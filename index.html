@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart HSR Owner Portal — بوابة المالك</title>
+  <meta name="description" content="منصة Smart HSR الذكية لإدارة الجودة والمراقبة الميدانية — بوابة المالك" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: linear-gradient(180deg, #0b2b3a, #0ea5a1);
+      color: white;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      animation: fadeIn 1.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .logo {
+      width: 120px;
+      height: auto;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+      animation: fadeIn 2s ease-in-out;
+    }
+    .btn {
+      margin-top: 30px;
+      background: white;
+      color: #0b2b3a;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 0.8rem 2.2rem;
+      transition: 0.3s;
+      box-shadow: 0 4px 10px rgba(255,255,255,0.25);
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: #e8faf8;
+    }
+  </style>
+</head>
+<body>
+  <!-- شعار Smart HSR -->
+  <img src="logo-hmm.png" alt="Smart HSR Logo" class="logo" />
+
+  <h1 class="text-3xl font-extrabold mb-3">مرحبًا بك في منصة Smart HSR</h1>
+  <p class="text-lg text-teal-100 max-w-md">
+    النظام الذكي لإدارة الجودة والملاحظات الميدانية — بوابة المالك الرسميّة لإدارة المؤسسة والمشتركين.
+  </p>
+
+  <button onclick="window.location.href='owner-login.html'" class="btn">
+    🔐 دخول المالك
+  </button>
+
+  <footer class="mt-10 text-sm text-gray-300">
+    © 2025 Smart HSR — جميع الحقوق محفوظة.
+  </footer>
+</body>
+</html>
