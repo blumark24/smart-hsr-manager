@@ -2,28 +2,44 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>لوحة مدير المؤسسة - Smart HSR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>لوحة إدارة Smart HSR</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet"/>
   <style>
-    body { font-family:'Tajawal',sans-serif; background:linear-gradient(180deg,#0b2b3a,#0ea5a1); min-height:100vh; color:#fff }
-    .card { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:20px; backdrop-filter:blur(14px) }
-    .btn { background:linear-gradient(90deg,#0ea5a1,#0b2b3a); color:#fff; font-weight:800; border-radius:999px; padding:.7rem 1.6rem; transition:.3s; box-shadow:0 4px 10px rgba(0,0,0,.2) }
-    .btn:hover { transform:translateY(-2px) scale(1.02); box-shadow:0 10px 20px rgba(14,165,161,.4) }
-    .btn-secondary { background:#0b2b3a; border:1px solid #0ea5a1 }
-    .btn-secondary:hover { background:#0ea5a1; border:1px solid #0ea5a1 }
-    .input-dark{ background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.2); color:#fff }
-    .input-dark::placeholder{ color:rgba(255,255,255,.5) }
-    /* modal */
-    .modal-content{ background:#fff; color:#0b2b3a; border-radius:20px; padding:2rem; width:95%; max-width:56rem }
-    /* scrollbars */
-    .scrollbox::-webkit-scrollbar{ width:8px }
-    .scrollbox::-webkit-scrollbar-thumb{ background-color:#0ea5a1; border-radius:10px }
-    .scrollbox::-webkit-scrollbar-track{ background:rgba(255,255,255,.1) }
+    body{font-family:'Tajawal',sans-serif;background:linear-gradient(180deg,#0b2b3a,#0ea5a1);min-height:100vh;color:#fff}
+    .card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;backdrop-filter:blur(14px)}
+    .btn{background:linear-gradient(90deg,#0ea5a1,#0b2b3a);color:#fff;font-weight:800;border-radius:999px;padding:.7rem 1.6rem;transition:.3s;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+    .btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 10px 20px rgba(14,165,161,.4)}
+    .btn-secondary{background:#0b2b3a;border:1px solid #0ea5a1}
+    .btn-secondary:hover{background:#0ea5a1;border:1px solid #0ea5a1}
+    .input-dark{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);color:#fff}
+    .input-dark::placeholder{color:rgba(255,255,255,.5)}
+    .modal-content{background:#fff;color:#0b2b3a;border-radius:20px;padding:2rem;width:95%;max-width:56rem}
+    .scrollbox::-webkit-scrollbar{width:8px}
+    .scrollbox::-webkit-scrollbar-thumb{background-color:#0ea5a1;border-radius:10px}
+    .scrollbox::-webkit-scrollbar-track{background:rgba(255,255,255,.1)}
+    .badge{padding:.25rem .6rem;border-radius:999px;font-size:.7rem;font-weight:800;white-space:nowrap}
   </style>
 </head>
 <body>
+  <!-- Toasts -->
+  <div id="toastHost" class="fixed bottom-4 right-4 z-[120] space-y-2"></div>
+  <audio id="sndNew" src="https://assets.mixkit.co/active_storage/sfx/1101/1101-preview.mp3" preload="auto"></audio>
+  <audio id="sndUrgent" src="https://assets.mixkit.co/active_storage/sfx/2770/2770-preview.mp3" preload="auto"></audio>
+  <audio id="sndClosed" src="https://assets.mixkit.co/active_storage/sfx/166/166-preview.mp3" preload="auto"></audio>
+
+  <!-- Image Modal -->
+  <div id="imageModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[110] p-4">
+    <div class="relative max-w-4xl w-full">
+      <button id="closeImageModal" class="absolute -top-10 left-0 btn btn-secondary px-4 py-2">إغلاق</button>
+      <div id="imageCarousel" class="bg-white rounded-2xl p-2">
+        <img id="previewImg" src="" class="w-full h-[70vh] object-contain rounded-xl" alt="preview"/>
+      </div>
+      <div id="thumbs" class="flex gap-2 mt-3 overflow-x-auto"></div>
+    </div>
+  </div>
+
   <!-- Message Modal -->
   <div id="messageModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100]">
     <div id="messageBox" class="card p-8 w-full max-w-lg text-center transform transition-all duration-300 scale-95 opacity-0">
@@ -38,41 +54,97 @@
     <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-2xl bg-white/90 flex items-center justify-center text-[#0b2b3a] font-extrabold text-xl shadow-lg">SH</div>
-        <h1 class="text-lg font-extrabold">Smart HSR <span class="text-teal-400">Manager Console</span></h1>
+        <h1 class="text-lg font-extrabold">لوحة إدارة <span class="text-teal-300">Smart HSR</span></h1>
       </div>
-      <button id="logoutBtn" class="btn shadow-none bg-transparent border border-white/30 hover:bg-white/10 text-sm">🚪 تسجيل الخروج</button>
+      <div class="flex items-center gap-2">
+        <button id="btnToggleNoti" class="btn btn-secondary text-sm px-4">🔔 تفعيل التنبيهات</button>
+        <button id="logoutBtn" class="btn shadow-none bg-transparent border border-white/30 hover:bg-white/10 text-sm">🚪 تسجيل الخروج</button>
+      </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-6 py-10">
-    <h2 class="text-3xl font-black mb-8 text-teal-200">لوحة مدير المؤسسة</h2>
+  <main class="max-w-7xl mx-auto px-6 py-8 space-y-10">
+    <div id="loadingIndicator" class="text-center p-8 text-xl font-bold bg-white/10 card hidden">جاري التحميل...</div>
 
-    <div id="loadingIndicator" class="text-center p-8 text-xl font-bold bg-white/10 card mb-10 hidden">جاري التحميل...</div>
-
-    <!-- KPIs -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+    <!-- KPIs (Smart Reports quick tiles) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="card p-6 text-center shadow-2xl">
-        <div class="text-sm opacity-70">إجمالي الملاحظات</div>
-        <div id="kpiUsers" class="text-4xl font-extrabold mt-1 text-teal-300">0</div>
+        <div class="text-sm opacity-70">الملاحظات الجديدة</div>
+        <div id="kpiNew" class="text-4xl font-extrabold mt-1 text-teal-300">0</div>
       </div>
       <div class="card p-6 text-center shadow-2xl">
-        <div class="text-sm opacity-70">ملاظات مفتوحة/انتظار</div>
-        <div id="kpiInspectors" class="text-4xl font-extrabold mt-1 text-teal-300">0</div>
-      </div>
-      <div class="card p-6 text-center shadow-2xl">
-        <div class="text-sm opacity-70">ملاظات مغلقة/معالجة</div>
-        <div id="kpiContractors" class="text-4xl font-extrabold mt-1 text-teal-300">0</div>
+        <div class="text-sm opacity-70">الملاحظات المنجزة</div>
+        <div id="kpiDone" class="text-4xl font-extrabold mt-1 text-teal-300">0</div>
       </div>
       <div class="card p-6 text-center shadow-2xl">
         <div class="text-sm opacity-70">الملاحظات العاجلة</div>
-        <div id="kpiOpenObs" class="text-4xl font-extrabold mt-1 text-red-300">0</div>
+        <div id="kpiUrgent" class="text-4xl font-extrabold mt-1 text-red-300">0</div>
+      </div>
+      <div class="card p-6 text-center shadow-2xl">
+        <div class="text-sm opacity-70">إجمالي الملاحظات</div>
+        <div id="kpiTotal" class="text-4xl font-extrabold mt-1 text-teal-300">0</div>
       </div>
     </section>
 
-    <!-- إدارة المستخدمين -->
-    <section class="card p-6 mb-10 shadow-2xl">
+    <!-- Mini Chart -->
+    <section class="card p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-2xl font-bold">التقارير الذكية</h3>
+        <select id="chartRange" class="input-dark p-2 rounded-xl">
+          <option value="7">آخر 7 أيام</option>
+          <option value="30" selected>آخر 30 يوم</option>
+          <option value="90">آخر 90 يوم</option>
+        </select>
+      </div>
+      <canvas id="miniChart" width="800" height="260" class="w-full rounded-xl bg-white/5 border border-white/10"></canvas>
+    </section>
+
+    <!-- Notes -->
+    <section class="card p-6 shadow-2xl">
       <div class="flex flex-col sm:flex-row items-center justify-between mb-4 gap-4">
-        <h3 class="text-2xl font-bold">إدارة المستخدمين</h3>
+        <h3 class="text-2xl font-bold">الملاحظات</h3>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <select id="obsFilterType" class="input-dark p-3 rounded-xl">
+            <option value="all">كل الأنواع</option>
+            <option value="طرق">طرق</option>
+            <option value="أرصفة">أرصفة</option>
+            <option value="إنارة">إنارة</option>
+            <option value="تصريف">تصريف</option>
+          </select>
+          <select id="obsFilterStatus" class="input-dark p-3 rounded-xl">
+            <option value="all">كل الحالات</option>
+            <option value="NEW">جديدة</option>
+            <option value="IN_PROGRESS">قيد التنفيذ</option>
+            <option value="COMPLETED">مغلقة</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl">
+        <table class="w-full text-sm text-right border-collapse">
+          <thead class="bg-white/10 sticky top-0">
+            <tr class="text-white/80">
+              <th class="p-3 border-b border-white/20">رقم</th>
+              <th class="p-3 border-b border-white/20">النوع</th>
+              <th class="p-3 border-b border-white/20">الحالة</th>
+              <th class="p-3 border-b border-white/20">عاجلة</th>
+              <th class="p-3 border-b border-white/20">الوصف</th>
+              <th class="p-3 border-b border-white/20">الصور</th>
+              <th class="p-3 border-b border-white/20">التاريخ والموقع</th>
+              <th class="p-3 border-b border-white/20">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="obsBody">
+            <tr><td colspan="8" class="text-center p-4 text-white/60">جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Users -->
+    <section class="card p-6 shadow-2xl">
+      <div class="flex flex-col sm:flex-row items-center justify-between mb-4 gap-4">
+        <h3 class="text-2xl font-bold">المستخدمون</h3>
         <div class="flex gap-2 w-full sm:w-auto">
           <input id="userSearch" type="text" placeholder="🔍 بحث بالاسم أو البريد" class="input-dark p-3 rounded-xl w-full sm:w-64">
           <button id="btnNewUser" class="btn">➕ إضافة مستخدم</button>
@@ -95,74 +167,13 @@
         </table>
       </div>
     </section>
-
-    <!-- إدارة الملاحظات -->
-    <section class="card p-6 mb-10 shadow-2xl">
-      <div class="flex flex-col sm:flex-row items-center justify-between mb-4 gap-4">
-        <h3 class="text-2xl font-bold">إدارة الملاحظات</h3>
-        <div class="flex gap-2 w-full sm:w-auto">
-          <select id="obsFilterType" class="input-dark p-3 rounded-xl">
-            <option value="all">كل التصنيفات</option>
-            <option value="جودة">جودة</option>
-            <option value="صيانة">صيانة</option>
-            <option value="سلامة">سلامة</option>
-            <option value="بيئة">بيئة</option>
-          </select>
-          <select id="obsFilterStatus" class="input-dark p-3 rounded-xl">
-            <option value="all">كل الحالات</option>
-            <option value="PENDING">قيد الانتظار</option>
-            <option value="IN_PROGRESS">قيد التنفيذ</option>
-            <option value="COMPLETED">مغلقة</option>
-          </select>
-        </div>
-      </div>
-      <div class="overflow-x-auto rounded-xl">
-        <table class="w-full text-sm text-right border-collapse">
-          <thead class="bg-white/10 sticky top-0">
-            <tr class="text-white/80">
-              <th class="p-3 border-b border-white/20">المعرف</th>
-              <th class="p-3 border-b border-white/20">العنوان</th>
-              <th class="p-3 border-b border-white/20 hidden lg:table-cell">التصنيف</th>
-              <th class="p-3 border-b border-white/20 hidden md:table-cell">الحالة</th>
-              <th class="p-3 border-b border-white/20">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="obsBody">
-            <tr><td colspan="5" class="text-center p-4 text-white/60">جاري التحميل...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- التقارير الذكية -->
-    <section class="card p-6 mb-10 shadow-2xl">
-      <div class="flex flex-col sm:flex-row items-center justify-between mb-4 gap-4">
-        <h3 class="text-2xl font-bold">التقارير الذكية (Gemini)</h3>
-        <div class="flex gap-2 w-full sm:w-auto">
-          <select id="reportRange" class="input-dark p-3 rounded-xl">
-            <option value="7">آخر 7 أيام</option>
-            <option value="30" selected>آخر 30 يوم</option>
-            <option value="90">آخر 90 يوم</option>
-          </select>
-          <button id="btnGenerateReport" class="btn">✨ توليد تقرير تنفيذي</button>
-          <button id="btnPrint" class="btn btn-secondary">🖨️ طباعة</button>
-        </div>
-      </div>
-      <textarea id="reportOutput" class="w-full input-dark rounded-xl p-4 min-h-48" placeholder="سيظهر هنا التقرير الذكي..."></textarea>
-    </section>
-
-    <!-- سجل الأحداث -->
-    <section class="card p-6 shadow-2xl">
-      <h3 class="text-2xl font-bold mb-4">سجل الأحداث</h3>
-      <div id="logs" class="text-sm text-white/70 space-y-2 max-h-72 overflow-y-auto scrollbox"></div>
-    </section>
   </main>
 
-  <!-- Modals -->
+  <!-- User Modal -->
   <div id="userModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
     <div class="modal-content relative">
       <button id="closeUserModal" class="absolute top-4 left-4 text-gray-500 hover:text-black">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        ✕
       </button>
       <h2 class="text-2xl font-extrabold mb-6 text-center text-[#0b2b3a]">➕ إضافة/تعديل مستخدم</h2>
       <form id="userForm" class="space-y-5">
@@ -188,14 +199,14 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { 
-      getFirestore, doc, getDoc, setDoc, collection, query, onSnapshot, serverTimestamp, updateDoc, deleteDoc, where, getDocs, orderBy
+    import {
+      getFirestore, doc, getDoc, setDoc, collection, query, onSnapshot, serverTimestamp, updateDoc, deleteDoc
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import {
+      getStorage, ref as sRef, getDownloadURL, listAll
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-    // ===== Config (manager project) =====
-    const API_KEY = ""; // ضع مفتاح Gemini إذا رغبت
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
-
+    // ===== Config =====
     const firebaseConfig = {
       apiKey: "AIzaSyD5c-REPLACE-ME",
       authDomain: "smart-hsr-manager.firebaseapp.com",
@@ -205,33 +216,37 @@
       appId: "1:000000000000:web:REPLACE_ME"
     };
 
-    // Collections
-    const USERS_PATH = "users";            // users/{uidLike}
-    const OBSERVATIONS_PATH = "observations"; // observations/{obsId}
+    const USERS_PATH = "users";                 // users/{id}
+    const OBSERVATIONS_PATH = "observations";   // observations/{id}
 
     // ===== State =====
-    let app, db, auth;
+    let app, db, auth, storage;
     let usersData = [];
     let observationsData = [];
-    let editingUserId = null; // document id when editing
+    let editingUserId = null;
     let userSearchTerm = '';
     let filterType = 'all';
     let filterStatus = 'all';
+    let notiEnabled = JSON.parse(localStorage.getItem('smart_hsr_noti') || 'false');
+
+    const prevObs = new Map(); // id -> {status, urgent}
 
     // ===== DOM =====
-    const messageModal = document.getElementById('messageModal');
-    const messageBox = document.getElementById('messageBox');
-    const messageTitle = document.getElementById('messageTitle');
-    const messageText = document.getElementById('messageText');
-    const closeMessageModalBtn = document.getElementById('closeMessageModal');
-
     const loadingIndicator = document.getElementById('loadingIndicator');
     const logoutBtn = document.getElementById('logoutBtn');
+    const btnToggleNoti = document.getElementById('btnToggleNoti');
 
-    const kpiUsers = document.getElementById('kpiUsers');
-    const kpiInspectors = document.getElementById('kpiInspectors');
-    const kpiContractors = document.getElementById('kpiContractors');
-    const kpiOpenObs = document.getElementById('kpiOpenObs');
+    const kpiNew = document.getElementById('kpiNew');
+    const kpiDone = document.getElementById('kpiDone');
+    const kpiUrgent = document.getElementById('kpiUrgent');
+    const kpiTotal = document.getElementById('kpiTotal');
+
+    const chartRange = document.getElementById('chartRange');
+    const chartCanvas = document.getElementById('miniChart');
+
+    const obsBody = document.getElementById('obsBody');
+    const obsFilterType = document.getElementById('obsFilterType');
+    const obsFilterStatus = document.getElementById('obsFilterStatus');
 
     const usersBody = document.getElementById('usersBody');
     const userSearch = document.getElementById('userSearch');
@@ -245,61 +260,200 @@
     const uRole = document.getElementById('uRole');
     const uStatus = document.getElementById('uStatus');
 
-    const obsBody = document.getElementById('obsBody');
-    const obsFilterType = document.getElementById('obsFilterType');
-    const obsFilterStatus = document.getElementById('obsFilterStatus');
+    const toastHost = document.getElementById('toastHost');
+    const sndNew = document.getElementById('sndNew');
+    const sndUrgent = document.getElementById('sndUrgent');
+    const sndClosed = document.getElementById('sndClosed');
 
-    const btnGenerateReport = document.getElementById('btnGenerateReport');
-    const reportOutput = document.getElementById('reportOutput');
-    const reportRange = document.getElementById('reportRange');
-    const btnPrint = document.getElementById('btnPrint');
-    const logsDiv = document.getElementById('logs');
+    const imageModal = document.getElementById('imageModal');
+    const closeImageModal = document.getElementById('closeImageModal');
+    const previewImg = document.getElementById('previewImg');
+    const thumbs = document.getElementById('thumbs');
 
-    // ===== Helpers =====
-    function showMessage(title, text, isError=false){
-      messageTitle.innerText = title;
-      messageText.innerHTML = text;
-      messageTitle.classList.toggle('text-teal-300', !isError);
-      messageTitle.classList.toggle('text-red-400', isError);
-      messageModal.classList.remove('hidden'); messageModal.classList.add('flex');
-      setTimeout(()=>{ messageBox.classList.remove('opacity-0','scale-95'); messageBox.classList.add('opacity-100','scale-100') },10);
+    // ===== UI helpers =====
+    function setNotiBtn(){
+      btnToggleNoti.textContent = notiEnabled ? '🔕 إيقاف التنبيهات' : '🔔 تفعيل التنبيهات';
     }
-    function closeMessage(){
-      messageBox.classList.remove('opacity-100','scale-100');
-      messageBox.classList.add('opacity-0','scale-95');
-      setTimeout(()=>{ messageModal.classList.add('hidden'); messageModal.classList.remove('flex') },300);
+    function toast(text, type='info'){
+      const base = document.createElement('div');
+      base.className = 'rounded-xl px-4 py-3 shadow-lg border text-sm flex items-center gap-2 ' +
+        (type==='success'?'bg-emerald-600/90 border-emerald-400':
+         type==='danger'?'bg-red-600/90 border-red-400':
+         type==='warn'?'bg-yellow-600/90 border-yellow-400':
+         'bg-slate-700/90 border-slate-500');
+      base.innerHTML = `<span>${text}</span>`;
+      toastHost.appendChild(base);
+      setTimeout(()=>{ base.classList.add('opacity-0','translate-y-2'); }, 3000);
+      setTimeout(()=>{ base.remove(); }, 3600);
     }
-    closeMessageModalBtn.onclick = closeMessage;
-
-    function logActivity(message){
-      const now = new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
-      const p = document.createElement('p');
-      p.className = 'border-b border-white/10 pb-1';
-      p.innerHTML = `<span class="text-teal-400 font-mono">[${now}]</span> ${message}`;
-      logsDiv.prepend(p);
+    function desktopNotify(title, body){
+      if (!notiEnabled) return;
+      if (Notification.permission === 'granted'){
+        new Notification(title,{ body });
+      }
+    }
+    function play(soundEl){
+      try{ soundEl.currentTime=0; soundEl.play(); }catch{}
     }
 
+    // ===== KPI + Chart =====
     function updateKPIs(){
-      const inspectors = usersData.filter(u=>u.role==='inspector').length;
-      const contractors = usersData.filter(u=>u.role==='contractor').length;
-      const openObs = observationsData.filter(o=>o.status!=='COMPLETED').length;
-      kpiUsers.textContent = usersData.length;
-      kpiInspectors.textContent = inspectors;
-      kpiContractors.textContent = contractors;
-      kpiOpenObs.textContent = openObs;
+      const total = observationsData.length;
+      const newC = observationsData.filter(o=>o.status==='NEW').length;
+      const done = observationsData.filter(o=>o.status==='COMPLETED').length;
+      const urgent = observationsData.filter(o=>o.urgent===true).length;
+      kpiTotal.textContent = total;
+      kpiNew.textContent = newC;
+      kpiDone.textContent = done;
+      kpiUrgent.textContent = urgent;
+      drawMiniChart();
+    }
+    function drawMiniChart(){
+      const days = parseInt(chartRange.value,10)||30;
+      const since = new Date(Date.now()-days*24*60*60*1000);
+      const inRange = observationsData.filter(o=>{
+        const d = o.createdAt?.toDate ? o.createdAt.toDate() : (o.createdAt? new Date(o.createdAt): null);
+        return d && d >= since;
+      });
+      const counts = {
+        NEW: inRange.filter(o=>o.status==='NEW').length,
+        IN_PROGRESS: inRange.filter(o=>o.status==='IN_PROGRESS').length,
+        COMPLETED: inRange.filter(o=>o.status==='COMPLETED').length,
+        URGENT: inRange.filter(o=>o.urgent===true).length,
+      };
+      const ctx = chartCanvas.getContext('2d');
+      ctx.clearRect(0,0,chartCanvas.width, chartCanvas.height);
+      const labels = ['جديدة','قيد التنفيذ','مغلقة','عاجلة'];
+      const values = [counts.NEW, counts.IN_PROGRESS, counts.COMPLETED, counts.URGENT];
+      const W = chartCanvas.width, H = chartCanvas.height, pad = 40;
+      const barW = (W - pad*2) / values.length * 0.6;
+      const maxV = Math.max(1, ...values);
+      // axis
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+      // bars
+      values.forEach((v,i)=>{
+        const x = pad + (i+0.2)*((W - pad*2)/values.length);
+        const h = (H - pad*2) * (v/maxV);
+        ctx.fillStyle = 'rgba(45,200,195,0.9)';
+        ctx.fillRect(x, H - pad - h, barW, h);
+        ctx.fillStyle='white';
+        ctx.textAlign='center';
+        ctx.fillText(labels[i], x+barW/2, H - pad + 16);
+        ctx.font='bold 14px Tajawal';
+        ctx.fillText(String(v), x+barW/2, H - pad - h - 6);
+      });
     }
 
+    // ===== Render: Observations =====
+    function renderObservations(){
+      let list = observationsData.slice();
+      if (filterType!=='all') list = list.filter(o=>o.type===filterType);
+      if (filterStatus!=='all') list = list.filter(o=>o.status===filterStatus);
+      if (list.length===0){
+        obsBody.innerHTML = `<tr><td colspan="8" class="text-center p-4 text-white/60">لا توجد ملاحظات مطابقة.</td></tr>`;
+        return;
+      }
+      obsBody.innerHTML = list.map(o=>{
+        const statusBadge = o.status==='COMPLETED'?'bg-green-500':(o.status==='IN_PROGRESS'?'bg-yellow-500':'bg-blue-500');
+        const urgentBadge = o.urgent ? '<span class="badge bg-red-600">عاجلة</span>' : '<span class="badge bg-slate-500/70">—</span>';
+        const desc = (o.description||'-').slice(0,120);
+        const dateStr = (()=>{ const d=o.createdAt?.toDate?o.createdAt.toDate(): (o.createdAt?new Date(o.createdAt):null); return d? d.toLocaleString('ar-SA'): '-';})();
+        const locationStr = o.location?.address || (o.location? `${o.location.lat}, ${o.location.lng}` : '-');
+        const imagesCount = (o.images?.inspector?.length||0)+(o.images?.contractor?.length||0)+(o.images?.manager?.length||0);
+        const imgBtn = imagesCount>0 ? `<button class="text-xs underline" data-id="${o.id}" data-what="images">عرض (${imagesCount})</button>` : '—';
+        return `
+          <tr class="hover:bg-white/10 transition">
+            <td class="p-3 font-mono">${o.id||'-'}</td>
+            <td class="p-3">${o.type||'-'}</td>
+            <td class="p-3"><span class="badge ${statusBadge}">${o.status==='NEW'?'جديدة':(o.status==='IN_PROGRESS'?'قيد التنفيذ':'مغلقة')}</span></td>
+            <td class="p-3">${urgentBadge}</td>
+            <td class="p-3 max-w-[360px]">${desc}</td>
+            <td class="p-3">${imgBtn}</td>
+            <td class="p-3"><div>${dateStr}</div><div class="text-white/70 text-xs">${locationStr}</div></td>
+            <td class="p-3 flex flex-wrap gap-2 items-center">
+              <button class="text-xs text-white bg-teal-600 hover:bg-teal-500 px-2 py-1 rounded-full" data-id="${o.id}" data-what="progress">🛠️ تحديث الحالة</button>
+              <button class="text-xs text-yellow-300 hover:text-yellow-200" data-id="${o.id}" data-what="urgent">🚨 رفعها كـ عاجلة</button>
+              <button class="text-xs text-green-300 hover:text-green-200" data-id="${o.id}" data-what="close">✅ إغلاق الملاحظة</button>
+              <button class="text-xs text-red-300 hover:text-red-200" data-id="${o.id}" data-what="delete">🗑️ حذفها</button>
+            </td>
+          </tr>`;
+      }).join('');
+      // bind
+      obsBody.querySelectorAll('button').forEach(b=>{
+        const id=b.dataset.id; const what=b.dataset.what;
+        b.onclick=()=> {
+          if (what==='progress') cycleStatus(id);
+          if (what==='urgent') markUrgent(id);
+          if (what==='close') closeObservation(id);
+          if (what==='delete') deleteObservation(id);
+          if (what==='images') openImages(id);
+        };
+      });
+    }
+
+    async function cycleStatus(id){
+      const o = observationsData.find(x=>x.id===id); if(!o) return;
+      const next = o.status==='NEW'?'IN_PROGRESS':(o.status==='IN_PROGRESS'?'COMPLETED':'NEW');
+      await updateDoc(doc(db, OBSERVATIONS_PATH, id), { status: next, updatedAt: serverTimestamp() });
+      toast('تم تحديث الحالة', 'success');
+    }
+    async function markUrgent(id){
+      await updateDoc(doc(db, OBSERVATIONS_PATH, id), { urgent: true, updatedAt: serverTimestamp() });
+      toast('تم رفع الملاحظة كعاجلة', 'warn');
+    }
+    async function closeObservation(id){
+      await updateDoc(doc(db, OBSERVATIONS_PATH, id), { status: 'COMPLETED', updatedAt: serverTimestamp(), closedAt: serverTimestamp() });
+      toast('تم إغلاق الملاحظة', 'success');
+    }
+    async function deleteObservation(id){
+      if (!confirm('تأكيد حذف الملاحظة؟')) return;
+      await deleteDoc(doc(db, OBSERVATIONS_PATH, id));
+      toast('تم حذف الملاحظة', 'danger');
+    }
+
+    // Images (Firestore + Storage)
+    async function openImages(id){
+      const o = observationsData.find(x=>x.id===id); if(!o) return;
+      const paths = []
+        .concat(o.images?.inspector||[])
+        .concat(o.images?.contractor||[])
+        .concat(o.images?.manager||[]);
+      const urls = [];
+      for (const p of paths){
+        try{
+          // allow direct URLs or storage paths
+          if (/^https?:\/\//.test(p)) { urls.push(p); continue; }
+          const u = await getDownloadURL(sRef(storage, p));
+          urls.push(u);
+        }catch{}
+      }
+      if (urls.length===0){ toast('لا توجد صور', 'info'); return; }
+      thumbs.innerHTML = '';
+      previewImg.src = urls[0];
+      urls.forEach((u,idx)=>{
+        const t = document.createElement('img');
+        t.src = u; t.alt='thumb';
+        t.className='w-20 h-20 object-cover rounded-lg cursor-pointer border border-white/20';
+        t.onclick=()=>{ previewImg.src = u; };
+        thumbs.appendChild(t);
+      });
+      imageModal.classList.remove('hidden'); imageModal.classList.add('flex');
+    }
+    closeImageModal.onclick = ()=>{ imageModal.classList.add('hidden'); imageModal.classList.remove('flex'); };
+
+    // ===== Render: Users =====
     function renderUsers(){
-      const filtered = usersData.filter(u => {
-        const q = (userSearchTerm||'').toLowerCase();
-        return (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q)
+      const filtered = usersData.filter(u=>{
+        const q=(userSearchTerm||'').toLowerCase();
+        return (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q);
       });
       if (filtered.length===0){
         usersBody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-white/60">لا يوجد مستخدمون مطابقون.</td></tr>`;
         return;
       }
       usersBody.innerHTML = filtered.map(u=>{
-        const badge = u.status==='active' ? 'bg-green-500' : 'bg-gray-500';
+        const badge = u.status==='active'?'bg-green-500':'bg-gray-500';
         const roleTxt = u.role==='inspector'?'مراقب':'مقاول';
         return `
           <tr class="hover:bg-white/10 transition">
@@ -309,58 +463,23 @@
             <td class="p-3"><span class="px-3 py-1 text-xs font-semibold rounded-full ${badge}">${u.status==='active'?'نشط':'معلّق'}</span></td>
             <td class="p-3 flex gap-2 items-center">
               <button class="text-xs text-white bg-teal-600 hover:bg-teal-500 px-2 py-1 rounded-full" data-id="${u.id}" data-action="edit">✎ تعديل</button>
-              <button class="text-xs text-red-300 hover:text-red-200" data-id="${u.id}" data-action="delete">حذف</button>
+              <button class="text-xs text-red-300 hover:text-red-200" data-id="${u.id}" data-action="delete">🗑️ حذف</button>
               <button class="text-xs text-yellow-300 hover:text-yellow-200" data-id="${u.id}" data-action="toggle">${u.status==='active'?'تعطيل':'تفعيل'}</button>
             </td>
-          </tr>`
+          </tr>`;
       }).join('');
-      // bind actions
       usersBody.querySelectorAll('button').forEach(btn=>{
-        const id = btn.dataset.id; const action = btn.dataset.action;
-        btn.onclick = ()=>{
+        const id=btn.dataset.id; const action=btn.dataset.action;
+        btn.onclick= async ()=>{
           const user = usersData.find(x=>x.id===id);
           if (!user) return;
           if (action==='edit') openUserModal(user);
-          if (action==='delete') deleteUser(id);
-          if (action==='toggle') toggleUserStatus(user);
-        }
+          if (action==='delete'){ if(!confirm('تأكيد حذف المستخدم؟')) return; await deleteDoc(doc(db, USERS_PATH, id)); toast('تم حذف المستخدم', 'danger'); }
+          if (action==='toggle'){ const ns = user.status==='active'?'suspended':'active'; await updateDoc(doc(db, USERS_PATH, id), { status:ns, updatedAt:serverTimestamp() }); toast('تم تحديث الحالة', 'success'); }
+        };
       });
     }
 
-    function renderObservations(){
-      let list = observationsData.slice();
-      if (filterType!=='all') list = list.filter(o=>o.type===filterType);
-      if (filterStatus!=='all') list = list.filter(o=>o.status===filterStatus);
-      if (list.length===0){
-        obsBody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-white/60">لا توجد ملاحظات مطابقة.</td></tr>`;
-        return;
-      }
-      obsBody.innerHTML = list.map(o=>{
-        const statusBadge = o.status==='COMPLETED'?'bg-green-500':(o.status==='IN_PROGRESS'?'bg-yellow-500':'bg-red-500');
-        return `
-          <tr class="hover:bg-white/10 transition">
-            <td class="p-3">${o.id||'-'}</td>
-            <td class="p-3">${o.title||'-'}</td>
-            <td class="p-3 hidden lg:table-cell">${o.type||'-'}</td>
-            <td class="p-3 hidden md:table-cell"><span class="px-3 py-1 text-xs font-semibold rounded-full ${statusBadge}">${o.status}</span></td>
-            <td class="p-3 flex gap-2 items-center">
-              <button class="text-xs text-white bg-teal-600 hover:bg-teal-500 px-2 py-1 rounded-full" data-id="${o.id}" data-what="view">عرض</button>
-              <button class="text-xs text-green-300 hover:text-green-200" data-id="${o.id}" data-what="close">إغلاق</button>
-              <button class="text-xs text-red-300 hover:text-red-200" data-id="${o.id}" data-what="delete">حذف</button>
-            </td>
-          </tr>`
-      }).join('');
-      obsBody.querySelectorAll('button').forEach(b=>{
-        const id=b.dataset.id; const what=b.dataset.what;
-        b.onclick=()=>{
-          if (what==='close') closeObservation(id);
-          if (what==='delete') deleteObservation(id);
-          if (what==='view') showMessage('تفاصيل الملاحظة', `سيتم هنا عرض التفاصيل الموسعة للبلاغ <b>${id}</b>.`);
-        }
-      });
-    }
-
-    // ===== CRUD: Users =====
     function openUserModal(user){
       editingUserId = user? user.id : null;
       uName.value = user?.name||'';
@@ -370,8 +489,7 @@
       userModal.classList.remove('hidden'); userModal.classList.add('flex');
     }
     function closeUser(){ userModal.classList.add('hidden'); userModal.classList.remove('flex'); }
-
-    async function saveUser(e){
+    userForm.onsubmit = async (e)=>{
       e.preventDefault();
       const payload = {
         name: uName.value.trim(),
@@ -380,107 +498,91 @@
         status: uStatus.value,
         updatedAt: serverTimestamp()
       };
-      try{
-        if (editingUserId){
-          await updateDoc(doc(db, USERS_PATH, editingUserId), payload);
-          logActivity(`تعديل مستخدم: <span class='font-bold'>${payload.name}</span>`);
-        } else {
-          const id = 'usr_'+Date.now();
-          await setDoc(doc(db, USERS_PATH, id), { ...payload, createdAt: serverTimestamp(), id });
-          logActivity(`إضافة مستخدم جديد: <span class='font-bold'>${payload.name}</span>`);
-        }
-        closeUser();
-      }catch(err){ console.error(err); showMessage('خطأ','تعذّر حفظ المستخدم',true); }
-    }
-    async function deleteUser(id){
-      if (!confirm('تأكيد حذف المستخدم؟')) return;
-      try{ await deleteDoc(doc(db, USERS_PATH, id)); logActivity(`حذف مستخدم (${id})`); }catch(err){ console.error(err); showMessage('خطأ','تعذّر الحذف',true) }
-    }
-    async function toggleUserStatus(user){
-      const newStatus = user.status==='active'?'suspended':'active';
-      try{ await updateDoc(doc(db, USERS_PATH, user.id), { status:newStatus }); logActivity(`تبديل حالة ${user.name} إلى ${newStatus}`) }catch(err){ console.error(err); showMessage('خطأ','تعذّر تحديث الحالة',true) }
-    }
+      if (editingUserId){
+        await updateDoc(doc(db, USERS_PATH, editingUserId), payload);
+        toast('تم تعديل المستخدم', 'success');
+      }else{
+        const id = 'usr_'+Date.now();
+        await setDoc(doc(db, USERS_PATH, id), { ...payload, createdAt: serverTimestamp(), id });
+        toast('تم إضافة مستخدم', 'success');
+      }
+      closeUser();
+    };
+    closeUserModal.onclick = closeUser;
 
-    // ===== CRUD: Observations =====
-    async function closeObservation(id){
-      try{ await updateDoc(doc(db, OBSERVATIONS_PATH, id), { status:'COMPLETED', closedAt: serverTimestamp() }); logActivity(`إغلاق البلاغ (${id})`) }catch(err){ console.error(err); showMessage('خطأ','تعذّر الإغلاق',true) }
-    }
-    async function deleteObservation(id){
-      if (!confirm('تأكيد حذف الملاحظة؟')) return;
-      try{ await deleteDoc(doc(db, OBSERVATIONS_PATH, id)); logActivity(`حذف الملاحظة (${id})`) }catch(err){ console.error(err); showMessage('خطأ','تعذّر الحذف',true) }
-    }
-
-    // ===== AI: Reports =====
-    async function fetchGemini(systemPrompt,userQuery,maxRetries=3){
-      if (!API_KEY) return 'ضع API Key لـ Gemini لتفعيل هذه الميزة.';
-      let attempt=0; while(attempt<maxRetries){
-        try{
-          const payload={ contents:[{ parts:[{ text:userQuery }] }], systemInstruction:{ parts:[{ text:systemPrompt }] } };
-          const res=await fetch(API_URL,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-          if(!res.ok) throw new Error(`${res.status}`);
-          const data=await res.json();
-          return data.candidates?.[0]?.content?.parts?.[0]?.text||'لا يوجد نص.';
-        }catch(e){ if(++attempt>=maxRetries) throw e; await new Promise(r=>setTimeout(r,500*attempt)); }
+    // ===== Notifications =====
+    function askPermissionIfNeeded(){
+      if (notiEnabled && Notification && Notification.permission !== 'granted'){
+        Notification.requestPermission().then(p=>{
+          if (p!=='granted'){ notiEnabled=false; localStorage.setItem('smart_hsr_noti','false'); setNotiBtn(); toast('تم رفض إذن الإشعارات', 'warn'); }
+        });
       }
     }
-    async function generateReport(){
-      const days = parseInt(reportRange.value,10)||30;
-      const since = new Date(Date.now()-days*24*60*60*1000);
-      const inRange = observationsData.filter(o=> (o.createdAt?.toDate? o.createdAt.toDate():o.createdAt) >= since);
-      const stats = {
-        total: inRange.length,
-        open: inRange.filter(o=>o.status!=='COMPLETED').length,
-        closed: inRange.filter(o=>o.status==='COMPLETED').length,
-        byType: inRange.reduce((acc,o)=>{acc[o.type]= (acc[o.type]||0)+1; return acc}, {})
-      };
-      const systemPrompt = `قدّم تقريرًا تنفيذيًا موجزًا بالعربية لمدير مؤسسة في Smart HSR، يتضمن ملخصًا عدديًا، ملاحظات على الأداء، وأولويات الأسبوع القادم بنقاط واضحة.`;
-      const userQuery = `إحصائيات ${days} يومًا: إجمالي=${stats.total}, مفتوح=${stats.open}, مغلق=${stats.closed}, حسب النوع=${JSON.stringify(stats.byType)}. اقترح 3 توصيات عملية.`;
-      try{
-        reportOutput.value = '⏳ جاري التوليد...';
-        const text = await fetchGemini(systemPrompt,userQuery);
-        reportOutput.value = text;
-        logActivity('توليد تقرير ذكي');
-      }catch(e){ reportOutput.value='تعذّر التوليد.' }
+    btnToggleNoti.onclick = ()=>{
+      notiEnabled = !notiEnabled;
+      localStorage.setItem('smart_hsr_noti', JSON.stringify(notiEnabled));
+      setNotiBtn();
+      if (notiEnabled) { askPermissionIfNeeded(); toast('تم تفعيل التنبيهات', 'success'); } else { toast('تم إيقاف التنبيهات', 'warn'); }
+    };
+    setNotiBtn();
+
+    // Fire basis for change detection & notifications
+    function handleObservationEvents(newList){
+      const byId = new Map(newList.map(o=>[o.id,o]));
+      // New items
+      for (const [id, o] of byId){
+        const before = prevObs.get(id);
+        if (!before){
+          if (notiEnabled){ play(sndNew); desktopNotify('ملاحظة جديدة', `#${id} - ${o.type||''}`); }
+          toast(`تمت إضافة ملاحظة جديدة (#${id})`, 'info');
+        }else{
+          if (!before.urgent && o.urgent){
+            if (notiEnabled){ play(sndUrgent); desktopNotify('تم رفع الملاحظة كعاجلة', `#${id}`); }
+            toast(`🚨 ملاحظة (#${id}) أصبحت عاجلة`, 'warn');
+          }
+          if (before.status!=='COMPLETED' && o.status==='COMPLETED'){
+            if (notiEnabled){ play(sndClosed); desktopNotify('تم إغلاق ملاحظة', `#${id}`); }
+            toast(`✅ تم إغلاق الملاحظة (#${id})`, 'success');
+          }
+        }
+      }
+      // Update snapshot
+      prevObs.clear();
+      for (const [id,o] of byId){ prevObs.set(id, { status:o.status, urgent:!!o.urgent }); }
     }
 
-    // ===== Auth Guard (manager role) =====
+    // ===== Auth + Realtime =====
     async function init(){
-      try{
-        loadingIndicator.classList.remove('hidden');
-        app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app);
-        onAuthStateChanged(auth, async (user)=>{
-          if(!user){ window.location.href='owner-login.html'; return; }
-          const snap = await getDoc(doc(db,'managers', user.uid));
-          if(!snap.exists() || snap.data().role!=='manager'){ await signOut(auth); window.location.href='owner-login.html'; return; }
-          logActivity(`تسجيل دخول المدير: ${user.email||user.uid}`);
-          startRealtime(); loadingIndicator.classList.add('hidden');
-        });
-      }catch(e){ console.error(e); showMessage('خطأ','فشل التهيئة.',true); loadingIndicator.classList.add('hidden'); }
+      loadingIndicator.classList.remove('hidden');
+      app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); storage = getStorage(app);
+      onAuthStateChanged(auth, async (user)=>{
+        if(!user){ window.location.href='owner-login.html'; return; }
+        const snap = await getDoc(doc(db,'managers', user.uid));
+        if(!snap.exists() || snap.data().role!=='manager'){ await signOut(auth); window.location.href='owner-login.html'; return; }
+        startRealtime(); loadingIndicator.classList.add('hidden');
+        askPermissionIfNeeded();
+      });
     }
 
     function startRealtime(){
       onSnapshot(query(collection(db, USERS_PATH)), (qs)=>{
         usersData=[]; qs.forEach(d=> usersData.push({ id:d.id, ...d.data() }));
-        renderUsers(); updateKPIs();
+        renderUsers();
       });
       onSnapshot(query(collection(db, OBSERVATIONS_PATH)), (qs)=>{
         observationsData=[]; qs.forEach(d=> observationsData.push({ id:d.id, ...d.data() }));
-        renderObservations(); updateKPIs();
+        renderObservations(); updateKPIs(); handleObservationEvents(observationsData);
       });
     }
 
-    // ===== Events =====
-    logoutBtn.onclick = async()=>{ await signOut(auth); window.location.href='owner-login.html' };
-    btnNewUser.onclick = ()=> openUserModal();
-    closeUserModal.onclick = ()=> closeUser();
-    userForm.onsubmit = saveUser;
-    userSearch.oninput = (e)=>{ userSearchTerm=e.target.value.trim(); renderUsers(); };
-
+    // ===== Simple filters/search/events =====
     obsFilterType.onchange = (e)=>{ filterType=e.target.value; renderObservations(); };
     obsFilterStatus.onchange = (e)=>{ filterStatus=e.target.value; renderObservations(); };
+    chartRange.onchange = drawMiniChart;
 
-    btnGenerateReport.onclick = generateReport;
-    btnPrint.onclick = ()=> window.print();
+    logoutBtn.onclick = async()=>{ await signOut(auth); window.location.href='owner-login.html' };
+    btnNewUser.onclick = ()=> openUserModal();
+    userSearch.oninput = (e)=>{ userSearchTerm=e.target.value.trim(); renderUsers(); };
 
     window.onload = init;
   </script>
