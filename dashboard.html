@@ -450,6 +450,27 @@ try {
 }
 
     // =============================
+// 🔹 دالة الرفع الجديدة إلى Cloud Storage
+// =============================
+async function uploadImageToFirebase(file) {
+  if (!file) throw new Error("لم يتم تحديد أي ملف للرفع.");
+  if (!storage) throw new Error("خدمة التخزين غير مهيأة بعد.");
+
+  // اسم فريد للملف
+  const fileName = `${Date.now()}_${file.name}`;
+  const storageRef = ref(storage, `uploads/${fileName}`);
+
+  // رفع الملف إلى Google Cloud Storage
+  await uploadBytes(storageRef, file);
+
+  // جلب رابط التحميل المباشر
+  const downloadURL = await getDownloadURL(storageRef);
+  console.log("✅ تم رفع الملف بنجاح:", downloadURL);
+
+  return downloadURL; // نرجع الرابط إلى Firestore
+}
+
+    // =============================
     // 2) حالة واجهة المستخدم + بيانات
     // =============================
     let observationsData = [];          // سنملؤه من Firestore
