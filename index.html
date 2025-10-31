@@ -14,17 +14,56 @@
       --navy:#0B2B3A;
     }
     body{
-      font-family:'Tajawal', sans-serif;
-      background:linear-gradient(180deg,#0b2b3a 0%, #0e2330 30%, #081722 100%);
+      font-family:'Tajawal',sans-serif;
+      background:linear-gradient(180deg,#0b2b3a 0%,#0e2330 30%,#081722 100%);
       color:#e8f4f4;
       overflow-x:hidden;
     }
-    .btn{background:linear-gradient(180deg,#0EA5A1,#0a8c88);color:#062226;font-weight:800;padding:.9rem 1.25rem;border-radius:1rem;transition:.25s}
-    .btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(14,165,161,.35);}
-    .glass{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px);}
-    .ringed{position:relative;}
-    .ringed:after{content:"";position:absolute;inset:-2px;border-radius:inherit;padding:2px;background:conic-gradient(from 140deg,rgba(14,165,161,.75),rgba(11,43,58,.8),rgba(14,165,161,.75));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;border-radius:inherit;}
-    .orb{position:fixed;width:700px;height:700px;background:radial-gradient(circle at 50% 50%,rgba(14,165,161,.24),rgba(14,165,161,0) 60%);filter:blur(30px);pointer-events:none;transform:translate(-50%,-50%);}
+    .btn{
+      background:linear-gradient(180deg,#0EA5A1,#0a8c88);
+      color:#062226;
+      font-weight:800;
+      padding:.9rem 1.25rem;
+      border-radius:1rem;
+      transition:.25s;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:.5rem;
+    }
+    .btn:hover{
+      transform:translateY(-2px);
+      box-shadow:0 10px 24px rgba(14,165,161,.35);
+    }
+    .glass{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter:blur(10px);
+    }
+    .ringed{
+      position:relative;
+    }
+    .ringed:after{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      border-radius:inherit;
+      padding:2px;
+      background:conic-gradient(from 140deg,rgba(14,165,161,.75),rgba(11,43,58,.8),rgba(14,165,161,.75));
+      -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+      -webkit-mask-composite:xor;
+      mask-composite:exclude;
+      border-radius:inherit;
+    }
+    .orb{
+      position:fixed;
+      width:700px;
+      height:700px;
+      background:radial-gradient(circle at 50% 50%,rgba(14,165,161,.24),rgba(14,165,161,0) 60%);
+      filter:blur(30px);
+      pointer-events:none;
+      transform:translate(-50%,-50%);
+    }
     .en{font-family:'Inter',sans-serif;}
   </style>
 </head>
@@ -32,6 +71,7 @@
 <body>
   <div id="orb" class="orb" style="top:30%; left:70%"></div>
 
+  <!-- Header -->
   <header class="sticky top-0 z-40 backdrop-blur-md bg-[#0B2B3A]/70 border-b border-white/10">
     <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -50,20 +90,29 @@
     </div>
   </header>
 
-  <!-- القسم التجريبي -->
+  <!-- AI Demo -->
   <section id="demo" class="py-20">
     <div class="max-w-6xl mx-auto px-6">
       <h2 class="text-3xl md:text-4xl font-extrabold mb-3">✨ جرب الذكاء الصناعي الآن</h2>
       <p class="text-white/70 mb-8">ارفع صورة ميدانية وشاهد الوصف التحليلي فورًا عبر <span class="en">Gemini API</span>.</p>
 
       <div class="grid md:grid-cols-2 gap-6">
+        <!-- Upload -->
         <div class="glass ringed rounded-2xl p-6 flex flex-col justify-center">
           <label class="block text-sm text-white/70 mb-2">اختر صورة (JPEG/PNG)</label>
-          <input id="aiFile" type="file" accept="image/*" class="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[var(--turquoise)] file:text-[#062226] hover:file:opacity-90 text-white/80" />
+
+          <!-- ✅ الزر الجديد يعمل على الجوال -->
+          <label for="aiFile" class="relative z-50 cursor-pointer btn glow w-full">
+            📸 اختر صورة
+            <input id="aiFile" type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
+          </label>
+
           <div id="preview" class="mt-5 aspect-[16/10] bg-black/30 rounded-xl grid place-items-center text-white/40 text-sm">لا توجد صورة بعد</div>
+
           <button id="analyzeBtn" class="btn mt-5 w-full glow relative z-50">تحليل الصورة بالذكاء الصناعي</button>
         </div>
 
+        <!-- Result -->
         <div class="glass ringed rounded-2xl p-6">
           <h3 class="font-bold text-xl mb-3">📄 النتيجة التحليلية</h3>
           <div id="aiResult" class="text-white/80 leading-relaxed">—</div>
@@ -72,12 +121,14 @@
     </div>
   </section>
 
+  <!-- Footer -->
   <footer class="border-t border-white/10 py-6 text-center text-white/60 text-sm">
     © 2025 Smart HSR — جميع الحقوق محفوظة.
   </footer>
 
+  <!-- Script -->
   <script>
-    // حركة الدائرة المضيئة بالخلفية
+    // orb motion background
     const orb=document.getElementById('orb');
     window.addEventListener('mousemove',(e)=>{
       const {innerWidth:w,innerHeight:h}=window;
@@ -91,6 +142,7 @@
     const aiResult=document.getElementById('aiResult');
     let imgDataUrl=null;
 
+    // ✅ معاينة الصورة بعد الرفع
     aiFile.addEventListener('change',(ev)=>{
       const file=ev.target.files?.[0];
       if(!file) return;
@@ -102,6 +154,7 @@
       rd.readAsDataURL(file);
     });
 
+    // ✅ زر التحليل
     analyzeBtn.addEventListener('click',async()=>{
       if(!imgDataUrl){
         alert('📸 من فضلك اختر صورة أولاً.');
