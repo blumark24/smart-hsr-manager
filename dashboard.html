@@ -689,7 +689,7 @@ async function uploadImageBase64(file) {
       try {
         let uploadedUrl = null;
         if (currentFile) {
-  uploadedUrl = await uploadImageBase64(currentFile);
+uploadedUrl = await uploadImageToFirebase(currentFile);
 
         }
 
@@ -802,7 +802,7 @@ async function uploadImageBase64(file) {
       try {
         // ارفع صورة AFTER لـ ImgBB
         setButtonBusy('finalCloseoutBtn', true);
-        const afterUrl = await uploadImageBase64(currentAfterFile);
+       const afterUrl = await uploadImageToFirebase(currentAfterFile);
 
         // حدّث Firestore إن كان متاح
         if (FIREBASE_READY) {
