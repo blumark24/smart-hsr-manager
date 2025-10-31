@@ -5,135 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Smart HSR Dashboard — المدن الذكية تبدأ من الميدان</title>
 
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Fonts: Tajawal (AR) + Inter (EN) -->
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
-
-  <!-- AOS Animations -->
-  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
 
   <style>
     :root{
       --turquoise:#0EA5A1;
       --navy:#0B2B3A;
-      --ink:#0b1b32;
     }
     body{
-      font-family:'Tajawal', system-ui, -apple-system, sans-serif;
+      font-family:'Tajawal', sans-serif;
       background:linear-gradient(180deg,#0b2b3a 0%, #0e2330 30%, #081722 100%);
-      color:#e8f4f4; scroll-behavior:smooth;
+      color:#e8f4f4;
+      overflow-x:hidden;
     }
-    .stars{position:fixed;inset:0;pointer-events:none;opacity:.35;
-      background:
-        radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.18), transparent 60%),
-        radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,.12), transparent 60%),
-        radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.10), transparent 60%);
-      mix-blend-mode:screen;
-    }
-    .glow{animation:pulseGlow 3.5s ease-in-out infinite;}
-    @keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(14,165,161,.3);}50%{box-shadow:0 0 20px 6px rgba(14,165,161,.55);}}
-    .glass{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px);}
-    .btn{padding:.9rem 1.25rem;border-radius:1rem;font-weight:800;transition:.25s;background:linear-gradient(180deg,#0EA5A1,#0a8c88);color:#062226;}
-    .btn:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(14,165,161,.3);}
-    .btn-secondary{background:linear-gradient(180deg,#0b2b3a,#082231);color:#dff9f7;border:1px solid rgba(255,255,255,.1);}
-    .orb{position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(14,165,161,.25),rgba(14,165,161,0) 60%);filter:blur(40px);pointer-events:none;transform:translate(-50%,-50%)}
+    .btn{background:linear-gradient(180deg,#0EA5A1,#0a8c88);color:#062226;font-weight:800;padding:.9rem 1.25rem;border-radius:1rem;transition:.25s}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(14,165,161,.35);}
+    .glass{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px);}
+    .ringed{position:relative;}
+    .ringed:after{content:"";position:absolute;inset:-2px;border-radius:inherit;padding:2px;background:conic-gradient(from 140deg,rgba(14,165,161,.75),rgba(11,43,58,.8),rgba(14,165,161,.75));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;border-radius:inherit;}
+    .orb{position:fixed;width:700px;height:700px;background:radial-gradient(circle at 50% 50%,rgba(14,165,161,.24),rgba(14,165,161,0) 60%);filter:blur(30px);pointer-events:none;transform:translate(-50%,-50%);}
+    .en{font-family:'Inter',sans-serif;}
   </style>
 </head>
-<body>
-  <div class="stars"></div>
-  <div id="orb" class="orb" style="top:30%;left:70%"></div>
 
-  <!-- Header -->
-  <header class="sticky top-0 z-40 bg-[#0B2B3A]/70 backdrop-blur border-b border-white/10">
-    <div class="max-w-7xl mx-auto px-5 py-4 flex justify-between items-center">
+<body>
+  <div id="orb" class="orb" style="top:30%; left:70%"></div>
+
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-[#0B2B3A]/70 border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-white/90 rounded-2xl flex items-center justify-center glow">
+        <div class="w-11 h-11 rounded-2xl bg-white/90 flex items-center justify-center ringed">
           <span class="font-black text-[#0B2B3A]">SH</span>
         </div>
-        <div>
+        <div class="leading-tight">
           <div class="font-extrabold text-white text-lg">Smart HSR <span class="text-[var(--turquoise)]">Dashboard</span></div>
           <div class="text-xs text-white/70 en">AI-Powered Urban Quality</div>
         </div>
       </div>
       <nav class="hidden md:flex items-center gap-6 text-white/80">
-        <a href="#about" class="hover:text-white">الملف التعريفي</a>
         <a href="#demo" class="hover:text-white">تجربة الذكاء الصناعي</a>
         <a href="#impact" class="hover:text-white">الأثر</a>
-        <a href="#contact" class="hover:text-white">تواصل</a>
       </nav>
-      <a href="Home.html" class="btn glow">🚀 الدخول إلى النظام التنفيذي</a>
     </div>
   </header>
 
-  <!-- Hero -->
-  <section class="max-w-7xl mx-auto px-6 pt-16 pb-24 grid md:grid-cols-2 gap-10 items-center">
-    <div data-aos="fade-up">
-      <h1 class="text-4xl md:text-5xl font-black leading-tight">
-        المدن الذكية تبدأ من الميدان
-        <span class="block mt-1 text-[var(--turquoise)] text-2xl en">Smart HSR — AI Urban Quality</span>
-      </h1>
-      <p class="mt-5 text-white/80 text-lg leading-relaxed">
-        يربط <span class="text-[var(--turquoise)] font-semibold">Smart HSR</span> الميدان بغرفة القرار عبر الذكاء الصناعي لتحليل الصور والملاحظات الميدانية.
-      </p>
-      <div class="mt-7 flex flex-wrap gap-3">
-        <a href="#demo" class="btn glow">✨ جرب الذكاء الصناعي</a>
-        <a href="#about" class="btn-secondary btn">📘 الملف التعريفي</a>
-      </div>
-    </div>
-    <div data-aos="fade-left" class="glass rounded-3xl p-3">
-      <img src="https://i.ibb.co/djL2KQP/city-ai.jpg" class="rounded-2xl w-full" alt="city ai">
-    </div>
-  </section>
+  <!-- القسم التجريبي -->
+  <section id="demo" class="py-20">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl md:text-4xl font-extrabold mb-3">✨ جرب الذكاء الصناعي الآن</h2>
+      <p class="text-white/70 mb-8">ارفع صورة ميدانية وشاهد الوصف التحليلي فورًا عبر <span class="en">Gemini API</span>.</p>
 
-  <!-- AI Image Analyzer -->
-  <section id="demo" class="py-20 bg-[#0B2B3A]/30">
-    <div class="max-w-7xl mx-auto px-6">
-      <h2 class="text-3xl font-extrabold mb-3">🔍 تجربة تحليل الصور</h2>
-      <p class="text-white/70 mb-8">قم برفع صورة ميدانية ليقوم النظام بتحليلها فعليًا عبر واجهة الذكاء الصناعي.</p>
-
-      <div class="grid md:grid-cols-2 gap-6 items-stretch">
-        <div class="glass rounded-2xl p-6 flex flex-col justify-center">
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="glass ringed rounded-2xl p-6 flex flex-col justify-center">
           <label class="block text-sm text-white/70 mb-2">اختر صورة (JPEG/PNG)</label>
-          <input id="aiFile" type="file" accept="image/*"
-            class="text-white/80 file:bg-[var(--turquoise)] file:text-[#062226] file:px-4 file:py-2 file:rounded-lg file:font-semibold" />
-          <div id="preview" class="mt-4 aspect-[16/10] bg-black/40 rounded-xl grid place-items-center text-white/50 text-sm">لم يتم اختيار صورة بعد</div>
-          <button id="analyzeBtn" class="btn glow mt-5 w-full">⚙️ تحليل الصورة الآن</button>
+          <input id="aiFile" type="file" accept="image/*" class="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[var(--turquoise)] file:text-[#062226] hover:file:opacity-90 text-white/80" />
+          <div id="preview" class="mt-5 aspect-[16/10] bg-black/30 rounded-xl grid place-items-center text-white/40 text-sm">لا توجد صورة بعد</div>
+          <button id="analyzeBtn" class="btn mt-5 w-full glow relative z-50">تحليل الصورة بالذكاء الصناعي</button>
         </div>
 
-        <div class="glass rounded-2xl p-6">
-          <h3 class="font-bold text-xl">📄 النتيجة التحليلية</h3>
-          <div id="aiResult" class="mt-3 text-white/80 leading-relaxed">—</div>
+        <div class="glass ringed rounded-2xl p-6">
+          <h3 class="font-bold text-xl mb-3">📄 النتيجة التحليلية</h3>
+          <div id="aiResult" class="text-white/80 leading-relaxed">—</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Contact -->
-  <section id="contact" class="py-20 text-center">
-    <h2 class="text-3xl font-extrabold mb-3">📞 تواصل معنا</h2>
-    <p class="text-white/80 mb-6">تواصل لتجربة النظام أو للشراكات التقنية</p>
-    <div class="flex flex-wrap justify-center gap-3">
-      <a class="btn glow" href="https://wa.me/966507006849" target="_blank">💬 واتساب</a>
-      <a class="btn-secondary btn" href="mailto:support@blumark24.com">✉️ بريد إلكتروني</a>
-    </div>
-  </section>
-
-  <footer class="border-t border-white/10 py-6 text-center text-sm text-white/70">
+  <footer class="border-t border-white/10 py-6 text-center text-white/60 text-sm">
     © 2025 Smart HSR — جميع الحقوق محفوظة.
   </footer>
 
-  <!-- JS -->
-  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
   <script>
-    AOS.init({once:true,duration:800,easing:'ease-out-cubic'});
-
+    // حركة الدائرة المضيئة بالخلفية
     const orb=document.getElementById('orb');
     window.addEventListener('mousemove',(e)=>{
-      const x=(e.clientX/window.innerWidth)*100;
-      const y=(e.clientY/window.innerHeight)*100;
-      orb.style.left=`${x}%`; orb.style.top=`${y*0.6+10}%`;
+      const {innerWidth:w,innerHeight:h}=window;
+      orb.style.left=`${(e.clientX/w)*100}%`;
+      orb.style.top=`${(e.clientY/h)*60+10}%`;
     });
 
     const aiFile=document.getElementById('aiFile');
@@ -146,23 +95,33 @@
       const file=ev.target.files?.[0];
       if(!file) return;
       const rd=new FileReader();
-      rd.onload=()=>{ imgDataUrl=rd.result; preview.innerHTML=`<img src="${imgDataUrl}" class="w-full h-full object-cover rounded-xl"/>`; };
+      rd.onload=()=>{
+        imgDataUrl=rd.result;
+        preview.innerHTML=`<img src="${imgDataUrl}" alt="preview" class="w-full h-full object-cover rounded-xl"/>`;
+      };
       rd.readAsDataURL(file);
     });
 
     analyzeBtn.addEventListener('click',async()=>{
-      if(!imgDataUrl){ alert('من فضلك اختر صورة أولاً'); return; }
-      aiResult.textContent='⏳ جاري تحليل الصورة...';
+      if(!imgDataUrl){
+        alert('📸 من فضلك اختر صورة أولاً.');
+        return;
+      }
+      aiResult.innerHTML=`<div class="flex flex-col items-center gap-2 text-white/70">
+        <div class="animate-spin rounded-full h-8 w-8 border-4 border-[var(--turquoise)] border-t-transparent"></div>
+        <div>⏳ جاري التحليل عبر الذكاء الصناعي...</div>
+      </div>`;
       try{
-        const res=await fetch('https://smart-hsr-function-38965508031.europe-west1.run.app',{
+        const response=await fetch('https://smart-hsr-function-38965508031.europe-west1.run.app',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({image:imgDataUrl})
         });
-        const txt=await res.text();
-        aiResult.innerHTML=`<div>${txt}</div>`;
+        const resultText=await response.text();
+        aiResult.innerHTML=`<div class="leading-relaxed">${resultText}</div>`;
       }catch(err){
-        aiResult.textContent='❌ حدث خطأ أثناء الاتصال بخدمة التحليل.';
+        console.error(err);
+        aiResult.textContent='⚠️ حدث خطأ أثناء الاتصال بخدمة التحليل.';
       }
     });
   </script>
