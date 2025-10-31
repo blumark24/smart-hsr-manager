@@ -210,15 +210,15 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyC5HTAq-LeJn4GObn08REwKdqIeokKmwds",
-      authDomain: "smart-hsr.firebaseapp.com",
-      projectId: "smart-hsr",
-      storageBucket: "smart-hsr.firebasestorage.app",
-      messagingSenderId: "885545362431",
-      appId: "1:885545362431:web:2487096393f0fcbf29bdca",
-      measurementId: "G-NH7J83MWT9"
-    };
+   const firebaseConfig = {
+  apiKey: "AIzaSyBQ9iNZn0uxdkDSjKV6IlXGC5FW5-lxgZI",
+  authDomain: "smart-hsr-manager.firebaseapp.com",
+  projectId: "smart-hsr-manager",
+  storageBucket: "smart-hsr-manager-storage.appspot.com",
+  messagingSenderId: "38965508031",
+  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
+};
+
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -245,7 +245,7 @@
       try {
         await signInWithEmailAndPassword(auth, email, password);
         msg('تم تسجيل الدخول بنجاح. جاري التوجيه...','success');
-        window.location.href = "index.html";
+        window.location.href = "dashboard.html";
       } catch(e) {
         let errorMessage = 'خطأ في تسجيل الدخول. تأكد من البريد وكلمة المرور.';
         if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
