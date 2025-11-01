@@ -101,18 +101,14 @@
         <!-- Upload -->
         <div class="glass ringed rounded-2xl p-6 flex flex-col justify-center">
           <label class="block text-sm text-white/70 mb-2">اختر صورة (JPEG/PNG)</label>
-
-          <!-- الزر الجديد -->
-          <label for="aiFile" class="relative z-50 cursor-pointer btn glow w-full">
+          <label for="aiFile" class="relative z-50 cursor-pointer btn w-full">
             📸 اختر صورة
             <input id="aiFile" type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
           </label>
-
           <div id="preview" class="mt-5 bg-black/30 rounded-xl grid place-items-center text-white/40 text-sm min-h-[200px]">
             لا توجد صورة بعد
           </div>
-
-          <button id="analyzeBtn" class="btn mt-5 w-full glow relative z-50">تحليل الصورة بالذكاء الصناعي</button>
+          <button id="analyzeBtn" class="btn mt-5 w-full relative z-50">تحليل الصورة بالذكاء الصناعي</button>
         </div>
 
         <!-- Result -->
@@ -128,69 +124,63 @@
     © 2025 Smart HSR — جميع الحقوق محفوظة.
   </footer>
 
-  <!-- Script -->
+  <!-- Scripts -->
   <script>
-    // orb background
-    const orb=document.getElementById('orb');
-    window.addEventListener('mousemove',e=>{
-      const {innerWidth:w,innerHeight:h}=window;
-      orb.style.left=`${(e.clientX/w)*100}%`;
-      orb.style.top=`${(e.clientY/h)*60+10}%`;
+    // الخلفية المتحركة
+    const orb = document.getElementById('orb');
+    window.addEventListener('mousemove', e => {
+      const { innerWidth:w, innerHeight:h } = window;
+      orb.style.left = `${(e.clientX/w)*100}%`;
+      orb.style.top = `${(e.clientY/h)*60+10}%`;
     });
 
-  <script>
-  // ✅ إعدادات عناصر واجهة المستخدم
-  const aiFile = document.getElementById('aiFile');
-  const preview = document.getElementById('preview');
-  const analyzeBtn = document.getElementById('analyzeBtn');
-  const aiResult = document.getElementById('aiResult');
+    // ✅ إعدادات واجهة المستخدم
+    const aiFile = document.getElementById('aiFile');
+    const preview = document.getElementById('preview');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const aiResult = document.getElementById('aiResult');
+    let imgDataUrl = null;
 
-  let imgDataUrl = null;
+    // ✅ تحميل الصورة ومعاينتها
+    aiFile?.addEventListener('change', (ev) => {
+      const file = ev.target.files?.[0];
+      if (!file) return;
+      const rd = new FileReader();
+      rd.onload = () => {
+        imgDataUrl = rd.result;
+        preview.innerHTML = `<img src="${imgDataUrl}" alt="preview" class="w-full h-full object-cover rounded-xl"/>`;
+      };
+      rd.readAsDataURL(file);
+    });
 
-  // ✅ تحميل الصورة ومعاينتها
-  aiFile?.addEventListener('change', (ev) => {
-    const file = ev.target.files?.[0];
-    if (!file) return;
-    const rd = new FileReader();
-    rd.onload = () => {
-      imgDataUrl = rd.result;
-      preview.innerHTML = `<img src="${imgDataUrl}" alt="preview" class="w-full h-full object-cover rounded-xl"/>`;
-    };
-    rd.readAsDataURL(file);
-  });
-
-  // ✅ تشغيل التحليل عبر Cloud Run
-  analyzeBtn?.addEventListener('click', async () => {
-    if (!imgDataUrl) {
-      alert('📸 من فضلك اختر صورة أولاً.');
-      return;
-    }
-
-    aiResult.innerHTML = '<div class="text-white/70">⏳ جاري تحليل الصورة عبر الذكاء الصناعي...</div>';
-
-    try {
-      const res = await fetch('https://smart-hsr-function-38965508031.europe-west1.run.app/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: "حلل الصورة التالية وصفًا دقيقًا باللغة العربية." })
-      });
-
-      if (!res.ok) {
-        aiResult.innerHTML = '<div class="text-red-400">⚠️ فشل الاتصال بالخدمة. تحقق من إعدادات Cloud Run أو المفتاح السري.</div>';
+    // ✅ الاتصال بـ Cloud Run
+    analyzeBtn?.addEventListener('click', async () => {
+      if (!imgDataUrl) {
+        alert('📸 من فضلك اختر صورة أولاً.');
         return;
       }
+      aiResult.innerHTML = '<div class="text-white/70">⏳ جاري تحليل الصورة عبر الذكاء الصناعي...</div>';
 
-      const data = await res.json();
-      const result = data.output || '❌ لم يتم استلام نتيجة من الخدمة.';
-      aiResult.innerHTML = `<div class="leading-relaxed text-white/90">${result}</div>`;
+      try {
+        const res = await fetch('https://smart-hsr-function-38965508031.europe-west1.run.app/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: "حلل الصورة التالية وصفًا دقيقًا باللغة العربية." })
+        });
 
-    } catch (err) {
-      console.error(err);
-      aiResult.innerHTML = '<div class="text-red-400">❌ حدث خطأ أثناء الاتصال بالخدمة.</div>';
-    }
-  });
-</script>
+        if (!res.ok) {
+          aiResult.innerHTML = '<div class="text-red-400">⚠️ فشل الاتصال بالخدمة.</div>';
+          return;
+        }
 
+        const data = await res.json();
+        const result = data.output || '❌ لم يتم استلام نتيجة من الخدمة.';
+        aiResult.innerHTML = `<div class="leading-relaxed text-white/90">${result}</div>`;
+      } catch (err) {
+        console.error(err);
+        aiResult.innerHTML = '<div class="text-red-400">❌ حدث خطأ أثناء الاتصال بالخدمة.</div>';
+      }
+    });
+  </script>
 </body>
 </html>
-
