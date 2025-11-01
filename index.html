@@ -135,52 +135,59 @@
     });
 
     // ✅ إعدادات واجهة المستخدم
-    const aiFile = document.getElementById('aiFile');
-    const preview = document.getElementById('preview');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const aiResult = document.getElementById('aiResult');
-    let imgDataUrl = null;
+   <script>
+  // عناصر الواجهة
+  const aiFile = document.getElementById('aiFile');
+  const preview = document.getElementById('preview');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const aiResult = document.getElementById('aiResult');
 
-    // ✅ تحميل الصورة ومعاينتها
-    aiFile?.addEventListener('change', (ev) => {
-      const file = ev.target.files?.[0];
-      if (!file) return;
-      const rd = new FileReader();
-      rd.onload = () => {
-        imgDataUrl = rd.result;
-        preview.innerHTML = `<img src="${imgDataUrl}" alt="preview" class="w-full h-full object-cover rounded-xl"/>`;
-      };
-      rd.readAsDataURL(file);
-    });
+  let imgDataUrl = null;
 
-    // ✅ الاتصال بـ Cloud Run
-    analyzeBtn?.addEventListener('click', async () => {
-      if (!imgDataUrl) {
-        alert('📸 من فضلك اختر صورة أولاً.');
+  // تحميل الصورة ومعاينتها
+  aiFile?.addEventListener('change', (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      imgDataUrl = reader.result;
+      preview.innerHTML = `<img src="${imgDataUrl}" alt="preview" class="w-full h-full object-cover rounded-xl"/>`;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // تشغيل التحليل عبر Cloud Run
+  analyzeBtn?.addEventListener('click', async () => {
+    if (!imgDataUrl) {
+      alert('📸 من فضلك اختر صورة أولاً.');
+      return;
+    }
+
+    aiResult.innerHTML = '<div class="text-white/70">⏳ جاري تحليل الصورة بالذكاء الصناعي...</div>';
+
+    try {
+      const res = await fetch('https://smart-hsr-function-38965508031.europe-west1.run.app/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imgDataUrl })
+      });
+
+      if (!res.ok) {
+        aiResult.innerHTML = '<div class="text-red-400">⚠️ فشل الاتصال بالخدمة. تحقق من إعدادات Cloud Run أو المفتاح السري.</div>';
         return;
       }
-      aiResult.innerHTML = '<div class="text-white/70">⏳ جاري تحليل الصورة عبر الذكاء الصناعي...</div>';
 
-      try {
-        const res = await fetch('https://smart-hsr-function-38965508031.europe-west1.run.app/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: "حلل الصورة التالية وصفًا دقيقًا باللغة العربية." })
-        });
+      const data = await res.json();
+      const result = data.output || '❌ لم يتم استلام نتيجة من الخدمة.';
+      aiResult.innerHTML = `<div class="leading-relaxed text-white/90">${result}</div>`;
 
-        if (!res.ok) {
-          aiResult.innerHTML = '<div class="text-red-400">⚠️ فشل الاتصال بالخدمة.</div>';
-          return;
-        }
+    } catch (err) {
+      console.error(err);
+      aiResult.innerHTML = '<div class="text-red-400">❌ حدث خطأ أثناء الاتصال بالخدمة.</div>';
+    }
+  });
+</script>
 
-        const data = await res.json();
-        const result = data.output || '❌ لم يتم استلام نتيجة من الخدمة.';
-        aiResult.innerHTML = `<div class="leading-relaxed text-white/90">${result}</div>`;
-      } catch (err) {
-        console.error(err);
-        aiResult.innerHTML = '<div class="text-red-400">❌ حدث خطأ أثناء الاتصال بالخدمة.</div>';
-      }
-    });
-  </script>
 </body>
 </html>
+
