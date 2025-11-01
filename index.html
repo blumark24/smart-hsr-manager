@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Smart HSR Dashboard — المدن الذكية تبدأ من الميدان</title>
 
-  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
 
   <style>
     :root {
@@ -20,59 +20,17 @@
       color:#e8f4f4;
       overflow-x:hidden;
     }
-    .btn {
-      background:linear-gradient(180deg,#0EA5A1,#0a8c88);
-      color:#062226;
-      font-weight:800;
-      padding:.9rem 1.25rem;
-      border-radius:1rem;
-      transition:.25s;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:.5rem;
-    }
-    .btn:hover {
-      transform:translateY(-2px);
-      box-shadow:0 10px 24px rgba(14,165,161,.35);
-    }
-    .glass {
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.12);
-      backdrop-filter:blur(10px);
-    }
-    .ringed {
-      position:relative;
-    }
-    .ringed:after {
-      content:"";
-      position:absolute;
-      inset:-2px;
-      border-radius:inherit;
-      padding:2px;
-      background:conic-gradient(from 140deg,rgba(14,165,161,.75),rgba(11,43,58,.8),rgba(14,165,161,.75));
-      -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-      -webkit-mask-composite:xor;
-      mask-composite:exclude;
-      border-radius:inherit;
-    }
-    .orb {
-      position:fixed;
-      width:700px;
-      height:700px;
-      background:radial-gradient(circle at 50% 50%,rgba(14,165,161,.24),rgba(14,165,161,0) 60%);
-      filter:blur(30px);
-      pointer-events:none;
-      transform:translate(-50%,-50%);
-    }
-    .en {font-family:'Inter',sans-serif;}
+    .btn { background:linear-gradient(180deg,#0EA5A1,#0a8c88); color:#062226; font-weight:800; padding:.9rem 1.25rem; border-radius:1rem; transition:.25s; display:inline-flex; align-items:center; justify-content:center; gap:.5rem; }
+    .btn:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(14,165,161,.35); }
+    .glass { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); backdrop-filter:blur(10px); }
+    .ringed { position:relative; }
+    .ringed:after { content:""; position:absolute; inset:-2px; border-radius:inherit; padding:2px; background:conic-gradient(from 140deg,rgba(14,165,161,.75),rgba(11,43,58,.8),rgba(14,165,161,.75)); -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; border-radius:inherit; }
+    .orb { position:fixed; width:700px; height:700px; background:radial-gradient(circle at 50% 50%,rgba(14,165,161,.24),rgba(14,165,161,0) 60%); filter:blur(30px); pointer-events:none; transform:translate(-50%,-50%); }
   </style>
 </head>
-
 <body>
   <div id="orb" class="orb" style="top:30%;left:70%"></div>
 
-  <!-- Header -->
   <header class="sticky top-0 z-40 backdrop-blur-md bg-[#0B2B3A]/70 border-b border-white/10">
     <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -91,27 +49,18 @@
     </div>
   </header>
 
-  <!-- AI Demo -->
   <section id="demo" class="py-20">
     <div class="max-w-6xl mx-auto px-6">
       <h2 class="text-3xl md:text-4xl font-extrabold mb-3">✨ جرب الذكاء الصناعي الآن</h2>
       <p class="text-white/70 mb-8">ارفع صورة ميدانية وشاهد الوصف التحليلي الفوري عبر <span class="en">Gemini API</span>.</p>
 
       <div class="grid md:grid-cols-2 gap-6">
-        <!-- Upload -->
         <div class="glass ringed rounded-2xl p-6 flex flex-col justify-center">
           <label class="block text-sm text-white/70 mb-2">اختر صورة (JPEG/PNG)</label>
-          <label for="aiFile" class="relative z-50 cursor-pointer btn w-full">
-            📸 اختر صورة
-            <input id="aiFile" type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
-          </label>
-          <div id="preview" class="mt-5 bg-black/30 rounded-xl grid place-items-center text-white/40 text-sm min-h-[200px]">
-            لا توجد صورة بعد
-          </div>
-          <button id="analyzeBtn" class="btn mt-5 w-full relative z-50">تحليل الصورة بالذكاء الصناعي</button>
+          <label for="aiFile" class="relative z-50 cursor-pointer btn glow w-full">📸 اختر صورة<input id="aiFile" type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" /></label>
+          <div id="preview" class="mt-5 bg-black/30 rounded-xl grid place-items-center text-white/40 text-sm min-h-[200px]">لا توجد صورة بعد</div>
+          <button id="analyzeBtn" class="btn mt-5 w-full glow relative z-50">تحليل الصورة بالذكاء الصناعي</button>
         </div>
-
-        <!-- Result -->
         <div class="glass ringed rounded-2xl p-6">
           <h3 class="font-bold text-xl mb-3">📄 النتيجة التحليلية</h3>
           <div id="aiResult" class="text-white/80 leading-relaxed">—</div>
@@ -120,74 +69,31 @@
     </div>
   </section>
 
-  <footer class="border-t border-white/10 py-6 text-center text-white/60 text-sm">
-    © 2025 Smart HSR — جميع الحقوق محفوظة.
-  </footer>
+  <footer class="border-t border-white/10 py-6 text-center text-white/60 text-sm">© 2025 Smart HSR — جميع الحقوق محفوظة.</footer>
 
-  <!-- Scripts -->
   <script>
-    // الخلفية المتحركة
-    const orb = document.getElementById('orb');
-    window.addEventListener('mousemove', e => {
-      const { innerWidth:w, innerHeight:h } = window;
-      orb.style.left = `${(e.clientX/w)*100}%`;
-      orb.style.top = `${(e.clientY/h)*60+10}%`;
+    const orb=document.getElementById('orb');
+    window.addEventListener('mousemove',e=>{const{innerWidth:w,innerHeight:h}=window;orb.style.left=`${(e.clientX/w)*100}%`;orb.style.top=`${(e.clientY/h)*60+10}%`;});
+
+    const aiFile=document.getElementById('aiFile');
+    const preview=document.getElementById('preview');
+    const analyzeBtn=document.getElementById('analyzeBtn');
+    const aiResult=document.getElementById('aiResult');
+    let imgDataUrl=null;
+
+    aiFile?.addEventListener('change',ev=>{const file=ev.target.files?.[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{imgDataUrl=rd.result;preview.innerHTML=`<img src="${imgDataUrl}" alt="preview" class="w-full h-full object-cover rounded-xl"/>`;};rd.readAsDataURL(file);});
+
+    analyzeBtn?.addEventListener('click',async()=>{
+      if(!imgDataUrl){alert('📸 من فضلك اختر صورة أولاً.');return;}
+      aiResult.innerHTML='<div class="text-white/70">⏳ جاري تحليل الصورة عبر الذكاء الصناعي...</div>';
+      try{
+        const res=await fetch('https://smart-hsr-function-38965508031.europe-west1.run.app/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imgDataUrl})});
+        if(!res.ok){aiResult.innerHTML='<div class="text-red-400">⚠️ فشل الاتصال بالخدمة. تحقق من Cloud Run.</div>';return;}
+        const data=await res.json();
+        const result=data.output||'❌ لم يتم استلام نتيجة.';
+        aiResult.innerHTML=`<div class="leading-relaxed text-white/90">${result}</div>`;
+      }catch(err){console.error(err);aiResult.innerHTML='<div class="text-red-400">❌ حدث خطأ أثناء الاتصال بالخدمة.</div>';}
     });
-
-    // ✅ إعدادات واجهة المستخدم
-   <script>
-  // عناصر الواجهة
-  const aiFile = document.getElementById('aiFile');
-  const preview = document.getElementById('preview');
-  const analyzeBtn = document.getElementById('analyzeBtn');
-  const aiResult = document.getElementById('aiResult');
-
-  let imgDataUrl = null;
-
-  // تحميل الصورة ومعاينتها
-  aiFile?.addEventListener('change', (ev) => {
-    const file = ev.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      imgDataUrl = reader.result;
-      preview.innerHTML = `<img src="${imgDataUrl}" alt="preview" class="w-full h-full object-cover rounded-xl"/>`;
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // تشغيل التحليل عبر Cloud Run
-  analyzeBtn?.addEventListener('click', async () => {
-    if (!imgDataUrl) {
-      alert('📸 من فضلك اختر صورة أولاً.');
-      return;
-    }
-
-    aiResult.innerHTML = '<div class="text-white/70">⏳ جاري تحليل الصورة بالذكاء الصناعي...</div>';
-
-    try {
-      const res = await fetch('https://smart-hsr-function-38965508031.europe-west1.run.app/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imgDataUrl })
-      });
-
-      if (!res.ok) {
-        aiResult.innerHTML = '<div class="text-red-400">⚠️ فشل الاتصال بالخدمة. تحقق من إعدادات Cloud Run أو المفتاح السري.</div>';
-        return;
-      }
-
-      const data = await res.json();
-      const result = data.output || '❌ لم يتم استلام نتيجة من الخدمة.';
-      aiResult.innerHTML = `<div class="leading-relaxed text-white/90">${result}</div>`;
-
-    } catch (err) {
-      console.error(err);
-      aiResult.innerHTML = '<div class="text-red-400">❌ حدث خطأ أثناء الاتصال بالخدمة.</div>';
-    }
-  });
-</script>
-
+  </script>
 </body>
 </html>
-
