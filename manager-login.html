@@ -64,60 +64,65 @@
     <p class="mt-6 text-white/60 text-xs">© 2025 Smart HSR — جميع الحقوق محفوظة</p>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCliX4lQa7YWp0unYFp6-rZnGIgwC6MIQk",
-      authDomain: "smart-hsr-owner.firebaseapp.com",
-      projectId: "smart-hsr-owner",
-      storageBucket: "smart-hsr-owner.appspot.com",
-      messagingSenderId: "234872814790",
-      appId: "1:234872814790:web:66e1be939d0c300e3a6bc7"
-    };
+  // 🔥 إعداد Firebase الخاص بلوحة المدير
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
+    authDomain: "smart-hsr-manager.firebaseapp.com",
+    projectId: "smart-hsr-manager",
+    storageBucket: "smart-hsr-manager.firebasestorage.app",
+    messagingSenderId: "38965508031",
+    appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-    const form = document.getElementById('loginForm');
-    const errorMsg = document.getElementById('errorMsg');
+  const form = document.getElementById('loginForm');
+  const errorMsg = document.getElementById('errorMsg');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
 
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        const userDoc = await getDoc(doc(db, 'owners', user.uid));
+    try {
+      // تسجيل الدخول
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-        if (!userDoc.exists()) {
-          errorMsg.textContent = '🚫 لا توجد صلاحية لهذا المستخدم.';
-          errorMsg.classList.remove('hidden');
-          return;
-        }
+      // التحقق من Firestore داخل مجموعة managers
+      const userDoc = await getDoc(doc(db, 'managers', user.uid));
 
-        const role = userDoc.data().role;
-
-        if (role !== 'owner') {
-          errorMsg.textContent = '🚫 صلاحية الدخول محدودة — ليست صلاحية مالك النظام';
-          errorMsg.classList.remove('hidden');
-          return;
-        }
-
-        sessionStorage.setItem('smartHSRUser', JSON.stringify({ email: user.email, uid: user.uid }));
-window.location.href = 'manager.html';
-
-      } catch (error) {
-        console.error('Login Error:', error);
-        errorMsg.textContent = '❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور';
+      if (!userDoc.exists()) {
+        errorMsg.textContent = '🚫 لا توجد صلاحية لهذا المستخدم.';
         errorMsg.classList.remove('hidden');
+        return;
       }
-    });
-  </script>
+
+      const role = userDoc.data().role;
+      if (role !== 'manager') {
+        errorMsg.textContent = '🚫 صلاحية الدخول محدودة — ليست صلاحية مدير النظام';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      // ✅ نجاح الدخول
+      sessionStorage.setItem('smartHSRUser', JSON.stringify({ email: user.email, uid: user.uid }));
+      window.location.href = 'manager.html';
+
+    } catch (error) {
+      console.error('Login Error:', error);
+      errorMsg.textContent = '❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور';
+      errorMsg.classList.remove('hidden');
+    }
+  });
+</script>
+  
 </body>
 </html>
