@@ -218,7 +218,7 @@
     <div class="max-w-7xl mx-auto px-6">
       <header class="max-w-3xl" data-aos="fade-up">
         <h2 class="text-3xl md:text-4xl font-extrabold">الأثر والتحسين <span class="en">| Impact Metrics</span></h2>
-        
+       
       </header>
       <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div class="kpi rounded-2xl p-6" data-aos="zoom-in" data-aos-delay="0">
@@ -320,49 +320,81 @@
       orb.style.top = `${y * .6 + 10}%`;
     });
 
-<!-- AI Demo -->
-<section id="demo" class="py-20">
-  <div class="max-w-7xl mx-auto px-6">
-    <header class="max-w-3xl" data-aos="fade-up">
-      <h2 class="text-3xl md:text-4xl font-extrabold">
-        ✨ جرب الذكاء الصناعي الآن <span class="en">| Try the AI Demo</span>
-      </h2>
-      <p class="mt-3 text-white/70">ارفع صورة ميدانية وشاهد الوصف التحليلي التجريبي فورًا.</p>
-    </header>
+    // AI Demo: simple mock analysis
+    const aiFile = document.getElementById('aiFile');
+    const preview = document.getElementById('preview');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const aiResult = document.getElementById('aiResult');
 
-    <div class="mt-8 grid md:grid-cols-2 gap-6 items-stretch" data-aos="fade-up">
-      <!-- 🟢 القسم الأيسر: رفع الصورة + المعاينة -->
-      <div class="glass ringed rounded-2xl p-6 flex flex-col justify-center">
-        <label class="block text-sm text-white/70 mb-2">اختر صورة (JPEG/PNG)</label>
-        <input id="aiFile" type="file" accept="image/*"
-          class="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[var(--turquoise)] file:text-[#062226] hover:file:opacity-90 text-white/80" />
+    let imgDataUrl = null;
+    aiFile?.addEventListener('change', (ev)=>{
+      const file = ev.target.files?.[0];
+      if(!file) return;
+      const rd = new FileReader();
+      rd.onload = ()=>{
+        imgDataUrl = rd.result;
+        preview.innerHTML = `<img src="${imgDataUrl}" alt="preview" class="w-full h-full object-cover rounded-xl"/>`;
+      };
+      rd.readAsDataURL(file);
+    });
 
-        <!-- 👇 الصورة التجريبية المضافة -->
-        <div id="preview" class="mt-5 aspect-[16/10] bg-black/30 rounded-xl overflow-hidden shadow-lg ring-[2px] ring-[var(--turquoise)] ring-opacity-40 animate-pulse">
-          <img src="ChatGPT Image 31 أكتوبر 2025، 04_05_35 م.png"
-               alt="Smart HSR Demo"
-               class="w-full h-full object-cover" />
-        </div>
+    analyzeBtn?.addEventListener('click', ()=>{
+      aiResult.textContent = '⏳ جاري التحليل التجريبي...';
+      setTimeout(()=>{
+        const samples = [
+          'تم رصد تلف في الرصيف مع حاجة لمعالجة فورية خلال 48 ساعة. مستوى الأولوية: مرتفع. تم تحديد الموقع بدقة وإضافة توصيات إصلاح تلقائي.',
+          'تحليل الصورة يشير إلى تجمع نفايات حول عمود إنارة. يقترح النظام مهمة تنظيف عاجلة وتوثيق بعد المعالجة. الحالة: قيد الإنشاء.',
+          'وجود حفر سطحية بطول ~1.2م. يُوصى بإعادة رصف موضعي ومتابعة خلال 72 ساعة. تم إنشاء بطاقة متابعة للمقاول.'
+        ];
+        const pick = samples[Math.floor(Math.random()*samples.length)];
+        aiResult.innerHTML = `<div class="leading-relaxed">${pick}</div>
+        <div class="mt-3 text-white/60 text-sm en">
+          *AI-like description generated for demo purposes.*
+        </div>`;
+      }, 900);
+    });
+  </script>
 
-        <button id="analyzeBtn" class="btn mt-5 w-full glow">تحليل تجريبي بالذكاء الصناعي</button>
-      </div>
+  <!-- Smart HSR Assistant (Chatbase) -->
+  <script>
+  (function(){
+    if(!window.chatbase || window.chatbase("getState")!=="initialized"){
+      window.chatbase=(...args)=>{
+        if(!window.chatbase.q){window.chatbase.q=[]}
+        window.chatbase.q.push(args)
+      };
+      window.chatbase=new Proxy(window.chatbase,{
+        get(target,prop){if(prop==="q"){return target.q}
+        return(...a)=>target(prop,...a)}
+      });
+    }
+    const onLoad=function(){
+      const script=document.createElement("script");
+      script.src="https://www.chatbase.co/embed.min.js";
+      script.id="55P9LCwiBxOhS1khs3-VT";  // ✅ معرّف مساعدك الرسمي في Chatbase
+      script.domain="www.chatbase.co";
+      document.body.appendChild(script);
 
-      <!-- 🟣 القسم الأيمن: النتيجة -->
-      <div class="glass ringed rounded-2xl p-6">
-        <h3 class="font-bold text-xl">📄 النتيجة التحليلية</h3>
-        <div id="aiResult" class="mt-3 text-white/80 leading-relaxed">—</div>
-        <div class="mt-5 text-xs text-white/50 en">
-          *This is a mock demo for illustration. Connect your real API later.*
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
+      // 🎨 تخصيص مظهر المساعد وهوية Smart HSR
+      setTimeout(()=>{
+        try{
+          window.chatbase('config', {
+            color: '#0EA5A1',                // تركوازي
+            backgroundColor: '#0B2B3A',      // كحلي
+            title: 'Smart HSR Assistant 🤖',
+            subtitle: 'مساعدك الذكي للمدن الذكية',
+            showWelcomeMessage: true
+          });
+        }catch(e){ console.log('Chatbase config pending...'); }
+      }, 2500);
+    };
+    if(document.readyState==="complete"){onLoad()}
+    else{window.addEventListener("load",onLoad)}
+  })();
+  </script>
 
 </body>
 </html>
-
 
 
 
