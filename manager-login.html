@@ -109,7 +109,8 @@
           return;
         }
 
-        window.location.href = 'owner.html';
+        sessionStorage.setItem('smartHSRUser', JSON.stringify({ email: user.email, uid: user.uid }));
+window.location.href = 'manager.html';
 
       } catch (error) {
         console.error('Login Error:', error);
