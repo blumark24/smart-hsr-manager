@@ -30,10 +30,32 @@
   </style>
 </head>
 <body>
+  <!-- Session Guard + Toast utilities -->
+  <script>
+    function showToast(msg){
+      const t=document.getElementById('toast');
+      if(!t) return; 
+      t.textContent=msg; t.classList.remove('hidden'); t.style.opacity='1';
+      setTimeout(()=>{ t.style.opacity='0'; },2200);
+      setTimeout(()=>{ t.classList.add('hidden'); },2800);
+    }
+    (function(){
+      const s=sessionStorage.getItem('smartHSRUser');
+      if(!s){ window.location.href='manager-login.html'; return; }
+      try{
+        const user=JSON.parse(s)||{};
+        const badge=document.getElementById('userBadge');
+        if(badge){ badge.innerHTML = '<i data-lucide="user" class="w-4 h-4"></i> '+(user.email||'مدير'); badge.classList.remove('hidden'); }
+        if(!sessionStorage.getItem('welcomed')){ showToast('✅ تم تسجيل الدخول بنجاح – أهلاً بك!'); sessionStorage.setItem('welcomed','1'); }
+        try{ lucide.createIcons(); }catch(e){}
+        window.__SMART_USER__ = user;
+      }catch(e){ console.warn('Session parse failed',e); }
+    })();
+  </script>
   <!-- Header -->
   <header class="bg-white shadow-md sticky top-0 z-40 no-print">
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-      <h1 class="text-xl font-extrabold">Smart HSR <span class="text-[--color-teal]">Manager Panel</span></h1>
+      $1<span id="userBadge" class="hidden md:inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-xs font-bold"></span>
       <button id="logoutBtn" class="btn-ghost flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> تسجيل الخروج</button>
     </div>
   </header>
@@ -354,9 +376,15 @@
     function toggleDarkMode(){ document.body.classList.toggle('bg-slate-900'); document.body.classList.toggle('text-white'); }
 
     // ===== Boot =====
-    document.getElementById('logoutBtn').addEventListener('click',()=>{ alert('تم تسجيل الخروج (وضع تجريبي)'); });
+    document.getElementById('logoutBtn').addEventListener('click',()=>{
+      sessionStorage.removeItem('smartHSRUser');
+      sessionStorage.removeItem('welcomed');
+      window.location.href='manager-login.html';
+    });
     function boot(){ seedDemoData(); lucide.createIcons(); }
     window.addEventListener('DOMContentLoaded', boot);
   </script>
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 bg-teal-600 text-white px-4 py-2 rounded-full shadow-xl z-50 transition-opacity duration-500"></div>
 </body>
 </html>
