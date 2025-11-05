@@ -2,589 +2,361 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>لوحة إدارة Smart HSR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart HSR | لوحة المدير (نسخة تجريبية)</title>
+  <meta name="description" content="لوحة مدير تجريبية لإدارة المستخدمين والبلاغات ومؤشرات الأداء لنظام Smart HSR"/>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
   <style>
-    body{font-family:'Tajawal',sans-serif;background:linear-gradient(180deg,#0b2b3a,#0ea5a1);min-height:100vh;color:#fff}
-    .card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;backdrop-filter:blur(14px)}
-    .btn{background:linear-gradient(90deg,#0ea5a1,#0b2b3a);color:#fff;font-weight:800;border-radius:999px;padding:.7rem 1.6rem;transition:.3s;box-shadow:0 4px 10px rgba(0,0,0,.2)}
-    .btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 10px 20px rgba(14,165,161,.4)}
-    .btn-secondary{background:#0b2b3a;border:1px solid #0ea5a1}
-    .btn-secondary:hover{background:#0ea5a1;border:1px solid #0ea5a1}
-    .input-dark{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);color:#fff}
-    .input-dark::placeholder{color:rgba(255,255,255,.5)}
-    .modal-content{background:#fff;color:#0b2b3a;border-radius:20px;padding:2rem;width:95%;max-width:56rem}
-    .scrollbox::-webkit-scrollbar{width:8px}
-    .scrollbox::-webkit-scrollbar-thumb{background-color:#0ea5a1;border-radius:10px}
-    .scrollbox::-webkit-scrollbar-track{background:rgba(255,255,255,.1)}
-    .badge{padding:.25rem .6rem;border-radius:999px;font-size:.7rem;font-weight:800;white-space:nowrap}
+    :root{--color-navy:#0A1931;--color-teal:#18A5A2;--color-gray-bg:#F7F9FC}
+    body{font-family:'Tajawal',sans-serif;background:var(--color-gray-bg);color:var(--color-navy)}
+    .card{background:#fff;border-radius:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:1.25rem;border-top:5px solid var(--color-teal)}
+    .kpi-card{border-radius:1.25rem;color:#fff;padding:1.25rem;display:flex;align-items:center;justify-content:space-between}
+    .kpi-open{background:linear-gradient(135deg,#EF4444,#B91C1C)}
+    .kpi-closed{background:linear-gradient(135deg,#10B981,#18A5A2)}
+    .kpi-total{background:linear-gradient(135deg,#3B82F6,#0A1931)}
+    .kpi-photo{background:linear-gradient(135deg,#8B5CF6,#0EA5A1)}
+    .btn{background:var(--color-teal);color:#fff;border-radius:999px;padding:.55rem 1.1rem;font-weight:800;transition:.25s;box-shadow:0 6px 15px rgba(24,165,162,.35)}
+    .btn:hover{background:#148f8c;transform:translateY(-1px)}
+    .btn-ghost{background:#0A1931;color:#fff;border-radius:999px;padding:.55rem 1.1rem;font-weight:800}
+    .tag{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.8rem;font-weight:800}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:center;justify-content:center}
+    .modal-content{background:#fff;border-radius:1rem;max-width:720px;width:92%;padding:1.25rem;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+    .table th,.table td{padding:.75rem;border-bottom:1px solid #e5e7eb}
+    .pill{border-radius:999px;padding:.25rem .65rem;font-weight:800}
+    .tab-active{background:#fff;border-top:5px solid var(--color-teal);border-radius:1rem 1rem 0 0}
+    @media print{.no-print{display:none!important}}
   </style>
 </head>
 <body>
-  <!-- Toasts -->
-  <div id="toastHost" class="fixed bottom-4 right-4 z-[120] space-y-2"></div>
-  <audio id="sndNew" src="https://assets.mixkit.co/active_storage/sfx/1101/1101-preview.mp3" preload="auto"></audio>
-  <audio id="sndUrgent" src="https://assets.mixkit.co/active_storage/sfx/2770/2770-preview.mp3" preload="auto"></audio>
-  <audio id="sndClosed" src="https://assets.mixkit.co/active_storage/sfx/166/166-preview.mp3" preload="auto"></audio>
-
-  <!-- Image Modal -->
-  <div id="imageModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[110] p-4">
-    <div class="relative max-w-4xl w-full">
-      <button id="closeImageModal" class="absolute -top-10 left-0 btn btn-secondary px-4 py-2">إغلاق</button>
-      <div id="imageCarousel" class="bg-white rounded-2xl p-2">
-        <img id="previewImg" src="" class="w-full h-[70vh] object-contain rounded-xl" alt="preview"/>
-      </div>
-      <div id="thumbs" class="flex gap-2 mt-3 overflow-x-auto"></div>
-    </div>
-  </div>
-
-  <!-- Message Modal -->
-  <div id="messageModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100]">
-    <div id="messageBox" class="card p-8 w-full max-w-lg text-center transform transition-all duration-300 scale-95 opacity-0">
-      <h3 id="messageTitle" class="text-2xl font-black mb-3 text-teal-300"></h3>
-      <p id="messageText" class="text-white/80 mb-6"></p>
-      <button id="closeMessageModal" class="btn">حسناً</button>
-    </div>
-  </div>
-
   <!-- Header -->
-  <header class="sticky top-0 z-50 bg-white/10 backdrop-blur-xl border-b border-white/20">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-white/90 flex items-center justify-center text-[#0b2b3a] font-extrabold text-xl shadow-lg">SH</div>
-        <h1 class="text-lg font-extrabold">لوحة إدارة <span class="text-teal-300">Smart HSR</span></h1>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="btnToggleNoti" class="btn btn-secondary text-sm px-4">🔔 تفعيل التنبيهات</button>
-        <button id="logoutBtn" class="btn shadow-none bg-transparent border border-white/30 hover:bg-white/10 text-sm">🚪 تسجيل الخروج</button>
-      </div>
+  <header class="bg-white shadow-md sticky top-0 z-40 no-print">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-extrabold">Smart HSR <span class="text-[--color-teal]">Manager Panel</span></h1>
+      <button id="logoutBtn" class="btn-ghost flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> تسجيل الخروج</button>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-6 py-8 space-y-10">
-    <div id="loadingIndicator" class="text-center p-8 text-xl font-bold bg-white/10 card hidden">جاري التحميل...</div>
-
-    <!-- KPIs (Smart Reports quick tiles) -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="card p-6 text-center shadow-2xl">
-        <div class="text-sm opacity-70">الملاحظات الجديدة</div>
-        <div id="kpiNew" class="text-4xl font-extrabold mt-1 text-teal-300">0</div>
-      </div>
-      <div class="card p-6 text-center shadow-2xl">
-        <div class="text-sm opacity-70">الملاحظات المنجزة</div>
-        <div id="kpiDone" class="text-4xl font-extrabold mt-1 text-teal-300">0</div>
-      </div>
-      <div class="card p-6 text-center shadow-2xl">
-        <div class="text-sm opacity-70">الملاحظات العاجلة</div>
-        <div id="kpiUrgent" class="text-4xl font-extrabold mt-1 text-red-300">0</div>
-      </div>
-      <div class="card p-6 text-center shadow-2xl">
-        <div class="text-sm opacity-70">إجمالي الملاحظات</div>
-        <div id="kpiTotal" class="text-4xl font-extrabold mt-1 text-teal-300">0</div>
-      </div>
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- KPIs -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="kpi-card kpi-total"><div><p class="text-sm opacity-90">إجمالي البلاغات</p><p id="kpi-total" class="text-4xl font-extrabold">--</p></div><i data-lucide="clipboard-list" class="w-10 h-10 opacity-80"></i></div>
+      <div class="kpi-card kpi-open"><div><p class="text-sm opacity-90">بلاغات مفتوحة</p><p id="kpi-open" class="text-4xl font-extrabold">--</p></div><i data-lucide="alert-triangle" class="w-10 h-10 opacity-80"></i></div>
+      <div class="kpi-card kpi-closed"><div><p class="text-sm opacity-90">بلاغات مغلقة</p><p id="kpi-closed" class="text-4xl font-extrabold">--</p></div><i data-lucide="check-circle" class="w-10 h-10 opacity-80"></i></div>
+      <div class="kpi-card kpi-photo"><div><p class="text-sm opacity-90">موثقة بالصور</p><p id="kpi-photo" class="text-4xl font-extrabold">--</p></div><i data-lucide="image" class="w-10 h-10 opacity-80"></i></div>
     </section>
 
-    <!-- Mini Chart -->
-    <section class="card p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-2xl font-bold">التقارير الذكية</h3>
-        <select id="chartRange" class="input-dark p-2 rounded-xl">
-          <option value="7">آخر 7 أيام</option>
-          <option value="30" selected>آخر 30 يوم</option>
-          <option value="90">آخر 90 يوم</option>
-        </select>
-      </div>
-      <canvas id="miniChart" width="800" height="260" class="w-full rounded-xl bg-white/5 border border-white/10"></canvas>
-    </section>
+    <!-- Tabs -->
+    <nav class="no-print">
+      <ul class="flex gap-3 text-sm font-extrabold">
+        <li><button class="px-4 py-2 tab-active" data-tab="users">المستخدمون</button></li>
+        <li><button class="px-4 py-2" data-tab="observations">البلاغات</button></li>
+        <li><button class="px-4 py-2" data-tab="reports">التقارير</button></li>
+        <li><button class="px-4 py-2" data-tab="settings">الإعدادات</button></li>
+      </ul>
+    </nav>
 
-    <!-- Notes -->
-    <section class="card p-6 shadow-2xl">
-      <div class="flex flex-col sm:flex-row items-center justify-between mb-4 gap-4">
-        <h3 class="text-2xl font-bold">الملاحظات</h3>
-        <div class="flex gap-2 w-full sm:w-auto">
-          <select id="obsFilterType" class="input-dark p-3 rounded-xl">
-            <option value="all">كل الأنواع</option>
-            <option value="طرق">طرق</option>
-            <option value="أرصفة">أرصفة</option>
-            <option value="إنارة">إنارة</option>
-            <option value="تصريف">تصريف</option>
-          </select>
-          <select id="obsFilterStatus" class="input-dark p-3 rounded-xl">
-            <option value="all">كل الحالات</option>
-            <option value="NEW">جديدة</option>
-            <option value="IN_PROGRESS">قيد التنفيذ</option>
-            <option value="COMPLETED">مغلقة</option>
-          </select>
+    <!-- USERS TAB -->
+    <section id="tab-users" class="mt-6">
+      <div class="card">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <h2 class="text-2xl font-extrabold">إدارة المستخدمين</h2>
+          <div class="flex items-center gap-2">
+            <input id="userSearch" type="text" placeholder="🔍 بحث بالاسم أو البريد" class="border rounded-xl p-2 w-full md:w-64" oninput="filterUsers()"/>
+            <button class="btn" onclick="openModal('modalAddUser')"><i data-lucide="user-plus" class="w-4 h-4 ml-1"></i> إضافة مستخدم</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-xl border">
+          <table class="table w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr><th>الاسم</th><th>الدور</th><th>البريد</th><th>الحالة</th><th class="text-center">إجراءات</th></tr>
+            </thead>
+            <tbody id="usersBody"><tr><td colspan="5" class="text-center p-6 text-gray-500">...جاري التحميل</td></tr></tbody>
+          </table>
         </div>
       </div>
+    </section>
 
-      <div class="overflow-x-auto rounded-xl">
-        <table class="w-full text-sm text-right border-collapse">
-          <thead class="bg-white/10 sticky top-0">
-            <tr class="text-white/80">
-              <th class="p-3 border-b border-white/20">رقم</th>
-              <th class="p-3 border-b border-white/20">النوع</th>
-              <th class="p-3 border-b border-white/20">الحالة</th>
-              <th class="p-3 border-b border-white/20">عاجلة</th>
-              <th class="p-3 border-b border-white/20">الوصف</th>
-              <th class="p-3 border-b border-white/20">الصور</th>
-              <th class="p-3 border-b border-white/20">التاريخ والموقع</th>
-              <th class="p-3 border-b border-white/20">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="obsBody">
-            <tr><td colspan="8" class="text-center p-4 text-white/60">جاري التحميل...</td></tr>
-          </tbody>
-        </table>
+    <!-- OBSERVATIONS TAB -->
+    <section id="tab-observations" class="mt-6 hidden">
+      <div class="card">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <h2 class="text-2xl font-extrabold">إدارة البلاغات</h2>
+          <div class="flex items-center gap-2">
+            <select id="statusFilter" class="border rounded-xl p-2" onchange="renderObservations()">
+              <option value="ALL">كل الحالات</option>
+              <option value="PENDING">قيد الانتظار</option>
+              <option value="IN_PROGRESS">قيد التنفيذ</option>
+              <option value="COMPLETED">مغلق</option>
+            </select>
+            <button class="btn" onclick="seedDemoData(true)"><i data-lucide="refresh-ccw" class="w-4 h-4 ml-1"></i> تحديث بيانات تجريبية</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-xl border">
+          <table class="table w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr><th>المعرف</th><th>العنوان</th><th>الحالة</th><th>المراقب</th><th>المقاول</th><th>تاريخ البلاغ</th><th class="text-center">إجراءات</th></tr>
+            </thead>
+            <tbody id="obsBody"><tr><td colspan="7" class="text-center p-6 text-gray-500">...جاري التحميل</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
-    <!-- Users -->
-    <section class="card p-6 shadow-2xl">
-      <div class="flex flex-col sm:flex-row items-center justify-between mb-4 gap-4">
-        <h3 class="text-2xl font-bold">المستخدمون</h3>
-        <div class="flex gap-2 w-full sm:w-auto">
-          <input id="userSearch" type="text" placeholder="🔍 بحث بالاسم أو البريد" class="input-dark p-3 rounded-xl w-full sm:w-64">
-          <button id="btnNewUser" class="btn">➕ إضافة مستخدم</button>
+    <!-- REPORTS TAB -->
+    <section id="tab-reports" class="mt-6 hidden">
+      <div class="card">
+        <h2 class="text-2xl font-extrabold mb-4">التقارير التنفيذية</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl border">
+            <h3 class="font-extrabold mb-2">ملخص الأداء (AI Demo)</h3>
+            <p class="text-sm text-gray-600 mb-4">اضغط لتوليد ملخص أداء الفرق بناءً على البيانات المعروضة.</p>
+            <button class="btn" onclick="generateAiSummary()">✨ توليد تقرير تنفيذي</button>
+            <div id="aiSummary" class="mt-4 text-sm bg-gray-50 rounded-xl p-3 hidden"></div>
+          </div>
+          <div class="p-4 rounded-xl border">
+            <h3 class="font-extrabold mb-2">تصدير وطباعة</h3>
+            <p class="text-sm text-gray-600 mb-4">يمكنك طباعة الصفحة الحالية كتقرير PDF.</p>
+            <button class="btn-ghost" onclick="window.print()"><i data-lucide="file-down" class="w-4 h-4 ml-1"></i> طباعة التقرير</button>
+          </div>
         </div>
       </div>
-      <div class="overflow-x-auto rounded-xl">
-        <table class="w-full text-sm text-right border-collapse">
-          <thead class="bg-white/10 sticky top-0">
-            <tr class="text-white/80">
-              <th class="p-3 border-b border-white/20">الاسم</th>
-              <th class="p-3 border-b border-white/20 hidden md:table-cell">البريد</th>
-              <th class="p-3 border-b border-white/20">الدور</th>
-              <th class="p-3 border-b border-white/20">الحالة</th>
-              <th class="p-3 border-b border-white/20">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="usersBody">
-            <tr><td colspan="5" class="text-center p-4 text-white/60">جاري التحميل...</td></tr>
-          </tbody>
-        </table>
+    </section>
+
+    <!-- SETTINGS TAB -->
+    <section id="tab-settings" class="mt-6 hidden">
+      <div class="card">
+        <h2 class="text-2xl font-extrabold mb-4">الإعدادات العامة</h2>
+        <div class="flex flex-col gap-3">
+          <label class="flex items-center gap-2"><input id="darkToggle" type="checkbox" class="w-4 h-4" onchange="toggleDarkMode()"> تفعيل الوضع الليلي (تجريبي)</label>
+          <button class="btn w-fit" onclick="seedDemoData(true)"><i data-lucide="database" class="w-4 h-4 ml-1"></i> إعادة تهيئة البيانات التجريبية</button>
+        </div>
       </div>
     </section>
   </main>
 
-  <!-- User Modal -->
-  <div id="userModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
-    <div class="modal-content relative">
-      <button id="closeUserModal" class="absolute top-4 left-4 text-gray-500 hover:text-black">
-        ✕
-      </button>
-      <h2 class="text-2xl font-extrabold mb-6 text-center text-[#0b2b3a]">➕ إضافة/تعديل مستخدم</h2>
-      <form id="userForm" class="space-y-5">
-        <div><label class="block text-sm font-semibold mb-1">الاسم</label><input id="uName" required class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-[#0ea5a1]"></div>
-        <div><label class="block text-sm font-semibold mb-1">البريد الإلكتروني</label><input id="uEmail" type="email" required class="w-full border border-gray-300 rounded-xl p-3"></div>
-        <div><label class="block text-sm font-semibold mb-1">الدور</label>
-          <select id="uRole" required class="w-full border border-gray-300 rounded-xl p-3">
+  <!-- MODALS -->
+  <div id="modalAddUser" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between border-b pb-2 mb-3">
+        <h3 class="text-xl font-extrabold">➕ إضافة مستخدم</h3>
+        <button class="text-2xl" onclick="closeModal('modalAddUser')">&times;</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-bold">الاسم</label>
+          <input id="addName" class="border rounded-xl p-2 w-full" placeholder="مثال: أحمد"/>
+        </div>
+        <div>
+          <label class="text-sm font-bold">البريد</label>
+          <input id="addEmail" class="border rounded-xl p-2 w-full" placeholder="ahmed@example.com"/>
+        </div>
+        <div>
+          <label class="text-sm font-bold">الدور</label>
+          <select id="addRole" class="border rounded-xl p-2 w-full">
+            <option value="manager">مدير</option>
             <option value="inspector">مراقب</option>
             <option value="contractor">مقاول</option>
           </select>
         </div>
-        <div><label class="block text-sm font-semibold mb-1">الحالة</label>
-          <select id="uStatus" required class="w-full border border-gray-300 rounded-xl p-3">
-            <option value="active">نشط</option>
-            <option value="suspended">معلّق</option>
-          </select>
-        </div>
-        <div class="flex justify-center mt-6"><button type="submit" class="btn">💾 حفظ</button></div>
-      </form>
+        <div class="flex items-end"><button class="btn" onclick="saveUser()">حفظ</button></div>
+      </div>
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import {
-      getFirestore, doc, getDoc, setDoc, collection, query, onSnapshot, serverTimestamp, updateDoc, deleteDoc
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import {
-      getStorage, ref as sRef, getDownloadURL, listAll
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+  <div id="modalAssign" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between border-b pb-2 mb-3">
+        <h3 class="text-xl font-extrabold">🧭 تعيين البلاغ</h3>
+        <button class="text-2xl" onclick="closeModal('modalAssign')">&times;</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-bold">اختر مراقب</label>
+          <select id="assignInspector" class="border rounded-xl p-2 w-full"></select>
+        </div>
+        <div>
+          <label class="text-sm font-bold">اختر مقاول</label>
+          <select id="assignContractor" class="border rounded-xl p-2 w-full"></select>
+        </div>
+        <div class="flex items-end"><button class="btn" onclick="confirmAssign()">تعيين</button></div>
+      </div>
+    </div>
+  </div>
 
-    // ===== Config =====
-    const firebaseConfig = {
-      apiKey: "AIzaSyD5c-REPLACE-ME",
-      authDomain: "smart-hsr-manager.firebaseapp.com",
-      projectId: "smart-hsr-manager",
-      storageBucket: "smart-hsr-manager.appspot.com",
-      messagingSenderId: "000000000000",
-      appId: "1:000000000000:web:REPLACE_ME"
-    };
-
-    const USERS_PATH = "users";                 // users/{id}
-    const OBSERVATIONS_PATH = "observations";   // observations/{id}
-
+  <!-- SCRIPTS -->
+  <script>
     // ===== State =====
-    let app, db, auth, storage;
-    let usersData = [];
-    let observationsData = [];
-    let editingUserId = null;
-    let userSearchTerm = '';
-    let filterType = 'all';
-    let filterStatus = 'all';
-    let notiEnabled = JSON.parse(localStorage.getItem('smart_hsr_noti') || 'false');
+    let users = [];
+    let observations = [];
+    let selectedObservationId = null;
 
-    const prevObs = new Map(); // id -> {status, urgent}
+    const statusLabels = { PENDING:'قيد الانتظار', IN_PROGRESS:'قيد التنفيذ', COMPLETED:'مغلق' };
+    const statusColors = { PENDING:'bg-red-600 text-white', IN_PROGRESS:'bg-yellow-500 text-black', COMPLETED:'bg-green-600 text-white' };
 
-    // ===== DOM =====
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const btnToggleNoti = document.getElementById('btnToggleNoti');
+    // ===== Utils =====
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+    const openModal = id => { document.getElementById(id).style.display='flex'; }
+    const closeModal = id => { document.getElementById(id).style.display='none'; }
 
-    const kpiNew = document.getElementById('kpiNew');
-    const kpiDone = document.getElementById('kpiDone');
-    const kpiUrgent = document.getElementById('kpiUrgent');
-    const kpiTotal = document.getElementById('kpiTotal');
-
-    const chartRange = document.getElementById('chartRange');
-    const chartCanvas = document.getElementById('miniChart');
-
-    const obsBody = document.getElementById('obsBody');
-    const obsFilterType = document.getElementById('obsFilterType');
-    const obsFilterStatus = document.getElementById('obsFilterStatus');
-
-    const usersBody = document.getElementById('usersBody');
-    const userSearch = document.getElementById('userSearch');
-    const btnNewUser = document.getElementById('btnNewUser');
-
-    const userModal = document.getElementById('userModal');
-    const closeUserModal = document.getElementById('closeUserModal');
-    const userForm = document.getElementById('userForm');
-    const uName = document.getElementById('uName');
-    const uEmail = document.getElementById('uEmail');
-    const uRole = document.getElementById('uRole');
-    const uStatus = document.getElementById('uStatus');
-
-    const toastHost = document.getElementById('toastHost');
-    const sndNew = document.getElementById('sndNew');
-    const sndUrgent = document.getElementById('sndUrgent');
-    const sndClosed = document.getElementById('sndClosed');
-
-    const imageModal = document.getElementById('imageModal');
-    const closeImageModal = document.getElementById('closeImageModal');
-    const previewImg = document.getElementById('previewImg');
-    const thumbs = document.getElementById('thumbs');
-
-    // ===== UI helpers =====
-    function setNotiBtn(){
-      btnToggleNoti.textContent = notiEnabled ? '🔕 إيقاف التنبيهات' : '🔔 تفعيل التنبيهات';
-    }
-    function toast(text, type='info'){
-      const base = document.createElement('div');
-      base.className = 'rounded-xl px-4 py-3 shadow-lg border text-sm flex items-center gap-2 ' +
-        (type==='success'?'bg-emerald-600/90 border-emerald-400':
-         type==='danger'?'bg-red-600/90 border-red-400':
-         type==='warn'?'bg-yellow-600/90 border-yellow-400':
-         'bg-slate-700/90 border-slate-500');
-      base.innerHTML = `<span>${text}</span>`;
-      toastHost.appendChild(base);
-      setTimeout(()=>{ base.classList.add('opacity-0','translate-y-2'); }, 3000);
-      setTimeout(()=>{ base.remove(); }, 3600);
-    }
-    function desktopNotify(title, body){
-      if (!notiEnabled) return;
-      if (Notification.permission === 'granted'){
-        new Notification(title,{ body });
-      }
-    }
-    function play(soundEl){
-      try{ soundEl.currentTime=0; soundEl.play(); }catch{}
-    }
-
-    // ===== KPI + Chart =====
-    function updateKPIs(){
-      const total = observationsData.length;
-      const newC = observationsData.filter(o=>o.status==='NEW').length;
-      const done = observationsData.filter(o=>o.status==='COMPLETED').length;
-      const urgent = observationsData.filter(o=>o.urgent===true).length;
-      kpiTotal.textContent = total;
-      kpiNew.textContent = newC;
-      kpiDone.textContent = done;
-      kpiUrgent.textContent = urgent;
-      drawMiniChart();
-    }
-    function drawMiniChart(){
-      const days = parseInt(chartRange.value,10)||30;
-      const since = new Date(Date.now()-days*24*60*60*1000);
-      const inRange = observationsData.filter(o=>{
-        const d = o.createdAt?.toDate ? o.createdAt.toDate() : (o.createdAt? new Date(o.createdAt): null);
-        return d && d >= since;
-      });
-      const counts = {
-        NEW: inRange.filter(o=>o.status==='NEW').length,
-        IN_PROGRESS: inRange.filter(o=>o.status==='IN_PROGRESS').length,
-        COMPLETED: inRange.filter(o=>o.status==='COMPLETED').length,
-        URGENT: inRange.filter(o=>o.urgent===true).length,
-      };
-      const ctx = chartCanvas.getContext('2d');
-      ctx.clearRect(0,0,chartCanvas.width, chartCanvas.height);
-      const labels = ['جديدة','قيد التنفيذ','مغلقة','عاجلة'];
-      const values = [counts.NEW, counts.IN_PROGRESS, counts.COMPLETED, counts.URGENT];
-      const W = chartCanvas.width, H = chartCanvas.height, pad = 40;
-      const barW = (W - pad*2) / values.length * 0.6;
-      const maxV = Math.max(1, ...values);
-      // axis
-      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
-      // bars
-      values.forEach((v,i)=>{
-        const x = pad + (i+0.2)*((W - pad*2)/values.length);
-        const h = (H - pad*2) * (v/maxV);
-        ctx.fillStyle = 'rgba(45,200,195,0.9)';
-        ctx.fillRect(x, H - pad - h, barW, h);
-        ctx.fillStyle='white';
-        ctx.textAlign='center';
-        ctx.fillText(labels[i], x+barW/2, H - pad + 16);
-        ctx.font='bold 14px Tajawal';
-        ctx.fillText(String(v), x+barW/2, H - pad - h - 6);
-      });
-    }
-
-    // ===== Render: Observations =====
-    function renderObservations(){
-      let list = observationsData.slice();
-      if (filterType!=='all') list = list.filter(o=>o.type===filterType);
-      if (filterStatus!=='all') list = list.filter(o=>o.status===filterStatus);
-      if (list.length===0){
-        obsBody.innerHTML = `<tr><td colspan="8" class="text-center p-4 text-white/60">لا توجد ملاحظات مطابقة.</td></tr>`;
-        return;
-      }
-      obsBody.innerHTML = list.map(o=>{
-        const statusBadge = o.status==='COMPLETED'?'bg-green-500':(o.status==='IN_PROGRESS'?'bg-yellow-500':'bg-blue-500');
-        const urgentBadge = o.urgent ? '<span class="badge bg-red-600">عاجلة</span>' : '<span class="badge bg-slate-500/70">—</span>';
-        const desc = (o.description||'-').slice(0,120);
-        const dateStr = (()=>{ const d=o.createdAt?.toDate?o.createdAt.toDate(): (o.createdAt?new Date(o.createdAt):null); return d? d.toLocaleString('ar-SA'): '-';})();
-        const locationStr = o.location?.address || (o.location? `${o.location.lat}, ${o.location.lng}` : '-');
-        const imagesCount = (o.images?.inspector?.length||0)+(o.images?.contractor?.length||0)+(o.images?.manager?.length||0);
-        const imgBtn = imagesCount>0 ? `<button class="text-xs underline" data-id="${o.id}" data-what="images">عرض (${imagesCount})</button>` : '—';
-        return `
-          <tr class="hover:bg-white/10 transition">
-            <td class="p-3 font-mono">${o.id||'-'}</td>
-            <td class="p-3">${o.type||'-'}</td>
-            <td class="p-3"><span class="badge ${statusBadge}">${o.status==='NEW'?'جديدة':(o.status==='IN_PROGRESS'?'قيد التنفيذ':'مغلقة')}</span></td>
-            <td class="p-3">${urgentBadge}</td>
-            <td class="p-3 max-w-[360px]">${desc}</td>
-            <td class="p-3">${imgBtn}</td>
-            <td class="p-3"><div>${dateStr}</div><div class="text-white/70 text-xs">${locationStr}</div></td>
-            <td class="p-3 flex flex-wrap gap-2 items-center">
-              <button class="text-xs text-white bg-teal-600 hover:bg-teal-500 px-2 py-1 rounded-full" data-id="${o.id}" data-what="progress">🛠️ تحديث الحالة</button>
-              <button class="text-xs text-yellow-300 hover:text-yellow-200" data-id="${o.id}" data-what="urgent">🚨 رفعها كـ عاجلة</button>
-              <button class="text-xs text-green-300 hover:text-green-200" data-id="${o.id}" data-what="close">✅ إغلاق الملاحظة</button>
-              <button class="text-xs text-red-300 hover:text-red-200" data-id="${o.id}" data-what="delete">🗑️ حذفها</button>
-            </td>
-          </tr>`;
-      }).join('');
-      // bind
-      obsBody.querySelectorAll('button').forEach(b=>{
-        const id=b.dataset.id; const what=b.dataset.what;
-        b.onclick=()=> {
-          if (what==='progress') cycleStatus(id);
-          if (what==='urgent') markUrgent(id);
-          if (what==='close') closeObservation(id);
-          if (what==='delete') deleteObservation(id);
-          if (what==='images') openImages(id);
-        };
-      });
-    }
-
-    async function cycleStatus(id){
-      const o = observationsData.find(x=>x.id===id); if(!o) return;
-      const next = o.status==='NEW'?'IN_PROGRESS':(o.status==='IN_PROGRESS'?'COMPLETED':'NEW');
-      await updateDoc(doc(db, OBSERVATIONS_PATH, id), { status: next, updatedAt: serverTimestamp() });
-      toast('تم تحديث الحالة', 'success');
-    }
-    async function markUrgent(id){
-      await updateDoc(doc(db, OBSERVATIONS_PATH, id), { urgent: true, updatedAt: serverTimestamp() });
-      toast('تم رفع الملاحظة كعاجلة', 'warn');
-    }
-    async function closeObservation(id){
-      await updateDoc(doc(db, OBSERVATIONS_PATH, id), { status: 'COMPLETED', updatedAt: serverTimestamp(), closedAt: serverTimestamp() });
-      toast('تم إغلاق الملاحظة', 'success');
-    }
-    async function deleteObservation(id){
-      if (!confirm('تأكيد حذف الملاحظة؟')) return;
-      await deleteDoc(doc(db, OBSERVATIONS_PATH, id));
-      toast('تم حذف الملاحظة', 'danger');
-    }
-
-    // Images (Firestore + Storage)
-    async function openImages(id){
-      const o = observationsData.find(x=>x.id===id); if(!o) return;
-      const paths = []
-        .concat(o.images?.inspector||[])
-        .concat(o.images?.contractor||[])
-        .concat(o.images?.manager||[]);
-      const urls = [];
-      for (const p of paths){
-        try{
-          // allow direct URLs or storage paths
-          if (/^https?:\/\//.test(p)) { urls.push(p); continue; }
-          const u = await getDownloadURL(sRef(storage, p));
-          urls.push(u);
-        }catch{}
-      }
-      if (urls.length===0){ toast('لا توجد صور', 'info'); return; }
-      thumbs.innerHTML = '';
-      previewImg.src = urls[0];
-      urls.forEach((u,idx)=>{
-        const t = document.createElement('img');
-        t.src = u; t.alt='thumb';
-        t.className='w-20 h-20 object-cover rounded-lg cursor-pointer border border-white/20';
-        t.onclick=()=>{ previewImg.src = u; };
-        thumbs.appendChild(t);
-      });
-      imageModal.classList.remove('hidden'); imageModal.classList.add('flex');
-    }
-    closeImageModal.onclick = ()=>{ imageModal.classList.add('hidden'); imageModal.classList.remove('flex'); };
-
-    // ===== Render: Users =====
-    function renderUsers(){
-      const filtered = usersData.filter(u=>{
-        const q=(userSearchTerm||'').toLowerCase();
-        return (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q);
-      });
-      if (filtered.length===0){
-        usersBody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-white/60">لا يوجد مستخدمون مطابقون.</td></tr>`;
-        return;
-      }
-      usersBody.innerHTML = filtered.map(u=>{
-        const badge = u.status==='active'?'bg-green-500':'bg-gray-500';
-        const roleTxt = u.role==='inspector'?'مراقب':'مقاول';
-        return `
-          <tr class="hover:bg-white/10 transition">
-            <td class="p-3">${u.name||'-'}</td>
-            <td class="p-3 hidden md:table-cell text-white/70">${u.email||'-'}</td>
-            <td class="p-3">${roleTxt}</td>
-            <td class="p-3"><span class="px-3 py-1 text-xs font-semibold rounded-full ${badge}">${u.status==='active'?'نشط':'معلّق'}</span></td>
-            <td class="p-3 flex gap-2 items-center">
-              <button class="text-xs text-white bg-teal-600 hover:bg-teal-500 px-2 py-1 rounded-full" data-id="${u.id}" data-action="edit">✎ تعديل</button>
-              <button class="text-xs text-red-300 hover:text-red-200" data-id="${u.id}" data-action="delete">🗑️ حذف</button>
-              <button class="text-xs text-yellow-300 hover:text-yellow-200" data-id="${u.id}" data-action="toggle">${u.status==='active'?'تعطيل':'تفعيل'}</button>
-            </td>
-          </tr>`;
-      }).join('');
-      usersBody.querySelectorAll('button').forEach(btn=>{
-        const id=btn.dataset.id; const action=btn.dataset.action;
-        btn.onclick= async ()=>{
-          const user = usersData.find(x=>x.id===id);
-          if (!user) return;
-          if (action==='edit') openUserModal(user);
-          if (action==='delete'){ if(!confirm('تأكيد حذف المستخدم؟')) return; await deleteDoc(doc(db, USERS_PATH, id)); toast('تم حذف المستخدم', 'danger'); }
-          if (action==='toggle'){ const ns = user.status==='active'?'suspended':'active'; await updateDoc(doc(db, USERS_PATH, id), { status:ns, updatedAt:serverTimestamp() }); toast('تم تحديث الحالة', 'success'); }
-        };
-      });
-    }
-
-    function openUserModal(user){
-      editingUserId = user? user.id : null;
-      uName.value = user?.name||'';
-      uEmail.value = user?.email||'';
-      uRole.value = user?.role||'inspector';
-      uStatus.value = user?.status||'active';
-      userModal.classList.remove('hidden'); userModal.classList.add('flex');
-    }
-    function closeUser(){ userModal.classList.add('hidden'); userModal.classList.remove('flex'); }
-    userForm.onsubmit = async (e)=>{
-      e.preventDefault();
-      const payload = {
-        name: uName.value.trim(),
-        email: uEmail.value.trim(),
-        role: uRole.value,
-        status: uStatus.value,
-        updatedAt: serverTimestamp()
-      };
-      if (editingUserId){
-        await updateDoc(doc(db, USERS_PATH, editingUserId), payload);
-        toast('تم تعديل المستخدم', 'success');
-      }else{
-        const id = 'usr_'+Date.now();
-        await setDoc(doc(db, USERS_PATH, id), { ...payload, createdAt: serverTimestamp(), id });
-        toast('تم إضافة مستخدم', 'success');
-      }
-      closeUser();
-    };
-    closeUserModal.onclick = closeUser;
-
-    // ===== Notifications =====
-    function askPermissionIfNeeded(){
-      if (notiEnabled && Notification && Notification.permission !== 'granted'){
-        Notification.requestPermission().then(p=>{
-          if (p!=='granted'){ notiEnabled=false; localStorage.setItem('smart_hsr_noti','false'); setNotiBtn(); toast('تم رفض إذن الإشعارات', 'warn'); }
+    // ===== Tabs =====
+    $$("nav [data-tab]").forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        $$("nav [data-tab]").forEach(b=>b.classList.remove('tab-active'));
+        btn.classList.add('tab-active');
+        const t = btn.getAttribute('data-tab');
+        ['users','observations','reports','settings'].forEach(id=>{
+          document.getElementById('tab-'+id).classList.toggle('hidden', id!==t);
         });
+      })
+    });
+
+    // ===== Demo Seed =====
+    function seedDemoData(reset=false){
+      if(!users.length || reset){
+        users = [
+          {id:'u1', name:'أحمد العتيبي', email:'ahmed@example.com', role:'inspector', active:true},
+          {id:'u2', name:'نورة السبيعي', email:'nora@example.com', role:'inspector', active:true},
+          {id:'u3', name:'شركة الصيانة المتحدة', email:'cont@example.com', role:'contractor', active:true},
+          {id:'u4', name:'مشرف عام', email:'manager@example.com', role:'manager', active:true},
+        ];
       }
-    }
-    btnToggleNoti.onclick = ()=>{
-      notiEnabled = !notiEnabled;
-      localStorage.setItem('smart_hsr_noti', JSON.stringify(notiEnabled));
-      setNotiBtn();
-      if (notiEnabled) { askPermissionIfNeeded(); toast('تم تفعيل التنبيهات', 'success'); } else { toast('تم إيقاف التنبيهات', 'warn'); }
-    };
-    setNotiBtn();
-
-    // Fire basis for change detection & notifications
-    function handleObservationEvents(newList){
-      const byId = new Map(newList.map(o=>[o.id,o]));
-      // New items
-      for (const [id, o] of byId){
-        const before = prevObs.get(id);
-        if (!before){
-          if (notiEnabled){ play(sndNew); desktopNotify('ملاحظة جديدة', `#${id} - ${o.type||''}`); }
-          toast(`تمت إضافة ملاحظة جديدة (#${id})`, 'info');
-        }else{
-          if (!before.urgent && o.urgent){
-            if (notiEnabled){ play(sndUrgent); desktopNotify('تم رفع الملاحظة كعاجلة', `#${id}`); }
-            toast(`🚨 ملاحظة (#${id}) أصبحت عاجلة`, 'warn');
-          }
-          if (before.status!=='COMPLETED' && o.status==='COMPLETED'){
-            if (notiEnabled){ play(sndClosed); desktopNotify('تم إغلاق ملاحظة', `#${id}`); }
-            toast(`✅ تم إغلاق الملاحظة (#${id})`, 'success');
-          }
-        }
+      if(!observations.length || reset){
+        observations = [
+          {id:1761488503202, title:'حفرية بالطريق', status:'PENDING', inspector:'أحمد العتيبي', contractor:'—', date:'2025-10-29', hasImage:true},
+          {id:1761488503203, title:'حواجز خرسانية متساقطة', status:'PENDING', inspector:'نورة السبيعي', contractor:'—', date:'2025-10-29', hasImage:true},
+          {id:1761488503204, title:'تشققات بالأسفلت', status:'IN_PROGRESS', inspector:'أحمد العتيبي', contractor:'شركة الصيانة المتحدة', date:'2025-10-28', hasImage:true},
+          {id:1761488503205, title:'عدم صيانة دورات المياه', status:'PENDING', inspector:'—', contractor:'—', date:'2025-10-28', hasImage:false},
+          {id:1761488503206, title:'حفرية بالطريق', status:'COMPLETED', inspector:'نورة السبيعي', contractor:'شركة الصيانة المتحدة', date:'2025-10-22', hasImage:true},
+        ];
       }
-      // Update snapshot
-      prevObs.clear();
-      for (const [id,o] of byId){ prevObs.set(id, { status:o.status, urgent:!!o.urgent }); }
+      renderUsers();
+      renderObservations();
+      renderKPIs();
     }
 
-    // ===== Auth + Realtime =====
-    async function init(){
-      loadingIndicator.classList.remove('hidden');
-      app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); storage = getStorage(app);
-      onAuthStateChanged(auth, async (user)=>{
-        if(!user){ window.location.href='owner-login.html'; return; }
-        const snap = await getDoc(doc(db,'managers', user.uid));
-        if(!snap.exists() || snap.data().role!=='manager'){ await signOut(auth); window.location.href='owner-login.html'; return; }
-        startRealtime(); loadingIndicator.classList.add('hidden');
-        askPermissionIfNeeded();
-      });
+    // ===== KPIs =====
+    function renderKPIs(){
+      const total = observations.length;
+      const open = observations.filter(o=>o.status!=='COMPLETED').length;
+      const closed = total - open;
+      const photo = observations.filter(o=>o.hasImage).length;
+      document.getElementById('kpi-total').textContent = total;
+      document.getElementById('kpi-open').textContent = open;
+      document.getElementById('kpi-closed').textContent = closed;
+      document.getElementById('kpi-photo').textContent = photo;
+      lucide.createIcons();
     }
 
-    function startRealtime(){
-      onSnapshot(query(collection(db, USERS_PATH)), (qs)=>{
-        usersData=[]; qs.forEach(d=> usersData.push({ id:d.id, ...d.data() }));
-        renderUsers();
-      });
-      onSnapshot(query(collection(db, OBSERVATIONS_PATH)), (qs)=>{
-        observationsData=[]; qs.forEach(d=> observationsData.push({ id:d.id, ...d.data() }));
-        renderObservations(); updateKPIs(); handleObservationEvents(observationsData);
-      });
+    // ===== Users =====
+    function roleBadge(role){
+      const map={manager:'مدير', inspector:'مراقب', contractor:'مقاول'};
+      const cls={manager:'bg-slate-800 text-white', inspector:'bg-sky-600 text-white', contractor:'bg-emerald-600 text-white'};
+      return `<span class="pill ${cls[role]||'bg-gray-400 text-white'}">${map[role]||role}</span>`
+    }
+    function statusSwitch(u){
+      const t = u.active? 'تعطيل' : 'تفعيل';
+      const c = u.active? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700';
+      return `<button class="px-3 py-1 text-white rounded-full ${c}" onclick="toggleUser('${u.id}')">${t}</button>`
+    }
+    function renderUsers(){
+      const body = document.getElementById('usersBody');
+      const q = (document.getElementById('userSearch').value||'').trim().toLowerCase();
+      const filtered = users.filter(u=>!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+      if(!filtered.length){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>لا توجد نتائج</td></tr>`; return; }
+      body.innerHTML = filtered.map(u=>
+        `<tr>
+          <td class="font-bold">${u.name}</td>
+          <td>${roleBadge(u.role)}</td>
+          <td class="text-gray-600">${u.email}</td>
+          <td>${u.active?'<span class="tag bg-green-100 text-green-700">نشط</span>':'<span class="tag bg-red-100 text-red-700">معطل</span>'}</td>
+          <td class="text-center">
+            <div class="flex items-center gap-2 justify-center">
+              ${statusSwitch(u)}
+              <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="editUser('${u.id}')">تعديل</button>
+              <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="removeUser('${u.id}')">حذف</button>
+            </div>
+          </td>
+        </tr>`
+      ).join('');
+      lucide.createIcons();
+    }
+    function filterUsers(){ renderUsers(); }
+    function saveUser(){
+      const name=$('#addName').value.trim();
+      const email=$('#addEmail').value.trim();
+      const role=$('#addRole').value;
+      if(!name||!email) return alert('الرجاء تعبئة الاسم والبريد.');
+      users.unshift({id:'u'+(Date.now()), name, email, role, active:true});
+      closeModal('modalAddUser');
+      $('#addName').value='';$('#addEmail').value='';$('#addRole').value='inspector';
+      renderUsers();
+    }
+    function toggleUser(id){ const u=users.find(x=>x.id===id); if(!u) return; u.active=!u.active; renderUsers(); }
+    function editUser(id){ const u=users.find(x=>x.id===id); if(!u) return; const nn=prompt('تعديل الاسم',u.name)||u.name; const em=prompt('تعديل البريد',u.email)||u.email; u.name=nn; u.email=em; renderUsers(); }
+    function removeUser(id){ if(!confirm('تأكيد حذف المستخدم؟')) return; users = users.filter(u=>u.id!==id); renderUsers(); }
+
+    // ===== Observations =====
+    function renderObservations(){
+      const body = document.getElementById('obsBody');
+      const f = document.getElementById('statusFilter').value;
+      const list = observations.filter(o=> f==='ALL' || o.status===f );
+      if(!list.length){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-gray-500'>لا توجد بلاغات</td></tr>`; return; }
+      body.innerHTML = list.map(o=>
+        `<tr>
+          <td class="font-bold">${o.id}</td>
+          <td>${o.title}</td>
+          <td><span class="tag ${statusColors[o.status]}">${statusLabels[o.status]}</span></td>
+          <td>${o.inspector||'—'}</td>
+          <td>${o.contractor||'—'}</td>
+          <td class="text-gray-600">${o.date}</td>
+          <td class="text-center">
+            <div class="flex items-center gap-2 justify-center">
+              <button class="px-3 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-full" onclick="openAssign(${o.id})">تعيين</button>
+              <button class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-full" onclick="cycleStatus(${o.id})">تغيير الحالة</button>
+              <button class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full" onclick="closeTicket(${o.id})">إغلاق</button>
+            </div>
+          </td>
+        </tr>`
+      ).join('');
+      lucide.createIcons();
+    }
+    function cycleStatus(id){ const o=observations.find(x=>x.id===id); if(!o) return; o.status = o.status==='PENDING'?'IN_PROGRESS':(o.status==='IN_PROGRESS'?'COMPLETED':'PENDING'); renderObservations(); renderKPIs(); }
+    function closeTicket(id){ const o=observations.find(x=>x.id===id); if(!o) return; o.status='COMPLETED'; renderObservations(); renderKPIs(); alert('تم إغلاق البلاغ رقم '+id); }
+
+    // ===== Assign Modal =====
+    function openAssign(id){ selectedObservationId=id; const inspSel=$('#assignInspector'); const contSel=$('#assignContractor');
+      inspSel.innerHTML = users.filter(u=>u.role==='inspector'&&u.active).map(u=>`<option>${u.name}</option>`).join('');
+      contSel.innerHTML = users.filter(u=>u.role==='contractor'&&u.active).map(u=>`<option>${u.name}</option>`).join('');
+      openModal('modalAssign');
+    }
+    function confirmAssign(){ const o=observations.find(x=>x.id===selectedObservationId); if(!o) return; o.inspector=$('#assignInspector').value||o.inspector; o.contractor=$('#assignContractor').value||o.contractor; closeModal('modalAssign'); renderObservations(); alert('تم التعيين بنجاح'); }
+
+    // ===== Reports (AI Demo) =====
+    function generateAiSummary(){
+      const total=observations.length; const open=observations.filter(o=>o.status!=='COMPLETED').length; const closed=total-open;
+      const topInspector = (function(){ const m={}; observations.forEach(o=>{ if(o.inspector&&o.status==='COMPLETED'){ m[o.inspector]=(m[o.inspector]||0)+1 } }); let k='—',v=0; Object.entries(m).forEach(([n,c])=>{ if(c>v){k=n;v=c} }); return k; })();
+      const html = `<div class='p-3 border-r-4 border-[--color-teal] bg-white rounded-xl'>
+        <p class='font-bold'>ملخص تنفيذي (تجريبي):</p>
+        <ul class='list-disc pr-6 mt-2 text-sm text-gray-700'>
+          <li>إجمالي البلاغات: <b>${total}</b> | مفتوحة: <b>${open}</b> | مغلقة: <b>${closed}</b>.</li>
+          <li>أعلى إنجاز: <b>${topInspector}</b> بناءً على عدد البلاغات المغلقة.</li>
+          <li>توصية: تسريع توثيق صور الإغلاق لرفع نسبة الإكمال.</li>
+        </ul>
+      </div>`;
+      const box = document.getElementById('aiSummary');
+      box.innerHTML = html; box.classList.remove('hidden');
     }
 
-    // ===== Simple filters/search/events =====
-    obsFilterType.onchange = (e)=>{ filterType=e.target.value; renderObservations(); };
-    obsFilterStatus.onchange = (e)=>{ filterStatus=e.target.value; renderObservations(); };
-    chartRange.onchange = drawMiniChart;
+    // ===== Settings =====
+    function toggleDarkMode(){ document.body.classList.toggle('bg-slate-900'); document.body.classList.toggle('text-white'); }
 
-    logoutBtn.onclick = async()=>{ await signOut(auth); window.location.href='owner-login.html' };
-    btnNewUser.onclick = ()=> openUserModal();
-    userSearch.oninput = (e)=>{ userSearchTerm=e.target.value.trim(); renderUsers(); };
-
-    window.onload = init;
+    // ===== Boot =====
+    document.getElementById('logoutBtn').addEventListener('click',()=>{ alert('تم تسجيل الخروج (وضع تجريبي)'); });
+    function boot(){ seedDemoData(); lucide.createIcons(); }
+    window.addEventListener('DOMContentLoaded', boot);
   </script>
 </body>
 </html>
