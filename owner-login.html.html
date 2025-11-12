@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل دخول المالك - Smart HSR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: radial-gradient(circle at center, #0EA5A1 0%, #0B2B3A 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+    .card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 22px;
+      padding: 3rem;
+      width: 100%;
+      max-width: 420px;
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 0 30px rgba(14,165,161,0.4);
+      text-align: center;
+    }
+    .glow {
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+    @keyframes glowPulse {
+      0%,100%{ box-shadow:0 0 25px rgba(14,165,161,0.5);}
+      50%{ box-shadow:0 0 45px rgba(14,165,161,0.9);}
+    }
+    input{direction:ltr;}
+  </style>
+</head>
+<body>
+  <div class="card glow">
+    <img src="Smart_HSR_Dashboard_Logo.svg" alt="Smart HSR Logo" class="mx-auto w-24 mb-5 animate-pulse">
+    <h2 class="text-2xl font-extrabold mb-6 text-teal-300 tracking-wide">تسجيل دخول المالك</h2>
+
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="block text-right mb-1">البريد الإلكتروني</label>
+        <input type="email" id="email" class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400" placeholder="example@email.com" required>
+      </div>
+      <div>
+        <label class="block text-right mb-1">كلمة المرور</label>
+        <input type="password" id="password" class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="w-full py-3 rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:opacity-90 font-extrabold tracking-wide transition">تسجيل الدخول</button>
+    </form>
+
+    <p id="errorMsg" class="text-red-400 mt-4 hidden text-sm"></p>
+    <p class="mt-6 text-white/60 text-xs">© 2025 Smart HSR — جميع الحقوق محفوظة</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+    // إعداد Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
+      authDomain: "smart-hsr-manager.firebaseapp.com",
+      projectId: "smart-hsr-manager",
+      storageBucket: "smart-hsr-manager.firebasestorage.app",
+      messagingSenderId: "38965508031",
+      appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // التحقق من صلاحية المالك
+        const ownerDoc = await getDoc(doc(db, 'owners', user.uid));
+        if (!ownerDoc.exists()) {
+          errorMsg.textContent = '🚫 ليس لديك صلاحية الدخول كمالك.';
+          errorMsg.classList.remove('hidden');
+          return;
+        }
+
+        // ✅ نجاح الدخول
+        sessionStorage.setItem('SmartHSROwner', JSON.stringify({ email: user.email, uid: user.uid }));
+        window.location.href = 'owner.html';
+
+      } catch (error) {
+        console.error('Login Error:', error);
+        errorMsg.textContent = '❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور';
+        errorMsg.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
