@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>Smart HSR | الخريطة الميدانية الذكية</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Icons & Fonts -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --navy:#0A1931; --teal:#18A5A2; --teal-600:#14918E;
+      --bg:#F7F9FC; --card:#FFFFFF; --line:#E6EEF3; --shadow:0 10px 30px rgba(0,0,0,.10);
+      --text:#0A1931; --muted:#64748B;
+      --red:#EF4444; --amber:#F59E0B; --green:#10B981;
+      --map-ring:#CFEAE8;
+    }
+    [data-theme="dark"]{
+      --bg:#0e1726; --card:#102036; --line:#25334A; --shadow:0 10px 30px rgba(0,0,0,.35);
+      --text:#E6EEF7; --muted:#9FB0C8; --map-ring:#173F46;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:'Tajawal',sans-serif; background:var(--bg); color:var(--text)}
+
+    /* Header (mobile-first, compact) */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: var(--card);
+  border-bottom: 3px solid rgba(24,165,162,.12);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  flex-wrap: wrap; /* يسمح بالانتقال للسطر التالي في الجوال */
+  gap: 8px;
+}
+
+/* تحسينات للشعار */
+.brand {
+  font-weight: 900;
+  font-size: 17px;
+  white-space: nowrap;
+}
+.brand span {
+  color: var(--teal);
+}
+
+/* تحسين منطقة الأزرار */
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* جعل الإحصائيات تحت العنوان في الجوال */
+#nearStats {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* تحسين المظهر على الشاشات الصغيرة */
+@media (max-width: 600px) {
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    padding: 10px 10px;
+  }
+
+  .brand {
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  #nearStats {
+    justify-content: center;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .header-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+}
+
+
+    
+    .brand{font-weight:900; letter-spacing:.3px; font-size:16px}
+    .brand span{color:var(--teal)}
+    .header-actions{margin-inline-start:auto; display:flex; gap:6px; align-items:center}
+    .btn{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 10px; border:none; border-radius:999px; cursor:pointer;
+      font-weight:800; transition:.18s; box-shadow:0 4px 10px rgba(10,25,49,.08); font-size:12px
+    }
+    .btn i{width:16px;height:16px}
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:var(--teal); color:#fff}
+    .btn-dark{background:var(--navy); color:#fff}
+    .btn-soft{background:transparent; color:var(--text); border:1px solid var(--line)}
+    .btn-ghost{background:transparent; color:var(--text)}
+    .chip{display:none}
+
+    @media (max-width:420px){
+      .app-header{padding:8px 10px}
+      .btn{padding:6px 8px; font-size:11px}
+      .brand{font-size:14px}
+    }
+
+    /* Map frame */
+    .map-wrap{
+      position:relative; height:calc(100vh - 64px);
+      margin:10px; border-radius:18px;
+      background:linear-gradient(#fff,#fff) padding-box,
+                 linear-gradient(135deg, #ACE2E1 0%, #18A5A2 50%, #0A1931 100%) border-box;
+      border:3px solid transparent; box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    [data-theme="dark"] .map-wrap{ background:linear-gradient(var(--card),var(--card)) padding-box,
+                                   linear-gradient(135deg, #173F46 0%, #18A5A2 50%, #0A1931 100%) border-box;}
+    #map{width:100%; height:100%}
+
+    /* Toolbar (legend toggle only stays here) */
+    .toolbar{
+      position:absolute; top:12px; inset-inline-start:12px; z-index:900;
+      display:flex; flex-direction:column; gap:8px; pointer-events:none;
+    }
+    .card{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow)}
+    .tool-card{padding:8px; pointer-events:auto}
+
+    /* Pulsing marker */
+    .pulse{ width:14px; height:14px; border-radius:50%; position:relative; box-shadow:0 0 0 2px #fff, 0 4px 10px rgba(0,0,0,.25)}
+    .pulse.red{background:var(--red)}
+    .pulse.amber{background:var(--amber)}
+    .pulse.green{background:var(--green)}
+    .pulse.red::after,.pulse.amber::after{
+      content:""; position:absolute; inset:0; border-radius:50%; box-shadow:0 0 0 0 currentColor; animation:pulse 1.8s infinite; opacity:.55
+    }
+    .pulse.red::after{color:var(--red)}
+    .pulse.amber::after{color:var(--amber)}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 currentColor} 70%{box-shadow:0 0 0 14px rgba(0,0,0,0)} 100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
+
+    /* My location ring */
+    .me-ring{
+      box-shadow: 0 0 0 3px #fff;
+      border:2px solid var(--teal);
+      background:radial-gradient(circle at center, var(--teal) 0 40%, transparent 41% 100%);
+      width:16px;height:16px;border-radius:50%;
+    }
+
+    /* Toast */
+    .toast{position:fixed; bottom:12px; inset-inline-start:12px; background:var(--navy); color:#fff; padding:10px 12px; border-radius:12px; box-shadow:var(--shadow); z-index:4000; display:none; font-weight:800}
+    .toast.show{display:block}
+
+    /* Bottom Sheet (Smart Modal) */
+    .sheet{
+      position:fixed; inset-inline:0; bottom:0; z-index:3500;
+      border-top-left-radius:18px; border-top-right-radius:18px;
+      background:var(--card); color:var(--text);
+      box-shadow:0 -10px 40px rgba(0,0,0,.25);
+      transform:translateY(100%); transition:transform .28s ease;
+      border-top:1px solid var(--line);
+      max-height:80vh; display:flex; flex-direction:column;
+    }
+    .sheet.open{transform:translateY(0)}
+    .sheet-handle{width:46px; height:5px; border-radius:999px; background:var(--line); margin:8px auto 6px;}
+
+    /* Observation sheet content */
+    .sheet-header{padding:6px 14px 10px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--line)}
+    .sheet-header h3{margin:0; font-weight:900; font-size:15px}
+    .pill{display:inline-flex; gap:6px; align-items:center; padding:4px 8px; border-radius:999px; font-weight:800; font-size:12px}
+    .pill.red{background:#fee2e2; color:#991b1b}
+    .pill.amber{background:#fef3c7; color:#92400e}
+    .pill.green{background:#dcfce7; color:#065f46}
+    .sheet-body{padding:10px 14px; overflow:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .field{display:flex; flex-direction:column; gap:6px}
+    .field label{font-size:12px; color:var(--muted); font-weight:800}
+    .card-mini{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px; font-weight:800}
+    textarea, select, input[type="file"]{border:1px solid var(--line); border-radius:10px; padding:8px; font-family:inherit; background:var(--card); color:var(--text)}
+    .media-box{padding:8px; border-radius:12px; border:1px dashed var(--line); min-height:56px}
+    .sheet-actions{display:flex; gap:8px; padding:10px 14px 12px; border-top:1px solid var(--line); justify-content:flex-end}
+    .btn-lg{padding:10px 14px; font-size:13px}
+
+    @media (max-width:768px){
+      .sheet-body{grid-template-columns:1fr}
+      .btn-lg{padding:10px 12px; font-size:12px}
+      .sheet-header h3{font-size:14px}
+    }
+
+    /* Legend glass + toggle */
+    .legend-glass {
+      position: absolute;
+      bottom: 68px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(24,165,162,0.2);
+      border-radius: 14px;
+      padding: 10px 14px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+      font-size: 13px;
+      color: var(--text);
+      z-index: 900;
+      min-width: 130px;
+      transition: all 0.35s ease;
+    }
+    [data-theme="dark"] .legend-glass { background: rgba(16,32,54,0.85); border-color: rgba(24,165,162,0.25); color: #e8f7f6; }
+    .legend-glass.hidden { opacity:0; transform: translateY(20px); pointer-events:none; }
+    .legend-title { font-weight:900; font-size:14px; color:var(--teal); margin-bottom:6px; text-align:center; }
+    .legend-items .item { display:flex; align-items:center; gap:8px; margin:5px 0; font-weight:700; }
+    .dot { width:12px; height:12px; border-radius:50%; }
+    .dot.red {background: var(--red);} .dot.amber {background: var(--amber);} .dot.green {background: var(--green);}
+
+    .legend-toggle {
+      position: absolute; bottom: 14px; right: 14px; width: 48px; height: 48px;
+      border: none; border-radius: 50%; background: var(--teal); color:#fff; font-weight:900;
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
+      box-shadow:0 6px 20px rgba(0,0,0,0.25); z-index:901; transition: all .3s ease;
+    }
+    .legend-toggle:hover { transform: scale(1.08); background: var(--teal-600); }
+    .legend-toggle.active { background: var(--navy); transform: rotate(180deg); }
+    .legend-count { position: absolute; top:6px; right:6px; background: var(--red); color:#fff; font-size:12px; font-weight:800; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px #fff; transition: all .3s ease; }
+    .legend-toggle.green .legend-count { background: var(--green); }
+    .legend-toggle.amber .legend-count { background: var(--amber); }
+    .legend-toggle.red .legend-count { background: var(--red); }
+    @keyframes pulseBadge { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(24,165,162,0.4); } 50% { transform: scale(1.25); box-shadow: 0 0 10px 4px rgba(24,165,162,0.2); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(24,165,162,0); } }
+    .legend-count.flash { animation: pulseBadge 0.8s ease; }
+
+    .leaflet-control-attribution { display:none !important; }
+
+/* ===== Smart Bottom Filter Sheet (peek 30%) ===== */
+.filter-sheet{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 902;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(24,165,162,0.25);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -10px 25px rgba(0,0,0,0.18);
+  overflow: hidden;
+transition: transform .45s cubic-bezier(.25,1.25,.5,1);
+  transform: translateY(70%); /* يظهر 30% فقط */
+  max-width: 520px;
+  margin-inline: auto;
+  pointer-events: auto;
+}
+[data-theme="dark"] .filter-sheet{ background: rgba(16,32,54,0.9); border-color: rgba(24,165,162,0.3); }
+.filter-sheet.open{ transform: translateY(0); }
+.filter-grip{ width: 40px; height: 5px; border-radius: 999px; background: var(--line); margin: 10px auto 6px; }
+.filter-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 12px 8px; border-bottom:1px solid var(--line); cursor:pointer; }
+.filter-title{ font-weight:900; font-size:13px; color: var(--muted); display:flex; align-items:center; gap:6px; }
+.near-badge{ display:inline-flex; align-items:center; gap:6px; background:#eefaf9; color:#0b6b68; border:1px solid rgba(24,165,162,0.25); padding:4px 8px; border-radius:999px; font-weight:900; font-size:12px; }
+[data-theme="dark"] .near-badge{ background:#0f2a33; color:#b7f3ef; }
+
+.filter-body{ display:flex; flex-direction:column; gap:8px; padding:10px 12px 12px; }
+.filter-item{ display:flex; align-items:center; gap:6px; font-weight:800; }
+.filter-item label{ color: var(--teal); font-weight:900; }
+.filter-select{ border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--text); font-weight:700; padding:4px 8px; font-size:12px; }
+.filter-range{ width: 100%; accent-color: var(--teal); }
+.radius-value{ font-weight:900; font-size:12px; color: var(--teal); }
+
+/* أسطورة الحالات داخل الشريط */
+.legend-inline {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px;
+  border-top: 1px solid var(--line);
+  font-weight: 800;
+  font-size: 13px;
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(8px);
+}
+[data-theme="dark"] .legend-inline {
+  background: rgba(16,32,54,0.65);
+}
+.legend-inline .item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend-inline .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dot.red { background: var(--red); }
+.dot.amber { background: var(--amber); }
+.dot.green { background: var(--green); }
+
+@media (max-width:480px){
+  .filter-body{ flex-direction: column; align-items:flex-start; }
+  .filter-range{ width: 100%; }
+  .legend-inline { flex-direction: column; gap: 6px; text-align: center; }
+}
+
+/* زر الأسطورة */
+.legend-toggle {
+  position: absolute;
+  bottom: 22px;
+  right: 24px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  transition: all 0.3s ease;
+}
+.legend-toggle:hover {
+  transform: translateY(-3px);
+  background: var(--teal-600);
+}
+.legend-toggle.active {
+  background: var(--navy);
+  transform: rotate(180deg);
+}
+
+/* مساحة إضافية للخريطة */
+.map-wrap {
+  margin-bottom: 60px;
+}
+
+    
+  </style>
+</head>
+<body>
+
+ <!-- Header -->
+<header class="app-header">
+  <div class="brand">Smart HSR <span>Live&nbsp;Map</span></div>
+  <div id="nearStats" class="counter" title="حول موقعي الآن">
+    <div class="stat"><i data-lucide="map-pin" class="w-4 h-4"></i><span id="meDistLabel">—</span></div>
+    <div class="stat"><i data-lucide="alert-triangle" class="w-4 h-4"></i>قريب: <b id="nearCount">0</b></div>
+    <div class="chip" id="themeChip">وضع نهاري</div>
+  </div>
+  <div class="header-actions">
+    <button id="themeBtn" class="btn btn-soft" title="الوضع الليلي/النهاري">
+      <i data-lucide="moon"></i><span class="sr-only">الوضع</span>
+    </button>
+    <button id="locBtn" class="btn btn-primary" title="تحديد موقعي">
+      <i data-lucide="crosshair"></i><span>موقعي</span>
+    </button>
+    <button id="centerBtn" class="btn btn-dark" title="إعادة التمركز">
+      <i data-lucide="navigation"></i><span>تمركز</span>
+    </button>
+    <a href="dashboard.html" class="btn btn-soft" title="اللوحة التنفيذية">
+      <i data-lucide="layout-dashboard"></i><span class="sr-only">اللوحة التنفيذية</span>
+    </a>
+  </div>
+</header>
+
+
+  <!-- Map frame -->
+  <div class="map-wrap">
+    <div id="map" aria-label="الخريطة التفاعلية"></div>
+
+
+    <!-- Floating tools (legend only) -->
+    <div class="toolbar">
+      <button id="legendToggle" class="legend-toggle" title="إظهار/إخفاء الأسطورة">
+        <span id="legendCount" class="legend-count">0</span>
+        <i data-lucide="info"></i>
+      </button>
+
+      <div id="legendBox" class="legend-glass hidden" aria-label="أسطورة الحالات">
+        <h4 class="legend-title">أسطورة الحالات</h4>
+        <div class="legend-items">
+          <div class="item"><span class="dot red"></span> جديد</div>
+          <div class="item"><span class="dot amber"></span> قيد التنفيذ</div>
+          <div class="item"><span class="dot green"></span> مغلق</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Smart Bottom Filter Sheet (peek) -->
+    <section id="filterSheet" class="filter-sheet" aria-label="أدوات التصفية الذكية">
+      <div id="filterHandle" class="filter-grip" aria-hidden="true"></div>
+      <div class="filter-head">
+        <div class="filter-title"><i data-lucide="sliders-horizontal" class="w-4 h-4"></i> عوامل التصفية</div>
+        <div class="near-badge"><i data-lucide="radar" class="w-4 h-4"></i> قريب: <span id="nearCountMini">0</span></div>
+      </div>
+      <div class="filter-body">
+        <div class="filter-item">
+          <label for="statusFilter"><i data-lucide="list-filter"></i></label>
+          <select id="statusFilter" class="filter-select" title="تصفية حسب الحالة">
+            <option value="ALL">كل الحالات</option>
+            <option value="PENDING">جديد</option>
+            <option value="IN_PROGRESS">قيد التنفيذ</option>
+            <option value="COMPLETED">مغلق</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <i data-lucide="radar"></i>
+          <label for="radiusInput">نصف القطر:</label>
+          <input id="radiusInput" type="range" min="500" max="5000" step="100" class="filter-range">
+          <span id="radiusLabel" class="radius-value">2000 م</span>
+        </div>
+      </div>
+
+
+      <div class="legend-inline">
+  <div class="item"><span class="dot red"></span> جديد: <b id="countRed">0</b></div>
+  <div class="item"><span class="dot amber"></span> قيد التنفيذ: <b id="countAmber">0</b></div>
+  <div class="item"><span class="dot green"></span> مغلق: <b id="countGreen">0</b></div>
+</div>
+
+    </section>
+  </div>
+
+  <!-- Observation details sheet (unchanged) -->
+  <section id="smartSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-handle" id="sheetHandle" aria-hidden="true"></div>
+    <div class="sheet-header">
+      <i data-lucide="file-search" class="w-5 h-5"></i>
+      <h3 id="sheetTitle">تفاصيل الملاحظة</h3>
+      <span id="sheetChip" class="pill" style="margin-inline-start:auto"></span>
+      <button id="sheetClose" class="btn btn-ghost" title="إغلاق"><i data-lucide="x"></i></button>
+    </div>
+
+    <div id="sheetBody" class="sheet-body">
+      <div class="field">
+        <label>العنوان</label>
+        <div id="sTitle" class="card-mini"></div>
+      </div>
+      <div class="field">
+        <label>المسافة من موقعي</label>
+        <div id="sDistance" class="card-mini"></div>
+      </div>
+
+      <div class="field" style="grid-column:1/-1">
+        <label>الوصف</label>
+        <div id="sDetails" class="card-mini" style="line-height:1.8"></div>
+      </div>
+
+      <div class="field">
+        <label>الحالة</label>
+        <select id="sStatus">
+          <option value="PENDING">جديد</option>
+          <option value="IN_PROGRESS">قيد التنفيذ</option>
+          <option value="COMPLETED">مغلق</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>صورة بعد الإصلاح (إلزامية عند الإغلاق)</label>
+        <input id="sAfter" type="file" accept="image/*">
+      </div>
+
+      <div class="field" style="grid-column:1/-1">
+        <label>المذكرة الختامية</label>
+        <textarea id="sNote" rows="3" placeholder="اكتب المذكرة هنا..."></textarea>
+      </div>
+
+      <div class="field" style="grid-column:1/-1">
+        <label>المرفق الحالي</label>
+        <div id="sMedia" class="media-box"></div>
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button id="sSave" class="btn btn-primary btn-lg"><i data-lucide="save"></i>حفظ التحديث</button>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">تم الحفظ بنجاح</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfClVxFIXgUXL4olEv5SepUDtzk0dq3lo",
+      authDomain: "gen-lang-client-0349944917.firebaseapp.com",
+      projectId: "gen-lang-client-0349944917",
+      storageBucket: "gen-lang-client-0349944917.firebasestorage.app",
+      messagingSenderId: "883065484771",
+      appId: "1:883065484771:web:c907bb5a51f68caad75cd6",
+      measurementId: "G-V8WG5M8V5B"
+    };
+
+    let app, db, FIREBASE_READY=false;
+    try { app = initializeApp(firebaseConfig); db = getFirestore(app); FIREBASE_READY=true; }
+    catch(e){ console.warn("Firebase init failed, running local-only.", e); }
+
+    const root = document.documentElement;
+    const themeBtn = document.getElementById('themeBtn');
+    const themeChip = document.getElementById('themeChip');
+    function applyTheme(mode){
+      root.setAttribute('data-theme', mode);
+      themeBtn.innerHTML = mode==='dark'
+        ? '<i data-lucide="sun"></i><span class="sr-only">نهاري</span>'
+        : '<i data-lucide="moon"></i><span class="sr-only">ليلي</span>';
+      if (themeChip){ themeChip.textContent = (mode==='dark'?'وضع ليلي':'وضع نهاري'); }
+      lucide.createIcons();
+      localStorage.setItem('smartTheme', mode);
+    }
+    const saved = localStorage.getItem('smartTheme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(saved);
+    themeBtn.addEventListener('click', ()=>{
+      const now = root.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+      applyTheme(now);
+    });
+
+    const map = L.map('map', { zoomControl:false, attributionControl:true });
+    map.setView([24.7136, 46.6753], 11);
+    L.control.zoom({ position:'topright' }).addTo(map);
+    const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:19, attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    const frameRing = L.layerGroup().addTo(map);
+
+    const statusIcon = (status)=> L.divIcon({
+      html:`<div class="pulse ${status==='PENDING'?'red':status==='IN_PROGRESS'?'amber':'green'}"></div>`,
+      className:'', iconSize:[16,16], iconAnchor:[8,8]
+    });
+
+    let meMarker=null, meCircle=null, lastMe=[24.7136,46.6753];
+    const radiusInput=document.getElementById('radiusInput'); radiusInput.value=2000;
+
+    function drawMe(){
+      const r=parseInt(radiusInput.value||2000,10);
+      if (meMarker) meMarker.remove();
+      if (meCircle) meCircle.remove();
+      meMarker = L.marker(lastMe, { icon:L.divIcon({html:'<div class="me-ring"></div>', className:'', iconSize:[16,16], iconAnchor:[8,8]})}).addTo(map);
+      meCircle = L.circle(lastMe, { radius:r, color:'#18A5A2', fillColor:'var(--map-ring)', fillOpacity:0.12, weight:2 }).addTo(map);
+    }
+    function haversine(a,b){
+      const toRad = d=> d*Math.PI/180;
+      const [lat1,lon1]=a, [lat2,lon2]=b;
+      const R=6371000;
+      const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+      const s1=Math.sin(dLat/2), s2=Math.sin(dLon/2);
+      const c=2*Math.asin(Math.sqrt(s1*s1 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*s2*s2));
+      return R*c;
+    }
+
+    const markers = new Map();
+    let observations = [];
+
+    const statusFilter = document.getElementById('statusFilter');
+    const nearCountEl  = document.getElementById('nearCount');
+    const nearCountMini= document.getElementById('nearCountMini');
+    const meDistLabel  = document.getElementById('meDistLabel');
+    const radiusLabel  = document.getElementById('radiusLabel');
+
+    function fmtMeters(m){ return m<1000 ? `${Math.round(m)} م` : `${(m/1000).toFixed(1)} كم`; }
+
+    function paint(){
+      drawMe();
+      const filter = statusFilter.value;
+      const r = parseInt(radiusInput.value,10);
+      radiusLabel.textContent = `${r} م`;
+
+      let near=0;
+      const presentIds=new Set();
+      for (const o of observations){
+        if (!o.location) continue;
+        const [lat, lon] = o.location.split(',').map(n=>parseFloat(n.trim()));
+        if (Number.isNaN(lat) || Number.isNaN(lon)) continue;
+        if (filter!=='ALL' && o.status!==filter) continue;
+
+        const dist = haversine(lastMe, [lat,lon]);
+        if (dist<=r) near++;
+
+        let m = markers.get(o.docId);
+        if (!m){
+          m = L.marker([lat,lon], { icon: statusIcon(o.status) }).addTo(map);
+          m.bindTooltip(o.title || '', { direction:'top', offset:[0,-10] });
+          m.on('click', ()=> openSheet(o, dist));
+          markers.set(o.docId, m);
+        } else {
+          m.setIcon(statusIcon(o.status));
+          m.setLatLng([lat,lon]);
+        }
+        presentIds.add(o.docId);
+      }
+      for (const [id, m] of markers){
+        if (!presentIds.has(id)){ m.remove(); markers.delete(id); }
+      }
+      if (nearCountEl) nearCountEl.textContent = near.toString();
+      if (nearCountMini) nearCountMini.textContent = near.toString();
+      if (meDistLabel) meDistLabel.textContent = `نطاقي: ${fmtMeters(r)}`;
+
+      const legendCount = document.getElementById('legendCount');
+      const legendBtn = document.getElementById('legendToggle');
+      if (legendCount && legendBtn) {
+        const old = parseInt(legendCount.textContent || "0", 10);
+        legendCount.textContent = near.toString();
+        if (near !== old) {
+          legendCount.classList.add('flash');
+          setTimeout(()=>legendCount.classList.remove('flash'), 700);
+        }
+        const reds = observations.filter(o => o.status === "PENDING" && o.location && haversine(lastMe, o.location.split(',').map(Number)) <= r).length;
+        const ambers = observations.filter(o => o.status === "IN_PROGRESS" && o.location && haversine(lastMe, o.location.split(',').map(Number)) <= r).length;
+        const greens = observations.filter(o => o.status === "COMPLETED" && o.location && haversine(lastMe, o.location.split(',').map(Number)) <= r).length;
+
+        document.getElementById("countRed").textContent = reds;
+document.getElementById("countAmber").textContent = ambers;
+document.getElementById("countGreen").textContent = greens;
+        
+        
+        legendBtn.classList.remove('red','amber','green');
+        if (reds >= ambers && reds >= greens && reds > 0) legendBtn.classList.add('red');
+        else if (ambers >= reds && ambers >= greens && ambers > 0) legendBtn.classList.add('amber');
+        else if (greens > 0) legendBtn.classList.add('green');
+      }
+    }
+
+    async function startLive(){
+      if (!FIREBASE_READY){
+        observations = [
+          {docId:'local-1', id:1, title:'هبوط بسيط بالممر الجانبي', status:'PENDING', type:'MAINTENANCE', date:'2025-10-01', details:'ملاحظة تجربة.', location:'24.774265,46.738586', imagePath:'https://picsum.photos/600/400?1'},
+          {docId:'local-2', id:2, title:'تشققات عرضية', status:'IN_PROGRESS', type:'QUALITY', date:'2025-10-03', details:'جاري الإصلاح.', location:'24.633333,46.716667', imagePath:'https://picsum.photos/600/400?2'},
+          {docId:'local-3', id:3, title:'لوحة إرشادية تالفة', status:'COMPLETED', type:'QUALITY', date:'2025-10-05', details:'تم الاستبدال.', location:'24.7136,46.6753', imagePath:'https://picsum.photos/600/400?3', afterImagePath:'https://picsum.photos/600/400?4', resolutionNote:'حسب المواصفات'}
+        ];
+        paint();
+        return;
+      }
+      const q = query(collection(db,'observations'), orderBy('createdAt','desc'));
+      onSnapshot(q, (snap)=>{
+        const arr=[];
+        snap.forEach(d=>{
+          const data=d.data();
+          arr.push({
+            docId:d.id,
+            id: data.displayId || 0,
+            title:data.title||'—',
+            status:data.status||'PENDING',
+            type:data.type||'MAINTENANCE',
+            date:data.date||'',
+            details:data.details||'',
+            location:data.location||'',
+            imagePath:data.imagePath||null,
+            afterImagePath:data.afterImagePath||null,
+            resolutionNote:data.resolutionNote||''
+          });
+        });
+        observations = arr;
+        paint();
+      });
+    }
+
+    const locBtn=document.getElementById('locBtn');
+    const centerBtn=document.getElementById('centerBtn');
+    let watchId=null;
+
+    function startWatch(){
+      if (!navigator.geolocation){ alert('المتصفح لا يدعم تحديد الموقع.'); return; }
+      if (watchId!==null) return;
+      watchId = navigator.geolocation.watchPosition(pos=>{
+        lastMe=[pos.coords.latitude, pos.coords.longitude];
+        paint();
+      }, err=>{
+        console.warn(err);
+        alert('تعذر تحديد الموقع. يرجى السماح بالصلاحيات.');
+      }, { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
+    }
+
+    locBtn.addEventListener('click', ()=>{
+      startWatch();
+      map.setView(lastMe, 14, { animate:true });
+    });
+    centerBtn.addEventListener('click', ()=>{
+      map.setView(lastMe, map.getZoom()<14?14:map.getZoom(), { animate:true });
+    });
+
+    statusFilter.addEventListener('change', paint);
+    radiusInput.addEventListener('input', paint);
+
+    const sheet = document.getElementById('smartSheet');
+    const sheetHandle = document.getElementById('sheetHandle');
+    const sheetClose = document.getElementById('sheetClose');
+    const sStatus  = document.getElementById('sStatus');
+    const sTitleEl = document.getElementById('sTitle');
+    const sDetails = document.getElementById('sDetails');
+    const sMedia   = document.getElementById('sMedia');
+    const sNote    = document.getElementById('sNote');
+    const sDistance= document.getElementById('sDistance');
+    const sChip    = document.getElementById('sheetChip');
+    const sSave    = document.getElementById('sSave');
+    const sAfter   = document.getElementById('sAfter');
+    const sheetTitle= document.getElementById('sheetTitle');
+
+    let currentDocId=null, currentAfterData=null;
+
+    function setChip(status){
+      sChip.className='pill '+(status==='PENDING'?'red':status==='IN_PROGRESS'?'amber':'green');
+      sChip.textContent = status==='PENDING'?'جديد':status==='IN_PROGRESS'?'قيد التنفيذ':'مغلق';
+    }
+
+    sAfter.addEventListener('change', async (e)=>{
+      const f=e.target.files?.[0];
+      if (!f) { currentAfterData=null; return; }
+      if (!f.type.startsWith('image/')) { alert('يجب اختيار صورة.'); e.target.value=''; return; }
+      currentAfterData = await fileToBase64(f);
+    });
+
+    function openSheet(o, dist){
+      currentDocId=o.docId; currentAfterData=null;
+      sheetTitle.textContent = `ملاحظة #${o.id||'—'}`;
+      sTitleEl.textContent = o.title||'—';
+      sDetails.innerHTML = (o.details||'—').replace(/\n/g,'<br>');
+      sStatus.value = o.status||'PENDING';
+      setChip(o.status||'PENDING');
+      sNote.value = o.resolutionNote||'';
+      sDistance.textContent = (dist? (dist<1000?`${Math.round(dist)} م`:`${(dist/1000).toFixed(1)} كم`) : '—');
+
+      sMedia.innerHTML = '';
+      if (o.afterImagePath){
+        sMedia.innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <img src="${o.imagePath||''}" alt="قبل" style="width:100%;border-radius:10px">
+            <img src="${o.afterImagePath||''}" alt="بعد" style="width:100%;border-radius:10px">
+          </div>`;
+      } else if (o.imagePath){
+        sMedia.innerHTML = `<img src="${o.imagePath}" alt="مرفق" style="width:100%;border-radius:10px">`;
+      } else {
+        sMedia.innerHTML = `<div class="card-mini" style="text-align:center">لا يوجد مرفق</div>`;
+      }
+
+      sheet.classList.add('open');
+    }
+
+    sheetClose.addEventListener('click', ()=> sheet.classList.remove('open'));
+    let startY=0, currentY=0, dragging=false;
+    function onStart(e){ dragging=true; startY = (e.touches?e.touches[0].clientY:e.clientY); sheet.style.transition='none'; }
+    function onMove(e){
+      if(!dragging) return;
+      currentY = (e.touches?e.touches[0].clientY:e.clientY);
+      const dy = Math.max(0, currentY - startY);
+      sheet.style.transform = `translateY(${dy}px)`;
+    }
+    function onEnd(){
+      if(!dragging) return;
+      dragging=false; sheet.style.transition='';
+      const dy = Math.max(0, currentY - startY);
+      if (dy > 120){ sheet.classList.remove('open'); sheet.style.transform=''; }
+      else { sheet.style.transform=''; }
+    }
+    sheetHandle.addEventListener('mousedown', onStart);
+    sheetHandle.addEventListener('touchstart', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchend', onEnd);
+
+    sSave.addEventListener('click', async ()=>{
+      if (!currentDocId){ sheet.classList.remove('open'); return; }
+      const newStatus = sStatus.value;
+      if (newStatus==='COMPLETED' && !currentAfterData){
+        const ok = confirm('إغلاق يتطلب صورة "بعد". هل تريد المتابعة بدون صورة؟');
+        if (!ok) return;
+      }
+      const payload = {
+        status: newStatus,
+        resolutionNote: sNote.value || `تم التحديث بتاريخ ${new Date().toLocaleString('ar-SA')}`
+      };
+      if (currentAfterData) payload.afterImagePath = currentAfterData;
+
+      try {
+        if (FIREBASE_READY){
+          await updateDoc(doc(db,'observations', currentDocId), payload);
+        } else {
+          const idx = observations.findIndex(x=>x.docId===currentDocId);
+          if (idx>-1){ observations[idx] = { ...observations[idx], ...payload }; }
+        }
+        toast('تم الحفظ بنجاح');
+        sheet.classList.remove('open');
+        paint();
+      } catch (e){
+        console.error(e);
+        toast('تعذر الحفظ، تحقق من الاتصال');
+      }
+    });
+
+    const legendBtn = document.getElementById('legendToggle');
+    const legendBox = document.getElementById('legendBox');
+    legendBtn.addEventListener('click', () => {
+      legendBox.classList.toggle('hidden');
+      legendBtn.classList.toggle('active');
+      lucide.createIcons();
+    });
+
+    function ping(){
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 880;
+        g.gain.value = 0.0001;
+        o.connect(g); g.connect(ctx.destination);
+        o.start();
+        g.gain.exponentialRampToValueAtTime(0.05, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
+        o.stop(ctx.currentTime + 0.26);
+      }catch(e){}
+    }
+
+    const filterSheet = document.getElementById('filterSheet');
+    const filterHandle = document.getElementById('filterHandle');
+    let dragStartY = 0, dragY = 0, draggingFilter = false, sheetOpen = false;
+
+    function setFilterState(open){
+      sheetOpen = open;
+      filterSheet.classList.toggle('open', open);
+    }
+    function onFilterStart(e){
+      draggingFilter = true;
+      dragStartY = (e.touches?e.touches[0].clientY:e.clientY);
+      filterSheet.style.transition = 'none';
+    }
+    function onFilterMove(e){
+      if(!draggingFilter) return;
+      dragY = (e.touches?e.touches[0].clientY:e.clientY);
+      const dy = Math.max(0, dragY - dragStartY);
+      const base = sheetOpen ? 0 : (filterSheet.offsetHeight - 60);
+      let translate = sheetOpen ? dy : (filterSheet.offsetHeight - 60 - dy);
+      translate = Math.max(0, Math.min(filterSheet.offsetHeight - 60, translate));
+      filterSheet.style.transform = `translateY(${translate}px)`;
+    }
+    function onFilterEnd(){
+      if(!draggingFilter) return;
+      draggingFilter = false;
+      filterSheet.style.transition = '';
+      const matrix = window.getComputedStyle(filterSheet).transform;
+      let current = 0;
+      if (matrix && matrix !== 'none'){
+        const values = matrix.split('(')[1].split(')')[0].split(',');
+        current = parseFloat(values[5] || 0);
+      }
+      const threshold = (filterSheet.offsetHeight - 60)/2;
+      if (current > threshold){ setFilterState(false); filterSheet.style.transform = `translateY(${filterSheet.offsetHeight - 60}px)`; }
+      else { setFilterState(true); filterSheet.style.transform = `translateY(0)`; }
+    }
+
+    filterHandle.addEventListener('mousedown', onFilterStart);
+    filterHandle.addEventListener('touchstart', onFilterStart);
+    window.addEventListener('mousemove', onFilterMove);
+    window.addEventListener('touchmove', onFilterMove);
+    window.addEventListener('mouseup', onFilterEnd);
+    window.addEventListener('touchend', onFilterEnd);
+    document.querySelector('.filter-head').addEventListener('click', ()=> setFilterState(!sheetOpen));
+
+    function toast(text){
+      const t=document.getElementById('toast'); t.textContent=text; t.classList.add('show');
+      setTimeout(()=> t.classList.remove('show'), 1800);
+    }
+    function fileToBase64(file){
+      return new Promise((res,rej)=>{
+        const reader = new FileReader();
+        reader.onload = e=> res(e.target.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function drawFrame(){
+      frameRing.clearLayers();
+      const center = map.getCenter();
+      L.circle([center.lat, center.lng], { radius: 80, color:'#18A5A2', fillColor:'var(--map-ring)', fillOpacity:0.06, weight:1 }).addTo(frameRing);
+    }
+    map.on('moveend', drawFrame);
+    drawFrame();
+
+    startLive();
+    drawMe();
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>رفع الصور مع حفظ البيانات في Firestore</title>
+<style>
+body {
+  font-family: "Tajawal", sans-serif;
+  background: #0b2b3a;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+button {
+  background: #0ea5a1;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+img {
+  margin-top: 15px;
+  border-radius: 10px;
+  max-width: 200px;
+}
+input {
+  margin: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+}
+</style>
+</head>
+<body>
+  <h2>📤 رفع الصور إلى Firebase + حفظ في Firestore</h2>
+  <input type="text" id="userName" placeholder="اكتب اسم المستخدم">
+  <input type="file" id="imageUpload" accept="image/*">
+  <button id="uploadBtn">رفع الصورة</button>
+  <img id="preview" style="display:none;">
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBfClVxFIXgUXL4olEv5SepUDtzk0dq3lo",
+  authDomain: "gen-lang-client-0349944917.firebaseapp.com",
+  projectId: "gen-lang-client-0349944917",
+  storageBucket: "gen-lang-client-0349944917.firebasestorage.app",
+  messagingSenderId: "883065484771",
+  appId: "1:883065484771:web:c907bb5a51f68caad75cd6"
+};
+
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
+const db = getFirestore(app);
+
+const fileInput = document.getElementById("imageUpload");
+const uploadBtn = document.getElementById("uploadBtn");
+const preview = document.getElementById("preview");
+const userNameInput = document.getElementById("userName");
+
+uploadBtn.addEventListener("click", async () => {
+  const file = fileInput.files[0];
+  const userName = userNameInput.value.trim();
+
+  if (!userName) return alert("🧍‍♂️ الرجاء إدخال اسم المستخدم");
+  if (!file) return alert("🖼️ اختر صورة أولاً");
+
+  const filePath = `uploads/${Date.now()}_${file.name}`;
+  const storageRef = ref(storage, filePath);
+
+  try {
+    // رفع الصورة إلى Storage
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+
+    // عرض الصورة
+    preview.src = url;
+    preview.style.display = "block";
+
+    // حفظ البيانات في Firestore
+    await addDoc(collection(db, "user_uploads"), {
+      name: userName,
+      imageUrl: url,
+      path: filePath,
+      createdAt: serverTimestamp()
+    });
+
+    alert("✅ تم رفع الصورة وحفظ بياناتها بنجاح!");
+    console.log("الرابط:", url);
+
+  } catch (err) {
+    console.error("خطأ:", err);
+    alert("❌ حدث خطأ أثناء الرفع أو الحفظ.");
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+/* ===============================
+   1. تنسيق شعار Smart HSR Dashboard
+   =============================== */
+#hero {
+  text-align: center;
+  padding: 3rem 1rem 3.5rem 1rem;
+  background: #fff;
+  border-radius: 2rem;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
+  border-bottom: 8px solid var(--color-light-teal);
+  border-top: 8px solid var(--color-light-teal);
+}
+
+#hero h1 {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-weight: 900;
+  color: var(--color-navy);
+  line-height: 1.2;
+  margin-bottom: 0.6rem;
+}
+
+#hero h1 span {
+  color: var(--color-teal);
+}
+
+#hero h2 {
+  font-size: clamp(1.1rem, 3vw, 1.8rem);
+  font-weight: 700;
+  color: #1f2937;
+  margin-top: 0.4rem;
+}
+
+#hero p {
+  font-size: 1rem;
+  color: #6b7280;
+  max-width: 650px;
+  margin: 1.2rem auto 0 auto;
+  line-height: 1.8;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  #hero {
+    padding: 2rem 1rem;
+    border-radius: 1.3rem;
+  }
+  #hero h1 {
+    font-size: 2rem;
+  }
+  #hero h2 {
+    font-size: 1.1rem;
+  }
+  #hero p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+}
+
+/* ===============================
+   2. تصغير زر الإدخال الذكي + لمعة Apple
+   =============================== */
+#add-observation-btn {
+  transform: scale(0.9);
+  padding: 0.6rem 1.4rem !important;
+  font-size: 0.95rem !important;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #1bb3b0, #0fa29f);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(24,165,162,0.45);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* لمعة خفيفة مثل Apple */
+#add-observation-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 80%);
+  transform: skewX(-25deg);
+  transition: 0.7s;
+}
+
+#add-observation-btn:hover::after {
+  left: 130%;
+}
+
+#add-observation-btn:hover {
+  transform: scale(0.94);
+  box-shadow: 0 8px 22px rgba(24,165,162,0.6);
+}
+
+/* تحسين العرض على الجوال */
+@media (max-width: 480px) {
+  #add-observation-btn {
+    width: 100%;
+    font-size: 0.9rem !important;
+    padding: 0.7rem 1rem !important;
+    transform: scale(0.95);
+  }
+}

@@ -1,0 +1,64 @@
+/* === تنسيق وتصغير نوافذ Smart Input + Closeout بدون تغيير التصميم === */
+#smartInputModal.modal,
+#closeoutModal.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 1rem;
+  backdrop-filter: blur(3px);
+}
+
+#smartInputModal .modal-content,
+#closeoutModal .modal-content {
+  width: 92%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  padding: 1.8rem;
+  position: relative;
+  animation: fadeUp 0.3s ease-out;
+}
+
+@media (min-width: 1024px) {
+  #smartInputModal .modal-content,
+  #closeoutModal .modal-content {
+    max-width: 650px;
+    padding: 2.2rem;
+  }
+}
+
+#smartInputModal .close-btn,
+#closeoutModal .close-btn {
+  position: absolute;
+  top: 12px;
+  left: 18px;
+  font-size: 1.8rem;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+#smartInputModal .close-btn:hover,
+#closeoutModal .close-btn:hover {
+  color: #000;
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 480px) {
+  .ai-button-primary,
+  .ai-button-secondary {
+    width: 100%;
+    justify-content: center;
+    font-size: 1rem;
+  }
+}
