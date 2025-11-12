@@ -13,138 +13,60 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      background: linear-gradient(180deg, #2dd4bf 0%, #0f766e 100%);
       color: #0b2b3a;
-      background: linear-gradient(135deg, #16a34a, #0d9488, #14b8a6, #22c55e);
-      background-size: 300% 300%;
-      animation: gradientShift 8s ease-in-out infinite;
     }
-
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
     .card {
       background: rgba(255, 255, 255, 0.92);
       border-radius: 22px;
-      padding: 42px 34px;
+      padding: 40px 32px;
       width: 100%;
       max-width: 380px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
       text-align: center;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(10px);
       animation: fadeIn 1s ease-out;
-      position: relative;
     }
-
-    @keyframes fadeIn {
-      from {opacity:0; transform:translateY(25px);}
-      to {opacity:1; transform:translateY(0);}
-    }
-
+    @keyframes fadeIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
     img.logo {
-      width: 95px;
-      margin-bottom: 20px;
+      width: 90px;
+      margin-bottom: 18px;
       animation: pulse 3s infinite ease-in-out;
     }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.9; transform: scale(1.03); }
-    }
-
-    h1 {
-      margin-bottom: 6px;
-      font-size: 26px;
-      font-weight: 900;
-      color: #0b2b3a;
-    }
-
-    p {
-      margin: 0 0 25px;
-      color: #475569;
-      font-weight: 600;
-    }
-
-    label {
-      display: block;
-      text-align: right;
-      margin-bottom: 6px;
-      font-weight: 600;
-      color: #0f766e;
-    }
-
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.85;} }
+    h1 { margin-bottom: 6px; font-size: 24px; font-weight: 900; color: #0b2b3a; }
+    p { margin: 0 0 25px; color: #475569; font-weight: 600; }
+    label { display: block; text-align: right; margin-bottom: 6px; font-weight: 600; color: #0f766e; }
     input {
       width: 100%;
-      padding: 13px 14px;
+      padding: 12px 14px;
       margin-bottom: 16px;
       border: 1px solid #d1d5db;
       border-radius: 12px;
       font-size: 15px;
       outline: none;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
       background-color: #f9fafb;
     }
-
-    input:focus {
-      border-color: #0d9488;
-      box-shadow: 0 0 0 3px rgba(13,148,136,0.15);
-      background: #fff;
-    }
-
+    input:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.15); background: #fff; }
     button {
       width: 100%;
-      padding: 13px;
-      background: linear-gradient(to right, #0d9488, #22c55e);
+      padding: 12px;
+      background: linear-gradient(to right, #0d9488, #14b8a6);
       color: white;
       border: none;
       border-radius: 12px;
       font-weight: 800;
       font-size: 16px;
       cursor: pointer;
-      box-shadow: 0 8px 25px rgba(13,148,136,0.35);
+      box-shadow: 0 6px 18px rgba(13,148,136,0.3);
       transition: all 0.25s ease;
     }
-
-    button:hover {
-      transform: translateY(-2px);
-      opacity: 0.95;
-    }
-
-    .msg {
-      margin-top: 14px;
-      font-weight: 600;
-    }
-
+    button:hover { transform: translateY(-1px); opacity: 0.95; }
+    .msg { margin-top: 14px; font-weight: 600; }
     .error { color: #dc2626; }
     .success { color: #065f46; }
-
-    .footer {
-      margin-top: 18px;
-      font-size: 13px;
-      color: #64748b;
-    }
-
-    /* لمسة ناعمة متحركة خفيفة على البطاقة */
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 22px;
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(20,184,166,0.5), rgba(34,197,94,0.3));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-              mask-composite: exclude;
-      animation: borderGlow 4s ease-in-out infinite;
-    }
-
-    @keyframes borderGlow {
-      0%,100% { opacity: 0.5; }
-      50% { opacity: 1; }
-    }
+    .footer { margin-top: 18px; font-size: 13px; color: #64748b; }
   </style>
 </head>
 <body>
@@ -191,7 +113,7 @@
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
 
-      showMsg("⏳ جاري التحقق من البيانات...", "success");
+      showMsg("جاري التحقق من البيانات...", "success");
 
       try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -199,22 +121,19 @@
         const userDoc = await getDoc(doc(db, "users", user.uid));
 
         if (!userDoc.exists()) {
-          showMsg("🚫 لا يوجد صلاحية لهذا المستخدم.", "error");
+          showMsg("لا يوجد صلاحية لهذا المستخدم.", "error");
           return;
         }
 
         const role = userDoc.data().role;
         if (role === "contractor") {
-          showMsg("✅ مرحباً بالمقاول — جاري الدخول...", "success");
-          setTimeout(()=> window.location.href = "mobile-map.html", 800);
+          window.location.href = "mobile-map.html";
         } else {
-          showMsg("✅ مرحباً بالمراقب — جاري الدخول...", "success");
-          setTimeout(()=> window.location.href = "dashboard.html", 800);
+          window.location.href = "dashboard.html";
         }
-
       } catch (err) {
         console.error(err);
-        showMsg("❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور.", "error");
+        showMsg("فشل تسجيل الدخول. تحقق من البريد أو كلمة المرور.", "error");
       }
     });
   </script>
