@@ -1,0 +1,405 @@
+  <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart HSR Dashboard — المدن الذكية تبدأ من الميدان</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts: Tajawal (AR) + Inter (EN) -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
+
+  <!-- AOS (Animate On Scroll) for scroll animations) -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+
+  <style>
+    :root{
+      --turquoise:#0EA5A1;
+      --navy:#0B2B3A;
+      --ink:#0b1b32;
+      --muted:#6b7280;
+      --card:#0f1f2a;
+      --ring: rgba(14,165,161,.5);
+    }
+    html,body{scroll-behavior:smooth;}
+    body{font-family:'Tajawal', system-ui, -apple-system, Segoe UI, Roboto, 'Inter', sans-serif; background:linear-gradient(180deg,#0b2b3a 0%, #0e2330 30%, #081722 100%); color:#e8f4f4}
+
+    /* Subtle starry parallax dots */
+    .stars{pointer-events:none; position:fixed; inset:0; background:radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.18), transparent 60%), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,.12), transparent 60%), radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.10), transparent 60%); opacity:.35; mix-blend-mode:screen}
+
+    /* Soft glow around logo / buttons */
+    .glow{ box-shadow: 0 0 0 0 rgba(14,165,161,0.4); animation: pulseGlow 3.5s ease-in-out infinite; }
+    @keyframes pulseGlow{ 0%,100%{ box-shadow: 0 0 0 0 rgba(14,165,161,.35);} 50%{ box-shadow: 0 0 28px 6px rgba(14,165,161,.55);} }
+
+    /* Glass card */
+    .glass{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.12); backdrop-filter:blur(10px); }
+
+    /* Gradient ring */
+    .ringed{ position:relative; }
+    .ringed:after{ content:""; position:absolute; inset:-2px; border-radius:inherit; padding:2px; background:conic-gradient(from 140deg, rgba(14,165,161,.75), rgba(11,43,58,.8), rgba(14,165,161,.75)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; border-radius:inherit; }
+
+    /* Buttons */
+    .btn{ display:inline-flex; align-items:center; gap:.6rem; padding:.9rem 1.25rem; border-radius:1rem; font-weight:800; letter-spacing:.2px; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; background:linear-gradient(180deg, #0EA5A1, #0a8c88); color:#062226 }
+    .btn:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(14,165,161,.35); }
+
+    .btn-secondary{ background:linear-gradient(180deg, #0b2b3a, #082231); color:#dff9f7; border:1px solid rgba(255,255,255,.1) }
+
+    /* Parallax glow orb */
+    .orb{ position:absolute; width:700px; height:700px; background:radial-gradient(circle at 50% 50%, rgba(14,165,161,.24), rgba(14,165,161,0) 60%); filter:blur(30px); pointer-events:none; transform:translate(-50%,-50%); }
+
+    /* KPI counters */
+    .kpi{ background:linear-gradient(180deg, rgba(14,165,161,.12), rgba(255,255,255,.02)); border:1px solid rgba(14,165,161,.25) }
+
+    /* Feature icon glow */
+    .nano{ position:relative; }
+    .nano:before{ content:""; position:absolute; inset:-10px; background:radial-gradient(30px 30px at 50% 50%, rgba(14,165,161,.35), transparent 60%); filter:blur(16px); z-index:-1; opacity:.8 }
+
+    /* PDF frame fixed (no scroll in frame) */
+    .pdf-frame{ border:1px solid rgba(255,255,255,.08); border-radius:20px; overflow:hidden; }
+
+    /* Language helper for English snippets */
+    .en{ font-family:'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif }
+  </style>
+</head>
+<body>
+  <!-- Background parallax glow orb -->
+  <div id="orb" class="orb" style="top:30%; left:70%"></div>
+  <div class="stars"></div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 backdrop-blur-md/60 bg-[#0B2B3A]/70 border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <!-- Logo with soft glow -->
+        <div class="w-11 h-11 rounded-2xl bg-white/90 flex items-center justify-center glow ringed">
+          <!-- Simple monogram logo placeholder (replace with your SVG/PNG) -->
+          <span class="font-black text-[#0B2B3A]">SH</span>
+        </div>
+        <div class="leading-tight">
+          <div class="font-extrabold text-white text-lg">Smart HSR <span class="text-[var(--turquoise)]">Dashboard</span></div>
+          <div class="text-xs text-white/70 en">AI-Powered Urban Quality</div>
+        </div>
+      </div>
+      <nav class="hidden md:flex items-center gap-6 text-white/80">
+        <a href="#about" class="hover:text-white">الملف التعريفي</a>
+        <a href="#demo" class="hover:text-white">تجربة الذكاء الصناعي</a>
+        <a href="#impact" class="hover:text-white">الأثر</a>
+        <a href="#features" class="hover:text-white">المميزات</a>
+        <a href="#contact" class="hover:text-white">تواصل</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <a href="Home.html" class="btn glow">🚀 الدخول إلى النظام التنفيذي</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-6 pt-16 pb-20 md:pt-24 md:pb-28 grid md:grid-cols-2 gap-10 items-center">
+      <div data-aos="fade-up" data-aos-duration="900">
+        <h1 class="text-4xl md:text-5xl font-black leading-[1.2]">
+          <span class="block">المدن الذكية تبدأ من الميدان</span>
+          <span class="block mt-1 en text-2xl md:text-3xl text-[var(--turquoise)]">Smart HSR — AI Powered Urban Quality System</span>
+        </h1>
+        <p class="mt-5 text-white/80 text-lg leading-relaxed">
+          يربط <span class="font-semibold text-[var(--turquoise)]">Smart HSR</span> الميدان بغرفة القرار عبر
+          الذكاء الصناعي لتحليل الصور والملاحظات الميدانية — لتتحول البيانات الفورية إلى قرارات تنفيذية دقيقة.
+        </p>
+        <div class="mt-7 flex flex-wrap gap-3">
+        <a href="Home.html" class="btn glow">🚀 الدخول إلى النظام التنفيذي</a>
+          <a href="#about" class="btn btn-secondary">📘 الملف التعريفي</a>
+        </div>
+        <div class="mt-6 text-sm text-white/60 en">
+          Inspired by Apple / IBM / SDAIA aesthetics. Smooth. Precise. Premium.
+        </div>
+      </div>
+      <div class="relative" data-aos="fade-left" data-aos-duration="900">
+        <div class="aspect-[16/10] rounded-3xl glass ringed p-2">
+          <div class="w-full h-full rounded-2xl bg-gradient-to-br from-[rgba(14,165,161,.15)] to-[rgba(255,255,255,.03)] grid place-items-center">
+            <!-- Placeholder visual: city gridlines w/ AI glow -->
+            <svg viewBox="0 0 600 360" class="w-full h-full rounded-2xl">
+              <defs>
+                <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#0EA5A1" stop-opacity=".8" />
+                  <stop offset="100%" stop-color="#30FBEF" stop-opacity="0.2" />
+                </linearGradient>
+                <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <rect width="600" height="360" fill="url(#g1)" opacity=".08" />
+              <!-- "City" bars -->
+              <g filter="url(#soft)">
+                <rect x="60" y="140" width="40" height="140" fill="#0EA5A1" opacity=".35"/>
+                <rect x="120" y="120" width="44" height="160" fill="#0EA5A1" opacity=".22"/>
+                <rect x="180" y="180" width="40" height="100" fill="#0EA5A1" opacity=".28"/>
+                <rect x="240" y="100" width="52" height="180" fill="#0EA5A1" opacity=".30"/>
+                <rect x="310" y="150" width="44" height="130" fill="#0EA5A1" opacity=".26"/>
+                <rect x="370" y="90"  width="48" height="190" fill="#0EA5A1" opacity=".35"/>
+                <rect x="440" y="170" width="44" height="110" fill="#0EA5A1" opacity=".24"/>
+              </g>
+              <!-- AI path lines -->
+              <polyline points="60,140 100,120 160,140 220,110 300,150 370,100 440,170" stroke="#30FBEF" stroke-width="3" fill="none" stroke-linecap="round" opacity=".5" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About / Profile PDF -->
+  <section id="about" class="py-20">
+    <div class="max-w-7xl mx-auto px-6">
+      <header class="max-w-3xl" data-aos="fade-up">
+        <h2 class="text-3xl md:text-4xl font-extrabold">📘 تعرّف على Smart HSR من الداخل</h2>
+        <p class="mt-3 text-white/70 en">Explore the official profile from inside the product.</p>
+      </header>
+      <div class="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="lg:col-span-8 pdf-frame glass ringed" data-aos="zoom-in">
+          <!-- NOTE: Replace the src with your hosted PDF path if needed. If you upload the PDF beside this file, use the exact file name. -->
+        <iframe 
+  title="Smart HSR Profile PDF" 
+  src="https://drive.google.com/file/d/1yietCualc15XxZVzlxJzI7NhHVcTAwMh/preview" 
+  class="w-full h-[550px] bg-[#0a1b27] rounded-2xl" 
+  loading="lazy">
+</iframe>
+        </div>
+        <aside class="lg:col-span-4 space-y-4" data-aos="fade-left">
+          <div class="glass rounded-2xl p-5">
+            <h3 class="font-bold text-xl">ملخص سريع</h3>
+            <ul class="list-disc pr-5 mt-3 text-white/80 leading-relaxed">
+              <li>تحليل بصري فوري للصور.</li>
+              <li>تصنيف وأولويات ذكية.</li>
+              <li>لوحة قيادة تنفيذية تفاعلية.</li>
+              <li>تقارير وتوصيات لحظية.</li>
+            </ul>
+          </div>
+<a href="https://drive.google.com/uc?export=download&id=1yietCualc15XxZVzlxJzI7NhHVcTAwMh" 
+   target="_blank" 
+   class="btn w-full justify-center">
+   ⬇️ تنزيل الملف التعريفي
+</a>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Demo -->
+  <section id="demo" class="py-20">
+    <div class="max-w-7xl mx-auto px-6">
+      <header class="max-w-3xl" data-aos="fade-up">
+        <h2 class="text-3xl md:text-4xl font-extrabold">✨ جرب الذكاء الصناعي الآن <span class="en">| Try the AI Demo</span></h2>
+        <p class="mt-3 text-white/70">ارفع صورة ميدانية وشاهد الوصف التحليلي التجريبي فورًا.</p>
+      </header>
+      <div class="mt-8 grid md:grid-cols-2 gap-6 items-stretch" data-aos="fade-up">
+        <div class="glass ringed rounded-2xl p-6 flex flex-col justify-center">
+          <label class="block text-sm text-white/70 mb-2">اختر صورة (JPEG/PNG)</label>
+          <input id="aiFile" type="file" accept="image/*" class="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[var(--turquoise)] file:text-[#062226] hover:file:opacity-90 text-white/80" />
+          <div id="preview" class="mt-5 aspect-[16/10] bg-black/30 rounded-xl grid place-items-center text-white/40 text-sm">لا توجد صورة بعد</div>
+          <button id="analyzeBtn" class="btn mt-5 w-full glow">تحليل تجريبي بالذكاء الصناعي</button>
+        </div>
+        <div class="glass ringed rounded-2xl p-6">
+          <h3 class="font-bold text-xl">📄 النتيجة التحليلية</h3>
+          <div id="aiResult" class="mt-3 text-white/80 leading-relaxed">—</div>
+          <div class="mt-5 text-xs text-white/50 en">*This is a mock demo for illustration. Connect your real API later.*</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Impact Metrics -->
+  <section id="impact" class="py-20">
+    <div class="max-w-7xl mx-auto px-6">
+      <header class="max-w-3xl" data-aos="fade-up">
+        <h2 class="text-3xl md:text-4xl font-extrabold">الأثر والتحسين <span class="en">| Impact Metrics</span></h2>
+        <p class="mt-3 text-white/70">تصميم متدرج بالحركة والانسيابية يبرز النتائج.</p>
+      </header>
+      <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="kpi rounded-2xl p-6" data-aos="zoom-in" data-aos-delay="0">
+          <div class="text-3xl font-black text-[var(--turquoise)]">+4.3×</div>
+          <div class="mt-1 font-semibold">تسريع المعالجة</div>
+          <div class="text-white/70 en text-sm">Processing speed-up</div>
+        </div>
+        <div class="kpi rounded-2xl p-6" data-aos="zoom-in" data-aos-delay="100">
+          <div class="text-3xl font-black text-[var(--turquoise)]">−61%</div>
+          <div class="mt-1 font-semibold">انخفاض التراكم</div>
+          <div class="text-white/70 en text-sm">Backlog reduction</div>
+        </div>
+        <div class="kpi rounded-2xl p-6" data-aos="zoom-in" data-aos-delay="200">
+          <div class="text-3xl font-black text-[var(--turquoise)]">98%</div>
+          <div class="mt-1 font-semibold">دقة التحليل</div>
+          <div class="text-white/70 en text-sm">Analysis accuracy</div>
+        </div>
+        <div class="kpi rounded-2xl p-6" data-aos="zoom-in" data-aos-delay="300">
+          <div class="text-3xl font-black text-[var(--turquoise)]">24 / 7</div>
+          <div class="mt-1 font-semibold">جاهزية التشغيل</div>
+          <div class="text-white/70 en text-sm">Always-on readiness</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why / Investors -->
+  <section class="py-20">
+    <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-8 items-center">
+      <div data-aos="fade-up">
+        <h2 class="text-3xl md:text-4xl font-extrabold">استثمر في التحول البلدي الذكي</h2>
+        <p class="mt-4 text-white/80 leading-relaxed">
+          يجسّد <span class="text-[var(--turquoise)] font-semibold">Smart HSR</span> روح <span class="font-semibold">رؤية 2030</span> عبر الدمج بين البيانات الميدانية والذكاء الصناعي وتحليلات القرار التنفيذية.
+        </p>
+        <blockquote class="mt-5 p-5 glass rounded-2xl border border-white/10">
+          <p class="text-white/90 font-semibold">"في كل مدينة ذكية تبدأ الجودة من الميدان، ونحن نحوّل ذلك إلى واقع رقمي قابل للقياس والتحسين."</p>
+        </blockquote>
+      </div>
+      <div class="glass ringed rounded-3xl p-6" data-aos="fade-left">
+        <ul class="grid sm:grid-cols-2 gap-4">
+          <li class="nano glass rounded-2xl p-4">
+            <div class="text-lg font-bold">⚙️ تحليل صور فوري</div>
+            <div class="text-white/70 en text-sm">Instant AI Image Analysis</div>
+          </li>
+          <li class="nano glass rounded-2xl p-4">
+            <div class="text-lg font-bold">📍 تتبّع ذكي للملاحظات</div>
+            <div class="text-white/70 en text-sm">Smart Observation Tracking</div>
+          </li>
+          <li class="nano glass rounded-2xl p-4">
+            <div class="text-lg font-bold">📊 لوحة تحكم تفاعلية</div>
+            <div class="text-white/70 en text-sm">Interactive Dashboard</div>
+          </li>
+          <li class="nano glass rounded-2xl p-4">
+            <div class="text-lg font-bold">🔔 إشعارات لحظية</div>
+            <div class="text-white/70 en text-sm">Real-time Notifications</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA / Contact -->
+  <section id="contact" class="py-20">
+    <div class="max-w-5xl mx-auto px-6 text-center">
+      <h2 class="text-3xl md:text-4xl font-extrabold">تواصل معنا لشراكة وتجربة مخصصة</h2>
+      <p class="mt-3 text-white/80 en">Contact us to experience Smart HSR or request a tailored investment demo.</p>
+      <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
+        <a class="btn glow" href="https://wa.me/966507006849" target="_blank" rel="noreferrer noopener">💬 WhatsApp</a>
+        <a class="btn btn-secondary" href="mailto:support@blumark24.com">✉️ Email</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/10 py-8">
+    <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="text-white/70 text-sm">
+        © 2025 Smart HSR — جميع الحقوق محفوظة.
+      </div>
+      <div class="text-white/50 text-xs en">The program was developed ⚡️⃤ 🇸🇦 for smart cities.</div>
+    </div>
+  </footer>
+
+  <!-- Hidden anchor for CTA "launch" (update this href to your real app URL) -->
+  <a id="launch" class="hidden" href="#"></a>
+
+  <!-- AOS JS -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init({ once:true, duration:800, easing:'ease-out-cubic' });
+
+    // Parallax glow orb
+    const orb = document.getElementById('orb');
+    window.addEventListener('mousemove', (e)=>{
+      const { innerWidth:w, innerHeight:h } = window;
+      const x = (e.clientX / w) * 100;
+      const y = (e.clientY / h) * 100;
+      orb.style.left = `${x}%`;
+      orb.style.top = `${y * .6 + 10}%`;
+    });
+
+    // AI Demo: simple mock analysis
+    const aiFile = document.getElementById('aiFile');
+    const preview = document.getElementById('preview');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const aiResult = document.getElementById('aiResult');
+
+    let imgDataUrl = null;
+    aiFile?.addEventListener('change', (ev)=>{
+      const file = ev.target.files?.[0];
+      if(!file) return;
+      const rd = new FileReader();
+      rd.onload = ()=>{
+        imgDataUrl = rd.result;
+        preview.innerHTML = `<img src="${imgDataUrl}" alt="preview" class="w-full h-full object-cover rounded-xl"/>`;
+      };
+      rd.readAsDataURL(file);
+    });
+
+    analyzeBtn?.addEventListener('click', ()=>{
+      aiResult.textContent = '⏳ جاري التحليل التجريبي...';
+      setTimeout(()=>{
+        const samples = [
+          'تم رصد تلف في الرصيف مع حاجة لمعالجة فورية خلال 48 ساعة. مستوى الأولوية: مرتفع. تم تحديد الموقع بدقة وإضافة توصيات إصلاح تلقائي.',
+          'تحليل الصورة يشير إلى تجمع نفايات حول عمود إنارة. يقترح النظام مهمة تنظيف عاجلة وتوثيق بعد المعالجة. الحالة: قيد الإنشاء.',
+          'وجود حفر سطحية بطول ~1.2م. يُوصى بإعادة رصف موضعي ومتابعة خلال 72 ساعة. تم إنشاء بطاقة متابعة للمقاول.'
+        ];
+        const pick = samples[Math.floor(Math.random()*samples.length)];
+        aiResult.innerHTML = `<div class="leading-relaxed">${pick}</div>
+        <div class="mt-3 text-white/60 text-sm en">
+          *AI-like description generated for demo purposes.*
+        </div>`;
+      }, 900);
+    });
+  </script>
+
+  <!-- Smart HSR Assistant (Chatbase) -->
+  <script>
+  (function(){
+    if(!window.chatbase || window.chatbase("getState")!=="initialized"){
+      window.chatbase=(...args)=>{
+        if(!window.chatbase.q){window.chatbase.q=[]}
+        window.chatbase.q.push(args)
+      };
+      window.chatbase=new Proxy(window.chatbase,{
+        get(target,prop){if(prop==="q"){return target.q}
+        return(...a)=>target(prop,...a)}
+      });
+    }
+    const onLoad=function(){
+      const script=document.createElement("script");
+      script.src="https://www.chatbase.co/embed.min.js";
+      script.id="55P9LCwiBxOhS1khs3-VT";  // ✅ معرّف مساعدك الرسمي في Chatbase
+      script.domain="www.chatbase.co";
+      document.body.appendChild(script);
+
+      // 🎨 تخصيص مظهر المساعد وهوية Smart HSR
+      setTimeout(()=>{
+        try{
+          window.chatbase('config', {
+            color: '#0EA5A1',                // تركوازي
+            backgroundColor: '#0B2B3A',      // كحلي
+            title: 'Smart HSR Assistant 🤖',
+            subtitle: 'مساعدك الذكي للمدن الذكية',
+            showWelcomeMessage: true
+          });
+        }catch(e){ console.log('Chatbase config pending...'); }
+      }, 2500);
+    };
+    if(document.readyState==="complete"){onLoad()}
+    else{window.addEventListener("load",onLoad)}
+  })();
+  </script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
