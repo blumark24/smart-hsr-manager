@@ -1,222 +1,200 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart HSR - تسجيل الدخول</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Tajawal', sans-serif;
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      color: #0b2b3a;
-      background: linear-gradient(135deg, #16a34a, #0d9488, #14b8a6, #22c55e);
-      background-size: 300% 300%;
-      animation: gradientShift 8s ease-in-out infinite;
-    }
-
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .card {
-      background: rgba(255, 255, 255, 0.92);
-      border-radius: 22px;
-      padding: 42px 34px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-      text-align: center;
-      backdrop-filter: blur(12px);
-      animation: fadeIn 1s ease-out;
-      position: relative;
-    }
-
-    @keyframes fadeIn {
-      from {opacity:0; transform:translateY(25px);}
-      to {opacity:1; transform:translateY(0);}
-    }
-
-    img.logo {
-      width: 95px;
-      margin-bottom: 20px;
-      animation: pulse 3s infinite ease-in-out;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.9; transform: scale(1.03); }
-    }
-
-    h1 {
-      margin-bottom: 6px;
-      font-size: 26px;
-      font-weight: 900;
-      color: #0b2b3a;
-    }
-
-    p {
-      margin: 0 0 25px;
-      color: #475569;
-      font-weight: 600;
-    }
-
-    label {
-      display: block;
-      text-align: right;
-      margin-bottom: 6px;
-      font-weight: 600;
-      color: #0f766e;
-    }
-
-    input {
-      width: 100%;
-      padding: 13px 14px;
-      margin-bottom: 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 12px;
-      font-size: 15px;
-      outline: none;
-      transition: all 0.25s ease;
-      background-color: #f9fafb;
-    }
-
-    input:focus {
-      border-color: #0d9488;
-      box-shadow: 0 0 0 3px rgba(13,148,136,0.15);
-      background: #fff;
-    }
-
-    button {
-      width: 100%;
-      padding: 13px;
-      background: linear-gradient(to right, #0d9488, #22c55e);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: 800;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 8px 25px rgba(13,148,136,0.35);
-      transition: all 0.25s ease;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      opacity: 0.95;
-    }
-
-    .msg {
-      margin-top: 14px;
-      font-weight: 600;
-    }
-
-    .error { color: #dc2626; }
-    .success { color: #065f46; }
-
-    .footer {
-      margin-top: 18px;
-      font-size: 13px;
-      color: #64748b;
-    }
-
-    /* لمسة ناعمة متحركة خفيفة على البطاقة */
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 22px;
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(20,184,166,0.5), rgba(34,197,94,0.3));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-              mask-composite: exclude;
-      animation: borderGlow 4s ease-in-out infinite;
-    }
-
-    @keyframes borderGlow {
-      0%,100% { opacity: 0.5; }
-      50% { opacity: 1; }
-    }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart HSR - تسجيل الدخول</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-teal: #0ea5a1;
+            --secondary-navy: #0b2b3a;
+            --card-bg: #ffffff;
+            --button-shadow: rgba(14, 165, 161, 0.4);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(180deg, #f7f9fb 0%, #ecfdf5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+        .card {
+            width: 380px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 15px 40px rgba(10,20,50,0.15);
+            padding: 40px 30px;
+            border: 1px solid #e9ecef;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .card:hover { box-shadow: 0 18px 45px rgba(14,165,161,0.2); }
+        .card-header-line {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-teal), var(--secondary-navy));
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+        }
+        h1 { margin: 0 0 4px 0; text-align: center; font-size: 32px; color: var(--secondary-navy); font-weight: 900; }
+        p.lead { margin: 0 0 25px 0; text-align: center; color: #6c757d; font-weight: 500; font-size: 16px; }
+        .field { margin-bottom: 18px; }
+        .field label { display: block; margin-bottom: 8px; color: var(--secondary-navy); font-size: 14px; font-weight: 600; }
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid #d4dce4;
+            background: #f8f9fa;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input:focus {
+            border-color: var(--primary-teal);
+            box-shadow: 0 0 0 3px rgba(14,165,161,0.1);
+            background: white;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 17px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary-teal), #0b7285);
+            color: white;
+            box-shadow: 0 10px 20px var(--button-shadow);
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px var(--button-shadow);
+            background: linear-gradient(90deg, #0b7285, var(--primary-teal));
+        }
+        .message { text-align: center; margin-top: 15px; font-weight: 600; font-size: 15px; }
+        .error { color: #dc3545; }
+        .success { color: #198754; }
+        .muted { font-size: 13px; color: #7b8a90; text-align: center; margin-top: 15px; }
+        .loading-spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 20px; height: 20px;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width:420px) { .card { width: 95%; padding: 30px 20px; } }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <img src="Smart_HSR_Dashboard_Logo.svg" alt="Smart HSR Logo" class="logo" />
-    <h1>Smart HSR</h1>
-    <p>تسجيل الدخول إلى النظام الميداني</p>
 
-    <form id="loginForm">
-      <label for="email">البريد الإلكتروني</label>
-      <input type="email" id="email" placeholder="example@smart-hsr.com" required />
-      <label for="password">كلمة المرور</label>
-      <input type="password" id="password" placeholder="••••••••" required />
-      <button type="submit">تسجيل الدخول</button>
-    </form>
+<div class="card" role="main">
+  <div class="card-header-line"></div>
+  <h1>Smart HSR</h1>
+  <p class="lead">تسجيل الدخول إلى النظام الميداني</p>
 
-    <div id="msg" class="msg"></div>
-    <div class="footer">© 2025 Smart HSR — جميع الحقوق محفوظة</div>
-  </div>
+  <form id="loginForm">
+    <div class="field">
+      <label for="email">البريد الإلكتروني (المعتمد):</label>
+      <input id="email" type="email" placeholder="example@smart-hsr.com" required />
+    </div>
+    <div class="field">
+      <label for="password">كلمة المرور:</label>
+      <input id="password" type="password" placeholder="كلمة المرور السرية" required />
+    </div>
+    <button type="submit" id="loginButton" class="btn btn-primary" style="margin-top:10px;">
+        تسجيل الدخول
+    </button>
+  </form>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+  <div id="msg" class="message"></div>
+  <div class="muted">هذا النظام مخصص للمديرين والمراقبين والمقاولين المعتمدين فقط.</div>
+</div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-      authDomain: "smart-hsr-manager.firebaseapp.com",
-      projectId: "smart-hsr-manager",
-      storageBucket: "smart-hsr-manager.firebasestorage.app",
-      messagingSenderId: "38965508031",
-      appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-    };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const msgEl = document.getElementById('msg');
+// إعدادات Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
+  authDomain: "smart-hsr-manager.firebaseapp.com",
+  projectId: "smart-hsr-manager",
+  storageBucket: "smart-hsr-manager.firebasestorage.app",
+  messagingSenderId: "38965508031",
+  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
+};
 
-    function showMsg(text, type=''){ msgEl.textContent = text; msgEl.className = `msg ${type}`; }
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const loginButton = document.getElementById('loginButton');
+const msgBox = document.getElementById('msg');
 
-    document.getElementById('loginForm').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
+function showMsg(text, type='') {
+  msgBox.textContent = text;
+  msgBox.className = 'message ' + type;
+}
 
-      showMsg("⏳ جاري التحقق من البيانات...", "success");
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
 
-      try {
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        const user = cred.user;
-        const userDoc = await getDoc(doc(db, "users", user.uid));
+  if (!email || !password) {
+    showMsg('الرجاء إدخال البريد وكلمة المرور.', 'error');
+    return;
+  }
 
-        if (!userDoc.exists()) {
-          showMsg("🚫 لا يوجد صلاحية لهذا المستخدم.", "error");
-          return;
-        }
+  loginButton.disabled = true;
+  loginButton.innerHTML = `<div class="loading-spinner"></div> جاري الدخول...`;
 
-        const role = userDoc.data().role;
-        if (role === "contractor") {
-          showMsg("✅ مرحباً بالمقاول — جاري الدخول...", "success");
-          setTimeout(()=> window.location.href = "mobile-map.html", 800);
-        } else {
-          showMsg("✅ مرحباً بالمراقب — جاري الدخول...", "success");
-          setTimeout(()=> window.location.href = "dashboard.html", 800);
-        }
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const user = cred.user;
+    const userDoc = await getDoc(doc(db, "users", user.uid));
 
-      } catch (err) {
-        console.error(err);
-        showMsg("❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور.", "error");
+    if (!userDoc.exists()) {
+      showMsg('🚫 لا توجد صلاحية لهذا المستخدم.', 'error');
+      loginButton.disabled = false;
+      loginButton.textContent = 'تسجيل الدخول';
+      return;
+    }
+
+    const role = userDoc.data().role;
+    showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
+
+    setTimeout(() => {
+      if (role === 'contractor') {
+        window.location.href = 'mobile-map.html';
+      } else {
+        window.location.href = 'dashboard.html';
       }
-    });
-  </script>
+    }, 1000);
+
+  } catch (e) {
+    console.error(e);
+    showMsg('❌ البريد الإلكتروني أو كلمة المرور غير صحيحة.', 'error');
+    loginButton.disabled = false;
+    loginButton.textContent = 'تسجيل الدخول';
+  }
+});
+</script>
 </body>
 </html>
