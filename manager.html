@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart HSR | لوحة المدير </title>
+  <meta name="description" content="لوحة مدير تجريبية لإدارة المستخدمين والبلاغات ومؤشرات الأداء لنظام Smart HSR"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Leaflet (الخريطة الذكية) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root{--color-navy:#0A1931;--color-teal:#18A5A2;--color-gray-bg:#F7F9FC}
+    body{font-family:'Tajawal',sans-serif;background:var(--color-gray-bg);color:var(--color-navy)}
+    .card{background:#fff;border-radius:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:1.25rem;border-top:5px solid var(--color-teal)}
+    .kpi-card{border-radius:1.25rem;color:#fff;padding:1.25rem;display:flex;align-items:center;justify-content:space-between}
+    .kpi-open{background:linear-gradient(135deg,#EF4444,#B91C1C)}
+    .kpi-closed{background:linear-gradient(135deg,#10B981,#18A5A2)}
+    .kpi-total{background:linear-gradient(135deg,#3B82F6,#0A1931)}
+    .kpi-photo{background:linear-gradient(135deg,#8B5CF6,#0EA5A1)}
+    .btn{background:var(--color-teal);color:#fff;border-radius:999px;padding:.55rem 1.1rem;font-weight:800;transition:.25s;box-shadow:0 6px 15px rgba(24,165,162,.35)}
+    .btn:hover{background:#148f8c;transform:translateY(-1px)}
+    .btn-ghost{background:#0A1931;color:#fff;border-radius:999px;padding:.55rem 1.1rem;font-weight:800}
+    .tag{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.8rem;font-weight:800}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:center;justify-content:center}
+    .modal-content{background:#fff;border-radius:1rem;max-width:720px;width:92%;padding:1.25rem;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+    .table th,.table td{padding:.75rem;border-bottom:1px solid #e5e7eb}
+    .pill{border-radius:999px;padding:.25rem .65rem;font-weight:800}
+    .tab-active{background:#fff;border-top:5px solid var(--color-teal);border-radius:1rem 1rem 0 0}
+
+    #map {
+  height: 580px;
+  border-radius: 20px;
+  border: 3px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, #ACE2E1 0%, #18A5A2 50%, #0A1931 100%) border-box;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+
+    
+    .legend{position:absolute;bottom:12px;left:12px;background:#fff;border-radius:.75rem;border:1px solid #e5e7eb;padding:.6rem 1rem;font-size:.85rem;line-height:1.6;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+    .legend .dot{display:inline-block;width:.8rem;height:.8rem;border-radius:50%;margin-left:.45rem;vertical-align:middle}
+    .badge{display:inline-flex;align-items:center;gap:.4rem;background:#F1F5F9;border:1px solid #E2E8F0;padding:.25rem .6rem;border-radius:999px;font-size:.75rem;font-weight:800}
+    @media print{.no-print{display:none!important}}
+  </style>
+</head>
+<body>
+  <!-- Session Guard + Toast utilities -->
+  <script>
+    function showToast(msg){
+      const t=document.getElementById('toast');
+      if(!t) return;
+      t.textContent=msg; t.classList.remove('hidden'); t.style.opacity='1';
+      setTimeout(()=>{ t.style.opacity='0'; },2200);
+      setTimeout(()=>{ t.classList.add('hidden'); },2800);
+    }
+    (function(){
+      const s=sessionStorage.getItem('smartHSRUser');
+      if(!s){ window.location.href='manager-login.html'; return; }
+      try{
+        const user=JSON.parse(s)||{};
+        const badge=document.getElementById('userBadge');
+        if(badge){ badge.innerHTML = '<i data-lucide="user" class="w-4 h-4"></i> '+(user.email||'مدير'); badge.classList.remove('hidden'); }
+        if(!sessionStorage.getItem('welcomed')){ showToast('✅ تم تسجيل الدخول بنجاح – أهلاً بك!'); sessionStorage.setItem('welcomed','1'); }
+        try{ lucide.createIcons(); }catch(e){}
+        window.__SMART_USER__ = user;
+      }catch(e){ console.warn('Session parse failed',e); }
+    })();
+  </script>
+
+  <!-- Header -->
+  <header class="bg-white shadow-md sticky top-0 z-40 no-print">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <span class="text-xl font-extrabold">Smart HSR <span class="text-[--color-teal]">Manager Panel</span></span>
+      <span id="userBadge" class="hidden md:inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-xs font-bold"></span>
+      <button id="logoutBtn" class="btn-ghost flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> تسجيل الخروج</button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- KPIs -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="kpi-card kpi-total"><div><p class="text-sm opacity-90">إجمالي البلاغات</p><p id="kpi-total" class="text-4xl font-extrabold">--</p></div><i data-lucide="clipboard-list" class="w-10 h-10 opacity-80"></i></div>
+      <div class="kpi-card kpi-open"><div><p class="text-sm opacity-90">بلاغات مفتوحة</p><p id="kpi-open" class="text-4xl font-extrabold">--</p></div><i data-lucide="alert-triangle" class="w-10 h-10 opacity-80"></i></div>
+      <div class="kpi-card kpi-closed"><div><p class="text-sm opacity-90">بلاغات مغلقة</p><p id="kpi-closed" class="text-4xl font-extrabold">--</p></div><i data-lucide="check-circle" class="w-10 h-10 opacity-80"></i></div>
+      <div class="kpi-card kpi-photo"><div><p class="text-sm opacity-90">موثقة بالصور</p><p id="kpi-photo" class="text-4xl font-extrabold">--</p></div><i data-lucide="image" class="w-10 h-10 opacity-80"></i></div>
+    </section>
+
+    <!-- Tabs -->
+    <nav class="no-print">
+      <ul class="flex gap-3 text-sm font-extrabold">
+        <li><button class="px-4 py-2 tab-active" data-tab="users">المستخدمون</button></li>
+        <li><button class="px-4 py-2" data-tab="observations">البلاغات</button></li>
+        <li><button class="px-4 py-2" data-tab="map">الخريطة الذكية</button></li>
+        <li><button class="px-4 py-2" data-tab="reports">التقارير</button></li>
+        <li><button class="px-4 py-2" data-tab="settings">الإعدادات</button></li>
+      </ul>
+    </nav>
+
+    <!-- USERS TAB -->
+    <section id="tab-users" class="mt-6">
+      <div class="card">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <h2 class="text-2xl font-extrabold">إدارة المستخدمين</h2>
+          <div class="flex items-center gap-2">
+            <input id="userSearch" type="text" placeholder="🔍 بحث بالاسم أو البريد" class="border rounded-xl p-2 w-full md:w-64" oninput="filterUsers()"/>
+            <button class="btn" onclick="openModal('modalAddUser')"><i data-lucide="user-plus" class="w-4 h-4 ml-1"></i> إضافة مستخدم</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-xl border">
+          <table class="table w-full text-sm">
+            <thead class="bg-gray-50">
+            <tr><th>الاسم</th><th>الدور</th><th>البريد</th><th>الحالة</th><th class="text-center">إجراءات</th></tr>
+            </thead>
+            <tbody id="usersBody"><tr><td colspan="5" class="text-center p-6 text-gray-500">...جاري التحميل</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- OBSERVATIONS TAB -->
+    <section id="tab-observations" class="mt-6 hidden">
+      <div class="card">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <h2 class="text-2xl font-extrabold">إدارة البلاغات</h2>
+          <div class="flex items-center gap-2">
+            <select id="statusFilter" class="border rounded-xl p-2" onchange="renderObservations()">
+              <option value="ALL">كل الحالات</option>
+              <option value="PENDING">قيد الانتظار</option>
+              <option value="IN_PROGRESS">قيد التنفيذ</option>
+              <option value="COMPLETED">مغلق</option>
+            </select>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-xl border">
+          <table class="table w-full text-sm">
+            <thead class="bg-gray-50">
+            <tr><th>المعرف</th><th>العنوان</th><th>الحالة</th><th>المراقب</th><th>المقاول</th><th>تاريخ البلاغ</th><th class="text-center">إجراءات</th></tr>
+            </thead>
+            <tbody id="obsBody"><tr><td colspan="7" class="text-center p-6 text-gray-500">...جاري التحميل</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SMART MAP TAB -->
+    <section id="tab-map" class="mt-6 hidden">
+      <div class="card">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <h2 class="text-2xl font-extrabold">الخريطة الذكية (مباشر)</h2>
+          <div class="flex items-center gap-2">
+            <span class="badge"><span class="dot" style="background:#ef4444"></span>جديد</span>
+            <span class="badge"><span class="dot" style="background:#f59e0b"></span>قيد التنفيذ</span>
+            <span class="badge"><span class="dot" style="background:#10b981"></span>مغلق</span>
+            <span class="badge"><span class="dot" style="background:#3b82f6"></span>طاقم ميداني</span>
+          </div>
+        </div>
+        <div id="map"></div>
+        <div class="legend">
+          <div><span class="dot" style="background:#ef4444"></span>ملاحظة جديدة</div>
+          <div><span class="dot" style="background:#f59e0b"></span>لدى المقاول</div>
+          <div><span class="dot" style="background:#10b981"></span>تمت المعالجة</div>
+          <div class="mt-2"><span class="dot" style="background:#3b82f6"></span>موقع مراقب/مقاول</div>
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+          <button class="btn" id="followMeBtn" onclick="toggleLiveTracking()"><i data-lucide="navigation" class="w-4 h-4 ml-1"></i> تتبع موقعي (تشغيل)</button>
+          <button class="btn-ghost" onclick="fitAllMarkers()"><i data-lucide="scan-search" class="w-4 h-4 ml-1"></i> مواءمة جميع العلامات</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS TAB -->
+    <section id="tab-reports" class="mt-6 hidden">
+      <div class="card">
+        <h2 class="text-2xl font-extrabold mb-4">التقارير التنفيذية</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl border">
+            <h3 class="font-extrabold mb-2">ملخص الأداء (AI Demo)</h3>
+            <p class="text-sm text-gray-600 mb-4">اضغط لتوليد ملخص أداء الفرق بناءً على البيانات المعروضة.</p>
+            <button class="btn" onclick="generateAiSummary()">✨ توليد تقرير تنفيذي</button>
+            <div id="aiSummary" class="mt-4 text-sm bg-gray-50 rounded-xl p-3 hidden"></div>
+          </div>
+          <div class="p-4 rounded-xl border">
+            <h3 class="font-extrabold mb-2">تصدير وطباعة</h3>
+            <p class="text-sm text-gray-600 mb-4">يمكنك طباعة الصفحة الحالية كتقرير PDF.</p>
+            <button class="btn-ghost" onclick="window.print()"><i data-lucide="file-down" class="w-4 h-4 ml-1"></i> طباعة التقرير</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS TAB -->
+    <section id="tab-settings" class="mt-6 hidden">
+      <div class="card">
+        <h2 class="text-2xl font-extrabold mb-4">الإعدادات العامة</h2>
+        <div class="flex flex-col gap-3">
+          <label class="flex items-center gap-2"><input id="darkToggle" type="checkbox" class="w-4 h-4" onchange="toggleDarkMode()"> تفعيل الوضع الليلي (تجريبي)</label>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODALS -->
+  <div id="modalAddUser" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between border-b pb-2 mb-3">
+        <h3 class="text-xl font-extrabold">➕ إضافة مستخدم</h3>
+        <button class="text-2xl" onclick="closeModal('modalAddUser')">&times;</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-bold">الاسم</label>
+          <input id="addName" class="border rounded-xl p-2 w-full" placeholder="مثال: أحمد"/>
+        </div>
+        <div>
+          <label class="text-sm font-bold">البريد</label>
+          <input id="addEmail" type="email" class="border rounded-xl p-2 w-full" placeholder="ahmed@example.com"/>
+        </div>
+        <div>
+          <label class="text-sm font-bold">كلمة المرور</label>
+          <input id="addPassword" type="password" class="border rounded-xl p-2 w-full" placeholder="••••••••"/>
+        </div>
+        <div>
+          <label class="text-sm font-bold">الدور</label>
+          <select id="addRole" class="border rounded-xl p-2 w-full">
+            <option value="inspector">مراقب</option>
+            <option value="contractor">مقاول</option>
+            <option value="manager">مدير</option>
+          </select>
+        </div>
+        <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveUser()">حفظ</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalAssign" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between border-b pb-2 mb-3">
+        <h3 class="text-xl font-extrabold">🧭 تعيين البلاغ</h3>
+        <button class="text-2xl" onclick="closeModal('modalAssign')">&times;</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-bold">اختر مراقب</label>
+          <select id="assignInspector" class="border rounded-xl p-2 w-full"></select>
+        </div>
+        <div>
+          <label class="text-sm font-bold">اختر مقاول</label>
+          <select id="assignContractor" class="border rounded-xl p-2 w-full"></select>
+        </div>
+        <div class="flex items-end"><button class="btn" onclick="confirmAssign()">تعيين</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIBS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- FIREBASE (Modules) -->
+  <script type="module">
+    // ------ Firebase setup ------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc,
+      onSnapshot, serverTimestamp, query, orderBy, setDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// إعدادات Firebase الخاصة بك
+const firebaseConfig = {
+  apiKey: "AIzaSyBfClVxFIXgUXL4olEv5SepUDtzk0dq3lo",
+  authDomain: "gen-lang-client-0349944917.firebaseapp.com",
+  projectId: "gen-lang-client-0349944917",
+  storageBucket: "smart-hsr-manager.firebasestorage.app",
+  messagingSenderId: "883065484771",
+  appId: "1:883065484771:web:c907bb5a51f68caad75cd6",
+  measurementId: "G-V8WG5M8V5B"
+};
+
+    let app, db, auth, FIREBASE_READY=false;
+    try{
+      app  = initializeApp(firebaseConfig);
+      db   = getFirestore(app);
+      auth = getAuth(app);
+      FIREBASE_READY = !!db;
+      console.log('✅ Firebase connected');
+    }catch(e){
+      console.warn('⚠️ Firebase init failed.', e);
+    }
+
+    // ===== State =====
+    let users = [];
+    let observations = [];
+    let selectedObservationId = null;
+
+    const statusLabels = { PENDING:'قيد الانتظار', IN_PROGRESS:'قيد التنفيذ', COMPLETED:'مغلق' };
+    const statusColors = { PENDING:'bg-red-600 text-white', IN_PROGRESS:'bg-yellow-500 text-black', COMPLETED:'bg-green-600 text-white' };
+
+    // ===== Utils =====
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+    const openModal = id => { document.getElementById(id).style.display='flex'; }
+    const closeModal = id => { document.getElementById(id).style.display='none'; }
+
+    // ===== Tabs =====
+    $$("nav [data-tab]").forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        $$("nav [data-tab]").forEach(b=>b.classList.remove('tab-active'));
+        btn.classList.add('tab-active');
+        const t = btn.getAttribute('data-tab');
+        ['users','observations','map','reports','settings'].forEach(id=>{
+          document.getElementById('tab-'+id).classList.toggle('hidden', id!==t);
+        });
+        if(t==='map'){ setTimeout(()=>{ map?.invalidateSize(); }, 200); }
+      })
+    });
+
+    // ===== KPIs =====
+    function renderKPIs(){
+      const total = observations.length;
+      const open = observations.filter(o=>o.status!=='COMPLETED').length;
+      const closed = total - open;
+      const photo = observations.filter(o=>o.hasImage).length;
+      document.getElementById('kpi-total').textContent = total;
+      document.getElementById('kpi-open').textContent = open;
+      document.getElementById('kpi-closed').textContent = closed;
+      document.getElementById('kpi-photo').textContent = photo;
+      try{ lucide.createIcons(); }catch(e){}
+    }
+
+    // ===== Users =====
+    function roleBadge(role){
+      const map={manager:'مدير', inspector:'مراقب', contractor:'مقاول'};
+      const cls={manager:'bg-slate-800 text-white', inspector:'bg-sky-600 text-white', contractor:'bg-emerald-600 text-white'};
+      return `<span class="pill ${cls[role]||'bg-gray-400 text-white'}">${map[role]||role}</span>`
+    }
+    function statusSwitch(u){
+      const t = u.active? 'تعطيل' : 'تفعيل';
+      const c = u.active? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700';
+      return `<button class="px-3 py-1 text-white rounded-full ${c}" onclick="toggleUser('${u.id}')">${t}</button>`
+    }
+    function renderUsers(){
+      const body = document.getElementById('usersBody');
+      const q = (document.getElementById('userSearch').value||'').trim().toLowerCase();
+      const filtered = users.filter(u=>!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+      if(!filtered.length){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>لا توجد نتائج</td></tr>`; return; }
+      body.innerHTML = filtered.map(u=>
+        `<tr>
+          <td class="font-bold">${u.name}</td>
+          <td>${roleBadge(u.role)}</td>
+          <td class="text-gray-600">${u.email}</td>
+          <td>${u.active?'<span class="tag bg-green-100 text-green-700">نشط</span>':'<span class="tag bg-red-100 text-red-700">معطل</span>'}</td>
+          <td class="text-center">
+            <div class="flex items-center gap-2 justify-center">
+              ${statusSwitch(u)}
+              <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="editUser('${u.id}')">تعديل</button>
+              <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="removeUser('${u.id}')">حذف</button>
+            </div>
+          </td>
+        </tr>`
+      ).join('');
+      try{ lucide.createIcons(); }catch(e){}
+    }
+    window.filterUsers = ()=>renderUsers();
+
+    // إنشاء مستخدم فعلي (Auth + Firestore)
+    async function saveUser(){
+      const name=$('#addName').value.trim();
+      const email=$('#addEmail').value.trim();
+      const password=$('#addPassword').value.trim();
+      const role=$('#addRole').value;
+      if(!name||!email||!password){ alert('الرجاء تعبئة الاسم والبريد وكلمة المرور.'); return; }
+      try{
+        if(!FIREBASE_READY){ alert('لم يتم ضبط Firebase بعد. الرجاء إدخال الإعدادات الصحيحة.'); return; }
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = cred.user.uid;
+        await setDoc(doc(db,'users',uid), { uid, name, email, role, active:true, createdAt: serverTimestamp() });
+        users.unshift({ id: uid, name, email, role, active:true });
+        closeModal('modalAddUser');
+        $('#addName').value=''; $('#addEmail').value=''; $('#addPassword').value=''; $('#addRole').value='inspector';
+        renderUsers();
+        showToast('✅ تم إنشاء المستخدم بنجاح');
+      }catch(err){
+        console.error(err); alert('حدث خطأ أثناء إنشاء المستخدم: '+ (err?.message||err));
+      }
+    }
+    window.saveUser = saveUser;
+
+    async function toggleUser(id){
+      const u=users.find(x=>x.id===id); if(!u) return;
+      u.active=!u.active; renderUsers();
+      if(FIREBASE_READY) await updateDoc(doc(db,'users',id), {active:u.active});
+    }
+    window.toggleUser = toggleUser;
+
+    async function editUser(id){
+      const u=users.find(x=>x.id===id); if(!u) return;
+      const nn=prompt('تعديل الاسم',u.name)||u.name;
+      const em=prompt('تعديل البريد',u.email)||u.email;
+      u.name=nn; u.email=em; renderUsers();
+      if(FIREBASE_READY) await updateDoc(doc(db,'users',id), {name:nn,email:em});
+    }
+    window.editUser = editUser;
+
+    async function removeUser(id){
+      if(!confirm('تأكيد حذف المستخدم؟')) return;
+      users = users.filter(u=>u.id!==id); renderUsers();
+      if(FIREBASE_READY) await deleteDoc(doc(db,'users',id));
+    }
+    window.removeUser = removeUser;
+
+    // ===== Observations (قائمة) =====
+    function renderObservations(){
+      const body = document.getElementById('obsBody');
+      const f = document.getElementById('statusFilter').value;
+      const list = observations.filter(o=> f==='ALL' || o.status===f );
+      if(!list.length){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-gray-500'>لا توجد بلاغات</td></tr>`; return; }
+      body.innerHTML = list.map(o=>
+        `<tr>
+          <td class="font-bold">${o.displayId || o.id}</td>
+          <td>${o.title||'—'}</td>
+          <td><span class="tag ${statusColors[o.status]||'bg-gray-500 text-white'}">${statusLabels[o.status]||o.status}</span></td>
+          <td>${o.inspector||'—'}</td>
+          <td>${o.contractor||'—'}</td>
+          <td class="text-gray-600">${o.date||'—'}</td>
+<td class="text-center">
+  <div class="flex items-center gap-2 justify-center">
+    <button class="px-3 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-full" onclick="openAssign('${o.docId||o.id}')">تعيين</button>
+    <button class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-full" onclick="cycleStatus('${o.docId||o.id}')">تغيير الحالة</button>
+    <button class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full" onclick="closeTicket('${o.docId||o.id}')">إغلاق</button>
+
+    <!-- 🔴 زر الحذف -->
+    <button class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-full" onclick="deleteObservation('${o.docId||o.id}')">🗑️ حذف</button>
+
+    <!-- 🔵 زر عرض الصور -->
+    <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="showObservationImages('${o.docId||o.id}')">📸 عرض الصور</button>
+  </div>
+</td>
+
+        </tr>`
+      ).join('');
+      try{ lucide.createIcons(); }catch(e){}
+    }
+    window.renderObservations = renderObservations;
+
+    async function cycleStatus(id){
+      const o=observations.find(x=>(x.docId||x.id)==id); if(!o) return;
+      o.status = o.status==='PENDING'?'IN_PROGRESS':(o.status==='IN_PROGRESS'?'COMPLETED':'PENDING');
+      renderObservations(); renderKPIs(); refreshMapMarkers();
+      if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), {status:o.status});
+    }
+    window.cycleStatus = cycleStatus;
+
+    async function closeTicket(id){
+      const o=observations.find(x=>(x.docId||x.id)==id); if(!o) return;
+      o.status='COMPLETED'; renderObservations(); renderKPIs(); refreshMapMarkers();
+      if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), {status:'COMPLETED', closedAt: serverTimestamp()});
+      alert('تم إغلاق البلاغ رقم '+(o.displayId || o.id));
+    }
+    window.closeTicket = closeTicket;
+
+    // ===== Assign Modal =====
+    function openAssign(id){
+      selectedObservationId=id;
+      const inspSel=$('#assignInspector'); const contSel=$('#assignContractor');
+      const insp = users.filter(u=>u.role==='inspector'&&u.active);
+      const cont = users.filter(u=>u.role==='contractor'&&u.active);
+      inspSel.innerHTML = insp.length? insp.map(u=>`<option>${u.name}</option>`).join('') : '<option disabled>لا يوجد مراقبون نشطون</option>';
+      contSel.innerHTML = cont.length? cont.map(u=>`<option>${u.name}</option>`).join('') : '<option disabled>لا يوجد مقاولون نشطون</option>';
+      openModal('modalAssign');
+    }
+    window.openAssign = openAssign;
+
+    async function confirmAssign(){
+      const o=observations.find(x=>(x.docId||x.id)==selectedObservationId); if(!o) return;
+      const inspector=$('#assignInspector').value||o.inspector;
+      const contractor=$('#assignContractor').value||o.contractor;
+      o.inspector=inspector; o.contractor=contractor;
+      closeModal('modalAssign'); renderObservations();
+      if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), {inspector,contractor});
+      alert('تم التعيين بنجاح');
+    }
+    window.confirmAssign = confirmAssign;
+
+    // ===== Reports (AI Demo) =====
+    function generateAiSummary(){
+      const total=observations.length; const open=observations.filter(o=>o.status!=='COMPLETED').length; const closed=total-open;
+      const topInspector = (function(){ const m={}; observations.forEach(o=>{ if(o.inspector&&o.status==='COMPLETED'){ m[o.inspector]=(m[o.inspector]||0)+1 } }); let k='—',v=0; Object.entries(m).forEach(([n,c])=>{ if(c>v){k=n;v=c} }); return k; })();
+      const html = `<div class='p-3 border-r-4 border-[--color-teal] bg-white rounded-xl'>
+        <p class='font-bold'>ملخص تنفيذي (تجريبي):</p>
+        <ul class='list-disc pr-6 mt-2 text-sm text-gray-700'>
+          <li>إجمالي البلاغات: <b>${total}</b> | مفتوحة: <b>${open}</b> | مغلقة: <b>${closed}</b>.</li>
+          <li>أعلى إنجاز: <b>${topInspector}</b> بناءً على عدد البلاغات المغلقة.</li>
+          <li>توصية: تسريع توثيق صور الإغلاق لرفع نسبة الإكمال.</li>
+        </ul>
+      </div>`;
+      const box = document.getElementById('aiSummary');
+      box.innerHTML = html; box.classList.remove('hidden');
+    }
+    window.generateAiSummary = generateAiSummary;
+
+    // ===== Settings =====
+    function toggleDarkMode(){ document.body.classList.toggle('bg-slate-900'); document.body.classList.toggle('text-white'); }
+    window.toggleDarkMode = toggleDarkMode;
+
+    // ===== Logout =====
+    document.getElementById('logoutBtn').addEventListener('click',()=>{
+      sessionStorage.removeItem('smartHSRUser');
+      sessionStorage.removeItem('welcomed');
+      window.location.href='manager-login.html';
+    });
+
+    // ===== Firestore sync (Users + Observations) =====
+    async function loadFromFirestore(){
+      if(!FIREBASE_READY) { console.warn('Firebase غير متاح — لن يتم تحميل بيانات تجريبية تلقائياً.'); return; }
+
+      // Users
+      onSnapshot(collection(db,'users'), snap=>{
+        users = [];
+        snap.forEach(d=> users.push({id:d.id, ...d.data()}) );
+        renderUsers();
+      });
+
+      // Observations ordered by time desc
+      onSnapshot(query(collection(db,'observations'), orderBy('createdAt','desc')), snap=>{
+        const arr=[];
+        snap.forEach(d=>{
+          const x=d.data();
+          // دعم كلا الحالتين: lat/lng كأرقام أو location كنص "lat, lng"
+          let lat = typeof x.lat==='number' ? x.lat : null;
+          let lng = typeof x.lng==='number' ? x.lng : null;
+          if((lat===null || lng===null) && typeof x.location==='string'){
+            const parts = x.location.split(',').map(s=>parseFloat(s.trim()));
+            if(parts.length===2 && parts.every(n=>Number.isFinite(n))){ lat=parts[0]; lng=parts[1]; }
+          }
+          arr.push({
+            docId:d.id,
+            id: x.id || d.id,
+            displayId: x.displayId || x.id || '',
+            title: x.title || '',
+            status: x.status || 'PENDING',
+            inspector: x.inspector || '—',
+            contractor: x.contractor || '—',
+            date: x.date || '',
+            hasImage: !!(x.imagePath || x.afterImagePath),
+            lat, lng
+          });
+        });
+        observations = arr;
+        renderObservations(); renderKPIs(); refreshMapMarkers();
+      });
+    }
+
+    // ===== Smart Map (Leaflet) =====
+    let map, markersLayer, presenceLayer, myWatchId=null, presenceUnsub=null;
+    const statusColor = s => s==='PENDING' ? '#ef4444' : (s==='IN_PROGRESS' ? '#f59e0b' : '#10b981');
+
+    function initMap(){
+      map = L.map('map',{ zoomControl:true }).setView([24.7136,46.6753], 10);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        maxZoom: 19, attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+      markersLayer = L.layerGroup().addTo(map);
+      presenceLayer = L.layerGroup().addTo(map);
+    }
+
+    function makeDot(color){
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28">
+          <circle cx="14" cy="14" r="10" fill="${color}" stroke="white" stroke-width="3"/>
+        </svg>`;
+      return L.icon({
+        iconUrl: 'data:image/svg+xml;base64,'+btoa(svg),
+        iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-12]
+      });
+    }
+    const ICONS = {
+      PENDING: makeDot('#ef4444'),
+      IN_PROGRESS: makeDot('#f59e0b'),
+      COMPLETED: makeDot('#10b981'),
+      CREW: makeDot('#3b82f6')
+    };
+
+    function refreshMapMarkers(){
+      if(!map) return;
+      markersLayer.clearLayers();
+      const list = observations.filter(o=>Number.isFinite(o.lat) && Number.isFinite(o.lng));
+      list.forEach(o=>{
+        const icon = ICONS[o.status] || ICONS.PENDING;
+        const m = L.marker([o.lat,o.lng], {icon})
+
+         .bindPopup(`
+  <div style="min-width:200px; font-family:Tajawal;">
+    <div class="font-extrabold mb-1 text-[15px]">${o.title || '—'}</div>
+    <div class="text-xs text-gray-600 mb-2">المعرف: ${(o.displayId || o.id) || '—'}</div>
+    <div class="text-xs mb-2"><span class="badge"><span class="dot" style="background:${statusColor(o.status)}"></span>${statusLabels[o.status] || o.status}</span></div>
+    ${o.inspector && o.inspector !== '—' ? `<div class="text-xs mb-1">👷‍♂️ المراقب: ${o.inspector}</div>` : ''}
+    ${o.contractor && o.contractor !== '—' ? `<div class="text-xs mb-2">🏗️ المقاول: ${o.contractor}</div>` : ''}
+    <div class="flex flex-col gap-2">
+      <button onclick="showObservationImages('${o.docId || o.id}')" class="px-2 py-1 bg-indigo-600 text-white rounded text-xs w-full">📸 عرض الصور</button>
+      <button onclick="closeTicket('${o.docId || o.id}')" class="px-2 py-1 bg-green-600 text-white rounded text-xs w-full">✅ إغلاق البلاغ</button>
+      <button onclick="deleteObservation('${o.docId || o.id}')" class="px-2 py-1 bg-red-600 text-white rounded text-xs w-full">🗑️ حذف البلاغ</button>
+    </div>
+  </div>
+`);
+ 
+
+        
+        m.addTo(markersLayer);
+      });
+    }
+
+    function fitAllMarkers(){
+      const all = [];
+      markersLayer.eachLayer(l=> all.push(l.getLatLng()));
+      presenceLayer.eachLayer(l=> all.push(l.getLatLng()));
+      if(!all.length) return;
+      const bounds = L.latLngBounds(all);
+      map.fitBounds(bounds.pad(0.2));
+    }
+    window.fitAllMarkers = fitAllMarkers;
+
+    async function toggleLiveTracking(){
+      const btn = document.getElementById('followMeBtn');
+      if(myWatchId!==null){
+        navigator.geolocation.clearWatch(myWatchId);
+        myWatchId=null; btn.textContent='تتبع موقعي (تشغيل)';
+        showToast('تم إيقاف التتبع');
+        return;
+      }
+      if(!('geolocation' in navigator)){ alert('المتصفح لا يدعم GPS'); return; }
+      btn.textContent='إيقاف التتبع';
+      myWatchId = navigator.geolocation.watchPosition(async pos=>{
+        const {latitude:lat, longitude:lng} = pos.coords;
+        if(FIREBASE_READY){
+          const me = window.__SMART_USER__ || {};
+          await setDoc(doc(db,'presence', (me.email||'manager')), {
+            role: 'manager', email: me.email||'manager', lat, lng, updatedAt: serverTimestamp()
+          });
+        }
+      }, _err=>{
+        console.warn(_err); showToast('تعذر الحصول على الموقع');
+      }, {enableHighAccuracy:true, maximumAge:5000, timeout:20000});
+    }
+    window.toggleLiveTracking = toggleLiveTracking;
+
+    function subscribePresence(){
+      if(!FIREBASE_READY) return;
+      if(presenceUnsub) presenceUnsub();
+      presenceUnsub = onSnapshot(collection(db,'presence'), snap=>{
+        presenceLayer.clearLayers();
+        snap.forEach(d=>{
+          const p=d.data(); if(typeof p.lat!=='number'||typeof p.lng!=='number') return;
+          const m = L.marker([p.lat,p.lng], {icon:ICONS.CREW})
+            .bindPopup(`<div class="text-sm"><b>${p.role||'crew'}</b><div class="text-xs text-gray-600">${p.email||''}</div></div>`);
+          m.addTo(presenceLayer);
+        });
+      });
+    }
+
+    // ===== Boot =====
+    function boot(){
+      initMap();
+      if(FIREBASE_READY) { loadFromFirestore(); subscribePresence(); }
+      else { showToast('⚠️ الرجاء ضبط مفاتيح Firebase ليعمل المشروع.'); }
+      try{ lucide.createIcons(); }catch(e){}
+    }
+    window.addEventListener('DOMContentLoaded', boot);
+
+  
+    
+        // ===== Delete Observation =====
+    async function deleteObservation(id) {
+      if (!confirm("⚠️ هل أنت متأكد أنك تريد حذف هذه الملاحظة نهائيًا؟")) return;
+      const o = observations.find(x => (x.docId || x.id) == id);
+      if (!o) return;
+
+      // حذف من الواجهة
+      observations = observations.filter(x => (x.docId || x.id) != id);
+      renderObservations();
+      renderKPIs();
+      refreshMapMarkers?.();
+
+      // حذف من Firestore
+      if (FIREBASE_READY && o.docId) {
+        try {
+          await deleteDoc(doc(db, "observations", o.docId));
+          alert("✅ تم حذف الملاحظة بنجاح");
+        } catch (err) {
+          console.error(err);
+          alert("حدث خطأ أثناء الحذف ❌");
+        }
+      }
+    }
+    window.deleteObservation = deleteObservation;
+
+
+// ===== Show Observation Images (خريطة ذكية مطورة) =====
+async function showObservationImages(id) {
+  const o = observations.find(x => (x.docId || x.id) == id);
+  if (!o) {
+    alert("❌ لم يتم العثور على الملاحظة.");
+    return;
+  }
+
+  // جمع الصور من كل الحقول المحتملة
+  const keys = [
+    "beforeImagePath", "afterImagePath", "imagePath",
+    "beforeImage", "afterImage", "photoPath", "imgPath", "photoUrl"
+  ];
+  let before = null, after = null;
+  for (const key of keys) {
+    if (o[key] && typeof o[key] === "string") {
+      if (!before) before = o[key];
+      else if (!after && o[key] !== before) after = o[key];
+    }
+  }
+  if (o.images) {
+    if (o.images.before && !before) before = o.images.before;
+    if (o.images.after && !after) after = o.images.after;
+  }
+
+  // لو مافيه صور نهائياً
+  if (!before && !after) {
+    L.popup()
+      .setLatLng([o.lat, o.lng])
+      .setContent(`<div style="min-width:220px;text-align:center;font-family:Tajawal;">
+        🚫 لا توجد صور مرفقة لهذه الملاحظة.
+      </div>`)
+      .openOn(map);
+    return;
+  }
+
+  // بناء محتوى المقارنة
+  const html = `
+    <div style="position:relative;width:270px;overflow:hidden;border-radius:12px;">
+      <img src="${before}" style="width:100%;display:block;border-radius:12px;">
+      ${
+        after
+          ? `<div id="compareAfter" style="position:absolute;top:0;left:0;width:50%;overflow:hidden;">
+               <img src="${after}" style="width:100%;border-radius:12px;">
+             </div>
+             <div id="compareDivider" style="position:absolute;top:0;left:50%;width:3px;height:100%;background:#18A5A2;cursor:ew-resize;"></div>`
+          : ""
+      }
+      <div style="text-align:center;margin-top:5px;">
+        <small>${after ? "📸 قبل / بعد" : "📷 صورة البلاغ"}</small>
+      </div>
+    </div>
+  `;
+
+  // فتح البوب أب
+  const popup = L.popup()
+    .setLatLng([o.lat, o.lng])
+    .setContent(html)
+    .openOn(map);
+
+  // لو في صورتين — فعل السحب اليدوي
+  setTimeout(() => {
+    const divider = document.getElementById("compareDivider");
+    const afterBox = document.getElementById("compareAfter");
+    if (!divider || !afterBox) return;
+    let dragging = false;
+    divider.addEventListener("mousedown", () => (dragging = true));
+    window.addEventListener("mouseup", () => (dragging = false));
+    window.addEventListener("mousemove", e => {
+      if (!dragging) return;
+      const rect = divider.parentElement.getBoundingClientRect();
+      let x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const percent = (x / rect.width) * 100;
+      afterBox.style.width = percent + "%";
+      divider.style.left = percent + "%";
+    });
+  }, 300);
+}
+window.showObservationImages = showObservationImages;
+
+// ===== CSS لتصميم النافذة =====
+const style = document.createElement("style");
+style.textContent = `
+.observation-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+.modal-content {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+  text-align: center;
+  z-index: 10;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: scaleIn 0.25s ease;
+}
+.modal-content h3 {
+  font-size: 20px;
+  color: #0b2b3a;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.images {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.images div p {
+  font-weight: bold;
+  color: #0ea5a1;
+  margin-bottom: 6px;
+}
+.images img {
+  max-width: 280px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+  transition: transform 0.3s ease;
+  cursor: zoom-in;
+}
+.images img:hover {
+  transform: scale(1.05);
+}
+.modal-content button {
+  background: linear-gradient(90deg,#0b2b3a,#0ea5a1);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  margin-top: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+.modal-content button:hover { opacity: 0.85; }
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+@keyframes scaleIn { from{opacity:0;transform:scale(.9);} to{opacity:1;transform:scale(1);} }
+`;
+document.head.appendChild(style);
+
+
+    
+  </script>
+
+  <!-- App helpers (non-module so we can call them from inline HTML) -->
+  <script>
+    window.openModal = (id)=>{ document.getElementById(id).style.display='flex'; };
+    window.closeModal = (id)=>{ document.getElementById(id).style.display='none'; };
+  </script>
+
+<!-- مقارنة الصور قبل وبعد -->
+<div id="imageComparisonWrapper" class="comparison-wrapper hidden mt-6">
+  <img id="beforeImage" class="before-image w-full h-auto" alt="صورة قبل الإصلاح">
+  <div id="afterImageContainer" class="after-image">
+    <img id="afterImage" class="w-full h-auto" alt="صورة بعد الإصلاح">
+  </div>
+  <div id="comparisonDivider" class="comparison-divider no-print">
+    <div class="comparison-divider-handle">
+      <i data-lucide="arrow-left-right" class="w-4 h-4 text-teal-600"></i>
+    </div>
+  </div>
+  <span class="comparison-label label-before no-print">قبل</span>
+  <span class="comparison-label label-after no-print">بعد</span>
+</div>
+
+  
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 bg-teal-600 text-white px-4 py-2 rounded-full shadow-xl z-50 transition-opacity duration-500"></div>
+
+
+</body>
+</html>
