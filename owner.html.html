@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>لوحة المالك – SmartX SaaS (متصلة فعليًا)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0a2647; --card:#0f284f; --stroke:#1c325c; --gold:#ffd700; --emerald:#10b981; --cyan:#06b6d4; --rose:#f43f5e; --amber:#f59e0b;
+    }
+    body { background: var(--bg); color:#f8fafc; font-family:"Cairo", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
+    .glass { background: linear-gradient(180deg, rgba(16,24,40,.55), rgba(2,6,23,.55)); backdrop-filter: blur(8px); border:1px solid #1f3a70; }
+    .card { border:1px solid var(--stroke); border-radius: 16px; background: linear-gradient(180deg, rgba(11,36,71,.8), rgba(4,18,40,.8)); box-shadow: 0 8px 24px rgba(2,6,23,.35); }
+    .title { color: var(--gold); letter-spacing: .2px; }
+    .btn { border-radius: 12px; padding:.6rem 1rem; font-weight:700; }
+    .btn-primary { background: linear-gradient(135deg, #059669, #10b981); border: 1px solid #10b981; }
+    .btn-outline { border:1px solid #334155; }
+    .pill { padding:.2rem .55rem; border:1px solid #334155; border-radius:999px; font-size:12px; }
+    .sidebar-link { border-radius: 12px; padding:.6rem .8rem; display:flex; align-items:center; gap:.6rem; border:1px solid transparent; }
+    .sidebar-link:hover { background:#0b1f3f; border-color:#1f3a70; }
+    .table { border-collapse: separate; border-spacing:0; }
+    .table th, .table td { border-bottom:1px solid #1c315e; }
+    .badge { border-radius:999px; padding:.2rem .55rem; font-size:12px; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="grid grid-cols-12 gap-4 p-4">
+    <!-- Sidebar -->
+    <aside class="col-span-12 md:col-span-3 lg:col-span-2 card p-4">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 grid place-items-center font-extrabold">SX</div>
+        <div>
+          <div class="text-xs text-slate-400">لوحة المالك</div>
+          <div class="font-bold">SmartX Command</div>
+        </div>
+      </div>
+      <nav class="space-y-1 text-sm">
+        <a class="sidebar-link bg-[#0b1f3f] border-[#1f3a70]" href="#top">🏠 لوحة التحكم</a>
+        <a class="sidebar-link" href="#orgs">🏢 المؤسسات</a>
+        <a class="sidebar-link" href="#subs">💳 الاشتراكات</a>
+        <a class="sidebar-link" href="#reports">📈 التقارير</a>
+        <a class="sidebar-link" href="#settings">⚙️ الإعدادات</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="col-span-12 md:col-span-9 lg:col-span-10 space-y-4">
+      <!-- Topbar -->
+      <header class="card px-4 py-3 flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-extrabold title">لوحة المالك – تحكم شامل بالمؤسسات</h1>
+          <p class="text-slate-300 text-sm mt-1">تصميم فخم مستوحى من أنظمة حكومية (بلدي / توكلنا أعمال) مع اتصال فعلي بقاعدة البيانات.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="ownerName" class="pill">مرحّبًا بك 👑 مالك النظام</span>
+          <button id="logoutBtn" class="btn btn-outline">تسجيل خروج</button>
+        </div>
+      </header>
+
+      <!-- KPI Cards -->
+      <section id="top" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="card p-4">
+          <p class="text-xs text-slate-400">إجمالي الأرباح الشهرية</p>
+          <h3 id="kpiRevenue" class="text-3xl font-extrabold text-emerald-400">--</h3>
+          <small id="kpiRevenueNote" class="text-slate-400">—</small>
+        </div>
+        <div class="card p-4">
+          <p class="text-xs text-slate-400">عدد المؤسسات النشطة</p>
+          <h3 id="kpiActive" class="text-3xl font-extrabold text-cyan-400">--</h3>
+          <small class="text-slate-400">خطة مدفوعة</small>
+        </div>
+        <div class="card p-4">
+          <p class="text-xs text-slate-400">التجارب المجانية</p>
+          <h3 id="kpiTrial" class="text-3xl font-extrabold text-amber-400">--</h3>
+          <small class="text-slate-400">تنتهي قريبًا</small>
+        </div>
+        <div class="card p-4">
+          <p class="text-xs text-slate-400">اشتراكات منتهية</p>
+          <h3 id="kpiExpired" class="text-3xl font-extrabold text-rose-400">--</h3>
+          <small class="text-slate-400">بحاجة متابعة</small>
+        </div>
+      </section>
+
+      <!-- Chart -->
+      <section class="card p-4">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-lg font-bold title">نمو المؤسسات (آخر 6 أشهر)</h2>
+          <span class="pill">تفاعلي</span>
+        </div>
+        <canvas id="orgsChart" height="80"></canvas>
+      </section>
+
+      <!-- Organizations Table -->
+      <section id="orgs" class="card p-4">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="text-lg font-bold title">المؤسسات المسجلة</h2>
+            <p class="text-xs text-slate-400">إدارة كاملة: إضافة، تعديل، حذف، وترقية الخطط.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="searchBox" placeholder="ابحث باسم المؤسسة..." class="bg-transparent border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" />
+            <button id="addOrgBtn" class="btn btn-primary">+ إضافة مؤسسة</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="table min-w-full text-sm text-right">
+            <thead class="text-slate-400">
+              <tr>
+                <th class="py-2 px-3">المؤسسة</th>
+                <th class="py-2 px-3">المدير</th>
+                <th class="py-2 px-3">البريد</th>
+                <th class="py-2 px-3">الجوال</th>
+                <th class="py-2 px-3">الخطة</th>
+                <th class="py-2 px-3">الدورة</th>
+                <th class="py-2 px-3">الحالة</th>
+                <th class="py-2 px-3">الانتهاء</th>
+                <th class="py-2 px-3">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="orgsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Subscriptions Placeholder -->
+      <section id="subs" class="card p-4">
+        <h2 class="text-lg font-bold title mb-1">الاشتراكات</h2>
+        <p class="text-sm text-slate-300">سيتم ربطها ببوابة دفع (Tap/Stripe). قم بإدارة الخطط من الجدول أعلاه مؤقتًا.</p>
+      </section>
+
+      <footer id="settings" class="text-xs text-slate-400 py-4">
+        <p>© SmartX SaaS — لوحة مالك فاخرة بمستوى عالمي.</p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Modal: Add/Edit Organization -->
+  <dialog id="orgModal" class="glass rounded-2xl p-0 w-[92vw] max-w-2xl">
+    <form id="orgForm" method="dialog" class="p-4 space-y-3">
+      <div class="flex items-center justify-between mb-2">
+        <h3 id="modalTitle" class="text-xl font-extrabold title">إضافة مؤسسة</h3>
+        <button type="button" onclick="document.getElementById('orgModal').close()" class="pill">إغلاق ✕</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="text-sm">اسم المؤسسة<input name="name" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">اسم المدير<input name="manager" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">البريد الإلكتروني<input name="email" type="email" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">الجوال<input name="phone" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">الخطة<select name="plan" class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1"><option>Trial</option><option>Basic</option><option>Pro</option><option>Enterprise</option></select></label>
+        <label class="text-sm">الدورة<select name="billingCycle" class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1"><option>monthly</option><option>yearly</option></select></label>
+        <label class="text-sm">الحالة<select name="status" class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1"><option>active</option><option>expired</option><option>trial</option></select></label>
+        <label class="text-sm">تاريخ الانتهاء<input name="expiresAt" type="date" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
+      </div>
+      <div class="flex items-center gap-2 justify-end pt-2">
+        <button id="deleteBtn" type="button" class="btn btn-outline hidden">حذف</button>
+        <button id="saveBtn" class="btn btn-primary" value="default">حفظ</button>
+      </div>
+      <input type="hidden" name="docId" />
+    </form>
+  </dialog>
+
+  <script type="module">
+    // ✅ اتصال فعلي بـ Firebase (باستخدام نفس إعدادات مشروعك)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
+      authDomain: "smart-hsr-manager.firebaseapp.com",
+      projectId: "smart-hsr-manager",
+      storageBucket: "smart-hsr-manager.firebasestorage.app",
+      messagingSenderId: "38965508031",
+      appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // عناصر الواجهة
+    const addOrgBtn = document.getElementById('addOrgBtn');
+    const orgsBody = document.getElementById('orgsBody');
+    const searchBox = document.getElementById('searchBox');
+    const kpiRevenue = document.getElementById('kpiRevenue');
+    const kpiRevenueNote = document.getElementById('kpiRevenueNote');
+    const kpiActive = document.getElementById('kpiActive');
+    const kpiTrial = document.getElementById('kpiTrial');
+    const kpiExpired = document.getElementById('kpiExpired');
+
+    const orgModal = document.getElementById('orgModal');
+    const orgForm = document.getElementById('orgForm');
+    const modalTitle = document.getElementById('modalTitle');
+    const deleteBtn = document.getElementById('deleteBtn');
+
+    let ORGS = [];
+
+    // تحميل المؤسسات
+    async function fetchOrganizations() {
+      const q = query(collection(db, 'organizations'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      ORGS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderTable();
+      renderKPIs();
+      renderChart();
+    }
+
+    function formatSAR(n) { return new Intl.NumberFormat('ar-SA').format(n) + ' ر.س'; }
+
+    function renderKPIs(){
+      const active = ORGS.filter(o => o.plan && o.plan !== 'Trial' && o.status === 'active').length;
+      const trial = ORGS.filter(o => (o.plan === 'Trial' || o.status === 'trial')).length;
+      const expired = ORGS.filter(o => o.status === 'expired').length;
+      const revenue = ORGS.reduce((sum,o)=>{
+        if(o.plan==='Basic' && o.status==='active') return sum+249;
+        if(o.plan==='Pro' && o.status==='active') return sum+499;
+        if(o.plan==='Enterprise' && o.status==='active') return sum+1499;
+        return sum;}, 0);
+      kpiActive.textContent = active; kpiTrial.textContent = trial; kpiExpired.textContent = expired; kpiRevenue.textContent = formatSAR(revenue);
+      kpiRevenueNote.textContent = revenue? 'تقدير اشتراكات نشطة لهذا الشهر' : 'لا توجد اشتراكات نشطة حالياً';
+    }
+
+    function renderTable(filter=''){
+      const rows = (filter? ORGS.filter(o=> (o.name||'').includes(filter)) : ORGS)
+        .map(o=>`<tr class="hover:bg-[#0b1f3f]">
+          <td class="py-2 px-3 font-semibold">${o.name||'-'}</td>
+          <td class="py-2 px-3">${o.manager||'-'}</td>
+          <td class="py-2 px-3">${o.email||'-'}</td>
+          <td class="py-2 px-3">${o.phone||'-'}</td>
+          <td class="py-2 px-3"><span class="badge border-emerald-400/40">${o.plan||'Trial'}</span></td>
+          <td class="py-2 px-3">${o.billingCycle||'monthly'}</td>
+          <td class="py-2 px-3">${o.status||'active'}</td>
+          <td class="py-2 px-3">${o.expiresAt? new Date(o.expiresAt).toLocaleDateString('ar-SA'): '-'}</td>
+          <td class="py-2 px-3">
+            <div class="flex gap-2">
+              <button class="btn btn-outline" data-act="edit" data-id="${o.id}">تعديل</button>
+              <button class="btn btn-primary" data-act="upgrade" data-id="${o.id}">ترقية</button>
+              <button class="btn btn-outline" data-act="delete" data-id="${o.id}">حذف</button>
+            </div>
+          </td>
+        </tr>`).join('');
+      orgsBody.innerHTML = rows || `<tr><td colspan="9" class="text-center text-slate-400 py-6">لا توجد مؤسسات بعد</td></tr>`;
+    }
+
+    // رسم بياني مبسط من البيانات الفعلية
+    let chart;
+    function renderChart(){
+      const byMonth = Array.from({length:6}).map((_,i)=>({label:i, count:0}));
+      const now = new Date();
+      ORGS.forEach(o=>{
+        const d = o.createdAt ? new Date(o.createdAt) : null;
+        if(!d) return; const diff = (now.getMonth() - d.getMonth() + 12) % 12; if(diff < 6) byMonth[5-diff].count++;
+      });
+      const labels = byMonth.map((_,i)=> new Date(now.getFullYear(), now.getMonth()- (5-i)).toLocaleDateString('ar-SA',{month:'long'}));
+      const data = byMonth.map(x=>x.count);
+      const ctx = document.getElementById('orgsChart');
+      chart && chart.destroy();
+      chart = new Chart(ctx,{ type:'line', data:{ labels, datasets:[{ label:'المؤسسات الجديدة', data, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.2)', borderWidth:3, tension:.35, fill:true }]}, options:{ plugins:{ legend:{ labels:{ color:'#e2e8f0'} } }, scales:{ x:{ ticks:{ color:'#94a3b8'} }, y:{ ticks:{ color:'#94a3b8'} } } }});
+    }
+
+    // إضافة / تعديل مؤسسة
+    addOrgBtn.addEventListener('click', ()=> openModal());
+    searchBox.addEventListener('input', (e)=> renderTable(e.target.value.trim()));
+
+    orgsBody.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+      const act = btn.dataset.act; const id = btn.dataset.id; const org = ORGS.find(o=>o.id===id);
+      if(act==='edit'){ openModal(org); }
+      if(act==='upgrade'){ openModal({...org, plan: org.plan==='Pro' ? 'Enterprise' : 'Pro'}); }
+      if(act==='delete'){
+        if(confirm('تأكيد حذف المؤسسة؟')){ await deleteDoc(doc(db,'organizations', id)); await fetchOrganizations(); }
+      }
+    });
+
+    function openModal(org=null){
+      orgForm.reset();
+      modalTitle.textContent = org? 'تعديل مؤسسة' : 'إضافة مؤسسة';
+      orgForm.elements.name.value = org?.name||'';
+      orgForm.elements.manager.value = org?.manager||'';
+      orgForm.elements.email.value = org?.email||'';
+      orgForm.elements.phone.value = org?.phone||'';
+      orgForm.elements.plan.value = org?.plan||'Trial';
+      orgForm.elements.billingCycle.value = org?.billingCycle||'monthly';
+      orgForm.elements.status.value = org?.status|| (org?.plan==='Trial' ? 'trial' : 'active');
+      orgForm.elements.expiresAt.value = org?.expiresAt? new Date(org.expiresAt).toISOString().slice(0,10): '';
+      orgForm.elements.docId.value = org?.id||'';
+      deleteBtn.classList.toggle('hidden', !org);
+      orgModal.showModal();
+    }
+
+    orgForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const f = orgForm.elements;
+      const payload = {
+        name: f.name.value.trim(),
+        manager: f.manager.value.trim(),
+        email: f.email.value.trim(),
+        phone: f.phone.value.trim(),
+        plan: f.plan.value,
+        billingCycle: f.billingCycle.value,
+        status: f.status.value,
+        expiresAt: f.expiresAt.value ? new Date(f.expiresAt.value).toISOString() : null,
+        createdAt: serverTimestamp()
+      };
+      const id = f.docId.value;
+      if(id){ await updateDoc(doc(db,'organizations', id), payload); }
+      else { await addDoc(collection(db,'organizations'), payload); }
+      orgModal.close(); await fetchOrganizations();
+    });
+
+    deleteBtn.addEventListener('click', async ()=>{
+      const id = orgForm.elements.docId.value; if(!id) return;
+      if(confirm('تأكيد الحذف؟')){ await deleteDoc(doc(db,'organizations', id)); orgModal.close(); await fetchOrganizations(); }
+    });
+
+    // بدء التشغيل
+    fetchOrganizations();
+  </script>
+</body>
+</html>
