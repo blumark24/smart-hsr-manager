@@ -1,29 +1,58 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>لوحة المالك – SmartX SaaS (متصلة فعليًا)</title>
+  <title>لوحة المالك – SmartX Elite v2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- jsPDF لتوليد الفواتير PDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --bg:#0a2647; --card:#0f284f; --stroke:#1c325c; --gold:#ffd700; --emerald:#10b981; --cyan:#06b6d4; --rose:#f43f5e; --amber:#f59e0b;
+      /* الوضع النهاري (Light) */
+      --bg: #f5f7fa;            /* خلفية عامة */
+      --text: #0b1220;          /* لون نص أساسي */
+      --muted: #5b6b84;         /* نص ثانوي */
+      --card: #ffffff;          /* بطاقات */
+      --stroke: #e6ecf3;        /* حدود */
+      --chip: #eef3f9;          /* شارات */
+      --primary: #0a2647;       /* كحلي الهوية */
+      --gold: #ffd700;          /* ذهبي */
+      --emerald: #10b981;       /* زمردي */
+      --cyan: #06b6d4;          /* سماوي */
+      --amber: #f59e0b;         /* ذهبي تحذير */
+      --rose: #f43f5e;          /* أحمر */
     }
-    body { background: var(--bg); color:#f8fafc; font-family:"Cairo", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
-    .glass { background: linear-gradient(180deg, rgba(16,24,40,.55), rgba(2,6,23,.55)); backdrop-filter: blur(8px); border:1px solid #1f3a70; }
-    .card { border:1px solid var(--stroke); border-radius: 16px; background: linear-gradient(180deg, rgba(11,36,71,.8), rgba(4,18,40,.8)); box-shadow: 0 8px 24px rgba(2,6,23,.35); }
-    .title { color: var(--gold); letter-spacing: .2px; }
-    .btn { border-radius: 12px; padding:.6rem 1rem; font-weight:700; }
-    .btn-primary { background: linear-gradient(135deg, #059669, #10b981); border: 1px solid #10b981; }
-    .btn-outline { border:1px solid #334155; }
-    .pill { padding:.2rem .55rem; border:1px solid #334155; border-radius:999px; font-size:12px; }
-    .sidebar-link { border-radius: 12px; padding:.6rem .8rem; display:flex; align-items:center; gap:.6rem; border:1px solid transparent; }
-    .sidebar-link:hover { background:#0b1f3f; border-color:#1f3a70; }
-    .table { border-collapse: separate; border-spacing:0; }
-    .table th, .table td { border-bottom:1px solid #1c315e; }
-    .badge { border-radius:999px; padding:.2rem .55rem; font-size:12px; }
+    :root[data-theme="dark"] {
+      /* الوضع الليلي (Dark) */
+      --bg:#0a2647; --text:#f8fafc; --muted:#94a3b8; --card:#0f284f; --stroke:#1c325c; --chip:#0b1f3f;
+      --primary:#0a2647; --gold:#ffd700; --emerald:#10b981; --cyan:#06b6d4; --amber:#f59e0b; --rose:#f43f5e;
+    }
+    html, body { height:100%; }
+    body { background: var(--bg); color: var(--text); font-family:"Cairo", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
+    .card { border:1px solid var(--stroke); border-radius: 16px; background: var(--card); box-shadow: 0 8px 24px rgba(2,6,23,.06); }
+    .title { color: var(--gold); letter-spacing:.2px; }
+    .pill { padding:.2rem .6rem; border:1px solid var(--stroke); border-radius:999px; font-size:12px; background: var(--chip); color: var(--muted); }
+    .btn { border-radius: 12px; padding:.6rem 1rem; font-weight:700; transition: .2s; }
+    .btn-outline { border:1px solid var(--stroke); background: transparent; }
+    .btn-primary { background: linear-gradient(135deg, #059669, var(--emerald)); color:#fff; border:1px solid #059669; }
+    .btn-warn { background: linear-gradient(135deg, #f97316, var(--amber)); color:#000; border:1px solid #f59e0b; }
+    .btn-ghost { background: transparent; }
+    .sidebar-link { border-radius: 12px; padding:.65rem .8rem; display:flex; align-items:center; gap:.6rem; border:1px solid transparent; color: var(--text); }
+    .sidebar-link:hover { background: var(--chip); border-color: var(--stroke); }
+    .table { border-collapse: separate; border-spacing:0; width:100%; }
+    .table th, .table td { border-bottom:1px solid var(--stroke); padding:.75rem .75rem; }
+    .kpi { position:relative; overflow:hidden; }
+    .kpi:after { content:""; position:absolute; inset:0; background: radial-gradient(120px 120px at 100% -10%, rgba(255,215,0,.16), transparent 60%); pointer-events:none; }
+    .badge { border-radius:999px; padding:.2rem .55rem; font-size:12px; border:1px solid var(--stroke); background: var(--chip); }
+    .muted { color: var(--muted); }
+    .notif { border-left: 3px solid var(--emerald); }
+    .switch { inline-size: 44px; block-size: 26px; border-radius:999px; background: var(--chip); border:1px solid var(--stroke); position:relative; }
+    .switch i { position:absolute; inset-block-start:2px; inset-inline-start:2px; inline-size:22px; block-size:22px; background:#fff; border-radius:999px; transition:.25s; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+    [data-theme="dark"] .switch i { transform: translateX(18px); }
   </style>
 </head>
 <body class="min-h-screen">
@@ -31,17 +60,17 @@
     <!-- Sidebar -->
     <aside class="col-span-12 md:col-span-3 lg:col-span-2 card p-4">
       <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 grid place-items-center font-extrabold">SX</div>
+        <div style="background:linear-gradient(135deg, var(--emerald), var(--cyan))" class="w-10 h-10 rounded-2xl grid place-items-center font-extrabold text-white">SX</div>
         <div>
-          <div class="text-xs text-slate-400">لوحة المالك</div>
-          <div class="font-bold">SmartX Command</div>
+          <div class="text-xs muted">لوحة المالك</div>
+          <div class="font-bold">SmartX Elite</div>
         </div>
       </div>
       <nav class="space-y-1 text-sm">
-        <a class="sidebar-link bg-[#0b1f3f] border-[#1f3a70]" href="#top">🏠 لوحة التحكم</a>
+        <a class="sidebar-link" href="#dashboard">🏠 لوحة التحكم</a>
         <a class="sidebar-link" href="#orgs">🏢 المؤسسات</a>
-        <a class="sidebar-link" href="#subs">💳 الاشتراكات</a>
-        <a class="sidebar-link" href="#reports">📈 التقارير</a>
+        <a class="sidebar-link" href="#invoices">💳 الفواتير</a>
+        <a class="sidebar-link" href="#analytics">📈 الإيرادات</a>
         <a class="sidebar-link" href="#settings">⚙️ الإعدادات</a>
       </nav>
     </aside>
@@ -52,45 +81,64 @@
       <header class="card px-4 py-3 flex items-center justify-between">
         <div>
           <h1 class="text-2xl md:text-3xl font-extrabold title">لوحة المالك – تحكم شامل بالمؤسسات</h1>
-          <p class="text-slate-300 text-sm mt-1">تصميم فخم مستوحى من أنظمة حكومية (بلدي / توكلنا أعمال) مع اتصال فعلي بقاعدة البيانات.</p>
+          <p class="muted text-sm mt-1">تصميم فخم بهوية رسمية + وضع نهاري/ليلي + فواتير احترافية.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <span id="ownerName" class="pill">مرحّبًا بك 👑 مالك النظام</span>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <span id="themeLabel" class="muted text-xs">نهاري</span>
+            <button id="themeToggle" class="switch" title="تبديل الوضع"><i></i></button>
+          </div>
+          <span class="pill">👑 مرحّبًا بك مالك النظام</span>
           <button id="logoutBtn" class="btn btn-outline">تسجيل خروج</button>
         </div>
       </header>
 
-      <!-- KPI Cards -->
-      <section id="top" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div class="card p-4">
-          <p class="text-xs text-slate-400">إجمالي الأرباح الشهرية</p>
-          <h3 id="kpiRevenue" class="text-3xl font-extrabold text-emerald-400">--</h3>
-          <small id="kpiRevenueNote" class="text-slate-400">—</small>
-        </div>
-        <div class="card p-4">
-          <p class="text-xs text-slate-400">عدد المؤسسات النشطة</p>
-          <h3 id="kpiActive" class="text-3xl font-extrabold text-cyan-400">--</h3>
-          <small class="text-slate-400">خطة مدفوعة</small>
-        </div>
-        <div class="card p-4">
-          <p class="text-xs text-slate-400">التجارب المجانية</p>
-          <h3 id="kpiTrial" class="text-3xl font-extrabold text-amber-400">--</h3>
-          <small class="text-slate-400">تنتهي قريبًا</small>
-        </div>
-        <div class="card p-4">
-          <p class="text-xs text-slate-400">اشتراكات منتهية</p>
-          <h3 id="kpiExpired" class="text-3xl font-extrabold text-rose-400">--</h3>
-          <small class="text-slate-400">بحاجة متابعة</small>
+      <!-- Notifications -->
+      <section id="notifications" class="hidden card px-4 py-3 notif">
+        <div class="flex items-start gap-3">
+          <div>🔔</div>
+          <div>
+            <div class="font-bold">تنبيه مالي</div>
+            <div id="notifText" class="muted text-sm">سيظهر هنا أي تنبيه جديد (فاتورة صدرت، اشتراك قارب الانتهاء، عميل جديد).</div>
+          </div>
+          <div class="ms-auto"><button id="hideNotif" class="btn btn-ghost">إخفاء</button></div>
         </div>
       </section>
 
-      <!-- Chart -->
-      <section class="card p-4">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-lg font-bold title">نمو المؤسسات (آخر 6 أشهر)</h2>
-          <span class="pill">تفاعلي</span>
+      <!-- KPI Cards -->
+      <section id="dashboard" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="card p-4 kpi">
+          <p class="text-xs muted">إجمالي الأرباح الشهرية</p>
+          <h3 id="kpiRevenue" class="text-3xl font-extrabold" style="color:var(--emerald)">--</h3>
+          <small id="kpiRevenueNote" class="muted">—</small>
         </div>
-        <canvas id="orgsChart" height="80"></canvas>
+        <div class="card p-4 kpi">
+          <p class="text-xs muted">عدد المؤسسات النشطة</p>
+          <h3 id="kpiActive" class="text-3xl font-extrabold" style="color:var(--cyan)">--</h3>
+          <small class="muted">خطة مدفوعة</small>
+        </div>
+        <div class="card p-4 kpi">
+          <p class="text-xs muted">التجارب المجانية</p>
+          <h3 id="kpiTrial" class="text-3xl font-extrabold" style="color:var(--amber)">--</h3>
+          <small class="muted">تنتهي قريبًا</small>
+        </div>
+        <div class="card p-4 kpi">
+          <p class="text-xs muted">اشتراكات منتهية</p>
+          <h3 id="kpiExpired" class="text-3xl font-extrabold" style="color:var(--rose)">--</h3>
+          <small class="muted">بحاجة متابعة</small>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section id="analytics" class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="card p-4 xl:col-span-2">
+          <div class="flex items-center justify-between mb-2"><h2 class="text-lg font-bold title">نمو المؤسسات (6 أشهر)</h2><span class="pill">تفاعلي</span></div>
+          <canvas id="orgsChart" height="80"></canvas>
+        </div>
+        <div class="card p-4">
+          <h2 class="text-lg font-bold title mb-2">توزيع الخطط</h2>
+          <canvas id="plansChart" height="80"></canvas>
+        </div>
       </section>
 
       <!-- Organizations Table -->
@@ -98,26 +146,19 @@
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
           <div>
             <h2 class="text-lg font-bold title">المؤسسات المسجلة</h2>
-            <p class="text-xs text-slate-400">إدارة كاملة: إضافة، تعديل، حذف، وترقية الخطط.</p>
+            <p class="text-xs muted">إدارة كاملة: إضافة، تعديل، حذف، وترقية الخطط (يتم إنشاء فاتورة عند الترقية).</p>
           </div>
           <div class="flex items-center gap-2">
-            <input id="searchBox" placeholder="ابحث باسم المؤسسة..." class="bg-transparent border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" />
+            <input id="searchBox" placeholder="ابحث باسم المؤسسة..." class="bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[var(--emerald)]" />
             <button id="addOrgBtn" class="btn btn-primary">+ إضافة مؤسسة</button>
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="table min-w-full text-sm text-right">
-            <thead class="text-slate-400">
+          <table class="table text-sm text-right">
+            <thead class="muted">
               <tr>
-                <th class="py-2 px-3">المؤسسة</th>
-                <th class="py-2 px-3">المدير</th>
-                <th class="py-2 px-3">البريد</th>
-                <th class="py-2 px-3">الجوال</th>
-                <th class="py-2 px-3">الخطة</th>
-                <th class="py-2 px-3">الدورة</th>
-                <th class="py-2 px-3">الحالة</th>
-                <th class="py-2 px-3">الانتهاء</th>
-                <th class="py-2 px-3">الإجراءات</th>
+                <th>المؤسسة</th><th>المدير</th><th>البريد</th><th>الجوال</th>
+                <th>الخطة</th><th>الدورة</th><th>الحالة</th><th>الانتهاء</th><th>الإجراءات</th>
               </tr>
             </thead>
             <tbody id="orgsBody"></tbody>
@@ -125,34 +166,51 @@
         </div>
       </section>
 
-      <!-- Subscriptions Placeholder -->
-      <section id="subs" class="card p-4">
-        <h2 class="text-lg font-bold title mb-1">الاشتراكات</h2>
-        <p class="text-sm text-slate-300">سيتم ربطها ببوابة دفع (Tap/Stripe). قم بإدارة الخطط من الجدول أعلاه مؤقتًا.</p>
+      <!-- Invoices -->
+      <section id="invoices" class="card p-4">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="text-lg font-bold title">الفواتير</h2>
+            <p class="text-xs muted">فواتير اشتراكات المؤسسات (إنشاء تلقائي عند الترقية أو يمكن إنشاؤها يدويًّا).</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="newInvoiceBtn" class="btn btn-outline">+ إصدار فاتورة يدوية</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="table text-sm text-right">
+            <thead class="muted">
+              <tr>
+                <th>رقم الفاتورة</th><th>المؤسسة</th><th>الخطة</th><th>الدورة</th><th>المبلغ (شامل الضريبة)</th><th>الحالة</th><th>التاريخ</th><th>ملف</th>
+              </tr>
+            </thead>
+            <tbody id="invoicesBody"></tbody>
+          </table>
+        </div>
       </section>
 
-      <footer id="settings" class="text-xs text-slate-400 py-4">
-        <p>© SmartX SaaS — لوحة مالك فاخرة بمستوى عالمي.</p>
+      <footer id="settings" class="text-xs muted py-4">
+        <p>© SmartX Elite – لوحة مالك فاخرة بمستوى عالمي. الوضع <span id="modeText">نهاري</span>.</p>
       </footer>
     </main>
   </div>
 
   <!-- Modal: Add/Edit Organization -->
-  <dialog id="orgModal" class="glass rounded-2xl p-0 w-[92vw] max-w-2xl">
+  <dialog id="orgModal" class="card p-0 w-[92vw] max-w-2xl">
     <form id="orgForm" method="dialog" class="p-4 space-y-3">
       <div class="flex items-center justify-between mb-2">
         <h3 id="modalTitle" class="text-xl font-extrabold title">إضافة مؤسسة</h3>
         <button type="button" onclick="document.getElementById('orgModal').close()" class="pill">إغلاق ✕</button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <label class="text-sm">اسم المؤسسة<input name="name" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
-        <label class="text-sm">اسم المدير<input name="manager" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
-        <label class="text-sm">البريد الإلكتروني<input name="email" type="email" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
-        <label class="text-sm">الجوال<input name="phone" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
-        <label class="text-sm">الخطة<select name="plan" class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1"><option>Trial</option><option>Basic</option><option>Pro</option><option>Enterprise</option></select></label>
-        <label class="text-sm">الدورة<select name="billingCycle" class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1"><option>monthly</option><option>yearly</option></select></label>
-        <label class="text-sm">الحالة<select name="status" class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1"><option>active</option><option>expired</option><option>trial</option></select></label>
-        <label class="text-sm">تاريخ الانتهاء<input name="expiresAt" type="date" required class="w-full bg-transparent border border-slate-700 rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">اسم المؤسسة<input name="name" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">اسم المدير<input name="manager" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">البريد الإلكتروني<input name="email" type="email" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">الجوال<input name="phone" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">الخطة<select name="plan" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>Trial</option><option>Basic</option><option>Pro</option><option>Enterprise</option></select></label>
+        <label class="text-sm">الدورة<select name="billingCycle" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>monthly</option><option>yearly</option></select></label>
+        <label class="text-sm">الحالة<select name="status" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>active</option><option>expired</option><option>trial</option></select></label>
+        <label class="text-sm">تاريخ الانتهاء<input name="expiresAt" type="date" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
       </div>
       <div class="flex items-center gap-2 justify-end pt-2">
         <button id="deleteBtn" type="button" class="btn btn-outline hidden">حذف</button>
@@ -162,8 +220,27 @@
     </form>
   </dialog>
 
+  <!-- Modal: Manual Invoice -->
+  <dialog id="invoiceModal" class="card p-0 w-[92vw] max-w-xl">
+    <form id="invoiceForm" method="dialog" class="p-4 space-y-3">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xl font-extrabold title">إصدار فاتورة يدوية</h3>
+        <button type="button" onclick="document.getElementById('invoiceModal').close()" class="pill">إغلاق ✕</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="text-sm">المؤسسة<select name="orgId" id="invoiceOrgId" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"></select></label>
+        <label class="text-sm">الخطة<select name="plan" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>Basic</option><option>Pro</option><option>Enterprise</option></select></label>
+        <label class="text-sm">الدورة<select name="billingCycle" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>monthly</option><option>yearly</option></select></label>
+        <label class="text-sm">المبلغ (بدون ضريبة)<input name="amount" type="number" min="0" step="0.01" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" placeholder="مثال: 499" /></label>
+      </div>
+      <div class="flex items-center gap-2 justify-end pt-2">
+        <button class="btn btn-primary" value="default">إصدار الفاتورة</button>
+      </div>
+    </form>
+  </dialog>
+
   <script type="module">
-    // ✅ اتصال فعلي بـ Firebase (باستخدام نفس إعدادات مشروعك)
+    // ✅ اتصال فعلي بـ Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
@@ -175,64 +252,96 @@
       messagingSenderId: "38965508031",
       appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     // عناصر الواجهة
-    const addOrgBtn = document.getElementById('addOrgBtn');
     const orgsBody = document.getElementById('orgsBody');
+    const invoicesBody = document.getElementById('invoicesBody');
     const searchBox = document.getElementById('searchBox');
+    const addOrgBtn = document.getElementById('addOrgBtn');
+    const newInvoiceBtn = document.getElementById('newInvoiceBtn');
     const kpiRevenue = document.getElementById('kpiRevenue');
     const kpiRevenueNote = document.getElementById('kpiRevenueNote');
     const kpiActive = document.getElementById('kpiActive');
     const kpiTrial = document.getElementById('kpiTrial');
     const kpiExpired = document.getElementById('kpiExpired');
 
+    const notif = document.getElementById('notifications');
+    const notifText = document.getElementById('notifText');
+    const hideNotif = document.getElementById('hideNotif');
+
+    // مودالات
     const orgModal = document.getElementById('orgModal');
     const orgForm = document.getElementById('orgForm');
     const modalTitle = document.getElementById('modalTitle');
     const deleteBtn = document.getElementById('deleteBtn');
 
-    let ORGS = [];
+    const invoiceModal = document.getElementById('invoiceModal');
+    const invoiceForm = document.getElementById('invoiceForm');
+    const invoiceOrgSelect = document.getElementById('invoiceOrgId');
 
-    // تحميل المؤسسات
-    async function fetchOrganizations() {
+    // ثيم النهار/الليل
+    const themeToggle = document.getElementById('themeToggle');
+    const themeLabel = document.getElementById('themeLabel');
+    const modeText = document.getElementById('modeText');
+
+    function applyTheme(mode){
+      document.documentElement.setAttribute('data-theme', mode);
+      const isDark = mode === 'dark';
+      themeLabel.textContent = isDark ? 'ليلي' : 'نهاري';
+      modeText.textContent = isDark ? 'ليلي' : 'نهاري';
+      localStorage.setItem('smartx_theme', mode);
+    }
+    const savedTheme = localStorage.getItem('smartx_theme') || 'dark';
+    applyTheme(savedTheme);
+    themeToggle.addEventListener('click', ()=> applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark'));
+
+    // بيانات
+    let ORGS = [];
+    let INVOICES = [];
+
+    function formatSAR(n){ return new Intl.NumberFormat('ar-SA', {minimumFractionDigits:2, maximumFractionDigits:2}).format(n) + ' ر.س'; }
+
+    async function fetchOrganizations(){
       const q = query(collection(db, 'organizations'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       ORGS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderTable();
+      renderOrgs();
       renderKPIs();
-      renderChart();
+      renderCharts();
+      fillInvoiceOrgSelect();
     }
 
-    function formatSAR(n) { return new Intl.NumberFormat('ar-SA').format(n) + ' ر.س'; }
+    async function fetchInvoices(){
+      const q = query(collection(db, 'invoices'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      INVOICES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderInvoices();
+    }
 
     function renderKPIs(){
-      const active = ORGS.filter(o => o.plan && o.plan !== 'Trial' && o.status === 'active').length;
-      const trial = ORGS.filter(o => (o.plan === 'Trial' || o.status === 'trial')).length;
-      const expired = ORGS.filter(o => o.status === 'expired').length;
-      const revenue = ORGS.reduce((sum,o)=>{
-        if(o.plan==='Basic' && o.status==='active') return sum+249;
-        if(o.plan==='Pro' && o.status==='active') return sum+499;
-        if(o.plan==='Enterprise' && o.status==='active') return sum+1499;
-        return sum;}, 0);
+      const active = ORGS.filter(o => o.plan && o.plan !== 'Trial' && (o.status||'active') === 'active').length;
+      const trial = ORGS.filter(o => (o.plan === 'Trial' || (o.status||'') === 'trial')).length;
+      const expired = ORGS.filter(o => (o.status||'') === 'expired').length;
+      const revenue = INVOICES.filter(i=> (i.status||'')==='paid')
+        .reduce((sum,i)=> sum + (i.total || 0), 0);
       kpiActive.textContent = active; kpiTrial.textContent = trial; kpiExpired.textContent = expired; kpiRevenue.textContent = formatSAR(revenue);
-      kpiRevenueNote.textContent = revenue? 'تقدير اشتراكات نشطة لهذا الشهر' : 'لا توجد اشتراكات نشطة حالياً';
+      kpiRevenueNote.textContent = revenue? 'إيراد مدفوع خلال الشهر الحالي (من الفواتير)': 'لا توجد فواتير مدفوعة حاليًا';
     }
 
-    function renderTable(filter=''){
+    function renderOrgs(filter=''){
       const rows = (filter? ORGS.filter(o=> (o.name||'').includes(filter)) : ORGS)
-        .map(o=>`<tr class="hover:bg-[#0b1f3f]">
-          <td class="py-2 px-3 font-semibold">${o.name||'-'}</td>
-          <td class="py-2 px-3">${o.manager||'-'}</td>
-          <td class="py-2 px-3">${o.email||'-'}</td>
-          <td class="py-2 px-3">${o.phone||'-'}</td>
-          <td class="py-2 px-3"><span class="badge border-emerald-400/40">${o.plan||'Trial'}</span></td>
-          <td class="py-2 px-3">${o.billingCycle||'monthly'}</td>
-          <td class="py-2 px-3">${o.status||'active'}</td>
-          <td class="py-2 px-3">${o.expiresAt? new Date(o.expiresAt).toLocaleDateString('ar-SA'): '-'}</td>
-          <td class="py-2 px-3">
+        .map(o=>`<tr>
+          <td class="font-semibold">${o.name||'-'}</td>
+          <td>${o.manager||'-'}</td>
+          <td>${o.email||'-'}</td>
+          <td>${o.phone||'-'}</td>
+          <td><span class="badge">${o.plan||'Trial'}</span></td>
+          <td>${o.billingCycle||'monthly'}</td>
+          <td>${o.status||'active'}</td>
+          <td>${o.expiresAt? new Date(o.expiresAt).toLocaleDateString('ar-SA'): '-'}</td>
+          <td>
             <div class="flex gap-2">
               <button class="btn btn-outline" data-act="edit" data-id="${o.id}">تعديل</button>
               <button class="btn btn-primary" data-act="upgrade" data-id="${o.id}">ترقية</button>
@@ -240,82 +349,161 @@
             </div>
           </td>
         </tr>`).join('');
-      orgsBody.innerHTML = rows || `<tr><td colspan="9" class="text-center text-slate-400 py-6">لا توجد مؤسسات بعد</td></tr>`;
+      orgsBody.innerHTML = rows || `<tr><td colspan="9" class="text-center muted py-6">لا توجد مؤسسات بعد</td></tr>`;
     }
 
-    // رسم بياني مبسط من البيانات الفعلية
-    let chart;
-    function renderChart(){
-      const byMonth = Array.from({length:6}).map((_,i)=>({label:i, count:0}));
+    function fillInvoiceOrgSelect(){
+      invoiceOrgSelect.innerHTML = ORGS.map(o=>`<option value="${o.id}">${o.name||o.id}</option>`).join('');
+    }
+
+    function renderInvoices(){
+      invoicesBody.innerHTML = INVOICES.map(inv=>`
+        <tr>
+          <td>${inv.invoiceId||inv.id}</td>
+          <td>${inv.organization_name||'-'}</td>
+          <td>${inv.plan||'-'}</td>
+          <td>${inv.billingCycle||'-'}</td>
+          <td>${formatSAR(inv.total||0)}</td>
+          <td><span class="badge" style="border-color:${(inv.status==='paid')?'#16a34a':'#f59e0b'}; color:${(inv.status==='paid')?'#16a34a':'#f59e0b'}">${inv.status||'-'}</span></td>
+          <td>${inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'):'-'}</td>
+          <td><button class="btn btn-outline" data-dl="${inv.id}">PDF</button></td>
+        </tr>`).join('');
+    }
+
+    // رسوم بيانية
+    let lineChart, pieChart;
+    function renderCharts(){
+      // خطي: نمو المؤسسات
+      const byMonth = Array.from({length:6}).map(()=>0);
       const now = new Date();
-      ORGS.forEach(o=>{
-        const d = o.createdAt ? new Date(o.createdAt) : null;
-        if(!d) return; const diff = (now.getMonth() - d.getMonth() + 12) % 12; if(diff < 6) byMonth[5-diff].count++;
-      });
-      const labels = byMonth.map((_,i)=> new Date(now.getFullYear(), now.getMonth()- (5-i)).toLocaleDateString('ar-SA',{month:'long'}));
-      const data = byMonth.map(x=>x.count);
-      const ctx = document.getElementById('orgsChart');
-      chart && chart.destroy();
-      chart = new Chart(ctx,{ type:'line', data:{ labels, datasets:[{ label:'المؤسسات الجديدة', data, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.2)', borderWidth:3, tension:.35, fill:true }]}, options:{ plugins:{ legend:{ labels:{ color:'#e2e8f0'} } }, scales:{ x:{ ticks:{ color:'#94a3b8'} }, y:{ ticks:{ color:'#94a3b8'} } } }});
+      ORGS.forEach(o=>{ const d = o.createdAt? new Date(o.createdAt): null; if(!d) return; const diff = (now.getMonth()-d.getMonth()+12)%12; if(diff<6) byMonth[5-diff]++;});
+      const labels = Array.from({length:6}).map((_,i)=> new Date(now.getFullYear(), now.getMonth()-(5-i)).toLocaleDateString('ar-SA',{month:'long'}));
+      const ctx1 = document.getElementById('orgsChart'); lineChart && lineChart.destroy();
+      lineChart = new Chart(ctx1,{ type:'line', data:{ labels, datasets:[{ label:'المؤسسات الجديدة', data:byMonth, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.2)', borderWidth:3, tension:.35, fill:true }]}, options:{ plugins:{ legend:{ labels:{ color:'var(--muted)'} } }, scales:{ x:{ ticks:{ color:'var(--muted)'} }, y:{ ticks:{ color:'var(--muted)'} } } }});
+
+      // دائري: توزيع الخطط
+      const plans = {Trial:0,Basic:0,Pro:0,Enterprise:0};
+      ORGS.forEach(o=>{ plans[o.plan||'Trial'] = (plans[o.plan||'Trial']||0)+1; });
+      const ctx2 = document.getElementById('plansChart'); pieChart && pieChart.destroy();
+      pieChart = new Chart(ctx2, { type:'doughnut', data:{ labels:Object.keys(plans), datasets:[{ data:Object.values(plans) }] }, options:{ plugins:{ legend:{ labels:{ color:'var(--muted)'} } } } });
     }
 
-    // إضافة / تعديل مؤسسة
-    addOrgBtn.addEventListener('click', ()=> openModal());
-    searchBox.addEventListener('input', (e)=> renderTable(e.target.value.trim()));
-
+    // أحداث الجدول
     orgsBody.addEventListener('click', async (e)=>{
       const btn = e.target.closest('button'); if(!btn) return;
       const act = btn.dataset.act; const id = btn.dataset.id; const org = ORGS.find(o=>o.id===id);
-      if(act==='edit'){ openModal(org); }
-      if(act==='upgrade'){ openModal({...org, plan: org.plan==='Pro' ? 'Enterprise' : 'Pro'}); }
+      if(act==='edit'){ openOrgModal(org); }
+      if(act==='upgrade'){ // ترقية الخطة → تحديث المؤسسة + إنشاء فاتورة
+        const newPlan = org.plan==='Pro' ? 'Enterprise' : (org.plan==='Basic' ? 'Pro' : 'Pro');
+        await updateDoc(doc(db,'organizations', id), { plan:newPlan, status:'active', updatedAt: serverTimestamp() });
+        await createInvoice({ org, plan:newPlan, billingCycle: org.billingCycle||'monthly' });
+        showNotif(`تمت ترقية خطة ${org.name} إلى ${newPlan} وإصدار فاتورة تلقائيًا.`);
+        await refreshAll();
+      }
       if(act==='delete'){
-        if(confirm('تأكيد حذف المؤسسة؟')){ await deleteDoc(doc(db,'organizations', id)); await fetchOrganizations(); }
+        if(confirm('تأكيد حذف المؤسسة؟')){ await deleteDoc(doc(db,'organizations', id)); showNotif('تم حذف المؤسسة بنجاح.'); await refreshAll(); }
       }
     });
 
-    function openModal(org=null){
+    // بحث
+    searchBox.addEventListener('input', (e)=> renderOrgs(e.target.value.trim()));
+
+    // مودال المؤسسة
+    addOrgBtn.addEventListener('click', ()=> openOrgModal());
+    function openOrgModal(org=null){
       orgForm.reset();
-      modalTitle.textContent = org? 'تعديل مؤسسة' : 'إضافة مؤسسة';
-      orgForm.elements.name.value = org?.name||'';
-      orgForm.elements.manager.value = org?.manager||'';
-      orgForm.elements.email.value = org?.email||'';
-      orgForm.elements.phone.value = org?.phone||'';
-      orgForm.elements.plan.value = org?.plan||'Trial';
-      orgForm.elements.billingCycle.value = org?.billingCycle||'monthly';
-      orgForm.elements.status.value = org?.status|| (org?.plan==='Trial' ? 'trial' : 'active');
-      orgForm.elements.expiresAt.value = org?.expiresAt? new Date(org.expiresAt).toISOString().slice(0,10): '';
-      orgForm.elements.docId.value = org?.id||'';
-      deleteBtn.classList.toggle('hidden', !org);
+      document.getElementById('modalTitle').textContent = org? 'تعديل مؤسسة' : 'إضافة مؤسسة';
+      const f = orgForm.elements;
+      f.name.value = org?.name||''; f.manager.value = org?.manager||''; f.email.value = org?.email||''; f.phone.value = org?.phone||'';
+      f.plan.value = org?.plan||'Trial'; f.billingCycle.value = org?.billingCycle||'monthly'; f.status.value = org?.status|| (org?.plan==='Trial'?'trial':'active');
+      f.expiresAt.value = org?.expiresAt? new Date(org.expiresAt).toISOString().slice(0,10): '';
+      f.docId.value = org?.id||''; deleteBtn.classList.toggle('hidden', !org);
       orgModal.showModal();
     }
 
     orgForm.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const f = orgForm.elements;
+      e.preventDefault(); const f = orgForm.elements;
       const payload = {
-        name: f.name.value.trim(),
-        manager: f.manager.value.trim(),
-        email: f.email.value.trim(),
-        phone: f.phone.value.trim(),
-        plan: f.plan.value,
-        billingCycle: f.billingCycle.value,
-        status: f.status.value,
+        name:f.name.value.trim(), manager:f.manager.value.trim(), email:f.email.value.trim(), phone:f.phone.value.trim(),
+        plan:f.plan.value, billingCycle:f.billingCycle.value, status:f.status.value,
         expiresAt: f.expiresAt.value ? new Date(f.expiresAt.value).toISOString() : null,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
       };
       const id = f.docId.value;
-      if(id){ await updateDoc(doc(db,'organizations', id), payload); }
-      else { await addDoc(collection(db,'organizations'), payload); }
-      orgModal.close(); await fetchOrganizations();
+      if(id){ await updateDoc(doc(db,'organizations', id), payload); showNotif('تم تحديث بيانات المؤسسة.'); }
+      else { const ref = await addDoc(collection(db,'organizations'), payload); showNotif('تمت إضافة مؤسسة جديدة بنجاح.'); }
+      orgModal.close(); await refreshAll();
     });
-
     deleteBtn.addEventListener('click', async ()=>{
       const id = orgForm.elements.docId.value; if(!id) return;
-      if(confirm('تأكيد الحذف؟')){ await deleteDoc(doc(db,'organizations', id)); orgModal.close(); await fetchOrganizations(); }
+      if(confirm('تأكيد الحذف؟')){ await deleteDoc(doc(db,'organizations', id)); orgModal.close(); showNotif('تم حذف المؤسسة.'); await refreshAll(); }
     });
 
+    // مودال فاتورة يدوية
+    newInvoiceBtn.addEventListener('click', ()=> { invoiceForm.reset(); fillInvoiceOrgSelect(); invoiceModal.showModal(); });
+    invoiceForm.addEventListener('submit', async (e)=>{
+      e.preventDefault(); const f = invoiceForm.elements;
+      const org = ORGS.find(o=>o.id===f.orgId.value); if(!org) return;
+      await createInvoice({ org, plan:f.plan.value, billingCycle:f.billingCycle.value, amount: Number(f.amount.value||0) });
+      invoiceModal.close(); showNotif('تم إصدار الفاتورة وإضافتها إلى السجل.'); await refreshAll();
+    });
+
+    // إنشاء فاتورة + حفظ PDF
+    async function createInvoice({ org, plan, billingCycle, amount }){
+      // تسعير افتراضي في حال لم يُرسل مبلغ يدوي
+      const base = amount || (plan==='Basic'?249: plan==='Pro'?499: 1499);
+      const vat = +(base * 0.15).toFixed(2);
+      const total = +(base + vat).toFixed(2);
+      const invoiceId = 'INV-' + Math.random().toString(36).slice(2,7).toUpperCase();
+      const payload = {
+        invoiceId,
+        organization_id: org.id,
+        organization_name: org.name,
+        plan, billingCycle,
+        amount: base, vat, total,
+        status: 'paid', // مبدئيًا مدفوعة – يمكن ربطها لاحقًا ببوابة الدفع
+        createdAt: new Date().toISOString()
+      };
+      await addDoc(collection(db,'invoices'), payload);
+      // توليد PDF بسيط
+      const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
+      docPdf.setFont('helvetica','bold'); docPdf.setFontSize(16);
+      docPdf.text(`فاتورة اشتراك – ${invoiceId}` , 40, 40);
+      docPdf.setFontSize(12); docPdf.setFont('helvetica','normal');
+      docPdf.text(`المؤسسة: ${org.name||'-'}`, 40, 70);
+      docPdf.text(`الخطة: ${plan} (${billingCycle})`, 40, 90);
+      docPdf.text(`المبلغ: ${base} SAR`, 40, 110);
+      docPdf.text(`الضريبة 15%: ${vat} SAR`, 40, 130);
+      docPdf.text(`الإجمالي: ${total} SAR`, 40, 150);
+      docPdf.text(`التاريخ: ${(new Date()).toLocaleDateString('ar-SA')}`, 40, 170);
+      docPdf.save(`${invoiceId}.pdf`);
+    }
+
+    // تنزيل PDF من الجدول (إعادة توليد سريع)
+    invoicesBody.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return; const id = btn.dataset.dl; if(!id) return;
+      const inv = INVOICES.find(x=> x.id===id); if(!inv) return;
+      const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
+      docPdf.setFont('helvetica','bold'); docPdf.setFontSize(16);
+      docPdf.text(`فاتورة اشتراك – ${inv.invoiceId||id}` , 40, 40);
+      docPdf.setFontSize(12); docPdf.setFont('helvetica','normal');
+      docPdf.text(`المؤسسة: ${inv.organization_name||'-'}`, 40, 70);
+      docPdf.text(`الخطة: ${inv.plan||'-'} (${inv.billingCycle||'-'})`, 40, 90);
+      docPdf.text(`المبلغ: ${inv.amount||0} SAR`, 40, 110);
+      docPdf.text(`الضريبة 15%: ${inv.vat||0} SAR`, 40, 130);
+      docPdf.text(`الإجمالي: ${inv.total||0} SAR`, 40, 150);
+      docPdf.text(`التاريخ: ${inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'): ''}`, 40, 170);
+      docPdf.save(`${inv.invoiceId||id}.pdf`);
+    });
+
+    // إشعارات
+    function showNotif(text){ notif.classList.remove('hidden'); notifText.textContent = text; }
+    hideNotif.addEventListener('click', ()=> notif.classList.add('hidden'));
+
+    async function refreshAll(){ await Promise.all([fetchOrganizations(), fetchInvoices()]); renderKPIs(); }
+
     // بدء التشغيل
-    fetchOrganizations();
+    await refreshAll();
   </script>
 </body>
 </html>
