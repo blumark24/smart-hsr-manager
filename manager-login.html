@@ -29,47 +29,57 @@
       text-align: center;
       animation: fadeIn 1.2s ease-out;
     }
-    .glow {
-      animation: glowPulse 3s ease-in-out infinite;
-    }
+    .glow { animation: glowPulse 3s ease-in-out infinite; }
+
     @keyframes glowPulse {
-      0%, 100% { box-shadow: 0 0 25px rgba(14,165,161,0.5); }
-      50% { box-shadow: 0 0 45px rgba(14,165,161,0.9); }
+      0%,100%{ box-shadow:0 0 25px rgba(14,165,161,0.5); }
+      50%{ box-shadow:0 0 45px rgba(14,165,161,0.9); }
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from{ opacity:0; transform:translateY(20px); }
+      to{ opacity:1; transform:translateY(0); }
     }
-    input { direction: ltr; }
   </style>
 </head>
 <body>
+
   <div class="card glow">
-    <img src="Smart_HSR_Dashboard_Logo.svg" alt="Smart HSR Logo" class="mx-auto w-24 mb-5 animate-pulse">
-    <h2 class="text-2xl font-extrabold mb-6 text-teal-300 tracking-wide">تسجيل دخول المدير</h2>
+    <img src="Smart_HSR_Dashboard_Logo.svg" class="mx-auto w-24 mb-5 animate-pulse">
+    <h2 class="text-2xl font-extrabold mb-6 text-teal-300 tracking-wide">
+      تسجيل دخول المدير
+    </h2>
 
     <form id="loginForm" class="space-y-4">
       <div>
         <label class="block text-right mb-1">البريد الإلكتروني</label>
-        <input type="email" id="email" class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400" placeholder="example@email.com" required>
+        <input type="email" id="email"
+          class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400"
+          placeholder="example@email.com" required>
       </div>
       <div>
         <label class="block text-right mb-1">كلمة المرور</label>
-        <input type="password" id="password" class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400" placeholder="••••••••" required>
+        <input type="password" id="password"
+          class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400"
+          placeholder="••••••••" required>
       </div>
-      <button type="submit" class="w-full py-3 rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:opacity-90 font-extrabold tracking-wide transition">تسجيل الدخول</button>
+
+      <button type="submit"
+        class="w-full py-3 rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:opacity-90 font-extrabold tracking-wide transition">
+        تسجيل الدخول
+      </button>
     </form>
 
     <p id="errorMsg" class="text-red-400 mt-4 hidden text-sm"></p>
+
     <p class="mt-6 text-white/60 text-xs">© 2025 Smart HSR — جميع الحقوق محفوظة</p>
   </div>
 
- <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// إعدادات Firebase الخاصة بك
+// إعدادات Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
   authDomain: "smart-hsr-manager.firebaseapp.com",
@@ -79,50 +89,59 @@ const firebaseConfig = {
   appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
 };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-  const form = document.getElementById('loginForm');
-  const errorMsg = document.getElementById('errorMsg');
+const form = document.getElementById("loginForm");
+const errorMsg = document.getElementById("errorMsg");
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    try {
-      // تسجيل الدخول
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
 
-      // التحقق من Firestore داخل مجموعة managers
-      const userDoc = await getDoc(doc(db, 'managers', user.uid));
+  try {
+    // تسجيل الدخول
+    const userCred = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCred.user;
 
-      if (!userDoc.exists()) {
-        errorMsg.textContent = '🚫 لا توجد صلاحية لهذا المستخدم.';
-        errorMsg.classList.remove('hidden');
-        return;
-      }
+    // 🔍 تحقق إذا كان موجود داخل managers
+    const ref = doc(db, "managers", user.uid);
+    const snap = await getDoc(ref);
 
-      const role = userDoc.data().role;
-      if (role !== 'manager') {
-        errorMsg.textContent = '🚫 صلاحية الدخول محدودة — ليست صلاحية مدير النظام';
-        errorMsg.classList.remove('hidden');
-        return;
-      }
-
-      // ✅ نجاح الدخول
-      sessionStorage.setItem('smartHSRUser', JSON.stringify({ email: user.email, uid: user.uid }));
-      window.location.href = 'manager.html';
-
-    } catch (error) {
-      console.error('Login Error:', error);
-      errorMsg.textContent = '❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور';
-      errorMsg.classList.remove('hidden');
+    if (!snap.exists()) {
+      // 🟢 إنشاء مستند المدير تلقائيًا (لا مزيد من الأخطاء)
+      await setDoc(ref, {
+        uid: user.uid,
+        email: user.email,
+        name: "مدير المؤسسة",
+        role: "manager",
+        createdAt: serverTimestamp(),
+        lastLogin: serverTimestamp()
+      });
+    } else {
+      // تحديث آخر تسجيل دخول
+      await setDoc(ref, { lastLogin: serverTimestamp() }, { merge: true });
     }
-  });
+
+    // تخزين الجلسة
+    sessionStorage.setItem("smartHSRUser", JSON.stringify({
+      uid: user.uid,
+      email: user.email,
+      role: "manager"
+    }));
+
+    window.location.href = "manager.html";
+
+  } catch (err) {
+    console.error(err);
+    errorMsg.textContent = "❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور";
+    errorMsg.classList.remove("hidden");
+  }
+});
 </script>
-  
+
 </body>
 </html>
