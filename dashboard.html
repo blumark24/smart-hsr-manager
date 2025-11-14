@@ -751,6 +751,10 @@ import {
   getFirestore, collection, getDocs, addDoc, updateDoc, doc,
   serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
 
 // إعدادات Firebase الخاصة بك
 const firebaseConfig = {
@@ -795,15 +799,19 @@ try {
     // =============================
     // 3) خدمات مساعدة (ImgBB + أدوات عامة)
     // =============================
-// حفظ الصور داخل Firestore كنص Base64 (مجاني)
-async function uploadImageBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => resolve(e.target.result); // نرجع النص Base64
-    reader.onerror = reject;
-    reader.readAsDataURL(file); // نحول الصورة إلى Base64
-  });
+
+    // رفع الصور إلى Firebase Storage وإرجاع رابط التحميل
+async function uploadImageToStorage(file, folder = "HSR") {
+  const storage = getStorage(app);
+  const fileName = Date.now() + "-" + file.name;
+  const storageRef = ref(storage, `${folder}/${fileName}`);
+
+  await uploadBytes(storageRef, file);
+  const downloadUrl = await getDownloadURL(storageRef);
+
+  return downloadUrl;  // نعيد رابط الصورة فقط
 }
+
 
 
     function kpis() {
@@ -1017,7 +1025,7 @@ async function uploadImageBase64(file) {
       try {
         let uploadedUrl = null;
         if (currentFile) {
-  uploadedUrl = await uploadImageBase64(currentFile);
+uploadedUrl = await uploadImageToStorage(currentFile, "HSR");
 
         }
 
@@ -1130,7 +1138,8 @@ async function uploadImageBase64(file) {
       try {
         // ارفع صورة AFTER لـ ImgBB
         setButtonBusy('finalCloseoutBtn', true);
-        const afterUrl = await uploadImageBase64(currentAfterFile);
+        const afterUrl = await uploadImageToStorage(currentAfterFile, "HSR/after");
+
 
         // حدّث Firestore إن كان متاح
         if (FIREBASE_READY) {
