@@ -354,6 +354,11 @@
       text-align:center
     }
 
+    @keyframes slide-up{
+      0%{opacity:0;transform:translateY(20px)}
+      100%{opacity:1;transform:translateY(0)}
+    }
+
     @media print{
       body{
         background:#fff!important;
@@ -539,7 +544,6 @@
     .toast.show{opacity:1;transform:translateY(0);}
     .spin{animation:spin 1s linear infinite;}
 
-    /* زر أسطورة (لو احتجتيه لاحقاً) */
     .legend-toggle::after{
       content:"";
       position:absolute;
@@ -1031,7 +1035,7 @@ document.addEventListener("DOMContentLoaded", () => {
 setInterval(updateGpsStatus, 60000);
 </script>
 
-<!-- MAIN APP (Firebase + Firestore + Storage) -->
+<!-- MAIN APP (Firebase + Firestore + Storage + AI via Google Apps Script) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
@@ -1053,6 +1057,9 @@ import {
   uploadBytes,
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
+
+/** 🔗 رابط خدمة Google Apps Script لتحليل الصور بالذكاء الاصطناعي */
+const IMAGE_ANALYSIS_URL = "https://script.google.com/macros/s/AKfycbxJMU3Qs0uzA5WJ0qg-8mAQcrc23IzozFuOyw6hLApPnhl4xghaklH9JDxIbip40d6meA/exec";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
@@ -1646,24 +1653,61 @@ window.setupImageComparison = function(){
   wrapper.addEventListener('touchstart', onMouseDown);
 };
 
-// ========= AI BUTTONS (DUMMY) =========
-window.analyzeImage = function(tool){
-  const title = {'vision':'تحليل الرؤية (Vision)','root-cause':'تحليل السبب الجذري'}[tool] || 'التحليل';
+/* ========= 🔥 AI BUTTONS (متصلة مع Google Apps Script) ========= */
+window.analyzeImage = async function(tool){
+  const obs = currentSelectedObservation;
+
+  if (!obs || !obs.imagePath) {
+    alert('لا توجد صورة مرتبطة بهذه الملاحظة لتحليلها.');
+    return;
+  }
+
+  const title =
+    tool === 'vision'
+      ? 'تحليل الرؤية (Vision)'
+      : 'تحليل السبب الجذري';
+
   setText('aiResultTitle', `جاري تنفيذ ${title}...`);
   setHTML('aiResultContent', `
     <div class="flex items-center text-teal-700 font-bold">
       <div class="loading-spinner" style="border-top-color: var(--color-teal); border: 4px solid rgba(24, 165, 162, 0.3); margin-left: 8px;"></div>
-      يرجى الانتظار
+      يرجى الانتظار...
     </div>`);
   unhide('aiResultContainer');
 
-  setTimeout(()=>{
-    let result = (tool==='vision')
-      ? `<p class="communication-draft">**وصف تقريبي تلقائي:** تظهر مؤشرات تلف/تشققات. يُوصى بإزالة الجزء المتضرر وإعادة السفلتة.</p>`
-      : `<p class="communication-draft">**5 Whys (مقترح):**\n1) لماذا حدث؟ تأخر صيانة.\n2) لماذا؟ نقص متابعة.\n3) لماذا؟ جدول غير محدث.\n4) لماذا؟ بدون أتمتة.\n5) السبب الجذري: غياب آلية تنبيه دوري.</p>`;
-    setText('aiResultTitle', `نتائج ${title} مكتملة:`);
-    setHTML('aiResultContent', result);
-  }, 1200);
+  try {
+    const response = await fetch(IMAGE_ANALYSIS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        imageUrl: obs.imagePath,
+        type: tool   // "vision" أو "root-cause"
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
+
+    const data = await response.json();
+    const text = data.analysis || "لم يصل أي نص من خدمة التحليل.";
+
+    setText('aiResultTitle', `نتائج ${title}:`);
+    setHTML(
+      'aiResultContent',
+      `<div class="communication-draft p-4 border rounded-lg">${(text || '').replace(/\n/g,'<br>')}</div>`
+    );
+  } catch (err) {
+    console.error(err);
+    setText('aiResultTitle', 'تعذر تنفيذ التحليل');
+    setHTML(
+      'aiResultContent',
+      `<p class="text-red-600">
+        حدث خطأ أثناء الاتصال بخدمة التحليل.<br>
+        تأكد أن تطبيق Google Apps Script منشور كتطبيق ويب (Anyone) وأن الرابط صحيح.
+      </p>`
+    );
+  }
 };
 
 window.generateCommunicationDraft = function(){
@@ -1799,6 +1843,7 @@ async function initApp(){
 }
 
 window.addEventListener('load', initApp);
+
 </script>
 
 </body>
