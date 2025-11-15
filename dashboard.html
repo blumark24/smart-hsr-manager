@@ -746,7 +746,8 @@ document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
 // =============================
 // 1) إعداد Firebase الرسمي (مشروعك الحالي)
 // =============================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, doc,
   serverTimestamp, query, orderBy
@@ -755,31 +756,14 @@ import {
   getStorage, ref, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
+// نستخدم نفس Firebase App اللي تم تشغيله في أعلى الصفحة
+const app = getApp();
+const db  = getFirestore(app);
+const FIREBASE_READY = true;
 
-// إعدادات Firebase الخاصة بك
-const firebaseConfig = {
-  apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-  authDomain: "smart-hsr-manager.firebaseapp.com",
-  projectId: "smart-hsr-manager",
-  storageBucket: "smart-hsr-manager.firebasestorage.app",
-  messagingSenderId: "38965508031",
-  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-};
+document.getElementById('userInfo').textContent =
+  '✅ تم الاتصال بنجاح بـ Firebase / Firestore.';
 
-
-
-// تهيئة التطبيق وقاعدة البيانات
-let app, db, FIREBASE_READY = false;
-
-try {
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  FIREBASE_READY = !!db;
-  document.getElementById('userInfo').textContent = '✅ تم الاتصال بنجاح بـ Firebase / Firestore.';
-} catch (e) {
-  console.warn('Firebase init failed, fallback to local demo mode.', e);
-  document.getElementById('userInfo').textContent = '⚠️ وضع تجريبي محلي (لم يتم ضبط Firebase).';
-}
 
     // =============================
     // 2) حالة واجهة المستخدم + بيانات
