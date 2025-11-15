@@ -736,41 +736,6 @@ document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
 
   <!-- APP LOGIC (Firebase + Firestore + ImgBB) -->
   <script type="module">
- // =============================
-// 0) إعدادات عامة
-// =============================
-const IMGBB_API_KEY = 'fa1275ad54913c2eada7b0ea054dae80';
-const COLLECTION = 'observations';
-
-// =============================
-// 1) إعداد Firebase الرسمي
-// =============================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, collection, getDocs, addDoc, updateDoc, doc,
-  serverTimestamp, query, orderBy
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import {
-  getStorage, ref, uploadBytes, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-
-// ========== تهيئة Firebase ==========
-const firebaseConfig = {
-  apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-  authDomain: "smart-hsr-manager.firebaseapp.com",
-  projectId: "smart-hsr-manager",
-  storageBucket: "smart-hsr-manager.firebasestorage.app",
-  messagingSenderId: "38965508031",
-  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-};
-
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-const storage = getStorage(app);
-const FIREBASE_READY = true;
-
-document.getElementById('userInfo').textContent =
-  '✅ تم الاتصال بنجاح بـ Firebase / Firestore.';
 
 
     // =============================
