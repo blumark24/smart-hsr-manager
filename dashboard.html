@@ -576,6 +576,25 @@
 
   <link rel="stylesheet" href="modal-style.css">
   <link rel="stylesheet" href="style-custom.css">
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getGenerativeAI } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-generative-ai.js";
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_KEY",
+  authDomain: "your-app.firebaseapp.com",
+  projectId: "your-app"
+};
+const app = initializeApp(firebaseConfig);
+window.genAI = getGenerativeAI(app);
+
+async function askAIForNote(noteText){
+  const model = genAI.getGenerativeModel({model:"gemini-1.5-flash"});
+  const res = await model.generateContent("حلل هذه الملاحظة واقترح تحسينات:\n"+noteText);
+  return res.response.text();
+}
+</script>
+
 </head>
 
 <body class="text-gray-800">
