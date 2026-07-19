@@ -64,7 +64,13 @@
       try{
         const user=JSON.parse(s)||{};
         const badge=document.getElementById('userBadge');
-        if(badge){ badge.innerHTML = '<i data-lucide="user" class="w-4 h-4"></i> '+(user.email||'مدير'); badge.classList.remove('hidden'); }
+        if(badge){
+          const icon = document.createElement('i');
+          icon.setAttribute('data-lucide', 'user');
+          icon.className = 'w-4 h-4';
+          badge.replaceChildren(icon, document.createTextNode(' '+(user.email||'مدير')));
+          badge.classList.remove('hidden');
+        }
         if(!sessionStorage.getItem('welcomed')){ showToast('✅ تم تسجيل الدخول بنجاح – أهلاً بك!'); sessionStorage.setItem('welcomed','1'); }
         try{ lucide.createIcons(); }catch(e){}
         window.__SMART_USER__ = user;
@@ -305,6 +311,20 @@ const firebaseConfig = {
     const $$ = s => document.querySelectorAll(s);
     const openModal = id => { document.getElementById(id).style.display='flex'; }
     const closeModal = id => { document.getElementById(id).style.display='none'; }
+    const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[char]));
+    const safeImageUrl = value => {
+      const raw = String(value ?? '').trim();
+      if (/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(raw)) return raw;
+      try {
+        const url = new URL(raw);
+        return url.protocol === 'https:' ? url.href : '';
+      } catch (_) {
+        return '';
+      }
+    };
+    const safeActionId = value => encodeURIComponent(String(value ?? ''));
 
     // ===== Tabs =====
     $$("nav [data-tab]").forEach(btn=>{
@@ -336,12 +356,12 @@ const firebaseConfig = {
     function roleBadge(role){
       const map={manager:'مدير', inspector:'مراقب', contractor:'مقاول'};
       const cls={manager:'bg-slate-800 text-white', inspector:'bg-sky-600 text-white', contractor:'bg-emerald-600 text-white'};
-      return `<span class="pill ${cls[role]||'bg-gray-400 text-white'}">${map[role]||role}</span>`
+      return `<span class="pill ${cls[role]||'bg-gray-400 text-white'}">${escapeHTML(map[role]||role)}</span>`
     }
     function statusSwitch(u){
       const t = u.active? 'تعطيل' : 'تفعيل';
       const c = u.active? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700';
-      return `<button class="px-3 py-1 text-white rounded-full ${c}" onclick="toggleUser('${u.id}')">${t}</button>`
+      return `<button class="px-3 py-1 text-white rounded-full ${c}" onclick="toggleUser(decodeURIComponent('${safeActionId(u.id)}'))">${t}</button>`
     }
     function renderUsers(){
       const body = document.getElementById('usersBody');
@@ -350,15 +370,15 @@ const firebaseConfig = {
       if(!filtered.length){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>لا توجد نتائج</td></tr>`; return; }
       body.innerHTML = filtered.map(u=>
         `<tr>
-          <td class="font-bold">${u.name}</td>
+          <td class="font-bold">${escapeHTML(u.name)}</td>
           <td>${roleBadge(u.role)}</td>
-          <td class="text-gray-600">${u.email}</td>
+          <td class="text-gray-600">${escapeHTML(u.email)}</td>
           <td>${u.active?'<span class="tag bg-green-100 text-green-700">نشط</span>':'<span class="tag bg-red-100 text-red-700">معطل</span>'}</td>
           <td class="text-center">
             <div class="flex items-center gap-2 justify-center">
               ${statusSwitch(u)}
-              <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="editUser('${u.id}')">تعديل</button>
-              <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="removeUser('${u.id}')">حذف</button>
+              <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="editUser(decodeURIComponent('${safeActionId(u.id)}'))">تعديل</button>
+              <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="removeUser(decodeURIComponent('${safeActionId(u.id)}'))">حذف</button>
             </div>
           </td>
         </tr>`
@@ -421,23 +441,23 @@ const firebaseConfig = {
       if(!list.length){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-gray-500'>لا توجد بلاغات</td></tr>`; return; }
       body.innerHTML = list.map(o=>
         `<tr>
-          <td class="font-bold">${o.displayId || o.id}</td>
-          <td>${o.title||'—'}</td>
-          <td><span class="tag ${statusColors[o.status]||'bg-gray-500 text-white'}">${statusLabels[o.status]||o.status}</span></td>
-          <td>${o.inspector||'—'}</td>
-          <td>${o.contractor||'—'}</td>
-          <td class="text-gray-600">${o.date||'—'}</td>
+          <td class="font-bold">${escapeHTML(o.displayId || o.id)}</td>
+          <td>${escapeHTML(o.title||'—')}</td>
+          <td><span class="tag ${statusColors[o.status]||'bg-gray-500 text-white'}">${escapeHTML(statusLabels[o.status]||o.status)}</span></td>
+          <td>${escapeHTML(o.inspector||'—')}</td>
+          <td>${escapeHTML(o.contractor||'—')}</td>
+          <td class="text-gray-600">${escapeHTML(o.date||'—')}</td>
 <td class="text-center">
   <div class="flex items-center gap-2 justify-center">
-    <button class="px-3 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-full" onclick="openAssign('${o.docId||o.id}')">تعيين</button>
-    <button class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-full" onclick="cycleStatus('${o.docId||o.id}')">تغيير الحالة</button>
-    <button class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full" onclick="closeTicket('${o.docId||o.id}')">إغلاق</button>
+    <button class="px-3 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-full" onclick="openAssign(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">تعيين</button>
+    <button class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-full" onclick="cycleStatus(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">تغيير الحالة</button>
+    <button class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full" onclick="closeTicket(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">إغلاق</button>
 
     <!-- 🔴 زر الحذف -->
-    <button class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-full" onclick="deleteObservation('${o.docId||o.id}')">🗑️ حذف</button>
+    <button class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-full" onclick="deleteObservation(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">🗑️ حذف</button>
 
     <!-- 🔵 زر عرض الصور -->
-    <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="showObservationImages('${o.docId||o.id}')">📸 عرض الصور</button>
+    <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">📸 عرض الصور</button>
   </div>
 </td>
 
@@ -469,8 +489,19 @@ const firebaseConfig = {
       const inspSel=$('#assignInspector'); const contSel=$('#assignContractor');
       const insp = users.filter(u=>u.role==='inspector'&&u.active);
       const cont = users.filter(u=>u.role==='contractor'&&u.active);
-      inspSel.innerHTML = insp.length? insp.map(u=>`<option>${u.name}</option>`).join('') : '<option disabled>لا يوجد مراقبون نشطون</option>';
-      contSel.innerHTML = cont.length? cont.map(u=>`<option>${u.name}</option>`).join('') : '<option disabled>لا يوجد مقاولون نشطون</option>';
+      const fillSelect = (select, list, emptyText) => {
+        select.replaceChildren();
+        if (!list.length) {
+          const option = new Option(emptyText, '');
+          option.disabled = true;
+          option.selected = true;
+          select.add(option);
+          return;
+        }
+        list.forEach(user => select.add(new Option(String(user.name ?? ''), String(user.name ?? ''))));
+      };
+      fillSelect(inspSel, insp, 'لا يوجد مراقبون نشطون');
+      fillSelect(contSel, cont, 'لا يوجد مقاولون نشطون');
       openModal('modalAssign');
     }
     window.openAssign = openAssign;
@@ -494,7 +525,7 @@ const firebaseConfig = {
         <p class='font-bold'>ملخص تنفيذي (تجريبي):</p>
         <ul class='list-disc pr-6 mt-2 text-sm text-gray-700'>
           <li>إجمالي البلاغات: <b>${total}</b> | مفتوحة: <b>${open}</b> | مغلقة: <b>${closed}</b>.</li>
-          <li>أعلى إنجاز: <b>${topInspector}</b> بناءً على عدد البلاغات المغلقة.</li>
+          <li>أعلى إنجاز: <b>${escapeHTML(topInspector)}</b> بناءً على عدد البلاغات المغلقة.</li>
           <li>توصية: تسريع توثيق صور الإغلاق لرفع نسبة الإكمال.</li>
         </ul>
       </div>`;
@@ -595,15 +626,15 @@ const firebaseConfig = {
 
          .bindPopup(`
   <div style="min-width:200px; font-family:Tajawal;">
-    <div class="font-extrabold mb-1 text-[15px]">${o.title || '—'}</div>
+    <div class="font-extrabold mb-1 text-[15px]">${escapeHTML(o.title || '—')}</div>
     <div class="text-xs text-gray-600 mb-2">المعرف: ${(o.displayId || o.id) || '—'}</div>
     <div class="text-xs mb-2"><span class="badge"><span class="dot" style="background:${statusColor(o.status)}"></span>${statusLabels[o.status] || o.status}</span></div>
-    ${o.inspector && o.inspector !== '—' ? `<div class="text-xs mb-1">👷‍♂️ المراقب: ${o.inspector}</div>` : ''}
-    ${o.contractor && o.contractor !== '—' ? `<div class="text-xs mb-2">🏗️ المقاول: ${o.contractor}</div>` : ''}
+    ${o.inspector && o.inspector !== '—' ? `<div class="text-xs mb-1">👷‍♂️ المراقب: ${escapeHTML(o.inspector)}</div>` : ''}
+    ${o.contractor && o.contractor !== '—' ? `<div class="text-xs mb-2">🏗️ المقاول: ${escapeHTML(o.contractor)}</div>` : ''}
     <div class="flex flex-col gap-2">
-      <button onclick="showObservationImages('${o.docId || o.id}')" class="px-2 py-1 bg-indigo-600 text-white rounded text-xs w-full">📸 عرض الصور</button>
-      <button onclick="closeTicket('${o.docId || o.id}')" class="px-2 py-1 bg-green-600 text-white rounded text-xs w-full">✅ إغلاق البلاغ</button>
-      <button onclick="deleteObservation('${o.docId || o.id}')" class="px-2 py-1 bg-red-600 text-white rounded text-xs w-full">🗑️ حذف البلاغ</button>
+      <button onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-indigo-600 text-white rounded text-xs w-full">📸 عرض الصور</button>
+      <button onclick="closeTicket(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-green-600 text-white rounded text-xs w-full">✅ إغلاق البلاغ</button>
+      <button onclick="deleteObservation(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-red-600 text-white rounded text-xs w-full">🗑️ حذف البلاغ</button>
     </div>
   </div>
 `);
@@ -656,7 +687,7 @@ const firebaseConfig = {
         snap.forEach(d=>{
           const p=d.data(); if(typeof p.lat!=='number'||typeof p.lng!=='number') return;
           const m = L.marker([p.lat,p.lng], {icon:ICONS.CREW})
-            .bindPopup(`<div class="text-sm"><b>${p.role||'crew'}</b><div class="text-xs text-gray-600">${p.email||''}</div></div>`);
+            .bindPopup(`<div class="text-sm"><b>${escapeHTML(p.role||'crew')}</b><div class="text-xs text-gray-600">${escapeHTML(p.email||'')}</div></div>`);
           m.addTo(presenceLayer);
         });
       });
@@ -715,13 +746,15 @@ async function showObservationImages(id) {
   let before = null, after = null;
   for (const key of keys) {
     if (o[key] && typeof o[key] === "string") {
-      if (!before) before = o[key];
-      else if (!after && o[key] !== before) after = o[key];
+      const safe = safeImageUrl(o[key]);
+      if (!safe) continue;
+      if (!before) before = safe;
+      else if (!after && safe !== before) after = safe;
     }
   }
   if (o.images) {
-    if (o.images.before && !before) before = o.images.before;
-    if (o.images.after && !after) after = o.images.after;
+    if (o.images.before && !before) before = safeImageUrl(o.images.before) || null;
+    if (o.images.after && !after) after = safeImageUrl(o.images.after) || null;
   }
 
   // لو مافيه صور نهائياً

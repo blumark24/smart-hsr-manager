@@ -853,6 +853,25 @@ const firebaseConfig = {
   const sheetOverlay = document.getElementById('sheetOverlay');
 
   let currentDocId=null, currentAfterData=null;
+  const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+  const MAX_COMPRESSED_IMAGE_BYTES = 700 * 1024;
+
+  function escapeHTML(value){
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[char]));
+  }
+
+  function safeImageUrl(value){
+    const raw = String(value ?? '').trim();
+    if (/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(raw)) return raw;
+    try {
+      const url = new URL(raw);
+      return url.protocol === 'https:' ? url.href : '';
+    } catch (_) {
+      return '';
+    }
+  }
 
   function setChip(status){
     sChip.className='pill '+(
@@ -869,19 +888,25 @@ const firebaseConfig = {
   sAfter.addEventListener('change', async (e)=>{
     const f=e.target.files?.[0];
     if (!f) { currentAfterData=null; return; }
-    if (!f.type.startsWith('image/')){
-      alert('يجب اختيار صورة.');
+    if (!ALLOWED_IMAGE_TYPES.has(f.type)){
+      alert('يجب اختيار صورة بصيغة JPEG أو PNG أو WebP.');
       e.target.value='';
       return;
     }
-    currentAfterData = await fileToBase64(f);
+    currentAfterData = null;
+    try {
+      currentAfterData = await compressImage(f);
+    } catch (error) {
+      alert(error?.message || 'تعذر معالجة الصورة المختارة.');
+      e.target.value='';
+    }
   });
 
   function openSheet(o, dist){
     currentDocId=o.docId; currentAfterData=null;
     sheetTitle.textContent = `ملاحظة #${o.id||'—'}`;
     sTitleEl.textContent = o.title||'—';
-    sDetails.innerHTML = (o.details||'—').replace(/\n/g,'<br>');
+    sDetails.innerHTML = escapeHTML(o.details||'—').replace(/\n/g,'<br>');
     sStatus.value = o.status||'PENDING';
     setChip(o.status||'PENDING');
     sNote.value = o.resolutionNote||'';
@@ -890,14 +915,16 @@ const firebaseConfig = {
       : '—';
 
     sMedia.innerHTML = '';
-    if (o.afterImagePath){
+    const beforeImage = safeImageUrl(o.imagePath);
+    const afterImage = safeImageUrl(o.afterImagePath);
+    if (afterImage){
       sMedia.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <img src="${o.imagePath||''}" alt="قبل" style="width:100%;border-radius:10px">
-          <img src="${o.afterImagePath||''}" alt="بعد" style="width:100%;border-radius:10px">
+          ${beforeImage ? `<img src="${beforeImage}" alt="قبل" style="width:100%;border-radius:10px">` : ''}
+          <img src="${afterImage}" alt="بعد" style="width:100%;border-radius:10px">
         </div>`;
-    } else if (o.imagePath){
-      sMedia.innerHTML = `<img src="${o.imagePath}" alt="مرفق" style="width:100%;border-radius:10px">`;
+    } else if (beforeImage){
+      sMedia.innerHTML = `<img src="${beforeImage}" alt="مرفق" style="width:100%;border-radius:10px">`;
     } else {
       sMedia.innerHTML = `<div class="card-mini" style="text-align:center">لا يوجد مرفق</div>`;
     }
@@ -916,8 +943,8 @@ const firebaseConfig = {
     if (!currentDocId){ closeSheet(); return; }
     const newStatus = sStatus.value;
     if (newStatus==='COMPLETED' && !currentAfterData){
-      const ok = confirm('إغلاق يتطلب صورة "بعد". هل تريد المتابعة بدون صورة؟');
-      if (!ok) return;
+      alert('إغلاق البلاغ يتطلب صورة "بعد" صالحة وحجمها لا يتجاوز 700 كيلوبايت بعد الضغط.');
+      return;
     }
     const payload = {
       status: newStatus,
@@ -1039,11 +1066,41 @@ const firebaseConfig = {
     setTimeout(()=> t.classList.remove('show'), 1800);
   }
 
-  function fileToBase64(file){
-    return new Promise((res,rej)=>{
+  function compressImage(file){
+    return new Promise((resolve,reject)=>{
+      if (!(file instanceof Blob) || !ALLOWED_IMAGE_TYPES.has(file.type)) {
+        reject(new Error('يجب اختيار صورة بصيغة JPEG أو PNG أو WebP.'));
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = e=> res(e.target.result);
-      reader.onerror = rej;
+      reader.onerror = () => reject(new Error('تعذر قراءة الصورة المختارة.'));
+      reader.onload = () => {
+        const image = new Image();
+        image.onerror = () => reject(new Error('الملف المختار ليس صورة صالحة.'));
+        image.onload = () => {
+          const maxDimension = 1024;
+          const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(image.width * scale));
+          canvas.height = Math.max(1, Math.round(image.height * scale));
+          canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(blob => {
+            if (!blob) {
+              reject(new Error('تعذر ضغط الصورة المختارة.'));
+              return;
+            }
+            if (blob.size > MAX_COMPRESSED_IMAGE_BYTES) {
+              reject(new Error('حجم الصورة بعد الضغط ما زال أكبر من 700 كيلوبايت. اختر صورة أصغر.'));
+              return;
+            }
+            const output = new FileReader();
+            output.onerror = () => reject(new Error('تعذر تجهيز الصورة بعد الضغط.'));
+            output.onload = () => resolve(output.result);
+            output.readAsDataURL(blob);
+          }, 'image/jpeg', 0.7);
+        };
+        image.src = reader.result;
+      };
       reader.readAsDataURL(file);
     });
   }
