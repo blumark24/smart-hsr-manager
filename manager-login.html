@@ -76,8 +76,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // إعدادات Firebase
 const firebaseConfig = {
@@ -100,7 +100,7 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const password = document.getElementById("password").value;
 
   try {
     // تسجيل الدخول
@@ -111,22 +111,15 @@ form.addEventListener("submit", async (e) => {
     const ref = doc(db, "managers", user.uid);
     const snap = await getDoc(ref);
 
-    if (!snap.exists()) {
-      // 🟢 إنشاء مستند المدير تلقائيًا (لا مزيد من الأخطاء)
-      await setDoc(ref, {
-        uid: user.uid,
-        email: user.email,
-        name: "مدير المؤسسة",
-        role: "manager",
-        createdAt: serverTimestamp(),
-        lastLogin: serverTimestamp()
-      });
-    } else {
-      // تحديث آخر تسجيل دخول
-      await setDoc(ref, { lastLogin: serverTimestamp() }, { merge: true });
+    const managerData = snap.exists() ? snap.data() : null;
+
+    // لا تُنشئ صلاحية مدير من صفحة الدخول. يجب منحها مسبقًا من الإدارة.
+    if (!managerData || managerData.role !== "manager") {
+      await signOut(auth);
+      throw new Error("unauthorized-manager");
     }
 
-    // تخزين الجلسة
+    // تخزين الجلسة بعد التحقق من مستند المدير ودوره فقط
     sessionStorage.setItem("smartHSRUser", JSON.stringify({
       uid: user.uid,
       email: user.email,
@@ -137,7 +130,9 @@ form.addEventListener("submit", async (e) => {
 
   } catch (err) {
     console.error(err);
-    errorMsg.textContent = "❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور";
+    errorMsg.textContent = err.message === "unauthorized-manager"
+      ? "❌ هذا الحساب غير مصرح له بالدخول كمدير"
+      : "❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور";
     errorMsg.classList.remove("hidden");
   }
 });
