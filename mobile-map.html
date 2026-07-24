@@ -608,8 +608,9 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
-    getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy
+    getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, query, orderBy
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
@@ -621,8 +622,8 @@ const firebaseConfig = {
 };
 
 
-  let app, db, FIREBASE_READY=false;
-  try { app = initializeApp(firebaseConfig); db = getFirestore(app); FIREBASE_READY=true; }
+  let app, db, auth, FIREBASE_READY=false;
+  try { app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); FIREBASE_READY=true; }
   catch(e){ console.warn("Firebase init failed, running local-only.", e); }
 
   const root = document.documentElement;
@@ -1116,9 +1117,43 @@ const firebaseConfig = {
   map.on('moveend', drawFrame);
   drawFrame();
 
-  startLive();
-  drawMe();
-  lucide.createIcons();
+  // بدء التشغيل: يتطلب جلسة موثّقة فعليًا + دور "مقاول" فعّال في users/{uid}
+  // قبل قراءة/كتابة البلاغات في Firestore. هذا يطابق منطق التوجيه في login.html
+  // الذي يرسل role === 'contractor' فقط إلى هذه الصفحة.
+  let mapBooted = false;
+  function bootMap(){
+    if (mapBooted) return;
+    mapBooted = true;
+    startLive();
+    drawMe();
+    lucide.createIcons();
+  }
+
+  async function denyMapAccess(){
+    try{ if (auth?.currentUser) await signOut(auth); }catch(e){ console.warn(e); }
+    window.location.replace('login.html');
+  }
+
+  async function isAuthorizedContractor(user){
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists()) return false;
+    const data = snap.data() || {};
+    return data.role === 'contractor' && data.active !== false;
+  }
+
+  if (FIREBASE_READY){
+    onAuthStateChanged(auth, async (user) => {
+      if (!user){ await denyMapAccess(); return; }
+      let allowed = false;
+      try{ allowed = await isAuthorizedContractor(user); }
+      catch(err){ console.error('تعذر التحقق من صلاحية المقاول', err); allowed = false; }
+      if (!allowed){ await denyMapAccess(); return; }
+      bootMap();
+    });
+  } else {
+    // تعذّر تهيئة Firebase — رفض الوصول افتراضيًا (Fail closed) بدل عرض بيانات تجريبية
+    toast('⚠️ تعذر الاتصال بالخدمة — تم رفض الوصول.');
+  }
 </script>
 </body>
 </html>
