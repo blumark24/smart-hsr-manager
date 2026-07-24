@@ -242,7 +242,8 @@
   <script type="module">
     // ✅ اتصال فعلي بـ Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
@@ -254,6 +255,7 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
     // عناصر الواجهة
     const orgsBody = document.getElementById('orgsBody');
@@ -261,6 +263,7 @@
     const searchBox = document.getElementById('searchBox');
     const addOrgBtn = document.getElementById('addOrgBtn');
     const newInvoiceBtn = document.getElementById('newInvoiceBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const kpiRevenue = document.getElementById('kpiRevenue');
     const kpiRevenueNote = document.getElementById('kpiRevenueNote');
     const kpiActive = document.getElementById('kpiActive');
@@ -331,43 +334,88 @@
     }
 
     function renderOrgs(filter=''){
-      const rows = (filter? ORGS.filter(o=> (o.name||'').includes(filter)) : ORGS)
-        .map(o=>`<tr>
-          <td class="font-semibold">${o.name||'-'}</td>
-          <td>${o.manager||'-'}</td>
-          <td>${o.email||'-'}</td>
-          <td>${o.phone||'-'}</td>
-          <td><span class="badge">${o.plan||'Trial'}</span></td>
-          <td>${o.billingCycle||'monthly'}</td>
-          <td>${o.status||'active'}</td>
-          <td>${o.expiresAt? new Date(o.expiresAt).toLocaleDateString('ar-SA'): '-'}</td>
-          <td>
-            <div class="flex gap-2">
-              <button class="btn btn-outline" data-act="edit" data-id="${o.id}">تعديل</button>
-              <button class="btn btn-primary" data-act="upgrade" data-id="${o.id}">ترقية</button>
-              <button class="btn btn-outline" data-act="delete" data-id="${o.id}">حذف</button>
-            </div>
-          </td>
-        </tr>`).join('');
-      orgsBody.innerHTML = rows || `<tr><td colspan="9" class="text-center muted py-6">لا توجد مؤسسات بعد</td></tr>`;
+      const rows = filter? ORGS.filter(o=> (o.name||'').includes(filter)) : ORGS;
+      orgsBody.innerHTML = '';
+      if(!rows.length){
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 9; td.className = 'text-center muted py-6'; td.textContent = 'لا توجد مؤسسات بعد';
+        tr.appendChild(td); orgsBody.appendChild(tr);
+        return;
+      }
+      rows.forEach(o=>{
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td'); tdName.className = 'font-semibold'; tdName.textContent = o.name||'-'; tr.appendChild(tdName);
+        const tdManager = document.createElement('td'); tdManager.textContent = o.manager||'-'; tr.appendChild(tdManager);
+        const tdEmail = document.createElement('td'); tdEmail.textContent = o.email||'-'; tr.appendChild(tdEmail);
+        const tdPhone = document.createElement('td'); tdPhone.textContent = o.phone||'-'; tr.appendChild(tdPhone);
+
+        const tdPlan = document.createElement('td');
+        const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = o.plan||'Trial';
+        tdPlan.appendChild(badge); tr.appendChild(tdPlan);
+
+        const tdCycle = document.createElement('td'); tdCycle.textContent = o.billingCycle||'monthly'; tr.appendChild(tdCycle);
+        const tdStatus = document.createElement('td'); tdStatus.textContent = o.status||'active'; tr.appendChild(tdStatus);
+
+        const tdExpires = document.createElement('td');
+        tdExpires.textContent = o.expiresAt? new Date(o.expiresAt).toLocaleDateString('ar-SA'): '-';
+        tr.appendChild(tdExpires);
+
+        const tdActions = document.createElement('td');
+        const wrap = document.createElement('div'); wrap.className = 'flex gap-2';
+        const mkBtn = (label, act, cls)=>{
+          const b = document.createElement('button');
+          b.className = cls; b.textContent = label;
+          b.dataset.act = act; b.dataset.id = o.id;
+          return b;
+        };
+        wrap.appendChild(mkBtn('تعديل','edit','btn btn-outline'));
+        wrap.appendChild(mkBtn('ترقية','upgrade','btn btn-primary'));
+        wrap.appendChild(mkBtn('حذف','delete','btn btn-outline'));
+        tdActions.appendChild(wrap); tr.appendChild(tdActions);
+
+        orgsBody.appendChild(tr);
+      });
     }
 
     function fillInvoiceOrgSelect(){
-      invoiceOrgSelect.innerHTML = ORGS.map(o=>`<option value="${o.id}">${o.name||o.id}</option>`).join('');
+      invoiceOrgSelect.innerHTML = '';
+      ORGS.forEach(o=>{
+        invoiceOrgSelect.add(new Option(o.name||o.id, o.id));
+      });
     }
 
     function renderInvoices(){
-      invoicesBody.innerHTML = INVOICES.map(inv=>`
-        <tr>
-          <td>${inv.invoiceId||inv.id}</td>
-          <td>${inv.organization_name||'-'}</td>
-          <td>${inv.plan||'-'}</td>
-          <td>${inv.billingCycle||'-'}</td>
-          <td>${formatSAR(inv.total||0)}</td>
-          <td><span class="badge" style="border-color:${(inv.status==='paid')?'#16a34a':'#f59e0b'}; color:${(inv.status==='paid')?'#16a34a':'#f59e0b'}">${inv.status||'-'}</span></td>
-          <td>${inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'):'-'}</td>
-          <td><button class="btn btn-outline" data-dl="${inv.id}">PDF</button></td>
-        </tr>`).join('');
+      invoicesBody.innerHTML = '';
+      INVOICES.forEach(inv=>{
+        const tr = document.createElement('tr');
+
+        const tdId = document.createElement('td'); tdId.textContent = inv.invoiceId||inv.id; tr.appendChild(tdId);
+        const tdOrg = document.createElement('td'); tdOrg.textContent = inv.organization_name||'-'; tr.appendChild(tdOrg);
+        const tdPlan = document.createElement('td'); tdPlan.textContent = inv.plan||'-'; tr.appendChild(tdPlan);
+        const tdCycle = document.createElement('td'); tdCycle.textContent = inv.billingCycle||'-'; tr.appendChild(tdCycle);
+        const tdAmount = document.createElement('td'); tdAmount.textContent = formatSAR(inv.total||0); tr.appendChild(tdAmount);
+
+        const tdStatus = document.createElement('td');
+        const badge = document.createElement('span'); badge.className = 'badge';
+        const isPaid = inv.status === 'paid';
+        badge.style.borderColor = isPaid? '#16a34a':'#f59e0b';
+        badge.style.color = isPaid? '#16a34a':'#f59e0b';
+        badge.textContent = inv.status||'-';
+        tdStatus.appendChild(badge); tr.appendChild(tdStatus);
+
+        const tdDate = document.createElement('td');
+        tdDate.textContent = inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'):'-';
+        tr.appendChild(tdDate);
+
+        const tdFile = document.createElement('td');
+        const btn = document.createElement('button'); btn.className = 'btn btn-outline'; btn.textContent = 'PDF';
+        btn.dataset.dl = inv.id;
+        tdFile.appendChild(btn); tr.appendChild(tdFile);
+
+        invoicesBody.appendChild(tr);
+      });
     }
 
     // رسوم بيانية
@@ -502,8 +550,40 @@
 
     async function refreshAll(){ await Promise.all([fetchOrganizations(), fetchInvoices()]); renderKPIs(); }
 
-    // بدء التشغيل
-    await refreshAll();
+    // تسجيل الخروج
+    logoutBtn.addEventListener('click', async ()=>{
+      try{ if(auth.currentUser) await signOut(auth); }
+      catch(err){ console.warn('تعذر تسجيل الخروج من Firebase', err); }
+      finally{
+        sessionStorage.removeItem('SmartHSROwner');
+        window.location.replace('owner-login.html');
+      }
+    });
+
+    async function denyOwnerAccess(){
+      try{ if(auth.currentUser) await signOut(auth); }catch(e){ console.warn(e); }
+      sessionStorage.removeItem('SmartHSROwner');
+      window.location.replace('owner-login.html');
+    }
+
+    // نموذج التفويض كما في owner-login.html: وجود مستند owners/{uid} فقط (لا حقول إضافية مُخترَعة)
+    async function isAuthorizedOwner(user){
+      const snap = await getDoc(doc(db, 'owners', user.uid));
+      return snap.exists();
+    }
+
+    // بدء التشغيل: يتطلب جلسة موثّقة + مستند owners/{uid} فعليًا قبل قراءة/كتابة المؤسسات والفواتير
+    let ownerBooted = false;
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){ await denyOwnerAccess(); return; }
+      let allowed = false;
+      try{ allowed = await isAuthorizedOwner(user); }
+      catch(err){ console.error('تعذر التحقق من صلاحية المالك', err); allowed = false; }
+      if(!allowed){ await denyOwnerAccess(); return; }
+      if(ownerBooted) return;
+      ownerBooted = true;
+      await refreshAll();
+    });
   </script>
 </body>
 </html>
