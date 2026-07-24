@@ -269,12 +269,12 @@
   <!-- FIREBASE (Modules) -->
   <script type="module">
     // ------ Firebase setup ------
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
-      getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc,
+      getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
       onSnapshot, serverTimestamp, query, orderBy, setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // إعدادات Firebase الخاصة بك
 const firebaseConfig = {
@@ -391,14 +391,21 @@ const firebaseConfig = {
     async function saveUser(){
       const name=$('#addName').value.trim();
       const email=$('#addEmail').value.trim();
-      const password=$('#addPassword').value.trim();
+      const password=$('#addPassword').value;
       const role=$('#addRole').value;
       if(!name||!email||!password){ alert('الرجاء تعبئة الاسم والبريد وكلمة المرور.'); return; }
+      let secondaryApp = null;
       try{
         if(!FIREBASE_READY){ alert('لم يتم ضبط Firebase بعد. الرجاء إدخال الإعدادات الصحيحة.'); return; }
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+        // إنشاء المستخدم في تطبيق Firebase ثانوي حتى تبقى جلسة المدير الحالية فعّالة.
+        secondaryApp = initializeApp(firebaseConfig, 'user-creation-' + Date.now());
+        const secondaryAuth = getAuth(secondaryApp);
+        const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
         const uid = cred.user.uid;
         await setDoc(doc(db,'users',uid), { uid, name, email, role, active:true, createdAt: serverTimestamp() });
+        await signOut(secondaryAuth);
+
         users.unshift({ id: uid, name, email, role, active:true });
         closeModal('modalAddUser');
         $('#addName').value=''; $('#addEmail').value=''; $('#addPassword').value=''; $('#addRole').value='inspector';
@@ -406,6 +413,10 @@ const firebaseConfig = {
         showToast('✅ تم إنشاء المستخدم بنجاح');
       }catch(err){
         console.error(err); alert('حدث خطأ أثناء إنشاء المستخدم: '+ (err?.message||err));
+      }finally{
+        if(secondaryApp){
+          try{ await deleteApp(secondaryApp); }catch(cleanupError){ console.warn('تعذر تنظيف تطبيق إنشاء المستخدم', cleanupError); }
+        }
       }
     }
     window.saveUser = saveUser;
@@ -539,10 +550,14 @@ const firebaseConfig = {
     window.toggleDarkMode = toggleDarkMode;
 
     // ===== Logout =====
-    document.getElementById('logoutBtn').addEventListener('click',()=>{
-      sessionStorage.removeItem('smartHSRUser');
-      sessionStorage.removeItem('welcomed');
-      window.location.href='manager-login.html';
+    document.getElementById('logoutBtn').addEventListener('click',async()=>{
+      try{ if(auth?.currentUser) await signOut(auth); }
+      catch(err){ console.warn('تعذر تسجيل الخروج من Firebase', err); }
+      finally{
+        sessionStorage.removeItem('smartHSRUser');
+        sessionStorage.removeItem('welcomed');
+        window.location.replace('manager-login.html');
+      }
     });
 
     // ===== Firestore sync (Users + Observations) =====
@@ -693,14 +708,64 @@ const firebaseConfig = {
       });
     }
 
-    // ===== Boot =====
-    function boot(){
+    // ===== Boot + authenticated manager guard =====
+    let appStarted = false;
+
+    async function verifyManagerAccess(user){
+      if(!user) return false;
+      const managerSnap = await getDoc(doc(db, 'managers', user.uid));
+      if(!managerSnap.exists()) return false;
+      const manager = managerSnap.data() || {};
+      return manager.role === 'manager' && manager.active !== false;
+    }
+
+    async function denyManagerAccess(message){
+      sessionStorage.removeItem('smartHSRUser');
+      sessionStorage.removeItem('welcomed');
+      try{ if(auth?.currentUser) await signOut(auth); }catch(err){ console.warn(err); }
+      if(message) alert(message);
+      window.location.replace('manager-login.html');
+    }
+
+    async function bootForManager(user){
+      if(appStarted) return;
+      if(!FIREBASE_READY){
+        showToast('⚠️ تعذر الاتصال بخدمة تسجيل الدخول.');
+        return;
+      }
+
+      let allowed = false;
+      try{ allowed = await verifyManagerAccess(user); }
+      catch(err){ console.error('Manager access verification failed', err); }
+
+      if(!allowed){
+        await denyManagerAccess(user ? 'هذا الحساب غير مصرح له بالدخول كمدير.' : '');
+        return;
+      }
+
+      sessionStorage.setItem('smartHSRUser', JSON.stringify({
+        uid:user.uid,
+        email:user.email || '',
+        role:'manager'
+      }));
+      window.__SMART_USER__ = { uid:user.uid, email:user.email || '', role:'manager' };
+      appStarted = true;
       initMap();
-      if(FIREBASE_READY) { loadFromFirestore(); subscribePresence(); }
-      else { showToast('⚠️ الرجاء ضبط مفاتيح Firebase ليعمل المشروع.'); }
+      loadFromFirestore();
+      subscribePresence();
       try{ lucide.createIcons(); }catch(e){}
     }
-    window.addEventListener('DOMContentLoaded', boot);
+
+    if(FIREBASE_READY){
+      onAuthStateChanged(auth, user=>{
+        bootForManager(user).catch(err=>{
+          console.error('Manager boot failed', err);
+          denyManagerAccess('تعذر التحقق من صلاحية المدير.');
+        });
+      });
+    }else{
+      showToast('⚠️ الرجاء ضبط مفاتيح Firebase ليعمل المشروع.');
+    }
 
   
     
