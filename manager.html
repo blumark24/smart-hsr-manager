@@ -235,7 +235,6 @@
           <select id="addRole" class="border rounded-xl p-2 w-full">
             <option value="inspector">مراقب</option>
             <option value="contractor">مقاول</option>
-            <option value="manager">مدير</option>
           </select>
         </div>
         <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveUser()">حفظ</button></div>
@@ -394,6 +393,12 @@ const firebaseConfig = {
       const password=$('#addPassword').value;
       const role=$('#addRole').value;
       if(!name||!email||!password){ alert('الرجاء تعبئة الاسم والبريد وكلمة المرور.'); return; }
+      // قائمة الأدوار المسموح بها فقط — تحقق قبل إنشاء حساب المصادقة
+      const ALLOWED_ROLES = ['inspector', 'contractor'];
+      if(!ALLOWED_ROLES.includes(role)){
+        alert('الدور المحدد غير صالح. يُسمح فقط بدور "مراقب" (inspector) أو "مقاول" (contractor).');
+        return;
+      }
       let secondaryApp = null;
       try{
         if(!FIREBASE_READY){ alert('لم يتم ضبط Firebase بعد. الرجاء إدخال الإعدادات الصحيحة.'); return; }
