@@ -11,6 +11,9 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
   "devDependencies": {
     "tailwindcss": "^3.4.18"
   }
