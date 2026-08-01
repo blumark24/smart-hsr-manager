@@ -592,6 +592,7 @@
           <span id="userName">—</span>
           <span id="userRole" class="role-badge">—</span>
         </span>
+        <span id="orgBadge" class="hidden" style="font-size:.75rem; opacity:.85;"></span>
       </div>
     </div>
 
@@ -647,8 +648,10 @@
         <h4 class="text-2xl font-bold mb-4" style="color:var(--color-teal);">تصفية الملاحظات</h4>
         <select id="observationFilter" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-[--color-teal] focus:border-[--color-teal] text-gray-700 shadow-sm transition-all duration-300" onchange="handleFilterChange()">
           <option value="الكل">عرض كل الملاحظات</option>
-          <option value="جديد">جديد</option>
-          <option value="قيد التنفيذ">قيد التنفيذ</option>
+          <!-- NOTE: the option VALUES are lookup keys for the filter map in
+               handleFilterChange(); only the visible labels are unified. -->
+          <option value="جديد">قيد الانتظار</option>
+          <option value="قيد التنفيذ">قيد المعالجة</option>
           <option value="تمت المعالجة">تمت المعالجة</option>
           <option value="جودة">جودة</option>
           <option value="صيانة">صيانة</option>
@@ -1040,9 +1043,9 @@ import {
   doc,
   getDoc,
   collection,
-  getDocs,
   query,
-  orderBy,
+  where,
+  onSnapshot,
   addDoc,
   serverTimestamp,
   updateDoc
@@ -1077,49 +1080,143 @@ const userRole = document.getElementById('userRole');
 const menuToggle = document.getElementById('menuToggle');
 const actions = document.querySelector('.actions');
 
-// ========= HEADER AUTH / USER INFO =========
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    let stored = JSON.parse(localStorage.getItem("hsrUserData") || "{}");
+// ========= INSPECTOR ORG-ISOLATION CONTEXT (in-memory only, never trusted
+// from form input, URL, sessionStorage, or localStorage) =========
+let appStarted = false;
+const inspectorContext = { uid: null, organizationId: null, organizationName: '' };
 
-    try {
-      const ref1 = doc(db, "managers", user.uid);
-      const snap1 = await getDoc(ref1);
-      if (snap1.exists()) stored = snap1.data();
-      else {
-        const ref2 = doc(db, "users", user.uid);
-        const snap2 = await getDoc(ref2);
-        if (snap2.exists()) stored = snap2.data();
+// Loads the signed-in user's OWN users/{uid} doc (never any other uid, never
+// the managers collection) and returns the verified context ONLY if
+// role === 'inspector', active !== false, AND organizationId is a non-empty
+// string. Any missing/failing piece fails closed (returns null).
+async function verifyInspectorAccess(user) {
+  const snap = await getDoc(doc(db, "users", user.uid));
+  if (!snap.exists()) return null;
+  const data = snap.data() || {};
+  const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
+  if (data.role !== 'inspector' || data.active === false || !organizationId) return null;
+  const organizationName = typeof data.organizationName === 'string' && data.organizationName.trim()
+    ? data.organizationName.trim()
+    : organizationId;
+  return { organizationId, organizationName, name: data.name || '' };
+}
+
+// Resolves what to do with an authenticated session that is NOT an inspector.
+// A valid contractor/manager who merely opened the wrong page must be routed
+// to their own surface WITHOUT being signed out — previously any non-inspector
+// was signed out globally, which killed a contractor's session mid-job.
+// Returns { route } for a valid other-role session, or null to deny.
+async function resolveOtherRoleRoute(user) {
+  // 1) Contractor? inspector/contractor records live in users/{uid}.
+  //    A miss here must NOT short-circuit: a manager may legitimately also
+  //    have a legacy users/{uid} document, and managers/{uid} is the
+  //    authoritative record for manager access. Returning early here would
+  //    deny that manager instead of routing them.
+  try {
+    const uSnap = await getDoc(doc(db, "users", user.uid));
+    if (uSnap.exists()) {
+      const d = uSnap.data() || {};
+      const org = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+      // Only a fully valid contractor is routed. Anything else (inactive,
+      // no organization, other role) falls through to the managers check.
+      if (d.role === 'contractor' && d.active !== false && org) {
+        return { route: 'mobile-map.html' };
       }
-      localStorage.setItem("hsrUserData", JSON.stringify(stored));
-    } catch (err) {
-      console.warn("خطأ أثناء جلب البيانات:", err);
     }
+  } catch (err) {
+    console.error('users lookup failed', err); // fall through, still try managers
+  }
 
-    const rawRole = (stored.role || "manager").toLowerCase().trim();
-    let arabicRole = "";
-    let roleClass = "";
-
-    if (rawRole.includes("manager") || rawRole.includes("مدير")) {
-      arabicRole = "مدير";
-      roleClass = "user-role-manager";
-    } else if (rawRole.includes("inspector") || rawRole.includes("مراقب")) {
-      arabicRole = "مراقب";
-      roleClass = "user-role-inspector";
-    } else if (rawRole.includes("contractor") || rawRole.includes("مقاول")) {
-      arabicRole = "مقاول";
-      roleClass = "user-role-contractor";
-    } else {
-      arabicRole = "مستخدم";
+  // 2) Manager? managers/{uid} is authoritative and still fully validated —
+  //    inactive or organization-less manager records remain denied.
+  try {
+    const mSnap = await getDoc(doc(db, "managers", user.uid));
+    if (mSnap.exists()) {
+      const d = mSnap.data() || {};
+      const org = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+      if (d.role === 'manager' && d.active !== false && org) {
+        return { route: 'manager.html' };
+      }
     }
+  } catch (err) {
+    console.error('managers lookup failed', err);
+  }
 
-    userName.textContent = stored.name || user.displayName || "مستخدم";
-    userRole.className = roleClass;
-    userRole.textContent = arabicRole;
+  // Nothing valid to route to -> caller denies and signs out.
+  return null;
+}
 
-    lucide.createIcons();
+function renderOrgBadge() {
+  const el = document.getElementById('orgBadge');
+  if (!el) return;
+  if (inspectorContext.organizationName) {
+    el.textContent = 'المؤسسة: ' + inspectorContext.organizationName;
+    el.classList.remove('hidden');
   } else {
-    redirectToLogin();
+    el.classList.add('hidden');
+  }
+}
+
+// Shows a clear Arabic "not authorized" state in place of any observation
+// data, then signs out and redirects — never renders the dashboard content
+// for a denied session.
+function showUnauthorized() {
+  obsState = 'unauthorized';
+  renderObservationsList([]);
+  renderKPIs();
+}
+
+async function denyInspectorAccess(message) {
+  showUnauthorized();
+  try { await signOut(auth); } catch (e) { console.warn(e); }
+  if (message) { try { alert(message); } catch (_) {} }
+  setTimeout(() => redirectToLogin(), 1200);
+}
+
+// ========= HEADER AUTH / USER INFO (fail-closed inspector gate) =========
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { redirectToLogin(); return; }
+
+  let verified = null;
+  try {
+    verified = await verifyInspectorAccess(user);
+  } catch (err) {
+    console.error('Inspector access verification failed', err);
+  }
+
+  if (!verified) {
+    // Not an inspector. Before denying, check whether this is a perfectly
+    // valid contractor/manager who simply opened the wrong page — they get
+    // routed to their own surface with their session intact.
+    let other = null;
+    try { other = await resolveOtherRoleRoute(user); }
+    catch (err) { console.error('Role routing failed', err); }
+
+    if (other) {
+      obsState = 'unauthorized';
+      renderObservationsList([]);
+      renderKPIs();
+      window.location.replace(other.route);
+      return;
+    }
+
+    await denyInspectorAccess('🚫 هذا الحساب غير مصرح له بالوصول للوحة المراقب، أو الحساب غير نشط، أو لا يتبع لمؤسسة محددة.');
+    return;
+  }
+
+  inspectorContext.uid = user.uid;
+  inspectorContext.organizationId = verified.organizationId;
+  inspectorContext.organizationName = verified.organizationName;
+
+  userName.textContent = verified.name || user.displayName || 'مستخدم';
+  userRole.className = 'user-role-inspector';
+  userRole.textContent = 'مراقب';
+  renderOrgBadge();
+  lucide.createIcons();
+
+  if (!appStarted) {
+    appStarted = true;
+    startApp();
   }
 });
 
@@ -1131,7 +1228,6 @@ logoutBtn.addEventListener('click', async () => {
 
   try {
     await signOut(auth);
-    localStorage.removeItem("hsrUserData");
     showToast("تم تسجيل الخروج بنجاح ✔️");
     setTimeout(() => redirectToLogin(), 1600);
   } catch (e) {
@@ -1169,10 +1265,12 @@ function showToast(msg) {
 // ========= DASHBOARD STATE =========
 let observationsData = [];
 let currentSelectedObservation = null;
+let obsState = 'loading';   // 'loading' | 'ready' | 'error' | 'unauthorized'
+let obsUnsub = null;
 
 const statusMap = {
   "PENDING": { color:'bg-red-600', text:'قيد الانتظار' },
-  "IN_PROGRESS": { color:'bg-yellow-600', text:'قيد التنفيذ' },
+  "IN_PROGRESS": { color:'bg-yellow-600', text:'قيد المعالجة' },
   "COMPLETED": { color:'bg-green-600', text:'تمت المعالجة' }
 };
 
@@ -1253,8 +1351,20 @@ function kpis() {
 }
 
 function renderKPIs() {
-  const { totalReports, openReports, closedReports, reportsWithImages } = kpis();
   const kpiContainer = document.getElementById('kpiContainer');
+  if (obsState !== 'ready') {
+    const msg = obsState === 'error' ? '⚠️ تعذر تحميل المؤشرات'
+      : obsState === 'unauthorized' ? '🚫 غير مصرح لك بالوصول'
+      : 'جاري التحميل...';
+    kpiContainer.innerHTML = `
+      <div class="p-6 bg-white rounded-2xl shadow-xl border-t-4 border-gray-200">
+        <p class="text-xl font-medium text-gray-500">${msg}</p>
+        <p class="text-5xl font-extrabold text-gray-700 mt-2">--</p>
+      </div>`;
+    return;
+  }
+
+  const { totalReports, openReports, closedReports, reportsWithImages } = kpis();
   kpiContainer.innerHTML = '';
 
   const kpiData = [
@@ -1282,8 +1392,27 @@ function renderObservationsList(observations) {
   const list = document.getElementById('observationsList');
   list.innerHTML = '';
 
+  if (obsState === 'loading') {
+    list.innerHTML = '<div class="text-center text-gray-500 mt-10 p-4">... جاري تحميل الملاحظات ...</div>';
+    document.getElementById('detailPlaceholder').classList.remove('hidden');
+    document.getElementById('observationDetail').classList.add('hidden');
+    return;
+  }
+  if (obsState === 'error') {
+    list.innerHTML = '<div class="text-center text-red-600 mt-10 p-4 bg-red-50 rounded-xl">⚠️ تعذر تحميل الملاحظات. الرجاء تحديث الصفحة أو المحاولة لاحقاً.</div>';
+    document.getElementById('detailPlaceholder').classList.remove('hidden');
+    document.getElementById('observationDetail').classList.add('hidden');
+    return;
+  }
+  if (obsState === 'unauthorized') {
+    list.innerHTML = '<div class="text-center text-red-700 mt-10 p-4 bg-red-50 rounded-xl font-bold">🚫 غير مصرح لك بالوصول. جاري تحويلك لصفحة الدخول...</div>';
+    document.getElementById('detailPlaceholder').classList.remove('hidden');
+    document.getElementById('observationDetail').classList.add('hidden');
+    return;
+  }
+
   if (!observations || observations.length === 0) {
-    list.innerHTML = '<div class="text-center text-gray-500 mt-10 p-4 bg-gray-100 rounded-xl">لا توجد ملاحظات.</div>';
+    list.innerHTML = '<div class="text-center text-gray-500 mt-10 p-4 bg-gray-100 rounded-xl">لا توجد ملاحظات في مؤسستك حالياً.</div>';
     document.getElementById('detailPlaceholder').classList.remove('hidden');
     document.getElementById('observationDetail').classList.add('hidden');
     return;
@@ -1304,35 +1433,69 @@ function renderObservationsList(observations) {
 }
 
 // ========= FIRESTORE =========
-async function loadFromFirestore() {
-  const q = query(collection(db, COLLECTION), orderBy('createdAt','desc'));
-  const snapshot = await getDocs(q);
-  const arr = [];
-  snapshot.forEach(d=>{
-    const data = d.data();
-    arr.push({
-      docId:d.id,
-      id: data.displayId || 0,
-      type:data.type || 'MAINTENANCE',
-      date:data.date || '',
-      title:data.title || '',
-      status:data.status || 'PENDING',
-      details:data.details || '',
-      hasImage: !!data.imagePath,
-      isComparative: !!data.isComparative,
-      location:data.location || '',
-      isVideo:false,
-      imagePath:data.imagePath || null,
-      fileMimeType:'image/jpeg',
-      actionPlan:data.actionPlan || '',
-      riskAssessment:data.riskAssessment || { priority:'Medium', timeframe:'72 hours' },
-      resolutionNote:data.resolutionNote || null,
-      afterImagePath:data.afterImagePath || null,
-      createdAt:data.createdAt?.toMillis ? data.createdAt.toMillis(): (data.createdAt || Date.now()),
-      isNewInput:false
+// Organization-scoped, cache-guarded live subscription. Never queries the
+// full collection — always filtered by the verified inspector's own
+// organizationId. metadata.fromCache snapshots are ignored so a refresh
+// never renders stale/cached data as authoritative.
+function subscribeObservations() {
+  const organizationId = inspectorContext.organizationId;
+  if (!organizationId) {
+    console.error('لا يمكن تحميل البلاغات بدون معرف مؤسسة صالح.');
+    obsState = 'error';
+    renderObservationsList([]);
+    renderKPIs();
+    return;
+  }
+
+  if (obsUnsub) { obsUnsub(); obsUnsub = null; }
+  observationsData = [];
+  obsState = 'loading';
+  renderObservationsList([]);
+  renderKPIs();
+
+  const q = query(collection(db, COLLECTION), where('organizationId', '==', organizationId));
+  obsUnsub = onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
+    if (snapshot.metadata.fromCache) return; // never render an unverified cached snapshot
+    const arr = [];
+    snapshot.forEach(d=>{
+      const data = d.data();
+      arr.push({
+        docId:d.id,
+        id: data.displayId || 0,
+        type:data.type || 'MAINTENANCE',
+        date:data.date || '',
+        title:data.title || '',
+        status:data.status || 'PENDING',
+        details:data.details || '',
+        hasImage: !!data.imagePath,
+        isComparative: !!data.isComparative,
+        location:data.location || '',
+        isVideo:false,
+        imagePath:data.imagePath || null,
+        fileMimeType:'image/jpeg',
+        actionPlan:data.actionPlan || '',
+        riskAssessment:data.riskAssessment || { priority:'Medium', timeframe:'72 hours' },
+        resolutionNote:data.resolutionNote || null,
+        afterImagePath:data.afterImagePath || null,
+        createdAt:data.createdAt?.toMillis ? data.createdAt.toMillis(): (data.createdAt || 0),
+        isNewInput:false
+      });
     });
+    arr.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+    observationsData = arr;
+    obsState = 'ready';
+    renderKPIs();
+    renderObservationsList(observationsData);
+    if (!currentSelectedObservation && observationsData.length > 0) {
+      showObservationDetail(observationsData[0].docId);
+    }
+    lucide.createIcons();
+  }, err => {
+    console.error('Observations subscription failed', err);
+    obsState = 'error';
+    renderObservationsList([]);
+    renderKPIs();
   });
-  observationsData = arr;
 }
 
 async function addObservationToFirestore(payload) {
@@ -1490,6 +1653,14 @@ window.processSmartInput = async function(){
     return;
   }
 
+  // organizationId/createdByUid come ONLY from the verified in-memory
+  // inspector context and the live authenticated session — never from form
+  // input, URL, or storage.
+  if (!inspectorContext.organizationId || !auth.currentUser) {
+    alert('تعذر تحديد هويتك أو مؤسستك. الرجاء إعادة تسجيل الدخول.');
+    return;
+  }
+
   hide('modalStep1');
   unhide('modalResult');
   setHTML('modalResultContent', loaderHTML('جاري معالجة البيانات...'));
@@ -1517,7 +1688,9 @@ window.processSmartInput = async function(){
       riskAssessment: { priority:"High", timeframe:"48 hours" },
       location: `${lat}, ${lon}`,
       resolutionNote: null,
-      afterImagePath: null
+      afterImagePath: null,
+      organizationId: inspectorContext.organizationId,
+      createdByUid: auth.currentUser.uid
     };
 
     let docId;
@@ -1818,15 +1991,6 @@ function cryptoRandom(){
   return (crypto.getRandomValues(new Uint32Array(2)).join(''));
 }
 
-function seedLocalDemo(){
-  observationsData = [
-    { docId:'local-4', id:4, type:'QUALITY', date:'2024-09-20', title:'تآكل في لوحة إرشادية (الشعار غير واضح)', status:'PENDING', details:'تآكل واضح بلوحة إرشادية.', hasImage:true, isComparative:false, location:'24.5247, 46.7135', isVideo:false, imagePath:'https://picsum.photos/800/600?random=4', fileMimeType:'image/jpeg', actionPlan:'استبدال اللوحة.', riskAssessment:{priority:'High', timeframe:'7 days'}, resolutionNote:null, afterImagePath:null, createdAt: new Date("2024-09-20T16:45:00").getTime(), isNewInput:false },
-    { docId:'local-2', id:2, type:'QUALITY', date:'2024-09-28', title:'تصدع في الأسفلت وإعادة رصف', status:'COMPLETED', details:'تم إغلاقه بعد الإصلاح الكامل.', hasImage:true, isComparative:true, location:'24.5247, 46.7135', isVideo:false, imagePath:'https://picsum.photos/800/600?random=2', afterImagePath:'https://picsum.photos/800/600?random=5', fileMimeType:'image/jpeg', actionPlan:'إعادة بناء الطبقات.', riskAssessment:{priority:'Low', timeframe:'7 days'}, resolutionNote:'تم الإغلاق حسب المواصفات.', createdAt: new Date("2024-09-28T14:30:00").getTime(), isNewInput:false },
-    { docId:'local-3', id:3, type:'MAINTENANCE', date:'2024-09-25', title:'عطل في نظام التبريد الرئيسي', status:'IN_PROGRESS', details:'إرسال فريق عاجل.', hasImage:true, isComparative:false, location:'24.5247, 46.7135', isVideo:false, imagePath:'https://picsum.photos/800/600?random=3', fileMimeType:'image/jpeg', actionPlan:'توفير قطع الغيار.', riskAssessment:{priority:'Medium', timeframe:'48 hours'}, resolutionNote:null, afterImagePath:null, createdAt: new Date("2024-09-25T08:15:00").getTime(), isNewInput:false },
-    { docId:'local-1', id:1, type:'SAFETY', date:'2024-10-01', title:'ملاحظة عدم ارتداء معدات الحماية', status:'PENDING', details:'فريق بدون خوذات أمان.', hasImage:true, isComparative:false, location:'24.5247, 46.7135', isVideo:false, imagePath:'https://picsum.photos/800/600?random=1', fileMimeType:'image/jpeg', actionPlan:'تعزيز الالتزام بـ PPE.', riskAssessment:{priority:'High', timeframe:'24 hours'}, resolutionNote:null, afterImagePath:null, createdAt: new Date("2024-10-01T10:00:00").getTime(), isNewInput:false }
-  ].sort((a,b)=>b.createdAt-a.createdAt);
-}
-
 function setButtonBusy(buttonId, busy) {
   const btn = document.getElementById(buttonId);
   if (!btn) return;
@@ -1846,21 +2010,13 @@ function setButtonBusy(buttonId, busy) {
 }
 
 // ========= INIT =========
-async function initApp(){
-  try {
-    await loadFromFirestore();
-  } catch (e) {
-    console.warn('Loading from Firestore failed, fallback to local demo.', e);
-    seedLocalDemo();
-  }
-  renderKPIs();
-  observationsData.sort((a,b)=> (b.createdAt||0)-(a.createdAt||0));
-  renderObservationsList(observationsData);
-  if (observationsData.length>0) showObservationDetail(observationsData[0].docId);
+// Started ONLY after a verified inspector session (see onAuthStateChanged
+// above) — never on window 'load', since there is no data to show for an
+// unauthorized or unauthenticated visitor.
+function startApp(){
+  subscribeObservations();
   lucide.createIcons();
 }
-
-window.addEventListener('load', initApp);
 </script>
 
 </body>

@@ -8,9 +8,10 @@
 //   inspector  -> users/{uid}       (role 'inspector')
 //   contractor -> users/{uid}       (role 'contractor')
 //
-// Phase 1: only owners may call the live API. The manager-scoping helper
-// (assertCanManage) is implemented and exported now so a later phase can let
-// an organization manager manage ONLY inspectors/contractors of its own org.
+// Phase 2: owners may call the live API for any organization. An
+// organization manager (managers/{uid}, role 'manager', active != false,
+// non-empty organizationId) may additionally call it, but assertCanManage
+// restricts them to inspectors/contractors of their OWN organizationId only.
 // ============================================================================
 const { getAuth, getDb } = require('./firebaseAdmin');
 
@@ -18,8 +19,11 @@ const { getAuth, getDb } = require('./firebaseAdmin');
 // excluded — the API must never create or manage owners or escalate to owner.
 const MANAGEABLE_ROLES = ['manager', 'inspector', 'contractor'];
 
-// Phase-1 flag: manager-initiated management is prepared but not yet enabled.
-const MANAGER_MANAGEMENT_ENABLED = false;
+// Roles an organization manager (as opposed to an owner) may manage.
+const MANAGER_SCOPED_ROLES = ['inspector', 'contractor'];
+
+// Stage B flag: manager-initiated, same-organization management is enabled.
+const MANAGER_MANAGEMENT_ENABLED = true;
 
 function collectionForRole(role) {
   if (role === 'manager') return 'managers';
@@ -60,11 +64,11 @@ async function getCallerContext(uid) {
   const mgrSnap = await db.collection('managers').doc(uid).get();
   if (mgrSnap.exists) {
     const d = mgrSnap.data() || {};
-    if (d.role === 'manager' && activeIsNotFalse(d)) {
-      return {
-        uid, isOwner: false, isManager: true, role: 'manager',
-        organizationId: d.organizationId || null,
-      };
+    const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+    // Fail closed: a manager record without a non-empty organizationId is
+    // never treated as an authorized manager.
+    if (d.role === 'manager' && activeIsNotFalse(d) && orgId) {
+      return { uid, isOwner: false, isManager: true, role: 'manager', organizationId: orgId };
     }
   }
   return { uid, isOwner: false, isManager: false, role: null, organizationId: null };
@@ -86,7 +90,7 @@ function assertCanManage(caller, target) {
     return { allowed: true, reason: 'owner' };
   }
   if (caller.isManager) {
-    if (targetRole === 'manager') {
+    if (!MANAGER_SCOPED_ROLES.includes(targetRole)) {
       return { allowed: false, reason: 'manager_cannot_manage_managers' };
     }
     if (!caller.organizationId || targetOrg !== caller.organizationId) {
@@ -99,6 +103,7 @@ function assertCanManage(caller, target) {
 
 module.exports = {
   MANAGEABLE_ROLES,
+  MANAGER_SCOPED_ROLES,
   MANAGER_MANAGEMENT_ENABLED,
   collectionForRole,
   activeIsNotFalse,

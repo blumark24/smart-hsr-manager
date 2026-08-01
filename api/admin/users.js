@@ -3,7 +3,10 @@
 // POST /api/admin/users  — secure server-side account & password management.
 //
 // Auth:   Authorization: Bearer <Firebase ID token>   (verified, revoke-checked)
-// Authz:  caller must be an owner (owners/{uid}, active != false) in Phase 1.
+// Authz:  caller must be an owner (owners/{uid}, active != false), OR an
+//         organization manager (managers/{uid}, role 'manager', active !=
+//         false, non-empty organizationId) acting only on inspector/
+//         contractor records of that SAME organizationId.
 // Body:   { action, ...params }
 //
 // Actions: list | create | setTempPassword | setActive | revokeSessions | getMetadata
@@ -14,6 +17,8 @@
 const { getAuth, getDb, FieldValue } = require('../_lib/firebaseAdmin');
 const {
   MANAGEABLE_ROLES,
+  MANAGER_SCOPED_ROLES,
+  MANAGER_MANAGEMENT_ENABLED,
   collectionForRole,
   verifyRequestToken,
   getCallerContext,
@@ -82,10 +87,10 @@ module.exports = async function handler(req, res) {
     return sendJson(res, e.statusCode || 401, { error: 'unauthenticated' });
   }
 
-  // ---- authorize (Phase 1: owner only) ----
+  // ---- authorize (owner: any org; manager: own org, inspector/contractor only) ----
   const caller = await getCallerContext(decoded.uid);
-  if (!caller.isOwner) {
-    return sendJson(res, 403, { error: 'forbidden', reason: 'owner_required' });
+  if (!caller.isOwner && !(caller.isManager && MANAGER_MANAGEMENT_ENABLED)) {
+    return sendJson(res, 403, { error: 'forbidden', reason: 'owner_or_manager_required' });
   }
 
   const body = await readJsonBody(req);
@@ -101,12 +106,20 @@ module.exports = async function handler(req, res) {
         if (!isNonEmptyString(organizationId)) {
           return sendJson(res, 400, { error: 'organizationId_required' });
         }
+        // A manager may only ever list their OWN organization, and never
+        // sees manager/owner records — inspectors/contractors only.
+        if (caller.isManager && organizationId !== caller.organizationId) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
+        }
+        const collectionsToQuery = caller.isManager ? ['users'] : ['managers', 'users'];
         const out = [];
-        for (const col of ['managers', 'users']) {
+        for (const col of collectionsToQuery) {
           const snap = await db.collection(col)
             .where('organizationId', '==', organizationId).get();
           for (const doc of snap.docs) {
-            out.push(await safeMetadata(auth, doc.id, { data: doc.data() || {} }));
+            const data = doc.data() || {};
+            if (caller.isManager && !MANAGER_SCOPED_ROLES.includes(data.role)) continue;
+            out.push(await safeMetadata(auth, doc.id, { data }));
           }
         }
         return sendJson(res, 200, { users: out });

@@ -82,6 +82,7 @@
   <header class="bg-white shadow-md sticky top-0 z-40 no-print">
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <span class="text-xl font-extrabold">Smart HSR <span class="text-[--color-teal]">Manager Panel</span></span>
+      <span id="orgBadge" class="hidden md:inline-flex items-center gap-2 bg-slate-100 text-[--color-navy] px-3 py-1 rounded-full text-xs font-bold"></span>
       <span id="userBadge" class="hidden md:inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-xs font-bold"></span>
       <button id="logoutBtn" class="btn-ghost flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> تسجيل الخروج</button>
     </div>
@@ -137,8 +138,8 @@
             <select id="statusFilter" class="border rounded-xl p-2" onchange="renderObservations()">
               <option value="ALL">كل الحالات</option>
               <option value="PENDING">قيد الانتظار</option>
-              <option value="IN_PROGRESS">قيد التنفيذ</option>
-              <option value="COMPLETED">مغلق</option>
+              <option value="IN_PROGRESS">قيد المعالجة</option>
+              <option value="COMPLETED">تمت المعالجة</option>
             </select>
           </div>
         </div>
@@ -227,16 +228,13 @@
           <input id="addEmail" type="email" class="border rounded-xl p-2 w-full" placeholder="ahmed@example.com"/>
         </div>
         <div>
-          <label class="text-sm font-bold">كلمة المرور</label>
-          <input id="addPassword" type="password" class="border rounded-xl p-2 w-full" placeholder="••••••••"/>
-        </div>
-        <div>
           <label class="text-sm font-bold">الدور</label>
           <select id="addRole" class="border rounded-xl p-2 w-full">
             <option value="inspector">مراقب</option>
             <option value="contractor">مقاول</option>
           </select>
         </div>
+        <div class="md:col-span-2 text-xs text-gray-500">سيتم إنشاء الحساب بدون كلمة مرور. استخدم زر «كلمة مرور مؤقتة» من جدول المستخدمين لتوليدها وتسليمها للمستخدم.</div>
         <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveUser()">حفظ</button></div>
       </div>
     </div>
@@ -268,12 +266,12 @@
   <!-- FIREBASE (Modules) -->
   <script type="module">
     // ------ Firebase setup ------
-    import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
       getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-      onSnapshot, serverTimestamp, query, orderBy, setDoc
+      onSnapshot, serverTimestamp, query, where, setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // إعدادات Firebase الخاصة بك
 const firebaseConfig = {
@@ -301,8 +299,14 @@ const firebaseConfig = {
     let users = [];
     let observations = [];
     let selectedObservationId = null;
+    let usersState = 'loading';   // 'loading' | 'ready' | 'error'
+    let obsState = 'loading';     // 'loading' | 'ready' | 'error'
+    let usersUnsub = null, obsUnsub = null;
+    // Authenticated manager's own organization — set once by bootForManager()
+    // and never trusted from anywhere else (fail closed if absent).
+    const managerContext = { uid: null, organizationId: null, organizationName: '' };
 
-    const statusLabels = { PENDING:'قيد الانتظار', IN_PROGRESS:'قيد التنفيذ', COMPLETED:'مغلق' };
+    const statusLabels = { PENDING:'قيد الانتظار', IN_PROGRESS:'قيد المعالجة', COMPLETED:'تمت المعالجة' };
     const statusColors = { PENDING:'bg-red-600 text-white', IN_PROGRESS:'bg-yellow-500 text-black', COMPLETED:'bg-green-600 text-white' };
 
     // ===== Utils =====
@@ -364,6 +368,9 @@ const firebaseConfig = {
     }
     function renderUsers(){
       const body = document.getElementById('usersBody');
+      if(usersState==='loading'){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>...جاري تحميل المستخدمين</td></tr>`; return; }
+      if(usersState==='error'){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-red-500'>⚠️ تعذر تحميل المستخدمين. الرجاء تحديث الصفحة أو المحاولة لاحقاً.</td></tr>`; return; }
+      if(!users.length){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>لا يوجد مستخدمون في مؤسستك حالياً</td></tr>`; return; }
       const q = (document.getElementById('userSearch').value||'').trim().toLowerCase();
       const filtered = users.filter(u=>!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
       if(!filtered.length){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>لا توجد نتائج</td></tr>`; return; }
@@ -376,8 +383,8 @@ const firebaseConfig = {
           <td class="text-center">
             <div class="flex items-center gap-2 justify-center">
               ${statusSwitch(u)}
-              <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="editUser(decodeURIComponent('${safeActionId(u.id)}'))">تعديل</button>
-              <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="removeUser(decodeURIComponent('${safeActionId(u.id)}'))">حذف</button>
+              <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="setUserTempPassword(decodeURIComponent('${safeActionId(u.id)}'))">كلمة مرور مؤقتة</button>
+              <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="revokeUserSessions(decodeURIComponent('${safeActionId(u.id)}'))">إنهاء الجلسات</button>
             </div>
           </td>
         </tr>`
@@ -386,75 +393,109 @@ const firebaseConfig = {
     }
     window.filterUsers = ()=>renderUsers();
 
-    // إنشاء مستخدم فعلي (Auth + Firestore)
+    // ===== Secure Admin API (server-enforced org + role scoping) =====
+    // All account management (create/temp password/activate/deactivate/
+    // revoke sessions) goes through /api/admin/users using the manager's own
+    // ID token. The server verifies role==='manager', active!==false and
+    // restricts the manager to inspector/contractor records of its OWN
+    // organizationId. Passwords are never returned, stored, or logged here.
+    const ADMIN_API = '/api/admin/users';
+
+    async function callAdminApi(payload){
+      if(!auth?.currentUser) throw new Error('انتهت الجلسة. الرجاء تسجيل الدخول من جديد.');
+      const token = await auth.currentUser.getIdToken();
+      const resp = await fetch(ADMIN_API, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+        body: JSON.stringify(payload)
+      });
+      let data={}; try{ data = await resp.json(); }catch(_){}
+      if(!resp.ok){
+        const reason = data.reason || data.error || ('HTTP '+resp.status);
+        throw new Error('فشلت العملية: '+reason);
+      }
+      return data;
+    }
+
+    function generateTempPassword(){
+      const upper='ABCDEFGHJKLMNPQRSTUVWXYZ', lower='abcdefghijkmnpqrstuvwxyz', digits='23456789', sym='!@#$%*?';
+      const all=upper+lower+digits+sym; const buf=new Uint32Array(14);
+      crypto.getRandomValues(buf);
+      let i=0; const pick=c=>c[buf[i++]%c.length];
+      let pw=pick(upper)+pick(lower)+pick(digits)+pick(sym);
+      while(pw.length<12) pw+=all[buf[i++%buf.length]%all.length];
+      return pw;
+    }
+
+    // إنشاء مستخدم عبر واجهة الخادم الآمنة — يُقتصر على مراقب/مقاول ضمن مؤسسة المدير نفسه
     async function saveUser(){
       const name=$('#addName').value.trim();
       const email=$('#addEmail').value.trim();
-      const password=$('#addPassword').value;
       const role=$('#addRole').value;
-      if(!name||!email||!password){ alert('الرجاء تعبئة الاسم والبريد وكلمة المرور.'); return; }
-      // قائمة الأدوار المسموح بها فقط — تحقق قبل إنشاء حساب المصادقة
       const ALLOWED_ROLES = ['inspector', 'contractor'];
+      if(!name||!email){ alert('الرجاء تعبئة الاسم والبريد.'); return; }
       if(!ALLOWED_ROLES.includes(role)){
         alert('الدور المحدد غير صالح. يُسمح فقط بدور "مراقب" (inspector) أو "مقاول" (contractor).');
         return;
       }
-      let secondaryApp = null;
+      if(!managerContext.organizationId){ alert('تعذر تحديد مؤسستك. الرجاء إعادة تسجيل الدخول.'); return; }
       try{
-        if(!FIREBASE_READY){ alert('لم يتم ضبط Firebase بعد. الرجاء إدخال الإعدادات الصحيحة.'); return; }
-
-        // إنشاء المستخدم في تطبيق Firebase ثانوي حتى تبقى جلسة المدير الحالية فعّالة.
-        secondaryApp = initializeApp(firebaseConfig, 'user-creation-' + Date.now());
-        const secondaryAuth = getAuth(secondaryApp);
-        const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-        const uid = cred.user.uid;
-        await setDoc(doc(db,'users',uid), { uid, name, email, role, active:true, createdAt: serverTimestamp() });
-        await signOut(secondaryAuth);
-
-        users.unshift({ id: uid, name, email, role, active:true });
+        await callAdminApi({ action:'create', organizationId: managerContext.organizationId, role, email, name });
         closeModal('modalAddUser');
-        $('#addName').value=''; $('#addEmail').value=''; $('#addPassword').value=''; $('#addRole').value='inspector';
-        renderUsers();
-        showToast('✅ تم إنشاء المستخدم بنجاح');
+        $('#addName').value=''; $('#addEmail').value=''; $('#addRole').value='inspector';
+        showToast('✅ تم إنشاء المستخدم بنجاح. استخدم «كلمة مرور مؤقتة» لتوليد كلمة الدخول.');
       }catch(err){
         console.error(err); alert('حدث خطأ أثناء إنشاء المستخدم: '+ (err?.message||err));
-      }finally{
-        if(secondaryApp){
-          try{ await deleteApp(secondaryApp); }catch(cleanupError){ console.warn('تعذر تنظيف تطبيق إنشاء المستخدم', cleanupError); }
-        }
       }
     }
     window.saveUser = saveUser;
 
     async function toggleUser(id){
       const u=users.find(x=>x.id===id); if(!u) return;
-      u.active=!u.active; renderUsers();
-      if(FIREBASE_READY) await updateDoc(doc(db,'users',id), {active:u.active});
+      const next = !u.active;
+      if(!confirm(next ? 'تفعيل هذا الحساب؟' : 'تعطيل هذا الحساب سيمنع المستخدم من الدخول. متابعة؟')) return;
+      try{
+        await callAdminApi({ action:'setActive', uid:id, active: next });
+        showToast(next ? '✅ تم تفعيل الحساب' : '✅ تم تعطيل الحساب');
+      }catch(err){
+        console.error(err); alert(err?.message || 'تعذّر تنفيذ العملية.');
+      }
     }
     window.toggleUser = toggleUser;
 
-    async function editUser(id){
+    async function setUserTempPassword(id){
       const u=users.find(x=>x.id===id); if(!u) return;
-      const nn=prompt('تعديل الاسم',u.name)||u.name;
-      const em=prompt('تعديل البريد',u.email)||u.email;
-      u.name=nn; u.email=em; renderUsers();
-      if(FIREBASE_READY) await updateDoc(doc(db,'users',id), {name:nn,email:em});
+      const pw = generateTempPassword();
+      if(!confirm('سيتم تعيين كلمة مرور مؤقتة لهذا المستخدم وسيُطلب منه تغييرها عند أول دخول.\n\nكلمة المرور المؤقتة (انسخها الآن — لن تظهر مجددًا):\n\n'+pw+'\n\nهل تريد المتابعة؟')) return;
+      try{
+        await callAdminApi({ action:'setTempPassword', uid:id, password: pw });
+        showToast('✅ تم تعيين كلمة المرور المؤقتة');
+      }catch(err){
+        console.error(err); alert(err?.message || 'تعذّر تعيين كلمة المرور.');
+      }
     }
-    window.editUser = editUser;
+    window.setUserTempPassword = setUserTempPassword;
 
-    async function removeUser(id){
-      if(!confirm('تأكيد حذف المستخدم؟')) return;
-      users = users.filter(u=>u.id!==id); renderUsers();
-      if(FIREBASE_READY) await deleteDoc(doc(db,'users',id));
+    async function revokeUserSessions(id){
+      const u=users.find(x=>x.id===id); if(!u) return;
+      if(!confirm('إنهاء جميع جلسات هذا المستخدم سيخرجه من كل الأجهزة. متابعة؟')) return;
+      try{
+        await callAdminApi({ action:'revokeSessions', uid:id });
+        showToast('✅ تم إنهاء جميع جلسات المستخدم');
+      }catch(err){
+        console.error(err); alert(err?.message || 'تعذّر إنهاء الجلسات.');
+      }
     }
-    window.removeUser = removeUser;
+    window.revokeUserSessions = revokeUserSessions;
 
     // ===== Observations (قائمة) =====
     function renderObservations(){
       const body = document.getElementById('obsBody');
+      if(obsState==='loading'){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-gray-500'>...جاري تحميل البلاغات</td></tr>`; return; }
+      if(obsState==='error'){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-red-500'>⚠️ تعذر تحميل البلاغات. الرجاء تحديث الصفحة أو المحاولة لاحقاً.</td></tr>`; return; }
       const f = document.getElementById('statusFilter').value;
       const list = observations.filter(o=> f==='ALL' || o.status===f );
-      if(!list.length){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-gray-500'>لا توجد بلاغات</td></tr>`; return; }
+      if(!list.length){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-gray-500'>لا توجد بلاغات في مؤسستك حالياً</td></tr>`; return; }
       body.innerHTML = list.map(o=>
         `<tr>
           <td class="font-bold">${escapeHTML(o.displayId || o.id)}</td>
@@ -565,19 +606,47 @@ const firebaseConfig = {
       }
     });
 
-    // ===== Firestore sync (Users + Observations) =====
-    async function loadFromFirestore(){
-      if(!FIREBASE_READY) { console.warn('Firebase غير متاح — لن يتم تحميل بيانات تجريبية تلقائياً.'); return; }
+    // ===== Firestore sync (Users + Observations) — organization-scoped only =====
+    // Every subscription is filtered by the authenticated manager's own
+    // organizationId. metadata.fromCache snapshots are ignored so a refresh
+    // never flashes stale/cached data as if it were authoritative — only a
+    // server-verified snapshot is ever rendered.
+    function loadFromFirestore(){
+      if(!FIREBASE_READY){ console.warn('Firebase غير متاح — لن يتم تحميل البيانات.'); return; }
+      const organizationId = managerContext.organizationId;
+      if(!organizationId){ console.error('لا يمكن تحميل البيانات بدون معرف مؤسسة صالح.'); return; }
 
-      // Users
-      onSnapshot(collection(db,'users'), snap=>{
+      // Clear all prior state before (re)subscribing so no previous
+      // organization's data can ever remain visible even for an instant.
+      if(usersUnsub){ usersUnsub(); usersUnsub=null; }
+      if(obsUnsub){ obsUnsub(); obsUnsub=null; }
+      users = []; observations = [];
+      usersState = 'loading'; obsState = 'loading';
+      renderUsers(); renderObservations(); renderKPIs();
+
+      // Users (inspectors/contractors) — scoped to this organization only.
+      const usersQuery = query(collection(db,'users'), where('organizationId','==', organizationId));
+      usersUnsub = onSnapshot(usersQuery, { includeMetadataChanges:true }, snap=>{
+        if(snap.metadata.fromCache) return; // never render an unverified cached snapshot
         users = [];
-        snap.forEach(d=> users.push({id:d.id, ...d.data()}) );
+        snap.forEach(d=>{
+          const x = d.data() || {};
+          if(!['inspector','contractor'].includes(x.role)) return; // defense in depth
+          users.push({ id:d.id, ...x });
+        });
+        usersState = 'ready';
+        renderUsers();
+      }, err=>{
+        console.error('Users subscription failed', err);
+        usersState = 'error';
         renderUsers();
       });
 
-      // Observations ordered by time desc
-      onSnapshot(query(collection(db,'observations'), orderBy('createdAt','desc')), snap=>{
+      // Observations — scoped to this organization only; sorted client-side
+      // to avoid requiring a composite index for organizationId + createdAt.
+      const obsQuery = query(collection(db,'observations'), where('organizationId','==', organizationId));
+      obsUnsub = onSnapshot(obsQuery, { includeMetadataChanges:true }, snap=>{
+        if(snap.metadata.fromCache) return;
         const arr=[];
         snap.forEach(d=>{
           const x=d.data();
@@ -597,12 +666,28 @@ const firebaseConfig = {
             inspector: x.inspector || '—',
             contractor: x.contractor || '—',
             date: x.date || '',
+            createdAtMs: x.createdAt?.toMillis ? x.createdAt.toMillis() : 0,
             hasImage: !!(x.imagePath || x.afterImagePath),
+            // Closeout evidence. These were previously dropped by the mapper,
+            // so showObservationImages() always fell through to "no images"
+            // and the contractor's proof-of-repair never reached the manager.
+            imagePath: x.imagePath || null,
+            afterImagePath: x.afterImagePath || null,
+            resolutionNote: x.resolutionNote || '',
+            isComparative: !!x.isComparative,
+            // Retained so the record's tenant is available for verification.
+            organizationId: x.organizationId || null,
             lat, lng
           });
         });
+        arr.sort((a,b)=> b.createdAtMs - a.createdAtMs);
         observations = arr;
+        obsState = 'ready';
         renderObservations(); renderKPIs(); refreshMapMarkers();
+      }, err=>{
+        console.error('Observations subscription failed', err);
+        obsState = 'error';
+        renderObservations(); renderKPIs();
       });
     }
 
@@ -687,41 +772,86 @@ const firebaseConfig = {
       btn.textContent='إيقاف التتبع';
       myWatchId = navigator.geolocation.watchPosition(async pos=>{
         const {latitude:lat, longitude:lng} = pos.coords;
-        if(FIREBASE_READY){
-          const me = window.__SMART_USER__ || {};
-          await setDoc(doc(db,'presence', (me.email||'manager')), {
-            role: 'manager', email: me.email||'manager', lat, lng, updatedAt: serverTimestamp()
-          });
+        if(!FIREBASE_READY) return;
+        // Presence must carry the tenant, otherwise every organization's crew
+        // renders on every manager's map. organizationId comes ONLY from the
+        // already-verified manager context.
+        if(!managerContext.organizationId || !auth?.currentUser?.email){
+          console.warn('تعذر إرسال الموقع: لا يوجد سياق مؤسسة موثّق.');
+          return;
         }
+        // Document id stays the e-mail for now: firestore.rules (V2 and the
+        // proposed V3) both require presenceId == request.auth.token.email.
+        // Re-keying to uid is part of the approved migration, not this change.
+        const email = auth.currentUser.email;
+        try{
+          await setDoc(doc(db,'presence', email), {
+            role: 'manager',
+            email,
+            organizationId: managerContext.organizationId,
+            lat, lng,
+            updatedAt: serverTimestamp()
+          });
+        }catch(err){ console.warn('تعذر تحديث الموقع', err); }
       }, _err=>{
         console.warn(_err); showToast('تعذر الحصول على الموقع');
       }, {enableHighAccuracy:true, maximumAge:5000, timeout:20000});
     }
     window.toggleLiveTracking = toggleLiveTracking;
 
+    // Organization-scoped presence. The full collection is NEVER loaded — an
+    // unscoped read exposed every municipality's crew positions and e-mails.
     function subscribePresence(){
       if(!FIREBASE_READY) return;
-      if(presenceUnsub) presenceUnsub();
-      presenceUnsub = onSnapshot(collection(db,'presence'), snap=>{
+      const organizationId = managerContext.organizationId;
+      if(!organizationId){
+        console.error('لا يمكن تحميل مواقع الطاقم بدون معرف مؤسسة صالح.');
+        return;
+      }
+      if(presenceUnsub){ presenceUnsub(); presenceUnsub = null; }
+      // Clear any previous session's crew markers before resubscribing.
+      presenceLayer.clearLayers();
+
+      const presenceQuery = query(
+        collection(db,'presence'),
+        where('organizationId','==', organizationId)
+      );
+      presenceUnsub = onSnapshot(presenceQuery, { includeMetadataChanges:true }, snap=>{
+        // Never render an unverified cached snapshot as authoritative.
+        if(snap.metadata.fromCache) return;
         presenceLayer.clearLayers();
         snap.forEach(d=>{
           const p=d.data(); if(typeof p.lat!=='number'||typeof p.lng!=='number') return;
+          // Defence in depth: drop anything not belonging to this organization.
+          if(p.organizationId !== organizationId) return;
           const m = L.marker([p.lat,p.lng], {icon:ICONS.CREW})
             .bindPopup(`<div class="text-sm"><b>${escapeHTML(p.role||'crew')}</b><div class="text-xs text-gray-600">${escapeHTML(p.email||'')}</div></div>`);
           m.addTo(presenceLayer);
         });
+      }, err=>{
+        console.error('Presence subscription failed', err);
+        presenceLayer.clearLayers();
       });
     }
 
     // ===== Boot + authenticated manager guard =====
     let appStarted = false;
 
+    // Loads managers/{uid} and returns the organization context ONLY if the
+    // record is role==='manager', active !== false, AND carries a non-empty
+    // organizationId. Any missing piece fails closed (returns null) — the
+    // caller must treat null exactly like "not a manager".
     async function verifyManagerAccess(user){
-      if(!user) return false;
+      if(!user) return null;
       const managerSnap = await getDoc(doc(db, 'managers', user.uid));
-      if(!managerSnap.exists()) return false;
+      if(!managerSnap.exists()) return null;
       const manager = managerSnap.data() || {};
-      return manager.role === 'manager' && manager.active !== false;
+      const organizationId = typeof manager.organizationId === 'string' ? manager.organizationId.trim() : '';
+      if(manager.role !== 'manager' || manager.active === false || !organizationId) return null;
+      const organizationName = typeof manager.organizationName === 'string' && manager.organizationName.trim()
+        ? manager.organizationName.trim()
+        : organizationId;
+      return { organizationId, organizationName };
     }
 
     async function denyManagerAccess(message){
@@ -732,6 +862,17 @@ const firebaseConfig = {
       window.location.replace('manager-login.html');
     }
 
+    function renderOrgBadge(){
+      const el = document.getElementById('orgBadge');
+      if(!el) return;
+      if(managerContext.organizationName){
+        el.textContent = 'المؤسسة: ' + managerContext.organizationName;
+        el.classList.remove('hidden');
+      }else{
+        el.classList.add('hidden');
+      }
+    }
+
     async function bootForManager(user){
       if(appStarted) return;
       if(!FIREBASE_READY){
@@ -739,22 +880,33 @@ const firebaseConfig = {
         return;
       }
 
-      let allowed = false;
-      try{ allowed = await verifyManagerAccess(user); }
+      let orgContext = null;
+      try{ orgContext = await verifyManagerAccess(user); }
       catch(err){ console.error('Manager access verification failed', err); }
 
-      if(!allowed){
-        await denyManagerAccess(user ? 'هذا الحساب غير مصرح له بالدخول كمدير.' : '');
+      // Fail closed: no manager record, wrong role, inactive account, or a
+      // missing/empty organizationId are all treated identically — deny.
+      if(!orgContext){
+        await denyManagerAccess(user ? 'هذا الحساب غير مصرح له بالدخول كمدير، أو لا يتبع لمؤسسة محددة.' : '');
         return;
       }
+
+      managerContext.uid = user.uid;
+      managerContext.organizationId = orgContext.organizationId;
+      managerContext.organizationName = orgContext.organizationName;
 
       sessionStorage.setItem('smartHSRUser', JSON.stringify({
         uid:user.uid,
         email:user.email || '',
-        role:'manager'
+        role:'manager',
+        organizationId: managerContext.organizationId
       }));
-      window.__SMART_USER__ = { uid:user.uid, email:user.email || '', role:'manager' };
+      window.__SMART_USER__ = {
+        uid:user.uid, email:user.email || '', role:'manager',
+        organizationId: managerContext.organizationId
+      };
       appStarted = true;
+      renderOrgBadge();
       initMap();
       loadFromFirestore();
       subscribePresence();
@@ -827,12 +979,25 @@ async function showObservationImages(id) {
     if (o.images.after && !after) after = safeImageUrl(o.images.after) || null;
   }
 
+  // موقع آمن للنافذة: بعض البلاغات بلا إحداثيات صالحة
+  const popupAt = (Number.isFinite(o.lat) && Number.isFinite(o.lng))
+    ? [o.lat, o.lng]
+    : map.getCenter();
+
+  // المذكرة الختامية من المقاول (تُعرض ضمن دليل الإغلاق) — مُهرّبة دائماً
+  const noteHtml = o.resolutionNote
+    ? `<div style="margin-top:8px;padding:8px;border-radius:8px;background:#f1f5f9;
+         font-size:12px;line-height:1.7;text-align:right;">
+         <b>المذكرة الختامية:</b><br>${escapeHTML(o.resolutionNote)}
+       </div>`
+    : '';
+
   // لو مافيه صور نهائياً
   if (!before && !after) {
     L.popup()
-      .setLatLng([o.lat, o.lng])
+      .setLatLng(popupAt)
       .setContent(`<div style="min-width:220px;text-align:center;font-family:Tajawal;">
-        🚫 لا توجد صور مرفقة لهذه الملاحظة.
+        🚫 لا توجد صور مرفقة لهذه الملاحظة.${noteHtml}
       </div>`)
       .openOn(map);
     return;
@@ -853,12 +1018,13 @@ async function showObservationImages(id) {
       <div style="text-align:center;margin-top:5px;">
         <small>${after ? "📸 قبل / بعد" : "📷 صورة البلاغ"}</small>
       </div>
+      ${noteHtml}
     </div>
   `;
 
   // فتح البوب أب
   const popup = L.popup()
-    .setLatLng([o.lat, o.lng])
+    .setLatLng(popupAt)
     .setContent(html)
     .openOn(map);
 
