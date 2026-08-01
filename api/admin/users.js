@@ -5,8 +5,9 @@
 // Auth:   Authorization: Bearer <Firebase ID token>   (verified, revoke-checked)
 // Authz:  caller must be an owner (owners/{uid}, active != false), OR an
 //         organization manager (managers/{uid}, role 'manager', active !=
-//         false, non-empty organizationId) acting only on inspector/
-//         contractor records of that SAME organizationId.
+//         false, non-empty organizationId) acting only on supervisor/
+//         inspector/contractor records of that SAME organizationId.
+//         Supervisors are deliberately not authorized callers.
 // Body:   { action, ...params }
 //
 // Actions: list | create | setTempPassword | setActive | revokeSessions | getMetadata
@@ -125,7 +126,7 @@ module.exports = async function handler(req, res) {
         return sendJson(res, 200, { users: out });
       }
 
-      // ---- create a manager / inspector / contractor ----
+      // ---- create a manager / supervisor / inspector / contractor ----
       case 'create': {
         const { organizationId, role, email, name, password } = body;
         if (!MANAGEABLE_ROLES.includes(role)) {

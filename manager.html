@@ -60,7 +60,8 @@
     }
     (function(){
       const s=sessionStorage.getItem('smartHSRUser');
-      if(!s){ window.location.href='manager-login.html'; return; }
+      // Firebase Auth + Firestore role documents are authoritative. Session
+      // storage is display-only and must never gate a supervisor or manager.
       try{
         const user=JSON.parse(s)||{};
         const badge=document.getElementById('userBadge');
@@ -83,6 +84,7 @@
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <span class="text-xl font-extrabold">Smart HSR <span class="text-[--color-teal]">Manager Panel</span></span>
       <span id="orgBadge" class="hidden md:inline-flex items-center gap-2 bg-slate-100 text-[--color-navy] px-3 py-1 rounded-full text-xs font-bold"></span>
+      <span id="accessRoleBadge" class="hidden md:inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold"></span>
       <span id="userBadge" class="hidden md:inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-xs font-bold"></span>
       <button id="logoutBtn" class="btn-ghost flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> تسجيل الخروج</button>
     </div>
@@ -115,7 +117,7 @@
           <h2 class="text-2xl font-extrabold">إدارة المستخدمين</h2>
           <div class="flex items-center gap-2">
             <input id="userSearch" type="text" placeholder="🔍 بحث بالاسم أو البريد" class="border rounded-xl p-2 w-full md:w-64" oninput="filterUsers()"/>
-            <button class="btn" onclick="openModal('modalAddUser')"><i data-lucide="user-plus" class="w-4 h-4 ml-1"></i> إضافة مستخدم</button>
+            <button class="btn" data-manager-only onclick="openModal('modalAddUser')"><i data-lucide="user-plus" class="w-4 h-4 ml-1"></i> إضافة مستخدم</button>
           </div>
         </div>
         <div class="overflow-x-auto rounded-xl border">
@@ -230,6 +232,7 @@
         <div>
           <label class="text-sm font-bold">الدور</label>
           <select id="addRole" class="border rounded-xl p-2 w-full">
+            <option value="supervisor">مشرف مساعد</option>
             <option value="inspector">مراقب</option>
             <option value="contractor">مقاول</option>
           </select>
@@ -248,14 +251,14 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label class="text-sm font-bold">اختر مراقب</label>
-          <select id="assignInspector" class="border rounded-xl p-2 w-full"></select>
-        </div>
-        <div>
           <label class="text-sm font-bold">اختر مقاول</label>
           <select id="assignContractor" class="border rounded-xl p-2 w-full"></select>
         </div>
-        <div class="flex items-end"><button class="btn" onclick="confirmAssign()">تعيين</button></div>
+        <div>
+          <label class="text-sm font-bold">ملاحظة المشرف</label>
+          <textarea id="assignSupervisorNote" class="border rounded-xl p-2 w-full" rows="3" maxlength="1000" placeholder="ملاحظة اختيارية للتعيين"></textarea>
+        </div>
+        <div class="md:col-span-2 flex justify-end"><button class="btn" onclick="confirmAssign()">حفظ التعيين</button></div>
       </div>
     </div>
   </div>
@@ -304,7 +307,13 @@ const firebaseConfig = {
     let usersUnsub = null, obsUnsub = null;
     // Authenticated manager's own organization — set once by bootForManager()
     // and never trusted from anywhere else (fail closed if absent).
-    const managerContext = { uid: null, organizationId: null, organizationName: '' };
+    const managerContext = { uid: null, role: null, organizationId: null, organizationName: '' };
+    const isManagerMode = () => managerContext.role === 'manager';
+    function requireManagerMode(){
+      if (isManagerMode()) return true;
+      alert('هذا الإجراء متاح لمدير المؤسسة فقط.');
+      return false;
+    }
 
     const statusLabels = { PENDING:'قيد الانتظار', IN_PROGRESS:'قيد المعالجة', COMPLETED:'تمت المعالجة' };
     const statusColors = { PENDING:'bg-red-600 text-white', IN_PROGRESS:'bg-yellow-500 text-black', COMPLETED:'bg-green-600 text-white' };
@@ -357,8 +366,8 @@ const firebaseConfig = {
 
     // ===== Users =====
     function roleBadge(role){
-      const map={manager:'مدير', inspector:'مراقب', contractor:'مقاول'};
-      const cls={manager:'bg-slate-800 text-white', inspector:'bg-sky-600 text-white', contractor:'bg-emerald-600 text-white'};
+      const map={manager:'مدير', supervisor:'مشرف مساعد', inspector:'مراقب', contractor:'مقاول'};
+      const cls={manager:'bg-slate-800 text-white', supervisor:'bg-indigo-600 text-white', inspector:'bg-sky-600 text-white', contractor:'bg-emerald-600 text-white'};
       return `<span class="pill ${cls[role]||'bg-gray-400 text-white'}">${escapeHTML(map[role]||role)}</span>`
     }
     function statusSwitch(u){
@@ -372,7 +381,7 @@ const firebaseConfig = {
       if(usersState==='error'){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-red-500'>⚠️ تعذر تحميل المستخدمين. الرجاء تحديث الصفحة أو المحاولة لاحقاً.</td></tr>`; return; }
       if(!users.length){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>لا يوجد مستخدمون في مؤسستك حالياً</td></tr>`; return; }
       const q = (document.getElementById('userSearch').value||'').trim().toLowerCase();
-      const filtered = users.filter(u=>!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+      const filtered = users.filter(u=>!q || String(u.name||'').toLowerCase().includes(q) || String(u.email||'').toLowerCase().includes(q));
       if(!filtered.length){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>لا توجد نتائج</td></tr>`; return; }
       body.innerHTML = filtered.map(u=>
         `<tr>
@@ -382,9 +391,9 @@ const firebaseConfig = {
           <td>${u.active?'<span class="tag bg-green-100 text-green-700">نشط</span>':'<span class="tag bg-red-100 text-red-700">معطل</span>'}</td>
           <td class="text-center">
             <div class="flex items-center gap-2 justify-center">
-              ${statusSwitch(u)}
+              ${isManagerMode() ? `${statusSwitch(u)}
               <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="setUserTempPassword(decodeURIComponent('${safeActionId(u.id)}'))">كلمة مرور مؤقتة</button>
-              <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="revokeUserSessions(decodeURIComponent('${safeActionId(u.id)}'))">إنهاء الجلسات</button>
+              <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="revokeUserSessions(decodeURIComponent('${safeActionId(u.id)}'))">إنهاء الجلسات</button>` : '<span class="text-xs text-gray-500">عرض فقط</span>'}
             </div>
           </td>
         </tr>`
@@ -402,6 +411,7 @@ const firebaseConfig = {
     const ADMIN_API = '/api/admin/users';
 
     async function callAdminApi(payload){
+      if(!isManagerMode()) throw new Error('إدارة الحسابات متاحة لمدير المؤسسة فقط.');
       if(!auth?.currentUser) throw new Error('انتهت الجلسة. الرجاء تسجيل الدخول من جديد.');
       const token = await auth.currentUser.getIdToken();
       const resp = await fetch(ADMIN_API, {
@@ -429,13 +439,14 @@ const firebaseConfig = {
 
     // إنشاء مستخدم عبر واجهة الخادم الآمنة — يُقتصر على مراقب/مقاول ضمن مؤسسة المدير نفسه
     async function saveUser(){
+      if(!requireManagerMode()) return;
       const name=$('#addName').value.trim();
       const email=$('#addEmail').value.trim();
       const role=$('#addRole').value;
-      const ALLOWED_ROLES = ['inspector', 'contractor'];
+      const ALLOWED_ROLES = ['supervisor', 'inspector', 'contractor'];
       if(!name||!email){ alert('الرجاء تعبئة الاسم والبريد.'); return; }
       if(!ALLOWED_ROLES.includes(role)){
-        alert('الدور المحدد غير صالح. يُسمح فقط بدور "مراقب" (inspector) أو "مقاول" (contractor).');
+        alert('الدور المحدد غير صالح. يُسمح بمشرف مساعد أو مراقب أو مقاول.');
         return;
       }
       if(!managerContext.organizationId){ alert('تعذر تحديد مؤسستك. الرجاء إعادة تسجيل الدخول.'); return; }
@@ -451,6 +462,7 @@ const firebaseConfig = {
     window.saveUser = saveUser;
 
     async function toggleUser(id){
+      if(!requireManagerMode()) return;
       const u=users.find(x=>x.id===id); if(!u) return;
       const next = !u.active;
       if(!confirm(next ? 'تفعيل هذا الحساب؟' : 'تعطيل هذا الحساب سيمنع المستخدم من الدخول. متابعة؟')) return;
@@ -464,6 +476,7 @@ const firebaseConfig = {
     window.toggleUser = toggleUser;
 
     async function setUserTempPassword(id){
+      if(!requireManagerMode()) return;
       const u=users.find(x=>x.id===id); if(!u) return;
       const pw = generateTempPassword();
       if(!confirm('سيتم تعيين كلمة مرور مؤقتة لهذا المستخدم وسيُطلب منه تغييرها عند أول دخول.\n\nكلمة المرور المؤقتة (انسخها الآن — لن تظهر مجددًا):\n\n'+pw+'\n\nهل تريد المتابعة؟')) return;
@@ -477,6 +490,7 @@ const firebaseConfig = {
     window.setUserTempPassword = setUserTempPassword;
 
     async function revokeUserSessions(id){
+      if(!requireManagerMode()) return;
       const u=users.find(x=>x.id===id); if(!u) return;
       if(!confirm('إنهاء جميع جلسات هذا المستخدم سيخرجه من كل الأجهزة. متابعة؟')) return;
       try{
@@ -502,16 +516,14 @@ const firebaseConfig = {
           <td>${escapeHTML(o.title||'—')}</td>
           <td><span class="tag ${statusColors[o.status]||'bg-gray-500 text-white'}">${escapeHTML(statusLabels[o.status]||o.status)}</span></td>
           <td>${escapeHTML(o.inspector||'—')}</td>
-          <td>${escapeHTML(o.contractor||'—')}</td>
+          <td>${escapeHTML(contractorDisplay(o))}</td>
           <td class="text-gray-600">${escapeHTML(o.date||'—')}</td>
 <td class="text-center">
   <div class="flex items-center gap-2 justify-center">
     <button class="px-3 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-full" onclick="openAssign(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">تعيين</button>
-    <button class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-full" onclick="cycleStatus(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">تغيير الحالة</button>
+    ${isManagerMode() ? `<button class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-full" onclick="cycleStatus(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">تغيير الحالة</button>
     <button class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full" onclick="closeTicket(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">إغلاق</button>
-
-    <!-- 🔴 زر الحذف -->
-    <button class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-full" onclick="deleteObservation(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">🗑️ حذف</button>
+    <button class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-full" onclick="deleteObservation(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">🗑️ حذف</button>` : ''}
 
     <!-- 🔵 زر عرض الصور -->
     <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">📸 عرض الصور</button>
@@ -524,18 +536,29 @@ const firebaseConfig = {
     }
     window.renderObservations = renderObservations;
 
+    function contractorDisplay(observation){
+      const assigned=users.find(u=>u.id===observation.assignedContractorUid && u.role==='contractor');
+      return assigned?.name || assigned?.email || observation.contractor || '—';
+    }
+
     async function cycleStatus(id){
+      if(!requireManagerMode()) return;
       const o=observations.find(x=>(x.docId||x.id)==id); if(!o) return;
       o.status = o.status==='PENDING'?'IN_PROGRESS':(o.status==='IN_PROGRESS'?'COMPLETED':'PENDING');
       renderObservations(); renderKPIs(); refreshMapMarkers();
-      if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), {status:o.status});
+      if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), {
+        status:o.status, updatedByUid:auth.currentUser.uid, updatedAt:serverTimestamp()
+      });
     }
     window.cycleStatus = cycleStatus;
 
     async function closeTicket(id){
+      if(!requireManagerMode()) return;
       const o=observations.find(x=>(x.docId||x.id)==id); if(!o) return;
       o.status='COMPLETED'; renderObservations(); renderKPIs(); refreshMapMarkers();
-      if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), {status:'COMPLETED', closedAt: serverTimestamp()});
+      if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), {
+        status:'COMPLETED', closedAt:serverTimestamp(), updatedByUid:auth.currentUser.uid, updatedAt:serverTimestamp()
+      });
       alert('تم إغلاق البلاغ رقم '+(o.displayId || o.id));
     }
     window.closeTicket = closeTicket;
@@ -543,34 +566,46 @@ const firebaseConfig = {
     // ===== Assign Modal =====
     function openAssign(id){
       selectedObservationId=id;
-      const inspSel=$('#assignInspector'); const contSel=$('#assignContractor');
-      const insp = users.filter(u=>u.role==='inspector'&&u.active);
+      const contSel=$('#assignContractor');
       const cont = users.filter(u=>u.role==='contractor'&&u.active);
-      const fillSelect = (select, list, emptyText) => {
-        select.replaceChildren();
-        if (!list.length) {
-          const option = new Option(emptyText, '');
-          option.disabled = true;
-          option.selected = true;
-          select.add(option);
-          return;
-        }
-        list.forEach(user => select.add(new Option(String(user.name ?? ''), String(user.name ?? ''))));
-      };
-      fillSelect(inspSel, insp, 'لا يوجد مراقبون نشطون');
-      fillSelect(contSel, cont, 'لا يوجد مقاولون نشطون');
+      contSel.replaceChildren();
+      const placeholder=new Option('— اختر مقاولاً نشطاً —', '');
+      placeholder.disabled=true;
+      contSel.add(placeholder);
+      cont.forEach(user => contSel.add(new Option(String(user.name || user.email || user.id), String(user.id))));
+      const observation=observations.find(x=>(x.docId||x.id)==id);
+      contSel.value=observation?.assignedContractorUid || '';
+      $('#assignSupervisorNote').value=observation?.supervisorNote || '';
       openModal('modalAssign');
     }
     window.openAssign = openAssign;
 
     async function confirmAssign(){
       const o=observations.find(x=>(x.docId||x.id)==selectedObservationId); if(!o) return;
-      const inspector=$('#assignInspector').value||o.inspector;
-      const contractor=$('#assignContractor').value||o.contractor;
-      o.inspector=inspector; o.contractor=contractor;
-      closeModal('modalAssign'); renderObservations();
-      if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), {inspector,contractor});
-      alert('تم التعيين بنجاح');
+      if(!auth?.currentUser || !managerContext.organizationId) return;
+      if(o.organizationId !== managerContext.organizationId){
+        alert('لا يمكن تعديل بلاغ خارج نطاق مؤسستك.'); return;
+      }
+      const assignedContractorUid=$('#assignContractor').value;
+      if(!assignedContractorUid){ alert('اختر مقاولاً نشطاً للتعيين.'); return; }
+      const contractor=users.find(u=>u.id===assignedContractorUid && u.role==='contractor' && u.active);
+      if(assignedContractorUid && (!contractor || contractor.organizationId !== managerContext.organizationId)){
+        alert('المقاول المحدد غير صالح لهذه المؤسسة.'); return;
+      }
+      const supervisorNote=$('#assignSupervisorNote').value.trim();
+      const payload={
+        assignedContractorUid,
+        assignedByUid: auth.currentUser.uid,
+        assignedAt: serverTimestamp(),
+        supervisorNote,
+        updatedByUid: auth.currentUser.uid,
+        updatedAt: serverTimestamp()
+      };
+      try{
+        if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), payload);
+        closeModal('modalAssign');
+        alert('تم تعيين المقاول بنجاح');
+      }catch(err){ console.error(err); alert('تعذر حفظ التعيين.'); }
     }
     window.confirmAssign = confirmAssign;
 
@@ -624,14 +659,14 @@ const firebaseConfig = {
       usersState = 'loading'; obsState = 'loading';
       renderUsers(); renderObservations(); renderKPIs();
 
-      // Users (inspectors/contractors) — scoped to this organization only.
+      // Users (supervisors/inspectors/contractors) — scoped to this organization only.
       const usersQuery = query(collection(db,'users'), where('organizationId','==', organizationId));
       usersUnsub = onSnapshot(usersQuery, { includeMetadataChanges:true }, snap=>{
         if(snap.metadata.fromCache) return; // never render an unverified cached snapshot
         users = [];
         snap.forEach(d=>{
           const x = d.data() || {};
-          if(!['inspector','contractor'].includes(x.role)) return; // defense in depth
+          if(!['supervisor','inspector','contractor'].includes(x.role)) return; // defense in depth
           users.push({ id:d.id, ...x });
         });
         usersState = 'ready';
@@ -665,6 +700,13 @@ const firebaseConfig = {
             status: x.status || 'PENDING',
             inspector: x.inspector || '—',
             contractor: x.contractor || '—',
+            createdByUid: x.createdByUid || null,
+            assignedContractorUid: x.assignedContractorUid || null,
+            assignedByUid: x.assignedByUid || null,
+            assignedAt: x.assignedAt || null,
+            supervisorNote: x.supervisorNote || '',
+            updatedByUid: x.updatedByUid || null,
+            updatedAt: x.updatedAt || null,
             date: x.date || '',
             createdAtMs: x.createdAt?.toMillis ? x.createdAt.toMillis() : 0,
             hasImage: !!(x.imagePath || x.afterImagePath),
@@ -735,11 +777,12 @@ const firebaseConfig = {
     <div class="text-xs text-gray-600 mb-2">المعرف: ${(o.displayId || o.id) || '—'}</div>
     <div class="text-xs mb-2"><span class="badge"><span class="dot" style="background:${statusColor(o.status)}"></span>${statusLabels[o.status] || o.status}</span></div>
     ${o.inspector && o.inspector !== '—' ? `<div class="text-xs mb-1">👷‍♂️ المراقب: ${escapeHTML(o.inspector)}</div>` : ''}
-    ${o.contractor && o.contractor !== '—' ? `<div class="text-xs mb-2">🏗️ المقاول: ${escapeHTML(o.contractor)}</div>` : ''}
+    ${contractorDisplay(o) !== '—' ? `<div class="text-xs mb-2">🏗️ المقاول: ${escapeHTML(contractorDisplay(o))}</div>` : ''}
     <div class="flex flex-col gap-2">
       <button onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-indigo-600 text-white rounded text-xs w-full">📸 عرض الصور</button>
-      <button onclick="closeTicket(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-green-600 text-white rounded text-xs w-full">✅ إغلاق البلاغ</button>
-      <button onclick="deleteObservation(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-red-600 text-white rounded text-xs w-full">🗑️ حذف البلاغ</button>
+      <button onclick="openAssign(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-slate-700 text-white rounded text-xs w-full">🧭 تعيين مقاول</button>
+      ${isManagerMode() ? `<button onclick="closeTicket(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-green-600 text-white rounded text-xs w-full">✅ إغلاق البلاغ</button>
+      <button onclick="deleteObservation(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-red-600 text-white rounded text-xs w-full">🗑️ حذف البلاغ</button>` : ''}
     </div>
   </div>
 `);
@@ -786,7 +829,7 @@ const firebaseConfig = {
         const email = auth.currentUser.email;
         try{
           await setDoc(doc(db,'presence', email), {
-            role: 'manager',
+            role: managerContext.role,
             email,
             organizationId: managerContext.organizationId,
             lat, lng,
@@ -837,21 +880,28 @@ const firebaseConfig = {
     // ===== Boot + authenticated manager guard =====
     let appStarted = false;
 
-    // Loads managers/{uid} and returns the organization context ONLY if the
-    // record is role==='manager', active !== false, AND carries a non-empty
-    // organizationId. Any missing piece fails closed (returns null) — the
-    // caller must treat null exactly like "not a manager".
-    async function verifyManagerAccess(user){
+    // Manager record is authoritative. Only when it is not valid do we accept
+    // an active, organization-scoped supervisor from users/{uid}.
+    async function verifyStaffAccess(user){
       if(!user) return null;
       const managerSnap = await getDoc(doc(db, 'managers', user.uid));
-      if(!managerSnap.exists()) return null;
-      const manager = managerSnap.data() || {};
-      const organizationId = typeof manager.organizationId === 'string' ? manager.organizationId.trim() : '';
-      if(manager.role !== 'manager' || manager.active === false || !organizationId) return null;
-      const organizationName = typeof manager.organizationName === 'string' && manager.organizationName.trim()
-        ? manager.organizationName.trim()
-        : organizationId;
-      return { organizationId, organizationName };
+      if(managerSnap.exists()) {
+        const manager = managerSnap.data() || {};
+        const organizationId = typeof manager.organizationId === 'string' ? manager.organizationId.trim() : '';
+        if(manager.role === 'manager' && manager.active !== false && organizationId) {
+          const organizationName = typeof manager.organizationName === 'string' && manager.organizationName.trim()
+            ? manager.organizationName.trim() : organizationId;
+          return { role:'manager', organizationId, organizationName };
+        }
+      }
+      const userSnap = await getDoc(doc(db, 'users', user.uid));
+      if(!userSnap.exists()) return null;
+      const supervisor = userSnap.data() || {};
+      const organizationId = typeof supervisor.organizationId === 'string' ? supervisor.organizationId.trim() : '';
+      if(supervisor.role !== 'supervisor' || supervisor.active === false || !organizationId) return null;
+      const organizationName = typeof supervisor.organizationName === 'string' && supervisor.organizationName.trim()
+        ? supervisor.organizationName.trim() : organizationId;
+      return { role:'supervisor', organizationId, organizationName };
     }
 
     async function denyManagerAccess(message){
@@ -871,6 +921,15 @@ const firebaseConfig = {
       }else{
         el.classList.add('hidden');
       }
+      const roleBadgeEl=document.getElementById('accessRoleBadge');
+      if(roleBadgeEl){
+        roleBadgeEl.textContent=managerContext.role==='supervisor' ? 'الدور: مشرف مساعد' : 'الدور: مدير';
+        roleBadgeEl.classList.remove('hidden');
+      }
+      document.querySelectorAll('[data-manager-only]').forEach(el=>{
+        el.classList.toggle('hidden', !isManagerMode());
+        el.setAttribute('aria-hidden', isManagerMode() ? 'false' : 'true');
+      });
     }
 
     async function bootForManager(user){
@@ -881,28 +940,29 @@ const firebaseConfig = {
       }
 
       let orgContext = null;
-      try{ orgContext = await verifyManagerAccess(user); }
-      catch(err){ console.error('Manager access verification failed', err); }
+      try{ orgContext = await verifyStaffAccess(user); }
+      catch(err){ console.error('Staff access verification failed', err); }
 
       // Fail closed: no manager record, wrong role, inactive account, or a
       // missing/empty organizationId are all treated identically — deny.
       if(!orgContext){
-        await denyManagerAccess(user ? 'هذا الحساب غير مصرح له بالدخول كمدير، أو لا يتبع لمؤسسة محددة.' : '');
+        await denyManagerAccess(user ? 'هذا الحساب غير مصرح له بالدخول كمدير أو مشرف مساعد، أو لا يتبع لمؤسسة محددة.' : '');
         return;
       }
 
       managerContext.uid = user.uid;
+      managerContext.role = orgContext.role;
       managerContext.organizationId = orgContext.organizationId;
       managerContext.organizationName = orgContext.organizationName;
 
       sessionStorage.setItem('smartHSRUser', JSON.stringify({
         uid:user.uid,
         email:user.email || '',
-        role:'manager',
+        role:managerContext.role,
         organizationId: managerContext.organizationId
       }));
       window.__SMART_USER__ = {
-        uid:user.uid, email:user.email || '', role:'manager',
+        uid:user.uid, email:user.email || '', role:managerContext.role,
         organizationId: managerContext.organizationId
       };
       appStarted = true;
@@ -917,7 +977,7 @@ const firebaseConfig = {
       onAuthStateChanged(auth, user=>{
         bootForManager(user).catch(err=>{
           console.error('Manager boot failed', err);
-          denyManagerAccess('تعذر التحقق من صلاحية المدير.');
+          denyManagerAccess('تعذر التحقق من صلاحية المدير أو المشرف المساعد.');
         });
       });
     }else{
@@ -928,6 +988,7 @@ const firebaseConfig = {
     
         // ===== Delete Observation =====
     async function deleteObservation(id) {
+      if(!requireManagerMode()) return;
       if (!confirm("⚠️ هل أنت متأكد أنك تريد حذف هذه الملاحظة نهائيًا؟")) return;
       const o = observations.find(x => (x.docId || x.id) == id);
       if (!o) return;

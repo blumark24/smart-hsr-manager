@@ -1107,28 +1107,8 @@ async function verifyInspectorAccess(user) {
 // was signed out globally, which killed a contractor's session mid-job.
 // Returns { route } for a valid other-role session, or null to deny.
 async function resolveOtherRoleRoute(user) {
-  // 1) Contractor? inspector/contractor records live in users/{uid}.
-  //    A miss here must NOT short-circuit: a manager may legitimately also
-  //    have a legacy users/{uid} document, and managers/{uid} is the
-  //    authoritative record for manager access. Returning early here would
-  //    deny that manager instead of routing them.
-  try {
-    const uSnap = await getDoc(doc(db, "users", user.uid));
-    if (uSnap.exists()) {
-      const d = uSnap.data() || {};
-      const org = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
-      // Only a fully valid contractor is routed. Anything else (inactive,
-      // no organization, other role) falls through to the managers check.
-      if (d.role === 'contractor' && d.active !== false && org) {
-        return { route: 'mobile-map.html' };
-      }
-    }
-  } catch (err) {
-    console.error('users lookup failed', err); // fall through, still try managers
-  }
-
-  // 2) Manager? managers/{uid} is authoritative and still fully validated —
-  //    inactive or organization-less manager records remain denied.
+  // 1) Manager is authoritative. A legacy users/{uid} role must never
+  //    override a valid managers/{uid} record.
   try {
     const mSnap = await getDoc(doc(db, "managers", user.uid));
     if (mSnap.exists()) {
@@ -1140,6 +1120,24 @@ async function resolveOtherRoleRoute(user) {
     }
   } catch (err) {
     console.error('managers lookup failed', err);
+  }
+
+  // 2) Supervisor or contractor? Both live in users/{uid}. An inspector
+  //    intentionally falls through so this page can verify it itself.
+  try {
+    const uSnap = await getDoc(doc(db, "users", user.uid));
+    if (uSnap.exists()) {
+      const d = uSnap.data() || {};
+      const org = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+      if (d.role === 'contractor' && d.active !== false && org) {
+        return { route: 'mobile-map.html' };
+      }
+      if (d.role === 'supervisor' && d.active !== false && org) {
+        return { route: 'manager.html' };
+      }
+    }
+  } catch (err) {
+    console.error('users lookup failed', err);
   }
 
   // Nothing valid to route to -> caller denies and signs out.
@@ -1177,6 +1175,20 @@ async function denyInspectorAccess(message) {
 onAuthStateChanged(auth, async (user) => {
   if (!user) { redirectToLogin(); return; }
 
+  // Resolve authoritative manager and valid non-inspector roles BEFORE the
+  // inspector gate so a conflicting legacy users record cannot override a
+  // valid manager record.
+  let other = null;
+  try { other = await resolveOtherRoleRoute(user); }
+  catch (err) { console.error('Role routing failed', err); }
+  if (other) {
+    obsState = 'unauthorized';
+    renderObservationsList([]);
+    renderKPIs();
+    window.location.replace(other.route);
+    return;
+  }
+
   let verified = null;
   try {
     verified = await verifyInspectorAccess(user);
@@ -1188,18 +1200,6 @@ onAuthStateChanged(auth, async (user) => {
     // Not an inspector. Before denying, check whether this is a perfectly
     // valid contractor/manager who simply opened the wrong page — they get
     // routed to their own surface with their session intact.
-    let other = null;
-    try { other = await resolveOtherRoleRoute(user); }
-    catch (err) { console.error('Role routing failed', err); }
-
-    if (other) {
-      obsState = 'unauthorized';
-      renderObservationsList([]);
-      renderKPIs();
-      window.location.replace(other.route);
-      return;
-    }
-
     await denyInspectorAccess('🚫 هذا الحساب غير مصرح له بالوصول للوحة المراقب، أو الحساب غير نشط، أو لا يتبع لمؤسسة محددة.');
     return;
   }
@@ -1453,7 +1453,11 @@ function subscribeObservations() {
   renderObservationsList([]);
   renderKPIs();
 
-  const q = query(collection(db, COLLECTION), where('organizationId', '==', organizationId));
+  const q = query(
+    collection(db, COLLECTION),
+    where('organizationId', '==', organizationId),
+    where('createdByUid', '==', inspectorContext.uid)
+  );
   obsUnsub = onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
     if (snapshot.metadata.fromCache) return; // never render an unverified cached snapshot
     const arr = [];

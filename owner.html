@@ -276,7 +276,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <label class="text-sm">الاسم<input name="name" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
         <label class="text-sm">البريد الإلكتروني<input name="email" type="email" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
-        <label class="text-sm">الدور<select name="role" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option value="manager">مدير</option><option value="inspector">مراقب</option><option value="contractor">مقاول</option></select></label>
+        <label class="text-sm">الدور<select name="role" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option value="manager">مدير</option><option value="supervisor">مشرف مساعد</option><option value="inspector">مراقب</option><option value="contractor">مقاول</option></select></label>
         <label class="text-sm">المؤسسة<select name="organizationId" id="userFormOrg" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"></select></label>
       </div>
       <p class="text-xs muted">سيتم إنشاء الحساب بدون كلمة مرور. استخدم زر «كلمة مرور مؤقتة» لتوليدها وتسليمها للمستخدم (يُطلب منه تغييرها عند أول دخول).</p>
@@ -651,7 +651,7 @@
     const userForm       = document.getElementById('userForm');
     const userFormMsg    = document.getElementById('userFormMsg');
 
-    const ROLE_AR = { manager:'مدير', inspector:'مراقب', contractor:'مقاول' };
+    const ROLE_AR = { manager:'مدير', supervisor:'مشرف مساعد', inspector:'مراقب', contractor:'مقاول' };
 
     function setUsersMsg(text, ok){
       usersMsg.textContent = text || '';

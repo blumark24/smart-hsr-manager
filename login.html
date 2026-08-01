@@ -128,7 +128,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 // إعدادات Firebase
@@ -168,21 +168,38 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   try {
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const user = cred.user;
-    const userDoc = await getDoc(doc(db, "users", user.uid));
+    // managers/{uid} is authoritative. A legacy users/{uid} record must never
+    // override a valid organization manager and route them to the wrong page.
+    const managerSnap = await getDoc(doc(db, "managers", user.uid));
+    if (managerSnap.exists()) {
+      const manager = managerSnap.data() || {};
+      const managerOrg = typeof manager.organizationId === 'string' ? manager.organizationId.trim() : '';
+      if (manager.role === 'manager' && manager.active !== false && managerOrg) {
+        window.location.href = 'manager.html';
+        return;
+      }
+    }
 
-    if (!userDoc.exists()) {
-      showMsg('🚫 لا توجد صلاحية لهذا المستخدم.', 'error');
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const data = userDoc.exists() ? (userDoc.data() || {}) : {};
+    const role = data.role;
+    const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
+    if (!userDoc.exists() || !['supervisor','inspector','contractor'].includes(role)
+        || data.active === false || !organizationId) {
+      await signOut(auth);
+      showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
       loginButton.disabled = false;
       loginButton.textContent = 'تسجيل الدخول';
       return;
     }
 
-    const role = userDoc.data().role;
     showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
 
     setTimeout(() => {
       if (role === 'contractor') {
         window.location.href = 'mobile-map.html';
+      } else if (role === 'supervisor') {
+        window.location.href = 'manager.html';
       } else {
         window.location.href = 'dashboard.html';
       }

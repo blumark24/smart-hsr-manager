@@ -5,29 +5,31 @@
 // Model (matches firestore.rules):
 //   owner      -> owners/{uid}      (allowlist; active != false)
 //   manager    -> managers/{uid}    (role 'manager';  active != false)
+//   supervisor -> users/{uid}       (role 'supervisor'; no Admin API access)
 //   inspector  -> users/{uid}       (role 'inspector')
 //   contractor -> users/{uid}       (role 'contractor')
 //
 // Phase 2: owners may call the live API for any organization. An
 // organization manager (managers/{uid}, role 'manager', active != false,
 // non-empty organizationId) may additionally call it, but assertCanManage
-// restricts them to inspectors/contractors of their OWN organizationId only.
+// restricts them to supervisors/inspectors/contractors of their OWN
+// organizationId only. Supervisors never receive account-management access.
 // ============================================================================
 const { getAuth, getDb } = require('./firebaseAdmin');
 
 // Roles this API is ever allowed to create/manage. 'owner' is intentionally
 // excluded — the API must never create or manage owners or escalate to owner.
-const MANAGEABLE_ROLES = ['manager', 'inspector', 'contractor'];
+const MANAGEABLE_ROLES = ['manager', 'supervisor', 'inspector', 'contractor'];
 
 // Roles an organization manager (as opposed to an owner) may manage.
-const MANAGER_SCOPED_ROLES = ['inspector', 'contractor'];
+const MANAGER_SCOPED_ROLES = ['supervisor', 'inspector', 'contractor'];
 
 // Stage B flag: manager-initiated, same-organization management is enabled.
 const MANAGER_MANAGEMENT_ENABLED = true;
 
 function collectionForRole(role) {
   if (role === 'manager') return 'managers';
-  if (role === 'inspector' || role === 'contractor') return 'users';
+  if (role === 'supervisor' || role === 'inspector' || role === 'contractor') return 'users';
   return null;
 }
 
@@ -75,8 +77,8 @@ async function getCallerContext(uid) {
 }
 
 // Pure authorization decision. Owner -> anything manageable. Manager -> only
-// inspectors/contractors in its OWN organization; never managers or owners or
-// another organization. Everyone else -> denied.
+// supervisors/inspectors/contractors in its OWN organization; never managers,
+// owners, or another organization. Everyone else -> denied.
 function assertCanManage(caller, target) {
   const targetRole = target && target.targetRole;
   const targetOrg = target && target.targetOrganizationId;

@@ -658,7 +658,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
-    getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, query, where
+    getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, query, where, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -926,7 +926,8 @@ const firebaseConfig = {
 
     const q = query(
       collection(db,'observations'),
-      where('organizationId','==', organizationId)
+      where('organizationId','==', organizationId),
+      where('assignedContractorUid','==', contractorContext.uid)
     );
 
     obsUnsub = onSnapshot(q, { includeMetadataChanges:true }, (snap)=>{
@@ -1150,16 +1151,14 @@ const firebaseConfig = {
       return;
     }
 
-    // Payload is deliberately limited to EXACTLY these three keys.
-    // firestore.rules restricts contractors to
-    //   affectedKeys().hasOnly(['status','resolutionNote','afterImagePath'])
-    // so adding organizationId / updatedByUid / updatedAt here would make
-    // every contractor save fail with permission-denied (verified against the
-    // emulator). Audit stamping requires a rules change first — tracked as a
-    // follow-up and intentionally NOT done in this sprint.
+    // Identity comes only from the authenticated session. Proposed Rules V3
+    // limits this contractor to its own assignment and these closeout/audit
+    // fields.
     const payload = {
       status: newStatus,
-      resolutionNote: sNote.value || `تم التحديث بتاريخ ${new Date().toLocaleString('ar-SA')}`
+      resolutionNote: sNote.value || `تم التحديث بتاريخ ${new Date().toLocaleString('ar-SA')}`,
+      updatedByUid: auth.currentUser.uid,
+      updatedAt: serverTimestamp()
     };
     if (currentAfterData) payload.afterImagePath = currentAfterData;
 
@@ -1395,10 +1394,33 @@ const firebaseConfig = {
     return { organizationId, organizationName };
   }
 
+  // Recover a valid wrong-role session without signing it out. The manager
+  // record is checked first so a legacy users/{uid} record cannot override it.
+  async function resolveAlternateRoute(user){
+    const managerSnap = await getDoc(doc(db, 'managers', user.uid));
+    if (managerSnap.exists()) {
+      const data = managerSnap.data() || {};
+      const org = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
+      if (data.role === 'manager' && data.active !== false && org) return 'manager.html';
+    }
+    const userSnap = await getDoc(doc(db, 'users', user.uid));
+    if (!userSnap.exists()) return null;
+    const data = userSnap.data() || {};
+    const org = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
+    if (data.active === false || !org) return null;
+    if (data.role === 'supervisor') return 'manager.html';
+    if (data.role === 'inspector') return 'dashboard.html';
+    return null;
+  }
+
   if (FIREBASE_READY){
     setMapState('loading');
     onAuthStateChanged(auth, async (user) => {
       if (!user){ await denyMapAccess(); return; }
+      let alternate = null;
+      try{ alternate = await resolveAlternateRoute(user); }
+      catch(err){ console.error('تعذر التحقق من مسار الدور البديل', err); }
+      if (alternate){ window.location.replace(alternate); return; }
       let verified = null;
       try{ verified = await verifyContractorAccess(user); }
       catch(err){ console.error('تعذر التحقق من صلاحية المقاول', err); verified = null; }
