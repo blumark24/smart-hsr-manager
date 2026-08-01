@@ -60,7 +60,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
     // إعداد Firebase
@@ -73,8 +73,9 @@
       appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
     };
 
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig, 'smart-hsr-owner-session');
     const auth = getAuth(app);
+    await setPersistence(auth, browserLocalPersistence);
     const db = getFirestore(app);
 
     const form = document.getElementById('loginForm');
@@ -91,7 +92,8 @@
 
         // التحقق من صلاحية المالك
         const ownerDoc = await getDoc(doc(db, 'owners', user.uid));
-        if (!ownerDoc.exists()) {
+        if (!ownerDoc.exists() || ownerDoc.data()?.active === false) {
+          await signOut(auth);
           errorMsg.textContent = '🚫 ليس لديك صلاحية الدخول كمالك.';
           errorMsg.classList.remove('hidden');
           return;

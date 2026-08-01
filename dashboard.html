@@ -26,6 +26,8 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- STYLES -->
   <style>
@@ -568,6 +570,20 @@
         box-shadow:0 0 0 22px rgba(24,165,162,0);
       }
     }
+    /* Smart HSR Civic Spatial Intelligence — field capture stays map-first. */
+    #modalStep1{display:flex;flex-direction:column;min-width:0}
+    #modalStep1>p{order:0}#modalStep1>.input-group-wrapper{order:1}#modalStep1>textarea{order:2;margin-top:1rem}#modalStep1>.mt-6{order:3}
+    #inspectorCaptureMap,.input-group-wrapper,.input-group{min-width:0;max-width:100%}
+    #confirmLocationBtn,#retryLocationBtn,#useWeakLocationBtn,#getLocationBtn{min-height:44px;overflow-wrap:anywhere}
+    @media(max-width:768px){
+      #smartInputModal{align-items:flex-end;padding:0}
+      #smartInputModal .modal-content{width:100%;max-width:none;max-height:94dvh;margin:0;border-radius:24px 24px 0 0;padding:1.15rem;overflow-y:auto;overscroll-behavior:contain;padding-bottom:calc(1rem + env(safe-area-inset-bottom))}
+      #smartInputModal .input-group-wrapper{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:.75rem}
+      #inspectorCaptureMap{height:42dvh!important;min-height:260px}
+      #smartInputModal h2{font-size:clamp(1.45rem,7vw,2rem);line-height:1.25;padding-inline-end:1.5rem;overflow-wrap:anywhere}
+      #smartInputModal .mt-6.text-center{position:sticky;bottom:0;z-index:500;background:rgba(255,255,255,.96);padding:.65rem 0 calc(.35rem + env(safe-area-inset-bottom))}
+      #processSmartInputBtn{width:100%;min-height:50px;font-size:1rem;padding-inline:.75rem}
+    }
   </style>
 
   <link rel="stylesheet" href="modal-style.css">
@@ -575,6 +591,7 @@
 </head>
 
 <body class="text-gray-800">
+<div id="localDemoBadge" class="hidden fixed bottom-3 left-3 right-3 z-[1000] bg-amber-100 border border-amber-400 text-amber-950 rounded-xl px-4 py-3 text-sm font-bold shadow-lg" role="status">بيئة عرض تجريبية — الصور محفوظة على هذا الجهاز فقط ولم تُرفع إلى خادم البلدية.</div>
 
 <!-- ========== HEADER ========== -->
 <header id="hsrHeader" class="hsr-header">
@@ -918,12 +935,18 @@
       <div class="mt-4 input-group-wrapper">
         <div class="input-group p-4 border-2 border-dashed border-gray-300 rounded-xl bg-white hover:border-teal-500 transition-colors">
           <label class="block text-sm font-medium text-gray-700 mb-2">الموقع الجغرافي (GPS):</label>
-          <p id="locationStatus" class="text-sm font-semibold text-gray-500">لم يتم التحديد بعد</p>
+          <p id="locationStatus" class="text-sm font-semibold text-gray-500" aria-live="polite">لم يتم التحديد بعد</p>
+          <div id="inspectorCaptureMap" style="height:clamp(240px,42vh,390px);width:100%;margin-top:.75rem;border-radius:1rem;overflow:hidden" aria-label="خريطة تثبيت موقع الملاحظة"></div>
           <input type="hidden" id="inputLatitude">
           <input type="hidden" id="inputLongitude">
           <button id="getLocationBtn" class="ai-button-primary rounded-full px-4 py-2 text-sm font-bold mt-2 flex items-center justify-center mx-auto" onclick="getLocation()" type="button">
             <i data-lucide="map-pin" class="w-4 h-4 ml-2"></i> تحديد الموقع الحالي
           </button>
+          <div class="mt-2 flex flex-wrap gap-2 justify-center">
+            <button id="retryLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">إعادة المحاولة</button>
+            <button id="useWeakLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">استخدام الموقع مع تنبيه</button>
+            <button id="confirmLocationBtn" class="ai-button-primary rounded-full px-4 py-2 text-sm font-bold" type="button" disabled>تثبيت موقع الملاحظة</button>
+          </div>
         </div>
 
         <div class="input-group p-4 border-2 border-dashed border-gray-300 rounded-xl bg-white hover:border-teal-500 transition-colors">
@@ -1009,29 +1032,14 @@ function updateGpsStatus() {
     return;
   }
 
-  gpsText.textContent = "جاري التحديد...";
-  gpsCircle.classList.add("off");
-  gpsCircle.classList.remove("on");
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      gpsText.textContent = "نشط";
-      gpsCircle.classList.add("on");
-      gpsCircle.classList.remove("off");
-    },
-    (err) => {
-      gpsText.textContent = "غير متاح";
-      gpsCircle.classList.add("off");
-      gpsCircle.classList.remove("on");
-    },
-    { enableHighAccuracy: true, timeout: 5000 }
-  );
+  gpsText.textContent = "جاهز عند فتح البلاغ";
+  gpsCircle.classList.add("on");
+  gpsCircle.classList.remove("off");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   updateGpsStatus();
 });
-setInterval(updateGpsStatus, 60000);
 </script>
 
 <!-- MAIN APP (Firebase + Firestore + Storage) -->
@@ -1056,6 +1064,8 @@ import {
   uploadBytes,
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
+import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls } from './storage-adapter.js';
+import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
@@ -1084,6 +1094,7 @@ const actions = document.querySelector('.actions');
 // from form input, URL, sessionStorage, or localStorage) =========
 let appStarted = false;
 const inspectorContext = { uid: null, organizationId: null, organizationName: '' };
+let organizationMapContext=null;
 
 // Loads the signed-in user's OWN users/{uid} doc (never any other uid, never
 // the managers collection) and returns the verified context ONLY if
@@ -1165,6 +1176,7 @@ function showUnauthorized() {
 }
 
 async function denyInspectorAccess(message) {
+  stopInspectorGps();
   showUnauthorized();
   try { await signOut(auth); } catch (e) { console.warn(e); }
   if (message) { try { alert(message); } catch (_) {} }
@@ -1207,6 +1219,9 @@ onAuthStateChanged(auth, async (user) => {
   inspectorContext.uid = user.uid;
   inspectorContext.organizationId = verified.organizationId;
   inspectorContext.organizationName = verified.organizationName;
+  try { organizationMapContext=await fetchOrganizationMapContext(auth,{organizationId:verified.organizationId}); }
+  catch (_) { organizationMapContext=null; }
+  await refreshDemoStorageBadge().catch(()=>{});
 
   userName.textContent = verified.name || user.displayName || 'مستخدم';
   userRole.className = 'user-role-inspector';
@@ -1222,6 +1237,8 @@ onAuthStateChanged(auth, async (user) => {
 
 // LOGOUT
 logoutBtn.addEventListener('click', async () => {
+  stopInspectorGps();
+  revokeAllObservationImageUrls();
   logoutBtn.innerHTML = "<i data-lucide='loader-2' class='spin'></i> جاري تسجيل الخروج...";
   logoutBtn.disabled = true;
   lucide.createIcons();
@@ -1238,6 +1255,7 @@ logoutBtn.addEventListener('click', async () => {
   }
 });
 
+window.addEventListener('pagehide',revokeAllObservationImageUrls);
 menuToggle.addEventListener('click', () => actions.classList.toggle('active'));
 
 function redirectToLogin() {
@@ -1333,12 +1351,27 @@ function compressImage(file) {
 }
 
 // ========= STORAGE UPLOAD =========
-async function uploadImageToStorage(file, folder = "HSR") {
+async function uploadImageToFirebaseStorage(file, folder = "HSR") {
   const fileName = `${Date.now()}-${file.name || 'image.jpg'}`;
   const storageRef = ref(storage, `${folder}/${fileName}`);
   await uploadBytes(storageRef, file);
   const downloadUrl = await getDownloadURL(storageRef);
   return downloadUrl;
+}
+
+async function uploadImageToStorage(file, folder = 'HSR', observationId = null) {
+  return uploadObservationImage({blob:file,observationId,context:{uid:auth.currentUser?.uid,organizationId:inspectorContext.organizationId,role:'inspector'},fallbackUpload:blob=>uploadImageToFirebaseStorage(blob,folder)});
+}
+
+async function resolveEvidenceReference(reference) {
+  const external=safeImageUrl(reference);if(external)return external;
+  const result=await resolveObservationImage({reference,context:{uid:auth.currentUser?.uid,organizationId:inspectorContext.organizationId,role:'inspector'}});
+  return result.available?result.url:'';
+}
+
+async function refreshDemoStorageBadge(){
+  const connector=await getConnectorConfiguration(inspectorContext.organizationId);
+  document.getElementById('localDemoBadge')?.classList.toggle('hidden',!(connector?.active&&connector.type===LOCAL_DEMO_TYPE));
 }
 
 // ========= KPI HELPERS =========
@@ -1481,6 +1514,12 @@ function subscribeObservations() {
         riskAssessment:data.riskAssessment || { priority:'Medium', timeframe:'72 hours' },
         resolutionNote:data.resolutionNote || null,
         afterImagePath:data.afterImagePath || null,
+        organizationId:data.organizationId || null,
+        createdByUid:data.createdByUid || null,
+        originalLat:data.originalLat,
+        originalLng:data.originalLng,
+        correctedLat:data.correctedLat,
+        correctedLng:data.correctedLng,
         createdAt:data.createdAt?.toMillis ? data.createdAt.toMillis(): (data.createdAt || 0),
         isNewInput:false
       });
@@ -1490,6 +1529,7 @@ function subscribeObservations() {
     obsState = 'ready';
     renderKPIs();
     renderObservationsList(observationsData);
+    renderInspectorObservationMarkers();
     if (!currentSelectedObservation && observationsData.length > 0) {
       showObservationDetail(observationsData[0].docId);
     }
@@ -1515,7 +1555,7 @@ async function updateObservationInFirestore(docId, fields) {
 }
 
 // ========= DETAIL VIEW =========
-window.showObservationDetail = function(docId) {
+window.showObservationDetail = async function(docId) {
   const obs = observationsData.find(o=>o.docId===docId);
   if (!obs) return;
   currentSelectedObservation = obs;
@@ -1549,21 +1589,26 @@ window.showObservationDetail = function(docId) {
   const mediaContent = document.getElementById('mediaContent');
   mediaContent.innerHTML = '';
 
-  if (obs.status==='COMPLETED' && obs.afterImagePath) {
+  revokeAllObservationImageUrls();
+  const beforeResolved=await resolveEvidenceReference(obs.imagePath);
+  const afterResolved=await resolveEvidenceReference(obs.afterImagePath);
+  if (obs.status==='COMPLETED' && afterResolved) {
     unhide('imageComparisonWrapper');
-    document.getElementById('beforeImage').src = safeImageUrl(obs.imagePath);
-    document.getElementById('afterImage').src  = safeImageUrl(obs.afterImagePath);
+    if(beforeResolved)document.getElementById('beforeImage').src=beforeResolved;
+    document.getElementById('afterImage').src=afterResolved;
     setupImageComparison();
     setText('resolutionNote', obs.resolutionNote || 'لم يتم توفير مذكرة إغلاق تفصيلية.');
     unhide('resolutionNoteContainer');
-  } else if (safeImageUrl(obs.imagePath)) {
+  } else if (beforeResolved) {
     unhide('mediaContainer');
     const image = document.createElement('img');
     image.className = 'w-full h-auto rounded-xl shadow-lg';
     image.alt = 'صورة الملاحظة';
-    image.src = safeImageUrl(obs.imagePath);
+    image.src = beforeResolved;
     mediaContent.replaceChildren(image);
   } else {
+    const missing=document.getElementById('noImageMessage');
+    if(missing)missing.textContent=String(obs.imagePath||obs.afterImagePath||'').startsWith('local-demo://')?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا توجد صورة مرفقة لهذا البلاغ.';
     unhide('noImageMessage');
   }
 
@@ -1605,27 +1650,104 @@ window.handleFilterChange = function() {
   }
 };
 
-// ========= LOCATION & FILE UPLOAD =========
-window.getLocation = function(){
-  setHTML('locationStatus','<span class="text-yellow-600">جاري البحث...</span>');
-  document.getElementById('getLocationBtn').disabled = true;
-  navigator.geolocation?.getCurrentPosition(pos=>{
-    const lat = pos.coords.latitude, lon = pos.coords.longitude;
-    document.getElementById('inputLatitude').value = lat;
-    document.getElementById('inputLongitude').value = lon;
-    setHTML('locationStatus', `<span class="text-green-600">تم التحديد:</span> ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
-    document.getElementById('getLocationBtn').disabled = false;
-    checkSmartInputState();
-  }, _err=>{
-    setHTML('locationStatus','<span class="text-red-600">تعذر تحديد الموقع</span>');
-    document.getElementById('getLocationBtn').disabled = false;
-  });
+// ========= CIVIC SPATIAL CAPTURE & FILE UPLOAD =========
+const GPS_OPTIONS=Object.freeze({enableHighAccuracy:true,maximumAge:0,timeout:20000});
+let inspectorMap=null,inspectorObservationLayer=null,locationMarker=null,accuracyCircle=null;
+let locationWatchId=null,locationTimeoutId=null,locationSamples=[],locationCandidate=null,locationConfirmed=false,locationDragged=false;
+let locationWarningOverride=false,locationTimedOut=false;
+
+function accuracyLabel(m){return m<=10?'ممتازة':m<=20?'جيدة':m<=30?'مقبولة':'ضعيفة'}
+function validLocationSample(position,now=Date.now()){
+  const c=position?.coords,ts=Number(position?.timestamp||now);
+  return !!c&&Number.isFinite(c.latitude)&&Math.abs(c.latitude)<=90&&Number.isFinite(c.longitude)&&Math.abs(c.longitude)<=180&&Number.isFinite(c.accuracy)&&c.accuracy>0&&c.accuracy<=500&&Math.abs(now-ts)<=30000;
+}
+function distanceMeters(a,b){
+  const r=6371000,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLng=(b.lng-a.lng)*p;
+  const q=Math.sin(dLat/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLng/2)**2;
+  return 2*r*Math.asin(Math.sqrt(q));
+}
+function bestStableSample(samples){
+  if(!samples.length)return null;
+  const sorted=[...samples].sort((a,b)=>a.accuracy-b.accuracy),best=sorted[0];
+  const stable=samples.length>=3&&samples.filter(s=>distanceMeters(s,best)<=Math.max(10,best.accuracy*1.5)).length>=2;
+  return {...best,stable};
+}
+function candidateIsCurrent(candidate,now=Date.now()){
+  if(!candidate||!Number.isFinite(candidate.lat)||Math.abs(candidate.lat)>90||!Number.isFinite(candidate.lng)||Math.abs(candidate.lng)>180)return false;
+  if(!Number.isFinite(candidate.accuracy)||candidate.accuracy<=0||candidate.accuracy>500)return false;
+  const capturedAt=Date.parse(candidate.capturedAt);return Number.isFinite(capturedAt)&&Math.abs(now-capturedAt)<=30000;
+}
+function normalLocationConfirmationAllowed(){
+  return candidateIsCurrent(locationCandidate)&&locationSamples.length>=3&&locationCandidate.stable===true&&locationCandidate.accuracy<=30&&!locationTimedOut;
+}
+function stopInspectorGps(){
+  if(locationWatchId!==null)navigator.geolocation?.clearWatch(locationWatchId);
+  locationWatchId=null;clearTimeout(locationTimeoutId);locationTimeoutId=null;
+  const button=document.getElementById('getLocationBtn');if(button)button.disabled=false;
+}
+function initInspectorMap(){
+  if(inspectorMap||!window.L)return;
+  inspectorMap=L.map('inspectorCaptureMap',{zoomControl:true,keyboard:true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'}).addTo(inspectorMap);
+  applyMapAttribution(inspectorMap);inspectorObservationLayer=L.layerGroup().addTo(inspectorMap);
+  openVerifiedMap(inspectorMap,observationsData,inspectorContext.organizationId,organizationMapContext);
+}
+function renderInspectorObservationMarkers(){
+  if(!inspectorObservationLayer)return;inspectorObservationLayer.clearLayers();
+  observationsData.forEach(o=>{const p=observationCoordinates(o,inspectorContext.organizationId);if(p)L.marker([p.lat,p.lng],{icon:statusMarkerIcon(L,o.status,{title:o.title})}).addTo(inspectorObservationLayer)});
+}
+function renderLocationCandidate(){
+  if(!locationCandidate)return;initInspectorMap();
+  const point=[locationCandidate.lat,locationCandidate.lng];
+  if(!locationMarker){
+    locationMarker=L.marker(point,{draggable:true,title:'موقع الملاحظة المصحح'}).addTo(inspectorMap);
+    locationMarker.on('dragend',()=>{const p=locationMarker.getLatLng();locationCandidate.correctedLat=p.lat;locationCandidate.correctedLng=p.lng;locationDragged=true;accuracyCircle?.setLatLng(p)});
+  }else locationMarker.setLatLng(point);
+  if(!accuracyCircle)accuracyCircle=L.circle(point,{radius:locationCandidate.accuracy,color:'#0891b2',fillOpacity:.12,weight:2}).addTo(inspectorMap);
+  else accuracyCircle.setLatLng(point).setRadius(locationCandidate.accuracy);
+  inspectorMap.setView(point,Math.max(inspectorMap.getZoom()||13,16));
+  const normalAllowed=normalLocationConfirmationAllowed();
+  const warningRequired=!normalAllowed;
+  document.getElementById('retryLocationBtn').classList.toggle('hidden',!warningRequired);
+  document.getElementById('useWeakLocationBtn').classList.toggle('hidden',!warningRequired);
+  document.getElementById('confirmLocationBtn').disabled=!(normalAllowed||locationWarningOverride);
+  const quality=locationCandidate.stable?(locationCandidate.accuracy<=30?accuracyLabel(locationCandidate.accuracy):'ضعيفة'):'غير مستقرة';
+  const timeoutText=locationTimedOut?' — انتهت مهلة جمع العينات':'';
+  setText('locationStatus',`دقة GPS الفعلية ±${Math.round(locationCandidate.accuracy)} م — ${quality}${timeoutText}${warningRequired?'؛ يلزم إعادة المحاولة أو القبول مع تنبيه':''}`);
+}
+window.getLocation=function(){
+  if(!navigator.geolocation){setText('locationStatus','هذا المتصفح لا يدعم تحديد الموقع.');return}
+  stopInspectorGps();locationSamples=[];locationCandidate=null;locationConfirmed=false;locationDragged=false;locationWarningOverride=false;locationTimedOut=false;
+  document.getElementById('getLocationBtn').disabled=true;setText('locationStatus','جاري جمع عينات GPS دقيقة...');
+  locationWatchId=navigator.geolocation.watchPosition(position=>{
+    if(!validLocationSample(position))return;
+    locationSamples.push({lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy,capturedAt:new Date(position.timestamp||Date.now()).toISOString()});
+    locationSamples=locationSamples.slice(-8);locationCandidate=bestStableSample(locationSamples);renderLocationCandidate();
+  },()=>{locationTimedOut=true;stopInspectorGps();if(locationCandidate)renderLocationCandidate();else setText('locationStatus','تعذر تحديد الموقع. تحقق من الإذن ثم أعد المحاولة.')},GPS_OPTIONS);
+  locationTimeoutId=setTimeout(()=>{locationTimedOut=true;stopInspectorGps();if(locationCandidate)renderLocationCandidate();else setText('locationStatus','انتهت مهلة GPS دون عينة صالحة.')},20000);
 };
+document.getElementById('retryLocationBtn')?.addEventListener('click',()=>window.getLocation());
+document.getElementById('useWeakLocationBtn')?.addEventListener('click',()=>{
+  if(!candidateIsCurrent(locationCandidate)){setText('locationStatus','لا يمكن قبول موقع مفقود أو غير صالح أو قديم. أعد المحاولة.');return}
+  stopInspectorGps();locationWarningOverride=true;document.getElementById('confirmLocationBtn').disabled=false;
+  setText('locationStatus',`تم قبول استخدام GPS مع تنبيه — الدقة الفعلية ±${Math.round(locationCandidate.accuracy)} م، والموقع غير موثّق بدقة كاملة.`);
+});
+document.getElementById('confirmLocationBtn')?.addEventListener('click',()=>{
+  const normalAllowed=normalLocationConfirmationAllowed();
+  if(!candidateIsCurrent(locationCandidate)||(!normalAllowed&&!locationWarningOverride))return;
+  stopInspectorGps();locationConfirmed=true;
+  const lat=locationCandidate.correctedLat??locationCandidate.lat,lng=locationCandidate.correctedLng??locationCandidate.lng;
+  if(!Number.isFinite(lat)||Math.abs(lat)>90||!Number.isFinite(lng)||Math.abs(lng)>180){locationConfirmed=false;return}
+  document.getElementById('inputLatitude').value=lat;document.getElementById('inputLongitude').value=lng;
+  setText('locationStatus',locationWarningOverride?`تم تثبيت الموقع مع تنبيه — الدقة الفعلية ±${Math.round(locationCandidate.accuracy)} م، غير موثّق بدقة كاملة.`:`تم تثبيت موقع الملاحظة — دقة ${accuracyLabel(locationCandidate.accuracy)} (±${Math.round(locationCandidate.accuracy)} م)`);checkSmartInputState();
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopInspectorGps()},{passive:true});
+new MutationObserver(()=>{if(document.getElementById('smartInputModal')?.style.display==='none')stopInspectorGps()})
+  .observe(document.getElementById('smartInputModal'),{attributes:true,attributeFilter:['style']});
 
 window.checkSmartInputState = function(){
   const text = document.getElementById('rawObservationInput').value.trim();
-  const lat = document.getElementById('inputLatitude').value;
-  document.getElementById('processSmartInputBtn').disabled = !(text.length>0 || currentFile || lat);
+  document.getElementById('processSmartInputBtn').disabled = !((text.length>0 || currentFile) && locationConfirmed);
 };
 
 window.handleFileUpload = function(e){
@@ -1656,6 +1778,7 @@ window.processSmartInput = async function(){
     alert('أدخل وصفاً أو صورة.');
     return;
   }
+  if(!locationConfirmed||!locationCandidate){alert('يجب تثبيت موقع الملاحظة قبل المتابعة.');return}
 
   // organizationId/createdByUid come ONLY from the verified in-memory
   // inspector context and the live authenticated session — never from form
@@ -1694,7 +1817,15 @@ window.processSmartInput = async function(){
       resolutionNote: null,
       afterImagePath: null,
       organizationId: inspectorContext.organizationId,
-      createdByUid: auth.currentUser.uid
+      createdByUid: auth.currentUser.uid,
+      originalLat: locationCandidate.lat,
+      originalLng: locationCandidate.lng,
+      correctedLat: Number(lat),
+      correctedLng: Number(lon),
+      locationAccuracyMeters: locationCandidate.accuracy,
+      locationCapturedAt: locationCandidate.capturedAt,
+      locationSource: locationDragged ? 'gps_corrected' : 'gps',
+      locationVerified: !locationWarningOverride
     };
 
     let docId;
@@ -1730,6 +1861,7 @@ window.processSmartInput = async function(){
     setText('locationStatus','لم يتم التحديد بعد');
     document.getElementById('inputLatitude').value='';
     document.getElementById('inputLongitude').value='';
+    locationConfirmed=false;locationCandidate=null;locationWarningOverride=false;locationTimedOut=false;stopInspectorGps();
     document.getElementById('processSmartInputBtn').disabled = true;
 
   } catch (err) {
@@ -1748,6 +1880,7 @@ window.openModal = function(id){
     clearAfterUpload();
   }
   if (id==='smartInputModal'){
+    stopInspectorGps();locationConfirmed=false;locationCandidate=null;locationSamples=[];locationWarningOverride=false;locationTimedOut=false;
     document.getElementById('rawObservationInput').value = '';
     setText('locationStatus','لم يتم التحديد بعد');
     setText('fileStatus','لم يتم اختيار ملف بعد');
@@ -1756,6 +1889,7 @@ window.openModal = function(id){
     currentFile = null;
     document.getElementById('fileUploadInput').value='';
     document.getElementById('processSmartInputBtn').disabled = true;
+    setTimeout(()=>{initInspectorMap();inspectorMap?.invalidateSize();renderInspectorObservationMarkers();openVerifiedMap(inspectorMap,observationsData,inspectorContext.organizationId,organizationMapContext);window.getLocation()},80);
     hide('modalResult');
     unhide('modalStep1');
   }
@@ -1804,7 +1938,7 @@ window.completeObservation = async function(){
   try {
     setButtonBusy('finalCloseoutBtn', true);
     const compressedFile = await compressImage(currentAfterFile);
-    const afterUrl = await uploadImageToStorage(compressedFile, "HSR/after");
+    const afterUrl = await uploadImageToStorage(compressedFile, "HSR/after", currentSelectedObservation.docId);
 
     try {
       await updateObservationInFirestore(currentSelectedObservation.docId, {

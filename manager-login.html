@@ -76,7 +76,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // إعدادات Firebase
@@ -89,8 +89,11 @@ const firebaseConfig = {
   appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
 };
 
-const app = initializeApp(firebaseConfig);
+// Dedicated persisted Auth namespace: manager/supervisor actions must never
+// mutate the field-worker session stored by the default Firebase app.
+const app = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
 const auth = getAuth(app);
+await setPersistence(auth, browserLocalPersistence);
 const db = getFirestore(app);
 
 const form = document.getElementById("loginForm");
@@ -113,8 +116,17 @@ form.addEventListener("submit", async (e) => {
 
     const managerData = snap.exists() ? snap.data() : null;
 
-    // لا تُنشئ صلاحية مدير من صفحة الدخول. يجب منحها مسبقًا من الإدارة.
-    if (!managerData || managerData.role !== "manager") {
+    // لا تُنشئ صلاحية من صفحة الدخول. المدير من managers/{uid} أو المشرف
+    // المساعد من users/{uid} فقط، وكلاهما فعّال ومرتبط بمؤسسة.
+    const managerOrg = typeof managerData?.organizationId === 'string' ? managerData.organizationId.trim() : '';
+    let authorized = !!(managerData && managerData.role === 'manager' && managerData.active !== false && managerOrg);
+    if (!authorized) {
+      const userSnap = await getDoc(doc(db, 'users', user.uid));
+      const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+      const userOrg = typeof userData.organizationId === 'string' ? userData.organizationId.trim() : '';
+      authorized = userData.role === 'supervisor' && userData.active !== false && !!userOrg;
+    }
+    if (!authorized) {
       await signOut(auth);
       throw new Error("unauthorized-manager");
     }

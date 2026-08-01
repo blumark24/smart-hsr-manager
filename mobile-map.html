@@ -225,6 +225,8 @@
       font-weight:900; font-size:12px; box-shadow:var(--shadow);
     }
     .stale-note.show{display:block}
+    .field-status-capsule{position:absolute;z-index:945;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;max-width:calc(100% - 24px);padding:7px 11px;border:1px solid rgba(8,145,178,.28);border-radius:999px;background:rgba(255,255,255,.92);box-shadow:var(--shadow);font-size:11px;font-weight:900;white-space:nowrap}
+    [data-theme="dark"] .field-status-capsule{background:rgba(15,23,42,.92)}
     [data-theme="dark"] .stale-note{ background:#3b2f12; color:#fcd34d }
 
     /* ====== مركزية نافذة التفاصيل بأسلوب iOS Dashboard ====== */
@@ -328,10 +330,13 @@
     .btn-lg{padding:10px 14px; font-size:13px}
 
     @media (max-width:768px){
+      .sheet{align-items:flex-end}
       .sheet-body{grid-template-columns:1fr}
       .btn-lg{padding:10px 12px; font-size:12px}
       .sheet-header h3{font-size:14px}
-      .sheet-panel{width:94vw; border-radius:20px}
+      .sheet-panel{width:100%;max-height:88dvh;border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom);transform:translateY(24px)}
+      .sheet-actions{position:sticky;bottom:0;padding-bottom:calc(14px + env(safe-area-inset-bottom));background:var(--card)}
+      .sheet-actions .btn{min-height:44px;flex:1}
     }
 
     /* Legend glass + toggle */
@@ -398,7 +403,6 @@
     }
     .legend-count.flash { animation: pulseBadge 0.8s ease; }
 
-    .leaflet-control-attribution { display:none !important; }
 
     /* ===== Smart Bottom Filter Sheet (peek 30%) ===== */
     .filter-sheet{
@@ -505,6 +509,7 @@
   </style>
 </head>
 <body>
+<div id="localDemoBadge" class="hidden" style="position:fixed;z-index:2200;left:12px;right:12px;bottom:12px;padding:12px 14px;border:1px solid #d69e2e;border-radius:14px;background:#fff3bf;color:#533f03;font-weight:800;font-size:13px" role="status">بيئة عرض تجريبية — الصور محفوظة على هذا الجهاز فقط ولم تُرفع إلى خادم البلدية.</div>
 
 <!-- Header -->
 <header class="app-header">
@@ -542,6 +547,7 @@
   <div id="staleNote" class="stale-note" role="status" aria-live="polite">
     وضع غير متصل — البيانات المعروضة قد لا تكون محدّثة
   </div>
+  <div class="field-status-capsule" role="status" aria-live="polite"><span id="fieldGpsState">GPS: جاهز</span><span aria-hidden="true">•</span><span id="fieldConnectionState">الاتصال: متصل</span><span aria-hidden="true">•</span><span id="fieldSyncState">المزامنة: موثّقة</span></div>
 
   <!-- Floating tools (legend only) -->
   <div class="toolbar">
@@ -661,6 +667,8 @@
     getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, query, where, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls } from './storage-adapter.js';
+  import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
@@ -681,6 +689,7 @@ const firebaseConfig = {
   // Never read from a form field, URL parameter, sessionStorage or
   // localStorage — those are all attacker-controllable.
   const contractorContext = { uid:null, organizationId:null, organizationName:'' };
+  let organizationMapContext=null, mapOpenedForAssignment=false;
 
   // ===== Arabic state machine for the map surface =====
   // Wording intentionally mirrors manager.html and dashboard.html so the
@@ -694,6 +703,7 @@ const firebaseConfig = {
   };
 
   function setMapState(state){
+    const sync=document.getElementById('fieldSyncState');if(sync)sync.textContent=`المزامنة: ${state==='ready'?'موثّقة':state==='loading'?'جارية':'غير متاحة'}`;
     const el = document.getElementById('mapStatus');
     if (!el) return;
     el.classList.remove('is-error','is-denied');
@@ -750,22 +760,18 @@ const firebaseConfig = {
   });
 
   const map = L.map('map', { zoomControl:false, attributionControl:true });
-  map.setView([24.7136, 46.6753], 11);
   L.control.zoom({ position:'topright' }).addTo(map);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom:19, attribution: '&copy; OpenStreetMap'
+    maxZoom:19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
   }).addTo(map);
+  applyMapAttribution(map);
   const frameRing = L.layerGroup().addTo(map);
 
-  const statusIcon = (status)=> L.divIcon({
-    html:`<div class="pulse ${status==='PENDING'?'red':status==='IN_PROGRESS'?'amber':'green'}"></div>`,
-    className:'', iconSize:[16,16], iconAnchor:[8,8]
-  });
-
-  let meMarker=null, meCircle=null, lastMe=[24.7136,46.6753];
+  let meMarker=null, meCircle=null, lastMe=null;
   const radiusInput=document.getElementById('radiusInput'); radiusInput.value=2000;
 
   function drawMe(){
+    if(!lastMe)return;
     const r=parseInt(radiusInput.value||2000,10);
     if (meMarker) meMarker.remove();
     if (meCircle) meCircle.remove();
@@ -824,18 +830,17 @@ const firebaseConfig = {
     let near=0;
     const presentIds=new Set();
     for (const o of observations){
-      if (!o.location) continue;
-      const [lat, lon] = o.location.split(',').map(n=>parseFloat(n.trim()));
-      if (Number.isNaN(lat) || Number.isNaN(lon)) continue;
+      const point=observationCoordinates(o,contractorContext.organizationId);if(!point)continue;
+      const {lat,lng:lon}=point;
       if (filter!=='ALL' && o.status!==filter) continue;
 
-      const dist = haversine(lastMe, [lat,lon]);
+      const dist = lastMe?haversine(lastMe, [lat,lon]):Infinity;
       if (dist<=r) near++;
 
       const docId = o.docId;
       let m = markers.get(docId);
       if (!m){
-        m = L.marker([lat,lon], { icon: statusIcon(o.status) }).addTo(map);
+        m = L.marker([lat,lon], { icon: statusMarkerIcon(L,o.status,{title:o.title}) }).addTo(map);
         // Leaflet assigns string tooltip content via innerHTML, and the title
         // is operator-authored free text stored in Firestore — escape it.
         m.bindTooltip(escapeHTML(o.title || ''), { direction:'top', offset:[0,-10] });
@@ -846,7 +851,7 @@ const firebaseConfig = {
         m.on('click', ()=> openCurrent(docId));
         markers.set(docId, m);
       } else {
-        m.setIcon(statusIcon(o.status));
+        m.setIcon(statusMarkerIcon(L,o.status,{title:o.title}));
         m.setLatLng([lat,lon]);
         m.setTooltipContent(escapeHTML(o.title || ''));
       }
@@ -859,6 +864,11 @@ const firebaseConfig = {
     if (nearCountMini) nearCountMini.textContent = near.toString();
     if (meDistLabel) meDistLabel.textContent = `نطاقي: ${fmtMeters(r)}`;
 
+    if(!mapOpenedForAssignment&&observations.length){
+      if(openVerifiedMap(map,observations,contractorContext.organizationId,organizationMapContext)==='observations')mapOpenedForAssignment=true;
+    }else if(!observations.length){
+      openVerifiedMap(map,[],contractorContext.organizationId,organizationMapContext);
+    }
     const legendCount = document.getElementById('legendCount');
     const legendBtn = document.getElementById('legendToggle');
     if (legendCount && legendBtn) {
@@ -871,17 +881,17 @@ const firebaseConfig = {
       const reds = observations.filter(o =>
         o.status === "PENDING" &&
         o.location &&
-        haversine(lastMe, o.location.split(',').map(Number)) <= r
+        lastMe && haversine(lastMe, o.location.split(',').map(Number)) <= r
       ).length;
       const ambers = observations.filter(o =>
         o.status === "IN_PROGRESS" &&
         o.location &&
-        haversine(lastMe, o.location.split(',').map(Number)) <= r
+        lastMe && haversine(lastMe, o.location.split(',').map(Number)) <= r
       ).length;
       const greens = observations.filter(o =>
         o.status === "COMPLETED" &&
         o.location &&
-        haversine(lastMe, o.location.split(',').map(Number)) <= r
+        lastMe && haversine(lastMe, o.location.split(',').map(Number)) <= r
       ).length;
 
       document.getElementById("countRed").textContent = reds;
@@ -956,6 +966,8 @@ const firebaseConfig = {
           // Retained so every write can be re-checked against the session's
           // organization before it is sent (see the save handler).
           organizationId: data.organizationId || null,
+          correctedLat:data.correctedLat,
+          correctedLng:data.correctedLng,
           createdAtMs: data.createdAt?.toMillis ? data.createdAt.toMillis() : 0
         });
       });
@@ -986,19 +998,23 @@ const firebaseConfig = {
     if (watchId!==null) return;
     watchId = navigator.geolocation.watchPosition(pos=>{
       lastMe=[pos.coords.latitude, pos.coords.longitude];
+      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent=`GPS: ±${Math.round(pos.coords.accuracy||0)}م`;
       paint();
     }, err=>{
       console.warn(err);
+      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent='GPS: غير متاح';
       alert('تعذر تحديد الموقع. يرجى السماح بالصلاحيات.');
     }, { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
   }
 
   locBtn.addEventListener('click', ()=>{
     startWatch();
-    map.setView(lastMe, 14, { animate:true });
+    if(lastMe)map.setView(lastMe, 14, { animate:true });
   });
+  window.addEventListener('online',()=>{const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: متصل'});
+  window.addEventListener('offline',()=>{const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: غير متصل'});
   centerBtn.addEventListener('click', ()=>{
-    map.setView(lastMe, map.getZoom()<14?14:map.getZoom(), { animate:true });
+    if(lastMe)map.setView(lastMe, map.getZoom()<14?14:map.getZoom(), { animate:true });
   });
 
   statusFilter.addEventListener('change', paint);
@@ -1078,14 +1094,26 @@ const firebaseConfig = {
     const fresh = observations.find(x=>x.docId===docId);
     if (!fresh) return;
     let dist = null;
-    if (fresh.location){
+    if (fresh.location && lastMe){
       const [la, lo] = fresh.location.split(',').map(n=>parseFloat(n.trim()));
       if (Number.isFinite(la) && Number.isFinite(lo)) dist = haversine(lastMe,[la,lo]);
     }
+    for(const [id,marker] of markers){const item=observations.find(x=>x.docId===id);if(item)marker.setIcon(statusMarkerIcon(L,item.status,{selected:id===docId,title:item.title}))}
     openSheet(fresh, dist);
   }
 
-  function openSheet(o, dist){
+  async function resolveEvidenceReference(reference){
+    const external=safeImageUrl(reference);if(external)return external;
+    const result=await resolveObservationImage({reference,context:{uid:auth?.currentUser?.uid,organizationId:contractorContext.organizationId,role:'contractor'}});
+    return result.available?result.url:'';
+  }
+
+  async function refreshDemoStorageBadge(){
+    const connector=await getConnectorConfiguration(contractorContext.organizationId);
+    document.getElementById('localDemoBadge')?.classList.toggle('hidden',!(connector?.active&&connector.type===LOCAL_DEMO_TYPE));
+  }
+
+  async function openSheet(o, dist){
     currentDocId=o.docId; currentAfterData=null;
     // Reset the file input so a photo staged for a previous observation is
     // never silently associated with this one.
@@ -1100,9 +1128,10 @@ const firebaseConfig = {
       ? (dist<1000?`${Math.round(dist)} م`:`${(dist/1000).toFixed(1)} كم`)
       : '—';
 
+    revokeAllObservationImageUrls();
     sMedia.innerHTML = '';
-    const beforeImage = safeImageUrl(o.imagePath);
-    const afterImage = safeImageUrl(o.afterImagePath);
+    const beforeImage = await resolveEvidenceReference(o.imagePath);
+    const afterImage = await resolveEvidenceReference(o.afterImagePath);
     if (afterImage){
       sMedia.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -1112,15 +1141,18 @@ const firebaseConfig = {
     } else if (beforeImage){
       sMedia.innerHTML = `<img src="${beforeImage}" alt="مرفق" style="width:100%;border-radius:10px">`;
     } else {
-      sMedia.innerHTML = `<div class="card-mini" style="text-align:center">لا يوجد مرفق</div>`;
+      const localMissing=String(o.imagePath||o.afterImagePath||'').startsWith('local-demo://');
+      sMedia.innerHTML = `<div class="card-mini" style="text-align:center">${localMissing?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا يوجد مرفق'}</div>`;
     }
 
     sheet.classList.add('open');
   }
 
   function closeSheet(){
+    revokeAllObservationImageUrls();
     sheet.classList.remove('open');
   }
+  window.addEventListener('pagehide',revokeAllObservationImageUrls);
 
   sheetClose.addEventListener('click', closeSheet);
   sheetOverlay.addEventListener('click', closeSheet);
@@ -1154,13 +1186,17 @@ const firebaseConfig = {
     // Identity comes only from the authenticated session. Proposed Rules V3
     // limits this contractor to its own assignment and these closeout/audit
     // fields.
+    let afterReference=null;
+    try{
+      if(currentAfterData)afterReference=await uploadObservationImage({blob:currentAfterData,observationId:currentDocId,context:{uid:auth.currentUser.uid,organizationId:contractorContext.organizationId,role:'contractor'}});
+    }catch(_){toast('تعذر حفظ صورة المعالجة: يجب تفعيل مخزن معتمد أو وضع العرض المحلي لهذه المؤسسة.');return}
     const payload = {
       status: newStatus,
       resolutionNote: sNote.value || `تم التحديث بتاريخ ${new Date().toLocaleString('ar-SA')}`,
       updatedByUid: auth.currentUser.uid,
       updatedAt: serverTimestamp()
     };
-    if (currentAfterData) payload.afterImagePath = currentAfterData;
+    if (afterReference) payload.afterImagePath = afterReference;
 
     try {
       await updateDoc(doc(db,'observations', currentDocId), payload);
@@ -1297,10 +1333,7 @@ const firebaseConfig = {
               reject(new Error('حجم الصورة بعد الضغط ما زال أكبر من 700 كيلوبايت. اختر صورة أصغر.'));
               return;
             }
-            const output = new FileReader();
-            output.onerror = () => reject(new Error('تعذر تجهيز الصورة بعد الضغط.'));
-            output.onload = () => resolve(output.result);
-            output.readAsDataURL(blob);
+            resolve(blob);
           }, 'image/jpeg', 0.7);
         };
         image.src = reader.result;
@@ -1428,6 +1461,9 @@ const firebaseConfig = {
       contractorContext.uid = user.uid;
       contractorContext.organizationId = verified.organizationId;
       contractorContext.organizationName = verified.organizationName;
+      try{ organizationMapContext=await fetchOrganizationMapContext(auth,{organizationId:verified.organizationId}); }
+      catch(_){ organizationMapContext=null; }
+      await refreshDemoStorageBadge().catch(()=>{});
       bootMap();
     });
   } else {

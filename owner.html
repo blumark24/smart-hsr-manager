@@ -53,9 +53,11 @@
     .switch { inline-size: 44px; block-size: 26px; border-radius:999px; background: var(--chip); border:1px solid var(--stroke); position:relative; }
     .switch i { position:absolute; inset-block-start:2px; inset-inline-start:2px; inline-size:22px; block-size:22px; background:#fff; border-radius:999px; transition:.25s; box-shadow:0 2px 6px rgba(0,0,0,.15); }
     [data-theme="dark"] .switch i { transform: translateX(18px); }
+    .connector-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.connector-grid>*{min-width:0}.connector-grid label{display:grid;gap:.35rem;font-size:.85rem;font-weight:700}.connector-grid input,.connector-grid select{min-height:44px;min-width:0;width:100%;border:1px solid var(--stroke);border-radius:12px;padding:.65rem .8rem;background:transparent;color:var(--text)}.connector-status{border-inline-start:4px solid var(--cyan);background:var(--chip);border-radius:12px;padding:1rem}.demo-warning{border:1px solid var(--amber);background:var(--card);border-radius:12px;padding:1rem}.connector-actions{display:flex;gap:.7rem;flex-wrap:wrap}.connector-actions .btn{min-height:44px}.card,main,aside,section,header{min-width:0;max-width:100%}body>.grid{width:100%;max-width:100%;margin:0}main>header{flex-wrap:wrap;gap:1rem}main>header>div{min-width:0;max-width:100%}main>header .flex{flex-wrap:wrap}h1,h2,p,.pill,.btn{overflow-wrap:anywhere}@media(max-width:700px){.connector-grid{grid-template-columns:1fr}.connector-actions .btn{width:100%}body>.grid{padding:.75rem;gap:.75rem}main>header{align-items:flex-start}main>header>div:last-child{width:100%;justify-content:flex-start}}
   </style>
 </head>
 <body class="min-h-screen">
+  <div id="ownerLocalDemoBadge" class="hidden" style="position:fixed;z-index:1200;left:12px;right:12px;bottom:12px;padding:12px 14px;border:1px solid var(--amber);border-radius:14px;background:#fff3bf;color:#533f03;font-weight:800;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.16)" role="status">بيئة عرض تجريبية — الصور محفوظة على هذا الجهاز فقط ولم تُرفع إلى خادم البلدية.</div>
   <div class="grid grid-cols-12 gap-4 p-4">
     <!-- Sidebar -->
     <aside class="col-span-12 md:col-span-3 lg:col-span-2 card p-4">
@@ -193,6 +195,30 @@
         </div>
       </section>
 
+      <section id="storage-connectors" class="card p-4" aria-labelledby="storageConnectorTitle">
+        <div class="flex items-start justify-between gap-3 flex-wrap mb-4">
+          <div><p class="text-xs muted">إدارة المالك فقط</p><h2 id="storageConnectorTitle" class="text-xl font-bold title">مركز ربط البيانات</h2><p class="text-sm muted mt-1">تدعم المنصة ربط بيانات ومرفقات كل مؤسسة بخادمها الخاص. يعمل العرض الحالي في وضع تخزين محلي تجريبي، ويُفعّل الربط الفعلي بعد اعتماد مواصفات الخادم من تقنية معلومات المؤسسة.</p></div>
+          <button id="focusConnectorBtn" class="btn btn-primary" type="button">ربط خادم المؤسسة</button>
+        </div>
+        <div class="demo-warning mb-4"><strong>خادم بلدية القنفذة — وضع تجريبي محلي</strong><p class="text-sm mt-1">بيئة عرض تجريبية — الصور محفوظة على هذا الجهاز فقط ولم تُرفع إلى خادم البلدية.</p><p class="text-xs muted mt-1">لا يوفر هذا الوضع نسخًا احتياطية أو مزامنة بين الأجهزة أو ضمان استمرارية أو اتصالًا فعليًا بخادم البلدية.</p></div>
+        <form id="connectorForm" class="space-y-4" novalidate>
+          <div class="connector-grid">
+            <label>اسم المؤسسة<select id="connectorOrganization" required></select></label>
+            <label>organizationId<input id="connectorOrganizationId" readonly dir="ltr" aria-readonly="true"></label>
+            <label>نوع التخزين<select id="connectorType"><option value="LOCAL_DEMO">Local Demo Storage</option><option value="S3_COMPATIBLE">S3 Compatible</option><option value="MINIO">MinIO</option><option value="GOVERNMENT_HTTPS_API">Government HTTPS API</option></select></label>
+            <label>اسم الاتصال<input id="connectorName" maxlength="100" placeholder="اسم وصفي دون بيانات اعتماد"></label>
+            <label>عنوان الخادم<input id="connectorServer" type="url" inputmode="url" placeholder="HTTPS فقط — لا تضع بيانات اعتماد"></label>
+            <label>اسم Bucket/Container<input id="connectorContainer" maxlength="120"></label>
+            <label>المنطقة<input id="connectorRegion" maxlength="80"></label>
+            <label>حالة TLS/HTTPS<select id="connectorTls"><option value="true">HTTPS/TLS مطلوب</option><option value="false">غير متحقق — غير صالح للإنتاج</option></select></label>
+          </div>
+          <div id="connectorRequirement" class="connector-status" role="status">وضع محلي مجاني للعرض على هذا الجهاز فقط.</div>
+          <dl class="connector-grid text-sm"><div><dt class="muted">نمط الاتصال</dt><dd id="connectorMode" class="font-bold">محلي تجريبي</dd></div><div><dt class="muted">آخر اختبار اتصال</dt><dd id="connectorLastTest" class="font-bold">لم يُختبر</dd></div><div><dt class="muted">حالة الاتصال</dt><dd id="connectorStatus" class="font-bold">غير مفعّل</dd></div><div><dt class="muted">سياق خريطة المؤسسة</dt><dd id="connectorMapContext" class="font-bold">جاري التحقق الآمن</dd></div></dl>
+          <div class="connector-actions"><button id="saveConnectorBtn" class="btn btn-outline" type="submit">حفظ إعداد العرض</button><button id="testConnectorBtn" class="btn btn-outline" type="button">اختبار الاتصال</button><button id="toggleConnectorBtn" class="btn btn-primary" type="button">تفعيل الوضع التجريبي</button><button id="clearDemoStorageBtn" class="btn btn-warn" type="button">مسح بيانات العرض التجريبي</button></div>
+          <p id="connectorMessage" class="text-sm" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
       <!-- Invoices -->
       <section id="invoices" class="card p-4">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -291,7 +317,9 @@
     // ✅ اتصال فعلي بـ Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { LOCAL_DEMO_TYPE, getConnectorConfiguration, saveConnectorConfiguration, testStorageConnection, clearLocalDemoStorage } from './storage-adapter.js';
+    import { fetchOrganizationMapContext } from './spatial-map.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
@@ -301,9 +329,11 @@
       messagingSenderId: "38965508031",
       appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
     };
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig, 'smart-hsr-owner-session');
     const db = getFirestore(app);
     const auth = getAuth(app);
+    await setPersistence(auth, browserLocalPersistence);
+    const ownerContext = { uid:null, role:'owner' };
 
     // عناصر الواجهة
     const orgsBody = document.getElementById('orgsBody');
@@ -598,6 +628,64 @@
 
     async function refreshAll(){ await Promise.all([fetchOrganizations(), fetchInvoices()]); renderKPIs(); }
 
+    // ===== Owner-only institutional storage connector center =====
+    const connectorForm=document.getElementById('connectorForm');
+    const connectorOrganization=document.getElementById('connectorOrganization');
+    const connectorType=document.getElementById('connectorType');
+    let currentConnector=null;
+    const connectorText=(id,text)=>{const el=document.getElementById(id);if(el)el.textContent=text};
+    function setConnectorMessage(text,ok=false){const el=document.getElementById('connectorMessage');el.textContent=text||'';el.style.color=ok?'var(--emerald)':'var(--rose)'}
+    function populateConnectorOrganizations(){
+      const selected=connectorOrganization.value;
+      connectorOrganization.replaceChildren();
+      ORGS.forEach(org=>connectorOrganization.add(new Option(String(org.name||org.id),String(org.id))));
+      if(selected&&ORGS.some(org=>org.id===selected))connectorOrganization.value=selected;
+      document.getElementById('connectorOrganizationId').value=connectorOrganization.value||'';
+    }
+    function connectorDraft(active=currentConnector?.active===true){return{
+      organizationId:connectorOrganization.value,
+      type:connectorType.value,
+      connectionName:document.getElementById('connectorName').value.trim(),
+      serverUrl:document.getElementById('connectorServer').value.trim(),
+      containerName:document.getElementById('connectorContainer').value.trim(),
+      region:document.getElementById('connectorRegion').value.trim(),
+      tls:document.getElementById('connectorTls').value==='true',active,
+      lastTestAt:currentConnector?.lastTestAt||null,lastTestStatus:currentConnector?.lastTestStatus||'not-tested'
+    }}
+    function renderConnectorType(){
+      const local=connectorType.value===LOCAL_DEMO_TYPE;
+      connectorText('connectorRequirement',local?'وضع محلي مجاني للعرض على هذا الجهاز فقط.':'يتطلب إعدادًا آمنًا من تقنية معلومات المؤسسة. لا تُحفظ بيانات اعتماد في المتصفح.');
+      connectorText('connectorMode',local?'محلي تجريبي':'واجهة خادم مطلوبة');
+      document.getElementById('toggleConnectorBtn').disabled=!local;
+      document.getElementById('toggleConnectorBtn').textContent=currentConnector?.active?'إلغاء تفعيل الوضع التجريبي':'تفعيل الوضع التجريبي';
+    }
+    async function loadConnector(){
+      const organizationId=connectorOrganization.value;
+      document.getElementById('connectorOrganizationId').value=organizationId;
+      currentConnector=organizationId?await getConnectorConfiguration(organizationId):null;
+      connectorType.value=currentConnector?.type||LOCAL_DEMO_TYPE;
+      document.getElementById('connectorName').value=currentConnector?.connectionName||'';
+      document.getElementById('connectorServer').value=currentConnector?.serverUrl||'';
+      document.getElementById('connectorContainer').value=currentConnector?.containerName||'';
+      document.getElementById('connectorRegion').value=currentConnector?.region||'';
+      document.getElementById('connectorTls').value=currentConnector?.tls===false?'false':'true';
+      connectorText('connectorLastTest',currentConnector?.lastTestAt?new Date(currentConnector.lastTestAt).toLocaleString('ar-SA'):'لم يُختبر');
+      connectorText('connectorStatus',currentConnector?.active?'مفعّل على هذا الجهاز':'غير مفعّل');
+      try{
+        const context=await fetchOrganizationMapContext(auth,{organizationId,ownerSelected:true});
+        connectorText('connectorMapContext',context.configured?'إعداد خريطة المؤسسة موثّق':'مركز تقريبي لمدينة القنفذة — ليس حدًا خدميًا رسميًا');
+      }catch(_){connectorText('connectorMapContext','تعذر التحقق الآمن من سياق الخريطة')}
+      document.getElementById('ownerLocalDemoBadge').classList.toggle('hidden',!(currentConnector?.active&&currentConnector.type===LOCAL_DEMO_TYPE));
+      renderConnectorType();setConnectorMessage('');
+    }
+    connectorOrganization.addEventListener('change',()=>loadConnector().catch(()=>setConnectorMessage('تعذر قراءة إعداد الربط المحلي.')));
+    connectorType.addEventListener('change',()=>{currentConnector={...currentConnector,type:connectorType.value,active:false};renderConnectorType()});
+    document.getElementById('focusConnectorBtn').addEventListener('click',()=>{connectorOrganization.focus();document.getElementById('storage-connectors').scrollIntoView({behavior:'smooth'})});
+    connectorForm.addEventListener('submit',async event=>{event.preventDefault();try{currentConnector=await saveConnectorConfiguration(connectorDraft(),ownerContext);await loadConnector();setConnectorMessage('تم حفظ إعداد العرض المحلي دون أي بيانات اعتماد.',true)}catch(_){setConnectorMessage('تعذر حفظ إعداد الربط. تحقق من اختيار المؤسسة.')}});
+    document.getElementById('testConnectorBtn').addEventListener('click',async()=>{try{const result=await testStorageConnection({organizationId:connectorOrganization.value,ownerContext});if(result.ok){currentConnector=await saveConnectorConfiguration({...connectorDraft(),lastTestAt:result.testedAt,lastTestStatus:result.status},ownerContext);await loadConnector();setConnectorMessage('نجح اختبار مخزن العرض المحلي على هذا الجهاز.',true)}else setConnectorMessage('يتطلب اختبار هذا النوع واجهة خادم آمنة تعتمدها تقنية معلومات المؤسسة.')}catch(_){setConnectorMessage('تعذر اختبار التخزين المحلي.')}});
+    document.getElementById('toggleConnectorBtn').addEventListener('click',async()=>{if(connectorType.value!==LOCAL_DEMO_TYPE)return;try{currentConnector=await saveConnectorConfiguration(connectorDraft(!(currentConnector?.active)),ownerContext);await loadConnector();setConnectorMessage(currentConnector.active?'تم تفعيل وضع العرض التجريبي صراحةً لهذه المؤسسة.':'تم إلغاء تفعيل وضع العرض التجريبي.',true)}catch(_){setConnectorMessage('تعذر تغيير حالة وضع العرض.')}});
+    document.getElementById('clearDemoStorageBtn').addEventListener('click',async()=>{const organizationId=connectorOrganization.value;if(!organizationId)return;const confirmed=confirm('سيؤدي هذا إلى حذف صور العرض التجريبي لهذه المؤسسة من هذا الجهاز فقط. لا يمكن التراجع. هل تريد المتابعة؟');if(!confirmed)return;try{await clearLocalDemoStorage({organizationId,ownerContext,confirmed:true});setConnectorMessage('تم مسح بيانات العرض التجريبي لهذه المؤسسة من هذا الجهاز.',true)}catch(_){setConnectorMessage('تعذر مسح بيانات العرض التجريبي.')}});
+
     // تسجيل الخروج
     logoutBtn.addEventListener('click', async ()=>{
       try{ if(auth.currentUser) await signOut(auth); }
@@ -614,10 +702,10 @@
       window.location.replace('owner-login.html');
     }
 
-    // نموذج التفويض كما في owner-login.html: وجود مستند owners/{uid} فقط (لا حقول إضافية مُخترَعة)
+    // Owner authorization remains fail-closed and is scoped to this named Auth app.
     async function isAuthorizedOwner(user){
       const snap = await getDoc(doc(db, 'owners', user.uid));
-      return snap.exists();
+      return snap.exists() && snap.data()?.active !== false;
     }
 
     // بدء التشغيل: يتطلب جلسة موثّقة + مستند owners/{uid} فعليًا قبل قراءة/كتابة المؤسسات والفواتير
@@ -630,8 +718,10 @@
       if(!allowed){ await denyOwnerAccess(); return; }
       if(ownerBooted) return;
       ownerBooted = true;
+      ownerContext.uid = user.uid;
       await refreshAll();
       try{ populateOrgSelects(); }catch(_){}
+      try{ populateConnectorOrganizations(); await loadConnector(); }catch(_){ setConnectorMessage('تعذر تحميل إعداد الربط المحلي.'); }
     });
 
     // ============================================================

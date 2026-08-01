@@ -57,6 +57,8 @@
     .modal{display:none;position:fixed;inset:0;background:rgba(3,17,29,.72);backdrop-filter:blur(5px);z-index:50;align-items:center;justify-content:center;padding:1rem}
     .modal-content{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:1.25rem;max-width:760px;width:100%;padding:1.25rem;box-shadow:0 24px 70px rgba(0,0,0,.35);max-height:92vh;overflow:auto}
     .table{border-collapse:collapse}.table th,.table td{padding:.85rem;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}.table th{font-size:.72rem;color:var(--muted);font-weight:900;white-space:nowrap}.table tr:hover td{background:var(--surface-2)}
+    .management-toolbar{display:flex;align-items:center;gap:.65rem;min-width:0;flex-wrap:wrap}.management-toolbar>*{min-width:0}.management-table-wrap{border:1px solid var(--line);border-radius:1rem;overflow:auto;background:var(--surface)}
+    .management-table{width:100%;min-width:760px;border-collapse:separate;border-spacing:0}.management-table thead{background:var(--color-navy)}.management-table th{padding:.85rem 1rem;color:#fff!important;background:var(--color-navy)!important;font-size:.78rem;font-weight:900;letter-spacing:.01em;border:0;text-align:right;vertical-align:middle}.management-table th:first-child{border-start-start-radius:.9rem}.management-table th:last-child{border-start-end-radius:.9rem}.management-table td{padding:.9rem 1rem;color:var(--text);border-bottom:1px solid var(--line);background:var(--surface);text-align:right;vertical-align:middle}.management-table tbody tr:last-child td{border-bottom:0}.management-table tbody tr:hover td{background:var(--surface-2)}.management-primary{font-weight:800;color:var(--text)}.management-secondary{color:#475f73!important;font-weight:600}.dark .management-secondary{color:#c3d4de!important}.management-table .pill,.management-table .tag{border:1px solid currentColor}.management-table .bg-sky-600{background:#0369a1!important;color:#fff!important}.management-table .bg-indigo-600{background:#4338ca!important;color:#fff!important}.management-table .bg-emerald-600{background:#047857!important;color:#fff!important}.management-table .bg-slate-800{background:#1e293b!important;color:#fff!important}.management-table .bg-green-100{background:#dcfce7!important}.management-table .text-green-700{color:#166534!important}.management-table .bg-red-100{background:#fee2e2!important}.management-table .text-red-700{color:#991b1b!important}.management-actions{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap}.management-actions button{min-height:44px;padding:.5rem .8rem;font-weight:800}.management-filter,.management-search{min-height:44px;border:1px solid #8296a6!important;border-radius:.75rem!important;background:var(--surface)!important;color:var(--text)!important;padding:.6rem .8rem!important;text-align:right}.management-search{width:min(100%,18rem)}.management-search::placeholder{color:#526b7e;opacity:1}.dark .management-search::placeholder{color:#bdced8}.management-filter:focus,.management-search:focus,.management-filter:focus-visible,.management-search:focus-visible{border-color:var(--color-cyan)!important;box-shadow:0 0 0 3px rgba(27,167,184,.22);outline:3px solid transparent}.management-empty-cell{padding:2.25rem 1rem!important;background:var(--surface)!important}.management-empty{display:grid;justify-items:center;gap:.35rem;max-width:34rem;margin:auto;text-align:center;color:var(--text)}.management-empty-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:1rem;background:#e8f5f1;color:#087f5b}.dark .management-empty-icon{background:#123d36;color:#68e4b8}.management-empty-title{font-size:1rem;font-weight:900;color:var(--text)}.management-empty-copy{font-size:.88rem;font-weight:600;color:#475f73}.dark .management-empty-copy{color:#c3d4de}
     .pill{border-radius:999px;padding:.25rem .65rem;font-weight:800}
     .command-nav{position:sticky;top:79px;z-index:30;background:rgba(243,246,248,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.dark .command-nav{background:rgba(7,21,34,.9)}
     .command-nav ul{display:flex;direction:rtl;justify-content:flex-start;gap:.35rem;overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;scroll-padding-inline:1rem;padding:.55rem clamp(1rem,2.4vw,2rem);width:min(1480px,100%);max-width:100%;margin:auto;scrollbar-width:thin}.command-nav li{flex:0 0 auto;min-width:0}.command-nav button{min-width:max-content;min-height:44px;padding:.55rem .9rem;border-radius:.7rem;color:var(--muted);font-size:.82rem;font-weight:800;white-space:nowrap}.command-nav button:hover{background:var(--surface)}.command-nav .tab-active{background:var(--color-navy);color:#fff;box-shadow:0 5px 14px rgba(7,29,51,.16)}
@@ -78,7 +80,8 @@
     .modal input,.modal select,.modal textarea{background:var(--surface);color:var(--text);border-color:var(--line)}
     #toast{background:var(--color-navy)!important;color:#fff!important;border:1px solid rgba(255,255,255,.15)}
     @media(max-width:1180px){.header-inner{grid-template-columns:auto minmax(0,1fr) auto;row-gap:.55rem}.header-meta{grid-column:1/-1;grid-row:2;justify-content:center;border-top:1px solid rgba(255,255,255,.12);padding-top:.55rem}.header-chip{font-size:.72rem}.kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.operations-grid{grid-template-columns:1fr}.side-stack{grid-template-columns:repeat(3,minmax(0,1fr))}.map-toolbar{grid-template-columns:repeat(3,minmax(0,1fr))}.map-toolbar h2{grid-column:1/-1}}
-    @media(max-width:820px){.command-header{position:relative}.command-nav{top:0}.header-inner{grid-template-columns:minmax(0,1fr) auto}.brand-mark{grid-column:1;grid-row:1}.brand-copy{grid-column:1;grid-row:1;padding-inline-start:3.4rem}.header-actions{grid-column:2;grid-row:1}.header-meta{display:flex!important;grid-column:1/-1;grid-row:2;justify-content:center}.header-meta #userBadge{display:none!important}.header-meta #orgBadge,.header-meta #accessRoleBadge{display:inline-flex!important;flex:1 1 220px;max-width:calc(50% - .25rem);min-height:44px}.header-date{display:none}.executive-intro{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi-grid .kpi-card:last-of-type{grid-column:1/-1;width:calc(50% - .375rem);justify-self:center}.side-stack{grid-template-columns:1fr}.workflow-board{grid-template-columns:1fr}.map-toolbar{grid-template-columns:1fr 1fr}.map-toolbar h2{grid-column:1/-1}#map{height:480px}.table-responsive{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.table{min-width:760px}}
+    @media(max-width:820px){.command-header{position:relative}.command-nav{top:0}.header-inner{grid-template-columns:minmax(0,1fr) auto}.brand-mark{grid-column:1;grid-row:1}.brand-copy{grid-column:1;grid-row:1;padding-inline-start:3.4rem}.header-actions{grid-column:2;grid-row:1}.header-meta{display:flex!important;grid-column:1/-1;grid-row:2;justify-content:center}.header-meta #userBadge{display:none!important}.header-meta #orgBadge,.header-meta #accessRoleBadge{display:inline-flex!important;flex:1 1 220px;max-width:calc(50% - .25rem);min-height:44px}.header-date{display:none}.executive-intro{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi-grid .kpi-card:last-of-type{grid-column:1/-1;width:calc(50% - .375rem);justify-self:center}.side-stack{grid-template-columns:1fr}.workflow-board{grid-template-columns:1fr}.map-toolbar{grid-template-columns:1fr 1fr}.map-toolbar h2{grid-column:1/-1}#map{height:480px}.table-responsive{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.table{min-width:760px}.management-table-wrap{overflow-x:auto}.management-toolbar{width:100%}}
+    @media(max-width:640px){.management-toolbar{align-items:stretch}.management-toolbar>*{width:100%}.management-search{max-width:none}.management-table-wrap{border:0;overflow:visible;background:transparent}.management-table{display:block;min-width:0;width:100%}.management-table thead{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.management-table tbody{display:grid;gap:.75rem}.management-table tr{display:block;min-width:0;border:1px solid var(--line);border-radius:1rem;overflow:hidden;background:var(--surface);box-shadow:0 5px 16px rgba(7,29,51,.05)}.management-table td{display:grid;grid-template-columns:minmax(92px,36%) minmax(0,1fr);gap:.65rem;align-items:center;width:100%;min-width:0;padding:.7rem .8rem;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.management-table td::before{font-size:.72rem;font-weight:900;color:#475f73;content:attr(data-label)}.dark .management-table td::before{color:#c3d4de}.management-table td:last-child{border-bottom:0}.management-table .management-empty-cell{display:block;border:1px solid var(--line);border-radius:1rem}.management-table .management-empty-cell::before{content:none}.management-actions{justify-content:flex-start}.management-actions button{flex:1 1 130px}.management-table .text-center{text-align:right}}
     @media(max-width:520px){.shell{width:100%;max-width:100%;padding-inline:.75rem}.command-header .header-inner{width:100%;max-width:100%;padding-inline:.75rem}.brand-copy .eyebrow{display:none}.brand-copy p:last-child{font-size:.92rem;white-space:normal;line-height:1.25}.brand-mark{width:40px;height:40px}.header-actions{gap:.35rem}.header-actions .header-chip{width:44px;min-width:44px;padding:0}.header-chip{padding:.35rem .5rem}.header-meta #orgBadge,.header-meta #accessRoleBadge{flex-basis:100%;max-width:100%;width:100%}.command-nav ul{padding-inline:.75rem}.executive-intro h1{font-size:1.32rem;line-height:1.4}.executive-intro>*,.map-toolbar>*,.workflow-column,.work-item{min-width:0;max-width:100%}.kpi-grid{gap:.55rem}.kpi-card{min-height:112px;padding:.8rem}.kpi-card .metric-value{font-size:1.65rem}.kpi-grid .kpi-card:last-of-type{width:calc(50% - .275rem)}.map-card,.map-frame,.workflow-board,.workflow-column{width:100%;max-width:100%}.map-toolbar{grid-template-columns:minmax(0,1fr)}.map-toolbar>*{grid-column:auto!important;width:100%;max-width:100%}#map{height:420px}.card{padding:.85rem;border-radius:1rem}.modal-content{padding:1rem}.btn,.btn-ghost,.btn-soft{max-width:100%;white-space:normal}.work-actions button{flex:1 1 0}}
     @media(max-width:1024px){.twin-layout{grid-template-columns:1fr}.twin-panel{position:relative;top:auto;max-height:none}.settings-grid{grid-template-columns:1fr}.settings-card-wide{grid-column:auto}.password-grid{grid-template-columns:1fr}}
     @media(max-width:820px){.twin-map{height:480px}.twin-panel{position:fixed;z-index:60;inset:auto .5rem .5rem;max-height:min(72vh,620px);border-radius:1.25rem;box-shadow:0 -18px 50px rgba(3,17,29,.28);transform:translateY(calc(100% + 1rem));transition:transform .25s ease}.twin-panel.open{transform:translateY(0)}.twin-panel-close{display:inline-grid!important}.presentation-bar{position:sticky;top:0;z-index:2}.identity-row{grid-template-columns:1fr;gap:.2rem}}
@@ -88,6 +91,7 @@
   </style>
 </head>
 <body>
+  <div id="localDemoBadge" class="hidden no-print" style="position:fixed;z-index:1200;left:12px;right:12px;bottom:12px;padding:12px 14px;border:1px solid #d69e2e;border-radius:14px;background:#fff3bf;color:#533f03;font-weight:800;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.16)" role="status">بيئة عرض تجريبية — الصور محفوظة على هذا الجهاز فقط ولم تُرفع إلى خادم البلدية.</div>
   <!-- Session Guard + Toast utilities -->
   <script>
     function showToast(msg){
@@ -253,17 +257,17 @@
       <div class="card">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
           <h2 class="text-2xl font-extrabold">إدارة المستخدمين</h2>
-          <div class="flex items-center gap-2">
-            <input id="userSearch" type="text" placeholder="🔍 بحث بالاسم أو البريد" class="border rounded-xl p-2 w-full md:w-64" oninput="filterUsers()"/>
+          <div class="management-toolbar">
+            <input id="userSearch" type="text" placeholder="بحث بالاسم أو البريد" class="management-search" oninput="filterUsers()"/>
             <button class="btn" data-manager-only onclick="openModal('modalAddUser')"><i data-lucide="user-plus" class="w-4 h-4 ml-1"></i> إضافة مستخدم</button>
           </div>
         </div>
-        <div class="table-responsive rounded-xl border">
-          <table class="table w-full text-sm">
-            <thead class="bg-gray-50">
+        <div class="management-table-wrap">
+          <table class="table management-table users-management-table text-sm">
+            <thead>
             <tr><th>الاسم</th><th>الدور</th><th>البريد</th><th>الحالة</th><th class="text-center">إجراءات</th></tr>
             </thead>
-            <tbody id="usersBody"><tr><td colspan="5" class="text-center p-6 text-gray-500">...جاري التحميل</td></tr></tbody>
+            <tbody id="usersBody"><tr><td colspan="5" class="management-empty-cell"><div class="management-empty"><span class="management-empty-icon" aria-hidden="true"><i data-lucide="loader-circle"></i></span><strong class="management-empty-title">جاري تحميل المستخدمين</strong></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -274,8 +278,8 @@
       <div class="card">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
           <h2 class="text-2xl font-extrabold">إدارة البلاغات</h2>
-          <div class="flex items-center gap-2">
-            <select id="statusFilter" class="border rounded-xl p-2" onchange="renderObservations()">
+          <div class="management-toolbar">
+            <select id="statusFilter" class="management-filter" onchange="renderObservations()" aria-label="تصفية البلاغات حسب الحالة">
               <option value="ALL">كل الحالات</option>
               <option value="PENDING">قيد الانتظار</option>
               <option value="IN_PROGRESS">قيد المعالجة</option>
@@ -283,12 +287,12 @@
             </select>
           </div>
         </div>
-        <div class="table-responsive rounded-xl border">
-          <table class="table w-full text-sm">
-            <thead class="bg-gray-50">
+        <div class="management-table-wrap">
+          <table class="table management-table observations-management-table text-sm">
+            <thead>
             <tr><th>المعرف</th><th>العنوان</th><th>الحالة</th><th>المراقب</th><th>المقاول</th><th>تاريخ البلاغ</th><th class="text-center">إجراءات</th></tr>
             </thead>
-            <tbody id="obsBody"><tr><td colspan="7" class="text-center p-6 text-gray-500">...جاري التحميل</td></tr></tbody>
+            <tbody id="obsBody"><tr><td colspan="7" class="management-empty-cell"><div class="management-empty"><span class="management-empty-icon" aria-hidden="true"><i data-lucide="loader-circle"></i></span><strong class="management-empty-title">جاري تحميل البلاغات</strong></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -471,9 +475,11 @@
       onSnapshot, serverTimestamp, query, where, setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import {
-      getAuth, onAuthStateChanged, signOut, EmailAuthProvider,
+      getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, EmailAuthProvider,
       reauthenticateWithCredential, updatePassword, sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { LOCAL_DEMO_TYPE, isLocalDemoReference, getConnectorConfiguration, resolveObservationImage, revokeAllObservationImageUrls } from './storage-adapter.js';
+    import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
 
 // إعدادات Firebase الخاصة بك
 const firebaseConfig = {
@@ -488,9 +494,12 @@ const firebaseConfig = {
 
     let app, db, auth, FIREBASE_READY=false;
     try{
-      app  = initializeApp(firebaseConfig);
+      // Dedicated manager/supervisor Auth namespace. A denial or logout here
+      // cannot clear the inspector/contractor session owned by the default app.
+      app  = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
       db   = getFirestore(app);
       auth = getAuth(app);
+      await setPersistence(auth, browserLocalPersistence);
       FIREBASE_READY = !!db;
       console.log('✅ Firebase connected');
     }catch(e){
@@ -507,6 +516,7 @@ const firebaseConfig = {
     // Authenticated manager's own organization — set once by bootForManager()
     // and never trusted from anywhere else (fail closed if absent).
     const managerContext = { uid: null, role: null, organizationId: null, organizationName: '' };
+    let organizationMapContext=null;
     const isManagerMode = () => managerContext.role === 'manager';
     function requireManagerMode(){
       if (isManagerMode()) return true;
@@ -588,7 +598,7 @@ const firebaseConfig = {
       const progress = observations.filter(o=>o.status==='IN_PROGRESS').length;
       const closed = observations.filter(o=>o.status==='COMPLETED').length;
       const open = pending + progress;
-      const photo = observations.filter(o=>safeImageUrl(o.imagePath) && safeImageUrl(o.afterImagePath)).length;
+      const photo = observations.filter(o=>hasEvidenceReference(o.imagePath) && hasEvidenceReference(o.afterImagePath)).length;
       const rate = total ? Math.round((closed/total)*100) : null;
       const resolutionDurations = observations.map(o=>{
         const start=o.createdAtMs;
@@ -657,7 +667,7 @@ const firebaseConfig = {
         const list=observations.filter(o=>o.status===status);
         const items=list.length ? list.slice(0,8).map(o=>`<article class="work-item">
           <div class="flex items-start justify-between gap-2"><h3 class="work-item-title">${escapeHTML(o.title||'بلاغ بدون عنوان')}</h3><span class="text-[10px]" style="color:var(--muted)">${escapeHTML(o.displayId||o.id)}</span></div>
-          <div class="work-meta"><span>المراقب: ${escapeHTML(userDisplay(o.createdByUid,o.inspector))}</span><span>المقاول: ${escapeHTML(contractorDisplay(o))}</span><span>${escapeHTML(elapsedLabel(o))} · ${safeImageUrl(o.imagePath)&&safeImageUrl(o.afterImagePath)?'دليل المعالجة مكتمل':'دليل المعالجة غير مكتمل'}</span></div>
+          <div class="work-meta"><span>المراقب: ${escapeHTML(userDisplay(o.createdByUid,o.inspector))}</span><span>المقاول: ${escapeHTML(contractorDisplay(o))}</span><span>${escapeHTML(elapsedLabel(o))} · ${hasEvidenceReference(o.imagePath)&&hasEvidenceReference(o.afterImagePath)?'دليل المعالجة مكتمل':'دليل المعالجة غير مكتمل'}</span></div>
           <div class="work-actions"><button class="btn-soft" onclick="openAssign(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">إسناد</button><button class="btn-soft" onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">دليل المعالجة</button></div>
         </article>`).join('') : '<div class="state-box py-4">لا توجد بلاغات في هذه المرحلة.</div>';
         return `<section class="workflow-column" aria-label="${statusLabels[status]}"><header class="workflow-column-head"><span>${statusLabels[status]}</span><span class="workflow-count">${list.length}</span></header><div class="workflow-items">${items}</div></section>`;
@@ -690,22 +700,25 @@ const firebaseConfig = {
       const c = u.active? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700';
       return `<button class="px-3 py-1 text-white rounded-full ${c}" onclick="toggleUser(decodeURIComponent('${safeActionId(u.id)}'))">${t}</button>`
     }
+    function managementEmptyState(title,copy,icon='inbox',colspan=7){
+      return `<tr><td colspan="${colspan}" class="management-empty-cell"><div class="management-empty"><span class="management-empty-icon" aria-hidden="true"><i data-lucide="${icon}"></i></span><strong class="management-empty-title">${escapeHTML(title)}</strong>${copy?`<span class="management-empty-copy">${escapeHTML(copy)}</span>`:''}</div></td></tr>`;
+    }
     function renderUsers(){
       const body = document.getElementById('usersBody');
-      if(usersState==='loading'){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>...جاري تحميل المستخدمين</td></tr>`; return; }
-      if(usersState==='error'){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-red-500'>⚠️ تعذر تحميل المستخدمين. الرجاء تحديث الصفحة أو المحاولة لاحقاً.</td></tr>`; return; }
-      if(!users.length){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>لا يوجد مستخدمون في مؤسستك حالياً</td></tr>`; return; }
+      if(usersState==='loading'){ body.innerHTML = managementEmptyState('جاري تحميل المستخدمين','يرجى الانتظار حتى يكتمل الاتصال الآمن.','loader-circle',5); return; }
+      if(usersState==='error'){ body.innerHTML = managementEmptyState('تعذر تحميل المستخدمين','يرجى تحديث الصفحة أو المحاولة لاحقًا.','triangle-alert',5); return; }
+      if(!users.length){ body.innerHTML = managementEmptyState('لا يوجد مستخدمون حاليًا','ستظهر حسابات فريق المؤسسة هنا عند إضافتها.','users',5); return; }
       const q = (document.getElementById('userSearch').value||'').trim().toLowerCase();
       const filtered = users.filter(u=>!q || String(u.name||'').toLowerCase().includes(q) || String(u.email||'').toLowerCase().includes(q));
-      if(!filtered.length){ body.innerHTML = `<tr><td colspan=5 class='text-center p-6 text-gray-500'>لا توجد نتائج</td></tr>`; return; }
+      if(!filtered.length){ body.innerHTML = managementEmptyState('لا توجد نتائج مطابقة','جرّب اسمًا أو بريدًا مختلفًا.','search-x',5); return; }
       body.innerHTML = filtered.map(u=>
         `<tr>
-          <td class="font-bold">${escapeHTML(u.name)}</td>
-          <td>${roleBadge(u.role)}</td>
-          <td class="text-gray-600">${escapeHTML(u.email)}</td>
-          <td>${u.active?'<span class="tag bg-green-100 text-green-700">نشط</span>':'<span class="tag bg-red-100 text-red-700">معطل</span>'}</td>
-          <td class="text-center">
-            <div class="flex items-center gap-2 justify-center">
+          <td data-label="الاسم" class="management-primary">${escapeHTML(u.name)}</td>
+          <td data-label="الدور">${roleBadge(u.role)}</td>
+          <td data-label="البريد" class="management-secondary">${escapeHTML(u.email)}</td>
+          <td data-label="الحالة">${u.active?'<span class="tag bg-green-100 text-green-700">نشط</span>':'<span class="tag bg-red-100 text-red-700">معطل</span>'}</td>
+          <td data-label="إجراءات" class="text-center">
+            <div class="management-actions">
               ${isManagerMode() ? `${statusSwitch(u)}
               <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="setUserTempPassword(decodeURIComponent('${safeActionId(u.id)}'))">كلمة مرور مؤقتة</button>
               <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="revokeUserSessions(decodeURIComponent('${safeActionId(u.id)}'))">إنهاء الجلسات</button>` : '<span class="text-xs text-gray-500">عرض فقط</span>'}
@@ -820,21 +833,21 @@ const firebaseConfig = {
     // ===== Observations (قائمة) =====
     function renderObservations(){
       const body = document.getElementById('obsBody');
-      if(obsState==='loading'){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-gray-500'>...جاري تحميل البلاغات</td></tr>`; return; }
-      if(obsState==='error'){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-red-500'>⚠️ تعذر تحميل البلاغات. الرجاء تحديث الصفحة أو المحاولة لاحقاً.</td></tr>`; return; }
+      if(obsState==='loading'){ body.innerHTML = managementEmptyState('جاري تحميل البلاغات','يرجى الانتظار حتى يكتمل الاتصال الآمن.','loader-circle'); return; }
+      if(obsState==='error'){ body.innerHTML = managementEmptyState('تعذر تحميل البلاغات','يرجى تحديث الصفحة أو المحاولة لاحقًا.','triangle-alert'); return; }
       const f = document.getElementById('statusFilter').value;
       const list = observations.filter(o=> f==='ALL' || o.status===f );
-      if(!list.length){ body.innerHTML = `<tr><td colspan=7 class='text-center p-6 text-gray-500'>لا توجد بلاغات في مؤسستك حالياً</td></tr>`; return; }
+      if(!list.length){ body.innerHTML = managementEmptyState('لا توجد بلاغات حاليًا','ستظهر البلاغات التابعة للمؤسسة هنا عند إنشائها.','inbox'); return; }
       body.innerHTML = list.map(o=>
         `<tr>
-          <td class="font-bold">${escapeHTML(o.displayId || o.id)}</td>
-          <td>${escapeHTML(o.title||'—')}</td>
-          <td><span class="tag ${statusColors[o.status]||'bg-gray-500 text-white'}">${escapeHTML(statusLabels[o.status]||o.status)}</span></td>
-          <td>${escapeHTML(o.inspector||'—')}</td>
-          <td>${escapeHTML(contractorDisplay(o))}</td>
-          <td class="text-gray-600">${escapeHTML(o.date||'—')}</td>
-<td class="text-center">
-  <div class="flex items-center gap-2 justify-center">
+          <td data-label="المعرف" class="management-primary">${escapeHTML(o.displayId || o.id)}</td>
+          <td data-label="العنوان" class="management-primary">${escapeHTML(o.title||'—')}</td>
+          <td data-label="الحالة"><span class="tag ${statusColors[o.status]||'bg-gray-500 text-white'}">${escapeHTML(statusLabels[o.status]||o.status)}</span></td>
+          <td data-label="المراقب">${escapeHTML(o.inspector||'—')}</td>
+          <td data-label="المقاول">${escapeHTML(contractorDisplay(o))}</td>
+          <td data-label="تاريخ البلاغ" class="management-secondary">${escapeHTML(o.date||'—')}</td>
+<td data-label="إجراءات" class="text-center">
+  <div class="management-actions">
     <button class="px-3 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-full" onclick="openAssign(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">إسناد</button>
     ${isManagerMode() ? `<button class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-full" onclick="cycleStatus(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">تغيير الحالة</button>
     <button class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full" onclick="closeTicket(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">إغلاق</button>
@@ -1077,6 +1090,7 @@ const firebaseConfig = {
     async function logoutManager(){
       stopPresentation();
       clearPasswordFields();
+      revokeAllObservationImageUrls();
       try{ if(auth?.currentUser) await signOut(auth); }
       catch(err){ console.warn('تعذر تسجيل الخروج من Firebase', err); }
       finally{
@@ -1169,6 +1183,8 @@ const firebaseConfig = {
             isComparative: !!x.isComparative,
             // Retained so the record's tenant is available for verification.
             organizationId: x.organizationId || null,
+            correctedLat: x.correctedLat,
+            correctedLng: x.correctedLng,
             lat, lng
           });
         });
@@ -1176,6 +1192,7 @@ const firebaseConfig = {
         observations = arr;
         obsState = 'ready';
         markVerifiedNow(); renderObservations(); renderKPIs(); refreshMapMarkers(); renderTwin();
+        prepareLocalDemoEvidence().then(()=>{renderObservations();renderKPIs();refreshMapMarkers();renderTwin()}).catch(()=>{});
       }, err=>{
         console.error('Observations subscription failed', err);
         obsState = 'error';
@@ -1188,10 +1205,11 @@ const firebaseConfig = {
     const statusColor = s => s==='PENDING' ? '#ef4444' : (s==='IN_PROGRESS' ? '#f59e0b' : '#10b981');
 
     function initMap(){
-      map = L.map('map',{ zoomControl:true }).setView([24.7136,46.6753], 10);
+      map = L.map('map',{ zoomControl:true });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-        maxZoom: 19, attribution: '&copy; OpenStreetMap'
+        maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
       }).addTo(map);
+      applyMapAttribution(map);
       markersLayer = L.layerGroup().addTo(map);
       presenceLayer = L.layerGroup().addTo(map);
     }
@@ -1206,17 +1224,30 @@ const firebaseConfig = {
         iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-12]
       });
     }
-    const ICONS = {
-      PENDING: makeDot('#ef4444'),
-      IN_PROGRESS: makeDot('#f59e0b'),
-      COMPLETED: makeDot('#10b981'),
-      CREW: makeDot('#3b82f6')
-    };
+    const ICONS = { CREW: makeDot('#3b82f6') };
+    const resolvedLocalImages=new Map();
+    const hasEvidenceReference=value=>!!(safeImageUrl(value)||isLocalDemoReference(value));
+    const displayEvidenceUrl=value=>safeImageUrl(value)||(resolvedLocalImages.get(String(value||''))||'');
+    async function resolveManagerEvidence(reference){
+      const external=safeImageUrl(reference);if(external)return external;
+      if(!isLocalDemoReference(reference))return '';
+      const result=await resolveObservationImage({reference,context:{uid:auth?.currentUser?.uid,organizationId:managerContext.organizationId,role:managerContext.role}});
+      resolvedLocalImages.set(String(reference),result.available?result.url:'');
+      return result.available?result.url:'';
+    }
+    async function prepareLocalDemoEvidence(){
+      revokeAllObservationImageUrls();resolvedLocalImages.clear();
+      const refs=[...new Set(observations.flatMap(o=>[o.imagePath,o.afterImagePath]).filter(isLocalDemoReference))];
+      await Promise.all(refs.map(reference=>resolveManagerEvidence(reference).catch(()=>'')));
+    }
+    async function refreshDemoStorageBadge(){
+      const connector=await getConnectorConfiguration(managerContext.organizationId);
+      document.getElementById('localDemoBadge')?.classList.toggle('hidden',!(connector?.active&&connector.type===LOCAL_DEMO_TYPE));
+    }
     function makeTwinDot(color){
       const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"><circle cx="22" cy="22" r="10" fill="${color}" stroke="white" stroke-width="3"/></svg>`;
       return L.icon({iconUrl:'data:image/svg+xml;base64,'+btoa(svg),iconSize:[44,44],iconAnchor:[22,22],popupAnchor:[0,-16]});
     }
-    const TWIN_ICONS={PENDING:makeTwinDot('#ef4444'),IN_PROGRESS:makeTwinDot('#f59e0b'),COMPLETED:makeTwinDot('#10b981')};
 
     function populateMapFilters(){
       const inspectorSelect=document.getElementById('mapInspectorFilter');
@@ -1258,7 +1289,7 @@ const firebaseConfig = {
     function refreshMapMarkers(){
       if(!map) return;
       markersLayer.clearLayers();
-      const list = filteredMapObservations().filter(o=>Number.isFinite(o.lat) && Number.isFinite(o.lng));
+      const list = filteredMapObservations().filter(o=>observationCoordinates(o,managerContext.organizationId));
       const state=document.getElementById('mapState');
       if(state){
         if(obsState==='loading'){state.textContent='جاري تحميل المواقع الموثّقة…';state.classList.remove('hidden')}
@@ -1267,8 +1298,8 @@ const firebaseConfig = {
         else state.classList.add('hidden');
       }
       list.forEach(o=>{
-        const icon = ICONS[o.status] || ICONS.PENDING;
-        const m = L.marker([o.lat,o.lng], {icon})
+        const point=observationCoordinates(o,managerContext.organizationId);
+        const m = L.marker([point.lat,point.lng], {icon:statusMarkerIcon(L,o.status,{title:o.title})})
 
          .bindPopup(`
     <div dir="rtl" style="min-width:250px;max-width:310px;font-family:Tajawal;line-height:1.65">
@@ -1279,7 +1310,7 @@ const firebaseConfig = {
     <div class="text-xs mb-1">المقاول: ${escapeHTML(contractorDisplay(o))}</div>
     <div class="text-xs mb-1">الإنشاء: ${escapeHTML(formatTimestamp(o.createdAt))}</div>
     <div class="text-xs mb-1">آخر تحديث: ${escapeHTML(formatTimestamp(o.updatedAt))}</div>
-    <div class="text-xs mb-1">دليل المعالجة: ${safeImageUrl(o.imagePath)&&safeImageUrl(o.afterImagePath)?'قبل وبعد':'غير مكتمل'}</div>
+    <div class="text-xs mb-1">دليل المعالجة: ${hasEvidenceReference(o.imagePath)&&hasEvidenceReference(o.afterImagePath)?'قبل وبعد':'غير مكتمل'}</div>
     ${o.resolutionNote?`<div class="text-xs mb-2">ملاحظة المعالجة: ${escapeHTML(o.resolutionNote)}</div>`:''}
     <div class="flex flex-col gap-2">
       <button onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-indigo-600 text-white rounded text-xs w-full">📸 عرض الصور</button>
@@ -1294,6 +1325,8 @@ const firebaseConfig = {
         
         m.addTo(markersLayer);
       });
+      if(list.length)openVerifiedMap(map,list,managerContext.organizationId,organizationMapContext);
+      else if(obsState!=='loading')openVerifiedMap(map,[],managerContext.organizationId,organizationMapContext);
     }
 
     function fitAllMarkers(){
@@ -1309,16 +1342,20 @@ const firebaseConfig = {
     // ===== Operational Digital Twin Lite =====
     // A read-only projection of the already verified, organization-scoped
     // observations and users arrays. It creates no new data path or query.
-    let twinMap=null,twinMarkersLayer=null,selectedTwinId=null,presentationTimer=null,presentationIndex=0,presentationPaused=false;
+    let twinMap=null,twinMarkersLayer=null,selectedTwinId=null,presentationTimer=null,presentationIndex=0,presentationPaused=false,automatedTwinMove=false;
     const twinMarkers=new Map();
     function verifiedTwinObservations(){
       if(!managerContext.organizationId)return [];
-      return observations.filter(o=>o.organizationId===managerContext.organizationId&&Number.isFinite(o.lat)&&Number.isFinite(o.lng));
+      return observations.filter(o=>!!observationCoordinates(o,managerContext.organizationId));
     }
     function initTwinMap(){
       if(twinMap||!window.L)return;
-      twinMap=L.map('twinMap',{zoomControl:true,keyboard:true}).setView([24.7136,46.6753],10);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(twinMap);
+      twinMap=L.map('twinMap',{zoomControl:true,keyboard:true});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'}).addTo(twinMap);
+      applyMapAttribution(twinMap);
+      twinMap.on('dragstart',()=>stopPresentation());
+      twinMap.on('zoomstart',()=>{if(!automatedTwinMove)stopPresentation()});
+      twinMap.on('moveend',()=>{automatedTwinMove=false});
       twinMarkersLayer=L.layerGroup().addTo(twinMap);
     }
     function renderTwin(){
@@ -1333,12 +1370,13 @@ const firebaseConfig = {
       listEl.innerHTML=list.length?list.map(o=>`<button type="button" class="twin-item" data-twin-id="${safeActionId(o.docId||o.id)}" aria-current="${selectedTwinId===(o.docId||o.id)}"><span class="dot" style="background:${statusColor(o.status)}"></span><span><strong>${escapeHTML(o.title||'بلاغ دون عنوان')}</strong><small class="block type-meta">${escapeHTML(statusLabels[o.status]||'حالة غير متاحة')} · ${escapeHTML(o.displayId||o.id||'معرف غير متاح')}</small></span><span aria-hidden="true">←</span></button>`).join(''):'<div class="state-box">لا توجد مواقع موثّقة متاحة حالياً.</div>';
       listEl.querySelectorAll('[data-twin-id]').forEach(button=>button.addEventListener('click',()=>selectTwinObservation(decodeURIComponent(button.dataset.twinId))));
       if(twinMarkersLayer)list.forEach(o=>{
-        const marker=L.marker([o.lat,o.lng],{icon:TWIN_ICONS[o.status]||TWIN_ICONS.PENDING,keyboard:true,title:o.title||'بلاغ'}).addTo(twinMarkersLayer);
+        const point=observationCoordinates(o,managerContext.organizationId);
+        const marker=L.marker([point.lat,point.lng],{icon:statusMarkerIcon(L,o.status,{selected:String(selectedTwinId)===String(o.docId||o.id),title:o.title}),keyboard:true,title:o.title||'بلاغ'}).addTo(twinMarkersLayer);
         marker.on('click',()=>selectTwinObservation(o.docId||o.id));
         twinMarkers.set(String(o.docId||o.id),marker);
       });
       if(selectedTwinId&&!list.some(o=>String(o.docId||o.id)===String(selectedTwinId))){selectedTwinId=null;renderTwinDetail(null);stopPresentation()}
-      if(twinMap&&list.length&&!selectedTwinId)twinMap.fitBounds(L.latLngBounds(list.map(o=>[o.lat,o.lng])).pad(.18));
+      if(twinMap&&!selectedTwinId)openVerifiedMap(twinMap,list,managerContext.organizationId,organizationMapContext);
       try{lucide.createIcons()}catch(_){}
     }
     function timelineHTML(o){
@@ -1347,15 +1385,16 @@ const firebaseConfig = {
         {label:'إسناد المقاول',present:!!(o.assignedContractorUid||timestampToMs(o.assignedAt)),time:formatTimestamp(o.assignedAt)},
         {label:'قيد المعالجة',present:['IN_PROGRESS','COMPLETED'].includes(o.status),time:formatTimestamp(o.updatedAt)},
         {label:'تمت المعالجة',present:o.status==='COMPLETED',time:formatTimestamp(o.updatedAt||o.closedAt)},
-        {label:'التوثيق قبل/بعد',present:!!(safeImageUrl(o.imagePath)||safeImageUrl(o.afterImagePath)),time:safeImageUrl(o.imagePath)&&safeImageUrl(o.afterImagePath)?'دليل المعالجة مكتمل':'الدليل غير مكتمل'}
+        {label:'التوثيق قبل/بعد',present:!!(hasEvidenceReference(o.imagePath)||hasEvidenceReference(o.afterImagePath)),time:hasEvidenceReference(o.imagePath)&&hasEvidenceReference(o.afterImagePath)?'دليل المعالجة مكتمل':'الدليل غير مكتمل'}
       ];
       return steps.map(step=>`<div class="timeline-step ${step.present?'':'missing'}"><strong>${escapeHTML(step.label)}</strong><div class="type-meta">${step.present?escapeHTML(step.time):'بيانات غير متاحة'}</div></div>`).join('');
     }
     function renderTwinDetail(o){
       const detail=document.getElementById('twinDetail');if(!detail)return;
       if(!o){detail.className='state-box';detail.innerHTML='<h3 id="twinDetailTitle" class="font-black mb-2">تفاصيل البلاغ</h3><p>اختر بلاغاً موثّق الموقع لعرض دورة حياته ودليل المعالجة.</p>';return}
-      const before=safeImageUrl(o.imagePath),after=safeImageUrl(o.afterImagePath);
-      const evidence=before||after?`<div class="twin-evidence">${before?`<figure><img src="${before}" alt="دليل البلاغ قبل المعالجة" loading="lazy"><figcaption class="type-meta mt-1">قبل المعالجة</figcaption></figure>`:'<div class="state-box">صورة ما قبل المعالجة غير متاحة.</div>'}${after?`<figure><img src="${after}" alt="دليل البلاغ بعد المعالجة" loading="lazy"><figcaption class="type-meta mt-1">بعد المعالجة</figcaption></figure>`:'<div class="state-box">صورة ما بعد المعالجة غير متاحة.</div>'}</div>`:'<div class="state-box">لا يتوفر دليل معالجة مصور لهذا البلاغ.</div>';
+      const before=displayEvidenceUrl(o.imagePath),after=displayEvidenceUrl(o.afterImagePath);
+      const localUnavailable=[o.imagePath,o.afterImagePath].some(isLocalDemoReference)?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا يتوفر دليل معالجة مصور لهذا البلاغ.';
+      const evidence=before||after?`<div class="twin-evidence">${before?`<figure><img src="${before}" alt="دليل البلاغ قبل المعالجة" loading="lazy"><figcaption class="type-meta mt-1">قبل المعالجة</figcaption></figure>`:'<div class="state-box">صورة ما قبل المعالجة غير متاحة.</div>'}${after?`<figure><img src="${after}" alt="دليل البلاغ بعد المعالجة" loading="lazy"><figcaption class="type-meta mt-1">بعد المعالجة</figcaption></figure>`:'<div class="state-box">صورة ما بعد المعالجة غير متاحة.</div>'}</div>`:`<div class="state-box">${localUnavailable}</div>`;
       detail.className='twin-detail';
       detail.innerHTML=`<div class="twin-detail-head"><p class="section-label">بلاغ موثّق</p><h3 id="twinDetailTitle" class="text-xl font-black">${escapeHTML(o.title||'بلاغ دون عنوان')}</h3><p class="type-meta">${escapeHTML(o.displayId||o.id||'المعرف غير متاح')}</p></div><div class="twin-meta"><div><span>الحالة</span><strong>${escapeHTML(statusLabels[o.status]||'غير متاحة')}</strong></div><div><span>المراقب المسؤول</span><strong>${escapeHTML(userDisplay(o.createdByUid,o.inspector))}</strong></div><div><span>المقاول المسند</span><strong>${escapeHTML(contractorDisplay(o))}</strong></div><div><span>آخر تحديث</span><strong>${escapeHTML(formatTimestamp(o.updatedAt))}</strong></div></div><section><h3 class="font-black mb-3">دورة حياة البلاغ</h3><div class="timeline">${timelineHTML(o)}</div></section><section><h3 class="font-black mb-3">دليل المعالجة</h3>${evidence}${o.resolutionNote?`<div class="mt-3 p-3 rounded-xl" style="background:var(--surface-2)"><span class="type-meta">ملاحظة المعالجة</span><p>${escapeHTML(o.resolutionNote)}</p></div>`:'<p class="type-meta mt-2">لا توجد ملاحظة معالجة موثّقة.</p>'}</section>`;
     }
@@ -1363,8 +1402,9 @@ const firebaseConfig = {
       const o=verifiedTwinObservations().find(item=>String(item.docId||item.id)===String(id));if(!o)return;
       const wasSelected=selectedTwinId===String(o.docId||o.id);
       selectedTwinId=String(o.docId||o.id);renderTwinDetail(o);
+      for(const [markerId,twinMarker] of twinMarkers){const item=verifiedTwinObservations().find(x=>String(x.docId||x.id)===String(markerId));if(item)twinMarker.setIcon(statusMarkerIcon(L,item.status,{selected:String(markerId)===selectedTwinId,title:item.title}))}
       document.querySelectorAll('[data-twin-id]').forEach(button=>button.setAttribute('aria-current',decodeURIComponent(button.dataset.twinId)===selectedTwinId?'true':'false'));
-      const marker=twinMarkers.get(selectedTwinId);if(twinMap&&marker){motionReduced()?twinMap.panTo(marker.getLatLng()):twinMap.flyTo(marker.getLatLng(),Math.max(twinMap.getZoom(),15),{duration:.8});const icon=marker.getElement();if(icon&&!motionReduced()){icon.classList.remove('marker-pulse');void icon.offsetWidth;icon.classList.add('marker-pulse')}marker.openPopup?.()}
+      const marker=twinMarkers.get(selectedTwinId);if(twinMap&&marker){automatedTwinMove=true;motionReduced()?twinMap.panTo(marker.getLatLng()):twinMap.flyTo(marker.getLatLng(),Math.max(twinMap.getZoom(),15),{duration:.8});const icon=marker.getElement();if(icon&&!motionReduced()){icon.classList.remove('marker-pulse');void icon.offsetWidth;icon.classList.add('marker-pulse')}marker.openPopup?.()}
       const panel=document.getElementById('twinDetailPanel');if(window.matchMedia('(max-width: 820px)').matches&&(managerPreferences.twinDetails==='automatic'||wasSelected))panel?.classList.add('open');
       if(announce){const live=document.getElementById('twinAnnouncement');if(live)live.textContent=`تم اختيار البلاغ ${o.title||o.displayId||o.id}`}
     }
@@ -1381,6 +1421,7 @@ const firebaseConfig = {
     document.getElementById('presentationExit')?.addEventListener('click',stopPresentation);
     document.getElementById('twinPanelClose')?.addEventListener('click',()=>document.getElementById('twinDetailPanel')?.classList.remove('open'));
     document.addEventListener('visibilitychange',()=>{if(document.hidden){stopPresentation();clearPasswordFields()}});
+    window.addEventListener('pagehide',revokeAllObservationImageUrls);
 
     async function toggleLiveTracking(){
       const btn = document.getElementById('followMeBtn');
@@ -1537,6 +1578,14 @@ const firebaseConfig = {
       managerContext.role = orgContext.role;
       managerContext.organizationId = orgContext.organizationId;
       managerContext.organizationName = orgContext.organizationName;
+      try{
+        organizationMapContext=await fetchOrganizationMapContext(auth,{organizationId:managerContext.organizationId});
+        managerContext.organizationName=organizationMapContext.organizationName;
+      }catch(_){
+        organizationMapContext=null;
+        showToast('تعذر تحميل سياق خريطة المؤسسة بأمان.');
+      }
+      await refreshDemoStorageBadge().catch(()=>{});
 
       const userBadge=document.getElementById('userBadge');
       if(userBadge){userBadge.textContent=user.email||'حساب مصادق عليه';userBadge.classList.remove('hidden')}
@@ -1622,15 +1671,15 @@ async function showObservationImages(id) {
   let before = null, after = null;
   for (const key of keys) {
     if (o[key] && typeof o[key] === "string") {
-      const safe = safeImageUrl(o[key]);
+      const safe = await resolveManagerEvidence(o[key]);
       if (!safe) continue;
       if (!before) before = safe;
       else if (!after && safe !== before) after = safe;
     }
   }
   if (o.images) {
-    if (o.images.before && !before) before = safeImageUrl(o.images.before) || null;
-    if (o.images.after && !after) after = safeImageUrl(o.images.after) || null;
+    if (o.images.before && !before) before = await resolveManagerEvidence(o.images.before) || null;
+    if (o.images.after && !after) after = await resolveManagerEvidence(o.images.after) || null;
   }
 
   // موقع آمن للنافذة: بعض البلاغات بلا إحداثيات صالحة
@@ -1648,9 +1697,10 @@ async function showObservationImages(id) {
 
   // لو مافيه صور نهائياً
   if (!before && !after) {
+    const localUnavailable=[o.imagePath,o.afterImagePath].some(isLocalDemoReference)?'<strong>الصورة التجريبية غير متاحة على هذا الجهاز.</strong><br>':'';
     L.popup()
       .setLatLng(popupAt)
-      .setContent(`<div style="min-width:220px;text-align:center;font-family:Tajawal;">
+      .setContent(`<div style="min-width:220px;text-align:center;font-family:Tajawal;">${localUnavailable}
         🚫 لا توجد صور مرفقة لهذه الملاحظة.${noteHtml}
       </div>`)
       .openOn(map);
