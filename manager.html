@@ -3,49 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart HSR | لوحة المدير </title>
-  <meta name="description" content="لوحة مدير تجريبية لإدارة المستخدمين والبلاغات ومؤشرات الأداء لنظام Smart HSR"/>
+  <title>Smart HSR | مركز القيادة البلدي</title>
+  <meta name="description" content="مركز القيادة التشغيلي لبلدية القنفذة ضمن منظومة Smart HSR"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
   <!-- Leaflet (الخريطة الذكية) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    :root{--color-navy:#0A1931;--color-teal:#18A5A2;--color-gray-bg:#F7F9FC}
-    body{font-family:'Tajawal',sans-serif;background:var(--color-gray-bg);color:var(--color-navy)}
-    .card{background:#fff;border-radius:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:1.25rem;border-top:5px solid var(--color-teal)}
-    .kpi-card{border-radius:1.25rem;color:#fff;padding:1.25rem;display:flex;align-items:center;justify-content:space-between}
-    .kpi-open{background:linear-gradient(135deg,#EF4444,#B91C1C)}
-    .kpi-closed{background:linear-gradient(135deg,#10B981,#18A5A2)}
-    .kpi-total{background:linear-gradient(135deg,#3B82F6,#0A1931)}
-    .kpi-photo{background:linear-gradient(135deg,#8B5CF6,#0EA5A1)}
-    .btn{background:var(--color-teal);color:#fff;border-radius:999px;padding:.55rem 1.1rem;font-weight:800;transition:.25s;box-shadow:0 6px 15px rgba(24,165,162,.35)}
-    .btn:hover{background:#148f8c;transform:translateY(-1px)}
-    .btn-ghost{background:#0A1931;color:#fff;border-radius:999px;padding:.55rem 1.1rem;font-weight:800}
-    .tag{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.8rem;font-weight:800}
-    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:center;justify-content:center}
-    .modal-content{background:#fff;border-radius:1rem;max-width:720px;width:92%;padding:1.25rem;box-shadow:0 10px 40px rgba(0,0,0,.25)}
-    .table th,.table td{padding:.75rem;border-bottom:1px solid #e5e7eb}
+    :root{color-scheme:light;--color-navy:#071d33;--color-navy-2:#0c2d49;--color-green:#087f5b;--color-green-2:#10a77a;--color-cyan:#1ba7b8;--color-gray-bg:#f3f6f8;--surface:#fff;--surface-2:#f8fafb;--text:#102a43;--muted:#5b7083;--line:#dce5ea;--danger:#b42318;--warning:#b54708;--shadow:0 18px 45px rgba(7,29,51,.09)}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;background:var(--color-gray-bg)}
+    body{font-family:'Tajawal',sans-serif;background:var(--color-gray-bg);color:var(--text);margin:0;min-width:0;overflow-x:hidden;line-height:1.55}
+    body.dark{color-scheme:dark;--color-gray-bg:#071522;--surface:#0c2235;--surface-2:#102a40;--text:#edf7fa;--muted:#afc3cf;--line:#29465a;--shadow:0 18px 45px rgba(0,0,0,.28)}
+    button,input,select,textarea{font:inherit;min-height:44px}
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #34d3e2;outline-offset:3px}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .skip-link{position:fixed;top:-80px;right:1rem;z-index:100;background:#fff;color:#071d33;padding:.7rem 1rem;border-radius:.75rem;font-weight:800}.skip-link:focus{top:1rem}
+    .command-header{background:linear-gradient(124deg,#061a2e 0%,#0b304a 70%,#075d4b 100%);color:#fff;position:sticky;top:0;z-index:40;border-bottom:1px solid rgba(255,255,255,.14);box-shadow:0 10px 28px rgba(7,29,51,.18)}
+    .command-header:after{content:"";position:absolute;inset:auto 0 0;height:3px;background:linear-gradient(90deg,transparent,#1ba7b8 30%,#10a77a 70%,transparent)}
+    .header-inner{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;align-items:center}
+    .header-inner>*,.header-meta>*,.shell>*,.kpi-grid>*,.operations-grid>*,.side-stack>*,.workflow-board>*,.map-toolbar>*{min-width:0;max-width:100%}
+    .brand-copy,.brand-copy p,.executive-intro h1,.executive-intro p,.header-chip,.kpi-card,.work-item,.activity-item,.table td{overflow-wrap:anywhere}
+    .brand-mark{width:46px;height:46px;border:1px solid rgba(255,255,255,.3);border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.08);font-weight:900;letter-spacing:-1px}
+    .eyebrow{font-size:.69rem;font-weight:800;letter-spacing:.08em;color:#5dd9d0;text-transform:uppercase}
+    .secure-dot{width:8px;height:8px;border-radius:50%;background:#68e4b8;box-shadow:0 0 0 5px rgba(104,228,184,.13)}
+    .secure-dot.pending{background:#fdb022;box-shadow:0 0 0 5px rgba(253,176,34,.13)}.secure-dot.offline{background:#f97066;box-shadow:0 0 0 5px rgba(249,112,102,.13)}
+    .header-chip{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:36px;max-width:100%;padding:.35rem .75rem;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.07);font-size:.76rem;font-weight:700;white-space:normal;text-align:center}
+    .header-meta{min-width:0;flex-wrap:wrap}.header-actions{min-width:0;justify-self:end;flex-wrap:nowrap}
+    .icon-button{min-width:44px;min-height:44px;border-radius:12px;display:inline-grid;place-items:center;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;transition:.2s}.icon-button:hover{background:rgba(255,255,255,.16)}
+    .shell{width:min(1480px,100%);margin:auto;padding:1.25rem clamp(1rem,2.4vw,2rem) 3rem}
+    .executive-intro{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1rem;align-items:end;padding:1rem 0 1.1rem;border-bottom:1px solid var(--line)}
+    .executive-intro h1{font-size:clamp(1.55rem,2.5vw,2.35rem);font-weight:900;letter-spacing:-.04em;color:var(--color-navy);line-height:1.2}.dark .executive-intro h1{color:var(--text)}
+    .section-label{font-size:.72rem;font-weight:900;color:var(--color-green);letter-spacing:.06em}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:1.2rem;box-shadow:var(--shadow);padding:1.15rem;min-width:0}
+    .kpi-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.75rem;margin:1rem 0}
+    .kpi-card{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding:1rem;min-height:128px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 24px rgba(7,29,51,.05)}
+    .kpi-card:before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--metric,#1ba7b8)}
+    .kpi-card .metric-label{font-size:.75rem;font-weight:800;color:var(--muted)}.kpi-card .metric-value{font-size:clamp(1.7rem,2.4vw,2.35rem);font-weight:900;color:var(--color-navy);line-height:1}.dark .kpi-card .metric-value{color:var(--text)}
+    .kpi-card .metric-note{font-size:.68rem;color:var(--muted)}
+    .btn,.btn-ghost,.btn-soft{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;border-radius:.75rem;padding:.55rem 1rem;font-weight:800;transition:.2s;min-height:44px}
+    .btn{background:var(--color-green);color:#fff;box-shadow:0 8px 18px rgba(8,127,91,.18)}.btn:hover{background:#066b4d;transform:translateY(-1px)}
+    .btn-ghost{background:var(--color-navy);color:#fff}.btn-ghost:hover{background:#103c5d}
+    .btn-soft{background:var(--surface-2);border:1px solid var(--line);color:var(--text)}.btn-soft:hover{border-color:var(--color-cyan)}
+    .tag{display:inline-flex;align-items:center;border-radius:999px;padding:.25rem .65rem;font-size:.75rem;font-weight:800;white-space:nowrap}
+    .modal{display:none;position:fixed;inset:0;background:rgba(3,17,29,.72);backdrop-filter:blur(5px);z-index:50;align-items:center;justify-content:center;padding:1rem}
+    .modal-content{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:1.25rem;max-width:760px;width:100%;padding:1.25rem;box-shadow:0 24px 70px rgba(0,0,0,.35);max-height:92vh;overflow:auto}
+    .table{border-collapse:collapse}.table th,.table td{padding:.85rem;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}.table th{font-size:.72rem;color:var(--muted);font-weight:900;white-space:nowrap}.table tr:hover td{background:var(--surface-2)}
     .pill{border-radius:999px;padding:.25rem .65rem;font-weight:800}
-    .tab-active{background:#fff;border-top:5px solid var(--color-teal);border-radius:1rem 1rem 0 0}
-
-    #map {
-  height: 580px;
-  border-radius: 20px;
-  border: 3px solid transparent;
-  background:
-    linear-gradient(#fff, #fff) padding-box,
-    linear-gradient(135deg, #ACE2E1 0%, #18A5A2 50%, #0A1931 100%) border-box;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  position: relative;
-}
-
-    
-    .legend{position:absolute;bottom:12px;left:12px;background:#fff;border-radius:.75rem;border:1px solid #e5e7eb;padding:.6rem 1rem;font-size:.85rem;line-height:1.6;box-shadow:0 8px 20px rgba(0,0,0,.08)}
-    .legend .dot{display:inline-block;width:.8rem;height:.8rem;border-radius:50%;margin-left:.45rem;vertical-align:middle}
-    .badge{display:inline-flex;align-items:center;gap:.4rem;background:#F1F5F9;border:1px solid #E2E8F0;padding:.25rem .6rem;border-radius:999px;font-size:.75rem;font-weight:800}
-    @media print{.no-print{display:none!important}}
+    .command-nav{position:sticky;top:79px;z-index:30;background:rgba(243,246,248,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.dark .command-nav{background:rgba(7,21,34,.9)}
+    .command-nav ul{display:flex;direction:rtl;justify-content:flex-start;gap:.35rem;overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;scroll-padding-inline:1rem;padding:.55rem clamp(1rem,2.4vw,2rem);width:min(1480px,100%);max-width:100%;margin:auto;scrollbar-width:thin}.command-nav li{flex:0 0 auto;min-width:0}.command-nav button{min-width:max-content;min-height:44px;padding:.55rem .9rem;border-radius:.7rem;color:var(--muted);font-size:.82rem;font-weight:800;white-space:nowrap}.command-nav button:hover{background:var(--surface)}.command-nav .tab-active{background:var(--color-navy);color:#fff;box-shadow:0 5px 14px rgba(7,29,51,.16)}
+    .operations-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,.7fr);gap:1rem;align-items:start}
+    .map-card{padding:.75rem}.map-toolbar{display:grid;grid-template-columns:1fr repeat(4,minmax(120px,.55fr));gap:.55rem;padding:.55rem}.map-toolbar select,.map-toolbar input,.table-search{width:100%;border:1px solid var(--line);border-radius:.7rem;background:var(--surface);color:var(--text);padding:.55rem .7rem}
+    #map{width:100%;max-width:100%;height:clamp(440px,55vh,650px);border-radius:1rem;border:1px solid var(--line);background:var(--surface-2);overflow:hidden;position:relative;z-index:1}
+    .map-frame{position:relative}.map-state{position:absolute;z-index:500;inset:1rem auto auto 50%;transform:translateX(-50%);background:rgba(7,29,51,.9);color:#fff;padding:.55rem .9rem;border-radius:999px;font-size:.75rem;font-weight:800;pointer-events:none}
+    .legend{display:flex;flex-wrap:wrap;gap:.45rem;padding:.65rem 0 0}.legend-item,.badge{display:inline-flex;align-items:center;gap:.4rem;background:var(--surface-2);border:1px solid var(--line);padding:.35rem .65rem;border-radius:999px;font-size:.72rem;font-weight:800}.dot{display:inline-block;width:.65rem;height:.65rem;border-radius:50%}
+    .side-stack{display:grid;gap:1rem}.brief-card{background:linear-gradient(145deg,var(--color-navy),var(--color-navy-2));color:#fff;border:none}.brief-card .muted-light{color:#c0d4df}
+    .progress-track{height:8px;border-radius:999px;background:rgba(255,255,255,.15);overflow:hidden}.progress-bar{height:100%;border-radius:inherit;background:linear-gradient(90deg,#1ba7b8,#68e4b8);width:0}
+    .team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}.team-stat{padding:.8rem;border:1px solid var(--line);border-radius:.85rem;background:var(--surface-2)}.team-stat strong{display:block;font-size:1.4rem;color:var(--color-navy)}.dark .team-stat strong{color:var(--text)}
+    .activity-list{display:grid;gap:.65rem}.activity-item{display:grid;grid-template-columns:10px 1fr;gap:.65rem;align-items:start;font-size:.78rem}.activity-mark{width:9px;height:9px;border-radius:50%;background:var(--color-green);margin-top:.35rem;box-shadow:0 0 0 4px rgba(8,127,91,.1)}
+    .workflow-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}.workflow-column{border:1px solid var(--line);background:var(--surface-2);border-radius:1rem;padding:.7rem;min-height:170px}.workflow-column-head{display:flex;justify-content:space-between;align-items:center;padding:.25rem .2rem .7rem;font-weight:900}.workflow-count{min-width:28px;height:28px;border-radius:999px;background:var(--surface);display:grid;place-items:center;border:1px solid var(--line);font-size:.75rem}.workflow-items{display:grid;gap:.6rem}.work-item{background:var(--surface);border:1px solid var(--line);border-radius:.85rem;padding:.8rem;box-shadow:0 4px 14px rgba(7,29,51,.05)}.work-item-title{font-size:.84rem;font-weight:900}.work-meta{display:grid;gap:.25rem;color:var(--muted);font-size:.7rem;margin:.55rem 0}.work-actions{display:flex;gap:.4rem;flex-wrap:wrap}.work-actions button{min-height:38px;padding:.35rem .65rem;font-size:.7rem}
+    .state-box{padding:2rem 1rem;text-align:center;color:var(--muted)}
+    .modal input,.modal select,.modal textarea{background:var(--surface);color:var(--text);border-color:var(--line)}
+    #toast{background:var(--color-navy)!important;color:#fff!important;border:1px solid rgba(255,255,255,.15)}
+    @media(max-width:1180px){.header-inner{grid-template-columns:auto minmax(0,1fr) auto;row-gap:.55rem}.header-meta{grid-column:1/-1;grid-row:2;justify-content:center;border-top:1px solid rgba(255,255,255,.12);padding-top:.55rem}.header-chip{font-size:.72rem}.kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.operations-grid{grid-template-columns:1fr}.side-stack{grid-template-columns:repeat(3,minmax(0,1fr))}.map-toolbar{grid-template-columns:repeat(3,minmax(0,1fr))}.map-toolbar h2{grid-column:1/-1}}
+    @media(max-width:820px){.command-header{position:relative}.command-nav{top:0}.header-inner{grid-template-columns:minmax(0,1fr) auto}.brand-mark{grid-column:1;grid-row:1}.brand-copy{grid-column:1;grid-row:1;padding-inline-start:3.4rem}.header-actions{grid-column:2;grid-row:1}.header-meta{display:flex!important;grid-column:1/-1;grid-row:2;justify-content:center}.header-meta #userBadge{display:none!important}.header-meta #orgBadge,.header-meta #accessRoleBadge{display:inline-flex!important;flex:1 1 220px;max-width:calc(50% - .25rem);min-height:44px}.header-date{display:none}.executive-intro{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi-grid .kpi-card:last-of-type{grid-column:1/-1;width:calc(50% - .375rem);justify-self:center}.side-stack{grid-template-columns:1fr}.workflow-board{grid-template-columns:1fr}.map-toolbar{grid-template-columns:1fr 1fr}.map-toolbar h2{grid-column:1/-1}#map{height:480px}.table-responsive{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.table{min-width:760px}}
+    @media(max-width:520px){.shell{width:100%;max-width:100%;padding-inline:.75rem}.command-header .header-inner{width:100%;max-width:100%;padding-inline:.75rem}.brand-copy .eyebrow{display:none}.brand-copy p:last-child{font-size:.92rem;white-space:normal;line-height:1.25}.brand-mark{width:40px;height:40px}.header-actions{gap:.35rem}.header-actions .header-chip{width:44px;min-width:44px;padding:0}.header-chip{padding:.35rem .5rem}.header-meta #orgBadge,.header-meta #accessRoleBadge{flex-basis:100%;max-width:100%;width:100%}.command-nav ul{padding-inline:.75rem}.executive-intro h1{font-size:1.32rem;line-height:1.4}.executive-intro>*,.map-toolbar>*,.workflow-column,.work-item{min-width:0;max-width:100%}.kpi-grid{gap:.55rem}.kpi-card{min-height:112px;padding:.8rem}.kpi-card .metric-value{font-size:1.65rem}.kpi-grid .kpi-card:last-of-type{width:calc(50% - .275rem)}.map-card,.map-frame,.workflow-board,.workflow-column{width:100%;max-width:100%}.map-toolbar{grid-template-columns:minmax(0,1fr)}.map-toolbar>*{grid-column:auto!important;width:100%;max-width:100%}#map{height:420px}.card{padding:.85rem;border-radius:1rem}.modal-content{padding:1rem}.btn,.btn-ghost,.btn-soft{max-width:100%;white-space:normal}.work-actions button{flex:1 1 0}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+    @media print{.no-print{display:none!important}.card{box-shadow:none}.shell{width:100%;padding:0}}
   </style>
 </head>
 <body>
@@ -79,39 +104,137 @@
     })();
   </script>
 
-  <!-- Header -->
-  <header class="bg-white shadow-md sticky top-0 z-40 no-print">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-      <span class="text-xl font-extrabold">Smart HSR <span class="text-[--color-teal]">Manager Panel</span></span>
-      <span id="orgBadge" class="hidden md:inline-flex items-center gap-2 bg-slate-100 text-[--color-navy] px-3 py-1 rounded-full text-xs font-bold"></span>
-      <span id="accessRoleBadge" class="hidden md:inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold"></span>
-      <span id="userBadge" class="hidden md:inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-xs font-bold"></span>
-      <button id="logoutBtn" class="btn-ghost flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> تسجيل الخروج</button>
+  <a class="skip-link" href="#commandMain">انتقل إلى المحتوى الرئيسي</a>
+  <header class="command-header no-print" aria-label="رأس مركز القيادة">
+    <div class="header-inner w-full max-w-[1480px] mx-auto px-6 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="brand-mark" aria-hidden="true">HSR</div>
+        <div class="brand-copy min-w-0">
+          <p class="eyebrow">Smart HSR Municipal Command Center</p>
+          <p class="font-black text-lg leading-tight truncate">مركز القيادة البلدي</p>
+        </div>
+      </div>
+      <div class="header-meta flex items-center justify-center gap-2 min-w-0">
+        <span id="orgBadge" class="header-chip hidden"></span>
+        <span id="accessRoleBadge" class="header-chip hidden"></span>
+        <span id="userBadge" class="header-chip hidden max-w-[220px] overflow-hidden text-ellipsis"></span>
+      </div>
+      <div class="header-actions flex items-center gap-2">
+        <div class="header-date hidden lg:block text-left leading-tight" aria-live="polite">
+          <div id="gregorianDate" class="text-xs font-bold"></div>
+          <div id="hijriDate" class="text-[11px] text-slate-300"></div>
+        </div>
+        <span class="header-chip" title="حالة الاتصال والمصادقة"><span id="secureDot" class="secure-dot pending"></span><span id="secureLabel" class="hidden sm:inline">جاري التحقق</span></span>
+        <button id="themeToggle" class="icon-button" type="button" aria-label="تفعيل الوضع الداكن" aria-pressed="false" title="الوضع الداكن"><i data-lucide="moon" class="w-5 h-5"></i></button>
+        <button id="logoutBtn" class="icon-button" type="button" aria-label="تسجيل الخروج" title="تسجيل الخروج"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+      </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-6 py-8">
-    <!-- KPIs -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div class="kpi-card kpi-total"><div><p class="text-sm opacity-90">إجمالي البلاغات</p><p id="kpi-total" class="text-4xl font-extrabold">--</p></div><i data-lucide="clipboard-list" class="w-10 h-10 opacity-80"></i></div>
-      <div class="kpi-card kpi-open"><div><p class="text-sm opacity-90">بلاغات مفتوحة</p><p id="kpi-open" class="text-4xl font-extrabold">--</p></div><i data-lucide="alert-triangle" class="w-10 h-10 opacity-80"></i></div>
-      <div class="kpi-card kpi-closed"><div><p class="text-sm opacity-90">بلاغات مغلقة</p><p id="kpi-closed" class="text-4xl font-extrabold">--</p></div><i data-lucide="check-circle" class="w-10 h-10 opacity-80"></i></div>
-      <div class="kpi-card kpi-photo"><div><p class="text-sm opacity-90">موثقة بالصور</p><p id="kpi-photo" class="text-4xl font-extrabold">--</p></div><i data-lucide="image" class="w-10 h-10 opacity-80"></i></div>
+  <nav class="command-nav no-print" aria-label="أقسام مركز القيادة">
+    <ul>
+      <li><button class="tab-active" data-tab="overview" aria-current="page"><i data-lucide="layout-dashboard" class="w-4 h-4 inline ml-1"></i>نظرة تنفيذية</button></li>
+      <li><button data-tab="observations"><i data-lucide="kanban-square" class="w-4 h-4 inline ml-1"></i>البلاغات</button></li>
+      <li><button data-tab="users"><i data-lucide="users" class="w-4 h-4 inline ml-1"></i>الفرق</button></li>
+      <li><button data-tab="reports"><i data-lucide="file-bar-chart" class="w-4 h-4 inline ml-1"></i>التقارير</button></li>
+      <li><button data-tab="settings"><i data-lucide="settings" class="w-4 h-4 inline ml-1"></i>الإعدادات</button></li>
+    </ul>
+  </nav>
+
+  <main id="commandMain" class="shell">
+    <section class="executive-intro" aria-labelledby="commandTitle">
+      <div>
+        <p class="section-label">المشهد التشغيلي الموحّد</p>
+        <h1 id="commandTitle">بلدية القنفذة — القرار الميداني في صورة واحدة</h1>
+        <p class="text-sm mt-2 max-w-3xl" style="color:var(--muted)">متابعة البلاغات والفرق والتكليفات لحظياً ضمن نطاق المؤسسة الموثّق.</p>
+      </div>
+      <div class="text-sm text-left" style="color:var(--muted)">
+        <span class="font-bold">آخر تحديث موثّق</span>
+        <div id="lastVerifiedAt" aria-live="polite">بانتظار البيانات…</div>
+      </div>
     </section>
 
-    <!-- Tabs -->
-    <nav class="no-print">
-      <ul class="flex gap-3 text-sm font-extrabold">
-        <li><button class="px-4 py-2 tab-active" data-tab="users">المستخدمون</button></li>
-        <li><button class="px-4 py-2" data-tab="observations">البلاغات</button></li>
-        <li><button class="px-4 py-2" data-tab="map">الخريطة الذكية</button></li>
-        <li><button class="px-4 py-2" data-tab="reports">التقارير</button></li>
-        <li><button class="px-4 py-2" data-tab="settings">الإعدادات</button></li>
-      </ul>
-    </nav>
+    <section class="kpi-grid" aria-label="المؤشرات التنفيذية">
+      <article class="kpi-card" style="--metric:#1ba7b8"><span class="metric-label">إجمالي البلاغات</span><strong id="kpi-total" class="metric-value">—</strong><span class="metric-note">ضمن المؤسسة فقط</span></article>
+      <article class="kpi-card" style="--metric:#d92d20"><span class="metric-label">قيد الانتظار</span><strong id="kpi-pending" class="metric-value">—</strong><span class="metric-note">تحتاج بدء المعالجة</span></article>
+      <article class="kpi-card" style="--metric:#eaaa08"><span class="metric-label">قيد المعالجة</span><strong id="kpi-progress" class="metric-value">—</strong><span class="metric-note">أعمال جارية</span></article>
+      <article class="kpi-card" style="--metric:#087f5b"><span class="metric-label">تمت المعالجة</span><strong id="kpi-closed" class="metric-value">—</strong><span class="metric-note">بلاغات مكتملة</span></article>
+      <article class="kpi-card" style="--metric:#0c2d49"><span class="metric-label">نسبة الإنجاز</span><strong id="kpi-rate" class="metric-value">—</strong><span class="metric-note">من إجمالي البلاغات</span></article>
+      <article class="kpi-card" style="--metric:#7f56d9"><span class="metric-label">توثيق قبل/بعد</span><strong id="kpi-photo" class="metric-value">—</strong><span class="metric-note">دليل معالجة مكتمل</span></article>
+      <article class="kpi-card" style="--metric:#667085"><span class="metric-label">متوسط زمن المعالجة</span><strong id="kpi-resolution" class="metric-value text-xl">غير متاح</strong><span class="metric-note">يظهر عند توفر وقت الإنشاء والإغلاق</span></article>
+      <span id="kpi-open" class="hidden" aria-hidden="true">—</span>
+    </section>
+
+    <section id="tab-overview" aria-label="النظرة التنفيذية">
+      <div class="operations-grid">
+        <article class="card map-card">
+          <div class="map-toolbar">
+            <div>
+              <p class="section-label">01 / المشهد الجغرافي</p>
+              <h2 class="text-xl font-black">خريطة العمليات البلدية</h2>
+            </div>
+            <select id="mapStatusFilter" aria-label="تصفية الخريطة حسب الحالة"><option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option></select>
+            <select id="mapInspectorFilter" aria-label="تصفية الخريطة حسب المراقب"><option value="ALL">كل المراقبين</option></select>
+            <select id="mapContractorFilter" aria-label="تصفية الخريطة حسب المقاول"><option value="ALL">كل المقاولين</option><option value="UNASSIGNED">غير مسند</option></select>
+            <input id="mapDateFilter" type="date" aria-label="تصفية الخريطة حسب التاريخ" />
+          </div>
+          <div class="map-frame">
+            <div id="mapState" class="map-state">جاري تجهيز الخريطة…</div>
+            <div id="map" role="region" aria-label="خريطة بلاغات بلدية القنفذة"></div>
+          </div>
+          <div class="legend" aria-label="مفتاح الخريطة">
+            <span class="legend-item"><span class="dot" style="background:#d92d20"></span>قيد الانتظار</span>
+            <span class="legend-item"><span class="dot" style="background:#eaaa08"></span>قيد المعالجة</span>
+            <span class="legend-item"><span class="dot" style="background:#087f5b"></span>تمت المعالجة</span>
+            <span class="legend-item"><span class="dot" style="background:#2970ff"></span>طاقم ميداني</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 mt-3 no-print">
+            <button class="btn" id="followMeBtn" onclick="toggleLiveTracking()"><i data-lucide="navigation" class="w-4 h-4"></i>تتبع موقعي</button>
+            <button class="btn-soft" onclick="fitAllMarkers()"><i data-lucide="scan-search" class="w-4 h-4"></i>إظهار جميع المواقع</button>
+            <button class="btn-soft" onclick="clearMapFilters()"><i data-lucide="filter-x" class="w-4 h-4"></i>مسح التصفية</button>
+          </div>
+        </article>
+
+        <aside class="side-stack" aria-label="موجز العمليات">
+          <article class="card brief-card">
+            <p class="eyebrow">موجز القيادة</p>
+            <h2 class="text-xl font-black mt-1">جاهزية الاستجابة</h2>
+            <div class="flex items-end justify-between mt-5"><strong id="briefRate" class="text-4xl font-black">—</strong><span class="text-xs muted-light">نسبة الإنجاز</span></div>
+            <div class="progress-track mt-3"><div id="briefProgress" class="progress-bar"></div></div>
+            <p id="briefMessage" class="text-xs muted-light mt-4">بانتظار بيانات المؤسسة الموثّقة.</p>
+          </article>
+          <article class="card">
+            <div class="flex items-center justify-between mb-3"><div><p class="section-label">الفريق</p><h2 class="font-black">الطاقة التشغيلية</h2></div><i data-lucide="users-round" class="w-6 h-6" style="color:var(--color-green)"></i></div>
+            <div class="team-grid">
+              <div class="team-stat"><span class="text-xs" style="color:var(--muted)">المراقبون</span><strong id="teamInspectors">—</strong></div>
+              <div class="team-stat"><span class="text-xs" style="color:var(--muted)">المقاولون</span><strong id="teamContractors">—</strong></div>
+              <div class="team-stat"><span class="text-xs" style="color:var(--muted)">المشرفون</span><strong id="teamSupervisors">—</strong></div>
+              <div class="team-stat"><span class="text-xs" style="color:var(--muted)">غير المسندة</span><strong id="teamUnassigned">—</strong></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="mb-3"><p class="section-label">الحركة الأخيرة</p><h2 class="font-black">آخر النشاطات</h2></div>
+            <div id="recentActivity" class="activity-list"><div class="state-box py-4">بانتظار البيانات…</div></div>
+          </article>
+        </aside>
+      </div>
+
+      <article class="card mt-4" aria-labelledby="workflowTitle">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div><p class="section-label">02 / سير العمل</p><h2 id="workflowTitle" class="text-xl font-black">لوحة تنفيذ البلاغات</h2></div>
+          <span class="text-xs" style="color:var(--muted)">جميع البطاقات من نطاق المؤسسة الموثّق</span>
+        </div>
+        <div id="workflowBoard" class="workflow-board" aria-live="polite"></div>
+      </article>
+
+      <article class="card mt-4" aria-labelledby="contractorSummaryTitle">
+        <div class="mb-3"><p class="section-label">03 / أداء المقاولين</p><h2 id="contractorSummaryTitle" class="text-xl font-black">ملخص إنجاز المقاولين</h2></div>
+        <div id="contractorSummary" class="table-responsive"><div class="state-box">بانتظار البيانات…</div></div>
+      </article>
+    </section>
 
     <!-- USERS TAB -->
-    <section id="tab-users" class="mt-6">
+    <section id="tab-users" class="mt-4 hidden">
       <div class="card">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
           <h2 class="text-2xl font-extrabold">إدارة المستخدمين</h2>
@@ -120,7 +243,7 @@
             <button class="btn" data-manager-only onclick="openModal('modalAddUser')"><i data-lucide="user-plus" class="w-4 h-4 ml-1"></i> إضافة مستخدم</button>
           </div>
         </div>
-        <div class="overflow-x-auto rounded-xl border">
+        <div class="table-responsive rounded-xl border">
           <table class="table w-full text-sm">
             <thead class="bg-gray-50">
             <tr><th>الاسم</th><th>الدور</th><th>البريد</th><th>الحالة</th><th class="text-center">إجراءات</th></tr>
@@ -132,7 +255,7 @@
     </section>
 
     <!-- OBSERVATIONS TAB -->
-    <section id="tab-observations" class="mt-6 hidden">
+    <section id="tab-observations" class="mt-4 hidden">
       <div class="card">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
           <h2 class="text-2xl font-extrabold">إدارة البلاغات</h2>
@@ -145,7 +268,7 @@
             </select>
           </div>
         </div>
-        <div class="overflow-x-auto rounded-xl border">
+        <div class="table-responsive rounded-xl border">
           <table class="table w-full text-sm">
             <thead class="bg-gray-50">
             <tr><th>المعرف</th><th>العنوان</th><th>الحالة</th><th>المراقب</th><th>المقاول</th><th>تاريخ البلاغ</th><th class="text-center">إجراءات</th></tr>
@@ -156,40 +279,14 @@
       </div>
     </section>
 
-    <!-- SMART MAP TAB -->
-    <section id="tab-map" class="mt-6 hidden">
-      <div class="card">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-          <h2 class="text-2xl font-extrabold">الخريطة الذكية (مباشر)</h2>
-          <div class="flex items-center gap-2">
-            <span class="badge"><span class="dot" style="background:#ef4444"></span>جديد</span>
-            <span class="badge"><span class="dot" style="background:#f59e0b"></span>قيد التنفيذ</span>
-            <span class="badge"><span class="dot" style="background:#10b981"></span>مغلق</span>
-            <span class="badge"><span class="dot" style="background:#3b82f6"></span>طاقم ميداني</span>
-          </div>
-        </div>
-        <div id="map"></div>
-        <div class="legend">
-          <div><span class="dot" style="background:#ef4444"></span>ملاحظة جديدة</div>
-          <div><span class="dot" style="background:#f59e0b"></span>لدى المقاول</div>
-          <div><span class="dot" style="background:#10b981"></span>تمت المعالجة</div>
-          <div class="mt-2"><span class="dot" style="background:#3b82f6"></span>موقع مراقب/مقاول</div>
-        </div>
-        <div class="flex items-center gap-2 mt-4">
-          <button class="btn" id="followMeBtn" onclick="toggleLiveTracking()"><i data-lucide="navigation" class="w-4 h-4 ml-1"></i> تتبع موقعي (تشغيل)</button>
-          <button class="btn-ghost" onclick="fitAllMarkers()"><i data-lucide="scan-search" class="w-4 h-4 ml-1"></i> مواءمة جميع العلامات</button>
-        </div>
-      </div>
-    </section>
-
     <!-- REPORTS TAB -->
-    <section id="tab-reports" class="mt-6 hidden">
+    <section id="tab-reports" class="mt-4 hidden">
       <div class="card">
         <h2 class="text-2xl font-extrabold mb-4">التقارير التنفيذية</h2>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div class="p-4 rounded-xl border">
-            <h3 class="font-extrabold mb-2">ملخص الأداء (AI Demo)</h3>
-            <p class="text-sm text-gray-600 mb-4">اضغط لتوليد ملخص أداء الفرق بناءً على البيانات المعروضة.</p>
+            <h3 class="font-extrabold mb-2">ملخص الأداء</h3>
+            <p class="text-sm mb-4" style="color:var(--muted)">إنشاء ملخص محلي من المؤشرات المعروضة دون إرسال بيانات إلى خدمة خارجية.</p>
             <button class="btn" onclick="generateAiSummary()">✨ توليد تقرير تنفيذي</button>
             <div id="aiSummary" class="mt-4 text-sm bg-gray-50 rounded-xl p-3 hidden"></div>
           </div>
@@ -203,11 +300,12 @@
     </section>
 
     <!-- SETTINGS TAB -->
-    <section id="tab-settings" class="mt-6 hidden">
+    <section id="tab-settings" class="mt-4 hidden">
       <div class="card">
         <h2 class="text-2xl font-extrabold mb-4">الإعدادات العامة</h2>
         <div class="flex flex-col gap-3">
-          <label class="flex items-center gap-2"><input id="darkToggle" type="checkbox" class="w-4 h-4" onchange="toggleDarkMode()"> تفعيل الوضع الليلي (تجريبي)</label>
+          <button class="btn-soft self-start" onclick="toggleDarkMode()"><i data-lucide="sun-moon" class="w-4 h-4"></i>تبديل المظهر</button>
+          <p class="text-sm" style="color:var(--muted)">يحفظ المتصفح اختيار المظهر محلياً على هذا الجهاز فقط.</p>
         </div>
       </div>
     </section>
@@ -218,7 +316,7 @@
     <div class="modal-content">
       <div class="flex items-center justify-between border-b pb-2 mb-3">
         <h3 class="text-xl font-extrabold">➕ إضافة مستخدم</h3>
-        <button class="text-2xl" onclick="closeModal('modalAddUser')">&times;</button>
+        <button class="text-2xl" aria-label="إغلاق نافذة إضافة مستخدم" onclick="closeModal('modalAddUser')">&times;</button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
@@ -247,7 +345,7 @@
     <div class="modal-content">
       <div class="flex items-center justify-between border-b pb-2 mb-3">
         <h3 class="text-xl font-extrabold">🧭 تعيين البلاغ</h3>
-        <button class="text-2xl" onclick="closeModal('modalAssign')">&times;</button>
+        <button class="text-2xl" aria-label="إغلاق نافذة تعيين البلاغ" onclick="closeModal('modalAssign')">&times;</button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
@@ -342,26 +440,113 @@ const firebaseConfig = {
     $$("nav [data-tab]").forEach(btn=>{
       btn.addEventListener('click',()=>{
         $$("nav [data-tab]").forEach(b=>b.classList.remove('tab-active'));
+        $$("nav [data-tab]").forEach(b=>b.removeAttribute('aria-current'));
         btn.classList.add('tab-active');
+        btn.setAttribute('aria-current','page');
         const t = btn.getAttribute('data-tab');
-        ['users','observations','map','reports','settings'].forEach(id=>{
+        ['overview','users','observations','reports','settings'].forEach(id=>{
           document.getElementById('tab-'+id).classList.toggle('hidden', id!==t);
         });
-        if(t==='map'){ setTimeout(()=>{ map?.invalidateSize(); }, 200); }
+        if(t==='overview'){ setTimeout(()=>{ map?.invalidateSize(); }, 200); }
       })
     });
 
     // ===== KPIs =====
     function renderKPIs(){
       const total = observations.length;
-      const open = observations.filter(o=>o.status!=='COMPLETED').length;
-      const closed = total - open;
-      const photo = observations.filter(o=>o.hasImage).length;
+      const pending = observations.filter(o=>o.status==='PENDING').length;
+      const progress = observations.filter(o=>o.status==='IN_PROGRESS').length;
+      const closed = observations.filter(o=>o.status==='COMPLETED').length;
+      const open = pending + progress;
+      const photo = observations.filter(o=>safeImageUrl(o.imagePath) && safeImageUrl(o.afterImagePath)).length;
+      const rate = total ? Math.round((closed/total)*100) : null;
+      const resolutionDurations = observations.map(o=>{
+        const start=o.createdAtMs;
+        const end=timestampToMs(o.closedAt);
+        return start>0 && end>start ? end-start : null;
+      }).filter(Number.isFinite);
+      const averageMs=resolutionDurations.length ? resolutionDurations.reduce((sum,n)=>sum+n,0)/resolutionDurations.length : null;
       document.getElementById('kpi-total').textContent = total;
       document.getElementById('kpi-open').textContent = open;
+      document.getElementById('kpi-pending').textContent = pending;
+      document.getElementById('kpi-progress').textContent = progress;
       document.getElementById('kpi-closed').textContent = closed;
       document.getElementById('kpi-photo').textContent = photo;
+      document.getElementById('kpi-rate').textContent = rate===null ? 'غير متاح' : `${rate}%`;
+      document.getElementById('kpi-resolution').textContent = averageMs===null ? 'غير متاح' : formatDuration(averageMs);
+      document.getElementById('briefRate').textContent = rate===null ? '—' : `${rate}%`;
+      document.getElementById('briefProgress').style.width = `${rate || 0}%`;
+      document.getElementById('briefMessage').textContent = total
+        ? `${open} بلاغاً مفتوحاً، منها ${pending} بانتظار بدء المعالجة.`
+        : 'لا توجد بلاغات موثّقة ضمن المؤسسة حالياً.';
+      renderOperationsOverview();
       try{ lucide.createIcons(); }catch(e){}
+    }
+
+    function timestampToMs(value){
+      if(!value) return 0;
+      if(typeof value.toMillis==='function') return value.toMillis();
+      if(value instanceof Date) return value.getTime();
+      const parsed=Date.parse(value); return Number.isFinite(parsed) ? parsed : 0;
+    }
+    function formatDuration(ms){
+      if(!Number.isFinite(ms) || ms<0) return 'غير متاح';
+      const hours=Math.round(ms/3600000);
+      if(hours<24) return `${Math.max(1,hours)} س`;
+      return `${Math.round(hours/24)} يوم`;
+    }
+    function elapsedLabel(observation){
+      const start=observation.createdAtMs;
+      if(!start) return 'المدة غير متاحة';
+      const end=observation.status==='COMPLETED' ? timestampToMs(observation.closedAt) : Date.now();
+      return end>start ? `منذ ${formatDuration(end-start)}` : 'المدة غير متاحة';
+    }
+    function userDisplay(uid,fallback='—'){
+      const user=users.find(item=>item.id===uid);
+      return user?.name || user?.email || fallback || '—';
+    }
+    function renderOperationsOverview(){
+      const activeUsers=users.filter(user=>user.active!==false);
+      const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=String(value)};
+      set('teamInspectors',activeUsers.filter(u=>u.role==='inspector').length);
+      set('teamContractors',activeUsers.filter(u=>u.role==='contractor').length);
+      set('teamSupervisors',activeUsers.filter(u=>u.role==='supervisor').length);
+      set('teamUnassigned',observations.filter(o=>!o.assignedContractorUid).length);
+      renderWorkflowBoard();
+      renderRecentActivity();
+      renderContractorSummary();
+      populateMapFilters();
+    }
+
+    function renderWorkflowBoard(){
+      const board=document.getElementById('workflowBoard'); if(!board) return;
+      if(obsState==='loading'){board.innerHTML='<div class="state-box" style="grid-column:1/-1">جاري تحميل سير العمل الموثّق…</div>';return}
+      if(obsState==='error'){board.innerHTML='<div class="state-box" style="grid-column:1/-1;color:var(--danger)">تعذر تحميل سير العمل. تحقق من الاتصال ثم أعد المحاولة.</div>';return}
+      const statuses=['PENDING','IN_PROGRESS','COMPLETED'];
+      board.innerHTML=statuses.map(status=>{
+        const list=observations.filter(o=>o.status===status);
+        const items=list.length ? list.slice(0,8).map(o=>`<article class="work-item">
+          <div class="flex items-start justify-between gap-2"><h3 class="work-item-title">${escapeHTML(o.title||'بلاغ بدون عنوان')}</h3><span class="text-[10px]" style="color:var(--muted)">${escapeHTML(o.displayId||o.id)}</span></div>
+          <div class="work-meta"><span>المراقب: ${escapeHTML(userDisplay(o.createdByUid,o.inspector))}</span><span>المقاول: ${escapeHTML(contractorDisplay(o))}</span><span>${escapeHTML(elapsedLabel(o))} · ${safeImageUrl(o.imagePath)&&safeImageUrl(o.afterImagePath)?'دليل مكتمل':'الدليل غير مكتمل'}</span></div>
+          <div class="work-actions"><button class="btn-soft" onclick="openAssign(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">تعيين</button><button class="btn-soft" onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId||o.id)}'))">الأدلة</button></div>
+        </article>`).join('') : '<div class="state-box py-4">لا توجد بلاغات في هذه المرحلة.</div>';
+        return `<section class="workflow-column" aria-label="${statusLabels[status]}"><header class="workflow-column-head"><span>${statusLabels[status]}</span><span class="workflow-count">${list.length}</span></header><div class="workflow-items">${items}</div></section>`;
+      }).join('');
+    }
+
+    function renderRecentActivity(){
+      const box=document.getElementById('recentActivity'); if(!box) return;
+      if(obsState==='loading'){box.innerHTML='<div class="state-box py-4">جاري تحميل النشاط…</div>';return}
+      const recent=[...observations].sort((a,b)=>(timestampToMs(b.updatedAt)||b.createdAtMs)-(timestampToMs(a.updatedAt)||a.createdAtMs)).slice(0,5);
+      box.innerHTML=recent.length ? recent.map(o=>`<div class="activity-item"><span class="activity-mark"></span><div><strong>${escapeHTML(o.title||'بلاغ')}</strong><div style="color:var(--muted)">${escapeHTML(statusLabels[o.status]||o.status)} · ${escapeHTML(contractorDisplay(o))}</div></div></div>`).join('') : '<div class="state-box py-4">لا يوجد نشاط موثّق لعرضه.</div>';
+    }
+
+    function renderContractorSummary(){
+      const box=document.getElementById('contractorSummary'); if(!box) return;
+      const contractors=users.filter(u=>u.role==='contractor'&&u.active!==false);
+      if(!contractors.length){box.innerHTML='<div class="state-box">لا يوجد مقاولون نشطون ضمن المؤسسة.</div>';return}
+      const rows=contractors.map(c=>{const assigned=observations.filter(o=>o.assignedContractorUid===c.id);const completed=assigned.filter(o=>o.status==='COMPLETED').length;const rate=assigned.length?`${Math.round(completed/assigned.length*100)}%`:'غير متاح';return `<tr><td class="font-bold">${escapeHTML(c.name||c.email||c.id)}</td><td>${assigned.length}</td><td>${completed}</td><td>${rate}</td></tr>`}).join('');
+      box.innerHTML=`<table class="table w-full text-sm"><thead><tr><th>المقاول</th><th>البلاغات المسندة</th><th>المكتملة</th><th>نسبة الإنجاز</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     // ===== Users =====
@@ -627,8 +812,28 @@ const firebaseConfig = {
     window.generateAiSummary = generateAiSummary;
 
     // ===== Settings =====
-    function toggleDarkMode(){ document.body.classList.toggle('bg-slate-900'); document.body.classList.toggle('text-white'); }
+    function applyTheme(dark){
+      document.body.classList.toggle('dark',dark);
+      const button=document.getElementById('themeToggle');
+      if(button){button.setAttribute('aria-pressed',dark?'true':'false');button.setAttribute('aria-label',dark?'تفعيل الوضع الفاتح':'تفعيل الوضع الداكن');button.innerHTML=`<i data-lucide="${dark?'sun':'moon'}" class="w-5 h-5"></i>`}
+      try{localStorage.setItem('smartHSRTheme',dark?'dark':'light')}catch(_){}
+      try{lucide.createIcons()}catch(_){}
+    }
+    function toggleDarkMode(){applyTheme(!document.body.classList.contains('dark'))}
     window.toggleDarkMode = toggleDarkMode;
+    document.getElementById('themeToggle')?.addEventListener('click',toggleDarkMode);
+    try{applyTheme(localStorage.getItem('smartHSRTheme')==='dark')}catch(_){applyTheme(false)}
+
+    function renderCommandDates(){
+      const now=new Date();
+      const gregorian=document.getElementById('gregorianDate'), hijri=document.getElementById('hijriDate');
+      if(gregorian) gregorian.textContent=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now);
+      if(hijri) hijri.textContent=new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(now);
+    }
+    function markVerifiedNow(){const el=document.getElementById('lastVerifiedAt');if(el)el.textContent=new Intl.DateTimeFormat('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(new Date())}
+    renderCommandDates();
+    window.addEventListener('online',()=>{const state=document.getElementById('mapState');if(state&&obsState!=='error')refreshMapMarkers();const dot=document.getElementById('secureDot');dot?.classList.remove('offline');document.getElementById('secureLabel').textContent=appStarted?'اتصال آمن':'جاري التحقق';showToast('تمت استعادة الاتصال.')});
+    window.addEventListener('offline',()=>{const state=document.getElementById('mapState');if(state){state.textContent='أنت غير متصل. لن تُعرض بيانات مخزنة كبيانات موثّقة.';state.classList.remove('hidden')}const dot=document.getElementById('secureDot');dot?.classList.add('offline');document.getElementById('secureLabel').textContent='غير متصل'});
 
     // ===== Logout =====
     document.getElementById('logoutBtn').addEventListener('click',async()=>{
@@ -670,11 +875,11 @@ const firebaseConfig = {
           users.push({ id:d.id, ...x });
         });
         usersState = 'ready';
-        renderUsers();
+        markVerifiedNow(); renderUsers(); renderOperationsOverview();
       }, err=>{
         console.error('Users subscription failed', err);
         usersState = 'error';
-        renderUsers();
+        renderUsers(); renderOperationsOverview();
       });
 
       // Observations — scoped to this organization only; sorted client-side
@@ -709,6 +914,8 @@ const firebaseConfig = {
             updatedAt: x.updatedAt || null,
             date: x.date || '',
             createdAtMs: x.createdAt?.toMillis ? x.createdAt.toMillis() : 0,
+            createdAt: x.createdAt || null,
+            closedAt: x.closedAt || null,
             hasImage: !!(x.imagePath || x.afterImagePath),
             // Closeout evidence. These were previously dropped by the mapper,
             // so showObservationImages() always fell through to "no images"
@@ -725,7 +932,7 @@ const firebaseConfig = {
         arr.sort((a,b)=> b.createdAtMs - a.createdAtMs);
         observations = arr;
         obsState = 'ready';
-        renderObservations(); renderKPIs(); refreshMapMarkers();
+        markVerifiedNow(); renderObservations(); renderKPIs(); refreshMapMarkers();
       }, err=>{
         console.error('Observations subscription failed', err);
         obsState = 'error';
@@ -763,21 +970,69 @@ const firebaseConfig = {
       CREW: makeDot('#3b82f6')
     };
 
+    function populateMapFilters(){
+      const inspectorSelect=document.getElementById('mapInspectorFilter');
+      const contractorSelect=document.getElementById('mapContractorFilter');
+      if(!inspectorSelect||!contractorSelect) return;
+      const inspectorValue=inspectorSelect.value, contractorValue=contractorSelect.value;
+      inspectorSelect.replaceChildren(new Option('كل المراقبين','ALL'));
+      contractorSelect.replaceChildren(new Option('كل المقاولين','ALL'),new Option('غير مسند','UNASSIGNED'));
+      users.filter(u=>u.role==='inspector'&&u.active!==false).forEach(u=>inspectorSelect.add(new Option(String(u.name||u.email||u.id),String(u.id))));
+      users.filter(u=>u.role==='contractor'&&u.active!==false).forEach(u=>contractorSelect.add(new Option(String(u.name||u.email||u.id),String(u.id))));
+      if([...inspectorSelect.options].some(o=>o.value===inspectorValue)) inspectorSelect.value=inspectorValue;
+      if([...contractorSelect.options].some(o=>o.value===contractorValue)) contractorSelect.value=contractorValue;
+    }
+    function filteredMapObservations(){
+      const status=document.getElementById('mapStatusFilter')?.value||'ALL';
+      const inspector=document.getElementById('mapInspectorFilter')?.value||'ALL';
+      const contractor=document.getElementById('mapContractorFilter')?.value||'ALL';
+      const date=document.getElementById('mapDateFilter')?.value||'';
+      return observations.filter(o=>{
+        if(status!=='ALL'&&o.status!==status) return false;
+        if(inspector!=='ALL'&&o.createdByUid!==inspector) return false;
+        if(contractor==='UNASSIGNED'&&o.assignedContractorUid) return false;
+        if(contractor!=='ALL'&&contractor!=='UNASSIGNED'&&o.assignedContractorUid!==contractor) return false;
+        if(date){const ms=o.createdAtMs||Date.parse(o.date);if(!ms||new Date(ms).toISOString().slice(0,10)!==date)return false}
+        return true;
+      });
+    }
+    function clearMapFilters(){
+      document.getElementById('mapStatusFilter').value='ALL';document.getElementById('mapInspectorFilter').value='ALL';document.getElementById('mapContractorFilter').value='ALL';document.getElementById('mapDateFilter').value='';refreshMapMarkers();
+    }
+    window.clearMapFilters=clearMapFilters;
+    ['mapStatusFilter','mapInspectorFilter','mapContractorFilter','mapDateFilter'].forEach(id=>document.getElementById(id)?.addEventListener('change',refreshMapMarkers));
+
+    function formatTimestamp(value){
+      const ms=timestampToMs(value); if(!ms) return 'غير متاح';
+      return new Intl.DateTimeFormat('ar-SA',{dateStyle:'medium',timeStyle:'short'}).format(ms);
+    }
+
     function refreshMapMarkers(){
       if(!map) return;
       markersLayer.clearLayers();
-      const list = observations.filter(o=>Number.isFinite(o.lat) && Number.isFinite(o.lng));
+      const list = filteredMapObservations().filter(o=>Number.isFinite(o.lat) && Number.isFinite(o.lng));
+      const state=document.getElementById('mapState');
+      if(state){
+        if(obsState==='loading'){state.textContent='جاري تحميل المواقع الموثّقة…';state.classList.remove('hidden')}
+        else if(obsState==='error'){state.textContent='تعذر تحميل مواقع البلاغات.';state.classList.remove('hidden')}
+        else if(!list.length){state.textContent=observations.length?'لا توجد مواقع تطابق التصفية الحالية.':'لا توجد بلاغات ذات إحداثيات لعرضها.';state.classList.remove('hidden')}
+        else state.classList.add('hidden');
+      }
       list.forEach(o=>{
         const icon = ICONS[o.status] || ICONS.PENDING;
         const m = L.marker([o.lat,o.lng], {icon})
 
          .bindPopup(`
-  <div style="min-width:200px; font-family:Tajawal;">
+    <div dir="rtl" style="min-width:250px;max-width:310px;font-family:Tajawal;line-height:1.65">
     <div class="font-extrabold mb-1 text-[15px]">${escapeHTML(o.title || '—')}</div>
-    <div class="text-xs text-gray-600 mb-2">المعرف: ${(o.displayId || o.id) || '—'}</div>
-    <div class="text-xs mb-2"><span class="badge"><span class="dot" style="background:${statusColor(o.status)}"></span>${statusLabels[o.status] || o.status}</span></div>
-    ${o.inspector && o.inspector !== '—' ? `<div class="text-xs mb-1">👷‍♂️ المراقب: ${escapeHTML(o.inspector)}</div>` : ''}
-    ${contractorDisplay(o) !== '—' ? `<div class="text-xs mb-2">🏗️ المقاول: ${escapeHTML(contractorDisplay(o))}</div>` : ''}
+    <div class="text-xs text-gray-600 mb-2">المعرف: ${escapeHTML((o.displayId || o.id) || '—')}</div>
+    <div class="text-xs mb-2"><span class="badge"><span class="dot" style="background:${statusColor(o.status)}"></span>${escapeHTML(statusLabels[o.status] || o.status)}</span></div>
+    <div class="text-xs mb-1">المراقب: ${escapeHTML(userDisplay(o.createdByUid,o.inspector))}</div>
+    <div class="text-xs mb-1">المقاول: ${escapeHTML(contractorDisplay(o))}</div>
+    <div class="text-xs mb-1">الإنشاء: ${escapeHTML(formatTimestamp(o.createdAt))}</div>
+    <div class="text-xs mb-1">آخر تحديث: ${escapeHTML(formatTimestamp(o.updatedAt))}</div>
+    <div class="text-xs mb-1">الأدلة: ${safeImageUrl(o.imagePath)&&safeImageUrl(o.afterImagePath)?'قبل وبعد':'غير مكتملة'}</div>
+    ${o.resolutionNote?`<div class="text-xs mb-2">ملاحظة المعالجة: ${escapeHTML(o.resolutionNote)}</div>`:''}
     <div class="flex flex-col gap-2">
       <button onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-indigo-600 text-white rounded text-xs w-full">📸 عرض الصور</button>
       <button onclick="openAssign(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-slate-700 text-white rounded text-xs w-full">🧭 تعيين مقاول</button>
@@ -905,6 +1160,7 @@ const firebaseConfig = {
     }
 
     async function denyManagerAccess(message){
+      const mapState=document.getElementById('mapState');if(mapState){mapState.textContent='غير مصرح لهذا الحساب بعرض مركز القيادة.';mapState.classList.remove('hidden')}
       sessionStorage.removeItem('smartHSRUser');
       sessionStorage.removeItem('welcomed');
       try{ if(auth?.currentUser) await signOut(auth); }catch(err){ console.warn(err); }
@@ -923,7 +1179,7 @@ const firebaseConfig = {
       }
       const roleBadgeEl=document.getElementById('accessRoleBadge');
       if(roleBadgeEl){
-        roleBadgeEl.textContent=managerContext.role==='supervisor' ? 'الدور: مشرف مساعد' : 'الدور: مدير';
+        roleBadgeEl.textContent=managerContext.role==='supervisor' ? 'الدور: مشرف مساعد' : 'الدور: مدير المؤسسة';
         roleBadgeEl.classList.remove('hidden');
       }
       document.querySelectorAll('[data-manager-only]').forEach(el=>{
@@ -955,6 +1211,9 @@ const firebaseConfig = {
       managerContext.organizationId = orgContext.organizationId;
       managerContext.organizationName = orgContext.organizationName;
 
+      const userBadge=document.getElementById('userBadge');
+      if(userBadge){userBadge.textContent=user.email||'حساب مصادق عليه';userBadge.classList.remove('hidden')}
+
       sessionStorage.setItem('smartHSRUser', JSON.stringify({
         uid:user.uid,
         email:user.email || '',
@@ -966,6 +1225,8 @@ const firebaseConfig = {
         organizationId: managerContext.organizationId
       };
       appStarted = true;
+      document.getElementById('secureDot')?.classList.remove('pending','offline');
+      const secureLabel=document.getElementById('secureLabel');if(secureLabel)secureLabel.textContent='اتصال آمن';
       renderOrgBadge();
       initMap();
       loadFromFirestore();
@@ -1128,7 +1389,8 @@ style.textContent = `
   animation: fadeIn 0.3s ease;
 }
 .modal-content {
-  background: #fff;
+  background: var(--surface);
+  color: var(--text);
   border-radius: 18px;
   padding: 24px;
   max-width: 90%;
@@ -1141,7 +1403,7 @@ style.textContent = `
 }
 .modal-content h3 {
   font-size: 20px;
-  color: #0b2b3a;
+  color: var(--text);
   font-weight: 800;
   margin-bottom: 16px;
 }
