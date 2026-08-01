@@ -46,6 +46,41 @@ async function readJsonBody(req) {
 
 function isNonEmptyString(v) { return typeof v === 'string' && v.trim().length > 0; }
 
+const RECENT_AUTH_WINDOW_SECONDS = 10 * 60;
+const PASSWORD_TARGET_ROLES = ['inspector', 'contractor'];
+
+function hasRecentAuthentication(decoded, nowSeconds = Math.floor(Date.now() / 1000)) {
+  const authTime = Number(decoded && decoded.auth_time);
+  return Number.isFinite(authTime) && authTime > 0 && authTime <= nowSeconds + 60
+    && nowSeconds - authTime <= RECENT_AUTH_WINDOW_SECONDS;
+}
+
+function passwordPolicyReason(password, target) {
+  if (typeof password !== 'string' || password.length < 12) return 'password_policy_failed';
+  if (password !== password.trim()) return 'password_policy_failed';
+  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+    return 'password_policy_failed';
+  }
+  const normalized = password.toLowerCase();
+  const obvious = ['password', 'qwerty', 'admin', 'welcome', 'letmein', '1234', 'abcd'];
+  if (obvious.some(value => normalized.includes(value)) || /(.)\1{3,}/.test(normalized) || /(.{2,})\1{2,}/.test(normalized)) {
+    return 'password_policy_failed';
+  }
+  const identityParts = [target && target.email, target && target.name]
+    .filter(isNonEmptyString)
+    .flatMap(value => String(value).toLowerCase().split(/[^\p{L}\p{N}]+/u))
+    .filter(value => value.length >= 3);
+  return identityParts.some(value => normalized.includes(value)) ? 'password_policy_failed' : null;
+}
+
+function safeAdminFailure(error) {
+  const code = error && error.errorInfo && error.errorInfo.code;
+  if (code === 'auth/email-already-exists') return { statusCode: 409, reason: 'email_already_exists' };
+  if (code === 'auth/invalid-email') return { statusCode: 400, reason: 'invalid_email' };
+  if (code === 'auth/invalid-password') return { statusCode: 400, reason: 'invalid_password' };
+  return { statusCode: 500, reason: 'temporary_failure' };
+}
+
 // Locate a managed user's record (managers/ or users/) by uid.
 async function findRecord(db, uid) {
   const mgr = await db.collection('managers').doc(uid).get();
@@ -167,23 +202,37 @@ module.exports = async function handler(req, res) {
       case 'setTempPassword': {
         const { uid, password } = body;
         if (!isNonEmptyString(uid) || !isNonEmptyString(password)) {
-          return sendJson(res, 400, { error: 'uid_and_password_required' });
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'password_policy_failed' });
+        }
+        // This sensitive action is deliberately manager-only. Owners and
+        // supervisors use their separate approved workflows and cannot inherit
+        // organization-manager password authority through this endpoint.
+        if (!caller.isManager || caller.role !== 'manager' || !isNonEmptyString(caller.organizationId)) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'password_management_denied' });
+        }
+        if (!hasRecentAuthentication(decoded)) {
+          return sendJson(res, 401, { error: 'unauthenticated', reason: 'reauthentication_required' });
         }
         const record = await findRecord(db, uid);
-        if (!record) return sendJson(res, 404, { error: 'record_not_found' });
-        const decision = assertCanManage(caller, {
-          targetRole: record.data.role, targetOrganizationId: record.data.organizationId,
-        });
-        if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+        if (!record || !PASSWORD_TARGET_ROLES.includes(record.data.role)) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'password_target_denied' });
+        }
+        if (!isNonEmptyString(record.data.organizationId) || record.data.organizationId !== caller.organizationId) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'target_organization_mismatch' });
+        }
+        const policyFailure = passwordPolicyReason(password, record.data);
+        if (policyFailure) return sendJson(res, 400, { error: 'invalid_request', reason: policyFailure });
 
         await auth.updateUser(uid, { password }); // password set, never stored/logged
+        await auth.revokeRefreshTokens(uid);
         await record.ref.set({
           mustChangePassword: true,
           passwordUpdatedAt: FieldValue.serverTimestamp(),
+          sessionsRevokedAt: FieldValue.serverTimestamp(),
         }, { merge: true });
 
         // No password echoed back.
-        return sendJson(res, 200, { uid, mustChangePassword: true });
+        return sendJson(res, 200, { uid, mustChangePassword: true, revoked: true });
       }
 
       // ---- enable / disable an account ----
@@ -240,7 +289,7 @@ module.exports = async function handler(req, res) {
     }
   } catch (e) {
     // Never leak internals or any credential material.
-    const msg = (e && e.errorInfo && e.errorInfo.code) || 'internal_error';
-    return sendJson(res, 500, { error: 'operation_failed', code: msg });
+    const failure = safeAdminFailure(e);
+    return sendJson(res, failure.statusCode, { error: 'request_failed', reason: failure.reason });
   }
 };
