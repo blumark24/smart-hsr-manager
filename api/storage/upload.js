@@ -83,21 +83,44 @@ function safeScope(value) {
   return ALLOWED_SCOPES.includes(clean) ? clean : 'before';
 }
 
+// Root folder every evidence object lives under. It is also the one segment a
+// deployment's B2_FILE_PREFIX is likely to already end with.
+const OBJECT_ROOT = 'observations';
+
 // B2_FILE_PREFIX is operator-controlled; normalize it and drop anything that
-// could climb out of the prefix ('..', backslashes, empty segments).
-function normalizedPrefix(value) {
+// could climb out of the prefix ('..', backslashes, empty segments). Leading
+// and trailing slashes disappear with the empty-segment filter, and an
+// adjacent repeat of the same segment is collapsed.
+function normalizedPrefixSegments(value) {
   const raw = typeof value === 'string' ? value.trim() : '';
-  if (!raw) return '';
+  if (!raw) return [];
   const segments = raw.split('/').map(s => s.trim()).filter(s => s && s !== '.' && s !== '..' && /^[A-Za-z0-9_-]+$/.test(s));
-  return segments.join('/');
+  return segments.filter((segment, index) => index === 0 || segment !== segments[index - 1]);
+}
+
+function normalizedPrefix(value) {
+  return normalizedPrefixSegments(value).join('/');
 }
 
 function buildObjectKey({ prefix, organizationId, scope, extension, now = new Date(), uuid = crypto.randomUUID() }) {
   const year = String(now.getUTCFullYear());
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const head = normalizedPrefix(prefix);
-  const tail = `observations/${organizationId}/${scope}/${year}/${month}/${uuid}.${extension}`;
-  return head ? `${head}/${tail}` : tail;
+  // The tail is authoritative and is never rewritten: organizationId, scope,
+  // date and filename pass through exactly as given.
+  const tail = [OBJECT_ROOT, organizationId, scope, year, month, `${uuid}.${extension}`];
+  const head = normalizedPrefixSegments(prefix);
+
+  // Junction de-duplication only. B2_FILE_PREFIX is commonly set to
+  // 'observations' (or '<something>/observations'), which used to produce
+  // 'observations/observations/<org>/...'. If the prefix already ends at the
+  // object root, don't repeat it.
+  //
+  // Deliberately limited to this one join: collapsing repeats *inside* the
+  // tail would corrupt a key whenever organizationId or scope happened to
+  // equal the segment before it.
+  if (head.length && head[head.length - 1] === OBJECT_ROOT) tail.shift();
+
+  return [...head, ...tail].join('/');
 }
 
 // Reads the caller's OWN users/{uid} document. No other collection, no other
@@ -271,6 +294,8 @@ module.exports._test = {
   safeOrganizationId,
   safeScope,
   normalizedPrefix,
+  normalizedPrefixSegments,
+  OBJECT_ROOT,
   buildObjectKey,
   resolveInspectorContext,
   b2Configuration,
