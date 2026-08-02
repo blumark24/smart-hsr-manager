@@ -1,26 +1,29 @@
 /* ===============================
-   زر الإدخال الذكي القديم — محمي ولا يعاد تصميم مساره
+   زر الإدخال الذكي بأسلوب iOS حقيقي وواضح
    =============================== */
 #add-observation-btn {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 44px;
+
   padding: 0.65rem 1.5rem !important;
   font-size: 1rem !important;
   font-weight: 700;
   border: none;
   outline: none;
   cursor: pointer;
+
   color: #fff;
   border-radius: 14px;
   background: linear-gradient(180deg, #22c1c3 0%, #0ea5a0 100%);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.4);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  overflow: hidden;
+  box-shadow:
+    0 4px 8px rgba(0,0,0,0.15),
+    inset 0 1px 1px rgba(255,255,255,0.4);
+  transition: all 0.25s ease-in-out;
 }
+
+/* لمعة iOS عند المرور */
 #add-observation-btn::before {
   content: "";
   position: absolute;
@@ -28,261 +31,42 @@
   border-radius: inherit;
   background: linear-gradient(145deg, rgba(255,255,255,0.35), rgba(255,255,255,0));
   opacity: 0;
-  pointer-events: none;
   transition: opacity 0.3s;
 }
-#add-observation-btn:hover::before { opacity: 1; }
-#add-observation-btn:active {
-  transform: scale(0.96);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.22), inset 0 1px 1px rgba(255,255,255,0.2);
-}
-#add-observation-btn:focus-visible {
-  outline: 3px solid #67e8f9;
-  outline-offset: 3px;
-}
-
-/* ===============================
-   هيدر المراقب البلدي — طبقة خارج المسار القديم
-   =============================== */
-body {
-  padding-top: 78px;
-}
-
-#hsrHeader.hsr-header {
-  padding: 0;
-  background: linear-gradient(118deg, #071d33 0%, #0b304a 68%, #087f5b 100%);
-  border-bottom: 1px solid rgba(255,255,255,.16);
-  box-shadow: 0 8px 24px rgba(7,29,51,.2);
-  backdrop-filter: blur(12px);
-}
-
-#hsrHeader .hsr-top {
-  width: min(1180px, 100%);
-  min-height: 68px;
-  margin: 0 auto;
-  padding: .65rem clamp(.75rem, 2vw, 1.25rem);
-  display: grid;
-  grid-template-columns: auto minmax(0,1fr) auto;
-  align-items: center;
-  gap: .75rem;
-}
-
-#hsrHeader .brand {
-  min-width: 0;
-  gap: .5rem;
-  white-space: nowrap;
-}
-#hsrHeader .brand strong { font-weight: 900; letter-spacing: -.02em; }
-#hsrHeader .brand .accent { color: #8be3d5; font-size: .78rem; }
-#hsrHeader .brand .dot {
-  width: 9px;
-  height: 9px;
-  background: #68e4b8;
-  box-shadow: 0 0 0 5px rgba(104,228,184,.12);
-}
-
-#hsrHeader .user-info {
-  justify-self: center;
-  min-width: 0;
-  max-width: 100%;
-  padding: .45rem .75rem;
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: 12px;
-  background: rgba(255,255,255,.07);
-  box-shadow: none;
-}
-#hsrHeader .user-text,
-#hsrHeader #userFullInfo {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: .45rem;
-  flex-wrap: wrap;
-}
-#hsrHeader #userName { font-size: .9rem; overflow-wrap: anywhere; }
-#hsrHeader #userRole {
-  min-height: 28px;
-  display: inline-flex;
-  align-items: center;
-  padding: .2rem .55rem;
-  color: #d9fff2;
-  background: rgba(16,185,129,.2);
-  border: 1px solid rgba(104,228,184,.22);
-}
-#hsrHeader #orgBadge {
-  max-width: 290px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #cfe7ef;
-}
-
-#hsrHeader .menu-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .4rem;
-  min-width: 44px;
-  min-height: 44px;
-  padding: .45rem .7rem;
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 12px;
-  background: rgba(255,255,255,.08);
-  color: #fff;
-  font-weight: 800;
-}
-#hsrHeader .menu-toggle::after {
-  content: "التفاصيل";
-  font-family: 'Tajawal', sans-serif;
-  font-size: .76rem;
-}
-#hsrHeader .menu-toggle:hover { background: rgba(255,255,255,.15); }
-#hsrHeader .menu-toggle:focus-visible {
-  outline: 3px solid #67e8f9;
-  outline-offset: 2px;
-}
-#hsrHeader .menu-toggle[aria-expanded="true"] {
-  background: #fff;
-  color: #071d33;
-}
-
-/* الستارة الذكية: تنقل الأزرار الأصلية نفسها، ولا تنشئ نسخاً منها */
-#inspectorHeaderCurtain {
-  display: grid;
-  grid-template-rows: 0fr;
-  width: 100%;
-  background: rgba(5,24,41,.98);
-  border-top: 1px solid rgba(255,255,255,.1);
-  transition: grid-template-rows .24s ease;
-}
-#inspectorHeaderCurtain.open { grid-template-rows: 1fr; }
-#inspectorHeaderCurtainInner {
-  overflow: hidden;
-  width: min(1180px, 100%);
-  margin: 0 auto;
-}
-#inspectorHeaderCurtainContent {
-  display: grid;
-  grid-template-columns: minmax(0,1fr) auto;
-  align-items: center;
-  gap: .8rem;
-  padding: 0 clamp(.75rem,2vw,1.25rem);
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity .18s ease, transform .18s ease, padding .18s ease;
-}
-#inspectorHeaderCurtain.open #inspectorHeaderCurtainContent {
-  padding-top: .7rem;
-  padding-bottom: .8rem;
+#add-observation-btn:hover::before {
   opacity: 1;
-  transform: translateY(0);
 }
 
-#inspectorHeaderSummary {
-  display: flex;
-  align-items: center;
-  gap: .45rem;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-.inspector-header-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: .4rem;
-  min-height: 36px;
-  max-width: 100%;
-  padding: .35rem .65rem;
-  border: 1px solid rgba(255,255,255,.13);
-  border-radius: 999px;
-  background: rgba(255,255,255,.06);
-  color: #dceaf0;
-  font-size: .75rem;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-.inspector-header-chip strong { color: #fff; }
-
-#hsrHeader .actions {
-  display: none;
-  align-items: center;
-  justify-content: flex-end;
-  gap: .5rem;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-}
-#hsrHeader .actions.active { display: flex; }
-#hsrHeader .actions .btn,
-#hsrHeader .gps-indicator {
-  min-height: 44px;
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 11px;
-  background: rgba(255,255,255,.08);
-  color: #fff;
-  box-shadow: none;
-}
-#hsrHeader .actions .btn { padding: .5rem .75rem; }
-#hsrHeader .actions .btn:hover { transform: none; background: rgba(255,255,255,.15); }
-#hsrHeader .gps-indicator { padding: .45rem .65rem; }
-
-/* الحفاظ على المنطقة القديمة من زر الإدخال حتى النوافذ والسجل */
-#observations-log,
-#smartInputModal,
-#closeoutModal,
-#imageComparisonWrapper,
-#observationsList,
-#observationDetail {
-  isolation: isolate;
+/* تأثير الضغط والارتداد */
+#add-observation-btn:active {
+  transform: scale(0.94);
+  background: linear-gradient(180deg, #0fa29f 0%, #078a84 100%);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.25),
+    inset 0 1px 1px rgba(255,255,255,0.2);
+  transition: transform 0.15s ease;
 }
 
-/* عنوان التفاصيل فقط، بدون تعديل المحتوى الداخلي */
-#observationDetail > * { min-width: 0; }
-
-@media (max-width: 768px) {
-  body { padding-top: 122px; }
-  #hsrHeader .hsr-top {
-    min-height: auto;
-    grid-template-columns: minmax(0,1fr) auto;
-    row-gap: .55rem;
-  }
-  #hsrHeader .brand { grid-column: 1; grid-row: 1; }
-  #hsrHeader .menu-toggle { grid-column: 2; grid-row: 1; }
-  #hsrHeader .user-info {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    width: 100%;
-    justify-self: stretch;
-    justify-content: center;
-  }
-  #hsrHeader #orgBadge { max-width: min(62vw, 280px); }
-  #inspectorHeaderCurtainContent { grid-template-columns: 1fr; }
-  #inspectorHeaderSummary { justify-content: center; }
-  #hsrHeader .actions.active {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    width: 100%;
-  }
-  #hsrHeader .gps-indicator { grid-column: 1 / -1; justify-content: center; }
-  #hsrHeader .actions .btn { width: 100%; justify-content: center; }
+/* تأثير اهتزاز خفيف عند النقر */
+#add-observation-btn:active {
+  animation: iosBounce 0.25s ease-out;
+}
+@keyframes iosBounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.93); }
+  70% { transform: scale(1.02); }
+  100% { transform: scale(1); }
 }
 
+/* للجوال */
 @media (max-width: 480px) {
   #add-observation-btn {
-    width: min(90%, 290px);
-    font-size: .95rem !important;
-    padding: .65rem 1.2rem !important;
+    width: 90%;
+    max-width: 270px;
+    font-size: 0.95rem !important;
+    padding: 0.65rem 1.2rem !important;
+    border-radius: 12px;
     margin: 0 auto;
+    display: flex;
   }
-  #hsrHeader .brand .accent { display: none; }
-  #hsrHeader .menu-toggle::after { content: "تفاصيل"; }
-  #inspectorHeaderSummary { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-  .inspector-header-chip { justify-content: center; border-radius: 10px; }
-  #hsrHeader .actions.active { grid-template-columns: 1fr; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #inspectorHeaderCurtain,
-  #inspectorHeaderCurtainContent,
-  #add-observation-btn { transition: none; }
 }
