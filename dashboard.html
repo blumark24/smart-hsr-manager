@@ -2651,7 +2651,7 @@ import {
   serverTimestamp,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls, isLocalDemoReference } from './storage-adapter.js';
+import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls, isLocalDemoReference, isServerObjectKey } from './storage-adapter.js';
 import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
 
 const firebaseConfig = {
@@ -3088,10 +3088,30 @@ async function uploadImageToStorage(file, folder = 'HSR', observationId = null) 
   }
 }
 
+// References that exist but could not be fetched, so the UI can say so
+// instead of pretending the report has no image.
+const failedEvidence=new Set();
 async function resolveEvidenceReference(reference) {
   const external=safeImageUrl(reference);if(external)return external;
-  const result=await resolveObservationImage({reference,context:{uid:auth.currentUser?.uid,organizationId:inspectorContext.organizationId,role:'inspector'}});
-  return result.available?result.url:'';
+  if(!reference) return '';
+  // getIdToken is what lets a private B2 object key be fetched through the
+  // authenticated read endpoint; without it the adapter cannot resolve it.
+  const result=await resolveObservationImage({
+    reference,
+    context:{
+      uid:auth.currentUser?.uid,
+      organizationId:inspectorContext.organizationId,
+      role:'inspector',
+      getIdToken:()=>auth.currentUser?.getIdToken()
+    }
+  });
+  const url=result.available?result.url:'';
+  if(url) failedEvidence.delete(String(reference));
+  else if(isServerObjectKey(reference)||isLocalDemoReference(reference)){
+    failedEvidence.add(String(reference));
+    console.warn('تعذر تحميل صورة الملاحظة', result.reason||'unknown');
+  }
+  return url;
 }
 
 async function refreshDemoStorageBadge(){
@@ -3368,7 +3388,10 @@ window.showObservationDetail = async function(docId) {
     mediaContent.replaceChildren(image);
   } else {
     const missing=document.getElementById('noImageMessage');
-    if(missing)missing.textContent=String(obs.imagePath||obs.afterImagePath||'').startsWith('local-demo://')?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا توجد صورة مرفقة لهذا البلاغ.';
+    // A reference that failed to load is reported as a failure, never as
+    // "no image" — the two mean very different things to an inspector.
+    const failed=[obs.imagePath,obs.afterImagePath].some(v=>v&&failedEvidence.has(String(v)));
+    if(missing)missing.textContent=failed?'تعذر تحميل صورة الملاحظة':(String(obs.imagePath||obs.afterImagePath||'').startsWith('local-demo://')?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا توجد صورة مرفقة لهذا البلاغ.');
     unhide('noImageMessage');
   }
 

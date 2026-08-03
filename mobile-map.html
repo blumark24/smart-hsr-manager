@@ -667,7 +667,7 @@
     getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, query, where, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls } from './storage-adapter.js';
+  import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls, isLocalDemoReference, isServerObjectKey } from './storage-adapter.js';
   import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
 
 const firebaseConfig = {
@@ -1102,10 +1102,30 @@ const firebaseConfig = {
     openSheet(fresh, dist);
   }
 
+  // References that exist but could not be fetched, so the sheet can say so
+  // instead of pretending the task has no attachment.
+  const failedEvidence=new Set();
   async function resolveEvidenceReference(reference){
     const external=safeImageUrl(reference);if(external)return external;
-    const result=await resolveObservationImage({reference,context:{uid:auth?.currentUser?.uid,organizationId:contractorContext.organizationId,role:'contractor'}});
-    return result.available?result.url:'';
+    if(!reference) return '';
+    // getIdToken is what lets a private B2 object key be fetched through the
+    // authenticated read endpoint; without it the adapter cannot resolve it.
+    const result=await resolveObservationImage({
+      reference,
+      context:{
+        uid:auth?.currentUser?.uid,
+        organizationId:contractorContext.organizationId,
+        role:'contractor',
+        getIdToken:()=>auth?.currentUser?.getIdToken()
+      }
+    });
+    const url=result.available?result.url:'';
+    if(url) failedEvidence.delete(String(reference));
+    else if(isServerObjectKey(reference)||isLocalDemoReference(reference)){
+      failedEvidence.add(String(reference));
+      console.warn('تعذر تحميل صورة الملاحظة', result.reason||'unknown');
+    }
+    return url;
   }
 
   async function refreshDemoStorageBadge(){
@@ -1142,7 +1162,10 @@ const firebaseConfig = {
       sMedia.innerHTML = `<img src="${beforeImage}" alt="مرفق" style="width:100%;border-radius:10px">`;
     } else {
       const localMissing=String(o.imagePath||o.afterImagePath||'').startsWith('local-demo://');
-      sMedia.innerHTML = `<div class="card-mini" style="text-align:center">${localMissing?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا يوجد مرفق'}</div>`;
+      // A reference that failed to load is reported as a failure, never as
+      // "no attachment" — the two mean very different things to a contractor.
+      const failed=[o.imagePath,o.afterImagePath,o.afterImageUrl].some(v=>v&&failedEvidence.has(String(v)));
+      sMedia.innerHTML = `<div class="card-mini" style="text-align:center">${failed?'تعذر تحميل صورة الملاحظة':(localMissing?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا يوجد مرفق')}</div>`;
     }
 
     sheet.classList.add('open');
