@@ -21,6 +21,7 @@
       --text:#0A1931; --muted:#64748B;
       --red:#EF4444; --amber:#F59E0B; --green:#10B981;
       --map-ring:#CFEAE8;
+      --app-header-height:64px;
     }
     [data-theme="dark"]{
       --bg:#0e1726; --card:#102036; --line:#25334A; --shadow:0 10px 30px rgba(0,0,0,.35);
@@ -28,8 +29,9 @@
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%}
+    html,body{height:100%; max-width:100%; overflow-x:hidden}
     body{margin:0; font-family:'Tajawal',sans-serif; background:var(--bg); color:var(--text)}
+    img{max-width:100%}
 
     /* Header (mobile-first, compact) */
     .app-header {
@@ -127,12 +129,16 @@
 
     /* Map frame */
     .map-wrap{
-      position:relative; height:calc(100vh - 64px);
+      position:relative;
+      height:calc(100dvh - var(--app-header-height) - 20px);
       margin:10px; border-radius:18px;
       background:linear-gradient(#fff,#fff) padding-box,
                  linear-gradient(135deg, #ACE2E1 0%, #18A5A2 50%, #0A1931 100%) border-box;
       border:3px solid transparent; box-shadow:var(--shadow);
       overflow:hidden;
+    }
+    @supports not (height:100dvh){
+      .map-wrap{height:calc(100vh - var(--app-header-height) - 20px)}
     }
     [data-theme="dark"] .map-wrap{
       background:linear-gradient(var(--card),var(--card)) padding-box,
@@ -192,6 +198,7 @@
       background:#eefaf9; color:#0b6b68;
       border:1px solid rgba(24,165,162,0.25);
       padding:4px 10px; border-radius:999px;
+      max-width:100%; overflow:hidden; text-overflow:ellipsis;
       font-weight:900; font-size:12px; white-space:nowrap;
     }
     [data-theme="dark"] .org-badge{ background:#0f2a33; color:#b7f3ef; }
@@ -225,7 +232,7 @@
       font-weight:900; font-size:12px; box-shadow:var(--shadow);
     }
     .stale-note.show{display:block}
-    .field-status-capsule{position:absolute;z-index:945;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;max-width:calc(100% - 24px);padding:7px 11px;border:1px solid rgba(8,145,178,.28);border-radius:999px;background:rgba(255,255,255,.92);box-shadow:var(--shadow);font-size:11px;font-weight:900;white-space:nowrap}
+    .field-status-capsule{position:absolute;z-index:945;top:12px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px;align-items:center;max-width:calc(100% - 24px);padding:7px 11px;border:1px solid rgba(8,145,178,.28);border-radius:999px;background:rgba(255,255,255,.92);box-shadow:var(--shadow);font-size:11px;font-weight:900;white-space:normal;text-align:center;overflow-wrap:anywhere}
     [data-theme="dark"] .field-status-capsule{background:rgba(15,23,42,.92)}
     [data-theme="dark"] .stale-note{ background:#3b2f12; color:#fcd34d }
 
@@ -310,7 +317,7 @@
     .card-mini{
       background:var(--card); border:1px solid var(--line);
       border-radius:12px; padding:8px; font-weight:800;
-      font-size:13px;
+      font-size:13px; overflow-wrap:anywhere;
     }
     textarea, select, input[type="file"]{
       border:1px solid var(--line); border-radius:10px;
@@ -501,6 +508,7 @@
       .filter-body{ flex-direction: column; align-items:flex-start; }
       .filter-range{ width: 100%; }
       .legend-inline { flex-direction: column; gap: 6px; text-align: center; }
+      .field-status-capsule{width:calc(100% - 24px)}
     }
 
     .map-wrap {
@@ -629,19 +637,20 @@
       <div class="field">
         <label>الحالة</label>
         <select id="sStatus">
-          <option value="PENDING">قيد الانتظار</option>
-          <option value="IN_PROGRESS">قيد المعالجة</option>
-          <option value="COMPLETED">تمت المعالجة</option>
+          <option value="PENDING" disabled>قيد الانتظار</option>
+          <option value="IN_PROGRESS" disabled>قيد المعالجة</option>
+          <option value="PENDING_REVIEW" disabled>بانتظار مراجعة المراقب</option>
+          <option value="COMPLETED" disabled>تمت المعالجة</option>
         </select>
       </div>
 
       <div class="field">
-        <label>صورة بعد الإصلاح (إلزامية عند الإغلاق)</label>
+        <label>صورة بعد الإصلاح (إلزامية للإرسال للمراجعة)</label>
         <input id="sAfter" type="file" accept="image/*">
       </div>
 
       <div class="field" style="grid-column:1/-1">
-        <label>المذكرة الختامية</label>
+        <label>ملاحظة المعالجة</label>
         <textarea id="sNote" rows="3" placeholder="اكتب المذكرة هنا..."></textarea>
       </div>
 
@@ -664,7 +673,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
-    getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, query, where, serverTimestamp
+    getFirestore, collection, onSnapshot, doc, getDoc, getDocFromServer, updateDoc, query, where, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls, isLocalDemoReference, isServerObjectKey } from './storage-adapter.js';
@@ -691,12 +700,78 @@ const firebaseConfig = {
   const contractorContext = { uid:null, organizationId:null, organizationName:'' };
   let organizationMapContext=null, mapOpenedForAssignment=false;
 
+  // ===== Contractor workflow policy (pure and locally testable) =====
+  function normalizeContractorAccess(data){
+    const value = data && typeof data === 'object' ? data : {};
+    const organizationId = typeof value.organizationId === 'string' ? value.organizationId.trim() : '';
+    if (value.role !== 'contractor' || value.active !== true || !organizationId) return null;
+    const organizationName = typeof value.organizationName === 'string' && value.organizationName.trim()
+      ? value.organizationName.trim()
+      : organizationId;
+    return { organizationId, organizationName };
+  }
+
+  function contractorNextStatus(currentStatus){
+    if (currentStatus === 'PENDING') return 'IN_PROGRESS';
+    if (currentStatus === 'IN_PROGRESS') return 'PENDING_REVIEW';
+    return null;
+  }
+
+  function validateReviewSubmission(note, hasAfterImage){
+    if (!String(note || '').trim()) return { ok:false, reason:'NOTE_REQUIRED' };
+    if (!hasAfterImage) return { ok:false, reason:'AFTER_IMAGE_REQUIRED' };
+    return { ok:true, reason:null };
+  }
+
+  function createReviewSaveCoordinator({ upload, update }){
+    let inFlight = false;
+    let pending = null;
+    return {
+      get inFlight(){ return inFlight; },
+      pendingReference(docId){ return pending?.docId === docId ? pending.afterReference : null; },
+      discard(docId){
+        if (!inFlight && (!docId || pending?.docId === docId)) pending = null;
+      },
+      async submit({ docId, blob, existingAfterReference, buildPayload }){
+        if (inFlight) return { ok:false, reason:'IN_FLIGHT', afterReference:pending?.afterReference || null };
+        inFlight = true;
+        let stage = 'upload';
+        try {
+          if (!pending || pending.docId !== docId){
+            pending = { docId, afterReference:existingAfterReference || null };
+          } else if (!pending.afterReference && existingAfterReference){
+            pending.afterReference = existingAfterReference;
+          }
+          if (!pending.afterReference){
+            pending.afterReference = await upload(blob, docId);
+            if (!pending.afterReference) throw new Error('empty-upload-reference');
+          }
+          stage = 'firestore';
+          await update(docId, buildPayload(pending.afterReference));
+          const afterReference = pending.afterReference;
+          pending = null;
+          return { ok:true, reason:null, afterReference };
+        } catch (error){
+          return {
+            ok:false,
+            reason:stage === 'upload' ? 'UPLOAD_FAILED' : 'FIRESTORE_FAILED',
+            error,
+            afterReference:pending?.afterReference || null
+          };
+        } finally {
+          inFlight = false;
+        }
+      }
+    };
+  }
+  // ===== End contractor workflow policy =====
+
   // ===== Arabic state machine for the map surface =====
   // Wording intentionally mirrors manager.html and dashboard.html so the
   // three municipality surfaces speak with one voice.
   const MAP_STATE_TEXT = {
-    loading:      '... جاري تحميل بلاغات مؤسستك ...',
-    empty:        'لا توجد بلاغات في مؤسستك حالياً.',
+    loading:      '... جاري تحميل المهام المسندة إليك ...',
+    empty:        'لا توجد مهام مسندة إليك حاليًا',
     error:        '⚠️ تعذر تحميل البلاغات. الرجاء تحديث الصفحة أو المحاولة لاحقاً.',
     unauthorized: '🚫 غير مصرح لك بالوصول. جاري تحويلك لصفحة الدخول...',
     offline:      '⚠️ تعذر الاتصال بالخدمة. لا يمكن عرض البلاغات حالياً.'
@@ -759,13 +834,46 @@ const firebaseConfig = {
     applyTheme(now);
   });
 
+  // Keep the approved map frame inside the usable mobile viewport even when
+  // the existing header wraps to two or three rows at 390px / 430px.
+  const appHeader = document.querySelector('.app-header');
+  function syncAppHeaderHeight(){
+    const height = Math.ceil(appHeader?.getBoundingClientRect().height || 64);
+    root.style.setProperty('--app-header-height', `${height}px`);
+  }
+  syncAppHeaderHeight();
+  window.addEventListener('resize', syncAppHeaderHeight, { passive:true });
+  if ('ResizeObserver' in window && appHeader){
+    new ResizeObserver(syncAppHeaderHeight).observe(appHeader);
+  }
+
+  // مركز احتياطي للعرض فقط (القنفذة) — [latitude, longitude] بترتيب Leaflet.
+  // لا يُعتمد أبداً كموقع بلاغ ولا يُكتب في أي مستند: وظيفته الوحيدة منع
+  // ظهور حاوية خريطة رمادية فارغة قبل توفر مركز المؤسسة أو موقع الجهاز.
+  const FALLBACK_MAP_CENTER = Object.freeze({ lat:19.1264, lng:41.0789, zoom:13 });
+
   const map = L.map('map', { zoomControl:false, attributionControl:true });
+  // Leaflet لا يرسم أي بلاطة قبل تحديد العرض. التمركز الابتدائي يحدث فوراً عند
+  // الإنشاء حتى لا تظهر الخريطة فارغة للمقاول الذي لا مهام مسندة إليه بعد.
+  map.setView([FALLBACK_MAP_CENTER.lat, FALLBACK_MAP_CENTER.lng], FALLBACK_MAP_CENTER.zoom);
   L.control.zoom({ position:'topright' }).addTo(map);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom:19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
   }).addTo(map);
   applyMapAttribution(map);
   const frameRing = L.layerGroup().addTo(map);
+
+  // تمركز موثّق بأولوية واضحة: مهام مسندة مؤكدة ← مركز المؤسسة ← القنفذة.
+  // يمرّ دائماً عبر openVerifiedMap فيبقى فحص organizationId لكل نقطة كما هو،
+  // ولا يُعرض أي إحداثي لا يخص مؤسسة المقاول المتحقق منها.
+  function ensureMapView(points = []){
+    const view = openVerifiedMap(
+      map, points, contractorContext.organizationId, organizationMapContext
+    );
+    if (view !== 'unavailable') return view;
+    map.setView([FALLBACK_MAP_CENTER.lat, FALLBACK_MAP_CENTER.lng], FALLBACK_MAP_CENTER.zoom);
+    return 'fallback';
+  }
 
   let meMarker=null, meCircle=null, lastMe=null;
   const radiusInput=document.getElementById('radiusInput'); radiusInput.value=2000;
@@ -865,9 +973,11 @@ const firebaseConfig = {
     if (meDistLabel) meDistLabel.textContent = `نطاقي: ${fmtMeters(r)}`;
 
     if(!mapOpenedForAssignment&&observations.length){
-      if(openVerifiedMap(map,observations,contractorContext.organizationId,organizationMapContext)==='observations')mapOpenedForAssignment=true;
+      if(ensureMapView(observations)==='observations')mapOpenedForAssignment=true;
     }else if(!observations.length){
-      openVerifiedMap(map,[],contractorContext.organizationId,organizationMapContext);
+      // بلا مهام مسندة: تبقى الخريطة معروضة على مركز المؤسسة أو القنفذة،
+      // ورسالة الحالة وحدها هي ما يخبر المقاول بعدم وجود مهام.
+      ensureMapView([]);
     }
     const legendCount = document.getElementById('legendCount');
     const legendBtn = document.getElementById('legendToggle');
@@ -878,21 +988,14 @@ const firebaseConfig = {
         legendCount.classList.add('flash');
         setTimeout(()=>legendCount.classList.remove('flash'), 700);
       }
-      const reds = observations.filter(o =>
-        o.status === "PENDING" &&
-        o.location &&
-        lastMe && haversine(lastMe, o.location.split(',').map(Number)) <= r
-      ).length;
-      const ambers = observations.filter(o =>
-        o.status === "IN_PROGRESS" &&
-        o.location &&
-        lastMe && haversine(lastMe, o.location.split(',').map(Number)) <= r
-      ).length;
-      const greens = observations.filter(o =>
-        o.status === "COMPLETED" &&
-        o.location &&
-        lastMe && haversine(lastMe, o.location.split(',').map(Number)) <= r
-      ).length;
+      const isNearWithStatus = (o, status) => {
+        if (o.status !== status || !lastMe) return false;
+        const point = observationCoordinates(o, contractorContext.organizationId);
+        return !!point && haversine(lastMe, [point.lat, point.lng]) <= r;
+      };
+      const reds = observations.filter(o => isNearWithStatus(o, 'PENDING')).length;
+      const ambers = observations.filter(o => isNearWithStatus(o, 'IN_PROGRESS')).length;
+      const greens = observations.filter(o => isNearWithStatus(o, 'COMPLETED')).length;
 
       document.getElementById("countRed").textContent = reds;
       document.getElementById("countAmber").textContent = ambers;
@@ -962,10 +1065,18 @@ const firebaseConfig = {
           location:data.location||'',
           imagePath:data.imagePath||null,
           afterImagePath:data.afterImagePath||null,
+          afterImageUrl:data.afterImageUrl||null,
           resolutionNote:data.resolutionNote||'',
           // Retained so every write can be re-checked against the session's
           // organization before it is sent (see the save handler).
           organizationId: data.organizationId || null,
+          assignedContractorUid:data.assignedContractorUid||null,
+          assignedContractorName:data.assignedContractorName||data.contractorName||data.contractor||'',
+          assignedByUid:data.assignedByUid||null,
+          assignedByName:data.assignedByName||data.supervisorName||'',
+          assignedAt:data.assignedAt||null,
+          supervisorNote:data.supervisorNote||'',
+          updatedByUid:data.updatedByUid||null,
           correctedLat:data.correctedLat,
           correctedLng:data.correctedLng,
           createdAtMs: data.createdAt?.toMillis ? data.createdAt.toMillis() : 0
@@ -1011,10 +1122,19 @@ const firebaseConfig = {
     startWatch();
     if(lastMe)map.setView(lastMe, 14, { animate:true });
   });
-  window.addEventListener('online',()=>{const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: متصل'});
-  window.addEventListener('offline',()=>{const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: غير متصل'});
+  window.addEventListener('online',()=>{
+    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: متصل';
+    if (contractorContext.organizationId && !hasServerSnapshot) subscribeObservations();
+  });
+  window.addEventListener('offline',()=>{
+    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: غير متصل';
+    if (!hasServerSnapshot) setMapState('offline');
+  });
   centerBtn.addEventListener('click', ()=>{
-    if(lastMe)map.setView(lastMe, map.getZoom()<14?14:map.getZoom(), { animate:true });
+    if(lastMe){ map.setView(lastMe, map.getZoom()<14?14:map.getZoom(), { animate:true }); return; }
+    // بلا موقع جهاز: «تمركز» يعيد العرض إلى المهام المسندة، أو مركز المؤسسة،
+    // أو القنفذة — بدل أن يكون الزر بلا أي أثر مرئي.
+    ensureMapView(observations);
   });
 
   statusFilter.addEventListener('change', paint);
@@ -1034,9 +1154,23 @@ const firebaseConfig = {
   const sheetTitle   = document.getElementById('sheetTitle');
   const sheetOverlay = document.getElementById('sheetOverlay');
 
-  let currentDocId=null, currentAfterData=null;
+  let currentDocId=null, currentAfterData=null, currentWorkflowStatus=null;
+  let saveInFlight=false, openSheetEpoch=0;
   const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const MAX_COMPRESSED_IMAGE_BYTES = 700 * 1024;
+
+  const reviewSaveCoordinator = createReviewSaveCoordinator({
+    upload: (blob, docId) => uploadObservationImage({
+      blob,
+      observationId:docId,
+      context:{
+        uid:auth?.currentUser?.uid,
+        organizationId:contractorContext.organizationId,
+        role:'contractor'
+      }
+    }),
+    update: (docId, payload) => updateDoc(doc(db,'observations',docId), payload)
+  });
 
   function escapeHTML(value){
     return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -1055,20 +1189,50 @@ const firebaseConfig = {
     }
   }
 
-  // Canonical Arabic status labels, identical across manager.html,
-  // dashboard.html and this page. Stored Firestore values are unchanged.
+  // Contractor-visible status labels. PENDING_REVIEW is intentionally
+  // contractor-only until the reviewer surfaces adopt the proposed workflow.
   const STATUS_LABELS = {
     PENDING:     'قيد الانتظار',
     IN_PROGRESS: 'قيد المعالجة',
+    PENDING_REVIEW:'بانتظار مراجعة المراقب',
     COMPLETED:   'تمت المعالجة'
   };
 
   function setChip(status){
     sChip.className='pill '+(
       status==='PENDING'?'red':
-      status==='IN_PROGRESS'?'amber':'green'
+      status==='COMPLETED'?'green':'amber'
     );
     sChip.textContent = STATUS_LABELS[status] || status;
+  }
+
+  function setSaveButtonText(text){
+    sSave.innerHTML = `<i data-lucide="save"></i>${escapeHTML(text)}`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function renderWorkflowControls(status, retryReason=null){
+    currentWorkflowStatus = status;
+    sStatus.value = STATUS_LABELS[status] ? status : 'PENDING';
+    sStatus.disabled = true;
+    setChip(status);
+    const actionable = status === 'PENDING' || status === 'IN_PROGRESS';
+    sSave.disabled = saveInFlight || !actionable;
+    sSave.setAttribute('aria-busy', saveInFlight ? 'true' : 'false');
+    sNote.disabled = saveInFlight || status !== 'IN_PROGRESS';
+    sAfter.disabled = saveInFlight || status !== 'IN_PROGRESS';
+    if (retryReason === 'UPLOAD_FAILED' || retryReason === 'FIRESTORE_FAILED'){
+      setSaveButtonText('إعادة المحاولة');
+    } else if (status === 'PENDING'){
+      setSaveButtonText('بدء المعالجة');
+    } else {
+      setSaveButtonText('إرسال للمراجعة');
+    }
+  }
+
+  function setSaveBusy(busy, retryReason=null){
+    saveInFlight = busy;
+    renderWorkflowControls(currentWorkflowStatus, retryReason);
   }
 
   sAfter.addEventListener('change', async (e)=>{
@@ -1081,7 +1245,10 @@ const firebaseConfig = {
     }
     currentAfterData = null;
     try {
-      currentAfterData = await compressImage(f);
+      const compressed = await compressImage(f);
+      reviewSaveCoordinator.discard(currentDocId);
+      currentAfterData = compressed;
+      renderWorkflowControls(currentWorkflowStatus);
     } catch (error) {
       alert(error?.message || 'تعذر معالجة الصورة المختارة.');
       e.target.value='';
@@ -1128,21 +1295,58 @@ const firebaseConfig = {
     return url;
   }
 
+  function observationDetailHTML(observation){
+    const point = observationCoordinates(observation, contractorContext.organizationId);
+    const values = [escapeHTML(observation.details || '—').replace(/\n/g,'<br>')];
+    if (point){
+      values.push(`<strong>الإحداثيات:</strong> ${escapeHTML(`${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`)}`);
+    }
+    values.push(`<strong>الإسناد:</strong> ${escapeHTML(observation.assignedContractorName || 'المقاول الحالي')}`);
+    if (observation.assignedByName){
+      values.push(`<strong>المشرف:</strong> ${escapeHTML(observation.assignedByName)}`);
+    }
+    if (observation.supervisorNote){
+      values.push(`<strong>ملاحظة المشرف:</strong> ${escapeHTML(observation.supervisorNote)}`);
+    }
+    return values.join('<br>');
+  }
+
+  async function readVerifiedWritableObservation(docId){
+    const user = auth?.currentUser;
+    if (!user || !contractorContext.organizationId || user.uid !== contractorContext.uid){
+      throw new Error('contractor-session-invalid');
+    }
+    const [accessSnap, observationSnap] = await Promise.all([
+      getDocFromServer(doc(db,'users',user.uid)),
+      getDocFromServer(doc(db,'observations',docId))
+    ]);
+    const access = accessSnap.exists() ? normalizeContractorAccess(accessSnap.data()) : null;
+    if (!access || access.organizationId !== contractorContext.organizationId){
+      throw new Error('contractor-access-revoked');
+    }
+    if (!observationSnap.exists()) throw new Error('observation-not-found');
+    const data = observationSnap.data() || {};
+    if (data.organizationId !== contractorContext.organizationId || data.assignedContractorUid !== user.uid){
+      throw new Error('assignment-scope-denied');
+    }
+    return data;
+  }
+
   async function refreshDemoStorageBadge(){
     const connector=await getConnectorConfiguration(contractorContext.organizationId);
     document.getElementById('localDemoBadge')?.classList.toggle('hidden',!(connector?.active&&connector.type===LOCAL_DEMO_TYPE));
   }
 
   async function openSheet(o, dist){
+    const requestEpoch = ++openSheetEpoch;
     currentDocId=o.docId; currentAfterData=null;
     // Reset the file input so a photo staged for a previous observation is
     // never silently associated with this one.
     if (sAfter) sAfter.value='';
     sheetTitle.textContent = `ملاحظة #${o.id||'—'}`;
     sTitleEl.textContent = o.title||'—';
-    sDetails.innerHTML = escapeHTML(o.details||'—').replace(/\n/g,'<br>');
-    sStatus.value = o.status||'PENDING';
-    setChip(o.status||'PENDING');
+    sDetails.innerHTML = observationDetailHTML(o);
+    renderWorkflowControls(o.status||'PENDING');
     sNote.value = o.resolutionNote||'';
     sDistance.textContent = dist
       ? (dist<1000?`${Math.round(dist)} م`:`${(dist/1000).toFixed(1)} كم`)
@@ -1150,8 +1354,11 @@ const firebaseConfig = {
 
     revokeAllObservationImageUrls();
     sMedia.innerHTML = '';
-    const beforeImage = await resolveEvidenceReference(o.imagePath);
-    const afterImage = await resolveEvidenceReference(o.afterImagePath);
+    const [beforeImage, afterImage] = await Promise.all([
+      resolveEvidenceReference(o.imagePath).catch(()=>''),
+      resolveEvidenceReference(o.afterImagePath || o.afterImageUrl).catch(()=>''),
+    ]);
+    if (requestEpoch !== openSheetEpoch || currentDocId !== o.docId) return;
     if (afterImage){
       sMedia.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -1172,6 +1379,7 @@ const firebaseConfig = {
   }
 
   function closeSheet(){
+    openSheetEpoch++;
     revokeAllObservationImageUrls();
     sheet.classList.remove('open');
   }
@@ -1181,6 +1389,7 @@ const firebaseConfig = {
   sheetOverlay.addEventListener('click', closeSheet);
 
   sSave.addEventListener('click', async ()=>{
+    if (saveInFlight || reviewSaveCoordinator.inFlight) return;
     if (!currentDocId){ closeSheet(); return; }
 
     // Re-verify session + tenancy immediately before writing. The target must
@@ -1192,42 +1401,114 @@ const firebaseConfig = {
       return;
     }
     const target = observations.find(x=>x.docId===currentDocId);
-    if (!target || target.organizationId !== contractorContext.organizationId){
+    if (!target || target.organizationId !== contractorContext.organizationId || target.assignedContractorUid !== auth.currentUser.uid){
       toast('لا يمكن تحديث بلاغ خارج نطاق مؤسستك.');
       closeSheet();
       return;
     }
 
-    const newStatus = sStatus.value;
-    // A previously stored closing photo also satisfies the requirement, so a
-    // closed report can still have its note corrected without re-uploading.
-    if (newStatus==='COMPLETED' && !currentAfterData && !target.afterImagePath){
-      alert('إغلاق البلاغ يتطلب صورة "بعد" صالحة وحجمها لا يتجاوز 700 كيلوبايت بعد الضغط.');
+    const nextStatus = contractorNextStatus(currentWorkflowStatus);
+    if (!nextStatus){
+      toast(currentWorkflowStatus === 'PENDING_REVIEW'
+        ? 'تم إرسال البلاغ للمراجعة ولا يمكن للمقاول تعديله الآن.'
+        : 'هذه الحالة لا تسمح بتحديث من المقاول.');
       return;
     }
 
-    // Identity comes only from the authenticated session. Proposed Rules V3
-    // limits this contractor to its own assignment and these closeout/audit
-    // fields.
-    let afterReference=null;
-    try{
-      if(currentAfterData)afterReference=await uploadObservationImage({blob:currentAfterData,observationId:currentDocId,context:{uid:auth.currentUser.uid,organizationId:contractorContext.organizationId,role:'contractor'}});
-    }catch(_){toast('تعذر حفظ صورة المعالجة: يجب تفعيل مخزن معتمد أو وضع العرض المحلي لهذه المؤسسة.');return}
-    const payload = {
-      status: newStatus,
-      resolutionNote: sNote.value || `تم التحديث بتاريخ ${new Date().toLocaleString('ar-SA')}`,
-      updatedByUid: auth.currentUser.uid,
-      updatedAt: serverTimestamp()
-    };
-    if (afterReference) payload.afterImagePath = afterReference;
+    const note = sNote.value.trim();
+    const pendingAfterReference = reviewSaveCoordinator.pendingReference(currentDocId);
+    const existingAfterReference = pendingAfterReference
+      || (currentAfterData ? null : (target.afterImagePath || target.afterImageUrl || null));
+    if (nextStatus === 'PENDING_REVIEW'){
+      const validation = validateReviewSubmission(note, !!(currentAfterData || existingAfterReference));
+      if (!validation.ok){
+        if (validation.reason === 'NOTE_REQUIRED'){
+          alert('اكتب ملاحظة معالجة حقيقية قبل إرسال البلاغ للمراجعة.');
+          sNote.focus();
+        } else {
+          alert('إرسال البلاغ للمراجعة يتطلب صورة "بعد" صالحة وحجمها لا يتجاوز 700 كيلوبايت بعد الضغط.');
+          sAfter.focus();
+        }
+        return;
+      }
+    }
 
+    let retryReason = null;
+    setSaveBusy(true);
     try {
-      await updateDoc(doc(db,'observations', currentDocId), payload);
-      toast('تم الحفظ بنجاح');
+      const fresh = await readVerifiedWritableObservation(currentDocId);
+
+      // A previous request may have reached Firestore even if its response was
+      // interrupted. Treat only a server-read matching submission as success;
+      // never send the same update again in that case.
+      if (nextStatus === 'PENDING_REVIEW' && fresh.status === 'PENDING_REVIEW'){
+        const pendingReference = reviewSaveCoordinator.pendingReference(currentDocId);
+        const savedReference = fresh.afterImagePath || fresh.afterImageUrl || null;
+        if (fresh.updatedByUid === auth.currentUser.uid && fresh.resolutionNote === note
+            && (!pendingReference || savedReference === pendingReference)){
+          reviewSaveCoordinator.discard(currentDocId);
+          toast('البلاغ موجود بالفعل بانتظار مراجعة المراقب.');
+          closeSheet();
+          return;
+        }
+      }
+
+      if (fresh.status !== currentWorkflowStatus){
+        throw new Error('observation-status-changed');
+      }
+
+      if (nextStatus === 'IN_PROGRESS'){
+        await updateDoc(doc(db,'observations',currentDocId), {
+          status:'IN_PROGRESS',
+          updatedByUid:auth.currentUser.uid,
+          updatedAt:serverTimestamp()
+        });
+        toast('تم بدء معالجة البلاغ');
+        closeSheet();
+        return;
+      }
+
+      const result = await reviewSaveCoordinator.submit({
+        docId:currentDocId,
+        blob:currentAfterData,
+        existingAfterReference,
+        buildPayload:afterReference => ({
+          status:'PENDING_REVIEW',
+          resolutionNote:note,
+          afterImagePath:afterReference,
+          updatedByUid:auth.currentUser.uid,
+          updatedAt:serverTimestamp()
+        })
+      });
+      if (!result.ok){
+        retryReason = result.reason;
+        console.error(result.reason === 'UPLOAD_FAILED'
+          ? 'Contractor after-image upload failed'
+          : 'Contractor review submission failed', result.error);
+        toast(result.reason === 'UPLOAD_FAILED'
+          ? 'تعذر رفع صورة المعالجة. احتُفظت البيانات لإعادة المحاولة.'
+          : 'تعذر إرسال البلاغ. لن تُرفع الصورة مرة أخرى عند إعادة المحاولة.');
+        return;
+      }
+      toast('تم إرسال البلاغ لمراجعة المراقب');
+      currentAfterData = null;
       closeSheet();
-    } catch (e){
-      console.error(e);
-      toast('تعذر حفظ التحديث. الرجاء التحقق من الاتصال والمحاولة مرة أخرى.');
+    } catch (error){
+      console.error('Contractor workflow update failed', error);
+      if (['contractor-session-invalid','contractor-access-revoked'].includes(error?.message)){
+        retryReason = null;
+        await denyMapAccess();
+      } else if (['assignment-scope-denied','observation-not-found','observation-status-changed'].includes(error?.message)){
+        retryReason = null;
+        toast('تغيّر البلاغ أو الإسناد على الخادم. أُعيد تحميل البيانات الموثقة.');
+        closeSheet();
+        subscribeObservations();
+      } else {
+        retryReason = 'FIRESTORE_FAILED';
+        toast('تعذر حفظ التحديث. احتُفظت البيانات لإعادة المحاولة.');
+      }
+    } finally {
+      if (saveInFlight) setSaveBusy(false, retryReason);
     }
   });
 
@@ -1408,26 +1689,49 @@ const firebaseConfig = {
 
   let mapBooted = false;
   function bootMap(){
-    if (mapBooted) return;
-    mapBooted = true;
     renderOrgBadge();
     subscribeObservations();
+    if (mapBooted) return;
+    mapBooted = true;
     drawMe();
     lucide.createIcons();
+  }
+
+  function clearContractorSurface(){
+    if (obsUnsub){ try{ obsUnsub(); }catch(_){} obsUnsub = null; }
+    observations = [];
+    clearAllMarkers();
+    hasServerSnapshot = false;
+    mapOpenedForAssignment = false;
+    organizationMapContext = null;
+    contractorContext.uid = null;
+    contractorContext.organizationId = null;
+    contractorContext.organizationName = '';
+    currentDocId = null;
+    currentAfterData = null;
+    currentWorkflowStatus = null;
+    reviewSaveCoordinator.discard();
+    if (watchId !== null && navigator.geolocation){
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    lastMe = null;
+    if (meMarker){ meMarker.remove(); meMarker = null; }
+    if (meCircle){ meCircle.remove(); meCircle = null; }
+    frameRing.clearLayers();
+    // الخريطة تُفرَّغ من كل بيانات الجلسة السابقة، لكنها تبقى معروضة على المركز
+    // الاحتياطي بدل [0,0] حتى لا تومض حاوية رمادية أثناء إعادة التوجيه.
+    map.setView([FALLBACK_MAP_CENTER.lat,FALLBACK_MAP_CENTER.lng],FALLBACK_MAP_CENTER.zoom,{animate:false});
+    document.getElementById('localDemoBadge')?.classList.add('hidden');
+    closeSheet();
+    renderOrgBadge();
+    setStaleNotice(null);
   }
 
   // Tears live data down BEFORE signing out, so no record from the previous
   // session (or organization) stays on screen while the redirect is in flight.
   async function denyMapAccess(){
-    if (obsUnsub){ try{ obsUnsub(); }catch(_){} obsUnsub = null; }
-    observations = [];
-    clearAllMarkers();
-    hasServerSnapshot = false;
-    contractorContext.uid = null;
-    contractorContext.organizationId = null;
-    contractorContext.organizationName = '';
-    renderOrgBadge();
-    setStaleNotice(null);
+    clearContractorSurface();
     setMapState('unauthorized');
     try{ if (auth?.currentUser) await signOut(auth); }catch(e){ console.warn(e); }
     window.location.replace('login.html');
@@ -1439,15 +1743,9 @@ const firebaseConfig = {
   // organizationId — all four are treated identically.
   async function verifyContractorAccess(user){
     if (!user) return null;
-    const snap = await getDoc(doc(db, 'users', user.uid));
+    const snap = await getDocFromServer(doc(db, 'users', user.uid));
     if (!snap.exists()) return null;
-    const data = snap.data() || {};
-    const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
-    if (data.role !== 'contractor' || data.active === false || !organizationId) return null;
-    const organizationName = typeof data.organizationName === 'string' && data.organizationName.trim()
-      ? data.organizationName.trim()
-      : organizationId;
-    return { organizationId, organizationName };
+    return normalizeContractorAccess(snap.data());
   }
 
   // Recover a valid wrong-role session without signing it out. The manager
@@ -1470,23 +1768,31 @@ const firebaseConfig = {
   }
 
   if (FIREBASE_READY){
+    let authVerificationEpoch = 0;
     setMapState('loading');
     onAuthStateChanged(auth, async (user) => {
+      const epoch = ++authVerificationEpoch;
+      clearContractorSurface();
+      setMapState('loading');
       if (!user){ await denyMapAccess(); return; }
       let alternate = null;
       try{ alternate = await resolveAlternateRoute(user); }
       catch(err){ console.error('تعذر التحقق من مسار الدور البديل', err); }
+      if (epoch !== authVerificationEpoch || auth.currentUser?.uid !== user.uid) return;
       if (alternate){ window.location.replace(alternate); return; }
       let verified = null;
       try{ verified = await verifyContractorAccess(user); }
       catch(err){ console.error('تعذر التحقق من صلاحية المقاول', err); verified = null; }
+      if (epoch !== authVerificationEpoch || auth.currentUser?.uid !== user.uid) return;
       if (!verified){ await denyMapAccess(); return; }
       contractorContext.uid = user.uid;
       contractorContext.organizationId = verified.organizationId;
       contractorContext.organizationName = verified.organizationName;
       try{ organizationMapContext=await fetchOrganizationMapContext(auth,{organizationId:verified.organizationId}); }
       catch(_){ organizationMapContext=null; }
+      if (epoch !== authVerificationEpoch || auth.currentUser?.uid !== user.uid) return;
       await refreshDemoStorageBadge().catch(()=>{});
+      if (epoch !== authVerificationEpoch || auth.currentUser?.uid !== user.uid) return;
       bootMap();
     });
   } else {

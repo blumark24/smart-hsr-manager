@@ -1,6 +1,7 @@
 const STATUS = Object.freeze({
   PENDING: { color:'#ef4444', icon:'!', label:'قيد الانتظار', motion:'active' },
   IN_PROGRESS: { color:'#f59e0b', icon:'↻', label:'قيد المعالجة', motion:'slow' },
+  PENDING_REVIEW: { color:'#f59e0b', icon:'↻', label:'بانتظار مراجعة المراقب', motion:'slow' },
   COMPLETED: { color:'#10b981', icon:'✓', label:'تمت المعالجة', motion:'static' }
 });
 
