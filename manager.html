@@ -523,7 +523,7 @@
       getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, EmailAuthProvider,
       reauthenticateWithCredential, updatePassword, sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { LOCAL_DEMO_TYPE, isLocalDemoReference, getConnectorConfiguration, resolveObservationImage, revokeAllObservationImageUrls } from './storage-adapter.js';
+    import { LOCAL_DEMO_TYPE, isLocalDemoReference, isServerObjectKey, getConnectorConfiguration, resolveObservationImage, revokeAllObservationImageUrls } from './storage-adapter.js';
     import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
 
 // إعدادات Firebase الخاصة بك
@@ -1318,18 +1318,37 @@ const firebaseConfig = {
     }
     const ICONS = { CREW: makeDot('#3b82f6') };
     const resolvedLocalImages=new Map();
-    const hasEvidenceReference=value=>!!(safeImageUrl(value)||isLocalDemoReference(value));
+    // A private-bucket object key is evidence too: it just cannot be used as
+    // img.src directly, it has to be fetched through the authenticated read
+    // endpoint first. Without this the manager saw "لا يوجد دليل" for every
+    // report uploaded to B2.
+    const hasEvidenceReference=value=>!!(safeImageUrl(value)||isLocalDemoReference(value)||isServerObjectKey(value));
     const displayEvidenceUrl=value=>safeImageUrl(value)||(resolvedLocalImages.get(String(value||''))||'');
+    // Records which references were tried and failed, so the UI can say so
+    // instead of silently pretending the report has no evidence.
+    const failedEvidence=new Set();
     async function resolveManagerEvidence(reference){
       const external=safeImageUrl(reference);if(external)return external;
-      if(!isLocalDemoReference(reference))return '';
-      const result=await resolveObservationImage({reference,context:{uid:auth?.currentUser?.uid,organizationId:managerContext.organizationId,role:managerContext.role}});
-      resolvedLocalImages.set(String(reference),result.available?result.url:'');
-      return result.available?result.url:'';
+      if(!isLocalDemoReference(reference)&&!isServerObjectKey(reference))return '';
+      const result=await resolveObservationImage({
+        reference,
+        context:{
+          uid:auth?.currentUser?.uid,
+          organizationId:managerContext.organizationId,
+          role:managerContext.role,
+          getIdToken:()=>auth?.currentUser?.getIdToken()
+        }
+      });
+      const url=result.available?result.url:'';
+      resolvedLocalImages.set(String(reference),url);
+      if(url) failedEvidence.delete(String(reference));
+      else { failedEvidence.add(String(reference)); console.warn('تعذر تحميل صورة الملاحظة', result.reason||'unknown'); }
+      return url;
     }
     async function prepareLocalDemoEvidence(){
-      revokeAllObservationImageUrls();resolvedLocalImages.clear();
-      const refs=[...new Set(observations.flatMap(o=>[o.imagePath,o.afterImagePath]).filter(isLocalDemoReference))];
+      revokeAllObservationImageUrls();resolvedLocalImages.clear();failedEvidence.clear();
+      const refs=[...new Set(observations.flatMap(o=>[o.imagePath,o.afterImagePath])
+        .filter(value=>isLocalDemoReference(value)||isServerObjectKey(value)))];
       await Promise.all(refs.map(reference=>resolveManagerEvidence(reference).catch(()=>'')));
     }
     async function refreshDemoStorageBadge(){
@@ -1485,7 +1504,11 @@ const firebaseConfig = {
       const detail=document.getElementById('twinDetail');if(!detail)return;
       if(!o){detail.className='state-box';detail.innerHTML='<h3 id="twinDetailTitle" class="font-black mb-2">تفاصيل البلاغ</h3><p>اختر بلاغاً موثّق الموقع لعرض دورة حياته ودليل المعالجة.</p>';return}
       const before=displayEvidenceUrl(o.imagePath),after=displayEvidenceUrl(o.afterImagePath);
-      const localUnavailable=[o.imagePath,o.afterImagePath].some(isLocalDemoReference)?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا يتوفر دليل معالجة مصور لهذا البلاغ.';
+      // A reference that exists but could not be fetched is reported as a
+      // failure, never as "no evidence" — the two mean very different things
+      // to a manager reviewing a report.
+      const evidenceFailed=[o.imagePath,o.afterImagePath].some(v=>v&&failedEvidence.has(String(v)));
+      const localUnavailable=evidenceFailed?'تعذر تحميل صورة الملاحظة':([o.imagePath,o.afterImagePath].some(isLocalDemoReference)?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا يتوفر دليل معالجة مصور لهذا البلاغ.');
       const evidence=before||after?`<div class="twin-evidence">${before?`<figure><img src="${before}" alt="دليل البلاغ قبل المعالجة" loading="lazy"><figcaption class="type-meta mt-1">قبل المعالجة</figcaption></figure>`:'<div class="state-box">صورة ما قبل المعالجة غير متاحة.</div>'}${after?`<figure><img src="${after}" alt="دليل البلاغ بعد المعالجة" loading="lazy"><figcaption class="type-meta mt-1">بعد المعالجة</figcaption></figure>`:'<div class="state-box">صورة ما بعد المعالجة غير متاحة.</div>'}</div>`:`<div class="state-box">${localUnavailable}</div>`;
       detail.className='twin-detail';
       detail.innerHTML=`<div class="twin-detail-head"><p class="section-label">بلاغ موثّق</p><h3 id="twinDetailTitle" class="text-xl font-black">${escapeHTML(o.title||'بلاغ دون عنوان')}</h3><p class="type-meta">${escapeHTML(o.displayId||o.id||'المعرف غير متاح')}</p></div><div class="twin-meta"><div><span>الحالة</span><strong>${escapeHTML(statusLabels[o.status]||'غير متاحة')}</strong></div><div><span>المراقب المسؤول</span><strong>${escapeHTML(userDisplay(o.createdByUid,o.inspector))}</strong></div><div><span>المقاول المسند</span><strong>${escapeHTML(contractorDisplay(o))}</strong></div><div><span>آخر تحديث</span><strong>${escapeHTML(formatTimestamp(o.updatedAt))}</strong></div></div><section><h3 class="font-black mb-3">دورة حياة البلاغ</h3><div class="timeline">${timelineHTML(o)}</div></section><section><h3 class="font-black mb-3">دليل المعالجة</h3>${evidence}${o.resolutionNote?`<div class="mt-3 p-3 rounded-xl" style="background:var(--surface-2)"><span class="type-meta">ملاحظة المعالجة</span><p>${escapeHTML(o.resolutionNote)}</p></div>`:'<p class="type-meta mt-2">لا توجد ملاحظة معالجة موثّقة.</p>'}</section>`;

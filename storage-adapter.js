@@ -75,6 +75,49 @@ export function isLocalDemoReference(reference) {
   return !!parseLocalReference(reference);
 }
 
+// A reference that is neither a local-demo asset nor an absolute URL is a
+// server-side object key in the private bucket. It is NOT usable as img.src —
+// it must be fetched through the authenticated read endpoint.
+export function isServerObjectKey(reference) {
+  const raw = typeof reference === 'string' ? reference.trim() : '';
+  if (!raw || raw.length > 512) return false;
+  if (parseLocalReference(raw)) return false;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return false;   // https:, data:, local-demo:
+  if (raw.startsWith('/') || raw.includes('//') || raw.includes('\\') || raw.includes('..')) return false;
+  return /^[A-Za-z0-9_\-/.]+\.(?:jpe?g|png|webp)$/i.test(raw);
+}
+
+// Fetches a private object through the server and hands back a blob URL.
+// The B2 bucket is never made public and no bucket URL reaches the browser.
+export async function resolveServerObjectImage({ reference, idToken }) {
+  const key = typeof reference === 'string' ? reference.trim() : '';
+  if (!isServerObjectKey(key)) return { kind: 'server', available: false, url: null, reason: 'invalid-object-key' };
+  if (!idToken) return { kind: 'server', available: false, url: null, reason: 'missing-id-token' };
+
+  let response;
+  try {
+    response = await fetch(`/api/storage/read?key=${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${idToken}` }
+    });
+  } catch (_) {
+    return { kind: 'server', available: false, url: null, reason: 'network-error' };
+  }
+  if (!response.ok) {
+    // Server error codes only — never provider or bucket detail.
+    const failure = await response.json().catch(() => ({}));
+    const reason = typeof failure?.error === 'string' ? failure.error : `http-${response.status}`;
+    return { kind: 'server', available: false, url: null, reason, status: response.status };
+  }
+
+  const blob = await response.blob();
+  if (!blob || !blob.size || !String(blob.type || '').startsWith('image/')) {
+    return { kind: 'server', available: false, url: null, reason: 'not-an-image' };
+  }
+  const url = URL.createObjectURL(blob);
+  objectUrls.add(url);
+  return { kind: 'server', available: true, url, mimeType: blob.type, byteSize: blob.size };
+}
+
 export async function getConnectorConfiguration(organizationId) {
   const id = requiredText(organizationId, 'organization');
   return (await transact(CONNECTOR_STORE, 'readonly', store => store.get(id))) || null;
@@ -149,9 +192,23 @@ export async function uploadObservationImage({ blob, observationId = null, conte
   return `${LOCAL_DEMO_SCHEME}${encodeURIComponent(verified.organizationId)}/${encodeURIComponent(assetKey)}`;
 }
 
+// Handles every reference shape a report can carry:
+//   local-demo://…        -> on-device blob (demo storage)
+//   https://… / data:…    -> legacy direct URL, usable as-is
+//   observations/…        -> private object key, fetched via the read endpoint
 export async function resolveObservationImage({ reference, context }) {
   const parsed = parseLocalReference(reference);
-  if (!parsed) return { kind: 'external', available: false, url: null };
+  if (!parsed) {
+    const raw = typeof reference === 'string' ? reference.trim() : '';
+    if (/^https:\/\//i.test(raw) || /^data:image\//i.test(raw)) {
+      return { kind: 'external', available: true, url: raw };
+    }
+    if (isServerObjectKey(raw)) {
+      const idToken = typeof context?.getIdToken === 'function' ? await context.getIdToken() : context?.idToken;
+      return resolveServerObjectImage({ reference: raw, idToken });
+    }
+    return { kind: 'external', available: false, url: null, reason: 'unsupported-reference' };
+  }
   const verified = verifiedAssetContext(context);
   if (parsed.organizationId !== verified.organizationId) return { kind: 'local-demo', available: false, url: null, reason: 'organization-mismatch' };
   const record = await transact(ASSET_STORE, 'readonly', store => store.get(`${parsed.organizationId}/${parsed.assetKey}`));
