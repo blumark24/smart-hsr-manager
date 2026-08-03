@@ -46,6 +46,7 @@
     .card{background:var(--surface);border:1px solid var(--line);border-radius:1.2rem;box-shadow:var(--shadow);padding:1.15rem;min-width:0}
     .kpi-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.75rem;margin:1rem 0}
     .kpi-card{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding:1rem;min-height:128px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 24px rgba(7,29,51,.05)}
+    [hidden]{display:none!important}
     .kpi-card:before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--metric,#1ba7b8)}
     .kpi-card .metric-label{font-size:.75rem;font-weight:800;color:var(--muted)}.kpi-card .metric-value{font-size:clamp(1.7rem,2.4vw,2.35rem);font-weight:900;color:var(--color-navy);line-height:1}.dark .kpi-card .metric-value{color:var(--text)}
     .kpi-card .metric-note{font-size:.68rem;color:var(--muted)}
@@ -182,7 +183,7 @@
       <article class="kpi-card" style="--metric:#087f5b"><span class="metric-label">تمت المعالجة</span><strong id="kpi-closed" class="metric-value">—</strong><span class="metric-note">بلاغات مكتملة</span></article>
       <article class="kpi-card" style="--metric:#0c2d49"><span class="metric-label">نسبة الإنجاز</span><strong id="kpi-rate" class="metric-value">—</strong><span class="metric-note">من إجمالي البلاغات</span></article>
       <article class="kpi-card" style="--metric:#7f56d9"><span class="metric-label">توثيق قبل/بعد</span><strong id="kpi-photo" class="metric-value">—</strong><span class="metric-note">دليل معالجة مكتمل</span></article>
-      <article class="kpi-card" style="--metric:#667085"><span class="metric-label">متوسط زمن المعالجة</span><strong id="kpi-resolution" class="metric-value text-xl">غير متاح</strong><span class="metric-note">يظهر عند توفر وقت الإنشاء والإغلاق</span></article>
+      <article id="kpi-resolution-card" class="kpi-card" style="--metric:#667085" hidden><span class="metric-label">متوسط زمن المعالجة</span><strong id="kpi-resolution" class="metric-value text-xl"></strong></article>
       <span id="kpi-open" class="hidden" aria-hidden="true">—</span>
     </section>
 
@@ -646,7 +647,7 @@ const firebaseConfig = {
       const photo = observations.filter(o=>hasEvidenceReference(o.imagePath) && hasEvidenceReference(o.afterImagePath)).length;
       const rate = total ? Math.round((closed/total)*100) : null;
       const resolutionDurations = observations.map(o=>{
-        const start=o.createdAtMs;
+        const start=timestampToMs(o.createdAt);
         const end=timestampToMs(o.closedAt);
         return start>0 && end>start ? end-start : null;
       }).filter(Number.isFinite);
@@ -658,7 +659,10 @@ const firebaseConfig = {
       document.getElementById('kpi-closed').textContent = closed;
       document.getElementById('kpi-photo').textContent = photo;
       document.getElementById('kpi-rate').textContent = rate===null ? 'غير متاح' : `${rate}%`;
-      document.getElementById('kpi-resolution').textContent = averageMs===null ? 'غير متاح' : formatDuration(averageMs);
+      const resolutionCard=document.getElementById('kpi-resolution-card');
+      const resolutionValue=document.getElementById('kpi-resolution');
+      resolutionCard.hidden=averageMs===null;
+      resolutionValue.textContent=averageMs===null ? '' : formatResolutionDuration(averageMs);
       document.getElementById('briefRate').textContent = rate===null ? '—' : `${rate}%`;
       document.getElementById('briefProgress').style.width = `${rate || 0}%`;
       document.getElementById('briefMessage').textContent = total
@@ -679,6 +683,15 @@ const firebaseConfig = {
       const hours=Math.round(ms/3600000);
       if(hours<24) return `${Math.max(1,hours)} س`;
       return `${Math.round(hours/24)} يوم`;
+    }
+    function formatResolutionDuration(ms){
+      const totalMinutes=Math.max(1,Math.round(ms/60000));
+      const days=Math.floor(totalMinutes/1440);
+      const hours=Math.floor((totalMinutes%1440)/60);
+      const minutes=totalMinutes%60;
+      if(days) return hours ? `${days} يوم ${hours} س` : `${days} يوم`;
+      if(hours) return minutes ? `${hours} س ${minutes} د` : `${hours} س`;
+      return `${minutes} د`;
     }
     function elapsedLabel(observation){
       const start=observation.createdAtMs;
