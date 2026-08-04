@@ -530,8 +530,11 @@
     #mapPanel .map-wrap{display:block;height:calc(100dvh - var(--app-header-height) - 105px);min-height:480px;margin:0}.map-workspace-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}.map-workspace-head h1{margin:0;font-size:20px}.map-workspace-head p{margin:2px 0 0;color:var(--muted);font-size:11px}
     .evidence-stage{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}.evidence-card{padding:10px;border:1px solid var(--line);border-radius:13px;background:var(--bg)}.evidence-card-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px}.evidence-card-head strong{font-size:12px}.quality-badge{padding:3px 7px;border-radius:999px;background:#e4f7f5;color:#087f7b;font-size:9px;font-weight:900}.evidence-preview{min-height:118px;display:grid;place-items:center;overflow:hidden;border:1px dashed #bfd2d7;border-radius:10px;background:var(--card);color:var(--muted);font-size:11px;text-align:center}.evidence-preview img{width:100%;height:150px;object-fit:cover}.evidence-controls{display:flex;gap:6px;margin-top:7px}.evidence-controls label,.evidence-controls button{min-height:44px;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font-family:inherit;font-size:11px;font-weight:900;cursor:pointer}.evidence-controls input{position:absolute;width:1px;height:1px;opacity:0}.upload-progress{height:5px;margin-top:7px;border-radius:999px;background:var(--line);overflow:hidden}.upload-progress span{display:block;width:0;height:100%;background:var(--teal);transition:width .25s}.evidence-legacy-field{display:none}
     .workflow-presentation{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(76px,1fr));gap:5px;overflow-x:auto;padding:4px 0 7px}.workflow-step{position:relative;min-height:52px;padding:8px 5px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--muted);text-align:center;font-size:9px;font-weight:900}.workflow-step i{display:block;width:16px;height:16px;margin:0 auto 4px}.workflow-step.done{background:#e7f8f5;color:#087f7b;border-color:rgba(24,165,162,.28)}.workflow-step.current{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .task-actions{display:grid;gap:7px;align-self:center;min-width:132px}.task-action-secondary{min-height:44px;border:1px solid rgba(24,165,162,.32);border-radius:12px;background:#eefaf9;color:#087f7b;font-family:inherit;font-weight:900;cursor:pointer}.task-assignment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px;margin-top:8px}.task-assignment-grid span{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px;align-items:center;color:var(--muted);font-size:10px;font-weight:800}.task-assignment-grid i{width:14px;height:14px;color:var(--teal)}
+    .twin-summary{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:11px;border:1px solid rgba(24,165,162,.2);border-radius:14px;background:linear-gradient(135deg,rgba(24,165,162,.1),transparent)}.twin-summary div{min-width:0}.twin-summary span,.twin-summary strong{display:block}.twin-summary span{font-size:9px;color:var(--muted);font-weight:800}.twin-summary strong{margin-top:3px;font-size:11px;overflow-wrap:anywhere}.twin-timeline{grid-column:1/-1;min-height:63px;display:grid;grid-template-columns:repeat(4,minmax(74px,1fr));gap:6px;overflow-x:auto}.twin-timeline-step{padding:9px 6px;border-radius:11px;background:var(--bg);border:1px solid var(--line);text-align:center;font-size:9px;font-weight:900;color:var(--muted)}.twin-timeline-step.active{background:#e7f8f5;color:#087f7b;border-color:rgba(24,165,162,.3)}
+    .smart-observation-fab{position:fixed;z-index:1100;inset-inline-end:18px;bottom:18px;min-height:52px;display:flex;align-items:center;gap:8px;padding:0 17px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:linear-gradient(135deg,#0b3a4a,#18a5a2);color:#fff;font-family:inherit;font-weight:900;box-shadow:0 12px 28px rgba(10,25,49,.26);cursor:pointer}.smart-observation-fab i{width:20px}.smart-action-sheet{position:fixed;inset:0;z-index:4200;display:grid;place-items:end center;padding:18px;background:rgba(4,23,34,.48);backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:opacity .22s}.smart-action-sheet.open{opacity:1;pointer-events:auto}.smart-action-panel{width:min(480px,100%);padding:14px;border:1px solid rgba(255,255,255,.42);border-radius:22px;background:rgba(255,255,255,.9);box-shadow:0 22px 60px rgba(10,25,49,.3);transform:translateY(20px);transition:transform .22s}.smart-action-sheet.open .smart-action-panel{transform:none}[data-theme="dark"] .smart-action-panel{background:rgba(16,32,54,.94)}.smart-action-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.smart-action-head h2{margin:0;font-size:16px}.smart-action-head button{width:44px;height:44px;border:0;border-radius:12px;background:var(--bg);color:var(--text)}.smart-action-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.smart-action-option{min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);font-family:inherit;font-weight:900}.smart-action-option i{width:23px;color:var(--teal)}.smart-action-note{margin:10px 0 0;color:var(--muted);font-size:10px;text-align:center;font-weight:700}
     .sheet-header .btn{min-width:44px;min-height:44px;justify-content:center}button:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}button:active{transform:scale(.98)}
-    @media(max-width:760px){.app-header{padding:8px 10px}.contractor-header{grid-template-columns:minmax(0,1fr) auto}.header-brand{display:none}.contractor-identity{padding:0;border:0}.header-metrics .header-metric:first-child{display:none}.header-metric{padding:5px 7px}.workspace-shell{padding:10px 9px 24px}.operations-grid{grid-template-columns:1fr}.ops-rail{grid-template-columns:1fr 1fr}.task-summary{display:none}.task-card{grid-template-columns:1fr}.task-action{width:100%}.evidence-stage{grid-template-columns:1fr}}
+    @media(max-width:760px){.app-header{padding:8px 10px}.contractor-header{grid-template-columns:minmax(0,1fr) auto}.header-brand{display:none}.contractor-identity{padding:0;border:0}.header-metrics .header-metric:first-child{display:none}.header-metric{padding:5px 7px}.workspace-shell{padding:10px 9px 86px}.operations-grid{grid-template-columns:1fr}.ops-rail{grid-template-columns:1fr 1fr}.task-summary{display:none}.task-card{grid-template-columns:1fr}.task-actions{grid-template-columns:1fr 1fr;width:100%}.task-action{width:100%}.evidence-stage{grid-template-columns:1fr}.smart-observation-fab{inset-inline-end:12px;bottom:72px;justify-content:center}.twin-summary{grid-template-columns:1fr 1fr}.twin-summary>div:last-child{grid-column:1/-1}}
     @media(max-width:480px){.identity-copy strong{font-size:12px}.header-metrics{gap:4px}.workspace-nav{margin-bottom:10px}.ops-rail{grid-template-columns:1fr}#mapPanel .map-wrap{min-height:520px;height:calc(100dvh - var(--app-header-height) - 92px)}}
     @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
@@ -611,7 +614,7 @@
           <option value="ALL">كل الحالات</option>
           <option value="PENDING">قيد الانتظار</option>
           <option value="IN_PROGRESS">قيد المعالجة</option>
-          <option value="PENDING_REVIEW">بانتظار مراجعة المراقب</option>
+          <option value="PENDING_REVIEW">بانتظار الاعتماد</option>
           <option value="COMPLETED">تمت المعالجة</option>
         </select>
       </div>
@@ -636,16 +639,22 @@
 <!-- Observation details sheet (iOS-style centered modal) -->
 <section id="smartSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="sheet-overlay" id="sheetOverlay"></div>
-  <div class="sheet-panel" role="document">
+  <div class="sheet-panel" role="document" tabindex="-1">
     <div class="sheet-handle" id="sheetHandle" aria-hidden="true"></div>
     <div class="sheet-header">
-      <i data-lucide="file-search" class="w-5 h-5"></i>
-      <h3 id="sheetTitle">تفاصيل الملاحظة</h3>
+      <i data-lucide="orbit" class="w-5 h-5"></i>
+      <h3 id="sheetTitle">التوأم التشغيلي للمهمة</h3>
       <span id="sheetChip" class="pill" style="margin-inline-start:auto"></span>
-      <button id="sheetClose" class="btn btn-ghost" title="إغلاق"><i data-lucide="x"></i></button>
+      <button id="sheetClose" class="btn btn-ghost" title="إغلاق" aria-label="إغلاق التوأم التشغيلي"><i data-lucide="x"></i></button>
     </div>
 
     <div id="sheetBody" class="sheet-body">
+      <section class="twin-summary" aria-label="ملخص التوأم التشغيلي">
+        <div><span>رقم المهمة</span><strong id="twinModalNumber">—</strong></div>
+        <div><span>الحالة</span><strong id="twinModalStatus">—</strong></div>
+        <div><span>الموقع</span><strong id="twinModalLocation">—</strong></div>
+      </section>
+      <div id="twinModalTimeline" class="twin-timeline" aria-label="الخط الزمني للمهمة"></div>
       <div class="field">
         <label>العنوان</label>
         <div id="sTitle" class="card-mini"></div>
@@ -665,12 +674,10 @@
         <select id="sStatus">
           <option value="PENDING" disabled>قيد الانتظار</option>
           <option value="IN_PROGRESS" disabled>قيد المعالجة</option>
-          <option value="PENDING_REVIEW" disabled>بانتظار مراجعة المراقب</option>
+          <option value="PENDING_REVIEW" disabled>بانتظار الاعتماد</option>
           <option value="COMPLETED" disabled>تمت المعالجة</option>
         </select>
       </div>
-
-      <div id="workflowPresentation" class="workflow-presentation" aria-label="دورة تنفيذ المهمة"></div>
 
       <div class="field evidence-legacy-field">
         <label>صورة بعد الإصلاح (إلزامية للإرسال للمراجعة)</label>
@@ -706,6 +713,20 @@
         <i data-lucide="save"></i>حفظ التحديث
       </button>
     </div>
+  </div>
+</section>
+
+<button id="smartObservationFab" class="smart-observation-fab" type="button" aria-haspopup="dialog" aria-controls="smartObservationSheet"><i data-lucide="sparkles"></i>إنشاء ملاحظة ذكية</button>
+<section id="smartObservationSheet" class="smart-action-sheet" role="dialog" aria-modal="true" aria-labelledby="smartObservationTitle" hidden>
+  <div class="smart-action-panel">
+    <header class="smart-action-head"><div><h2 id="smartObservationTitle">إنشاء ملاحظة ذكية</h2><small>اختر طريقة التوثيق الميداني</small></div><button id="smartObservationClose" type="button" aria-label="إغلاق"><i data-lucide="x"></i></button></header>
+    <div class="smart-action-options">
+      <button class="smart-action-option" type="button" data-smart-mode="camera"><i data-lucide="camera"></i>الكاميرا</button>
+      <button class="smart-action-option" type="button" data-smart-mode="voice"><i data-lucide="mic"></i>ملاحظة صوتية</button>
+      <button class="smart-action-option" type="button" data-smart-mode="text"><i data-lucide="notebook-pen"></i>ملاحظة نصية</button>
+      <button class="smart-action-option" type="button" data-smart-mode="location"><i data-lucide="map-pin"></i>الموقع</button>
+    </div>
+    <p class="smart-action-note">مكوّن جاهز للربط المستقبلي — لا يتم إنشاء أو إرسال بيانات حالياً.</p>
   </div>
 </section>
 
@@ -748,7 +769,7 @@ const firebaseConfig = {
     if (value.role !== 'contractor' || value.active !== true || !organizationId) return null;
     const organizationName = typeof value.organizationName === 'string' && value.organizationName.trim()
       ? value.organizationName.trim()
-      : organizationId;
+      : 'الجهة الحكومية';
     const contractorName = typeof value.name === 'string' && value.name.trim()
       ? value.name.trim() : (typeof value.displayName === 'string' ? value.displayName.trim() : '');
     return { organizationId, organizationName, contractorName };
@@ -849,12 +870,9 @@ const firebaseConfig = {
   function renderOrgBadge(){
     const el = document.getElementById('orgBadge');
     if (!el) return;
-    if (contractorContext.organizationName){
-      el.textContent = 'المؤسسة: ' + contractorContext.organizationName;
-      el.hidden = false;
-    } else {
-      el.hidden = true;
-    }
+    const organizationName=contractorContext.organizationName||'الجهة الحكومية';
+    el.textContent = organizationName;
+    el.hidden = false;
     const name = contractorContext.contractorName || auth?.currentUser?.displayName || auth?.currentUser?.email?.split('@')[0] || 'مقاول Smart HSR';
     const nameEl=document.getElementById('contractorName');if(nameEl)nameEl.textContent=name;
     const avatar=document.getElementById('contractorAvatar');if(avatar)avatar.textContent=name.trim().charAt(0)||'م';
@@ -1111,9 +1129,11 @@ const firebaseConfig = {
           priority:data.priority||'NORMAL',
           estimatedMinutes:Number(data.estimatedMinutes)||null,
           slaDueAtMs:data.slaDueAt?.toMillis ? data.slaDueAt.toMillis() : 0,
+          deadlineAtMs:data.deadline?.toMillis ? data.deadline.toMillis() : (data.dueAt?.toMillis ? data.dueAt.toMillis() : 0),
           date:data.date||'',
           details:data.details||'',
           location:data.location||'',
+          locationName:data.locationName||data.address||data.area||'',
           imagePath:data.imagePath||null,
           afterImagePath:data.afterImagePath||null,
           afterImageUrl:data.afterImageUrl||null,
@@ -1126,6 +1146,7 @@ const firebaseConfig = {
           assignedByUid:data.assignedByUid||null,
           assignedByName:data.assignedByName||data.supervisorName||'',
           assignedAt:data.assignedAt||null,
+          assignedAtMs:data.assignedAt?.toMillis ? data.assignedAt.toMillis() : 0,
           supervisorNote:data.supervisorNote||'',
           updatedByUid:data.updatedByUid||null,
           correctedLat:data.correctedLat,
@@ -1150,33 +1171,34 @@ const firebaseConfig = {
 
   const locBtn=document.getElementById('locBtn');
   const centerBtn=document.getElementById('centerBtn');
-  let watchId=null;
+  let watchId=null, lastGpsAccuracy=null, gpsRequestEpoch=0;
 
-  function startWatch(){
+  function requestOneShotLocation({notify=true}={}){
     if (!navigator.geolocation){
-      alert('المتصفح لا يدعم تحديد الموقع.');
-      return;
+      if(notify)alert('المتصفح لا يدعم تحديد الموقع.');
+      return Promise.resolve(null);
     }
-    if (watchId!==null) return;
-    watchId = navigator.geolocation.watchPosition(pos=>{
-      lastMe=[pos.coords.latitude, pos.coords.longitude];
-      const accuracy=Math.round(pos.coords.accuracy||0), speed=Number(pos.coords.speed);
-      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent=`±${accuracy}م`;
-      const accuracyEl=document.getElementById('gpsAccuracyValue');if(accuracyEl)accuracyEl.textContent=`±${accuracy} متر`;
-      const updatedEl=document.getElementById('gpsLastUpdate');if(updatedEl){updatedEl.dataset.at=String(Date.now());updatedEl.textContent='الآن';}
-      const speedEl=document.getElementById('gpsSpeedValue');if(speedEl)speedEl.textContent=Number.isFinite(speed)?`${Math.round(speed*3.6)} كم/س`:'0 كم/س';
-      const navBtn=document.getElementById('openNavigationBtn');if(navBtn)navBtn.disabled=!getNavigationTarget();
-      paint();
-    }, err=>{
-      console.warn(err);
-      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent='غير متاح';
-      alert('تعذر تحديد الموقع. يرجى السماح بالصلاحيات.');
-    }, { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
+    if(watchId)return watchId;
+    const requestEpoch=++gpsRequestEpoch;
+    watchId=new Promise(resolve=>navigator.geolocation.getCurrentPosition(pos=>{
+        if(requestEpoch!==gpsRequestEpoch){resolve(null);return}
+        lastMe=[pos.coords.latitude,pos.coords.longitude];lastGpsAccuracy=Math.round(pos.coords.accuracy||0);
+        const speed=Number(pos.coords.speed),gps=document.getElementById('fieldGpsState');if(gps)gps.textContent=`±${lastGpsAccuracy}م`;
+        const accuracyEl=document.getElementById('gpsAccuracyValue');if(accuracyEl)accuracyEl.textContent=`±${lastGpsAccuracy} متر`;
+        const updatedEl=document.getElementById('gpsLastUpdate');if(updatedEl){updatedEl.dataset.at=String(Date.now());updatedEl.textContent='الآن';}
+        const speedEl=document.getElementById('gpsSpeedValue');if(speedEl)speedEl.textContent=Number.isFinite(speed)?`${Math.round(speed*3.6)} كم/س`:'0 كم/س';
+        const navBtn=document.getElementById('openNavigationBtn');if(navBtn)navBtn.disabled=!getNavigationTarget();paint();
+        watchId=null;resolve({coords:lastMe,accuracy:lastGpsAccuracy});
+      },err=>{if(requestEpoch!==gpsRequestEpoch){resolve(null);return}console.warn(err);const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent='غير متاح';watchId=null;if(notify)alert('تعذر تحديد الموقع. يرجى السماح بالصلاحيات.');resolve(null);},
+      {enableHighAccuracy:true,maximumAge:2000,timeout:10000}));
+    return watchId;
   }
 
-  locBtn.addEventListener('click', ()=>{
-    startWatch();
-    if(lastMe)map.setView(lastMe, 14, { animate:true });
+  function startWatch(){return requestOneShotLocation({notify:true})}
+
+  locBtn.addEventListener('click', async ()=>{
+    const fix=await startWatch();
+    if(fix?.coords)map.setView(fix.coords,14,{animate:true});
   });
   window.addEventListener('online',()=>{
     const e=document.getElementById('fieldConnectionState');if(e)e.textContent='متصل';
@@ -1216,7 +1238,7 @@ const firebaseConfig = {
   const evidenceProgressBar=document.getElementById('evidenceProgressBar');
   let stagedEvidenceUrl='';
 
-  let currentDocId=null, currentAfterData=null, currentWorkflowStatus=null;
+  let currentDocId=null, currentAfterData=null, currentWorkflowStatus=null, sheetOrigin=null;
   let saveInFlight=false, openSheetEpoch=0;
   const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const MAX_COMPRESSED_IMAGE_BYTES = 700 * 1024;
@@ -1256,14 +1278,16 @@ const firebaseConfig = {
   const STATUS_LABELS = {
     PENDING:     'قيد الانتظار',
     IN_PROGRESS: 'قيد المعالجة',
-    PENDING_REVIEW:'بانتظار مراجعة المراقب',
+    PENDING_REVIEW:'بانتظار الاعتماد',
     COMPLETED:   'تمت المعالجة'
   };
+  const CONTRACTOR_SUBMITTED = 'PENDING_REVIEW'; // UI semantic alias; preserves the approved backend workflow.
+  const EXECUTION_EVENT_PREFIX='[SMART_HSR_';
 
   const PRESENTATION_STAGE = {
     PENDING:{label:'مسندة',action:'ابدأ التوجه'},
     IN_PROGRESS:{label:'قيد العمل',action:'متابعة العمل'},
-    PENDING_REVIEW:{label:'بانتظار المراجعة',action:'عرض التفاصيل'},
+    PENDING_REVIEW:{label:'بانتظار الاعتماد',action:'عرض التفاصيل'},
     COMPLETED:{label:'مكتملة',action:'عرض التفاصيل'}
   };
 
@@ -1281,6 +1305,38 @@ const firebaseConfig = {
     return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')} ساعة`;
   }
 
+  function formatMissionDate(timestampMs,fallback='غير محدد'){
+    if(!Number.isFinite(timestampMs)||timestampMs<=0)return fallback;
+    return new Intl.DateTimeFormat('ar-SA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(timestampMs));
+  }
+
+  function priorityLabel(value){
+    const priority=String(value||'NORMAL').toUpperCase();
+    return priority==='URGENT'?'عاجل':priority==='HIGH'?'مرتفع':priority==='LOW'?'منخفض':'اعتيادي';
+  }
+
+  function buildExecutionEvent(kind,fix){
+    const coordinates=fix?.coords?.length===2?`${fix.coords[0].toFixed(6)},${fix.coords[1].toFixed(6)}`:'غير متاح';
+    const accuracy=Number.isFinite(fix?.accuracy)?`±${fix.accuracy}م`:'دقة غير متاحة';
+    return `[SMART_HSR_${kind}] ${new Date().toISOString()} | ${coordinates} | ${accuracy}`;
+  }
+
+  function executionEventLines(value){return String(value||'').split('\n').filter(line=>line.startsWith(EXECUTION_EVENT_PREFIX))}
+  function visibleResolutionNote(value){return String(value||'').split('\n').filter(line=>!line.startsWith(EXECUTION_EVENT_PREFIX)).join('\n').trim()}
+  function combinedExecutionNote(existing,userNote,eventLine){return [...new Set([...executionEventLines(existing),eventLine]),userNote.trim()].filter(Boolean).join('\n')}
+
+  function renderTwinModalTimeline(observation){
+    const timeline=document.getElementById('twinModalTimeline');if(!timeline)return;
+    const status=observation?.status||'PENDING';
+    const stages=[
+      {label:'تم الإسناد',active:true,time:formatMissionDate(observation?.assignedAtMs,'موثّق')},
+      {label:'بدأ التنفيذ',active:['IN_PROGRESS','PENDING_REVIEW','COMPLETED'].includes(status),time:status==='PENDING'?'بانتظار البدء':'تم التسجيل'},
+      {label:'رُفع الإنجاز',active:['PENDING_REVIEW','COMPLETED'].includes(status),time:['PENDING_REVIEW','COMPLETED'].includes(status)?'CONTRACTOR_SUBMITTED':'بانتظار المقاول'},
+      {label:'تم الاعتماد',active:status==='COMPLETED',time:status==='COMPLETED'?'مكتمل':'بانتظار الجهة'}
+    ];
+    timeline.innerHTML=stages.map(stage=>`<div class="twin-timeline-step ${stage.active?'active':''}">${escapeHTML(stage.label)}<small style="display:block;margin-top:3px">${escapeHTML(stage.time)}</small></div>`).join('');
+  }
+
   function renderContractorWorkspace(){
     const list=document.getElementById('contractorTaskList');if(!list)return;
     const active=observations.filter(o=>o.status!=='COMPLETED');
@@ -1289,9 +1345,8 @@ const firebaseConfig = {
     if(!observations.length){list.innerHTML='<div class="empty-workspace">لا توجد مهام مسندة إليك حالياً.</div>';renderOperationalTwin(null);return;}
     list.innerHTML=observations.map(o=>{
       const stage=PRESENTATION_STAGE[o.status]||{label:STATUS_LABELS[o.status]||'حالة غير متاحة',action:'عرض التفاصيل'};
-      const priority=String(o.priority||'NORMAL').toUpperCase()==='URGENT'?'عاجل':'اعتيادي';
-      const estimate=o.estimatedMinutes?`${o.estimatedMinutes} دقيقة تقديرية`:'المدة غير محددة';
-      return `<article class="task-card"><div class="task-card-main"><div class="task-topline"><span class="task-id">بلاغ #${escapeHTML(o.id||'—')}</span><span class="status-tag">${escapeHTML(stage.label)}</span><span class="priority-tag">${priority}</span></div><h2>${escapeHTML(o.title||o.category||'مهمة ميدانية')}</h2><div class="task-meta"><span><i data-lucide="layers-3"></i>${escapeHTML(o.category||'صيانة بلدية')}</span><span><i data-lucide="map-pin"></i>${escapeHTML(formatTaskDistance(o))}</span><span><i data-lucide="clock-3"></i>${escapeHTML(estimate)}</span></div><div class="task-sla"><div class="task-sla-head"><span>الوقت المتبقي</span><strong>${escapeHTML(formatSla(o))}</strong></div><div class="task-sla-track"><span></span></div></div></div><button class="task-action" type="button" data-task-id="${escapeHTML(o.docId)}">${escapeHTML(stage.action)}</button></article>`;
+      const priority=priorityLabel(o.priority),location=o.locationName||o.location||'موقع بلدي موثق';
+      return `<article class="task-card"><div class="task-card-main"><div class="task-topline"><span class="task-id">بلاغ #${escapeHTML(o.id||'—')}</span><span class="status-tag">${escapeHTML(stage.label)}</span><span class="priority-tag">${escapeHTML(priority)}</span></div><h2>${escapeHTML(o.title||o.category||'مهمة ميدانية')}</h2><div class="task-meta"><span><i data-lucide="map-pin"></i>${escapeHTML(location)}</span><span><i data-lucide="route"></i>${escapeHTML(formatTaskDistance(o))}</span></div><div class="task-assignment-grid"><span><i data-lucide="calendar-check"></i>أُسندت: ${escapeHTML(formatMissionDate(o.assignedAtMs,'وقت الإسناد غير متاح'))}</span><span><i data-lucide="alarm-clock"></i>الموعد النهائي: ${escapeHTML(formatMissionDate(o.deadlineAtMs,'غير محدد'))}</span></div><div class="task-sla"><div class="task-sla-head"><span>حالة SLA</span><strong>${escapeHTML(formatSla(o))}</strong></div><div class="task-sla-track"><span></span></div></div></div><div class="task-actions"><button class="task-action-secondary" type="button" data-task-action="location" data-task-id="${escapeHTML(o.docId)}"><i data-lucide="navigation"></i>فتح الموقع</button><button class="task-action" type="button" data-task-action="start" data-task-id="${escapeHTML(o.docId)}">${escapeHTML(stage.action)}</button></div></article>`;
     }).join('');
     renderOperationalTwin(active.find(o=>o.status==='IN_PROGRESS')||active[0]||observations[0]);
     lucide.createIcons();
@@ -1311,7 +1366,13 @@ const firebaseConfig = {
   }
 
   document.getElementById('contractorTaskList')?.addEventListener('click',event=>{
-    const button=event.target.closest('[data-task-id]');if(button)openCurrent(button.dataset.taskId);
+    const button=event.target.closest('[data-task-id]');if(!button)return;
+    const task=observations.find(item=>item.docId===button.dataset.taskId);if(!task)return;
+    if(button.dataset.taskAction==='location'){
+      const point=observationCoordinates(task,contractorContext.organizationId);if(!point){toast('موقع المهمة غير متاح.');return;}
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${point.lat},${point.lng}`)}`,'_blank','noopener,noreferrer');return;
+    }
+    openCurrent(button.dataset.taskId);
   });
   document.getElementById('openNavigationBtn')?.addEventListener('click',()=>{
     const target=getNavigationTarget();if(!target)return;
@@ -1327,6 +1388,20 @@ const firebaseConfig = {
   document.getElementById('tasksTab')?.addEventListener('click',()=>activateWorkspace('tasks'));
   document.getElementById('mapTab')?.addEventListener('click',()=>activateWorkspace('map'));
   setInterval(()=>{const el=document.getElementById('gpsLastUpdate');const at=Number(el?.dataset.at||0);if(el&&at)el.textContent=`قبل ${Math.max(1,Math.round((Date.now()-at)/1000))} ث`;},5000);
+
+  const smartObservationFab=document.getElementById('smartObservationFab');
+  const smartObservationSheet=document.getElementById('smartObservationSheet');
+  const smartObservationClose=document.getElementById('smartObservationClose');
+  function openSmartObservationSheet(){smartObservationSheet.hidden=false;requestAnimationFrame(()=>smartObservationSheet.classList.add('open'));smartObservationClose.focus()}
+  function closeSmartObservationSheet(){smartObservationSheet.classList.remove('open');setTimeout(()=>{smartObservationSheet.hidden=true;smartObservationFab.focus()},220)}
+  smartObservationFab?.addEventListener('click',openSmartObservationSheet);
+  smartObservationClose?.addEventListener('click',closeSmartObservationSheet);
+  smartObservationSheet?.addEventListener('click',event=>{if(event.target===smartObservationSheet)closeSmartObservationSheet()});
+  smartObservationSheet?.addEventListener('keydown',event=>{if(event.key==='Escape')closeSmartObservationSheet()});
+  smartObservationSheet?.querySelectorAll('[data-smart-mode]').forEach(button=>button.addEventListener('click',()=>{
+    const labels={camera:'الكاميرا',voice:'الملاحظة الصوتية',text:'الملاحظة النصية',location:'الموقع'};
+    toast(`${labels[button.dataset.smartMode]} جاهزة للربط في المرحلة القادمة`);
+  }));
 
   function setChip(status){
     sChip.className='pill '+(
@@ -1485,6 +1560,7 @@ const firebaseConfig = {
   }
 
   async function openSheet(o, dist){
+    sheetOrigin=document.activeElement;
     const requestEpoch = ++openSheetEpoch;
     currentDocId=o.docId; currentAfterData=null;
     // Reset the file input so a photo staged for a previous observation is
@@ -1495,11 +1571,17 @@ const firebaseConfig = {
     if(afterQualityBadge){afterQualityBadge.textContent='بانتظار الالتقاط';afterQualityBadge.removeAttribute('style');}
     if(retakeEvidenceBtn)retakeEvidenceBtn.disabled=true;
     if(evidenceProgressBar)evidenceProgressBar.style.width='0';
-    sheetTitle.textContent = `ملاحظة #${o.id||'—'}`;
+    sheetTitle.textContent = `التوأم التشغيلي — مهمة #${o.id||'—'}`;
     sTitleEl.textContent = o.title||'—';
     sDetails.innerHTML = observationDetailHTML(o);
     renderWorkflowControls(o.status||'PENDING');
-    sNote.value = o.resolutionNote||'';
+    sNote.value = visibleResolutionNote(o.resolutionNote);
+    const modalNumber=document.getElementById('twinModalNumber'),modalStatus=document.getElementById('twinModalStatus'),modalLocation=document.getElementById('twinModalLocation');
+    if(modalNumber)modalNumber.textContent=`#${o.id||'—'}`;
+    if(modalStatus)modalStatus.textContent=STATUS_LABELS[o.status]||'حالة غير متاحة';
+    if(modalLocation)modalLocation.textContent=o.locationName||o.location||'موقع بلدي موثق';
+    renderTwinModalTimeline(o);
+    const captureLabel=document.getElementById('captureLabel');if(captureLabel)captureLabel.textContent='رفع الإنجاز';
     sDistance.textContent = dist
       ? (dist<1000?`${Math.round(dist)} م`:`${(dist/1000).toFixed(1)} كم`)
       : '—';
@@ -1533,17 +1615,27 @@ const firebaseConfig = {
     }
 
     sheet.classList.add('open');
+    sheet.querySelector('.sheet-panel')?.focus();
   }
 
   function closeSheet(){
     openSheetEpoch++;
     revokeAllObservationImageUrls();
     sheet.classList.remove('open');
+    if(sheetOrigin instanceof HTMLElement)sheetOrigin.focus();
   }
   window.addEventListener('pagehide',revokeAllObservationImageUrls);
 
   sheetClose.addEventListener('click', closeSheet);
   sheetOverlay.addEventListener('click', closeSheet);
+  sheet.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){closeSheet();return}
+    if(event.key!=='Tab')return;
+    const focusable=[...sheet.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex="0"]')];
+    if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+  });
 
   sSave.addEventListener('click', async ()=>{
     if (saveInFlight || reviewSaveCoordinator.inFlight) return;
@@ -1590,6 +1682,14 @@ const firebaseConfig = {
       }
     }
 
+    // Privacy-respecting execution telemetry: collect one GPS fix only for
+    // the start or submission event. No background or continuous tracking.
+    const executionFix=await requestOneShotLocation({notify:false});
+    if(!executionFix){
+      alert('يتطلب تسجيل حدث التنفيذ قراءة موقع واحدة. فعّل GPS ثم أعد المحاولة.');
+      return;
+    }
+
     let retryReason = null;
     setSaveBusy(true);
     try {
@@ -1601,7 +1701,7 @@ const firebaseConfig = {
       if (nextStatus === 'PENDING_REVIEW' && fresh.status === 'PENDING_REVIEW'){
         const pendingReference = reviewSaveCoordinator.pendingReference(currentDocId);
         const savedReference = fresh.afterImagePath || fresh.afterImageUrl || null;
-        if (fresh.updatedByUid === auth.currentUser.uid && fresh.resolutionNote === note
+        if (fresh.updatedByUid === auth.currentUser.uid && visibleResolutionNote(fresh.resolutionNote) === note
             && (!pendingReference || savedReference === pendingReference)){
           reviewSaveCoordinator.discard(currentDocId);
           toast('البلاغ موجود بالفعل بانتظار مراجعة المراقب.');
@@ -1615,8 +1715,10 @@ const firebaseConfig = {
       }
 
       if (nextStatus === 'IN_PROGRESS'){
+        const startEvent=buildExecutionEvent('START',executionFix);
         await updateDoc(doc(db,'observations',currentDocId), {
           status:'IN_PROGRESS',
+          resolutionNote:combinedExecutionNote(fresh.resolutionNote,'',startEvent),
           updatedByUid:auth.currentUser.uid,
           updatedAt:serverTimestamp()
         });
@@ -1630,8 +1732,8 @@ const firebaseConfig = {
         blob:currentAfterData,
         existingAfterReference,
         buildPayload:afterReference => ({
-          status:'PENDING_REVIEW',
-          resolutionNote:note,
+          status:CONTRACTOR_SUBMITTED,
+          resolutionNote:combinedExecutionNote(fresh.resolutionNote,note,buildExecutionEvent('SUBMISSION',executionFix)),
           afterImagePath:afterReference,
           updatedByUid:auth.currentUser.uid,
           updatedAt:serverTimestamp()
@@ -1647,7 +1749,7 @@ const firebaseConfig = {
           : 'تعذر إرسال البلاغ. لن تُرفع الصورة مرة أخرى عند إعادة المحاولة.');
         return;
       }
-      toast('تم إرسال البلاغ لمراجعة المراقب');
+      toast('تم رفع الإنجاز — بانتظار الاعتماد');
       if(evidenceProgressBar)evidenceProgressBar.style.width='100%';
       currentAfterData = null;
       closeSheet();
@@ -1870,10 +1972,8 @@ const firebaseConfig = {
     currentAfterData = null;
     currentWorkflowStatus = null;
     reviewSaveCoordinator.discard();
-    if (watchId !== null && navigator.geolocation){
-      navigator.geolocation.clearWatch(watchId);
-      watchId = null;
-    }
+    // GPS is collected as one-shot privacy events only; no continuous watcher exists.
+    gpsRequestEpoch++;watchId = null;
     lastMe = null;
     if (meMarker){ meMarker.remove(); meMarker = null; }
     if (meCircle){ meCircle.remove(); meCircle = null; }
