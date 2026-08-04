@@ -871,7 +871,7 @@
     display: none;
   }
 
-  @media (max-width:700px) {
+  @media (max-width:430px) {
     body {
       padding-bottom: calc(106px + env(safe-area-inset-bottom)) !important;
     }
@@ -885,7 +885,11 @@
 
       height: 76px;
       display: grid !important;
-      grid-template-columns: repeat(4, minmax(0,1fr));
+      /* 5 equal slots: Home / Map / Add (center) / Log / Settings.
+         Settings itself lives outside this <nav> (see #mobileNavSettings,
+         positioned to overlay this 5th track) so its ID and handler
+         stay untouched. */
+      grid-template-columns: repeat(5, minmax(0,1fr));
       align-items: center;
       gap: 3px;
 
@@ -1057,7 +1061,7 @@
     }
   }
 
-  @media (min-width:701px) {
+  @media (min-width:431px) {
     #smartFieldDock {
       display: none !important;
     }
@@ -1065,7 +1069,7 @@
 </style>
 
 <style id="refine-smart-dock-primary">
-@media (max-width:700px) {
+@media (max-width:430px) {
   #smartFieldDock .smart-dock-primary {
     height: 58px !important;
     transform: none !important;
@@ -1716,39 +1720,48 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
      so the four dock cells keep their exact geometry. */
   #mobileNavSettings{display:none}
 
-  @media (max-width:700px){
-    /* Floats above the dock's left edge — dock bottom + 76px height + 8px gap. */
+  @media (max-width:430px){
+    /* No longer a floating button above the dock: it now overlays the
+       dock's own 5th grid track (see smart-field-dock-style, which sets
+       #smartFieldDock to a 5-column grid but only ever renders 4 real
+       children — the 5th track is left empty on purpose for this to sit
+       in). Same bottom/height as the dock itself, same math the dock
+       uses for its own inset/padding/gap, so the two align pixel-for-
+       pixel without any DOM change to the <nav>. Visual style (transparent
+       background, icon-over-label, same font/color) matches .smart-dock-item
+       so it reads as a genuine 5th item, not a separate floating control. */
     #mobileNavSettings{
       position:fixed;
       z-index:1401;
-      left:max(10px, env(safe-area-inset-left));
-      bottom:calc(max(10px, env(safe-area-inset-bottom)) + 84px);
-      flex:0 0 auto;
-      width:44px;height:44px;
-      display:grid;place-items:center;
-      padding:0;
-      border:1px solid rgba(211,255,250,.16);
-      border-radius:13px;
-      background:linear-gradient(135deg,rgba(5,34,45,.92),rgba(5,28,40,.95));
-      color:#b8d1d4;
-      box-shadow:0 10px 24px rgba(2,17,29,.32);
-      backdrop-filter:blur(18px) saturate(140%);
-      -webkit-backdrop-filter:blur(18px) saturate(140%);
+      left:calc(max(8px, env(safe-area-inset-left)) + 7px);
+      right:auto;
+      bottom:max(8px, env(safe-area-inset-bottom));
+      width:calc((100vw - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right)) - 26px) / 5);
+      height:70px;
+      display:flex!important;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:3px;
+      padding:4px 2px;
+      margin:0;
+      border:0;
+      border-radius:15px;
+      background:transparent;
+      color:#a9c5ca;
+      font-family:inherit;
+      font-size:.64rem;
+      font-weight:850;
+      line-height:1;
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
-      transition:background .2s ease,color .2s ease,transform .15s ease;
+      transition:background .2s ease,color .2s ease,transform .18s ease;
     }
+    #mobileNavSettings span{white-space:nowrap}
     #mobileNavSettings svg{width:20px;height:20px;stroke-width:2.1}
-    #mobileNavSettings:hover{background:rgba(24,165,162,.26);color:#eafffb}
-    #mobileNavSettings:active{transform:scale(.97)}
+    #mobileNavSettings:hover{background:rgba(24,165,162,.13);color:#eafffb}
+    #mobileNavSettings:active{transform:scale(.91)}
     #mobileNavSettings:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}
-
-    /* Clears the floating settings button off the last content.
-       Base rule is calc(1rem + safe-area); this adds 46px on top and keeps
-       the safe-area term intact. Footer text lands ~30px above the button. */
-    #smart-hsr-footer{
-      padding-bottom:calc(1rem + 46px + env(safe-area-inset-bottom));
-    }
   }
   /* Matches the dock's own behaviour while the personal map is open. */
   body.personal-map-open #mobileNavSettings{display:none!important}
@@ -1872,11 +1885,8 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
     #smartFieldDock .smart-dock-primary{height:54px!important;min-height:54px!important;margin:0 2px!important;border-radius:15px!important}
     #smartFieldDock .smart-dock-primary-icon{width:25px!important;height:25px!important;border-radius:8px!important}
     #smartFieldDock .smart-dock-primary-icon svg{width:17px!important;height:17px!important}
-    #mobileNavSettings{
-      bottom:calc(max(8px,env(safe-area-inset-bottom)) + 77px)!important;
-      width:40px!important;height:40px!important;border-radius:12px!important;
-    }
-    #mobileNavSettings svg{width:18px!important;height:18px!important}
+    /* #mobileNavSettings sizing/position now lives in inspector-settings-style
+       (it renders as the dock's 5th slot at ≤430px, not a floating button). */
     body.personal-map-open #smartFieldDock.smart-field-dock{display:grid!important}
     body.personal-map-open #mobileNavSettings{display:grid!important}
     #personalMapDialog{padding-bottom:calc(84px + env(safe-area-inset-bottom))!important}
@@ -1901,6 +1911,128 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
 
   /* Preserve the approved legacy observation detail, AI tools and before/after slider. */
   #observations-log,#observationDetail,#aiAnalysisSection,#imageComparisonWrapper{isolation:isolate}
+</style>
+
+<style id="dashboard-ui-polish-design-system">
+  /* Digital Twin design-system refinement — dimensions & spacing only.
+     No color, layout, copy, ID, or logic is touched here.
+     Out of scope by design: #hsrHeader, .inspector-identity-card,
+     #smartFieldDock, #mobileNavSettings, #smartInputModal,
+     #locationCorrectionDialog, #personalMapDialog, #personalLifecycleDialog,
+     #closeoutModal — all left exactly as before.
+
+     Breakpoint model:
+       >1024px    desktop — base rules directly below (unchanged)
+       431–1024px tablet  — same base rules (currently-approved size, preserved)
+       ≤430px     mobile  — @media(max-width:430px) block further down only */
+
+  /* ---- Primary button — tablet/desktop baseline (52px/16px radius/20px pad/16px·700) ---- */
+  #add-observation-btn{
+    border-radius:16px!important;
+    min-height:52px!important;
+    height:auto!important;
+    padding:0 20px!important;
+    font-size:16px!important;
+    font-weight:700!important;
+    line-height:1.25;
+    white-space:normal;
+  }
+
+  /* ---- Secondary buttons — tablet/desktop baseline (44px/14px radius/14px·600) ---- */
+  #vision-btn,#root-cause-btn,#comm-btn,#pdf-report-btn,
+  #updateStatusBtn,#completeObservationBtn,#alreadyCompletedBtn,
+  #openPersonalMapBtnPrimary,#operationsLifecycleBtn{
+    border-radius:14px!important;
+    min-height:44px!important;
+    height:auto!important;
+    padding:0 16px!important;
+    font-size:14px!important;
+    font-weight:600!important;
+    line-height:1.25;
+    white-space:nowrap;
+  }
+
+  /* Action row prefers one line; wraps as a group — never stretched to a
+     forced full-width block — if a label genuinely doesn't fit. */
+  #actionButtons{flex-wrap:wrap!important}
+
+  /* ---- Settings-sheet touch targets (min 44px) ---- */
+  .inspector-settings-choice button{min-height:44px!important}
+  .inspector-settings-close{width:44px!important;height:44px!important;flex:0 0 44px!important}
+
+  /* ---- Card system — tablet/desktop baseline (24px/24px), preserved ---- */
+  .mission-summary{border-radius:24px!important;padding:24px!important}
+  #personal-smart-map-launch.personal-map-card{border-radius:24px!important;padding:24px!important}
+  #mini-operational-twin{border-radius:24px!important;padding:24px!important}
+  /* radius+padding both stated explicitly (not just padding) so this rule
+     stands on its own at 431–1024px and isn't affected by the older,
+     pre-existing ≤700px rule for this same selector in municipal-complete-
+     visual-v2 — which would otherwise still apply between 431–700px now
+     that this block's own mobile section only runs to 430px. */
+  #observations-log>div.bg-white{border-radius:24px!important;padding:24px!important}
+  .inspector-light-card{border-radius:20px!important;padding:16px!important}
+  .inspector-light-grid{gap:12px!important}
+
+  /* ---- Typography: keep section headings in the calm 22–26px mobile band ---- */
+  #observations-log>.text-center h3{font-size:clamp(1.375rem,4vw,2rem)!important;line-height:1.3!important}
+  .mission-summary h1{font-size:clamp(1.375rem,2.5vw,1.625rem)!important}
+
+  /* ================================================================
+     MOBILE ONLY — phones ≤430px. Every declaration in this block is
+     media-scoped to max-width:430px; nothing here reaches 431px+, so
+     the tablet/desktop rules above are unaffected (rule: no mobile
+     CSS leakage above 430px).
+     ================================================================ */
+  @media (max-width:430px){
+    /* Primary button — compact phone sizing */
+    #add-observation-btn{
+      min-height:44px!important;
+      border-radius:13px!important;
+      padding:0 14px!important;
+      font-size:14px!important;
+      font-weight:700!important;
+    }
+    #add-observation-btn svg{width:18px!important;height:18px!important}
+
+    /* Secondary buttons — compact phone sizing */
+    #vision-btn,#root-cause-btn,#comm-btn,#pdf-report-btn,
+    #updateStatusBtn,#completeObservationBtn,#alreadyCompletedBtn,
+    #openPersonalMapBtnPrimary,#operationsLifecycleBtn{
+      min-height:40px!important;
+      border-radius:11px!important;
+      padding:0 12px!important;
+      font-size:13px!important;
+      font-weight:600!important;
+    }
+    /* Safety net only — buttons stay content-width and on one line by
+       default; this just lets a genuinely-too-long label wrap instead
+       of forcing horizontal overflow. */
+    #vision-btn,#root-cause-btn,#comm-btn,#pdf-report-btn{white-space:normal}
+
+    /* Action row: compact gap (≤10px), horizontal by default. flex-wrap
+       above already lets a button drop to its own line — full width,
+       never forced — only if it truly can't fit next to the other one. */
+    #actionButtons{gap:8px!important}
+
+    /* AI analysis row: tighter gap so four pill buttons don't read as
+       oversized colored blocks. */
+    #aiAnalysisSection>.flex.flex-wrap{gap:8px!important}
+
+    /* Cards: compact phone padding/radius. Tablet (431–1024px) and
+       desktop keep the baseline set above this media block. */
+    .mission-summary{border-radius:18px!important;padding:14px!important}
+    #personal-smart-map-launch.personal-map-card{border-radius:18px!important;padding:14px!important}
+    #mini-operational-twin{border-radius:18px!important;padding:14px!important}
+    #observations-log>div.bg-white{border-radius:18px!important;padding:14px!important}
+    .inspector-light-card{border-radius:18px!important;padding:14px!important}
+    .inspector-light-grid{gap:8px!important}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    #add-observation-btn,#vision-btn,#root-cause-btn,#comm-btn,#pdf-report-btn,
+    #updateStatusBtn,#completeObservationBtn,#alreadyCompletedBtn,
+    #openPersonalMapBtnPrimary,#operationsLifecycleBtn{transition:none!important}
+  }
 </style>
 
 </head>
@@ -2334,11 +2466,14 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   <span class="smart-dock-glow" aria-hidden="true"></span>
 </nav>
 
-<!-- Independent of #smartFieldDock: floats above its left edge so the four
-     dock cells keep their exact width. -->
+<!-- ≤430px: rendered as the 5th slot of #smartFieldDock's row (see
+     inspector-settings-style). Kept as an independent element so its ID,
+     handler and dialog target are untouched — only its CSS position/style
+     changes at mobile width. -->
 <button id="mobileNavSettings" class="inspector-settings-launch no-print" type="button"
         aria-label="الإعدادات" aria-haspopup="dialog" aria-controls="inspectorSettingsDialog">
   <i data-lucide="settings" aria-hidden="true"></i>
+  <span>الإعدادات</span>
 </button>
 
 <dialog id="inspectorSettingsDialog" class="inspector-settings-sheet no-print" aria-labelledby="inspectorSettingsTitle">

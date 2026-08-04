@@ -33,81 +33,44 @@
     body{margin:0; font-family:'Tajawal',sans-serif; background:var(--bg); color:var(--text)}
     img{max-width:100%}
 
-    /* Header (mobile-first, compact) */
-    .app-header {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background: var(--card);
-      border-bottom: 3px solid rgba(24,165,162,.12);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 14px;
-      flex-wrap: wrap;
-      gap: 8px;
+    /* Inspector-aligned municipal identity header */
+    .app-header{
+      position:sticky;top:0;z-index:1000;width:100%;padding:.5rem;
+      color:#fff;background:linear-gradient(125deg,rgba(5,34,45,.95),rgba(8,74,78,.92));
+      border-bottom:1px solid rgba(255,255,255,.1);
+      box-shadow:0 10px 34px rgba(0,0,0,.25);
+      backdrop-filter:blur(22px) saturate(135%);
+      -webkit-backdrop-filter:blur(22px) saturate(135%);
     }
-
-    .brand {
-      font-weight: 900;
-      font-size: 17px;
-      white-space: nowrap;
+    .contractor-header{
+      width:min(1180px,100%);min-height:76px;margin-inline:auto;
+      display:grid;grid-template-columns:auto minmax(220px,1fr) minmax(190px,.7fr) auto;
+      align-items:center;gap:.85rem;padding:.6rem .75rem;
+      border:1px solid rgba(205,255,249,.17);border-radius:18px;
+      background:linear-gradient(130deg,rgba(11,58,68,.78),rgba(8,42,54,.68));
+      box-shadow:0 12px 30px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.08);
     }
-    .brand span {
-      color: var(--teal);
+    .app-header .brand{display:flex;align-items:center;gap:.4rem;min-width:0;font-size:1.15rem;font-weight:700;white-space:nowrap}
+    .app-header .brand .dot{width:10px;height:10px;flex:0 0 10px;border-radius:50%;background:#86efac;box-shadow:0 0 0 4px rgba(134,239,172,.15)}
+    .app-header .brand .accent{color:#bce9e4;font-size:.7rem;overflow:hidden;text-overflow:ellipsis}
+    .user-info{display:flex;align-items:center;gap:.65rem;min-width:0}
+    .contractor-profile-avatar{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;border-radius:14px;color:#d1fae5;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.16);font-size:1rem;font-weight:900}
+    .user-text{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;font-weight:600}
+    #contractorName{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:1rem;font-weight:800}
+    .identity-meta-row{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+    .role-badge{flex:0 0 auto;padding:3px 9px;border-radius:999px;background:#dcfce7;color:#14532d;font-size:.8rem;font-weight:800}
+    #orgBadge{display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#effffc;font-size:.76rem}
+    .identity-metrics{display:grid;grid-template-columns:repeat(2,minmax(86px,1fr));gap:.45rem;min-width:0}
+    .identity-metric{display:flex;align-items:center;gap:.45rem;min-width:0;min-height:48px;padding:.4rem .55rem;border:1px solid rgba(211,255,250,.18);border-radius:12px;background:rgba(3,26,36,.4);color:#effffc;font-family:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+    .identity-metric i{width:18px;height:18px;flex:0 0 18px;color:#ccfbf1}.identity-metric-copy{display:flex;flex-direction:column;min-width:0;line-height:1.2}.identity-metric small{color:#ccfbf1;font-size:.68rem;white-space:nowrap}.identity-metric strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:.78rem}
+    .gps-indicator{cursor:pointer}.connection-dot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#86efac;box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+    .identity-logout{min-width:88px;min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.55rem .75rem;border:1px solid rgba(211,255,250,.18);border-radius:12px;background:rgba(3,26,36,.4);color:#effffc;font-family:inherit;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.07);cursor:pointer}.identity-logout i{width:18px;height:18px}.identity-logout:hover{background:rgba(4,31,39,.78)}
+    @media(max-width:900px){
+      .app-header{padding:.35rem}.contractor-header{grid-template-columns:1fr auto;gap:.55rem;padding:.55rem;border-radius:15px}
+      .app-header .brand{grid-column:1;grid-row:2;font-size:1rem}.user-info{grid-column:1/-1;grid-row:1;padding-inline-end:96px}.identity-logout{grid-column:2;grid-row:1;min-width:86px}
+      .identity-metrics{grid-column:1/-1;grid-row:3;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}.identity-metric{min-height:44px;padding:.35rem .45rem}#orgBadge{max-width:220px}
     }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      justify-content: flex-end;
-    }
-
-    #nearStats {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      font-size: 13px;
-    }
-
-    @media (max-width: 600px) {
-      .app-header {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-        padding: 10px 10px;
-      }
-
-      .brand {
-        font-size: 15px;
-        margin-bottom: 4px;
-      }
-
-      #nearStats {
-        justify-content: center;
-        font-size: 12px;
-        gap: 6px;
-      }
-
-      .header-actions {
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-
-      .btn {
-        padding: 7px 10px;
-        font-size: 11px;
-      }
-    }
-
-    .brand{font-weight:900; letter-spacing:.3px; font-size:16px}
-    .brand span{color:var(--teal)}
-    .header-actions{margin-inline-start:auto; display:flex; gap:6px; align-items:center}
+    @media(max-width:430px){.identity-logout{width:44px;min-width:44px;padding:0}.identity-logout span{position:absolute;width:1px;height:1px;clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;white-space:nowrap}.user-info{padding-inline-end:54px}}
     .btn{
       display:inline-flex; align-items:center; gap:6px;
       padding:8px 10px; border:none; border-radius:999px; cursor:pointer;
@@ -122,9 +85,7 @@
     .chip{display:none}
 
     @media (max-width:420px){
-      .app-header{padding:8px 10px}
       .btn{padding:6px 8px; font-size:11px}
-      .brand{font-size:14px}
     }
 
     /* Map frame */
@@ -154,25 +115,13 @@
     .card{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow)}
     .tool-card{padding:8px; pointer-events:auto}
 
-    /* Pulsing marker */
-    .pulse{
-      width:14px; height:14px; border-radius:50%; position:relative;
-      box-shadow:0 0 0 2px #fff, 0 4px 10px rgba(0,0,0,.25)
-    }
-    .pulse.red{background:var(--red)}
-    .pulse.amber{background:var(--amber)}
-    .pulse.green{background:var(--green)}
-    .pulse.red::after,.pulse.amber::after{
-      content:""; position:absolute; inset:0; border-radius:50%;
-      box-shadow:0 0 0 0 currentColor; animation:pulse 1.8s infinite; opacity:.55
-    }
-    .pulse.red::after{color:var(--red)}
-    .pulse.amber::after{color:var(--amber)}
-    @keyframes pulse{
-      0%{box-shadow:0 0 0 0 currentColor}
-      70%{box-shadow:0 0 0 14px rgba(0,0,0,0)}
-      100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}
-    }
+    /* Enterprise presentation for the shared statusMarkerIcon renderer. */
+    .map-wrap .smart-hsr-status-marker__core{width:26px!important;height:26px!important;font-size:0!important}
+    .map-wrap .smart-hsr-status-marker[data-motion="active"]::before{opacity:.36!important;animation:enterpriseMarkerPulse 2.6s ease-out infinite!important}
+    .map-wrap .smart-hsr-status-marker[data-motion="slow"]::before,
+    .map-wrap .smart-hsr-status-marker[data-motion="static"]::before{opacity:.18!important;animation:none!important}
+    @keyframes enterpriseMarkerPulse{0%{transform:scale(.82);opacity:.34}72%,100%{transform:scale(1.34);opacity:0}}
+    .map-wrap .leaflet-control-attribution{max-width:min(260px,calc(100vw - 96px))!important;margin:8px!important;border-radius:8px;font-size:9px!important;box-shadow:0 2px 8px rgba(10,25,49,.12)}
 
     /* My location ring */
     .me-ring{
@@ -244,6 +193,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
+      padding:max(16px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
       pointer-events:none;
     }
 
@@ -258,20 +208,23 @@
 
     .sheet-panel{
       position:relative;
-      width:min(520px, 92vw);
-      max-height:80vh;
-      background:var(--card);
+      width:min(92vw,390px);
+      max-height:80dvh;
+      background:rgba(255,255,255,.92);
       color:var(--text);
       border-radius:24px;
-      box-shadow:0 24px 60px rgba(15,23,42,.45);
-      border:1px solid rgba(24,165,162,0.18);
+      box-shadow:0 24px 60px rgba(2,25,35,.3),inset 0 1px rgba(255,255,255,.72);
+      border:1px solid rgba(255,255,255,.62);
+      backdrop-filter:blur(22px) saturate(145%);
+      -webkit-backdrop-filter:blur(22px) saturate(145%);
       display:flex;
       flex-direction:column;
       overflow:hidden;
-      transform:translateY(20px) scale(.96);
+      transform:translateY(14px) scale(.97);
       opacity:0;
-      transition:all .28s ease;
+      transition:opacity .26s ease,transform .26s cubic-bezier(.22,1,.36,1);
     }
+    [data-theme="dark"] .sheet-panel{background:rgba(14,29,45,.94);border-color:rgba(255,255,255,.14)}
 
     .sheet.open{
       pointer-events:auto;
@@ -284,15 +237,14 @@
       transform:translateY(0) scale(1);
     }
 
-    .sheet-handle{
-      width:46px; height:5px; border-radius:999px;
-      background:var(--line); margin:10px auto 4px;
-    }
+    .sheet-handle{display:none}
 
     .sheet-header{
-      padding:4px 16px 10px;
+      min-height:60px;padding:8px 12px;
       display:flex; align-items:center; gap:8px;
       border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.3);
+      flex:0 0 auto;
     }
     .sheet-header h3{
       margin:0; font-weight:900; font-size:15px;
@@ -308,8 +260,9 @@
     .pill.green{background:#dcfce7; color:#065f46}
 
     .sheet-body{
-      padding:10px 16px 12px;
+      min-height:0;padding:12px;
       overflow:auto;
+      overscroll-behavior:contain;
       display:grid; grid-template-columns:1fr 1fr; gap:10px;
     }
     .field{display:flex; flex-direction:column; gap:6px}
@@ -330,19 +283,18 @@
       font-size:13px;
     }
     .sheet-actions{
-      display:flex; gap:8px; padding:10px 16px 14px;
+      display:flex;flex:0 0 auto;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
       border-top:1px solid var(--line); justify-content:flex-end;
-      background:linear-gradient(to top, rgba(15,23,42,0.02), transparent);
+      background:rgba(255,255,255,.68);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
     }
     .btn-lg{padding:10px 14px; font-size:13px}
 
     @media (max-width:768px){
-      .sheet{align-items:flex-end}
+      .sheet{align-items:flex-end;padding-bottom:0}
+      .sheet-panel{width:min(100%,430px);border-radius:24px 24px 0 0}
       .sheet-body{grid-template-columns:1fr}
       .btn-lg{padding:10px 12px; font-size:12px}
       .sheet-header h3{font-size:14px}
-      .sheet-panel{width:100%;max-height:88dvh;border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom);transform:translateY(24px)}
-      .sheet-actions{position:sticky;bottom:0;padding-bottom:calc(14px + env(safe-area-inset-bottom));background:var(--card)}
       .sheet-actions .btn{min-height:44px;flex:1}
     }
 
@@ -413,7 +365,7 @@
 
     /* ===== Smart Bottom Filter Sheet (peek 30%) ===== */
     .filter-sheet{
-      position: fixed;
+      position: absolute;
       left: 0;
       right: 0;
       bottom: 0;
@@ -475,6 +427,7 @@
     }
     .filter-range{ width: 100%; accent-color: var(--teal); }
     .radius-value{ font-weight:900; font-size:12px; color: var(--teal); }
+    .radius-select{min-width:88px;min-height:40px}.radius-state{color:var(--muted);font-size:10px;font-weight:800;white-space:nowrap}
 
     .legend-inline {
       display: flex;
@@ -514,34 +467,86 @@
     .map-wrap {
       margin-bottom: 60px;
     }
+
+    /* Contractor Experience V2 — presentation layer only */
+    body{background:linear-gradient(180deg,#edf7f6 0,#f7f9fc 320px)}
+    [data-theme="dark"] body{background:linear-gradient(180deg,#071d2a 0,#0e1726 320px)}
+    .workspace-shell{width:min(1180px,100%);margin:auto;padding:14px 14px calc(28px + env(safe-area-inset-bottom))}.workspace-nav{width:min(460px,100%);display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:0 auto 14px;padding:5px;border:1px solid rgba(24,165,162,.2);border-radius:15px;background:rgba(255,255,255,.76);box-shadow:0 8px 24px rgba(10,25,49,.08);backdrop-filter:blur(12px)}[data-theme="dark"] .workspace-nav{background:rgba(16,32,54,.8)}.workspace-tab{min-height:44px;border:0;border-radius:11px;background:transparent;color:var(--muted);font-family:inherit;font-weight:900;cursor:pointer}.workspace-tab.active{background:var(--navy);color:#fff}.workspace-panel[hidden]{display:none!important}
+    .workspace-intro{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.workspace-intro h1{margin:0;font-size:clamp(20px,4vw,29px);font-weight:900}.workspace-intro p{margin:3px 0 0;color:var(--muted);font-size:12px;font-weight:700}.task-summary{display:flex;gap:7px}.summary-pill{padding:6px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:11px;font-weight:900}.summary-pill b{color:var(--teal);font-size:15px}
+    .operations-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr);gap:12px;align-items:start}.task-list,.ops-rail{display:grid;gap:9px}.task-card{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:14px;border:1px solid var(--line);border-inline-start:4px solid var(--teal);border-radius:16px;background:var(--card);box-shadow:0 8px 22px rgba(10,25,49,.07)}.task-card-main{min-width:0}.task-topline,.task-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.task-id{font-size:11px;color:var(--muted);font-weight:900}.task-card h2{margin:5px 0 7px;font-size:16px}.status-tag,.priority-tag{padding:3px 7px;border-radius:999px;font-size:10px;font-weight:900}.status-tag{background:#e4f7f5;color:#087f7b}.priority-tag{background:#fff1dc;color:#9a5b00}.task-meta{color:var(--muted);font-size:11px;font-weight:800}.task-meta span{display:inline-flex;align-items:center;gap:3px}.task-meta i{width:13px;height:13px}.task-sla{margin-top:9px}.task-sla-head{display:flex;justify-content:space-between;font-size:10px;font-weight:900}.task-sla-track{height:5px;margin-top:4px;border-radius:999px;background:var(--line);overflow:hidden}.task-sla-track span{display:block;width:68%;height:100%;background:linear-gradient(90deg,var(--teal),#f59e0b)}.task-action{align-self:center;min-width:112px;min-height:44px;border:0;border-radius:12px;background:var(--teal);color:#fff;font-family:inherit;font-weight:900;cursor:pointer}.empty-workspace{padding:28px;text-align:center;border:1px dashed var(--line);border-radius:16px;background:var(--card);color:var(--muted);font-weight:800}
+    .ops-card{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.82);box-shadow:0 8px 22px rgba(10,25,49,.07);backdrop-filter:blur(12px)}[data-theme="dark"] .ops-card{background:rgba(16,32,54,.86)}.ops-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}.ops-card-head h2{margin:0;font-size:14px}.ops-card-head i{width:18px;color:var(--teal)}.twin-state{display:flex;align-items:center;gap:7px;color:#087f7b;font-size:11px;font-weight:900}.twin-state::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green)}.twin-grid,.gps-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric-box{padding:9px;border-radius:11px;background:var(--bg)}.metric-box span,.metric-box strong{display:block}.metric-box span{color:var(--muted);font-size:9px;font-weight:800}.metric-box strong{margin-top:2px;font-size:11px}.navigate-btn{width:100%;min-height:44px;margin-top:10px;border:1px solid rgba(24,165,162,.28);border-radius:11px;background:#e9f9f7;color:#087f7b;font-family:inherit;font-weight:900}.navigate-btn:disabled{opacity:.55}.ai-ready-card[hidden]{display:none!important}
+    #mapPanel .map-wrap{display:block;height:calc(100dvh - var(--app-header-height) - 105px);min-height:480px;margin:0}.map-workspace-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}.map-workspace-head h1{margin:0;font-size:20px}.map-workspace-head p{margin:2px 0 0;color:var(--muted);font-size:11px}
+    .evidence-stage{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}.evidence-card{padding:10px;border:1px solid var(--line);border-radius:13px;background:var(--bg)}.evidence-card-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px}.evidence-card-head strong{font-size:12px}.quality-badge{padding:3px 7px;border-radius:999px;background:#e4f7f5;color:#087f7b;font-size:9px;font-weight:900}.evidence-preview{min-height:118px;display:grid;place-items:center;overflow:hidden;border:1px dashed #bfd2d7;border-radius:10px;background:var(--card);color:var(--muted);font-size:11px;text-align:center}.evidence-preview img{width:100%;height:150px;object-fit:cover}.evidence-controls{display:flex;gap:6px;margin-top:7px}.evidence-controls label,.evidence-controls button{min-height:44px;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font-family:inherit;font-size:11px;font-weight:900;cursor:pointer}.evidence-controls input{position:absolute;width:1px;height:1px;opacity:0}.upload-progress{height:5px;margin-top:7px;border-radius:999px;background:var(--line);overflow:hidden}.upload-progress span{display:block;width:0;height:100%;background:var(--teal);transition:width .25s}.evidence-legacy-field{display:none}
+    .workflow-presentation{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(76px,1fr));gap:5px;overflow-x:auto;padding:4px 0 7px}.workflow-step{position:relative;min-height:52px;padding:8px 5px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--muted);text-align:center;font-size:9px;font-weight:900}.workflow-step i{display:block;width:16px;height:16px;margin:0 auto 4px}.workflow-step.done{background:#e7f8f5;color:#087f7b;border-color:rgba(24,165,162,.28)}.workflow-step.current{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .task-actions{display:grid;gap:7px;align-self:center;min-width:132px}.task-action-secondary{min-height:44px;border:1px solid rgba(24,165,162,.32);border-radius:12px;background:#eefaf9;color:#087f7b;font-family:inherit;font-weight:900;cursor:pointer}.task-assignment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px;margin-top:8px}.task-assignment-grid span{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px;align-items:center;color:var(--muted);font-size:10px;font-weight:800}.task-assignment-grid i{width:14px;height:14px;color:var(--teal)}
+    .twin-summary{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:11px;border:1px solid rgba(24,165,162,.2);border-radius:14px;background:linear-gradient(135deg,rgba(24,165,162,.1),transparent)}.twin-summary div{min-width:0}.twin-summary span,.twin-summary strong{display:block}.twin-summary span{font-size:9px;color:var(--muted);font-weight:800}.twin-summary strong{margin-top:3px;font-size:11px;overflow-wrap:anywhere}.twin-timeline{grid-column:1/-1;min-height:63px;display:grid;grid-template-columns:repeat(4,minmax(74px,1fr));gap:6px;overflow-x:auto}.twin-timeline-step{padding:9px 6px;border-radius:11px;background:var(--bg);border:1px solid var(--line);text-align:center;font-size:9px;font-weight:900;color:var(--muted)}.twin-timeline-step.active{background:#e7f8f5;color:#087f7b;border-color:rgba(24,165,162,.3)}
+    .sheet-header .btn{min-width:44px;min-height:44px;justify-content:center}button:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}button:active{transform:scale(.98)}
+    /* Compact field workspace */
+    .task-card{gap:12px;padding:12px;border-inline-start-width:3px;box-shadow:0 5px 16px rgba(10,25,49,.06)}
+    .task-card h2{margin:5px 0 6px;font-size:15px;line-height:1.45}.task-assignment-grid{margin-top:7px}.task-sla{margin-top:7px}.task-actions{gap:8px}.task-action,.task-action-secondary{min-height:44px;border-radius:13px;padding-inline:10px;font-size:12px;white-space:normal;line-height:1.25}
+    .ops-card{padding:12px;box-shadow:0 5px 16px rgba(10,25,49,.06)}.ops-card-head{margin-bottom:8px}.twin-grid,.gps-grid{gap:6px}.metric-box{min-width:0;padding:8px}.metric-box strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.navigate-btn{margin-top:8px;border-radius:13px}
+    [data-theme="dark"] .sheet-header{background:rgba(7,29,42,.35)}
+    .sheet-header h3{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.sheet-header>svg{flex:0 0 20px}.sheet-header .pill{flex:0 1 auto;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sheet-header .btn{width:44px;height:44px;flex:0 0 44px;padding:0;border-radius:12px}
+    .sheet-body{scrollbar-gutter:stable}[data-theme="dark"] .sheet-actions{background:rgba(14,29,45,.82)}.sheet-actions .btn{width:100%;min-height:44px;border-radius:13px}
+    #mapPanel .map-wrap{height:clamp(430px,58dvh,610px);min-height:430px;border-radius:16px}.workspace-shell{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+    @media(max-width:760px){
+      .workspace-shell{padding:10px 10px calc(28px + env(safe-area-inset-bottom))}.operations-grid{grid-template-columns:1fr}.task-summary{display:none}.task-card{grid-template-columns:1fr}.task-actions{grid-template-columns:repeat(2,minmax(0,1fr));width:100%;min-width:0}.task-actions>*{width:100%}.evidence-stage{grid-template-columns:1fr}.twin-summary{grid-template-columns:1fr 1fr}.sheet-body{grid-template-columns:1fr}.workflow-presentation{grid-template-columns:repeat(6,minmax(76px,1fr))}
+    }
+    @media(min-width:420px) and (max-width:760px){.ops-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-card{height:100%}}
+    @media(max-width:419px){.ops-rail{grid-template-columns:1fr}.workspace-intro h1{font-size:20px}.workspace-nav{margin-bottom:10px}.task-assignment-grid{grid-template-columns:1fr}#mapPanel .map-wrap{height:54dvh;min-height:420px}}
+    @media(min-width:761px){.ops-rail{grid-template-columns:1fr}.sheet-body{grid-template-columns:1fr 1fr}.sheet-panel{width:min(520px,72vw);max-height:78dvh}#mapPanel .map-wrap{height:min(68dvh,720px)}}
+    @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
 </head>
 <body>
 
 <!-- Header -->
 <header class="app-header">
-  <div class="brand">Smart HSR <span>Live&nbsp;Map</span></div>
-  <div id="orgBadge" class="org-badge" hidden></div>
-  <div id="nearStats" class="counter" title="حول موقعي الآن">
-    <div class="stat"><i data-lucide="map-pin" class="w-4 h-4"></i><span id="meDistLabel">—</span></div>
-    <div class="stat"><i data-lucide="alert-triangle" class="w-4 h-4"></i>قريب: <b id="nearCount">0</b></div>
-    <div class="chip" id="themeChip">وضع نهاري</div>
-  </div>
-  <div class="header-actions">
-    <button id="themeBtn" class="btn btn-soft" title="الوضع الليلي/النهاري">
-      <i data-lucide="moon"></i><span class="sr-only">الوضع</span>
-    </button>
-    <button id="locBtn" class="btn btn-primary" title="تحديد موقعي">
-      <i data-lucide="crosshair"></i><span>موقعي</span>
-    </button>
-    <button id="centerBtn" class="btn btn-dark" title="إعادة التمركز">
-      <i data-lucide="navigation"></i><span>تمركز</span>
-    </button>
-    <button id="logoutBtn" class="btn btn-soft" title="تسجيل الخروج" aria-label="تسجيل الخروج">
-      <i data-lucide="log-out"></i><span>خروج</span>
-    </button>
+  <div class="contractor-header">
+    <div class="brand">
+      <span class="dot" aria-hidden="true"></span>
+      <strong>Smart HSR</strong>
+      <span class="accent">منصة العمل الميداني الذكية</span>
+    </div>
+    <div class="user-info">
+      <div id="contractorAvatar" class="contractor-profile-avatar" aria-hidden="true">م</div>
+      <div class="user-text">
+        <span id="contractorName">مقاول Smart HSR</span>
+        <span class="identity-meta-row">
+          <span class="role-badge">مقاول ميداني</span>
+          <span id="orgBadge">شركة المقاول</span>
+        </span>
+      </div>
+    </div>
+    <div class="identity-metrics" aria-label="حالة جلسة المقاول">
+      <div class="identity-metric" title="حالة الاتصال">
+        <span id="connectionDot" class="connection-dot" aria-hidden="true"></span>
+        <span class="identity-metric-copy"><small>الاتصال</small><strong id="fieldConnectionState">متصل</strong></span>
+      </div>
+      <button id="locBtn" class="identity-metric gps-indicator" type="button" title="تحديث موقعي">
+        <i data-lucide="crosshair" aria-hidden="true"></i>
+        <span class="identity-metric-copy"><small>جودة GPS</small><strong id="fieldGpsState">جاهز</strong></span>
+      </button>
+    </div>
+    <button id="logoutBtn" class="identity-logout" type="button" aria-label="تسجيل الخروج"><i data-lucide="log-out" aria-hidden="true"></i><span>خروج</span></button>
   </div>
 </header>
+
+<main class="workspace-shell">
+  <nav class="workspace-nav" aria-label="مساحة عمل المقاول">
+    <button id="tasksTab" class="workspace-tab active" type="button" aria-selected="true" aria-controls="tasksPanel"><i data-lucide="clipboard-list"></i> مهامي اليوم</button>
+    <button id="mapTab" class="workspace-tab" type="button" aria-selected="false" aria-controls="mapPanel"><i data-lucide="map"></i> الخريطة</button>
+  </nav>
+  <section id="tasksPanel" class="workspace-panel" aria-labelledby="tasksTab">
+    <div class="workspace-intro"><div><h1>مساحة العمل الميداني</h1><p>المهام المسندة إليك ضمن نطاق المؤسسة</p></div><div class="task-summary"><span class="summary-pill"><b id="taskTotal">0</b> إجمالي</span><span class="summary-pill"><b id="taskActive">0</b> نشطة</span></div></div>
+    <div class="operations-grid"><div id="contractorTaskList" class="task-list"><div class="empty-workspace">جاري تحميل مهام اليوم…</div></div><aside class="ops-rail">
+      <section class="ops-card" aria-labelledby="twinTitle"><div class="ops-card-head"><h2 id="twinTitle">التوأم التشغيلي</h2><span class="twin-state">يعمل</span></div><div class="twin-grid"><div class="metric-box"><span>المهمة الحالية</span><strong id="twinTask">لا توجد مهمة نشطة</strong></div><div class="metric-box"><span>الموقع</span><strong id="twinLocation">—</strong></div><div class="metric-box"><span>مدة التنفيذ</span><strong id="twinDuration">—</strong></div><div class="metric-box"><span>آخر مزامنة</span><strong id="twinSync">بانتظار البيانات</strong></div></div></section>
+      <section class="ops-card" aria-labelledby="gpsCardTitle"><div class="ops-card-head"><h2 id="gpsCardTitle">الموقع الحالي</h2><i data-lucide="locate-fixed"></i></div><div class="gps-grid"><div class="metric-box"><span>الدقة</span><strong id="gpsAccuracyValue">—</strong></div><div class="metric-box"><span>آخر تحديث</span><strong id="gpsLastUpdate">—</strong></div><div class="metric-box"><span>السرعة</span><strong id="gpsSpeedValue">—</strong></div><div class="metric-box"><span>النطاق</span><strong id="meDistLabel">2000 م</strong></div></div><button id="openNavigationBtn" class="navigate-btn" type="button" disabled><i data-lucide="navigation"></i> فتح الملاحة</button></section>
+      <section class="ops-card ai-ready-card" hidden aria-labelledby="aiReadyTitle"><div class="ops-card-head"><h2 id="aiReadyTitle">AI مساعد التنفيذ</h2><i data-lucide="sparkles"></i></div><p>تحليل الصورة · تحسين وصف المعالجة · اقتراح خطة العمل</p></section>
+    </aside></div>
+  </section>
+  <section id="mapPanel" class="workspace-panel" hidden aria-labelledby="mapTab">
+    <div class="map-workspace-head"><div><h1>الخريطة الميدانية</h1><p>المهام القريبة والمواقع المسندة</p></div><button id="centerBtn" class="btn btn-dark" title="إعادة التمركز"><i data-lucide="navigation"></i><span>تمركز</span></button></div>
 
 <!-- Map frame -->
 <div class="map-wrap">
@@ -554,7 +559,7 @@
   <div id="staleNote" class="stale-note" role="status" aria-live="polite">
     وضع غير متصل — البيانات المعروضة قد لا تكون محدّثة
   </div>
-  <div class="field-status-capsule" role="status" aria-live="polite"><span id="fieldGpsState">GPS: جاهز</span><span aria-hidden="true">•</span><span id="fieldConnectionState">الاتصال: متصل</span><span aria-hidden="true">•</span><span id="fieldSyncState">المزامنة: موثّقة</span></div>
+  <div class="field-status-capsule" role="status" aria-live="polite"><span id="fieldSyncState">المزامنة: موثّقة</span><span aria-hidden="true">•</span><span>المهام القريبة: <b id="nearCount">0</b></span></div>
 
   <!-- Floating tools (legend only) -->
   <div class="toolbar">
@@ -566,9 +571,9 @@
     <div id="legendBox" class="legend-glass hidden" aria-label="أسطورة الحالات">
       <h4 class="legend-title">أسطورة الحالات</h4>
       <div class="legend-items">
-        <div class="item"><span class="dot red"></span> قيد الانتظار</div>
-        <div class="item"><span class="dot amber"></span> قيد المعالجة</div>
-        <div class="item"><span class="dot green"></span> تمت المعالجة</div>
+        <div class="item"><span class="dot red"></span> حرج أو متأخر</div>
+        <div class="item"><span class="dot amber"></span> يحتاج انتباه</div>
+        <div class="item"><span class="dot green"></span> مكتمل</div>
       </div>
     </div>
   </div>
@@ -587,42 +592,55 @@
           <option value="ALL">كل الحالات</option>
           <option value="PENDING">قيد الانتظار</option>
           <option value="IN_PROGRESS">قيد المعالجة</option>
+          <option value="PENDING_REVIEW">بانتظار الاعتماد</option>
           <option value="COMPLETED">تمت المعالجة</option>
         </select>
       </div>
       <div class="filter-item">
         <i data-lucide="radar"></i>
         <label for="radiusInput">نصف القطر:</label>
-        <input id="radiusInput" type="range" min="500" max="5000" step="100" class="filter-range">
+        <select id="radiusInput" class="filter-select radius-select" aria-label="اختيار نصف قطر المهام">
+          <option value="500">500 م</option>
+          <option value="1000">1 كم</option>
+          <option value="2000" selected>2 كم</option>
+          <option value="5000">5 كم</option>
+          <option value="10000">10 كم</option>
+        </select>
         <span id="radiusLabel" class="radius-value">2000 م</span>
+        <span id="radiusState" class="radius-state">بانتظار GPS</span>
       </div>
     </div>
 
     <div class="legend-inline">
-      <div class="item"><span class="dot red"></span> قيد الانتظار: <b id="countRed">0</b></div>
-      <div class="item"><span class="dot amber"></span> قيد المعالجة: <b id="countAmber">0</b></div>
-      <div class="item"><span class="dot green"></span> تمت المعالجة: <b id="countGreen">0</b></div>
+      <div class="item"><span class="dot red"></span> حرج/متأخر: <b id="countRed">0</b></div>
+      <div class="item"><span class="dot amber"></span> انتباه: <b id="countAmber">0</b></div>
+      <div class="item"><span class="dot green"></span> مكتمل: <b id="countGreen">0</b></div>
     </div>
   </section>
 </div>
+  </section>
+</main>
 
 <!-- Observation details sheet (iOS-style centered modal) -->
 <section id="smartSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="sheet-overlay" id="sheetOverlay"></div>
-  <div class="sheet-panel" role="document">
+  <div class="sheet-panel" role="document" tabindex="-1">
     <div class="sheet-handle" id="sheetHandle" aria-hidden="true"></div>
     <div class="sheet-header">
-      <i data-lucide="file-search" class="w-5 h-5"></i>
-      <h3 id="sheetTitle">تفاصيل الملاحظة</h3>
+      <i data-lucide="orbit" class="w-5 h-5"></i>
+      <h3 id="sheetTitle">التوأم التشغيلي للمهمة</h3>
       <span id="sheetChip" class="pill" style="margin-inline-start:auto"></span>
-      <button id="sheetClose" class="btn btn-ghost" title="إغلاق"><i data-lucide="x"></i></button>
+      <button id="sheetClose" class="btn btn-ghost" title="إغلاق" aria-label="إغلاق التوأم التشغيلي"><i data-lucide="x"></i></button>
     </div>
 
     <div id="sheetBody" class="sheet-body">
-      <div class="field">
-        <label>العنوان</label>
-        <div id="sTitle" class="card-mini"></div>
-      </div>
+      <section class="twin-summary" aria-label="ملخص التوأم التشغيلي">
+        <div><span>العنوان</span><strong id="sTitle">—</strong></div>
+        <div><span>الحالة</span><strong id="twinModalStatus">—</strong></div>
+        <div><span>الأولوية</span><strong id="twinModalPriority">—</strong></div>
+        <div><span>الموقع</span><strong id="twinModalLocation">—</strong></div>
+      </section>
+      <div id="twinModalTimeline" class="twin-timeline" aria-label="الخط الزمني للمهمة"></div>
       <div class="field">
         <label>المسافة من موقعي</label>
         <div id="sDistance" class="card-mini"></div>
@@ -638,14 +656,27 @@
         <select id="sStatus">
           <option value="PENDING" disabled>قيد الانتظار</option>
           <option value="IN_PROGRESS" disabled>قيد المعالجة</option>
-          <option value="PENDING_REVIEW" disabled>بانتظار مراجعة المراقب</option>
+          <option value="PENDING_REVIEW" disabled>بانتظار الاعتماد</option>
           <option value="COMPLETED" disabled>تمت المعالجة</option>
         </select>
       </div>
 
-      <div class="field">
+      <div class="field evidence-legacy-field">
         <label>صورة بعد الإصلاح (إلزامية للإرسال للمراجعة)</label>
-        <input id="sAfter" type="file" accept="image/*">
+        <input id="sAfter" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
+      </div>
+
+      <div class="evidence-stage">
+        <article class="evidence-card">
+          <div class="evidence-card-head"><strong>الصورة السابقة</strong><span class="quality-badge">مرجع البلاغ</span></div>
+          <div id="beforeEvidencePreview" class="evidence-preview">تظهر صورة البلاغ الأصلية هنا</div>
+        </article>
+        <article class="evidence-card">
+          <div class="evidence-card-head"><strong>صورة المعالجة</strong><span id="afterQualityBadge" class="quality-badge">بانتظار الالتقاط</span></div>
+          <div id="afterEvidencePreview" class="evidence-preview">التقط صورة واضحة بعد إتمام المعالجة</div>
+          <div class="evidence-controls"><label for="sAfter"><i data-lucide="camera"></i><span id="captureLabel">فتح الكاميرا</span></label><button id="retakeEvidenceBtn" type="button" disabled><i data-lucide="rotate-ccw"></i>إعادة الالتقاط</button></div>
+          <div class="upload-progress" aria-label="تقدم رفع الصورة"><span id="evidenceProgressBar"></span></div>
+        </article>
       </div>
 
       <div class="field" style="grid-column:1/-1">
@@ -696,18 +727,22 @@ const firebaseConfig = {
   // Populated ONCE from the signed-in contractor's own users/{uid} record.
   // Never read from a form field, URL parameter, sessionStorage or
   // localStorage — those are all attacker-controllable.
-  const contractorContext = { uid:null, organizationId:null, organizationName:'' };
+  const contractorContext = { uid:null, organizationId:null, organizationName:'', contractorName:'' };
   let organizationMapContext=null, mapOpenedForAssignment=false;
 
   // ===== Contractor workflow policy (pure and locally testable) =====
+  function safeIdentityText(value, fallback=''){
+    const text = typeof value === 'string' ? value.trim() : '';
+    return text && !/^(?:undefined|null|nan)$/i.test(text) ? text : fallback;
+  }
+
   function normalizeContractorAccess(data){
     const value = data && typeof data === 'object' ? data : {};
     const organizationId = typeof value.organizationId === 'string' ? value.organizationId.trim() : '';
     if (value.role !== 'contractor' || value.active !== true || !organizationId) return null;
-    const organizationName = typeof value.organizationName === 'string' && value.organizationName.trim()
-      ? value.organizationName.trim()
-      : organizationId;
-    return { organizationId, organizationName };
+    const organizationName = safeIdentityText(value.organizationName, 'شركة المقاول');
+    const contractorName = safeIdentityText(value.name, safeIdentityText(value.displayName));
+    return { organizationId, organizationName, contractorName };
   }
 
   function contractorNextStatus(currentStatus){
@@ -805,12 +840,12 @@ const firebaseConfig = {
   function renderOrgBadge(){
     const el = document.getElementById('orgBadge');
     if (!el) return;
-    if (contractorContext.organizationName){
-      el.textContent = 'المؤسسة: ' + contractorContext.organizationName;
-      el.hidden = false;
-    } else {
-      el.hidden = true;
-    }
+    const organizationName=safeIdentityText(contractorContext.organizationName,'شركة المقاول');
+    el.textContent = organizationName;
+    el.hidden = false;
+    const name = safeIdentityText(contractorContext.contractorName,safeIdentityText(auth?.currentUser?.displayName,safeIdentityText(auth?.currentUser?.email?.split('@')[0],'مقاول Smart HSR')));
+    const nameEl=document.getElementById('contractorName');if(nameEl)nameEl.textContent=name;
+    const avatar=document.getElementById('contractorAvatar');if(avatar)avatar.textContent=name.trim().charAt(0)||'م';
   }
 
   const root = document.documentElement;
@@ -818,7 +853,7 @@ const firebaseConfig = {
   const themeChip = document.getElementById('themeChip');
   function applyTheme(mode){
     root.setAttribute('data-theme', mode);
-    themeBtn.innerHTML = mode==='dark'
+    if(themeBtn) themeBtn.innerHTML = mode==='dark'
       ? '<i data-lucide="sun"></i><span class="sr-only">نهاري</span>'
       : '<i data-lucide="moon"></i><span class="sr-only">ليلي</span>';
     if (themeChip){ themeChip.textContent = (mode==='dark'?'وضع ليلي':'وضع نهاري'); }
@@ -828,7 +863,7 @@ const firebaseConfig = {
   const saved = localStorage.getItem('smartTheme')
     || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   applyTheme(saved);
-  themeBtn.addEventListener('click', ()=>{
+  themeBtn?.addEventListener('click', ()=>{
     const now = root.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
     applyTheme(now);
   });
@@ -860,6 +895,7 @@ const firebaseConfig = {
     maxZoom:19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
   }).addTo(map);
   applyMapAttribution(map);
+  map.attributionControl?.setPosition('topleft');
   const frameRing = L.layerGroup().addTo(map);
 
   // تمركز موثّق بأولوية واضحة: مهام مسندة مؤكدة ← مركز المؤسسة ← القنفذة.
@@ -875,23 +911,27 @@ const firebaseConfig = {
   }
 
   let meMarker=null, meCircle=null, lastMe=null;
-  const radiusInput=document.getElementById('radiusInput'); radiusInput.value=2000;
+  const radiusInput=document.getElementById('radiusInput');
+  const radiusState=document.getElementById('radiusState');
+
+  function selectedRadius(){return Number(radiusInput.value)||2000}
+  function formatRadius(radius){return radius<1000?`${radius} م`:`${radius/1000} كم`}
 
   function drawMe(){
-    if(!lastMe)return;
-    const r=parseInt(radiusInput.value||2000,10);
-    if (meMarker) meMarker.remove();
-    if (meCircle) meCircle.remove();
-    meMarker = L.marker(lastMe, {
-      icon:L.divIcon({
-        html:'<div class="me-ring"></div>',
-        className:'', iconSize:[16,16], iconAnchor:[8,8]
-      })
-    }).addTo(map);
-    meCircle = L.circle(lastMe, {
-      radius:r, color:'#18A5A2', fillColor:'var(--map-ring)',
-      fillOpacity:0.12, weight:2
-    }).addTo(map);
+    const radius=selectedRadius();
+    if(!lastMe){
+      if(meMarker){meMarker.remove();meMarker=null}
+      if(meCircle){meCircle.remove();meCircle=null}
+      if(radiusState)radiusState.textContent='GPS غير متاح — كل المهام ظاهرة';
+      return;
+    }
+    if(radiusState)radiusState.textContent='النطاق مفعّل';
+    if(!meMarker){
+      meMarker=L.marker(lastMe,{icon:L.divIcon({html:'<div class="me-ring"></div>',className:'',iconSize:[16,16],iconAnchor:[8,8]})}).addTo(map);
+    }else meMarker.setLatLng(lastMe);
+    if(!meCircle){
+      meCircle=L.circle(lastMe,{radius,color:'#0f8f8a',fillColor:'#18A5A2',fillOpacity:.1,weight:2,dashArray:'8 6'}).addTo(map);
+    }else meCircle.setLatLng(lastMe).setRadius(radius);
   }
 
   function haversine(a,b){
@@ -928,29 +968,52 @@ const firebaseConfig = {
     return m<1000 ? `${Math.round(m)} م` : `${(m/1000).toFixed(1)} كم`;
   }
 
+  // Presentation-only marker classification. It reuses statusMarkerIcon and
+  // never mutates the persisted task status or contractor workflow.
+  function isCriticalObservation(observation){
+    if (!observation || observation.status === 'COMPLETED') return false;
+    const priority = String(observation.priority || '').toUpperCase();
+    const overdue = Number.isFinite(observation.slaDueAtMs)
+      && observation.slaDueAtMs > 0
+      && observation.slaDueAtMs <= Date.now();
+    return overdue || priority === 'URGENT' || priority === 'HIGH';
+  }
+
+  function markerPresentationStatus(observation){
+    if (observation?.status === 'COMPLETED') return 'COMPLETED';
+    return isCriticalObservation(observation) ? 'PENDING' : 'IN_PROGRESS';
+  }
+
+  function filteredObservationsSource(){
+    const selectedStatus = statusFilter.value;
+    const radius = selectedRadius();
+    return observations.filter(observation=>{
+      if (selectedStatus !== 'ALL' && observation.status !== selectedStatus) return false;
+      // Without a GPS fix, radius filtering is deliberately bypassed so tasks
+      // never disappear merely because location permission or signal is absent.
+      if (!lastMe) return true;
+      const point = observationCoordinates(observation,contractorContext.organizationId);
+      return !!point && haversine(lastMe,[point.lat,point.lng]) <= radius;
+    });
+  }
+
   function paint(){
     drawMe();
-    const filter = statusFilter.value;
-    const r = parseInt(radiusInput.value,10);
-    radiusLabel.textContent = `${r} م`;
+    const r = selectedRadius();
+    radiusLabel.textContent = formatRadius(r);
+    const filteredObservations = filteredObservationsSource();
 
-    let near=0;
+    const near = lastMe ? filteredObservations.length : 0;
     const presentIds=new Set();
-    for (const o of observations){
+    for (const o of filteredObservations){
       const point=observationCoordinates(o,contractorContext.organizationId);if(!point)continue;
       const {lat,lng:lon}=point;
-      if (filter!=='ALL' && o.status!==filter) continue;
-
-      const dist = lastMe?haversine(lastMe, [lat,lon]):Infinity;
-      if (dist<=r) near++;
 
       const docId = o.docId;
+      const markerStatus = markerPresentationStatus(o);
       let m = markers.get(docId);
       if (!m){
-        m = L.marker([lat,lon], { icon: statusMarkerIcon(L,o.status,{title:o.title}) }).addTo(map);
-        // Leaflet assigns string tooltip content via innerHTML, and the title
-        // is operator-authored free text stored in Firestore — escape it.
-        m.bindTooltip(escapeHTML(o.title || ''), { direction:'top', offset:[0,-10] });
+        m = L.marker([lat,lon], { icon: statusMarkerIcon(L,markerStatus,{title:o.title}) }).addTo(map);
         // Resolve the observation fresh on every click. Capturing `o` here
         // would pin the marker to the snapshot it was created from, so after
         // any later update the sheet would show — and let the contractor act
@@ -958,9 +1021,8 @@ const firebaseConfig = {
         m.on('click', ()=> openCurrent(docId));
         markers.set(docId, m);
       } else {
-        m.setIcon(statusMarkerIcon(L,o.status,{title:o.title}));
+        m.setIcon(statusMarkerIcon(L,markerStatus,{title:o.title}));
         m.setLatLng([lat,lon]);
-        m.setTooltipContent(escapeHTML(o.title || ''));
       }
       presentIds.add(docId);
     }
@@ -969,11 +1031,11 @@ const firebaseConfig = {
     }
     if (nearCountEl) nearCountEl.textContent = near.toString();
     if (nearCountMini) nearCountMini.textContent = near.toString();
-    if (meDistLabel) meDistLabel.textContent = `نطاقي: ${fmtMeters(r)}`;
+    if (meDistLabel) meDistLabel.textContent = `نطاقي: ${formatRadius(r)}`;
 
-    if(!mapOpenedForAssignment&&observations.length){
-      if(ensureMapView(observations)==='observations')mapOpenedForAssignment=true;
-    }else if(!observations.length){
+    if(!mapOpenedForAssignment&&filteredObservations.length){
+      if(ensureMapView(filteredObservations)==='observations')mapOpenedForAssignment=true;
+    }else if(!filteredObservations.length){
       // بلا مهام مسندة: تبقى الخريطة معروضة على مركز المؤسسة أو القنفذة،
       // ورسالة الحالة وحدها هي ما يخبر المقاول بعدم وجود مهام.
       ensureMapView([]);
@@ -987,14 +1049,9 @@ const firebaseConfig = {
         legendCount.classList.add('flash');
         setTimeout(()=>legendCount.classList.remove('flash'), 700);
       }
-      const isNearWithStatus = (o, status) => {
-        if (o.status !== status || !lastMe) return false;
-        const point = observationCoordinates(o, contractorContext.organizationId);
-        return !!point && haversine(lastMe, [point.lat, point.lng]) <= r;
-      };
-      const reds = observations.filter(o => isNearWithStatus(o, 'PENDING')).length;
-      const ambers = observations.filter(o => isNearWithStatus(o, 'IN_PROGRESS')).length;
-      const greens = observations.filter(o => isNearWithStatus(o, 'COMPLETED')).length;
+      const reds = filteredObservations.filter(isCriticalObservation).length;
+      const ambers = filteredObservations.filter(o => o.status !== 'COMPLETED' && !isCriticalObservation(o)).length;
+      const greens = filteredObservations.filter(o => o.status === 'COMPLETED').length;
 
       document.getElementById("countRed").textContent = reds;
       document.getElementById("countAmber").textContent = ambers;
@@ -1005,6 +1062,7 @@ const firebaseConfig = {
       else if (ambers >= reds && ambers >= greens && ambers > 0) legendBtn.classList.add('amber');
       else if (greens > 0) legendBtn.classList.add('green');
     }
+    renderContractorWorkspace(filteredObservations);
   }
 
   // Organization-scoped live subscription.
@@ -1059,9 +1117,15 @@ const firebaseConfig = {
           title:data.title||'—',
           status:data.status||'PENDING',
           type:data.type||'MAINTENANCE',
+          category:data.category||data.type||'صيانة بلدية',
+          priority:data.priority||'NORMAL',
+          estimatedMinutes:Number(data.estimatedMinutes)||null,
+          slaDueAtMs:data.slaDueAt?.toMillis ? data.slaDueAt.toMillis() : 0,
+          deadlineAtMs:data.deadline?.toMillis ? data.deadline.toMillis() : (data.dueAt?.toMillis ? data.dueAt.toMillis() : 0),
           date:data.date||'',
           details:data.details||'',
           location:data.location||'',
+          locationName:data.locationName||data.address||data.area||'',
           imagePath:data.imagePath||null,
           afterImagePath:data.afterImagePath||null,
           afterImageUrl:data.afterImageUrl||null,
@@ -1074,6 +1138,7 @@ const firebaseConfig = {
           assignedByUid:data.assignedByUid||null,
           assignedByName:data.assignedByName||data.supervisorName||'',
           assignedAt:data.assignedAt||null,
+          assignedAtMs:data.assignedAt?.toMillis ? data.assignedAt.toMillis() : 0,
           supervisorNote:data.supervisorNote||'',
           updatedByUid:data.updatedByUid||null,
           correctedLat:data.correctedLat,
@@ -1098,35 +1163,41 @@ const firebaseConfig = {
 
   const locBtn=document.getElementById('locBtn');
   const centerBtn=document.getElementById('centerBtn');
-  let watchId=null;
+  let watchId=null, lastGpsAccuracy=null, gpsRequestEpoch=0;
 
-  function startWatch(){
+  function requestOneShotLocation({notify=true}={}){
     if (!navigator.geolocation){
-      alert('المتصفح لا يدعم تحديد الموقع.');
-      return;
+      if(notify)alert('المتصفح لا يدعم تحديد الموقع.');
+      return Promise.resolve(null);
     }
-    if (watchId!==null) return;
-    watchId = navigator.geolocation.watchPosition(pos=>{
-      lastMe=[pos.coords.latitude, pos.coords.longitude];
-      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent=`GPS: ±${Math.round(pos.coords.accuracy||0)}م`;
-      paint();
-    }, err=>{
-      console.warn(err);
-      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent='GPS: غير متاح';
-      alert('تعذر تحديد الموقع. يرجى السماح بالصلاحيات.');
-    }, { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
+    if(watchId)return watchId;
+    const requestEpoch=++gpsRequestEpoch;
+    watchId=new Promise(resolve=>navigator.geolocation.getCurrentPosition(pos=>{
+        if(requestEpoch!==gpsRequestEpoch){resolve(null);return}
+        lastMe=[pos.coords.latitude,pos.coords.longitude];lastGpsAccuracy=Math.round(pos.coords.accuracy||0);
+        const speed=Number(pos.coords.speed),gps=document.getElementById('fieldGpsState');if(gps)gps.textContent=`±${lastGpsAccuracy}م`;
+        const accuracyEl=document.getElementById('gpsAccuracyValue');if(accuracyEl)accuracyEl.textContent=`±${lastGpsAccuracy} متر`;
+        const updatedEl=document.getElementById('gpsLastUpdate');if(updatedEl){updatedEl.dataset.at=String(Date.now());updatedEl.textContent='الآن';}
+        const speedEl=document.getElementById('gpsSpeedValue');if(speedEl)speedEl.textContent=Number.isFinite(speed)?`${Math.round(speed*3.6)} كم/س`:'0 كم/س';
+        const navBtn=document.getElementById('openNavigationBtn');if(navBtn)navBtn.disabled=!getNavigationTarget();paint();
+        watchId=null;resolve({coords:lastMe,accuracy:lastGpsAccuracy});
+      },err=>{if(requestEpoch!==gpsRequestEpoch){resolve(null);return}console.warn(err);const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent='غير متاح';watchId=null;if(notify)alert('تعذر تحديد الموقع. يرجى السماح بالصلاحيات.');resolve(null);},
+      {enableHighAccuracy:true,maximumAge:2000,timeout:10000}));
+    return watchId;
   }
 
-  locBtn.addEventListener('click', ()=>{
-    startWatch();
-    if(lastMe)map.setView(lastMe, 14, { animate:true });
+  function startWatch(){return requestOneShotLocation({notify:true})}
+
+  locBtn.addEventListener('click', async ()=>{
+    const fix=await startWatch();
+    if(fix?.coords)map.setView(fix.coords,14,{animate:true});
   });
   window.addEventListener('online',()=>{
-    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: متصل';
+    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='متصل';
     if (contractorContext.organizationId && !hasServerSnapshot) subscribeObservations();
   });
   window.addEventListener('offline',()=>{
-    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: غير متصل';
+    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='غير متصل';
     if (!hasServerSnapshot) setMapState('offline');
   });
   centerBtn.addEventListener('click', ()=>{
@@ -1137,7 +1208,7 @@ const firebaseConfig = {
   });
 
   statusFilter.addEventListener('change', paint);
-  radiusInput.addEventListener('input', paint);
+  radiusInput.addEventListener('change', paint);
 
   const sheet        = document.getElementById('smartSheet');
   const sheetClose   = document.getElementById('sheetClose');
@@ -1152,8 +1223,14 @@ const firebaseConfig = {
   const sAfter       = document.getElementById('sAfter');
   const sheetTitle   = document.getElementById('sheetTitle');
   const sheetOverlay = document.getElementById('sheetOverlay');
+  const beforeEvidencePreview=document.getElementById('beforeEvidencePreview');
+  const afterEvidencePreview=document.getElementById('afterEvidencePreview');
+  const afterQualityBadge=document.getElementById('afterQualityBadge');
+  const retakeEvidenceBtn=document.getElementById('retakeEvidenceBtn');
+  const evidenceProgressBar=document.getElementById('evidenceProgressBar');
+  let stagedEvidenceUrl='';
 
-  let currentDocId=null, currentAfterData=null, currentWorkflowStatus=null;
+  let currentDocId=null, currentAfterData=null, currentWorkflowStatus=null, sheetOrigin=null;
   let saveInFlight=false, openSheetEpoch=0;
   const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const MAX_COMPRESSED_IMAGE_BYTES = 700 * 1024;
@@ -1193,9 +1270,119 @@ const firebaseConfig = {
   const STATUS_LABELS = {
     PENDING:     'قيد الانتظار',
     IN_PROGRESS: 'قيد المعالجة',
-    PENDING_REVIEW:'بانتظار مراجعة المراقب',
+    PENDING_REVIEW:'بانتظار الاعتماد',
     COMPLETED:   'تمت المعالجة'
   };
+  const CONTRACTOR_SUBMITTED = 'PENDING_REVIEW'; // UI semantic alias; preserves the approved backend workflow.
+  const EXECUTION_EVENT_PREFIX='[SMART_HSR_';
+
+  const PRESENTATION_STAGE = {
+    PENDING:{label:'مسندة',action:'بدء التنفيذ'},
+    IN_PROGRESS:{label:'قيد العمل',action:'رفع إثبات المعالجة'},
+    PENDING_REVIEW:{label:'بانتظار الاعتماد',action:'عرض التفاصيل'},
+    COMPLETED:{label:'مكتملة',action:'عرض التفاصيل'}
+  };
+
+  function formatTaskDistance(observation){
+    const point=observationCoordinates(observation,contractorContext.organizationId);
+    if(!point||!lastMe)return 'المسافة غير متاحة';
+    return fmtMeters(haversine(lastMe,[point.lat,point.lng]));
+  }
+
+  function formatSla(observation){
+    if(!observation.slaDueAtMs)return 'حسب خطة المؤسسة';
+    const remaining=observation.slaDueAtMs-Date.now();
+    if(remaining<=0)return 'متجاوز';
+    const hours=Math.floor(remaining/3600000),minutes=Math.floor((remaining%3600000)/60000);
+    return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')} ساعة`;
+  }
+
+  function formatMissionDate(timestampMs,fallback='غير محدد'){
+    if(!Number.isFinite(timestampMs)||timestampMs<=0)return fallback;
+    return new Intl.DateTimeFormat('ar-SA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(timestampMs));
+  }
+
+  function priorityLabel(value){
+    const priority=String(value||'NORMAL').toUpperCase();
+    return priority==='URGENT'?'عاجل':priority==='HIGH'?'مرتفع':priority==='LOW'?'منخفض':'اعتيادي';
+  }
+
+  function buildExecutionEvent(kind,fix){
+    const coordinates=fix?.coords?.length===2?`${fix.coords[0].toFixed(6)},${fix.coords[1].toFixed(6)}`:'غير متاح';
+    const accuracy=Number.isFinite(fix?.accuracy)?`±${fix.accuracy}م`:'دقة غير متاحة';
+    return `[SMART_HSR_${kind}] ${new Date().toISOString()} | ${coordinates} | ${accuracy}`;
+  }
+
+  function executionEventLines(value){return String(value||'').split('\n').filter(line=>line.startsWith(EXECUTION_EVENT_PREFIX))}
+  function visibleResolutionNote(value){return String(value||'').split('\n').filter(line=>!line.startsWith(EXECUTION_EVENT_PREFIX)).join('\n').trim()}
+  function combinedExecutionNote(existing,userNote,eventLine){return [...new Set([...executionEventLines(existing),eventLine]),userNote.trim()].filter(Boolean).join('\n')}
+
+  function renderTwinModalTimeline(observation){
+    const timeline=document.getElementById('twinModalTimeline');if(!timeline)return;
+    const status=observation?.status||'PENDING';
+    const stages=[
+      {label:'تم الإسناد',active:true,time:formatMissionDate(observation?.assignedAtMs,'موثّق')},
+      {label:'بدأ التنفيذ',active:['IN_PROGRESS','PENDING_REVIEW','COMPLETED'].includes(status),time:status==='PENDING'?'بانتظار البدء':'تم التسجيل'},
+      {label:'رُفع الإنجاز',active:['PENDING_REVIEW','COMPLETED'].includes(status),time:['PENDING_REVIEW','COMPLETED'].includes(status)?'CONTRACTOR_SUBMITTED':'بانتظار المقاول'},
+      {label:'تم الاعتماد',active:status==='COMPLETED',time:status==='COMPLETED'?'مكتمل':'بانتظار الجهة'}
+    ];
+    timeline.innerHTML=stages.map(stage=>`<div class="twin-timeline-step ${stage.active?'active':''}">${escapeHTML(stage.label)}<small style="display:block;margin-top:3px">${escapeHTML(stage.time)}</small></div>`).join('');
+  }
+
+  function renderContractorWorkspace(filteredObservations=observations){
+    const list=document.getElementById('contractorTaskList');if(!list)return;
+    const active=filteredObservations.filter(o=>o.status!=='COMPLETED');
+    document.getElementById('taskTotal').textContent=String(filteredObservations.length);
+    document.getElementById('taskActive').textContent=String(active.length);
+    if(!filteredObservations.length){
+      list.innerHTML=`<div class="empty-workspace">${observations.length?'لا توجد مهام تطابق عوامل التصفية الحالية.':'لا توجد مهام مسندة إليك حالياً.'}</div>`;
+      renderOperationalTwin(null);return;
+    }
+    list.innerHTML=filteredObservations.map(o=>{
+      const stage=PRESENTATION_STAGE[o.status]||{label:STATUS_LABELS[o.status]||'حالة غير متاحة',action:'عرض التفاصيل'};
+      const priority=priorityLabel(o.priority),location=o.locationName||o.location||'موقع بلدي موثق';
+      return `<article class="task-card"><div class="task-card-main"><div class="task-topline"><span class="task-id">بلاغ #${escapeHTML(o.id||'—')}</span><span class="status-tag">${escapeHTML(stage.label)}</span><span class="priority-tag">${escapeHTML(priority)}</span></div><h2>${escapeHTML(o.title||o.category||'مهمة ميدانية')}</h2><div class="task-meta"><span><i data-lucide="map-pin"></i>${escapeHTML(location)}</span><span><i data-lucide="route"></i>${escapeHTML(formatTaskDistance(o))}</span></div><div class="task-assignment-grid"><span><i data-lucide="calendar-check"></i>أُسندت: ${escapeHTML(formatMissionDate(o.assignedAtMs,'وقت الإسناد غير متاح'))}</span><span><i data-lucide="alarm-clock"></i>الموعد النهائي: ${escapeHTML(formatMissionDate(o.deadlineAtMs,'غير محدد'))}</span></div><div class="task-sla"><div class="task-sla-head"><span>حالة SLA</span><strong>${escapeHTML(formatSla(o))}</strong></div><div class="task-sla-track"><span></span></div></div></div><div class="task-actions"><button class="task-action-secondary" type="button" data-task-action="location" data-task-id="${escapeHTML(o.docId)}"><i data-lucide="navigation"></i>فتح الموقع</button><button class="task-action" type="button" data-task-action="start" data-task-id="${escapeHTML(o.docId)}">${escapeHTML(stage.action)}</button></div></article>`;
+    }).join('');
+    renderOperationalTwin(active.find(o=>o.status==='IN_PROGRESS')||active[0]||filteredObservations[0]);
+    lucide.createIcons();
+  }
+
+  function renderOperationalTwin(task){
+    const taskEl=document.getElementById('twinTask'),locationEl=document.getElementById('twinLocation'),durationEl=document.getElementById('twinDuration'),syncEl=document.getElementById('twinSync');
+    if(taskEl)taskEl.textContent=task?.title||'لا توجد مهمة نشطة';
+    if(locationEl)locationEl.textContent=safeIdentityText(contractorContext.organizationName,'شركة المقاول');
+    if(durationEl)durationEl.textContent=task?.estimatedMinutes?`${task.estimatedMinutes} دقيقة`:'—';
+    if(syncEl)syncEl.textContent=hasServerSnapshot?'الآن':'بانتظار البيانات';
+  }
+
+  function getNavigationTarget(){
+    const task=observations.find(o=>o.status==='IN_PROGRESS')||observations.find(o=>o.status==='PENDING');
+    return task?observationCoordinates(task,contractorContext.organizationId):null;
+  }
+
+  document.getElementById('contractorTaskList')?.addEventListener('click',event=>{
+    const button=event.target.closest('[data-task-id]');if(!button)return;
+    const task=observations.find(item=>item.docId===button.dataset.taskId);if(!task)return;
+    if(button.dataset.taskAction==='location'){
+      const point=observationCoordinates(task,contractorContext.organizationId);if(!point){toast('موقع المهمة غير متاح.');return;}
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${point.lat},${point.lng}`)}`,'_blank','noopener,noreferrer');return;
+    }
+    openCurrent(button.dataset.taskId);
+  });
+  document.getElementById('openNavigationBtn')?.addEventListener('click',()=>{
+    const target=getNavigationTarget();if(!target)return;
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${target.lat},${target.lng}`)}`,'_blank','noopener,noreferrer');
+  });
+  function activateWorkspace(view){
+    const showMap=view==='map';
+    document.getElementById('tasksPanel').hidden=showMap;document.getElementById('mapPanel').hidden=!showMap;
+    document.getElementById('tasksTab').classList.toggle('active',!showMap);document.getElementById('mapTab').classList.toggle('active',showMap);
+    document.getElementById('tasksTab').setAttribute('aria-selected',String(!showMap));document.getElementById('mapTab').setAttribute('aria-selected',String(showMap));
+    if(showMap)setTimeout(()=>{map.invalidateSize();paint();},50);
+  }
+  document.getElementById('tasksTab')?.addEventListener('click',()=>activateWorkspace('tasks'));
+  document.getElementById('mapTab')?.addEventListener('click',()=>activateWorkspace('map'));
+  setInterval(()=>{const el=document.getElementById('gpsLastUpdate');const at=Number(el?.dataset.at||0);if(el&&at)el.textContent=`قبل ${Math.max(1,Math.round((Date.now()-at)/1000))} ث`;},5000);
 
   function setChip(status){
     sChip.className='pill '+(
@@ -1220,10 +1407,17 @@ const firebaseConfig = {
     sSave.setAttribute('aria-busy', saveInFlight ? 'true' : 'false');
     sNote.disabled = saveInFlight || status !== 'IN_PROGRESS';
     sAfter.disabled = saveInFlight || status !== 'IN_PROGRESS';
+    const workflow=document.getElementById('workflowPresentation');
+    if(workflow){
+      const stages=[['مسندة','clipboard-check'],['في الطريق','navigation'],['وصل للموقع','map-pin-check'],['قيد العمل','wrench'],['بانتظار المراجعة','shield-check'],['مكتملة','circle-check']];
+      const currentIndex=status==='PENDING'?0:status==='IN_PROGRESS'?3:status==='PENDING_REVIEW'?4:status==='COMPLETED'?5:0;
+      workflow.innerHTML=stages.map((stage,index)=>`<div class="workflow-step ${index<currentIndex?'done':''} ${index===currentIndex?'current':''}"><i data-lucide="${stage[1]}"></i>${stage[0]}</div>`).join('');
+      if(window.lucide)lucide.createIcons();
+    }
     if (retryReason === 'UPLOAD_FAILED' || retryReason === 'FIRESTORE_FAILED'){
       setSaveButtonText('إعادة المحاولة');
     } else if (status === 'PENDING'){
-      setSaveButtonText('بدء المعالجة');
+      setSaveButtonText('بدء التنفيذ');
     } else {
       setSaveButtonText('إرسال للمراجعة');
     }
@@ -1231,6 +1425,7 @@ const firebaseConfig = {
 
   function setSaveBusy(busy, retryReason=null){
     saveInFlight = busy;
+    if(evidenceProgressBar&&busy)evidenceProgressBar.style.width='65%';
     renderWorkflowControls(currentWorkflowStatus, retryReason);
   }
 
@@ -1247,12 +1442,21 @@ const firebaseConfig = {
       const compressed = await compressImage(f);
       reviewSaveCoordinator.discard(currentDocId);
       currentAfterData = compressed;
+      if(stagedEvidenceUrl)URL.revokeObjectURL(stagedEvidenceUrl);
+      stagedEvidenceUrl=URL.createObjectURL(compressed);
+      if(afterEvidencePreview)afterEvidencePreview.innerHTML=`<img src="${stagedEvidenceUrl}" alt="معاينة صورة المعالجة">`;
+      if(afterQualityBadge){afterQualityBadge.textContent='جودة مناسبة';afterQualityBadge.style.background='#dcfce7';}
+      if(retakeEvidenceBtn)retakeEvidenceBtn.disabled=false;
+      if(evidenceProgressBar)evidenceProgressBar.style.width='20%';
+      const captureLabel=document.getElementById('captureLabel');if(captureLabel)captureLabel.textContent='تغيير الصورة';
       renderWorkflowControls(currentWorkflowStatus);
     } catch (error) {
       alert(error?.message || 'تعذر معالجة الصورة المختارة.');
       e.target.value='';
     }
   });
+
+  retakeEvidenceBtn?.addEventListener('click',()=>sAfter.click());
 
   // Always opens the CURRENT version of an observation, recomputing distance
   // from the latest known position.
@@ -1264,7 +1468,7 @@ const firebaseConfig = {
       const [la, lo] = fresh.location.split(',').map(n=>parseFloat(n.trim()));
       if (Number.isFinite(la) && Number.isFinite(lo)) dist = haversine(lastMe,[la,lo]);
     }
-    for(const [id,marker] of markers){const item=observations.find(x=>x.docId===id);if(item)marker.setIcon(statusMarkerIcon(L,item.status,{selected:id===docId,title:item.title}))}
+    for(const [id,marker] of markers){const item=observations.find(x=>x.docId===id);if(item)marker.setIcon(statusMarkerIcon(L,markerPresentationStatus(item),{selected:id===docId,title:item.title}))}
     openSheet(fresh, dist);
   }
 
@@ -1337,36 +1541,58 @@ const firebaseConfig = {
   }
 
   async function openSheet(o, dist){
+    sheetOrigin=document.activeElement;
     const requestEpoch = ++openSheetEpoch;
     currentDocId=o.docId; currentAfterData=null;
     // Reset the file input so a photo staged for a previous observation is
     // never silently associated with this one.
     if (sAfter) sAfter.value='';
-    sheetTitle.textContent = `ملاحظة #${o.id||'—'}`;
+    if(stagedEvidenceUrl){URL.revokeObjectURL(stagedEvidenceUrl);stagedEvidenceUrl='';}
+    if(beforeEvidencePreview)beforeEvidencePreview.textContent='جاري تحميل الصورة السابقة…';
+    if(afterEvidencePreview)afterEvidencePreview.textContent='جاري تحميل إثبات المعالجة…';
+    if(afterQualityBadge){afterQualityBadge.textContent='جاري التحميل';afterQualityBadge.removeAttribute('style');}
+    if(retakeEvidenceBtn)retakeEvidenceBtn.disabled=true;
+    if(evidenceProgressBar)evidenceProgressBar.style.width='0';
+    sheetTitle.textContent = `التوأم التشغيلي — مهمة #${o.id||'—'}`;
     sTitleEl.textContent = o.title||'—';
     sDetails.innerHTML = observationDetailHTML(o);
     renderWorkflowControls(o.status||'PENDING');
-    sNote.value = o.resolutionNote||'';
+    sNote.value = visibleResolutionNote(o.resolutionNote);
+    const modalStatus=document.getElementById('twinModalStatus'),modalPriority=document.getElementById('twinModalPriority'),modalLocation=document.getElementById('twinModalLocation');
+    if(modalStatus)modalStatus.textContent=STATUS_LABELS[o.status]||'حالة غير متاحة';
+    if(modalPriority)modalPriority.textContent=priorityLabel(o.priority);
+    if(modalLocation)modalLocation.textContent=o.locationName||o.location||'موقع بلدي موثق';
+    renderTwinModalTimeline(o);
+    const captureLabel=document.getElementById('captureLabel');if(captureLabel)captureLabel.textContent='رفع الإنجاز';
     sDistance.textContent = dist
       ? (dist<1000?`${Math.round(dist)} م`:`${(dist/1000).toFixed(1)} كم`)
       : '—';
 
     revokeAllObservationImageUrls();
-    sMedia.innerHTML = '';
+    sMedia.innerHTML = '<div class="card-mini" style="text-align:center">جاري تحميل المرفقات…</div>';
+    // Open immediately with trusted task text; evidence resolves independently
+    // below. openSheetEpoch still prevents a late response painting another task.
+    sheet.classList.add('open');
+    sheet.querySelector('.sheet-panel')?.focus();
     const [beforeImage, afterImage] = await Promise.all([
       resolveEvidenceReference(o.imagePath).catch(()=>''),
       resolveEvidenceReference(o.afterImagePath || o.afterImageUrl).catch(()=>''),
     ]);
     if (requestEpoch !== openSheetEpoch || currentDocId !== o.docId) return;
     if (afterImage){
+      if(beforeEvidencePreview)beforeEvidencePreview.innerHTML=beforeImage?`<img src="${beforeImage}" alt="الصورة السابقة">`:'لا توجد صورة سابقة';
+      if(afterEvidencePreview)afterEvidencePreview.innerHTML=`<img src="${afterImage}" alt="صورة المعالجة الحالية">`;
+      if(afterQualityBadge)afterQualityBadge.textContent='مرفوعة';
       sMedia.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           ${beforeImage ? `<img src="${beforeImage}" alt="قبل" style="width:100%;border-radius:10px">` : ''}
           <img src="${afterImage}" alt="بعد" style="width:100%;border-radius:10px">
         </div>`;
     } else if (beforeImage){
+      if(beforeEvidencePreview)beforeEvidencePreview.innerHTML=`<img src="${beforeImage}" alt="الصورة السابقة">`;
       sMedia.innerHTML = `<img src="${beforeImage}" alt="مرفق" style="width:100%;border-radius:10px">`;
     } else {
+      if(beforeEvidencePreview)beforeEvidencePreview.textContent='لا توجد صورة سابقة متاحة';
       const localMissing=String(o.imagePath||o.afterImagePath||'').startsWith('local-demo://');
       // A reference that failed to load is reported as a failure, never as
       // "no attachment" — the two mean very different things to a contractor.
@@ -1374,18 +1600,26 @@ const firebaseConfig = {
       sMedia.innerHTML = `<div class="card-mini" style="text-align:center">${failed?'تعذر تحميل صورة الملاحظة':(localMissing?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا يوجد مرفق')}</div>`;
     }
 
-    sheet.classList.add('open');
   }
 
   function closeSheet(){
     openSheetEpoch++;
     revokeAllObservationImageUrls();
     sheet.classList.remove('open');
+    if(sheetOrigin instanceof HTMLElement)sheetOrigin.focus();
   }
   window.addEventListener('pagehide',revokeAllObservationImageUrls);
 
   sheetClose.addEventListener('click', closeSheet);
   sheetOverlay.addEventListener('click', closeSheet);
+  sheet.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){closeSheet();return}
+    if(event.key!=='Tab')return;
+    const focusable=[...sheet.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex="0"]')];
+    if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+  });
 
   sSave.addEventListener('click', async ()=>{
     if (saveInFlight || reviewSaveCoordinator.inFlight) return;
@@ -1432,6 +1666,14 @@ const firebaseConfig = {
       }
     }
 
+    // Privacy-respecting execution telemetry: collect one GPS fix only for
+    // the start or submission event. No background or continuous tracking.
+    const executionFix=await requestOneShotLocation({notify:false});
+    if(!executionFix){
+      alert('يتطلب تسجيل حدث التنفيذ قراءة موقع واحدة. فعّل GPS ثم أعد المحاولة.');
+      return;
+    }
+
     let retryReason = null;
     setSaveBusy(true);
     try {
@@ -1443,7 +1685,7 @@ const firebaseConfig = {
       if (nextStatus === 'PENDING_REVIEW' && fresh.status === 'PENDING_REVIEW'){
         const pendingReference = reviewSaveCoordinator.pendingReference(currentDocId);
         const savedReference = fresh.afterImagePath || fresh.afterImageUrl || null;
-        if (fresh.updatedByUid === auth.currentUser.uid && fresh.resolutionNote === note
+        if (fresh.updatedByUid === auth.currentUser.uid && visibleResolutionNote(fresh.resolutionNote) === note
             && (!pendingReference || savedReference === pendingReference)){
           reviewSaveCoordinator.discard(currentDocId);
           toast('البلاغ موجود بالفعل بانتظار مراجعة المراقب.');
@@ -1457,8 +1699,10 @@ const firebaseConfig = {
       }
 
       if (nextStatus === 'IN_PROGRESS'){
+        const startEvent=buildExecutionEvent('START',executionFix);
         await updateDoc(doc(db,'observations',currentDocId), {
           status:'IN_PROGRESS',
+          resolutionNote:combinedExecutionNote(fresh.resolutionNote,'',startEvent),
           updatedByUid:auth.currentUser.uid,
           updatedAt:serverTimestamp()
         });
@@ -1472,8 +1716,8 @@ const firebaseConfig = {
         blob:currentAfterData,
         existingAfterReference,
         buildPayload:afterReference => ({
-          status:'PENDING_REVIEW',
-          resolutionNote:note,
+          status:CONTRACTOR_SUBMITTED,
+          resolutionNote:combinedExecutionNote(fresh.resolutionNote,note,buildExecutionEvent('SUBMISSION',executionFix)),
           afterImagePath:afterReference,
           updatedByUid:auth.currentUser.uid,
           updatedAt:serverTimestamp()
@@ -1489,7 +1733,8 @@ const firebaseConfig = {
           : 'تعذر إرسال البلاغ. لن تُرفع الصورة مرة أخرى عند إعادة المحاولة.');
         return;
       }
-      toast('تم إرسال البلاغ لمراجعة المراقب');
+      toast('تم رفع الإنجاز — بانتظار الاعتماد');
+      if(evidenceProgressBar)evidenceProgressBar.style.width='100%';
       currentAfterData = null;
       closeSheet();
     } catch (error){
@@ -1706,14 +1951,13 @@ const firebaseConfig = {
     contractorContext.uid = null;
     contractorContext.organizationId = null;
     contractorContext.organizationName = '';
+    contractorContext.contractorName = '';
     currentDocId = null;
     currentAfterData = null;
     currentWorkflowStatus = null;
     reviewSaveCoordinator.discard();
-    if (watchId !== null && navigator.geolocation){
-      navigator.geolocation.clearWatch(watchId);
-      watchId = null;
-    }
+    // GPS is collected as one-shot privacy events only; no continuous watcher exists.
+    gpsRequestEpoch++;watchId = null;
     lastMe = null;
     if (meMarker){ meMarker.remove(); meMarker = null; }
     if (meCircle){ meCircle.remove(); meCircle = null; }
@@ -1787,6 +2031,7 @@ const firebaseConfig = {
       contractorContext.uid = user.uid;
       contractorContext.organizationId = verified.organizationId;
       contractorContext.organizationName = verified.organizationName;
+      contractorContext.contractorName = verified.contractorName || user.displayName || '';
       try{ organizationMapContext=await fetchOrganizationMapContext(auth,{organizationId:verified.organizationId}); }
       catch(_){ organizationMapContext=null; }
       if (epoch !== authVerificationEpoch || auth.currentUser?.uid !== user.uid) return;
