@@ -534,8 +534,30 @@
     .twin-summary{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:11px;border:1px solid rgba(24,165,162,.2);border-radius:14px;background:linear-gradient(135deg,rgba(24,165,162,.1),transparent)}.twin-summary div{min-width:0}.twin-summary span,.twin-summary strong{display:block}.twin-summary span{font-size:9px;color:var(--muted);font-weight:800}.twin-summary strong{margin-top:3px;font-size:11px;overflow-wrap:anywhere}.twin-timeline{grid-column:1/-1;min-height:63px;display:grid;grid-template-columns:repeat(4,minmax(74px,1fr));gap:6px;overflow-x:auto}.twin-timeline-step{padding:9px 6px;border-radius:11px;background:var(--bg);border:1px solid var(--line);text-align:center;font-size:9px;font-weight:900;color:var(--muted)}.twin-timeline-step.active{background:#e7f8f5;color:#087f7b;border-color:rgba(24,165,162,.3)}
     .smart-observation-fab{position:fixed;z-index:1100;inset-inline-end:18px;bottom:18px;min-height:52px;display:flex;align-items:center;gap:8px;padding:0 17px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:linear-gradient(135deg,#0b3a4a,#18a5a2);color:#fff;font-family:inherit;font-weight:900;box-shadow:0 12px 28px rgba(10,25,49,.26);cursor:pointer}.smart-observation-fab i{width:20px}.smart-action-sheet{position:fixed;inset:0;z-index:4200;display:grid;place-items:end center;padding:18px;background:rgba(4,23,34,.48);backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:opacity .22s}.smart-action-sheet.open{opacity:1;pointer-events:auto}.smart-action-panel{width:min(480px,100%);padding:14px;border:1px solid rgba(255,255,255,.42);border-radius:22px;background:rgba(255,255,255,.9);box-shadow:0 22px 60px rgba(10,25,49,.3);transform:translateY(20px);transition:transform .22s}.smart-action-sheet.open .smart-action-panel{transform:none}[data-theme="dark"] .smart-action-panel{background:rgba(16,32,54,.94)}.smart-action-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.smart-action-head h2{margin:0;font-size:16px}.smart-action-head button{width:44px;height:44px;border:0;border-radius:12px;background:var(--bg);color:var(--text)}.smart-action-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.smart-action-option{min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);font-family:inherit;font-weight:900}.smart-action-option i{width:23px;color:var(--teal)}.smart-action-note{margin:10px 0 0;color:var(--muted);font-size:10px;text-align:center;font-weight:700}
     .sheet-header .btn{min-width:44px;min-height:44px;justify-content:center}button:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}button:active{transform:scale(.98)}
-    @media(max-width:760px){.app-header{padding:8px 10px}.contractor-header{grid-template-columns:minmax(0,1fr) auto}.header-brand{display:none}.contractor-identity{padding:0;border:0}.header-metrics .header-metric:first-child{display:none}.header-metric{padding:5px 7px}.workspace-shell{padding:10px 9px 86px}.operations-grid{grid-template-columns:1fr}.ops-rail{grid-template-columns:1fr 1fr}.task-summary{display:none}.task-card{grid-template-columns:1fr}.task-actions{grid-template-columns:1fr 1fr;width:100%}.task-action{width:100%}.evidence-stage{grid-template-columns:1fr}.smart-observation-fab{inset-inline-end:12px;bottom:72px;justify-content:center}.twin-summary{grid-template-columns:1fr 1fr}.twin-summary>div:last-child{grid-column:1/-1}}
-    @media(max-width:480px){.identity-copy strong{font-size:12px}.header-metrics{gap:4px}.workspace-nav{margin-bottom:10px}.ops-rail{grid-template-columns:1fr}#mapPanel .map-wrap{min-height:520px;height:calc(100dvh - var(--app-header-height) - 92px)}}
+    /* iPhone-first contractor polish — inspector header parity and compact field workspace */
+    .app-header{padding:8px;background:linear-gradient(90deg,#0a1931 0%,#087f7b 100%);box-shadow:0 4px 14px rgba(10,25,49,.2);backdrop-filter:blur(8px)}
+    .contractor-header{min-height:68px;padding:8px 10px;border:1px solid rgba(255,255,255,.2);border-radius:18px;background:linear-gradient(130deg,rgba(11,58,68,.88),rgba(8,74,78,.78));box-shadow:0 8px 22px rgba(2,25,35,.18),inset 0 1px rgba(255,255,255,.1)}
+    .brand-mark{width:10px;height:10px;flex:0 0 10px;border-radius:50%;font-size:0;background:#86efac;box-shadow:0 0 0 4px rgba(134,239,172,.15)}
+    .header-brand .brand{font-size:15px;font-weight:800}.header-brand small{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#d1f4f2}
+    .contractor-identity{gap:10px}.contractor-avatar{width:44px;height:44px;flex-basis:44px;border-radius:14px;color:#d1fae5}.identity-copy strong{font-size:14px}.identity-copy>small:last-child{max-width:220px}.role-badge{padding:3px 9px;background:#dcfce7;color:#14532d!important;border:0}
+    .header-metric{min-height:48px;padding:6px 9px}.profile-action{width:48px;height:48px}
+    .task-card{gap:12px;padding:12px;border-inline-start-width:3px;box-shadow:0 5px 16px rgba(10,25,49,.06)}
+    .task-card h2{margin:5px 0 6px;font-size:15px;line-height:1.45}.task-assignment-grid{margin-top:7px}.task-sla{margin-top:7px}.task-actions{gap:8px}.task-action,.task-action-secondary{min-height:44px;border-radius:13px;padding-inline:10px;font-size:12px;white-space:normal;line-height:1.25}
+    .ops-card{padding:12px;box-shadow:0 5px 16px rgba(10,25,49,.06)}.ops-card-head{margin-bottom:8px}.twin-grid,.gps-grid{gap:6px}.metric-box{min-width:0;padding:8px}.metric-box strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.navigate-btn{margin-top:8px;border-radius:13px}
+    .sheet{align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+    .sheet-panel{width:min(92vw,390px);max-height:80dvh;border-radius:24px;background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.62);box-shadow:0 24px 60px rgba(2,25,35,.3),inset 0 1px rgba(255,255,255,.72);backdrop-filter:blur(22px) saturate(145%);transform:translateY(14px) scale(.97)}
+    [data-theme="dark"] .sheet-panel{background:rgba(14,29,45,.94);border-color:rgba(255,255,255,.14)}
+    .sheet-handle{display:none}.sheet-header{flex:0 0 auto;min-height:60px;padding:8px 12px;background:rgba(255,255,255,.3)}[data-theme="dark"] .sheet-header{background:rgba(7,29,42,.35)}
+    .sheet-header h3{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.sheet-header>svg{flex:0 0 20px}.sheet-header .pill{flex:0 1 auto;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sheet-header .btn{width:44px;height:44px;flex:0 0 44px;padding:0;border-radius:12px}
+    .sheet-body{min-height:0;overscroll-behavior:contain;padding:12px;scrollbar-gutter:stable}.sheet-actions{position:static;flex:0 0 auto;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.68);backdrop-filter:blur(12px)}[data-theme="dark"] .sheet-actions{background:rgba(14,29,45,.82)}.sheet-actions .btn{width:100%;min-height:44px;border-radius:13px}
+    .smart-observation-fab{min-width:44px;min-height:44px;padding:0 13px;gap:6px;inset-inline-end:max(12px,env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));font-size:11px;box-shadow:0 8px 20px rgba(10,25,49,.22)}.smart-observation-fab i{width:18px;height:18px}
+    #mapPanel .map-wrap{height:clamp(430px,58dvh,610px);min-height:430px;border-radius:16px}.workspace-shell{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+    @media(max-width:760px){
+      .app-header{padding:6px}.contractor-header{position:relative;grid-template-columns:minmax(0,1fr) auto;gap:7px;padding:30px 8px 8px;border-radius:16px}.header-brand{position:absolute;inset-block-start:8px;inset-inline-start:10px;display:flex}.header-brand small{display:none}.contractor-identity{padding:0;border:0}.contractor-avatar{width:40px;height:40px;flex-basis:40px}.identity-copy strong{max-width:155px;font-size:12px}.identity-copy>small:last-child{max-width:155px}.header-metrics{gap:4px}.header-metric{min-height:44px;padding:5px 7px}.header-metric span{font-size:8px}.header-metric strong{font-size:10px}.profile-action{width:44px;height:44px}.workspace-shell{padding:10px 10px calc(78px + env(safe-area-inset-bottom))}.operations-grid{grid-template-columns:1fr}.task-summary{display:none}.task-card{grid-template-columns:1fr}.task-actions{grid-template-columns:repeat(2,minmax(0,1fr));width:100%;min-width:0}.task-actions>*{width:100%}.evidence-stage{grid-template-columns:1fr}.twin-summary{grid-template-columns:1fr 1fr}.twin-summary>div:last-child{grid-column:1/-1}.sheet-body{grid-template-columns:1fr}.workflow-presentation{grid-template-columns:repeat(6,minmax(76px,1fr))}
+    }
+    @media(min-width:420px) and (max-width:760px){.ops-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-card{height:100%}}
+    @media(max-width:419px){.ops-rail{grid-template-columns:1fr}.header-metrics .header-metric:first-child{display:none}.workspace-intro h1{font-size:20px}.workspace-nav{margin-bottom:10px}.task-assignment-grid{grid-template-columns:1fr}.smart-observation-fab{max-width:152px;padding-inline:11px}#mapPanel .map-wrap{height:54dvh;min-height:420px}}
+    @media(min-width:761px){.ops-rail{grid-template-columns:1fr}.sheet-body{grid-template-columns:1fr 1fr}#mapPanel .map-wrap{height:min(62dvh,620px)}}
     @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
 </head>
@@ -545,7 +567,7 @@
 <header class="app-header">
   <div class="contractor-header">
     <div class="header-brand"><span class="brand-mark">HSR</span><div><div class="brand">Smart HSR</div><small>منصة العمل البلدي الذكية</small></div></div>
-    <div class="contractor-identity"><div id="contractorAvatar" class="contractor-avatar" aria-hidden="true">م</div><div class="identity-copy"><strong id="contractorName">مقاول Smart HSR</strong><small class="role-badge">مقاول ميداني</small><small id="orgBadge">بانتظار التحقق</small></div></div>
+    <div class="contractor-identity"><div id="contractorAvatar" class="contractor-avatar" aria-hidden="true">م</div><div class="identity-copy"><strong id="contractorName">مقاول Smart HSR</strong><small class="role-badge">مقاول ميداني</small><small id="orgBadge">الجهة الحكومية</small></div></div>
     <div class="header-metrics">
       <div class="header-metric"><span id="connectionDot" class="connection-dot" aria-hidden="true"></span><div><span>حالة الاتصال</span><strong id="fieldConnectionState">متصل</strong></div></div>
       <button id="locBtn" class="header-metric" title="تحديث موقعي"><i data-lucide="crosshair"></i><div><span>دقة GPS</span><strong id="fieldGpsState">جاهز</strong></div></button>
@@ -763,15 +785,17 @@ const firebaseConfig = {
   let organizationMapContext=null, mapOpenedForAssignment=false;
 
   // ===== Contractor workflow policy (pure and locally testable) =====
+  function safeIdentityText(value, fallback=''){
+    const text = typeof value === 'string' ? value.trim() : '';
+    return text && !/^(?:undefined|null|nan)$/i.test(text) ? text : fallback;
+  }
+
   function normalizeContractorAccess(data){
     const value = data && typeof data === 'object' ? data : {};
     const organizationId = typeof value.organizationId === 'string' ? value.organizationId.trim() : '';
     if (value.role !== 'contractor' || value.active !== true || !organizationId) return null;
-    const organizationName = typeof value.organizationName === 'string' && value.organizationName.trim()
-      ? value.organizationName.trim()
-      : 'الجهة الحكومية';
-    const contractorName = typeof value.name === 'string' && value.name.trim()
-      ? value.name.trim() : (typeof value.displayName === 'string' ? value.displayName.trim() : '');
+    const organizationName = safeIdentityText(value.organizationName, 'الجهة الحكومية');
+    const contractorName = safeIdentityText(value.name, safeIdentityText(value.displayName));
     return { organizationId, organizationName, contractorName };
   }
 
@@ -870,10 +894,10 @@ const firebaseConfig = {
   function renderOrgBadge(){
     const el = document.getElementById('orgBadge');
     if (!el) return;
-    const organizationName=contractorContext.organizationName||'الجهة الحكومية';
+    const organizationName=safeIdentityText(contractorContext.organizationName,'الجهة الحكومية');
     el.textContent = organizationName;
     el.hidden = false;
-    const name = contractorContext.contractorName || auth?.currentUser?.displayName || auth?.currentUser?.email?.split('@')[0] || 'مقاول Smart HSR';
+    const name = safeIdentityText(contractorContext.contractorName,safeIdentityText(auth?.currentUser?.displayName,safeIdentityText(auth?.currentUser?.email?.split('@')[0],'مقاول Smart HSR')));
     const nameEl=document.getElementById('contractorName');if(nameEl)nameEl.textContent=name;
     const avatar=document.getElementById('contractorAvatar');if(avatar)avatar.textContent=name.trim().charAt(0)||'م';
   }
@@ -1355,7 +1379,7 @@ const firebaseConfig = {
   function renderOperationalTwin(task){
     const taskEl=document.getElementById('twinTask'),locationEl=document.getElementById('twinLocation'),durationEl=document.getElementById('twinDuration'),syncEl=document.getElementById('twinSync');
     if(taskEl)taskEl.textContent=task?.title||'لا توجد مهمة نشطة';
-    if(locationEl)locationEl.textContent=contractorContext.organizationName||'—';
+    if(locationEl)locationEl.textContent=safeIdentityText(contractorContext.organizationName,'الجهة الحكومية');
     if(durationEl)durationEl.textContent=task?.estimatedMinutes?`${task.estimatedMinutes} دقيقة`:'—';
     if(syncEl)syncEl.textContent=hasServerSnapshot?'الآن':'بانتظار البيانات';
   }
