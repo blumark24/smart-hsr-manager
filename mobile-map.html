@@ -514,34 +514,58 @@
     .map-wrap {
       margin-bottom: 60px;
     }
+
+    /* Contractor Experience V2 — presentation layer only */
+    body{background:linear-gradient(180deg,#edf7f6 0,#f7f9fc 320px)}
+    [data-theme="dark"] body{background:linear-gradient(180deg,#071d2a 0,#0e1726 320px)}
+    .app-header{position:sticky;display:block;padding:10px 14px;background:linear-gradient(135deg,#082a3b,#0b4650);border:0;color:#fff;box-shadow:0 8px 28px rgba(7,31,44,.22)}
+    .contractor-header{width:min(1180px,100%);margin:auto;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px}
+    .header-brand,.contractor-identity,.header-metrics{display:flex;align-items:center}.header-brand{gap:9px;min-width:0}.brand-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#27bbb5,#148d8a);font-weight:900}.header-brand .brand{font-size:17px}.header-brand small{display:block;color:#bce9e4;font-size:10px;font-weight:800}
+    .contractor-identity{min-width:0;gap:9px;padding-inline-start:12px;border-inline-start:1px solid rgba(255,255,255,.18)}.contractor-avatar{width:38px;height:38px;flex:0 0 auto;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);font-weight:900}.identity-copy{min-width:0}.identity-copy strong,.identity-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.identity-copy strong{font-size:13px}.identity-copy small{color:#bce9e4;font-size:10px}.role-badge{display:inline-flex!important;width:max-content;margin-top:3px;padding:2px 7px;border-radius:999px;background:rgba(24,165,162,.28);color:#dffffb!important;border:1px solid rgba(192,255,247,.18)}
+    .header-metrics{gap:6px}.header-metric{min-height:44px;display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:12px;background:rgba(255,255,255,.09);color:#fff;border:1px solid rgba(255,255,255,.12);font-family:inherit}.header-metric i{width:16px}.header-metric span{display:block;color:#afd4d4;font-size:9px;font-weight:700}.header-metric strong{display:block;font-size:11px;white-space:nowrap}.connection-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(16,185,129,.14)}.profile-action{width:44px;height:44px;padding:0;justify-content:center;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.16);box-shadow:none}.profile-action span{display:none}
+    .workspace-shell{width:min(1180px,100%);margin:auto;padding:14px 14px calc(28px + env(safe-area-inset-bottom))}.workspace-nav{width:min(460px,100%);display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:0 auto 14px;padding:5px;border:1px solid rgba(24,165,162,.2);border-radius:15px;background:rgba(255,255,255,.76);box-shadow:0 8px 24px rgba(10,25,49,.08);backdrop-filter:blur(12px)}[data-theme="dark"] .workspace-nav{background:rgba(16,32,54,.8)}.workspace-tab{min-height:44px;border:0;border-radius:11px;background:transparent;color:var(--muted);font-family:inherit;font-weight:900;cursor:pointer}.workspace-tab.active{background:var(--navy);color:#fff}.workspace-panel[hidden]{display:none!important}
+    .workspace-intro{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.workspace-intro h1{margin:0;font-size:clamp(20px,4vw,29px);font-weight:900}.workspace-intro p{margin:3px 0 0;color:var(--muted);font-size:12px;font-weight:700}.task-summary{display:flex;gap:7px}.summary-pill{padding:6px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:11px;font-weight:900}.summary-pill b{color:var(--teal);font-size:15px}
+    .operations-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr);gap:12px;align-items:start}.task-list,.ops-rail{display:grid;gap:9px}.task-card{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:14px;border:1px solid var(--line);border-inline-start:4px solid var(--teal);border-radius:16px;background:var(--card);box-shadow:0 8px 22px rgba(10,25,49,.07)}.task-card-main{min-width:0}.task-topline,.task-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.task-id{font-size:11px;color:var(--muted);font-weight:900}.task-card h2{margin:5px 0 7px;font-size:16px}.status-tag,.priority-tag{padding:3px 7px;border-radius:999px;font-size:10px;font-weight:900}.status-tag{background:#e4f7f5;color:#087f7b}.priority-tag{background:#fff1dc;color:#9a5b00}.task-meta{color:var(--muted);font-size:11px;font-weight:800}.task-meta span{display:inline-flex;align-items:center;gap:3px}.task-meta i{width:13px;height:13px}.task-sla{margin-top:9px}.task-sla-head{display:flex;justify-content:space-between;font-size:10px;font-weight:900}.task-sla-track{height:5px;margin-top:4px;border-radius:999px;background:var(--line);overflow:hidden}.task-sla-track span{display:block;width:68%;height:100%;background:linear-gradient(90deg,var(--teal),#f59e0b)}.task-action{align-self:center;min-width:112px;min-height:44px;border:0;border-radius:12px;background:var(--teal);color:#fff;font-family:inherit;font-weight:900;cursor:pointer}.empty-workspace{padding:28px;text-align:center;border:1px dashed var(--line);border-radius:16px;background:var(--card);color:var(--muted);font-weight:800}
+    .ops-card{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.82);box-shadow:0 8px 22px rgba(10,25,49,.07);backdrop-filter:blur(12px)}[data-theme="dark"] .ops-card{background:rgba(16,32,54,.86)}.ops-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}.ops-card-head h2{margin:0;font-size:14px}.ops-card-head i{width:18px;color:var(--teal)}.twin-state{display:flex;align-items:center;gap:7px;color:#087f7b;font-size:11px;font-weight:900}.twin-state::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green)}.twin-grid,.gps-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric-box{padding:9px;border-radius:11px;background:var(--bg)}.metric-box span,.metric-box strong{display:block}.metric-box span{color:var(--muted);font-size:9px;font-weight:800}.metric-box strong{margin-top:2px;font-size:11px}.navigate-btn{width:100%;min-height:44px;margin-top:10px;border:1px solid rgba(24,165,162,.28);border-radius:11px;background:#e9f9f7;color:#087f7b;font-family:inherit;font-weight:900}.navigate-btn:disabled{opacity:.55}.ai-ready-card[hidden]{display:none!important}
+    #mapPanel .map-wrap{display:block;height:calc(100dvh - var(--app-header-height) - 105px);min-height:480px;margin:0}.map-workspace-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}.map-workspace-head h1{margin:0;font-size:20px}.map-workspace-head p{margin:2px 0 0;color:var(--muted);font-size:11px}
+    .evidence-stage{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}.evidence-card{padding:10px;border:1px solid var(--line);border-radius:13px;background:var(--bg)}.evidence-card-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px}.evidence-card-head strong{font-size:12px}.quality-badge{padding:3px 7px;border-radius:999px;background:#e4f7f5;color:#087f7b;font-size:9px;font-weight:900}.evidence-preview{min-height:118px;display:grid;place-items:center;overflow:hidden;border:1px dashed #bfd2d7;border-radius:10px;background:var(--card);color:var(--muted);font-size:11px;text-align:center}.evidence-preview img{width:100%;height:150px;object-fit:cover}.evidence-controls{display:flex;gap:6px;margin-top:7px}.evidence-controls label,.evidence-controls button{min-height:44px;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font-family:inherit;font-size:11px;font-weight:900;cursor:pointer}.evidence-controls input{position:absolute;width:1px;height:1px;opacity:0}.upload-progress{height:5px;margin-top:7px;border-radius:999px;background:var(--line);overflow:hidden}.upload-progress span{display:block;width:0;height:100%;background:var(--teal);transition:width .25s}.evidence-legacy-field{display:none}
+    .workflow-presentation{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(76px,1fr));gap:5px;overflow-x:auto;padding:4px 0 7px}.workflow-step{position:relative;min-height:52px;padding:8px 5px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--muted);text-align:center;font-size:9px;font-weight:900}.workflow-step i{display:block;width:16px;height:16px;margin:0 auto 4px}.workflow-step.done{background:#e7f8f5;color:#087f7b;border-color:rgba(24,165,162,.28)}.workflow-step.current{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .sheet-header .btn{min-width:44px;min-height:44px;justify-content:center}button:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}button:active{transform:scale(.98)}
+    @media(max-width:760px){.app-header{padding:8px 10px}.contractor-header{grid-template-columns:minmax(0,1fr) auto}.header-brand{display:none}.contractor-identity{padding:0;border:0}.header-metrics .header-metric:first-child{display:none}.header-metric{padding:5px 7px}.workspace-shell{padding:10px 9px 24px}.operations-grid{grid-template-columns:1fr}.ops-rail{grid-template-columns:1fr 1fr}.task-summary{display:none}.task-card{grid-template-columns:1fr}.task-action{width:100%}.evidence-stage{grid-template-columns:1fr}}
+    @media(max-width:480px){.identity-copy strong{font-size:12px}.header-metrics{gap:4px}.workspace-nav{margin-bottom:10px}.ops-rail{grid-template-columns:1fr}#mapPanel .map-wrap{min-height:520px;height:calc(100dvh - var(--app-header-height) - 92px)}}
+    @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
 </head>
 <body>
 
 <!-- Header -->
 <header class="app-header">
-  <div class="brand">Smart HSR <span>Live&nbsp;Map</span></div>
-  <div id="orgBadge" class="org-badge" hidden></div>
-  <div id="nearStats" class="counter" title="حول موقعي الآن">
-    <div class="stat"><i data-lucide="map-pin" class="w-4 h-4"></i><span id="meDistLabel">—</span></div>
-    <div class="stat"><i data-lucide="alert-triangle" class="w-4 h-4"></i>قريب: <b id="nearCount">0</b></div>
-    <div class="chip" id="themeChip">وضع نهاري</div>
-  </div>
-  <div class="header-actions">
-    <button id="themeBtn" class="btn btn-soft" title="الوضع الليلي/النهاري">
-      <i data-lucide="moon"></i><span class="sr-only">الوضع</span>
-    </button>
-    <button id="locBtn" class="btn btn-primary" title="تحديد موقعي">
-      <i data-lucide="crosshair"></i><span>موقعي</span>
-    </button>
-    <button id="centerBtn" class="btn btn-dark" title="إعادة التمركز">
-      <i data-lucide="navigation"></i><span>تمركز</span>
-    </button>
-    <button id="logoutBtn" class="btn btn-soft" title="تسجيل الخروج" aria-label="تسجيل الخروج">
-      <i data-lucide="log-out"></i><span>خروج</span>
-    </button>
+  <div class="contractor-header">
+    <div class="header-brand"><span class="brand-mark">HSR</span><div><div class="brand">Smart HSR</div><small>منصة العمل البلدي الذكية</small></div></div>
+    <div class="contractor-identity"><div id="contractorAvatar" class="contractor-avatar" aria-hidden="true">م</div><div class="identity-copy"><strong id="contractorName">مقاول Smart HSR</strong><small class="role-badge">مقاول ميداني</small><small id="orgBadge">بانتظار التحقق</small></div></div>
+    <div class="header-metrics">
+      <div class="header-metric"><span id="connectionDot" class="connection-dot" aria-hidden="true"></span><div><span>حالة الاتصال</span><strong id="fieldConnectionState">متصل</strong></div></div>
+      <button id="locBtn" class="header-metric" title="تحديث موقعي"><i data-lucide="crosshair"></i><div><span>دقة GPS</span><strong id="fieldGpsState">جاهز</strong></div></button>
+      <button id="logoutBtn" class="btn profile-action" title="قائمة الحساب وتسجيل الخروج" aria-label="تسجيل الخروج"><i data-lucide="user-round"></i><span>الحساب</span></button>
+    </div>
   </div>
 </header>
+
+<main class="workspace-shell">
+  <nav class="workspace-nav" aria-label="مساحة عمل المقاول">
+    <button id="tasksTab" class="workspace-tab active" type="button" aria-selected="true" aria-controls="tasksPanel"><i data-lucide="clipboard-list"></i> مهامي اليوم</button>
+    <button id="mapTab" class="workspace-tab" type="button" aria-selected="false" aria-controls="mapPanel"><i data-lucide="map"></i> الخريطة</button>
+  </nav>
+  <section id="tasksPanel" class="workspace-panel" aria-labelledby="tasksTab">
+    <div class="workspace-intro"><div><h1>مساحة العمل الميداني</h1><p>المهام المسندة إليك ضمن نطاق المؤسسة</p></div><div class="task-summary"><span class="summary-pill"><b id="taskTotal">0</b> إجمالي</span><span class="summary-pill"><b id="taskActive">0</b> نشطة</span></div></div>
+    <div class="operations-grid"><div id="contractorTaskList" class="task-list"><div class="empty-workspace">جاري تحميل مهام اليوم…</div></div><aside class="ops-rail">
+      <section class="ops-card" aria-labelledby="twinTitle"><div class="ops-card-head"><h2 id="twinTitle">التوأم التشغيلي</h2><span class="twin-state">يعمل</span></div><div class="twin-grid"><div class="metric-box"><span>المهمة الحالية</span><strong id="twinTask">لا توجد مهمة نشطة</strong></div><div class="metric-box"><span>الموقع</span><strong id="twinLocation">—</strong></div><div class="metric-box"><span>مدة التنفيذ</span><strong id="twinDuration">—</strong></div><div class="metric-box"><span>آخر مزامنة</span><strong id="twinSync">بانتظار البيانات</strong></div></div></section>
+      <section class="ops-card" aria-labelledby="gpsCardTitle"><div class="ops-card-head"><h2 id="gpsCardTitle">الموقع الحالي</h2><i data-lucide="locate-fixed"></i></div><div class="gps-grid"><div class="metric-box"><span>الدقة</span><strong id="gpsAccuracyValue">—</strong></div><div class="metric-box"><span>آخر تحديث</span><strong id="gpsLastUpdate">—</strong></div><div class="metric-box"><span>السرعة</span><strong id="gpsSpeedValue">—</strong></div><div class="metric-box"><span>النطاق</span><strong id="meDistLabel">2000 م</strong></div></div><button id="openNavigationBtn" class="navigate-btn" type="button" disabled><i data-lucide="navigation"></i> فتح الملاحة</button></section>
+      <section class="ops-card ai-ready-card" hidden aria-labelledby="aiReadyTitle"><div class="ops-card-head"><h2 id="aiReadyTitle">AI مساعد التنفيذ</h2><i data-lucide="sparkles"></i></div><p>تحليل الصورة · تحسين وصف المعالجة · اقتراح خطة العمل</p></section>
+    </aside></div>
+  </section>
+  <section id="mapPanel" class="workspace-panel" hidden aria-labelledby="mapTab">
+    <div class="map-workspace-head"><div><h1>الخريطة الميدانية</h1><p>المهام القريبة والمواقع المسندة</p></div><button id="centerBtn" class="btn btn-dark" title="إعادة التمركز"><i data-lucide="navigation"></i><span>تمركز</span></button></div>
 
 <!-- Map frame -->
 <div class="map-wrap">
@@ -554,7 +578,7 @@
   <div id="staleNote" class="stale-note" role="status" aria-live="polite">
     وضع غير متصل — البيانات المعروضة قد لا تكون محدّثة
   </div>
-  <div class="field-status-capsule" role="status" aria-live="polite"><span id="fieldGpsState">GPS: جاهز</span><span aria-hidden="true">•</span><span id="fieldConnectionState">الاتصال: متصل</span><span aria-hidden="true">•</span><span id="fieldSyncState">المزامنة: موثّقة</span></div>
+  <div class="field-status-capsule" role="status" aria-live="polite"><span id="fieldSyncState">المزامنة: موثّقة</span><span aria-hidden="true">•</span><span>المهام القريبة: <b id="nearCount">0</b></span></div>
 
   <!-- Floating tools (legend only) -->
   <div class="toolbar">
@@ -587,6 +611,7 @@
           <option value="ALL">كل الحالات</option>
           <option value="PENDING">قيد الانتظار</option>
           <option value="IN_PROGRESS">قيد المعالجة</option>
+          <option value="PENDING_REVIEW">بانتظار مراجعة المراقب</option>
           <option value="COMPLETED">تمت المعالجة</option>
         </select>
       </div>
@@ -605,6 +630,8 @@
     </div>
   </section>
 </div>
+  </section>
+</main>
 
 <!-- Observation details sheet (iOS-style centered modal) -->
 <section id="smartSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
@@ -643,9 +670,24 @@
         </select>
       </div>
 
-      <div class="field">
+      <div id="workflowPresentation" class="workflow-presentation" aria-label="دورة تنفيذ المهمة"></div>
+
+      <div class="field evidence-legacy-field">
         <label>صورة بعد الإصلاح (إلزامية للإرسال للمراجعة)</label>
-        <input id="sAfter" type="file" accept="image/*">
+        <input id="sAfter" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
+      </div>
+
+      <div class="evidence-stage">
+        <article class="evidence-card">
+          <div class="evidence-card-head"><strong>الصورة السابقة</strong><span class="quality-badge">مرجع البلاغ</span></div>
+          <div id="beforeEvidencePreview" class="evidence-preview">تظهر صورة البلاغ الأصلية هنا</div>
+        </article>
+        <article class="evidence-card">
+          <div class="evidence-card-head"><strong>صورة المعالجة</strong><span id="afterQualityBadge" class="quality-badge">بانتظار الالتقاط</span></div>
+          <div id="afterEvidencePreview" class="evidence-preview">التقط صورة واضحة بعد إتمام المعالجة</div>
+          <div class="evidence-controls"><label for="sAfter"><i data-lucide="camera"></i><span id="captureLabel">فتح الكاميرا</span></label><button id="retakeEvidenceBtn" type="button" disabled><i data-lucide="rotate-ccw"></i>إعادة الالتقاط</button></div>
+          <div class="upload-progress" aria-label="تقدم رفع الصورة"><span id="evidenceProgressBar"></span></div>
+        </article>
       </div>
 
       <div class="field" style="grid-column:1/-1">
@@ -696,7 +738,7 @@ const firebaseConfig = {
   // Populated ONCE from the signed-in contractor's own users/{uid} record.
   // Never read from a form field, URL parameter, sessionStorage or
   // localStorage — those are all attacker-controllable.
-  const contractorContext = { uid:null, organizationId:null, organizationName:'' };
+  const contractorContext = { uid:null, organizationId:null, organizationName:'', contractorName:'' };
   let organizationMapContext=null, mapOpenedForAssignment=false;
 
   // ===== Contractor workflow policy (pure and locally testable) =====
@@ -707,7 +749,9 @@ const firebaseConfig = {
     const organizationName = typeof value.organizationName === 'string' && value.organizationName.trim()
       ? value.organizationName.trim()
       : organizationId;
-    return { organizationId, organizationName };
+    const contractorName = typeof value.name === 'string' && value.name.trim()
+      ? value.name.trim() : (typeof value.displayName === 'string' ? value.displayName.trim() : '');
+    return { organizationId, organizationName, contractorName };
   }
 
   function contractorNextStatus(currentStatus){
@@ -811,6 +855,9 @@ const firebaseConfig = {
     } else {
       el.hidden = true;
     }
+    const name = contractorContext.contractorName || auth?.currentUser?.displayName || auth?.currentUser?.email?.split('@')[0] || 'مقاول Smart HSR';
+    const nameEl=document.getElementById('contractorName');if(nameEl)nameEl.textContent=name;
+    const avatar=document.getElementById('contractorAvatar');if(avatar)avatar.textContent=name.trim().charAt(0)||'م';
   }
 
   const root = document.documentElement;
@@ -818,7 +865,7 @@ const firebaseConfig = {
   const themeChip = document.getElementById('themeChip');
   function applyTheme(mode){
     root.setAttribute('data-theme', mode);
-    themeBtn.innerHTML = mode==='dark'
+    if(themeBtn) themeBtn.innerHTML = mode==='dark'
       ? '<i data-lucide="sun"></i><span class="sr-only">نهاري</span>'
       : '<i data-lucide="moon"></i><span class="sr-only">ليلي</span>';
     if (themeChip){ themeChip.textContent = (mode==='dark'?'وضع ليلي':'وضع نهاري'); }
@@ -828,7 +875,7 @@ const firebaseConfig = {
   const saved = localStorage.getItem('smartTheme')
     || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   applyTheme(saved);
-  themeBtn.addEventListener('click', ()=>{
+  themeBtn?.addEventListener('click', ()=>{
     const now = root.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
     applyTheme(now);
   });
@@ -1005,6 +1052,7 @@ const firebaseConfig = {
       else if (ambers >= reds && ambers >= greens && ambers > 0) legendBtn.classList.add('amber');
       else if (greens > 0) legendBtn.classList.add('green');
     }
+    renderContractorWorkspace();
   }
 
   // Organization-scoped live subscription.
@@ -1059,6 +1107,10 @@ const firebaseConfig = {
           title:data.title||'—',
           status:data.status||'PENDING',
           type:data.type||'MAINTENANCE',
+          category:data.category||data.type||'صيانة بلدية',
+          priority:data.priority||'NORMAL',
+          estimatedMinutes:Number(data.estimatedMinutes)||null,
+          slaDueAtMs:data.slaDueAt?.toMillis ? data.slaDueAt.toMillis() : 0,
           date:data.date||'',
           details:data.details||'',
           location:data.location||'',
@@ -1108,11 +1160,16 @@ const firebaseConfig = {
     if (watchId!==null) return;
     watchId = navigator.geolocation.watchPosition(pos=>{
       lastMe=[pos.coords.latitude, pos.coords.longitude];
-      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent=`GPS: ±${Math.round(pos.coords.accuracy||0)}م`;
+      const accuracy=Math.round(pos.coords.accuracy||0), speed=Number(pos.coords.speed);
+      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent=`±${accuracy}م`;
+      const accuracyEl=document.getElementById('gpsAccuracyValue');if(accuracyEl)accuracyEl.textContent=`±${accuracy} متر`;
+      const updatedEl=document.getElementById('gpsLastUpdate');if(updatedEl){updatedEl.dataset.at=String(Date.now());updatedEl.textContent='الآن';}
+      const speedEl=document.getElementById('gpsSpeedValue');if(speedEl)speedEl.textContent=Number.isFinite(speed)?`${Math.round(speed*3.6)} كم/س`:'0 كم/س';
+      const navBtn=document.getElementById('openNavigationBtn');if(navBtn)navBtn.disabled=!getNavigationTarget();
       paint();
     }, err=>{
       console.warn(err);
-      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent='GPS: غير متاح';
+      const gps=document.getElementById('fieldGpsState');if(gps)gps.textContent='غير متاح';
       alert('تعذر تحديد الموقع. يرجى السماح بالصلاحيات.');
     }, { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
   }
@@ -1122,11 +1179,11 @@ const firebaseConfig = {
     if(lastMe)map.setView(lastMe, 14, { animate:true });
   });
   window.addEventListener('online',()=>{
-    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: متصل';
+    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='متصل';
     if (contractorContext.organizationId && !hasServerSnapshot) subscribeObservations();
   });
   window.addEventListener('offline',()=>{
-    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='الاتصال: غير متصل';
+    const e=document.getElementById('fieldConnectionState');if(e)e.textContent='غير متصل';
     if (!hasServerSnapshot) setMapState('offline');
   });
   centerBtn.addEventListener('click', ()=>{
@@ -1152,6 +1209,12 @@ const firebaseConfig = {
   const sAfter       = document.getElementById('sAfter');
   const sheetTitle   = document.getElementById('sheetTitle');
   const sheetOverlay = document.getElementById('sheetOverlay');
+  const beforeEvidencePreview=document.getElementById('beforeEvidencePreview');
+  const afterEvidencePreview=document.getElementById('afterEvidencePreview');
+  const afterQualityBadge=document.getElementById('afterQualityBadge');
+  const retakeEvidenceBtn=document.getElementById('retakeEvidenceBtn');
+  const evidenceProgressBar=document.getElementById('evidenceProgressBar');
+  let stagedEvidenceUrl='';
 
   let currentDocId=null, currentAfterData=null, currentWorkflowStatus=null;
   let saveInFlight=false, openSheetEpoch=0;
@@ -1197,6 +1260,74 @@ const firebaseConfig = {
     COMPLETED:   'تمت المعالجة'
   };
 
+  const PRESENTATION_STAGE = {
+    PENDING:{label:'مسندة',action:'ابدأ التوجه'},
+    IN_PROGRESS:{label:'قيد العمل',action:'متابعة العمل'},
+    PENDING_REVIEW:{label:'بانتظار المراجعة',action:'عرض التفاصيل'},
+    COMPLETED:{label:'مكتملة',action:'عرض التفاصيل'}
+  };
+
+  function formatTaskDistance(observation){
+    const point=observationCoordinates(observation,contractorContext.organizationId);
+    if(!point||!lastMe)return 'المسافة غير متاحة';
+    return fmtMeters(haversine(lastMe,[point.lat,point.lng]));
+  }
+
+  function formatSla(observation){
+    if(!observation.slaDueAtMs)return 'حسب خطة المؤسسة';
+    const remaining=observation.slaDueAtMs-Date.now();
+    if(remaining<=0)return 'متجاوز';
+    const hours=Math.floor(remaining/3600000),minutes=Math.floor((remaining%3600000)/60000);
+    return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')} ساعة`;
+  }
+
+  function renderContractorWorkspace(){
+    const list=document.getElementById('contractorTaskList');if(!list)return;
+    const active=observations.filter(o=>o.status!=='COMPLETED');
+    document.getElementById('taskTotal').textContent=String(observations.length);
+    document.getElementById('taskActive').textContent=String(active.length);
+    if(!observations.length){list.innerHTML='<div class="empty-workspace">لا توجد مهام مسندة إليك حالياً.</div>';renderOperationalTwin(null);return;}
+    list.innerHTML=observations.map(o=>{
+      const stage=PRESENTATION_STAGE[o.status]||{label:STATUS_LABELS[o.status]||'حالة غير متاحة',action:'عرض التفاصيل'};
+      const priority=String(o.priority||'NORMAL').toUpperCase()==='URGENT'?'عاجل':'اعتيادي';
+      const estimate=o.estimatedMinutes?`${o.estimatedMinutes} دقيقة تقديرية`:'المدة غير محددة';
+      return `<article class="task-card"><div class="task-card-main"><div class="task-topline"><span class="task-id">بلاغ #${escapeHTML(o.id||'—')}</span><span class="status-tag">${escapeHTML(stage.label)}</span><span class="priority-tag">${priority}</span></div><h2>${escapeHTML(o.title||o.category||'مهمة ميدانية')}</h2><div class="task-meta"><span><i data-lucide="layers-3"></i>${escapeHTML(o.category||'صيانة بلدية')}</span><span><i data-lucide="map-pin"></i>${escapeHTML(formatTaskDistance(o))}</span><span><i data-lucide="clock-3"></i>${escapeHTML(estimate)}</span></div><div class="task-sla"><div class="task-sla-head"><span>الوقت المتبقي</span><strong>${escapeHTML(formatSla(o))}</strong></div><div class="task-sla-track"><span></span></div></div></div><button class="task-action" type="button" data-task-id="${escapeHTML(o.docId)}">${escapeHTML(stage.action)}</button></article>`;
+    }).join('');
+    renderOperationalTwin(active.find(o=>o.status==='IN_PROGRESS')||active[0]||observations[0]);
+    lucide.createIcons();
+  }
+
+  function renderOperationalTwin(task){
+    const taskEl=document.getElementById('twinTask'),locationEl=document.getElementById('twinLocation'),durationEl=document.getElementById('twinDuration'),syncEl=document.getElementById('twinSync');
+    if(taskEl)taskEl.textContent=task?.title||'لا توجد مهمة نشطة';
+    if(locationEl)locationEl.textContent=contractorContext.organizationName||'—';
+    if(durationEl)durationEl.textContent=task?.estimatedMinutes?`${task.estimatedMinutes} دقيقة`:'—';
+    if(syncEl)syncEl.textContent=hasServerSnapshot?'الآن':'بانتظار البيانات';
+  }
+
+  function getNavigationTarget(){
+    const task=observations.find(o=>o.status==='IN_PROGRESS')||observations.find(o=>o.status==='PENDING');
+    return task?observationCoordinates(task,contractorContext.organizationId):null;
+  }
+
+  document.getElementById('contractorTaskList')?.addEventListener('click',event=>{
+    const button=event.target.closest('[data-task-id]');if(button)openCurrent(button.dataset.taskId);
+  });
+  document.getElementById('openNavigationBtn')?.addEventListener('click',()=>{
+    const target=getNavigationTarget();if(!target)return;
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${target.lat},${target.lng}`)}`,'_blank','noopener,noreferrer');
+  });
+  function activateWorkspace(view){
+    const showMap=view==='map';
+    document.getElementById('tasksPanel').hidden=showMap;document.getElementById('mapPanel').hidden=!showMap;
+    document.getElementById('tasksTab').classList.toggle('active',!showMap);document.getElementById('mapTab').classList.toggle('active',showMap);
+    document.getElementById('tasksTab').setAttribute('aria-selected',String(!showMap));document.getElementById('mapTab').setAttribute('aria-selected',String(showMap));
+    if(showMap)setTimeout(()=>{map.invalidateSize();paint();},50);
+  }
+  document.getElementById('tasksTab')?.addEventListener('click',()=>activateWorkspace('tasks'));
+  document.getElementById('mapTab')?.addEventListener('click',()=>activateWorkspace('map'));
+  setInterval(()=>{const el=document.getElementById('gpsLastUpdate');const at=Number(el?.dataset.at||0);if(el&&at)el.textContent=`قبل ${Math.max(1,Math.round((Date.now()-at)/1000))} ث`;},5000);
+
   function setChip(status){
     sChip.className='pill '+(
       status==='PENDING'?'red':
@@ -1220,6 +1351,13 @@ const firebaseConfig = {
     sSave.setAttribute('aria-busy', saveInFlight ? 'true' : 'false');
     sNote.disabled = saveInFlight || status !== 'IN_PROGRESS';
     sAfter.disabled = saveInFlight || status !== 'IN_PROGRESS';
+    const workflow=document.getElementById('workflowPresentation');
+    if(workflow){
+      const stages=[['مسندة','clipboard-check'],['في الطريق','navigation'],['وصل للموقع','map-pin-check'],['قيد العمل','wrench'],['بانتظار المراجعة','shield-check'],['مكتملة','circle-check']];
+      const currentIndex=status==='PENDING'?0:status==='IN_PROGRESS'?3:status==='PENDING_REVIEW'?4:status==='COMPLETED'?5:0;
+      workflow.innerHTML=stages.map((stage,index)=>`<div class="workflow-step ${index<currentIndex?'done':''} ${index===currentIndex?'current':''}"><i data-lucide="${stage[1]}"></i>${stage[0]}</div>`).join('');
+      if(window.lucide)lucide.createIcons();
+    }
     if (retryReason === 'UPLOAD_FAILED' || retryReason === 'FIRESTORE_FAILED'){
       setSaveButtonText('إعادة المحاولة');
     } else if (status === 'PENDING'){
@@ -1231,6 +1369,7 @@ const firebaseConfig = {
 
   function setSaveBusy(busy, retryReason=null){
     saveInFlight = busy;
+    if(evidenceProgressBar&&busy)evidenceProgressBar.style.width='65%';
     renderWorkflowControls(currentWorkflowStatus, retryReason);
   }
 
@@ -1247,12 +1386,21 @@ const firebaseConfig = {
       const compressed = await compressImage(f);
       reviewSaveCoordinator.discard(currentDocId);
       currentAfterData = compressed;
+      if(stagedEvidenceUrl)URL.revokeObjectURL(stagedEvidenceUrl);
+      stagedEvidenceUrl=URL.createObjectURL(compressed);
+      if(afterEvidencePreview)afterEvidencePreview.innerHTML=`<img src="${stagedEvidenceUrl}" alt="معاينة صورة المعالجة">`;
+      if(afterQualityBadge){afterQualityBadge.textContent='جودة مناسبة';afterQualityBadge.style.background='#dcfce7';}
+      if(retakeEvidenceBtn)retakeEvidenceBtn.disabled=false;
+      if(evidenceProgressBar)evidenceProgressBar.style.width='20%';
+      const captureLabel=document.getElementById('captureLabel');if(captureLabel)captureLabel.textContent='تغيير الصورة';
       renderWorkflowControls(currentWorkflowStatus);
     } catch (error) {
       alert(error?.message || 'تعذر معالجة الصورة المختارة.');
       e.target.value='';
     }
   });
+
+  retakeEvidenceBtn?.addEventListener('click',()=>sAfter.click());
 
   // Always opens the CURRENT version of an observation, recomputing distance
   // from the latest known position.
@@ -1342,6 +1490,11 @@ const firebaseConfig = {
     // Reset the file input so a photo staged for a previous observation is
     // never silently associated with this one.
     if (sAfter) sAfter.value='';
+    if(stagedEvidenceUrl){URL.revokeObjectURL(stagedEvidenceUrl);stagedEvidenceUrl='';}
+    if(afterEvidencePreview)afterEvidencePreview.textContent='التقط صورة واضحة بعد إتمام المعالجة';
+    if(afterQualityBadge){afterQualityBadge.textContent='بانتظار الالتقاط';afterQualityBadge.removeAttribute('style');}
+    if(retakeEvidenceBtn)retakeEvidenceBtn.disabled=true;
+    if(evidenceProgressBar)evidenceProgressBar.style.width='0';
     sheetTitle.textContent = `ملاحظة #${o.id||'—'}`;
     sTitleEl.textContent = o.title||'—';
     sDetails.innerHTML = observationDetailHTML(o);
@@ -1359,14 +1512,19 @@ const firebaseConfig = {
     ]);
     if (requestEpoch !== openSheetEpoch || currentDocId !== o.docId) return;
     if (afterImage){
+      if(beforeEvidencePreview)beforeEvidencePreview.innerHTML=beforeImage?`<img src="${beforeImage}" alt="الصورة السابقة">`:'لا توجد صورة سابقة';
+      if(afterEvidencePreview)afterEvidencePreview.innerHTML=`<img src="${afterImage}" alt="صورة المعالجة الحالية">`;
+      if(afterQualityBadge)afterQualityBadge.textContent='مرفوعة';
       sMedia.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           ${beforeImage ? `<img src="${beforeImage}" alt="قبل" style="width:100%;border-radius:10px">` : ''}
           <img src="${afterImage}" alt="بعد" style="width:100%;border-radius:10px">
         </div>`;
     } else if (beforeImage){
+      if(beforeEvidencePreview)beforeEvidencePreview.innerHTML=`<img src="${beforeImage}" alt="الصورة السابقة">`;
       sMedia.innerHTML = `<img src="${beforeImage}" alt="مرفق" style="width:100%;border-radius:10px">`;
     } else {
+      if(beforeEvidencePreview)beforeEvidencePreview.textContent='لا توجد صورة سابقة متاحة';
       const localMissing=String(o.imagePath||o.afterImagePath||'').startsWith('local-demo://');
       // A reference that failed to load is reported as a failure, never as
       // "no attachment" — the two mean very different things to a contractor.
@@ -1490,6 +1648,7 @@ const firebaseConfig = {
         return;
       }
       toast('تم إرسال البلاغ لمراجعة المراقب');
+      if(evidenceProgressBar)evidenceProgressBar.style.width='100%';
       currentAfterData = null;
       closeSheet();
     } catch (error){
@@ -1706,6 +1865,7 @@ const firebaseConfig = {
     contractorContext.uid = null;
     contractorContext.organizationId = null;
     contractorContext.organizationName = '';
+    contractorContext.contractorName = '';
     currentDocId = null;
     currentAfterData = null;
     currentWorkflowStatus = null;
@@ -1787,6 +1947,7 @@ const firebaseConfig = {
       contractorContext.uid = user.uid;
       contractorContext.organizationId = verified.organizationId;
       contractorContext.organizationName = verified.organizationName;
+      contractorContext.contractorName = verified.contractorName || user.displayName || '';
       try{ organizationMapContext=await fetchOrganizationMapContext(auth,{organizationId:verified.organizationId}); }
       catch(_){ organizationMapContext=null; }
       if (epoch !== authVerificationEpoch || auth.currentUser?.uid !== user.uid) return;
