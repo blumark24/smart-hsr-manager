@@ -580,9 +580,9 @@
     <div id="legendBox" class="legend-glass hidden" aria-label="أسطورة الحالات">
       <h4 class="legend-title">أسطورة الحالات</h4>
       <div class="legend-items">
-        <div class="item"><span class="dot red"></span> قيد الانتظار</div>
-        <div class="item"><span class="dot amber"></span> قيد المعالجة</div>
-        <div class="item"><span class="dot green"></span> تمت المعالجة</div>
+        <div class="item"><span class="dot red"></span> حرج أو متأخر</div>
+        <div class="item"><span class="dot amber"></span> يحتاج انتباه</div>
+        <div class="item"><span class="dot green"></span> مكتمل</div>
       </div>
     </div>
   </div>
@@ -614,9 +614,9 @@
     </div>
 
     <div class="legend-inline">
-      <div class="item"><span class="dot red"></span> قيد الانتظار: <b id="countRed">0</b></div>
-      <div class="item"><span class="dot amber"></span> قيد المعالجة: <b id="countAmber">0</b></div>
-      <div class="item"><span class="dot green"></span> تمت المعالجة: <b id="countGreen">0</b></div>
+      <div class="item"><span class="dot red"></span> حرج/متأخر: <b id="countRed">0</b></div>
+      <div class="item"><span class="dot amber"></span> انتباه: <b id="countAmber">0</b></div>
+      <div class="item"><span class="dot green"></span> مكتمل: <b id="countGreen">0</b></div>
     </div>
   </section>
 </div>
@@ -968,26 +968,52 @@ const firebaseConfig = {
     return m<1000 ? `${Math.round(m)} م` : `${(m/1000).toFixed(1)} كم`;
   }
 
+  // Presentation-only marker classification. It reuses statusMarkerIcon and
+  // never mutates the persisted task status or contractor workflow.
+  function isCriticalObservation(observation){
+    if (!observation || observation.status === 'COMPLETED') return false;
+    const priority = String(observation.priority || '').toUpperCase();
+    const overdue = Number.isFinite(observation.slaDueAtMs)
+      && observation.slaDueAtMs > 0
+      && observation.slaDueAtMs <= Date.now();
+    return overdue || priority === 'URGENT' || priority === 'HIGH';
+  }
+
+  function markerPresentationStatus(observation){
+    if (observation?.status === 'COMPLETED') return 'COMPLETED';
+    return isCriticalObservation(observation) ? 'PENDING' : 'IN_PROGRESS';
+  }
+
+  function filteredObservationsSource(){
+    const selectedStatus = statusFilter.value;
+    const radius = parseInt(radiusInput.value,10);
+    return observations.filter(observation=>{
+      if (selectedStatus !== 'ALL' && observation.status !== selectedStatus) return false;
+      // Without a GPS fix, radius filtering is deliberately bypassed so tasks
+      // never disappear merely because location permission or signal is absent.
+      if (!lastMe) return true;
+      const point = observationCoordinates(observation,contractorContext.organizationId);
+      return !!point && haversine(lastMe,[point.lat,point.lng]) <= radius;
+    });
+  }
+
   function paint(){
     drawMe();
-    const filter = statusFilter.value;
     const r = parseInt(radiusInput.value,10);
     radiusLabel.textContent = `${r} م`;
+    const filteredObservations = filteredObservationsSource();
 
-    let near=0;
+    const near = lastMe ? filteredObservations.length : 0;
     const presentIds=new Set();
-    for (const o of observations){
+    for (const o of filteredObservations){
       const point=observationCoordinates(o,contractorContext.organizationId);if(!point)continue;
       const {lat,lng:lon}=point;
-      if (filter!=='ALL' && o.status!==filter) continue;
-
-      const dist = lastMe?haversine(lastMe, [lat,lon]):Infinity;
-      if (dist<=r) near++;
 
       const docId = o.docId;
+      const markerStatus = markerPresentationStatus(o);
       let m = markers.get(docId);
       if (!m){
-        m = L.marker([lat,lon], { icon: statusMarkerIcon(L,o.status,{title:o.title}) }).addTo(map);
+        m = L.marker([lat,lon], { icon: statusMarkerIcon(L,markerStatus,{title:o.title}) }).addTo(map);
         // Leaflet assigns string tooltip content via innerHTML, and the title
         // is operator-authored free text stored in Firestore — escape it.
         m.bindTooltip(escapeHTML(o.title || ''), { direction:'top', offset:[0,-10] });
@@ -998,7 +1024,7 @@ const firebaseConfig = {
         m.on('click', ()=> openCurrent(docId));
         markers.set(docId, m);
       } else {
-        m.setIcon(statusMarkerIcon(L,o.status,{title:o.title}));
+        m.setIcon(statusMarkerIcon(L,markerStatus,{title:o.title}));
         m.setLatLng([lat,lon]);
         m.setTooltipContent(escapeHTML(o.title || ''));
       }
@@ -1011,9 +1037,9 @@ const firebaseConfig = {
     if (nearCountMini) nearCountMini.textContent = near.toString();
     if (meDistLabel) meDistLabel.textContent = `نطاقي: ${fmtMeters(r)}`;
 
-    if(!mapOpenedForAssignment&&observations.length){
-      if(ensureMapView(observations)==='observations')mapOpenedForAssignment=true;
-    }else if(!observations.length){
+    if(!mapOpenedForAssignment&&filteredObservations.length){
+      if(ensureMapView(filteredObservations)==='observations')mapOpenedForAssignment=true;
+    }else if(!filteredObservations.length){
       // بلا مهام مسندة: تبقى الخريطة معروضة على مركز المؤسسة أو القنفذة،
       // ورسالة الحالة وحدها هي ما يخبر المقاول بعدم وجود مهام.
       ensureMapView([]);
@@ -1027,14 +1053,9 @@ const firebaseConfig = {
         legendCount.classList.add('flash');
         setTimeout(()=>legendCount.classList.remove('flash'), 700);
       }
-      const isNearWithStatus = (o, status) => {
-        if (o.status !== status || !lastMe) return false;
-        const point = observationCoordinates(o, contractorContext.organizationId);
-        return !!point && haversine(lastMe, [point.lat, point.lng]) <= r;
-      };
-      const reds = observations.filter(o => isNearWithStatus(o, 'PENDING')).length;
-      const ambers = observations.filter(o => isNearWithStatus(o, 'IN_PROGRESS')).length;
-      const greens = observations.filter(o => isNearWithStatus(o, 'COMPLETED')).length;
+      const reds = filteredObservations.filter(isCriticalObservation).length;
+      const ambers = filteredObservations.filter(o => o.status !== 'COMPLETED' && !isCriticalObservation(o)).length;
+      const greens = filteredObservations.filter(o => o.status === 'COMPLETED').length;
 
       document.getElementById("countRed").textContent = reds;
       document.getElementById("countAmber").textContent = ambers;
@@ -1045,7 +1066,7 @@ const firebaseConfig = {
       else if (ambers >= reds && ambers >= greens && ambers > 0) legendBtn.classList.add('amber');
       else if (greens > 0) legendBtn.classList.add('green');
     }
-    renderContractorWorkspace();
+    renderContractorWorkspace(filteredObservations);
   }
 
   // Organization-scoped live subscription.
@@ -1312,18 +1333,21 @@ const firebaseConfig = {
     timeline.innerHTML=stages.map(stage=>`<div class="twin-timeline-step ${stage.active?'active':''}">${escapeHTML(stage.label)}<small style="display:block;margin-top:3px">${escapeHTML(stage.time)}</small></div>`).join('');
   }
 
-  function renderContractorWorkspace(){
+  function renderContractorWorkspace(filteredObservations=observations){
     const list=document.getElementById('contractorTaskList');if(!list)return;
-    const active=observations.filter(o=>o.status!=='COMPLETED');
-    document.getElementById('taskTotal').textContent=String(observations.length);
+    const active=filteredObservations.filter(o=>o.status!=='COMPLETED');
+    document.getElementById('taskTotal').textContent=String(filteredObservations.length);
     document.getElementById('taskActive').textContent=String(active.length);
-    if(!observations.length){list.innerHTML='<div class="empty-workspace">لا توجد مهام مسندة إليك حالياً.</div>';renderOperationalTwin(null);return;}
-    list.innerHTML=observations.map(o=>{
+    if(!filteredObservations.length){
+      list.innerHTML=`<div class="empty-workspace">${observations.length?'لا توجد مهام تطابق عوامل التصفية الحالية.':'لا توجد مهام مسندة إليك حالياً.'}</div>`;
+      renderOperationalTwin(null);return;
+    }
+    list.innerHTML=filteredObservations.map(o=>{
       const stage=PRESENTATION_STAGE[o.status]||{label:STATUS_LABELS[o.status]||'حالة غير متاحة',action:'عرض التفاصيل'};
       const priority=priorityLabel(o.priority),location=o.locationName||o.location||'موقع بلدي موثق';
       return `<article class="task-card"><div class="task-card-main"><div class="task-topline"><span class="task-id">بلاغ #${escapeHTML(o.id||'—')}</span><span class="status-tag">${escapeHTML(stage.label)}</span><span class="priority-tag">${escapeHTML(priority)}</span></div><h2>${escapeHTML(o.title||o.category||'مهمة ميدانية')}</h2><div class="task-meta"><span><i data-lucide="map-pin"></i>${escapeHTML(location)}</span><span><i data-lucide="route"></i>${escapeHTML(formatTaskDistance(o))}</span></div><div class="task-assignment-grid"><span><i data-lucide="calendar-check"></i>أُسندت: ${escapeHTML(formatMissionDate(o.assignedAtMs,'وقت الإسناد غير متاح'))}</span><span><i data-lucide="alarm-clock"></i>الموعد النهائي: ${escapeHTML(formatMissionDate(o.deadlineAtMs,'غير محدد'))}</span></div><div class="task-sla"><div class="task-sla-head"><span>حالة SLA</span><strong>${escapeHTML(formatSla(o))}</strong></div><div class="task-sla-track"><span></span></div></div></div><div class="task-actions"><button class="task-action-secondary" type="button" data-task-action="location" data-task-id="${escapeHTML(o.docId)}"><i data-lucide="navigation"></i>فتح الموقع</button><button class="task-action" type="button" data-task-action="start" data-task-id="${escapeHTML(o.docId)}">${escapeHTML(stage.action)}</button></div></article>`;
     }).join('');
-    renderOperationalTwin(active.find(o=>o.status==='IN_PROGRESS')||active[0]||observations[0]);
+    renderOperationalTwin(active.find(o=>o.status==='IN_PROGRESS')||active[0]||filteredObservations[0]);
     lucide.createIcons();
   }
 
@@ -1448,7 +1472,7 @@ const firebaseConfig = {
       const [la, lo] = fresh.location.split(',').map(n=>parseFloat(n.trim()));
       if (Number.isFinite(la) && Number.isFinite(lo)) dist = haversine(lastMe,[la,lo]);
     }
-    for(const [id,marker] of markers){const item=observations.find(x=>x.docId===id);if(item)marker.setIcon(statusMarkerIcon(L,item.status,{selected:id===docId,title:item.title}))}
+    for(const [id,marker] of markers){const item=observations.find(x=>x.docId===id);if(item)marker.setIcon(statusMarkerIcon(L,markerPresentationStatus(item),{selected:id===docId,title:item.title}))}
     openSheet(fresh, dist);
   }
 
@@ -1528,8 +1552,9 @@ const firebaseConfig = {
     // never silently associated with this one.
     if (sAfter) sAfter.value='';
     if(stagedEvidenceUrl){URL.revokeObjectURL(stagedEvidenceUrl);stagedEvidenceUrl='';}
-    if(afterEvidencePreview)afterEvidencePreview.textContent='التقط صورة واضحة بعد إتمام المعالجة';
-    if(afterQualityBadge){afterQualityBadge.textContent='بانتظار الالتقاط';afterQualityBadge.removeAttribute('style');}
+    if(beforeEvidencePreview)beforeEvidencePreview.textContent='جاري تحميل الصورة السابقة…';
+    if(afterEvidencePreview)afterEvidencePreview.textContent='جاري تحميل إثبات المعالجة…';
+    if(afterQualityBadge){afterQualityBadge.textContent='جاري التحميل';afterQualityBadge.removeAttribute('style');}
     if(retakeEvidenceBtn)retakeEvidenceBtn.disabled=true;
     if(evidenceProgressBar)evidenceProgressBar.style.width='0';
     sheetTitle.textContent = `التوأم التشغيلي — مهمة #${o.id||'—'}`;
@@ -1548,7 +1573,11 @@ const firebaseConfig = {
       : '—';
 
     revokeAllObservationImageUrls();
-    sMedia.innerHTML = '';
+    sMedia.innerHTML = '<div class="card-mini" style="text-align:center">جاري تحميل المرفقات…</div>';
+    // Open immediately with trusted task text; evidence resolves independently
+    // below. openSheetEpoch still prevents a late response painting another task.
+    sheet.classList.add('open');
+    sheet.querySelector('.sheet-panel')?.focus();
     const [beforeImage, afterImage] = await Promise.all([
       resolveEvidenceReference(o.imagePath).catch(()=>''),
       resolveEvidenceReference(o.afterImagePath || o.afterImageUrl).catch(()=>''),
@@ -1575,8 +1604,6 @@ const firebaseConfig = {
       sMedia.innerHTML = `<div class="card-mini" style="text-align:center">${failed?'تعذر تحميل صورة الملاحظة':(localMissing?'الصورة التجريبية غير متاحة على هذا الجهاز.':'لا يوجد مرفق')}</div>`;
     }
 
-    sheet.classList.add('open');
-    sheet.querySelector('.sheet-panel')?.focus();
   }
 
   function closeSheet(){
