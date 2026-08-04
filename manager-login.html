@@ -76,8 +76,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // إعدادات Firebase
 const firebaseConfig = {
@@ -89,8 +89,11 @@ const firebaseConfig = {
   appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
 };
 
-const app = initializeApp(firebaseConfig);
+// Dedicated persisted Auth namespace: manager/supervisor actions must never
+// mutate the field-worker session stored by the default Firebase app.
+const app = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
 const auth = getAuth(app);
+await setPersistence(auth, browserLocalPersistence);
 const db = getFirestore(app);
 
 const form = document.getElementById("loginForm");
@@ -100,7 +103,7 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const password = document.getElementById("password").value;
 
   try {
     // تسجيل الدخول
@@ -111,22 +114,24 @@ form.addEventListener("submit", async (e) => {
     const ref = doc(db, "managers", user.uid);
     const snap = await getDoc(ref);
 
-    if (!snap.exists()) {
-      // 🟢 إنشاء مستند المدير تلقائيًا (لا مزيد من الأخطاء)
-      await setDoc(ref, {
-        uid: user.uid,
-        email: user.email,
-        name: "مدير المؤسسة",
-        role: "manager",
-        createdAt: serverTimestamp(),
-        lastLogin: serverTimestamp()
-      });
-    } else {
-      // تحديث آخر تسجيل دخول
-      await setDoc(ref, { lastLogin: serverTimestamp() }, { merge: true });
+    const managerData = snap.exists() ? snap.data() : null;
+
+    // لا تُنشئ صلاحية من صفحة الدخول. المدير من managers/{uid} أو المشرف
+    // المساعد من users/{uid} فقط، وكلاهما فعّال ومرتبط بمؤسسة.
+    const managerOrg = typeof managerData?.organizationId === 'string' ? managerData.organizationId.trim() : '';
+    let authorized = !!(managerData && managerData.role === 'manager' && managerData.active !== false && managerOrg);
+    if (!authorized) {
+      const userSnap = await getDoc(doc(db, 'users', user.uid));
+      const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+      const userOrg = typeof userData.organizationId === 'string' ? userData.organizationId.trim() : '';
+      authorized = userData.role === 'supervisor' && userData.active !== false && !!userOrg;
+    }
+    if (!authorized) {
+      await signOut(auth);
+      throw new Error("unauthorized-manager");
     }
 
-    // تخزين الجلسة
+    // تخزين الجلسة بعد التحقق من مستند المدير ودوره فقط
     sessionStorage.setItem("smartHSRUser", JSON.stringify({
       uid: user.uid,
       email: user.email,
@@ -137,7 +142,9 @@ form.addEventListener("submit", async (e) => {
 
   } catch (err) {
     console.error(err);
-    errorMsg.textContent = "❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور";
+    errorMsg.textContent = err.message === "unauthorized-manager"
+      ? "❌ هذا الحساب غير مصرح له بالدخول كمدير"
+      : "❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور";
     errorMsg.classList.remove("hidden");
   }
 });

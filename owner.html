@@ -53,9 +53,11 @@
     .switch { inline-size: 44px; block-size: 26px; border-radius:999px; background: var(--chip); border:1px solid var(--stroke); position:relative; }
     .switch i { position:absolute; inset-block-start:2px; inset-inline-start:2px; inline-size:22px; block-size:22px; background:#fff; border-radius:999px; transition:.25s; box-shadow:0 2px 6px rgba(0,0,0,.15); }
     [data-theme="dark"] .switch i { transform: translateX(18px); }
+    .connector-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.connector-grid>*{min-width:0}.connector-grid label{display:grid;gap:.35rem;font-size:.85rem;font-weight:700}.connector-grid input,.connector-grid select{min-height:44px;min-width:0;width:100%;border:1px solid var(--stroke);border-radius:12px;padding:.65rem .8rem;background:transparent;color:var(--text)}.connector-status{border-inline-start:4px solid var(--cyan);background:var(--chip);border-radius:12px;padding:1rem}.demo-warning{border:1px solid var(--amber);background:var(--card);border-radius:12px;padding:1rem}.connector-actions{display:flex;gap:.7rem;flex-wrap:wrap}.connector-actions .btn{min-height:44px}.card,main,aside,section,header{min-width:0;max-width:100%}body>.grid{width:100%;max-width:100%;margin:0}main>header{flex-wrap:wrap;gap:1rem}main>header>div{min-width:0;max-width:100%}main>header .flex{flex-wrap:wrap}h1,h2,p,.pill,.btn{overflow-wrap:anywhere}@media(max-width:700px){.connector-grid{grid-template-columns:1fr}.connector-actions .btn{width:100%}body>.grid{padding:.75rem;gap:.75rem}main>header{align-items:flex-start}main>header>div:last-child{width:100%;justify-content:flex-start}}
   </style>
 </head>
 <body class="min-h-screen">
+  <div id="ownerLocalDemoBadge" class="hidden" style="position:fixed;z-index:1200;left:12px;right:12px;bottom:12px;padding:12px 14px;border:1px solid var(--amber);border-radius:14px;background:#fff3bf;color:#533f03;font-weight:800;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.16)" role="status">بيئة عرض تجريبية — الصور محفوظة على هذا الجهاز فقط ولم تُرفع إلى خادم البلدية.</div>
   <div class="grid grid-cols-12 gap-4 p-4">
     <!-- Sidebar -->
     <aside class="col-span-12 md:col-span-3 lg:col-span-2 card p-4">
@@ -69,6 +71,7 @@
       <nav class="space-y-1 text-sm">
         <a class="sidebar-link" href="#dashboard">🏠 لوحة التحكم</a>
         <a class="sidebar-link" href="#orgs">🏢 المؤسسات</a>
+        <a class="sidebar-link" href="#users">👥 المستخدمون والصلاحيات</a>
         <a class="sidebar-link" href="#invoices">💳 الفواتير</a>
         <a class="sidebar-link" href="#analytics">📈 الإيرادات</a>
         <a class="sidebar-link" href="#settings">⚙️ الإعدادات</a>
@@ -166,6 +169,56 @@
         </div>
       </section>
 
+      <!-- Users & Permissions -->
+      <section id="users" class="card p-4">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="text-lg font-bold title">المستخدمون والصلاحيات</h2>
+            <p class="text-xs muted">إدارة حسابات المؤسسة (مدير / مراقب / مقاول) عبر واجهة آمنة من الخادم. لا تُخزَّن كلمات المرور ولا تُعرض.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="usersOrgSelect" class="bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 text-sm"></select>
+            <button id="refreshUsersBtn" class="btn btn-outline">تحديث</button>
+            <button id="addUserBtn" class="btn btn-primary">+ إضافة مستخدم</button>
+          </div>
+        </div>
+        <div id="usersMsg" class="text-xs mb-2"></div>
+        <div class="overflow-x-auto">
+          <table class="table text-sm text-right">
+            <thead class="muted">
+              <tr>
+                <th>البريد</th><th>الدور</th><th>الحالة</th><th>آخر دخول</th><th>تغيير كلمة المرور</th><th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="usersBody"><tr><td colspan="6" class="muted">اختر مؤسسة لعرض المستخدمين.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="storage-connectors" class="card p-4" aria-labelledby="storageConnectorTitle">
+        <div class="flex items-start justify-between gap-3 flex-wrap mb-4">
+          <div><p class="text-xs muted">إدارة المالك فقط</p><h2 id="storageConnectorTitle" class="text-xl font-bold title">مركز ربط البيانات</h2><p class="text-sm muted mt-1">تدعم المنصة ربط بيانات ومرفقات كل مؤسسة بخادمها الخاص. يعمل العرض الحالي في وضع تخزين محلي تجريبي، ويُفعّل الربط الفعلي بعد اعتماد مواصفات الخادم من تقنية معلومات المؤسسة.</p></div>
+          <button id="focusConnectorBtn" class="btn btn-primary" type="button">ربط خادم المؤسسة</button>
+        </div>
+        <div class="demo-warning mb-4"><strong>خادم بلدية القنفذة — وضع تجريبي محلي</strong><p class="text-sm mt-1">بيئة عرض تجريبية — الصور محفوظة على هذا الجهاز فقط ولم تُرفع إلى خادم البلدية.</p><p class="text-xs muted mt-1">لا يوفر هذا الوضع نسخًا احتياطية أو مزامنة بين الأجهزة أو ضمان استمرارية أو اتصالًا فعليًا بخادم البلدية.</p></div>
+        <form id="connectorForm" class="space-y-4" novalidate>
+          <div class="connector-grid">
+            <label>اسم المؤسسة<select id="connectorOrganization" required></select></label>
+            <label>organizationId<input id="connectorOrganizationId" readonly dir="ltr" aria-readonly="true"></label>
+            <label>نوع التخزين<select id="connectorType"><option value="LOCAL_DEMO">Local Demo Storage</option><option value="S3_COMPATIBLE">S3 Compatible</option><option value="MINIO">MinIO</option><option value="GOVERNMENT_HTTPS_API">Government HTTPS API</option></select></label>
+            <label>اسم الاتصال<input id="connectorName" maxlength="100" placeholder="اسم وصفي دون بيانات اعتماد"></label>
+            <label>عنوان الخادم<input id="connectorServer" type="url" inputmode="url" placeholder="HTTPS فقط — لا تضع بيانات اعتماد"></label>
+            <label>اسم Bucket/Container<input id="connectorContainer" maxlength="120"></label>
+            <label>المنطقة<input id="connectorRegion" maxlength="80"></label>
+            <label>حالة TLS/HTTPS<select id="connectorTls"><option value="true">HTTPS/TLS مطلوب</option><option value="false">غير متحقق — غير صالح للإنتاج</option></select></label>
+          </div>
+          <div id="connectorRequirement" class="connector-status" role="status">وضع محلي مجاني للعرض على هذا الجهاز فقط.</div>
+          <dl class="connector-grid text-sm"><div><dt class="muted">نمط الاتصال</dt><dd id="connectorMode" class="font-bold">محلي تجريبي</dd></div><div><dt class="muted">آخر اختبار اتصال</dt><dd id="connectorLastTest" class="font-bold">لم يُختبر</dd></div><div><dt class="muted">حالة الاتصال</dt><dd id="connectorStatus" class="font-bold">غير مفعّل</dd></div><div><dt class="muted">سياق خريطة المؤسسة</dt><dd id="connectorMapContext" class="font-bold">جاري التحقق الآمن</dd></div></dl>
+          <div class="connector-actions"><button id="saveConnectorBtn" class="btn btn-outline" type="submit">حفظ إعداد العرض</button><button id="testConnectorBtn" class="btn btn-outline" type="button">اختبار الاتصال</button><button id="toggleConnectorBtn" class="btn btn-primary" type="button">تفعيل الوضع التجريبي</button><button id="clearDemoStorageBtn" class="btn btn-warn" type="button">مسح بيانات العرض التجريبي</button></div>
+          <p id="connectorMessage" class="text-sm" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
       <!-- Invoices -->
       <section id="invoices" class="card p-4">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -239,10 +292,34 @@
     </form>
   </dialog>
 
+  <!-- Modal: Add User -->
+  <dialog id="userModal" class="card p-0 w-[92vw] max-w-xl">
+    <form id="userForm" method="dialog" class="p-4 space-y-3">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xl font-extrabold title">إضافة مستخدم للمؤسسة</h3>
+        <button type="button" onclick="document.getElementById('userModal').close()" class="pill">إغلاق ✕</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="text-sm">الاسم<input name="name" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">البريد الإلكتروني<input name="email" type="email" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">الدور<select name="role" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option value="manager">مدير</option><option value="supervisor">مشرف مساعد</option><option value="inspector">مراقب</option><option value="contractor">مقاول</option></select></label>
+        <label class="text-sm">المؤسسة<select name="organizationId" id="userFormOrg" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"></select></label>
+      </div>
+      <p class="text-xs muted">سيتم إنشاء الحساب بدون كلمة مرور. استخدم زر «كلمة مرور مؤقتة» لتوليدها وتسليمها للمستخدم (يُطلب منه تغييرها عند أول دخول).</p>
+      <div id="userFormMsg" class="text-xs"></div>
+      <div class="flex items-center gap-2 justify-end pt-2">
+        <button class="btn btn-primary" value="default">إنشاء المستخدم</button>
+      </div>
+    </form>
+  </dialog>
+
   <script type="module">
     // ✅ اتصال فعلي بـ Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { LOCAL_DEMO_TYPE, getConnectorConfiguration, saveConnectorConfiguration, testStorageConnection, clearLocalDemoStorage } from './storage-adapter.js';
+    import { fetchOrganizationMapContext } from './spatial-map.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
@@ -252,8 +329,11 @@
       messagingSenderId: "38965508031",
       appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
     };
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig, 'smart-hsr-owner-session');
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    await setPersistence(auth, browserLocalPersistence);
+    const ownerContext = { uid:null, role:'owner' };
 
     // عناصر الواجهة
     const orgsBody = document.getElementById('orgsBody');
@@ -261,6 +341,7 @@
     const searchBox = document.getElementById('searchBox');
     const addOrgBtn = document.getElementById('addOrgBtn');
     const newInvoiceBtn = document.getElementById('newInvoiceBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const kpiRevenue = document.getElementById('kpiRevenue');
     const kpiRevenueNote = document.getElementById('kpiRevenueNote');
     const kpiActive = document.getElementById('kpiActive');
@@ -331,43 +412,88 @@
     }
 
     function renderOrgs(filter=''){
-      const rows = (filter? ORGS.filter(o=> (o.name||'').includes(filter)) : ORGS)
-        .map(o=>`<tr>
-          <td class="font-semibold">${o.name||'-'}</td>
-          <td>${o.manager||'-'}</td>
-          <td>${o.email||'-'}</td>
-          <td>${o.phone||'-'}</td>
-          <td><span class="badge">${o.plan||'Trial'}</span></td>
-          <td>${o.billingCycle||'monthly'}</td>
-          <td>${o.status||'active'}</td>
-          <td>${o.expiresAt? new Date(o.expiresAt).toLocaleDateString('ar-SA'): '-'}</td>
-          <td>
-            <div class="flex gap-2">
-              <button class="btn btn-outline" data-act="edit" data-id="${o.id}">تعديل</button>
-              <button class="btn btn-primary" data-act="upgrade" data-id="${o.id}">ترقية</button>
-              <button class="btn btn-outline" data-act="delete" data-id="${o.id}">حذف</button>
-            </div>
-          </td>
-        </tr>`).join('');
-      orgsBody.innerHTML = rows || `<tr><td colspan="9" class="text-center muted py-6">لا توجد مؤسسات بعد</td></tr>`;
+      const rows = filter? ORGS.filter(o=> (o.name||'').includes(filter)) : ORGS;
+      orgsBody.innerHTML = '';
+      if(!rows.length){
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 9; td.className = 'text-center muted py-6'; td.textContent = 'لا توجد مؤسسات بعد';
+        tr.appendChild(td); orgsBody.appendChild(tr);
+        return;
+      }
+      rows.forEach(o=>{
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td'); tdName.className = 'font-semibold'; tdName.textContent = o.name||'-'; tr.appendChild(tdName);
+        const tdManager = document.createElement('td'); tdManager.textContent = o.manager||'-'; tr.appendChild(tdManager);
+        const tdEmail = document.createElement('td'); tdEmail.textContent = o.email||'-'; tr.appendChild(tdEmail);
+        const tdPhone = document.createElement('td'); tdPhone.textContent = o.phone||'-'; tr.appendChild(tdPhone);
+
+        const tdPlan = document.createElement('td');
+        const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = o.plan||'Trial';
+        tdPlan.appendChild(badge); tr.appendChild(tdPlan);
+
+        const tdCycle = document.createElement('td'); tdCycle.textContent = o.billingCycle||'monthly'; tr.appendChild(tdCycle);
+        const tdStatus = document.createElement('td'); tdStatus.textContent = o.status||'active'; tr.appendChild(tdStatus);
+
+        const tdExpires = document.createElement('td');
+        tdExpires.textContent = o.expiresAt? new Date(o.expiresAt).toLocaleDateString('ar-SA'): '-';
+        tr.appendChild(tdExpires);
+
+        const tdActions = document.createElement('td');
+        const wrap = document.createElement('div'); wrap.className = 'flex gap-2';
+        const mkBtn = (label, act, cls)=>{
+          const b = document.createElement('button');
+          b.className = cls; b.textContent = label;
+          b.dataset.act = act; b.dataset.id = o.id;
+          return b;
+        };
+        wrap.appendChild(mkBtn('تعديل','edit','btn btn-outline'));
+        wrap.appendChild(mkBtn('ترقية','upgrade','btn btn-primary'));
+        wrap.appendChild(mkBtn('حذف','delete','btn btn-outline'));
+        tdActions.appendChild(wrap); tr.appendChild(tdActions);
+
+        orgsBody.appendChild(tr);
+      });
     }
 
     function fillInvoiceOrgSelect(){
-      invoiceOrgSelect.innerHTML = ORGS.map(o=>`<option value="${o.id}">${o.name||o.id}</option>`).join('');
+      invoiceOrgSelect.innerHTML = '';
+      ORGS.forEach(o=>{
+        invoiceOrgSelect.add(new Option(o.name||o.id, o.id));
+      });
     }
 
     function renderInvoices(){
-      invoicesBody.innerHTML = INVOICES.map(inv=>`
-        <tr>
-          <td>${inv.invoiceId||inv.id}</td>
-          <td>${inv.organization_name||'-'}</td>
-          <td>${inv.plan||'-'}</td>
-          <td>${inv.billingCycle||'-'}</td>
-          <td>${formatSAR(inv.total||0)}</td>
-          <td><span class="badge" style="border-color:${(inv.status==='paid')?'#16a34a':'#f59e0b'}; color:${(inv.status==='paid')?'#16a34a':'#f59e0b'}">${inv.status||'-'}</span></td>
-          <td>${inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'):'-'}</td>
-          <td><button class="btn btn-outline" data-dl="${inv.id}">PDF</button></td>
-        </tr>`).join('');
+      invoicesBody.innerHTML = '';
+      INVOICES.forEach(inv=>{
+        const tr = document.createElement('tr');
+
+        const tdId = document.createElement('td'); tdId.textContent = inv.invoiceId||inv.id; tr.appendChild(tdId);
+        const tdOrg = document.createElement('td'); tdOrg.textContent = inv.organization_name||'-'; tr.appendChild(tdOrg);
+        const tdPlan = document.createElement('td'); tdPlan.textContent = inv.plan||'-'; tr.appendChild(tdPlan);
+        const tdCycle = document.createElement('td'); tdCycle.textContent = inv.billingCycle||'-'; tr.appendChild(tdCycle);
+        const tdAmount = document.createElement('td'); tdAmount.textContent = formatSAR(inv.total||0); tr.appendChild(tdAmount);
+
+        const tdStatus = document.createElement('td');
+        const badge = document.createElement('span'); badge.className = 'badge';
+        const isPaid = inv.status === 'paid';
+        badge.style.borderColor = isPaid? '#16a34a':'#f59e0b';
+        badge.style.color = isPaid? '#16a34a':'#f59e0b';
+        badge.textContent = inv.status||'-';
+        tdStatus.appendChild(badge); tr.appendChild(tdStatus);
+
+        const tdDate = document.createElement('td');
+        tdDate.textContent = inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'):'-';
+        tr.appendChild(tdDate);
+
+        const tdFile = document.createElement('td');
+        const btn = document.createElement('button'); btn.className = 'btn btn-outline'; btn.textContent = 'PDF';
+        btn.dataset.dl = inv.id;
+        tdFile.appendChild(btn); tr.appendChild(tdFile);
+
+        invoicesBody.appendChild(tr);
+      });
     }
 
     // رسوم بيانية
@@ -502,8 +628,244 @@
 
     async function refreshAll(){ await Promise.all([fetchOrganizations(), fetchInvoices()]); renderKPIs(); }
 
-    // بدء التشغيل
-    await refreshAll();
+    // ===== Owner-only institutional storage connector center =====
+    const connectorForm=document.getElementById('connectorForm');
+    const connectorOrganization=document.getElementById('connectorOrganization');
+    const connectorType=document.getElementById('connectorType');
+    let currentConnector=null;
+    const connectorText=(id,text)=>{const el=document.getElementById(id);if(el)el.textContent=text};
+    function setConnectorMessage(text,ok=false){const el=document.getElementById('connectorMessage');el.textContent=text||'';el.style.color=ok?'var(--emerald)':'var(--rose)'}
+    function populateConnectorOrganizations(){
+      const selected=connectorOrganization.value;
+      connectorOrganization.replaceChildren();
+      ORGS.forEach(org=>connectorOrganization.add(new Option(String(org.name||org.id),String(org.id))));
+      if(selected&&ORGS.some(org=>org.id===selected))connectorOrganization.value=selected;
+      document.getElementById('connectorOrganizationId').value=connectorOrganization.value||'';
+    }
+    function connectorDraft(active=currentConnector?.active===true){return{
+      organizationId:connectorOrganization.value,
+      type:connectorType.value,
+      connectionName:document.getElementById('connectorName').value.trim(),
+      serverUrl:document.getElementById('connectorServer').value.trim(),
+      containerName:document.getElementById('connectorContainer').value.trim(),
+      region:document.getElementById('connectorRegion').value.trim(),
+      tls:document.getElementById('connectorTls').value==='true',active,
+      lastTestAt:currentConnector?.lastTestAt||null,lastTestStatus:currentConnector?.lastTestStatus||'not-tested'
+    }}
+    function renderConnectorType(){
+      const local=connectorType.value===LOCAL_DEMO_TYPE;
+      connectorText('connectorRequirement',local?'وضع محلي مجاني للعرض على هذا الجهاز فقط.':'يتطلب إعدادًا آمنًا من تقنية معلومات المؤسسة. لا تُحفظ بيانات اعتماد في المتصفح.');
+      connectorText('connectorMode',local?'محلي تجريبي':'واجهة خادم مطلوبة');
+      document.getElementById('toggleConnectorBtn').disabled=!local;
+      document.getElementById('toggleConnectorBtn').textContent=currentConnector?.active?'إلغاء تفعيل الوضع التجريبي':'تفعيل الوضع التجريبي';
+    }
+    async function loadConnector(){
+      const organizationId=connectorOrganization.value;
+      document.getElementById('connectorOrganizationId').value=organizationId;
+      currentConnector=organizationId?await getConnectorConfiguration(organizationId):null;
+      connectorType.value=currentConnector?.type||LOCAL_DEMO_TYPE;
+      document.getElementById('connectorName').value=currentConnector?.connectionName||'';
+      document.getElementById('connectorServer').value=currentConnector?.serverUrl||'';
+      document.getElementById('connectorContainer').value=currentConnector?.containerName||'';
+      document.getElementById('connectorRegion').value=currentConnector?.region||'';
+      document.getElementById('connectorTls').value=currentConnector?.tls===false?'false':'true';
+      connectorText('connectorLastTest',currentConnector?.lastTestAt?new Date(currentConnector.lastTestAt).toLocaleString('ar-SA'):'لم يُختبر');
+      connectorText('connectorStatus',currentConnector?.active?'مفعّل على هذا الجهاز':'غير مفعّل');
+      try{
+        const context=await fetchOrganizationMapContext(auth,{organizationId,ownerSelected:true});
+        connectorText('connectorMapContext',context.configured?'إعداد خريطة المؤسسة موثّق':'مركز تقريبي لمدينة القنفذة — ليس حدًا خدميًا رسميًا');
+      }catch(_){connectorText('connectorMapContext','تعذر التحقق الآمن من سياق الخريطة')}
+      document.getElementById('ownerLocalDemoBadge').classList.toggle('hidden',!(currentConnector?.active&&currentConnector.type===LOCAL_DEMO_TYPE));
+      renderConnectorType();setConnectorMessage('');
+    }
+    connectorOrganization.addEventListener('change',()=>loadConnector().catch(()=>setConnectorMessage('تعذر قراءة إعداد الربط المحلي.')));
+    connectorType.addEventListener('change',()=>{currentConnector={...currentConnector,type:connectorType.value,active:false};renderConnectorType()});
+    document.getElementById('focusConnectorBtn').addEventListener('click',()=>{connectorOrganization.focus();document.getElementById('storage-connectors').scrollIntoView({behavior:'smooth'})});
+    connectorForm.addEventListener('submit',async event=>{event.preventDefault();try{currentConnector=await saveConnectorConfiguration(connectorDraft(),ownerContext);await loadConnector();setConnectorMessage('تم حفظ إعداد العرض المحلي دون أي بيانات اعتماد.',true)}catch(_){setConnectorMessage('تعذر حفظ إعداد الربط. تحقق من اختيار المؤسسة.')}});
+    document.getElementById('testConnectorBtn').addEventListener('click',async()=>{try{const result=await testStorageConnection({organizationId:connectorOrganization.value,ownerContext});if(result.ok){currentConnector=await saveConnectorConfiguration({...connectorDraft(),lastTestAt:result.testedAt,lastTestStatus:result.status},ownerContext);await loadConnector();setConnectorMessage('نجح اختبار مخزن العرض المحلي على هذا الجهاز.',true)}else setConnectorMessage('يتطلب اختبار هذا النوع واجهة خادم آمنة تعتمدها تقنية معلومات المؤسسة.')}catch(_){setConnectorMessage('تعذر اختبار التخزين المحلي.')}});
+    document.getElementById('toggleConnectorBtn').addEventListener('click',async()=>{if(connectorType.value!==LOCAL_DEMO_TYPE)return;try{currentConnector=await saveConnectorConfiguration(connectorDraft(!(currentConnector?.active)),ownerContext);await loadConnector();setConnectorMessage(currentConnector.active?'تم تفعيل وضع العرض التجريبي صراحةً لهذه المؤسسة.':'تم إلغاء تفعيل وضع العرض التجريبي.',true)}catch(_){setConnectorMessage('تعذر تغيير حالة وضع العرض.')}});
+    document.getElementById('clearDemoStorageBtn').addEventListener('click',async()=>{const organizationId=connectorOrganization.value;if(!organizationId)return;const confirmed=confirm('سيؤدي هذا إلى حذف صور العرض التجريبي لهذه المؤسسة من هذا الجهاز فقط. لا يمكن التراجع. هل تريد المتابعة؟');if(!confirmed)return;try{await clearLocalDemoStorage({organizationId,ownerContext,confirmed:true});setConnectorMessage('تم مسح بيانات العرض التجريبي لهذه المؤسسة من هذا الجهاز.',true)}catch(_){setConnectorMessage('تعذر مسح بيانات العرض التجريبي.')}});
+
+    // تسجيل الخروج
+    logoutBtn.addEventListener('click', async ()=>{
+      try{ if(auth.currentUser) await signOut(auth); }
+      catch(err){ console.warn('تعذر تسجيل الخروج من Firebase', err); }
+      finally{
+        sessionStorage.removeItem('SmartHSROwner');
+        window.location.replace('owner-login.html');
+      }
+    });
+
+    async function denyOwnerAccess(){
+      try{ if(auth.currentUser) await signOut(auth); }catch(e){ console.warn(e); }
+      sessionStorage.removeItem('SmartHSROwner');
+      window.location.replace('owner-login.html');
+    }
+
+    // Owner authorization remains fail-closed and is scoped to this named Auth app.
+    async function isAuthorizedOwner(user){
+      const snap = await getDoc(doc(db, 'owners', user.uid));
+      return snap.exists() && snap.data()?.active !== false;
+    }
+
+    // بدء التشغيل: يتطلب جلسة موثّقة + مستند owners/{uid} فعليًا قبل قراءة/كتابة المؤسسات والفواتير
+    let ownerBooted = false;
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){ await denyOwnerAccess(); return; }
+      let allowed = false;
+      try{ allowed = await isAuthorizedOwner(user); }
+      catch(err){ console.error('تعذر التحقق من صلاحية المالك', err); allowed = false; }
+      if(!allowed){ await denyOwnerAccess(); return; }
+      if(ownerBooted) return;
+      ownerBooted = true;
+      ownerContext.uid = user.uid;
+      await refreshAll();
+      try{ populateOrgSelects(); }catch(_){}
+      try{ populateConnectorOrganizations(); await loadConnector(); }catch(_){ setConnectorMessage('تعذر تحميل إعداد الربط المحلي.'); }
+    });
+
+    // ============================================================
+    // Users & Permissions (Phase 1) — talks ONLY to the secure
+    // server-side Admin API using the owner's Firebase ID token.
+    // Passwords are generated client-side, shown once to the owner,
+    // and sent to be set on the account. The server never returns them.
+    // ============================================================
+    const ADMIN_API = '/api/admin/users';
+    const usersOrgSelect = document.getElementById('usersOrgSelect');
+    const userFormOrg    = document.getElementById('userFormOrg');
+    const usersBody      = document.getElementById('usersBody');
+    const usersMsg       = document.getElementById('usersMsg');
+    const addUserBtn     = document.getElementById('addUserBtn');
+    const refreshUsersBtn= document.getElementById('refreshUsersBtn');
+    const userModal      = document.getElementById('userModal');
+    const userForm       = document.getElementById('userForm');
+    const userFormMsg    = document.getElementById('userFormMsg');
+
+    const ROLE_AR = { manager:'مدير', supervisor:'مشرف مساعد', inspector:'مراقب', contractor:'مقاول' };
+
+    function setUsersMsg(text, ok){
+      usersMsg.textContent = text || '';
+      usersMsg.style.color = ok ? 'var(--emerald)' : 'var(--rose)';
+    }
+
+    function generateTempPassword(){
+      const upper='ABCDEFGHJKLMNPQRSTUVWXYZ', lower='abcdefghijkmnpqrstuvwxyz', digits='23456789', sym='!@#$%*?';
+      const all=upper+lower+digits+sym; const buf=new Uint32Array(14);
+      crypto.getRandomValues(buf);
+      let pick=c=>c[buf[i++]%c.length]; let i=0;
+      let pw=pick(upper)+pick(lower)+pick(digits)+pick(sym);
+      while(pw.length<12) pw+=all[buf[i++% buf.length]%all.length];
+      return pw;
+    }
+
+    async function callAdminApi(payload){
+      const user = auth.currentUser;
+      if(!user) throw new Error('انتهت الجلسة. الرجاء تسجيل الدخول من جديد.');
+      const token = await user.getIdToken();
+      const resp = await fetch(ADMIN_API, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+        body: JSON.stringify(payload)
+      });
+      let data={}; try{ data=await resp.json(); }catch(_){}
+      if(!resp.ok){
+        const reason = data.reason || data.error || ('HTTP '+resp.status);
+        throw new Error('فشلت العملية: '+reason);
+      }
+      return data;
+    }
+
+    function populateOrgSelects(){
+      const opts = (ORGS||[]).map(o=>`<option value="${o.id}">${(o.name||o.id)}</option>`).join('');
+      const empty = '<option value="">— لا توجد مؤسسات —</option>';
+      usersOrgSelect.innerHTML = opts || empty;
+      userFormOrg.innerHTML = opts || empty;
+    }
+
+    function fmtDate(t){ if(!t) return '—'; try{ return new Date(t).toLocaleString('ar-SA'); }catch(_){ return '—'; } }
+
+    async function renderUsers(){
+      const orgId = usersOrgSelect.value;
+      if(!orgId){ usersBody.innerHTML = `<tr><td colspan="6" class="muted">اختر مؤسسة لعرض المستخدمين.</td></tr>`; return; }
+      usersBody.innerHTML = `<tr><td colspan="6" class="muted">...جاري التحميل</td></tr>`;
+      try{
+        const { users } = await callAdminApi({ action:'list', organizationId: orgId });
+        if(!users || !users.length){ usersBody.innerHTML = `<tr><td colspan="6" class="muted">لا يوجد مستخدمون في هذه المؤسسة.</td></tr>`; return; }
+        usersBody.innerHTML = users.map(u=>{
+          const statusPill = u.active
+            ? '<span class="pill" style="color:var(--emerald)">نشط</span>'
+            : '<span class="pill" style="color:var(--rose)">معطّل</span>';
+          const mcp = u.mustChangePassword ? '⚠️ مطلوب' : '—';
+          const toggleLabel = u.active ? 'تعطيل' : 'تفعيل';
+          return `<tr>
+            <td>${u.email||'—'}</td>
+            <td>${ROLE_AR[u.role]||u.role||'—'}</td>
+            <td>${statusPill}</td>
+            <td class="muted">${fmtDate(u.lastSignInTime)}</td>
+            <td>${mcp}</td>
+            <td>
+              <div class="flex items-center gap-1 justify-end flex-wrap">
+                <button class="btn btn-outline" data-act="temp" data-uid="${u.uid}">كلمة مرور مؤقتة</button>
+                <button class="btn btn-outline" data-act="toggle" data-uid="${u.uid}" data-active="${u.active?1:0}">${toggleLabel}</button>
+                <button class="btn btn-ghost" data-act="revoke" data-uid="${u.uid}">إنهاء الجلسات</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('');
+        setUsersMsg('تم تحميل '+users.length+' مستخدم.', true);
+      }catch(err){
+        usersBody.innerHTML = `<tr><td colspan="6" class="muted">تعذّر التحميل.</td></tr>`;
+        setUsersMsg(err.message||'تعذّر تحميل المستخدمين.', false);
+      }
+    }
+
+    usersOrgSelect.addEventListener('change', renderUsers);
+    refreshUsersBtn.addEventListener('click', ()=>{ populateOrgSelects(); renderUsers(); });
+    addUserBtn.addEventListener('click', ()=>{ populateOrgSelects(); userFormMsg.textContent=''; userForm.reset(); const o=usersOrgSelect.value; if(o) userFormOrg.value=o; userModal.showModal(); });
+
+    userForm.addEventListener('submit', async (e)=>{
+      const f = userForm.elements;
+      const name=f.name.value.trim(), email=f.email.value.trim(), role=f.role.value, organizationId=f.organizationId.value;
+      if(!name||!email||!organizationId){ e.preventDefault(); userFormMsg.style.color='var(--rose)'; userFormMsg.textContent='الرجاء تعبئة الاسم والبريد واختيار المؤسسة.'; return; }
+      e.preventDefault();
+      userFormMsg.style.color='var(--muted)'; userFormMsg.textContent='...جاري الإنشاء';
+      try{
+        await callAdminApi({ action:'create', organizationId, role, email, name });
+        userModal.close();
+        setUsersMsg('تم إنشاء المستخدم بنجاح. استخدم «كلمة مرور مؤقتة» لتوليد كلمة الدخول.', true);
+        if(usersOrgSelect.value!==organizationId) usersOrgSelect.value=organizationId;
+        renderUsers();
+      }catch(err){
+        userFormMsg.style.color='var(--rose)'; userFormMsg.textContent=err.message||'تعذّر إنشاء المستخدم.';
+      }
+    });
+
+    usersBody.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button[data-act]'); if(!btn) return;
+      const uid = btn.dataset.uid; const act = btn.dataset.act;
+      try{
+        if(act==='temp'){
+          const pw = generateTempPassword();
+          if(!confirm('سيتم تعيين كلمة مرور مؤقتة لهذا المستخدم وسيُطلب منه تغييرها عند أول دخول.\n\nكلمة المرور المؤقتة (انسخها الآن — لن تظهر مجددًا):\n\n'+pw+'\n\nهل تريد المتابعة؟')) return;
+          await callAdminApi({ action:'setTempPassword', uid, password: pw });
+          setUsersMsg('تم تعيين كلمة المرور المؤقتة. سلّمها للمستخدم بشكل آمن.', true);
+          renderUsers();
+        } else if(act==='toggle'){
+          const currentlyActive = btn.dataset.active==='1';
+          const next = !currentlyActive;
+          if(!confirm(next ? 'تفعيل هذا الحساب؟' : 'تعطيل هذا الحساب سيمنع المستخدم من الدخول. متابعة؟')) return;
+          await callAdminApi({ action:'setActive', uid, active: next });
+          setUsersMsg(next ? 'تم تفعيل الحساب.' : 'تم تعطيل الحساب.', true);
+          renderUsers();
+        } else if(act==='revoke'){
+          if(!confirm('إنهاء جميع جلسات هذا المستخدم سيخرجه من كل الأجهزة. متابعة؟')) return;
+          await callAdminApi({ action:'revokeSessions', uid });
+          setUsersMsg('تم إنهاء جميع جلسات المستخدم.', true);
+        }
+      }catch(err){
+        setUsersMsg(err.message||'تعذّر تنفيذ الإجراء.', false);
+      }
+    });
   </script>
 </body>
 </html>
