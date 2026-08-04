@@ -489,7 +489,6 @@
     .workflow-presentation{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(76px,1fr));gap:5px;overflow-x:auto;padding:4px 0 7px}.workflow-step{position:relative;min-height:52px;padding:8px 5px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--muted);text-align:center;font-size:9px;font-weight:900}.workflow-step i{display:block;width:16px;height:16px;margin:0 auto 4px}.workflow-step.done{background:#e7f8f5;color:#087f7b;border-color:rgba(24,165,162,.28)}.workflow-step.current{background:var(--navy);color:#fff;border-color:var(--navy)}
     .task-actions{display:grid;gap:7px;align-self:center;min-width:132px}.task-action-secondary{min-height:44px;border:1px solid rgba(24,165,162,.32);border-radius:12px;background:#eefaf9;color:#087f7b;font-family:inherit;font-weight:900;cursor:pointer}.task-assignment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px;margin-top:8px}.task-assignment-grid span{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px;align-items:center;color:var(--muted);font-size:10px;font-weight:800}.task-assignment-grid i{width:14px;height:14px;color:var(--teal)}
     .twin-summary{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:11px;border:1px solid rgba(24,165,162,.2);border-radius:14px;background:linear-gradient(135deg,rgba(24,165,162,.1),transparent)}.twin-summary div{min-width:0}.twin-summary span,.twin-summary strong{display:block}.twin-summary span{font-size:9px;color:var(--muted);font-weight:800}.twin-summary strong{margin-top:3px;font-size:11px;overflow-wrap:anywhere}.twin-timeline{grid-column:1/-1;min-height:63px;display:grid;grid-template-columns:repeat(4,minmax(74px,1fr));gap:6px;overflow-x:auto}.twin-timeline-step{padding:9px 6px;border-radius:11px;background:var(--bg);border:1px solid var(--line);text-align:center;font-size:9px;font-weight:900;color:var(--muted)}.twin-timeline-step.active{background:#e7f8f5;color:#087f7b;border-color:rgba(24,165,162,.3)}
-    .smart-observation-fab{position:fixed;z-index:1100;inset-inline-end:18px;bottom:18px;min-height:52px;display:flex;align-items:center;gap:8px;padding:0 17px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:linear-gradient(135deg,#0b3a4a,#18a5a2);color:#fff;font-family:inherit;font-weight:900;box-shadow:0 12px 28px rgba(10,25,49,.26);cursor:pointer}.smart-observation-fab i{width:20px}.smart-action-sheet{position:fixed;inset:0;z-index:4200;display:grid;place-items:end center;padding:18px;background:rgba(4,23,34,.48);backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:opacity .22s}.smart-action-sheet.open{opacity:1;pointer-events:auto}.smart-action-panel{width:min(480px,100%);padding:14px;border:1px solid rgba(255,255,255,.42);border-radius:22px;background:rgba(255,255,255,.9);box-shadow:0 22px 60px rgba(10,25,49,.3);transform:translateY(20px);transition:transform .22s}.smart-action-sheet.open .smart-action-panel{transform:none}[data-theme="dark"] .smart-action-panel{background:rgba(16,32,54,.94)}.smart-action-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.smart-action-head h2{margin:0;font-size:16px}.smart-action-head button{width:44px;height:44px;border:0;border-radius:12px;background:var(--bg);color:var(--text)}.smart-action-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.smart-action-option{min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);font-family:inherit;font-weight:900}.smart-action-option i{width:23px;color:var(--teal)}.smart-action-note{margin:10px 0 0;color:var(--muted);font-size:10px;text-align:center;font-weight:700}
     .sheet-header .btn{min-width:44px;min-height:44px;justify-content:center}button:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}button:active{transform:scale(.98)}
     /* Compact field workspace */
     .task-card{gap:12px;padding:12px;border-inline-start-width:3px;box-shadow:0 5px 16px rgba(10,25,49,.06)}
@@ -498,13 +497,12 @@
     [data-theme="dark"] .sheet-header{background:rgba(7,29,42,.35)}
     .sheet-header h3{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.sheet-header>svg{flex:0 0 20px}.sheet-header .pill{flex:0 1 auto;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sheet-header .btn{width:44px;height:44px;flex:0 0 44px;padding:0;border-radius:12px}
     .sheet-body{scrollbar-gutter:stable}[data-theme="dark"] .sheet-actions{background:rgba(14,29,45,.82)}.sheet-actions .btn{width:100%;min-height:44px;border-radius:13px}
-    .smart-observation-fab{min-width:44px;min-height:44px;padding:0 13px;gap:6px;inset-inline-end:max(12px,env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));font-size:11px;box-shadow:0 8px 20px rgba(10,25,49,.22)}.smart-observation-fab i{width:18px;height:18px}
-    #mapPanel .map-wrap{height:clamp(430px,58dvh,610px);min-height:430px;border-radius:16px}.workspace-shell{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+    #mapPanel .map-wrap{height:clamp(430px,58dvh,610px);min-height:430px;border-radius:16px}.workspace-shell{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
     @media(max-width:760px){
-      .workspace-shell{padding:10px 10px calc(78px + env(safe-area-inset-bottom))}.operations-grid{grid-template-columns:1fr}.task-summary{display:none}.task-card{grid-template-columns:1fr}.task-actions{grid-template-columns:repeat(2,minmax(0,1fr));width:100%;min-width:0}.task-actions>*{width:100%}.evidence-stage{grid-template-columns:1fr}.twin-summary{grid-template-columns:1fr 1fr}.twin-summary>div:last-child{grid-column:1/-1}.sheet-body{grid-template-columns:1fr}.workflow-presentation{grid-template-columns:repeat(6,minmax(76px,1fr))}
+      .workspace-shell{padding:10px 10px calc(28px + env(safe-area-inset-bottom))}.operations-grid{grid-template-columns:1fr}.task-summary{display:none}.task-card{grid-template-columns:1fr}.task-actions{grid-template-columns:repeat(2,minmax(0,1fr));width:100%;min-width:0}.task-actions>*{width:100%}.evidence-stage{grid-template-columns:1fr}.twin-summary{grid-template-columns:1fr 1fr}.twin-summary>div:last-child{grid-column:1/-1}.sheet-body{grid-template-columns:1fr}.workflow-presentation{grid-template-columns:repeat(6,minmax(76px,1fr))}
     }
     @media(min-width:420px) and (max-width:760px){.ops-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-card{height:100%}}
-    @media(max-width:419px){.ops-rail{grid-template-columns:1fr}.workspace-intro h1{font-size:20px}.workspace-nav{margin-bottom:10px}.task-assignment-grid{grid-template-columns:1fr}.smart-observation-fab{max-width:152px;padding-inline:11px}#mapPanel .map-wrap{height:54dvh;min-height:420px}}
+    @media(max-width:419px){.ops-rail{grid-template-columns:1fr}.workspace-intro h1{font-size:20px}.workspace-nav{margin-bottom:10px}.task-assignment-grid{grid-template-columns:1fr}#mapPanel .map-wrap{height:54dvh;min-height:420px}}
     @media(min-width:761px){.ops-rail{grid-template-columns:1fr}.sheet-body{grid-template-columns:1fr 1fr}#mapPanel .map-wrap{height:min(62dvh,620px)}}
     @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
@@ -702,20 +700,6 @@
         <i data-lucide="save"></i>حفظ التحديث
       </button>
     </div>
-  </div>
-</section>
-
-<button id="smartObservationFab" class="smart-observation-fab" type="button" aria-haspopup="dialog" aria-controls="smartObservationSheet"><i data-lucide="sparkles"></i>إنشاء ملاحظة ذكية</button>
-<section id="smartObservationSheet" class="smart-action-sheet" role="dialog" aria-modal="true" aria-labelledby="smartObservationTitle" hidden>
-  <div class="smart-action-panel">
-    <header class="smart-action-head"><div><h2 id="smartObservationTitle">إنشاء ملاحظة ذكية</h2><small>اختر طريقة التوثيق الميداني</small></div><button id="smartObservationClose" type="button" aria-label="إغلاق"><i data-lucide="x"></i></button></header>
-    <div class="smart-action-options">
-      <button class="smart-action-option" type="button" data-smart-mode="camera"><i data-lucide="camera"></i>الكاميرا</button>
-      <button class="smart-action-option" type="button" data-smart-mode="voice"><i data-lucide="mic"></i>ملاحظة صوتية</button>
-      <button class="smart-action-option" type="button" data-smart-mode="text"><i data-lucide="notebook-pen"></i>ملاحظة نصية</button>
-      <button class="smart-action-option" type="button" data-smart-mode="location"><i data-lucide="map-pin"></i>الموقع</button>
-    </div>
-    <p class="smart-action-note">مكوّن جاهز للربط المستقبلي — لا يتم إنشاء أو إرسال بيانات حالياً.</p>
   </div>
 </section>
 
@@ -1276,8 +1260,8 @@ const firebaseConfig = {
   const EXECUTION_EVENT_PREFIX='[SMART_HSR_';
 
   const PRESENTATION_STAGE = {
-    PENDING:{label:'مسندة',action:'ابدأ التوجه'},
-    IN_PROGRESS:{label:'قيد العمل',action:'متابعة العمل'},
+    PENDING:{label:'مسندة',action:'بدء التنفيذ'},
+    IN_PROGRESS:{label:'قيد العمل',action:'رفع إثبات المعالجة'},
     PENDING_REVIEW:{label:'بانتظار الاعتماد',action:'عرض التفاصيل'},
     COMPLETED:{label:'مكتملة',action:'عرض التفاصيل'}
   };
@@ -1380,20 +1364,6 @@ const firebaseConfig = {
   document.getElementById('mapTab')?.addEventListener('click',()=>activateWorkspace('map'));
   setInterval(()=>{const el=document.getElementById('gpsLastUpdate');const at=Number(el?.dataset.at||0);if(el&&at)el.textContent=`قبل ${Math.max(1,Math.round((Date.now()-at)/1000))} ث`;},5000);
 
-  const smartObservationFab=document.getElementById('smartObservationFab');
-  const smartObservationSheet=document.getElementById('smartObservationSheet');
-  const smartObservationClose=document.getElementById('smartObservationClose');
-  function openSmartObservationSheet(){smartObservationSheet.hidden=false;requestAnimationFrame(()=>smartObservationSheet.classList.add('open'));smartObservationClose.focus()}
-  function closeSmartObservationSheet(){smartObservationSheet.classList.remove('open');setTimeout(()=>{smartObservationSheet.hidden=true;smartObservationFab.focus()},220)}
-  smartObservationFab?.addEventListener('click',openSmartObservationSheet);
-  smartObservationClose?.addEventListener('click',closeSmartObservationSheet);
-  smartObservationSheet?.addEventListener('click',event=>{if(event.target===smartObservationSheet)closeSmartObservationSheet()});
-  smartObservationSheet?.addEventListener('keydown',event=>{if(event.key==='Escape')closeSmartObservationSheet()});
-  smartObservationSheet?.querySelectorAll('[data-smart-mode]').forEach(button=>button.addEventListener('click',()=>{
-    const labels={camera:'الكاميرا',voice:'الملاحظة الصوتية',text:'الملاحظة النصية',location:'الموقع'};
-    toast(`${labels[button.dataset.smartMode]} جاهزة للربط في المرحلة القادمة`);
-  }));
-
   function setChip(status){
     sChip.className='pill '+(
       status==='PENDING'?'red':
@@ -1427,7 +1397,7 @@ const firebaseConfig = {
     if (retryReason === 'UPLOAD_FAILED' || retryReason === 'FIRESTORE_FAILED'){
       setSaveButtonText('إعادة المحاولة');
     } else if (status === 'PENDING'){
-      setSaveButtonText('بدء المعالجة');
+      setSaveButtonText('بدء التنفيذ');
     } else {
       setSaveButtonText('إرسال للمراجعة');
     }
