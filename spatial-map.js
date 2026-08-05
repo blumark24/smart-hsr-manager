@@ -133,6 +133,20 @@ function installManagerCommandEnhancements(){
     body.manager-command-v2 .bm-zoom-toolbar button{width:44px!important;height:44px!important;min-height:44px!important;border-radius:12px!important;display:grid!important;place-items:center!important;background:rgba(255,255,255,.1)!important;color:#fff!important;border:1px solid rgba(255,255,255,.12)!important}
     body.manager-command-v2 .bm-zoom-toolbar button:hover{background:rgba(255,255,255,.2)!important}
     body.manager-command-v2 .leaflet-popup-content-wrapper{border-radius:16px!important;box-shadow:0 18px 50px rgba(7,29,51,.24)!important}
+    body.manager-command-v2 .leaflet-popup-content{margin:0!important;width:auto!important}
+    body.manager-command-v2 .leaflet-popup-close-button{top:8px!important;left:8px!important;right:auto!important;width:28px!important;height:28px!important;border-radius:9px!important;background:var(--surface-2)!important;color:var(--text)!important;font-size:20px!important;line-height:26px!important}
+    body.manager-command-v2 .bm-map-card{width:min(286px,calc(100vw - 54px));padding:.85rem;direction:rtl;font-family:Tajawal,system-ui,sans-serif;color:var(--text)}
+    body.manager-command-v2 .bm-map-card__eyebrow{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding-inline-end:2rem;color:var(--muted);font-size:.66rem;font-weight:850}
+    body.manager-command-v2 .bm-map-card__status{display:inline-flex;align-items:center;gap:.32rem;padding:.2rem .5rem;border-radius:999px;background:var(--surface-2);color:var(--text);white-space:nowrap}
+    body.manager-command-v2 .bm-map-card__status::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--bm-status,#64748b)}
+    body.manager-command-v2 .bm-map-card h3{margin:.55rem 0 .65rem;font-size:.95rem;line-height:1.45;font-weight:950;color:var(--color-navy)}
+    body.dark.manager-command-v2 .bm-map-card h3{color:var(--text)}
+    body.manager-command-v2 .bm-map-card__facts{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin:0 0 .72rem}
+    body.manager-command-v2 .bm-map-card__fact{min-width:0;padding:.45rem .5rem;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+    body.manager-command-v2 .bm-map-card__fact span{display:block;margin-bottom:.12rem;color:var(--muted);font-size:.6rem;font-weight:750}
+    body.manager-command-v2 .bm-map-card__fact strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.7rem}
+    body.manager-command-v2 .bm-map-card__actions{display:grid;grid-template-columns:1fr 1fr;gap:.42rem}
+    body.manager-command-v2 .bm-map-card__actions .bm-btn{min-height:38px!important;padding:.42rem .55rem!important;font-size:.68rem!important}
     body.manager-command-v2 .smart-hsr-status-marker{cursor:pointer!important}
 
     @media(max-width:900px){
@@ -223,29 +237,6 @@ function installManagerCommandEnhancements(){
   scan(document);
   new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType===1){classifyButton(node);scan(node)}}))).observe(document.body,{childList:true,subtree:true});
 
-  const patchLeaflet=()=>{
-    const L=window.L;
-    if(!L?.Marker?.prototype||L.Marker.prototype.__smartHsrManagerPopupPatched) return;
-    const original=L.Marker.prototype.bindPopup;
-    Object.defineProperty(L.Marker.prototype,'__smartHsrManagerPopupPatched',{value:true});
-    L.Marker.prototype.bindPopup=function(content,options){
-      if(typeof content==='string'&&content.includes('showObservationImages')){
-        const match=content.match(/showObservationImages\(decodeURIComponent\('([^']+)'\)\)/);
-        if(match&&!this.__smartHsrObservationClick){
-          this.__smartHsrObservationClick=true;
-          const encodedId=match[1];
-          this.on('click',()=>{
-            const activeMap=this._map;
-            if(activeMap){const target=this.getLatLng();const zoom=Math.max(activeMap.getZoom?.()||13,15);activeMap.flyTo?.(target,zoom,{duration:.55})}
-            window.setTimeout(()=>window.showObservationImages?.(decodeURIComponent(encodedId)),180);
-          });
-          return this;
-        }
-      }
-      return original.call(this,content,options);
-    };
-  };
-  patchLeaflet();
 }
 
 if(typeof document!=='undefined'){
