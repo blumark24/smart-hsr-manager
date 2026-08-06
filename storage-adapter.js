@@ -89,16 +89,25 @@ export function isServerObjectKey(reference) {
 
 // Fetches a private object through the server and hands back a blob URL.
 // The B2 bucket is never made public and no bucket URL reaches the browser.
-export async function resolveServerObjectImage({ reference, idToken }) {
+export async function resolveServerObjectImage({ reference, idToken, refreshIdToken }) {
   const key = typeof reference === 'string' ? reference.trim() : '';
   if (!isServerObjectKey(key)) return { kind: 'server', available: false, url: null, reason: 'invalid-object-key' };
   if (!idToken) return { kind: 'server', available: false, url: null, reason: 'missing-id-token' };
 
+  const readObject = token => fetch(`/api/storage/read?key=${encodeURIComponent(key)}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
   let response;
   try {
-    response = await fetch(`/api/storage/read?key=${encodeURIComponent(key)}`, {
-      headers: { Authorization: `Bearer ${idToken}` }
-    });
+    response = await readObject(idToken);
+    // A restored browser session can briefly expose a cached Firebase token
+    // that the server rejects. Refresh it once and retry the same read; all
+    // authorization and organization ownership checks still run server-side.
+    if (response.status === 401 && typeof refreshIdToken === 'function') {
+      const freshToken = await refreshIdToken();
+      if (freshToken && freshToken !== idToken) response = await readObject(freshToken);
+    }
   } catch (_) {
     return { kind: 'server', available: false, url: null, reason: 'network-error' };
   }
@@ -204,8 +213,11 @@ export async function resolveObservationImage({ reference, context }) {
       return { kind: 'external', available: true, url: raw };
     }
     if (isServerObjectKey(raw)) {
-      const idToken = typeof context?.getIdToken === 'function' ? await context.getIdToken() : context?.idToken;
-      return resolveServerObjectImage({ reference: raw, idToken });
+      const idToken = typeof context?.getIdToken === 'function' ? await context.getIdToken(false) : context?.idToken;
+      const refreshIdToken = typeof context?.getIdToken === 'function'
+        ? () => context.getIdToken(true)
+        : null;
+      return resolveServerObjectImage({ reference: raw, idToken, refreshIdToken });
     }
     return { kind: 'external', available: false, url: null, reason: 'unsupported-reference' };
   }
