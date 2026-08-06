@@ -1,0 +1,102 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function ownerRecord() { return get(/databases/$(database)/documents/owners/$(request.auth.uid)); }
+    function isOwner() { return signedIn() && exists(/databases/$(database)/documents/owners/$(request.auth.uid)) && ownerRecord().data.active != false; }
+    function managerRecord() { return get(/databases/$(database)/documents/managers/$(request.auth.uid)); }
+    function isManager() { return signedIn() && exists(/databases/$(database)/documents/managers/$(request.auth.uid)) && managerRecord().data.role == 'manager' && managerRecord().data.active != false && managerRecord().data.organizationId is string && managerRecord().data.organizationId.size() > 0; }
+    function managerOrg() { return isManager() ? managerRecord().data.organizationId : null; }
+    function userRecord() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function isOrgUser() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && userRecord().data.role in ['supervisor','inspector','contractor'] && userRecord().data.active != false && userRecord().data.organizationId is string && userRecord().data.organizationId.size() > 0; }
+    function userRole() { return isOrgUser() ? userRecord().data.role : null; }
+    function userOrg() { return isOrgUser() ? userRecord().data.organizationId : null; }
+    function sameOrg(org) { return org is string && org.size() > 0 && ((isManager() && managerOrg() == org) || (isOrgUser() && userOrg() == org)); }
+    function validStatus(s) { return s in ['PENDING','IN_PROGRESS','PENDING_REVIEW','COMPLETED']; }
+    function assignmentPath(id) { return /databases/$(database)/documents/assignments/$(id); }
+    function observationPath(id) { return /databases/$(database)/documents/observations/$(id); }
+
+    match /managers/{id} { allow read: if request.auth.uid == id; allow write: if false; }
+    match /owners/{id} { allow read: if request.auth.uid == id; allow write: if false; }
+    match /users/{id} { allow read: if request.auth.uid == id || (isManager() && resource.data.organizationId == managerOrg()) || (userRole() == 'supervisor' && resource.data.organizationId == userOrg()); allow write: if false; }
+
+    match /observations/{obsId} {
+      allow read: if sameOrg(resource.data.organizationId);
+      allow create: if userRole() == 'inspector' && request.resource.data.organizationId == userOrg() && request.resource.data.createdByUid == request.auth.uid && request.resource.data.status == 'PENDING';
+      allow update: if request.resource.data.organizationId == resource.data.organizationId && validStatus(request.resource.data.status)
+        && authorizedUpdate();
+      allow delete: if isManager() && resource.data.organizationId == managerOrg();
+
+      function authorizedUpdate() {
+        return isManager()
+          ? (resource.data.organizationId == managerOrg() && managerUpdate())
+          : (isOrgUser() && resource.data.organizationId == userOrg()
+            ? (userRole() == 'supervisor' ? supervisorUpdate()
+              : (userRole() == 'inspector' ? inspectorUpdate()
+                : (userRole() == 'contractor' ? contractorUpdate() : false)))
+            : false);
+      }
+
+      function managerUpdate() {
+        let keys = request.resource.data.diff(resource.data).affectedKeys();
+        return keys.hasOnly(['status','closedAt','updatedByUid','updatedAt','supervisorNote','currentAssignmentId','currentAssignmentVersion','assignedContractorUid','assignedByUid','assignedAt'])
+          && (!keys.hasAny(['updatedByUid']) || request.resource.data.updatedByUid == request.auth.uid)
+          && (!keys.hasAny(['status']) || (resource.data.status == 'PENDING_REVIEW' && request.resource.data.status in ['IN_PROGRESS','COMPLETED']) || (resource.data.status == 'PENDING' && request.resource.data.status == 'IN_PROGRESS'))
+          && resource.data.status != 'COMPLETED';
+      }
+      function supervisorUpdate() {
+        let keys = request.resource.data.diff(resource.data).affectedKeys();
+        return keys.hasOnly(['status','supervisorNote','updatedByUid','updatedAt','currentAssignmentId','currentAssignmentVersion','assignedContractorUid','assignedByUid','assignedAt'])
+          && request.resource.data.updatedByUid == request.auth.uid
+          && (!keys.hasAny(['status']) || (resource.data.status == 'PENDING_REVIEW' && request.resource.data.status == 'IN_PROGRESS') || (resource.data.status == 'PENDING' && request.resource.data.status == 'IN_PROGRESS'))
+          && resource.data.status != 'COMPLETED';
+      }
+      function inspectorUpdate() {
+        let keys = request.resource.data.diff(resource.data).affectedKeys();
+        return resource.data.createdByUid == request.auth.uid
+          && !('currentAssignmentId' in resource.data) && !('assignedContractorUid' in resource.data)
+          && keys.hasOnly(['isComparative','resolutionNote']) && request.resource.data.status == resource.data.status && resource.data.status == 'PENDING';
+      }
+      function contractorUpdate() {
+        let keys = request.resource.data.diff(resource.data).affectedKeys();
+        let aid = resource.data.currentAssignmentId;
+        let a = get(assignmentPath(aid)).data;
+        return aid is string && exists(assignmentPath(aid)) && a.assignmentId == aid && a.status == 'ACTIVE'
+          && a.organizationId == resource.data.organizationId && a.observationId == obsId && a.contractorId == request.auth.uid
+          && a.version == resource.data.currentAssignmentVersion
+          && keys.hasOnly(['status','resolutionNote','afterImagePath','updatedByUid','updatedAt']) && request.resource.data.updatedByUid == request.auth.uid
+          && ((resource.data.status == 'PENDING' && request.resource.data.status == 'IN_PROGRESS') || (resource.data.status == 'IN_PROGRESS' && request.resource.data.status == 'PENDING_REVIEW'));
+      }
+    }
+
+    match /assignments/{assignmentId} {
+      allow read: if sameOrg(resource.data.organizationId);
+      allow create: if managerialAssignmentWrite(request.resource.data.organizationId)
+        && request.resource.data.assignmentId == assignmentId && request.resource.data.status == 'ACTIVE'
+        && request.resource.data.version is int && request.resource.data.version > 0
+        && ((!('currentAssignmentVersion' in get(observationPath(request.resource.data.observationId)).data) && request.resource.data.version == 1)
+          || ('currentAssignmentVersion' in get(observationPath(request.resource.data.observationId)).data && request.resource.data.version == get(observationPath(request.resource.data.observationId)).data.currentAssignmentVersion + 1))
+        && getAfter(observationPath(request.resource.data.observationId)).data.currentAssignmentId == assignmentId
+        && getAfter(observationPath(request.resource.data.observationId)).data.currentAssignmentVersion == request.resource.data.version
+        && getAfter(observationPath(request.resource.data.observationId)).data.organizationId == request.resource.data.organizationId;
+      allow update: if managerialAssignmentWrite(resource.data.organizationId)
+        && request.resource.data.assignmentId == resource.data.assignmentId
+        && request.resource.data.organizationId == resource.data.organizationId
+        && request.resource.data.observationId == resource.data.observationId
+        && request.resource.data.contractorId == resource.data.contractorId
+        && request.resource.data.version == resource.data.version
+        && resource.data.status == 'ACTIVE' && request.resource.data.status in ['REPLACED','INACTIVE']
+        && request.resource.data.endedAt != null
+        && ((request.resource.data.status == 'REPLACED' && request.resource.data.replacedByAssignmentId == getAfter(observationPath(resource.data.observationId)).data.currentAssignmentId)
+          || (request.resource.data.status == 'INACTIVE' && !('currentAssignmentId' in getAfter(observationPath(resource.data.observationId)).data)));
+      allow delete: if false;
+      function managerialAssignmentWrite(org) { return (isManager() && managerOrg() == org) || (userRole() == 'supervisor' && userOrg() == org); }
+    }
+
+    match /presence/{id} { allow read: if isManager(); allow write: if isManager() && id == request.auth.token.email; }
+    match /organizations/{id} { allow read, write: if isOwner(); }
+    match /invoices/{id} { allow read, create: if isOwner(); allow update, delete: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

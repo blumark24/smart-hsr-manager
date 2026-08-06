@@ -635,6 +635,8 @@
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { LOCAL_DEMO_TYPE, isLocalDemoReference, isServerObjectKey, getConnectorConfiguration, resolveObservationImage, revokeAllObservationImageUrls } from './storage-adapter.js';
     import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
+    import { executeManagerAssignmentCallsite } from './platform/integration/manager-assignment-preview.mjs';
+    import { maybeLoadAssignmentV2PreviewBundle } from './platform/integration/preview-bundle-loader.mjs';
 
 // إعدادات Firebase الخاصة بك
 const firebaseConfig = {
@@ -655,6 +657,7 @@ const firebaseConfig = {
       db   = getFirestore(app);
       auth = getAuth(app);
       await setPersistence(auth, browserLocalPersistence);
+      await maybeLoadAssignmentV2PreviewBundle();
       FIREBASE_READY = !!db;
       console.log('✅ Firebase connected');
     }catch(e){
@@ -1143,7 +1146,28 @@ const firebaseConfig = {
         updatedAt: serverTimestamp()
       };
       try{
-        if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), payload);
+        const legacyWrite=async()=>{
+          if(FIREBASE_READY && o.docId) await updateDoc(doc(db,'observations',o.docId), payload);
+          return {allowed:true,code:'LEGACY_ASSIGNMENT_SAVED',reason:'Legacy assignment path completed.'};
+        };
+        const result=await executeManagerAssignmentCallsite({
+          override:window.__SMART_HSR_PREVIEW_ASSIGNMENT_V2__,
+          hostname:window.location.hostname,
+          previewBootstrap:window.__SMART_HSR_ASSIGNMENT_V2_PREVIEW__,
+          legacyWrite,
+          input:{
+            actor:{uid:auth.currentUser.uid,role:managerContext.role,organizationId:managerContext.organizationId},
+            observation:o,
+            contractorId:assignedContractorUid,
+            contractor,
+            supervisorNote
+          }
+        });
+        if(!result?.allowed){
+          console.warn('Preview assignment denied',result?.code);
+          alert(result?.reason||'تعذر حفظ الإسناد.');
+          return;
+        }
         closeModal('modalAssign');
         alert('تم إسناد المقاول بنجاح');
       }catch(err){ console.error(err); alert('تعذر حفظ الإسناد.'); }
@@ -1380,6 +1404,8 @@ const firebaseConfig = {
             assignedContractorUid: x.assignedContractorUid || null,
             assignedByUid: x.assignedByUid || null,
             assignedAt: x.assignedAt || null,
+            currentAssignmentId: x.currentAssignmentId || null,
+            currentAssignmentVersion: Number.isInteger(x.currentAssignmentVersion) ? x.currentAssignmentVersion : null,
             supervisorNote: x.supervisorNote || '',
             updatedByUid: x.updatedByUid || null,
             updatedAt: x.updatedAt || null,
