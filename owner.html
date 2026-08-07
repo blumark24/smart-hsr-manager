@@ -315,24 +315,13 @@
 
   <script type="module">
     // ✅ اتصال فعلي بـ Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
     import { LOCAL_DEMO_TYPE, getConnectorConfiguration, saveConnectorConfiguration, testStorageConnection, clearLocalDemoStorage } from './storage-adapter.js';
     import { fetchOrganizationMapContext } from './spatial-map.js';
+    import { auth, db } from './owner-firebase-client.js';
+    import { isAuthorizedOwner } from './owner-auth-guard.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-      authDomain: "smart-hsr-manager.firebaseapp.com",
-      projectId: "smart-hsr-manager",
-      storageBucket: "smart-hsr-manager.firebasestorage.app",
-      messagingSenderId: "38965508031",
-      appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-    };
-    const app = initializeApp(firebaseConfig, 'smart-hsr-owner-session');
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    await setPersistence(auth, browserLocalPersistence);
     const ownerContext = { uid:null, role:'owner' };
 
     // عناصر الواجهة
@@ -702,18 +691,12 @@
       window.location.replace('owner-login.html');
     }
 
-    // Owner authorization remains fail-closed and is scoped to this named Auth app.
-    async function isAuthorizedOwner(user){
-      const snap = await getDoc(doc(db, 'owners', user.uid));
-      return snap.exists() && snap.data()?.active !== false;
-    }
-
     // بدء التشغيل: يتطلب جلسة موثّقة + مستند owners/{uid} فعليًا قبل قراءة/كتابة المؤسسات والفواتير
     let ownerBooted = false;
     onAuthStateChanged(auth, async (user)=>{
       if(!user){ await denyOwnerAccess(); return; }
       let allowed = false;
-      try{ allowed = await isAuthorizedOwner(user); }
+      try{ allowed = await isAuthorizedOwner({ db, uid: user.uid }); }
       catch(err){ console.error('تعذر التحقق من صلاحية المالك', err); allowed = false; }
       if(!allowed){ await denyOwnerAccess(); return; }
       if(ownerBooted) return;
