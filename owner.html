@@ -423,7 +423,7 @@
 
   <script type="module">
     // ✅ اتصال فعلي بـ Firebase
-    import { collection, getDocs, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
     import { LOCAL_DEMO_TYPE, getConnectorConfiguration, saveConnectorConfiguration, testStorageConnection, clearLocalDemoStorage } from './storage-adapter.js';
     import { fetchOrganizationMapContext } from './spatial-map.js';
@@ -433,12 +433,11 @@
     import { createOwnerRouter } from './owner-router.js';
     import { initOrganizationsModule } from './owner-organizations.js';
     import { initUsersModule } from './owner-users.js';
+    import { initInvoicesModule } from './owner-invoices.js';
 
     const ownerContext = { uid:null, role:'owner' };
 
     // عناصر الواجهة
-    const invoicesBody = document.getElementById('invoicesBody');
-    const newInvoiceBtn = document.getElementById('newInvoiceBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const kpiRevenue = document.getElementById('kpiRevenue');
     const kpiRevenueNote = document.getElementById('kpiRevenueNote');
@@ -449,11 +448,6 @@
     const notif = document.getElementById('notifications');
     const notifText = document.getElementById('notifText');
     const hideNotif = document.getElementById('hideNotif');
-
-    // مودالات
-    const invoiceModal = document.getElementById('invoiceModal');
-    const invoiceForm = document.getElementById('invoiceForm');
-    const invoiceOrgSelect = document.getElementById('invoiceOrgId');
 
     // ثيم النهار/الليل (Shell) — الوظيفة منقولة إلى owner-shell.js
     const themeToggle = document.getElementById('themeToggle');
@@ -468,6 +462,16 @@
     let ORGS = [];
     let INVOICES = [];
 
+    // وحدة الفواتير والاشتراكات (Invoices) — منطق العرض والإنشاء منقول إلى owner-invoices.js.
+    // الحالة المشتركة (INVOICES) و fetchInvoices() تبقى هنا، وتُقرأ عبر الحقن (getInvoices).
+    const invoicesModule = initInvoicesModule({
+      db,
+      getOrgs: () => ORGS,
+      getInvoices: () => INVOICES,
+      showNotif: (text) => showNotif(text),
+      refreshAll: () => refreshAll(),
+    });
+
     // وحدة المؤسسات (Organizations) — منطق العرض والـCRUD منقول إلى owner-organizations.js.
     // الحالة المشتركة (ORGS) والدوال المشتركة بين الوحدات تبقى هنا وتُمرَّر عبر الحقن.
     const organizationsModule = initOrganizationsModule({
@@ -475,7 +479,7 @@
       getOrgs: () => ORGS,
       showNotif: (text) => showNotif(text),
       refreshAll: () => refreshAll(),
-      createInvoice: (args) => createInvoice(args),
+      createInvoice: (args) => invoicesModule.createInvoice(args),
     });
 
     // وحدة المستخدمون والصلاحيات (Users) — منطق العرض والـ Admin API منقول إلى owner-users.js.
@@ -493,14 +497,14 @@
       organizationsModule.renderOrgs();
       renderKPIs();
       renderCharts();
-      fillInvoiceOrgSelect();
+      invoicesModule.fillInvoiceOrgSelect();
     }
 
     async function fetchInvoices(){
       const q = query(collection(db, 'invoices'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       INVOICES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderInvoices();
+      invoicesModule.renderInvoices();
     }
 
     function renderKPIs(){
@@ -511,45 +515,6 @@
         .reduce((sum,i)=> sum + (i.total || 0), 0);
       kpiActive.textContent = active; kpiTrial.textContent = trial; kpiExpired.textContent = expired; kpiRevenue.textContent = formatSAR(revenue);
       kpiRevenueNote.textContent = revenue? 'إيراد مدفوع خلال الشهر الحالي (من الفواتير)': 'لا توجد فواتير مدفوعة حاليًا';
-    }
-
-    function fillInvoiceOrgSelect(){
-      invoiceOrgSelect.innerHTML = '';
-      ORGS.forEach(o=>{
-        invoiceOrgSelect.add(new Option(o.name||o.id, o.id));
-      });
-    }
-
-    function renderInvoices(){
-      invoicesBody.innerHTML = '';
-      INVOICES.forEach(inv=>{
-        const tr = document.createElement('tr');
-
-        const tdId = document.createElement('td'); tdId.textContent = inv.invoiceId||inv.id; tr.appendChild(tdId);
-        const tdOrg = document.createElement('td'); tdOrg.textContent = inv.organization_name||'-'; tr.appendChild(tdOrg);
-        const tdPlan = document.createElement('td'); tdPlan.textContent = inv.plan||'-'; tr.appendChild(tdPlan);
-        const tdCycle = document.createElement('td'); tdCycle.textContent = inv.billingCycle||'-'; tr.appendChild(tdCycle);
-        const tdAmount = document.createElement('td'); tdAmount.textContent = formatSAR(inv.total||0); tr.appendChild(tdAmount);
-
-        const tdStatus = document.createElement('td');
-        const badge = document.createElement('span'); badge.className = 'badge';
-        const isPaid = inv.status === 'paid';
-        badge.style.borderColor = isPaid? '#16a34a':'#f59e0b';
-        badge.style.color = isPaid? '#16a34a':'#f59e0b';
-        badge.textContent = inv.status||'-';
-        tdStatus.appendChild(badge); tr.appendChild(tdStatus);
-
-        const tdDate = document.createElement('td');
-        tdDate.textContent = inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'):'-';
-        tr.appendChild(tdDate);
-
-        const tdFile = document.createElement('td');
-        const btn = document.createElement('button'); btn.className = 'btn btn-outline'; btn.textContent = 'PDF';
-        btn.dataset.dl = inv.id;
-        tdFile.appendChild(btn); tr.appendChild(tdFile);
-
-        invoicesBody.appendChild(tr);
-      });
     }
 
     // رسوم بيانية
@@ -569,63 +534,6 @@
       const ctx2 = document.getElementById('plansChart'); pieChart && pieChart.destroy();
       pieChart = new Chart(ctx2, { type:'doughnut', data:{ labels:Object.keys(plans), datasets:[{ data:Object.values(plans) }] }, options:{ plugins:{ legend:{ labels:{ color:'var(--muted)'} } } } });
     }
-
-    // مودال فاتورة يدوية
-    newInvoiceBtn.addEventListener('click', ()=> { invoiceForm.reset(); fillInvoiceOrgSelect(); invoiceModal.showModal(); });
-    invoiceForm.addEventListener('submit', async (e)=>{
-      e.preventDefault(); const f = invoiceForm.elements;
-      const org = ORGS.find(o=>o.id===f.orgId.value); if(!org) return;
-      await createInvoice({ org, plan:f.plan.value, billingCycle:f.billingCycle.value, amount: Number(f.amount.value||0) });
-      invoiceModal.close(); showNotif('تم إصدار الفاتورة وإضافتها إلى السجل.'); await refreshAll();
-    });
-
-    // إنشاء فاتورة + حفظ PDF
-    async function createInvoice({ org, plan, billingCycle, amount }){
-      // تسعير افتراضي في حال لم يُرسل مبلغ يدوي
-      const base = amount || (plan==='Basic'?249: plan==='Pro'?499: 1499);
-      const vat = +(base * 0.15).toFixed(2);
-      const total = +(base + vat).toFixed(2);
-      const invoiceId = 'INV-' + Math.random().toString(36).slice(2,7).toUpperCase();
-      const payload = {
-        invoiceId,
-        organization_id: org.id,
-        organization_name: org.name,
-        plan, billingCycle,
-        amount: base, vat, total,
-        status: 'paid', // مبدئيًا مدفوعة – يمكن ربطها لاحقًا ببوابة الدفع
-        createdAt: new Date().toISOString()
-      };
-      await addDoc(collection(db,'invoices'), payload);
-      // توليد PDF بسيط
-      const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
-      docPdf.setFont('helvetica','bold'); docPdf.setFontSize(16);
-      docPdf.text(`فاتورة اشتراك – ${invoiceId}` , 40, 40);
-      docPdf.setFontSize(12); docPdf.setFont('helvetica','normal');
-      docPdf.text(`المؤسسة: ${org.name||'-'}`, 40, 70);
-      docPdf.text(`الخطة: ${plan} (${billingCycle})`, 40, 90);
-      docPdf.text(`المبلغ: ${base} SAR`, 40, 110);
-      docPdf.text(`الضريبة 15%: ${vat} SAR`, 40, 130);
-      docPdf.text(`الإجمالي: ${total} SAR`, 40, 150);
-      docPdf.text(`التاريخ: ${(new Date()).toLocaleDateString('ar-SA')}`, 40, 170);
-      docPdf.save(`${invoiceId}.pdf`);
-    }
-
-    // تنزيل PDF من الجدول (إعادة توليد سريع)
-    invoicesBody.addEventListener('click', async (e)=>{
-      const btn = e.target.closest('button'); if(!btn) return; const id = btn.dataset.dl; if(!id) return;
-      const inv = INVOICES.find(x=> x.id===id); if(!inv) return;
-      const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
-      docPdf.setFont('helvetica','bold'); docPdf.setFontSize(16);
-      docPdf.text(`فاتورة اشتراك – ${inv.invoiceId||id}` , 40, 40);
-      docPdf.setFontSize(12); docPdf.setFont('helvetica','normal');
-      docPdf.text(`المؤسسة: ${inv.organization_name||'-'}`, 40, 70);
-      docPdf.text(`الخطة: ${inv.plan||'-'} (${inv.billingCycle||'-'})`, 40, 90);
-      docPdf.text(`المبلغ: ${inv.amount||0} SAR`, 40, 110);
-      docPdf.text(`الضريبة 15%: ${inv.vat||0} SAR`, 40, 130);
-      docPdf.text(`الإجمالي: ${inv.total||0} SAR`, 40, 150);
-      docPdf.text(`التاريخ: ${inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'): ''}`, 40, 170);
-      docPdf.save(`${inv.invoiceId||id}.pdf`);
-    });
 
     // إشعارات
     function showNotif(text){ notif.classList.remove('hidden'); notifText.textContent = text; }
