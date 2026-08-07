@@ -41,9 +41,19 @@
     .btn-primary { background: linear-gradient(135deg, #059669, var(--emerald)); color:#fff; border:1px solid #059669; }
     .btn-warn { background: linear-gradient(135deg, #f97316, var(--amber)); color:#000; border:1px solid #f59e0b; }
     .btn-ghost { background: transparent; }
-    .sidebar-link { border-radius: 12px; padding:.65rem .8rem; display:flex; align-items:center; gap:.6rem; border:1px solid transparent; color: var(--text); }
+    .sidebar-link { border-radius: 12px; padding:.65rem .8rem; display:flex; align-items:center; gap:.6rem; border:1px solid transparent; border-inline-start:3px solid transparent; color: var(--text); }
     .sidebar-link:hover { background: var(--chip); border-color: var(--stroke); }
-    .sidebar-link-active { background: var(--chip); border-color: var(--stroke); color: var(--gold); font-weight:700; }
+    .sidebar-link-active { background: var(--chip); border-color: var(--stroke); border-inline-start-color: var(--gold); color: var(--gold); font-weight:700; }
+    .sidebar-group-label { padding:.9rem .8rem .3rem; font-size:11px; font-weight:800; letter-spacing:.4px; color: var(--muted); text-transform: uppercase; }
+    .sidebar-group-label:first-child { padding-top:.1rem; }
+    .status-strip { display:flex; flex-wrap:wrap; gap:.6rem; }
+    .status-chip { display:flex; align-items:center; gap:.5rem; padding:.55rem .9rem; border-radius:12px; border:1px solid var(--stroke); background:var(--chip); font-size:12px; font-weight:700; }
+    .status-dot { inline-size:8px; block-size:8px; border-radius:999px; flex:none; }
+    .status-dot.ok { background: var(--emerald); }
+    .status-dot.pending { background: var(--amber); }
+    .empty-state { text-align:center; padding:2.75rem 1.25rem; }
+    .empty-state-icon { font-size:2.25rem; margin-bottom:.75rem; opacity:.85; }
+    .empty-state-desc { font-size:.85rem; color:var(--muted); max-width:34rem; margin:.5rem auto 0; }
     .table { border-collapse: separate; border-spacing:0; width:100%; }
     .table th, .table td { border-bottom:1px solid var(--stroke); padding:.75rem .75rem; }
     .kpi { position:relative; overflow:hidden; }
@@ -70,14 +80,21 @@
         </div>
       </div>
       <nav class="space-y-1 text-sm">
+        <div class="sidebar-group-label">نظرة عامة</div>
         <a class="sidebar-link" data-route-link="/overview" href="#/overview">🏠 لوحة المؤشرات الرئيسية</a>
+
+        <div class="sidebar-group-label">الإدارة</div>
         <a class="sidebar-link" data-route-link="/organizations" href="#/organizations">🏢 المؤسسات</a>
         <a class="sidebar-link" data-route-link="/users" href="#/users">👥 المستخدمون والصلاحيات</a>
         <a class="sidebar-link" data-route-link="/subscriptions" href="#/subscriptions">💳 الاشتراكات</a>
+
+        <div class="sidebar-group-label">الذكاء والحوكمة</div>
         <a class="sidebar-link" data-route-link="/ai" href="#/ai">🤖 الذكاء الاصطناعي</a>
         <a class="sidebar-link" data-route-link="/audit" href="#/audit">🧾 سجلات التدقيق</a>
         <a class="sidebar-link" data-route-link="/security" href="#/security">🛡️ الأمان</a>
         <a class="sidebar-link" data-route-link="/reports" href="#/reports">📊 التقارير</a>
+
+        <div class="sidebar-group-label">النظام</div>
         <a class="sidebar-link" data-route-link="/integrations" href="#/integrations">🔌 التكاملات</a>
         <a class="sidebar-link" data-route-link="/health" href="#/health">💚 صحة النظام</a>
       </nav>
@@ -115,7 +132,22 @@
 
       <!-- Module: Overview -->
       <div class="module-view space-y-4" data-route="/overview">
-      <h2 class="text-xl font-extrabold title">لوحة المؤشرات الرئيسية</h2>
+      <div>
+        <h2 class="text-xl font-extrabold title">لوحة المؤشرات الرئيسية</h2>
+        <p class="muted text-xs mt-1">نظرة تنفيذية على أداء المنصة وحالة الأنظمة الفرعية.</p>
+      </div>
+
+      <!-- System status (static architecture summary, not a live health check) -->
+      <div class="card p-4">
+        <h3 class="text-sm font-bold muted mb-3">حالة الأنظمة</h3>
+        <div class="status-strip">
+          <span class="status-chip"><span class="status-dot ok"></span> قاعدة البيانات: Firestore مباشر</span>
+          <span class="status-chip"><span class="status-dot pending"></span> الذكاء الاصطناعي: غير مفعّل في اللوحة</span>
+          <span class="status-chip"><span class="status-dot pending"></span> سجل التدقيق: قيد الإعداد</span>
+          <span class="status-chip"><span class="status-dot ok"></span> التخزين: وضع تجريبي محلي افتراضيًا</span>
+        </div>
+      </div>
+
       <!-- KPI Cards -->
       <section id="dashboard" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="card p-4 kpi">
@@ -151,6 +183,7 @@
           <canvas id="plansChart" height="80"></canvas>
         </div>
       </section>
+      <p class="muted text-xs">ستُحدَّث الرسوم البيانية تلقائيًا فور تحميل بيانات المؤسسات.</p>
       </div>
 
       <!-- Module: Organizations -->
@@ -269,41 +302,51 @@
 
       <!-- Module: AI Control Center (placeholder) -->
       <div class="module-view hidden" data-route="/ai">
-        <section class="card p-6">
-          <h2 class="text-xl font-extrabold title mb-2">مركز التحكم بالذكاء الاصطناعي</h2>
-          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        <section class="card empty-state">
+          <div class="empty-state-icon">🤖</div>
+          <h2 class="text-xl font-extrabold title">مركز التحكم بالذكاء الاصطناعي</h2>
+          <p class="empty-state-desc">لا توجد بيانات بعد. سيعرض هذا القسم مستقبلاً حالة تفعيل الذكاء الاصطناعي واستخدامه عبر المؤسسات.</p>
+          <span class="pill mt-4 inline-block">قيد التطوير</span>
         </section>
       </div>
 
       <!-- Module: Audit Logs (placeholder) -->
       <div class="module-view hidden" data-route="/audit">
-        <section class="card p-6">
-          <h2 class="text-xl font-extrabold title mb-2">سجلات التدقيق</h2>
-          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        <section class="card empty-state">
+          <div class="empty-state-icon">🧾</div>
+          <h2 class="text-xl font-extrabold title">سجلات التدقيق</h2>
+          <p class="empty-state-desc">لا توجد بيانات بعد. سيعرض هذا القسم سجل إجراءات المالك والمديرين بمجرد تفعيل الكتابة إلى سجل التدقيق.</p>
+          <span class="pill mt-4 inline-block">قيد التطوير</span>
         </section>
       </div>
 
       <!-- Module: Security Center (placeholder) -->
       <div class="module-view hidden" data-route="/security">
-        <section class="card p-6">
-          <h2 class="text-xl font-extrabold title mb-2">مركز الأمان</h2>
-          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        <section class="card empty-state">
+          <div class="empty-state-icon">🛡️</div>
+          <h2 class="text-xl font-extrabold title">مركز الأمان</h2>
+          <p class="empty-state-desc">لا توجد بيانات بعد. سيعرض هذا القسم الجلسات النشطة ومحاولات الوصول المرفوضة.</p>
+          <span class="pill mt-4 inline-block">قيد التطوير</span>
         </section>
       </div>
 
       <!-- Module: Reports (placeholder) -->
       <div class="module-view hidden" data-route="/reports">
-        <section class="card p-6">
-          <h2 class="text-xl font-extrabold title mb-2">التقارير</h2>
-          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        <section class="card empty-state">
+          <div class="empty-state-icon">📊</div>
+          <h2 class="text-xl font-extrabold title">التقارير</h2>
+          <p class="empty-state-desc">لا توجد بيانات بعد. سيتيح هذا القسم تقارير تشغيلية وتحليلية عبر جميع المؤسسات.</p>
+          <span class="pill mt-4 inline-block">قيد التطوير</span>
         </section>
       </div>
 
       <!-- Module: System Health (placeholder) -->
       <div class="module-view hidden" data-route="/health">
-        <section class="card p-6">
-          <h2 class="text-xl font-extrabold title mb-2">صحة النظام</h2>
-          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        <section class="card empty-state">
+          <div class="empty-state-icon">💚</div>
+          <h2 class="text-xl font-extrabold title">صحة النظام</h2>
+          <p class="empty-state-desc">لا توجد بيانات بعد. سيعرض هذا القسم حالة البنية التحتية وحدود الاستخدام.</p>
+          <span class="pill mt-4 inline-block">قيد التطوير</span>
         </section>
       </div>
 
