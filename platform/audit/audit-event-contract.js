@@ -3,7 +3,7 @@
 const { ROLE_VALUES } = require('../contracts/role-contract');
 const { createDecision, deepFreeze } = require('../contracts/decision');
 
-const RESOURCE_TYPES = Object.freeze(['observation', 'assignment', 'organization']);
+const RESOURCE_TYPES = Object.freeze(['observation', 'assignment', 'organization', 'invoice', 'user']);
 const DECISION_VALUES = Object.freeze(['ALLOW', 'DENY']);
 
 function normalizeId(value) {
@@ -30,10 +30,13 @@ function validateAuditEvent(value) {
   return createDecision(true, 'AUDIT_EVENT_VALID', 'The audit event is valid.');
 }
 
-function createAuditEvent({ eventId, context, resourceType = 'observation', resourceId, action, decision, previousState, requestedState, assignmentId, timestamp, correlationId } = {}) {
+function createAuditEvent({ eventId, context, resourceType = 'observation', resourceId, action, decision, previousState, requestedState, assignmentId, timestamp, correlationId, organizationId } = {}) {
   const value = {
     eventId: normalizeId(eventId),
-    organizationId: normalizeId(context && context.actor && context.actor.organizationId),
+    // organizationId defaults to the actor's own org (assignment/observation events, where
+    // actor and resource share a tenant). Owner-initiated events act across tenants, so
+    // callers there pass the target resource's organizationId explicitly instead.
+    organizationId: normalizeId(organizationId) || normalizeId(context && context.actor && context.actor.organizationId),
     actorId: normalizeId(context && context.actor && context.actor.uid),
     actorRole: context && context.actor && context.actor.role,
     resourceType,
