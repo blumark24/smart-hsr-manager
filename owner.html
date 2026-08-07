@@ -43,6 +43,7 @@
     .btn-ghost { background: transparent; }
     .sidebar-link { border-radius: 12px; padding:.65rem .8rem; display:flex; align-items:center; gap:.6rem; border:1px solid transparent; color: var(--text); }
     .sidebar-link:hover { background: var(--chip); border-color: var(--stroke); }
+    .sidebar-link-active { background: var(--chip); border-color: var(--stroke); color: var(--gold); font-weight:700; }
     .table { border-collapse: separate; border-spacing:0; width:100%; }
     .table th, .table td { border-bottom:1px solid var(--stroke); padding:.75rem .75rem; }
     .kpi { position:relative; overflow:hidden; }
@@ -69,12 +70,16 @@
         </div>
       </div>
       <nav class="space-y-1 text-sm">
-        <a class="sidebar-link" href="#dashboard">🏠 لوحة التحكم</a>
-        <a class="sidebar-link" href="#orgs">🏢 المؤسسات</a>
-        <a class="sidebar-link" href="#users">👥 المستخدمون والصلاحيات</a>
-        <a class="sidebar-link" href="#invoices">💳 الفواتير</a>
-        <a class="sidebar-link" href="#analytics">📈 الإيرادات</a>
-        <a class="sidebar-link" href="#settings">⚙️ الإعدادات</a>
+        <a class="sidebar-link" data-route-link="/overview" href="#/overview">🏠 لوحة المؤشرات الرئيسية</a>
+        <a class="sidebar-link" data-route-link="/organizations" href="#/organizations">🏢 المؤسسات</a>
+        <a class="sidebar-link" data-route-link="/users" href="#/users">👥 المستخدمون والصلاحيات</a>
+        <a class="sidebar-link" data-route-link="/subscriptions" href="#/subscriptions">💳 الاشتراكات</a>
+        <a class="sidebar-link" data-route-link="/ai" href="#/ai">🤖 الذكاء الاصطناعي</a>
+        <a class="sidebar-link" data-route-link="/audit" href="#/audit">🧾 سجلات التدقيق</a>
+        <a class="sidebar-link" data-route-link="/security" href="#/security">🛡️ الأمان</a>
+        <a class="sidebar-link" data-route-link="/reports" href="#/reports">📊 التقارير</a>
+        <a class="sidebar-link" data-route-link="/integrations" href="#/integrations">🔌 التكاملات</a>
+        <a class="sidebar-link" data-route-link="/health" href="#/health">💚 صحة النظام</a>
       </nav>
     </aside>
 
@@ -108,6 +113,9 @@
         </div>
       </section>
 
+      <!-- Module: Overview -->
+      <div class="module-view space-y-4" data-route="/overview">
+      <h2 class="text-xl font-extrabold title">لوحة المؤشرات الرئيسية</h2>
       <!-- KPI Cards -->
       <section id="dashboard" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="card p-4 kpi">
@@ -143,7 +151,11 @@
           <canvas id="plansChart" height="80"></canvas>
         </div>
       </section>
+      </div>
 
+      <!-- Module: Organizations -->
+      <div class="module-view hidden space-y-4" data-route="/organizations">
+      <h2 class="text-xl font-extrabold title">إدارة المؤسسات</h2>
       <!-- Organizations Table -->
       <section id="orgs" class="card p-4">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -168,7 +180,11 @@
           </table>
         </div>
       </section>
+      </div>
 
+      <!-- Module: Users & RBAC -->
+      <div class="module-view hidden space-y-4" data-route="/users">
+      <h2 class="text-xl font-extrabold title">المستخدمون والصلاحيات</h2>
       <!-- Users & Permissions -->
       <section id="users" class="card p-4">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -194,7 +210,11 @@
           </table>
         </div>
       </section>
+      </div>
 
+      <!-- Module: Integrations -->
+      <div class="module-view hidden space-y-4" data-route="/integrations">
+      <h2 class="text-xl font-extrabold title">التكاملات</h2>
       <section id="storage-connectors" class="card p-4" aria-labelledby="storageConnectorTitle">
         <div class="flex items-start justify-between gap-3 flex-wrap mb-4">
           <div><p class="text-xs muted">إدارة المالك فقط</p><h2 id="storageConnectorTitle" class="text-xl font-bold title">مركز ربط البيانات</h2><p class="text-sm muted mt-1">تدعم المنصة ربط بيانات ومرفقات كل مؤسسة بخادمها الخاص. يعمل العرض الحالي في وضع تخزين محلي تجريبي، ويُفعّل الربط الفعلي بعد اعتماد مواصفات الخادم من تقنية معلومات المؤسسة.</p></div>
@@ -218,7 +238,11 @@
           <p id="connectorMessage" class="text-sm" role="status" aria-live="polite"></p>
         </form>
       </section>
+      </div>
 
+      <!-- Module: Subscriptions -->
+      <div class="module-view hidden space-y-4" data-route="/subscriptions">
+      <h2 class="text-xl font-extrabold title">الاشتراكات والفواتير</h2>
       <!-- Invoices -->
       <section id="invoices" class="card p-4">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -241,6 +265,47 @@
           </table>
         </div>
       </section>
+      </div>
+
+      <!-- Module: AI Control Center (placeholder) -->
+      <div class="module-view hidden" data-route="/ai">
+        <section class="card p-6">
+          <h2 class="text-xl font-extrabold title mb-2">مركز التحكم بالذكاء الاصطناعي</h2>
+          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        </section>
+      </div>
+
+      <!-- Module: Audit Logs (placeholder) -->
+      <div class="module-view hidden" data-route="/audit">
+        <section class="card p-6">
+          <h2 class="text-xl font-extrabold title mb-2">سجلات التدقيق</h2>
+          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        </section>
+      </div>
+
+      <!-- Module: Security Center (placeholder) -->
+      <div class="module-view hidden" data-route="/security">
+        <section class="card p-6">
+          <h2 class="text-xl font-extrabold title mb-2">مركز الأمان</h2>
+          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        </section>
+      </div>
+
+      <!-- Module: Reports (placeholder) -->
+      <div class="module-view hidden" data-route="/reports">
+        <section class="card p-6">
+          <h2 class="text-xl font-extrabold title mb-2">التقارير</h2>
+          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        </section>
+      </div>
+
+      <!-- Module: System Health (placeholder) -->
+      <div class="module-view hidden" data-route="/health">
+        <section class="card p-6">
+          <h2 class="text-xl font-extrabold title mb-2">صحة النظام</h2>
+          <p class="muted text-sm">لا توجد بيانات بعد.</p>
+        </section>
+      </div>
 
       <footer id="settings" class="text-xs muted py-4">
         <p>© SmartX Elite – لوحة مالك فاخرة بمستوى عالمي. الوضع <span id="modeText">نهاري</span>.</p>
@@ -321,6 +386,8 @@
     import { fetchOrganizationMapContext } from './spatial-map.js';
     import { auth, db } from './owner-firebase-client.js';
     import { isAuthorizedOwner } from './owner-auth-guard.js';
+    import { initThemeToggle } from './owner-shell.js';
+    import { createOwnerRouter } from './owner-router.js';
 
     const ownerContext = { uid:null, role:'owner' };
 
@@ -351,21 +418,14 @@
     const invoiceForm = document.getElementById('invoiceForm');
     const invoiceOrgSelect = document.getElementById('invoiceOrgId');
 
-    // ثيم النهار/الليل
+    // ثيم النهار/الليل (Shell) — الوظيفة منقولة إلى owner-shell.js
     const themeToggle = document.getElementById('themeToggle');
     const themeLabel = document.getElementById('themeLabel');
     const modeText = document.getElementById('modeText');
+    initThemeToggle({ toggleEl: themeToggle, labelEl: themeLabel, modeTextEl: modeText });
 
-    function applyTheme(mode){
-      document.documentElement.setAttribute('data-theme', mode);
-      const isDark = mode === 'dark';
-      themeLabel.textContent = isDark ? 'ليلي' : 'نهاري';
-      modeText.textContent = isDark ? 'ليلي' : 'نهاري';
-      localStorage.setItem('smartx_theme', mode);
-    }
-    const savedTheme = localStorage.getItem('smartx_theme') || 'dark';
-    applyTheme(savedTheme);
-    themeToggle.addEventListener('click', ()=> applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark'));
+    // التوجيه بين وحدات مركز التحكم (Router) — عرض/إخفاء فقط، لا يغيّر منطق البيانات
+    createOwnerRouter().start();
 
     // بيانات
     let ORGS = [];
