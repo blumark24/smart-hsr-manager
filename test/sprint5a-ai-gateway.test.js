@@ -15,9 +15,9 @@ const baseInput = (overrides = {}) => ({ organizationId: 'org-a', observationId:
 const auth = (overrides = {}) => ({ organizationId: 'org-a', actorId: 'inspector-a', ...overrides });
 const registration = (provider = createMockAIProvider(), capabilities = { vision: true }) => ({ mock: { kind: 'MOCK', enabled: true, capabilities, provider } });
 
-test('valid formal Arabic summary is accepted', () => assert.equal(validateShortSummaryAr('تم رصد حفرة أسفلتية تتطلب معالجة عاجلة لحماية مستخدمي الطريق.').allowed, true));
-test('summary with fewer than five words is denied', () => assert.equal(validateShortSummaryAr('حفرة تتطلب معالجة عاجلة').code, 'AI_SUMMARY_TOO_SHORT'));
-test('summary with more than fifteen words is denied', () => assert.equal(validateShortSummaryAr('تم رصد حفرة كبيرة في الطريق الرئيسي وتتطلب معالجة عاجلة وفورية لحماية جميع مستخدمي الطريق من المخاطر المحتملة').code, 'AI_SUMMARY_TOO_LONG'));
+test('valid formal Arabic summary is accepted', () => assert.equal(validateShortSummaryAr('تم رصد حفرة إسفلتية تتطلب معالجة عاجلة.').allowed, true));
+test('summary with fewer than five words is denied', () => assert.equal(validateShortSummaryAr('تم رصد حفرة خطرة').code, 'AI_SUMMARY_TOO_SHORT'));
+test('summary with more than fifteen words is denied', () => assert.equal(validateShortSummaryAr('تم رصد حفرة كبيرة في الطريق الرئيسي وتتطلب معالجة عاجلة وفورية لحماية جميع مستخدمي الطريق من المخاطر المحتملة والمتزايدة').code, 'AI_SUMMARY_TOO_LONG'));
 test('empty summary is denied', () => assert.equal(validateShortSummaryAr('').code, 'AI_SUMMARY_EMPTY'));
 test('English-only summary is denied', () => assert.equal(validateShortSummaryAr('Visible road damage requires immediate municipal repair action').code, 'AI_SUMMARY_ARABIC_REQUIRED'));
 test('Markdown is denied', () => assert.equal(validateShortSummaryAr('تم رصد **حفرة** تتطلب معالجة عاجلة لحماية الطريق.').code, 'AI_SUMMARY_MARKUP_DENIED'));

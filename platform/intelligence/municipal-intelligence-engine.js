@@ -14,7 +14,7 @@ function clean(value){return typeof value==='string'?value.trim():'';}
 
 function validateRawIssue(issue={}){
   if(!clean(issue.categoryCode)||!Number.isFinite(issue.confidence)||issue.confidence<0||issue.confidence>1||!Number.isFinite(issue.severityScore)||!Object.hasOwn(SEVERITY_RANK,issue.severity))return fail('MUNICIPAL_ANALYSIS_ISSUE_INVALID','Provider issue structure is invalid.');
-  const summary=validateShortSummaryAr(issue.shortSummaryAr);if(!summary.allowed)return fail('MUNICIPAL_ANALYSIS_SUMMARY_INVALID',summary.code);
+  const summary=validateShortSummaryAr(issue.shortSummaryAr,{confidence:issue.confidence});if(!summary.allowed)return fail('MUNICIPAL_ANALYSIS_SUMMARY_INVALID',summary.code);
   const serialized=JSON.stringify(issue).toUpperCase();
   if(FORBIDDEN_ACTIONS.some(command=>serialized.includes(command))||/(?:API[_-]?KEY|PRIVATE[_-]?KEY|BEARER\s|RAW[_-]?PROMPT)/i.test(serialized))return fail('MUNICIPAL_ANALYSIS_UNSAFE','Provider issue contains prohibited content.');
   return Object.freeze({ok:true});

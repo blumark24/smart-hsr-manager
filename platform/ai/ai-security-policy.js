@@ -37,7 +37,7 @@ function validateAIOutput(output = {}) {
   if (!Number.isFinite(output.severityScore) || output.severityScore < 0 || output.severityScore > 100) return decision(false, 'AI_SEVERITY_SCORE_INVALID', 'Severity score must be between 0 and 100.');
   if (!Number.isFinite(output.confidence) || output.confidence < 0 || output.confidence > 1) return decision(false, 'AI_CONFIDENCE_INVALID', 'Confidence must be between 0 and 1.');
   if (!Number.isFinite(output.processingTimeMs) || output.processingTimeMs < 0 || !Array.isArray(output.warnings) || typeof output.requiresHumanReview !== 'boolean') return decision(false, 'AI_OUTPUT_SHAPE_INVALID', 'Output timing, warnings, or review flag is invalid.');
-  const summary = validateShortSummaryAr(output.shortSummaryAr); if (!summary.allowed) return summary;
+  const summary = validateShortSummaryAr(output.shortSummaryAr, { confidence: output.confidence }); if (!summary.allowed) return summary;
   if (output.confidence < CONFIDENCE_THRESHOLD && (output.shortSummaryAr !== LOW_CONFIDENCE_FALLBACK_AR || output.requiresHumanReview !== true)) return decision(false, 'AI_LOW_CONFIDENCE_POLICY_VIOLATION', 'Low confidence must use the fallback and require human review.');
   const serialized = JSON.stringify(output);
   if (/(?:api[_-]?key|private[_-]?key|authorization|bearer\s|secret)/i.test(serialized)) return decision(false, 'AI_OUTPUT_SENSITIVE_DATA', 'Provider output contains sensitive material.');

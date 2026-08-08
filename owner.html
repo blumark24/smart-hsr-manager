@@ -132,45 +132,89 @@
 
       <!-- Module: Overview -->
       <div class="module-view space-y-4" data-route="/overview">
+      <!-- Executive Header -->
       <div>
-        <h2 class="text-xl font-extrabold title">لوحة المؤشرات الرئيسية</h2>
-        <p class="muted text-xs mt-1">نظرة تنفيذية على أداء المنصة وحالة الأنظمة الفرعية.</p>
-      </div>
-
-      <!-- System status (static architecture summary, not a live health check) -->
-      <div class="card p-4">
-        <h3 class="text-sm font-bold muted mb-3">حالة الأنظمة</h3>
-        <div class="status-strip">
-          <span class="status-chip"><span class="status-dot ok"></span> قاعدة البيانات: Firestore مباشر</span>
-          <span class="status-chip"><span class="status-dot pending"></span> الذكاء الاصطناعي: غير مفعّل في اللوحة</span>
-          <span class="status-chip"><span class="status-dot pending"></span> سجل التدقيق: قيد الإعداد</span>
-          <span class="status-chip"><span class="status-dot ok"></span> التخزين: وضع تجريبي محلي افتراضيًا</span>
+        <h2 class="text-xl font-extrabold title">Smart HSR — مركز القيادة التنفيذي</h2>
+        <p class="muted text-xs mt-1">مرحباً بك مالك النظام. نظرة تنفيذية على أداء المنصة وحالة الأنظمة الفرعية.</p>
+        <div class="flex items-center gap-3 mt-2 flex-wrap">
+          <span class="status-chip"><span class="status-dot ok"></span> جميع الأنظمة الأساسية تعمل</span>
+          <span class="muted text-xs" id="overviewLastUpdated">آخر تحديث: —</span>
         </div>
       </div>
 
-      <!-- KPI Cards -->
+      <!-- Platform Health Center (static architecture summary, not a live health check) -->
+      <div class="card p-4">
+        <h3 class="text-sm font-bold muted mb-3">حالة المنصة</h3>
+        <div class="status-strip">
+          <span class="status-chip"><span class="status-dot ok"></span> Firebase: متصلة</span>
+          <span class="status-chip"><span class="status-dot pending"></span> الذكاء الاصطناعي: جاهز وغير متصل</span>
+          <span class="status-chip"><span class="status-dot ok"></span> الأمان: نشط</span>
+          <span class="status-chip"><span class="status-dot pending"></span> سجل التدقيق: غير مفعّل</span>
+        </div>
+      </div>
+
+      <!-- Attention Center -->
+      <div class="card p-4">
+        <h3 class="text-sm font-bold muted mb-3">يحتاج انتباهك</h3>
+        <ul id="attentionList" class="space-y-2 text-sm"></ul>
+      </div>
+
+      <!-- Executive KPI Cards -->
       <section id="dashboard" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="card p-4 kpi">
-          <p class="text-xs muted">إجمالي الأرباح الشهرية</p>
+          <p class="text-xs muted">المؤسسات</p>
+          <h3 id="kpiOrgsTotal" class="text-3xl font-extrabold" style="color:var(--cyan)">--</h3>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="badge" id="kpiOrgsActiveBadge">نشطة: --</span>
+            <span class="badge" id="kpiOrgsGrowthBadge">--</span>
+          </div>
+        </div>
+        <div class="card p-4 kpi">
+          <p class="text-xs muted">الإيرادات المحصّلة</p>
           <h3 id="kpiRevenue" class="text-3xl font-extrabold" style="color:var(--emerald)">--</h3>
-          <small id="kpiRevenueNote" class="muted">—</small>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="badge" id="kpiRevenueCountBadge">-- فاتورة</span>
+            <span class="badge" id="kpiRevenueTrendBadge">--</span>
+          </div>
         </div>
         <div class="card p-4 kpi">
-          <p class="text-xs muted">عدد المؤسسات النشطة</p>
-          <h3 id="kpiActive" class="text-3xl font-extrabold" style="color:var(--cyan)">--</h3>
-          <small class="muted">خطة مدفوعة</small>
+          <p class="text-xs muted">المستخدمون</p>
+          <h3 class="text-xl font-extrabold muted">غير متاح حالياً</h3>
+          <small class="muted">بانتظار User Analytics API</small>
         </div>
         <div class="card p-4 kpi">
-          <p class="text-xs muted">التجارب المجانية</p>
-          <h3 id="kpiTrial" class="text-3xl font-extrabold" style="color:var(--amber)">--</h3>
-          <small class="muted">تنتهي قريبًا</small>
-        </div>
-        <div class="card p-4 kpi">
-          <p class="text-xs muted">اشتراكات منتهية</p>
-          <h3 id="kpiExpired" class="text-3xl font-extrabold" style="color:var(--rose)">--</h3>
-          <small class="muted">بحاجة متابعة</small>
+          <p class="text-xs muted">الاشتراكات</p>
+          <h3 id="kpiSubsActive" class="text-3xl font-extrabold" style="color:var(--amber)">--</h3>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="badge" id="kpiSubsExpiringBadge">تنتهي قريبًا: --</span>
+          </div>
         </div>
       </section>
+
+      <!-- Organization Intelligence -->
+      <div class="card p-4" id="orgIntelligencePanel"></div>
+
+      <!-- Revenue Intelligence -->
+      <div class="card p-4" id="revenueIntelligencePanel"></div>
+
+      <!-- Operational Readiness (no fake reports — honest empty state) -->
+      <div class="card empty-state">
+        <div class="empty-state-icon">🧠</div>
+        <h3 class="text-lg font-extrabold title">ذكاء العمليات</h3>
+        <p class="text-sm font-bold mt-2">بلاغات: <span class="muted font-normal">غير متاح حالياً</span></p>
+        <p class="empty-state-desc mt-2">سيظهر بعد تفعيل وحدة البلاغات.</p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card p-4">
+        <h3 class="text-sm font-bold muted mb-3">إجراءات سريعة</h3>
+        <div class="flex flex-wrap gap-2">
+          <button id="qaAddOrg" type="button" class="btn btn-primary">+ إضافة مؤسسة</button>
+          <button id="qaNewInvoice" type="button" class="btn btn-outline">+ إصدار فاتورة</button>
+          <button id="qaAddUser" type="button" class="btn btn-outline">+ إضافة مستخدم</button>
+          <button id="qaAiCenter" type="button" class="btn btn-ghost">🤖 مركز الذكاء الاصطناعي</button>
+        </div>
+      </div>
 
       <!-- Charts -->
       <section id="analytics" class="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -183,7 +227,20 @@
           <canvas id="plansChart" height="80"></canvas>
         </div>
       </section>
+      <section class="grid grid-cols-1 gap-4">
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-2"><h2 class="text-lg font-bold title">اتجاه الإيرادات (6 أشهر)</h2><span class="pill">تفاعلي</span></div>
+          <canvas id="revenueChart" height="80"></canvas>
+        </div>
+      </section>
       <p class="muted text-xs">ستُحدَّث الرسوم البيانية تلقائيًا فور تحميل بيانات المؤسسات.</p>
+
+      <!-- Recent Activity (Audit backend not active — empty state only, no fabricated events) -->
+      <div class="card empty-state">
+        <div class="empty-state-icon">🕓</div>
+        <h3 class="text-lg font-extrabold title">آخر العمليات</h3>
+        <p class="empty-state-desc">سيظهر سجل العمليات بعد تفعيل مركز التدقيق.</p>
+      </div>
       </div>
 
       <!-- Module: Organizations -->
@@ -300,14 +357,25 @@
       </section>
       </div>
 
-      <!-- Module: AI Control Center (placeholder) -->
-      <div class="module-view hidden" data-route="/ai">
-        <section class="card empty-state">
-          <div class="empty-state-icon">🤖</div>
-          <h2 class="text-xl font-extrabold title">مركز التحكم بالذكاء الاصطناعي</h2>
-          <p class="empty-state-desc">لا توجد بيانات بعد. سيعرض هذا القسم مستقبلاً حالة تفعيل الذكاء الاصطناعي واستخدامه عبر المؤسسات.</p>
-          <span class="pill mt-4 inline-block">قيد التطوير</span>
-        </section>
+      <!-- Module: AI Command Center -->
+      <div class="module-view hidden space-y-4" data-route="/ai">
+        <div>
+          <h2 class="text-xl font-extrabold title">Smart HSR — مركز قيادة الذكاء الاصطناعي</h2>
+          <p class="muted text-xs mt-1">حالة الأنظمة الذكية ومزوّدي الرؤية الاصطناعية داخل المنصة.</p>
+          <div class="flex items-center gap-3 mt-2 flex-wrap">
+            <span class="status-chip"><span class="status-dot pending"></span> غير متصل بمزود ذكاء اصطناعي حقيقي</span>
+            <span class="muted text-xs">آخر تقييم: لا تتوفر بيانات حية</span>
+          </div>
+        </div>
+
+        <!-- AI Capability Cards -->
+        <section id="aiCapabilityCards" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"></section>
+
+        <!-- Image Analysis Center -->
+        <div class="card p-4" id="aiImageAnalysisCenter"></div>
+
+        <!-- AI Governance -->
+        <div class="card p-4" id="aiGovernanceSection"></div>
       </div>
 
       <!-- Module: Audit Logs (placeholder) -->
@@ -434,16 +502,13 @@
     import { initOrganizationsModule } from './owner-organizations.js';
     import { initUsersModule } from './owner-users.js';
     import { initInvoicesModule } from './owner-invoices.js';
+    import { initOverviewModule } from './owner-overview.js';
+    import { initAIModule } from './owner-ai.js';
 
     const ownerContext = { uid:null, role:'owner' };
 
     // عناصر الواجهة
     const logoutBtn = document.getElementById('logoutBtn');
-    const kpiRevenue = document.getElementById('kpiRevenue');
-    const kpiRevenueNote = document.getElementById('kpiRevenueNote');
-    const kpiActive = document.getElementById('kpiActive');
-    const kpiTrial = document.getElementById('kpiTrial');
-    const kpiExpired = document.getElementById('kpiExpired');
 
     const notif = document.getElementById('notifications');
     const notifText = document.getElementById('notifText');
@@ -456,11 +521,27 @@
     initThemeToggle({ toggleEl: themeToggle, labelEl: themeLabel, modeTextEl: modeText });
 
     // التوجيه بين وحدات مركز التحكم (Router) — عرض/إخفاء فقط، لا يغيّر منطق البيانات
-    createOwnerRouter().start();
+    const router = createOwnerRouter();
+    router.start();
 
     // بيانات
     let ORGS = [];
     let INVOICES = [];
+
+    // وحدة النظرة العامة (Overview) — منطق المؤشرات والرسوم البيانية منقول إلى owner-overview.js.
+    // showNotif/navigate مُمرَّران لتوافق مستقبلي (مركز الانتباه/البطاقات القابلة للنقر)، وغير مستخدمين حاليًا.
+    const overviewModule = initOverviewModule({
+      getOrgs: () => ORGS,
+      getInvoices: () => INVOICES,
+      showNotif: (text) => showNotif(text),
+      navigate: (route) => router.navigate(route),
+    });
+
+    // وحدة مركز قيادة الذكاء الاصطناعي (AI) — محتوى ثابت وصادق، بلا اتصال حقيقي بأي مزود بعد.
+    const aiModule = initAIModule({
+      navigate: (route) => router.navigate(route),
+      showNotif: (text) => showNotif(text),
+    });
 
     // وحدة الفواتير والاشتراكات (Invoices) — منطق العرض والإنشاء منقول إلى owner-invoices.js.
     // الحالة المشتركة (INVOICES) و fetchInvoices() تبقى هنا، وتُقرأ عبر الحقن (getInvoices).
@@ -488,15 +569,13 @@
       getOrgs: () => ORGS,
     });
 
-    function formatSAR(n){ return new Intl.NumberFormat('ar-SA', {minimumFractionDigits:2, maximumFractionDigits:2}).format(n) + ' ر.س'; }
-
     async function fetchOrganizations(){
       const q = query(collection(db, 'organizations'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       ORGS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       organizationsModule.renderOrgs();
-      renderKPIs();
-      renderCharts();
+      overviewModule.renderKPIs();
+      overviewModule.renderCharts();
       invoicesModule.fillInvoiceOrgSelect();
     }
 
@@ -507,39 +586,11 @@
       invoicesModule.renderInvoices();
     }
 
-    function renderKPIs(){
-      const active = ORGS.filter(o => o.plan && o.plan !== 'Trial' && (o.status||'active') === 'active').length;
-      const trial = ORGS.filter(o => (o.plan === 'Trial' || (o.status||'') === 'trial')).length;
-      const expired = ORGS.filter(o => (o.status||'') === 'expired').length;
-      const revenue = INVOICES.filter(i=> (i.status||'')==='paid')
-        .reduce((sum,i)=> sum + (i.total || 0), 0);
-      kpiActive.textContent = active; kpiTrial.textContent = trial; kpiExpired.textContent = expired; kpiRevenue.textContent = formatSAR(revenue);
-      kpiRevenueNote.textContent = revenue? 'إيراد مدفوع خلال الشهر الحالي (من الفواتير)': 'لا توجد فواتير مدفوعة حاليًا';
-    }
-
-    // رسوم بيانية
-    let lineChart, pieChart;
-    function renderCharts(){
-      // خطي: نمو المؤسسات
-      const byMonth = Array.from({length:6}).map(()=>0);
-      const now = new Date();
-      ORGS.forEach(o=>{ const d = o.createdAt? new Date(o.createdAt): null; if(!d) return; const diff = (now.getMonth()-d.getMonth()+12)%12; if(diff<6) byMonth[5-diff]++;});
-      const labels = Array.from({length:6}).map((_,i)=> new Date(now.getFullYear(), now.getMonth()-(5-i)).toLocaleDateString('ar-SA',{month:'long'}));
-      const ctx1 = document.getElementById('orgsChart'); lineChart && lineChart.destroy();
-      lineChart = new Chart(ctx1,{ type:'line', data:{ labels, datasets:[{ label:'المؤسسات الجديدة', data:byMonth, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.2)', borderWidth:3, tension:.35, fill:true }]}, options:{ plugins:{ legend:{ labels:{ color:'var(--muted)'} } }, scales:{ x:{ ticks:{ color:'var(--muted)'} }, y:{ ticks:{ color:'var(--muted)'} } } }});
-
-      // دائري: توزيع الخطط
-      const plans = {Trial:0,Basic:0,Pro:0,Enterprise:0};
-      ORGS.forEach(o=>{ plans[o.plan||'Trial'] = (plans[o.plan||'Trial']||0)+1; });
-      const ctx2 = document.getElementById('plansChart'); pieChart && pieChart.destroy();
-      pieChart = new Chart(ctx2, { type:'doughnut', data:{ labels:Object.keys(plans), datasets:[{ data:Object.values(plans) }] }, options:{ plugins:{ legend:{ labels:{ color:'var(--muted)'} } } } });
-    }
-
     // إشعارات
     function showNotif(text){ notif.classList.remove('hidden'); notifText.textContent = text; }
     hideNotif.addEventListener('click', ()=> notif.classList.add('hidden'));
 
-    async function refreshAll(){ await Promise.all([fetchOrganizations(), fetchInvoices()]); renderKPIs(); }
+    async function refreshAll(){ await Promise.all([fetchOrganizations(), fetchInvoices()]); overviewModule.renderKPIs(); }
 
     // ===== Owner-only institutional storage connector center =====
     const connectorForm=document.getElementById('connectorForm');

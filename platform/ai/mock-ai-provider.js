@@ -1,6 +1,8 @@
 'use strict';
 
 const { LOW_CONFIDENCE_FALLBACK_AR } = require('./arabic-summary-policy');
+const { MUNICIPAL_SUMMARY_FIXTURES } = require('./municipal-summary-fixtures');
+const SUMMARY_BY_FIXTURE = new Map(MUNICIPAL_SUMMARY_FIXTURES.map(item => [item.fixtureId, item.shortSummaryAr]));
 
 const FIXTURES = Object.freeze({
   ASPHALT_POTHOLE: Object.freeze({ summary: 'تم رصد حفرة أسفلتية تتطلب معالجة عاجلة لحماية مستخدمي الطريق.', categoryCode: 'ROAD_DEFECT', categoryLabelAr: 'عيب في الطريق', severity: 'HIGH', score: 78, priority: 'URGENT', action: 'تأمين الموقع وإصلاح طبقات الأسفلت المتضررة.', confidence: 0.94, quality: 'GOOD', department: 'إدارة صيانة الطرق' }),
@@ -21,7 +23,7 @@ function createMockAIProvider({ fixture = 'ASPHALT_POTHOLE', mode = 'VALID' } = 
       if (fixture === 'UNSUPPORTED_IMAGE') throw Object.assign(new Error('unsupported fixture'), { code: 'AI_UNSUPPORTED_IMAGE' });
       const data = FIXTURES[fixture] || FIXTURES.UNCLEAR_IMAGE;
       return Object.freeze({
-        ok: true, analysisId: `mock-${String(fixture).toLowerCase()}`, shortSummaryAr: data.summary,
+        ok: true, analysisId: `mock-${String(fixture).toLowerCase()}`, shortSummaryAr: SUMMARY_BY_FIXTURE.get(fixture) || data.summary,
         categoryCode: data.categoryCode, categoryLabelAr: data.categoryLabelAr,
         severity: data.severity, severityScore: data.score, prioritySuggestion: data.priority,
         responsibleDepartmentSuggestion: data.department, recommendedActionAr: data.action,
