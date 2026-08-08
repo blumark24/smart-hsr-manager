@@ -1,0 +1,18 @@
+{
+  "fixturePath": "test/fixtures/vision/asphalt-pothole.jpg",
+  "model": "gemini-2.0-flash-001",
+  "apiCallCount": 1,
+  "httpStatus": 429,
+  "success": false,
+  "latencyMs": 1052,
+  "schemaValidation": false,
+  "arabicSummaryValidation": false,
+  "structuredResult": null,
+  "errorCode": "AI_PROVIDER_UNAVAILABLE",
+  "providerDiagnostics": {
+    "httpStatus": 429,
+    "providerErrorStatus": "RESOURCE_EXHAUSTED",
+    "providerErrorMessageSanitized": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.  * Quota exceeded for metric: generativelanguage.googleapis.",
+    "providerErrorCode": "429"
+  }
+}

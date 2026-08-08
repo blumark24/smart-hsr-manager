@@ -1,0 +1,28 @@
+{
+  "fixturePath": "test/fixtures/vision/asphalt-pothole.jpg",
+  "model": "gemini-3.6-flash",
+  "apiCallCount": 1,
+  "httpStatus": 200,
+  "success": true,
+  "latencyMs": 22961,
+  "schemaValidation": true,
+  "arabicSummaryValidation": true,
+  "structuredResult": {
+    "shortSummaryAr": "تم رصد هبوط وإنهيار جزئي في الطريق يتطلب الإصلاح الفوري.",
+    "categoryCode": "ROADS_MAINTENANCE",
+    "categoryLabelAr": "صيانة الطرق",
+    "subcategoryCode": "POTHOLE",
+    "subcategoryLabelAr": "حفر وهبوطات الأسفلت",
+    "severity": "HIGH",
+    "severityScore": 0.82,
+    "prioritySuggestion": "HIGH",
+    "responsibleDepartmentSuggestion": "إدارة صيانة الطرق والشبكات",
+    "recommendedActionAr": "إغلاق المنطقة المتضررة وإعادة ردم وسفلتة الموقع لتأمين حركة المرور.",
+    "confidence": 0.95,
+    "imageQuality": "GOOD",
+    "requiresHumanReview": true,
+    "warnings": []
+  },
+  "errorCode": null,
+  "providerDiagnostics": null
+}

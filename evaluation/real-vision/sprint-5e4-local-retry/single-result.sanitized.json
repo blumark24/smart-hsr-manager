@@ -1,0 +1,18 @@
+{
+  "fixturePath": "test/fixtures/vision/asphalt-pothole.jpg",
+  "model": "gemini-2.5-flash",
+  "apiCallCount": 1,
+  "httpStatus": 404,
+  "success": false,
+  "latencyMs": 1102,
+  "schemaValidation": false,
+  "arabicSummaryValidation": false,
+  "structuredResult": null,
+  "errorCode": "AI_PROVIDER_UNAVAILABLE",
+  "providerDiagnostics": {
+    "httpStatus": 404,
+    "providerErrorStatus": "NOT_FOUND",
+    "providerErrorMessageSanitized": "This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use a newer model for the latest features and improvements.",
+    "providerErrorCode": "404"
+  }
+}

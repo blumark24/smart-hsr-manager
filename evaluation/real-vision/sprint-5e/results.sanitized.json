@@ -1,0 +1,8 @@
+{
+  "runStatus": "BLOCKED",
+  "blockers": ["AI_REAL_API_KEY_REQUIRED", "AI_REAL_APPLICATION_ISOLATION_REQUIRED", "EVALUATION_FIXTURES_MISSING"],
+  "selectedProvider": "gemini",
+  "selectedModel": null,
+  "realApiCalls": 0,
+  "records": []
+}

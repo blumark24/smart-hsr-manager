@@ -1,0 +1,44 @@
+{
+  "runStatus": "FAILED",
+  "errorCode": "AI_PROVIDER_ERROR",
+  "rootCause": "CODEX_SANDBOX_NETWORK_EACCES",
+  "fixtureCase": "asphalt pothole",
+  "fixturePath": "test/fixtures/vision/asphalt-pothole.jpg",
+  "provenance": {
+    "status": "USER_AUTHORIZED_LOCAL_TEST_IMAGE",
+    "validJpeg": true,
+    "identifiableFacesVisible": false,
+    "readableVehiclePlatesVisible": false,
+    "personalDataVisible": false,
+    "operationalCoordinatesVisible": false
+  },
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "apiCallCount": 1,
+  "success": false,
+  "latencyMs": 111,
+  "httpStatus": null,
+  "transportDiagnostics": {
+    "endpointHost": "generativelanguage.googleapis.com",
+    "fetchExists": true,
+    "environmentLoadingSucceeded": true,
+    "requestBodyValidationPassed": true,
+    "errorClass": "TypeError",
+    "errorCode": "EACCES"
+  },
+  "schemaValidation": "NOT_RUN_NO_PROVIDER_OUTPUT",
+  "arabicSummaryValidation": "NOT_RUN_NO_PROVIDER_OUTPUT",
+  "hallucinationReview": "NOT_APPLICABLE_NO_PROVIDER_OUTPUT",
+  "structuredResult": null,
+  "security": {
+    "apiKeyStored": false,
+    "rawEnvironmentStored": false,
+    "rawPromptStored": false,
+    "rawProviderResponseStored": false,
+    "rawImageBytesStored": false,
+    "stackTraceStored": false,
+    "firebaseActivity": false,
+    "observationCreated": false
+  },
+  "recommendation": "NO_GO_MULTI_IMAGE_EVALUATION"
+}
