@@ -1,9 +1,12 @@
 'use strict';
 // ============================================================================
 // POST /api/ai/analyze — secure AI Vision Gateway integration
-// (Sprint 6.8: analysis + advisory response; Sprint 6.9: + persistence).
+// (Sprint 6.8: analysis + advisory response; Sprint 6.9: + persistence;
+// Sprint 6.11 Phase 2: + configuration-driven provider selection).
 //
-// Inspector Upload Image -> Secure AI Gateway -> Gemini Vision Provider ->
+// Inspector Upload Image -> Secure AI Gateway -> Configured Vision Provider
+// (Gemini or OpenAI, selected by SMART_HSR_AI_PROVIDER via
+// platform/ai/server/active-vision-provider-selector.js) ->
 // Issue Classification -> Priority Suggestion -> AI Analysis Persistence ->
 // Manager Dashboard Review -> Human Approval -> Existing Workflow Continues
 //
@@ -18,7 +21,8 @@
 //         other organization receives a clear, honest "not enabled" response
 //         — never a fabricated AI result. This is enforced twice: once here
 //         (fast path, before any storage/provider work) and once again inside
-//         the Gemini provider's own activation guard (defense in depth).
+//         the active provider's own activation guard (defense in depth) —
+//         see platform/ai/server/real-provider-activation-guard.js.
 //
 // Advisory-only: this endpoint never assigns a contractor, never changes an
 // observation's status, and never closes a report. Sprint 6.9 adds ONE
@@ -34,7 +38,7 @@ const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 const { b2Configuration, getS3Client, safeStorageFailure } = require('../_lib/b2Client');
 const { evaluateAIStorageInput } = require('../../platform/ai/ai-storage-boundary');
 const { createProviderRouter } = require('../../platform/ai/provider-router');
-const { createGeminiCompatibleVisionProvider } = require('../../platform/ai/server/gemini-compatible-vision-provider');
+const { createActiveVisionProviderRegistration } = require('../../platform/ai/server/active-vision-provider-selector');
 const { createMunicipalIntelligence } = require('../../platform/intelligence/municipal-intelligence-engine');
 
 // Same organization id used elsewhere for the Al-Qunfudhah pilot (see
@@ -216,16 +220,23 @@ async function handler(req, res) {
     return fail(res, 502, 'AI_STORAGE_READ_FAILED', 'Could not read the evidence image.');
   }
 
-  const provider = createGeminiCompatibleVisionProvider({
-    enabled: true,
+  // Sprint 6.11 Phase 2: which provider is active is decided in exactly one
+  // place (SMART_HSR_AI_PROVIDER, read by active-vision-provider-selector.js)
+  // -- never client input, never hardcoded here. Gemini remains the default
+  // when the variable is unset. An unsupported value fails closed with an
+  // honest denial, same as every other AI gateway error path in this file.
+  const providerSelection = createActiveVisionProviderRegistration({
     mode: 'application',
     applicationContext: { organizationAllowed, authenticatedRequest: true },
     timeoutMs: PROVIDER_TIMEOUT_MS,
   });
+  if (!providerSelection.allowed) {
+    return fail(res, 503, providerSelection.code, providerSelection.reason);
+  }
 
   const router = createProviderRouter({
-    selectedProvider: 'gemini',
-    providers: { gemini: { kind: 'GEMINI_COMPATIBLE', enabled: true, capabilities: { vision: true }, provider } },
+    selectedProvider: providerSelection.providerId,
+    providers: { [providerSelection.providerId]: providerSelection.providerRegistration },
     timeoutMs: PROVIDER_TIMEOUT_MS,
   });
 
