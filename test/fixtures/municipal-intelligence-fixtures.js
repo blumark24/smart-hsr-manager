@@ -1,0 +1,26 @@
+'use strict';
+
+const { LOW_CONFIDENCE_FALLBACK_AR } = require('../../platform/ai/arabic-summary-policy');
+const summaries=Object.freeze({ASPHALT_POTHOLE:'تم رصد حفرة أسفلتية تتطلب معالجة عاجلة لحماية مستخدمي الطريق.',ROAD_CRACKING:'تم رصد تشققات طريق تستوجب الصيانة لمنع توسع الضرر.',GROUND_SUBSIDENCE:'تم رصد هبوط أرضي يتطلب تأمين الموقع والمعالجة الهندسية.',LEANING_LIGHTING_POLE:'تم رصد عمود إنارة مائل يستوجب المعالجة حفاظاً على السلامة.',DAMAGED_LIGHTING_POLE:'تم رصد عمود إنارة متضرر يتطلب العزل والإصلاح الآمن.',FALLEN_PALM_TREE:'تم رصد نخلة ساقطة تعيق الحركة وتتطلب الإزالة الآمنة.',FALLEN_TREE:'تم رصد شجرة ساقطة تستوجب الإزالة وفتح المسار المتأثر.',CONSTRUCTION_WASTE:'تم رصد مخلفات بناء متراكمة تستوجب الإزالة والتنظيف الآمن.',OVERFLOWING_CONTAINER:'تم رصد حاوية نفايات ممتلئة تتطلب التفريغ وتنظيف محيطها.',WATER_LEAKAGE:'تم رصد تسرب مياه يتطلب إيقاف المصدر ومعالجة الأثر.',DAMAGED_SIGN:'تم رصد لوحة إرشادية متضررة تتطلب الإصلاح لضمان وضوح التوجيه.',VISUAL_POLLUTION:'تم رصد تشوه بصري يستوجب الإزالة وتحسين المشهد الحضري.',DAMAGED_SIDEWALK:'تم رصد رصيف متضرر يتطلب الإصلاح لضمان سلامة المشاة.',EXPOSED_ELECTRICAL_CABLE:'تم رصد كابل كهربائي مكشوف يستوجب العزل والمعالجة الفورية.',OPEN_MANHOLE:'تم رصد فتحة صرف مكشوفة تتطلب التأمين والإغلاق العاجل.',ABANDONED_VEHICLE:'تم رصد مركبة مهجورة تستوجب التحقق والإزالة وفق الإجراءات.',DAMAGED_BARRIER:'تم رصد حاجز مروري متضرر يتطلب الاستبدال لحماية الطريق.',ILLEGAL_EXCAVATION:'تم رصد حفر غير نظامي يستوجب التأمين والتحقق الميداني.',UNKNOWN:LOW_CONFIDENCE_FALLBACK_AR});
+const severity=Object.freeze({ASPHALT_POTHOLE:'HIGH',ROAD_CRACKING:'MEDIUM',GROUND_SUBSIDENCE:'HIGH',LEANING_LIGHTING_POLE:'CRITICAL',DAMAGED_LIGHTING_POLE:'HIGH',FALLEN_PALM_TREE:'HIGH',FALLEN_TREE:'HIGH',CONSTRUCTION_WASTE:'MEDIUM',OVERFLOWING_CONTAINER:'MEDIUM',WATER_LEAKAGE:'HIGH',DAMAGED_SIGN:'MEDIUM',VISUAL_POLLUTION:'LOW',DAMAGED_SIDEWALK:'MEDIUM',EXPOSED_ELECTRICAL_CABLE:'CRITICAL',OPEN_MANHOLE:'CRITICAL',ABANDONED_VEHICLE:'MEDIUM',DAMAGED_BARRIER:'HIGH',ILLEGAL_EXCAVATION:'HIGH',UNKNOWN:'UNKNOWN'});
+function issue(code,overrides={}){const sev=severity[code]||'MEDIUM';return {shortSummaryAr:summaries[code]||'تم رصد ملاحظة غير مصنفة تتطلب التحقق والمعالجة الميدانية.',categoryCode:code,categoryLabelAr:code,severity:sev,severityScore:sev==='CRITICAL'?92:sev==='HIGH'?75:sev==='MEDIUM'?50:sev==='LOW'?20:0,prioritySuggestion:'UNKNOWN',recommendedActionAr:'مراجعة الموقع واتخاذ المعالجة البلدية المناسبة.',confidence:code==='UNKNOWN'?0.3:0.9,imageQuality:code==='UNKNOWN'?'POOR':'GOOD',requiresHumanReview:true,warnings:[],...overrides};}
+function analysis(id,issues,overrides={}){const list=Array.isArray(issues)?issues:[issues];return {ok:true,analysisId:id,...list[0],detectedIssues:list,provider:'MOCK',model:'fixture',modelVersion:'1',processingTimeMs:1,...overrides};}
+const singleCodes=['ASPHALT_POTHOLE','ROAD_CRACKING','GROUND_SUBSIDENCE','LEANING_LIGHTING_POLE','DAMAGED_LIGHTING_POLE','FALLEN_PALM_TREE','FALLEN_TREE','CONSTRUCTION_WASTE','OVERFLOWING_CONTAINER','WATER_LEAKAGE','DAMAGED_SIGN','DAMAGED_SIDEWALK','EXPOSED_ELECTRICAL_CABLE','OPEN_MANHOLE','ABANDONED_VEHICLE','DAMAGED_BARRIER','ILLEGAL_EXCAVATION'];
+const fixtures=singleCodes.map((code,index)=>Object.freeze({fixtureId:`single-${index+1}`,kind:'SINGLE',analysis:analysis(`a-single-${index+1}`,issue(code))}));
+fixtures.push(
+  {fixtureId:'multi-pothole-pole',kind:'MULTI',analysis:analysis('a-m1',[issue('ASPHALT_POTHOLE'),issue('LEANING_LIGHTING_POLE')])},
+  {fixtureId:'multi-palm-sidewalk',kind:'MULTI',analysis:analysis('a-m2',[issue('FALLEN_PALM_TREE'),issue('DAMAGED_SIDEWALK')])},
+  {fixtureId:'multi-waste-water',kind:'MULTI',analysis:analysis('a-m3',[issue('CONSTRUCTION_WASTE'),issue('WATER_LEAKAGE')])},
+  {fixtureId:'multi-manhole-barrier',kind:'MULTI',analysis:analysis('a-m4',[issue('OPEN_MANHOLE'),issue('DAMAGED_BARRIER')])},
+  {fixtureId:'multi-crack-subsidence',kind:'MULTI',analysis:analysis('a-m5',[issue('ROAD_CRACKING'),issue('GROUND_SUBSIDENCE')])},
+  {fixtureId:'multi-sign-visual',kind:'MULTI',analysis:analysis('a-m6',[issue('DAMAGED_SIGN'),issue('VISUAL_POLLUTION')])},
+  {fixtureId:'edge-unclear',kind:'EDGE',analysis:analysis('a-e1',issue('UNKNOWN'))},
+  {fixtureId:'edge-non-municipal',kind:'EDGE',analysis:analysis('a-e2',issue('NON_MUNICIPAL_IMAGE',{confidence:0.3}))},
+  {fixtureId:'edge-duplicate',kind:'EDGE',analysis:analysis('a-e3',[issue('ASPHALT_POTHOLE',{confidence:0.8}),issue('ASPHALT_POTHOLE',{confidence:0.95})])},
+  {fixtureId:'edge-low-secondary',kind:'EDGE',analysis:analysis('a-e4',[issue('OPEN_MANHOLE'),issue('DAMAGED_SIGN',{confidence:0.4,shortSummaryAr:LOW_CONFIDENCE_FALLBACK_AR})])},
+  {fixtureId:'edge-conflicting-department',kind:'EDGE',analysis:analysis('a-e5',issue('ASPHALT_POTHOLE'),{responsibleDepartmentSuggestion:'LIGHTING'})},
+  {fixtureId:'edge-malformed',kind:'EDGE',analysis:{ok:true,analysisId:'a-e6',detectedIssues:[{categoryCode:'ASPHALT_POTHOLE'}]}},
+  {fixtureId:'edge-unsupported-category',kind:'EDGE',analysis:analysis('a-e7',issue('UNSUPPORTED_CATEGORY'))}
+);
+const MUNICIPAL_INTELLIGENCE_FIXTURES=Object.freeze(fixtures.map(value=>Object.freeze(value)));
+module.exports=Object.freeze({summaries,issue,analysis,MUNICIPAL_INTELLIGENCE_FIXTURES});

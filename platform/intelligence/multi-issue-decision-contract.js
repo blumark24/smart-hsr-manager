@@ -1,0 +1,18 @@
+'use strict';
+
+const { MULTI_ISSUE_OPTIONS } = require('./municipal-intelligence-contract');
+function freezeSession(value){return Object.freeze({...value,selectedIssueIds:Object.freeze([...(value.selectedIssueIds||[])]),ignoredIssueIds:Object.freeze([...(value.ignoredIssueIds||[])]),editedIssues:Object.freeze([...(value.editedIssues||[])]),persisted:false,executable:false,automaticObservationCreation:false});}
+function fail(code,reason,session=null){return Object.freeze({allowed:false,code,reason,session});}
+function ids(intelligence){return new Set((intelligence?.detectedIssues||[]).map(issue=>issue.issueId));}
+
+function createMultiIssueDecisionSession({sessionId,intelligence}={}){
+  if(!sessionId||!intelligence?.intelligenceId||!intelligence?.primaryIssue?.issueId)return fail('MULTI_ISSUE_SESSION_INVALID','Session and intelligence are required.');
+  const primary=intelligence.primaryIssue;const selectable=primary.confidence>=0.55&&primary.issueCode!=='UNKNOWN'?[primary.issueId]:[];
+  return Object.freeze({allowed:true,code:'MULTI_ISSUE_SESSION_CREATED',session:freezeSession({sessionId,intelligenceId:intelligence.intelligenceId,analysisId:intelligence.analysisId,selectedIssueIds:selectable,ignoredIssueIds:[],editedIssues:[],finalManualDecision:null,provenance:{source:'MUNICIPAL_INTELLIGENCE',analysisId:intelligence.analysisId,intelligenceId:intelligence.intelligenceId,inspectorDecisionRequired:true}})});
+}
+function selectIssues(session,intelligence,issueIds=[]){const valid=ids(intelligence);const unique=[...new Set(issueIds)];if(unique.some(id=>!valid.has(id)))return fail('MULTI_ISSUE_SELECTION_INVALID','Selected issue is not in the intelligence result.',session);const below=(intelligence.detectedIssues||[]).filter(issue=>unique.includes(issue.issueId)&&(issue.confidence<0.55||issue.issueCode==='UNKNOWN'));if(below.length)return fail('MULTI_ISSUE_LOW_CONFIDENCE_SELECTION_DENIED','Low-confidence issues require manual review before selection.',session);return Object.freeze({allowed:true,code:'MULTI_ISSUE_SELECTION_UPDATED',session:freezeSession({...session,selectedIssueIds:unique,ignoredIssueIds:session.ignoredIssueIds.filter(id=>!unique.includes(id))})});}
+function ignoreIssues(session,intelligence,issueIds=[]){const valid=ids(intelligence);const unique=[...new Set(issueIds)];if(unique.some(id=>!valid.has(id)))return fail('MULTI_ISSUE_IGNORE_INVALID','Ignored issue is not in the intelligence result.',session);return Object.freeze({allowed:true,code:'MULTI_ISSUE_IGNORED',session:freezeSession({...session,ignoredIssueIds:unique,selectedIssueIds:session.selectedIssueIds.filter(id=>!unique.includes(id))})});}
+function editIssue(session,intelligence,issueId,editedSummaryAr){if(!ids(intelligence).has(issueId)||typeof editedSummaryAr!=='string'||!editedSummaryAr.trim())return fail('MULTI_ISSUE_EDIT_INVALID','Issue and edited summary are required.',session);const edits=session.editedIssues.filter(edit=>edit.issueId!==issueId);edits.push(Object.freeze({issueId,editedSummaryAr:editedSummaryAr.trim()}));return Object.freeze({allowed:true,code:'MULTI_ISSUE_EDITED',session:freezeSession({...session,editedIssues:edits})});}
+function setFinalManualDecision(session,decision){if(!MULTI_ISSUE_OPTIONS.includes(decision))return fail('MULTI_ISSUE_DECISION_INVALID','Final manual decision is unsupported.',session);return Object.freeze({allowed:true,code:'MULTI_ISSUE_DECISION_RECORDED',session:freezeSession({...session,finalManualDecision:decision})});}
+
+module.exports=Object.freeze({createMultiIssueDecisionSession,selectIssues,ignoreIssues,editIssue,setFinalManualDecision});

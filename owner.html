@@ -41,8 +41,19 @@
     .btn-primary { background: linear-gradient(135deg, #059669, var(--emerald)); color:#fff; border:1px solid #059669; }
     .btn-warn { background: linear-gradient(135deg, #f97316, var(--amber)); color:#000; border:1px solid #f59e0b; }
     .btn-ghost { background: transparent; }
-    .sidebar-link { border-radius: 12px; padding:.65rem .8rem; display:flex; align-items:center; gap:.6rem; border:1px solid transparent; color: var(--text); }
+    .sidebar-link { border-radius: 12px; padding:.65rem .8rem; display:flex; align-items:center; gap:.6rem; border:1px solid transparent; border-inline-start:3px solid transparent; color: var(--text); }
     .sidebar-link:hover { background: var(--chip); border-color: var(--stroke); }
+    .sidebar-link-active { background: var(--chip); border-color: var(--stroke); border-inline-start-color: var(--gold); color: var(--gold); font-weight:700; }
+    .sidebar-group-label { padding:.9rem .8rem .3rem; font-size:11px; font-weight:800; letter-spacing:.4px; color: var(--muted); text-transform: uppercase; }
+    .sidebar-group-label:first-child { padding-top:.1rem; }
+    .status-strip { display:flex; flex-wrap:wrap; gap:.6rem; }
+    .status-chip { display:flex; align-items:center; gap:.5rem; padding:.55rem .9rem; border-radius:12px; border:1px solid var(--stroke); background:var(--chip); font-size:12px; font-weight:700; }
+    .status-dot { inline-size:8px; block-size:8px; border-radius:999px; flex:none; }
+    .status-dot.ok { background: var(--emerald); }
+    .status-dot.pending { background: var(--amber); }
+    .empty-state { text-align:center; padding:2.75rem 1.25rem; }
+    .empty-state-icon { font-size:2.25rem; margin-bottom:.75rem; opacity:.85; }
+    .empty-state-desc { font-size:.85rem; color:var(--muted); max-width:34rem; margin:.5rem auto 0; }
     .table { border-collapse: separate; border-spacing:0; width:100%; }
     .table th, .table td { border-bottom:1px solid var(--stroke); padding:.75rem .75rem; }
     .kpi { position:relative; overflow:hidden; }
@@ -69,12 +80,23 @@
         </div>
       </div>
       <nav class="space-y-1 text-sm">
-        <a class="sidebar-link" href="#dashboard">🏠 لوحة التحكم</a>
-        <a class="sidebar-link" href="#orgs">🏢 المؤسسات</a>
-        <a class="sidebar-link" href="#users">👥 المستخدمون والصلاحيات</a>
-        <a class="sidebar-link" href="#invoices">💳 الفواتير</a>
-        <a class="sidebar-link" href="#analytics">📈 الإيرادات</a>
-        <a class="sidebar-link" href="#settings">⚙️ الإعدادات</a>
+        <div class="sidebar-group-label">نظرة عامة</div>
+        <a class="sidebar-link" data-route-link="/overview" href="#/overview">🏠 لوحة المؤشرات الرئيسية</a>
+
+        <div class="sidebar-group-label">الإدارة</div>
+        <a class="sidebar-link" data-route-link="/organizations" href="#/organizations">🏢 المؤسسات</a>
+        <a class="sidebar-link" data-route-link="/users" href="#/users">👥 المستخدمون والصلاحيات</a>
+        <a class="sidebar-link" data-route-link="/subscriptions" href="#/subscriptions">💳 الاشتراكات</a>
+
+        <div class="sidebar-group-label">الذكاء والحوكمة</div>
+        <a class="sidebar-link" data-route-link="/ai" href="#/ai">🤖 الذكاء الاصطناعي</a>
+        <a class="sidebar-link" data-route-link="/audit" href="#/audit">🧾 سجلات التدقيق</a>
+        <a class="sidebar-link" data-route-link="/security" href="#/security">🛡️ الأمان</a>
+        <a class="sidebar-link" data-route-link="/reports" href="#/reports">📊 التقارير</a>
+
+        <div class="sidebar-group-label">النظام</div>
+        <a class="sidebar-link" data-route-link="/integrations" href="#/integrations">🔌 التكاملات</a>
+        <a class="sidebar-link" data-route-link="/health" href="#/health">💚 صحة النظام</a>
       </nav>
     </aside>
 
@@ -108,29 +130,91 @@
         </div>
       </section>
 
-      <!-- KPI Cards -->
+      <!-- Module: Overview -->
+      <div class="module-view space-y-4" data-route="/overview">
+      <!-- Executive Header -->
+      <div>
+        <h2 class="text-xl font-extrabold title">Smart HSR — مركز القيادة التنفيذي</h2>
+        <p class="muted text-xs mt-1">مرحباً بك مالك النظام. نظرة تنفيذية على أداء المنصة وحالة الأنظمة الفرعية.</p>
+        <div class="flex items-center gap-3 mt-2 flex-wrap">
+          <span class="status-chip"><span class="status-dot ok"></span> جميع الأنظمة الأساسية تعمل</span>
+          <span class="muted text-xs" id="overviewLastUpdated">آخر تحديث: —</span>
+        </div>
+      </div>
+
+      <!-- Platform Health Center (static architecture summary, not a live health check) -->
+      <div class="card p-4">
+        <h3 class="text-sm font-bold muted mb-3">حالة المنصة</h3>
+        <div class="status-strip">
+          <span class="status-chip"><span class="status-dot ok"></span> Firebase: متصلة</span>
+          <span class="status-chip"><span class="status-dot pending"></span> الذكاء الاصطناعي: جاهز وغير متصل</span>
+          <span class="status-chip"><span class="status-dot ok"></span> الأمان: نشط</span>
+          <span class="status-chip"><span class="status-dot pending"></span> سجل التدقيق: غير مفعّل</span>
+        </div>
+      </div>
+
+      <!-- Attention Center -->
+      <div class="card p-4">
+        <h3 class="text-sm font-bold muted mb-3">يحتاج انتباهك</h3>
+        <ul id="attentionList" class="space-y-2 text-sm"></ul>
+      </div>
+
+      <!-- Executive KPI Cards -->
       <section id="dashboard" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="card p-4 kpi">
-          <p class="text-xs muted">إجمالي الأرباح الشهرية</p>
+          <p class="text-xs muted">المؤسسات</p>
+          <h3 id="kpiOrgsTotal" class="text-3xl font-extrabold" style="color:var(--cyan)">--</h3>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="badge" id="kpiOrgsActiveBadge">نشطة: --</span>
+            <span class="badge" id="kpiOrgsGrowthBadge">--</span>
+          </div>
+        </div>
+        <div class="card p-4 kpi">
+          <p class="text-xs muted">الإيرادات المحصّلة</p>
           <h3 id="kpiRevenue" class="text-3xl font-extrabold" style="color:var(--emerald)">--</h3>
-          <small id="kpiRevenueNote" class="muted">—</small>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="badge" id="kpiRevenueCountBadge">-- فاتورة</span>
+            <span class="badge" id="kpiRevenueTrendBadge">--</span>
+          </div>
         </div>
         <div class="card p-4 kpi">
-          <p class="text-xs muted">عدد المؤسسات النشطة</p>
-          <h3 id="kpiActive" class="text-3xl font-extrabold" style="color:var(--cyan)">--</h3>
-          <small class="muted">خطة مدفوعة</small>
+          <p class="text-xs muted">المستخدمون</p>
+          <h3 class="text-xl font-extrabold muted">غير متاح حالياً</h3>
+          <small class="muted">بانتظار User Analytics API</small>
         </div>
         <div class="card p-4 kpi">
-          <p class="text-xs muted">التجارب المجانية</p>
-          <h3 id="kpiTrial" class="text-3xl font-extrabold" style="color:var(--amber)">--</h3>
-          <small class="muted">تنتهي قريبًا</small>
-        </div>
-        <div class="card p-4 kpi">
-          <p class="text-xs muted">اشتراكات منتهية</p>
-          <h3 id="kpiExpired" class="text-3xl font-extrabold" style="color:var(--rose)">--</h3>
-          <small class="muted">بحاجة متابعة</small>
+          <p class="text-xs muted">الاشتراكات</p>
+          <h3 id="kpiSubsActive" class="text-3xl font-extrabold" style="color:var(--amber)">--</h3>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="badge" id="kpiSubsExpiringBadge">تنتهي قريبًا: --</span>
+          </div>
         </div>
       </section>
+
+      <!-- Organization Intelligence -->
+      <div class="card p-4" id="orgIntelligencePanel"></div>
+
+      <!-- Revenue Intelligence -->
+      <div class="card p-4" id="revenueIntelligencePanel"></div>
+
+      <!-- Operational Readiness (no fake reports — honest empty state) -->
+      <div class="card empty-state">
+        <div class="empty-state-icon">🧠</div>
+        <h3 class="text-lg font-extrabold title">ذكاء العمليات</h3>
+        <p class="text-sm font-bold mt-2">بلاغات: <span class="muted font-normal">غير متاح حالياً</span></p>
+        <p class="empty-state-desc mt-2">سيظهر بعد تفعيل وحدة البلاغات.</p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card p-4">
+        <h3 class="text-sm font-bold muted mb-3">إجراءات سريعة</h3>
+        <div class="flex flex-wrap gap-2">
+          <button id="qaAddOrg" type="button" class="btn btn-primary">+ إضافة مؤسسة</button>
+          <button id="qaNewInvoice" type="button" class="btn btn-outline">+ إصدار فاتورة</button>
+          <button id="qaAddUser" type="button" class="btn btn-outline">+ إضافة مستخدم</button>
+          <button id="qaAiCenter" type="button" class="btn btn-ghost">🤖 مركز الذكاء الاصطناعي</button>
+        </div>
+      </div>
 
       <!-- Charts -->
       <section id="analytics" class="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -143,7 +227,25 @@
           <canvas id="plansChart" height="80"></canvas>
         </div>
       </section>
+      <section class="grid grid-cols-1 gap-4">
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-2"><h2 class="text-lg font-bold title">اتجاه الإيرادات (6 أشهر)</h2><span class="pill">تفاعلي</span></div>
+          <canvas id="revenueChart" height="80"></canvas>
+        </div>
+      </section>
+      <p class="muted text-xs">ستُحدَّث الرسوم البيانية تلقائيًا فور تحميل بيانات المؤسسات.</p>
 
+      <!-- Recent Activity (Audit backend not active — empty state only, no fabricated events) -->
+      <div class="card empty-state">
+        <div class="empty-state-icon">🕓</div>
+        <h3 class="text-lg font-extrabold title">آخر العمليات</h3>
+        <p class="empty-state-desc">سيظهر سجل العمليات بعد تفعيل مركز التدقيق.</p>
+      </div>
+      </div>
+
+      <!-- Module: Organizations -->
+      <div class="module-view hidden space-y-4" data-route="/organizations">
+      <h2 class="text-xl font-extrabold title">إدارة المؤسسات</h2>
       <!-- Organizations Table -->
       <section id="orgs" class="card p-4">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -168,7 +270,11 @@
           </table>
         </div>
       </section>
+      </div>
 
+      <!-- Module: Users & RBAC -->
+      <div class="module-view hidden space-y-4" data-route="/users">
+      <h2 class="text-xl font-extrabold title">المستخدمون والصلاحيات</h2>
       <!-- Users & Permissions -->
       <section id="users" class="card p-4">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -194,7 +300,11 @@
           </table>
         </div>
       </section>
+      </div>
 
+      <!-- Module: Integrations -->
+      <div class="module-view hidden space-y-4" data-route="/integrations">
+      <h2 class="text-xl font-extrabold title">التكاملات</h2>
       <section id="storage-connectors" class="card p-4" aria-labelledby="storageConnectorTitle">
         <div class="flex items-start justify-between gap-3 flex-wrap mb-4">
           <div><p class="text-xs muted">إدارة المالك فقط</p><h2 id="storageConnectorTitle" class="text-xl font-bold title">مركز ربط البيانات</h2><p class="text-sm muted mt-1">تدعم المنصة ربط بيانات ومرفقات كل مؤسسة بخادمها الخاص. يعمل العرض الحالي في وضع تخزين محلي تجريبي، ويُفعّل الربط الفعلي بعد اعتماد مواصفات الخادم من تقنية معلومات المؤسسة.</p></div>
@@ -218,7 +328,11 @@
           <p id="connectorMessage" class="text-sm" role="status" aria-live="polite"></p>
         </form>
       </section>
+      </div>
 
+      <!-- Module: Subscriptions -->
+      <div class="module-view hidden space-y-4" data-route="/subscriptions">
+      <h2 class="text-xl font-extrabold title">الاشتراكات والفواتير</h2>
       <!-- Invoices -->
       <section id="invoices" class="card p-4">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -241,6 +355,68 @@
           </table>
         </div>
       </section>
+      </div>
+
+      <!-- Module: AI Command Center -->
+      <div class="module-view hidden space-y-4" data-route="/ai">
+        <div>
+          <h2 class="text-xl font-extrabold title">Smart HSR — مركز قيادة الذكاء الاصطناعي</h2>
+          <p class="muted text-xs mt-1">حالة الأنظمة الذكية ومزوّدي الرؤية الاصطناعية داخل المنصة.</p>
+          <div class="flex items-center gap-3 mt-2 flex-wrap">
+            <span class="status-chip"><span class="status-dot pending"></span> غير متصل بمزود ذكاء اصطناعي حقيقي</span>
+            <span class="muted text-xs">آخر تقييم: لا تتوفر بيانات حية</span>
+          </div>
+        </div>
+
+        <!-- AI Capability Cards -->
+        <section id="aiCapabilityCards" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"></section>
+
+        <!-- Image Analysis Center -->
+        <div class="card p-4" id="aiImageAnalysisCenter"></div>
+
+        <!-- AI Governance -->
+        <div class="card p-4" id="aiGovernanceSection"></div>
+      </div>
+
+      <!-- Module: Audit Logs (placeholder) -->
+      <div class="module-view hidden" data-route="/audit">
+        <section class="card empty-state">
+          <div class="empty-state-icon">🧾</div>
+          <h2 class="text-xl font-extrabold title">سجلات التدقيق</h2>
+          <p class="empty-state-desc">لا توجد بيانات بعد. سيعرض هذا القسم سجل إجراءات المالك والمديرين بمجرد تفعيل الكتابة إلى سجل التدقيق.</p>
+          <span class="pill mt-4 inline-block">قيد التطوير</span>
+        </section>
+      </div>
+
+      <!-- Module: Security Center (placeholder) -->
+      <div class="module-view hidden" data-route="/security">
+        <section class="card empty-state">
+          <div class="empty-state-icon">🛡️</div>
+          <h2 class="text-xl font-extrabold title">مركز الأمان</h2>
+          <p class="empty-state-desc">لا توجد بيانات بعد. سيعرض هذا القسم الجلسات النشطة ومحاولات الوصول المرفوضة.</p>
+          <span class="pill mt-4 inline-block">قيد التطوير</span>
+        </section>
+      </div>
+
+      <!-- Module: Reports (placeholder) -->
+      <div class="module-view hidden" data-route="/reports">
+        <section class="card empty-state">
+          <div class="empty-state-icon">📊</div>
+          <h2 class="text-xl font-extrabold title">التقارير</h2>
+          <p class="empty-state-desc">لا توجد بيانات بعد. سيتيح هذا القسم تقارير تشغيلية وتحليلية عبر جميع المؤسسات.</p>
+          <span class="pill mt-4 inline-block">قيد التطوير</span>
+        </section>
+      </div>
+
+      <!-- Module: System Health (placeholder) -->
+      <div class="module-view hidden" data-route="/health">
+        <section class="card empty-state">
+          <div class="empty-state-icon">💚</div>
+          <h2 class="text-xl font-extrabold title">صحة النظام</h2>
+          <p class="empty-state-desc">لا توجد بيانات بعد. سيعرض هذا القسم حالة البنية التحتية وحدود الاستخدام.</p>
+          <span class="pill mt-4 inline-block">قيد التطوير</span>
+        </section>
+      </div>
 
       <footer id="settings" class="text-xs muted py-4">
         <p>© SmartX Elite – لوحة مالك فاخرة بمستوى عالمي. الوضع <span id="modeText">نهاري</span>.</p>
@@ -315,318 +491,106 @@
 
   <script type="module">
     // ✅ اتصال فعلي بـ Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
     import { LOCAL_DEMO_TYPE, getConnectorConfiguration, saveConnectorConfiguration, testStorageConnection, clearLocalDemoStorage } from './storage-adapter.js';
     import { fetchOrganizationMapContext } from './spatial-map.js';
+    import { auth, db } from './owner-firebase-client.js';
+    import { isAuthorizedOwner } from './owner-auth-guard.js';
+    import { initThemeToggle } from './owner-shell.js';
+    import { createOwnerRouter } from './owner-router.js';
+    import { initOrganizationsModule } from './owner-organizations.js';
+    import { initUsersModule } from './owner-users.js';
+    import { initInvoicesModule } from './owner-invoices.js';
+    import { initOverviewModule } from './owner-overview.js';
+    import { initAIModule } from './owner-ai.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-      authDomain: "smart-hsr-manager.firebaseapp.com",
-      projectId: "smart-hsr-manager",
-      storageBucket: "smart-hsr-manager.firebasestorage.app",
-      messagingSenderId: "38965508031",
-      appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-    };
-    const app = initializeApp(firebaseConfig, 'smart-hsr-owner-session');
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    await setPersistence(auth, browserLocalPersistence);
     const ownerContext = { uid:null, role:'owner' };
 
     // عناصر الواجهة
-    const orgsBody = document.getElementById('orgsBody');
-    const invoicesBody = document.getElementById('invoicesBody');
-    const searchBox = document.getElementById('searchBox');
-    const addOrgBtn = document.getElementById('addOrgBtn');
-    const newInvoiceBtn = document.getElementById('newInvoiceBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-    const kpiRevenue = document.getElementById('kpiRevenue');
-    const kpiRevenueNote = document.getElementById('kpiRevenueNote');
-    const kpiActive = document.getElementById('kpiActive');
-    const kpiTrial = document.getElementById('kpiTrial');
-    const kpiExpired = document.getElementById('kpiExpired');
 
     const notif = document.getElementById('notifications');
     const notifText = document.getElementById('notifText');
     const hideNotif = document.getElementById('hideNotif');
 
-    // مودالات
-    const orgModal = document.getElementById('orgModal');
-    const orgForm = document.getElementById('orgForm');
-    const modalTitle = document.getElementById('modalTitle');
-    const deleteBtn = document.getElementById('deleteBtn');
-
-    const invoiceModal = document.getElementById('invoiceModal');
-    const invoiceForm = document.getElementById('invoiceForm');
-    const invoiceOrgSelect = document.getElementById('invoiceOrgId');
-
-    // ثيم النهار/الليل
+    // ثيم النهار/الليل (Shell) — الوظيفة منقولة إلى owner-shell.js
     const themeToggle = document.getElementById('themeToggle');
     const themeLabel = document.getElementById('themeLabel');
     const modeText = document.getElementById('modeText');
+    initThemeToggle({ toggleEl: themeToggle, labelEl: themeLabel, modeTextEl: modeText });
 
-    function applyTheme(mode){
-      document.documentElement.setAttribute('data-theme', mode);
-      const isDark = mode === 'dark';
-      themeLabel.textContent = isDark ? 'ليلي' : 'نهاري';
-      modeText.textContent = isDark ? 'ليلي' : 'نهاري';
-      localStorage.setItem('smartx_theme', mode);
-    }
-    const savedTheme = localStorage.getItem('smartx_theme') || 'dark';
-    applyTheme(savedTheme);
-    themeToggle.addEventListener('click', ()=> applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark'));
+    // التوجيه بين وحدات مركز التحكم (Router) — عرض/إخفاء فقط، لا يغيّر منطق البيانات
+    const router = createOwnerRouter();
+    router.start();
 
     // بيانات
     let ORGS = [];
     let INVOICES = [];
 
-    function formatSAR(n){ return new Intl.NumberFormat('ar-SA', {minimumFractionDigits:2, maximumFractionDigits:2}).format(n) + ' ر.س'; }
+    // وحدة النظرة العامة (Overview) — منطق المؤشرات والرسوم البيانية منقول إلى owner-overview.js.
+    // showNotif/navigate مُمرَّران لتوافق مستقبلي (مركز الانتباه/البطاقات القابلة للنقر)، وغير مستخدمين حاليًا.
+    const overviewModule = initOverviewModule({
+      getOrgs: () => ORGS,
+      getInvoices: () => INVOICES,
+      showNotif: (text) => showNotif(text),
+      navigate: (route) => router.navigate(route),
+    });
+
+    // وحدة مركز قيادة الذكاء الاصطناعي (AI) — محتوى ثابت وصادق، بلا اتصال حقيقي بأي مزود بعد.
+    const aiModule = initAIModule({
+      navigate: (route) => router.navigate(route),
+      showNotif: (text) => showNotif(text),
+    });
+
+    // وحدة الفواتير والاشتراكات (Invoices) — منطق العرض والإنشاء منقول إلى owner-invoices.js.
+    // الحالة المشتركة (INVOICES) و fetchInvoices() تبقى هنا، وتُقرأ عبر الحقن (getInvoices).
+    const invoicesModule = initInvoicesModule({
+      db,
+      getOrgs: () => ORGS,
+      getInvoices: () => INVOICES,
+      showNotif: (text) => showNotif(text),
+      refreshAll: () => refreshAll(),
+    });
+
+    // وحدة المؤسسات (Organizations) — منطق العرض والـCRUD منقول إلى owner-organizations.js.
+    // الحالة المشتركة (ORGS) والدوال المشتركة بين الوحدات تبقى هنا وتُمرَّر عبر الحقن.
+    const organizationsModule = initOrganizationsModule({
+      db,
+      getOrgs: () => ORGS,
+      showNotif: (text) => showNotif(text),
+      refreshAll: () => refreshAll(),
+      createInvoice: (args) => invoicesModule.createInvoice(args),
+    });
+
+    // وحدة المستخدمون والصلاحيات (Users) — منطق العرض والـ Admin API منقول إلى owner-users.js.
+    const usersModule = initUsersModule({
+      auth,
+      getOrgs: () => ORGS,
+    });
 
     async function fetchOrganizations(){
       const q = query(collection(db, 'organizations'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       ORGS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderOrgs();
-      renderKPIs();
-      renderCharts();
-      fillInvoiceOrgSelect();
+      organizationsModule.renderOrgs();
+      overviewModule.renderKPIs();
+      overviewModule.renderCharts();
+      invoicesModule.fillInvoiceOrgSelect();
     }
 
     async function fetchInvoices(){
       const q = query(collection(db, 'invoices'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       INVOICES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderInvoices();
+      invoicesModule.renderInvoices();
     }
-
-    function renderKPIs(){
-      const active = ORGS.filter(o => o.plan && o.plan !== 'Trial' && (o.status||'active') === 'active').length;
-      const trial = ORGS.filter(o => (o.plan === 'Trial' || (o.status||'') === 'trial')).length;
-      const expired = ORGS.filter(o => (o.status||'') === 'expired').length;
-      const revenue = INVOICES.filter(i=> (i.status||'')==='paid')
-        .reduce((sum,i)=> sum + (i.total || 0), 0);
-      kpiActive.textContent = active; kpiTrial.textContent = trial; kpiExpired.textContent = expired; kpiRevenue.textContent = formatSAR(revenue);
-      kpiRevenueNote.textContent = revenue? 'إيراد مدفوع خلال الشهر الحالي (من الفواتير)': 'لا توجد فواتير مدفوعة حاليًا';
-    }
-
-    function renderOrgs(filter=''){
-      const rows = filter? ORGS.filter(o=> (o.name||'').includes(filter)) : ORGS;
-      orgsBody.innerHTML = '';
-      if(!rows.length){
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.colSpan = 9; td.className = 'text-center muted py-6'; td.textContent = 'لا توجد مؤسسات بعد';
-        tr.appendChild(td); orgsBody.appendChild(tr);
-        return;
-      }
-      rows.forEach(o=>{
-        const tr = document.createElement('tr');
-
-        const tdName = document.createElement('td'); tdName.className = 'font-semibold'; tdName.textContent = o.name||'-'; tr.appendChild(tdName);
-        const tdManager = document.createElement('td'); tdManager.textContent = o.manager||'-'; tr.appendChild(tdManager);
-        const tdEmail = document.createElement('td'); tdEmail.textContent = o.email||'-'; tr.appendChild(tdEmail);
-        const tdPhone = document.createElement('td'); tdPhone.textContent = o.phone||'-'; tr.appendChild(tdPhone);
-
-        const tdPlan = document.createElement('td');
-        const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = o.plan||'Trial';
-        tdPlan.appendChild(badge); tr.appendChild(tdPlan);
-
-        const tdCycle = document.createElement('td'); tdCycle.textContent = o.billingCycle||'monthly'; tr.appendChild(tdCycle);
-        const tdStatus = document.createElement('td'); tdStatus.textContent = o.status||'active'; tr.appendChild(tdStatus);
-
-        const tdExpires = document.createElement('td');
-        tdExpires.textContent = o.expiresAt? new Date(o.expiresAt).toLocaleDateString('ar-SA'): '-';
-        tr.appendChild(tdExpires);
-
-        const tdActions = document.createElement('td');
-        const wrap = document.createElement('div'); wrap.className = 'flex gap-2';
-        const mkBtn = (label, act, cls)=>{
-          const b = document.createElement('button');
-          b.className = cls; b.textContent = label;
-          b.dataset.act = act; b.dataset.id = o.id;
-          return b;
-        };
-        wrap.appendChild(mkBtn('تعديل','edit','btn btn-outline'));
-        wrap.appendChild(mkBtn('ترقية','upgrade','btn btn-primary'));
-        wrap.appendChild(mkBtn('حذف','delete','btn btn-outline'));
-        tdActions.appendChild(wrap); tr.appendChild(tdActions);
-
-        orgsBody.appendChild(tr);
-      });
-    }
-
-    function fillInvoiceOrgSelect(){
-      invoiceOrgSelect.innerHTML = '';
-      ORGS.forEach(o=>{
-        invoiceOrgSelect.add(new Option(o.name||o.id, o.id));
-      });
-    }
-
-    function renderInvoices(){
-      invoicesBody.innerHTML = '';
-      INVOICES.forEach(inv=>{
-        const tr = document.createElement('tr');
-
-        const tdId = document.createElement('td'); tdId.textContent = inv.invoiceId||inv.id; tr.appendChild(tdId);
-        const tdOrg = document.createElement('td'); tdOrg.textContent = inv.organization_name||'-'; tr.appendChild(tdOrg);
-        const tdPlan = document.createElement('td'); tdPlan.textContent = inv.plan||'-'; tr.appendChild(tdPlan);
-        const tdCycle = document.createElement('td'); tdCycle.textContent = inv.billingCycle||'-'; tr.appendChild(tdCycle);
-        const tdAmount = document.createElement('td'); tdAmount.textContent = formatSAR(inv.total||0); tr.appendChild(tdAmount);
-
-        const tdStatus = document.createElement('td');
-        const badge = document.createElement('span'); badge.className = 'badge';
-        const isPaid = inv.status === 'paid';
-        badge.style.borderColor = isPaid? '#16a34a':'#f59e0b';
-        badge.style.color = isPaid? '#16a34a':'#f59e0b';
-        badge.textContent = inv.status||'-';
-        tdStatus.appendChild(badge); tr.appendChild(tdStatus);
-
-        const tdDate = document.createElement('td');
-        tdDate.textContent = inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'):'-';
-        tr.appendChild(tdDate);
-
-        const tdFile = document.createElement('td');
-        const btn = document.createElement('button'); btn.className = 'btn btn-outline'; btn.textContent = 'PDF';
-        btn.dataset.dl = inv.id;
-        tdFile.appendChild(btn); tr.appendChild(tdFile);
-
-        invoicesBody.appendChild(tr);
-      });
-    }
-
-    // رسوم بيانية
-    let lineChart, pieChart;
-    function renderCharts(){
-      // خطي: نمو المؤسسات
-      const byMonth = Array.from({length:6}).map(()=>0);
-      const now = new Date();
-      ORGS.forEach(o=>{ const d = o.createdAt? new Date(o.createdAt): null; if(!d) return; const diff = (now.getMonth()-d.getMonth()+12)%12; if(diff<6) byMonth[5-diff]++;});
-      const labels = Array.from({length:6}).map((_,i)=> new Date(now.getFullYear(), now.getMonth()-(5-i)).toLocaleDateString('ar-SA',{month:'long'}));
-      const ctx1 = document.getElementById('orgsChart'); lineChart && lineChart.destroy();
-      lineChart = new Chart(ctx1,{ type:'line', data:{ labels, datasets:[{ label:'المؤسسات الجديدة', data:byMonth, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.2)', borderWidth:3, tension:.35, fill:true }]}, options:{ plugins:{ legend:{ labels:{ color:'var(--muted)'} } }, scales:{ x:{ ticks:{ color:'var(--muted)'} }, y:{ ticks:{ color:'var(--muted)'} } } }});
-
-      // دائري: توزيع الخطط
-      const plans = {Trial:0,Basic:0,Pro:0,Enterprise:0};
-      ORGS.forEach(o=>{ plans[o.plan||'Trial'] = (plans[o.plan||'Trial']||0)+1; });
-      const ctx2 = document.getElementById('plansChart'); pieChart && pieChart.destroy();
-      pieChart = new Chart(ctx2, { type:'doughnut', data:{ labels:Object.keys(plans), datasets:[{ data:Object.values(plans) }] }, options:{ plugins:{ legend:{ labels:{ color:'var(--muted)'} } } } });
-    }
-
-    // أحداث الجدول
-    orgsBody.addEventListener('click', async (e)=>{
-      const btn = e.target.closest('button'); if(!btn) return;
-      const act = btn.dataset.act; const id = btn.dataset.id; const org = ORGS.find(o=>o.id===id);
-      if(act==='edit'){ openOrgModal(org); }
-      if(act==='upgrade'){ // ترقية الخطة → تحديث المؤسسة + إنشاء فاتورة
-        const newPlan = org.plan==='Pro' ? 'Enterprise' : (org.plan==='Basic' ? 'Pro' : 'Pro');
-        await updateDoc(doc(db,'organizations', id), { plan:newPlan, status:'active', updatedAt: serverTimestamp() });
-        await createInvoice({ org, plan:newPlan, billingCycle: org.billingCycle||'monthly' });
-        showNotif(`تمت ترقية خطة ${org.name} إلى ${newPlan} وإصدار فاتورة تلقائيًا.`);
-        await refreshAll();
-      }
-      if(act==='delete'){
-        if(confirm('تأكيد حذف المؤسسة؟')){ await deleteDoc(doc(db,'organizations', id)); showNotif('تم حذف المؤسسة بنجاح.'); await refreshAll(); }
-      }
-    });
-
-    // بحث
-    searchBox.addEventListener('input', (e)=> renderOrgs(e.target.value.trim()));
-
-    // مودال المؤسسة
-    addOrgBtn.addEventListener('click', ()=> openOrgModal());
-    function openOrgModal(org=null){
-      orgForm.reset();
-      document.getElementById('modalTitle').textContent = org? 'تعديل مؤسسة' : 'إضافة مؤسسة';
-      const f = orgForm.elements;
-      f.name.value = org?.name||''; f.manager.value = org?.manager||''; f.email.value = org?.email||''; f.phone.value = org?.phone||'';
-      f.plan.value = org?.plan||'Trial'; f.billingCycle.value = org?.billingCycle||'monthly'; f.status.value = org?.status|| (org?.plan==='Trial'?'trial':'active');
-      f.expiresAt.value = org?.expiresAt? new Date(org.expiresAt).toISOString().slice(0,10): '';
-      f.docId.value = org?.id||''; deleteBtn.classList.toggle('hidden', !org);
-      orgModal.showModal();
-    }
-
-    orgForm.addEventListener('submit', async (e)=>{
-      e.preventDefault(); const f = orgForm.elements;
-      const payload = {
-        name:f.name.value.trim(), manager:f.manager.value.trim(), email:f.email.value.trim(), phone:f.phone.value.trim(),
-        plan:f.plan.value, billingCycle:f.billingCycle.value, status:f.status.value,
-        expiresAt: f.expiresAt.value ? new Date(f.expiresAt.value).toISOString() : null,
-        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-      };
-      const id = f.docId.value;
-      if(id){ await updateDoc(doc(db,'organizations', id), payload); showNotif('تم تحديث بيانات المؤسسة.'); }
-      else { const ref = await addDoc(collection(db,'organizations'), payload); showNotif('تمت إضافة مؤسسة جديدة بنجاح.'); }
-      orgModal.close(); await refreshAll();
-    });
-    deleteBtn.addEventListener('click', async ()=>{
-      const id = orgForm.elements.docId.value; if(!id) return;
-      if(confirm('تأكيد الحذف؟')){ await deleteDoc(doc(db,'organizations', id)); orgModal.close(); showNotif('تم حذف المؤسسة.'); await refreshAll(); }
-    });
-
-    // مودال فاتورة يدوية
-    newInvoiceBtn.addEventListener('click', ()=> { invoiceForm.reset(); fillInvoiceOrgSelect(); invoiceModal.showModal(); });
-    invoiceForm.addEventListener('submit', async (e)=>{
-      e.preventDefault(); const f = invoiceForm.elements;
-      const org = ORGS.find(o=>o.id===f.orgId.value); if(!org) return;
-      await createInvoice({ org, plan:f.plan.value, billingCycle:f.billingCycle.value, amount: Number(f.amount.value||0) });
-      invoiceModal.close(); showNotif('تم إصدار الفاتورة وإضافتها إلى السجل.'); await refreshAll();
-    });
-
-    // إنشاء فاتورة + حفظ PDF
-    async function createInvoice({ org, plan, billingCycle, amount }){
-      // تسعير افتراضي في حال لم يُرسل مبلغ يدوي
-      const base = amount || (plan==='Basic'?249: plan==='Pro'?499: 1499);
-      const vat = +(base * 0.15).toFixed(2);
-      const total = +(base + vat).toFixed(2);
-      const invoiceId = 'INV-' + Math.random().toString(36).slice(2,7).toUpperCase();
-      const payload = {
-        invoiceId,
-        organization_id: org.id,
-        organization_name: org.name,
-        plan, billingCycle,
-        amount: base, vat, total,
-        status: 'paid', // مبدئيًا مدفوعة – يمكن ربطها لاحقًا ببوابة الدفع
-        createdAt: new Date().toISOString()
-      };
-      await addDoc(collection(db,'invoices'), payload);
-      // توليد PDF بسيط
-      const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
-      docPdf.setFont('helvetica','bold'); docPdf.setFontSize(16);
-      docPdf.text(`فاتورة اشتراك – ${invoiceId}` , 40, 40);
-      docPdf.setFontSize(12); docPdf.setFont('helvetica','normal');
-      docPdf.text(`المؤسسة: ${org.name||'-'}`, 40, 70);
-      docPdf.text(`الخطة: ${plan} (${billingCycle})`, 40, 90);
-      docPdf.text(`المبلغ: ${base} SAR`, 40, 110);
-      docPdf.text(`الضريبة 15%: ${vat} SAR`, 40, 130);
-      docPdf.text(`الإجمالي: ${total} SAR`, 40, 150);
-      docPdf.text(`التاريخ: ${(new Date()).toLocaleDateString('ar-SA')}`, 40, 170);
-      docPdf.save(`${invoiceId}.pdf`);
-    }
-
-    // تنزيل PDF من الجدول (إعادة توليد سريع)
-    invoicesBody.addEventListener('click', async (e)=>{
-      const btn = e.target.closest('button'); if(!btn) return; const id = btn.dataset.dl; if(!id) return;
-      const inv = INVOICES.find(x=> x.id===id); if(!inv) return;
-      const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
-      docPdf.setFont('helvetica','bold'); docPdf.setFontSize(16);
-      docPdf.text(`فاتورة اشتراك – ${inv.invoiceId||id}` , 40, 40);
-      docPdf.setFontSize(12); docPdf.setFont('helvetica','normal');
-      docPdf.text(`المؤسسة: ${inv.organization_name||'-'}`, 40, 70);
-      docPdf.text(`الخطة: ${inv.plan||'-'} (${inv.billingCycle||'-'})`, 40, 90);
-      docPdf.text(`المبلغ: ${inv.amount||0} SAR`, 40, 110);
-      docPdf.text(`الضريبة 15%: ${inv.vat||0} SAR`, 40, 130);
-      docPdf.text(`الإجمالي: ${inv.total||0} SAR`, 40, 150);
-      docPdf.text(`التاريخ: ${inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'): ''}`, 40, 170);
-      docPdf.save(`${inv.invoiceId||id}.pdf`);
-    });
 
     // إشعارات
     function showNotif(text){ notif.classList.remove('hidden'); notifText.textContent = text; }
     hideNotif.addEventListener('click', ()=> notif.classList.add('hidden'));
 
-    async function refreshAll(){ await Promise.all([fetchOrganizations(), fetchInvoices()]); renderKPIs(); }
+    async function refreshAll(){ await Promise.all([fetchOrganizations(), fetchInvoices()]); overviewModule.renderKPIs(); }
 
     // ===== Owner-only institutional storage connector center =====
     const connectorForm=document.getElementById('connectorForm');
@@ -702,170 +666,22 @@
       window.location.replace('owner-login.html');
     }
 
-    // Owner authorization remains fail-closed and is scoped to this named Auth app.
-    async function isAuthorizedOwner(user){
-      const snap = await getDoc(doc(db, 'owners', user.uid));
-      return snap.exists() && snap.data()?.active !== false;
-    }
-
     // بدء التشغيل: يتطلب جلسة موثّقة + مستند owners/{uid} فعليًا قبل قراءة/كتابة المؤسسات والفواتير
     let ownerBooted = false;
     onAuthStateChanged(auth, async (user)=>{
       if(!user){ await denyOwnerAccess(); return; }
       let allowed = false;
-      try{ allowed = await isAuthorizedOwner(user); }
+      try{ allowed = await isAuthorizedOwner({ db, uid: user.uid }); }
       catch(err){ console.error('تعذر التحقق من صلاحية المالك', err); allowed = false; }
       if(!allowed){ await denyOwnerAccess(); return; }
       if(ownerBooted) return;
       ownerBooted = true;
       ownerContext.uid = user.uid;
       await refreshAll();
-      try{ populateOrgSelects(); }catch(_){}
+      try{ usersModule.populateOrgSelects(); }catch(_){}
       try{ populateConnectorOrganizations(); await loadConnector(); }catch(_){ setConnectorMessage('تعذر تحميل إعداد الربط المحلي.'); }
     });
 
-    // ============================================================
-    // Users & Permissions (Phase 1) — talks ONLY to the secure
-    // server-side Admin API using the owner's Firebase ID token.
-    // Passwords are generated client-side, shown once to the owner,
-    // and sent to be set on the account. The server never returns them.
-    // ============================================================
-    const ADMIN_API = '/api/admin/users';
-    const usersOrgSelect = document.getElementById('usersOrgSelect');
-    const userFormOrg    = document.getElementById('userFormOrg');
-    const usersBody      = document.getElementById('usersBody');
-    const usersMsg       = document.getElementById('usersMsg');
-    const addUserBtn     = document.getElementById('addUserBtn');
-    const refreshUsersBtn= document.getElementById('refreshUsersBtn');
-    const userModal      = document.getElementById('userModal');
-    const userForm       = document.getElementById('userForm');
-    const userFormMsg    = document.getElementById('userFormMsg');
-
-    const ROLE_AR = { manager:'مدير', supervisor:'مشرف مساعد', inspector:'مراقب', contractor:'مقاول' };
-
-    function setUsersMsg(text, ok){
-      usersMsg.textContent = text || '';
-      usersMsg.style.color = ok ? 'var(--emerald)' : 'var(--rose)';
-    }
-
-    function generateTempPassword(){
-      const upper='ABCDEFGHJKLMNPQRSTUVWXYZ', lower='abcdefghijkmnpqrstuvwxyz', digits='23456789', sym='!@#$%*?';
-      const all=upper+lower+digits+sym; const buf=new Uint32Array(14);
-      crypto.getRandomValues(buf);
-      let pick=c=>c[buf[i++]%c.length]; let i=0;
-      let pw=pick(upper)+pick(lower)+pick(digits)+pick(sym);
-      while(pw.length<12) pw+=all[buf[i++% buf.length]%all.length];
-      return pw;
-    }
-
-    async function callAdminApi(payload){
-      const user = auth.currentUser;
-      if(!user) throw new Error('انتهت الجلسة. الرجاء تسجيل الدخول من جديد.');
-      const token = await user.getIdToken();
-      const resp = await fetch(ADMIN_API, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
-        body: JSON.stringify(payload)
-      });
-      let data={}; try{ data=await resp.json(); }catch(_){}
-      if(!resp.ok){
-        const reason = data.reason || data.error || ('HTTP '+resp.status);
-        throw new Error('فشلت العملية: '+reason);
-      }
-      return data;
-    }
-
-    function populateOrgSelects(){
-      const opts = (ORGS||[]).map(o=>`<option value="${o.id}">${(o.name||o.id)}</option>`).join('');
-      const empty = '<option value="">— لا توجد مؤسسات —</option>';
-      usersOrgSelect.innerHTML = opts || empty;
-      userFormOrg.innerHTML = opts || empty;
-    }
-
-    function fmtDate(t){ if(!t) return '—'; try{ return new Date(t).toLocaleString('ar-SA'); }catch(_){ return '—'; } }
-
-    async function renderUsers(){
-      const orgId = usersOrgSelect.value;
-      if(!orgId){ usersBody.innerHTML = `<tr><td colspan="6" class="muted">اختر مؤسسة لعرض المستخدمين.</td></tr>`; return; }
-      usersBody.innerHTML = `<tr><td colspan="6" class="muted">...جاري التحميل</td></tr>`;
-      try{
-        const { users } = await callAdminApi({ action:'list', organizationId: orgId });
-        if(!users || !users.length){ usersBody.innerHTML = `<tr><td colspan="6" class="muted">لا يوجد مستخدمون في هذه المؤسسة.</td></tr>`; return; }
-        usersBody.innerHTML = users.map(u=>{
-          const statusPill = u.active
-            ? '<span class="pill" style="color:var(--emerald)">نشط</span>'
-            : '<span class="pill" style="color:var(--rose)">معطّل</span>';
-          const mcp = u.mustChangePassword ? '⚠️ مطلوب' : '—';
-          const toggleLabel = u.active ? 'تعطيل' : 'تفعيل';
-          return `<tr>
-            <td>${u.email||'—'}</td>
-            <td>${ROLE_AR[u.role]||u.role||'—'}</td>
-            <td>${statusPill}</td>
-            <td class="muted">${fmtDate(u.lastSignInTime)}</td>
-            <td>${mcp}</td>
-            <td>
-              <div class="flex items-center gap-1 justify-end flex-wrap">
-                <button class="btn btn-outline" data-act="temp" data-uid="${u.uid}">كلمة مرور مؤقتة</button>
-                <button class="btn btn-outline" data-act="toggle" data-uid="${u.uid}" data-active="${u.active?1:0}">${toggleLabel}</button>
-                <button class="btn btn-ghost" data-act="revoke" data-uid="${u.uid}">إنهاء الجلسات</button>
-              </div>
-            </td>
-          </tr>`;
-        }).join('');
-        setUsersMsg('تم تحميل '+users.length+' مستخدم.', true);
-      }catch(err){
-        usersBody.innerHTML = `<tr><td colspan="6" class="muted">تعذّر التحميل.</td></tr>`;
-        setUsersMsg(err.message||'تعذّر تحميل المستخدمين.', false);
-      }
-    }
-
-    usersOrgSelect.addEventListener('change', renderUsers);
-    refreshUsersBtn.addEventListener('click', ()=>{ populateOrgSelects(); renderUsers(); });
-    addUserBtn.addEventListener('click', ()=>{ populateOrgSelects(); userFormMsg.textContent=''; userForm.reset(); const o=usersOrgSelect.value; if(o) userFormOrg.value=o; userModal.showModal(); });
-
-    userForm.addEventListener('submit', async (e)=>{
-      const f = userForm.elements;
-      const name=f.name.value.trim(), email=f.email.value.trim(), role=f.role.value, organizationId=f.organizationId.value;
-      if(!name||!email||!organizationId){ e.preventDefault(); userFormMsg.style.color='var(--rose)'; userFormMsg.textContent='الرجاء تعبئة الاسم والبريد واختيار المؤسسة.'; return; }
-      e.preventDefault();
-      userFormMsg.style.color='var(--muted)'; userFormMsg.textContent='...جاري الإنشاء';
-      try{
-        await callAdminApi({ action:'create', organizationId, role, email, name });
-        userModal.close();
-        setUsersMsg('تم إنشاء المستخدم بنجاح. استخدم «كلمة مرور مؤقتة» لتوليد كلمة الدخول.', true);
-        if(usersOrgSelect.value!==organizationId) usersOrgSelect.value=organizationId;
-        renderUsers();
-      }catch(err){
-        userFormMsg.style.color='var(--rose)'; userFormMsg.textContent=err.message||'تعذّر إنشاء المستخدم.';
-      }
-    });
-
-    usersBody.addEventListener('click', async (e)=>{
-      const btn = e.target.closest('button[data-act]'); if(!btn) return;
-      const uid = btn.dataset.uid; const act = btn.dataset.act;
-      try{
-        if(act==='temp'){
-          const pw = generateTempPassword();
-          if(!confirm('سيتم تعيين كلمة مرور مؤقتة لهذا المستخدم وسيُطلب منه تغييرها عند أول دخول.\n\nكلمة المرور المؤقتة (انسخها الآن — لن تظهر مجددًا):\n\n'+pw+'\n\nهل تريد المتابعة؟')) return;
-          await callAdminApi({ action:'setTempPassword', uid, password: pw });
-          setUsersMsg('تم تعيين كلمة المرور المؤقتة. سلّمها للمستخدم بشكل آمن.', true);
-          renderUsers();
-        } else if(act==='toggle'){
-          const currentlyActive = btn.dataset.active==='1';
-          const next = !currentlyActive;
-          if(!confirm(next ? 'تفعيل هذا الحساب؟' : 'تعطيل هذا الحساب سيمنع المستخدم من الدخول. متابعة؟')) return;
-          await callAdminApi({ action:'setActive', uid, active: next });
-          setUsersMsg(next ? 'تم تفعيل الحساب.' : 'تم تعطيل الحساب.', true);
-          renderUsers();
-        } else if(act==='revoke'){
-          if(!confirm('إنهاء جميع جلسات هذا المستخدم سيخرجه من كل الأجهزة. متابعة؟')) return;
-          await callAdminApi({ action:'revokeSessions', uid });
-          setUsersMsg('تم إنهاء جميع جلسات المستخدم.', true);
-        }
-      }catch(err){
-        setUsersMsg(err.message||'تعذّر تنفيذ الإجراء.', false);
-      }
-    });
   </script>
 </body>
 </html>

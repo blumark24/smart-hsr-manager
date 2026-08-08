@@ -1,0 +1,10 @@
+<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>Sprint 5D local smoke</title><style>.hidden{display:none}.inspector-ai-chip{display:block}</style>
+<textarea id="rawObservationInput"></textarea><input id="fileUploadInput" type="file"><input id="inputLatitude"><input id="inputLongitude">
+<button id="inspectorAiAnalyzeBtn" class="hidden">تحليل ذكي</button><button id="manualAddressBtn" class="hidden">إدخال يدوي</button>
+<section id="inspectorAiPreviewRoot" class="hidden"><p id="inspectorAiWarning" class="hidden"></p><div id="inspectorAiSuggestionPanel" class="hidden"><p id="inspectorAiSuggestionText"></p><button id="inspectorAiUseBtn">استخدام</button><button id="inspectorAiEditBtn">تعديل</button><button id="inspectorAiIgnoreBtn">تجاهل</button></div><div id="inspectorAiChips"></div><div id="inspectorAiMultiIssue" class="hidden"></div></section>
+<section id="inspectorManualLocationPanel" class="hidden"><input id="manualDistrict"><input id="manualStreet"><input id="manualLandmark"><input id="manualLatitude"><input id="manualLongitude"><button id="manualLocationCancelBtn">إلغاء</button><button id="manualLocationApplyBtn">اعتماد</button></section>
+<output id="smokeResult">PENDING</output><script src="../../preview-only/inspector-human-review-preview.js"></script><script>
+const controller=SmartHsrInspectorPreview.createController({document,location,confirmReplace:()=>true,applyManualLocation:()=>true});controller.bind();
+const checks={enabled:controller.flag.enabled,rootVisible:!document.getElementById('inspectorAiPreviewRoot').classList.contains('hidden'),analyzeVisible:!document.getElementById('inspectorAiAnalyzeBtn').classList.contains('hidden'),manualVisible:!document.getElementById('manualAddressBtn').classList.contains('hidden'),noNetwork:typeof window.__sprint5dNetworkCall==='undefined'};
+document.getElementById('smokeResult').textContent=Object.values(checks).every(Boolean)?'PASS':'FAIL';document.getElementById('smokeResult').dataset.checks=JSON.stringify(checks);
+</script></html>

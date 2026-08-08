@@ -1,0 +1,30 @@
+{
+  "fixturePath": "test/fixtures/vision/asphalt-pothole.jpg",
+  "model": "gemini-3.6-flash",
+  "apiCallCount": 1,
+  "httpStatus": 200,
+  "success": true,
+  "latencyMs": 8151,
+  "schemaValidation": true,
+  "arabicSummaryValidation": true,
+  "structuredResult": {
+    "shortSummaryAr": "وجود حفرة عميقة بأسفلت الطريق تشكل خطراً على السلامة وتتطلب إصلاحاً عاجلاً",
+    "categoryCode": "ROAD_MAINTENANCE",
+    "categoryLabelAr": "صيانة الطرق والشوارع",
+    "subcategoryCode": "POTHOLE_SINKHOLE",
+    "subcategoryLabelAr": "حفرة أو هبوط أسفلتي",
+    "severity": "HIGH",
+    "severityScore": 0.85,
+    "prioritySuggestion": "HIGH",
+    "responsibleDepartmentSuggestion": "إدارة صيانة الطرق",
+    "recommendedActionAr": "وضع صبات تحذيرية آمنة ومعالجة الحفرة وإعادة تعبيد طبقة الأسفلت المتضررة.",
+    "confidence": 0.92,
+    "imageQuality": "GOOD",
+    "requiresHumanReview": true,
+    "warnings": [
+      "خطر تعثر المركبات أو انهيار جزئي في الطريق"
+    ]
+  },
+  "errorCode": null,
+  "providerDiagnostics": null
+}

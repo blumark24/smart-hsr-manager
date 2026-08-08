@@ -1,0 +1,18 @@
+{
+  "fixturePath": "test/fixtures/vision/asphalt-pothole.jpg",
+  "model": "gemini-2.0-flash-001",
+  "apiCallCount": 1,
+  "httpStatus": 429,
+  "success": false,
+  "latencyMs": 1479,
+  "schemaValidation": false,
+  "arabicSummaryValidation": false,
+  "structuredResult": null,
+  "errorCode": "AI_PROVIDER_UNAVAILABLE",
+  "providerDiagnostics": {
+    "httpStatus": 429,
+    "providerErrorStatus": "RESOURCE_EXHAUSTED",
+    "providerErrorMessageSanitized": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay.",
+    "providerErrorCode": "429"
+  }
+}

@@ -6,3 +6,4 @@ ui-debug.log
 *.local
 .env
 .env.*
+!.env.example

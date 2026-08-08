@@ -630,6 +630,14 @@
     #smartInputModal button,#locationCorrectionDialog button,#personalMapDialog button{min-height:44px}
     #confirmLocationBtn,#retryLocationBtn,#useWeakLocationBtn,#getLocationBtn,#editLocationBtn,#manualLocationBtn,#useMyLocationBtn,#adoptLocationBtn{overflow-wrap:anywhere}
     .location-actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:.5rem}
+    .inspector-preview-location-row{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;align-items:center}
+    .inspector-ai-preview{margin-top:.65rem;padding:.7rem;border:1px solid rgba(15,143,140,.25);border-radius:12px;background:rgba(15,143,140,.06);text-align:right}
+    .inspector-ai-preview button{min-height:36px!important}.inspector-ai-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
+    .inspector-ai-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}.inspector-ai-chip{display:inline-flex;align-items:center;gap:.25rem;padding:.3rem .45rem;border:1px solid rgba(15,143,140,.25);border-radius:999px;font-size:.72rem;background:var(--ui-surface-soft,#f8fafc)}
+    .inspector-ai-chip button{border:0;background:transparent;color:var(--color-teal);font-weight:800;text-decoration:underline}
+    .inspector-ai-multi{margin-top:.55rem;padding:.55rem;border-inline-start:3px solid var(--color-teal);font-size:.8rem}.inspector-ai-multi ul{margin:.35rem 1.15rem}.inspector-ai-multi select{width:100%;margin-top:.4rem;padding:.35rem;border-radius:8px}
+    .inspector-manual-location{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin-top:.6rem;padding:.7rem;border:1px solid rgba(100,116,139,.25);border-radius:12px}.inspector-manual-location label{font-size:.75rem;font-weight:700}.inspector-manual-location input{width:100%;margin-top:.2rem;padding:.45rem;border:1px solid #cbd5e1;border-radius:8px}.inspector-manual-location .wide{grid-column:1/-1}.inspector-manual-location-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:.4rem}
+    @media(max-width:560px){.inspector-manual-location{grid-template-columns:1fr}.inspector-manual-location .wide,.inspector-manual-location-actions{grid-column:1}.inspector-ai-actions button{flex:1 1 auto}}
     #locationStatus,#fileStatus{min-height:2.6em;display:flex;align-items:center;justify-content:center;line-height:1.45}
     #smartInputModal :focus-visible,#locationCorrectionDialog :focus-visible,#personalMapDialog :focus-visible,.inspector-identity-card :focus-visible{outline:3px solid #fbbf24;outline-offset:3px}
 
@@ -2535,15 +2543,37 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
       </p>
       <textarea id="rawObservationInput" rows="5" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-[--color-teal] focus:border-[--color-teal] text-gray-700 shadow-sm" placeholder="مثال: يوجد تجمع للمياه على طريق الخدمة عند الكيلو 52..." oninput="checkSmartInputState()"></textarea>
 
+      <section id="inspectorAiPreviewRoot" class="inspector-ai-preview hidden" aria-live="polite" aria-label="اقتراحات التحليل الذكي التجريبية">
+        <p id="inspectorAiWarning" class="hidden text-sm font-bold text-amber-700"></p>
+        <div id="inspectorAiSuggestionPanel" class="hidden">
+          <p class="text-xs font-bold">اقتراح وصف — للمراجعة فقط</p>
+          <p id="inspectorAiSuggestionText" class="mt-1 text-sm"></p>
+          <div class="inspector-ai-actions"><button id="inspectorAiUseBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">استخدام</button><button id="inspectorAiEditBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">تعديل</button><button id="inspectorAiIgnoreBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">تجاهل</button></div>
+        </div>
+        <div id="inspectorAiChips" class="inspector-ai-chips"></div>
+        <div id="inspectorAiMultiIssue" class="inspector-ai-multi hidden"></div>
+      </section>
+
       <div class="mt-4 input-group-wrapper">
         <div class="input-group p-4 border-2 border-dashed border-gray-300 rounded-xl bg-white hover:border-teal-500 transition-colors">
           <label class="block text-sm font-medium text-gray-700 mb-2">الموقع الجغرافي (GPS):</label>
           <p id="locationStatus" class="text-sm font-semibold text-gray-500" aria-live="polite">لم يتم التحديد بعد</p>
           <input type="hidden" id="inputLatitude">
           <input type="hidden" id="inputLongitude">
-          <button id="getLocationBtn" class="ai-button-primary rounded-full px-4 py-2 text-sm font-bold mt-2 flex items-center justify-center mx-auto" onclick="getLocation()" type="button">
-            <i data-lucide="map-pin" class="w-4 h-4 ml-2"></i> تحديد الموقع الحالي
-          </button>
+          <div class="inspector-preview-location-row mt-2">
+            <button id="getLocationBtn" class="ai-button-primary rounded-full px-4 py-2 text-sm font-bold flex items-center justify-center" onclick="getLocation()" type="button">
+              <i data-lucide="map-pin" class="w-4 h-4 ml-2"></i> تحديد موقعي
+            </button>
+            <button id="manualAddressBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button" aria-controls="inspectorManualLocationPanel" aria-expanded="false">إدخال يدوي</button>
+          </div>
+          <div id="inspectorManualLocationPanel" class="inspector-manual-location hidden" aria-label="إدخال الموقع يدوياً">
+            <label>الحي<input id="manualDistrict" autocomplete="address-level3"></label>
+            <label>الشارع<input id="manualStreet" autocomplete="street-address"></label>
+            <label class="wide">معلم قريب<input id="manualLandmark"></label>
+            <label>خط العرض<input id="manualLatitude" inputmode="decimal"></label>
+            <label>خط الطول<input id="manualLongitude" inputmode="decimal"></label>
+            <div class="inspector-manual-location-actions"><button id="manualLocationCancelBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">إلغاء</button><button id="manualLocationApplyBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">اعتماد المسودة</button></div>
+          </div>
           <div class="location-actions">
             <button id="retryLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">إعادة المحاولة</button>
             <button id="manualLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">
@@ -2564,6 +2594,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
           <button class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold mt-2 flex items-center justify-center mx-auto" onclick="document.getElementById('fileUploadInput').click()" type="button">
             <i data-lucide="upload" class="w-4 h-4 ml-2"></i> اختيار ملف
           </button>
+          <button id="inspectorAiAnalyzeBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold mt-2 hidden" type="button" disabled>تحليل ذكي</button>
         </div>
       </div>
 
@@ -2746,6 +2777,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
 </div>
 
 <script src="modal-script.js"></script>
+<script src="preview-only/inspector-human-review-preview.js"></script>
 
 <!-- GEO STATUS -->
 <script>
@@ -4035,6 +4067,20 @@ function commitLocationSelection(){
   document.getElementById('inputLatitude').value=lat;document.getElementById('inputLongitude').value=lng;
   return true;
 }
+// Preview-only manual location bridge. It requires an explicit inspector action
+// and never writes or persists; the normal save path remains the sole writer.
+window.applyInspectorManualLocationPreview=function(draft={}){
+  const lat=Number(draft.latitude),lng=Number(draft.longitude);
+  if(!Number.isFinite(lat)||Math.abs(lat)>90||!Number.isFinite(lng)||Math.abs(lng)>180)return false;
+  stopInspectorGps();
+  locationCandidate={lat,lng,correctedLat:lat,correctedLng:lng,accuracy:null,stable:false,manual:true,capturedAt:new Date().toISOString()};
+  locationConfirmed=false;locationVerified=false;locationSource=null;locationDragged=false;locationWarningOverride=false;
+  clearAdoptedLocation();
+  if(!commitLocationSelection())return false;
+  setText('locationStatus',`موقع يدوي مثبت (${lat.toFixed(5)}، ${lng.toFixed(5)}) — ${cleanDisplayText(draft.district,'الحي غير محدد',50)}، ${cleanDisplayText(draft.street,'الشارع غير محدد',70)}`);
+  checkSmartInputState();
+  return true;
+};
 window.getLocation=function(){
   if(!navigator.geolocation){setText('locationStatus','هذا المتصفح لا يدعم تحديد الموقع.');setIdentityGpsStatus('غير مدعوم',false);checkSmartInputState();return}
   stopInspectorGps();locationSamples=[];locationCandidate=null;locationConfirmed=false;locationDragged=false;locationWarningOverride=false;locationTimedOut=false;
@@ -4588,7 +4634,10 @@ window.setupImageComparison = function(){
   wrapper.addEventListener('touchstart', onMouseDown);
 };
 
-// ========= AI BUTTONS (DUMMY) =========
+// ========= AI BUTTONS =========
+// 'vision' calls the real, advisory-only AI Gateway (Sprint 6.8:
+// platform/ai/ -> api/ai/analyze.js). 'root-cause' is a separate,
+// unrelated illustrative placeholder and stays out of this sprint's scope.
 window.analyzeImage = function(tool){
   const title = {'vision':'تحليل الرؤية (Vision)','root-cause':'تحليل السبب الجذري'}[tool] || 'التحليل';
   setText('aiResultTitle', `جاري تنفيذ ${title}...`);
@@ -4599,14 +4648,92 @@ window.analyzeImage = function(tool){
     </div>`);
   unhide('aiResultContainer');
 
+  if (tool === 'vision') {
+    runVisionAnalysis(title);
+    return;
+  }
+
   setTimeout(()=>{
-    let result = (tool==='vision')
-      ? `<p class="communication-draft">**وصف تقريبي تلقائي:** تظهر مؤشرات تلف/تشققات. يُوصى بإزالة الجزء المتضرر وإعادة السفلتة.</p>`
-      : `<p class="communication-draft">**5 Whys (مقترح):**\n1) لماذا حدث؟ تأخر صيانة.\n2) لماذا؟ نقص متابعة.\n3) لماذا؟ جدول غير محدث.\n4) لماذا؟ بدون أتمتة.\n5) السبب الجذري: غياب آلية تنبيه دوري.</p>`;
+    const result = `<p class="communication-draft">**5 Whys (مقترح):**\n1) لماذا حدث؟ تأخر صيانة.\n2) لماذا؟ نقص متابعة.\n3) لماذا؟ جدول غير محدث.\n4) لماذا؟ بدون أتمتة.\n5) السبب الجذري: غياب آلية تنبيه دوري.</p>`;
     setText('aiResultTitle', `نتائج ${title} مكتملة:`);
     setHTML('aiResultContent', result);
   }, 1200);
 };
+
+// ========= REAL AI VISION ANALYSIS (Sprint 6.8) =========
+// Advisory only: renders a suggestion for human review. This code path never
+// saves, assigns, changes status, or closes a report by itself — a manager
+// still makes the real decision downstream through the existing workflow.
+const AI_ANALYZE_TIMEOUT_MS = 20000;
+const AI_ERROR_MESSAGES_AR = {
+  AI_APPLICATION_ORGANIZATION_NOT_ENABLED: 'تحليل الرؤية غير مُفعّل لمؤسستك حالياً (تجربة أولية محدودة النطاق).',
+  AI_OBSERVATION_NOT_FOUND: 'تعذر العثور على الملاحظة.',
+  AI_PRIVATE_IMAGE_REQUIRED: 'لا توجد صورة دليل مرفقة بهذه الملاحظة.',
+  AI_STORAGE_READ_FAILED: 'تعذر قراءة صورة الدليل من التخزين.',
+  AI_TIMEOUT: 'استغرق التحليل وقتاً أطول من المتوقع. حاول مجدداً.',
+  forbidden: 'لا تملك صلاحية تحليل هذه الملاحظة.',
+  unauthenticated: 'الرجاء إعادة تسجيل الدخول.',
+};
+function aiErrorMessageAr(errorCode){
+  return AI_ERROR_MESSAGES_AR[errorCode] || 'تعذر إتمام التحليل. النتيجة غير متاحة حالياً وتتطلب مراجعة ميدانية.';
+}
+function renderAiFailure(title, errorCode){
+  setText('aiResultTitle', `تعذر إتمام ${title}`);
+  setHTML('aiResultContent', errorHTML(aiErrorMessageAr(errorCode)));
+}
+function severityBadgeClass(severity){
+  return { CRITICAL:'bg-red-100 text-red-800', HIGH:'bg-orange-100 text-orange-800', MEDIUM:'bg-yellow-100 text-yellow-800', LOW:'bg-green-100 text-green-800', UNKNOWN:'bg-gray-100 text-gray-700' }[severity] || 'bg-gray-100 text-gray-700';
+}
+function renderVisionResult(title, payload){
+  const analysis = payload.analysis || {};
+  const intelligence = payload.intelligence || {};
+  const confidencePct = Number.isFinite(analysis.confidence) ? Math.round(analysis.confidence * 100) : null;
+  const reasons = Array.isArray(intelligence.prioritySuggestion?.reasonsAr) ? intelligence.prioritySuggestion.reasonsAr : [];
+  setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
+  setHTML('aiResultContent', `
+    <div class="communication-draft p-4 border rounded-lg">
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <span class="px-3 py-1 rounded-full text-xs font-bold ${severityBadgeClass(analysis.severity)}">${escapeHTML(analysis.categoryLabelAr || '-')}</span>
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">الأولوية المقترحة: ${escapeHTML(intelligence.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || '-')}</span>
+        ${confidencePct !== null ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">الثقة: ${confidencePct}%</span>` : ''}
+      </div>
+      <p class="font-bold text-gray-800 mb-2">${escapeHTML(analysis.shortSummaryAr || '-')}</p>
+      <p class="text-sm text-gray-600 mb-3">${escapeHTML(analysis.recommendedActionAr || '')}</p>
+      ${reasons.length ? `<ul class="text-xs text-gray-500 list-disc pr-5 space-y-1 mb-3">${reasons.map(r=>`<li>${escapeHTML(r)}</li>`).join('')}</ul>` : ''}
+      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+        اقتراح استرشادي فقط من الذكاء الاصطناعي (Gemini) — يتطلب مراجعة ميدانية واعتماد المشرف/المدير قبل أي إجراء. لا يتم أي إسناد أو تغيير حالة أو إغلاق تلقائي.
+      </p>
+    </div>`);
+}
+async function runVisionAnalysis(title){
+  const observation = currentSelectedObservation;
+  if (!observation || !observation.docId) { renderAiFailure(title, 'AI_OBSERVATION_NOT_FOUND'); return; }
+  const user = auth.currentUser;
+  if (!user) { renderAiFailure(title, 'unauthenticated'); return; }
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, AI_ANALYZE_TIMEOUT_MS);
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch('/api/ai/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ observationId: String(observation.docId), correlationId: `${observation.docId}-${Date.now()}` }),
+      signal: controller.signal
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload || payload.ok !== true) {
+      renderAiFailure(title, payload?.errorCode);
+      return;
+    }
+    renderVisionResult(title, payload);
+  } catch (error) {
+    renderAiFailure(title, (timedOut || error?.name === 'AbortError') ? 'AI_TIMEOUT' : null);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 window.generateCommunicationDraft = function(){
   setText('aiResultTitle','صياغة أمر العمل الآلي...');
@@ -4850,6 +4977,16 @@ function startApp(){
   subscribeObservations();
   lucide.createIcons();
 }
+
+// Explicit localhost/Preview opt-in only. The controller uses a deterministic
+// local fixture and cannot call a provider, Firebase, or the observation save path.
+const inspectorHumanReviewPreview=window.SmartHsrInspectorPreview?.createController({
+  document,
+  location:window.location,
+  confirmReplace:message=>window.confirm(message),
+  applyManualLocation:draft=>window.applyInspectorManualLocationPreview(draft)
+});
+inspectorHumanReviewPreview?.bind();
 </script>
 
 

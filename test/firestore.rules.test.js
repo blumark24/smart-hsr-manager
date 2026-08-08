@@ -112,6 +112,17 @@ async function seed() {
     await setDoc(doc(db, 'observations', 'obsAReview'), {
       organizationId: ORG_A, createdByUid: UID.insA, status: 'PENDING_REVIEW', title: 'AReview',
     });
+    await setDoc(doc(db, 'observations', 'obsAssignedConA'), {
+      organizationId: ORG_A, createdByUid: UID.insA, assignedContractorUid: UID.conA,
+      status: 'IN_PROGRESS', title: 'Assigned to contractor A',
+    });
+    await setDoc(doc(db, 'observations', 'obsAssignedConA2'), {
+      organizationId: ORG_A, createdByUid: UID.insA2, assignedContractorUid: UID.conA2,
+      status: 'IN_PROGRESS', title: 'Assigned to contractor A2',
+    });
+    await setDoc(doc(db, 'observations', 'obsUnassigned'), {
+      organizationId: ORG_A, createdByUid: UID.insA, status: 'PENDING', title: 'Unassigned',
+    });
 
     // presence
     await setDoc(doc(db, 'presence', EMAIL.mgrA), {
@@ -195,10 +206,28 @@ test('A8 manager updatedByUid set to another uid: deny', async () => {
   }));
 });
 
-test('A9 contractor same-org allowed-field update: allow', async () => {
+test('A9 assigned contractor allowed-field update: allow', async () => {
   const db = ctx(UID.conA);
-  await assertSucceeds(updateDoc(doc(db, 'observations', 'obsA'), {
+  await assertSucceeds(updateDoc(doc(db, 'observations', 'obsAssignedConA'), {
     status: 'PENDING_REVIEW', resolutionNote: 'done', afterImagePath: 'key', updatedByUid: UID.conA,
+  }));
+});
+
+test('A9.1 SECURITY GAP: non-assigned same-org contractor update should be denied', {
+  todo: 'firestore.rules does not yet enforce assignedContractorUid == request.auth.uid',
+}, async () => {
+  const db = ctx(UID.conA2);
+  await assertFails(updateDoc(doc(db, 'observations', 'obsAssignedConA'), {
+    status: 'PENDING_REVIEW', resolutionNote: 'not my assignment', updatedByUid: UID.conA2,
+  }));
+});
+
+test('A9.2 SECURITY GAP: unassigned observation contractor update should be denied', {
+  todo: 'firestore.rules currently authorizes contractors by organization only',
+}, async () => {
+  const db = ctx(UID.conA);
+  await assertFails(updateDoc(doc(db, 'observations', 'obsUnassigned'), {
+    status: 'PENDING_REVIEW', resolutionNote: 'claimed without assignment', updatedByUid: UID.conA,
   }));
 });
 
@@ -433,4 +462,51 @@ test('F14 supervisor organizations/invoices: deny', async () => {
 
 test('F15 inactive supervisor: deny', async () => {
   await assertFails(getDoc(doc(ctx(UID.supAInactive), 'observations', 'obsA')));
+});
+
+// ============================================================
+// G. known authorization gaps (executable todo tests)
+// ============================================================
+
+test('G1 SECURITY GAP: inspector should not update another inspector observation', {
+  todo: 'ownership policy is not enforced for inspector updates',
+}, async () => {
+  const db = ctx(UID.insA2);
+  await assertFails(updateDoc(doc(db, 'observations', 'obsA'), {
+    status: 'PENDING_REVIEW', resolutionNote: 'updated by another inspector',
+  }));
+});
+
+test('G2 inspector can update own observation using the current allowed fields', async () => {
+  const db = ctx(UID.insA);
+  await assertSucceeds(updateDoc(doc(db, 'observations', 'obsA'), {
+    status: 'PENDING_REVIEW', isComparative: true, resolutionNote: 'owner update',
+  }));
+});
+
+test('G3 SECURITY GAP: manager unknown status transition should be denied', {
+  todo: 'manager status values and transitions are not constrained',
+}, async () => {
+  const db = ctx(UID.mgrA);
+  await assertFails(updateDoc(doc(db, 'observations', 'obsA'), {
+    status: 'NOT_A_REAL_STATUS', updatedByUid: UID.mgrA,
+  }));
+});
+
+test('G4 SECURITY GAP: contractor backward transition should be denied', {
+  todo: 'contractor status transitions are not constrained',
+}, async () => {
+  const db = ctx(UID.conA);
+  await assertFails(updateDoc(doc(db, 'observations', 'obsAssignedConA'), {
+    status: 'PENDING', updatedByUid: UID.conA,
+  }));
+});
+
+test('G5 SECURITY GAP: inspector unknown status transition should be denied', {
+  todo: 'inspector status values and transitions are not constrained',
+}, async () => {
+  const db = ctx(UID.insA);
+  await assertFails(updateDoc(doc(db, 'observations', 'obsA'), {
+    status: 'NOT_A_REAL_STATUS',
+  }));
 });
