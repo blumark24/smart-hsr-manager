@@ -4634,7 +4634,10 @@ window.setupImageComparison = function(){
   wrapper.addEventListener('touchstart', onMouseDown);
 };
 
-// ========= AI BUTTONS (DUMMY) =========
+// ========= AI BUTTONS =========
+// 'vision' calls the real, advisory-only AI Gateway (Sprint 6.8:
+// platform/ai/ -> api/ai/analyze.js). 'root-cause' is a separate,
+// unrelated illustrative placeholder and stays out of this sprint's scope.
 window.analyzeImage = function(tool){
   const title = {'vision':'تحليل الرؤية (Vision)','root-cause':'تحليل السبب الجذري'}[tool] || 'التحليل';
   setText('aiResultTitle', `جاري تنفيذ ${title}...`);
@@ -4645,14 +4648,92 @@ window.analyzeImage = function(tool){
     </div>`);
   unhide('aiResultContainer');
 
+  if (tool === 'vision') {
+    runVisionAnalysis(title);
+    return;
+  }
+
   setTimeout(()=>{
-    let result = (tool==='vision')
-      ? `<p class="communication-draft">**وصف تقريبي تلقائي:** تظهر مؤشرات تلف/تشققات. يُوصى بإزالة الجزء المتضرر وإعادة السفلتة.</p>`
-      : `<p class="communication-draft">**5 Whys (مقترح):**\n1) لماذا حدث؟ تأخر صيانة.\n2) لماذا؟ نقص متابعة.\n3) لماذا؟ جدول غير محدث.\n4) لماذا؟ بدون أتمتة.\n5) السبب الجذري: غياب آلية تنبيه دوري.</p>`;
+    const result = `<p class="communication-draft">**5 Whys (مقترح):**\n1) لماذا حدث؟ تأخر صيانة.\n2) لماذا؟ نقص متابعة.\n3) لماذا؟ جدول غير محدث.\n4) لماذا؟ بدون أتمتة.\n5) السبب الجذري: غياب آلية تنبيه دوري.</p>`;
     setText('aiResultTitle', `نتائج ${title} مكتملة:`);
     setHTML('aiResultContent', result);
   }, 1200);
 };
+
+// ========= REAL AI VISION ANALYSIS (Sprint 6.8) =========
+// Advisory only: renders a suggestion for human review. This code path never
+// saves, assigns, changes status, or closes a report by itself — a manager
+// still makes the real decision downstream through the existing workflow.
+const AI_ANALYZE_TIMEOUT_MS = 20000;
+const AI_ERROR_MESSAGES_AR = {
+  AI_APPLICATION_ORGANIZATION_NOT_ENABLED: 'تحليل الرؤية غير مُفعّل لمؤسستك حالياً (تجربة أولية محدودة النطاق).',
+  AI_OBSERVATION_NOT_FOUND: 'تعذر العثور على الملاحظة.',
+  AI_PRIVATE_IMAGE_REQUIRED: 'لا توجد صورة دليل مرفقة بهذه الملاحظة.',
+  AI_STORAGE_READ_FAILED: 'تعذر قراءة صورة الدليل من التخزين.',
+  AI_TIMEOUT: 'استغرق التحليل وقتاً أطول من المتوقع. حاول مجدداً.',
+  forbidden: 'لا تملك صلاحية تحليل هذه الملاحظة.',
+  unauthenticated: 'الرجاء إعادة تسجيل الدخول.',
+};
+function aiErrorMessageAr(errorCode){
+  return AI_ERROR_MESSAGES_AR[errorCode] || 'تعذر إتمام التحليل. النتيجة غير متاحة حالياً وتتطلب مراجعة ميدانية.';
+}
+function renderAiFailure(title, errorCode){
+  setText('aiResultTitle', `تعذر إتمام ${title}`);
+  setHTML('aiResultContent', errorHTML(aiErrorMessageAr(errorCode)));
+}
+function severityBadgeClass(severity){
+  return { CRITICAL:'bg-red-100 text-red-800', HIGH:'bg-orange-100 text-orange-800', MEDIUM:'bg-yellow-100 text-yellow-800', LOW:'bg-green-100 text-green-800', UNKNOWN:'bg-gray-100 text-gray-700' }[severity] || 'bg-gray-100 text-gray-700';
+}
+function renderVisionResult(title, payload){
+  const analysis = payload.analysis || {};
+  const intelligence = payload.intelligence || {};
+  const confidencePct = Number.isFinite(analysis.confidence) ? Math.round(analysis.confidence * 100) : null;
+  const reasons = Array.isArray(intelligence.prioritySuggestion?.reasonsAr) ? intelligence.prioritySuggestion.reasonsAr : [];
+  setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
+  setHTML('aiResultContent', `
+    <div class="communication-draft p-4 border rounded-lg">
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <span class="px-3 py-1 rounded-full text-xs font-bold ${severityBadgeClass(analysis.severity)}">${escapeHTML(analysis.categoryLabelAr || '-')}</span>
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">الأولوية المقترحة: ${escapeHTML(intelligence.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || '-')}</span>
+        ${confidencePct !== null ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">الثقة: ${confidencePct}%</span>` : ''}
+      </div>
+      <p class="font-bold text-gray-800 mb-2">${escapeHTML(analysis.shortSummaryAr || '-')}</p>
+      <p class="text-sm text-gray-600 mb-3">${escapeHTML(analysis.recommendedActionAr || '')}</p>
+      ${reasons.length ? `<ul class="text-xs text-gray-500 list-disc pr-5 space-y-1 mb-3">${reasons.map(r=>`<li>${escapeHTML(r)}</li>`).join('')}</ul>` : ''}
+      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+        اقتراح استرشادي فقط من الذكاء الاصطناعي (Gemini) — يتطلب مراجعة ميدانية واعتماد المشرف/المدير قبل أي إجراء. لا يتم أي إسناد أو تغيير حالة أو إغلاق تلقائي.
+      </p>
+    </div>`);
+}
+async function runVisionAnalysis(title){
+  const observation = currentSelectedObservation;
+  if (!observation || !observation.docId) { renderAiFailure(title, 'AI_OBSERVATION_NOT_FOUND'); return; }
+  const user = auth.currentUser;
+  if (!user) { renderAiFailure(title, 'unauthenticated'); return; }
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, AI_ANALYZE_TIMEOUT_MS);
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch('/api/ai/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ observationId: String(observation.docId), correlationId: `${observation.docId}-${Date.now()}` }),
+      signal: controller.signal
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload || payload.ok !== true) {
+      renderAiFailure(title, payload?.errorCode);
+      return;
+    }
+    renderVisionResult(title, payload);
+  } catch (error) {
+    renderAiFailure(title, (timedOut || error?.name === 'AbortError') ? 'AI_TIMEOUT' : null);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 window.generateCommunicationDraft = function(){
   setText('aiResultTitle','صياغة أمر العمل الآلي...');

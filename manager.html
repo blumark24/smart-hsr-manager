@@ -606,6 +606,25 @@
           <p id="sowTimelineLabel" class="sow-section-label"><i data-lucide="git-commit-horizontal"></i>دورة حياة البلاغ التنفيذية</p>
           <div class="sow-timeline-card"><div id="sowTimelineBody" class="timeline"></div></div>
         </section>
+        <!-- AI Vision Analysis (Sprint 6.9) — read-only display of the
+             advisory result persisted by api/ai/analyze.js, plus the
+             manager's explicit Approve/Reject control. Hidden whenever the
+             observation has no aiAnalysis (unchanged for every report this
+             sprint didn't touch). -->
+        <section id="sowAiVisionSection" class="hidden" aria-labelledby="sowAiVisionLabel">
+          <p id="sowAiVisionLabel" class="sow-section-label"><i data-lucide="scan-eye"></i>تحليل الذكاء الاصطناعي</p>
+          <div class="sow-note">
+            <div class="sow-insight-row"><span>نوع المشكلة</span><strong id="sowAiCategory">—</strong></div>
+            <div class="sow-insight-row"><span>درجة الثقة</span><strong id="sowAiConfidence">—</strong></div>
+            <div class="sow-insight-row"><span>الأولوية المقترحة</span><strong id="sowAiPriority">—</strong></div>
+            <div class="sow-insight-row"><span>التوصية</span><strong id="sowAiRecommendation">—</strong></div>
+            <p id="sowAiExplanation" class="text-sm text-gray-600 mt-2"></p>
+            <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3">
+              ⚠️ هذا اقتراح آلي ويتطلب اعتماد المسؤول.
+            </p>
+            <div id="sowAiReviewControls" class="flex flex-wrap gap-2 mt-3"></div>
+          </div>
+        </section>
         <section id="sowNoteSection" class="hidden" aria-labelledby="sowNoteLabel">
           <p id="sowNoteLabel" class="sow-section-label"><i data-lucide="message-square-text"></i>المذكرة الختامية</p>
           <div id="sowNoteBody" class="sow-note"></div>
@@ -1423,6 +1442,11 @@ const firebaseConfig = {
             isComparative: !!x.isComparative,
             // Retained so the record's tenant is available for verification.
             organizationId: x.organizationId || null,
+            // Sprint 6.9: persisted Gemini advisory result (api/ai/analyze.js).
+            // Passed through as-is; renderAiVisionSection() hides the section
+            // entirely when this is absent, so every pre-existing report is
+            // unaffected.
+            aiAnalysis: x.aiAnalysis && typeof x.aiAnalysis === 'object' ? x.aiAnalysis : null,
             correctedLat: x.correctedLat,
             correctedLng: x.correctedLng,
             lat, lng
@@ -2072,6 +2096,7 @@ async function showObservationImages(id) {
   document.getElementById('sowInsightBody').innerHTML = sowInsightRows(o);
   document.getElementById('sowAiBody').innerHTML = sowRecommendations(o).map(text => `<div class="sow-ai-item"><i data-lucide="sparkle"></i><span>${escapeHTML(text)}</span></div>`).join('');
   document.getElementById('sowTimelineBody').innerHTML = timelineHTML(o);
+  renderAiVisionSection(o);
 
   const noteSection = document.getElementById('sowNoteSection');
   if (o.resolutionNote) {
@@ -2085,6 +2110,67 @@ async function showObservationImages(id) {
   openModal('modalSmartObservation');
 }
 window.showObservationImages = showObservationImages;
+
+// ===== AI Vision Analysis review (Sprint 6.9) =====
+// Read-only rendering of the advisory result api/ai/analyze.js persists to
+// observation.aiAnalysis (Sprint 6.8's Gemini output — distinct from the
+// heuristic "تحليل Smart HSR" card above, which is unrelated and untouched).
+// The Approve/Reject buttons below call a dedicated server endpoint; this
+// code never writes to Firestore directly and never touches status,
+// assignment, or closure — those remain exactly as they were before this
+// sprint, driven only by cycleStatus/closeTicket/confirmAssign above.
+const AI_PRIORITY_LABELS_AR = { LOW:'منخفضة', NORMAL:'عادية', HIGH:'عالية', URGENT:'عاجلة', UNKNOWN:'غير محددة' };
+const AI_REVIEW_API = '/api/report/ai-review';
+
+function renderAiVisionSection(o) {
+  const section = document.getElementById('sowAiVisionSection');
+  const ai = o && o.aiAnalysis;
+  if (!ai || typeof ai !== 'object') { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  document.getElementById('sowAiCategory').textContent = ai.categoryLabelAr || ai.category || '—';
+  document.getElementById('sowAiConfidence').textContent = Number.isFinite(ai.confidence) ? `${Math.round(ai.confidence * 100)}%` : '—';
+  document.getElementById('sowAiPriority').textContent = AI_PRIORITY_LABELS_AR[ai.prioritySuggestion] || ai.prioritySuggestion || '—';
+  document.getElementById('sowAiRecommendation').textContent = ai.recommendedActionAr || '—';
+  document.getElementById('sowAiExplanation').textContent = ai.explanation || '';
+
+  const controls = document.getElementById('sowAiReviewControls');
+  const id = o.docId || o.id;
+  if (ai.reviewStatus === 'APPROVED') {
+    controls.innerHTML = `<span class="tag bg-green-600 text-white">✅ تم الاعتماد</span>`;
+  } else if (ai.reviewStatus === 'REJECTED') {
+    controls.innerHTML = `<span class="tag bg-red-600 text-white">❌ تم الرفض</span>`;
+  } else if (isManagerMode()) {
+    controls.innerHTML = `
+      <button type="button" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full" onclick="reviewAiAnalysis(decodeURIComponent('${safeActionId(id)}'),'APPROVED')">اعتماد</button>
+      <button type="button" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-full" onclick="reviewAiAnalysis(decodeURIComponent('${safeActionId(id)}'),'REJECTED')">رفض</button>`;
+  } else {
+    controls.innerHTML = `<span class="tag bg-gray-400 text-white">بانتظار اعتماد المدير</span>`;
+  }
+}
+
+async function reviewAiAnalysis(id, decision) {
+  if (!requireManagerMode()) return;
+  const o = observations.find(x => (x.docId || x.id) == id);
+  if (!o || !o.aiAnalysis) return;
+  if (!auth?.currentUser) { alert('انتهت الجلسة. الرجاء تسجيل الدخول من جديد.'); return; }
+  try {
+    const token = await auth.currentUser.getIdToken();
+    const resp = await fetch(AI_REVIEW_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ observationId: String(o.docId || o.id), decision })
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok || data.ok !== true) { showToast('تعذر تنفيذ الإجراء. حاول لاحقًا.'); return; }
+    o.aiAnalysis = { ...o.aiAnalysis, reviewed: true, reviewStatus: decision, reviewedByUid: auth.currentUser.uid };
+    renderAiVisionSection(o);
+    showToast(decision === 'APPROVED' ? '✅ تم اعتماد تحليل الذكاء الاصطناعي' : '✅ تم رفض تحليل الذكاء الاصطناعي');
+  } catch (err) {
+    console.error(err);
+    showToast('تعذر الاتصال بالخادم.');
+  }
+}
+window.reviewAiAnalysis = reviewAiAnalysis;
 
 // ===== CSS لتصميم النافذة =====
 const style = document.createElement("style");
