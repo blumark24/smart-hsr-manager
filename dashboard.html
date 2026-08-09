@@ -630,6 +630,8 @@
     #smartInputModal button,#locationCorrectionDialog button,#personalMapDialog button{min-height:44px}
     #confirmLocationBtn,#retryLocationBtn,#useWeakLocationBtn,#getLocationBtn,#editLocationBtn,#manualLocationBtn,#useMyLocationBtn,#adoptLocationBtn{overflow-wrap:anywhere}
     .location-actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:.5rem}
+    /* Inspector capture is GPS-only. Legacy/manual controls remain inert for compatibility. */
+    #manualAddressBtn,#inspectorManualLocationPanel,#manualLocationBtn,#useWeakLocationBtn,#editLocationBtn,#confirmLocationBtn,#locationCorrectionDialog{display:none!important}
     .inspector-preview-location-row{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;align-items:center}
     .inspector-ai-preview{margin-top:.65rem;padding:.7rem;border:1px solid rgba(15,143,140,.25);border-radius:12px;background:rgba(15,143,140,.06);text-align:right}
     .inspector-ai-preview button{min-height:36px!important}.inspector-ai-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
@@ -3966,15 +3968,18 @@ function renderLocationCandidate(){
   document.getElementById('retryLocationBtn').classList.toggle('hidden',!warningRequired);
   // «تحديد يدوي» لا يظهر إلا عند فشل GPS أو انتهاء المهلة دون عينة صالحة.
   document.getElementById('manualLocationBtn').classList.add('hidden');
-  document.getElementById('useWeakLocationBtn').classList.toggle('hidden',!warningRequired);
-  document.getElementById('editLocationBtn').classList.remove('hidden');
-  document.getElementById('confirmLocationBtn').classList.remove('hidden');
-  document.getElementById('confirmLocationBtn').disabled=!(normalAllowed||locationWarningOverride||locationDragged);
+  document.getElementById('useWeakLocationBtn').classList.add('hidden');
+  document.getElementById('editLocationBtn').classList.add('hidden');
+  document.getElementById('confirmLocationBtn').classList.add('hidden');
+  document.getElementById('confirmLocationBtn').disabled=true;
   const quality=locationCandidate.stable?(locationCandidate.accuracy<=30?accuracyLabel(locationCandidate.accuracy):'ضعيفة'):'غير مستقرة';
   const timeoutText=locationTimedOut?' — انتهت مهلة جمع العينات':'';
   const outsideServiceArea=!candidateWithinServiceArea(locationCandidate);
   const areaText=outsideServiceArea?`؛ الموقع خارج ${cleanDisplayText(organizationMapContext?.serviceArea,'نطاق خدمة المؤسسة',80)}`:'';
-  setText('locationStatus',`دقة GPS الفعلية ±${Math.round(locationCandidate.accuracy)} م — ${quality}${timeoutText}${areaText}${warningRequired?'؛ يلزم إعادة المحاولة أو القبول مع تنبيه':''}`);
+  if(normalAllowed) commitLocationSelection();
+  setText('locationStatus',normalAllowed
+    ?`تم تحديد الموقع تلقائياً عبر GPS — دقة ${quality} (±${Math.round(locationCandidate.accuracy)} م)${areaText}`
+    :`دقة GPS الفعلية ±${Math.round(locationCandidate.accuracy)} م — ${quality}${timeoutText}${areaText}؛ أعد المحاولة للحصول على قراءة موثوقة`);
   setIdentityGpsStatus(`${quality} · ±${Math.round(locationCandidate.accuracy)} م`,true);
   renderLocationCandidateOnMap();
   syncAdoptButton();
@@ -4048,11 +4053,11 @@ function renderLocationRecovery(message){
   const weakAvailable=candidateIsCurrent(locationCandidate);
   const editable=candidateHasCoords(locationCandidate);
   document.getElementById('retryLocationBtn').classList.remove('hidden');
-  document.getElementById('manualLocationBtn').classList.remove('hidden');
-  document.getElementById('useWeakLocationBtn').classList.toggle('hidden',!weakAvailable);
-  document.getElementById('editLocationBtn').classList.toggle('hidden',!editable);
-  document.getElementById('confirmLocationBtn').classList.toggle('hidden',!editable);
-  document.getElementById('confirmLocationBtn').disabled=!(editable&&locationWarningOverride);
+  document.getElementById('manualLocationBtn').classList.add('hidden');
+  document.getElementById('useWeakLocationBtn').classList.add('hidden');
+  document.getElementById('editLocationBtn').classList.add('hidden');
+  document.getElementById('confirmLocationBtn').classList.add('hidden');
+  document.getElementById('confirmLocationBtn').disabled=true;
   setText('locationStatus',message);
   setIdentityGpsStatus('غير متاح',false);
   checkSmartInputState();
@@ -4220,7 +4225,7 @@ function smartInputRequirements(){
   const text = document.getElementById('rawObservationInput').value.trim();
   const hasText = text.length > 0;
   const hasImage = Boolean(currentFile) && ALLOWED_IMAGE_TYPES.has(currentFile.type);
-  const hasLocation = locationConfirmed === true && Boolean(locationCandidate)
+  const hasLocation = locationConfirmed === true && locationVerified === true && locationSource === 'gps' && Boolean(locationCandidate)
     && Number.isFinite(Number(document.getElementById('inputLatitude').value))
     && Number.isFinite(Number(document.getElementById('inputLongitude').value))
     && document.getElementById('inputLatitude').value !== ''
@@ -4494,11 +4499,12 @@ window.openModal = function(id){
     document.getElementById('confirmLocationBtn').disabled = true;
     // فتح النافذة من جديد يبدأ بلاغاً جديداً: لا تبقَ حمولة معلّقة من محاولة سابقة.
     pendingSmartInput = null; smartInputSaveInFlight = false;
-    setIdentityGpsStatus('جاهز عند الطلب',true);
+    setIdentityGpsStatus('جاري التحديد التلقائي',true);
     checkSmartInputState();
     hide('modalResult');
     unhide('modalStep1');
     unhide('modalResultReviewAction');
+    window.getLocation();
   }
 };
 

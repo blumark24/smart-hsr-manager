@@ -303,7 +303,7 @@
 
       <article class="card mt-4" aria-labelledby="workflowTitle">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div><p class="section-label">02 / سير العمل</p><h2 id="workflowTitle" class="text-xl font-black">لوحة تنفيذ البلاغات</h2></div>
+          <div><p class="section-label">02 / Smart Execution Matrix</p><h2 id="workflowTitle" class="text-xl font-black">مصفوفة تنفيذ البلاغات</h2></div>
           <span class="text-xs" style="color:var(--muted)">جميع البطاقات من نطاق المؤسسة الموثّق</span>
         </div>
         <div id="workflowBoard" class="workflow-board" aria-live="polite"></div>
@@ -1585,24 +1585,24 @@ const firebaseConfig = {
         const m = L.marker([point.lat,point.lng], {icon:statusMarkerIcon(L,o.status,{title:o.title})})
 
          .bindPopup(`
-    <div dir="rtl" style="min-width:250px;max-width:310px;font-family:Tajawal;line-height:1.65">
-    <div class="font-extrabold mb-1 text-[15px]">${escapeHTML(o.title || '—')}</div>
-    <div class="text-xs text-gray-600 mb-2">المعرف: ${escapeHTML((o.displayId || o.id) || '—')}</div>
-    <div class="text-xs mb-2"><span class="badge"><span class="dot" style="background:${statusColor(o.status)}"></span>${escapeHTML(statusLabels[o.status] || o.status)}</span></div>
-    <div class="text-xs mb-1">المراقب: ${escapeHTML(userDisplay(o.createdByUid,o.inspector))}</div>
-    <div class="text-xs mb-1">المقاول: ${escapeHTML(contractorDisplay(o))}</div>
-    <div class="text-xs mb-1">الإنشاء: ${escapeHTML(formatTimestamp(o.createdAt))}</div>
-    <div class="text-xs mb-1">آخر تحديث: ${escapeHTML(formatTimestamp(o.updatedAt))}</div>
-    <div class="text-xs mb-1">دليل المعالجة: ${hasEvidenceReference(o.imagePath)&&hasEvidenceReference(o.afterImagePath)?'قبل وبعد':'غير مكتمل'}</div>
-    ${o.resolutionNote?`<div class="text-xs mb-2">ملاحظة المعالجة: ${escapeHTML(o.resolutionNote)}</div>`:''}
-    <div class="flex flex-col gap-2">
-      <button onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-indigo-600 text-white rounded text-xs w-full">📸 عرض الصور</button>
-      <button onclick="openAssign(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-slate-700 text-white rounded text-xs w-full">إسناد مقاول</button>
-      ${isManagerMode() ? `<button onclick="closeTicket(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-green-600 text-white rounded text-xs w-full">✅ إغلاق البلاغ</button>
-      <button onclick="deleteObservation(decodeURIComponent('${safeActionId(o.docId || o.id)}'))" class="px-2 py-1 bg-red-600 text-white rounded text-xs w-full">🗑️ حذف البلاغ</button>` : ''}
-    </div>
-  </div>
-`);
+    <article class="bm-map-card" aria-label="بطاقة البلاغ ${escapeHTML((o.displayId || o.id) || '')}">
+      <div class="bm-map-card__eyebrow">
+        <span>${escapeHTML((o.displayId || o.id) || 'بلاغ بلدي')}</span>
+        <span class="bm-map-card__status" style="--bm-status:${statusColor(o.status)}">${escapeHTML(statusLabels[o.status] || o.status)}</span>
+      </div>
+      <h3>${escapeHTML(o.title || 'بلاغ بدون عنوان')}</h3>
+      <div class="bm-map-card__facts">
+        <div class="bm-map-card__fact"><span>المقاول</span><strong>${escapeHTML(contractorDisplay(o))}</strong></div>
+        <div class="bm-map-card__fact"><span>زمن البلاغ</span><strong>${escapeHTML(elapsedLabel(o))}</strong></div>
+        <div class="bm-map-card__fact"><span>الأدلة</span><strong>${hasEvidenceReference(o.imagePath)&&hasEvidenceReference(o.afterImagePath)?'مكتملة قبل/بعد':'تحتاج استكمال'}</strong></div>
+        <div class="bm-map-card__fact"><span>آخر تحديث</span><strong>${escapeHTML(formatTimestamp(o.updatedAt))}</strong></div>
+      </div>
+      <div class="bm-map-card__actions">
+        <button type="button" class="btn" onclick="openAssign(decodeURIComponent('${safeActionId(o.docId || o.id)}'))">إجراء البلاغ</button>
+        <button type="button" class="btn-soft" onclick="showObservationImages(decodeURIComponent('${safeActionId(o.docId || o.id)}'))">التفاصيل التنفيذية</button>
+      </div>
+    </article>
+`, {maxWidth:300,minWidth:240,className:'bm-map-popup'});
  
 
         
