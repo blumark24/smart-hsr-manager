@@ -3386,6 +3386,22 @@ function renderObservationsList(observations) {
 // full collection — always filtered by the verified inspector's own
 // organizationId. metadata.fromCache snapshots are ignored so a refresh
 // never renders stale/cached data as authoritative.
+// Keep every historical evidence field on the same authenticated read path.
+// imageObjectKey is the canonical private-storage field written by this page;
+// the remaining names preserve records created before that schema settled.
+function firstEvidenceReference(...candidates) {
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+  }
+  return null;
+}
+function normalizeObservationEvidence(data = {}) {
+  return {
+    before: firstEvidenceReference(data.imageObjectKey, data.imagePath, data.imageUrl, data.beforeImagePath),
+    after: firstEvidenceReference(data.afterImagePath, data.afterImageUrl)
+  };
+}
+
 function subscribeObservations() {
   const organizationId = inspectorContext.organizationId;
   if (!organizationId) {
@@ -3418,6 +3434,7 @@ function subscribeObservations() {
       // Defence in depth after the already double-scoped query: a document
       // that does not match both verified values is never admitted to UI state.
       if (data.organizationId !== organizationId || data.createdByUid !== inspectorContext.uid) return;
+      const evidence = normalizeObservationEvidence(data);
       arr.push({
         docId:d.id,
         id: data.displayId || 0,
@@ -3426,18 +3443,16 @@ function subscribeObservations() {
         title:data.title || '',
         status:data.status || 'PENDING',
         details:data.details || '',
-        hasImage: !!(data.imagePath || data.imageUrl || data.beforeImagePath),
+        hasImage: !!evidence.before,
         isComparative: !!data.isComparative,
         location:data.location || '',
         isVideo:false,
-        // Preserve read compatibility with observations created before the
-        // private-storage schema standardized on imagePath.
-        imagePath:data.imagePath || data.imageUrl || data.beforeImagePath || null,
+        imagePath:evidence.before,
         fileMimeType:'image/jpeg',
         actionPlan:data.actionPlan || '',
         riskAssessment:data.riskAssessment || { priority:'Medium', timeframe:'72 hours' },
         resolutionNote:data.resolutionNote || null,
-        afterImagePath:data.afterImagePath || null,
+        afterImagePath:evidence.after,
         organizationId:data.organizationId || null,
         createdByUid:data.createdByUid || null,
         originalLat:data.originalLat,
