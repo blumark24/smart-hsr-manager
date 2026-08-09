@@ -693,7 +693,9 @@
     @media(max-width:760px){
       .modal-content{width:calc(100% - 20px);padding:20px;margin:12px auto;border-radius:20px}
       #smartInputModal h2{font-size:1.55rem;line-height:1.35;padding-inline-end:1.5rem}
-      .input-group-wrapper{gap:.65rem}
+      /* Keep GPS and evidence controls readable after the AI/manual-location additions. */
+      #smartInputModal .input-group-wrapper{flex-direction:column;gap:.65rem}
+      #smartInputModal .input-group{width:100%;flex:0 0 auto}
       .input-group{padding:.8rem!important}
       #processSmartInputBtn{width:100%;font-size:1rem;padding-inline:.75rem}
       .personal-map-card{grid-template-columns:1fr;padding:1.25rem;border-inline-start-width:6px}
@@ -3422,11 +3424,13 @@ function subscribeObservations() {
         title:data.title || '',
         status:data.status || 'PENDING',
         details:data.details || '',
-        hasImage: !!data.imagePath,
+        hasImage: !!(data.imagePath || data.imageUrl || data.beforeImagePath),
         isComparative: !!data.isComparative,
         location:data.location || '',
         isVideo:false,
-        imagePath:data.imagePath || null,
+        // Preserve read compatibility with observations created before the
+        // private-storage schema standardized on imagePath.
+        imagePath:data.imagePath || data.imageUrl || data.beforeImagePath || null,
         fileMimeType:'image/jpeg',
         actionPlan:data.actionPlan || '',
         riskAssessment:data.riskAssessment || { priority:'Medium', timeframe:'72 hours' },
