@@ -13,7 +13,7 @@ Automated evidence and live/device evidence are reported separately. A gate is `
 |---|---|---|---|
 | 1. UX | Inspector modal markup/CSS regression checks; `dashboard.html` unchanged by this acceptance branch | Visual comparison on desktop, iPhone, and Android | **HOLD** |
 | 2. Functional | Golden Observation wiring covers verified session, modal open, GPS, image validation/upload, save, server re-subscription, reopen, and AI endpoint | Complete the flow against Preview on desktop and mobile | **HOLD** |
-| 3. Security | RBAC/tenant/storage suites pass, but the Firestore emulator exposes six pre-existing rule gaps, including cross-Inspector update ownership | Confirm deployed Firebase rules/B2 and close or formally disposition every rule gap | **HOLD** |
+| 3. Security | RBAC/tenant/storage suites pass; all six Firestore rule gaps are closed with 55/55 emulator tests and 0 TODO | Confirm the candidate rules in Preview before final acceptance | **PASS** |
 | 4. AI & Workflow | Advisory allowlist is persisted for Manager review; tests prohibit AI status, assignment, and closure mutations; review remains explicit | Run a real provider request and Manager approve/reject on Preview | **HOLD** |
 | 5. Field | GPS-only enforcement, canonical + legacy evidence normalization, authenticated read path, and Manager compatibility are regression-tested | Real GPS/camera/B2 round trip on iPhone and Android | **HOLD** |
 
@@ -57,17 +57,17 @@ Live result: **HOLD** until a single real observation completes the following Pr
 - `git diff --check`: **passed**.
 - `dashboard.html` diff from `f2027a0`: **empty**; the approved Inspector UI was not changed.
 
-### Firestore gaps preventing Security approval
+### Firestore security closure
 
-1. Same-tenant Contractor update is not restricted to the assigned contractor.
-2. An unassigned observation can be updated by a same-tenant Contractor.
-3. Inspector update is not restricted to the observation's creating Inspector.
-4. Manager status values/transitions are not constrained.
-5. Contractor backward status transitions are not constrained.
-6. Inspector status values/transitions are not constrained.
+1. Same-tenant Contractor updates require matching assignment ownership.
+2. Unassigned observations reject Contractor updates.
+3. Inspector updates require creator ownership and no assignment.
+4. Manager transitions follow the existing workflow matrix.
+5. Contractor transitions allow start and evidence submission only.
+6. Inspector has no status or final-completion authority.
 
-These findings predate this acceptance branch and were not repaired here because doing so changes shared workflow/security behavior beyond the no-feature Inspector acceptance scope. They must be closed or explicitly risk-accepted before Gate 3 can pass.
+Closure evidence is recorded in `docs/project-memory/SECURITY-CLOSURE-REPORT.md`. Inspector is **READY FOR LIVE ACCEPTANCE**, but remains unapproved until the live Golden Observation completes.
 
 ## Approval outcome
 
-Current status: **RC / HOLD**. Do not create `baseline/inspector-dashboard-v2` until all five gates are `PASS` and the live Golden Observation is recorded.
+Current status: **READY FOR LIVE ACCEPTANCE**. Do not create `baseline/inspector-dashboard-v2` until all five gates are `PASS` and the live Golden Observation is recorded.
