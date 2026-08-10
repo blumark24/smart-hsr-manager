@@ -25,7 +25,14 @@ const MAX_KEY_LENGTH = 512;
 const ALLOWED_CONTENT_TYPES = Object.freeze(['image/jpeg', 'image/png', 'image/webp']);
 // Only these fields on an observation may name an object. Anything else is not
 // evidence and must not be readable through this endpoint.
-const EVIDENCE_FIELDS = Object.freeze(['imagePath', 'afterImagePath', 'imageObjectKey']);
+const EVIDENCE_FIELDS = Object.freeze([
+  'imageObjectKey',
+  'imagePath',
+  'imageUrl',
+  'beforeImagePath',
+  'afterImagePath',
+  'afterImageUrl',
+]);
 
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;

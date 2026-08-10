@@ -2063,7 +2063,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   <section class="ref-map-preview" aria-labelledby="refMapPreviewTitle"><div class="ref-card-heading"><h2 id="refMapPreviewTitle">ملاحظاتي في القنفذة</h2><button id="refMapOpenBtn" type="button">عرض الخريطة <i data-lucide="maximize-2"></i></button></div><div id="refMapSurface" class="ref-map-surface"><span class="ref-map-label">القنفذة</span><span class="ref-map-attribution">© OpenStreetMap contributors</span><div class="ref-map-empty">تظهر مواقع ملاحظاتك المؤكدة هنا</div></div></section>
   <section class="ref-latest-card" aria-labelledby="refLatestTitle"><div class="ref-card-heading"><h2 id="refLatestTitle">آخر ملاحظة ميدانية</h2><span id="refLatestTime">—</span></div><div id="refLatestEmpty" class="ref-empty-state">لا توجد ملاحظات مؤكدة لك حتى الآن.</div><div id="refLatestBody" class="ref-latest-body hidden"><div class="ref-latest-copy"><h3 id="refLatestDescription">—</h3><p id="refLatestLocation">—</p><p><span id="refLatestStatus" class="ref-status-pill">—</span><span id="refLatestReference">—</span></p></div><img id="refLatestImage" alt="الصورة الأصلية لآخر ملاحظة" class="hidden"></div></section>
   <section class="ref-lifecycle-card" aria-labelledby="refLifecycleTitle"><h2 id="refLifecycleTitle">دورة حياة الملاحظة</h2><div id="refLifecycleTrack" class="ref-lifecycle-track"><div data-stage="created"><i data-lucide="pencil"></i><span>تم الإنشاء</span><small>—</small></div><div data-stage="received"><i data-lucide="download"></i><span>تم الاستلام</span><small>غير متاح</small></div><div data-stage="progress"><i data-lucide="settings-2"></i><span>قيد المعالجة</span><small>—</small></div><div data-stage="resolved"><i data-lucide="check"></i><span>تم الحل</span><small>غير متاح</small></div><div data-stage="closed"><i data-lucide="lock"></i><span>تم الإغلاق</span><small>غير متاح</small></div></div></section>
-  <details class="ref-ai-card"><summary><span><b>قدرات الذكاء الاصطناعي</b><small>بانتظار الربط الخادمي الآمن</small></span><i data-lucide="chevron-down"></i></summary><p>خارطة قدرات مستقبلية فقط. لا توجد نتائج أو استدعاءات Gemini في هذه الواجهة.</p></details>
+  <details class="ref-ai-card"><summary><span><b>قدرات الذكاء الاصطناعي</b><small>اقتراحات خاضعة للمراجعة البشرية</small></span><i data-lucide="chevron-down"></i></summary><p>التحليل عبر المزود الخادمي المعتمد استرشادي فقط، ولا ينفذ أي إجراء تلقائي.</p></details>
   <footer class="ref-footer">Smart HSR — منصة المراقبة الميدانية الذكية</footer>
 </section>
 
@@ -2237,7 +2237,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
             <h5 class="text-xl font-bold mb-3" style="color:var(--color-navy);">وصف الملاحظة</h5>
             <p id="detailDescription" class="text-gray-700 leading-relaxed"></p>
             <div id="actionPlanContainer" class="mt-4 p-3 bg-teal-50 rounded-lg hidden">
-              <h6 class="font-bold text-teal-700">خطة العمل المقترحة (Gemini AI)</h6>
+              <h6 class="font-bold text-teal-700">خطة العمل المقترحة (AI Advisory)</h6>
               <p id="actionPlan" class="text-sm text-teal-900 mt-1"></p>
             </div>
           </div>
@@ -2272,7 +2272,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
           </div>
 
           <div id="aiAnalysisSection" class="bg-white p-5 rounded-2xl shadow-md border-t-4 border-gray-200">
-            <h5 class="text-xl font-bold mb-4" style="color:var(--color-navy);">أدوات التحليل الذكي (Gemini AI)</h5>
+            <h5 class="text-xl font-bold mb-4" style="color:var(--color-navy);">أدوات التحليل الذكي (AI Advisory)</h5>
             <div class="flex flex-wrap gap-3 no-print">
               <button id="vision-btn" class="ai-button-vision rounded-full px-4 py-2 text-sm font-bold flex items-center" onclick="analyzeImage('vision')">
                 <i data-lucide="eye" class="w-4 h-4 ml-2"></i> تحليل الصور بالرؤية (Vision)
@@ -2347,7 +2347,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
     <div class="mt-12 text-center">
       <button id="kpi-insight-button" class="ai-button-secondary rounded-full px-8 py-3 text-lg font-bold flex items-center justify-center mx-auto" onclick="generateKpiInsights()">
         <i data-lucide="bar-chart-3" class="w-5 h-5 ml-2"></i>
-        ✨ توليد تقرير تنفيذي لملخص اللوحة (Gemini AI)
+        ✨ توليد تقرير تنفيذي لملخص اللوحة (AI Advisory)
       </button>
       <div id="kpi-insight-result" class="mt-6 text-sm"></div>
     </div>
@@ -2360,7 +2360,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
         🧠 الذكاء الاصطناعي في صميم العملية
       </h3>
       <p class="mt-3 text-lg text-gray-600">
-        استفد من نماذج Gemini لتحويل البيانات إلى قرارات قابلة للتنفيذ.
+        استفد من مزود الذكاء الاصطناعي المعتمد لدعم القرار البشري.
       </p>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-7 gap-8 text-center">
@@ -3886,9 +3886,9 @@ document.getElementById('personalLifecycleDialog')?.addEventListener('click',eve
 document.getElementById('personalLifecycleDialog')?.addEventListener('close',()=>{document.documentElement.style.overflow='';lifecycleRenderToken+=1});
 
 // ========= CIVIC SPATIAL CAPTURE & FILE UPLOAD =========
-const GPS_OPTIONS=Object.freeze({enableHighAccuracy:true,maximumAge:0,timeout:20000});
 let inspectorMap=null,locationMarker=null,accuracyCircle=null;
 let locationWatchId=null,locationTimeoutId=null,locationSamples=[],locationCandidate=null,locationConfirmed=false,locationDragged=false;
+let locationRunToken=0,locationAttempt=0;
 let locationWarningOverride=false,locationTimedOut=false;
 let locationVerified=false,locationSource=null;
 let manualLocationMode=false,manualMapClickBound=false;
@@ -3928,6 +3928,7 @@ function normalLocationConfirmationAllowed(){
   return candidateIsCurrent(locationCandidate)&&locationSamples.length>=3&&locationCandidate.stable===true&&locationCandidate.accuracy<=30&&!locationTimedOut&&candidateWithinServiceArea(locationCandidate);
 }
 function stopInspectorGps(){
+  locationRunToken+=1;
   if(locationWatchId!==null)navigator.geolocation?.clearWatch(locationWatchId);
   locationWatchId=null;clearTimeout(locationTimeoutId);locationTimeoutId=null;
   const button=document.getElementById('getLocationBtn');if(button)button.disabled=false;
@@ -4105,27 +4106,73 @@ window.applyInspectorManualLocationPreview=function(draft={}){
   checkSmartInputState();
   return true;
 };
+// GPS-only resilient capture. Each run owns a token so late callbacks from a
+// timed-out/retried watch cannot overwrite a newer fix. A transient failure
+// gets one bounded balanced-accuracy retry; permission denial fails closed and
+// tells the inspector to change the browser permission before retrying.
 window.getLocation=function(){
-  if(!navigator.geolocation){setText('locationStatus','هذا المتصفح لا يدعم تحديد الموقع.');setIdentityGpsStatus('غير مدعوم',false);checkSmartInputState();return}
-  stopInspectorGps();locationSamples=[];locationCandidate=null;locationConfirmed=false;locationDragged=false;locationWarningOverride=false;locationTimedOut=false;
+  if(!navigator.geolocation){
+    setText('locationStatus','هذا المتصفح لا يدعم تحديد الموقع عبر GPS.');
+    setIdentityGpsStatus('غير مدعوم',false);checkSmartInputState();return;
+  }
+  stopInspectorGps();
+  const runToken=++locationRunToken;
+  locationAttempt=0;locationSamples=[];locationCandidate=null;locationConfirmed=false;
+  locationDragged=false;locationWarningOverride=false;locationTimedOut=false;
   locationVerified=false;locationSource=null;manualLocationMode=false;
-  document.getElementById('retryLocationBtn').classList.add('hidden');
-  document.getElementById('manualLocationBtn').classList.add('hidden');
-  document.getElementById('useWeakLocationBtn').classList.add('hidden');
-  document.getElementById('editLocationBtn').classList.add('hidden');
-  document.getElementById('confirmLocationBtn').classList.add('hidden');
-  document.getElementById('confirmLocationBtn').disabled=true;
-  document.getElementById('getLocationBtn').disabled=true;setText('locationStatus','جاري جمع عينات GPS دقيقة...');setIdentityGpsStatus('جارٍ جمع العينات',true);
-  locationWatchId=navigator.geolocation.watchPosition(position=>{
-    if(!validLocationSample(position))return;
-    locationSamples.push({lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy,capturedAt:new Date(position.timestamp||Date.now()).toISOString()});
-    locationSamples=locationSamples.slice(-8);
-    const correction=locationDragged&&locationCandidate?{correctedLat:locationCandidate.correctedLat,correctedLng:locationCandidate.correctedLng}:null;
-    locationCandidate=bestStableSample(locationSamples);
-    if(correction&&Number.isFinite(correction.correctedLat)&&Number.isFinite(correction.correctedLng))Object.assign(locationCandidate,correction);
-    renderLocationCandidate();
-  },()=>{locationTimedOut=true;stopInspectorGps();if(locationCandidate)renderLocationCandidate();else renderLocationRecovery('تعذر تحديد الموقع. أعد المحاولة أو فعّل إذن الموقع من المتصفح.')},GPS_OPTIONS);
-  locationTimeoutId=setTimeout(()=>{locationTimedOut=true;stopInspectorGps();if(locationCandidate)renderLocationCandidate();else renderLocationRecovery('انتهت مهلة GPS دون عينة صالحة. تعذر تحديد الموقع. أعد المحاولة أو فعّل إذن الموقع من المتصفح.')},20000);
+  clearAdoptedLocation();
+  for(const id of ['retryLocationBtn','manualLocationBtn','useWeakLocationBtn','editLocationBtn','confirmLocationBtn'])document.getElementById(id)?.classList.add('hidden');
+  const getButton=document.getElementById('getLocationBtn');if(getButton)getButton.disabled=true;
+
+  const clearRunHandles=()=>{
+    if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);
+    locationWatchId=null;clearTimeout(locationTimeoutId);locationTimeoutId=null;
+  };
+  const recover=(message,status='غير متاح')=>{
+    if(runToken!==locationRunToken)return;
+    clearRunHandles();locationTimedOut=true;
+    renderLocationRecovery(message);setIdentityGpsStatus(status,false);
+    if(getButton)getButton.disabled=false;
+  };
+  const beginAttempt=()=>{
+    if(runToken!==locationRunToken)return;
+    locationAttempt+=1;locationTimedOut=false;clearRunHandles();
+    const finalAttempt=locationAttempt>=2;
+    const options=finalAttempt
+      ?{enableHighAccuracy:false,maximumAge:5000,timeout:18000}
+      :{enableHighAccuracy:true,maximumAge:0,timeout:12000};
+    setText('locationStatus',finalAttempt?'إعادة محاولة GPS بنطاق استقبال أوسع...':'جاري جمع عينات GPS دقيقة...');
+    setIdentityGpsStatus(finalAttempt?'إعادة المحاولة':'جاري جمع العينات',true);
+    const retryOrRecover=message=>{
+      if(runToken!==locationRunToken)return;
+      clearRunHandles();
+      if(!finalAttempt){beginAttempt();return;}
+      recover(message);
+    };
+    locationWatchId=navigator.geolocation.watchPosition(position=>{
+      if(runToken!==locationRunToken||!validLocationSample(position))return;
+      locationSamples.push({lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy,capturedAt:new Date(position.timestamp||Date.now()).toISOString()});
+      locationSamples=locationSamples.slice(-8);locationCandidate=bestStableSample(locationSamples);
+      renderLocationCandidate();
+    },error=>{
+      if(runToken!==locationRunToken)return;
+      if(Number(error?.code)===1){
+        recover('إذن الموقع مرفوض. فعّل Location permission لهذا الموقع من إعدادات المتصفح ثم اضغط إعادة المحاولة.','الإذن مرفوض');
+        return;
+      }
+      retryOrRecover(Number(error?.code)===2
+        ?'إشارة GPS غير متاحة حالياً. انتقل إلى مكان مفتوح ثم أعد المحاولة.'
+        :'انتهت مهلة GPS دون موقع موثوق. أعد المحاولة في مكان مفتوح.');
+    },options);
+    locationTimeoutId=setTimeout(()=>retryOrRecover('انتهت مهلة GPS دون موقع موثوق. أعد المحاولة في مكان مفتوح.'),options.timeout+500);
+  };
+  Promise.resolve(navigator.permissions?.query?navigator.permissions.query({name:'geolocation'}):null)
+    .then(permission=>{
+      if(runToken!==locationRunToken)return;
+      if(permission?.state==='denied')recover('إذن الموقع مرفوض. فعّل Location permission لهذا الموقع من إعدادات المتصفح ثم اضغط إعادة المحاولة.','الإذن مرفوض');
+      else beginAttempt();
+    })
+    .catch(()=>beginAttempt());
 };
 document.getElementById('retryLocationBtn')?.addEventListener('click',()=>window.getLocation());
 document.getElementById('manualLocationBtn')?.addEventListener('click',()=>{
@@ -4726,7 +4773,7 @@ function renderVisionResult(title, payload){
       <p class="text-sm text-gray-600 mb-3">${escapeHTML(analysis.recommendedActionAr || '')}</p>
       ${reasons.length ? `<ul class="text-xs text-gray-500 list-disc pr-5 space-y-1 mb-3">${reasons.map(r=>`<li>${escapeHTML(r)}</li>`).join('')}</ul>` : ''}
       <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
-        اقتراح استرشادي فقط من الذكاء الاصطناعي (Gemini) — يتطلب مراجعة ميدانية واعتماد المشرف/المدير قبل أي إجراء. لا يتم أي إسناد أو تغيير حالة أو إغلاق تلقائي.
+        اقتراح استرشادي فقط من مزود الذكاء الاصطناعي المعتمد — يتطلب مراجعة بشرية صريحة قبل أي إجراء. لا يتم الحفظ أو الإسناد أو تغيير الحالة أو الإغلاق تلقائياً.
       </p>
     </div>`);
 }

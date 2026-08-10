@@ -200,7 +200,14 @@ async function handler(req, res) {
     return fail(res, 403, 'forbidden', 'not_report_owner');
   }
 
-  const imageReference = typeof observation.imagePath === 'string' ? observation.imagePath.trim() : '';
+  // Follow the same canonical + legacy evidence order used by Inspector and
+  // the authenticated storage reader. Private B2 bytes remain server-side.
+  const imageReference = [
+    observation.imageObjectKey,
+    observation.imagePath,
+    observation.imageUrl,
+    observation.beforeImagePath,
+  ].find(value => typeof value === 'string' && value.trim())?.trim() || '';
   if (!imageReference) return fail(res, 400, 'AI_PRIVATE_IMAGE_REQUIRED', 'Observation has no evidence image to analyze.');
 
   const storageDecision = evaluateAIStorageInput({ organizationId: caller.organizationId, observationId, imageReference });
@@ -266,25 +273,13 @@ async function handler(req, res) {
     return fail(res, 200, intelligenceResult.errorCode, intelligenceResult.reason);
   }
 
-  // Persist for manager review (Sprint 6.9). Best-effort: a persistence
-  // failure does not invalidate an already-valid advisory result, so the
-  // inspector still sees it — but the response says so honestly via
-  // `persisted`, rather than silently pretending the manager will see it.
-  let persisted = false;
-  try {
-    await db.collection('observations').doc(observationId).update({
-      aiAnalysis: buildPersistedAiAnalysis(analysis, intelligenceResult.intelligence),
-    });
-    persisted = true;
-  } catch (error) {
-    console.error('ai analyze: aiAnalysis persistence failed', { name: (error && error.name) || 'unknown_error' });
-  }
-
+  // Inspector analysis is display-only. Saving an AI review must be a
+  // separate, explicit human action and is never coupled to provider success.
   return sendJson(res, 200, {
     ok: true,
     advisoryOnly: true,
     requiresExplicitHumanAction: true,
-    persisted,
+    persisted: false,
     inspectorOptions: routed.inspectorOptions,
     automation: routed.automation,
     analysis,
