@@ -15,7 +15,26 @@
 // restricts them to supervisors/inspectors/contractors of their OWN
 // organizationId only. Supervisors never receive account-management access.
 // ============================================================================
-const { getAuth, getDb } = require('./firebaseAdmin');
+const { getAuth, getDb, getProjectId } = require('./firebaseAdmin');
+
+const AUTH_CODES = Object.freeze({ HEADER_MISSING: 'AUTH_HEADER_MISSING', TOKEN_INVALID: 'AUTH_TOKEN_INVALID', TOKEN_EXPIRED: 'AUTH_TOKEN_EXPIRED', PROJECT_MISMATCH: 'AUTH_PROJECT_MISMATCH' });
+
+function authError(code) {
+  const error = new Error(code);
+  error.code = code;
+  error.statusCode = 401;
+  return error;
+}
+
+function tokenProject(token) {
+  try {
+    const payload = JSON.parse(Buffer.from(String(token).split('.')[1] || '', 'base64url').toString('utf8'));
+    const audience = typeof payload.aud === 'string' ? payload.aud : '';
+    const prefix = 'https://securetoken.google.com/';
+    const issuerProject = typeof payload.iss === 'string' && payload.iss.startsWith(prefix) ? payload.iss.slice(prefix.length) : '';
+    return audience && audience === issuerProject ? audience : '';
+  } catch (_) { return ''; }
+}
 
 // Roles this API is ever allowed to create/manage. 'owner' is intentionally
 // excluded — the API must never create or manage owners or escalate to owner.
@@ -43,16 +62,16 @@ async function verifyRequestToken(req) {
   const header = (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
   const m = /^Bearer\s+(.+)$/i.exec(String(header).trim());
   if (!m) {
-    const err = new Error('missing_bearer_token');
-    err.statusCode = 401;
-    throw err;
+    throw authError(AUTH_CODES.HEADER_MISSING);
   }
+  const project = tokenProject(m[1]);
+  if (!project) throw authError(AUTH_CODES.TOKEN_INVALID);
+  if (project !== getProjectId()) throw authError(AUTH_CODES.PROJECT_MISMATCH);
   try {
     return await getAuth().verifyIdToken(m[1], true);
   } catch (e) {
-    const err = new Error('invalid_or_revoked_token');
-    err.statusCode = 401;
-    throw err;
+    if (e && e.code === 'auth/id-token-expired') throw authError(AUTH_CODES.TOKEN_EXPIRED);
+    throw authError(AUTH_CODES.TOKEN_INVALID);
   }
 }
 
@@ -112,4 +131,6 @@ module.exports = {
   verifyRequestToken,
   getCallerContext,
   assertCanManage,
+  AUTH_CODES,
+  tokenProject,
 };

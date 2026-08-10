@@ -3277,7 +3277,7 @@ async function resolveEvidenceReference(reference) {
       uid:auth.currentUser?.uid,
       organizationId:inspectorContext.organizationId,
       role:'inspector',
-      getIdToken:forceRefresh=>auth.currentUser?.getIdToken(forceRefresh)
+      authUser:auth.currentUser
     }
   });
   const url=result.available?result.url:'';

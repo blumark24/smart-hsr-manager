@@ -38,15 +38,13 @@ test('refresh failure returns explicit reauthentication requirement without a re
   assert.equal(requestCalls, 1);
 });
 
-test('a second 401 is returned after one refresh and is never looped', async () => {
-  const { fetchWithFirebaseAuth } = await modulePromise;
+test('a second 401 fails closed after exactly two requests and is never looped', async () => {
+  const { fetchWithFirebaseAuth, REAUTHENTICATION_REQUIRED } = await modulePromise;
   let requests = 0;
-  const response = await fetchWithFirebaseAuth({
+  await assert.rejects(fetchWithFirebaseAuth({
     getIdToken: async force => force ? 'fresh' : 'initial',
     input: '/secure',
     fetchImpl: async () => { requests += 1; return { status: 401 }; },
-  });
-  assert.equal(response.status, 401);
+  }), error => error.code === REAUTHENTICATION_REQUIRED);
   assert.equal(requests, 2);
 });
-

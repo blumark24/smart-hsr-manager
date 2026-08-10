@@ -140,19 +140,19 @@ async function handler(req, res) {
   try {
     decoded = await verifyRequestToken(req);
   } catch (error) {
-    return sendJson(res, error.statusCode || 401, { error: 'unauthenticated' });
+    return sendJson(res, error.statusCode || 401, { error: error.code || 'AUTH_TOKEN_INVALID' });
   }
 
   const db = getDb();
   const viewer = await resolveViewerContext(db, decoded.uid);
-  if (!viewer) return sendJson(res, 403, { error: 'forbidden', reason: 'no_active_organization_role' });
+  if (!viewer) return sendJson(res, 403, { error: 'AUTH_ORGANIZATION_DENIED' });
 
   const key = safeObjectKey(requestedKey(req));
-  if (!key) return sendJson(res, 400, { error: 'invalid_key' });
+  if (!key) return sendJson(res, 404, { error: 'EVIDENCE_NOT_FOUND' });
 
   const contentType = extensionContentType(key);
   if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {
-    return sendJson(res, 415, { error: 'unsupported_image_type' });
+    return sendJson(res, 404, { error: 'EVIDENCE_NOT_FOUND' });
   }
 
   let allowed = false;
@@ -160,14 +160,14 @@ async function handler(req, res) {
     allowed = await keyBelongsToOrganization(db, key, viewer.organizationId);
   } catch (error) {
     console.error('storage read: ownership check failed', { name: (error && error.name) || 'unknown' });
-    return sendJson(res, 500, { error: 'read_failed' });
+    return sendJson(res, 502, { error: 'B2_READ_FAILED' });
   }
   // Same response for "not yours" and "does not exist": callers must not be
   // able to probe which keys exist in another organization.
-  if (!allowed) return sendJson(res, 403, { error: 'forbidden', reason: 'object_not_in_organization' });
+  if (!allowed) return sendJson(res, 403, { error: 'AUTH_ORGANIZATION_DENIED' });
 
   const config = b2Configuration();
-  if (!config) return sendJson(res, 503, { error: 'storage_not_configured' });
+  if (!config) return sendJson(res, 502, { error: 'B2_READ_FAILED' });
 
   try {
     const { GetObjectCommand } = require('@aws-sdk/client-s3');
@@ -188,9 +188,9 @@ async function handler(req, res) {
     console.error('storage read failed', safe);
     if (res.headersSent) { try { res.destroy(); } catch (_) {} return; }
     if (safe.name === 'NoSuchKey' || safe.status === 404) {
-      return sendJson(res, 404, { error: 'object_not_found' });
+      return sendJson(res, 404, { error: 'EVIDENCE_NOT_FOUND' });
     }
-    return sendJson(res, 502, { error: 'storage_read_failed' });
+    return sendJson(res, 502, { error: 'B2_READ_FAILED' });
   }
 }
 

@@ -23,6 +23,7 @@ export async function fetchWithFirebaseAuth({ getIdToken, input, init = {}, fetc
 
   const first = await execute(false);
   if (first.status !== 401) return first;
-  return execute(true); // exactly one refresh and one retry; never loops
+  const retry = await execute(true); // exactly one refresh and one retry; never loops
+  if (retry.status === 401) throw reauthenticationError();
+  return retry;
 }
-

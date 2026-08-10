@@ -1508,7 +1508,7 @@ const firebaseConfig = {
           uid:auth?.currentUser?.uid,
           organizationId:managerContext.organizationId,
           role:managerContext.role,
-          getIdToken:()=>auth?.currentUser?.getIdToken()
+          authUser:auth?.currentUser
         }
       });
       const url=result.available?result.url:'';
