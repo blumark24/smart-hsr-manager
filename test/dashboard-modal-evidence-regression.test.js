@@ -51,7 +51,8 @@ test('legacy evidence records normalize to the same secure read flow', () => {
 });
 
 test('private evidence resolution still uses an authenticated token', () => {
-  assert.match(dashboard, /getIdToken:\(\)=>auth\.currentUser\?\.getIdToken\(\)/);
+  assert.match(dashboard, /getIdToken:forceRefresh=>auth\.currentUser\?\.getIdToken\(forceRefresh\)/);
+  assert.match(dashboard, /fetchWithFirebaseAuth/);
   assert.match(dashboard, /resolveObservationImage\(\{/);
 });
 

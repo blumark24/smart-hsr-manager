@@ -102,7 +102,12 @@ function normalizedPrefix(value) {
   return normalizedPrefixSegments(value).join('/');
 }
 
-function buildObjectKey({ prefix, organizationId, scope, extension, now = new Date(), uuid = crypto.randomUUID() }) {
+function buildObjectKey({ prefix, organizationId, observationId, scope, extension, now = new Date(), uuid = crypto.randomUUID() }) {
+  const observation = typeof observationId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(observationId.trim())
+    ? observationId.trim() : '';
+  if (observation) {
+    return `organizations/${organizationId}/observations/${observation}/${scope}/${uuid}.${extension}`;
+  }
   const year = String(now.getUTCFullYear());
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
   // The tail is authoritative and is never rewritten: organizationId, scope,
@@ -262,6 +267,7 @@ async function handler(req, res) {
   const objectKey = buildObjectKey({
     prefix: config.prefix,
     organizationId: caller.organizationId,
+    observationId: typeof body.observationId === 'string' ? body.observationId : '',
     scope: safeScope(body.scope),
     extension,
   });

@@ -29,7 +29,7 @@ test('every supported Firestore evidence field is authorized through the same te
   assert.deepEqual([...storageRead.EVIDENCE_FIELDS], [
     'imageObjectKey', 'imagePath', 'imageUrl', 'beforeImagePath', 'afterImagePath', 'afterImageUrl'
   ]);
-  assert.match(storageAdapter, /Authorization: `Bearer \$\{idToken\}`/);
+  assert.match(storageAdapter, /fetchWithFirebaseAuth/);
   assert.match(storageAdapter, /\/api\/storage\/read\?key=/);
   assert.match(storageAdapter, /URL\.createObjectURL\(blob\)/);
 });
@@ -42,15 +42,24 @@ test('AI analysis resolves canonical then legacy before-evidence fields', () => 
   assert.ok(canonical > -1 && canonical < pathField && pathField < urlField && urlField < beforeField);
 });
 
+test('image-first draft analysis is review-only and precedes explicit save', () => {
+  const analyzeAt = dashboard.indexOf('aiDraft = await analyzeSmartCaptureDraft');
+  const reviewAt = dashboard.indexOf('renderSmartCaptureDraft(aiDraft)', analyzeAt);
+  const saveAt = dashboard.indexOf('pendingSmartInput = { payload, nextDisplayId, clientRequestId }', reviewAt);
+  assert.ok(analyzeAt > -1 && analyzeAt < reviewAt && reviewAt < saveAt);
+  assert.match(dashboard, /draftImageObjectKey:imageObjectKey/);
+  assert.match(dashboard, /requiresHumanReview:true,reviewed:false,reviewStatus:'PENDING'/);
+});
+
 test('Inspector AI is provider-neutral, authenticated, advisory-only, and persists no workflow mutation', () => {
-  assert.match(dashboard, /fetch\('\/api\/ai\/analyze'/);
-  assert.match(dashboard, /Authorization': `Bearer \$\{token\}`/);
+  assert.match(dashboard, /input:'\/api\/ai\/analyze'/);
+  assert.match(dashboard, /getIdToken:forceRefresh=>user\.getIdToken\(forceRefresh\)/);
   assert.match(dashboard, /AI Advisory/);
   assert.doesNotMatch(dashboard.slice(dashboard.indexOf('async function runVisionAnalysis'), dashboard.indexOf('window.generateCommunicationDraft')), /setDoc\(|updateDoc\(|ASSIGN|UPDATE_STATUS|CLOSE_OBSERVATION/);
   assert.match(aiApi, /advisoryOnly: true/);
   assert.match(aiApi, /requiresExplicitHumanAction: true/);
   assert.match(aiApi, /automation: routed\.automation/);
-  assert.match(aiApi, /persisted: true/);
+  assert.match(aiApi, /persisted: !draftMode/);
   assert.match(aiApi, /observationSnap\.ref\.update\(\{ aiAnalysis: persistedAiAnalysis \}\)/);
   const responsePath = aiApi.slice(aiApi.indexOf('const routed = await'), aiApi.indexOf('module.exports'));
   assert.doesNotMatch(responsePath, /(?:status|assignedContractorUid|assignedAt|closedAt)\s*:/);

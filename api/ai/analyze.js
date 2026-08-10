@@ -181,14 +181,26 @@ async function handler(req, res) {
     return fail(res, 403, 'AI_APPLICATION_ORGANIZATION_NOT_ENABLED', 'AI vision analysis is not yet enabled for this organization.');
   }
 
-  let observationSnap;
-  try {
-    observationSnap = await db.collection('observations').doc(observationId).get();
-  } catch (error) {
-    return fail(res, 500, 'AI_OBSERVATION_LOOKUP_FAILED', 'Could not read the observation record.');
+  const draftImageObjectKey = typeof body.draftImageObjectKey === 'string' ? body.draftImageObjectKey.trim() : '';
+  const draftMode = Boolean(draftImageObjectKey);
+  let observationSnap = null;
+  let observation;
+  if (draftMode) {
+    observation = {
+      organizationId: caller.organizationId,
+      createdByUid: caller.uid,
+      imageObjectKey: draftImageObjectKey,
+      details: typeof body.existingDescription === 'string' ? body.existingDescription.slice(0, 2000) : '',
+    };
+  } else {
+    try {
+      observationSnap = await db.collection('observations').doc(observationId).get();
+    } catch (error) {
+      return fail(res, 500, 'AI_OBSERVATION_LOOKUP_FAILED', 'Could not read the observation record.');
+    }
+    if (!observationSnap.exists) return fail(res, 404, 'AI_OBSERVATION_NOT_FOUND', 'Observation was not found.');
+    observation = observationSnap.data() || {};
   }
-  if (!observationSnap.exists) return fail(res, 404, 'AI_OBSERVATION_NOT_FOUND', 'Observation was not found.');
-  const observation = observationSnap.data() || {};
 
   // The organization used for every downstream check is the SERVER record on
   // the observation itself — never a client-supplied value.
@@ -278,18 +290,21 @@ async function handler(req, res) {
   // any other workflow field; the review decision remains a separate explicit
   // human action through /api/report/ai-review.
   const persistedAiAnalysis = buildPersistedAiAnalysis(analysis, intelligenceResult.intelligence);
-  try {
-    await observationSnap.ref.update({ aiAnalysis: persistedAiAnalysis });
-  } catch (error) {
-    console.error('ai analyze: advisory persistence failed', { name: error?.name || 'unknown' });
-    return fail(res, 500, 'AI_ADVISORY_PERSIST_FAILED', 'Could not make the advisory result available for human review.');
+  if (!draftMode) {
+    try {
+      await observationSnap.ref.update({ aiAnalysis: persistedAiAnalysis });
+    } catch (error) {
+      console.error('ai analyze: advisory persistence failed', { name: error?.name || 'unknown' });
+      return fail(res, 500, 'AI_ADVISORY_PERSIST_FAILED', 'Could not make the advisory result available for human review.');
+    }
   }
 
   return sendJson(res, 200, {
     ok: true,
     advisoryOnly: true,
     requiresExplicitHumanAction: true,
-    persisted: true,
+    persisted: !draftMode,
+    draft: draftMode,
     inspectorOptions: routed.inspectorOptions,
     automation: routed.automation,
     analysis,

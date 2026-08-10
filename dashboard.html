@@ -2543,9 +2543,9 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
 
     <div id="modalStep1">
       <p class="text-lg text-gray-600 mb-4">
-        الخطوة 1: أدخل تفاصيل الملاحظة (النص، الموقع، الصورة)
+        أرفق الصورة وثبّت GPS. الوصف اختياري ويمكن للذكاء الاصطناعي اقتراح مسودة قابلة للتعديل.
       </p>
-      <textarea id="rawObservationInput" rows="5" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-[--color-teal] focus:border-[--color-teal] text-gray-700 shadow-sm" placeholder="مثال: يوجد تجمع للمياه على طريق الخدمة عند الكيلو 52..." oninput="checkSmartInputState()"></textarea>
+      <textarea id="rawObservationInput" rows="5" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-[--color-teal] focus:border-[--color-teal] text-gray-700 shadow-sm" placeholder="وصف اختياري — اتركه فارغًا ليقترح AI مسودة من الصورة" oninput="checkSmartInputState()"></textarea>
 
       <section id="inspectorAiPreviewRoot" class="inspector-ai-preview hidden" aria-live="polite" aria-label="اقتراحات التحليل الذكي التجريبية">
         <p id="inspectorAiWarning" class="hidden text-sm font-bold text-amber-700"></p>
@@ -2604,14 +2604,14 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
 
       <div class="mt-6 text-center">
         <button id="processSmartInputBtn" class="ai-button-vision rounded-full px-8 py-3 text-lg font-bold flex items-center justify-center mx-auto" onclick="processSmartInput()" disabled>
-          <i data-lucide="cpu" class="w-5 h-5 ml-2"></i> بدء التحليل الذكي وتوليد التقرير
+          <i data-lucide="camera" class="w-5 h-5 ml-2"></i> تحليل الصورة وإنشاء مسودة
         </button>
         <p id="smartInputBlockReason" class="text-sm font-semibold text-gray-500 mt-2 hidden" aria-live="polite"></p>
       </div>
     </div>
 
     <div id="modalResult" class="mt-8 pt-6 border-t border-gray-200 hidden">
-      <h3 class="text-2xl font-bold mb-4" style="color:var(--color-teal);">الخطوة 2: معالجة البيانات</h3>
+      <h3 class="text-2xl font-bold mb-4" style="color:var(--color-teal);">حفظ الملاحظة</h3>
       <div id="modalResultContent"></div>
       <div id="modalResultReviewAction" class="mt-6 text-center">
         <button class="ai-button-primary rounded-full px-6 py-2 text-md font-bold" onclick="closeModal('smartInputModal')">
@@ -2823,6 +2823,7 @@ import {
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls, isLocalDemoReference, isServerObjectKey } from './storage-adapter.js';
+import { fetchWithFirebaseAuth, REAUTHENTICATION_REQUIRED } from './firebase-auth-fetch.js';
 import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
 
 const firebaseConfig = {
@@ -3212,17 +3213,20 @@ async function uploadImageToPlatformStorage(file, folder = 'HSR', observationId 
     scope: UPLOAD_SCOPE_BY_FOLDER[folder] || 'before',
     observationId: observationId == null ? null : String(observationId)
   });
-  const token = await user.getIdToken();
   const controller = new AbortController();
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, IMAGE_UPLOAD_TIMEOUT_MS);
   let response;
   try {
-    response = await fetch('/api/storage/upload', {
+    response = await fetchWithFirebaseAuth({
+      getIdToken: forceRefresh => user.getIdToken(forceRefresh),
+      input: '/api/storage/upload',
+      init: {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
       body,
       signal: controller.signal
+      }
     });
   } catch (error) {
     // قطع المهلة يُميَّز عن انقطاع الشبكة، وكلاهما بلا أي تفصيل تقني للمستخدم.
@@ -3273,13 +3277,14 @@ async function resolveEvidenceReference(reference) {
       uid:auth.currentUser?.uid,
       organizationId:inspectorContext.organizationId,
       role:'inspector',
-      getIdToken:()=>auth.currentUser?.getIdToken()
+      getIdToken:forceRefresh=>auth.currentUser?.getIdToken(forceRefresh)
     }
   });
   const url=result.available?result.url:'';
   if(url) failedEvidence.delete(String(reference));
   else if(isServerObjectKey(reference)||isLocalDemoReference(reference)){
     failedEvidence.add(String(reference));
+    if(result.reason===REAUTHENTICATION_REQUIRED)showToast('تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى لعرض الصورة.');
     console.warn('تعذر تحميل صورة الملاحظة', result.reason||'unknown');
   }
   return url;
@@ -3893,7 +3898,7 @@ let locationWarningOverride=false,locationTimedOut=false;
 let locationVerified=false,locationSource=null;
 let manualLocationMode=false,manualMapClickBound=false;
 // حمولة بانتظار تأكيد الخادم + قفل يمنع النقر المكرر على «إعادة محاولة الحفظ».
-let pendingSmartInput=null,smartInputSaveInFlight=false;
+let pendingSmartInput=null,pendingSmartCapture=null,smartInputSaveInFlight=false;
 
 function accuracyLabel(m){return m<=10?'ممتازة':m<=20?'جيدة':m<=30?'مقبولة':'ضعيفة'}
 function validLocationSample(position,now=Date.now()){
@@ -4293,7 +4298,6 @@ function smartInputRequirements(){
     && document.getElementById('inputLatitude').value !== ''
     && document.getElementById('inputLongitude').value !== '';
   const missing = [];
-  if(!hasText) missing.push({key:'text', message:'أدخل وصف الملاحظة.', clause:'أدخل وصف الملاحظة'});
   if(!hasImage) missing.push({key:'image', message:'أرفق صورة الملاحظة.', clause:'أرفق صورة الملاحظة'});
   if(!hasLocation) missing.push({key:'location', message:'ثبّت موقع الملاحظة.', clause:'ثبّت موقع الملاحظة'});
   return {text, hasText, hasImage, hasLocation, missing, ready: missing.length === 0};
@@ -4328,9 +4332,49 @@ window.handleFileUpload = function(e){
     return;
   }
   currentFile = file;
+  pendingSmartCapture = null;
+  const draftRoot=document.getElementById('inspectorAiPreviewRoot');if(draftRoot){draftRoot.replaceChildren();draftRoot.classList.add('hidden')}
+  const processButton=document.getElementById('processSmartInputBtn');if(processButton)processButton.innerHTML='<i data-lucide="camera" class="w-5 h-5 ml-2"></i> تحليل الصورة وإنشاء مسودة';
   setText('fileStatus', `تم اختيار الملف: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`);
   checkSmartInputState();
 };
+
+async function analyzeSmartCaptureDraft({observationId,imageObjectKey,existingDescription}){
+  const user=auth.currentUser;
+  if(!user)throw Object.assign(new Error(REAUTHENTICATION_REQUIRED),{code:REAUTHENTICATION_REQUIRED});
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),AI_ANALYZE_TIMEOUT_MS);
+  try{
+    const response=await fetchWithFirebaseAuth({
+      getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+      input:'/api/ai/analyze',
+      init:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        observationId,draftImageObjectKey:imageObjectKey,existingDescription,
+        correlationId:`${observationId}-${Date.now()}`
+      }),signal:controller.signal}
+    });
+    const payload=await response.json().catch(()=>null);
+    if(!response.ok||payload?.ok!==true)throw Object.assign(new Error(payload?.errorCode||`ai-http-${response.status}`),{code:payload?.errorCode||`ai-http-${response.status}`});
+    return payload;
+  }finally{clearTimeout(timer)}
+}
+function renderSmartCaptureDraft(payload){
+  const analysis=payload?.analysis||{},intelligence=payload?.intelligence||{};
+  const suggestion=analysis.shortSummaryAr||'';
+  if(!document.getElementById('rawObservationInput').value.trim()&&suggestion)document.getElementById('rawObservationInput').value=suggestion;
+  const root=document.getElementById('inspectorAiPreviewRoot');
+  root?.classList.remove('hidden');
+  if(root)setHTML('inspectorAiPreviewRoot',`<div class="p-4 border rounded-xl bg-teal-50">
+    <p class="font-bold text-teal-900 mb-2">مسودة AI للمراجعة والتعديل قبل الحفظ</p>
+    <p class="text-sm"><b>التصنيف:</b> ${escapeHTML(analysis.categoryLabelAr||analysis.categoryCode||'-')}</p>
+    <p class="text-sm"><b>الشدة:</b> ${escapeHTML(analysis.severity||'-')} · <b>الأولوية:</b> ${escapeHTML(intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion||'-')}</p>
+    <p class="text-sm"><b>الإجراء المقترح:</b> ${escapeHTML(analysis.recommendedActionAr||'-')}</p>
+    <p class="text-xs font-bold text-amber-700 mt-2">اقتراح استرشادي فقط. راجع الوصف وعدله، ثم احفظ الملاحظة صراحةً.</p>
+  </div>`);
+  const button=document.getElementById('processSmartInputBtn');
+  if(button)button.innerHTML='<i data-lucide="save" class="w-5 h-5 ml-2"></i> حفظ الملاحظة بعد المراجعة';
+  checkSmartInputState();lucide.createIcons();
+}
 
 // ========= SMART INPUT PROCESSING =========
 window.processSmartInput = async function(){
@@ -4366,13 +4410,25 @@ window.processSmartInput = async function(){
   try {
     // الصورة تُرفع أولاً وبشكل حاسم: أي فشل هنا يوقف كل ما بعده.
     // لا payload، ولا كتابة في Firestore، ولا تقرير، ولا مسح للمدخلات.
-    let uploadedUrl = null;
-    try {
-      const compressedFile = await compressImage(currentFile);
-      uploadedUrl = await uploadImageToStorage(compressedFile, "HSR/before");
-    } catch (uploadError) {
-      console.error('image upload failed', uploadError);
-      showUploadFailure(uploadFailureMessage(uploadError));
+    const clientRequestId = pendingSmartCapture?.clientRequestId || newClientRequestId();
+    let uploadedUrl = pendingSmartCapture?.uploadedUrl || null;
+    let aiDraft = pendingSmartCapture?.aiDraft || null;
+    if(!pendingSmartCapture){
+      try {
+        const compressedFile = await compressImage(currentFile);
+        uploadedUrl = await uploadImageToStorage(compressedFile, "HSR/before",clientRequestId);
+        aiDraft = await analyzeSmartCaptureDraft({observationId:clientRequestId,imageObjectKey:uploadedUrl,existingDescription:rawText});
+      } catch (uploadError) {
+        if(uploadError?.code===REAUTHENTICATION_REQUIRED){
+          showUploadFailure('تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى ثم أعد المحاولة.');
+        }else{
+          console.error('smart capture failed',{name:uploadError?.name||'Error',code:uploadError?.code||null});
+          showUploadFailure(uploadFailureMessage(uploadError));
+        }
+        return;
+      }
+      pendingSmartCapture={clientRequestId,uploadedUrl,aiDraft};
+      hide('modalResult');unhide('modalStep1');renderSmartCaptureDraft(aiDraft);
       return;
     }
     // مرجع صورة فارغ يعني بلاغاً بلا دليل — يُعامل معاملة الفشل.
@@ -4399,6 +4455,13 @@ window.processSmartInput = async function(){
       isComparative: false,
       actionPlan: "إصلاح فوري لأضرار الطريق عبر رقعة الإسفلت (Patching).",
       riskAssessment: { priority:"High", timeframe:"48 hours" },
+      aiAnalysis: aiDraft?.analysis ? {
+        provider:aiDraft.analysis.provider||'unknown',category:aiDraft.analysis.categoryCode||null,
+        categoryLabelAr:aiDraft.analysis.categoryLabelAr||null,confidence:Number.isFinite(aiDraft.analysis.confidence)?aiDraft.analysis.confidence:null,
+        severity:aiDraft.analysis.severity||'UNKNOWN',prioritySuggestion:aiDraft.intelligence?.prioritySuggestion?.prioritySuggestion||aiDraft.analysis.prioritySuggestion||'UNKNOWN',
+        explanation:document.getElementById('rawObservationInput').value.trim()||aiDraft.analysis.shortSummaryAr||null,
+        recommendedActionAr:aiDraft.analysis.recommendedActionAr||null,requiresHumanReview:true,reviewed:false,reviewStatus:'PENDING'
+      }:null,
       location: `${lat}, ${lon}`,
       resolutionNote: null,
       afterImagePath: null,
@@ -4420,7 +4483,6 @@ window.processSmartInput = async function(){
     // إرسال سابق في الجلسة نفسها فيُعاد استخدام معرّفها: الكتابة السابقة قد
     // تكون وصلت متأخرة، ومعرّف ثابت يجعل هذا الإرسال كتابةً على المستند نفسه
     // بدل إنشاء بلاغ ثانٍ. معرّف جديد يبدأ فقط من openModal.
-    const clientRequestId = pendingSmartInput?.clientRequestId || newClientRequestId();
     pendingSmartInput = { payload, nextDisplayId, clientRequestId };
     await commitPendingSmartInput();
 
@@ -4488,6 +4550,7 @@ async function commitPendingSmartInput(){
 // نجاح مؤكد من الخادم: setDoc لا تُحلّ إلا بعد إقرار الخادم بالكتابة.
 function finishSmartInputSuccess(docId, payload, nextDisplayId){
   pendingSmartInput = null;
+  pendingSmartCapture = null;
   smartInputSaveInFlight = false;
 
   observationsData.unshift({
@@ -4560,7 +4623,9 @@ window.openModal = function(id){
     document.getElementById('confirmLocationBtn').classList.add('hidden');
     document.getElementById('confirmLocationBtn').disabled = true;
     // فتح النافذة من جديد يبدأ بلاغاً جديداً: لا تبقَ حمولة معلّقة من محاولة سابقة.
-    pendingSmartInput = null; smartInputSaveInFlight = false;
+    pendingSmartInput = null; pendingSmartCapture = null; smartInputSaveInFlight = false;
+    const draftRoot=document.getElementById('inspectorAiPreviewRoot');if(draftRoot){draftRoot.replaceChildren();draftRoot.classList.add('hidden')}
+    const processButton=document.getElementById('processSmartInputBtn');if(processButton)processButton.innerHTML='<i data-lucide="camera" class="w-5 h-5 ml-2"></i> تحليل الصورة وإنشاء مسودة';
     setIdentityGpsStatus('جاري التحديد التلقائي',true);
     checkSmartInputState();
     hide('modalResult');
@@ -4787,12 +4852,15 @@ async function runVisionAnalysis(title){
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, AI_ANALYZE_TIMEOUT_MS);
   try {
-    const token = await user.getIdToken();
-    const response = await fetch('/api/ai/analyze', {
+    const response = await fetchWithFirebaseAuth({
+      getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+      input:'/api/ai/analyze',
+      init:{
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ observationId: String(observation.docId), correlationId: `${observation.docId}-${Date.now()}` }),
       signal: controller.signal
+      }
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok || !payload || payload.ok !== true) {
@@ -4801,7 +4869,7 @@ async function runVisionAnalysis(title){
     }
     renderVisionResult(title, payload);
   } catch (error) {
-    renderAiFailure(title, (timedOut || error?.name === 'AbortError') ? 'AI_TIMEOUT' : null);
+    renderAiFailure(title, error?.code===REAUTHENTICATION_REQUIRED?'unauthenticated':((timedOut || error?.name === 'AbortError') ? 'AI_TIMEOUT' : null));
   } finally {
     clearTimeout(timer);
   }

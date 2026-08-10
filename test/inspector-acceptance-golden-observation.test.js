@@ -11,6 +11,7 @@ const manager = fs.readFileSync(path.join(root, 'manager.html'), 'utf8');
 const rules = fs.readFileSync(path.join(root, 'firestore.rules'), 'utf8');
 const analyze = fs.readFileSync(path.join(root, 'api', 'ai', 'analyze.js'), 'utf8');
 const storageRead = require('../api/storage/read.js')._test;
+const storageUpload = require('../api/storage/upload.js')._test;
 
 test('Golden Observation wiring covers verified session, modal, GPS, image, save, reopen, and AI', () => {
   assert.match(dashboard, /onAuthStateChanged\(auth, async \(user\) =>/);
@@ -22,7 +23,13 @@ test('Golden Observation wiring covers verified session, modal, GPS, image, save
   assert.match(dashboard, /saveObservationToFirestore\(clientRequestId, payload\)/);
   assert.match(dashboard, /where\('createdByUid', '==', inspectorContext\.uid\)/);
   assert.match(dashboard, /showObservationDetail\(docId\)/);
-  assert.match(dashboard, /fetch\('\/api\/ai\/analyze'/);
+  assert.match(dashboard, /analyzeSmartCaptureDraft/);
+  assert.match(dashboard, /draftImageObjectKey:imageObjectKey/);
+  assert.doesNotMatch(dashboard, /if\(!hasText\) missing\.push/);
+  assert.match(dashboard, /pendingSmartCapture=\{clientRequestId,uploadedUrl,aiDraft\}/);
+  assert.match(dashboard, /حفظ الملاحظة بعد المراجعة/);
+  assert.match(dashboard, /aiAnalysis: aiDraft\?\.analysis/);
+  assert.match(dashboard, /تعذر تجديد جلسة الدخول\. سجّل الدخول مرة أخرى/);
 });
 
 test('saved canonical observation can be reopened with its evidence fields intact', () => {
@@ -32,6 +39,13 @@ test('saved canonical observation can be reopened with its evidence fields intac
   assert.deepEqual([...storageRead.EVIDENCE_FIELDS], [
     'imageObjectKey', 'imagePath', 'imageUrl', 'beforeImagePath', 'afterImagePath', 'afterImageUrl'
   ]);
+});
+
+test('pre-save upload uses a canonical tenant-and-observation-scoped private key', () => {
+  assert.equal(storageUpload.buildObjectKey({
+    prefix: 'ignored-for-canonical', organizationId: 'org-a', observationId: 'obs-1',
+    scope: 'before', extension: 'jpg', uuid: 'image-1',
+  }), 'organizations/org-a/observations/obs-1/before/image-1.jpg');
 });
 
 test('Manager receives canonical and legacy evidence plus the persisted advisory for the same record', () => {
@@ -47,7 +61,9 @@ test('AI persists only an allowlisted advisory and leaves workflow mutation to e
   assert.match(analyze, /observationSnap\.ref\.update\(\{ aiAnalysis: persistedAiAnalysis \}\)/);
   assert.match(analyze, /advisoryOnly: true/);
   assert.match(analyze, /requiresExplicitHumanAction: true/);
-  assert.match(analyze, /persisted: true/);
+  assert.match(analyze, /persisted: !draftMode/);
+  assert.match(analyze, /if \(!draftMode\)/);
+  assert.match(analyze, /draft: draftMode/);
   const persistenceBlock = analyze.slice(analyze.indexOf('const persistedAiAnalysis'), analyze.indexOf('return sendJson(res, 200'));
   for (const forbidden of ['status:', 'assignedContractorUid', 'assignedAt', 'closedAt']) {
     assert.equal(persistenceBlock.includes(forbidden), false, `AI persistence must not include ${forbidden}`);
@@ -90,4 +106,3 @@ test('storage authorization admits same-tenant Manager and rejects cross-tenant 
   assert.ok(queriedOrganizations.length > 0);
   assert.ok(queriedOrganizations.every(value => value === 'org-a'));
 });
-

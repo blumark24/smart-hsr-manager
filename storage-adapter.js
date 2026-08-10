@@ -89,17 +89,21 @@ export function isServerObjectKey(reference) {
 
 // Fetches a private object through the server and hands back a blob URL.
 // The B2 bucket is never made public and no bucket URL reaches the browser.
-export async function resolveServerObjectImage({ reference, idToken }) {
+export async function resolveServerObjectImage({ reference, getIdToken }) {
   const key = typeof reference === 'string' ? reference.trim() : '';
   if (!isServerObjectKey(key)) return { kind: 'server', available: false, url: null, reason: 'invalid-object-key' };
-  if (!idToken) return { kind: 'server', available: false, url: null, reason: 'missing-id-token' };
+  if (typeof getIdToken !== 'function') return { kind: 'server', available: false, url: null, reason: 'missing-id-token' };
 
   let response;
   try {
-    response = await fetch(`/api/storage/read?key=${encodeURIComponent(key)}`, {
-      headers: { Authorization: `Bearer ${idToken}` }
+    response = await fetchWithFirebaseAuth({
+      getIdToken,
+      input: `/api/storage/read?key=${encodeURIComponent(key)}`,
     });
-  } catch (_) {
+  } catch (error) {
+    if (error?.code === REAUTHENTICATION_REQUIRED) {
+      return { kind: 'server', available: false, url: null, reason: REAUTHENTICATION_REQUIRED };
+    }
     return { kind: 'server', available: false, url: null, reason: 'network-error' };
   }
   if (!response.ok) {
@@ -204,8 +208,10 @@ export async function resolveObservationImage({ reference, context }) {
       return { kind: 'external', available: true, url: raw };
     }
     if (isServerObjectKey(raw)) {
-      const idToken = typeof context?.getIdToken === 'function' ? await context.getIdToken() : context?.idToken;
-      return resolveServerObjectImage({ reference: raw, idToken });
+      const getIdToken = typeof context?.getIdToken === 'function'
+        ? context.getIdToken
+        : async () => context?.idToken;
+      return resolveServerObjectImage({ reference: raw, getIdToken });
     }
     return { kind: 'external', available: false, url: null, reason: 'unsupported-reference' };
   }
@@ -264,3 +270,4 @@ export async function clearLocalDemoStorage({ organizationId, ownerContext, conf
 // issue short-lived URLs, audit every operation and fail closed. Request-body
 // identity/organization scope is never authoritative and providers never
 // fall back across connectors or organizations.
+import { fetchWithFirebaseAuth, REAUTHENTICATION_REQUIRED } from './firebase-auth-fetch.js';
