@@ -273,13 +273,23 @@ async function handler(req, res) {
     return fail(res, 200, intelligenceResult.errorCode, intelligenceResult.reason);
   }
 
-  // Inspector analysis is display-only. Saving an AI review must be a
-  // separate, explicit human action and is never coupled to provider success.
+  // Persist only the allowlisted advisory result so the manager can review the
+  // same observation. This write never changes status, assignment, closure, or
+  // any other workflow field; the review decision remains a separate explicit
+  // human action through /api/report/ai-review.
+  const persistedAiAnalysis = buildPersistedAiAnalysis(analysis, intelligenceResult.intelligence);
+  try {
+    await observationSnap.ref.update({ aiAnalysis: persistedAiAnalysis });
+  } catch (error) {
+    console.error('ai analyze: advisory persistence failed', { name: error?.name || 'unknown' });
+    return fail(res, 500, 'AI_ADVISORY_PERSIST_FAILED', 'Could not make the advisory result available for human review.');
+  }
+
   return sendJson(res, 200, {
     ok: true,
     advisoryOnly: true,
     requiresExplicitHumanAction: true,
-    persisted: false,
+    persisted: true,
     inspectorOptions: routed.inspectorOptions,
     automation: routed.automation,
     analysis,

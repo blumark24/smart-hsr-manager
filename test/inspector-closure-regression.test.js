@@ -42,7 +42,7 @@ test('AI analysis resolves canonical then legacy before-evidence fields', () => 
   assert.ok(canonical > -1 && canonical < pathField && pathField < urlField && urlField < beforeField);
 });
 
-test('Inspector AI is provider-neutral, authenticated, advisory-only, and mutation-free in the browser', () => {
+test('Inspector AI is provider-neutral, authenticated, advisory-only, and persists no workflow mutation', () => {
   assert.match(dashboard, /fetch\('\/api\/ai\/analyze'/);
   assert.match(dashboard, /Authorization': `Bearer \$\{token\}`/);
   assert.match(dashboard, /AI Advisory/);
@@ -50,7 +50,8 @@ test('Inspector AI is provider-neutral, authenticated, advisory-only, and mutati
   assert.match(aiApi, /advisoryOnly: true/);
   assert.match(aiApi, /requiresExplicitHumanAction: true/);
   assert.match(aiApi, /automation: routed\.automation/);
-  assert.match(aiApi, /persisted: false/);
+  assert.match(aiApi, /persisted: true/);
+  assert.match(aiApi, /observationSnap\.ref\.update\(\{ aiAnalysis: persistedAiAnalysis \}\)/);
   const responsePath = aiApi.slice(aiApi.indexOf('const routed = await'), aiApi.indexOf('module.exports'));
-  assert.doesNotMatch(responsePath, /\.update\(|\.set\(|\.add\(/);
+  assert.doesNotMatch(responsePath, /(?:status|assignedContractorUid|assignedAt|closedAt)\s*:/);
 });

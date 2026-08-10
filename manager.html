@@ -1432,12 +1432,12 @@ const firebaseConfig = {
             createdAtMs: x.createdAt?.toMillis ? x.createdAt.toMillis() : 0,
             createdAt: x.createdAt || null,
             closedAt: x.closedAt || null,
-            hasImage: !!(x.imagePath || x.afterImagePath),
+            hasImage: !!(x.imageObjectKey || x.imagePath || x.imageUrl || x.beforeImagePath || x.afterImagePath || x.afterImageUrl),
             // Closeout evidence. These were previously dropped by the mapper,
             // so showObservationImages() always fell through to "no images"
             // and the contractor's proof-of-repair never reached the manager.
-            imagePath: x.imagePath || null,
-            afterImagePath: x.afterImagePath || null,
+            imagePath: x.imageObjectKey || x.imagePath || x.imageUrl || x.beforeImagePath || null,
+            afterImagePath: x.afterImagePath || x.afterImageUrl || null,
             resolutionNote: x.resolutionNote || '',
             isComparative: !!x.isComparative,
             // Retained so the record's tenant is available for verification.
