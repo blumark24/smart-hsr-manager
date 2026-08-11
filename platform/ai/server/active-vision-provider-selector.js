@@ -3,36 +3,69 @@
 const { createGeminiCompatibleVisionProvider } = require('./gemini-compatible-vision-provider');
 const { createOpenAICompatibleVisionProvider } = require('./openai-compatible-vision-provider');
 
-// Sprint 6.11 Phase 2: single source of truth for "which AI vision provider
-// is active", read once from SMART_HSR_AI_PROVIDER. Adding a future provider
-// means adding one entry here -- callers (api/ai/analyze.js) never hardcode
-// a provider id or kind, and provider-router.js is never touched. Gemini
-// stays the default when the variable is unset, so any deployment that has
-// never set SMART_HSR_AI_PROVIDER keeps its exact current behavior.
 const SUPPORTED_VISION_PROVIDERS = Object.freeze({
   gemini: Object.freeze({ kind: 'GEMINI_COMPATIBLE', create: createGeminiCompatibleVisionProvider }),
   openai: Object.freeze({ kind: 'OPENAI_COMPATIBLE', create: createOpenAICompatibleVisionProvider }),
 });
 
 const DEFAULT_VISION_PROVIDER_ID = 'gemini';
+const ALLOWED_PROVIDER_HOSTS = Object.freeze(new Set([
+  'generativelanguage.googleapis.com',
+  'api.openai.com',
+]));
 
 function resolveConfiguredVisionProviderId(environment = process.env) {
   const raw = typeof environment.SMART_HSR_AI_PROVIDER === 'string' ? environment.SMART_HSR_AI_PROVIDER.trim() : '';
   return raw || DEFAULT_VISION_PROVIDER_ID;
 }
 
-// Builds the { providerId, providerRegistration } pair createProviderRouter
-// expects, or an honest denial -- never a fabricated provider -- when
-// SMART_HSR_AI_PROVIDER names something unsupported. Never returns a
-// registration for an unrecognized id; the caller must fail closed on
-// allowed:false exactly like every other AI gateway denial path.
-function createActiveVisionProviderRegistration({ environment = process.env, mode = 'application', applicationContext = null, timeoutMs } = {}) {
+function createServerJsonTransport({ fetchImpl = globalThis.fetch } = {}) {
+  return async request => {
+    if (typeof fetchImpl !== 'function') throw Object.assign(new Error('Provider transport unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE' });
+
+    let target;
+    try { target = new URL(request?.url); }
+    catch (_) { throw Object.assign(new Error('Provider URL invalid.'), { code: 'AI_PROVIDER_UNAVAILABLE' }); }
+    if (target.protocol !== 'https:' || !ALLOWED_PROVIDER_HOSTS.has(target.hostname)) {
+      throw Object.assign(new Error('Provider destination denied.'), { code: 'AI_PROVIDER_UNAVAILABLE' });
+    }
+
+    const controller = new AbortController();
+    const timeoutMs = Number.isFinite(request?.timeoutMs) && request.timeoutMs > 0 ? request.timeoutMs : 10000;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetchImpl(target.toString(), {
+        method: request?.method || 'POST',
+        headers: request?.headers || {},
+        body: JSON.stringify(request?.body ?? {}),
+        signal: controller.signal,
+      });
+      const bytes = await response.arrayBuffer();
+      const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      let body = null;
+      if (text) {
+        try { body = JSON.parse(text); }
+        catch (_) { body = null; }
+      }
+      return Object.freeze({ ok: response.ok, status: response.status, body });
+    } catch (error) {
+      if (error?.name === 'AbortError') throw Object.assign(new Error('Provider timeout.'), { code: 'AI_TIMEOUT' });
+      if (error?.code === 'AI_TIMEOUT') throw error;
+      throw Object.assign(new Error('Provider transport unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE' });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+}
+
+function createActiveVisionProviderRegistration({ environment = process.env, mode = 'application', applicationContext = null, timeoutMs, transport } = {}) {
   const providerId = resolveConfiguredVisionProviderId(environment);
   const entry = SUPPORTED_VISION_PROVIDERS[providerId];
   if (!entry) {
     return Object.freeze({ allowed: false, code: 'AI_PROVIDER_NOT_CONFIGURED', reason: `Configured AI provider "${providerId}" is not supported.`, providerId, kind: null, providerRegistration: null });
   }
-  const provider = entry.create({ enabled: true, environment, mode, applicationContext, timeoutMs });
+  const providerTransport = transport === undefined && mode === 'application' ? createServerJsonTransport() : transport;
+  const provider = entry.create({ enabled: true, environment, mode, applicationContext, timeoutMs, transport: providerTransport });
   return Object.freeze({
     allowed: true,
     code: 'AI_PROVIDER_SELECTED',
@@ -47,5 +80,6 @@ module.exports = Object.freeze({
   SUPPORTED_VISION_PROVIDER_IDS: Object.freeze(Object.keys(SUPPORTED_VISION_PROVIDERS)),
   DEFAULT_VISION_PROVIDER_ID,
   resolveConfiguredVisionProviderId,
+  createServerJsonTransport,
   createActiveVisionProviderRegistration,
 });
