@@ -15,7 +15,7 @@
 // restricts them to supervisors/inspectors/contractors of their OWN
 // organizationId only. Supervisors never receive account-management access.
 // ============================================================================
-const { getAuth, getDb, getProjectId } = require('./firebaseAdmin');
+const { getAuth, getDb } = require('./firebaseAdmin');
 
 const AUTH_CODES = Object.freeze({ HEADER_MISSING: 'AUTH_HEADER_MISSING', TOKEN_INVALID: 'AUTH_TOKEN_INVALID', TOKEN_EXPIRED: 'AUTH_TOKEN_EXPIRED', PROJECT_MISMATCH: 'AUTH_PROJECT_MISMATCH' });
 
@@ -58,17 +58,17 @@ function activeIsNotFalse(data) {
 
 // Verify the Firebase ID token from the Authorization header.
 // checkRevoked=true so revoked sessions (disabled/rotated) are rejected.
-async function verifyRequestToken(req) {
+async function verifyRequestToken(req, verifyIdToken = (token, checkRevoked) => getAuth().verifyIdToken(token, checkRevoked)) {
   const header = (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
   const m = /^Bearer\s+(.+)$/i.exec(String(header).trim());
   if (!m) {
     throw authError(AUTH_CODES.HEADER_MISSING);
   }
-  const project = tokenProject(m[1]);
-  if (!project) throw authError(AUTH_CODES.TOKEN_INVALID);
-  if (project !== getProjectId()) throw authError(AUTH_CODES.PROJECT_MISMATCH);
   try {
-    return await getAuth().verifyIdToken(m[1], true);
+    // Firebase Admin is the single verification authority. A local comparison
+    // against app.options.projectId can diverge from the credential project on
+    // Vercel Preview and reject a token that Admin can verify correctly.
+    return await verifyIdToken(m[1], true);
   } catch (e) {
     if (e && e.code === 'auth/id-token-expired') throw authError(AUTH_CODES.TOKEN_EXPIRED);
     throw authError(AUTH_CODES.TOKEN_INVALID);

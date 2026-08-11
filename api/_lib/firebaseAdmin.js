@@ -67,8 +67,4 @@ function getDb() {
   return getAdmin().firestore();
 }
 
-function getProjectId() {
-  return initAdmin().options.projectId || '';
-}
-
-module.exports = { getAdmin, getAuth, getDb, getProjectId, FieldValue: admin.firestore.FieldValue };
+module.exports = { getAdmin, getAuth, getDb, FieldValue: admin.firestore.FieldValue };

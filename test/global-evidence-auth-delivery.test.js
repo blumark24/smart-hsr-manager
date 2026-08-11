@@ -25,6 +25,35 @@ test('Firebase token audience and issuer must identify the same project', () => 
   assert.equal(authz.tokenProject('not-a-token'), '');
 });
 
+test('valid token is accepted by Firebase Admin even when local app project metadata differs', async () => {
+  const token = jwt('smart-hsr-manager');
+  const calls = [];
+  const decoded = await authz.verifyRequestToken({ headers: { authorization: `Bearer ${token}` } }, async (received, checkRevoked) => {
+    calls.push({ received, checkRevoked });
+    return { uid: 'valid-user', aud: 'smart-hsr-manager' };
+  });
+  assert.equal(decoded.uid, 'valid-user');
+  assert.deepEqual(calls, [{ received: token, checkRevoked: true }]);
+});
+
+test('wrong-project token remains denied by Firebase Admin verification', async () => {
+  const token = jwt('wrong-project');
+  await assert.rejects(authz.verifyRequestToken({ headers: { authorization: `Bearer ${token}` } }, async () => {
+    const error = new Error('project mismatch');
+    error.code = 'auth/argument-error';
+    throw error;
+  }), error => error.code === 'AUTH_TOKEN_INVALID' && error.statusCode === 401);
+});
+
+test('storage read and organization context share the recovered Admin auth path', () => {
+  const authzSource = read('api/_lib/authz.js');
+  assert.doesNotMatch(authzSource, /tokenProject\(m\[1\]\)[\s\S]{0,200}getProjectId/);
+  assert.match(authzSource, /return await verifyIdToken\(m\[1\], true\)/);
+  for (const file of ['api/storage/read.js', 'api/organization/context.js']) {
+    assert.match(read(file), /verifyRequestToken\(req\)/);
+  }
+});
+
 test('missing Authorization fails closed with a safe code', async () => {
   await assert.rejects(authz.verifyRequestToken({ headers: {} }), error => {
     assert.equal(error.statusCode, 401);
