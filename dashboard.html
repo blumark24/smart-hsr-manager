@@ -4417,7 +4417,6 @@ window.processSmartInput = async function(){
       try {
         const compressedFile = await compressImage(currentFile);
         uploadedUrl = await uploadImageToStorage(compressedFile, "HSR/before",clientRequestId);
-        aiDraft = await analyzeSmartCaptureDraft({observationId:clientRequestId,imageObjectKey:uploadedUrl,existingDescription:rawText});
       } catch (uploadError) {
         if(uploadError?.code===REAUTHENTICATION_REQUIRED){
           showUploadFailure('تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى ثم أعد المحاولة.');
@@ -4427,14 +4426,26 @@ window.processSmartInput = async function(){
         }
         return;
       }
-      pendingSmartCapture={clientRequestId,uploadedUrl,aiDraft};
-      hide('modalResult');unhide('modalStep1');renderSmartCaptureDraft(aiDraft);
-      return;
+      // Persist the successful upload before AI starts. An AI retry must reuse
+      // this private object key and never upload the same evidence again.
+      pendingSmartCapture={clientRequestId,uploadedUrl,aiDraft:null};
     }
     // مرجع صورة فارغ يعني بلاغاً بلا دليل — يُعامل معاملة الفشل.
     if (typeof uploadedUrl !== 'string' || !uploadedUrl.trim()) {
       console.error('image upload returned no reference', uploadedUrl);
       showUploadFailure('لم يُرجع مخزن الصور مرجعاً صالحاً للصورة. أعد المحاولة.');
+      return;
+    }
+    if(!aiDraft){
+      try {
+        aiDraft = await analyzeSmartCaptureDraft({observationId:clientRequestId,imageObjectKey:uploadedUrl,existingDescription:rawText});
+        pendingSmartCapture.aiDraft=aiDraft;
+      } catch (aiError) {
+        console.error('smart capture AI draft failed',{name:aiError?.name||'Error',code:aiError?.code||null});
+        showSmartCaptureAiFailure(aiError);
+        return;
+      }
+      hide('modalResult');unhide('modalStep1');renderSmartCaptureDraft(aiDraft);
       return;
     }
 
@@ -5004,6 +5015,38 @@ function showUploadFailure(message){
   hide('modalResultReviewAction');
   lucide.createIcons();
 }
+function smartCaptureAiErrorHTML(message){
+  return `
+    <div class="p-6 bg-amber-50 rounded-xl border-4 border-amber-200 text-center">
+      <i data-lucide="sparkles" class="w-10 h-10 mx-auto text-amber-700 mb-3"></i>
+      <h4 class="text-xl font-extrabold text-amber-800">تعذر إنشاء مسودة AI</h4>
+      <p class="text-base font-bold text-amber-900 mt-3 leading-relaxed">${escapeHTML(message)}</p>
+      <p class="text-sm text-amber-800 mt-3">تم رفع صورة الملاحظة بنجاح، ولن يُعاد رفعها. لم يتم إنشاء أي بلاغ.</p>
+      <button id="retryAiDraftBtn" type="button" onclick="retrySmartCaptureAnalysis()"
+        class="ai-button-primary rounded-full px-6 py-3 text-base font-bold flex items-center justify-center mx-auto mt-5">
+        <i data-lucide="rotate-ccw" class="w-4 h-4 ml-2"></i> إعادة محاولة التحليل
+      </button>
+      <button type="button" onclick="returnToSmartInputStep1()"
+        class="ai-button-secondary rounded-full px-5 py-2 text-sm font-bold flex items-center justify-center mx-auto mt-3">
+        العودة لمراجعة البيانات
+      </button>
+    </div>`;
+}
+function showSmartCaptureAiFailure(error){
+  const code=[error?.code,error?.message].filter(v=>typeof v==='string'&&v.trim()).join(' ');
+  const message=error?.code===REAUTHENTICATION_REQUIRED
+    ? 'تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى ثم أعد التحليل.'
+    : /AbortError|aborted|timeout/i.test(code)
+      ? 'استغرق التحليل وقتاً أطول من المسموح. أعد محاولة التحليل.'
+      : 'الصورة محفوظة، لكن خدمة التحليل غير متاحة حالياً. أعد محاولة التحليل.';
+  setHTML('modalResultContent',smartCaptureAiErrorHTML(message));
+  hide('modalResultReviewAction');
+  lucide.createIcons();
+}
+window.retrySmartCaptureAnalysis=function(){
+  if(!pendingSmartCapture?.uploadedUrl||pendingSmartCapture.aiDraft||imageUploadInFlight||smartInputSaveInFlight)return;
+  processSmartInput();
+};
 // فشل الكتابة في Firestore يُعامل كفشل صريح: لا بلاغ، ولا تقرير، ولا مسح للمدخلات.
 // الحمولة والصورة المرفوعة تُحفظان لإعادة محاولة الحفظ وحده دون إعادة رفع الصورة.
 function saveErrorHTML(msg){

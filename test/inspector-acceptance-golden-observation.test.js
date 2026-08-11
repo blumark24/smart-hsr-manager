@@ -26,7 +26,8 @@ test('Golden Observation wiring covers verified session, modal, GPS, image, save
   assert.match(dashboard, /analyzeSmartCaptureDraft/);
   assert.match(dashboard, /draftImageObjectKey:imageObjectKey/);
   assert.doesNotMatch(dashboard, /if\(!hasText\) missing\.push/);
-  assert.match(dashboard, /pendingSmartCapture=\{clientRequestId,uploadedUrl,aiDraft\}/);
+  assert.match(dashboard, /pendingSmartCapture=\{clientRequestId,uploadedUrl,aiDraft:null\}/);
+  assert.match(dashboard, /pendingSmartCapture\.aiDraft=aiDraft/);
   assert.match(dashboard, /حفظ الملاحظة بعد المراجعة/);
   assert.match(dashboard, /aiAnalysis: aiDraft\?\.analysis/);
   assert.match(dashboard, /تعذر تجديد جلسة الدخول\. سجّل الدخول مرة أخرى/);
