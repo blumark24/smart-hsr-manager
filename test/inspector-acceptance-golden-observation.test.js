@@ -45,7 +45,7 @@ test('pre-save upload uses a canonical tenant-and-observation-scoped private key
   assert.equal(storageUpload.buildObjectKey({
     prefix: 'ignored-for-canonical', organizationId: 'org-a', observationId: 'obs-1',
     scope: 'before', extension: 'jpg', uuid: 'image-1',
-  }), 'organizations/org-a/observations/obs-1/before/image-1.jpg');
+  }), 'observations/org-a/obs-1/before/image-1.jpg');
 });
 
 test('Manager receives canonical and legacy evidence plus the persisted advisory for the same record', () => {

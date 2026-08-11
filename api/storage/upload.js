@@ -12,7 +12,8 @@
 //         { contentType, dataBase64, scope?, observationId? }
 // Limits: image/jpeg | image/png | image/webp only, declared type must match
 //         the file's magic bytes, decoded size 1..700KB.
-// Key:    [<B2_FILE_PREFIX>/]observations/<organizationId>/<scope>/<yyyy>/<mm>/<uuid>.<ext>
+// Key:    observations/<organizationId>/<observationId>/<scope>/<uuid>.<ext>
+//      or observations/<organizationId>/<scope>/<yyyy>/<mm>/<uuid>.<ext>
 // Out:    { ok: true, objectKey }
 //
 // SECURITY: B2 credentials live only in process.env on the server. They are
@@ -106,26 +107,13 @@ function buildObjectKey({ prefix, organizationId, observationId, scope, extensio
   const observation = typeof observationId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(observationId.trim())
     ? observationId.trim() : '';
   if (observation) {
-    return `organizations/${organizationId}/observations/${observation}/${scope}/${uuid}.${extension}`;
+    return `${OBJECT_ROOT}/${organizationId}/${observation}/${scope}/${uuid}.${extension}`;
   }
   const year = String(now.getUTCFullYear());
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
   // The tail is authoritative and is never rewritten: organizationId, scope,
   // date and filename pass through exactly as given.
-  const tail = [OBJECT_ROOT, organizationId, scope, year, month, `${uuid}.${extension}`];
-  const head = normalizedPrefixSegments(prefix);
-
-  // Junction de-duplication only. B2_FILE_PREFIX is commonly set to
-  // 'observations' (or '<something>/observations'), which used to produce
-  // 'observations/observations/<org>/...'. If the prefix already ends at the
-  // object root, don't repeat it.
-  //
-  // Deliberately limited to this one join: collapsing repeats *inside* the
-  // tail would corrupt a key whenever organizationId or scope happened to
-  // equal the segment before it.
-  if (head.length && head[head.length - 1] === OBJECT_ROOT) tail.shift();
-
-  return [...head, ...tail].join('/');
+  return [OBJECT_ROOT, organizationId, scope, year, month, `${uuid}.${extension}`].join('/');
 }
 
 // Reads the caller's OWN users/{uid} document. No other collection, no other
