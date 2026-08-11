@@ -67,6 +67,16 @@ function cleanId(value) {
   return raw.length && raw.length <= MAX_ID_LENGTH && /^[A-Za-z0-9_-]+$/.test(raw) ? raw : '';
 }
 
+function evaluateObservationAccess(observation, caller) {
+  if (observation?.organizationId !== caller?.organizationId) {
+    return { allowed: false, code: 'AI_CROSS_ORGANIZATION_DENIED', reason: 'cross_organization_denied' };
+  }
+  if (observation?.createdByUid !== caller?.uid) {
+    return { allowed: false, code: 'AI_REPORT_OWNER_DENIED', reason: 'not_report_owner' };
+  }
+  return { allowed: true, code: 'AI_REPORT_ACCESS_ALLOWED', reason: 'report_owner' };
+}
+
 // Reads the caller's OWN users/{uid} document only. Mirrors
 // api/storage/upload.js's resolveInspectorContext exactly, so AI analysis is
 // gated by the identical trust boundary as the upload it analyzes.
@@ -160,7 +170,7 @@ async function handler(req, res) {
 
   const db = getDb();
   const caller = await resolveInspectorContext(db, decoded.uid);
-  if (!caller) return fail(res, 403, 'forbidden', 'inspector_role_required');
+  if (!caller) return fail(res, 403, 'AI_INSPECTOR_ROLE_REQUIRED', 'inspector_role_required');
 
   let body;
   try {
@@ -204,13 +214,8 @@ async function handler(req, res) {
 
   // The organization used for every downstream check is the SERVER record on
   // the observation itself — never a client-supplied value.
-  if (observation.organizationId !== caller.organizationId) {
-    return fail(res, 403, 'forbidden', 'cross_organization_denied');
-  }
-  // Only the inspector who created the report may trigger its analysis.
-  if (observation.createdByUid !== caller.uid) {
-    return fail(res, 403, 'forbidden', 'not_report_owner');
-  }
+  const access = evaluateObservationAccess(observation, caller);
+  if (!access.allowed) return fail(res, 403, access.code, access.reason);
 
   // Follow the same canonical + legacy evidence order used by Inspector and
   // the authenticated storage reader. Private B2 bytes remain server-side.
@@ -321,5 +326,6 @@ module.exports._test = {
   readJsonBody,
   readObjectBytes,
   buildPersistedAiAnalysis,
+  evaluateObservationAccess,
   handler,
 };
