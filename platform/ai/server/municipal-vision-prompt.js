@@ -11,7 +11,14 @@ const MUNICIPAL_VISION_OUTPUT_SCHEMA = Object.freeze({
     imageQuality: { type: 'string', enum: ['GOOD','ACCEPTABLE','POOR','UNUSABLE'] }, requiresHumanReview: { type: 'boolean' },
     warnings: { type: 'array', items: { type: 'string' } },
   }),
-  required: Object.freeze(['shortSummaryAr','categoryCode','categoryLabelAr','severity','severityScore','prioritySuggestion','recommendedActionAr','confidence','imageQuality','requiresHumanReview','warnings']),
+  // OpenAI strict Structured Outputs requires every declared property to be
+  // present in `required`. Semantically optional fields remain nullable, so
+  // callers still receive null when no subcategory/department can be inferred.
+  required: Object.freeze([
+    'shortSummaryAr','categoryCode','categoryLabelAr','subcategoryCode','subcategoryLabelAr',
+    'severity','severityScore','prioritySuggestion','responsibleDepartmentSuggestion',
+    'recommendedActionAr','confidence','imageQuality','requiresHumanReview','warnings'
+  ]),
 });
 
 const CONTROLLED_MUNICIPAL_VISION_INSTRUCTION = [
