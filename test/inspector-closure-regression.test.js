@@ -61,7 +61,8 @@ test('Inspector AI is provider-neutral, authenticated, advisory-only, and persis
   assert.match(aiApi, /requiresExplicitHumanAction: true/);
   assert.match(aiApi, /automation: routed\.automation/);
   assert.match(aiApi, /persisted: !draftMode/);
-  assert.match(aiApi, /observationSnap\.ref\.update\(\{ aiAnalysis: persistedAiAnalysis \}\)/);
+  assert.match(aiApi, /patch: \{ aiAnalysis: persistedAiAnalysis \}/);
+  assert.match(aiApi, /completeAiOperation\(/);
   const responsePath = aiApi.slice(aiApi.indexOf('const routed = await'), aiApi.indexOf('module.exports'));
   assert.doesNotMatch(responsePath, /(?:status|assignedContractorUid|assignedAt|closedAt)\s*:/);
 });

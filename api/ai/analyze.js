@@ -41,6 +41,7 @@ const { createProviderRouter } = require('../../platform/ai/provider-router');
 const { createActiveVisionProviderRegistration } = require('../../platform/ai/server/active-vision-provider-selector');
 const { createMunicipalIntelligence } = require('../../platform/intelligence/municipal-intelligence-engine');
 const crypto = require('crypto');
+const { acquireAiOperation, completeAiOperation, releaseAiOperation } = require('../_lib/aiGuard');
 
 // Same organization id used elsewhere for the Al-Qunfudhah pilot (see
 // api/organization/context.js). Not a secret — it is a Firestore document id.
@@ -251,20 +252,34 @@ async function handler(req, res) {
   ].find(value => typeof value === 'string' && value.trim())?.trim() || '';
   if (!imageReference) return fail(res, 400, 'AI_PRIVATE_IMAGE_REQUIRED', 'Observation has no evidence image to analyze.');
 
+  let guard;
+  try {
+    guard = await acquireAiOperation(db, { organizationId:caller.organizationId, uid:caller.uid, observationId, imageReference });
+  } catch (_) {
+    return fail(res, 503, 'AI_GUARD_UNAVAILABLE', 'AI abuse protection is temporarily unavailable.');
+  }
+  if (guard.cached) return sendJson(res, 200, guard.response);
+  if (!guard.allowed) {
+    if (guard.retryAfterSeconds) res.setHeader('Retry-After', String(guard.retryAfterSeconds));
+    return fail(res, 429, guard.code, guard.code === 'AI_RATE_LIMITED' ? 'AI request quota exceeded.' : 'An identical AI operation is already running.');
+  }
+  const releaseGuard = async () => { try { await releaseAiOperation(db, guard.operationId); } catch (_) {} };
+
   const storageDecision = evaluateAIStorageInput({ organizationId: caller.organizationId, observationId, imageReference });
-  if (!storageDecision.allowed) return fail(res, 403, storageDecision.code, storageDecision.reason);
+  if (!storageDecision.allowed) { await releaseGuard(); return fail(res, 403, storageDecision.code, storageDecision.reason); }
 
   const contentType = extensionContentType(imageReference);
-  if (!contentType) return fail(res, 415, 'AI_IMAGE_MIME_DENIED', 'Unsupported image type.');
+  if (!contentType) { await releaseGuard(); return fail(res, 415, 'AI_IMAGE_MIME_DENIED', 'Unsupported image type.'); }
 
   const config = b2Configuration();
-  if (!config) return fail(res, 503, 'AI_STORAGE_NOT_CONFIGURED', 'Storage is not configured.');
+  if (!config) { await releaseGuard(); return fail(res, 503, 'AI_STORAGE_NOT_CONFIGURED', 'Storage is not configured.'); }
 
   let controlledImagePayload;
   try {
     controlledImagePayload = await readObjectBytes(config, imageReference);
   } catch (error) {
     console.error('ai analyze: image read failed', safeStorageFailure(error));
+    await releaseGuard();
     return fail(res, 502, 'AI_STORAGE_READ_FAILED', 'Could not read the evidence image.');
   }
 
@@ -279,6 +294,7 @@ async function handler(req, res) {
     timeoutMs: PROVIDER_TIMEOUT_MS,
   });
   if (!providerSelection.allowed) {
+    await releaseGuard();
     return fail(res, 503, providerSelection.code, providerSelection.reason);
   }
 
@@ -304,6 +320,7 @@ async function handler(req, res) {
 
   const analysis = routed.result;
   if (!analysis || analysis.ok !== true) {
+    await releaseGuard();
     return fail(res, 200, analysis?.errorCode || 'AI_PROVIDER_ERROR', analysis?.reason || 'AI analysis was not available.');
   }
 
@@ -311,6 +328,7 @@ async function handler(req, res) {
   // already-validated, already-tested municipal decision-support layer.
   const intelligenceResult = createMunicipalIntelligence({ analysis, organizationId: caller.organizationId, observationId });
   if (!intelligenceResult.ok) {
+    await releaseGuard();
     return fail(res, 200, intelligenceResult.errorCode, intelligenceResult.reason);
   }
 
@@ -319,16 +337,7 @@ async function handler(req, res) {
   // any other workflow field; the review decision remains a separate explicit
   // human action through /api/report/ai-review.
   const persistedAiAnalysis = buildPersistedAiAnalysis(analysis, intelligenceResult.intelligence);
-  if (!draftMode) {
-    try {
-      await observationSnap.ref.update({ aiAnalysis: persistedAiAnalysis });
-    } catch (error) {
-      console.error('ai analyze: advisory persistence failed', { name: error?.name || 'unknown' });
-      return fail(res, 500, 'AI_ADVISORY_PERSIST_FAILED', 'Could not make the advisory result available for human review.');
-    }
-  }
-
-  return sendJson(res, 200, {
+  const response = {
     ok: true,
     advisoryOnly: true,
     requiresExplicitHumanAction: true,
@@ -338,7 +347,17 @@ async function handler(req, res) {
     automation: routed.automation,
     analysis,
     intelligence: intelligenceResult.intelligence,
-  });
+  };
+  try {
+    await completeAiOperation(db, guard.operationId, response, Date.now(), draftMode ? null : {
+      ref: observationSnap.ref,
+      patch: { aiAnalysis: persistedAiAnalysis },
+    });
+  } catch (_) {
+    await releaseGuard();
+    return fail(res, 503, 'AI_GUARD_FINALIZATION_FAILED', 'Could not atomically finalize the AI advisory operation.');
+  }
+  return sendJson(res, 200, response);
 }
 
 module.exports = handler;

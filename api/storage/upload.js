@@ -280,6 +280,7 @@ async function handler(req, res) {
       observationId: typeof body.observationId === 'string' ? body.observationId.trim() : '',
       organizationId: caller.organizationId,
       ownerUid: caller.uid,
+      status: 'PENDING',
       createdAt: FieldValue.serverTimestamp(),
       expiresAt: new Date(Date.now() + PENDING_UPLOAD_TTL_MS),
     });

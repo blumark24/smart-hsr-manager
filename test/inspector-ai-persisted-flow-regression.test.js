@@ -47,7 +47,8 @@ test('Inspector save persists the canonical ownership fields used by analyze', (
 
 test('AI persistence cannot mutate workflow authority fields', () => {
   const source = fs.readFileSync(path.join(root, 'api/ai/analyze.js'), 'utf8');
-  assert.match(source, /observationSnap\.ref\.update\(\{ aiAnalysis: persistedAiAnalysis \}\)/);
+  assert.match(source, /patch: \{ aiAnalysis: persistedAiAnalysis \}/);
+  assert.match(source, /completeAiOperation\(/);
   const persistence = source.slice(source.indexOf('const persistedAiAnalysis'), source.indexOf('return sendJson', source.indexOf('const persistedAiAnalysis')));
   assert.doesNotMatch(persistence, /(?:status|assignment|completion|closure|closedAt)\s*:/i);
 });

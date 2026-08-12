@@ -2192,6 +2192,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
         <div id="observationsList" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
           <div class="text-center text-gray-500 mt-10">... جاري تحميل البيانات ...</div>
         </div>
+        <button id="loadMoreObservationsBtn" type="button" class="hidden mt-4 w-full px-4 py-2 rounded-xl border border-blue-200 text-blue-700 bg-white hover:bg-blue-50" onclick="loadMoreObservations()">Load older observations</button>
       </div>
 
       <!-- Details -->
@@ -2818,6 +2819,10 @@ import {
   query,
   where,
   onSnapshot,
+  getDocs,
+  orderBy,
+  limit,
+  startAfter,
   setDoc,
   serverTimestamp,
   updateDoc
@@ -2840,6 +2845,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const COLLECTION = "observations";
+const OBSERVATIONS_PAGE_SIZE = 25;
 
 // HEADER ELEMENTS
 const logoutBtn = document.getElementById('logoutBtn');
@@ -3105,6 +3111,10 @@ let observationsData = [];
 let currentSelectedObservation = null;
 let obsState = 'loading';   // 'loading' | 'ready' | 'error' | 'unauthorized'
 let obsUnsub = null;
+let oldestObservationCursor = null;
+let observationsHaveMore = false;
+let observationsPageLoading = false;
+let olderObservationsData = [];
 let observationsServerConfirmed = false;
 let lastServerSnapshotAt = null;
 
@@ -3407,6 +3417,33 @@ function normalizeObservationEvidence(data = {}) {
   };
 }
 
+function observationFromDocument(d, organizationId, uid) {
+  const data = d.data();
+  if (data.organizationId !== organizationId || data.createdByUid !== uid) return null;
+  const evidence = normalizeObservationEvidence(data);
+  return {
+    docId:d.id, id:data.displayId||0, type:data.type||'MAINTENANCE', date:data.date||'',
+    title:data.title||'', status:data.status||'PENDING', details:data.details||'',
+    hasImage:!!evidence.before, isComparative:!!data.isComparative, location:data.location||'',
+    isVideo:false, imagePath:evidence.before, fileMimeType:'image/jpeg', actionPlan:data.actionPlan||'',
+    riskAssessment:data.riskAssessment||{priority:'Medium',timeframe:'72 hours'},
+    resolutionNote:data.resolutionNote||null, afterImagePath:evidence.after,
+    organizationId:data.organizationId||null, createdByUid:data.createdByUid||null,
+    originalLat:data.originalLat, originalLng:data.originalLng, correctedLat:data.correctedLat,
+    correctedLng:data.correctedLng, locationAccuracyMeters:data.locationAccuracyMeters,
+    locationSource:data.locationSource, locationVerified:data.locationVerified===true,
+    locationCapturedAt:data.locationCapturedAt||null, createdAt:timestampValue(data.createdAt),
+    updatedAt:timestampValue(data.updatedAt||data.completedAt), serverConfirmed:true, isNewInput:false
+  };
+}
+
+function updateLoadMoreButton() {
+  const button = document.getElementById('loadMoreObservationsBtn');
+  if (!button) return;
+  button.classList.toggle('hidden', !observationsHaveMore);
+  button.disabled = observationsPageLoading;
+}
+
 function subscribeObservations() {
   const organizationId = inspectorContext.organizationId;
   if (!organizationId) {
@@ -3419,6 +3456,9 @@ function subscribeObservations() {
 
   if (obsUnsub) { obsUnsub(); obsUnsub = null; }
   observationsData = [];
+  olderObservationsData = [];
+  oldestObservationCursor = null;
+  observationsHaveMore = false;
   obsState = 'loading';
   renderObservationsList([]);
   renderKPIs();
@@ -3426,7 +3466,9 @@ function subscribeObservations() {
   const q = query(
     collection(db, COLLECTION),
     where('organizationId', '==', organizationId),
-    where('createdByUid', '==', inspectorContext.uid)
+    where('createdByUid', '==', inspectorContext.uid),
+    orderBy('createdAt', 'desc'),
+    limit(OBSERVATIONS_PAGE_SIZE)
   );
   obsUnsub = onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
     if (snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) {
@@ -3434,48 +3476,14 @@ function subscribeObservations() {
       return; // never render cached or locally-pending data as server-confirmed
     }
     const arr = [];
-    snapshot.forEach(d=>{
-      const data = d.data();
-      // Defence in depth after the already double-scoped query: a document
-      // that does not match both verified values is never admitted to UI state.
-      if (data.organizationId !== organizationId || data.createdByUid !== inspectorContext.uid) return;
-      const evidence = normalizeObservationEvidence(data);
-      arr.push({
-        docId:d.id,
-        id: data.displayId || 0,
-        type:data.type || 'MAINTENANCE',
-        date:data.date || '',
-        title:data.title || '',
-        status:data.status || 'PENDING',
-        details:data.details || '',
-        hasImage: !!evidence.before,
-        isComparative: !!data.isComparative,
-        location:data.location || '',
-        isVideo:false,
-        imagePath:evidence.before,
-        fileMimeType:'image/jpeg',
-        actionPlan:data.actionPlan || '',
-        riskAssessment:data.riskAssessment || { priority:'Medium', timeframe:'72 hours' },
-        resolutionNote:data.resolutionNote || null,
-        afterImagePath:evidence.after,
-        organizationId:data.organizationId || null,
-        createdByUid:data.createdByUid || null,
-        originalLat:data.originalLat,
-        originalLng:data.originalLng,
-        correctedLat:data.correctedLat,
-        correctedLng:data.correctedLng,
-        locationAccuracyMeters:data.locationAccuracyMeters,
-        locationSource:data.locationSource,
-        locationVerified:data.locationVerified === true,
-        locationCapturedAt:data.locationCapturedAt || null,
-        createdAt:timestampValue(data.createdAt),
-        updatedAt:timestampValue(data.updatedAt||data.completedAt),
-        serverConfirmed:true,
-        isNewInput:false
-      });
-    });
+    snapshot.forEach(d=>{ const observation=observationFromDocument(d,organizationId,inspectorContext.uid); if(observation)arr.push(observation); });
     arr.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
-    observationsData = arr;
+    const recentIds = new Set(arr.map(item=>item.docId));
+    olderObservationsData = olderObservationsData.filter(item=>!recentIds.has(item.docId));
+    observationsData = [...arr, ...olderObservationsData];
+    oldestObservationCursor = snapshot.docs.at(-1) || null;
+    observationsHaveMore = snapshot.size === OBSERVATIONS_PAGE_SIZE;
+    updateLoadMoreButton();
     observationsServerConfirmed = true;
     lastServerSnapshotAt = Date.now();
     obsState = 'ready';
@@ -3495,6 +3503,35 @@ function subscribeObservations() {
   });
 }
 
+window.loadMoreObservations = async function() {
+  if (observationsPageLoading || !observationsHaveMore || !oldestObservationCursor) return;
+  observationsPageLoading = true;
+  updateLoadMoreButton();
+  try {
+    const snapshot = await getDocs(query(
+      collection(db, COLLECTION),
+      where('organizationId', '==', inspectorContext.organizationId),
+      where('createdByUid', '==', inspectorContext.uid),
+      orderBy('createdAt', 'desc'),
+      startAfter(oldestObservationCursor),
+      limit(OBSERVATIONS_PAGE_SIZE)
+    ));
+    const known = new Set(observationsData.map(item=>item.docId));
+    snapshot.forEach(d=>{ const item=observationFromDocument(d,inspectorContext.organizationId,inspectorContext.uid); if(item&&!known.has(item.docId)){olderObservationsData.push(item);observationsData.push(item);} });
+    oldestObservationCursor = snapshot.docs.at(-1) || oldestObservationCursor;
+    observationsHaveMore = snapshot.size === OBSERVATIONS_PAGE_SIZE;
+    renderObservationsList(observationsData);
+    renderInspectorCounts();
+    renderPersonalMap();
+    renderPersonalLifecycle();
+  } catch (error) {
+    console.error('Older observations load failed', error);
+  } finally {
+    observationsPageLoading = false;
+    updateLoadMoreButton();
+  }
+};
+
 // كتابة مُعرَّفة بمعرّف عميل ثابت (idempotent): إعادة المحاولة تكتب على نفس
 // المستند فلا تُنتج بلاغاً مكرراً مهما تأخرت المحاولة الأولى.
 async function saveObservationToFirestore(clientRequestId, payload) {
@@ -3503,6 +3540,10 @@ async function saveObservationToFirestore(clientRequestId, payload) {
     clientRequestId,
     createdAt: serverTimestamp()
   });
+  if (payload.imageObjectKey) {
+    fetchWithFirebaseAuth({ getIdToken:forceRefresh=>auth.currentUser.getIdToken(forceRefresh), input:'/api/storage/finalize', init:{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({observationId:clientRequestId,objectKey:payload.imageObjectKey}) } })
+      .catch(error=>console.warn('Evidence finalization deferred', {name:error?.name||'Error'}));
+  }
   return clientRequestId;
 }
 
