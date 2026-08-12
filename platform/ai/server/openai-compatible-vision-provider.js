@@ -5,20 +5,6 @@ const { MUNICIPAL_VISION_OUTPUT_SCHEMA, buildControlledVisionPrompt } = require(
 const { validateEvaluationInput, parseProviderJSON, normalizeVisionResult, callWithTimeout, normalizeAdapterError } = require('./provider-adapter-utils');
 const { MAX_IMAGE_PAYLOAD_BYTES, ALLOWED_IMAGE_MIME_TYPES } = require('../ai-security-policy');
 
-// Sprint 6.11 Phase 1: additive OpenAI vision provider. Same
-// evaluation-only activation gate, same ai-provider-contract.js shape, and
-// same normalizeVisionResult/parseProviderJSON pipeline as the existing
-// Gemini and OpenRouter adapters (platform/ai/server/*-compatible-vision-provider.js)
-// -- this file changes nothing about the router, the Gemini provider, or the
-// live Inspector/Manager/Owner workflow. It is registered into
-// createProviderRouter's existing 'OPENAI_COMPATIBLE' kind by whoever
-// constructs the router; provider-router.js itself is unmodified.
-//
-// Sprint 6.11 Phase 2: mode:'application' added, mirroring
-// gemini-compatible-vision-provider.js exactly -- see that file's header
-// comment for why evaluation and application are two distinct, separately
-// gated modes rather than one relaxed check. This keeps the two live
-// providers symmetric for platform/ai/server/active-vision-provider-selector.js.
 function createOpenAICompatibleVisionProvider({ enabled = false, environment = process.env, transport = null, timeoutMs = 10000, clock = () => Date.now(), mode = 'evaluation', applicationContext = null } = {}) {
   const apiKey = typeof environment.OPENAI_API_KEY === 'string' ? environment.OPENAI_API_KEY.trim() : '';
   const model = typeof environment.OPENAI_VISION_MODEL === 'string' ? environment.OPENAI_VISION_MODEL.trim() : '';
@@ -39,9 +25,9 @@ function createOpenAICompatibleVisionProvider({ enabled = false, environment = p
     async analyzeObservationImage(input = {}) {
       const started = clock();
       try {
-        const guard = activation(); if (!guard.allowed) throw Object.assign(new Error(guard.reason), { code: guard.code });
-        if (!model || !/^[A-Za-z0-9._-]{1,128}$/.test(model)) throw Object.assign(new Error('OpenAI vision model is not explicitly configured.'), { code: 'AI_PROVIDER_UNAVAILABLE' });
-        const image = validateEvaluationInput(input); if (!image.allowed) throw Object.assign(new Error(image.reason), { code: image.code });
+        const guard = activation(); if (!guard.allowed) throw Object.assign(new Error(guard.reason), { code: guard.code, failureStage: 'OPENAI_UPSTREAM' });
+        if (!model || !/^[A-Za-z0-9._-]{1,128}$/.test(model)) throw Object.assign(new Error('OpenAI vision model is not explicitly configured.'), { code: 'AI_PROVIDER_UNAVAILABLE', failureStage: 'OPENAI_UPSTREAM' });
+        const image = validateEvaluationInput(input); if (!image.allowed) throw Object.assign(new Error(image.reason), { code: image.code, failureStage: 'OPENAI_UPSTREAM' });
         const imageData = Buffer.from(input.controlledImagePayload).toString('base64');
         const body = { model, messages: [{ role: 'user', content: [{ type: 'text', text: buildControlledVisionPrompt(input) }, { type: 'image_url', image_url: { url: `data:${input.imageContentType};base64,${imageData}` } }] }],
           response_format: { type: 'json_schema', json_schema: { name: 'smart_hsr_municipal_vision', strict: true, schema: MUNICIPAL_VISION_OUTPUT_SCHEMA } }, temperature: 0 };
@@ -49,22 +35,34 @@ function createOpenAICompatibleVisionProvider({ enabled = false, environment = p
         if (!response?.ok) {
           const upstreamError = response?.body?.error;
           console.warn('openai vision provider rejected request', {
+            failureStage: 'OPENAI_UPSTREAM',
             status: Number.isFinite(response?.status) ? response.status : null,
             code: typeof upstreamError?.code === 'string' ? upstreamError.code.slice(0, 80) : null,
             type: typeof upstreamError?.type === 'string' ? upstreamError.type.slice(0, 80) : null,
           });
-          throw Object.assign(new Error('OpenAI provider unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE' });
+          throw Object.assign(new Error('OpenAI provider unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE', failureStage: 'OPENAI_UPSTREAM', upstreamStatus: Number.isFinite(response?.status) ? response.status : null, upstreamCode: typeof upstreamError?.code === 'string' ? upstreamError.code.slice(0, 80) : null });
         }
         const message = response.body?.choices?.[0]?.message;
         const text = message?.content;
         if (typeof text !== 'string' || !text.trim()) {
           console.warn('openai vision provider returned no content', {
+            failureStage: 'OPENAI_NO_CONTENT',
             finishReason: typeof response.body?.choices?.[0]?.finish_reason === 'string' ? response.body.choices[0].finish_reason.slice(0, 40) : null,
             refusal: Boolean(message?.refusal),
           });
+          throw Object.assign(new Error('OpenAI provider returned no content.'), { code: 'AI_PROVIDER_OUTPUT_INVALID', failureStage: 'OPENAI_NO_CONTENT', validationCode: 'AI_PROVIDER_NO_CONTENT' });
         }
         return normalizeVisionResult({ rawObject: parseProviderJSON(text), provider: 'OPENAI_COMPATIBLE', model, modelVersion: response.body?.model || 'unreported', correlationId: input.correlationId, processingTimeMs: Math.max(0, clock() - started) });
-      } catch (error) { return normalizeAdapterError(error); }
+      } catch (error) {
+        console.warn('openai vision provider failure', {
+          failureStage: typeof error?.failureStage === 'string' ? error.failureStage : 'PROVIDER_NORMALIZATION',
+          errorCode: typeof error?.code === 'string' ? error.code : 'AI_PROVIDER_ERROR',
+          validationCode: typeof error?.validationCode === 'string' ? error.validationCode : null,
+          upstreamStatus: Number.isFinite(error?.upstreamStatus) ? error.upstreamStatus : null,
+          upstreamCode: typeof error?.upstreamCode === 'string' ? error.upstreamCode : null,
+        });
+        return normalizeAdapterError(error);
+      }
     },
     async verifyBeforeAfter() { return Object.freeze({ ok: false, errorCode: 'AI_OPERATION_NOT_ACTIVATED', reason: 'Before/after evaluation is not activated.' }); },
     async suggestPriority() { return Object.freeze({ ok: false, errorCode: 'AI_OPERATION_NOT_ACTIVATED', reason: 'Standalone priority evaluation is not activated.' }); },
