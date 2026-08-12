@@ -13,12 +13,13 @@ function validateEvaluationInput(input = {}) {
 }
 
 function parseProviderJSON(value) {
-  if (typeof value !== 'string' || !value.trim() || /^\s*```/.test(value)) throw Object.assign(new Error('Malformed provider JSON.'), { code: 'AI_PROVIDER_OUTPUT_INVALID' });
-  try { return JSON.parse(value); } catch (_) { throw Object.assign(new Error('Malformed provider JSON.'), { code: 'AI_PROVIDER_OUTPUT_INVALID' }); }
+  if (typeof value !== 'string' || !value.trim() || /^\s*```/.test(value)) throw Object.assign(new Error('Malformed provider JSON.'), { code: 'AI_PROVIDER_OUTPUT_INVALID', failureStage: 'OPENAI_PARSE', validationCode: 'AI_PROVIDER_JSON_INVALID' });
+  try { return JSON.parse(value); } catch (_) { throw Object.assign(new Error('Malformed provider JSON.'), { code: 'AI_PROVIDER_OUTPUT_INVALID', failureStage: 'OPENAI_PARSE', validationCode: 'AI_PROVIDER_JSON_INVALID' }); }
 }
 
 function normalizeVisionResult({ rawObject, provider, model, modelVersion = 'unknown', correlationId, processingTimeMs }) {
-  const advisory = validateAdvisoryOutput(rawObject); if (!advisory.allowed) throw Object.assign(new Error(advisory.reason), { code: advisory.code });
+  const advisory = validateAdvisoryOutput(rawObject);
+  if (!advisory.allowed) throw Object.assign(new Error(advisory.reason), { code: advisory.code, failureStage: 'ADVISORY_VALIDATION', validationCode: advisory.code });
   const confidence = Number(rawObject.confidence);
   const lowConfidence = Number.isFinite(confidence) && confidence < CONFIDENCE_THRESHOLD;
   const warnings = Array.isArray(rawObject.warnings) ? [...rawObject.warnings] : rawObject.warnings;
@@ -34,20 +35,32 @@ function normalizeVisionResult({ rawObject, provider, model, modelVersion = 'unk
     requiresHumanReview: lowConfidence ? true : rawObject.requiresHumanReview, warnings: normalizedWarnings,
     provider, model, modelVersion, processingTimeMs,
   });
-  const validation = validateAIOutput(result); if (!validation.allowed) throw Object.assign(new Error(validation.reason), { code: 'AI_PROVIDER_OUTPUT_INVALID' });
+  const validation = validateAIOutput(result);
+  if (!validation.allowed) throw Object.assign(new Error(validation.reason), { code: 'AI_PROVIDER_OUTPUT_INVALID', failureStage: 'AI_OUTPUT_VALIDATION', validationCode: validation.code });
   return result;
 }
 
 async function callWithTimeout(transport, request, timeoutMs) {
-  if (typeof transport !== 'function') throw Object.assign(new Error('Provider transport unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE' });
+  if (typeof transport !== 'function') throw Object.assign(new Error('Provider transport unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE', failureStage: 'OPENAI_UPSTREAM' });
   let timer;
-  try { return await Promise.race([transport(Object.freeze(request)), new Promise((_, reject) => { timer = setTimeout(() => reject(Object.assign(new Error('Provider timeout.'), { code: 'AI_TIMEOUT' })), timeoutMs); })]); }
+  try { return await Promise.race([transport(Object.freeze(request)), new Promise((_, reject) => { timer = setTimeout(() => reject(Object.assign(new Error('Provider timeout.'), { code: 'AI_TIMEOUT', failureStage: 'OPENAI_UPSTREAM' })), timeoutMs); })]); }
   finally { if (timer) clearTimeout(timer); }
 }
 
 function normalizeAdapterError(error) {
   const allowed = ['AI_TIMEOUT','AI_PROVIDER_UNAVAILABLE','AI_PROVIDER_OUTPUT_INVALID','AI_WORKFLOW_OUTPUT_DENIED','AI_WORKFLOW_COMMAND_DENIED','AI_EVALUATION_PUBLIC_URL_DENIED','AI_EVALUATION_PRIVATE_REFERENCE_DENIED','AI_EVALUATION_IMAGE_REQUIRED','AI_IMAGE_TOO_LARGE','AI_IMAGE_MIME_DENIED','AI_REAL_EVALUATION_DISABLED','AI_REAL_SYNTHETIC_DATA_REQUIRED','AI_REAL_PROVIDER_SELECTION_REQUIRED','AI_REAL_API_KEY_REQUIRED','AI_REAL_APPLICATION_ISOLATION_REQUIRED','AI_REAL_SERVER_ONLY','AI_APPLICATION_INTEGRATION_DISABLED','AI_APPLICATION_PROVIDER_SELECTION_REQUIRED','AI_APPLICATION_API_KEY_REQUIRED','AI_APPLICATION_ORGANIZATION_NOT_ENABLED','AI_APPLICATION_AUTHENTICATION_REQUIRED','AI_APPLICATION_SERVER_ONLY'];
-  return Object.freeze({ ok: false, errorCode: allowed.includes(error?.code) ? error.code : 'AI_PROVIDER_ERROR', reason: allowed.includes(error?.code) ? 'Provider evaluation request was denied.' : 'Provider evaluation failed.', requiresHumanReview: true, warnings: Object.freeze([]) });
+  const errorCode = allowed.includes(error?.code) ? error.code : 'AI_PROVIDER_ERROR';
+  const failureStage = typeof error?.failureStage === 'string' ? error.failureStage : 'PROVIDER_NORMALIZATION';
+  const validationCode = typeof error?.validationCode === 'string' ? error.validationCode : null;
+  return Object.freeze({
+    ok: false,
+    errorCode,
+    reason: allowed.includes(error?.code) ? 'Provider evaluation request was denied.' : 'Provider evaluation failed.',
+    failureStage,
+    ...(validationCode ? { validationCode } : {}),
+    requiresHumanReview: true,
+    warnings: Object.freeze([]),
+  });
 }
 
 module.exports = Object.freeze({ validateEvaluationInput, parseProviderJSON, normalizeVisionResult, callWithTimeout, normalizeAdapterError });
