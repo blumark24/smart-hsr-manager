@@ -25,9 +25,12 @@ function createOpenAICompatibleVisionProvider({ enabled = false, environment = p
     async analyzeObservationImage(input = {}) {
       const started = clock();
       try {
-        const guard = activation(); if (!guard.allowed) throw Object.assign(new Error(guard.reason), { code: guard.code, failureStage: 'OPENAI_UPSTREAM' });
-        if (!model || !/^[A-Za-z0-9._-]{1,128}$/.test(model)) throw Object.assign(new Error('OpenAI vision model is not explicitly configured.'), { code: 'AI_PROVIDER_UNAVAILABLE', failureStage: 'OPENAI_UPSTREAM' });
-        const image = validateEvaluationInput(input); if (!image.allowed) throw Object.assign(new Error(image.reason), { code: image.code, failureStage: 'OPENAI_UPSTREAM' });
+        const guard = activation();
+        if (!guard.allowed) throw Object.assign(new Error(guard.reason), { code: guard.code, failureStage: 'OPENAI_ACTIVATION_GUARD', validationCode: guard.code });
+        if (!model || !/^[A-Za-z0-9._-]{1,128}$/.test(model)) throw Object.assign(new Error('OpenAI vision model is not explicitly configured.'), { code: 'AI_PROVIDER_UNAVAILABLE', failureStage: 'OPENAI_MODEL_CONFIG', validationCode: 'OPENAI_MODEL_CONFIG_INVALID' });
+        const image = validateEvaluationInput(input);
+        if (!image.allowed) throw Object.assign(new Error(image.reason), { code: image.code, failureStage: 'OPENAI_IMAGE_INPUT', validationCode: image.code });
+        if (typeof transport !== 'function') throw Object.assign(new Error('OpenAI transport is unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE', failureStage: 'OPENAI_TRANSPORT_CONFIG', validationCode: 'OPENAI_TRANSPORT_MISSING' });
         const imageData = Buffer.from(input.controlledImagePayload).toString('base64');
         const body = { model, messages: [{ role: 'user', content: [{ type: 'text', text: buildControlledVisionPrompt(input) }, { type: 'image_url', image_url: { url: `data:${input.imageContentType};base64,${imageData}` } }] }],
           response_format: { type: 'json_schema', json_schema: { name: 'smart_hsr_municipal_vision', strict: true, schema: MUNICIPAL_VISION_OUTPUT_SCHEMA } }, temperature: 0 };
