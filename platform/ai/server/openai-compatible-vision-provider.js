@@ -48,23 +48,38 @@ function createOpenAICompatibleVisionProvider({ enabled = false, environment = p
         const response = await callWithTimeout(transport, { method: 'POST', url: 'https://api.openai.com/v1/chat/completions', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` }, body, timeoutMs }, timeoutMs);
         if (!response?.ok) {
           const upstreamError = response?.body?.error;
-          console.warn('openai vision provider rejected request', {
-            status: Number.isFinite(response?.status) ? response.status : null,
-            code: typeof upstreamError?.code === 'string' ? upstreamError.code.slice(0, 80) : null,
-            type: typeof upstreamError?.type === 'string' ? upstreamError.type.slice(0, 80) : null,
-          });
-          throw Object.assign(new Error('OpenAI provider unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE' });
+          const status = Number.isFinite(response?.status) ? response.status : null;
+          const upstreamCode = typeof upstreamError?.code === 'string' ? upstreamError.code.slice(0, 80) : null;
+          const upstreamType = typeof upstreamError?.type === 'string' ? upstreamError.type.slice(0, 80) : null;
+          console.warn('openai vision provider rejected request', { failureStage: 'OPENAI_UPSTREAM', status, code: upstreamCode, type: upstreamType });
+          throw Object.assign(new Error('OpenAI provider unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE', failureStage: 'OPENAI_UPSTREAM' });
         }
         const message = response.body?.choices?.[0]?.message;
         const text = message?.content;
         if (typeof text !== 'string' || !text.trim()) {
           console.warn('openai vision provider returned no content', {
+            failureStage: 'OPENAI_NO_CONTENT',
             finishReason: typeof response.body?.choices?.[0]?.finish_reason === 'string' ? response.body.choices[0].finish_reason.slice(0, 40) : null,
             refusal: Boolean(message?.refusal),
           });
+          throw Object.assign(new Error('OpenAI provider returned no content.'), { code: 'AI_PROVIDER_OUTPUT_INVALID', failureStage: 'OPENAI_NO_CONTENT' });
         }
-        return normalizeVisionResult({ rawObject: parseProviderJSON(text), provider: 'OPENAI_COMPATIBLE', model, modelVersion: response.body?.model || 'unreported', correlationId: input.correlationId, processingTimeMs: Math.max(0, clock() - started) });
-      } catch (error) { return normalizeAdapterError(error); }
+        let rawObject;
+        try {
+          rawObject = parseProviderJSON(text);
+        } catch (error) {
+          throw Object.assign(error, { failureStage: 'OPENAI_PARSE' });
+        }
+        return normalizeVisionResult({ rawObject, provider: 'OPENAI_COMPATIBLE', model, modelVersion: response.body?.model || 'unreported', correlationId: input.correlationId, processingTimeMs: Math.max(0, clock() - started) });
+      } catch (error) {
+        const normalized = normalizeAdapterError(error);
+        console.warn('openai vision provider failed safely', {
+          failureStage: normalized.diagnosticStage,
+          errorCode: normalized.errorCode,
+          validationCode: normalized.validationCode,
+        });
+        return normalized;
+      }
     },
     async verifyBeforeAfter() { return Object.freeze({ ok: false, errorCode: 'AI_OPERATION_NOT_ACTIVATED', reason: 'Before/after evaluation is not activated.' }); },
     async suggestPriority() { return Object.freeze({ ok: false, errorCode: 'AI_OPERATION_NOT_ACTIVATED', reason: 'Standalone priority evaluation is not activated.' }); },
