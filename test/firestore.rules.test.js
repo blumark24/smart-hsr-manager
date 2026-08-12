@@ -19,7 +19,7 @@ const {
 } = require('@firebase/rules-unit-testing');
 
 const {
-  doc, getDoc, setDoc, updateDoc, deleteDoc,
+  doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp,
 } = require('firebase/firestore');
 
 const PROJECT_ID = 'demo-smart-hsr-tests';
@@ -160,11 +160,22 @@ test('A3 same-org inspector read: allow', async () => {
   await assertSucceeds(getDoc(doc(ctx(UID.insA), 'observations', 'obsA')));
 });
 
-test('A3 same-org inspector create: allow', async () => {
+function validInspectorCreate(overrides = {}) {
+  return {
+    clientRequestId: 'obsNewA', organizationId: ORG_A, createdByUid: UID.insA,
+    status: 'PENDING', displayId: 1, type: 'MAINTENANCE', date: '2026-08-12',
+    title: 'Road issue', details: 'Observed damage', imagePath: 'observations/orgA/obsNewA/before/a.jpg',
+    imageObjectKey: 'observations/orgA/obsNewA/before/a.jpg', isComparative: false,
+    actionPlan: 'Inspect', riskAssessment: { priority: 'High', timeframe: '48 hours' },
+    location: '1, 2', originalLat: 1, originalLng: 2, correctedLat: 1,
+    correctedLng: 2, locationAccuracyMeters: 5, locationCapturedAt: 1,
+    locationSource: 'gps', locationVerified: true, createdAt: serverTimestamp(), ...overrides,
+  };
+}
+
+test('A3 same-org inspector create with canonical schema: allow', async () => {
   const db = ctx(UID.insA);
-  await assertSucceeds(setDoc(doc(db, 'observations', 'obsNewA'), {
-    organizationId: ORG_A, createdByUid: UID.insA, status: 'PENDING',
-  }));
+  await assertSucceeds(setDoc(doc(db, 'observations', 'obsNewA'), validInspectorCreate()));
 });
 
 test('A4 cross-org inspector read: deny', async () => {
@@ -173,16 +184,31 @@ test('A4 cross-org inspector read: deny', async () => {
 
 test('A4 cross-org inspector create: deny', async () => {
   const db = ctx(UID.insA);
-  await assertFails(setDoc(doc(db, 'observations', 'obsBadOrg'), {
-    organizationId: ORG_B, createdByUid: UID.insA, status: 'PENDING',
-  }));
+  await assertFails(setDoc(doc(db, 'observations', 'obsBadOrg'), validInspectorCreate({ clientRequestId: 'obsBadOrg', organizationId: ORG_B })));
 });
 
 test('A5 createdByUid spoofing: deny', async () => {
   const db = ctx(UID.insA);
-  await assertFails(setDoc(doc(db, 'observations', 'obsSpoof'), {
-    organizationId: ORG_A, createdByUid: UID.insA2, status: 'PENDING',
-  }));
+  await assertFails(setDoc(doc(db, 'observations', 'obsSpoof'), validInspectorCreate({ clientRequestId: 'obsSpoof', createdByUid: UID.insA2 })));
+});
+
+test('A5.1 forged workflow and server-owned fields at create: deny', async () => {
+  const db = ctx(UID.insA);
+  for (const forged of [
+    { status: 'COMPLETED' }, { assignedContractorUid: UID.conA },
+    { resolutionNote: 'forged' }, { afterImagePath: 'forged' },
+    { aiAnalysis: { reviewed: true } }, { updatedAt: new Date() },
+  ]) {
+    const field = Object.keys(forged)[0];
+    await assertFails(setDoc(doc(db, 'observations', `forged-${field}`),
+      validInspectorCreate({ clientRequestId: `forged-${field}`, ...forged })));
+  }
+});
+
+test('A5.2 forged createdAt and mismatched document id: deny', async () => {
+  const db = ctx(UID.insA);
+  await assertFails(setDoc(doc(db, 'observations', 'forged-time'), validInspectorCreate({ clientRequestId: 'forged-time', createdAt: new Date(0) })));
+  await assertFails(setDoc(doc(db, 'observations', 'different-id'), validInspectorCreate()));
 });
 
 test('A6 organizationId change on update: deny', async () => {

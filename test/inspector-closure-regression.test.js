@@ -48,7 +48,8 @@ test('image-first draft analysis is review-only and precedes explicit save', () 
   const saveAt = dashboard.indexOf('pendingSmartInput = { payload, nextDisplayId, clientRequestId }', reviewAt);
   assert.ok(analyzeAt > -1 && analyzeAt < reviewAt && reviewAt < saveAt);
   assert.match(dashboard, /draftImageObjectKey:imageObjectKey/);
-  assert.match(dashboard, /requiresHumanReview:true,reviewed:false,reviewStatus:'PENDING'/);
+  const createPayload = dashboard.slice(dashboard.indexOf('const payload = {'), saveAt);
+  assert.doesNotMatch(createPayload, /aiAnalysis|assignedContractorUid|resolutionNote|afterImagePath/);
 });
 
 test('Inspector AI is provider-neutral, authenticated, advisory-only, and persists no workflow mutation', () => {

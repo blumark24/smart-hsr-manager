@@ -21,7 +21,7 @@
 // bucket is private, so no public/permanent URL is ever produced here.
 // ============================================================================
 const crypto = require('crypto');
-const { getDb } = require('../_lib/firebaseAdmin');
+const { getDb, FieldValue } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 const { validateImage } = require('../_lib/imageValidation');
 
@@ -36,6 +36,7 @@ const ALLOWED_IMAGE_TYPES = Object.freeze({
   'image/webp': 'webp',
 });
 const ALLOWED_SCOPES = Object.freeze(['before', 'after']);
+const PENDING_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000;
 
 // Required B2 settings. Names are fixed by the Vercel project configuration.
 const REQUIRED_ENV = ['B2_KEY_ID', 'B2_APPLICATION_KEY', 'B2_BUCKET_NAME', 'B2_S3_ENDPOINT', 'B2_REGION'];
@@ -114,6 +115,10 @@ function buildObjectKey({ prefix, organizationId, observationId, scope, extensio
   // The tail is authoritative and is never rewritten: organizationId, scope,
   // date and filename pass through exactly as given.
   return [OBJECT_ROOT, organizationId, scope, year, month, `${uuid}.${extension}`].join('/');
+}
+
+function pendingUploadId(objectKey) {
+  return crypto.createHash('sha256').update(objectKey, 'utf8').digest('hex');
 }
 
 // Reads the caller's OWN users/{uid} document. No other collection, no other
@@ -215,7 +220,8 @@ async function handler(req, res) {
     return sendJson(res, error.statusCode || 401, { error: 'unauthenticated' });
   }
 
-  const caller = await resolveInspectorContext(getDb(), decoded.uid);
+  const db = getDb();
+  const caller = await resolveInspectorContext(db, decoded.uid);
   if (!caller) return sendJson(res, 403, { error: 'forbidden', reason: 'inspector_role_required' });
 
   let body;
@@ -269,6 +275,14 @@ async function handler(req, res) {
       uid: caller.uid,
       organizationId: caller.organizationId,
     });
+    await db.collection('pendingEvidenceUploads').doc(pendingUploadId(objectKey)).set({
+      objectKey,
+      observationId: typeof body.observationId === 'string' ? body.observationId.trim() : '',
+      organizationId: caller.organizationId,
+      ownerUid: caller.uid,
+      createdAt: FieldValue.serverTimestamp(),
+      expiresAt: new Date(Date.now() + PENDING_UPLOAD_TTL_MS),
+    });
   } catch (error) {
     logStorageFailure(error);
     return sendJson(res, 502, { error: 'storage_upload_failed' });
@@ -291,6 +305,7 @@ module.exports._test = {
   normalizedPrefixSegments,
   OBJECT_ROOT,
   buildObjectKey,
+  pendingUploadId,
   resolveInspectorContext,
   b2Configuration,
   handler,

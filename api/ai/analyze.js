@@ -40,6 +40,7 @@ const { evaluateAIStorageInput } = require('../../platform/ai/ai-storage-boundar
 const { createProviderRouter } = require('../../platform/ai/provider-router');
 const { createActiveVisionProviderRegistration } = require('../../platform/ai/server/active-vision-provider-selector');
 const { createMunicipalIntelligence } = require('../../platform/intelligence/municipal-intelligence-engine');
+const crypto = require('crypto');
 
 // Same organization id used elsewhere for the Al-Qunfudhah pilot (see
 // api/organization/context.js). Not a secret — it is a Firestore document id.
@@ -75,6 +76,20 @@ function evaluateObservationAccess(observation, caller) {
     return { allowed: false, code: 'AI_REPORT_OWNER_DENIED', reason: 'not_report_owner' };
   }
   return { allowed: true, code: 'AI_REPORT_ACCESS_ALLOWED', reason: 'report_owner' };
+}
+
+function pendingUploadId(objectKey) {
+  return crypto.createHash('sha256').update(objectKey, 'utf8').digest('hex');
+}
+
+function evaluateDraftOwnership(record, caller, observationId, objectKey, now = Date.now()) {
+  const expiry = record?.expiresAt?.toMillis ? record.expiresAt.toMillis() : new Date(record?.expiresAt || 0).getTime();
+  if (record?.organizationId !== caller?.organizationId) return { allowed: false, code: 'AI_CROSS_ORGANIZATION_DENIED' };
+  if (record?.ownerUid !== caller?.uid) return { allowed: false, code: 'AI_REPORT_OWNER_DENIED' };
+  if (record?.observationId !== observationId || record?.objectKey !== objectKey || !Number.isFinite(expiry) || expiry <= now) {
+    return { allowed: false, code: 'AI_DRAFT_OWNERSHIP_NOT_PROVEN' };
+  }
+  return { allowed: true, code: 'AI_DRAFT_OWNER_ALLOWED' };
 }
 
 // Reads the caller's OWN users/{uid} document only. Mirrors
@@ -196,9 +211,18 @@ async function handler(req, res) {
   let observationSnap = null;
   let observation;
   if (draftMode) {
+    let uploadSnap;
+    try {
+      uploadSnap = await db.collection('pendingEvidenceUploads').doc(pendingUploadId(draftImageObjectKey)).get();
+    } catch (_) {
+      return fail(res, 500, 'AI_DRAFT_OWNERSHIP_LOOKUP_FAILED', 'Could not verify draft evidence ownership.');
+    }
+    if (!uploadSnap.exists) return fail(res, 403, 'AI_DRAFT_OWNERSHIP_NOT_PROVEN', 'draft_evidence_ownership_not_proven');
+    const draftAccess = evaluateDraftOwnership(uploadSnap.data() || {}, caller, observationId, draftImageObjectKey);
+    if (!draftAccess.allowed) return fail(res, 403, draftAccess.code, 'draft_evidence_ownership_denied');
     observation = {
-      organizationId: caller.organizationId,
-      createdByUid: caller.uid,
+      organizationId: uploadSnap.data().organizationId,
+      createdByUid: uploadSnap.data().ownerUid,
       imageObjectKey: draftImageObjectKey,
       details: typeof body.existingDescription === 'string' ? body.existingDescription.slice(0, 2000) : '',
     };
@@ -327,5 +351,7 @@ module.exports._test = {
   readObjectBytes,
   buildPersistedAiAnalysis,
   evaluateObservationAccess,
+  pendingUploadId,
+  evaluateDraftOwnership,
   handler,
 };

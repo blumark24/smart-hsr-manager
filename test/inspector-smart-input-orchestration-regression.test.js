@@ -33,5 +33,5 @@ test('AI retry reuses pending object key and save remains review-only', () => {
   const render = flow.indexOf('renderSmartCaptureDraft(aiDraft)');
   const savePayload = flow.indexOf('pendingSmartInput = { payload, nextDisplayId, clientRequestId }');
   assert.ok(render > -1 && render < savePayload);
-  assert.match(flow, /requiresHumanReview:true,reviewed:false,reviewStatus:'PENDING'/);
+  assert.doesNotMatch(flow.slice(flow.indexOf('const payload = {'), savePayload), /aiAnalysis|assignedContractorUid|resolutionNote|afterImagePath/);
 });

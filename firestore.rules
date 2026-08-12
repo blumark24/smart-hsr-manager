@@ -93,8 +93,7 @@ service cloud.firestore {
         || (isActiveOrgUser() && resource.data.organizationId == orgUserOrgId());
 
       allow create: if orgUserRole() == 'inspector'
-        && request.resource.data.organizationId == orgUserOrgId()
-        && request.resource.data.createdByUid == request.auth.uid;
+        && validInspectorObservationCreate(obsId);
 
       allow update: if request.resource.data.organizationId == resource.data.organizationId
         && (canManagerUpdateObservation() || canSupervisorUpdateObservation()
@@ -102,6 +101,40 @@ service cloud.firestore {
 
       // manager-only, same-org (manager.html:1775 deleteObservation)
       allow delete: if isActiveManager() && resource.data.organizationId == managerOrgId();
+    }
+
+    function validInspectorObservationCreate(obsId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'clientRequestId', 'organizationId', 'createdByUid', 'status',
+          'displayId', 'type', 'date', 'title', 'details', 'imagePath',
+          'imageObjectKey', 'isComparative', 'actionPlan', 'riskAssessment',
+          'location', 'originalLat', 'originalLng', 'correctedLat',
+          'correctedLng', 'locationAccuracyMeters', 'locationCapturedAt',
+          'locationSource', 'locationVerified', 'createdAt'
+        ])
+        && data.clientRequestId == obsId
+        && data.clientRequestId is string
+        && data.organizationId == orgUserOrgId()
+        && data.createdByUid == request.auth.uid
+        && data.status == 'PENDING'
+        && data.displayId is int
+        && data.type is string
+        && data.date is string
+        && data.title is string
+        && data.details is string
+        && data.imagePath is string
+        && (!data.keys().hasAny(['imageObjectKey'])
+            || data.imageObjectKey == null
+            || data.imageObjectKey is string)
+        && data.isComparative == false
+        && data.actionPlan is string
+        && data.riskAssessment is map
+        && data.riskAssessment.keys().hasOnly(['priority', 'timeframe'])
+        && data.location is string
+        && data.locationSource is string
+        && data.locationVerified is bool
+        && data.createdAt == request.time;
     }
 
     // manager: cycleStatus / closeTicket / confirmAssign (manager.html:981,991,1037)

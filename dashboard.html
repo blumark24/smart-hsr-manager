@@ -3484,9 +3484,6 @@ function subscribeObservations() {
     renderObservationsList(observationsData);
     renderPersonalMap();
     renderPersonalLifecycle();
-    if (!currentSelectedObservation && observationsData.length > 0) {
-      showObservationDetail(observationsData[0].docId);
-    }
     lucide.createIcons();
   }, err => {
     console.error('Observations subscription failed', err);
@@ -3619,8 +3616,7 @@ window.handleFilterChange = function() {
   }
 
   renderObservationsList(filtered);
-  if (filtered.length>0) showObservationDetail(filtered[0].docId);
-  else {
+  if (filtered.length===0) {
     unhide('detailPlaceholder');
     hide('observationDetail');
   }
@@ -3840,6 +3836,7 @@ async function renderPersonalLifecycle(){
   setText('lifecycleLatestStatus',statusArabic(latest.status));
   setText('lifecycleLatestCreatedAt',formatObservationDate(latest.createdAt||latest.date));
   setText('lifecycleLatestResolution',cleanDisplayText(latest.resolutionNote,latest.status==='COMPLETED'?'تمت معالجة الملاحظة':'لم تُسجل مذكرة معالجة بعد',500));
+  if(!document.getElementById('personalLifecycleDialog')?.open)return;
   const [before,after]=await Promise.all([resolveEvidenceReference(latest.imagePath).catch(()=>''),resolveEvidenceReference(latest.afterImagePath).catch(()=> '')]);
   if(token!==lifecycleRenderToken)return;
   if(before){const image=document.getElementById('lifecycleBeforeImage');image.src=before;image.referrerPolicy='no-referrer';unhide('lifecycleBeforeFigure')}
@@ -4466,16 +4463,7 @@ window.processSmartInput = async function(){
       isComparative: false,
       actionPlan: "إصلاح فوري لأضرار الطريق عبر رقعة الإسفلت (Patching).",
       riskAssessment: { priority:"High", timeframe:"48 hours" },
-      aiAnalysis: aiDraft?.analysis ? {
-        provider:aiDraft.analysis.provider||'unknown',category:aiDraft.analysis.categoryCode||null,
-        categoryLabelAr:aiDraft.analysis.categoryLabelAr||null,confidence:Number.isFinite(aiDraft.analysis.confidence)?aiDraft.analysis.confidence:null,
-        severity:aiDraft.analysis.severity||'UNKNOWN',prioritySuggestion:aiDraft.intelligence?.prioritySuggestion?.prioritySuggestion||aiDraft.analysis.prioritySuggestion||'UNKNOWN',
-        explanation:document.getElementById('rawObservationInput').value.trim()||aiDraft.analysis.shortSummaryAr||null,
-        recommendedActionAr:aiDraft.analysis.recommendedActionAr||null,requiresHumanReview:true,reviewed:false,reviewStatus:'PENDING'
-      }:null,
       location: `${lat}, ${lon}`,
-      resolutionNote: null,
-      afterImagePath: null,
       organizationId: inspectorContext.organizationId,
       createdByUid: auth.currentUser.uid,
       originalLat: locationCandidate.lat,
