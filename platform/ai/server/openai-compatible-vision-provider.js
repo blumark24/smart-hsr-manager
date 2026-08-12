@@ -46,8 +46,23 @@ function createOpenAICompatibleVisionProvider({ enabled = false, environment = p
         const body = { model, messages: [{ role: 'user', content: [{ type: 'text', text: buildControlledVisionPrompt(input) }, { type: 'image_url', image_url: { url: `data:${input.imageContentType};base64,${imageData}` } }] }],
           response_format: { type: 'json_schema', json_schema: { name: 'smart_hsr_municipal_vision', strict: true, schema: MUNICIPAL_VISION_OUTPUT_SCHEMA } }, temperature: 0 };
         const response = await callWithTimeout(transport, { method: 'POST', url: 'https://api.openai.com/v1/chat/completions', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` }, body, timeoutMs }, timeoutMs);
-        if (!response?.ok) throw Object.assign(new Error('OpenAI provider unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE' });
-        const text = response.body?.choices?.[0]?.message?.content;
+        if (!response?.ok) {
+          const upstreamError = response?.body?.error;
+          console.warn('openai vision provider rejected request', {
+            status: Number.isFinite(response?.status) ? response.status : null,
+            code: typeof upstreamError?.code === 'string' ? upstreamError.code.slice(0, 80) : null,
+            type: typeof upstreamError?.type === 'string' ? upstreamError.type.slice(0, 80) : null,
+          });
+          throw Object.assign(new Error('OpenAI provider unavailable.'), { code: 'AI_PROVIDER_UNAVAILABLE' });
+        }
+        const message = response.body?.choices?.[0]?.message;
+        const text = message?.content;
+        if (typeof text !== 'string' || !text.trim()) {
+          console.warn('openai vision provider returned no content', {
+            finishReason: typeof response.body?.choices?.[0]?.finish_reason === 'string' ? response.body.choices[0].finish_reason.slice(0, 40) : null,
+            refusal: Boolean(message?.refusal),
+          });
+        }
         return normalizeVisionResult({ rawObject: parseProviderJSON(text), provider: 'OPENAI_COMPATIBLE', model, modelVersion: response.body?.model || 'unreported', correlationId: input.correlationId, processingTimeMs: Math.max(0, clock() - started) });
       } catch (error) { return normalizeAdapterError(error); }
     },
