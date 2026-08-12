@@ -28,10 +28,21 @@ function createProviderRouter({ selectedProvider = null, providers = {}, timeout
       try { output = await withTimeout(() => registration.provider.analyzeObservationImage(createControlledProviderInput(input)), timeoutMs); }
       catch (error) {
         const code = error?.code === 'AI_TIMEOUT' ? 'AI_TIMEOUT' : 'AI_PROVIDER_ERROR';
+        console.warn('ai provider router caught provider exception', { provider: selected, failureStage: code === 'AI_TIMEOUT' ? 'PROVIDER_TIMEOUT' : 'PROVIDER_EXCEPTION', errorCode: code });
         return advisoryEnvelope(aiFailure(code, code === 'AI_TIMEOUT' ? 'AI provider timed out.' : 'AI provider failed.', { provider: selected }));
       }
+      if (!output || output.ok !== true) {
+        const errorCode = typeof output?.errorCode === 'string' ? output.errorCode : 'AI_PROVIDER_ERROR';
+        const diagnosticStage = typeof output?.diagnosticStage === 'string' ? output.diagnosticStage : 'PROVIDER_RESULT';
+        const validationCode = typeof output?.validationCode === 'string' ? output.validationCode : null;
+        console.warn('ai provider router received failure result', { provider: selected, failureStage: diagnosticStage, errorCode, validationCode });
+        return advisoryEnvelope(aiFailure(errorCode, typeof output?.reason === 'string' ? output.reason : 'AI provider failed.', { provider: selected }));
+      }
       const outputDecision = validateAIOutput(output);
-      if (!outputDecision.allowed) return advisoryEnvelope(aiFailure('AI_PROVIDER_OUTPUT_INVALID', outputDecision.code, { provider: selected }));
+      if (!outputDecision.allowed) {
+        console.warn('ai provider router rejected successful output', { provider: selected, failureStage: 'ROUTER_OUTPUT_VALIDATION', errorCode: 'AI_PROVIDER_OUTPUT_INVALID', validationCode: outputDecision.code });
+        return advisoryEnvelope(aiFailure('AI_PROVIDER_OUTPUT_INVALID', outputDecision.code, { provider: selected }));
+      }
       return advisoryEnvelope(Object.freeze({ ...output, warnings: Object.freeze([...output.warnings]) }));
     },
   });
