@@ -28,10 +28,23 @@ function createProviderRouter({ selectedProvider = null, providers = {}, timeout
       try { output = await withTimeout(() => registration.provider.analyzeObservationImage(createControlledProviderInput(input)), timeoutMs); }
       catch (error) {
         const code = error?.code === 'AI_TIMEOUT' ? 'AI_TIMEOUT' : 'AI_PROVIDER_ERROR';
+        console.warn('ai provider router exception', { failureStage: 'ROUTER_EXCEPTION', errorCode: code, provider: selected });
         return advisoryEnvelope(aiFailure(code, code === 'AI_TIMEOUT' ? 'AI provider timed out.' : 'AI provider failed.', { provider: selected }));
       }
+      if (!output || output.ok !== true) {
+        const errorCode = typeof output?.errorCode === 'string' ? output.errorCode : 'AI_PROVIDER_ERROR';
+        const failureStage = typeof output?.failureStage === 'string' ? output.failureStage : 'PROVIDER_NORMALIZATION';
+        const validationCode = typeof output?.validationCode === 'string' ? output.validationCode : null;
+        console.warn('ai provider routed failure', { failureStage, errorCode, validationCode, provider: selected });
+        const failure = aiFailure(errorCode, typeof output?.reason === 'string' ? output.reason : 'AI provider failed.', { provider: selected });
+        return advisoryEnvelope(Object.freeze({ ...failure, failureStage, ...(validationCode ? { validationCode } : {}) }));
+      }
       const outputDecision = validateAIOutput(output);
-      if (!outputDecision.allowed) return advisoryEnvelope(aiFailure('AI_PROVIDER_OUTPUT_INVALID', outputDecision.code, { provider: selected }));
+      if (!outputDecision.allowed) {
+        console.warn('ai provider router output validation failed', { failureStage: 'ROUTER_OUTPUT_VALIDATION', errorCode: 'AI_PROVIDER_OUTPUT_INVALID', validationCode: outputDecision.code, provider: selected });
+        const failure = aiFailure('AI_PROVIDER_OUTPUT_INVALID', outputDecision.code, { provider: selected });
+        return advisoryEnvelope(Object.freeze({ ...failure, failureStage: 'ROUTER_OUTPUT_VALIDATION', validationCode: outputDecision.code }));
+      }
       return advisoryEnvelope(Object.freeze({ ...output, warnings: Object.freeze([...output.warnings]) }));
     },
   });
