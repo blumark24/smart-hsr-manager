@@ -4,6 +4,15 @@ const { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_PAYLOAD_BYTES, CONFIDENCE_THRESHOLD,
 const { LOW_CONFIDENCE_FALLBACK_AR } = require('../arabic-summary-policy');
 const { validateAdvisoryOutput } = require('../advisory-output-policy');
 
+const SAFE_FAILURE_STAGES = Object.freeze([
+  'OPENAI_UPSTREAM',
+  'OPENAI_NO_CONTENT',
+  'OPENAI_PARSE',
+  'ADVISORY_VALIDATION',
+  'AI_OUTPUT_VALIDATION',
+  'PROVIDER_ADAPTER',
+]);
+
 function validateEvaluationInput(input = {}) {
   if (input.imageReference) return Object.freeze({ allowed: false, code: /^https?:\/\//i.test(input.imageReference) ? 'AI_EVALUATION_PUBLIC_URL_DENIED' : 'AI_EVALUATION_PRIVATE_REFERENCE_DENIED', reason: 'Evaluation accepts controlled local bytes only.' });
   if (!(input.controlledImagePayload instanceof Uint8Array) || !input.controlledImagePayload.byteLength) return Object.freeze({ allowed: false, code: 'AI_EVALUATION_IMAGE_REQUIRED', reason: 'Controlled synthetic/public fixture bytes are required.' });
@@ -18,7 +27,10 @@ function parseProviderJSON(value) {
 }
 
 function normalizeVisionResult({ rawObject, provider, model, modelVersion = 'unknown', correlationId, processingTimeMs }) {
-  const advisory = validateAdvisoryOutput(rawObject); if (!advisory.allowed) throw Object.assign(new Error(advisory.reason), { code: advisory.code });
+  const advisory = validateAdvisoryOutput(rawObject);
+  if (!advisory.allowed) {
+    throw Object.assign(new Error(advisory.reason), { code: advisory.code, failureStage: 'ADVISORY_VALIDATION', validationCode: advisory.code });
+  }
   const confidence = Number(rawObject.confidence);
   const lowConfidence = Number.isFinite(confidence) && confidence < CONFIDENCE_THRESHOLD;
   const warnings = Array.isArray(rawObject.warnings) ? [...rawObject.warnings] : rawObject.warnings;
@@ -34,7 +46,10 @@ function normalizeVisionResult({ rawObject, provider, model, modelVersion = 'unk
     requiresHumanReview: lowConfidence ? true : rawObject.requiresHumanReview, warnings: normalizedWarnings,
     provider, model, modelVersion, processingTimeMs,
   });
-  const validation = validateAIOutput(result); if (!validation.allowed) throw Object.assign(new Error(validation.reason), { code: 'AI_PROVIDER_OUTPUT_INVALID' });
+  const validation = validateAIOutput(result);
+  if (!validation.allowed) {
+    throw Object.assign(new Error(validation.reason), { code: 'AI_PROVIDER_OUTPUT_INVALID', failureStage: 'AI_OUTPUT_VALIDATION', validationCode: validation.code });
+  }
   return result;
 }
 
@@ -47,7 +62,18 @@ async function callWithTimeout(transport, request, timeoutMs) {
 
 function normalizeAdapterError(error) {
   const allowed = ['AI_TIMEOUT','AI_PROVIDER_UNAVAILABLE','AI_PROVIDER_OUTPUT_INVALID','AI_WORKFLOW_OUTPUT_DENIED','AI_WORKFLOW_COMMAND_DENIED','AI_EVALUATION_PUBLIC_URL_DENIED','AI_EVALUATION_PRIVATE_REFERENCE_DENIED','AI_EVALUATION_IMAGE_REQUIRED','AI_IMAGE_TOO_LARGE','AI_IMAGE_MIME_DENIED','AI_REAL_EVALUATION_DISABLED','AI_REAL_SYNTHETIC_DATA_REQUIRED','AI_REAL_PROVIDER_SELECTION_REQUIRED','AI_REAL_API_KEY_REQUIRED','AI_REAL_APPLICATION_ISOLATION_REQUIRED','AI_REAL_SERVER_ONLY','AI_APPLICATION_INTEGRATION_DISABLED','AI_APPLICATION_PROVIDER_SELECTION_REQUIRED','AI_APPLICATION_API_KEY_REQUIRED','AI_APPLICATION_ORGANIZATION_NOT_ENABLED','AI_APPLICATION_AUTHENTICATION_REQUIRED','AI_APPLICATION_SERVER_ONLY'];
-  return Object.freeze({ ok: false, errorCode: allowed.includes(error?.code) ? error.code : 'AI_PROVIDER_ERROR', reason: allowed.includes(error?.code) ? 'Provider evaluation request was denied.' : 'Provider evaluation failed.', requiresHumanReview: true, warnings: Object.freeze([]) });
+  const errorCode = allowed.includes(error?.code) ? error.code : 'AI_PROVIDER_ERROR';
+  const diagnosticStage = SAFE_FAILURE_STAGES.includes(error?.failureStage) ? error.failureStage : 'PROVIDER_ADAPTER';
+  const validationCode = typeof error?.validationCode === 'string' && /^[A-Z0-9_]{1,80}$/.test(error.validationCode) ? error.validationCode : null;
+  return Object.freeze({
+    ok: false,
+    errorCode,
+    reason: allowed.includes(error?.code) ? 'Provider evaluation request was denied.' : 'Provider evaluation failed.',
+    diagnosticStage,
+    validationCode,
+    requiresHumanReview: true,
+    warnings: Object.freeze([]),
+  });
 }
 
 module.exports = Object.freeze({ validateEvaluationInput, parseProviderJSON, normalizeVisionResult, callWithTimeout, normalizeAdapterError });
