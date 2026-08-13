@@ -656,16 +656,10 @@
     import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
     import { executeManagerAssignmentCallsite } from './platform/integration/manager-assignment-preview.mjs';
     import { maybeLoadAssignmentV2PreviewBundle } from './platform/integration/preview-bundle-loader.mjs';
+    import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 
 // إعدادات Firebase الخاصة بك
-const firebaseConfig = {
-  apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-  authDomain: "smart-hsr-manager.firebaseapp.com",
-  projectId: "smart-hsr-manager",
-  storageBucket: "smart-hsr-manager.firebasestorage.app",
-  messagingSenderId: "38965508031",
-  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-};
+const firebaseConfig = await resolveFirebaseConfig();
 
 
     let app, db, auth, FIREBASE_READY=false;
