@@ -56,13 +56,13 @@ function hasRecentAuthentication(decoded, nowSeconds = Math.floor(Date.now() / 1
 }
 
 function passwordPolicyReason(password, target) {
-  if (typeof password !== 'string' || password.length < 12) return 'password_policy_failed';
+  if (typeof password !== 'string' || password.length < 8) return 'password_policy_failed';
   if (password !== password.trim()) return 'password_policy_failed';
   if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
     return 'password_policy_failed';
   }
   const normalized = password.toLowerCase();
-  const obvious = ['password', 'qwerty', 'admin', 'welcome', 'letmein', '1234', 'abcd'];
+  const obvious = ['password', 'qwerty', 'admin', 'welcome', 'letmein'];
   if (obvious.some(value => normalized.includes(value)) || /(.)\1{3,}/.test(normalized) || /(.{2,})\1{2,}/.test(normalized)) {
     return 'password_policy_failed';
   }
@@ -110,7 +110,7 @@ async function safeMetadata(auth, uid, record) {
   };
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return sendJson(res, 405, { error: 'method_not_allowed' });
   }
@@ -292,4 +292,7 @@ module.exports = async function handler(req, res) {
     const failure = safeAdminFailure(e);
     return sendJson(res, failure.statusCode, { error: 'request_failed', reason: failure.reason });
   }
-};
+}
+
+module.exports = handler;
+module.exports._test = { passwordPolicyReason };
