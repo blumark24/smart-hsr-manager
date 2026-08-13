@@ -29,7 +29,7 @@ test('Golden Observation wiring covers verified session, modal, GPS, image, save
   assert.match(dashboard, /pendingSmartCapture=\{clientRequestId,uploadedUrl,aiDraft:null\}/);
   assert.match(dashboard, /pendingSmartCapture\.aiDraft=aiDraft/);
   assert.match(dashboard, /حفظ الملاحظة بعد المراجعة/);
-  assert.match(dashboard, /aiAnalysis: aiDraft\?\.analysis/);
+  assert.doesNotMatch(dashboard, /aiAnalysis:\s*aiDraft\?\.analysis/);
   assert.match(dashboard, /تعذر تجديد جلسة الدخول\. سجّل الدخول مرة أخرى/);
 });
 
@@ -59,11 +59,11 @@ test('Manager receives canonical and legacy evidence plus the persisted advisory
 
 test('AI persists only an allowlisted advisory and leaves workflow mutation to explicit human actions', () => {
   assert.match(analyze, /const persistedAiAnalysis = buildPersistedAiAnalysis/);
-  assert.match(analyze, /observationSnap\.ref\.update\(\{ aiAnalysis: persistedAiAnalysis \}\)/);
+  assert.match(analyze, /completeAiOperation\([\s\S]*?patch: \{ aiAnalysis: persistedAiAnalysis \}/);
   assert.match(analyze, /advisoryOnly: true/);
   assert.match(analyze, /requiresExplicitHumanAction: true/);
   assert.match(analyze, /persisted: !draftMode/);
-  assert.match(analyze, /if \(!draftMode\)/);
+  assert.match(analyze, /draftMode \? null : \{[\s\S]*?patch: \{ aiAnalysis: persistedAiAnalysis \}/);
   assert.match(analyze, /draft: draftMode/);
   const persistenceBlock = analyze.slice(analyze.indexOf('const persistedAiAnalysis'), analyze.indexOf('return sendJson(res, 200'));
   for (const forbidden of ['status:', 'assignedContractorUid', 'assignedAt', 'closedAt']) {
@@ -73,7 +73,8 @@ test('AI persists only an allowlisted advisory and leaves workflow mutation to e
 
 test('Firestore keeps Inspector creation and Manager viewing tenant-scoped without rule changes', () => {
   assert.match(rules, /allow read: if \(isActiveManager\(\) && resource\.data\.organizationId == managerOrgId\(\)\)/);
-  assert.match(rules, /allow create: if orgUserRole\(\) == 'inspector'[\s\S]*?request\.resource\.data\.organizationId == orgUserOrgId\(\)[\s\S]*?request\.resource\.data\.createdByUid == request\.auth\.uid/);
+  assert.match(rules, /allow create: if orgUserRole\(\) == 'inspector'[\s\S]*?validInspectorObservationCreate\(obsId\)/);
+  assert.match(rules, /function validInspectorObservationCreate\(obsId\)[\s\S]*?data\.organizationId == orgUserOrgId\(\)[\s\S]*?data\.createdByUid == request\.auth\.uid/);
 });
 
 test('storage authorization admits same-tenant Manager and rejects cross-tenant evidence', async () => {
