@@ -46,6 +46,19 @@ const { acquireAiOperation, completeAiOperation, releaseAiOperation } = require(
 // Same organization id used elsewhere for the Al-Qunfudhah pilot (see
 // api/organization/context.js). Not a secret — it is a Firestore document id.
 const ALQUNFUDHAH_ORGANIZATION_ID = 'CnlVlKC7UcDMp2NZzjjT';
+
+// Production keeps its historical pilot org so no Production env write is
+// required by this change. Every other environment (Preview/Staging/dev)
+// must set SMART_HSR_AI_ALLOWED_ORGANIZATION_IDS explicitly; an unset, empty,
+// or malformed value resolves to an empty allowlist — fail closed, never
+// fail open. Organization ids are Firestore document ids, not secrets.
+function resolvePilotOrganizationIds(env = process.env) {
+  const configured = String(env.SMART_HSR_AI_ALLOWED_ORGANIZATION_IDS || '')
+    .split(',').map(value => value.trim()).filter(Boolean);
+  if (configured.length) return configured;
+  if (env.VERCEL_ENV === 'production') return [ALQUNFUDHAH_ORGANIZATION_ID];
+  return [];
+}
 const MAX_ID_LENGTH = 128;
 const MAX_BODY_BYTES = 8192;
 const PROVIDER_TIMEOUT_MS = 15000;
@@ -200,9 +213,10 @@ async function handler(req, res) {
   const correlationId = cleanId(body.correlationId) || `analyze-${observationId}-${Date.now()}`;
 
   // Fast pilot-scope gate: fail before touching storage or the provider at
-  // all for any organization other than Al-Qunfudhah. The provider's own
-  // activation guard re-checks this independently below (defense in depth).
-  const organizationAllowed = caller.organizationId === ALQUNFUDHAH_ORGANIZATION_ID;
+  // all for any organization outside the configured allowlist. The
+  // provider's own activation guard re-checks this independently below
+  // (defense in depth).
+  const organizationAllowed = resolvePilotOrganizationIds().includes(caller.organizationId);
   if (!organizationAllowed) {
     return fail(res, 403, 'AI_APPLICATION_ORGANIZATION_NOT_ENABLED', 'AI vision analysis is not yet enabled for this organization.');
   }
@@ -363,6 +377,7 @@ async function handler(req, res) {
 module.exports = handler;
 module.exports._test = {
   ALQUNFUDHAH_ORGANIZATION_ID,
+  resolvePilotOrganizationIds,
   cleanId,
   extensionContentType,
   resolveInspectorContext,
