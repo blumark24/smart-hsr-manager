@@ -2972,7 +2972,11 @@ function renderReferenceInspectorDashboard(own) {
   const latestEmpty=document.getElementById('refLatestEmpty'),latestBody=document.getElementById('refLatestBody');
   if(!observationsServerConfirmed||!latest){latestEmpty?.classList.remove('hidden');latestBody?.classList.add('hidden');setText('refLatestTime','—');return}
   latestEmpty?.classList.add('hidden');latestBody?.classList.remove('hidden');setText('refLatestDescription',cleanDisplayText(latest.description||latest.title,'ملاحظة ميدانية',160));setText('refLatestLocation',cleanDisplayText(latest.locationName||latest.area||latest.address,'الموقع الموثق',100));setText('refLatestStatus',statusArabic(latest.status));setText('refLatestReference',cleanDisplayText(latest.docId||latest.id,'مرجع غير متاح',50));setText('refLatestTime',formatObservationDate(latest.createdAt,'وقت غير متاح'));
-  const img=latest.imagePath||latest.imageUrl||latest.beforeImagePath;const imageEl=document.getElementById('refLatestImage');if(imageEl&&img){resolveEvidenceReference(img).then(url=>{if(url){imageEl.src=url;imageEl.classList.remove('hidden')}}).catch(()=>{})}else imageEl?.classList.add('hidden');
+  // Evidence images are private, authenticated-only objects: this summary
+  // card must never fetch one just because the dashboard loaded. The
+  // thumbnail stays hidden here; only the explicit observation-selection
+  // path (showObservationDetail) resolves and displays evidence.
+  document.getElementById('refLatestImage')?.classList.add('hidden');
   const stages={created:true,received:Boolean(latest.assignedToUid||latest.assignedAt||latest.receivedAt),progress:latest.status==='IN_PROGRESS'||latest.status==='COMPLETED',resolved:latest.status==='COMPLETED',closed:latest.status==='COMPLETED'&&Boolean(latest.afterImagePath||latest.resolutionNote)};
   document.querySelectorAll('#refLifecycleTrack [data-stage]').forEach(el=>{const active=stages[el.dataset.stage];el.classList.toggle('is-active',active);const small=el.querySelector('small');if(small)small.textContent=active?(el.dataset.stage==='created'?formatObservationDate(latest.createdAt,'تم الإنشاء'):el.dataset.stage==='progress'?'مؤكد':'مؤكد'):'غير متاح'});
 }
