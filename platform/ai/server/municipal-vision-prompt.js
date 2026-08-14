@@ -1,9 +1,19 @@
 'use strict';
 
+const { MUNICIPAL_TAXONOMY } = require('../../intelligence/municipal-taxonomy');
+
+// Single source of truth for which categoryCode values the provider may
+// return -- generated from the taxonomy module, never hand-duplicated. Used
+// both to constrain the output schema (enum) and to tell the model what the
+// valid codes actually are (a free-text field the model was never told the
+// vocabulary for cannot be validated against that vocabulary).
+const VALID_CATEGORY_CODES = Object.freeze(MUNICIPAL_TAXONOMY.map(entry => entry.code));
+const CATEGORY_CODE_ALLOWLIST_AR = MUNICIPAL_TAXONOMY.map(entry => `${entry.code} (${entry.labelAr})`).join('، ');
+
 const MUNICIPAL_VISION_OUTPUT_SCHEMA = Object.freeze({
   type: 'object', additionalProperties: false,
   properties: Object.freeze({
-    shortSummaryAr: { type: 'string' }, categoryCode: { type: 'string' }, categoryLabelAr: { type: 'string' },
+    shortSummaryAr: { type: 'string' }, categoryCode: { type: 'string', enum: VALID_CATEGORY_CODES }, categoryLabelAr: { type: 'string' },
     subcategoryCode: { type: ['string','null'] }, subcategoryLabelAr: { type: ['string','null'] },
     severity: { type: 'string', enum: ['LOW','MEDIUM','HIGH','CRITICAL','UNKNOWN'] }, severityScore: { type: 'number', minimum: 0, maximum: 100 },
     prioritySuggestion: { type: 'string', enum: ['LOW','NORMAL','HIGH','URGENT','UNKNOWN'] }, responsibleDepartmentSuggestion: { type: ['string','null'] },
@@ -22,9 +32,10 @@ const CONTROLLED_MUNICIPAL_VISION_INSTRUCTION = [
   'أنت مساعد رؤية ميداني بلدي. حلل فقط ما يمكن ملاحظته بصرياً في الصورة وقدّم مسودة مهنية للمراقب، وليست قراراً تنفيذياً.',
   'أعد JSON مطابقاً للمخطط دون Markdown أو نص إضافي.',
   'ابدأ بفهم المشكلة المرئية الرئيسية، ثم اختر أقرب تصنيف بلدي مناسب، ثم اقترح الإجراء الميداني المنطقي دون اختلاق تفاصيل غير ظاهرة.',
+  `اختر categoryCode حصراً من هذه القائمة المعتمدة دون ابتكار رمز جديد أو اختصار غير مدرج: ${CATEGORY_CODE_ALLOWLIST_AR}.`,
   'اجعل shortSummaryAr وصفاً عربياً رسمياً واحداً يبدأ بعبارة تم رصد، من 5 إلى 15 كلمة، ويذكر المشكلة المرئية بوضوح. إذا أمكن، اذكر أثرها أو الحاجة للمعالجة بصياغة طبيعية.',
   'اجعل recommendedActionAr إجراءً بلدياً عملياً ومختصراً مرتبطاً مباشرة بما يظهر في الصورة، مثل التنظيف أو الإزالة أو الإصلاح أو التأمين أو الفحص حسب الحالة.',
-  'استخدم UNKNOWN فقط عندما تكون الصورة غير قابلة للاستخدام أو لا توجد أدلة بصرية كافية لتحديد فئة بلدية معقولة. لا تستخدم UNKNOWN لمجرد وجود قدر طبيعي من عدم اليقين.',
+  'استخدم UNKNOWN فقط عندما تكون الصورة غير قابلة للاستخدام، أو لا توجد أدلة بصرية كافية، أو لا يوجد رمز في القائمة المعتمدة يطابق المشكلة بوضوح. لا تستخدم UNKNOWN لمجرد وجود قدر طبيعي من عدم اليقين.',
   'اضبط confidence بحسب وضوح الدليل البصري. لا ترفع الثقة لتعويض نقص المعلومات.',
   'لا تستنتج ملكية أو مسؤولية شخص أو مقاول أو جهة من الصورة وحدها. responsibleDepartmentSuggestion اقتراح استرشادي فقط ويمكن أن يكون null.',
   'لا تنشئ أوامر حفظ أو إسناد أو تغيير حالة أو إغلاق أو حذف.',
@@ -38,4 +49,4 @@ function buildControlledVisionPrompt(input = {}) {
   return `${CONTROLLED_MUNICIPAL_VISION_INSTRUCTION}\n<UNTRUSTED_EXISTING_DESCRIPTION>${existingDescription}</UNTRUSTED_EXISTING_DESCRIPTION>`;
 }
 
-module.exports = Object.freeze({ MUNICIPAL_VISION_OUTPUT_SCHEMA, CONTROLLED_MUNICIPAL_VISION_INSTRUCTION, buildControlledVisionPrompt });
+module.exports = Object.freeze({ MUNICIPAL_VISION_OUTPUT_SCHEMA, CONTROLLED_MUNICIPAL_VISION_INSTRUCTION, buildControlledVisionPrompt, VALID_CATEGORY_CODES });
