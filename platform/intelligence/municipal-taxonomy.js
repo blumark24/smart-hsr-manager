@@ -31,4 +31,65 @@ const MUNICIPAL_TAXONOMY = Object.freeze([
 const TAXONOMY_BY_CODE = Object.freeze(Object.fromEntries(MUNICIPAL_TAXONOMY.map(value => [value.code,value])));
 function resolveTaxonomy(code) { return TAXONOMY_BY_CODE[String(code||'').trim().toUpperCase()] || TAXONOMY_BY_CODE.UNKNOWN; }
 
-module.exports = Object.freeze({ MUNICIPAL_TAXONOMY, TAXONOMY_BY_CODE, resolveTaxonomy });
+// Arabic normalization: strip diacritics/tatweel and punctuation, collapse
+// whitespace, so token comparison isn't defeated by formatting noise.
+function normalizeArabicText(value) {
+  return String(value || '')
+    .replace(/[ً-ٰٟـ]/g, '')
+    .replace(/[^؀-ۿݐ-ݿ\sA-Za-z0-9]/g, ' ')
+    .trim();
+}
+function tokenSet(value) {
+  return new Set(normalizeArabicText(value).split(/\s+/).filter(Boolean));
+}
+
+// Deterministic, taxonomy-derived fallback for when the provider returns a
+// categoryCode outside the allowlist (schema/prompt now constrain new calls,
+// but this stays as defense in depth -- e.g. against a provider that ignores
+// the enum). Matches on each label's HEAD word only (Arabic noun phrases in
+// this taxonomy are head-initial: the defect noun comes first, e.g. "حفرة
+// أسفلتية" = pothole[head] + asphalt[modifier], "تسرب مياه" = leak[head] +
+// water[modifier]) -- this deliberately requires the defect noun itself, not
+// just an associated substance/material word, so "standing water" evidence
+// (which mentions مياه/water but never تسرب/leak) does NOT get force-mapped
+// to WATER_LEAKAGE. A tie between multiple head-word matches (e.g. two
+// lighting-pole entries sharing "عمود") is resolved only by a word exclusive
+// to one tied candidate (shared words like "إنارة" can't disambiguate
+// anything); an unresolved tie or zero matches returns null, which the
+// caller must treat as UNKNOWN.
+function attemptDeterministicFallbackMatch(evidenceText) {
+  const tokens = tokenSet(evidenceText);
+  if (!tokens.size) return null;
+  const candidates = MUNICIPAL_TAXONOMY.filter(entry => {
+    if (entry.code === 'UNKNOWN') return false;
+    const headWord = entry.labelAr.split(/\s+/)[0];
+    return headWord && tokens.has(headWord);
+  });
+  if (candidates.length === 1) return candidates[0];
+  if (candidates.length > 1) {
+    // Words shared by more than one tied candidate (e.g. both lighting-pole
+    // entries share "إنارة") can't disambiguate anything; only a word
+    // exclusive to one candidate among the tied set counts as a signal.
+    const wordSets = candidates.map(entry => new Set(entry.labelAr.split(/\s+/).slice(1)));
+    const refined = candidates.filter((entry, i) => {
+      const exclusiveWords = [...wordSets[i]].filter(word => !wordSets.some((other, j) => j !== i && other.has(word)));
+      return exclusiveWords.some(word => tokens.has(word));
+    });
+    if (refined.length === 1) return refined[0];
+  }
+  return null;
+}
+
+// Exact code match stays first priority (unchanged existing behavior). Only
+// when the provider's code is unsupported does this attempt the conservative
+// fallback match against the provider's own Arabic label/summary text; never
+// invents a category from weak or ambiguous evidence.
+function resolveTaxonomyWithFallback(code, evidenceText) {
+  const exact = TAXONOMY_BY_CODE[String(code||'').trim().toUpperCase()];
+  if (exact) return { entry: exact, usedFallback: false };
+  const fallback = attemptDeterministicFallbackMatch(evidenceText);
+  if (fallback) return { entry: fallback, usedFallback: true };
+  return { entry: TAXONOMY_BY_CODE.UNKNOWN, usedFallback: false };
+}
+
+module.exports = Object.freeze({ MUNICIPAL_TAXONOMY, TAXONOMY_BY_CODE, resolveTaxonomy, resolveTaxonomyWithFallback });

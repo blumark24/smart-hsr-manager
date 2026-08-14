@@ -1,14 +1,14 @@
 'use strict';
 
 const { evaluateRealProviderActivation, evaluateApplicationProviderActivation } = require('./real-provider-activation-guard');
-const { buildControlledVisionPrompt } = require('./municipal-vision-prompt');
+const { buildControlledVisionPrompt, VALID_CATEGORY_CODES } = require('./municipal-vision-prompt');
 const { validateEvaluationInput, parseProviderJSON, normalizeVisionResult, callWithTimeout, normalizeAdapterError } = require('./provider-adapter-utils');
 const { MAX_IMAGE_PAYLOAD_BYTES, ALLOWED_IMAGE_MIME_TYPES } = require('../ai-security-policy');
 
 const GEMINI_REST_VISION_OUTPUT_SCHEMA = Object.freeze({
   type: 'OBJECT',
   properties: Object.freeze({
-    shortSummaryAr: { type: 'STRING' }, categoryCode: { type: 'STRING' }, categoryLabelAr: { type: 'STRING' },
+    shortSummaryAr: { type: 'STRING' }, categoryCode: { type: 'STRING', enum: VALID_CATEGORY_CODES }, categoryLabelAr: { type: 'STRING' },
     subcategoryCode: { type: 'STRING', nullable: true }, subcategoryLabelAr: { type: 'STRING', nullable: true },
     severity: { type: 'STRING', enum: ['LOW','MEDIUM','HIGH','CRITICAL','UNKNOWN'] }, severityScore: { type: 'NUMBER' },
     prioritySuggestion: { type: 'STRING', enum: ['LOW','NORMAL','HIGH','URGENT','UNKNOWN'] },

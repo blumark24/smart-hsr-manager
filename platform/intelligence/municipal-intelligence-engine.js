@@ -2,7 +2,7 @@
 
 const { validateShortSummaryAr, LOW_CONFIDENCE_FALLBACK_AR } = require('../ai/arabic-summary-policy');
 const { FORBIDDEN_ACTIONS, validateMunicipalIntelligence, RISK_INDICATORS } = require('./municipal-intelligence-contract');
-const { resolveTaxonomy } = require('./municipal-taxonomy');
+const { resolveTaxonomy, resolveTaxonomyWithFallback } = require('./municipal-taxonomy');
 const { resolveExplainablePriority } = require('./explainable-priority-resolver');
 
 const MAX_DETECTED_ISSUES=5;
@@ -21,9 +21,16 @@ function validateRawIssue(issue={}){
 }
 
 function normalizeIssue(issue,analysisId,index){
-  const taxonomy=resolveTaxonomy(issue.categoryCode);const low=issue.confidence<ISSUE_CONFIDENCE_THRESHOLD;
+  // Exact categoryCode match stays first priority; only an unsupported code
+  // falls through to the conservative label/summary fallback match (defense
+  // in depth -- the schema/prompt now constrain new provider calls to the
+  // allowlist, this covers a provider that ignores it).
+  const evidenceText=[issue.categoryLabelAr,issue.shortSummaryAr].filter(v=>typeof v==='string').join(' ');
+  const {entry:taxonomy,usedFallback}=resolveTaxonomyWithFallback(issue.categoryCode,evidenceText);
+  const low=issue.confidence<ISSUE_CONFIDENCE_THRESHOLD;
   const warnings=[...(Array.isArray(issue.warnings)?issue.warnings:[])];
   if(taxonomy.code==='UNKNOWN'&&String(issue.categoryCode).toUpperCase()!=='UNKNOWN')warnings.push('UNSUPPORTED_CATEGORY_MAPPED_TO_UNKNOWN');
+  if(usedFallback)warnings.push('FALLBACK_CATEGORY_MATCH_USED');
   if(low)warnings.push('LOW_CONFIDENCE_NOT_AUTO_SELECTABLE');
   const safety=taxonomy.safetyFlags;
   return Object.freeze({issueId:`${analysisId}-${taxonomy.code.toLowerCase()}-${index+1}`,issueCode:taxonomy.code,issueLabelAr:taxonomy.labelAr,
