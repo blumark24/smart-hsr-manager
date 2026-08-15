@@ -421,6 +421,27 @@
       .comparison-wrapper .after-image img{position:static!important}
       .print-logo{display:block!important}
     }
+    /* رأس رسمي يظهر فقط عند الطباعة داخل لوحة نتائج الذكاء الاصطناعي -- لا يظهر
+       على الشاشة إطلاقاً ولا يضيف كتلة واجهة جديدة. */
+    .ai-print-header{display:none}
+    /* نبضة مقيّدة للمرحلة الحالية فقط في شريط التوأم الرقمي داخل نتائج الذكاء
+       الاصطناعي -- لا تُطبَّق على مراحل مكتملة أو معلّقة، ولا تمتد خارج
+       #aiResultContent. مطفأة عند تفضيل تقليل الحركة وعند الطباعة. */
+    @keyframes aiFlowCurrentPulse{
+      0%,100%{box-shadow:0 0 0 0 rgba(10,25,49,.20)}
+      50%{box-shadow:0 0 0 4px rgba(10,25,49,.10)}
+    }
+    #aiResultContent .ai-flow-current{animation:aiFlowCurrentPulse 2s ease-in-out infinite}
+    @media (prefers-reduced-motion: reduce){
+      #aiResultContent .ai-flow-current{animation:none}
+    }
+    @media print{
+      .ai-print-header{display:block!important;font-size:.75rem;color:#000;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:10px;line-height:1.6}
+      #aiResultContent .ai-badge{background:#fff!important;border:1px solid #000!important;color:#000!important}
+      #aiResultContent .ai-flow-node{background:#fff!important;color:#000!important;border:1px solid #000!important}
+      #aiResultContent .ai-flow-line{background:#000!important}
+      #aiResultContent .ai-flow-current{animation:none!important}
+    }
 
     /* HEADER — compact municipal inspector identity card */
     .hsr-header {
@@ -4918,11 +4939,6 @@ function renderAiFailure(title, errorCode){
 function severityBadgeClass(severity){
   return { CRITICAL:'bg-red-100 text-red-800', HIGH:'bg-orange-100 text-orange-800', MEDIUM:'bg-yellow-100 text-yellow-800', LOW:'bg-green-100 text-green-800', UNKNOWN:'bg-gray-100 text-gray-700' }[severity] || 'bg-gray-100 text-gray-700';
 }
-// عتبات لونية مقيَّدة: أخضر/تركواز = طبيعي أو معلوماتي، كهرماني = تنبيه/مراجعة يدوية،
-// أحمر = سلامة عامة أو أولوية عاجلة فقط، رمادي = بيانات وصفية ثانوية.
-function priorityBadgeClass(priority){
-  return { URGENT:'bg-red-100 text-red-800', HIGH:'bg-amber-100 text-amber-800', NORMAL:'bg-teal-100 text-teal-800', LOW:'bg-gray-100 text-gray-700', UNKNOWN:'bg-gray-100 text-gray-700' }[priority] || 'bg-gray-100 text-gray-700';
-}
 // صف حقل مضغوط داخل بطاقة رمادية فاتحة -- يُستخدم في الأقسام الثلاثة لعرض بيانات
 // وصفية (تصنيف/جهة/إطار زمني...) دون كتلة نصية واحدة طويلة.
 function aiFieldRow(label, value){
@@ -4933,35 +4949,103 @@ function aiListSection(label, items, itemClass){
   if (!Array.isArray(items) || !items.length) return '';
   return `<div class="mt-3"><p class="text-xs font-bold text-gray-500 mb-1">${escapeHTML(label)}</p><ul class="${itemClass||'text-sm text-gray-700'} list-disc pr-5 space-y-1">${items.map(i=>`<li>${escapeHTML(i)}</li>`).join('')}</ul></div>`;
 }
+// بطاقات مؤشرات مضغوطة (الثقة/الأولوية/SLA/الجهة) -- تُحذف البطاقة كلياً إن
+// كانت قيمتها غير متاحة، لا تُعرض أبداً كبطاقة "-" فارغة.
+function aiKpiTiles(tiles){
+  const usable = (tiles || []).filter(t => t && t.value);
+  if (!usable.length) return '';
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px;">${usable.map(t => `
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px;">
+      <div style="color:var(--color-navy);font-size:.65rem;font-weight:700;margin-bottom:3px;">${escapeHTML(t.label)}</div>
+      <div style="font-size:1rem;font-weight:800;color:${t.color || '#1f2937'};">${escapeHTML(t.value)}</div>
+    </div>`).join('')}</div>`;
+}
+const AI_FLOW_STAGES = [
+  { key:'evidence', label:'الدليل الميداني' },
+  { key:'vision', label:'الرؤية' },
+  { key:'intelligence', label:'الذكاء البلدي' },
+  { key:'root-cause', label:'السبب الجذري' },
+  { key:'work-order', label:'أمر العمل' },
+  { key:'human-review', label:'المراجعة البشرية' },
+];
+// شريط مضغوط لحالة التوأم الرقمي التشغيلية -- حالة حقيقية فقط: مرحلتا الرؤية
+// والذكاء البلدي مكتملتان دائماً عند وصول أي نتيجة (شرط مسبق يفرضه الخادم
+// فعلياً)، والمرحلة الحالية فقط تُعرض "قيد التنفيذ"؛ لا محاكاة ولا افتراض
+// اكتمال للسبب الجذري/أمر العمل أو المراجعة البشرية.
+function aiDigitalTwinFlow(currentStage){
+  const completedBaseline = new Set(['evidence', 'vision', 'intelligence']);
+  const nodes = AI_FLOW_STAGES.map((stage, i) => {
+    const isCurrent = stage.key === currentStage;
+    const isDone = !isCurrent && completedBaseline.has(stage.key);
+    const circleStyle = isCurrent
+      ? 'background:#fff;color:var(--color-navy);border:2px solid var(--color-navy);'
+      : isDone
+        ? 'background:var(--color-teal);color:#fff;border:2px solid var(--color-teal);'
+        : 'background:#f3f4f6;color:#9ca3af;border:1px solid #d1d5db;';
+    const labelStyle = isCurrent ? 'color:var(--color-navy);font-weight:700;' : isDone ? 'color:#4b5563;' : 'color:#9ca3af;';
+    const connector = i < AI_FLOW_STAGES.length - 1 ? `<span class="ai-flow-line" style="flex:1;height:1px;background:#e5e7eb;margin-top:9px;"></span>` : '';
+    const nodeClass = isCurrent ? 'ai-flow-node ai-flow-current' : 'ai-flow-node';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:40px;">
+      <span class="${nodeClass}" style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;${circleStyle}">${i + 1}</span>
+      <span style="font-size:.6rem;text-align:center;line-height:1.15;${labelStyle}">${escapeHTML(stage.label)}</span>
+    </div>${connector}`;
+  }).join('');
+  return `<div style="display:flex;align-items:flex-start;justify-content:space-between;margin:12px 0;" dir="rtl">${nodes}</div>`;
+}
+// رأس رسمي يظهر فقط عند الطباعة -- لا يُعرض على الشاشة إطلاقاً (.ai-print-header
+// مخفي افتراضياً، انظر @media print أعلاه) ولا يستخدم إلا بيانات الملاحظة
+// المتاحة فعلياً؛ أي حقل غائب يُحذف بدل عرضه فارغاً.
+function aiPrintHeader(analysisTypeAr, resultStatusAr){
+  const obs = currentSelectedObservation || {};
+  const rows = [
+    obs.id ? `رقم البلاغ: ${escapeHTML(String(obs.id))}` : '',
+    obs.date ? `التاريخ: ${escapeHTML(obs.date)}` : '',
+    obs.location ? `الموقع: ${escapeHTML(obs.location)}` : '',
+  ].filter(Boolean).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
+  return `<div class="ai-print-header">
+    <div><b>Smart HSR</b> — نظام المراقبة وإدارة الجودة الرقمي</div>
+    <div>نوع التحليل: ${escapeHTML(analysisTypeAr)}${resultStatusAr ? `&nbsp;&nbsp;|&nbsp;&nbsp;حالة النتيجة: ${escapeHTML(resultStatusAr)}` : ''}</div>
+    ${rows ? `<div>${rows}</div>` : ''}
+  </div>`;
+}
 function renderVisionResult(title, payload){
   const analysis = payload.analysis || {};
   const intelligence = payload.intelligence || {};
   const confidencePct = Number.isFinite(analysis.confidence) ? Math.round(analysis.confidence * 100) : null;
   const priority = intelligence.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || null;
+  const priorityAr = priority ? (SMART_INPUT_PRIORITY_LABELS_AR[priority] || priority) : null;
   const reasons = Array.isArray(intelligence.prioritySuggestion?.reasonsAr) ? intelligence.prioritySuggestion.reasonsAr : [];
   const riskReasons = Array.isArray(intelligence.riskIndicators) ? intelligence.riskIndicators.map(r=>r?.reasonAr).filter(Boolean) : [];
   const responseWindowAr = SMART_INPUT_RESPONSE_WINDOW_LABELS_AR[intelligence.suggestedResponseWindow] || intelligence.suggestedResponseWindow || null;
+  const department = intelligence.suggestedDepartment || null;
+  const summary = analysis.categoryLabelAr
+    ? `تم تصنيف الحالة كـ${escapeHTML(analysis.categoryLabelAr)}${department && responseWindowAr ? ` ويُوصى بإحالتها إلى ${escapeHTML(department)} خلال ${escapeHTML(responseWindowAr)}` : ''}.`
+    : '';
   setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
   setHTML('aiResultContent', `
+    ${aiPrintHeader('تحليل الرؤية (Vision)', 'استرشادي — يتطلب مراجعة بشرية')}
     <div class="bg-white border border-gray-200 rounded-xl p-4">
-      <div class="flex flex-wrap items-center gap-2 mb-3">
-        <span class="px-3 py-1 rounded-full text-xs font-bold ${severityBadgeClass(analysis.severity)}">${escapeHTML(analysis.categoryLabelAr || '-')}</span>
-        ${priority ? `<span class="px-3 py-1 rounded-full text-xs font-bold ${priorityBadgeClass(priority)}">الأولوية: ${escapeHTML(SMART_INPUT_PRIORITY_LABELS_AR[priority] || priority)}</span>` : ''}
-        ${confidencePct !== null ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">الثقة: ${confidencePct}%</span>` : ''}
-        ${intelligence.publicSafetyRisk ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">⚠ خطر على السلامة العامة</span>` : ''}
+      ${summary ? `<p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>` : ''}
+      ${aiKpiTiles([
+        confidencePct !== null ? { label:'الثقة', value:`${confidencePct}%` } : null,
+        priorityAr ? { label:'الأولوية', value:priorityAr, color: priority === 'URGENT' ? '#b91c1c' : priority === 'HIGH' ? '#b45309' : undefined } : null,
+        responseWindowAr ? { label:'SLA / زمن الاستجابة', value:responseWindowAr } : null,
+        department ? { label:'الجهة المختصة', value:department } : null,
+      ].filter(Boolean))}
+      ${aiDigitalTwinFlow('vision')}
+      <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
+        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${severityBadgeClass(analysis.severity)}">${escapeHTML(analysis.categoryLabelAr || '-')}</span>
+        ${intelligence.publicSafetyRisk ? `<span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">⚠ خطر على السلامة العامة</span>` : ''}
       </div>
-      <div class="bg-gray-50 rounded-lg border border-gray-100 px-3">
-        ${aiFieldRow('التصنيف', analysis.categoryLabelAr)}
+      <div class="bg-gray-50 rounded-lg border border-gray-100 px-3" style="break-inside:avoid;">
         ${aiFieldRow('الشدة', analysis.severity)}
-        ${aiFieldRow('الجهة المقترحة', intelligence.suggestedDepartment)}
-        ${aiFieldRow('الإطار الزمني المقترح', responseWindowAr)}
         ${aiFieldRow('المعالجة المقترحة', intelligence.suggestedTreatment)}
       </div>
       ${analysis.shortSummaryAr ? `<p class="text-sm text-gray-700 mt-3">${escapeHTML(analysis.shortSummaryAr)}</p>` : ''}
       ${analysis.recommendedActionAr ? `<p class="text-sm font-bold text-gray-800 mt-2">الإجراء الموصى به: <span class="font-normal text-gray-700">${escapeHTML(analysis.recommendedActionAr)}</span></p>` : ''}
       ${aiListSection('مؤشرات الخطر', riskReasons, 'text-xs text-amber-700')}
       ${aiListSection('أسباب تقدير الأولوية', reasons, 'text-xs text-gray-500')}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3">
+      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
         اقتراح استرشادي فقط من مزود الذكاء الاصطناعي المعتمد — يتطلب مراجعة بشرية صريحة قبل أي إجراء. لا يتم الحفظ أو الإسناد أو تغيير الحالة أو الإغلاق تلقائياً.
       </p>
     </div>`);
@@ -5013,19 +5097,23 @@ function renderRootCauseResult(title, payload){
   const missing = Array.isArray(rc.missingEvidence) ? rc.missingEvidence : [];
   const steps = Array.isArray(rc.verificationSteps) ? rc.verificationSteps : [];
   const confidencePct = Number.isFinite(rc.confidence) ? Math.round(rc.confidence * 100) : null;
+  const summary = 'لا يوجد سبب جذري مؤكد؛ يلزم تحقق ميداني قبل اعتماد أي تفسير سببي.';
   setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
   setHTML('aiResultContent', `
+    ${aiPrintHeader('تحليل السبب الجذري', 'استرشادي — غير مؤكد')}
     <div class="bg-white border border-gray-200 rounded-xl p-4">
-      <div class="flex flex-wrap items-center gap-2 mb-3">
-        <span class="px-3 py-1 rounded-full text-xs font-bold ${rc.rootCauseProven ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${rc.rootCauseProven ? 'سبب مؤكد' : 'غير مؤكد — يحتاج تحقق ميداني'}</span>
-        ${confidencePct !== null ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">الثقة: ${confidencePct}%</span>` : ''}
+      <p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>
+      ${aiKpiTiles([confidencePct !== null ? { label:'الثقة', value:`${confidencePct}%` } : null].filter(Boolean))}
+      ${aiDigitalTwinFlow('root-cause')}
+      <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
+        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${rc.rootCauseProven ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${rc.rootCauseProven ? 'سبب مؤكد' : 'غير مؤكد — يحتاج تحقق ميداني'}</span>
       </div>
       ${causes.length
         ? aiListSection('فرضيات محتملة (تتطلب التحقق الميداني)', causes, 'text-sm text-gray-700') + aiListSection('الأدلة الداعمة', evidence, 'text-xs text-gray-500')
         : `<p class="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-lg p-3">لا يوجد دليل بصري كافٍ لتحديد آلية السبب؛ يتطلب تحققاً ميدانياً.</p>`}
       ${aiListSection('أدلة ناقصة', missing, 'text-xs text-gray-500')}
       ${aiListSection('خطوات التحقق الموصى بها', steps, 'text-xs text-gray-500')}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3">
+      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
         اقتراح استرشادي فقط — لا يمثل سبباً جذرياً مؤكداً حتى يتم التحقق الميداني. لا يتم الحفظ أو الإسناد أو تغيير الحالة أو الإغلاق تلقائياً.
       </p>
     </div>`);
@@ -5075,24 +5163,31 @@ function renderWorkOrderResult(title, payload){
   const safety = Array.isArray(wo.safetyConsiderations) ? wo.safetyConsiderations : [];
   const evidence = Array.isArray(wo.requiredEvidence) ? wo.requiredEvidence : [];
   const closure = Array.isArray(wo.closureRequirements) ? wo.closureRequirements : [];
+  const priorityAr = wo.priority ? (SMART_INPUT_PRIORITY_LABELS_AR[wo.priority] || wo.priority) : null;
+  const summary = wo.workType
+    ? `مسودة عمل إرشادية لمعالجة ${escapeHTML(wo.workType)}${priorityAr && wo.targetSla ? ` بأولوية ${escapeHTML(priorityAr)} خلال ${escapeHTML(wo.targetSla)}` : ''}.`
+    : '';
   setText('aiResultTitle', `${title} (مسودة استرشادية):`);
   setHTML('aiResultContent', `
+    ${aiPrintHeader('مسودة أمر العمل', 'مسودة إرشادية')}
     <div class="bg-white border border-gray-200 rounded-xl p-4">
-      <div class="flex flex-wrap items-center gap-2 mb-3">
-        <span class="px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">مسودة إرشادية</span>
-        ${wo.priority ? `<span class="px-3 py-1 rounded-full text-xs font-bold ${priorityBadgeClass(wo.priority)}">الأولوية: ${escapeHTML(SMART_INPUT_PRIORITY_LABELS_AR[wo.priority]||wo.priority)}</span>` : ''}
-        ${wo.targetSla ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">الإطار الزمني: ${escapeHTML(wo.targetSla)}</span>` : ''}
+      ${summary ? `<p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>` : ''}
+      ${aiKpiTiles([
+        priorityAr ? { label:'الأولوية', value:priorityAr, color: wo.priority === 'URGENT' ? '#b91c1c' : wo.priority === 'HIGH' ? '#b45309' : undefined } : null,
+        wo.targetSla ? { label:'SLA / زمن الاستجابة', value:wo.targetSla } : null,
+        wo.recommendedDiscipline ? { label:'الجهة المختصة', value:wo.recommendedDiscipline } : null,
+      ].filter(Boolean))}
+      ${aiDigitalTwinFlow('work-order')}
+      <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
+        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">مسودة إرشادية</span>
       </div>
       <p class="font-bold text-lg text-gray-800">${escapeHTML(wo.workType||'-')} <span class="font-normal text-gray-500 text-base">— ${escapeHTML(wo.location||'-')}</span></p>
-      <div class="bg-gray-50 rounded-lg border border-gray-100 px-3 mt-3">
-        ${aiFieldRow('الجهة الموصى بها', wo.recommendedDiscipline)}
-      </div>
       ${wo.scopeOfWork ? `<p class="text-sm text-gray-700 mt-3">${escapeHTML(wo.scopeOfWork)}</p>` : ''}
       ${aiListSection('خطوات التنفيذ', steps, 'text-xs text-gray-600')}
       ${aiListSection('اعتبارات السلامة', safety, 'text-xs text-red-700')}
       ${aiListSection('الأدلة المطلوبة', evidence, 'text-xs text-gray-600')}
       ${aiListSection('متطلبات الإغلاق', closure, 'text-xs text-gray-600')}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3">
+      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
         مسودة استرشادية فقط — لا يتم الإسناد أو تغيير الحالة أو الإغلاق تلقائياً؛ يتطلب اعتماد المدير.
       </p>
     </div>`);
