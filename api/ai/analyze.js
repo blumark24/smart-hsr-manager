@@ -121,16 +121,31 @@ async function resolveInspectorContext(db, uid) {
 // Explicit allowlist only — never a spread of the raw analysis/intelligence
 // object — so an API key, prompt, or raw image byte can never reach
 // Firestore even if a future upstream change accidentally added one. Matches
-// the shape requested for Sprint 6.9, plus the review fields Phase 3 needs.
+// the shape requested for Sprint 6.9, plus the review fields Phase 3 needs,
+// plus (Sprint 4 municipal AI quality closure) the minimum already-computed,
+// already-validated municipal-intelligence fields Root Cause and Work Order
+// need downstream (api/report/root-cause.js, api/report/work-order.js) —
+// never arbitrary provider output, only fields createMunicipalIntelligence
+// already validated. category/categoryLabelAr now prefer the taxonomy-
+// resolved value (intelligence.primaryIssue) over the provider's raw text,
+// falling back to the raw value only when intelligence is unavailable.
 function buildPersistedAiAnalysis(analysis, intelligence) {
+  const primary = intelligence?.primaryIssue;
   return {
     provider: typeof analysis.provider === 'string' ? analysis.provider : 'unknown',
-    category: typeof analysis.categoryCode === 'string' ? analysis.categoryCode : null,
-    categoryLabelAr: typeof analysis.categoryLabelAr === 'string' ? analysis.categoryLabelAr : null,
+    category: typeof primary?.issueCode === 'string' ? primary.issueCode : (typeof analysis.categoryCode === 'string' ? analysis.categoryCode : null),
+    categoryLabelAr: typeof primary?.issueLabelAr === 'string' ? primary.issueLabelAr : (typeof analysis.categoryLabelAr === 'string' ? analysis.categoryLabelAr : null),
+    severity: typeof primary?.severity === 'string' ? primary.severity : (typeof analysis.severity === 'string' ? analysis.severity : 'UNKNOWN'),
     confidence: Number.isFinite(analysis.confidence) ? analysis.confidence : null,
     prioritySuggestion: intelligence?.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || 'UNKNOWN',
     explanation: typeof analysis.shortSummaryAr === 'string' ? analysis.shortSummaryAr : null,
     recommendedActionAr: typeof analysis.recommendedActionAr === 'string' ? analysis.recommendedActionAr : null,
+    suggestedTreatment: typeof intelligence?.suggestedTreatment === 'string' ? intelligence.suggestedTreatment : null,
+    suggestedDepartment: typeof intelligence?.suggestedDepartment === 'string' ? intelligence.suggestedDepartment : null,
+    suggestedResponseWindow: typeof intelligence?.suggestedResponseWindow === 'string' ? intelligence.suggestedResponseWindow : null,
+    riskIndicators: Array.isArray(intelligence?.riskIndicators) ? intelligence.riskIndicators.map(r => r?.code).filter(code => typeof code === 'string') : [],
+    requiresSiteIsolation: intelligence?.requiresSiteIsolation === true,
+    publicSafetyRisk: intelligence?.publicSafetyRisk === true,
     requiresHumanReview: true,
     reviewed: false,
     reviewStatus: 'PENDING',
