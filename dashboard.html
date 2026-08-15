@@ -630,8 +630,9 @@
     #smartInputModal button,#locationCorrectionDialog button,#personalMapDialog button{min-height:44px}
     #confirmLocationBtn,#retryLocationBtn,#useWeakLocationBtn,#getLocationBtn,#editLocationBtn,#manualLocationBtn,#useMyLocationBtn,#adoptLocationBtn{overflow-wrap:anywhere}
     .location-actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:.5rem}
-    /* Inspector capture is GPS-only. Legacy/manual controls remain inert for compatibility. */
-    #manualAddressBtn,#inspectorManualLocationPanel,#manualLocationBtn,#useWeakLocationBtn,#editLocationBtn,#confirmLocationBtn,#locationCorrectionDialog{display:none!important}
+    /* Inspector capture is GPS-only. Manual map-pin controls remain inert for compatibility;
+       the weak-location-with-warning confirm path stays reachable as a desktop GPS fallback. */
+    #manualAddressBtn,#inspectorManualLocationPanel,#manualLocationBtn,#editLocationBtn,#locationCorrectionDialog{display:none!important}
     .inspector-preview-location-row{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;align-items:center}
     .inspector-ai-preview{margin-top:.65rem;padding:.7rem;border:1px solid rgba(15,143,140,.25);border-radius:12px;background:rgba(15,143,140,.06);text-align:right}
     .inspector-ai-preview button{min-height:36px!important}.inspector-ai-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
@@ -4025,7 +4026,7 @@ function renderLocationCandidate(){
   document.getElementById('retryLocationBtn').classList.toggle('hidden',!warningRequired);
   // «تحديد يدوي» لا يظهر إلا عند فشل GPS أو انتهاء المهلة دون عينة صالحة.
   document.getElementById('manualLocationBtn').classList.add('hidden');
-  document.getElementById('useWeakLocationBtn').classList.add('hidden');
+  document.getElementById('useWeakLocationBtn').classList.toggle('hidden',!warningRequired);
   document.getElementById('editLocationBtn').classList.add('hidden');
   document.getElementById('confirmLocationBtn').classList.add('hidden');
   document.getElementById('confirmLocationBtn').disabled=true;
