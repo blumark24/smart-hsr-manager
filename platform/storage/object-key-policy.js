@@ -19,8 +19,11 @@ function buildCanonicalObjectKey({ organizationId, observationId, evidenceType, 
 
 function parseCanonicalObjectKey(value) {
   const raw = typeof value === 'string' ? value.trim() : '';
-  const match = /^organizations\/([A-Za-z0-9_-]+)\/observations\/([A-Za-z0-9_-]+)\/(before|after|thumbnail|ai-report|generated-report)\/([A-Za-z0-9_-]+)$/.exec(raw);
-  return match ? Object.freeze({ organizationId: match[1], observationId: match[2], evidenceType: match[3], objectId: match[4] }) : null;
+  const match = /^organizations\/([A-Za-z0-9_-]+)\/observations\/([A-Za-z0-9_-]+)\/(before|after|thumbnail|ai-report|generated-report)\/([A-Za-z0-9_.-]+)$/.exec(raw)
+    || /^observations\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)\/(before|after)\/([A-Za-z0-9_.-]+\.(?:jpe?g|png|webp))$/i.exec(raw);
+  return match && !match[4].includes('..')
+    ? Object.freeze({ organizationId: match[1], observationId: match[2], evidenceType: match[3], objectId: match[4] })
+    : null;
 }
 
 function normalizeFilename(filename, contentType) {

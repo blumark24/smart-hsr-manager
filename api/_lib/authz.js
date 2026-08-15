@@ -17,6 +17,25 @@
 // ============================================================================
 const { getAuth, getDb } = require('./firebaseAdmin');
 
+const AUTH_CODES = Object.freeze({ HEADER_MISSING: 'AUTH_HEADER_MISSING', TOKEN_INVALID: 'AUTH_TOKEN_INVALID', TOKEN_EXPIRED: 'AUTH_TOKEN_EXPIRED', PROJECT_MISMATCH: 'AUTH_PROJECT_MISMATCH' });
+
+function authError(code) {
+  const error = new Error(code);
+  error.code = code;
+  error.statusCode = 401;
+  return error;
+}
+
+function tokenProject(token) {
+  try {
+    const payload = JSON.parse(Buffer.from(String(token).split('.')[1] || '', 'base64url').toString('utf8'));
+    const audience = typeof payload.aud === 'string' ? payload.aud : '';
+    const prefix = 'https://securetoken.google.com/';
+    const issuerProject = typeof payload.iss === 'string' && payload.iss.startsWith(prefix) ? payload.iss.slice(prefix.length) : '';
+    return audience && audience === issuerProject ? audience : '';
+  } catch (_) { return ''; }
+}
+
 // Roles this API is ever allowed to create/manage. 'owner' is intentionally
 // excluded — the API must never create or manage owners or escalate to owner.
 const MANAGEABLE_ROLES = ['manager', 'supervisor', 'inspector', 'contractor'];
@@ -39,20 +58,20 @@ function activeIsNotFalse(data) {
 
 // Verify the Firebase ID token from the Authorization header.
 // checkRevoked=true so revoked sessions (disabled/rotated) are rejected.
-async function verifyRequestToken(req) {
+async function verifyRequestToken(req, verifyIdToken = (token, checkRevoked) => getAuth().verifyIdToken(token, checkRevoked)) {
   const header = (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
   const m = /^Bearer\s+(.+)$/i.exec(String(header).trim());
   if (!m) {
-    const err = new Error('missing_bearer_token');
-    err.statusCode = 401;
-    throw err;
+    throw authError(AUTH_CODES.HEADER_MISSING);
   }
   try {
-    return await getAuth().verifyIdToken(m[1], true);
+    // Firebase Admin is the single verification authority. A local comparison
+    // against app.options.projectId can diverge from the credential project on
+    // Vercel Preview and reject a token that Admin can verify correctly.
+    return await verifyIdToken(m[1], true);
   } catch (e) {
-    const err = new Error('invalid_or_revoked_token');
-    err.statusCode = 401;
-    throw err;
+    if (e && e.code === 'auth/id-token-expired') throw authError(AUTH_CODES.TOKEN_EXPIRED);
+    throw authError(AUTH_CODES.TOKEN_INVALID);
   }
 }
 
@@ -112,4 +131,6 @@ module.exports = {
   verifyRequestToken,
   getCallerContext,
   assertCanManage,
+  AUTH_CODES,
+  tokenProject,
 };

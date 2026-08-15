@@ -130,16 +130,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 
 // إعدادات Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-  authDomain: "smart-hsr-manager.firebaseapp.com",
-  projectId: "smart-hsr-manager",
-  storageBucket: "smart-hsr-manager.firebasestorage.app",
-  messagingSenderId: "38965508031",
-  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-};
+const firebaseConfig = await resolveFirebaseConfig();
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);

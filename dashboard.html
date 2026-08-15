@@ -421,6 +421,27 @@
       .comparison-wrapper .after-image img{position:static!important}
       .print-logo{display:block!important}
     }
+    /* رأس رسمي يظهر فقط عند الطباعة داخل لوحة نتائج الذكاء الاصطناعي -- لا يظهر
+       على الشاشة إطلاقاً ولا يضيف كتلة واجهة جديدة. */
+    .ai-print-header{display:none}
+    /* نبضة مقيّدة للمرحلة الحالية فقط في شريط التوأم الرقمي داخل نتائج الذكاء
+       الاصطناعي -- لا تُطبَّق على مراحل مكتملة أو معلّقة، ولا تمتد خارج
+       #aiResultContent. مطفأة عند تفضيل تقليل الحركة وعند الطباعة. */
+    @keyframes aiFlowCurrentPulse{
+      0%,100%{box-shadow:0 0 0 0 rgba(10,25,49,.20)}
+      50%{box-shadow:0 0 0 4px rgba(10,25,49,.10)}
+    }
+    #aiResultContent .ai-flow-current{animation:aiFlowCurrentPulse 2s ease-in-out infinite}
+    @media (prefers-reduced-motion: reduce){
+      #aiResultContent .ai-flow-current{animation:none}
+    }
+    @media print{
+      .ai-print-header{display:block!important;font-size:.75rem;color:#000;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:10px;line-height:1.6}
+      #aiResultContent .ai-badge{background:#fff!important;border:1px solid #000!important;color:#000!important}
+      #aiResultContent .ai-flow-node{background:#fff!important;color:#000!important;border:1px solid #000!important}
+      #aiResultContent .ai-flow-line{background:#000!important}
+      #aiResultContent .ai-flow-current{animation:none!important}
+    }
 
     /* HEADER — compact municipal inspector identity card */
     .hsr-header {
@@ -630,6 +651,9 @@
     #smartInputModal button,#locationCorrectionDialog button,#personalMapDialog button{min-height:44px}
     #confirmLocationBtn,#retryLocationBtn,#useWeakLocationBtn,#getLocationBtn,#editLocationBtn,#manualLocationBtn,#useMyLocationBtn,#adoptLocationBtn{overflow-wrap:anywhere}
     .location-actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:.5rem}
+    /* Inspector capture is GPS-only. Manual map-pin controls remain inert for compatibility;
+       the weak-location-with-warning confirm path stays reachable as a desktop GPS fallback. */
+    #manualAddressBtn,#inspectorManualLocationPanel,#manualLocationBtn,#editLocationBtn,#locationCorrectionDialog{display:none!important}
     .inspector-preview-location-row{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;align-items:center}
     .inspector-ai-preview{margin-top:.65rem;padding:.7rem;border:1px solid rgba(15,143,140,.25);border-radius:12px;background:rgba(15,143,140,.06);text-align:right}
     .inspector-ai-preview button{min-height:36px!important}.inspector-ai-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
@@ -693,7 +717,9 @@
     @media(max-width:760px){
       .modal-content{width:calc(100% - 20px);padding:20px;margin:12px auto;border-radius:20px}
       #smartInputModal h2{font-size:1.55rem;line-height:1.35;padding-inline-end:1.5rem}
-      .input-group-wrapper{gap:.65rem}
+      /* Keep GPS and evidence controls readable after the AI/manual-location additions. */
+      #smartInputModal .input-group-wrapper{flex-direction:column;gap:.65rem}
+      #smartInputModal .input-group{width:100%;flex:0 0 auto}
       .input-group{padding:.8rem!important}
       #processSmartInputBtn{width:100%;font-size:1rem;padding-inline:.75rem}
       .personal-map-card{grid-template-columns:1fr;padding:1.25rem;border-inline-start-width:6px}
@@ -2059,7 +2085,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   <section class="ref-map-preview" aria-labelledby="refMapPreviewTitle"><div class="ref-card-heading"><h2 id="refMapPreviewTitle">ملاحظاتي في القنفذة</h2><button id="refMapOpenBtn" type="button">عرض الخريطة <i data-lucide="maximize-2"></i></button></div><div id="refMapSurface" class="ref-map-surface"><span class="ref-map-label">القنفذة</span><span class="ref-map-attribution">© OpenStreetMap contributors</span><div class="ref-map-empty">تظهر مواقع ملاحظاتك المؤكدة هنا</div></div></section>
   <section class="ref-latest-card" aria-labelledby="refLatestTitle"><div class="ref-card-heading"><h2 id="refLatestTitle">آخر ملاحظة ميدانية</h2><span id="refLatestTime">—</span></div><div id="refLatestEmpty" class="ref-empty-state">لا توجد ملاحظات مؤكدة لك حتى الآن.</div><div id="refLatestBody" class="ref-latest-body hidden"><div class="ref-latest-copy"><h3 id="refLatestDescription">—</h3><p id="refLatestLocation">—</p><p><span id="refLatestStatus" class="ref-status-pill">—</span><span id="refLatestReference">—</span></p></div><img id="refLatestImage" alt="الصورة الأصلية لآخر ملاحظة" class="hidden"></div></section>
   <section class="ref-lifecycle-card" aria-labelledby="refLifecycleTitle"><h2 id="refLifecycleTitle">دورة حياة الملاحظة</h2><div id="refLifecycleTrack" class="ref-lifecycle-track"><div data-stage="created"><i data-lucide="pencil"></i><span>تم الإنشاء</span><small>—</small></div><div data-stage="received"><i data-lucide="download"></i><span>تم الاستلام</span><small>غير متاح</small></div><div data-stage="progress"><i data-lucide="settings-2"></i><span>قيد المعالجة</span><small>—</small></div><div data-stage="resolved"><i data-lucide="check"></i><span>تم الحل</span><small>غير متاح</small></div><div data-stage="closed"><i data-lucide="lock"></i><span>تم الإغلاق</span><small>غير متاح</small></div></div></section>
-  <details class="ref-ai-card"><summary><span><b>قدرات الذكاء الاصطناعي</b><small>بانتظار الربط الخادمي الآمن</small></span><i data-lucide="chevron-down"></i></summary><p>خارطة قدرات مستقبلية فقط. لا توجد نتائج أو استدعاءات Gemini في هذه الواجهة.</p></details>
+  <details class="ref-ai-card"><summary><span><b>قدرات الذكاء الاصطناعي</b><small>اقتراحات خاضعة للمراجعة البشرية</small></span><i data-lucide="chevron-down"></i></summary><p>التحليل عبر المزود الخادمي المعتمد استرشادي فقط، ولا ينفذ أي إجراء تلقائي.</p></details>
   <footer class="ref-footer">Smart HSR — منصة المراقبة الميدانية الذكية</footer>
 </section>
 
@@ -2188,6 +2214,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
         <div id="observationsList" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
           <div class="text-center text-gray-500 mt-10">... جاري تحميل البيانات ...</div>
         </div>
+        <button id="loadMoreObservationsBtn" type="button" class="hidden mt-4 w-full px-4 py-2 rounded-xl border border-blue-200 text-blue-700 bg-white hover:bg-blue-50" onclick="loadMoreObservations()">Load older observations</button>
       </div>
 
       <!-- Details -->
@@ -2233,7 +2260,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
             <h5 class="text-xl font-bold mb-3" style="color:var(--color-navy);">وصف الملاحظة</h5>
             <p id="detailDescription" class="text-gray-700 leading-relaxed"></p>
             <div id="actionPlanContainer" class="mt-4 p-3 bg-teal-50 rounded-lg hidden">
-              <h6 class="font-bold text-teal-700">خطة العمل المقترحة (Gemini AI)</h6>
+              <h6 class="font-bold text-teal-700">خطة العمل المقترحة (AI Advisory)</h6>
               <p id="actionPlan" class="text-sm text-teal-900 mt-1"></p>
             </div>
           </div>
@@ -2268,7 +2295,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
           </div>
 
           <div id="aiAnalysisSection" class="bg-white p-5 rounded-2xl shadow-md border-t-4 border-gray-200">
-            <h5 class="text-xl font-bold mb-4" style="color:var(--color-navy);">أدوات التحليل الذكي (Gemini AI)</h5>
+            <h5 class="text-xl font-bold mb-4" style="color:var(--color-navy);">أدوات التحليل الذكي (AI Advisory)</h5>
             <div class="flex flex-wrap gap-3 no-print">
               <button id="vision-btn" class="ai-button-vision rounded-full px-4 py-2 text-sm font-bold flex items-center" onclick="analyzeImage('vision')">
                 <i data-lucide="eye" class="w-4 h-4 ml-2"></i> تحليل الصور بالرؤية (Vision)
@@ -2343,7 +2370,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
     <div class="mt-12 text-center">
       <button id="kpi-insight-button" class="ai-button-secondary rounded-full px-8 py-3 text-lg font-bold flex items-center justify-center mx-auto" onclick="generateKpiInsights()">
         <i data-lucide="bar-chart-3" class="w-5 h-5 ml-2"></i>
-        ✨ توليد تقرير تنفيذي لملخص اللوحة (Gemini AI)
+        ✨ توليد تقرير تنفيذي لملخص اللوحة (AI Advisory)
       </button>
       <div id="kpi-insight-result" class="mt-6 text-sm"></div>
     </div>
@@ -2356,7 +2383,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
         🧠 الذكاء الاصطناعي في صميم العملية
       </h3>
       <p class="mt-3 text-lg text-gray-600">
-        استفد من نماذج Gemini لتحويل البيانات إلى قرارات قابلة للتنفيذ.
+        استفد من مزود الذكاء الاصطناعي المعتمد لدعم القرار البشري.
       </p>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-7 gap-8 text-center">
@@ -2539,9 +2566,9 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
 
     <div id="modalStep1">
       <p class="text-lg text-gray-600 mb-4">
-        الخطوة 1: أدخل تفاصيل الملاحظة (النص، الموقع، الصورة)
+        أرفق الصورة وثبّت GPS. الوصف اختياري ويمكن للذكاء الاصطناعي اقتراح مسودة قابلة للتعديل.
       </p>
-      <textarea id="rawObservationInput" rows="5" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-[--color-teal] focus:border-[--color-teal] text-gray-700 shadow-sm" placeholder="مثال: يوجد تجمع للمياه على طريق الخدمة عند الكيلو 52..." oninput="checkSmartInputState()"></textarea>
+      <textarea id="rawObservationInput" rows="5" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-[--color-teal] focus:border-[--color-teal] text-gray-700 shadow-sm" placeholder="وصف اختياري — اتركه فارغًا ليقترح AI مسودة من الصورة" oninput="checkSmartInputState()"></textarea>
 
       <section id="inspectorAiPreviewRoot" class="inspector-ai-preview hidden" aria-live="polite" aria-label="اقتراحات التحليل الذكي التجريبية">
         <p id="inspectorAiWarning" class="hidden text-sm font-bold text-amber-700"></p>
@@ -2562,7 +2589,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
           <input type="hidden" id="inputLongitude">
           <div class="inspector-preview-location-row mt-2">
             <button id="getLocationBtn" class="ai-button-primary rounded-full px-4 py-2 text-sm font-bold flex items-center justify-center" onclick="getLocation()" type="button">
-              <i data-lucide="map-pin" class="w-4 h-4 ml-2"></i> تحديد موقعي
+              <i data-lucide="map-pin" class="w-4 h-4 ml-2"></i> تحديد الموقع الحالي
             </button>
             <button id="manualAddressBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button" aria-controls="inspectorManualLocationPanel" aria-expanded="false">إدخال يدوي</button>
           </div>
@@ -2579,7 +2606,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
             <button id="manualLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">
               <i data-lucide="crosshair" class="w-4 h-4 ml-2"></i> تحديد يدوي
             </button>
-            <button id="useWeakLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">استخدام الموقع مع تنبيه</button>
+            <button id="useWeakLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">اعتماد الموقع رغم انخفاض الدقة</button>
             <button id="editLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">
               <i data-lucide="move" class="w-4 h-4 ml-2"></i> تصحيح الموقع على الخريطة
             </button>
@@ -2600,14 +2627,14 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
 
       <div class="mt-6 text-center">
         <button id="processSmartInputBtn" class="ai-button-vision rounded-full px-8 py-3 text-lg font-bold flex items-center justify-center mx-auto" onclick="processSmartInput()" disabled>
-          <i data-lucide="cpu" class="w-5 h-5 ml-2"></i> بدء التحليل الذكي وتوليد التقرير
+          <i data-lucide="camera" class="w-5 h-5 ml-2"></i> تحليل الصورة وإنشاء مسودة
         </button>
         <p id="smartInputBlockReason" class="text-sm font-semibold text-gray-500 mt-2 hidden" aria-live="polite"></p>
       </div>
     </div>
 
     <div id="modalResult" class="mt-8 pt-6 border-t border-gray-200 hidden">
-      <h3 class="text-2xl font-bold mb-4" style="color:var(--color-teal);">الخطوة 2: معالجة البيانات</h3>
+      <h3 class="text-2xl font-bold mb-4" style="color:var(--color-teal);">حفظ الملاحظة</h3>
       <div id="modalResultContent"></div>
       <div id="modalResultReviewAction" class="mt-6 text-center">
         <button class="ai-button-primary rounded-full px-6 py-2 text-md font-bold" onclick="closeModal('smartInputModal')">
@@ -2814,27 +2841,27 @@ import {
   query,
   where,
   onSnapshot,
+  getDocs,
+  orderBy,
+  limit,
+  startAfter,
   setDoc,
   serverTimestamp,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls, isLocalDemoReference, isServerObjectKey } from './storage-adapter.js';
+import { fetchWithFirebaseAuth, REAUTHENTICATION_REQUIRED } from './firebase-auth-fetch.js';
 import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
+import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-  authDomain: "smart-hsr-manager.firebaseapp.com",
-  projectId: "smart-hsr-manager",
-  storageBucket: "smart-hsr-manager.firebasestorage.app",
-  messagingSenderId: "38965508031",
-  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-};
+const firebaseConfig = await resolveFirebaseConfig();
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 const COLLECTION = "observations";
+const OBSERVATIONS_PAGE_SIZE = 25;
 
 // HEADER ELEMENTS
 const logoutBtn = document.getElementById('logoutBtn');
@@ -2967,7 +2994,11 @@ function renderReferenceInspectorDashboard(own) {
   const latestEmpty=document.getElementById('refLatestEmpty'),latestBody=document.getElementById('refLatestBody');
   if(!observationsServerConfirmed||!latest){latestEmpty?.classList.remove('hidden');latestBody?.classList.add('hidden');setText('refLatestTime','—');return}
   latestEmpty?.classList.add('hidden');latestBody?.classList.remove('hidden');setText('refLatestDescription',cleanDisplayText(latest.description||latest.title,'ملاحظة ميدانية',160));setText('refLatestLocation',cleanDisplayText(latest.locationName||latest.area||latest.address,'الموقع الموثق',100));setText('refLatestStatus',statusArabic(latest.status));setText('refLatestReference',cleanDisplayText(latest.docId||latest.id,'مرجع غير متاح',50));setText('refLatestTime',formatObservationDate(latest.createdAt,'وقت غير متاح'));
-  const img=latest.imagePath||latest.imageUrl||latest.beforeImagePath;const imageEl=document.getElementById('refLatestImage');if(imageEl&&img){resolveEvidenceReference(img).then(url=>{if(url){imageEl.src=url;imageEl.classList.remove('hidden')}}).catch(()=>{})}else imageEl?.classList.add('hidden');
+  // Evidence images are private, authenticated-only objects: this summary
+  // card must never fetch one just because the dashboard loaded. The
+  // thumbnail stays hidden here; only the explicit observation-selection
+  // path (showObservationDetail) resolves and displays evidence.
+  document.getElementById('refLatestImage')?.classList.add('hidden');
   const stages={created:true,received:Boolean(latest.assignedToUid||latest.assignedAt||latest.receivedAt),progress:latest.status==='IN_PROGRESS'||latest.status==='COMPLETED',resolved:latest.status==='COMPLETED',closed:latest.status==='COMPLETED'&&Boolean(latest.afterImagePath||latest.resolutionNote)};
   document.querySelectorAll('#refLifecycleTrack [data-stage]').forEach(el=>{const active=stages[el.dataset.stage];el.classList.toggle('is-active',active);const small=el.querySelector('small');if(small)small.textContent=active?(el.dataset.stage==='created'?formatObservationDate(latest.createdAt,'تم الإنشاء'):el.dataset.stage==='progress'?'مؤكد':'مؤكد'):'غير متاح'});
 }
@@ -3100,6 +3131,10 @@ let observationsData = [];
 let currentSelectedObservation = null;
 let obsState = 'loading';   // 'loading' | 'ready' | 'error' | 'unauthorized'
 let obsUnsub = null;
+let oldestObservationCursor = null;
+let observationsHaveMore = false;
+let observationsPageLoading = false;
+let olderObservationsData = [];
 let observationsServerConfirmed = false;
 let lastServerSnapshotAt = null;
 
@@ -3208,17 +3243,20 @@ async function uploadImageToPlatformStorage(file, folder = 'HSR', observationId 
     scope: UPLOAD_SCOPE_BY_FOLDER[folder] || 'before',
     observationId: observationId == null ? null : String(observationId)
   });
-  const token = await user.getIdToken();
   const controller = new AbortController();
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, IMAGE_UPLOAD_TIMEOUT_MS);
   let response;
   try {
-    response = await fetch('/api/storage/upload', {
+    response = await fetchWithFirebaseAuth({
+      getIdToken: forceRefresh => user.getIdToken(forceRefresh),
+      input: '/api/storage/upload',
+      init: {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
       body,
       signal: controller.signal
+      }
     });
   } catch (error) {
     // قطع المهلة يُميَّز عن انقطاع الشبكة، وكلاهما بلا أي تفصيل تقني للمستخدم.
@@ -3269,13 +3307,14 @@ async function resolveEvidenceReference(reference) {
       uid:auth.currentUser?.uid,
       organizationId:inspectorContext.organizationId,
       role:'inspector',
-      getIdToken:()=>auth.currentUser?.getIdToken()
+      authUser:auth.currentUser
     }
   });
   const url=result.available?result.url:'';
   if(url) failedEvidence.delete(String(reference));
   else if(isServerObjectKey(reference)||isLocalDemoReference(reference)){
     failedEvidence.add(String(reference));
+    if(result.reason===REAUTHENTICATION_REQUIRED)showToast('تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى لعرض الصورة.');
     console.warn('تعذر تحميل صورة الملاحظة', result.reason||'unknown');
   }
   return url;
@@ -3382,6 +3421,49 @@ function renderObservationsList(observations) {
 // full collection — always filtered by the verified inspector's own
 // organizationId. metadata.fromCache snapshots are ignored so a refresh
 // never renders stale/cached data as authoritative.
+// Keep every historical evidence field on the same authenticated read path.
+// imageObjectKey is the canonical private-storage field written by this page;
+// the remaining names preserve records created before that schema settled.
+function firstEvidenceReference(...candidates) {
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+  }
+  return null;
+}
+function normalizeObservationEvidence(data = {}) {
+  return {
+    before: firstEvidenceReference(data.imageObjectKey, data.imagePath, data.imageUrl, data.beforeImagePath),
+    after: firstEvidenceReference(data.afterImagePath, data.afterImageUrl)
+  };
+}
+
+function observationFromDocument(d, organizationId, uid) {
+  const data = d.data();
+  if (data.organizationId !== organizationId || data.createdByUid !== uid) return null;
+  const evidence = normalizeObservationEvidence(data);
+  return {
+    docId:d.id, id:data.displayId||0, type:data.type||'MAINTENANCE', date:data.date||'',
+    title:data.title||'', status:data.status||'PENDING', details:data.details||'',
+    hasImage:!!evidence.before, isComparative:!!data.isComparative, location:data.location||'',
+    isVideo:false, imagePath:evidence.before, fileMimeType:'image/jpeg', actionPlan:data.actionPlan||'',
+    riskAssessment:data.riskAssessment||{priority:'Medium',timeframe:'72 hours'},
+    resolutionNote:data.resolutionNote||null, afterImagePath:evidence.after,
+    organizationId:data.organizationId||null, createdByUid:data.createdByUid||null,
+    originalLat:data.originalLat, originalLng:data.originalLng, correctedLat:data.correctedLat,
+    correctedLng:data.correctedLng, locationAccuracyMeters:data.locationAccuracyMeters,
+    locationSource:data.locationSource, locationVerified:data.locationVerified===true,
+    locationCapturedAt:data.locationCapturedAt||null, createdAt:timestampValue(data.createdAt),
+    updatedAt:timestampValue(data.updatedAt||data.completedAt), serverConfirmed:true, isNewInput:false
+  };
+}
+
+function updateLoadMoreButton() {
+  const button = document.getElementById('loadMoreObservationsBtn');
+  if (!button) return;
+  button.classList.toggle('hidden', !observationsHaveMore);
+  button.disabled = observationsPageLoading;
+}
+
 function subscribeObservations() {
   const organizationId = inspectorContext.organizationId;
   if (!organizationId) {
@@ -3394,6 +3476,9 @@ function subscribeObservations() {
 
   if (obsUnsub) { obsUnsub(); obsUnsub = null; }
   observationsData = [];
+  olderObservationsData = [];
+  oldestObservationCursor = null;
+  observationsHaveMore = false;
   obsState = 'loading';
   renderObservationsList([]);
   renderKPIs();
@@ -3401,7 +3486,9 @@ function subscribeObservations() {
   const q = query(
     collection(db, COLLECTION),
     where('organizationId', '==', organizationId),
-    where('createdByUid', '==', inspectorContext.uid)
+    where('createdByUid', '==', inspectorContext.uid),
+    orderBy('createdAt', 'desc'),
+    limit(OBSERVATIONS_PAGE_SIZE)
   );
   obsUnsub = onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
     if (snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) {
@@ -3409,47 +3496,14 @@ function subscribeObservations() {
       return; // never render cached or locally-pending data as server-confirmed
     }
     const arr = [];
-    snapshot.forEach(d=>{
-      const data = d.data();
-      // Defence in depth after the already double-scoped query: a document
-      // that does not match both verified values is never admitted to UI state.
-      if (data.organizationId !== organizationId || data.createdByUid !== inspectorContext.uid) return;
-      arr.push({
-        docId:d.id,
-        id: data.displayId || 0,
-        type:data.type || 'MAINTENANCE',
-        date:data.date || '',
-        title:data.title || '',
-        status:data.status || 'PENDING',
-        details:data.details || '',
-        hasImage: !!data.imagePath,
-        isComparative: !!data.isComparative,
-        location:data.location || '',
-        isVideo:false,
-        imagePath:data.imagePath || null,
-        fileMimeType:'image/jpeg',
-        actionPlan:data.actionPlan || '',
-        riskAssessment:data.riskAssessment || { priority:'Medium', timeframe:'72 hours' },
-        resolutionNote:data.resolutionNote || null,
-        afterImagePath:data.afterImagePath || null,
-        organizationId:data.organizationId || null,
-        createdByUid:data.createdByUid || null,
-        originalLat:data.originalLat,
-        originalLng:data.originalLng,
-        correctedLat:data.correctedLat,
-        correctedLng:data.correctedLng,
-        locationAccuracyMeters:data.locationAccuracyMeters,
-        locationSource:data.locationSource,
-        locationVerified:data.locationVerified === true,
-        locationCapturedAt:data.locationCapturedAt || null,
-        createdAt:timestampValue(data.createdAt),
-        updatedAt:timestampValue(data.updatedAt||data.completedAt),
-        serverConfirmed:true,
-        isNewInput:false
-      });
-    });
+    snapshot.forEach(d=>{ const observation=observationFromDocument(d,organizationId,inspectorContext.uid); if(observation)arr.push(observation); });
     arr.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
-    observationsData = arr;
+    const recentIds = new Set(arr.map(item=>item.docId));
+    olderObservationsData = olderObservationsData.filter(item=>!recentIds.has(item.docId));
+    observationsData = [...arr, ...olderObservationsData];
+    oldestObservationCursor = snapshot.docs.at(-1) || null;
+    observationsHaveMore = snapshot.size === OBSERVATIONS_PAGE_SIZE;
+    updateLoadMoreButton();
     observationsServerConfirmed = true;
     lastServerSnapshotAt = Date.now();
     obsState = 'ready';
@@ -3458,9 +3512,6 @@ function subscribeObservations() {
     renderObservationsList(observationsData);
     renderPersonalMap();
     renderPersonalLifecycle();
-    if (!currentSelectedObservation && observationsData.length > 0) {
-      showObservationDetail(observationsData[0].docId);
-    }
     lucide.createIcons();
   }, err => {
     console.error('Observations subscription failed', err);
@@ -3472,6 +3523,35 @@ function subscribeObservations() {
   });
 }
 
+window.loadMoreObservations = async function() {
+  if (observationsPageLoading || !observationsHaveMore || !oldestObservationCursor) return;
+  observationsPageLoading = true;
+  updateLoadMoreButton();
+  try {
+    const snapshot = await getDocs(query(
+      collection(db, COLLECTION),
+      where('organizationId', '==', inspectorContext.organizationId),
+      where('createdByUid', '==', inspectorContext.uid),
+      orderBy('createdAt', 'desc'),
+      startAfter(oldestObservationCursor),
+      limit(OBSERVATIONS_PAGE_SIZE)
+    ));
+    const known = new Set(observationsData.map(item=>item.docId));
+    snapshot.forEach(d=>{ const item=observationFromDocument(d,inspectorContext.organizationId,inspectorContext.uid); if(item&&!known.has(item.docId)){olderObservationsData.push(item);observationsData.push(item);} });
+    oldestObservationCursor = snapshot.docs.at(-1) || oldestObservationCursor;
+    observationsHaveMore = snapshot.size === OBSERVATIONS_PAGE_SIZE;
+    renderObservationsList(observationsData);
+    renderInspectorCounts();
+    renderPersonalMap();
+    renderPersonalLifecycle();
+  } catch (error) {
+    console.error('Older observations load failed', error);
+  } finally {
+    observationsPageLoading = false;
+    updateLoadMoreButton();
+  }
+};
+
 // كتابة مُعرَّفة بمعرّف عميل ثابت (idempotent): إعادة المحاولة تكتب على نفس
 // المستند فلا تُنتج بلاغاً مكرراً مهما تأخرت المحاولة الأولى.
 async function saveObservationToFirestore(clientRequestId, payload) {
@@ -3480,6 +3560,10 @@ async function saveObservationToFirestore(clientRequestId, payload) {
     clientRequestId,
     createdAt: serverTimestamp()
   });
+  if (payload.imageObjectKey) {
+    fetchWithFirebaseAuth({ getIdToken:forceRefresh=>auth.currentUser.getIdToken(forceRefresh), input:'/api/storage/finalize', init:{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({observationId:clientRequestId,objectKey:payload.imageObjectKey}) } })
+      .catch(error=>console.warn('Evidence finalization deferred', {name:error?.name||'Error'}));
+  }
   return clientRequestId;
 }
 
@@ -3525,7 +3609,7 @@ window.showObservationDetail = async function(docId) {
   ds.className = `inline-block px-3 py-1 text-sm font-semibold rounded-full text-white ${st.color}`;
 
   document.getElementById('detailDescription').innerHTML = escapeHTML(obs.details || '').replace(/\n/g,'<br>');
-  setText('actionPlan', `الأولوية: ${obs.riskAssessment?.priority||'-'} | الإطار الزمني: ${obs.riskAssessment?.timeframe||'-'}. الخطة: ${obs.actionPlan||'-'}`);
+  setText('actionPlan', `الأولوية: ${SMART_INPUT_PRIORITY_LABELS_AR[obs.riskAssessment?.priority] || obs.riskAssessment?.priority || '-'} | الإطار الزمني: ${SMART_INPUT_RESPONSE_WINDOW_LABELS_AR[obs.riskAssessment?.timeframe] || obs.riskAssessment?.timeframe || '-'}. الخطة: ${obs.actionPlan||'-'}`);
   document.getElementById('actionPlanContainer').classList.remove('hidden');
 
   // Media
@@ -3593,8 +3677,7 @@ window.handleFilterChange = function() {
   }
 
   renderObservationsList(filtered);
-  if (filtered.length>0) showObservationDetail(filtered[0].docId);
-  else {
+  if (filtered.length===0) {
     unhide('detailPlaceholder');
     hide('observationDetail');
   }
@@ -3814,6 +3897,7 @@ async function renderPersonalLifecycle(){
   setText('lifecycleLatestStatus',statusArabic(latest.status));
   setText('lifecycleLatestCreatedAt',formatObservationDate(latest.createdAt||latest.date));
   setText('lifecycleLatestResolution',cleanDisplayText(latest.resolutionNote,latest.status==='COMPLETED'?'تمت معالجة الملاحظة':'لم تُسجل مذكرة معالجة بعد',500));
+  if(!document.getElementById('personalLifecycleDialog')?.open)return;
   const [before,after]=await Promise.all([resolveEvidenceReference(latest.imagePath).catch(()=>''),resolveEvidenceReference(latest.afterImagePath).catch(()=> '')]);
   if(token!==lifecycleRenderToken)return;
   if(before){const image=document.getElementById('lifecycleBeforeImage');image.src=before;image.referrerPolicy='no-referrer';unhide('lifecycleBeforeFigure')}
@@ -3865,14 +3949,14 @@ document.getElementById('personalLifecycleDialog')?.addEventListener('click',eve
 document.getElementById('personalLifecycleDialog')?.addEventListener('close',()=>{document.documentElement.style.overflow='';lifecycleRenderToken+=1});
 
 // ========= CIVIC SPATIAL CAPTURE & FILE UPLOAD =========
-const GPS_OPTIONS=Object.freeze({enableHighAccuracy:true,maximumAge:0,timeout:20000});
 let inspectorMap=null,locationMarker=null,accuracyCircle=null;
 let locationWatchId=null,locationTimeoutId=null,locationSamples=[],locationCandidate=null,locationConfirmed=false,locationDragged=false;
+let locationRunToken=0,locationAttempt=0;
 let locationWarningOverride=false,locationTimedOut=false;
 let locationVerified=false,locationSource=null;
 let manualLocationMode=false,manualMapClickBound=false;
 // حمولة بانتظار تأكيد الخادم + قفل يمنع النقر المكرر على «إعادة محاولة الحفظ».
-let pendingSmartInput=null,smartInputSaveInFlight=false;
+let pendingSmartInput=null,pendingSmartCapture=null,smartInputSaveInFlight=false;
 
 function accuracyLabel(m){return m<=10?'ممتازة':m<=20?'جيدة':m<=30?'مقبولة':'ضعيفة'}
 function validLocationSample(position,now=Date.now()){
@@ -3907,6 +3991,7 @@ function normalLocationConfirmationAllowed(){
   return candidateIsCurrent(locationCandidate)&&locationSamples.length>=3&&locationCandidate.stable===true&&locationCandidate.accuracy<=30&&!locationTimedOut&&candidateWithinServiceArea(locationCandidate);
 }
 function stopInspectorGps(){
+  locationRunToken+=1;
   if(locationWatchId!==null)navigator.geolocation?.clearWatch(locationWatchId);
   locationWatchId=null;clearTimeout(locationTimeoutId);locationTimeoutId=null;
   const button=document.getElementById('getLocationBtn');if(button)button.disabled=false;
@@ -3959,19 +4044,30 @@ function renderLocationCandidate(){
   if(locationCandidate.manual===true){renderManualLocationCandidate();return}
   const normalAllowed=normalLocationConfirmationAllowed();
   const warningRequired=!normalAllowed;
-  document.getElementById('retryLocationBtn').classList.toggle('hidden',!warningRequired);
+  // مرحلة واحدة نشطة فقط: «تحديد الموقع الحالي» يختفي فور وجود مرشّح، ويظهر إما
+  // «اعتماد الموقع رغم انخفاض الدقة» (دقة ضعيفة) أو لا شيء إضافي (تثبيت تلقائي).
+  document.getElementById('getLocationBtn').classList.add('hidden');
+  document.getElementById('retryLocationBtn').classList.add('hidden');
   // «تحديد يدوي» لا يظهر إلا عند فشل GPS أو انتهاء المهلة دون عينة صالحة.
   document.getElementById('manualLocationBtn').classList.add('hidden');
   document.getElementById('useWeakLocationBtn').classList.toggle('hidden',!warningRequired);
-  document.getElementById('editLocationBtn').classList.remove('hidden');
-  document.getElementById('confirmLocationBtn').classList.remove('hidden');
-  document.getElementById('confirmLocationBtn').disabled=!(normalAllowed||locationWarningOverride||locationDragged);
+  document.getElementById('editLocationBtn').classList.add('hidden');
+  document.getElementById('confirmLocationBtn').classList.add('hidden');
+  document.getElementById('confirmLocationBtn').disabled=true;
   const quality=locationCandidate.stable?(locationCandidate.accuracy<=30?accuracyLabel(locationCandidate.accuracy):'ضعيفة'):'غير مستقرة';
   const timeoutText=locationTimedOut?' — انتهت مهلة جمع العينات':'';
   const outsideServiceArea=!candidateWithinServiceArea(locationCandidate);
   const areaText=outsideServiceArea?`؛ الموقع خارج ${cleanDisplayText(organizationMapContext?.serviceArea,'نطاق خدمة المؤسسة',80)}`:'';
-  setText('locationStatus',`دقة GPS الفعلية ±${Math.round(locationCandidate.accuracy)} م — ${quality}${timeoutText}${areaText}${warningRequired?'؛ يلزم إعادة المحاولة أو القبول مع تنبيه':''}`);
-  setIdentityGpsStatus(`${quality} · ±${Math.round(locationCandidate.accuracy)} م`,true);
+  const accuracyRounded=Math.round(locationCandidate.accuracy);
+  if(normalAllowed){
+    commitLocationSelection();
+    document.getElementById('retryLocationBtn').textContent='تحديث الموقع';
+    document.getElementById('retryLocationBtn').classList.remove('hidden');
+    setText('locationStatus',`تم تحديد الموقع — الدقة ±${accuracyRounded} م${timeoutText}${areaText}`);
+  }else{
+    setText('locationStatus',`دقة الموقع منخفضة — ±${accuracyRounded} م${timeoutText}${areaText}`);
+  }
+  setIdentityGpsStatus(`${quality} · ±${accuracyRounded} م`,true);
   renderLocationCandidateOnMap();
   syncAdoptButton();
   checkSmartInputState();
@@ -4043,12 +4139,14 @@ function candidateHasCoords(candidate){
 function renderLocationRecovery(message){
   const weakAvailable=candidateIsCurrent(locationCandidate);
   const editable=candidateHasCoords(locationCandidate);
+  document.getElementById('getLocationBtn').classList.add('hidden');
+  document.getElementById('retryLocationBtn').textContent='إعادة المحاولة';
   document.getElementById('retryLocationBtn').classList.remove('hidden');
-  document.getElementById('manualLocationBtn').classList.remove('hidden');
-  document.getElementById('useWeakLocationBtn').classList.toggle('hidden',!weakAvailable);
-  document.getElementById('editLocationBtn').classList.toggle('hidden',!editable);
-  document.getElementById('confirmLocationBtn').classList.toggle('hidden',!editable);
-  document.getElementById('confirmLocationBtn').disabled=!(editable&&locationWarningOverride);
+  document.getElementById('manualLocationBtn').classList.add('hidden');
+  document.getElementById('useWeakLocationBtn').classList.add('hidden');
+  document.getElementById('editLocationBtn').classList.add('hidden');
+  document.getElementById('confirmLocationBtn').classList.add('hidden');
+  document.getElementById('confirmLocationBtn').disabled=true;
   setText('locationStatus',message);
   setIdentityGpsStatus('غير متاح',false);
   checkSmartInputState();
@@ -4081,27 +4179,73 @@ window.applyInspectorManualLocationPreview=function(draft={}){
   checkSmartInputState();
   return true;
 };
+// GPS-only resilient capture. Each run owns a token so late callbacks from a
+// timed-out/retried watch cannot overwrite a newer fix. A transient failure
+// gets one bounded balanced-accuracy retry; permission denial fails closed and
+// tells the inspector to change the browser permission before retrying.
 window.getLocation=function(){
-  if(!navigator.geolocation){setText('locationStatus','هذا المتصفح لا يدعم تحديد الموقع.');setIdentityGpsStatus('غير مدعوم',false);checkSmartInputState();return}
-  stopInspectorGps();locationSamples=[];locationCandidate=null;locationConfirmed=false;locationDragged=false;locationWarningOverride=false;locationTimedOut=false;
+  if(!navigator.geolocation){
+    setText('locationStatus','هذا المتصفح لا يدعم تحديد الموقع عبر GPS.');
+    setIdentityGpsStatus('غير مدعوم',false);checkSmartInputState();return;
+  }
+  stopInspectorGps();
+  const runToken=++locationRunToken;
+  locationAttempt=0;locationSamples=[];locationCandidate=null;locationConfirmed=false;
+  locationDragged=false;locationWarningOverride=false;locationTimedOut=false;
   locationVerified=false;locationSource=null;manualLocationMode=false;
-  document.getElementById('retryLocationBtn').classList.add('hidden');
-  document.getElementById('manualLocationBtn').classList.add('hidden');
-  document.getElementById('useWeakLocationBtn').classList.add('hidden');
-  document.getElementById('editLocationBtn').classList.add('hidden');
-  document.getElementById('confirmLocationBtn').classList.add('hidden');
-  document.getElementById('confirmLocationBtn').disabled=true;
-  document.getElementById('getLocationBtn').disabled=true;setText('locationStatus','جاري جمع عينات GPS دقيقة...');setIdentityGpsStatus('جارٍ جمع العينات',true);
-  locationWatchId=navigator.geolocation.watchPosition(position=>{
-    if(!validLocationSample(position))return;
-    locationSamples.push({lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy,capturedAt:new Date(position.timestamp||Date.now()).toISOString()});
-    locationSamples=locationSamples.slice(-8);
-    const correction=locationDragged&&locationCandidate?{correctedLat:locationCandidate.correctedLat,correctedLng:locationCandidate.correctedLng}:null;
-    locationCandidate=bestStableSample(locationSamples);
-    if(correction&&Number.isFinite(correction.correctedLat)&&Number.isFinite(correction.correctedLng))Object.assign(locationCandidate,correction);
-    renderLocationCandidate();
-  },()=>{locationTimedOut=true;stopInspectorGps();if(locationCandidate)renderLocationCandidate();else renderLocationRecovery('تعذر تحديد الموقع. أعد المحاولة أو فعّل إذن الموقع من المتصفح.')},GPS_OPTIONS);
-  locationTimeoutId=setTimeout(()=>{locationTimedOut=true;stopInspectorGps();if(locationCandidate)renderLocationCandidate();else renderLocationRecovery('انتهت مهلة GPS دون عينة صالحة. تعذر تحديد الموقع. أعد المحاولة أو فعّل إذن الموقع من المتصفح.')},20000);
+  clearAdoptedLocation();
+  for(const id of ['retryLocationBtn','manualLocationBtn','useWeakLocationBtn','editLocationBtn','confirmLocationBtn'])document.getElementById(id)?.classList.add('hidden');
+  const getButton=document.getElementById('getLocationBtn');if(getButton){getButton.disabled=true;getButton.classList.remove('hidden');}
+
+  const clearRunHandles=()=>{
+    if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);
+    locationWatchId=null;clearTimeout(locationTimeoutId);locationTimeoutId=null;
+  };
+  const recover=(message,status='غير متاح')=>{
+    if(runToken!==locationRunToken)return;
+    clearRunHandles();locationTimedOut=true;
+    renderLocationRecovery(message);setIdentityGpsStatus(status,false);
+    if(getButton)getButton.disabled=false;
+  };
+  const beginAttempt=()=>{
+    if(runToken!==locationRunToken)return;
+    locationAttempt+=1;locationTimedOut=false;clearRunHandles();
+    const finalAttempt=locationAttempt>=2;
+    const options=finalAttempt
+      ?{enableHighAccuracy:false,maximumAge:5000,timeout:18000}
+      :{enableHighAccuracy:true,maximumAge:0,timeout:12000};
+    setText('locationStatus',finalAttempt?'إعادة محاولة GPS بنطاق استقبال أوسع...':'جاري جمع عينات GPS دقيقة...');
+    setIdentityGpsStatus(finalAttempt?'إعادة المحاولة':'جاري جمع العينات',true);
+    const retryOrRecover=message=>{
+      if(runToken!==locationRunToken)return;
+      clearRunHandles();
+      if(!finalAttempt){beginAttempt();return;}
+      recover(message);
+    };
+    locationWatchId=navigator.geolocation.watchPosition(position=>{
+      if(runToken!==locationRunToken||!validLocationSample(position))return;
+      locationSamples.push({lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy,capturedAt:new Date(position.timestamp||Date.now()).toISOString()});
+      locationSamples=locationSamples.slice(-8);locationCandidate=bestStableSample(locationSamples);
+      renderLocationCandidate();
+    },error=>{
+      if(runToken!==locationRunToken)return;
+      if(Number(error?.code)===1){
+        recover('إذن الموقع مرفوض. فعّل Location permission لهذا الموقع من إعدادات المتصفح ثم اضغط إعادة المحاولة.','الإذن مرفوض');
+        return;
+      }
+      retryOrRecover(Number(error?.code)===2
+        ?'إشارة GPS غير متاحة حالياً. انتقل إلى مكان مفتوح ثم أعد المحاولة.'
+        :'انتهت مهلة GPS دون موقع موثوق. أعد المحاولة في مكان مفتوح.');
+    },options);
+    locationTimeoutId=setTimeout(()=>retryOrRecover('انتهت مهلة GPS دون موقع موثوق. أعد المحاولة في مكان مفتوح.'),options.timeout+500);
+  };
+  Promise.resolve(navigator.permissions?.query?navigator.permissions.query({name:'geolocation'}):null)
+    .then(permission=>{
+      if(runToken!==locationRunToken)return;
+      if(permission?.state==='denied')recover('إذن الموقع مرفوض. فعّل Location permission لهذا الموقع من إعدادات المتصفح ثم اضغط إعادة المحاولة.','الإذن مرفوض');
+      else beginAttempt();
+    })
+    .catch(()=>beginAttempt());
 };
 document.getElementById('retryLocationBtn')?.addEventListener('click',()=>window.getLocation());
 document.getElementById('manualLocationBtn')?.addEventListener('click',()=>{
@@ -4183,12 +4327,21 @@ document.getElementById('adoptLocationBtn')?.addEventListener('click',()=>{
 document.getElementById('closeLocationCorrectionBtn')?.addEventListener('click',()=>{const dialog=document.getElementById('locationCorrectionDialog');if(dialog?.open)dialog.close()});
 document.getElementById('locationCorrectionDialog')?.addEventListener('click',event=>{if(event.target===event.currentTarget)event.currentTarget.close()});
 document.getElementById('useWeakLocationBtn')?.addEventListener('click',()=>{
-  if(!candidateIsCurrent(locationCandidate)){setText('locationStatus','لا يمكن قبول موقع مفقود أو غير صالح أو قديم. أعد المحاولة.');checkSmartInputState();return}
+  if(!candidateIsCurrent(locationCandidate)){
+    setText('locationStatus','لا يمكن قبول موقع مفقود أو غير صالح أو قديم. أعد المحاولة.');
+    document.getElementById('useWeakLocationBtn').classList.add('hidden');
+    document.getElementById('retryLocationBtn').textContent='إعادة المحاولة';
+    document.getElementById('retryLocationBtn').classList.remove('hidden');
+    checkSmartInputState();return
+  }
   stopInspectorGps();locationWarningOverride=true;
-  document.getElementById('confirmLocationBtn').classList.remove('hidden');
-  document.getElementById('confirmLocationBtn').disabled=false;
   // القبول مع تنبيه اختيار صريح من المستخدم: يثبّت الموقع كغير دقيق ويفتح مسار التحليل دون تجاوز شرط الموقع.
-  if(commitLocationSelection())setText('locationStatus',`تم قبول استخدام GPS مع تنبيه — الدقة الفعلية ±${Math.round(locationCandidate.accuracy)} م، والموقع غير موثّق بدقة كاملة. يمكنك تصحيحه على الخريطة قبل التحليل.`);
+  if(commitLocationSelection()){
+    document.getElementById('useWeakLocationBtn').classList.add('hidden');
+    document.getElementById('retryLocationBtn').textContent='تحديث الموقع';
+    document.getElementById('retryLocationBtn').classList.remove('hidden');
+    setText('locationStatus',`تم تثبيت الموقع — الدقة ±${Math.round(locationCandidate.accuracy)} م`);
+  }
   checkSmartInputState();
 });
 document.getElementById('confirmLocationBtn')?.addEventListener('click',()=>{
@@ -4216,13 +4369,22 @@ function smartInputRequirements(){
   const text = document.getElementById('rawObservationInput').value.trim();
   const hasText = text.length > 0;
   const hasImage = Boolean(currentFile) && ALLOWED_IMAGE_TYPES.has(currentFile.type);
-  const hasLocation = locationConfirmed === true && Boolean(locationCandidate)
+  // موقع GPS ضعيف يستوفي الشرط فقط بعد قبول صريح (locationWarningOverride) مع
+  // إعادة التحقق من الحداثة/الصلاحية عبر candidateIsCurrent وقت الفحص نفسه، لا وقت
+  // التثبيت فقط — بحيث يفشل أي موقع أصبح قديماً بعد قبوله. لا تغيير على عتبات GPS.
+  const acceptedGpsSource =
+    (locationVerified === true && locationSource === 'gps')
+    ||
+    (locationSource === 'gps_weak' && locationWarningOverride === true);
+  const hasLocation =
+    locationConfirmed === true
+    && acceptedGpsSource
+    && candidateIsCurrent(locationCandidate)
     && Number.isFinite(Number(document.getElementById('inputLatitude').value))
     && Number.isFinite(Number(document.getElementById('inputLongitude').value))
     && document.getElementById('inputLatitude').value !== ''
     && document.getElementById('inputLongitude').value !== '';
   const missing = [];
-  if(!hasText) missing.push({key:'text', message:'أدخل وصف الملاحظة.', clause:'أدخل وصف الملاحظة'});
   if(!hasImage) missing.push({key:'image', message:'أرفق صورة الملاحظة.', clause:'أرفق صورة الملاحظة'});
   if(!hasLocation) missing.push({key:'location', message:'ثبّت موقع الملاحظة.', clause:'ثبّت موقع الملاحظة'});
   return {text, hasText, hasImage, hasLocation, missing, ready: missing.length === 0};
@@ -4257,9 +4419,56 @@ window.handleFileUpload = function(e){
     return;
   }
   currentFile = file;
+  pendingSmartCapture = null;
+  const draftRoot=document.getElementById('inspectorAiPreviewRoot');if(draftRoot){draftRoot.replaceChildren();draftRoot.classList.add('hidden')}
+  const processButton=document.getElementById('processSmartInputBtn');if(processButton)processButton.innerHTML='<i data-lucide="camera" class="w-5 h-5 ml-2"></i> تحليل الصورة وإنشاء مسودة';
   setText('fileStatus', `تم اختيار الملف: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`);
   checkSmartInputState();
 };
+
+async function analyzeSmartCaptureDraft({observationId,imageObjectKey,existingDescription}){
+  const user=auth.currentUser;
+  if(!user)throw Object.assign(new Error(REAUTHENTICATION_REQUIRED),{code:REAUTHENTICATION_REQUIRED});
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),AI_ANALYZE_TIMEOUT_MS);
+  try{
+    const response=await fetchWithFirebaseAuth({
+      getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+      input:'/api/ai/analyze',
+      init:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        observationId,draftImageObjectKey:imageObjectKey,existingDescription,
+        correlationId:`${observationId}-${Date.now()}`
+      }),signal:controller.signal}
+    });
+    const payload=await response.json().catch(()=>null);
+    if(!response.ok||payload?.ok!==true)throw Object.assign(new Error(payload?.errorCode||`ai-http-${response.status}`),{code:payload?.errorCode||`ai-http-${response.status}`});
+    return payload;
+  }finally{clearTimeout(timer)}
+}
+function renderSmartCaptureDraft(payload){
+  const analysis=payload?.analysis||{},intelligence=payload?.intelligence||{};
+  const suggestion=analysis.shortSummaryAr||'';
+  if(!document.getElementById('rawObservationInput').value.trim()&&suggestion)document.getElementById('rawObservationInput').value=suggestion;
+  const root=document.getElementById('inspectorAiPreviewRoot');
+  root?.classList.remove('hidden');
+  if(root)setHTML('inspectorAiPreviewRoot',`<div class="p-4 border rounded-xl bg-teal-50">
+    <p class="font-bold text-teal-900 mb-2">مسودة AI للمراجعة والتعديل قبل الحفظ</p>
+    <p class="text-sm"><b>التصنيف:</b> ${escapeHTML(analysis.categoryLabelAr||analysis.categoryCode||'-')}</p>
+    <p class="text-sm"><b>الشدة:</b> ${escapeHTML(analysis.severity||'-')} · <b>الأولوية:</b> ${escapeHTML(intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion||'-')}</p>
+    <p class="text-sm"><b>الإجراء المقترح:</b> ${escapeHTML(analysis.recommendedActionAr||'-')}</p>
+    <p class="text-xs font-bold text-amber-700 mt-2">اقتراح استرشادي فقط. راجع الوصف وعدله، ثم احفظ الملاحظة صراحةً.</p>
+  </div>`);
+  const button=document.getElementById('processSmartInputBtn');
+  if(button)button.innerHTML='<i data-lucide="save" class="w-5 h-5 ml-2"></i> حفظ الملاحظة بعد المراجعة';
+  checkSmartInputState();lucide.createIcons();
+}
+
+// Display-only Arabic labels for the validated municipal-intelligence
+// priority/response-window enums already computed server-side (Sprint 4) —
+// same small-lookup-table pattern manager.html already uses
+// (AI_PRIORITY_LABELS_AR) for the identical values.
+const SMART_INPUT_PRIORITY_LABELS_AR = {LOW:'منخفضة',NORMAL:'عادية',HIGH:'عالية',URGENT:'عاجلة',UNKNOWN:'غير محددة'};
+const SMART_INPUT_RESPONSE_WINDOW_LABELS_AR = {IMMEDIATE:'فوري',WITHIN_4_HOURS:'خلال 4 ساعات',WITHIN_24_HOURS:'خلال 24 ساعة',WITHIN_72_HOURS:'خلال 72 ساعة',PLANNED_MAINTENANCE:'ضمن خطة الصيانة الدورية',MANUAL_REVIEW_REQUIRED:'يتطلب مراجعة ميدانية',UNKNOWN:'غير محدد'};
 
 // ========= SMART INPUT PROCESSING =========
 window.processSmartInput = async function(){
@@ -4295,19 +4504,42 @@ window.processSmartInput = async function(){
   try {
     // الصورة تُرفع أولاً وبشكل حاسم: أي فشل هنا يوقف كل ما بعده.
     // لا payload، ولا كتابة في Firestore، ولا تقرير، ولا مسح للمدخلات.
-    let uploadedUrl = null;
-    try {
-      const compressedFile = await compressImage(currentFile);
-      uploadedUrl = await uploadImageToStorage(compressedFile, "HSR/before");
-    } catch (uploadError) {
-      console.error('image upload failed', uploadError);
-      showUploadFailure(uploadFailureMessage(uploadError));
-      return;
+    const clientRequestId = pendingSmartCapture?.clientRequestId || newClientRequestId();
+    let uploadedUrl = pendingSmartCapture?.uploadedUrl || null;
+    let aiDraft = pendingSmartCapture?.aiDraft || null;
+    if(!pendingSmartCapture){
+      try {
+        const compressedFile = await compressImage(currentFile);
+        uploadedUrl = await uploadImageToStorage(compressedFile, "HSR/before",clientRequestId);
+      } catch (uploadError) {
+        if(uploadError?.code===REAUTHENTICATION_REQUIRED){
+          showUploadFailure('تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى ثم أعد المحاولة.');
+        }else{
+          console.error('smart capture failed',{name:uploadError?.name||'Error',code:uploadError?.code||null});
+          showUploadFailure(uploadFailureMessage(uploadError));
+        }
+        return;
+      }
+      // Persist the successful upload before AI starts. An AI retry must reuse
+      // this private object key and never upload the same evidence again.
+      pendingSmartCapture={clientRequestId,uploadedUrl,aiDraft:null};
     }
     // مرجع صورة فارغ يعني بلاغاً بلا دليل — يُعامل معاملة الفشل.
     if (typeof uploadedUrl !== 'string' || !uploadedUrl.trim()) {
       console.error('image upload returned no reference', uploadedUrl);
       showUploadFailure('لم يُرجع مخزن الصور مرجعاً صالحاً للصورة. أعد المحاولة.');
+      return;
+    }
+    if(!aiDraft){
+      try {
+        aiDraft = await analyzeSmartCaptureDraft({observationId:clientRequestId,imageObjectKey:uploadedUrl,existingDescription:rawText});
+        pendingSmartCapture.aiDraft=aiDraft;
+      } catch (aiError) {
+        console.error('smart capture AI draft failed',{name:aiError?.name||'Error',code:aiError?.code||null});
+        showSmartCaptureAiFailure(aiError);
+        return;
+      }
+      hide('modalResult');unhide('modalStep1');renderSmartCaptureDraft(aiDraft);
       return;
     }
 
@@ -4326,11 +4558,18 @@ window.processSmartInput = async function(){
       // ولا يُسمح بالوصول إليها إلا عبر الخادم.
       imageObjectKey: isLocalDemoReference(uploadedUrl) ? null : uploadedUrl,
       isComparative: false,
-      actionPlan: "إصلاح فوري لأضرار الطريق عبر رقعة الإسفلت (Patching).",
-      riskAssessment: { priority:"High", timeframe:"48 hours" },
+      // Derived from the real Vision draft already fetched above -- never a
+      // fixed category-agnostic default (Sprint 4: the previous hardcoded
+      // "asphalt patching / High / 48 hours" applied to every observation
+      // regardless of actual content). Stores the CANONICAL validated
+      // municipal-intelligence enum values, not display text -- Arabic
+      // labels are looked up only when rendering (see showObservationDetail).
+      actionPlan: aiDraft?.intelligence?.suggestedTreatment || 'يتطلب تحديد إجراء ميداني بعد المراجعة.',
+      riskAssessment: {
+        priority: aiDraft?.intelligence?.prioritySuggestion?.prioritySuggestion || 'UNKNOWN',
+        timeframe: aiDraft?.intelligence?.suggestedResponseWindow || 'MANUAL_REVIEW_REQUIRED',
+      },
       location: `${lat}, ${lon}`,
-      resolutionNote: null,
-      afterImagePath: null,
       organizationId: inspectorContext.organizationId,
       createdByUid: auth.currentUser.uid,
       originalLat: locationCandidate.lat,
@@ -4349,7 +4588,6 @@ window.processSmartInput = async function(){
     // إرسال سابق في الجلسة نفسها فيُعاد استخدام معرّفها: الكتابة السابقة قد
     // تكون وصلت متأخرة، ومعرّف ثابت يجعل هذا الإرسال كتابةً على المستند نفسه
     // بدل إنشاء بلاغ ثانٍ. معرّف جديد يبدأ فقط من openModal.
-    const clientRequestId = pendingSmartInput?.clientRequestId || newClientRequestId();
     pendingSmartInput = { payload, nextDisplayId, clientRequestId };
     await commitPendingSmartInput();
 
@@ -4415,8 +4653,9 @@ async function commitPendingSmartInput(){
 }
 
 // نجاح مؤكد من الخادم: setDoc لا تُحلّ إلا بعد إقرار الخادم بالكتابة.
-function finishSmartInputSuccess(docId, payload, nextDisplayId){
+async function finishSmartInputSuccess(docId, payload, nextDisplayId){
   pendingSmartInput = null;
+  pendingSmartCapture = null;
   smartInputSaveInFlight = false;
 
   observationsData.unshift({
@@ -4454,6 +4693,15 @@ function finishSmartInputSuccess(docId, payload, nextDisplayId){
   document.getElementById('processSmartInputBtn').disabled = true;
   checkSmartInputState();
   renderKPIs();
+
+  // ربط تحليل الرؤية المخزَّن مؤقتاً (cache-only) بالملاحظة الجديدة. لا يُعيد
+  // تشغيل الرؤية أبداً. فشل هذا الربط لا يُبطل نجاح الحفظ أعلاه؛ يظهر تحذيراً
+  // صريحاً مع خيار إعادة محاولة الربط وحده، بدل ترك الفشل صامتاً.
+  const bindOutcome = await bindCachedVisionAnalysis(docId);
+  if(!bindOutcome.ok){
+    setHTML('modalResultContent', successHTML('تمت معالجة الملاحظة وإضافتها بنجاح.') + visionBindWarningHTML(docId));
+    lucide.createIcons();
+  }
   return true;
 }
 
@@ -4489,12 +4737,15 @@ window.openModal = function(id){
     document.getElementById('confirmLocationBtn').classList.add('hidden');
     document.getElementById('confirmLocationBtn').disabled = true;
     // فتح النافذة من جديد يبدأ بلاغاً جديداً: لا تبقَ حمولة معلّقة من محاولة سابقة.
-    pendingSmartInput = null; smartInputSaveInFlight = false;
-    setIdentityGpsStatus('جاهز عند الطلب',true);
+    pendingSmartInput = null; pendingSmartCapture = null; smartInputSaveInFlight = false;
+    const draftRoot=document.getElementById('inspectorAiPreviewRoot');if(draftRoot){draftRoot.replaceChildren();draftRoot.classList.add('hidden')}
+    const processButton=document.getElementById('processSmartInputBtn');if(processButton)processButton.innerHTML='<i data-lucide="camera" class="w-5 h-5 ml-2"></i> تحليل الصورة وإنشاء مسودة';
+    setIdentityGpsStatus('جاري التحديد التلقائي',true);
     checkSmartInputState();
     hide('modalResult');
     unhide('modalStep1');
     unhide('modalResultReviewAction');
+    window.getLocation();
   }
 };
 
@@ -4636,8 +4887,9 @@ window.setupImageComparison = function(){
 
 // ========= AI BUTTONS =========
 // 'vision' calls the real, advisory-only AI Gateway (Sprint 6.8:
-// platform/ai/ -> api/ai/analyze.js). 'root-cause' is a separate,
-// unrelated illustrative placeholder and stays out of this sprint's scope.
+// platform/ai/ -> api/ai/analyze.js). 'root-cause' (Sprint 4 municipal AI
+// quality closure) calls the deterministic, evidence-gated Root Cause
+// Advisory (api/report/root-cause.js) -- no second AI/provider call, ever.
 window.analyzeImage = function(tool){
   const title = {'vision':'تحليل الرؤية (Vision)','root-cause':'تحليل السبب الجذري'}[tool] || 'التحليل';
   setText('aiResultTitle', `جاري تنفيذ ${title}...`);
@@ -4652,12 +4904,10 @@ window.analyzeImage = function(tool){
     runVisionAnalysis(title);
     return;
   }
-
-  setTimeout(()=>{
-    const result = `<p class="communication-draft">**5 Whys (مقترح):**\n1) لماذا حدث؟ تأخر صيانة.\n2) لماذا؟ نقص متابعة.\n3) لماذا؟ جدول غير محدث.\n4) لماذا؟ بدون أتمتة.\n5) السبب الجذري: غياب آلية تنبيه دوري.</p>`;
-    setText('aiResultTitle', `نتائج ${title} مكتملة:`);
-    setHTML('aiResultContent', result);
-  }, 1200);
+  if (tool === 'root-cause') {
+    runRootCauseAnalysis(title);
+    return;
+  }
 };
 
 // ========= REAL AI VISION ANALYSIS (Sprint 6.8) =========
@@ -4673,6 +4923,11 @@ const AI_ERROR_MESSAGES_AR = {
   AI_TIMEOUT: 'استغرق التحليل وقتاً أطول من المتوقع. حاول مجدداً.',
   forbidden: 'لا تملك صلاحية تحليل هذه الملاحظة.',
   unauthenticated: 'الرجاء إعادة تسجيل الدخول.',
+  AI_INSPECTOR_ROLE_REQUIRED: 'لا تملك صلاحية تحليل هذه الملاحظة.',
+  AI_CROSS_ORGANIZATION_DENIED: 'لا تملك صلاحية تحليل هذه الملاحظة.',
+  AI_REPORT_OWNER_DENIED: 'لا تملك صلاحية تحليل هذه الملاحظة.',
+  ROOT_CAUSE_VISION_REQUIRED: 'يجب إجراء تحليل الرؤية (Vision) أولاً قبل تحليل السبب الجذري.',
+  WORK_ORDER_VISION_REQUIRED: 'يجب إجراء تحليل الرؤية (Vision) أولاً قبل صياغة أمر العمل.',
 };
 function aiErrorMessageAr(errorCode){
   return AI_ERROR_MESSAGES_AR[errorCode] || 'تعذر إتمام التحليل. النتيجة غير متاحة حالياً وتتطلب مراجعة ميدانية.';
@@ -4684,24 +4939,114 @@ function renderAiFailure(title, errorCode){
 function severityBadgeClass(severity){
   return { CRITICAL:'bg-red-100 text-red-800', HIGH:'bg-orange-100 text-orange-800', MEDIUM:'bg-yellow-100 text-yellow-800', LOW:'bg-green-100 text-green-800', UNKNOWN:'bg-gray-100 text-gray-700' }[severity] || 'bg-gray-100 text-gray-700';
 }
+// صف حقل مضغوط داخل بطاقة رمادية فاتحة -- يُستخدم في الأقسام الثلاثة لعرض بيانات
+// وصفية (تصنيف/جهة/إطار زمني...) دون كتلة نصية واحدة طويلة.
+function aiFieldRow(label, value){
+  return value ? `<div class="flex justify-between gap-3 py-1.5 border-b border-gray-100 last:border-0 text-sm"><span class="text-gray-500">${escapeHTML(label)}</span><span class="font-bold text-gray-800 text-left">${escapeHTML(value)}</span></div>` : '';
+}
+// قسم قائمة اختياري بعنوان صغير -- لا يُطبع شيء إذا كانت القائمة فارغة.
+function aiListSection(label, items, itemClass){
+  if (!Array.isArray(items) || !items.length) return '';
+  return `<div class="mt-3"><p class="text-xs font-bold text-gray-500 mb-1">${escapeHTML(label)}</p><ul class="${itemClass||'text-sm text-gray-700'} list-disc pr-5 space-y-1">${items.map(i=>`<li>${escapeHTML(i)}</li>`).join('')}</ul></div>`;
+}
+// بطاقات مؤشرات مضغوطة (الثقة/الأولوية/SLA/الجهة) -- تُحذف البطاقة كلياً إن
+// كانت قيمتها غير متاحة، لا تُعرض أبداً كبطاقة "-" فارغة.
+function aiKpiTiles(tiles){
+  const usable = (tiles || []).filter(t => t && t.value);
+  if (!usable.length) return '';
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px;">${usable.map(t => `
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px;">
+      <div style="color:var(--color-navy);font-size:.65rem;font-weight:700;margin-bottom:3px;">${escapeHTML(t.label)}</div>
+      <div style="font-size:1rem;font-weight:800;color:${t.color || '#1f2937'};">${escapeHTML(t.value)}</div>
+    </div>`).join('')}</div>`;
+}
+const AI_FLOW_STAGES = [
+  { key:'evidence', label:'الدليل الميداني' },
+  { key:'vision', label:'الرؤية' },
+  { key:'intelligence', label:'الذكاء البلدي' },
+  { key:'root-cause', label:'السبب الجذري' },
+  { key:'work-order', label:'أمر العمل' },
+  { key:'human-review', label:'المراجعة البشرية' },
+];
+// شريط مضغوط لحالة التوأم الرقمي التشغيلية -- حالة حقيقية فقط: مرحلتا الرؤية
+// والذكاء البلدي مكتملتان دائماً عند وصول أي نتيجة (شرط مسبق يفرضه الخادم
+// فعلياً)، والمرحلة الحالية فقط تُعرض "قيد التنفيذ"؛ لا محاكاة ولا افتراض
+// اكتمال للسبب الجذري/أمر العمل أو المراجعة البشرية.
+function aiDigitalTwinFlow(currentStage){
+  const completedBaseline = new Set(['evidence', 'vision', 'intelligence']);
+  const nodes = AI_FLOW_STAGES.map((stage, i) => {
+    const isCurrent = stage.key === currentStage;
+    const isDone = !isCurrent && completedBaseline.has(stage.key);
+    const circleStyle = isCurrent
+      ? 'background:#fff;color:var(--color-navy);border:2px solid var(--color-navy);'
+      : isDone
+        ? 'background:var(--color-teal);color:#fff;border:2px solid var(--color-teal);'
+        : 'background:#f3f4f6;color:#9ca3af;border:1px solid #d1d5db;';
+    const labelStyle = isCurrent ? 'color:var(--color-navy);font-weight:700;' : isDone ? 'color:#4b5563;' : 'color:#9ca3af;';
+    const connector = i < AI_FLOW_STAGES.length - 1 ? `<span class="ai-flow-line" style="flex:1;height:1px;background:#e5e7eb;margin-top:9px;"></span>` : '';
+    const nodeClass = isCurrent ? 'ai-flow-node ai-flow-current' : 'ai-flow-node';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:40px;">
+      <span class="${nodeClass}" style="width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;${circleStyle}">${i + 1}</span>
+      <span style="font-size:.6rem;text-align:center;line-height:1.15;${labelStyle}">${escapeHTML(stage.label)}</span>
+    </div>${connector}`;
+  }).join('');
+  return `<div style="display:flex;align-items:flex-start;justify-content:space-between;margin:12px 0;" dir="rtl">${nodes}</div>`;
+}
+// رأس رسمي يظهر فقط عند الطباعة -- لا يُعرض على الشاشة إطلاقاً (.ai-print-header
+// مخفي افتراضياً، انظر @media print أعلاه) ولا يستخدم إلا بيانات الملاحظة
+// المتاحة فعلياً؛ أي حقل غائب يُحذف بدل عرضه فارغاً.
+function aiPrintHeader(analysisTypeAr, resultStatusAr){
+  const obs = currentSelectedObservation || {};
+  const rows = [
+    obs.id ? `رقم البلاغ: ${escapeHTML(String(obs.id))}` : '',
+    obs.date ? `التاريخ: ${escapeHTML(obs.date)}` : '',
+    obs.location ? `الموقع: ${escapeHTML(obs.location)}` : '',
+  ].filter(Boolean).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
+  return `<div class="ai-print-header">
+    <div><b>Smart HSR</b> — نظام المراقبة وإدارة الجودة الرقمي</div>
+    <div>نوع التحليل: ${escapeHTML(analysisTypeAr)}${resultStatusAr ? `&nbsp;&nbsp;|&nbsp;&nbsp;حالة النتيجة: ${escapeHTML(resultStatusAr)}` : ''}</div>
+    ${rows ? `<div>${rows}</div>` : ''}
+  </div>`;
+}
 function renderVisionResult(title, payload){
   const analysis = payload.analysis || {};
   const intelligence = payload.intelligence || {};
   const confidencePct = Number.isFinite(analysis.confidence) ? Math.round(analysis.confidence * 100) : null;
+  const priority = intelligence.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || null;
+  const priorityAr = priority ? (SMART_INPUT_PRIORITY_LABELS_AR[priority] || priority) : null;
   const reasons = Array.isArray(intelligence.prioritySuggestion?.reasonsAr) ? intelligence.prioritySuggestion.reasonsAr : [];
+  const riskReasons = Array.isArray(intelligence.riskIndicators) ? intelligence.riskIndicators.map(r=>r?.reasonAr).filter(Boolean) : [];
+  const responseWindowAr = SMART_INPUT_RESPONSE_WINDOW_LABELS_AR[intelligence.suggestedResponseWindow] || intelligence.suggestedResponseWindow || null;
+  const department = intelligence.suggestedDepartment || null;
+  const summary = analysis.categoryLabelAr
+    ? `تم تصنيف الحالة كـ${escapeHTML(analysis.categoryLabelAr)}${department && responseWindowAr ? ` ويُوصى بإحالتها إلى ${escapeHTML(department)} خلال ${escapeHTML(responseWindowAr)}` : ''}.`
+    : '';
   setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
   setHTML('aiResultContent', `
-    <div class="communication-draft p-4 border rounded-lg">
-      <div class="flex flex-wrap items-center gap-2 mb-3">
-        <span class="px-3 py-1 rounded-full text-xs font-bold ${severityBadgeClass(analysis.severity)}">${escapeHTML(analysis.categoryLabelAr || '-')}</span>
-        <span class="px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">الأولوية المقترحة: ${escapeHTML(intelligence.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || '-')}</span>
-        ${confidencePct !== null ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">الثقة: ${confidencePct}%</span>` : ''}
+    ${aiPrintHeader('تحليل الرؤية (Vision)', 'استرشادي — يتطلب مراجعة بشرية')}
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+      ${summary ? `<p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>` : ''}
+      ${aiKpiTiles([
+        confidencePct !== null ? { label:'الثقة', value:`${confidencePct}%` } : null,
+        priorityAr ? { label:'الأولوية', value:priorityAr, color: priority === 'URGENT' ? '#b91c1c' : priority === 'HIGH' ? '#b45309' : undefined } : null,
+        responseWindowAr ? { label:'SLA / زمن الاستجابة', value:responseWindowAr } : null,
+        department ? { label:'الجهة المختصة', value:department } : null,
+      ].filter(Boolean))}
+      ${aiDigitalTwinFlow('vision')}
+      <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
+        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${severityBadgeClass(analysis.severity)}">${escapeHTML(analysis.categoryLabelAr || '-')}</span>
+        ${intelligence.publicSafetyRisk ? `<span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">⚠ خطر على السلامة العامة</span>` : ''}
       </div>
-      <p class="font-bold text-gray-800 mb-2">${escapeHTML(analysis.shortSummaryAr || '-')}</p>
-      <p class="text-sm text-gray-600 mb-3">${escapeHTML(analysis.recommendedActionAr || '')}</p>
-      ${reasons.length ? `<ul class="text-xs text-gray-500 list-disc pr-5 space-y-1 mb-3">${reasons.map(r=>`<li>${escapeHTML(r)}</li>`).join('')}</ul>` : ''}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
-        اقتراح استرشادي فقط من الذكاء الاصطناعي (Gemini) — يتطلب مراجعة ميدانية واعتماد المشرف/المدير قبل أي إجراء. لا يتم أي إسناد أو تغيير حالة أو إغلاق تلقائي.
+      <div class="bg-gray-50 rounded-lg border border-gray-100 px-3" style="break-inside:avoid;">
+        ${aiFieldRow('الشدة', analysis.severity)}
+        ${aiFieldRow('المعالجة المقترحة', intelligence.suggestedTreatment)}
+      </div>
+      ${analysis.shortSummaryAr ? `<p class="text-sm text-gray-700 mt-3">${escapeHTML(analysis.shortSummaryAr)}</p>` : ''}
+      ${analysis.recommendedActionAr ? `<p class="text-sm font-bold text-gray-800 mt-2">الإجراء الموصى به: <span class="font-normal text-gray-700">${escapeHTML(analysis.recommendedActionAr)}</span></p>` : ''}
+      ${aiListSection('مؤشرات الخطر', riskReasons, 'text-xs text-amber-700')}
+      ${aiListSection('أسباب تقدير الأولوية', reasons, 'text-xs text-gray-500')}
+      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
+        اقتراح استرشادي فقط من مزود الذكاء الاصطناعي المعتمد — يتطلب مراجعة بشرية صريحة قبل أي إجراء. لا يتم الحفظ أو الإسناد أو تغيير الحالة أو الإغلاق تلقائياً.
       </p>
     </div>`);
 }
@@ -4715,12 +5060,15 @@ async function runVisionAnalysis(title){
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, AI_ANALYZE_TIMEOUT_MS);
   try {
-    const token = await user.getIdToken();
-    const response = await fetch('/api/ai/analyze', {
+    const response = await fetchWithFirebaseAuth({
+      getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+      input:'/api/ai/analyze',
+      init:{
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ observationId: String(observation.docId), correlationId: `${observation.docId}-${Date.now()}` }),
       signal: controller.signal
+      }
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok || !payload || payload.ok !== true) {
@@ -4729,14 +5077,124 @@ async function runVisionAnalysis(title){
     }
     renderVisionResult(title, payload);
   } catch (error) {
-    renderAiFailure(title, (timedOut || error?.name === 'AbortError') ? 'AI_TIMEOUT' : null);
+    renderAiFailure(title, error?.code===REAUTHENTICATION_REQUIRED?'unauthenticated':((timedOut || error?.name === 'AbortError') ? 'AI_TIMEOUT' : null));
   } finally {
     clearTimeout(timer);
   }
 }
 
-window.generateCommunicationDraft = function(){
-  setText('aiResultTitle','صياغة أمر العمل الآلي...');
+// ========= ROOT CAUSE ADVISORY (Sprint 4) =========
+// Deterministic, evidence-gated, over the already-persisted Vision result
+// (api/report/root-cause.js -> platform/intelligence/root-cause-advisory.js).
+// NEVER a second AI/provider call. A candidate cause is always explicitly
+// labeled as an unverified hypothesis; rootCauseProven is false in Sprint 4
+// by design (see root-cause-advisory.js for why). Advisory only — never
+// saves, assigns, changes status, or closes a report.
+function renderRootCauseResult(title, payload){
+  const rc = payload.rootCause || {};
+  const causes = Array.isArray(rc.probableCauses) ? rc.probableCauses : [];
+  const evidence = Array.isArray(rc.evidenceForEachCause) ? rc.evidenceForEachCause : [];
+  const missing = Array.isArray(rc.missingEvidence) ? rc.missingEvidence : [];
+  const steps = Array.isArray(rc.verificationSteps) ? rc.verificationSteps : [];
+  const confidencePct = Number.isFinite(rc.confidence) ? Math.round(rc.confidence * 100) : null;
+  const summary = 'لا يوجد سبب جذري مؤكد؛ يلزم تحقق ميداني قبل اعتماد أي تفسير سببي.';
+  setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
+  setHTML('aiResultContent', `
+    ${aiPrintHeader('تحليل السبب الجذري', 'استرشادي — غير مؤكد')}
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+      <p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>
+      ${aiKpiTiles([confidencePct !== null ? { label:'الثقة', value:`${confidencePct}%` } : null].filter(Boolean))}
+      ${aiDigitalTwinFlow('root-cause')}
+      <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
+        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${rc.rootCauseProven ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${rc.rootCauseProven ? 'سبب مؤكد' : 'غير مؤكد — يحتاج تحقق ميداني'}</span>
+      </div>
+      ${causes.length
+        ? aiListSection('فرضيات محتملة (تتطلب التحقق الميداني)', causes, 'text-sm text-gray-700') + aiListSection('الأدلة الداعمة', evidence, 'text-xs text-gray-500')
+        : `<p class="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-lg p-3">لا يوجد دليل بصري كافٍ لتحديد آلية السبب؛ يتطلب تحققاً ميدانياً.</p>`}
+      ${aiListSection('أدلة ناقصة', missing, 'text-xs text-gray-500')}
+      ${aiListSection('خطوات التحقق الموصى بها', steps, 'text-xs text-gray-500')}
+      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
+        اقتراح استرشادي فقط — لا يمثل سبباً جذرياً مؤكداً حتى يتم التحقق الميداني. لا يتم الحفظ أو الإسناد أو تغيير الحالة أو الإغلاق تلقائياً.
+      </p>
+    </div>`);
+}
+async function runRootCauseAnalysis(title){
+  const observation = currentSelectedObservation;
+  if (!observation || !observation.docId) { renderAiFailure(title, 'AI_OBSERVATION_NOT_FOUND'); return; }
+  const user = auth.currentUser;
+  if (!user) { renderAiFailure(title, 'unauthenticated'); return; }
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, AI_ANALYZE_TIMEOUT_MS);
+  try {
+    const response = await fetchWithFirebaseAuth({
+      getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+      input:'/api/report/root-cause',
+      init:{
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ observationId: String(observation.docId) }),
+      signal: controller.signal
+      }
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload || payload.ok !== true) {
+      renderAiFailure(title, payload?.errorCode);
+      return;
+    }
+    renderRootCauseResult(title, payload);
+  } catch (error) {
+    renderAiFailure(title, error?.code===REAUTHENTICATION_REQUIRED?'unauthenticated':((timedOut || error?.name === 'AbortError') ? 'AI_TIMEOUT' : null));
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ========= WORK ORDER DRAFT (Sprint 4) =========
+// Deterministic, over validated Municipal Intelligence + observation
+// metadata (api/report/work-order.js -> platform/intelligence/
+// work-order-draft.js). Independent of Root Cause. NEVER a second AI/
+// provider call. Draft/advisory only — never saves, assigns, changes
+// status, or closes a report.
+function renderWorkOrderResult(title, payload){
+  const wo = payload.workOrder || {};
+  const steps = Array.isArray(wo.executionSteps) ? wo.executionSteps : [];
+  const safety = Array.isArray(wo.safetyConsiderations) ? wo.safetyConsiderations : [];
+  const evidence = Array.isArray(wo.requiredEvidence) ? wo.requiredEvidence : [];
+  const closure = Array.isArray(wo.closureRequirements) ? wo.closureRequirements : [];
+  const priorityAr = wo.priority ? (SMART_INPUT_PRIORITY_LABELS_AR[wo.priority] || wo.priority) : null;
+  const summary = wo.workType
+    ? `مسودة عمل إرشادية لمعالجة ${escapeHTML(wo.workType)}${priorityAr && wo.targetSla ? ` بأولوية ${escapeHTML(priorityAr)} خلال ${escapeHTML(wo.targetSla)}` : ''}.`
+    : '';
+  setText('aiResultTitle', `${title} (مسودة استرشادية):`);
+  setHTML('aiResultContent', `
+    ${aiPrintHeader('مسودة أمر العمل', 'مسودة إرشادية')}
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+      ${summary ? `<p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>` : ''}
+      ${aiKpiTiles([
+        priorityAr ? { label:'الأولوية', value:priorityAr, color: wo.priority === 'URGENT' ? '#b91c1c' : wo.priority === 'HIGH' ? '#b45309' : undefined } : null,
+        wo.targetSla ? { label:'SLA / زمن الاستجابة', value:wo.targetSla } : null,
+        wo.recommendedDiscipline ? { label:'الجهة المختصة', value:wo.recommendedDiscipline } : null,
+      ].filter(Boolean))}
+      ${aiDigitalTwinFlow('work-order')}
+      <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
+        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">مسودة إرشادية</span>
+      </div>
+      <p class="font-bold text-lg text-gray-800">${escapeHTML(wo.workType||'-')} <span class="font-normal text-gray-500 text-base">— ${escapeHTML(wo.location||'-')}</span></p>
+      ${wo.scopeOfWork ? `<p class="text-sm text-gray-700 mt-3">${escapeHTML(wo.scopeOfWork)}</p>` : ''}
+      ${aiListSection('خطوات التنفيذ', steps, 'text-xs text-gray-600')}
+      ${aiListSection('اعتبارات السلامة', safety, 'text-xs text-red-700')}
+      ${aiListSection('الأدلة المطلوبة', evidence, 'text-xs text-gray-600')}
+      ${aiListSection('متطلبات الإغلاق', closure, 'text-xs text-gray-600')}
+      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
+        مسودة استرشادية فقط — لا يتم الإسناد أو تغيير الحالة أو الإغلاق تلقائياً؛ يتطلب اعتماد المدير.
+      </p>
+    </div>`);
+}
+window.generateCommunicationDraft = async function(){
+  const title = 'صياغة أمر العمل';
+  setText('aiResultTitle', `جاري ${title}...`);
   setHTML('aiResultContent', `
     <div class="flex items-center text-teal-700 font-bold">
       <div class="loading-spinner" style="border-top-color: var(--color-teal); border: 4px solid rgba(24, 165, 162, 0.3); margin-left: 8px;"></div>
@@ -4744,19 +5202,36 @@ window.generateCommunicationDraft = function(){
     </div>`);
   unhide('aiResultContainer');
 
-  setTimeout(()=>{
-    const o = currentSelectedObservation || {};
-    setText('aiResultTitle','صياغة أمر العمل الآلي (مكتملة):');
-    setHTML('aiResultContent', `
-      <div class="communication-draft p-4 border rounded-lg">
-        <p class="font-bold text-lg mb-2 text-red-800">
-          أمر عمل عاجل: معالجة ${escapeHTML(o.title||'—')} [ID: ${o.id||'—'}]
-        </p>
-        <p class="mt-3 font-bold text-sm text-red-600">
-          الأولوية: ${o.riskAssessment?.priority||'-'} | الإطار الزمني المستهدف: ${o.riskAssessment?.timeframe||'-'}
-        </p>
-      </div>`);
-  }, 900);
+  const observation = currentSelectedObservation;
+  if (!observation || !observation.docId) { renderAiFailure(title, 'AI_OBSERVATION_NOT_FOUND'); return; }
+  const user = auth.currentUser;
+  if (!user) { renderAiFailure(title, 'unauthenticated'); return; }
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, AI_ANALYZE_TIMEOUT_MS);
+  try {
+    const response = await fetchWithFirebaseAuth({
+      getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+      input:'/api/report/work-order',
+      init:{
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ observationId: String(observation.docId) }),
+      signal: controller.signal
+      }
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload || payload.ok !== true) {
+      renderAiFailure(title, payload?.errorCode);
+      return;
+    }
+    renderWorkOrderResult(title, payload);
+  } catch (error) {
+    renderAiFailure(title, error?.code===REAUTHENTICATION_REQUIRED?'unauthenticated':((timedOut || error?.name === 'AbortError') ? 'AI_TIMEOUT' : null));
+  } finally {
+    clearTimeout(timer);
+  }
 };
 
 window.generateKpiInsights = function(){
@@ -4816,6 +5291,40 @@ function errorHTML(msg){
       <h4 class="text-2xl font-extrabold text-red-700">${msg}</h4>
     </div>`;
 }
+// تحذير غير حاجب: لا يُبطل نجاح حفظ الملاحظة ولا يُخفي فشل ربط التحليل. إعادة
+// المحاولة هنا تستدعي فقط /api/ai/bind-analysis (ربط من الذاكرة المؤقتة) —
+// لا تُعيد تشغيل الرؤية أو أي مزود ذكاء اصطناعي أبداً.
+function visionBindWarningHTML(observationId){
+  return `
+    <div class="p-4 mt-3 bg-amber-50 rounded-xl border-2 border-amber-200 text-center">
+      <p class="text-sm font-bold text-amber-800">تم حفظ الملاحظة، وتعذر ربط نتيجة تحليل الرؤية. يمكن إعادة محاولة ربط التحليل.</p>
+      <button type="button" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold mt-2" onclick="retryVisionBind('${escapeHTML(observationId)}')">إعادة محاولة ربط التحليل</button>
+    </div>`;
+}
+// يستدعي فقط نقطة الربط من الذاكرة المؤقتة (cache-only) -- لا استدعاء ثانٍ
+// للرؤية أو أي مزود ذكاء اصطناعي مهما كانت النتيجة.
+async function bindCachedVisionAnalysis(observationId){
+  const user = auth.currentUser;
+  if(!user) return {ok:false};
+  try{
+    const response = await fetchWithFirebaseAuth({
+      getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+      input:'/api/ai/bind-analysis',
+      init:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({observationId})}
+    });
+    const payload = await response.json().catch(()=>null);
+    return {ok: response.ok && payload?.ok===true, payload};
+  }catch(_){
+    return {ok:false};
+  }
+}
+window.retryVisionBind = async function(observationId){
+  const outcome = await bindCachedVisionAnalysis(observationId);
+  setHTML('modalResultContent', outcome.ok
+    ? successHTML('تمت معالجة الملاحظة وإضافتها بنجاح.')
+    : successHTML('تمت معالجة الملاحظة وإضافتها بنجاح.') + visionBindWarningHTML(observationId));
+  lucide.createIcons();
+};
 // فشل رفع الصورة يوقف العملية بالكامل: لا تقرير، ولا سجل في Firestore،
 // ولا مسح للمدخلات — مع مسار واضح للعودة وإعادة المحاولة.
 function uploadErrorHTML(msg){
@@ -4864,6 +5373,38 @@ function showUploadFailure(message){
   hide('modalResultReviewAction');
   lucide.createIcons();
 }
+function smartCaptureAiErrorHTML(message){
+  return `
+    <div class="p-6 bg-amber-50 rounded-xl border-4 border-amber-200 text-center">
+      <i data-lucide="sparkles" class="w-10 h-10 mx-auto text-amber-700 mb-3"></i>
+      <h4 class="text-xl font-extrabold text-amber-800">تعذر إنشاء مسودة AI</h4>
+      <p class="text-base font-bold text-amber-900 mt-3 leading-relaxed">${escapeHTML(message)}</p>
+      <p class="text-sm text-amber-800 mt-3">تم رفع صورة الملاحظة بنجاح، ولن يُعاد رفعها. لم يتم إنشاء أي بلاغ.</p>
+      <button id="retryAiDraftBtn" type="button" onclick="retrySmartCaptureAnalysis()"
+        class="ai-button-primary rounded-full px-6 py-3 text-base font-bold flex items-center justify-center mx-auto mt-5">
+        <i data-lucide="rotate-ccw" class="w-4 h-4 ml-2"></i> إعادة محاولة التحليل
+      </button>
+      <button type="button" onclick="returnToSmartInputStep1()"
+        class="ai-button-secondary rounded-full px-5 py-2 text-sm font-bold flex items-center justify-center mx-auto mt-3">
+        العودة لمراجعة البيانات
+      </button>
+    </div>`;
+}
+function showSmartCaptureAiFailure(error){
+  const code=[error?.code,error?.message].filter(v=>typeof v==='string'&&v.trim()).join(' ');
+  const message=error?.code===REAUTHENTICATION_REQUIRED
+    ? 'تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى ثم أعد التحليل.'
+    : /AbortError|aborted|timeout/i.test(code)
+      ? 'استغرق التحليل وقتاً أطول من المسموح. أعد محاولة التحليل.'
+      : 'الصورة محفوظة، لكن خدمة التحليل غير متاحة حالياً. أعد محاولة التحليل.';
+  setHTML('modalResultContent',smartCaptureAiErrorHTML(message));
+  hide('modalResultReviewAction');
+  lucide.createIcons();
+}
+window.retrySmartCaptureAnalysis=function(){
+  if(!pendingSmartCapture?.uploadedUrl||pendingSmartCapture.aiDraft||imageUploadInFlight||smartInputSaveInFlight)return;
+  processSmartInput();
+};
 // فشل الكتابة في Firestore يُعامل كفشل صريح: لا بلاغ، ولا تقرير، ولا مسح للمدخلات.
 // الحمولة والصورة المرفوعة تُحفظان لإعادة محاولة الحفظ وحده دون إعادة رفع الصورة.
 function saveErrorHTML(msg){

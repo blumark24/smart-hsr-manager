@@ -33,17 +33,34 @@
 // API key, prompt, or raw image byte is ever part of that write. A manager
 // still makes the real decision downstream through the existing workflow.
 // ============================================================================
-const { getDb, FieldValue } = require('../_lib/firebaseAdmin');
-const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
+const { getDb } = require('../_lib/firebaseAdmin');
+const { verifyRequestToken } = require('../_lib/authz');
+const { resolveInspectorContext, evaluateObservationAccess } = require('../_lib/inspectorAccess');
+const { buildPersistedAiAnalysis } = require('../_lib/persistedAiAnalysis');
 const { b2Configuration, getS3Client, safeStorageFailure } = require('../_lib/b2Client');
 const { evaluateAIStorageInput } = require('../../platform/ai/ai-storage-boundary');
 const { createProviderRouter } = require('../../platform/ai/provider-router');
 const { createActiveVisionProviderRegistration } = require('../../platform/ai/server/active-vision-provider-selector');
 const { createMunicipalIntelligence } = require('../../platform/intelligence/municipal-intelligence-engine');
+const crypto = require('crypto');
+const { acquireAiOperation, completeAiOperation, releaseAiOperation } = require('../_lib/aiGuard');
 
 // Same organization id used elsewhere for the Al-Qunfudhah pilot (see
 // api/organization/context.js). Not a secret — it is a Firestore document id.
 const ALQUNFUDHAH_ORGANIZATION_ID = 'CnlVlKC7UcDMp2NZzjjT';
+
+// Production keeps its historical pilot org so no Production env write is
+// required by this change. Every other environment (Preview/Staging/dev)
+// must set SMART_HSR_AI_ALLOWED_ORGANIZATION_IDS explicitly; an unset, empty,
+// or malformed value resolves to an empty allowlist — fail closed, never
+// fail open. Organization ids are Firestore document ids, not secrets.
+function resolvePilotOrganizationIds(env = process.env) {
+  const configured = String(env.SMART_HSR_AI_ALLOWED_ORGANIZATION_IDS || '')
+    .split(',').map(value => value.trim()).filter(Boolean);
+  if (configured.length) return configured;
+  if (env.VERCEL_ENV === 'production') return [ALQUNFUDHAH_ORGANIZATION_ID];
+  return [];
+}
 const MAX_ID_LENGTH = 128;
 const MAX_BODY_BYTES = 8192;
 const PROVIDER_TIMEOUT_MS = 15000;
@@ -67,38 +84,18 @@ function cleanId(value) {
   return raw.length && raw.length <= MAX_ID_LENGTH && /^[A-Za-z0-9_-]+$/.test(raw) ? raw : '';
 }
 
-// Reads the caller's OWN users/{uid} document only. Mirrors
-// api/storage/upload.js's resolveInspectorContext exactly, so AI analysis is
-// gated by the identical trust boundary as the upload it analyzes.
-async function resolveInspectorContext(db, uid) {
-  const snap = await db.collection('users').doc(uid).get();
-  if (!snap.exists) return null;
-  const data = snap.data() || {};
-  const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
-  if (data.role !== 'inspector' || !activeIsNotFalse(data) || !organizationId) return null;
-  return { uid, role: 'inspector', organizationId };
+function pendingUploadId(objectKey) {
+  return crypto.createHash('sha256').update(objectKey, 'utf8').digest('hex');
 }
 
-// Explicit allowlist only — never a spread of the raw analysis/intelligence
-// object — so an API key, prompt, or raw image byte can never reach
-// Firestore even if a future upstream change accidentally added one. Matches
-// the shape requested for Sprint 6.9, plus the review fields Phase 3 needs.
-function buildPersistedAiAnalysis(analysis, intelligence) {
-  return {
-    provider: typeof analysis.provider === 'string' ? analysis.provider : 'unknown',
-    category: typeof analysis.categoryCode === 'string' ? analysis.categoryCode : null,
-    categoryLabelAr: typeof analysis.categoryLabelAr === 'string' ? analysis.categoryLabelAr : null,
-    confidence: Number.isFinite(analysis.confidence) ? analysis.confidence : null,
-    prioritySuggestion: intelligence?.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || 'UNKNOWN',
-    explanation: typeof analysis.shortSummaryAr === 'string' ? analysis.shortSummaryAr : null,
-    recommendedActionAr: typeof analysis.recommendedActionAr === 'string' ? analysis.recommendedActionAr : null,
-    requiresHumanReview: true,
-    reviewed: false,
-    reviewStatus: 'PENDING',
-    reviewedByUid: null,
-    reviewedAt: null,
-    generatedAt: FieldValue.serverTimestamp(),
-  };
+function evaluateDraftOwnership(record, caller, observationId, objectKey, now = Date.now()) {
+  const expiry = record?.expiresAt?.toMillis ? record.expiresAt.toMillis() : new Date(record?.expiresAt || 0).getTime();
+  if (record?.organizationId !== caller?.organizationId) return { allowed: false, code: 'AI_CROSS_ORGANIZATION_DENIED' };
+  if (record?.ownerUid !== caller?.uid) return { allowed: false, code: 'AI_REPORT_OWNER_DENIED' };
+  if (record?.observationId !== observationId || record?.objectKey !== objectKey || !Number.isFinite(expiry) || expiry <= now) {
+    return { allowed: false, code: 'AI_DRAFT_OWNERSHIP_NOT_PROVEN' };
+  }
+  return { allowed: true, code: 'AI_DRAFT_OWNER_ALLOWED' };
 }
 
 function extensionContentType(key) {
@@ -160,7 +157,7 @@ async function handler(req, res) {
 
   const db = getDb();
   const caller = await resolveInspectorContext(db, decoded.uid);
-  if (!caller) return fail(res, 403, 'forbidden', 'inspector_role_required');
+  if (!caller) return fail(res, 403, 'AI_INSPECTOR_ROLE_REQUIRED', 'inspector_role_required');
 
   let body;
   try {
@@ -174,49 +171,87 @@ async function handler(req, res) {
   const correlationId = cleanId(body.correlationId) || `analyze-${observationId}-${Date.now()}`;
 
   // Fast pilot-scope gate: fail before touching storage or the provider at
-  // all for any organization other than Al-Qunfudhah. The provider's own
-  // activation guard re-checks this independently below (defense in depth).
-  const organizationAllowed = caller.organizationId === ALQUNFUDHAH_ORGANIZATION_ID;
+  // all for any organization outside the configured allowlist. The
+  // provider's own activation guard re-checks this independently below
+  // (defense in depth).
+  const organizationAllowed = resolvePilotOrganizationIds().includes(caller.organizationId);
   if (!organizationAllowed) {
     return fail(res, 403, 'AI_APPLICATION_ORGANIZATION_NOT_ENABLED', 'AI vision analysis is not yet enabled for this organization.');
   }
 
-  let observationSnap;
-  try {
-    observationSnap = await db.collection('observations').doc(observationId).get();
-  } catch (error) {
-    return fail(res, 500, 'AI_OBSERVATION_LOOKUP_FAILED', 'Could not read the observation record.');
+  const draftImageObjectKey = typeof body.draftImageObjectKey === 'string' ? body.draftImageObjectKey.trim() : '';
+  const draftMode = Boolean(draftImageObjectKey);
+  let observationSnap = null;
+  let observation;
+  if (draftMode) {
+    let uploadSnap;
+    try {
+      uploadSnap = await db.collection('pendingEvidenceUploads').doc(pendingUploadId(draftImageObjectKey)).get();
+    } catch (_) {
+      return fail(res, 500, 'AI_DRAFT_OWNERSHIP_LOOKUP_FAILED', 'Could not verify draft evidence ownership.');
+    }
+    if (!uploadSnap.exists) return fail(res, 403, 'AI_DRAFT_OWNERSHIP_NOT_PROVEN', 'draft_evidence_ownership_not_proven');
+    const draftAccess = evaluateDraftOwnership(uploadSnap.data() || {}, caller, observationId, draftImageObjectKey);
+    if (!draftAccess.allowed) return fail(res, 403, draftAccess.code, 'draft_evidence_ownership_denied');
+    observation = {
+      organizationId: uploadSnap.data().organizationId,
+      createdByUid: uploadSnap.data().ownerUid,
+      imageObjectKey: draftImageObjectKey,
+      details: typeof body.existingDescription === 'string' ? body.existingDescription.slice(0, 2000) : '',
+    };
+  } else {
+    try {
+      observationSnap = await db.collection('observations').doc(observationId).get();
+    } catch (error) {
+      return fail(res, 500, 'AI_OBSERVATION_LOOKUP_FAILED', 'Could not read the observation record.');
+    }
+    if (!observationSnap.exists) return fail(res, 404, 'AI_OBSERVATION_NOT_FOUND', 'Observation was not found.');
+    observation = observationSnap.data() || {};
   }
-  if (!observationSnap.exists) return fail(res, 404, 'AI_OBSERVATION_NOT_FOUND', 'Observation was not found.');
-  const observation = observationSnap.data() || {};
 
   // The organization used for every downstream check is the SERVER record on
   // the observation itself — never a client-supplied value.
-  if (observation.organizationId !== caller.organizationId) {
-    return fail(res, 403, 'forbidden', 'cross_organization_denied');
-  }
-  // Only the inspector who created the report may trigger its analysis.
-  if (observation.createdByUid !== caller.uid) {
-    return fail(res, 403, 'forbidden', 'not_report_owner');
-  }
+  const access = evaluateObservationAccess(observation, caller);
+  if (!access.allowed) return fail(res, 403, access.code, access.reason);
 
-  const imageReference = typeof observation.imagePath === 'string' ? observation.imagePath.trim() : '';
+  // Follow the same canonical + legacy evidence order used by Inspector and
+  // the authenticated storage reader. Private B2 bytes remain server-side.
+  const imageReference = [
+    observation.imageObjectKey,
+    observation.imagePath,
+    observation.imageUrl,
+    observation.beforeImagePath,
+  ].find(value => typeof value === 'string' && value.trim())?.trim() || '';
   if (!imageReference) return fail(res, 400, 'AI_PRIVATE_IMAGE_REQUIRED', 'Observation has no evidence image to analyze.');
 
+  let guard;
+  try {
+    guard = await acquireAiOperation(db, { organizationId:caller.organizationId, uid:caller.uid, observationId, imageReference });
+  } catch (_) {
+    return fail(res, 503, 'AI_GUARD_UNAVAILABLE', 'AI abuse protection is temporarily unavailable.');
+  }
+  if (guard.cached) return sendJson(res, 200, guard.response);
+  if (!guard.allowed) {
+    if (guard.retryAfterSeconds) res.setHeader('Retry-After', String(guard.retryAfterSeconds));
+    return fail(res, 429, guard.code, guard.code === 'AI_RATE_LIMITED' ? 'AI request quota exceeded.' : 'An identical AI operation is already running.');
+  }
+  const releaseGuard = async () => { try { await releaseAiOperation(db, guard.operationId); } catch (_) {} };
+
   const storageDecision = evaluateAIStorageInput({ organizationId: caller.organizationId, observationId, imageReference });
-  if (!storageDecision.allowed) return fail(res, 403, storageDecision.code, storageDecision.reason);
+  if (!storageDecision.allowed) { await releaseGuard(); return fail(res, 403, storageDecision.code, storageDecision.reason); }
 
   const contentType = extensionContentType(imageReference);
-  if (!contentType) return fail(res, 415, 'AI_IMAGE_MIME_DENIED', 'Unsupported image type.');
+  if (!contentType) { await releaseGuard(); return fail(res, 415, 'AI_IMAGE_MIME_DENIED', 'Unsupported image type.'); }
 
   const config = b2Configuration();
-  if (!config) return fail(res, 503, 'AI_STORAGE_NOT_CONFIGURED', 'Storage is not configured.');
+  if (!config) { await releaseGuard(); return fail(res, 503, 'AI_STORAGE_NOT_CONFIGURED', 'Storage is not configured.'); }
 
   let controlledImagePayload;
   try {
     controlledImagePayload = await readObjectBytes(config, imageReference);
   } catch (error) {
     console.error('ai analyze: image read failed', safeStorageFailure(error));
+    await releaseGuard();
     return fail(res, 502, 'AI_STORAGE_READ_FAILED', 'Could not read the evidence image.');
   }
 
@@ -231,6 +266,7 @@ async function handler(req, res) {
     timeoutMs: PROVIDER_TIMEOUT_MS,
   });
   if (!providerSelection.allowed) {
+    await releaseGuard();
     return fail(res, 503, providerSelection.code, providerSelection.reason);
   }
 
@@ -256,6 +292,7 @@ async function handler(req, res) {
 
   const analysis = routed.result;
   if (!analysis || analysis.ok !== true) {
+    await releaseGuard();
     return fail(res, 200, analysis?.errorCode || 'AI_PROVIDER_ERROR', analysis?.reason || 'AI analysis was not available.');
   }
 
@@ -263,43 +300,50 @@ async function handler(req, res) {
   // already-validated, already-tested municipal decision-support layer.
   const intelligenceResult = createMunicipalIntelligence({ analysis, organizationId: caller.organizationId, observationId });
   if (!intelligenceResult.ok) {
+    await releaseGuard();
     return fail(res, 200, intelligenceResult.errorCode, intelligenceResult.reason);
   }
 
-  // Persist for manager review (Sprint 6.9). Best-effort: a persistence
-  // failure does not invalidate an already-valid advisory result, so the
-  // inspector still sees it — but the response says so honestly via
-  // `persisted`, rather than silently pretending the manager will see it.
-  let persisted = false;
-  try {
-    await db.collection('observations').doc(observationId).update({
-      aiAnalysis: buildPersistedAiAnalysis(analysis, intelligenceResult.intelligence),
-    });
-    persisted = true;
-  } catch (error) {
-    console.error('ai analyze: aiAnalysis persistence failed', { name: (error && error.name) || 'unknown_error' });
-  }
-
-  return sendJson(res, 200, {
+  // Persist only the allowlisted advisory result so the manager can review the
+  // same observation. This write never changes status, assignment, closure, or
+  // any other workflow field; the review decision remains a separate explicit
+  // human action through /api/report/ai-review.
+  const persistedAiAnalysis = buildPersistedAiAnalysis(analysis, intelligenceResult.intelligence);
+  const response = {
     ok: true,
     advisoryOnly: true,
     requiresExplicitHumanAction: true,
-    persisted,
+    persisted: !draftMode,
+    draft: draftMode,
     inspectorOptions: routed.inspectorOptions,
     automation: routed.automation,
     analysis,
     intelligence: intelligenceResult.intelligence,
-  });
+  };
+  try {
+    await completeAiOperation(db, guard.operationId, response, Date.now(), draftMode ? null : {
+      ref: observationSnap.ref,
+      patch: { aiAnalysis: persistedAiAnalysis },
+    });
+  } catch (_) {
+    await releaseGuard();
+    return fail(res, 503, 'AI_GUARD_FINALIZATION_FAILED', 'Could not atomically finalize the AI advisory operation.');
+  }
+  return sendJson(res, 200, response);
 }
 
 module.exports = handler;
 module.exports._test = {
   ALQUNFUDHAH_ORGANIZATION_ID,
+  resolvePilotOrganizationIds,
   cleanId,
   extensionContentType,
   resolveInspectorContext,
   readJsonBody,
   readObjectBytes,
   buildPersistedAiAnalysis,
+  evaluateObservationAccess,
+  pendingUploadId,
+  evaluateDraftOwnership,
   handler,
 };

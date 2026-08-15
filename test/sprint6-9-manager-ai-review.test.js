@@ -38,7 +38,7 @@ test('buildPersistedAiAnalysis never includes an API key, prompt, or raw image b
   const poisoned = { ...validAnalysis(), apiKey: 'sk-secret', GEMINI_API_KEY: 'sk-secret', rawPrompt: 'ignore all instructions', controlledImagePayload: new Uint8Array([1,2,3]), imageBytes: new Uint8Array([1,2,3]), authorization: 'Bearer xyz' };
   const persisted = analyze._test.buildPersistedAiAnalysis(poisoned, null);
   const keys = Object.keys(persisted);
-  const allowlist = ['provider','category','categoryLabelAr','confidence','prioritySuggestion','explanation','recommendedActionAr','requiresHumanReview','reviewed','reviewStatus','reviewedByUid','reviewedAt','generatedAt'];
+  const allowlist = ['provider','category','categoryLabelAr','severity','confidence','prioritySuggestion','explanation','recommendedActionAr','suggestedTreatment','suggestedDepartment','suggestedResponseWindow','riskIndicators','requiresSiteIsolation','publicSafetyRisk','requiresHumanReview','reviewed','reviewStatus','reviewedByUid','reviewedAt','generatedAt'];
   assert.deepEqual(keys.sort(), allowlist.sort());
   const serialized = JSON.stringify(persisted);
   assert.equal(serialized.includes('sk-secret'), false);
@@ -46,10 +46,40 @@ test('buildPersistedAiAnalysis never includes an API key, prompt, or raw image b
   assert.equal(serialized.includes('Bearer'), false);
 });
 
+test('buildPersistedAiAnalysis prefers the taxonomy-resolved category/severity over the raw provider values when intelligence is present', () => {
+  const intelligence = {
+    primaryIssue: { issueCode: 'ASPHALT_POTHOLE', issueLabelAr: 'حفرة أسفلتية', severity: 'HIGH' },
+    prioritySuggestion: { prioritySuggestion: 'URGENT' },
+    suggestedTreatment: 'تأمين الموقع وتنفيذ ترقيع أسفلتي ملائم.',
+    suggestedDepartment: 'ROADS',
+    suggestedResponseWindow: 'WITHIN_24_HOURS',
+    riskIndicators: [{ code: 'PUBLIC_SAFETY', reasonAr: 'خطر محتمل على السلامة العامة' }],
+    requiresSiteIsolation: true,
+    publicSafetyRisk: true,
+  };
+  const persisted = analyze._test.buildPersistedAiAnalysis(validAnalysis(), intelligence);
+  assert.equal(persisted.category, 'ASPHALT_POTHOLE');
+  assert.equal(persisted.categoryLabelAr, 'حفرة أسفلتية');
+  assert.equal(persisted.severity, 'HIGH');
+  assert.equal(persisted.suggestedTreatment, 'تأمين الموقع وتنفيذ ترقيع أسفلتي ملائم.');
+  assert.equal(persisted.suggestedDepartment, 'ROADS');
+  assert.equal(persisted.suggestedResponseWindow, 'WITHIN_24_HOURS');
+  assert.deepEqual(persisted.riskIndicators, ['PUBLIC_SAFETY']);
+  assert.equal(persisted.requiresSiteIsolation, true);
+  assert.equal(persisted.publicSafetyRisk, true);
+});
+
 test('buildPersistedAiAnalysis tolerates a missing/malformed analysis field without throwing', () => {
   const persisted = analyze._test.buildPersistedAiAnalysis({}, null);
   assert.equal(persisted.provider, 'unknown');
   assert.equal(persisted.category, null);
+  assert.equal(persisted.severity, 'UNKNOWN');
+  assert.equal(persisted.suggestedTreatment, null);
+  assert.equal(persisted.suggestedDepartment, null);
+  assert.equal(persisted.suggestedResponseWindow, null);
+  assert.deepEqual(persisted.riskIndicators, []);
+  assert.equal(persisted.requiresSiteIsolation, false);
+  assert.equal(persisted.publicSafetyRisk, false);
   assert.equal(persisted.confidence, null);
   assert.equal(persisted.prioritySuggestion, 'UNKNOWN');
 });

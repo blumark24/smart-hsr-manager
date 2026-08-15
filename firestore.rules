@@ -93,8 +93,7 @@ service cloud.firestore {
         || (isActiveOrgUser() && resource.data.organizationId == orgUserOrgId());
 
       allow create: if orgUserRole() == 'inspector'
-        && request.resource.data.organizationId == orgUserOrgId()
-        && request.resource.data.createdByUid == request.auth.uid;
+        && validInspectorObservationCreate(obsId);
 
       allow update: if request.resource.data.organizationId == resource.data.organizationId
         && (canManagerUpdateObservation() || canSupervisorUpdateObservation()
@@ -104,15 +103,57 @@ service cloud.firestore {
       allow delete: if isActiveManager() && resource.data.organizationId == managerOrgId();
     }
 
+    function validInspectorObservationCreate(obsId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'clientRequestId', 'organizationId', 'createdByUid', 'status',
+          'displayId', 'type', 'date', 'title', 'details', 'imagePath',
+          'imageObjectKey', 'isComparative', 'actionPlan', 'riskAssessment',
+          'location', 'originalLat', 'originalLng', 'correctedLat',
+          'correctedLng', 'locationAccuracyMeters', 'locationCapturedAt',
+          'locationSource', 'locationVerified', 'createdAt'
+        ])
+        && data.clientRequestId == obsId
+        && data.clientRequestId is string
+        && data.organizationId == orgUserOrgId()
+        && data.createdByUid == request.auth.uid
+        && data.status == 'PENDING'
+        && data.displayId is int
+        && data.type is string
+        && data.date is string
+        && data.title is string
+        && data.details is string
+        && data.imagePath is string
+        && (!data.keys().hasAny(['imageObjectKey'])
+            || data.imageObjectKey == null
+            || data.imageObjectKey is string)
+        && data.isComparative == false
+        && data.actionPlan is string
+        && data.riskAssessment is map
+        && data.riskAssessment.keys().hasOnly(['priority', 'timeframe'])
+        && data.location is string
+        && data.locationSource is string
+        && data.locationVerified is bool
+        && data.createdAt == request.time;
+    }
+
     // manager: cycleStatus / closeTicket / confirmAssign (manager.html:981,991,1037)
     function canManagerUpdateObservation() {
       let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
       return isActiveManager()
         && resource.data.organizationId == managerOrgId()
+        && resource.data.status != 'COMPLETED'
         && changedKeys.hasOnly(
              ['status', 'closedAt', 'updatedByUid', 'updatedAt',
               'assignedContractorUid', 'assignedByUid', 'assignedAt', 'supervisorNote'])
-        && (!changedKeys.hasAny(['updatedByUid']) || request.resource.data.updatedByUid == request.auth.uid);
+        && (!changedKeys.hasAny(['updatedByUid']) || request.resource.data.updatedByUid == request.auth.uid)
+        && (!changedKeys.hasAny(['status']) || isManagerTransition());
+    }
+
+    function isManagerTransition() {
+      return (resource.data.status == 'PENDING' && request.resource.data.status == 'IN_PROGRESS')
+        || (resource.data.status == 'PENDING_REVIEW' && request.resource.data.status == 'IN_PROGRESS')
+        || (resource.data.status == 'PENDING_REVIEW' && request.resource.data.status == 'COMPLETED');
     }
 
     // supervisor: confirmAssign / review-return (manager.html:1037) — a
@@ -123,6 +164,7 @@ service cloud.firestore {
       let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
       return orgUserRole() == 'supervisor'
         && resource.data.organizationId == orgUserOrgId()
+        && resource.data.status != 'COMPLETED'
         && request.resource.data.createdByUid == resource.data.createdByUid
         && changedKeys.hasOnly(
              ['status', 'supervisorNote', 'assignedContractorUid',
@@ -140,7 +182,12 @@ service cloud.firestore {
       let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
       return orgUserRole() == 'inspector'
         && resource.data.organizationId == orgUserOrgId()
-        && changedKeys.hasOnly(['status', 'isComparative', 'afterImagePath', 'resolutionNote']);
+        && resource.data.status != 'COMPLETED'
+        && resource.data.createdByUid == request.auth.uid
+        && request.resource.data.createdByUid == resource.data.createdByUid
+        && !resource.data.keys().hasAny(['assignedContractorUid'])
+        && request.resource.data.status == resource.data.status
+        && changedKeys.hasOnly(['isComparative', 'afterImagePath', 'resolutionNote']);
     }
 
     // contractor: status/resolution flow (mobile-map.html:1460, :1470/:1171)
@@ -148,8 +195,17 @@ service cloud.firestore {
       let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
       return orgUserRole() == 'contractor'
         && resource.data.organizationId == orgUserOrgId()
+        && resource.data.status != 'COMPLETED'
+        && resource.data.assignedContractorUid == request.auth.uid
+        && request.resource.data.assignedContractorUid == resource.data.assignedContractorUid
         && changedKeys.hasOnly(['status', 'resolutionNote', 'afterImagePath', 'updatedByUid', 'updatedAt'])
-        && request.resource.data.updatedByUid == request.auth.uid;
+        && request.resource.data.updatedByUid == request.auth.uid
+        && (!changedKeys.hasAny(['status']) || isContractorTransition());
+    }
+
+    function isContractorTransition() {
+      return (resource.data.status == 'PENDING' && request.resource.data.status == 'IN_PROGRESS')
+        || (resource.data.status == 'IN_PROGRESS' && request.resource.data.status == 'PENDING_REVIEW');
     }
 
     // ==========================================================
