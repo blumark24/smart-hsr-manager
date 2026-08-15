@@ -33,8 +33,10 @@
 // API key, prompt, or raw image byte is ever part of that write. A manager
 // still makes the real decision downstream through the existing workflow.
 // ============================================================================
-const { getDb, FieldValue } = require('../_lib/firebaseAdmin');
-const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
+const { getDb } = require('../_lib/firebaseAdmin');
+const { verifyRequestToken } = require('../_lib/authz');
+const { resolveInspectorContext, evaluateObservationAccess } = require('../_lib/inspectorAccess');
+const { buildPersistedAiAnalysis } = require('../_lib/persistedAiAnalysis');
 const { b2Configuration, getS3Client, safeStorageFailure } = require('../_lib/b2Client');
 const { evaluateAIStorageInput } = require('../../platform/ai/ai-storage-boundary');
 const { createProviderRouter } = require('../../platform/ai/provider-router');
@@ -82,16 +84,6 @@ function cleanId(value) {
   return raw.length && raw.length <= MAX_ID_LENGTH && /^[A-Za-z0-9_-]+$/.test(raw) ? raw : '';
 }
 
-function evaluateObservationAccess(observation, caller) {
-  if (observation?.organizationId !== caller?.organizationId) {
-    return { allowed: false, code: 'AI_CROSS_ORGANIZATION_DENIED', reason: 'cross_organization_denied' };
-  }
-  if (observation?.createdByUid !== caller?.uid) {
-    return { allowed: false, code: 'AI_REPORT_OWNER_DENIED', reason: 'not_report_owner' };
-  }
-  return { allowed: true, code: 'AI_REPORT_ACCESS_ALLOWED', reason: 'report_owner' };
-}
-
 function pendingUploadId(objectKey) {
   return crypto.createHash('sha256').update(objectKey, 'utf8').digest('hex');
 }
@@ -104,55 +96,6 @@ function evaluateDraftOwnership(record, caller, observationId, objectKey, now = 
     return { allowed: false, code: 'AI_DRAFT_OWNERSHIP_NOT_PROVEN' };
   }
   return { allowed: true, code: 'AI_DRAFT_OWNER_ALLOWED' };
-}
-
-// Reads the caller's OWN users/{uid} document only. Mirrors
-// api/storage/upload.js's resolveInspectorContext exactly, so AI analysis is
-// gated by the identical trust boundary as the upload it analyzes.
-async function resolveInspectorContext(db, uid) {
-  const snap = await db.collection('users').doc(uid).get();
-  if (!snap.exists) return null;
-  const data = snap.data() || {};
-  const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
-  if (data.role !== 'inspector' || !activeIsNotFalse(data) || !organizationId) return null;
-  return { uid, role: 'inspector', organizationId };
-}
-
-// Explicit allowlist only — never a spread of the raw analysis/intelligence
-// object — so an API key, prompt, or raw image byte can never reach
-// Firestore even if a future upstream change accidentally added one. Matches
-// the shape requested for Sprint 6.9, plus the review fields Phase 3 needs,
-// plus (Sprint 4 municipal AI quality closure) the minimum already-computed,
-// already-validated municipal-intelligence fields Root Cause and Work Order
-// need downstream (api/report/root-cause.js, api/report/work-order.js) —
-// never arbitrary provider output, only fields createMunicipalIntelligence
-// already validated. category/categoryLabelAr now prefer the taxonomy-
-// resolved value (intelligence.primaryIssue) over the provider's raw text,
-// falling back to the raw value only when intelligence is unavailable.
-function buildPersistedAiAnalysis(analysis, intelligence) {
-  const primary = intelligence?.primaryIssue;
-  return {
-    provider: typeof analysis.provider === 'string' ? analysis.provider : 'unknown',
-    category: typeof primary?.issueCode === 'string' ? primary.issueCode : (typeof analysis.categoryCode === 'string' ? analysis.categoryCode : null),
-    categoryLabelAr: typeof primary?.issueLabelAr === 'string' ? primary.issueLabelAr : (typeof analysis.categoryLabelAr === 'string' ? analysis.categoryLabelAr : null),
-    severity: typeof primary?.severity === 'string' ? primary.severity : (typeof analysis.severity === 'string' ? analysis.severity : 'UNKNOWN'),
-    confidence: Number.isFinite(analysis.confidence) ? analysis.confidence : null,
-    prioritySuggestion: intelligence?.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || 'UNKNOWN',
-    explanation: typeof analysis.shortSummaryAr === 'string' ? analysis.shortSummaryAr : null,
-    recommendedActionAr: typeof analysis.recommendedActionAr === 'string' ? analysis.recommendedActionAr : null,
-    suggestedTreatment: typeof intelligence?.suggestedTreatment === 'string' ? intelligence.suggestedTreatment : null,
-    suggestedDepartment: typeof intelligence?.suggestedDepartment === 'string' ? intelligence.suggestedDepartment : null,
-    suggestedResponseWindow: typeof intelligence?.suggestedResponseWindow === 'string' ? intelligence.suggestedResponseWindow : null,
-    riskIndicators: Array.isArray(intelligence?.riskIndicators) ? intelligence.riskIndicators.map(r => r?.code).filter(code => typeof code === 'string') : [],
-    requiresSiteIsolation: intelligence?.requiresSiteIsolation === true,
-    publicSafetyRisk: intelligence?.publicSafetyRisk === true,
-    requiresHumanReview: true,
-    reviewed: false,
-    reviewStatus: 'PENDING',
-    reviewedByUid: null,
-    reviewedAt: null,
-    generatedAt: FieldValue.serverTimestamp(),
-  };
 }
 
 function extensionContentType(key) {

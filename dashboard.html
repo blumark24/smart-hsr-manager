@@ -4632,7 +4632,7 @@ async function commitPendingSmartInput(){
 }
 
 // نجاح مؤكد من الخادم: setDoc لا تُحلّ إلا بعد إقرار الخادم بالكتابة.
-function finishSmartInputSuccess(docId, payload, nextDisplayId){
+async function finishSmartInputSuccess(docId, payload, nextDisplayId){
   pendingSmartInput = null;
   pendingSmartCapture = null;
   smartInputSaveInFlight = false;
@@ -4672,6 +4672,15 @@ function finishSmartInputSuccess(docId, payload, nextDisplayId){
   document.getElementById('processSmartInputBtn').disabled = true;
   checkSmartInputState();
   renderKPIs();
+
+  // ربط تحليل الرؤية المخزَّن مؤقتاً (cache-only) بالملاحظة الجديدة. لا يُعيد
+  // تشغيل الرؤية أبداً. فشل هذا الربط لا يُبطل نجاح الحفظ أعلاه؛ يظهر تحذيراً
+  // صريحاً مع خيار إعادة محاولة الربط وحده، بدل ترك الفشل صامتاً.
+  const bindOutcome = await bindCachedVisionAnalysis(docId);
+  if(!bindOutcome.ok){
+    setHTML('modalResultContent', successHTML('تمت معالجة الملاحظة وإضافتها بنجاح.') + visionBindWarningHTML(docId));
+    lucide.createIcons();
+  }
   return true;
 }
 
@@ -5155,6 +5164,40 @@ function errorHTML(msg){
       <h4 class="text-2xl font-extrabold text-red-700">${msg}</h4>
     </div>`;
 }
+// تحذير غير حاجب: لا يُبطل نجاح حفظ الملاحظة ولا يُخفي فشل ربط التحليل. إعادة
+// المحاولة هنا تستدعي فقط /api/ai/bind-analysis (ربط من الذاكرة المؤقتة) —
+// لا تُعيد تشغيل الرؤية أو أي مزود ذكاء اصطناعي أبداً.
+function visionBindWarningHTML(observationId){
+  return `
+    <div class="p-4 mt-3 bg-amber-50 rounded-xl border-2 border-amber-200 text-center">
+      <p class="text-sm font-bold text-amber-800">تم حفظ الملاحظة، وتعذر ربط نتيجة تحليل الرؤية. يمكن إعادة محاولة ربط التحليل.</p>
+      <button type="button" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold mt-2" onclick="retryVisionBind('${escapeHTML(observationId)}')">إعادة محاولة ربط التحليل</button>
+    </div>`;
+}
+// يستدعي فقط نقطة الربط من الذاكرة المؤقتة (cache-only) -- لا استدعاء ثانٍ
+// للرؤية أو أي مزود ذكاء اصطناعي مهما كانت النتيجة.
+async function bindCachedVisionAnalysis(observationId){
+  const user = auth.currentUser;
+  if(!user) return {ok:false};
+  try{
+    const response = await fetchWithFirebaseAuth({
+      getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+      input:'/api/ai/bind-analysis',
+      init:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({observationId})}
+    });
+    const payload = await response.json().catch(()=>null);
+    return {ok: response.ok && payload?.ok===true, payload};
+  }catch(_){
+    return {ok:false};
+  }
+}
+window.retryVisionBind = async function(observationId){
+  const outcome = await bindCachedVisionAnalysis(observationId);
+  setHTML('modalResultContent', outcome.ok
+    ? successHTML('تمت معالجة الملاحظة وإضافتها بنجاح.')
+    : successHTML('تمت معالجة الملاحظة وإضافتها بنجاح.') + visionBindWarningHTML(observationId));
+  lucide.createIcons();
+};
 // فشل رفع الصورة يوقف العملية بالكامل: لا تقرير، ولا سجل في Firestore،
 // ولا مسح للمدخلات — مع مسار واضح للعودة وإعادة المحاولة.
 function uploadErrorHTML(msg){

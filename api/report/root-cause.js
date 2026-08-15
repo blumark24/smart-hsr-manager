@@ -13,7 +13,8 @@
 // itself enforces. Cross-org and non-owner requests are denied identically.
 // ============================================================================
 const { getDb } = require('../_lib/firebaseAdmin');
-const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
+const { verifyRequestToken } = require('../_lib/authz');
+const { resolveInspectorContext, evaluateObservationAccess } = require('../_lib/inspectorAccess');
 const { createRootCauseAdvisory } = require('../../platform/intelligence/root-cause-advisory');
 
 const MAX_ID_LENGTH = 128;
@@ -31,27 +32,6 @@ function fail(res, statusCode, errorCode, reason) {
 function cleanId(value) {
   const raw = typeof value === 'string' ? value.trim() : '';
   return raw.length && raw.length <= MAX_ID_LENGTH && /^[A-Za-z0-9_-]+$/.test(raw) ? raw : '';
-}
-
-// Mirrors api/ai/analyze.js's resolveInspectorContext exactly.
-async function resolveInspectorContext(db, uid) {
-  const snap = await db.collection('users').doc(uid).get();
-  if (!snap.exists) return null;
-  const data = snap.data() || {};
-  const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
-  if (data.role !== 'inspector' || !activeIsNotFalse(data) || !organizationId) return null;
-  return { uid, role: 'inspector', organizationId };
-}
-
-// Mirrors api/ai/analyze.js's evaluateObservationAccess exactly.
-function evaluateObservationAccess(observation, caller) {
-  if ((observation && observation.organizationId) !== (caller && caller.organizationId)) {
-    return { allowed: false, code: 'AI_CROSS_ORGANIZATION_DENIED', reason: 'cross_organization_denied' };
-  }
-  if ((observation && observation.createdByUid) !== (caller && caller.uid)) {
-    return { allowed: false, code: 'AI_REPORT_OWNER_DENIED', reason: 'not_report_owner' };
-  }
-  return { allowed: true, code: 'AI_REPORT_ACCESS_ALLOWED', reason: 'report_owner' };
 }
 
 async function readJsonBody(req) {
