@@ -2568,7 +2568,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
           <input type="hidden" id="inputLongitude">
           <div class="inspector-preview-location-row mt-2">
             <button id="getLocationBtn" class="ai-button-primary rounded-full px-4 py-2 text-sm font-bold flex items-center justify-center" onclick="getLocation()" type="button">
-              <i data-lucide="map-pin" class="w-4 h-4 ml-2"></i> تحديد موقعي
+              <i data-lucide="map-pin" class="w-4 h-4 ml-2"></i> تحديد الموقع الحالي
             </button>
             <button id="manualAddressBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button" aria-controls="inspectorManualLocationPanel" aria-expanded="false">إدخال يدوي</button>
           </div>
@@ -2585,7 +2585,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
             <button id="manualLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">
               <i data-lucide="crosshair" class="w-4 h-4 ml-2"></i> تحديد يدوي
             </button>
-            <button id="useWeakLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">استخدام الموقع مع تنبيه</button>
+            <button id="useWeakLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">اعتماد الموقع رغم انخفاض الدقة</button>
             <button id="editLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">
               <i data-lucide="move" class="w-4 h-4 ml-2"></i> تصحيح الموقع على الخريطة
             </button>
@@ -4023,7 +4023,10 @@ function renderLocationCandidate(){
   if(locationCandidate.manual===true){renderManualLocationCandidate();return}
   const normalAllowed=normalLocationConfirmationAllowed();
   const warningRequired=!normalAllowed;
-  document.getElementById('retryLocationBtn').classList.toggle('hidden',!warningRequired);
+  // مرحلة واحدة نشطة فقط: «تحديد الموقع الحالي» يختفي فور وجود مرشّح، ويظهر إما
+  // «اعتماد الموقع رغم انخفاض الدقة» (دقة ضعيفة) أو لا شيء إضافي (تثبيت تلقائي).
+  document.getElementById('getLocationBtn').classList.add('hidden');
+  document.getElementById('retryLocationBtn').classList.add('hidden');
   // «تحديد يدوي» لا يظهر إلا عند فشل GPS أو انتهاء المهلة دون عينة صالحة.
   document.getElementById('manualLocationBtn').classList.add('hidden');
   document.getElementById('useWeakLocationBtn').classList.toggle('hidden',!warningRequired);
@@ -4034,11 +4037,16 @@ function renderLocationCandidate(){
   const timeoutText=locationTimedOut?' — انتهت مهلة جمع العينات':'';
   const outsideServiceArea=!candidateWithinServiceArea(locationCandidate);
   const areaText=outsideServiceArea?`؛ الموقع خارج ${cleanDisplayText(organizationMapContext?.serviceArea,'نطاق خدمة المؤسسة',80)}`:'';
-  if(normalAllowed) commitLocationSelection();
-  setText('locationStatus',normalAllowed
-    ?`تم تحديد الموقع تلقائياً عبر GPS — دقة ${quality} (±${Math.round(locationCandidate.accuracy)} م)${areaText}`
-    :`دقة GPS الفعلية ±${Math.round(locationCandidate.accuracy)} م — ${quality}${timeoutText}${areaText}؛ أعد المحاولة للحصول على قراءة موثوقة`);
-  setIdentityGpsStatus(`${quality} · ±${Math.round(locationCandidate.accuracy)} م`,true);
+  const accuracyRounded=Math.round(locationCandidate.accuracy);
+  if(normalAllowed){
+    commitLocationSelection();
+    document.getElementById('retryLocationBtn').textContent='تحديث الموقع';
+    document.getElementById('retryLocationBtn').classList.remove('hidden');
+    setText('locationStatus',`تم تحديد الموقع — الدقة ±${accuracyRounded} م${timeoutText}${areaText}`);
+  }else{
+    setText('locationStatus',`دقة الموقع منخفضة — ±${accuracyRounded} م${timeoutText}${areaText}`);
+  }
+  setIdentityGpsStatus(`${quality} · ±${accuracyRounded} م`,true);
   renderLocationCandidateOnMap();
   syncAdoptButton();
   checkSmartInputState();
@@ -4110,6 +4118,8 @@ function candidateHasCoords(candidate){
 function renderLocationRecovery(message){
   const weakAvailable=candidateIsCurrent(locationCandidate);
   const editable=candidateHasCoords(locationCandidate);
+  document.getElementById('getLocationBtn').classList.add('hidden');
+  document.getElementById('retryLocationBtn').textContent='إعادة المحاولة';
   document.getElementById('retryLocationBtn').classList.remove('hidden');
   document.getElementById('manualLocationBtn').classList.add('hidden');
   document.getElementById('useWeakLocationBtn').classList.add('hidden');
@@ -4164,7 +4174,7 @@ window.getLocation=function(){
   locationVerified=false;locationSource=null;manualLocationMode=false;
   clearAdoptedLocation();
   for(const id of ['retryLocationBtn','manualLocationBtn','useWeakLocationBtn','editLocationBtn','confirmLocationBtn'])document.getElementById(id)?.classList.add('hidden');
-  const getButton=document.getElementById('getLocationBtn');if(getButton)getButton.disabled=true;
+  const getButton=document.getElementById('getLocationBtn');if(getButton){getButton.disabled=true;getButton.classList.remove('hidden');}
 
   const clearRunHandles=()=>{
     if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);
@@ -4296,12 +4306,21 @@ document.getElementById('adoptLocationBtn')?.addEventListener('click',()=>{
 document.getElementById('closeLocationCorrectionBtn')?.addEventListener('click',()=>{const dialog=document.getElementById('locationCorrectionDialog');if(dialog?.open)dialog.close()});
 document.getElementById('locationCorrectionDialog')?.addEventListener('click',event=>{if(event.target===event.currentTarget)event.currentTarget.close()});
 document.getElementById('useWeakLocationBtn')?.addEventListener('click',()=>{
-  if(!candidateIsCurrent(locationCandidate)){setText('locationStatus','لا يمكن قبول موقع مفقود أو غير صالح أو قديم. أعد المحاولة.');checkSmartInputState();return}
+  if(!candidateIsCurrent(locationCandidate)){
+    setText('locationStatus','لا يمكن قبول موقع مفقود أو غير صالح أو قديم. أعد المحاولة.');
+    document.getElementById('useWeakLocationBtn').classList.add('hidden');
+    document.getElementById('retryLocationBtn').textContent='إعادة المحاولة';
+    document.getElementById('retryLocationBtn').classList.remove('hidden');
+    checkSmartInputState();return
+  }
   stopInspectorGps();locationWarningOverride=true;
-  document.getElementById('confirmLocationBtn').classList.remove('hidden');
-  document.getElementById('confirmLocationBtn').disabled=false;
   // القبول مع تنبيه اختيار صريح من المستخدم: يثبّت الموقع كغير دقيق ويفتح مسار التحليل دون تجاوز شرط الموقع.
-  if(commitLocationSelection())setText('locationStatus',`تم قبول استخدام GPS مع تنبيه — الدقة الفعلية ±${Math.round(locationCandidate.accuracy)} م، والموقع غير موثّق بدقة كاملة. يمكنك تصحيحه على الخريطة قبل التحليل.`);
+  if(commitLocationSelection()){
+    document.getElementById('useWeakLocationBtn').classList.add('hidden');
+    document.getElementById('retryLocationBtn').textContent='تحديث الموقع';
+    document.getElementById('retryLocationBtn').classList.remove('hidden');
+    setText('locationStatus',`تم تثبيت الموقع — الدقة ±${Math.round(locationCandidate.accuracy)} م`);
+  }
   checkSmartInputState();
 });
 document.getElementById('confirmLocationBtn')?.addEventListener('click',()=>{
@@ -4329,7 +4348,17 @@ function smartInputRequirements(){
   const text = document.getElementById('rawObservationInput').value.trim();
   const hasText = text.length > 0;
   const hasImage = Boolean(currentFile) && ALLOWED_IMAGE_TYPES.has(currentFile.type);
-  const hasLocation = locationConfirmed === true && locationVerified === true && locationSource === 'gps' && Boolean(locationCandidate)
+  // موقع GPS ضعيف يستوفي الشرط فقط بعد قبول صريح (locationWarningOverride) مع
+  // إعادة التحقق من الحداثة/الصلاحية عبر candidateIsCurrent وقت الفحص نفسه، لا وقت
+  // التثبيت فقط — بحيث يفشل أي موقع أصبح قديماً بعد قبوله. لا تغيير على عتبات GPS.
+  const acceptedGpsSource =
+    (locationVerified === true && locationSource === 'gps')
+    ||
+    (locationSource === 'gps_weak' && locationWarningOverride === true);
+  const hasLocation =
+    locationConfirmed === true
+    && acceptedGpsSource
+    && candidateIsCurrent(locationCandidate)
     && Number.isFinite(Number(document.getElementById('inputLatitude').value))
     && Number.isFinite(Number(document.getElementById('inputLongitude').value))
     && document.getElementById('inputLatitude').value !== ''
