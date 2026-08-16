@@ -7,8 +7,16 @@ const PRODUCTION_FIREBASE_CONFIG = Object.freeze({
   appId: '1:38965508031:web:6fd0b6c6b0b63fa513930a'
 });
 
+const PRODUCTION_HOSTNAMES = Object.freeze([
+  'smart-hsr-manager.vercel.app',
+  'smart-hsr-manager-blumark24-os.vercel.app'
+]);
+
 export async function resolveFirebaseConfig() {
-  if (!location.hostname.endsWith('.vercel.app')) return PRODUCTION_FIREBASE_CONFIG;
+  const hostname = location.hostname;
+  if (!hostname.endsWith('.vercel.app') || PRODUCTION_HOSTNAMES.includes(hostname)) {
+    return PRODUCTION_FIREBASE_CONFIG;
+  }
   const response = await fetch('/api/firebase-config', { cache: 'no-store', credentials: 'same-origin' });
   if (!response.ok) throw new Error('FIREBASE_PREVIEW_CONFIG_UNAVAILABLE');
   const config = await response.json();
