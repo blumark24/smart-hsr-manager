@@ -3068,7 +3068,6 @@ onAuthStateChanged(auth, async (user) => {
   inspectorContext.organizationName = verified.organizationName;
   try { organizationMapContext=await fetchOrganizationMapContext(auth,{organizationId:verified.organizationId}); }
   catch (_) { organizationMapContext=null; }
-  await refreshDemoStorageBadge().catch(()=>{});
 
   userName.textContent = cleanDisplayText(verified.name || user.displayName, 'مستخدم');
   userRole.className = 'user-role-inspector';
@@ -3080,6 +3079,10 @@ onAuthStateChanged(auth, async (user) => {
     appStarted = true;
     startApp();
   }
+
+  // Only toggles a hidden demo-storage badge; nothing else reads its result
+  // or depends on its timing, so it runs after first paint instead of before it.
+  refreshDemoStorageBadge().catch(()=>{});
 });
 
 // LOGOUT
@@ -3148,6 +3151,10 @@ const statusMap = {
   "IN_PROGRESS": { color:'bg-yellow-600', text:'قيد المعالجة' },
   "COMPLETED": { color:'bg-green-600', text:'تمت المعالجة' }
 };
+// Display-only Arabic labels for the observation category/type enum. Same
+// small-lookup-table pattern as statusMap above -- the stored/API value is
+// never changed, only how it is shown.
+const TYPE_LABELS_AR = { MAINTENANCE:'صيانة', QUALITY:'جودة', SAFETY:'سلامة', ENVIRONMENT:'بيئة', ROAD:'طرق' };
 
 let currentFile = null;
 let currentAfterFile = null;
@@ -3409,7 +3416,7 @@ function renderObservationsList(observations) {
       <div class="observation-item p-3 rounded-lg flex justify-between items-center ${isSel}" onclick="showObservationDetail(decodeURIComponent('${safeActionId(obs.docId)}'))">
         <div>
           <p class="text-md font-bold text-gray-800 truncate max-w-[200px]">${escapeHTML(obs.title || '')}</p>
-          <p class="text-xs text-gray-500 mt-1">${escapeHTML(obs.date || '')} | ${escapeHTML(obs.type || '')}</p>
+          <p class="text-xs text-gray-500 mt-1">${escapeHTML(obs.date || '')} | ${escapeHTML(TYPE_LABELS_AR[obs.type] || obs.type || '')}</p>
         </div>
         <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full ${st.color} text-white">${escapeHTML(st.text)}</span>
       </div>`;
@@ -3599,7 +3606,7 @@ window.showObservationDetail = async function(docId) {
   const st = statusMap[obs.status] || {color:'bg-gray-500', text:obs.status};
   setText('detailTitle', obs.title);
   setText('printTitle', `الملاحظة: ${obs.title}`);
-  setText('detailType', obs.type);
+  setText('detailType', TYPE_LABELS_AR[obs.type] || obs.type);
   setText('detailDate', obs.date);
   setText('detailID', obs.id || '-');
   setText('detailLocation', obs.location || '-');
@@ -4454,7 +4461,7 @@ function renderSmartCaptureDraft(payload){
   if(root)setHTML('inspectorAiPreviewRoot',`<div class="p-4 border rounded-xl bg-teal-50">
     <p class="font-bold text-teal-900 mb-2">مسودة AI للمراجعة والتعديل قبل الحفظ</p>
     <p class="text-sm"><b>التصنيف:</b> ${escapeHTML(analysis.categoryLabelAr||analysis.categoryCode||'-')}</p>
-    <p class="text-sm"><b>الشدة:</b> ${escapeHTML(analysis.severity||'-')} · <b>الأولوية:</b> ${escapeHTML(intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion||'-')}</p>
+    <p class="text-sm"><b>الشدة:</b> ${escapeHTML(SMART_INPUT_SEVERITY_LABELS_AR[analysis.severity]||analysis.severity||'-')} · <b>الأولوية:</b> ${escapeHTML(SMART_INPUT_PRIORITY_LABELS_AR[intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion]||intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion||'-')}</p>
     <p class="text-sm"><b>الإجراء المقترح:</b> ${escapeHTML(analysis.recommendedActionAr||'-')}</p>
     <p class="text-xs font-bold text-amber-700 mt-2">اقتراح استرشادي فقط. راجع الوصف وعدله، ثم احفظ الملاحظة صراحةً.</p>
   </div>`);
@@ -4469,6 +4476,11 @@ function renderSmartCaptureDraft(payload){
 // (AI_PRIORITY_LABELS_AR) for the identical values.
 const SMART_INPUT_PRIORITY_LABELS_AR = {LOW:'منخفضة',NORMAL:'عادية',HIGH:'عالية',URGENT:'عاجلة',UNKNOWN:'غير محددة'};
 const SMART_INPUT_RESPONSE_WINDOW_LABELS_AR = {IMMEDIATE:'فوري',WITHIN_4_HOURS:'خلال 4 ساعات',WITHIN_24_HOURS:'خلال 24 ساعة',WITHIN_72_HOURS:'خلال 72 ساعة',PLANNED_MAINTENANCE:'ضمن خطة الصيانة الدورية',MANUAL_REVIEW_REQUIRED:'يتطلب مراجعة ميدانية',UNKNOWN:'غير محدد'};
+// Mirrors platform/intelligence/municipal-intelligence-contract.js DEPARTMENTS
+// (server-only module, not reachable from this browser script) — same values,
+// display-only.
+const SMART_INPUT_DEPARTMENT_LABELS_AR = {ROADS:'إدارة الطرق',LIGHTING:'إدارة الإنارة',PARKS_AND_LANDSCAPING:'إدارة الحدائق والتشجير',CLEANLINESS:'إدارة النظافة',WATER_SERVICES:'إدارة خدمات المياه',MUNICIPAL_ASSETS:'إدارة الأصول البلدية',TRAFFIC_SAFETY:'إدارة السلامة المرورية',GENERAL_REVIEW:'المراجعة البلدية العامة',UNKNOWN:'غير محدد'};
+const SMART_INPUT_SEVERITY_LABELS_AR = {CRITICAL:'حرجة',HIGH:'مرتفعة',MEDIUM:'متوسطة',LOW:'منخفضة',UNKNOWN:'غير محددة'};
 
 // ========= SMART INPUT PROCESSING =========
 window.processSmartInput = async function(){
@@ -5017,7 +5029,7 @@ function renderVisionResult(title, payload){
   const reasons = Array.isArray(intelligence.prioritySuggestion?.reasonsAr) ? intelligence.prioritySuggestion.reasonsAr : [];
   const riskReasons = Array.isArray(intelligence.riskIndicators) ? intelligence.riskIndicators.map(r=>r?.reasonAr).filter(Boolean) : [];
   const responseWindowAr = SMART_INPUT_RESPONSE_WINDOW_LABELS_AR[intelligence.suggestedResponseWindow] || intelligence.suggestedResponseWindow || null;
-  const department = intelligence.suggestedDepartment || null;
+  const department = intelligence.suggestedDepartment ? (SMART_INPUT_DEPARTMENT_LABELS_AR[intelligence.suggestedDepartment] || intelligence.suggestedDepartment) : null;
   const summary = analysis.categoryLabelAr
     ? `تم تصنيف الحالة كـ${escapeHTML(analysis.categoryLabelAr)}${department && responseWindowAr ? ` ويُوصى بإحالتها إلى ${escapeHTML(department)} خلال ${escapeHTML(responseWindowAr)}` : ''}.`
     : '';
@@ -5038,7 +5050,7 @@ function renderVisionResult(title, payload){
         ${intelligence.publicSafetyRisk ? `<span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">⚠ خطر على السلامة العامة</span>` : ''}
       </div>
       <div class="bg-gray-50 rounded-lg border border-gray-100 px-3" style="break-inside:avoid;">
-        ${aiFieldRow('الشدة', analysis.severity)}
+        ${aiFieldRow('الشدة', SMART_INPUT_SEVERITY_LABELS_AR[analysis.severity] || analysis.severity)}
         ${aiFieldRow('المعالجة المقترحة', intelligence.suggestedTreatment)}
       </div>
       ${analysis.shortSummaryAr ? `<p class="text-sm text-gray-700 mt-3">${escapeHTML(analysis.shortSummaryAr)}</p>` : ''}
