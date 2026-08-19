@@ -4458,12 +4458,12 @@ function renderSmartCaptureDraft(payload){
   if(!document.getElementById('rawObservationInput').value.trim()&&suggestion)document.getElementById('rawObservationInput').value=suggestion;
   const root=document.getElementById('inspectorAiPreviewRoot');
   root?.classList.remove('hidden');
-  if(root)setHTML('inspectorAiPreviewRoot',`<div class="p-4 border rounded-xl bg-teal-50">
-    <p class="font-bold text-teal-900 mb-2">مسودة AI للمراجعة والتعديل قبل الحفظ</p>
-    <p class="text-sm"><b>التصنيف:</b> ${escapeHTML(analysis.categoryLabelAr||analysis.categoryCode||'-')}</p>
-    <p class="text-sm"><b>الشدة:</b> ${escapeHTML(SMART_INPUT_SEVERITY_LABELS_AR[analysis.severity]||analysis.severity||'-')} · <b>الأولوية:</b> ${escapeHTML(SMART_INPUT_PRIORITY_LABELS_AR[intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion]||intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion||'-')}</p>
-    <p class="text-sm"><b>الإجراء المقترح:</b> ${escapeHTML(analysis.recommendedActionAr||'-')}</p>
-    <p class="text-xs font-bold text-amber-700 mt-2">اقتراح استرشادي فقط. راجع الوصف وعدله، ثم احفظ الملاحظة صراحةً.</p>
+  if(root)setHTML('inspectorAiPreviewRoot',`<div class="p-4 border rounded-xl" style="background:#fff;border-color:#d7e4e3;">
+    <p class="font-bold mb-2" style="color:var(--color-teal);">مسودة الذكاء الاصطناعي للمراجعة والتعديل قبل الحفظ</p>
+    <p class="text-sm" style="color:var(--color-navy);"><b>التصنيف:</b> <span style="color:#172033;">${escapeHTML(analysis.categoryLabelAr||analysis.categoryCode||'-')}</span></p>
+    <p class="text-sm" style="color:var(--color-navy);"><b>الشدة:</b> <span style="color:#172033;">${escapeHTML(SMART_INPUT_SEVERITY_LABELS_AR[analysis.severity]||analysis.severity||'-')}</span> · <b>الأولوية:</b> <span style="color:#172033;">${escapeHTML(SMART_INPUT_PRIORITY_LABELS_AR[intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion]||intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion||'-')}</span></p>
+    <p class="text-sm" style="color:var(--color-navy);"><b>الإجراء المقترح:</b> <span style="color:#172033;">${escapeHTML(analysis.recommendedActionAr||'-')}</span></p>
+    <p class="text-xs font-bold mt-2" style="color:#92400e;">اقتراح استرشادي بالذكاء الاصطناعي فقط. راجع الوصف وعدله، ثم احفظ الملاحظة صراحةً.</p>
   </div>`);
   const button=document.getElementById('processSmartInputBtn');
   if(button)button.innerHTML='<i data-lucide="save" class="w-5 h-5 ml-2"></i> حفظ الملاحظة بعد المراجعة';
@@ -4481,6 +4481,38 @@ const SMART_INPUT_RESPONSE_WINDOW_LABELS_AR = {IMMEDIATE:'فوري',WITHIN_4_HOU
 // display-only.
 const SMART_INPUT_DEPARTMENT_LABELS_AR = {ROADS:'إدارة الطرق',LIGHTING:'إدارة الإنارة',PARKS_AND_LANDSCAPING:'إدارة الحدائق والتشجير',CLEANLINESS:'إدارة النظافة',WATER_SERVICES:'إدارة خدمات المياه',MUNICIPAL_ASSETS:'إدارة الأصول البلدية',TRAFFIC_SAFETY:'إدارة السلامة المرورية',GENERAL_REVIEW:'المراجعة البلدية العامة',UNKNOWN:'غير محدد'};
 const SMART_INPUT_SEVERITY_LABELS_AR = {CRITICAL:'حرجة',HIGH:'مرتفعة',MEDIUM:'متوسطة',LOW:'منخفضة',UNKNOWN:'غير محددة'};
+// Municipal Decision Intelligence hardening (Commit 4 — Arabic UX only):
+// presentation-only Arabic labels for the structured visualEvidence enums
+// added in Commit 2 (platform/ai/server/municipal-vision-prompt.js) and
+// consumed here exactly as received — this file never re-derives, corrects,
+// or routes based on these values; the Municipal Consistency Guard already
+// did that server-side before this data ever reaches the browser.
+const AI_ASSET_LABELS_AR = {ROAD_SURFACE:'سطح الطريق',SIDEWALK:'الرصيف',CURB:'حافة الرصيف',MANHOLE:'فتحة الخدمات (المنهل)',LIGHTING_POLE:'عمود إنارة',TREE:'شجرة',PALM_TREE:'نخلة',WASTE_CONTAINER:'حاوية نفايات',PUBLIC_SPACE:'مساحة عامة',WATER_INFRASTRUCTURE:'مرفق مياه',TRAFFIC_BARRIER:'حاجز مروري',SIGN:'لوحة إرشادية',ELECTRICAL_CABLE:'كابل كهربائي',VEHICLE:'مركبة',UNKNOWN:'غير محدد'};
+const AI_DEFECT_LABELS_AR = {CRACKED:'متشقق',BROKEN:'متضرر',POTHOLE:'حفرة',SUBSIDENCE:'هبوط',LEANING:'مائل',FALLEN:'ساقط',OPEN:'مكشوف',EXPOSED:'مكشوف',OVERFLOWING:'ممتلئ',LEAKING:'تسرّب',ACCUMULATED:'تراكم',ABANDONED:'مهجور',EXCAVATED:'حفر ظاهر',DEGRADED:'متدهور',UNKNOWN:'غير محدد'};
+// Known Municipal Consistency Guard / municipal-intelligence-engine warning
+// codes translated to plain Arabic advisory text. An unrecognized code (e.g.
+// a future warning added server-side) falls back to a safe generic message
+// rather than ever showing a raw internal code to the Inspector.
+const AI_WARNING_LABELS_AR = {
+  CATEGORY_CORRECTED_BY_STRUCTURED_EVIDENCE:'تم تصحيح التصنيف بناءً على الأدلة المرئية المنظمة.',
+  CATEGORY_CONTRADICTION_UNRESOLVED:'تعارض في الأدلة ويتطلب مراجعة بشرية.',
+  SEVERITY_OUTSIDE_TAXONOMY_RANGE:'درجة الخطورة المقترحة لم تتوافق مع نطاق التصنيف المعتمد.',
+  LOW_CONFIDENCE_NOT_AUTO_SELECTABLE:'مستوى الثقة منخفض ويتطلب تحققًا يدويًا.',
+  FALLBACK_CATEGORY_MATCH_USED:'تم تحديد التصنيف عبر مطابقة استرشادية للنص الوصفي.',
+  UNSUPPORTED_CATEGORY_MAPPED_TO_UNKNOWN:'لم يتطابق التصنيف المقترح مع القائمة المعتمدة.',
+};
+function aiWarningLabelAr(code){
+  return AI_WARNING_LABELS_AR[code] || 'تنبيه إضافي من النظام يتطلب مراجعة ميدانية.';
+}
+// Standard human-in-the-loop notice reused across every Inspector AI result
+// surface (Vision / Root Cause / Work Order). Purely a static Arabic notice —
+// no logic, no save/apply/assign path lives here or anywhere near it.
+function aiHumanReviewNoticeHTML(){
+  return `<p class="text-sm font-bold mt-3 p-3 rounded-lg flex items-start gap-2" style="background:#fff7ed;border:1px solid #fde3c0;color:#7c4a03;">
+    <i data-lucide="user-check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+    <span>التحليل استرشادي ويتطلب مراجعة واعتماد المراقب.</span>
+  </p>`;
+}
 
 // ========= SMART INPUT PROCESSING =========
 window.processSmartInput = async function(){
@@ -5020,46 +5052,79 @@ function aiPrintHeader(analysisTypeAr, resultStatusAr){
     ${rows ? `<div>${rows}</div>` : ''}
   </div>`;
 }
+// Municipal decision hierarchy (Commit 4 — Arabic UX only): every
+// classification/severity/confidence field below is read from
+// intelligence.primaryIssue / intelligence.* -- the Municipal Consistency
+// Guard's ALREADY-RESOLVED output (see municipal-intelligence-engine.js) --
+// never from the raw analysis.categoryCode/severity/confidence, which may
+// still hold the model's original pre-correction claim. affectedAsset/
+// visibleDefect/evidenceStatements/uncertainties are read directly from
+// analysis.visualEvidence/analysis.uncertainties (Commit 2's structured
+// evidence) as the model's own stated perception -- distinct from, and
+// presented separately from, the corrected classification. No business
+// logic, taxonomy lookup, or Guard behavior is reproduced here; this is
+// presentation-only, reading fields that are already fully resolved
+// server-side before this response ever reaches the browser.
 function renderVisionResult(title, payload){
   const analysis = payload.analysis || {};
   const intelligence = payload.intelligence || {};
-  const confidencePct = Number.isFinite(analysis.confidence) ? Math.round(analysis.confidence * 100) : null;
-  const priority = intelligence.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || null;
+  const primaryIssue = intelligence.primaryIssue || {};
+  const confidenceSource = Number.isFinite(intelligence.confidence) ? intelligence.confidence : analysis.confidence;
+  const confidencePct = Number.isFinite(confidenceSource) ? Math.round(confidenceSource * 100) : null;
+  const priority = intelligence.prioritySuggestion?.prioritySuggestion || null;
   const priorityAr = priority ? (SMART_INPUT_PRIORITY_LABELS_AR[priority] || priority) : null;
   const reasons = Array.isArray(intelligence.prioritySuggestion?.reasonsAr) ? intelligence.prioritySuggestion.reasonsAr : [];
   const riskReasons = Array.isArray(intelligence.riskIndicators) ? intelligence.riskIndicators.map(r=>r?.reasonAr).filter(Boolean) : [];
   const responseWindowAr = SMART_INPUT_RESPONSE_WINDOW_LABELS_AR[intelligence.suggestedResponseWindow] || intelligence.suggestedResponseWindow || null;
   const department = intelligence.suggestedDepartment ? (SMART_INPUT_DEPARTMENT_LABELS_AR[intelligence.suggestedDepartment] || intelligence.suggestedDepartment) : null;
-  const summary = analysis.categoryLabelAr
-    ? `تم تصنيف الحالة كـ${escapeHTML(analysis.categoryLabelAr)}${department && responseWindowAr ? ` ويُوصى بإحالتها إلى ${escapeHTML(department)} خلال ${escapeHTML(responseWindowAr)}` : ''}.`
-    : '';
-  setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
+  const treatment = intelligence.suggestedTreatment || null;
+  const categoryLabelAr = primaryIssue.issueLabelAr || primaryIssue.categoryLabelAr || null;
+  const severity = primaryIssue.severity || null;
+  const severityAr = severity ? (SMART_INPUT_SEVERITY_LABELS_AR[severity] || severity) : null;
+  const evidence = analysis.visualEvidence && typeof analysis.visualEvidence === 'object' ? analysis.visualEvidence : null;
+  const affectedAssetAr = evidence?.affectedAsset ? (AI_ASSET_LABELS_AR[evidence.affectedAsset] || evidence.affectedAsset) : null;
+  const visibleDefectAr = evidence?.visibleDefect ? (AI_DEFECT_LABELS_AR[evidence.visibleDefect] || evidence.visibleDefect) : null;
+  const evidenceStatements = Array.isArray(evidence?.evidenceStatements) ? evidence.evidenceStatements : [];
+  const uncertainties = Array.isArray(analysis.uncertainties) ? analysis.uncertainties : [];
+  const systemWarnings = Array.isArray(primaryIssue.warnings) ? primaryIssue.warnings.map(aiWarningLabelAr) : [];
+
+  // 1. ملخص القرار التنفيذي — composed only from already-resolved fields; never manufactures a cause or unsupported fact.
+  const summaryParts = [];
+  if (categoryLabelAr) summaryParts.push(`تم رصد ${escapeHTML(categoryLabelAr)}`);
+  if (affectedAssetAr) summaryParts.push(`على ${escapeHTML(affectedAssetAr)}`);
+  if (severityAr) summaryParts.push(`بدرجة خطورة ${escapeHTML(severityAr)}`);
+  if (department && responseWindowAr) summaryParts.push(`ويوصى بإحالتها إلى ${escapeHTML(department)} ضمن ${escapeHTML(responseWindowAr)}`);
+  const summary = summaryParts.length ? summaryParts.join('، ') + '.' : '';
+
+  setText('aiResultTitle', `نتائج ${title}`);
   setHTML('aiResultContent', `
     ${aiPrintHeader('تحليل الرؤية (Vision)', 'استرشادي — يتطلب مراجعة بشرية')}
     <div class="bg-white border border-gray-200 rounded-xl p-4">
-      ${summary ? `<p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>` : ''}
+      ${summary ? `<p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.6;margin-bottom:12px;">${summary}</p>` : ''}
       ${aiKpiTiles([
-        confidencePct !== null ? { label:'الثقة', value:`${confidencePct}%` } : null,
+        severityAr ? { label:'الخطورة', value:severityAr } : null,
         priorityAr ? { label:'الأولوية', value:priorityAr, color: priority === 'URGENT' ? '#b91c1c' : priority === 'HIGH' ? '#b45309' : undefined } : null,
-        responseWindowAr ? { label:'SLA / زمن الاستجابة', value:responseWindowAr } : null,
         department ? { label:'الجهة المختصة', value:department } : null,
+        responseWindowAr ? { label:'زمن الاستجابة المستهدف', value:responseWindowAr } : null,
       ].filter(Boolean))}
       ${aiDigitalTwinFlow('vision')}
       <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
-        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${severityBadgeClass(analysis.severity)}">${escapeHTML(analysis.categoryLabelAr || '-')}</span>
+        ${categoryLabelAr ? `<span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${severityBadgeClass(severity)}">${escapeHTML(categoryLabelAr)}</span>` : ''}
         ${intelligence.publicSafetyRisk ? `<span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">⚠ خطر على السلامة العامة</span>` : ''}
       </div>
       <div class="bg-gray-50 rounded-lg border border-gray-100 px-3" style="break-inside:avoid;">
-        ${aiFieldRow('الشدة', SMART_INPUT_SEVERITY_LABELS_AR[analysis.severity] || analysis.severity)}
-        ${aiFieldRow('المعالجة المقترحة', intelligence.suggestedTreatment)}
+        ${aiFieldRow('الأصل البلدي المتأثر', affectedAssetAr)}
+        ${aiFieldRow('الحالة المرئية', visibleDefectAr)}
+        ${aiFieldRow('الإجراء الموصى به', treatment)}
       </div>
+      ${aiListSection('الأدلة المرئية', evidenceStatements, 'text-sm text-gray-700')}
+      ${aiListSection('متطلبات التحقق الميداني', uncertainties, 'text-xs text-gray-600')}
       ${analysis.shortSummaryAr ? `<p class="text-sm text-gray-700 mt-3">${escapeHTML(analysis.shortSummaryAr)}</p>` : ''}
-      ${analysis.recommendedActionAr ? `<p class="text-sm font-bold text-gray-800 mt-2">الإجراء الموصى به: <span class="font-normal text-gray-700">${escapeHTML(analysis.recommendedActionAr)}</span></p>` : ''}
       ${aiListSection('مؤشرات الخطر', riskReasons, 'text-xs text-amber-700')}
       ${aiListSection('أسباب تقدير الأولوية', reasons, 'text-xs text-gray-500')}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
-        اقتراح استرشادي فقط من مزود الذكاء الاصطناعي المعتمد — يتطلب مراجعة بشرية صريحة قبل أي إجراء. لا يتم الحفظ أو الإسناد أو تغيير الحالة أو الإغلاق تلقائياً.
-      </p>
+      ${confidencePct !== null ? `<p class="text-xs font-bold mt-3" style="color:var(--color-navy);">مستوى الثقة: <span class="font-normal" style="color:#374151;">${confidencePct}%</span></p>` : ''}
+      ${aiListSection('تنبيهات النظام', systemWarnings, 'text-xs text-amber-700')}
+      ${aiHumanReviewNoticeHTML()}
     </div>`);
 }
 async function runVisionAnalysis(title){
@@ -5109,25 +5174,26 @@ function renderRootCauseResult(title, payload){
   const missing = Array.isArray(rc.missingEvidence) ? rc.missingEvidence : [];
   const steps = Array.isArray(rc.verificationSteps) ? rc.verificationSteps : [];
   const confidencePct = Number.isFinite(rc.confidence) ? Math.round(rc.confidence * 100) : null;
-  const summary = 'لا يوجد سبب جذري مؤكد؛ يلزم تحقق ميداني قبل اعتماد أي تفسير سببي.';
-  setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
+  // rc.rootCauseProven semantics are read as-is from root-cause-advisory.js and
+  // never inverted here — only the Arabic label text differs per state.
+  const provenAr = rc.rootCauseProven ? 'سبب مثبت' : 'غير مؤكد — يحتاج تحقق ميداني';
+
+  setText('aiResultTitle', 'تحليل الأسباب المحتملة');
   setHTML('aiResultContent', `
     ${aiPrintHeader('تحليل السبب الجذري', 'استرشادي — غير مؤكد')}
     <div class="bg-white border border-gray-200 rounded-xl p-4">
-      <p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>
+      <p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.6;margin-bottom:12px;">مقترح استرشادي — يتطلب التحقق والاعتماد</p>
       ${aiKpiTiles([confidencePct !== null ? { label:'الثقة', value:`${confidencePct}%` } : null].filter(Boolean))}
       ${aiDigitalTwinFlow('root-cause')}
       <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
-        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${rc.rootCauseProven ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${rc.rootCauseProven ? 'سبب مؤكد' : 'غير مؤكد — يحتاج تحقق ميداني'}</span>
+        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${rc.rootCauseProven ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${provenAr}</span>
       </div>
       ${causes.length
         ? aiListSection('فرضيات محتملة (تتطلب التحقق الميداني)', causes, 'text-sm text-gray-700') + aiListSection('الأدلة الداعمة', evidence, 'text-xs text-gray-500')
         : `<p class="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-lg p-3">لا يوجد دليل بصري كافٍ لتحديد آلية السبب؛ يتطلب تحققاً ميدانياً.</p>`}
-      ${aiListSection('أدلة ناقصة', missing, 'text-xs text-gray-500')}
+      ${aiListSection('متطلبات التحقق الميداني', missing, 'text-xs text-gray-500')}
       ${aiListSection('خطوات التحقق الموصى بها', steps, 'text-xs text-gray-500')}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
-        اقتراح استرشادي فقط — لا يمثل سبباً جذرياً مؤكداً حتى يتم التحقق الميداني. لا يتم الحفظ أو الإسناد أو تغيير الحالة أو الإغلاق تلقائياً.
-      </p>
+      ${aiHumanReviewNoticeHTML()}
     </div>`);
 }
 async function runRootCauseAnalysis(title){
@@ -5177,13 +5243,14 @@ function renderWorkOrderResult(title, payload){
   const closure = Array.isArray(wo.closureRequirements) ? wo.closureRequirements : [];
   const priorityAr = wo.priority ? (SMART_INPUT_PRIORITY_LABELS_AR[wo.priority] || wo.priority) : null;
   const summary = wo.workType
-    ? `مسودة عمل إرشادية لمعالجة ${escapeHTML(wo.workType)}${priorityAr && wo.targetSla ? ` بأولوية ${escapeHTML(priorityAr)} خلال ${escapeHTML(wo.targetSla)}` : ''}.`
+    ? `مسودة أمر عمل استرشادية لمعالجة ${escapeHTML(wo.workType)}${priorityAr && wo.targetSla ? ` بأولوية ${escapeHTML(priorityAr)} خلال ${escapeHTML(wo.targetSla)}` : ''}.`
     : '';
-  setText('aiResultTitle', `${title} (مسودة استرشادية):`);
+  setText('aiResultTitle', 'مسودة أمر عمل');
   setHTML('aiResultContent', `
     ${aiPrintHeader('مسودة أمر العمل', 'مسودة إرشادية')}
     <div class="bg-white border border-gray-200 rounded-xl p-4">
-      ${summary ? `<p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>` : ''}
+      <p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.6;margin-bottom:12px;">مسودة أمر عمل استرشادية — لا تعني الإسناد أو التنفيذ أو تغيير الحالة أو الحفظ أو الإكمال أو الإغلاق. تتطلب مراجعة واعتماد المدير.</p>
+      ${summary ? `<p class="text-sm text-gray-700 mb-3">${summary}</p>` : ''}
       ${aiKpiTiles([
         priorityAr ? { label:'الأولوية', value:priorityAr, color: wo.priority === 'URGENT' ? '#b91c1c' : wo.priority === 'HIGH' ? '#b45309' : undefined } : null,
         wo.targetSla ? { label:'SLA / زمن الاستجابة', value:wo.targetSla } : null,
@@ -5191,7 +5258,7 @@ function renderWorkOrderResult(title, payload){
       ].filter(Boolean))}
       ${aiDigitalTwinFlow('work-order')}
       <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
-        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">مسودة إرشادية</span>
+        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">مسودة أمر عمل</span>
       </div>
       <p class="font-bold text-lg text-gray-800">${escapeHTML(wo.workType||'-')} <span class="font-normal text-gray-500 text-base">— ${escapeHTML(wo.location||'-')}</span></p>
       ${wo.scopeOfWork ? `<p class="text-sm text-gray-700 mt-3">${escapeHTML(wo.scopeOfWork)}</p>` : ''}
@@ -5199,9 +5266,7 @@ function renderWorkOrderResult(title, payload){
       ${aiListSection('اعتبارات السلامة', safety, 'text-xs text-red-700')}
       ${aiListSection('الأدلة المطلوبة', evidence, 'text-xs text-gray-600')}
       ${aiListSection('متطلبات الإغلاق', closure, 'text-xs text-gray-600')}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
-        مسودة استرشادية فقط — لا يتم الإسناد أو تغيير الحالة أو الإغلاق تلقائياً؛ يتطلب اعتماد المدير.
-      </p>
+      ${aiHumanReviewNoticeHTML()}
     </div>`);
 }
 window.generateCommunicationDraft = async function(){
