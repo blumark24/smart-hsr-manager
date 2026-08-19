@@ -93,4 +93,13 @@ function resolveTaxonomyWithFallback(code, evidenceText) {
   return { entry: TAXONOMY_BY_CODE.UNKNOWN, usedFallback: false };
 }
 
-module.exports = Object.freeze({ MUNICIPAL_TAXONOMY, TAXONOMY_BY_CODE, resolveTaxonomy, resolveTaxonomyWithFallback });
+// Generated, not hand-duplicated -- same principle as VALID_CATEGORY_CODES in
+// municipal-vision-prompt.js. These are the only two arrays the Vision output
+// schema and its validators may treat as the closed affectedAsset/
+// visibleDefect vocabularies; every value already exists on some taxonomy
+// entry above (including UNKNOWN), so there is no second, independently
+// maintained mapping to drift out of sync.
+const ASSET_VALUES = Object.freeze([...new Set(MUNICIPAL_TAXONOMY.map(entry => entry.asset))]);
+const DEFECT_VALUES = Object.freeze([...new Set(MUNICIPAL_TAXONOMY.map(entry => entry.defect))]);
+
+module.exports = Object.freeze({ MUNICIPAL_TAXONOMY, TAXONOMY_BY_CODE, resolveTaxonomy, resolveTaxonomyWithFallback, ASSET_VALUES, DEFECT_VALUES });
