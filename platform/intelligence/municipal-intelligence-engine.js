@@ -4,6 +4,7 @@ const { validateShortSummaryAr, LOW_CONFIDENCE_FALLBACK_AR } = require('../ai/ar
 const { FORBIDDEN_ACTIONS, validateMunicipalIntelligence, RISK_INDICATORS } = require('./municipal-intelligence-contract');
 const { resolveTaxonomy, resolveTaxonomyWithFallback } = require('./municipal-taxonomy');
 const { resolveExplainablePriority } = require('./explainable-priority-resolver');
+const { evaluateMunicipalConsistency } = require('./municipal-consistency-guard');
 
 const MAX_DETECTED_ISSUES=5;
 const ISSUE_CONFIDENCE_THRESHOLD=0.55;
@@ -26,9 +27,20 @@ function normalizeIssue(issue,analysisId,index){
   // in depth -- the schema/prompt now constrain new provider calls to the
   // allowlist, this covers a provider that ignores it).
   const evidenceText=[issue.categoryLabelAr,issue.shortSummaryAr].filter(v=>typeof v==='string').join(' ');
-  const {entry:taxonomy,usedFallback}=resolveTaxonomyWithFallback(issue.categoryCode,evidenceText);
-  const low=issue.confidence<ISSUE_CONFIDENCE_THRESHOLD;
-  const warnings=[...(Array.isArray(issue.warnings)?issue.warnings:[])];
+  const {entry:initialTaxonomy,usedFallback}=resolveTaxonomyWithFallback(issue.categoryCode,evidenceText);
+  // Municipal Consistency Guard (deterministic, zero I/O, never a second AI
+  // call -- see municipal-consistency-guard.js): cross-checks the taxonomy
+  // resolution above against the SAME provider call's independently-stated
+  // visualEvidence.affectedAsset/visibleDefect and severity, and may
+  // deterministically correct the category, fall back to UNKNOWN on an
+  // ambiguous/unsupported contradiction, or clamp an out-of-range severity.
+  // The taxonomy is re-resolved from the Guard's FINAL resolvedCategoryCode
+  // so every downstream field below (department/treatment/response-window)
+  // is derived from the corrected category, never the original model claim.
+  const guard=evaluateMunicipalConsistency({categoryCode:initialTaxonomy.code,severity:issue.severity,severityScore:issue.severityScore,confidence:issue.confidence,visualEvidence:issue.visualEvidence});
+  const taxonomy=resolveTaxonomy(guard.resolvedCategoryCode);
+  const low=guard.confidence<ISSUE_CONFIDENCE_THRESHOLD;
+  const warnings=[...(Array.isArray(issue.warnings)?issue.warnings:[]),...guard.warnings];
   if(taxonomy.code==='UNKNOWN'&&String(issue.categoryCode).toUpperCase()!=='UNKNOWN')warnings.push('UNSUPPORTED_CATEGORY_MAPPED_TO_UNKNOWN');
   if(usedFallback)warnings.push('FALLBACK_CATEGORY_MATCH_USED');
   if(low)warnings.push('LOW_CONFIDENCE_NOT_AUTO_SELECTABLE');
@@ -36,7 +48,7 @@ function normalizeIssue(issue,analysisId,index){
   return Object.freeze({issueId:`${analysisId}-${taxonomy.code.toLowerCase()}-${index+1}`,issueCode:taxonomy.code,issueLabelAr:taxonomy.labelAr,
     shortSummaryAr:low?LOW_CONFIDENCE_FALLBACK_AR:issue.shortSummaryAr,categoryCode:taxonomy.parentCategory,categoryLabelAr:taxonomy.labelAr,
     ...(issue.subcategoryCode?{subcategoryCode:issue.subcategoryCode}:{}),...(issue.subcategoryLabelAr?{subcategoryLabelAr:issue.subcategoryLabelAr}:{}),
-    severity:taxonomy.code==='UNKNOWN'?'UNKNOWN':issue.severity,severityScore:taxonomy.code==='UNKNOWN'?0:issue.severityScore,confidence:issue.confidence,
+    severity:taxonomy.code==='UNKNOWN'?'UNKNOWN':guard.resolvedSeverity,severityScore:taxonomy.code==='UNKNOWN'?0:issue.severityScore,confidence:guard.confidence,
     ...(issue.boundingRegion?{boundingRegion:Object.freeze({...issue.boundingRegion})}:{}),recommendedActionAr:taxonomy.treatmentGuidanceAr,suggestedDepartment:taxonomy.department,
     publicSafetyRisk:safety.includes('PUBLIC_SAFETY'),trafficImpact:safety.includes('TRAFFIC_OBSTRUCTION')?'HIGH':safety.includes('ACCESSIBILITY_IMPACT')?'MEDIUM':'NONE',
     requiresHumanReview:true,warnings:Object.freeze([...new Set(warnings)])});

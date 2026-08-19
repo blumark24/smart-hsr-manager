@@ -102,4 +102,17 @@ function resolveTaxonomyWithFallback(code, evidenceText) {
 const ASSET_VALUES = Object.freeze([...new Set(MUNICIPAL_TAXONOMY.map(entry => entry.asset))]);
 const DEFECT_VALUES = Object.freeze([...new Set(MUNICIPAL_TAXONOMY.map(entry => entry.defect))]);
 
-module.exports = Object.freeze({ MUNICIPAL_TAXONOMY, TAXONOMY_BY_CODE, resolveTaxonomy, resolveTaxonomyWithFallback, ASSET_VALUES, DEFECT_VALUES });
+// Municipal Consistency Guard support: the taxonomy is the only place that
+// knows which (asset, defect) pairs exist and how many real categories share
+// a given pair, so this query lives here rather than being reimplemented
+// inside the Guard. UNKNOWN is deliberately never a candidate (asset/defect
+// values of 'UNKNOWN' mean "insufficient evidence", never a real match), so
+// this can only ever return concrete, addressable taxonomy entries.
+function candidatesForAssetDefect(asset, defect) {
+  const a = String(asset || '').trim().toUpperCase();
+  const d = String(defect || '').trim().toUpperCase();
+  if (!a || !d || a === 'UNKNOWN' || d === 'UNKNOWN') return [];
+  return MUNICIPAL_TAXONOMY.filter(entry => entry.code !== 'UNKNOWN' && entry.asset === a && entry.defect === d);
+}
+
+module.exports = Object.freeze({ MUNICIPAL_TAXONOMY, TAXONOMY_BY_CODE, resolveTaxonomy, resolveTaxonomyWithFallback, ASSET_VALUES, DEFECT_VALUES, candidatesForAssetDefect });
