@@ -5541,47 +5541,58 @@ function renderRootCauseResult(title, payload){
   // rc.rootCauseProven semantics are read as-is from root-cause-advisory.js and
   // never inverted here — only the Arabic label/pill color differ per state.
   const provenAr = rc.rootCauseProven ? 'سبب مثبت' : 'غير مؤكد — يحتاج تحقق ميداني';
-  const provenPillClass = rc.rootCauseProven ? 'ai-vision-pill-proven' : 'ai-vision-pill-review';
+  const provenColor = rc.rootCauseProven ? 'var(--ui-success)' : 'var(--ui-warning)';
 
-  // ملخص القرار التنفيذي لهذه النتيجة تحديداً -- لا يفترض سبباً؛ يذكر فقط عدد
-  // الفرضيات المتاحة أو غيابها، وهي حقيقة مبنية على causes.length فعلياً.
-  const summary = causes.length
-    ? `تم تحديد ${causes.length} ${causes.length === 1 ? 'فرضية سببية محتملة' : 'فرضيات سببية محتملة'} تتطلب تحققاً ميدانياً قبل الاعتماد.`
-    : 'لا يوجد دليل بصري كافٍ لتحديد آلية السبب؛ يتطلب تحققاً ميدانياً مباشراً.';
-
-  // لوحة الأدلة/الفرضيات بأكملها تُحذف إن لم تحتوِ على أي بيانات فعلية -- لا
-  // تُعرض أبداً كصندوق فارغ (نفس مبدأ aiVisionMetrics الحالي).
-  const evidencePanelHTML = [
-    aiVisionListSection('الفرضيات المحتملة (تتطلب التحقق الميداني)', causes),
-    aiVisionListSection('الأدلة الداعمة', evidence),
-    aiVisionListSection('الأدلة الناقصة / متطلبات التحقق الميداني', missing, 'amber'),
-    aiVisionListSection('خطوات التحقق الموصى بها', verificationSteps),
-  ].join('');
+  // ملخص عرضي فقط: يعتمد حصراً على rootCauseProven وعدد الفرضيات العائدين من
+  // الخدمة، ولا يستنتج سبباً أو درجة يقين جديدة.
+  const summary = rc.rootCauseProven
+    ? 'تشير بيانات التحليل إلى سبب مثبت وفق المخرجات المتاحة؛ يبقى اعتماد المراقب مطلوباً.'
+    : causes.length
+      ? `تم تحديد ${causes.length} ${causes.length === 1 ? 'فرضية سببية محتملة' : 'فرضيات سببية محتملة'} تتطلب تحققاً ميدانياً قبل الاعتماد.`
+      : 'لا يوجد دليل كافٍ لتحديد آلية السبب؛ يتطلب الأمر تحققاً ميدانياً مباشراً.';
+  const listHTML = (items, tone, detailLabel) => {
+    if (!items.length) return '';
+    const list = values => `<ul class="ai-canvas-list${tone === 'amber' ? ' ai-canvas-list-amber' : ''}">${values.map(value => `<li>${escapeHTML(value)}</li>`).join('')}</ul>`;
+    if (items.length <= 2) return list(items);
+    return `${list(items.slice(0, 2))}<details class="ai-canvas-details"><summary>${detailLabel} (${items.length - 2})</summary>${list(items.slice(2))}</details>`;
+  };
 
   setText('aiResultTitle', 'تحليل الأسباب المحتملة');
   setHTML('aiResultContent', `
     ${aiPrintHeader('تحليل السبب الجذري', 'استرشادي — غير مؤكد')}
-    <div class="ai-vision-card">
-      <div class="ai-vision-header-row">
-        <p class="ai-vision-subtitle">مقترح استرشادي يتطلب التحقق الميداني والاعتماد — لا يمثل سبباً جذرياً مؤكداً بذاته.</p>
-        <div class="ai-vision-pill-group">
-          <span class="ai-vision-pill ai-vision-pill-advisory">تحليل استرشادي</span>
-          <span class="ai-vision-pill ai-vision-pill-review"><i data-lucide="user-check" class="w-3 h-3"></i> بانتظار اعتماد المراقب</span>
+    <div class="ai-canvas" dir="rtl">
+      <div class="ai-canvas-header">
+        <p class="ai-canvas-subtitle">تحليل استرشادي لدعم التحقق الميداني واتخاذ القرار</p>
+        <div class="ai-canvas-pill-row">
+          <span class="ai-canvas-pill ai-canvas-pill-advisory">تحليل استرشادي</span>
+          <span class="ai-canvas-pill ai-canvas-pill-pending"><i data-lucide="user-check" class="w-3 h-3"></i> بانتظار اعتماد المراقب</span>
         </div>
       </div>
-      <p class="ai-vision-summary">${summary}</p>
-      ${aiVisionTwin([
+      <p class="ai-canvas-decision">${summary}</p>
+      ${aiCanvasRail([
         { label:'الدليل المرئي', done:true },
         { label:'الأسباب المحتملة', value: causes.length ? `${causes.length} فرضية` : null },
-        { label:'التحقق الميداني', value: missing.length ? `${missing.length} بند مطلوب` : null },
+        { label:'التحقق الميداني', value: (missing.length + verificationSteps.length) ? `${missing.length + verificationSteps.length} بنود` : null },
         { label:'الاعتماد البشري', final:true },
       ])}
-      ${aiVisionMetrics([confidencePct !== null ? { label:'مستوى الثقة', value:`${confidencePct}%` } : null].filter(Boolean))}
-      <div class="ai-vision-pill-group" style="margin-bottom:14px;">
-        <span class="ai-vision-pill ${provenPillClass}">${provenAr}</span>
+      ${aiCanvasMetrics([
+        { label:'حالة السبب', value:provenAr, color:provenColor },
+        confidencePct !== null ? { label:'مستوى الثقة', value:`${confidencePct}%` } : null,
+      ].filter(Boolean))}
+      ${causes.length || evidence.length ? `<section>
+        <p class="ai-canvas-section-title">الفرضيات والأدلة</p>
+        ${causes.length ? `<p class="ai-canvas-field-label">الأسباب المحتملة</p>${listHTML(causes, null, 'عرض فرضيات إضافية')}` : '<p class="ai-canvas-meta">لا تتوفر فرضيات سببية إضافية.</p>'}
+        ${evidence.length ? `<p class="ai-canvas-field-label" style="margin-top:12px;">الأدلة الداعمة</p>${listHTML(evidence, null, 'عرض أدلة إضافية')}` : ''}
+      </section>` : ''}
+      ${missing.length || verificationSteps.length ? `<section>
+        <p class="ai-canvas-section-title">التحقق الميداني</p>
+        ${missing.length ? `<p class="ai-canvas-field-label">الأدلة الناقصة</p>${listHTML(missing, 'amber', 'عرض متطلبات إضافية')}` : ''}
+        ${verificationSteps.length ? `<p class="ai-canvas-field-label" style="margin-top:12px;">خطوات التحقق الموصى بها</p>${listHTML(verificationSteps, 'amber', 'عرض خطوات إضافية')}` : ''}
+      </section>` : '<p class="ai-canvas-meta">لا توجد بنود تحقق ميداني إضافية في المخرجات الحالية.</p>'}
+      <div class="ai-canvas-gate">
+        <i data-lucide="badge-check" class="w-4 h-4"></i>
+        <span>التحليل استرشادي ويتطلب مراجعة واعتماد المراقب.</span>
       </div>
-      ${evidencePanelHTML ? `<div class="ai-vision-evidence">${evidencePanelHTML}</div>` : ''}
-      ${aiVisionApprovalFooter()}
     </div>`);
 }
 async function runRootCauseAnalysis(title){
