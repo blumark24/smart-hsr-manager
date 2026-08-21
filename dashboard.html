@@ -5643,50 +5643,44 @@ function renderWorkOrderResult(title, payload){
   const priorityAr = wo.priority ? (SMART_INPUT_PRIORITY_LABELS_AR[wo.priority] || wo.priority) : null;
   const summary = wo.workType
     ? `مسودة عمل استرشادية لمعالجة ${escapeHTML(wo.workType)}${priorityAr && wo.targetSla ? ` بأولوية ${escapeHTML(priorityAr)} خلال ${escapeHTML(wo.targetSla)}` : ''}.`
-    : '';
-
-  // لوحة تفاصيل العمل بأكملها تُحذف إن لم تحتوِ على أي بيانات فعلية -- لا تُعرض
-  // أبداً كصندوق فارغ (نفس مبدأ aiVisionMetrics الحالي).
-  const evidencePanelHTML = [
-    aiVisionFieldRow('نوع العمل', wo.workType),
-    aiVisionFieldRow('الموقع', wo.location),
-    aiVisionListSection('خطوات التنفيذ', steps),
-    aiVisionListSection('اعتبارات السلامة', safety, 'red'),
-    aiVisionListSection('الأدلة المطلوبة', evidence),
-    aiVisionListSection('متطلبات الإغلاق', closure),
-  ].join('');
+    : 'مسودة استرشادية تتطلب مراجعة واعتماد المراقب قبل أي إسناد أو تنفيذ.';
+  const list = (items, tone, label, disclose=true) => {
+    if (!items.length) return '';
+    const ul = values => `<ul class="ai-canvas-list${tone === 'amber' ? ' ai-canvas-list-amber' : ''}">${values.map(v=>`<li>${escapeHTML(v)}</li>`).join('')}</ul>`;
+    return disclose && items.length > 2 ? `${ul(items.slice(0,2))}<details class="ai-canvas-details"><summary>${label} (${items.length - 2})</summary>${ul(items.slice(2))}</details>` : ul(items);
+  };
 
   setText('aiResultTitle', 'مسودة أمر عمل');
   setHTML('aiResultContent', `
     ${aiPrintHeader('مسودة أمر العمل', 'مسودة إرشادية')}
-    <div class="ai-vision-card">
-      <div class="ai-vision-header-row">
-        <p class="ai-vision-subtitle">مسودة استرشادية لدعم قرار المراقب — لا تعني الإسناد أو التنفيذ التلقائي.</p>
-        <div class="ai-vision-pill-group">
-          <span class="ai-vision-pill ai-vision-pill-advisory">تحليل استرشادي</span>
-          <span class="ai-vision-pill ai-vision-pill-review"><i data-lucide="user-check" class="w-3 h-3"></i> بانتظار اعتماد المراقب</span>
+    <div class="ai-canvas" dir="rtl">
+      <div class="ai-canvas-header">
+        <p class="ai-canvas-subtitle">مسودة استرشادية لدعم القرار والتنفيذ الميداني</p>
+        <div class="ai-canvas-pill-row">
+          <span class="ai-canvas-pill ai-canvas-pill-advisory">مسودة استرشادية</span>
+          <span class="ai-canvas-pill ai-canvas-pill-pending"><i data-lucide="user-check" class="w-3 h-3"></i> بانتظار اعتماد المراقب</span>
         </div>
       </div>
-      <div class="ai-vision-approval" style="margin-bottom:14px;">
-        <span class="ai-vision-approval-icon"><i data-lucide="badge-check" class="w-4 h-4"></i></span>
-        <span>مسودة أمر عمل فقط — لم يتم الإسناد تلقائياً، ولم يتم التنفيذ تلقائياً، ولا تمثل إجراء إغلاق. تتطلب اعتماداً بشرياً صريحاً من المراقب.</span>
-      </div>
-      ${summary ? `<p class="ai-vision-summary">${summary}</p>` : ''}
-      ${aiVisionTwin([
+      <p class="ai-canvas-decision">${summary}</p>
+      ${aiCanvasRail([
         { label:'الحالة', value: wo.workType || null },
         { label:'الإجراء المقترح', done: !!wo.scopeOfWork },
         { label:'الجهة المختصة', value: wo.recommendedDiscipline || null },
         { label:'زمن الاستجابة', value: wo.targetSla || null },
         { label:'اعتماد المراقب', final:true },
       ])}
-      ${aiVisionMetrics([
+      ${aiCanvasMetrics([
         priorityAr ? { label:'الأولوية', value:priorityAr, color: wo.priority === 'URGENT' ? '#b91c1c' : wo.priority === 'HIGH' ? '#b45309' : undefined } : null,
         wo.recommendedDiscipline ? { label:'الجهة المختصة', value:wo.recommendedDiscipline } : null,
         wo.targetSla ? { label:'زمن الاستجابة المستهدف', value:wo.targetSla } : null,
       ].filter(Boolean))}
-      ${evidencePanelHTML ? `<div class="ai-vision-evidence">${evidencePanelHTML}</div>` : ''}
-      ${wo.scopeOfWork ? `<p class="ai-vision-field-value" style="font-weight:400;color:#374151;margin-bottom:16px;">${escapeHTML(wo.scopeOfWork)}</p>` : ''}
-      ${aiVisionApprovalFooter()}
+      <section><p class="ai-canvas-section-title">نطاق أمر العمل</p>${aiCanvasField('نوع العمل',wo.workType)}${aiCanvasField('الموقع',wo.location)}${wo.scopeOfWork ? `<p class="ai-canvas-field-label" style="margin-top:10px;">الإجراء المقترح</p><p class="ai-canvas-note">${escapeHTML(wo.scopeOfWork)}</p>` : ''}</section>
+      ${steps.length ? `<section><p class="ai-canvas-section-title">التنفيذ الميداني</p>${list(steps,null,'عرض خطوات إضافية')}</section>` : ''}
+      ${safety.length ? `<section><p class="ai-canvas-section-title">السلامة</p>${list(safety,'amber','عرض تفاصيل إضافية',false)}</section>` : ''}
+      ${evidence.length ? `<section><p class="ai-canvas-section-title">الأدلة المطلوبة</p>${list(evidence,null,'عرض أدلة إضافية')}</section>` : ''}
+      ${closure.length ? `<section><p class="ai-canvas-section-title">متطلبات الإغلاق</p>${list(closure,null,'عرض التفاصيل')}</section>` : ''}
+      <p class="ai-canvas-note">لم يتم الإسناد تلقائياً، ولم يتم التنفيذ تلقائياً، ولا تمثل المسودة إجراء إغلاق. تتطلب اعتماداً بشرياً صريحاً.</p>
+      <div class="ai-canvas-gate"><i data-lucide="badge-check" class="w-4 h-4"></i><span>التحليل استرشادي ويتطلب مراجعة واعتماد المراقب.</span></div>
     </div>`);
 }
 window.generateCommunicationDraft = async function(){
