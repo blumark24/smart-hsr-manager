@@ -24,6 +24,15 @@ function normalizeVisionResult({ rawObject, provider, model, modelVersion = 'unk
   const lowConfidence = Number.isFinite(confidence) && confidence < CONFIDENCE_THRESHOLD;
   const warnings = Array.isArray(rawObject.warnings) ? [...rawObject.warnings] : rawObject.warnings;
   const normalizedWarnings = Array.isArray(warnings) ? [...new Set(lowConfidence ? [...warnings, 'LOW_CONFIDENCE'] : warnings)] : warnings;
+  // visualEvidence/uncertainties (Municipal Decision Intelligence hardening):
+  // same conditional-inclusion pattern as subcategoryCode/
+  // responsibleDepartmentSuggestion above -- raw sub-values are passed
+  // through AS-IS, never defaulted. A provider (OpenAI, schema-required)
+  // that supplies these gets them validated for real by validateAIOutput
+  // below; a provider/fixture that never mentions them (every pre-existing
+  // Gemini/offline-fixture code path) simply omits the key entirely, so
+  // validateAIOutput's presence-gated check never runs and nothing existing
+  // is affected.
   const result = Object.freeze({
     ok: true, analysisId: `${provider.toLowerCase()}-${String(correlationId || 'evaluation').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64) || 'evaluation'}`,
     shortSummaryAr: lowConfidence ? LOW_CONFIDENCE_FALLBACK_AR : rawObject.shortSummaryAr,
@@ -33,6 +42,10 @@ function normalizeVisionResult({ rawObject, provider, model, modelVersion = 'unk
     ...(rawObject.responsibleDepartmentSuggestion ? { responsibleDepartmentSuggestion: rawObject.responsibleDepartmentSuggestion } : {}),
     recommendedActionAr: rawObject.recommendedActionAr, confidence, imageQuality: rawObject.imageQuality,
     requiresHumanReview: lowConfidence ? true : rawObject.requiresHumanReview, warnings: normalizedWarnings,
+    ...(rawObject.visualEvidence && typeof rawObject.visualEvidence === 'object' && !Array.isArray(rawObject.visualEvidence)
+      ? { visualEvidence: { affectedAsset: rawObject.visualEvidence.affectedAsset, visibleDefect: rawObject.visualEvidence.visibleDefect, evidenceStatements: rawObject.visualEvidence.evidenceStatements } }
+      : {}),
+    ...(Array.isArray(rawObject.uncertainties) ? { uncertainties: [...rawObject.uncertainties] } : {}),
     provider, model, modelVersion, processingTimeMs,
   });
   const validation = validateAIOutput(result);

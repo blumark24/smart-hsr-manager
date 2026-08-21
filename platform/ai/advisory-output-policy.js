@@ -2,7 +2,7 @@
 
 const FORBIDDEN_COMMANDS = Object.freeze(['SAVE_OBSERVATION','CREATE_OBSERVATION','ASSIGN_CONTRACTOR','UPDATE_STATUS','COMPLETE','CLOSE','DELETE']);
 const FORBIDDEN_FIELDS = Object.freeze(['command','commands','workflowAction','workflowTransition','firestoreWrite','autoSave','applyClassification','applyPriority']);
-const ALLOWED_RESULT_FIELDS = Object.freeze(['ok','analysisId','shortSummaryAr','categoryCode','categoryLabelAr','subcategoryCode','subcategoryLabelAr','severity','severityScore','prioritySuggestion','responsibleDepartmentSuggestion','recommendedActionAr','confidence','imageQuality','requiresHumanReview','warnings','provider','model','modelVersion','processingTimeMs','errorCode','reason']);
+const ALLOWED_RESULT_FIELDS = Object.freeze(['ok','analysisId','shortSummaryAr','categoryCode','categoryLabelAr','subcategoryCode','subcategoryLabelAr','severity','severityScore','prioritySuggestion','responsibleDepartmentSuggestion','recommendedActionAr','confidence','imageQuality','requiresHumanReview','warnings','visualEvidence','uncertainties','provider','model','modelVersion','processingTimeMs','errorCode','reason']);
 
 function validateAdvisoryOutput(result = {}) {
   const keys = Object.keys(result);

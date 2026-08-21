@@ -442,6 +442,215 @@
       #aiResultContent .ai-flow-line{background:#000!important}
       #aiResultContent .ai-flow-current{animation:none!important}
     }
+    /* مسار القرار المصغّر (Mini Digital Twin) داخل كل نتيجة ذكاء اصطناعي --
+       عرض فقط لبيانات محسوبة مسبقاً في دالة الريندر المستدعية؛ لا تُجلب بيانات
+       جديدة ولا تُستنتج قيمة هنا. الخطوة الأخيرة (المراجعة/الاعتماد البشري)
+       تبقى دائماً بحالة "بانتظار الاعتماد" ولا تتحول أبداً لحالة مكتملة تلقائياً. */
+    .ai-mini-flow{display:flex;align-items:flex-start;gap:0;margin:14px 0 18px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 6px}
+    .ai-mini-flow-node{display:flex;flex-direction:column;align-items:center;flex:0 0 92px;width:92px;text-align:center}
+    .ai-mini-flow-row{display:flex;align-items:center;width:100%}
+    .ai-mini-flow-marker{width:22px;height:22px;border-radius:999px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin:0 auto}
+    .ai-mini-flow-done .ai-mini-flow-marker{background:var(--color-teal);color:#fff}
+    .ai-mini-flow-awaiting .ai-mini-flow-marker{background:#fff;color:#92400e;border:2px solid #d97706}
+    .ai-mini-flow-unavailable .ai-mini-flow-marker{background:#f3f4f6;color:#9ca3af;border:1px solid #d1d5db}
+    .ai-mini-flow-connector{flex:1;height:1px;background:#e2e8f0;margin:0 -1px;align-self:center}
+    .ai-mini-flow-text{margin-top:6px;display:flex;flex-direction:column;gap:1px}
+    .ai-mini-flow-label{font-size:.7rem;font-weight:700;color:var(--color-navy);line-height:1.3}
+    .ai-mini-flow-value{font-size:.68rem;color:#4b5563;line-height:1.3}
+    .ai-mini-flow-unavailable .ai-mini-flow-label,
+    .ai-mini-flow-unavailable .ai-mini-flow-value{color:#9ca3af}
+    #aiResultContent .ai-mini-flow-awaiting .ai-mini-flow-marker{animation:aiFlowCurrentPulse 2s ease-in-out infinite}
+    @media (prefers-reduced-motion: reduce){
+      #aiResultContent .ai-mini-flow-awaiting .ai-mini-flow-marker{animation:none}
+    }
+    @media print{
+      .ai-mini-flow-marker{background:#fff!important;color:#000!important;border:1px solid #000!important}
+      .ai-mini-flow-connector{background:#000!important}
+      .ai-mini-flow-awaiting .ai-mini-flow-marker{animation:none!important}
+    }
+    /* شارة حالة صغيرة أعلى بطاقة النتيجة -- إشارة استرشادية موجزة فقط عند عدم
+       وجود جملة فرعية أخرى في نفس البطاقة، لا تكرر أبداً نص التنويه الكامل
+       أسفل البطاقة (aiHumanReviewNoticeHTML). */
+    .ai-status-row{margin-bottom:10px}
+    .ai-status-pill{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;color:var(--color-navy);background:var(--color-light-teal);border-radius:999px;padding:3px 12px}
+
+    /* ===== COMMAND CARD — ministry-grade design system shared by all three
+       Inspector AI result surfaces (Vision, Root Cause, Work Order). First
+       built for renderVisionResult(); Root Cause and Work Order now reuse the
+       exact same classnames/helpers unchanged rather than duplicating a second
+       visual system. The "ai-vision-" prefix predates that reuse and is kept
+       as-is to avoid touching renderVisionResult()'s markup. ===== */
+    .ai-vision-card{background:#fff;border-radius:20px;box-shadow:0 1px 2px rgba(10,25,49,.05),0 8px 24px -12px rgba(10,25,49,.12);padding:22px 20px}
+    .ai-vision-header-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+    .ai-vision-subtitle{font-size:.85rem;color:#5b6472;line-height:1.6;margin:0;max-width:32rem}
+    .ai-vision-pill-group{display:flex;flex-wrap:wrap;gap:6px}
+    .ai-vision-pill{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;border-radius:999px;padding:4px 12px;white-space:nowrap}
+    .ai-vision-pill-advisory{color:var(--color-navy);background:var(--color-light-teal)}
+    .ai-vision-pill-proven{color:#065f46;background:#d1fae5}
+    .ai-vision-pill-review{color:#92400e;background:#fff3dc}
+    .ai-vision-summary{color:var(--color-navy);font-size:1.15rem;font-weight:800;line-height:1.65;margin:2px 0 14px;text-wrap:balance}
+    .ai-vision-safety-alert{display:flex;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:12px;padding:9px 13px;font-size:.82rem;font-weight:700;margin-bottom:16px}
+    /* -- Live Mini Digital Twin (centerpiece) -- */
+    .ai-vision-twin{display:flex;align-items:flex-start;gap:0;margin:0 0 20px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 2px 8px}
+    .ai-vision-twin-node{display:flex;flex-direction:column;align-items:center;flex:0 0 100px;width:100px;text-align:center}
+    .ai-vision-twin-row{display:flex;align-items:center;width:100%}
+    .ai-vision-twin-marker{width:30px;height:30px;border-radius:999px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin:0 auto;box-shadow:0 1px 2px rgba(10,25,49,.10);transition:background-color .25s ease,box-shadow .25s ease,border-color .25s ease}
+    .ai-vision-twin-done .ai-vision-twin-marker{background:var(--color-teal);color:#fff}
+    .ai-vision-twin-awaiting .ai-vision-twin-marker{background:#fff;color:#92400e;border:2px solid #d97706}
+    .ai-vision-twin-unavailable .ai-vision-twin-marker{background:#f3f4f6;color:#9ca3af;border:1px dashed #d1d5db;box-shadow:none}
+    .ai-vision-twin-connector{flex:1;height:2px;background:#e6eaef;margin:0 -2px;align-self:center;border-radius:2px;transition:background-color .25s ease}
+    .ai-vision-twin-connector.is-filled{background:var(--color-teal)}
+    .ai-vision-twin-text{margin-top:7px;display:flex;flex-direction:column;gap:1px}
+    .ai-vision-twin-label{font-size:.78rem;font-weight:700;color:var(--color-navy);line-height:1.3}
+    .ai-vision-twin-value{font-size:.72rem;color:#5b6472;line-height:1.3}
+    .ai-vision-twin-unavailable .ai-vision-twin-label,
+    .ai-vision-twin-unavailable .ai-vision-twin-value{color:#9ca3af}
+    #aiResultContent .ai-vision-twin-awaiting .ai-vision-twin-marker{animation:aiFlowCurrentPulse 2.2s ease-in-out infinite}
+    @media (prefers-reduced-motion: reduce){
+      #aiResultContent .ai-vision-twin-awaiting .ai-vision-twin-marker{animation:none}
+    }
+    /* -- Decision metrics grid -- */
+    .ai-vision-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:10px;margin-bottom:18px}
+    .ai-vision-metric-tile{background:#fbfcfd;border-radius:14px;box-shadow:0 1px 2px rgba(10,25,49,.05);padding:11px 13px}
+    .ai-vision-metric-label{font-size:.68rem;font-weight:700;color:#5b6472;margin-bottom:4px}
+    .ai-vision-metric-value{font-size:1.05rem;font-weight:800;color:var(--color-navy)}
+    /* -- Observation evidence panel -- */
+    .ai-vision-evidence{background:#fbfcfd;border-radius:16px;padding:14px 16px;margin-bottom:16px}
+    .ai-vision-field-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #eef1f4}
+    .ai-vision-field-row:last-of-type{border-bottom:none}
+    .ai-vision-field-label{font-size:.82rem;color:#5b6472}
+    .ai-vision-field-value{font-size:.82rem;font-weight:700;color:var(--color-navy);text-align:left}
+    .ai-vision-list-section{margin-top:12px}
+    .ai-vision-list-title{font-size:.74rem;font-weight:700;color:#5b6472;margin-bottom:5px}
+    .ai-vision-list{font-size:.88rem;color:#374151;line-height:1.7;list-style:disc;padding-right:1.15rem;display:flex;flex-direction:column;gap:2px}
+    .ai-vision-list-amber .ai-vision-list-title,
+    .ai-vision-list-amber .ai-vision-list{color:#92400e}
+    .ai-vision-list-red .ai-vision-list-title,
+    .ai-vision-list-red .ai-vision-list{color:#b91c1c}
+    /* -- System advisory / warnings -- */
+    .ai-vision-warnings{background:#fff8ec;border:1px solid #fbe3ba;border-radius:14px;padding:12px 14px;margin-bottom:16px}
+    .ai-vision-warnings-title{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;color:#92400e;margin-bottom:6px}
+    .ai-vision-warnings-list{font-size:.85rem;color:#7c4a03;line-height:1.7;list-style:disc;padding-right:1.15rem;display:flex;flex-direction:column;gap:2px}
+    /* -- Human approval checkpoint footer (calm gate, deliberately NOT amber/error-styled) -- */
+    .ai-vision-approval{display:flex;align-items:flex-start;gap:9px;background:#f0faf9;border:1px solid #cdeceb;border-radius:14px;padding:12px 14px;font-size:.85rem;font-weight:700;color:var(--color-navy);line-height:1.6}
+    .ai-vision-approval-icon{color:var(--color-teal);flex-shrink:0;margin-top:1px}
+    @media print{
+      .ai-vision-card{box-shadow:none!important;border:1px solid #000!important}
+      .ai-vision-twin-marker{background:#fff!important;color:#000!important;border:1px solid #000!important}
+      .ai-vision-twin-connector{background:#000!important}
+      .ai-vision-twin-awaiting .ai-vision-twin-marker{animation:none!important}
+      .ai-vision-metric-tile,.ai-vision-evidence,.ai-vision-warnings,.ai-vision-approval,.ai-vision-safety-alert{box-shadow:none!important;border:1px solid #000!important;background:#fff!important}
+    }
+
+    /* ===== VISION V3 — Municipal Intelligence Command Canvas (Vision result
+       ONLY). Fully independent from .ai-vision-*, which Root Cause and Work
+       Order keep using unchanged. Deliberately has NO opaque card background
+       of its own: #aiResultContainer/#aiAnalysisSection already resolve to
+       var(--ui-surface-soft) via the shared #municipal-complete-visual-v2
+       theme rules (they carry the bg-gray-50/bg-white Tailwind classes that
+       system targets), so this content sits directly inside that already-
+       themed navy/teal glass panel instead of layering a second white box on
+       top of it -- that double-box was the "white tower" problem being fixed
+       here. Uses the app's own --ui-* tokens throughout so it tracks
+       light/dark theme automatically. */
+    /* Adaptive width/spacing/type system (responsive polish pass): fluid
+       clamp()-based sizing throughout instead of hard breakpoint jumps, plus
+       a self-contained max-width/margin-inline:auto cap so this component
+       never over-stretches even if its ambient container were ever wider
+       than today's ~800px 2-column layout. No design/hierarchy change --
+       same sections, same data, same semantics as before this pass. */
+    .ai-canvas{display:flex;flex-direction:column;gap:clamp(12px,2.5vw,22px);width:100%;max-width:880px;margin-inline:auto;padding-block-end:clamp(4px,2vw,12px)}
+    .ai-canvas-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+    .ai-canvas-subtitle{margin:0;font-size:clamp(.8rem,.76rem + .2vw,.9rem);color:var(--ui-muted)}
+    .ai-canvas-pill-row{display:flex;flex-wrap:wrap;gap:6px}
+    .ai-canvas-pill{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;border-radius:999px;padding:4px 12px;white-space:nowrap}
+    .ai-canvas-pill-advisory{color:var(--ui-accent-2);background:var(--ui-accent-soft)}
+    .ai-canvas-pill-pending{color:var(--ui-warning);background:color-mix(in srgb,var(--ui-warning) 16%,transparent)}
+    /* حجم الخط يتمدد تدريجياً مع العرض (clamp) بدل قفزات مفاجئة عند نقاط
+       الكسر؛ max-inline-size يمنع الجملة من التمدد على كامل عرض شاشة كبيرة. */
+    .ai-canvas-decision{margin:0;font-size:clamp(1.05rem,.95rem + .6vw,1.35rem);font-weight:800;line-height:1.7;color:var(--ui-heading);text-wrap:balance;max-inline-size:60ch}
+    /* شريط تنبيه السلامة -- شريط تمييز جانبي هادئ بنفس أسلوب "وصف الملاحظة"
+       الحالي في الصفحة (حد جانبي ملون + خلفية شفافة خفيفة)، وليس صندوق تحذير
+       ثقيل. */
+    .ai-canvas-alert{display:flex;flex-direction:column;gap:6px;border-inline-start:4px solid var(--ui-danger);background:color-mix(in srgb,var(--ui-danger) 10%,transparent);border-radius:0 12px 12px 0;padding:clamp(9px,1.5vw,13px) clamp(11px,2.5vw,16px)}
+    .ai-canvas-alert-head{display:flex;align-items:center;gap:8px;font-size:clamp(.8rem,.77rem + .15vw,.9rem);font-weight:700;color:var(--ui-danger)}
+    .ai-canvas-alert-reasons{margin:0;padding-inline-start:1.1rem;list-style:disc;font-size:clamp(.76rem,.73rem + .15vw,.85rem);color:var(--ui-muted);line-height:1.7}
+    /* -- مسار القرار (Decision Rail) -- محور بصري للنتيجة؛ عرض فقط لبيانات
+       محسوبة مسبقاً في renderVisionResult()، الخطوة الأخيرة تبقى دائماً
+       "بانتظار الاعتماد". عرض العقدة يتمدد مع العرض (clamp) بدل رقم ثابت،
+       فتبقى مضغوطة (تتيح تمرير أفقي داخلي) على الجوال الضيق وتتنفس أكثر على
+       الأجهزة اللوحية وسطح المكتب دون فراغ زائد. */
+    .ai-canvas-rail{display:flex;align-items:flex-start;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 2px 8px;margin:0 -2px}
+    .ai-canvas-rail-node{display:flex;flex-direction:column;align-items:center;flex:0 0 clamp(88px,20vw,128px);width:clamp(88px,20vw,128px);text-align:center}
+    .ai-canvas-rail-row{display:flex;align-items:center;width:100%}
+    .ai-canvas-rail-marker{width:clamp(26px,1.6vw + 20px,32px);height:clamp(26px,1.6vw + 20px,32px);border-radius:999px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:background-color .25s ease,border-color .25s ease}
+    .ai-canvas-rail-done .ai-canvas-rail-marker{background:var(--ui-accent);color:#fff}
+    .ai-canvas-rail-awaiting .ai-canvas-rail-marker{background:transparent;color:var(--ui-warning);border:2px solid var(--ui-warning)}
+    .ai-canvas-rail-unavailable .ai-canvas-rail-marker{background:transparent;color:var(--ui-faint);border:1px dashed var(--ui-border-strong)}
+    .ai-canvas-rail-connector{flex:1;height:2px;background:var(--ui-border);margin:0 -2px;align-self:center;border-radius:2px;transition:background-color .25s ease}
+    .ai-canvas-rail-connector.is-filled{background:var(--ui-accent)}
+    .ai-canvas-rail-text{margin-top:6px;display:flex;flex-direction:column;gap:1px}
+    .ai-canvas-rail-label{font-size:clamp(.72rem,.7rem + .1vw,.8rem);font-weight:700;color:var(--ui-heading);line-height:1.3}
+    .ai-canvas-rail-value{font-size:clamp(.66rem,.64rem + .1vw,.74rem);color:var(--ui-muted);line-height:1.3}
+    .ai-canvas-rail-unavailable .ai-canvas-rail-label,
+    .ai-canvas-rail-unavailable .ai-canvas-rail-value{color:var(--ui-faint)}
+    @keyframes aiCanvasPulse{
+      0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ui-warning) 30%,transparent)}
+      50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--ui-warning) 12%,transparent)}
+    }
+    #aiResultContent .ai-canvas-rail-awaiting .ai-canvas-rail-marker{animation:aiCanvasPulse 2.2s ease-in-out infinite}
+    @media (prefers-reduced-motion: reduce){
+      #aiResultContent .ai-canvas-rail-awaiting .ai-canvas-rail-marker{animation:none}
+    }
+    /* -- شريط مؤشرات القرار المدمج -- شبكة auto-fit تُنتج تلقائياً عمودين على
+       الجوال الضيق، وحتى 3 على الأجهزة اللوحية، وصفاً أفقياً مضغوطاً واحداً
+       على سطح المكتب حيث تتسع كل الخمسة عناصر في صف واحد -- دون نقاط كسر
+       يدوية صريحة. -- */
+    .ai-canvas-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(112px,26vw,148px),1fr));gap:clamp(8px,1.5vw,10px) 0;border-top:1px solid var(--ui-border);border-bottom:1px solid var(--ui-border);padding:clamp(8px,1.5vw,12px) 0}
+    .ai-canvas-metric{padding-inline:clamp(8px,2vw,14px);padding-block:2px;min-width:0}
+    .ai-canvas-metric-label{font-size:clamp(.66rem,.64rem + .1vw,.72rem);font-weight:700;color:var(--ui-muted);margin-bottom:2px;overflow-wrap:break-word}
+    .ai-canvas-metric-value{font-size:clamp(.92rem,.88rem + .3vw,1.1rem);font-weight:800;color:var(--ui-heading);overflow-wrap:break-word}
+    @media (min-width:700px){
+      .ai-canvas-metric{border-inline-start:1px solid var(--ui-border)}
+      .ai-canvas-metric:first-child{border-inline-start:none}
+    }
+    /* -- قسما الأدلة المرئية والتحقق الميداني -- فصل بالتباعد لا بصناديق؛
+       max-inline-size يمنع فقرات النص من التمدد على كامل عرض شاشة كبيرة مع
+       إبقاء العناصر الهيكلية (المسار/المؤشرات) بعرضها الكامل. -- */
+    .ai-canvas-section-title{margin:0 0 6px;font-size:clamp(.74rem,.71rem + .1vw,.8rem);font-weight:700;color:var(--ui-muted)}
+    .ai-canvas-field{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:clamp(.82rem,.79rem + .15vw,.9rem)}
+    .ai-canvas-field-label{color:var(--ui-muted)}
+    .ai-canvas-field-value{font-weight:700;color:var(--ui-heading);text-align:left}
+    @media (max-width:360px){
+      .ai-canvas-field{flex-direction:column;align-items:flex-start;gap:2px}
+      .ai-canvas-field-value{text-align:right}
+    }
+    .ai-canvas-list{margin:6px 0 0;padding-inline-start:1.15rem;list-style:disc;font-size:clamp(.82rem,.79rem + .15vw,.9rem);color:var(--ui-text);line-height:1.75;display:flex;flex-direction:column;gap:2px;max-inline-size:65ch}
+    .ai-canvas-list-amber{color:var(--ui-warning)}
+    .ai-canvas-note{margin:8px 0 0;font-size:clamp(.8rem,.77rem + .15vw,.88rem);color:var(--ui-muted);line-height:1.7;max-inline-size:65ch}
+    .ai-canvas-meta{margin:4px 0 0;font-size:clamp(.78rem,.76rem + .1vw,.85rem);color:var(--ui-faint)}
+    /* إفصاح تدريجي أصلي (بدون جافاسكربت) لمحتوى التحقق الميداني الأطول --
+       "عرض التفاصيل" لا يخفي أبداً وجود التنبيهات نفسها، فقط تفاصيلها الكاملة.
+       ارتفاع 44px أدنى للعنوان القابل للنقر (هدف لمس مريح على الجوال). */
+    .ai-canvas-details{margin-top:8px}
+    .ai-canvas-details summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:clamp(.8rem,.77rem + .15vw,.88rem);font-weight:700;color:var(--ui-accent-2);list-style:none}
+    .ai-canvas-details summary::-webkit-details-marker{display:none}
+    .ai-canvas-details summary::before{content:"›";display:inline-block;margin-inline-end:4px;transition:transform .2s ease}
+    .ai-canvas-details[open] summary::before{transform:rotate(90deg)}
+    @media (prefers-reduced-motion: reduce){
+      .ai-canvas-details summary::before{transition:none}
+    }
+    /* -- بوابة القرار البشري -- بنفس أسلوب الشريط الجانبي الملون، بلون التيل
+       الهادئ (ليس كهرمانياً/أحمر) حتى لا يبدو صندوق خطأ. -- */
+    .ai-canvas-gate{display:flex;align-items:flex-start;gap:9px;border-inline-start:4px solid var(--ui-accent);background:var(--ui-accent-soft);border-radius:0 12px 12px 0;padding:clamp(9px,1.5vw,13px) clamp(12px,2.5vw,18px);font-size:clamp(.8rem,.77rem + .15vw,.9rem);font-weight:700;color:var(--ui-heading);line-height:1.6}
+    .ai-canvas-gate i{color:var(--ui-accent-2);flex-shrink:0;margin-top:1px}
+    @media print{
+      .ai-canvas-alert,.ai-canvas-gate{background:#fff!important;border:1px solid #000!important}
+      .ai-canvas-metrics,.ai-canvas-metric{border-color:#000!important}
+      .ai-canvas-rail-marker{background:#fff!important;color:#000!important;border:1px solid #000!important}
+      .ai-canvas-rail-connector{background:#000!important}
+      .ai-canvas-rail-awaiting .ai-canvas-rail-marker{animation:none!important}
+    }
 
     /* HEADER — compact municipal inspector identity card */
     .hsr-header {
@@ -4458,12 +4667,12 @@ function renderSmartCaptureDraft(payload){
   if(!document.getElementById('rawObservationInput').value.trim()&&suggestion)document.getElementById('rawObservationInput').value=suggestion;
   const root=document.getElementById('inspectorAiPreviewRoot');
   root?.classList.remove('hidden');
-  if(root)setHTML('inspectorAiPreviewRoot',`<div class="p-4 border rounded-xl bg-teal-50">
-    <p class="font-bold text-teal-900 mb-2">مسودة AI للمراجعة والتعديل قبل الحفظ</p>
-    <p class="text-sm"><b>التصنيف:</b> ${escapeHTML(analysis.categoryLabelAr||analysis.categoryCode||'-')}</p>
-    <p class="text-sm"><b>الشدة:</b> ${escapeHTML(SMART_INPUT_SEVERITY_LABELS_AR[analysis.severity]||analysis.severity||'-')} · <b>الأولوية:</b> ${escapeHTML(SMART_INPUT_PRIORITY_LABELS_AR[intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion]||intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion||'-')}</p>
-    <p class="text-sm"><b>الإجراء المقترح:</b> ${escapeHTML(analysis.recommendedActionAr||'-')}</p>
-    <p class="text-xs font-bold text-amber-700 mt-2">اقتراح استرشادي فقط. راجع الوصف وعدله، ثم احفظ الملاحظة صراحةً.</p>
+  if(root)setHTML('inspectorAiPreviewRoot',`<div class="p-4 border rounded-xl" style="background:#fff;border-color:#d7e4e3;">
+    <p class="font-bold mb-2" style="color:var(--color-teal);">مسودة الذكاء الاصطناعي للمراجعة والتعديل قبل الحفظ</p>
+    <p class="text-sm" style="color:var(--color-navy);"><b>التصنيف:</b> <span style="color:#172033;">${escapeHTML(analysis.categoryLabelAr||analysis.categoryCode||'-')}</span></p>
+    <p class="text-sm" style="color:var(--color-navy);"><b>الشدة:</b> <span style="color:#172033;">${escapeHTML(SMART_INPUT_SEVERITY_LABELS_AR[analysis.severity]||analysis.severity||'-')}</span> · <b>الأولوية:</b> <span style="color:#172033;">${escapeHTML(SMART_INPUT_PRIORITY_LABELS_AR[intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion]||intelligence.prioritySuggestion?.prioritySuggestion||analysis.prioritySuggestion||'-')}</span></p>
+    <p class="text-sm" style="color:var(--color-navy);"><b>الإجراء المقترح:</b> <span style="color:#172033;">${escapeHTML(analysis.recommendedActionAr||'-')}</span></p>
+    <p class="text-xs font-bold mt-2" style="color:#92400e;">اقتراح استرشادي بالذكاء الاصطناعي فقط. راجع الوصف وعدله، ثم احفظ الملاحظة صراحةً.</p>
   </div>`);
   const button=document.getElementById('processSmartInputBtn');
   if(button)button.innerHTML='<i data-lucide="save" class="w-5 h-5 ml-2"></i> حفظ الملاحظة بعد المراجعة';
@@ -4481,6 +4690,38 @@ const SMART_INPUT_RESPONSE_WINDOW_LABELS_AR = {IMMEDIATE:'فوري',WITHIN_4_HOU
 // display-only.
 const SMART_INPUT_DEPARTMENT_LABELS_AR = {ROADS:'إدارة الطرق',LIGHTING:'إدارة الإنارة',PARKS_AND_LANDSCAPING:'إدارة الحدائق والتشجير',CLEANLINESS:'إدارة النظافة',WATER_SERVICES:'إدارة خدمات المياه',MUNICIPAL_ASSETS:'إدارة الأصول البلدية',TRAFFIC_SAFETY:'إدارة السلامة المرورية',GENERAL_REVIEW:'المراجعة البلدية العامة',UNKNOWN:'غير محدد'};
 const SMART_INPUT_SEVERITY_LABELS_AR = {CRITICAL:'حرجة',HIGH:'مرتفعة',MEDIUM:'متوسطة',LOW:'منخفضة',UNKNOWN:'غير محددة'};
+// Municipal Decision Intelligence hardening (Commit 4 — Arabic UX only):
+// presentation-only Arabic labels for the structured visualEvidence enums
+// added in Commit 2 (platform/ai/server/municipal-vision-prompt.js) and
+// consumed here exactly as received — this file never re-derives, corrects,
+// or routes based on these values; the Municipal Consistency Guard already
+// did that server-side before this data ever reaches the browser.
+const AI_ASSET_LABELS_AR = {ROAD_SURFACE:'سطح الطريق',SIDEWALK:'الرصيف',CURB:'حافة الرصيف',MANHOLE:'فتحة الخدمات (المنهل)',LIGHTING_POLE:'عمود إنارة',TREE:'شجرة',PALM_TREE:'نخلة',WASTE_CONTAINER:'حاوية نفايات',PUBLIC_SPACE:'مساحة عامة',WATER_INFRASTRUCTURE:'مرفق مياه',TRAFFIC_BARRIER:'حاجز مروري',SIGN:'لوحة إرشادية',ELECTRICAL_CABLE:'كابل كهربائي',VEHICLE:'مركبة',UNKNOWN:'غير محدد'};
+const AI_DEFECT_LABELS_AR = {CRACKED:'متشقق',BROKEN:'متضرر',POTHOLE:'حفرة',SUBSIDENCE:'هبوط',LEANING:'مائل',FALLEN:'ساقط',OPEN:'مكشوف',EXPOSED:'مكشوف',OVERFLOWING:'ممتلئ',LEAKING:'تسرّب',ACCUMULATED:'تراكم',ABANDONED:'مهجور',EXCAVATED:'حفر ظاهر',DEGRADED:'متدهور',UNKNOWN:'غير محدد'};
+// Known Municipal Consistency Guard / municipal-intelligence-engine warning
+// codes translated to plain Arabic advisory text. An unrecognized code (e.g.
+// a future warning added server-side) falls back to a safe generic message
+// rather than ever showing a raw internal code to the Inspector.
+const AI_WARNING_LABELS_AR = {
+  CATEGORY_CORRECTED_BY_STRUCTURED_EVIDENCE:'تم تصحيح التصنيف بناءً على الأدلة المرئية المنظمة.',
+  CATEGORY_CONTRADICTION_UNRESOLVED:'تعارض في الأدلة ويتطلب مراجعة بشرية.',
+  SEVERITY_OUTSIDE_TAXONOMY_RANGE:'درجة الخطورة المقترحة لم تتوافق مع نطاق التصنيف المعتمد.',
+  LOW_CONFIDENCE_NOT_AUTO_SELECTABLE:'مستوى الثقة منخفض ويتطلب تحققًا يدويًا.',
+  FALLBACK_CATEGORY_MATCH_USED:'تم تحديد التصنيف عبر مطابقة استرشادية للنص الوصفي.',
+  UNSUPPORTED_CATEGORY_MAPPED_TO_UNKNOWN:'لم يتطابق التصنيف المقترح مع القائمة المعتمدة.',
+};
+function aiWarningLabelAr(code){
+  return AI_WARNING_LABELS_AR[code] || 'تنبيه إضافي من النظام يتطلب مراجعة ميدانية.';
+}
+// Standard human-in-the-loop notice reused across every Inspector AI result
+// surface (Vision / Root Cause / Work Order). Purely a static Arabic notice —
+// no logic, no save/apply/assign path lives here or anywhere near it.
+function aiHumanReviewNoticeHTML(){
+  return `<p class="text-sm font-bold mt-3 p-3 rounded-lg flex items-start gap-2" style="background:#fff7ed;border:1px solid #fde3c0;color:#7c4a03;">
+    <i data-lucide="user-check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+    <span>التحليل استرشادي ويتطلب مراجعة واعتماد المراقب.</span>
+  </p>`;
+}
 
 // ========= SMART INPUT PROCESSING =========
 window.processSmartInput = async function(){
@@ -5020,46 +5261,234 @@ function aiPrintHeader(analysisTypeAr, resultStatusAr){
     ${rows ? `<div>${rows}</div>` : ''}
   </div>`;
 }
+// مسار القرار المصغّر (Mini Digital Twin) لنتيجة ذكاء اصطناعي واحدة -- عرض
+// فقط لخطوات مُمررة من دالة الريندر المستدعية. step.value يجب أن يأتي من
+// بيانات محسوبة فعلياً هناك (لا يُبنى أي نص هنا)؛ step.done يشير إلى خطوة
+// سابقة تحققت ضمنياً بوجود هذه النتيجة أصلاً (مثال: نتيجة السبب الجذري لا
+// يمكن أن توجد دون دليل رؤية سابق -- انظر ROOT_CAUSE_VISION_REQUIRED)، وليس
+// بيانات مُختلقة. step.final هي دائماً خطوة الاعتماد البشري ولا تُعرض أبداً
+// كخطوة مكتملة تلقائياً.
+function aiMiniFlow(steps){
+  const nodes = (steps || []).map((step, i) => {
+    const state = step.final ? 'awaiting' : ((step.done || step.value) ? 'done' : 'unavailable');
+    const icon = state === 'done' ? 'check' : state === 'awaiting' ? 'user-check' : 'circle-dashed';
+    const connector = i < steps.length - 1 ? `<span class="ai-mini-flow-connector"></span>` : '';
+    return `<div class="ai-mini-flow-node ai-mini-flow-${state}">
+      <div class="ai-mini-flow-row">
+        <span class="ai-mini-flow-marker"><i data-lucide="${icon}" class="w-3 h-3"></i></span>
+        ${connector}
+      </div>
+      <div class="ai-mini-flow-text">
+        <span class="ai-mini-flow-label">${escapeHTML(step.label)}</span>
+        ${step.value ? `<span class="ai-mini-flow-value">${escapeHTML(step.value)}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="ai-mini-flow" dir="rtl">${nodes}</div>`;
+}
+// ===== SHARED COMMAND CARD helpers — the unified presentation system used by
+// all three Inspector AI result surfaces (Vision, Root Cause, Work Order).
+// Originally built for renderVisionResult() alone; Root Cause and Work Order
+// now call these same functions unchanged to reuse the identical approved
+// visual language, instead of duplicating a second CSS/markup system. The
+// legacy aiMiniFlow/aiKpiTiles/aiFieldRow/aiListSection/aiHumanReviewNoticeHTML
+// functions above are no longer called by any render function but are left
+// in place rather than deleted (out of scope for a presentation-only pass).
+// No business logic lives here. Same no-fabrication contract throughout:
+// step.value/tile.value/list items must come from data already computed by
+// the caller, step.done marks a stage implicitly satisfied by this result
+// existing at all, step.final is always the human-decision node and is never
+// shown as auto-completed.
+function aiVisionTwin(steps){
+  const nodes = (steps || []).map((step, i) => {
+    const state = step.final ? 'awaiting' : ((step.done || step.value) ? 'done' : 'unavailable');
+    const icon = state === 'done' ? 'check' : state === 'awaiting' ? 'user-check' : 'circle-dashed';
+    const connectorFilled = !step.final && state === 'done';
+    const connector = i < steps.length - 1
+      ? `<span class="ai-vision-twin-connector${connectorFilled ? ' is-filled' : ''}"></span>`
+      : '';
+    return `<div class="ai-vision-twin-node ai-vision-twin-${state}">
+      <div class="ai-vision-twin-row">
+        <span class="ai-vision-twin-marker"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i></span>
+        ${connector}
+      </div>
+      <div class="ai-vision-twin-text">
+        <span class="ai-vision-twin-label">${escapeHTML(step.label)}</span>
+        ${step.value ? `<span class="ai-vision-twin-value">${escapeHTML(step.value)}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="ai-vision-twin" dir="rtl">${nodes}</div>`;
+}
+function aiVisionMetrics(tiles){
+  const usable = (tiles || []).filter(t => t && t.value);
+  if (!usable.length) return '';
+  return `<div class="ai-vision-metrics">${usable.map(t => `
+    <div class="ai-vision-metric-tile">
+      <div class="ai-vision-metric-label">${escapeHTML(t.label)}</div>
+      <div class="ai-vision-metric-value" style="${t.color ? `color:${t.color};` : ''}">${escapeHTML(t.value)}</div>
+    </div>`).join('')}</div>`;
+}
+function aiVisionFieldRow(label, value){
+  return value ? `<div class="ai-vision-field-row"><span class="ai-vision-field-label">${escapeHTML(label)}</span><span class="ai-vision-field-value">${escapeHTML(value)}</span></div>` : '';
+}
+function aiVisionListSection(label, items, tone){
+  if (!Array.isArray(items) || !items.length) return '';
+  const toneClass = tone === 'amber' ? ' ai-vision-list-amber' : tone === 'red' ? ' ai-vision-list-red' : '';
+  return `<div class="ai-vision-list-section${toneClass}"><p class="ai-vision-list-title">${escapeHTML(label)}</p><ul class="ai-vision-list">${items.map(i=>`<li>${escapeHTML(i)}</li>`).join('')}</ul></div>`;
+}
+function aiVisionWarnings(items){
+  if (!Array.isArray(items) || !items.length) return '';
+  return `<div class="ai-vision-warnings">
+    <div class="ai-vision-warnings-title"><i data-lucide="alert-triangle" class="w-4 h-4"></i> تنبيهات النظام</div>
+    <ul class="ai-vision-warnings-list">${items.map(i=>`<li>${escapeHTML(i)}</li>`).join('')}</ul>
+  </div>`;
+}
+function aiVisionApprovalFooter(){
+  return `<div class="ai-vision-approval">
+    <span class="ai-vision-approval-icon"><i data-lucide="badge-check" class="w-4 h-4"></i></span>
+    <span>التحليل استرشادي ويتطلب مراجعة واعتماد المراقب.</span>
+  </div>`;
+}
+// ===== VISION V3 — Municipal Intelligence Command Canvas helpers. Used ONLY
+// by renderVisionResult(). Deliberately independent from aiVisionTwin/
+// aiVisionMetrics/aiVisionFieldRow/aiVisionListSection/aiVisionWarnings/
+// aiVisionApprovalFooter above, which Root Cause and Work Order keep calling
+// unchanged -- nothing here can affect those two surfaces. Same
+// no-fabrication contract as aiVisionTwin: step.value/tile.value/list items
+// must come from data already computed by the caller; step.done marks a
+// stage implicitly satisfied by this result existing at all; step.final is
+// always the human-decision node and is never shown as auto-completed.
+function aiCanvasRail(steps){
+  const nodes = (steps || []).map((step, i) => {
+    const state = step.final ? 'awaiting' : ((step.done || step.value) ? 'done' : 'unavailable');
+    const icon = state === 'done' ? 'check' : state === 'awaiting' ? 'user-check' : 'circle-dashed';
+    const connectorFilled = !step.final && state === 'done';
+    const connector = i < steps.length - 1
+      ? `<span class="ai-canvas-rail-connector${connectorFilled ? ' is-filled' : ''}"></span>`
+      : '';
+    return `<div class="ai-canvas-rail-node ai-canvas-rail-${state}">
+      <div class="ai-canvas-rail-row">
+        <span class="ai-canvas-rail-marker"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i></span>
+        ${connector}
+      </div>
+      <div class="ai-canvas-rail-text">
+        <span class="ai-canvas-rail-label">${escapeHTML(step.label)}</span>
+        ${step.value ? `<span class="ai-canvas-rail-value">${escapeHTML(step.value)}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="ai-canvas-rail" dir="rtl">${nodes}</div>`;
+}
+function aiCanvasMetrics(tiles){
+  const usable = (tiles || []).filter(t => t && t.value);
+  if (!usable.length) return '';
+  return `<div class="ai-canvas-metrics">${usable.map(t => `
+    <div class="ai-canvas-metric">
+      <div class="ai-canvas-metric-label">${escapeHTML(t.label)}</div>
+      <div class="ai-canvas-metric-value" style="${t.color ? `color:${t.color};` : ''}">${escapeHTML(t.value)}</div>
+    </div>`).join('')}</div>`;
+}
+function aiCanvasField(label, value){
+  return value ? `<div class="ai-canvas-field"><span class="ai-canvas-field-label">${escapeHTML(label)}</span><span class="ai-canvas-field-value">${escapeHTML(value)}</span></div>` : '';
+}
+// Municipal decision hierarchy (Commit 4 — Arabic UX only): every
+// classification/severity/confidence field below is read from
+// intelligence.primaryIssue / intelligence.* -- the Municipal Consistency
+// Guard's ALREADY-RESOLVED output (see municipal-intelligence-engine.js) --
+// never from the raw analysis.categoryCode/severity/confidence, which may
+// still hold the model's original pre-correction claim. affectedAsset/
+// visibleDefect/evidenceStatements/uncertainties are read directly from
+// analysis.visualEvidence/analysis.uncertainties (Commit 2's structured
+// evidence) as the model's own stated perception -- distinct from, and
+// presented separately from, the corrected classification. No business
+// logic, taxonomy lookup, or Guard behavior is reproduced here; this is
+// presentation-only, reading fields that are already fully resolved
+// server-side before this response ever reaches the browser.
 function renderVisionResult(title, payload){
   const analysis = payload.analysis || {};
   const intelligence = payload.intelligence || {};
-  const confidencePct = Number.isFinite(analysis.confidence) ? Math.round(analysis.confidence * 100) : null;
-  const priority = intelligence.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || null;
+  const primaryIssue = intelligence.primaryIssue || {};
+  const confidenceSource = Number.isFinite(intelligence.confidence) ? intelligence.confidence : analysis.confidence;
+  const confidencePct = Number.isFinite(confidenceSource) ? Math.round(confidenceSource * 100) : null;
+  const priority = intelligence.prioritySuggestion?.prioritySuggestion || null;
   const priorityAr = priority ? (SMART_INPUT_PRIORITY_LABELS_AR[priority] || priority) : null;
   const reasons = Array.isArray(intelligence.prioritySuggestion?.reasonsAr) ? intelligence.prioritySuggestion.reasonsAr : [];
   const riskReasons = Array.isArray(intelligence.riskIndicators) ? intelligence.riskIndicators.map(r=>r?.reasonAr).filter(Boolean) : [];
   const responseWindowAr = SMART_INPUT_RESPONSE_WINDOW_LABELS_AR[intelligence.suggestedResponseWindow] || intelligence.suggestedResponseWindow || null;
   const department = intelligence.suggestedDepartment ? (SMART_INPUT_DEPARTMENT_LABELS_AR[intelligence.suggestedDepartment] || intelligence.suggestedDepartment) : null;
-  const summary = analysis.categoryLabelAr
-    ? `تم تصنيف الحالة كـ${escapeHTML(analysis.categoryLabelAr)}${department && responseWindowAr ? ` ويُوصى بإحالتها إلى ${escapeHTML(department)} خلال ${escapeHTML(responseWindowAr)}` : ''}.`
-    : '';
-  setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
+  const treatment = intelligence.suggestedTreatment || null;
+  const categoryLabelAr = primaryIssue.issueLabelAr || primaryIssue.categoryLabelAr || null;
+  const severity = primaryIssue.severity || null;
+  const severityAr = severity ? (SMART_INPUT_SEVERITY_LABELS_AR[severity] || severity) : null;
+  const evidence = analysis.visualEvidence && typeof analysis.visualEvidence === 'object' ? analysis.visualEvidence : null;
+  const affectedAssetAr = evidence?.affectedAsset ? (AI_ASSET_LABELS_AR[evidence.affectedAsset] || evidence.affectedAsset) : null;
+  const visibleDefectAr = evidence?.visibleDefect ? (AI_DEFECT_LABELS_AR[evidence.visibleDefect] || evidence.visibleDefect) : null;
+  const evidenceStatements = Array.isArray(evidence?.evidenceStatements) ? evidence.evidenceStatements : [];
+  const uncertainties = Array.isArray(analysis.uncertainties) ? analysis.uncertainties : [];
+  const systemWarnings = Array.isArray(primaryIssue.warnings) ? primaryIssue.warnings.map(aiWarningLabelAr) : [];
+
+  // 1. ملخص القرار التنفيذي — composed only from already-resolved fields; never manufactures a cause or unsupported fact.
+  const summaryParts = [];
+  if (categoryLabelAr) summaryParts.push(`تم رصد ${escapeHTML(categoryLabelAr)}`);
+  if (affectedAssetAr) summaryParts.push(`على ${escapeHTML(affectedAssetAr)}`);
+  if (severityAr) summaryParts.push(`بدرجة خطورة ${escapeHTML(severityAr)}`);
+  if (department && responseWindowAr) summaryParts.push(`ويوصى بإحالتها إلى ${escapeHTML(department)} ضمن ${escapeHTML(responseWindowAr)}`);
+  const summary = summaryParts.length ? summaryParts.join('، ') + '.' : '';
+
+  setText('aiResultTitle', 'نتيجة التحليل الميداني');
   setHTML('aiResultContent', `
     ${aiPrintHeader('تحليل الرؤية (Vision)', 'استرشادي — يتطلب مراجعة بشرية')}
-    <div class="bg-white border border-gray-200 rounded-xl p-4">
-      ${summary ? `<p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>` : ''}
-      ${aiKpiTiles([
-        confidencePct !== null ? { label:'الثقة', value:`${confidencePct}%` } : null,
-        priorityAr ? { label:'الأولوية', value:priorityAr, color: priority === 'URGENT' ? '#b91c1c' : priority === 'HIGH' ? '#b45309' : undefined } : null,
-        responseWindowAr ? { label:'SLA / زمن الاستجابة', value:responseWindowAr } : null,
+    <div class="ai-canvas" dir="rtl">
+      <div class="ai-canvas-header">
+        <p class="ai-canvas-subtitle">تحليل استرشادي لدعم قرار المراقب</p>
+        <div class="ai-canvas-pill-row">
+          <span class="ai-canvas-pill ai-canvas-pill-advisory">تحليل استرشادي</span>
+          <span class="ai-canvas-pill ai-canvas-pill-pending"><i data-lucide="user-check" class="w-3 h-3"></i> بانتظار اعتماد المراقب</span>
+        </div>
+      </div>
+      ${summary ? `<p class="ai-canvas-decision">${summary}</p>` : ''}
+      ${intelligence.publicSafetyRisk ? `<div class="ai-canvas-alert">
+        <div class="ai-canvas-alert-head"><i data-lucide="alert-triangle" class="w-4 h-4"></i> خطر محتمل على السلامة العامة — يتطلب أولوية استجابة عاجلة</div>
+        ${riskReasons.length ? `<ul class="ai-canvas-alert-reasons">${riskReasons.map(r=>`<li>${escapeHTML(r)}</li>`).join('')}</ul>` : ''}
+      </div>` : ''}
+      ${aiCanvasRail([
+        { label:'الصورة', done:true },
+        { label:'الأصل البلدي', value: affectedAssetAr },
+        { label:'الحالة المرئية', value: visibleDefectAr },
+        { label:'التصنيف', value: categoryLabelAr },
+        { label:'القرار البشري', final:true },
+      ])}
+      ${aiCanvasMetrics([
+        severityAr ? { label:'الخطورة', value:severityAr, color: severity === 'CRITICAL' ? 'var(--ui-danger)' : undefined } : null,
+        priorityAr ? { label:'الأولوية', value:priorityAr, color: priority === 'URGENT' ? 'var(--ui-danger)' : priority === 'HIGH' ? 'var(--ui-warning)' : undefined } : null,
         department ? { label:'الجهة المختصة', value:department } : null,
+        responseWindowAr ? { label:'زمن الاستجابة', value:responseWindowAr } : null,
+        confidencePct !== null ? { label:'الثقة', value:`${confidencePct}%` } : null,
       ].filter(Boolean))}
-      ${aiDigitalTwinFlow('vision')}
-      <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
-        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${severityBadgeClass(analysis.severity)}">${escapeHTML(analysis.categoryLabelAr || '-')}</span>
-        ${intelligence.publicSafetyRisk ? `<span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">⚠ خطر على السلامة العامة</span>` : ''}
+      ${reasons.length ? `<details class="ai-canvas-details"><summary>سبب تقدير الأولوية</summary><ul class="ai-canvas-list">${reasons.map(r=>`<li>${escapeHTML(r)}</li>`).join('')}</ul></details>` : ''}
+      <div>
+        <p class="ai-canvas-section-title">الأدلة المرئية</p>
+        ${affectedAssetAr || visibleDefectAr || treatment || evidenceStatements.length || analysis.shortSummaryAr ? `
+          ${aiCanvasField('الأصل البلدي المتأثر', affectedAssetAr)}
+          ${aiCanvasField('الحالة المرئية', visibleDefectAr)}
+          ${aiCanvasField('الإجراء الموصى به', treatment)}
+          ${evidenceStatements.length ? `<ul class="ai-canvas-list">${evidenceStatements.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ul>` : ''}
+          ${analysis.shortSummaryAr ? `<p class="ai-canvas-note">${escapeHTML(analysis.shortSummaryAr)}</p>` : ''}
+        ` : `<p class="ai-canvas-meta">لا تتوفر بيانات أدلة مرئية إضافية.</p>`}
       </div>
-      <div class="bg-gray-50 rounded-lg border border-gray-100 px-3" style="break-inside:avoid;">
-        ${aiFieldRow('الشدة', SMART_INPUT_SEVERITY_LABELS_AR[analysis.severity] || analysis.severity)}
-        ${aiFieldRow('المعالجة المقترحة', intelligence.suggestedTreatment)}
+      <div>
+        <p class="ai-canvas-section-title">التحقق الميداني</p>
+        ${systemWarnings.length ? `<ul class="ai-canvas-list ai-canvas-list-amber">${systemWarnings.map(w=>`<li>${escapeHTML(w)}</li>`).join('')}</ul>` : ''}
+        ${uncertainties.length
+          ? `<details class="ai-canvas-details"><summary>عرض التفاصيل (${uncertainties.length})</summary><ul class="ai-canvas-list">${uncertainties.map(u=>`<li>${escapeHTML(u)}</li>`).join('')}</ul></details>`
+          : ''}
+        ${!systemWarnings.length && !uncertainties.length ? `<p class="ai-canvas-meta">لا توجد بنود تحقق ميداني معلّقة حالياً.</p>` : ''}
       </div>
-      ${analysis.shortSummaryAr ? `<p class="text-sm text-gray-700 mt-3">${escapeHTML(analysis.shortSummaryAr)}</p>` : ''}
-      ${analysis.recommendedActionAr ? `<p class="text-sm font-bold text-gray-800 mt-2">الإجراء الموصى به: <span class="font-normal text-gray-700">${escapeHTML(analysis.recommendedActionAr)}</span></p>` : ''}
-      ${aiListSection('مؤشرات الخطر', riskReasons, 'text-xs text-amber-700')}
-      ${aiListSection('أسباب تقدير الأولوية', reasons, 'text-xs text-gray-500')}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
-        اقتراح استرشادي فقط من مزود الذكاء الاصطناعي المعتمد — يتطلب مراجعة بشرية صريحة قبل أي إجراء. لا يتم الحفظ أو الإسناد أو تغيير الحالة أو الإغلاق تلقائياً.
-      </p>
+      <div class="ai-canvas-gate">
+        <i data-lucide="badge-check" class="w-4 h-4"></i>
+        <span>التحليل استرشادي ويتطلب مراجعة واعتماد المراقب.</span>
+      </div>
     </div>`);
 }
 async function runVisionAnalysis(title){
@@ -5107,27 +5536,63 @@ function renderRootCauseResult(title, payload){
   const causes = Array.isArray(rc.probableCauses) ? rc.probableCauses : [];
   const evidence = Array.isArray(rc.evidenceForEachCause) ? rc.evidenceForEachCause : [];
   const missing = Array.isArray(rc.missingEvidence) ? rc.missingEvidence : [];
-  const steps = Array.isArray(rc.verificationSteps) ? rc.verificationSteps : [];
+  const verificationSteps = Array.isArray(rc.verificationSteps) ? rc.verificationSteps : [];
   const confidencePct = Number.isFinite(rc.confidence) ? Math.round(rc.confidence * 100) : null;
-  const summary = 'لا يوجد سبب جذري مؤكد؛ يلزم تحقق ميداني قبل اعتماد أي تفسير سببي.';
-  setText('aiResultTitle', `نتائج ${title} (اقتراح للمراجعة البشرية):`);
+  // rc.rootCauseProven semantics are read as-is from root-cause-advisory.js and
+  // never inverted here — only the Arabic label/pill color differ per state.
+  const provenAr = rc.rootCauseProven ? 'سبب مثبت' : 'غير مؤكد — يحتاج تحقق ميداني';
+  const provenColor = rc.rootCauseProven ? 'var(--ui-success)' : 'var(--ui-warning)';
+
+  // ملخص عرضي فقط: يعتمد حصراً على rootCauseProven وعدد الفرضيات العائدين من
+  // الخدمة، ولا يستنتج سبباً أو درجة يقين جديدة.
+  const summary = rc.rootCauseProven
+    ? 'تشير بيانات التحليل إلى سبب مثبت وفق المخرجات المتاحة؛ يبقى اعتماد المراقب مطلوباً.'
+    : causes.length
+      ? `تم تحديد ${causes.length} ${causes.length === 1 ? 'فرضية سببية محتملة' : 'فرضيات سببية محتملة'} تتطلب تحققاً ميدانياً قبل الاعتماد.`
+      : 'لا يوجد دليل كافٍ لتحديد آلية السبب؛ يتطلب الأمر تحققاً ميدانياً مباشراً.';
+  const listHTML = (items, tone, detailLabel) => {
+    if (!items.length) return '';
+    const list = values => `<ul class="ai-canvas-list${tone === 'amber' ? ' ai-canvas-list-amber' : ''}">${values.map(value => `<li>${escapeHTML(value)}</li>`).join('')}</ul>`;
+    if (items.length <= 2) return list(items);
+    return `${list(items.slice(0, 2))}<details class="ai-canvas-details"><summary>${detailLabel} (${items.length - 2})</summary>${list(items.slice(2))}</details>`;
+  };
+
+  setText('aiResultTitle', 'تحليل الأسباب المحتملة');
   setHTML('aiResultContent', `
     ${aiPrintHeader('تحليل السبب الجذري', 'استرشادي — غير مؤكد')}
-    <div class="bg-white border border-gray-200 rounded-xl p-4">
-      <p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>
-      ${aiKpiTiles([confidencePct !== null ? { label:'الثقة', value:`${confidencePct}%` } : null].filter(Boolean))}
-      ${aiDigitalTwinFlow('root-cause')}
-      <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
-        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold ${rc.rootCauseProven ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${rc.rootCauseProven ? 'سبب مؤكد' : 'غير مؤكد — يحتاج تحقق ميداني'}</span>
+    <div class="ai-canvas" dir="rtl">
+      <div class="ai-canvas-header">
+        <p class="ai-canvas-subtitle">تحليل استرشادي لدعم التحقق الميداني واتخاذ القرار</p>
+        <div class="ai-canvas-pill-row">
+          <span class="ai-canvas-pill ai-canvas-pill-advisory">تحليل استرشادي</span>
+          <span class="ai-canvas-pill ai-canvas-pill-pending"><i data-lucide="user-check" class="w-3 h-3"></i> بانتظار اعتماد المراقب</span>
+        </div>
       </div>
-      ${causes.length
-        ? aiListSection('فرضيات محتملة (تتطلب التحقق الميداني)', causes, 'text-sm text-gray-700') + aiListSection('الأدلة الداعمة', evidence, 'text-xs text-gray-500')
-        : `<p class="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-lg p-3">لا يوجد دليل بصري كافٍ لتحديد آلية السبب؛ يتطلب تحققاً ميدانياً.</p>`}
-      ${aiListSection('أدلة ناقصة', missing, 'text-xs text-gray-500')}
-      ${aiListSection('خطوات التحقق الموصى بها', steps, 'text-xs text-gray-500')}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
-        اقتراح استرشادي فقط — لا يمثل سبباً جذرياً مؤكداً حتى يتم التحقق الميداني. لا يتم الحفظ أو الإسناد أو تغيير الحالة أو الإغلاق تلقائياً.
-      </p>
+      <p class="ai-canvas-decision">${summary}</p>
+      ${aiCanvasRail([
+        { label:'الدليل المرئي', done:true },
+        { label:'الأسباب المحتملة', value: causes.length ? `${causes.length} فرضية` : null },
+        { label:'التحقق الميداني', value: (missing.length + verificationSteps.length) ? `${missing.length + verificationSteps.length} بنود` : null },
+        { label:'الاعتماد البشري', final:true },
+      ])}
+      ${aiCanvasMetrics([
+        { label:'حالة السبب', value:provenAr, color:provenColor },
+        confidencePct !== null ? { label:'مستوى الثقة', value:`${confidencePct}%` } : null,
+      ].filter(Boolean))}
+      ${causes.length || evidence.length ? `<section>
+        <p class="ai-canvas-section-title">الفرضيات والأدلة</p>
+        ${causes.length ? `<p class="ai-canvas-field-label">الأسباب المحتملة</p>${listHTML(causes, null, 'عرض فرضيات إضافية')}` : '<p class="ai-canvas-meta">لا تتوفر فرضيات سببية إضافية.</p>'}
+        ${evidence.length ? `<p class="ai-canvas-field-label" style="margin-top:12px;">الأدلة الداعمة</p>${listHTML(evidence, null, 'عرض أدلة إضافية')}` : ''}
+      </section>` : ''}
+      ${missing.length || verificationSteps.length ? `<section>
+        <p class="ai-canvas-section-title">التحقق الميداني</p>
+        ${missing.length ? `<p class="ai-canvas-field-label">الأدلة الناقصة</p>${listHTML(missing, 'amber', 'عرض متطلبات إضافية')}` : ''}
+        ${verificationSteps.length ? `<p class="ai-canvas-field-label" style="margin-top:12px;">خطوات التحقق الموصى بها</p>${listHTML(verificationSteps, 'amber', 'عرض خطوات إضافية')}` : ''}
+      </section>` : '<p class="ai-canvas-meta">لا توجد بنود تحقق ميداني إضافية في المخرجات الحالية.</p>'}
+      <div class="ai-canvas-gate">
+        <i data-lucide="badge-check" class="w-4 h-4"></i>
+        <span>التحليل استرشادي ويتطلب مراجعة واعتماد المراقب.</span>
+      </div>
     </div>`);
 }
 async function runRootCauseAnalysis(title){
@@ -5177,31 +5642,45 @@ function renderWorkOrderResult(title, payload){
   const closure = Array.isArray(wo.closureRequirements) ? wo.closureRequirements : [];
   const priorityAr = wo.priority ? (SMART_INPUT_PRIORITY_LABELS_AR[wo.priority] || wo.priority) : null;
   const summary = wo.workType
-    ? `مسودة عمل إرشادية لمعالجة ${escapeHTML(wo.workType)}${priorityAr && wo.targetSla ? ` بأولوية ${escapeHTML(priorityAr)} خلال ${escapeHTML(wo.targetSla)}` : ''}.`
-    : '';
-  setText('aiResultTitle', `${title} (مسودة استرشادية):`);
+    ? `مسودة عمل استرشادية لمعالجة ${escapeHTML(wo.workType)}${priorityAr && wo.targetSla ? ` بأولوية ${escapeHTML(priorityAr)} خلال ${escapeHTML(wo.targetSla)}` : ''}.`
+    : 'مسودة استرشادية تتطلب مراجعة واعتماد المراقب قبل أي إسناد أو تنفيذ.';
+  const list = (items, tone, label, disclose=true) => {
+    if (!items.length) return '';
+    const ul = values => `<ul class="ai-canvas-list${tone === 'amber' ? ' ai-canvas-list-amber' : ''}">${values.map(v=>`<li>${escapeHTML(v)}</li>`).join('')}</ul>`;
+    return disclose && items.length > 2 ? `${ul(items.slice(0,2))}<details class="ai-canvas-details"><summary>${label} (${items.length - 2})</summary>${ul(items.slice(2))}</details>` : ul(items);
+  };
+
+  setText('aiResultTitle', 'مسودة أمر عمل');
   setHTML('aiResultContent', `
     ${aiPrintHeader('مسودة أمر العمل', 'مسودة إرشادية')}
-    <div class="bg-white border border-gray-200 rounded-xl p-4">
-      ${summary ? `<p style="color:var(--color-navy);font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:12px;">${summary}</p>` : ''}
-      ${aiKpiTiles([
-        priorityAr ? { label:'الأولوية', value:priorityAr, color: wo.priority === 'URGENT' ? '#b91c1c' : wo.priority === 'HIGH' ? '#b45309' : undefined } : null,
-        wo.targetSla ? { label:'SLA / زمن الاستجابة', value:wo.targetSla } : null,
-        wo.recommendedDiscipline ? { label:'الجهة المختصة', value:wo.recommendedDiscipline } : null,
-      ].filter(Boolean))}
-      ${aiDigitalTwinFlow('work-order')}
-      <div class="flex flex-wrap items-center gap-2 mb-3" style="break-inside:avoid;">
-        <span class="ai-badge px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">مسودة إرشادية</span>
+    <div class="ai-canvas" dir="rtl">
+      <div class="ai-canvas-header">
+        <p class="ai-canvas-subtitle">مسودة استرشادية لدعم القرار والتنفيذ الميداني</p>
+        <div class="ai-canvas-pill-row">
+          <span class="ai-canvas-pill ai-canvas-pill-advisory">مسودة استرشادية</span>
+          <span class="ai-canvas-pill ai-canvas-pill-pending"><i data-lucide="user-check" class="w-3 h-3"></i> بانتظار اعتماد المراقب</span>
+        </div>
       </div>
-      <p class="font-bold text-lg text-gray-800">${escapeHTML(wo.workType||'-')} <span class="font-normal text-gray-500 text-base">— ${escapeHTML(wo.location||'-')}</span></p>
-      ${wo.scopeOfWork ? `<p class="text-sm text-gray-700 mt-3">${escapeHTML(wo.scopeOfWork)}</p>` : ''}
-      ${aiListSection('خطوات التنفيذ', steps, 'text-xs text-gray-600')}
-      ${aiListSection('اعتبارات السلامة', safety, 'text-xs text-red-700')}
-      ${aiListSection('الأدلة المطلوبة', evidence, 'text-xs text-gray-600')}
-      ${aiListSection('متطلبات الإغلاق', closure, 'text-xs text-gray-600')}
-      <p class="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mt-3" style="break-inside:avoid;">
-        مسودة استرشادية فقط — لا يتم الإسناد أو تغيير الحالة أو الإغلاق تلقائياً؛ يتطلب اعتماد المدير.
-      </p>
+      <p class="ai-canvas-decision">${summary}</p>
+      ${aiCanvasRail([
+        { label:'الحالة', value: wo.workType || null },
+        { label:'الإجراء المقترح', done: !!wo.scopeOfWork },
+        { label:'الجهة المختصة', value: wo.recommendedDiscipline || null },
+        { label:'زمن الاستجابة', value: wo.targetSla || null },
+        { label:'اعتماد المراقب', final:true },
+      ])}
+      ${aiCanvasMetrics([
+        priorityAr ? { label:'الأولوية', value:priorityAr, color: wo.priority === 'URGENT' ? '#b91c1c' : wo.priority === 'HIGH' ? '#b45309' : undefined } : null,
+        wo.recommendedDiscipline ? { label:'الجهة المختصة', value:wo.recommendedDiscipline } : null,
+        wo.targetSla ? { label:'زمن الاستجابة المستهدف', value:wo.targetSla } : null,
+      ].filter(Boolean))}
+      <section><p class="ai-canvas-section-title">نطاق أمر العمل</p>${aiCanvasField('نوع العمل',wo.workType)}${aiCanvasField('الموقع',wo.location)}${wo.scopeOfWork ? `<p class="ai-canvas-field-label" style="margin-top:10px;">الإجراء المقترح</p><p class="ai-canvas-note">${escapeHTML(wo.scopeOfWork)}</p>` : ''}</section>
+      ${steps.length ? `<section><p class="ai-canvas-section-title">التنفيذ الميداني</p>${list(steps,null,'عرض خطوات إضافية')}</section>` : ''}
+      ${safety.length ? `<section><p class="ai-canvas-section-title">السلامة</p>${list(safety,'amber','عرض تفاصيل إضافية',false)}</section>` : ''}
+      ${evidence.length ? `<section><p class="ai-canvas-section-title">الأدلة المطلوبة</p>${list(evidence,null,'عرض أدلة إضافية')}</section>` : ''}
+      ${closure.length ? `<section><p class="ai-canvas-section-title">متطلبات الإغلاق</p>${list(closure,null,'عرض التفاصيل')}</section>` : ''}
+      <p class="ai-canvas-note">لم يتم الإسناد تلقائياً، ولم يتم التنفيذ تلقائياً، ولا تمثل المسودة إجراء إغلاق. تتطلب اعتماداً بشرياً صريحاً.</p>
+      <div class="ai-canvas-gate"><i data-lucide="badge-check" class="w-4 h-4"></i><span>التحليل استرشادي ويتطلب مراجعة واعتماد المراقب.</span></div>
     </div>`);
 }
 window.generateCommunicationDraft = async function(){
