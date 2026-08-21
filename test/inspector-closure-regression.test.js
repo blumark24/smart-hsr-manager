@@ -19,10 +19,27 @@ test('GPS capture distinguishes denied permission and performs one bounded trans
   assert.match(dashboard, /runToken!==locationRunToken/);
 });
 
-test('Inspector remains GPS-only and cannot satisfy save requirements with a weak or manual source', () => {
-  assert.match(dashboard, /locationConfirmed === true && locationVerified === true && locationSource === 'gps'/);
-  assert.match(dashboard, /#manualAddressBtn,#inspectorManualLocationPanel,#manualLocationBtn,#useWeakLocationBtn,#editLocationBtn,#confirmLocationBtn,#locationCorrectionDialog\{display:none!important\}/);
+test('Inspector save policy accepts only explicit GPS or explicitly overridden weak GPS', () => {
+  assert.match(dashboard, /locationConfirmed === true\s*&& acceptedGpsSource/);
+  assert.match(dashboard, /locationVerified === true && locationSource === 'gps'/);
+  assert.match(dashboard, /locationSource === 'gps_weak' && locationWarningOverride === true/);
   assert.doesNotMatch(dashboard, /locationSource === 'manual_map'[^\n]*hasLocation/);
+});
+
+test('closure UI stops on persistence failure and requires server confirmation before success', () => {
+  const start = dashboard.indexOf('window.completeObservation = async function()');
+  const end = dashboard.indexOf('window.generatePdfReport', start);
+  const closeout = dashboard.slice(start, end);
+  const write = closeout.indexOf('await updateObservationInFirestore');
+  const failure = closeout.indexOf("Firestore closeout persistence failed", write);
+  const failureReturn = closeout.indexOf('return;', failure);
+  const readBack = closeout.indexOf('await getDocFromServer(doc(db, COLLECTION, currentSelectedObservation.docId))', failureReturn);
+  const localCompletion = closeout.indexOf("currentSelectedObservation.status = 'COMPLETED'", readBack);
+  const success = closeout.indexOf('تم إغلاق الملاحظة رقم', localCompletion);
+  assert.ok(write > -1 && failure > write && failureReturn > failure);
+  assert.ok(readBack > failureReturn && localCompletion > readBack && success > localCompletion);
+  assert.match(closeout, /لم يتم تغيير حالة الملاحظة/);
+  assert.match(closeout, /لم يتم تغيير الحالة المعروضة/);
 });
 
 test('every supported Firestore evidence field is authorized through the same tenant-scoped reader', () => {

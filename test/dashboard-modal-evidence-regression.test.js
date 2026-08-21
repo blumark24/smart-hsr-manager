@@ -62,13 +62,8 @@ test('authenticated storage read authorizes the canonical and legacy path fields
   ]);
 });
 
-test('inspector capture starts GPS automatically and hides every manual-location path', () => {
+test('inspector capture starts GPS automatically and applies the persisted-source gate', () => {
   assert.match(dashboard, /if \(id==='smartInputModal'\)[\s\S]*?window\.getLocation\(\);/);
-  assert.match(
-    dashboard,
-    /#manualAddressBtn,#inspectorManualLocationPanel,#manualLocationBtn,#useWeakLocationBtn,#editLocationBtn,#confirmLocationBtn,#locationCorrectionDialog\{display:none!important\}/
-  );
-  assert.match(dashboard, /if\(normalAllowed\) commitLocationSelection\(\);/);
   assert.match(dashboard, /locationSource=manual\?'manual_map':\(locationDragged\?'gps_corrected':\(locationWarningOverride\?'gps_weak':'gps'\)\)/);
-  assert.match(dashboard, /locationConfirmed === true && locationVerified === true && locationSource === 'gps'/);
+  assert.match(dashboard, /locationConfirmed === true\s*&& acceptedGpsSource/);
 });

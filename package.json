@@ -6,7 +6,7 @@
     "build:css": "npx tailwindcss -i ./input.css -o ./output.css --minify",
     "watch:css": "npx tailwindcss -i ./input.css -o ./output.css --watch",
     "test:rules": "node test/run-firestore-rules.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules --test test/inspector-closure-regression.test.js test/municipal-consistency-guard.test.js test/municipal-vision-structured-evidence.test.js test/root-cause-advisory.test.js test/root-cause-work-order-endpoints.test.js test/sprint2-ai-guard.test.js test/sprint5d-inspector-human-review.test.js test/work-order-draft.test.js"
   },
   "keywords": [],
   "author": "",

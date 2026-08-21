@@ -178,6 +178,31 @@ test('A3 same-org inspector create with canonical schema: allow', async () => {
   await assertSucceeds(setDoc(doc(db, 'observations', 'obsNewA'), validInspectorCreate()));
 });
 
+test('A3.1 inspector GPS evidence has bounded coordinates and an explicit source policy', async () => {
+  const db = ctx(UID.insA);
+  const invalidShapes = [
+    { originalLat: 90.001 }, { originalLat: -90.001 },
+    { correctedLat: 90.001 }, { correctedLat: -90.001 },
+    { originalLng: 180.001 }, { originalLng: -180.001 },
+    { correctedLng: 180.001 }, { correctedLng: -180.001 },
+    { originalLat: '1' }, { originalLng: '2' },
+    { correctedLat: '1' }, { correctedLng: '2' },
+    { locationSource: 'manual_map', locationVerified: false },
+    { locationSource: 'forged', locationVerified: true },
+    { locationSource: 'gps', locationVerified: false },
+    { locationSource: 'gps_weak', locationVerified: true },
+  ];
+  for (const [index, override] of invalidShapes.entries()) {
+    const id = `gps-invalid-${index}`;
+    await assertFails(setDoc(doc(db, 'observations', id), validInspectorCreate({
+      clientRequestId: id, ...override,
+    })));
+  }
+  await assertSucceeds(setDoc(doc(db, 'observations', 'gps-weak-valid'), validInspectorCreate({
+    clientRequestId: 'gps-weak-valid', locationSource: 'gps_weak', locationVerified: false,
+  })));
+});
+
 test('A4 cross-org inspector read: deny', async () => {
   await assertFails(getDoc(doc(ctx(UID.insA), 'observations', 'obsB')));
 });

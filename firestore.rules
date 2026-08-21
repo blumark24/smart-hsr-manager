@@ -132,8 +132,25 @@ service cloud.firestore {
         && data.riskAssessment is map
         && data.riskAssessment.keys().hasOnly(['priority', 'timeframe'])
         && data.location is string
+        // GPS is client-originated evidence, not device-attested truth. These
+        // checks enforce a canonical, bounded evidence shape and deliberately
+        // do not claim that the browser's coordinates are cryptographically
+        // trustworthy.
+        && data.originalLat is number
+        && data.originalLat >= -90 && data.originalLat <= 90
+        && data.originalLng is number
+        && data.originalLng >= -180 && data.originalLng <= 180
+        && data.correctedLat is number
+        && data.correctedLat >= -90 && data.correctedLat <= 90
+        && data.correctedLng is number
+        && data.correctedLng >= -180 && data.correctedLng <= 180
         && data.locationSource is string
+        && data.locationSource in ['gps', 'gps_weak']
         && data.locationVerified is bool
+        // Normal GPS claims require the verified flag. A weak GPS location is
+        // intentionally retained as an explicit, unverified application
+        // state; manual/corrected/unknown sources cannot be persisted here.
+        && data.locationVerified == (data.locationSource == 'gps')
         && data.createdAt == request.time;
     }
 

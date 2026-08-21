@@ -3046,6 +3046,7 @@ import {
   getFirestore,
   doc,
   getDoc,
+  getDocFromServer,
   collection,
   query,
   where,
@@ -5054,18 +5055,33 @@ window.completeObservation = async function(){
     const compressedFile = await compressImage(currentAfterFile);
     const afterUrl = await uploadImageToStorage(compressedFile, "HSR/after", currentSelectedObservation.docId);
 
-    try {
-      await updateObservationInFirestore(currentSelectedObservation.docId, {
-        status: 'COMPLETED',
-        isComparative: true,
-        afterImagePath: afterUrl,
-        resolutionNote: note
-      });
-    } catch(e) {
-      console.warn("Firestore update failed, will still update UI", e);
-    }
+      try {
+        await updateObservationInFirestore(currentSelectedObservation.docId, {
+          status: 'COMPLETED',
+          isComparative: true,
+          afterImagePath: afterUrl,
+          resolutionNote: note
+        });
+      } catch(e) {
+        // Firestore is the source of truth. A rejected or unavailable write
+        // must never turn into a local-only closure confirmation.
+        console.warn("Firestore closeout persistence failed", { name:e?.name || 'Error', code:e?.code || null });
+        alert('تعذر تأكيد حفظ الإغلاق. لم يتم تغيير حالة الملاحظة؛ أعد المحاولة بعد التحقق من الاتصال والصلاحيات.');
+        return;
+      }
 
-    currentSelectedObservation.status = 'COMPLETED';
+      // A successful acknowledgement is followed by a server read-back before
+      // the UI claims closure. This prevents a stale/local result from being
+      // represented as a persisted workflow transition.
+      const persistedCloseout = await getDocFromServer(doc(db, COLLECTION, currentSelectedObservation.docId));
+      const persistedData = persistedCloseout.exists() ? persistedCloseout.data() : null;
+      if (!persistedData || persistedData.status !== 'COMPLETED') {
+        console.warn('Firestore closeout read-back did not confirm completion');
+        alert('تعذر تأكيد حالة الإغلاق من الخادم. لم يتم تغيير الحالة المعروضة؛ يرجى المحاولة لاحقاً.');
+        return;
+      }
+
+      currentSelectedObservation.status = 'COMPLETED';
     currentSelectedObservation.isComparative = true;
     currentSelectedObservation.afterImagePath = afterUrl;
     currentSelectedObservation.resolutionNote = note;
