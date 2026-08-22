@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { validateFieldSelection, validateLandsSelection } = require('../api/admin/users.js')._test;
+const { validateFieldSelection, validateLandsSelection, computeLandsSyncOperation } = require('../api/admin/users.js')._test;
 
 test('field selection: absent is valid and disabled', () => {
   assert.deepEqual(validateFieldSelection(undefined), { ok: true, present: false, enabled: false, role: null });
@@ -85,4 +85,43 @@ test('an invalid Lands role denies the whole request even if Field is valid', ()
   const result = wouldAllowCreate({ enabled: true, role: 'inspector' }, { enabled: true, role: 'lands_municipal_manager' });
   assert.equal(result.allowed, false);
   assert.equal(result.reason, 'invalid_lands_role');
+});
+
+// ---- computeLandsSyncOperation: which trusted Lands operation applies ----
+// (manager -> Lands trusted bridge, api/_lib/landsBridge.js)
+
+test('new Lands grant (never synced): entitlement.enable', () => {
+  const result = computeLandsSyncOperation(undefined, { enabled: true, role: 'lands_employee' });
+  assert.deepEqual(result, { operation: 'entitlement.enable', recordChanges: { lands_role: 'lands_employee' }, wasSynced: false });
+});
+
+test('role change on an already-synced account: entitlement.change_role', () => {
+  const previous = { enabled: true, role: 'lands_employee', syncStatus: 'synced' };
+  const result = computeLandsSyncOperation(previous, { enabled: true, role: 'lands_department_manager' });
+  assert.deepEqual(result, { operation: 'entitlement.change_role', recordChanges: { lands_role: 'lands_department_manager' }, wasSynced: true });
+});
+
+test('revoking an already-synced account: entitlement.disable', () => {
+  const previous = { enabled: true, role: 'lands_employee', syncStatus: 'synced' };
+  const result = computeLandsSyncOperation(previous, { enabled: false, role: null });
+  assert.deepEqual(result, { operation: 'entitlement.disable', recordChanges: undefined, wasSynced: true });
+});
+
+test('no-op: already synced with the same role', () => {
+  const previous = { enabled: true, role: 'lands_employee', syncStatus: 'synced' };
+  const result = computeLandsSyncOperation(previous, { enabled: true, role: 'lands_employee' });
+  assert.equal(result.operation, null);
+});
+
+test('no-op: disabling a Lands service that was never actually synced', () => {
+  const previous = { enabled: true, role: 'lands_employee', syncStatus: 'pending_trusted_sync' };
+  const result = computeLandsSyncOperation(previous, { enabled: false, role: null });
+  assert.equal(result.operation, null);
+});
+
+test('Field-only field selection never influences the Lands operation decision', () => {
+  // computeLandsSyncOperation takes only landsAccess state + the Lands
+  // selection — the Field role/selection is never a parameter, so Field
+  // changes can never leak into a Lands mutation decision.
+  assert.equal(computeLandsSyncOperation.length, 2);
 });

@@ -26,6 +26,17 @@ const {
   getCallerContext,
   assertCanManage,
 } = require('../_lib/authz');
+const { callLandsTrustedMutation } = require('../_lib/landsBridge');
+
+// The manager's own already-verified bearer token, forwarded as-is to Lands'
+// trusted mutation endpoint (see api/_lib/landsBridge.js). Extracted
+// separately from verifyRequestToken's decoded claims so authz.js's return
+// contract stays untouched for every other caller.
+function extractBearerToken(req) {
+  const header = (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
+  const m = /^Bearer\s+(.+)$/i.exec(String(header).trim());
+  return m ? m[1] : null;
+}
 
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
@@ -92,6 +103,26 @@ function validateFieldSelection(field) {
   if (field.enabled && !MANAGER_SCOPED_ROLES.includes(field.role)) return { ok: false, reason: 'invalid_field_role' };
   return { ok: true, present: true, enabled: field.enabled, role: field.enabled ? field.role : null };
 }
+// Pure decision function — no I/O. Lands' own entitlement.enable/disable are
+// single state transitions, not idempotent (calling entitlement.enable on an
+// already-enabled record fails on Lands' side), so the correct trusted
+// operation depends on the last state THIS API knows was actually synced —
+// never merely on what the manager is toggling in the form. Returns
+// operation:null when no real Lands-side change is needed.
+function computeLandsSyncOperation(previousLandsAccess, landsSel) {
+  const wasSynced = Boolean(previousLandsAccess && previousLandsAccess.enabled && previousLandsAccess.syncStatus === 'synced');
+  if (landsSel.enabled && !wasSynced) {
+    return { operation: 'entitlement.enable', recordChanges: { lands_role: landsSel.role }, wasSynced };
+  }
+  if (landsSel.enabled && wasSynced && previousLandsAccess.role !== landsSel.role) {
+    return { operation: 'entitlement.change_role', recordChanges: { lands_role: landsSel.role }, wasSynced };
+  }
+  if (!landsSel.enabled && wasSynced) {
+    return { operation: 'entitlement.disable', recordChanges: undefined, wasSynced };
+  }
+  return { operation: null, recordChanges: undefined, wasSynced };
+}
+
 function validateLandsSelection(lands) {
   if (lands === undefined) return { ok: true, present: false, enabled: false, role: null };
   if (typeof lands !== 'object' || lands === null || typeof lands.enabled !== 'boolean') {
@@ -156,6 +187,7 @@ async function handler(req, res) {
   } catch (e) {
     return sendJson(res, e.statusCode || 401, { error: 'unauthenticated' });
   }
+  const rawToken = extractBearerToken(req); // forwarded verbatim to the Lands bridge only, never logged or stored
 
   // ---- authorize (owner: any org; manager: own org, inspector/contractor only) ----
   const caller = await getCallerContext(decoded.uid);
@@ -269,6 +301,18 @@ async function handler(req, res) {
         if (isNonEmptyString(name)) createParams.displayName = name.trim();
         const userRecord = await auth.createUser(createParams);
 
+        // A brand-new Lands membership is always entitlement.enable — never
+        // change_role, since no prior membership can exist for a uid that
+        // was just created. See setServices below for the change_role and
+        // disable cases on an EXISTING account.
+        const landsSync = landsSel.enabled
+          ? await callLandsTrustedMutation({
+              idToken: rawToken, municipalityId: organizationId,
+              operation: 'entitlement.enable', recordId: userRecord.uid,
+              recordChanges: { lands_role: landsSel.role },
+            })
+          : null;
+
         const doc = {
           uid: userRecord.uid,
           email: email.trim(),
@@ -283,7 +327,8 @@ async function handler(req, res) {
           doc.landsAccess = {
             enabled: true, role: landsSel.role,
             requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(),
-            syncStatus: 'pending_trusted_sync',
+            syncStatus: landsSync.ok ? 'synced' : 'pending_trusted_sync',
+            ...(landsSync.ok ? { lastAuditEventId: landsSync.eventId || null } : { syncError: landsSync.reason }),
           };
         }
         await db.collection('users').doc(userRecord.uid).set(doc);
@@ -291,7 +336,9 @@ async function handler(req, res) {
         return sendJson(res, 200, {
           uid: userRecord.uid, email: email.trim(), organizationId, active: true,
           field: { enabled: fieldSel.enabled, role: fieldSel.role },
-          lands: { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? 'pending_trusted_sync' : null },
+          lands: landsSel.enabled
+            ? { enabled: true, role: landsSel.role, syncStatus: landsSync.ok ? 'synced' : 'pending_trusted_sync', syncError: landsSync.ok ? null : landsSync.reason }
+            : { enabled: false, role: null, syncStatus: null },
         });
       }
 
@@ -318,29 +365,49 @@ async function handler(req, res) {
         // users/{uid} only ever holds supervisor/inspector/contractor/null
         // (Lands-only) records — never a manager/owner — so the same-org
         // check alone is the correct, sufficient authorization here.
+        const municipalityId = record.data.organizationId;
         if (!caller.isOwner) {
-          if (!caller.isManager || record.data.organizationId !== caller.organizationId) {
+          if (!caller.isManager || municipalityId !== caller.organizationId) {
             return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
           }
         }
 
         const update = { updatedAt: FieldValue.serverTimestamp() };
         if (fieldSel.present) update.role = fieldSel.role;
+
+        let landsSync = null;
         if (landsSel.present) {
-          update.landsAccess = landsSel.enabled
-            ? {
-                enabled: true, role: landsSel.role,
-                requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(),
-                syncStatus: 'pending_trusted_sync',
-              }
-            : FieldValue.delete();
+          const previous = record.data.landsAccess;
+          const { operation, recordChanges, wasSynced } = computeLandsSyncOperation(previous, landsSel);
+
+          if (operation) {
+            landsSync = await callLandsTrustedMutation({
+              idToken: rawToken, municipalityId,
+              operation, recordId: uid,
+              ...(recordChanges !== undefined ? { recordChanges } : {}),
+            });
+          }
+
+          if (landsSel.enabled) {
+            update.landsAccess = {
+              enabled: true, role: landsSel.role,
+              requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(),
+              syncStatus: landsSync ? (landsSync.ok ? 'synced' : 'pending_trusted_sync') : (wasSynced ? 'synced' : 'pending_trusted_sync'),
+              ...(landsSync && landsSync.ok ? { lastAuditEventId: landsSync.eventId || null } : {}),
+              ...(landsSync && !landsSync.ok ? { syncError: landsSync.reason } : {}),
+            };
+          } else {
+            update.landsAccess = FieldValue.delete();
+          }
         }
         await record.ref.set(update, { merge: true });
 
         return sendJson(res, 200, {
           uid,
           field: fieldSel.present ? { enabled: fieldSel.enabled, role: fieldSel.role } : undefined,
-          lands: landsSel.present ? { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? 'pending_trusted_sync' : null } : undefined,
+          lands: landsSel.present
+            ? { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? (update.landsAccess.syncStatus) : null, syncError: landsSync && !landsSync.ok ? landsSync.reason : null }
+            : undefined,
         });
       }
 
@@ -441,4 +508,4 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
-module.exports._test = { passwordPolicyReason, validateFieldSelection, validateLandsSelection };
+module.exports._test = { passwordPolicyReason, validateFieldSelection, validateLandsSelection, computeLandsSyncOperation };
