@@ -492,16 +492,58 @@
           <label class="text-sm font-bold">البريد</label>
           <input id="addEmail" type="email" class="border rounded-xl p-2 w-full" placeholder="ahmed@example.com"/>
         </div>
-        <div>
-          <label class="text-sm font-bold">الدور</label>
-          <select id="addRole" class="border rounded-xl p-2 w-full">
+        <div class="md:col-span-2 border-t pt-3 mt-1">
+          <label class="text-sm font-bold block mb-2">الخدمات المفعّلة</label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="border rounded-xl p-3">
+              <label class="flex items-center gap-2 font-bold"><input type="checkbox" id="addFieldEnabled" checked onchange="syncAddServiceInputs()"> الحصر الميداني</label>
+              <select id="addRole" class="border rounded-xl p-2 w-full mt-2">
+                <option value="supervisor">مشرف مساعد</option>
+                <option value="inspector">مراقب</option>
+                <option value="contractor">مقاول</option>
+              </select>
+            </div>
+            <div class="border rounded-xl p-3">
+              <label class="flex items-center gap-2 font-bold"><input type="checkbox" id="addLandsEnabled" onchange="syncAddServiceInputs()"> حصر منح الأراضي الذكي</label>
+              <select id="addLandsRole" class="border rounded-xl p-2 w-full mt-2" disabled>
+                <option value="lands_employee">موظف أراضي</option>
+                <option value="lands_department_manager">مدير قسم الأراضي</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="md:col-span-2 text-xs text-gray-500">سيتم إنشاء الحساب بدون كلمة مرور. استخدم «إدارة الوصول» من جدول المستخدمين لتعيين كلمة مرور آمنة بعد تأكيد هوية المدير. صلاحية حصر الأراضي تُسجَّل هنا كطلب بانتظار المزامنة مع نظام الأراضي الموثوق، ولا تمنح وصولًا فعليًا حتى تكتمل هذه المزامنة.</div>
+        <div id="addUserError" class="md:col-span-2 text-xs text-red-600" hidden></div>
+        <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveUser()">حفظ</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalServices" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between border-b pb-2 mb-3">
+        <h3 class="text-xl font-extrabold">🧩 خدمات المستخدم — <span id="servicesUserName">—</span></h3>
+        <button class="text-2xl" aria-label="إغلاق نافذة إدارة الخدمات" onclick="closeModal('modalServices')">&times;</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="border rounded-xl p-3">
+          <label class="flex items-center gap-2 font-bold"><input type="checkbox" id="svcFieldEnabled" onchange="syncServicesInputs()"> الحصر الميداني</label>
+          <select id="svcFieldRole" class="border rounded-xl p-2 w-full mt-2">
             <option value="supervisor">مشرف مساعد</option>
             <option value="inspector">مراقب</option>
             <option value="contractor">مقاول</option>
           </select>
         </div>
-        <div class="md:col-span-2 text-xs text-gray-500">سيتم إنشاء الحساب بدون كلمة مرور. استخدم «إدارة الوصول» من جدول المستخدمين لتعيين كلمة مرور آمنة بعد تأكيد هوية المدير.</div>
-        <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveUser()">حفظ</button></div>
+        <div class="border rounded-xl p-3">
+          <label class="flex items-center gap-2 font-bold"><input type="checkbox" id="svcLandsEnabled" onchange="syncServicesInputs()"> حصر منح الأراضي الذكي</label>
+          <select id="svcLandsRole" class="border rounded-xl p-2 w-full mt-2">
+            <option value="lands_employee">موظف أراضي</option>
+            <option value="lands_department_manager">مدير قسم الأراضي</option>
+          </select>
+        </div>
+        <div class="md:col-span-2 text-xs text-gray-500">إلغاء تفعيل خدمة هنا يزيل صلاحيتها فقط ولا يحذف حساب المستخدم أو الخدمة الأخرى. صلاحية حصر الأراضي طلب بانتظار المزامنة مع نظام الأراضي الموثوق ولا تمنح وصولًا فعليًا حتى تكتمل هذه المزامنة.</div>
+        <div id="servicesError" class="md:col-span-2 text-xs text-red-600" hidden></div>
+        <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveServices()">حفظ الخدمات</button></div>
       </div>
     </div>
   </div>
@@ -874,9 +916,17 @@ const firebaseConfig = await resolveFirebaseConfig();
 
     // ===== Users =====
     function roleBadge(role){
+      if(!role) return `<span class="pill bg-gray-300 text-gray-700">بدون دور ميداني</span>`;
       const map={manager:'مدير المؤسسة', supervisor:'مشرف مساعد', inspector:'مراقب', contractor:'مقاول'};
       const cls={manager:'bg-slate-800 text-white', supervisor:'bg-indigo-600 text-white', inspector:'bg-sky-600 text-white', contractor:'bg-emerald-600 text-white'};
       return `<span class="pill ${cls[role]||'bg-gray-400 text-white'}">${escapeHTML(map[role]||role)}</span>`
+    }
+    const LANDS_ROLE_LABELS = { lands_employee:'موظف أراضي', lands_department_manager:'مدير قسم الأراضي' };
+    function landsBadge(u){
+      const access = u.landsAccess;
+      if(!access || !access.enabled) return `<span class="pill bg-gray-200 text-gray-500">—</span>`;
+      const label = LANDS_ROLE_LABELS[access.role] || access.role;
+      return `<span class="pill bg-teal-600 text-white" title="طلب مسجّل بانتظار المزامنة مع نظام الأراضي الموثوق">${escapeHTML(label)} · بانتظار المزامنة</span>`;
     }
     function statusSwitch(u){
       const t = u.active? 'تعطيل' : 'تفعيل';
@@ -897,12 +947,13 @@ const firebaseConfig = await resolveFirebaseConfig();
       body.innerHTML = filtered.map(u=>
         `<tr>
           <td data-label="الاسم" class="management-primary">${escapeHTML(u.name)}</td>
-          <td data-label="الدور">${roleBadge(u.role)}</td>
+          <td data-label="الدور"><div class="flex flex-col gap-1 items-start">${roleBadge(u.role)}${landsBadge(u)}</div></td>
           <td data-label="البريد" class="management-secondary">${escapeHTML(u.email)}</td>
           <td data-label="الحالة">${u.active?'<span class="tag bg-green-100 text-green-700">نشط</span>':'<span class="tag bg-red-100 text-red-700">معطل</span>'}</td>
           <td data-label="إجراءات" class="text-center">
             <div class="management-actions">
               ${isManagerMode() ? `${statusSwitch(u)}
+              <button class="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-full" onclick="openServicesManagement(decodeURIComponent('${safeActionId(u.id)}'))">الخدمات</button>
               ${['inspector','contractor'].includes(u.role)?`<button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="openAccessManagement(decodeURIComponent('${safeActionId(u.id)}'),this)">إدارة الوصول</button>`:''}
               <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="revokeUserSessions(decodeURIComponent('${safeActionId(u.id)}'))">إنهاء الجلسات</button>` : '<span class="text-xs text-gray-500">عرض فقط</span>'}
             </div>
@@ -920,7 +971,7 @@ const firebaseConfig = await resolveFirebaseConfig();
     // restricts the manager to inspector/contractor records of its OWN
     // organizationId. Passwords are never returned, stored, or logged here.
     const ADMIN_API = '/api/admin/users';
-    const SAFE_ADMIN_REASONS = new Set(['reauthentication_required','password_management_denied','password_target_denied','target_organization_mismatch','password_policy_failed','email_already_exists','invalid_email','invalid_password','temporary_failure']);
+    const SAFE_ADMIN_REASONS = new Set(['reauthentication_required','password_management_denied','password_target_denied','target_organization_mismatch','password_policy_failed','email_already_exists','invalid_email','invalid_password','temporary_failure','at_least_one_service_required','invalid_field_role','invalid_lands_role','invalid_field_selection','invalid_lands_selection','no_service_changes','cross_organization_denied']);
     function safeAdminErrorMessage(error){
       const messages={
         reauthentication_required:'انتهت صلاحية جلسة المدير. يرجى تأكيد الهوية مجددًا.',
@@ -931,7 +982,14 @@ const firebaseConfig = await resolveFirebaseConfig();
         email_already_exists:'البريد الإلكتروني مستخدم مسبقًا. استخدم بريدًا آخر أو راجع الحساب الحالي.',
         invalid_email:'صيغة البريد الإلكتروني غير صحيحة.',
         invalid_password:'كلمة المرور لا تستوفي متطلبات الأمان.',
-        temporary_failure:'تعذر الاتصال بخدمة إدارة الحسابات. حاول لاحقًا.'
+        temporary_failure:'تعذر الاتصال بخدمة إدارة الحسابات. حاول لاحقًا.',
+        at_least_one_service_required:'فعّل خدمة واحدة على الأقل قبل الحفظ.',
+        invalid_field_role:'الدور الميداني المحدد غير صالح.',
+        invalid_lands_role:'دور الأراضي المحدد غير صالح.',
+        invalid_field_selection:'بيانات الحصر الميداني غير صحيحة.',
+        invalid_lands_selection:'بيانات حصر الأراضي غير صحيحة.',
+        no_service_changes:'لم يتم تحديد أي تغيير على الخدمات.',
+        cross_organization_denied:'المستخدم لا ينتمي إلى مؤسستك.'
       };
       return messages[SAFE_ADMIN_REASONS.has(error?.reason)?error.reason:'temporary_failure'];
     }
@@ -971,28 +1029,90 @@ const firebaseConfig = await resolveFirebaseConfig();
     }
 
     // إنشاء مستخدم عبر واجهة الخادم الآمنة — يُقتصر على مراقب/مقاول ضمن مؤسسة المدير نفسه
+    function syncAddServiceInputs(){
+      $('#addRole').disabled = !$('#addFieldEnabled').checked;
+      $('#addLandsRole').disabled = !$('#addLandsEnabled').checked;
+    }
+    window.syncAddServiceInputs = syncAddServiceInputs;
+
+    function setInlineError(id, message){
+      const el = $('#'+id);
+      if(!el) return;
+      if(!message){ el.hidden = true; el.textContent=''; return; }
+      el.hidden = false; el.textContent = message;
+    }
+
+    // إنشاء مستخدم عبر واجهة الخادم الآمنة — الحصر الميداني وحصر الأراضي
+    // خدمتان مستقلتان؛ يمكن تفعيل إحداهما أو كلتيهما لنفس الحساب.
     async function saveUser(){
       if(!requireManagerMode()) return;
+      setInlineError('addUserError', null);
       const name=$('#addName').value.trim();
       const email=$('#addEmail').value.trim();
-      const role=$('#addRole').value;
-      const ALLOWED_ROLES = ['supervisor', 'inspector', 'contractor'];
-      if(!name||!email){ alert('الرجاء تعبئة الاسم والبريد.'); return; }
-      if(!ALLOWED_ROLES.includes(role)){
-        alert('الدور المحدد غير صالح. يُسمح بمشرف مساعد أو مراقب أو مقاول.');
-        return;
-      }
-      if(!managerContext.organizationId){ alert('تعذر تحديد مؤسستك. الرجاء إعادة تسجيل الدخول.'); return; }
+      const fieldEnabled = $('#addFieldEnabled').checked;
+      const landsEnabled = $('#addLandsEnabled').checked;
+      if(!name||!email){ setInlineError('addUserError','الرجاء تعبئة الاسم والبريد.'); return; }
+      if(!fieldEnabled && !landsEnabled){ setInlineError('addUserError','فعّل خدمة واحدة على الأقل قبل الحفظ.'); return; }
+      if(!managerContext.organizationId){ setInlineError('addUserError','تعذر تحديد مؤسستك. الرجاء إعادة تسجيل الدخول.'); return; }
+      const field = { enabled: fieldEnabled, role: fieldEnabled ? $('#addRole').value : null };
+      const lands = { enabled: landsEnabled, role: landsEnabled ? $('#addLandsRole').value : null };
       try{
-        await callAdminApi({ action:'create', organizationId: managerContext.organizationId, role, email, name });
+        await callAdminApi({ action:'create', organizationId: managerContext.organizationId, email, name, field, lands });
         closeModal('modalAddUser');
-        $('#addName').value=''; $('#addEmail').value=''; $('#addRole').value='inspector';
-        showToast('✅ تم إنشاء المستخدم بنجاح. استخدم «إدارة الوصول» لتعيين كلمة الدخول.');
+        $('#addName').value=''; $('#addEmail').value='';
+        $('#addFieldEnabled').checked = true; $('#addRole').value='inspector';
+        $('#addLandsEnabled').checked = false; $('#addLandsRole').value='lands_employee';
+        syncAddServiceInputs();
+        showToast(landsEnabled
+          ? '✅ تم إنشاء المستخدم. طلب حصر الأراضي مسجّل بانتظار المزامنة مع النظام الموثوق.'
+          : '✅ تم إنشاء المستخدم بنجاح. استخدم «إدارة الوصول» لتعيين كلمة الدخول.');
       }catch(err){
-        showToast(safeAdminErrorMessage(err));
+        setInlineError('addUserError', safeAdminErrorMessage(err));
       }
     }
     window.saveUser = saveUser;
+
+    // ===== الخدمات (Field + Lands) لمستخدم قائم =====
+    let servicesTargetId = null;
+    function syncServicesInputs(){
+      $('#svcFieldRole').disabled = !$('#svcFieldEnabled').checked;
+      $('#svcLandsRole').disabled = !$('#svcLandsEnabled').checked;
+    }
+    window.syncServicesInputs = syncServicesInputs;
+
+    function openServicesManagement(id){
+      if(!requireManagerMode()) return;
+      const u = users.find(x=>x.id===id); if(!u) return;
+      servicesTargetId = id;
+      setInlineError('servicesError', null);
+      $('#servicesUserName').textContent = u.name || u.email || id;
+      const hasFieldRole = ['supervisor','inspector','contractor'].includes(u.role);
+      $('#svcFieldEnabled').checked = hasFieldRole;
+      $('#svcFieldRole').value = hasFieldRole ? u.role : 'inspector';
+      const landsAccess = u.landsAccess;
+      $('#svcLandsEnabled').checked = Boolean(landsAccess && landsAccess.enabled);
+      $('#svcLandsRole').value = (landsAccess && landsAccess.enabled && landsAccess.role) ? landsAccess.role : 'lands_employee';
+      syncServicesInputs();
+      openModal('modalServices');
+    }
+    window.openServicesManagement = openServicesManagement;
+
+    async function saveServices(){
+      if(!requireManagerMode() || !servicesTargetId) return;
+      setInlineError('servicesError', null);
+      const field = { enabled: $('#svcFieldEnabled').checked, role: $('#svcFieldEnabled').checked ? $('#svcFieldRole').value : null };
+      const lands = { enabled: $('#svcLandsEnabled').checked, role: $('#svcLandsEnabled').checked ? $('#svcLandsRole').value : null };
+      try{
+        await callAdminApi({ action:'setServices', uid: servicesTargetId, field, lands });
+        closeModal('modalServices');
+        showToast(lands.enabled
+          ? '✅ تم حفظ الخدمات. طلب حصر الأراضي مسجّل بانتظار المزامنة مع النظام الموثوق.'
+          : '✅ تم حفظ الخدمات.');
+      }catch(err){
+        setInlineError('servicesError', safeAdminErrorMessage(err));
+      }
+    }
+    window.saveServices = saveServices;
 
     async function toggleUser(id){
       if(!requireManagerMode()) return;

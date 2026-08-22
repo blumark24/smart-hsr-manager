@@ -19,6 +19,7 @@ const { getAuth, getDb, FieldValue } = require('../_lib/firebaseAdmin');
 const {
   MANAGEABLE_ROLES,
   MANAGER_SCOPED_ROLES,
+  LANDS_MANAGEABLE_ROLES,
   MANAGER_MANAGEMENT_ENABLED,
   collectionForRole,
   verifyRequestToken,
@@ -73,6 +74,33 @@ function passwordPolicyReason(password, target) {
   return identityParts.some(value => normalized.includes(value)) ? 'password_policy_failed' : null;
 }
 
+// ---- multi-service entitlement helpers (Smart HSR Manager + Smart HSR Lands) ----
+// A user account is ONE Firebase identity; each service's access is declared
+// independently here. Field's existing top-level role/active/organizationId
+// fields are untouched and remain the sole source of truth for Field access
+// (see firestore.rules isActiveOrgUser()) — this only adds a sibling
+// `landsAccess` field. Crucially, landsAccess is a MANAGER-DECLARED REQUEST,
+// never the real grant: actual Lands authorization lives in Lands' own
+// landsMunicipalities/{municipality_id}/userAccess/{uid} document, written
+// only through Lands' trusted mutation endpoint (a cross-origin service this
+// Admin API cannot safely call yet — see server _test note / final report).
+function validateFieldSelection(field) {
+  if (field === undefined) return { ok: true, present: false, enabled: false, role: null };
+  if (typeof field !== 'object' || field === null || typeof field.enabled !== 'boolean') {
+    return { ok: false, reason: 'invalid_field_selection' };
+  }
+  if (field.enabled && !MANAGER_SCOPED_ROLES.includes(field.role)) return { ok: false, reason: 'invalid_field_role' };
+  return { ok: true, present: true, enabled: field.enabled, role: field.enabled ? field.role : null };
+}
+function validateLandsSelection(lands) {
+  if (lands === undefined) return { ok: true, present: false, enabled: false, role: null };
+  if (typeof lands !== 'object' || lands === null || typeof lands.enabled !== 'boolean') {
+    return { ok: false, reason: 'invalid_lands_selection' };
+  }
+  if (lands.enabled && !LANDS_MANAGEABLE_ROLES.includes(lands.role)) return { ok: false, reason: 'invalid_lands_role' };
+  return { ok: true, present: true, enabled: lands.enabled, role: lands.enabled ? lands.role : null };
+}
+
 function safeAdminFailure(error) {
   const code = error && error.errorInfo && error.errorInfo.code;
   if (code === 'auth/email-already-exists') return { statusCode: 409, reason: 'email_already_exists' };
@@ -99,6 +127,7 @@ async function safeMetadata(auth, uid, record) {
     lastSignInTime = (u.metadata && u.metadata.lastSignInTime) || null;
     email = u.email || email;
   } catch (_) { /* auth user may not exist yet */ }
+  const landsAccess = record.data.landsAccess;
   return {
     uid,
     email,
@@ -107,6 +136,11 @@ async function safeMetadata(auth, uid, record) {
     organizationId: record.data.organizationId || null,
     mustChangePassword: record.data.mustChangePassword === true,
     lastSignInTime,
+    // Declared intent only — not proof of a real Lands membership. See the
+    // validateLandsSelection/setServices comment above.
+    landsAccess: landsAccess && landsAccess.enabled === true
+      ? { enabled: true, role: landsAccess.role || null, syncStatus: landsAccess.syncStatus || 'pending_trusted_sync' }
+      : { enabled: false, role: null, syncStatus: null },
   };
 }
 
@@ -154,7 +188,12 @@ async function handler(req, res) {
             .where('organizationId', '==', organizationId).get();
           for (const doc of snap.docs) {
             const data = doc.data() || {};
-            if (caller.isManager && !MANAGER_SCOPED_ROLES.includes(data.role)) continue;
+            // A manager sees same-org Field-role records as before, PLUS any
+            // record that only has a declared Lands entitlement (role is
+            // null there since Field was never enabled for that account).
+            const hasFieldRole = MANAGER_SCOPED_ROLES.includes(data.role);
+            const hasLandsDeclared = Boolean(data.landsAccess && data.landsAccess.enabled);
+            if (caller.isManager && !hasFieldRole && !hasLandsDeclared) continue;
             out.push(await safeMetadata(auth, doc.id, { data }));
           }
         }
@@ -162,7 +201,10 @@ async function handler(req, res) {
       }
 
       // ---- create a manager / supervisor / inspector / contractor ----
-      case 'create': {
+      // (original single-role shape — byte-for-byte unchanged so every
+      // existing caller, including owner-users.js, keeps working exactly as
+      // before)
+      case 'create': if (isNonEmptyString(body.role)) {
         const { organizationId, role, email, name, password } = body;
         if (!MANAGEABLE_ROLES.includes(role)) {
           return sendJson(res, 400, { error: 'invalid_role', allowed: MANAGEABLE_ROLES });
@@ -195,6 +237,110 @@ async function handler(req, res) {
         // Response never includes the password.
         return sendJson(res, 200, {
           uid: userRecord.uid, email: email.trim(), role, organizationId, active: true,
+        });
+      } else {
+        // ---- create a multi-service (Field and/or Lands) operational user ----
+        // Only ever creates users/{uid} records — never managers — so this
+        // path can never be used to create another manager or owner.
+        const { organizationId, email, name, field, lands } = body;
+        if (!isNonEmptyString(email) || !isNonEmptyString(organizationId)) {
+          return sendJson(res, 400, { error: 'email_and_organizationId_required' });
+        }
+        const fieldSel = validateFieldSelection(field);
+        if (!fieldSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: fieldSel.reason });
+        const landsSel = validateLandsSelection(lands);
+        if (!landsSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: landsSel.reason });
+        if (!fieldSel.enabled && !landsSel.enabled) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'at_least_one_service_required' });
+        }
+        // Same organization-scoping decision Field creation already applies;
+        // a nominal manageable Field role is used for the authorization check
+        // even when Lands-only, since a Lands-only account is still a
+        // same-organization operational user, never a manager/owner.
+        const decision = assertCanManage(caller, {
+          targetRole: fieldSel.enabled ? fieldSel.role : 'inspector',
+          targetOrganizationId: organizationId,
+        });
+        if (!decision.allowed) {
+          return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+        }
+
+        const createParams = { email: email.trim(), disabled: false };
+        if (isNonEmptyString(name)) createParams.displayName = name.trim();
+        const userRecord = await auth.createUser(createParams);
+
+        const doc = {
+          uid: userRecord.uid,
+          email: email.trim(),
+          name: isNonEmptyString(name) ? name.trim() : '',
+          role: fieldSel.role,
+          organizationId,
+          active: true,
+          createdBy: caller.uid,
+          createdAt: FieldValue.serverTimestamp(),
+        };
+        if (landsSel.enabled) {
+          doc.landsAccess = {
+            enabled: true, role: landsSel.role,
+            requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(),
+            syncStatus: 'pending_trusted_sync',
+          };
+        }
+        await db.collection('users').doc(userRecord.uid).set(doc);
+
+        return sendJson(res, 200, {
+          uid: userRecord.uid, email: email.trim(), organizationId, active: true,
+          field: { enabled: fieldSel.enabled, role: fieldSel.role },
+          lands: { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? 'pending_trusted_sync' : null },
+        });
+      }
+
+      // ---- set a user's per-service entitlements (Field and/or Lands) ----
+      // Field's changes here behave exactly like the existing status/role
+      // model (same MANAGER_SCOPED_ROLES, same organizationId scoping).
+      // Disabling a service clears its role/declaration without touching the
+      // Firebase Auth account or the other service — "remove a service
+      // without deleting the user account".
+      case 'setServices': {
+        const { uid, field, lands } = body;
+        if (!isNonEmptyString(uid)) return sendJson(res, 400, { error: 'uid_required' });
+        const record = await findRecord(db, uid);
+        if (!record || record.collection !== 'users') return sendJson(res, 404, { error: 'record_not_found' });
+
+        const fieldSel = validateFieldSelection(field);
+        if (!fieldSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: fieldSel.reason });
+        const landsSel = validateLandsSelection(lands);
+        if (!landsSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: landsSel.reason });
+        if (!fieldSel.present && !landsSel.present) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'no_service_changes' });
+        }
+
+        // users/{uid} only ever holds supervisor/inspector/contractor/null
+        // (Lands-only) records — never a manager/owner — so the same-org
+        // check alone is the correct, sufficient authorization here.
+        if (!caller.isOwner) {
+          if (!caller.isManager || record.data.organizationId !== caller.organizationId) {
+            return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
+          }
+        }
+
+        const update = { updatedAt: FieldValue.serverTimestamp() };
+        if (fieldSel.present) update.role = fieldSel.role;
+        if (landsSel.present) {
+          update.landsAccess = landsSel.enabled
+            ? {
+                enabled: true, role: landsSel.role,
+                requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(),
+                syncStatus: 'pending_trusted_sync',
+              }
+            : FieldValue.delete();
+        }
+        await record.ref.set(update, { merge: true });
+
+        return sendJson(res, 200, {
+          uid,
+          field: fieldSel.present ? { enabled: fieldSel.enabled, role: fieldSel.role } : undefined,
+          lands: landsSel.present ? { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? 'pending_trusted_sync' : null } : undefined,
         });
       }
 
@@ -295,4 +441,4 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
-module.exports._test = { passwordPolicyReason };
+module.exports._test = { passwordPolicyReason, validateFieldSelection, validateLandsSelection };
