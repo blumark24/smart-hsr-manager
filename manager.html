@@ -417,7 +417,8 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
           <h2 class="text-2xl font-extrabold">إدارة المستخدمين</h2>
           <div class="management-toolbar">
-            <input id="userSearch" type="text" placeholder="بحث بالاسم أو البريد" class="management-search" oninput="filterUsers()"/>
+            <input id="userSearch" type="text" placeholder="بحث بالاسم أو البريد" class="management-search" autocomplete="off" autocorrect="off" spellcheck="false" oninput="filterUsers()"/>
+            <button type="button" class="btn-soft" onclick="clearUserSearch()"><i data-lucide="x" class="w-4 h-4 ml-1"></i> مسح البحث</button>
             <button class="btn" data-manager-only onclick="openModal('modalAddUser')"><i data-lucide="user-plus" class="w-4 h-4 ml-1"></i> إضافة مستخدم</button>
           </div>
         </div>
@@ -846,6 +847,7 @@
     import { executeManagerAssignmentCallsite } from './platform/integration/manager-assignment-preview.mjs';
     import { maybeLoadAssignmentV2PreviewBundle } from './platform/integration/preview-bundle-loader.mjs';
     import { resolveFirebaseConfig } from './firebase-runtime-config.js';
+    import { belongsOnUsersList, deriveVisibleUsers } from './users-list-view.js';
 
 // إعدادات Firebase الخاصة بك
 const firebaseConfig = await resolveFirebaseConfig();
@@ -867,12 +869,24 @@ const firebaseConfig = await resolveFirebaseConfig();
     }
 
     // ===== State =====
+    // `users` is the sole authoritative list — every organization user doc
+    // last received from Firestore. It is only ever reassigned wholesale
+    // inside loadFromFirestore()'s onSnapshot success callback; nothing
+    // else may mutate or replace it. `usersViewState` is the only source
+    // of the current search text — renderUsers() reads from it (and from
+    // the DOM input, kept in sync) but never writes into the search input.
     let users = [];
+    const usersViewState = { search: '' };
     let observations = [];
     let selectedObservationId = null;
     let usersState = 'loading';   // 'loading' | 'ready' | 'error'
     let obsState = 'loading';     // 'loading' | 'ready' | 'error'
     let usersUnsub = null, obsUnsub = null;
+    // Incremented every time loadFromFirestore() (re)subscribes. A snapshot
+    // or error callback from a superseded subscription checks this before
+    // touching `users`, so a stale in-flight callback can never overwrite a
+    // newer list (latest-subscription-wins).
+    let usersLoadGeneration = 0;
     // Authenticated manager's own organization — set once by bootForManager()
     // and never trusted from anywhere else (fail closed if absent).
     const managerContext = { uid: null, role: null, organizationId: null, organizationName: '', name: '' };
@@ -1160,13 +1174,20 @@ const firebaseConfig = await resolveFirebaseConfig();
     function managementEmptyState(title,copy,icon='inbox',colspan=7){
       return `<tr><td colspan="${colspan}" class="management-empty-cell"><div class="management-empty"><span class="management-empty-icon" aria-hidden="true"><i data-lucide="${icon}"></i></span><strong class="management-empty-title">${escapeHTML(title)}</strong>${copy?`<span class="management-empty-copy">${escapeHTML(copy)}</span>`:''}</div></td></tr>`;
     }
+    // Pure with respect to search/filter state: reads the current search
+    // text into usersViewState but never writes back into the search
+    // input, and never mutates `users`. A transient loading/error state
+    // only ever replaces the table when there is genuinely no previously
+    // loaded list yet — once `users` has real data, a later error must
+    // never blank it (see the onSnapshot error handler in
+    // loadFromFirestore(), which shows a non-destructive toast instead).
     function renderUsers(){
       const body = document.getElementById('usersBody');
-      if(usersState==='loading'){ body.innerHTML = managementEmptyState('جاري تحميل المستخدمين','يرجى الانتظار حتى يكتمل الاتصال الآمن.','loader-circle',5); return; }
-      if(usersState==='error'){ body.innerHTML = managementEmptyState('تعذر تحميل المستخدمين','يرجى تحديث الصفحة أو المحاولة لاحقًا.','triangle-alert',5); return; }
+      if(usersState==='loading' && !users.length){ body.innerHTML = managementEmptyState('جاري تحميل المستخدمين','يرجى الانتظار حتى يكتمل الاتصال الآمن.','loader-circle',5); return; }
+      if(usersState==='error' && !users.length){ body.innerHTML = managementEmptyState('تعذر تحميل المستخدمين','يرجى تحديث الصفحة أو المحاولة لاحقًا.','triangle-alert',5); return; }
       if(!users.length){ body.innerHTML = managementEmptyState('لا يوجد مستخدمون حاليًا','ستظهر حسابات فريق المؤسسة هنا عند إضافتها.','users',5); return; }
-      const q = (document.getElementById('userSearch').value||'').trim().toLowerCase();
-      const filtered = users.filter(u=>!q || String(u.name||'').toLowerCase().includes(q) || String(u.email||'').toLowerCase().includes(q));
+      usersViewState.search = document.getElementById('userSearch').value||'';
+      const filtered = deriveVisibleUsers(users, usersViewState);
       if(!filtered.length){ body.innerHTML = managementEmptyState('لا توجد نتائج مطابقة','جرّب اسمًا أو بريدًا مختلفًا.','search-x',5); return; }
       body.innerHTML = filtered.map(u=>
         `<tr>
@@ -1187,6 +1208,16 @@ const firebaseConfig = await resolveFirebaseConfig();
       try{ lucide.createIcons(); }catch(e){}
     }
     window.filterUsers = ()=>renderUsers();
+
+    // The only function permitted to write into #userSearch's value — an
+    // explicit, user-initiated clear action. Nothing else in this file may
+    // assign to that input.
+    function clearUserSearch(){
+      const input = document.getElementById('userSearch');
+      if(input) input.value = '';
+      renderUsers();
+    }
+    window.clearUserSearch = clearUserSearch;
 
     // ===== Secure Admin API (server-enforced org + role scoping) =====
     // All account management (create/temp password/activate/deactivate/
@@ -1751,21 +1782,37 @@ const firebaseConfig = await resolveFirebaseConfig();
       usersState = 'loading'; obsState = 'loading';
       renderUsers(); renderObservations(); renderKPIs();
 
-      // Users (supervisors/inspectors/contractors) — scoped to this organization only.
+      // Latest-subscription-wins: a callback from a subscription this call
+      // has since replaced must never be allowed to write into `users`,
+      // even if it was already in flight when usersUnsub() ran above.
+      usersLoadGeneration += 1;
+      const usersGeneration = usersLoadGeneration;
+
+      // Users — scoped to this organization only. Every Field role
+      // (supervisor/inspector/contractor) AND every Lands-only account
+      // (role is null, recognized by its landsAccess object — see
+      // users-list-view.js) belongs on this list. A role-only whitelist
+      // here previously discarded every Lands-only employee silently.
       const usersQuery = query(collection(db,'users'), where('organizationId','==', organizationId));
       usersUnsub = onSnapshot(usersQuery, { includeMetadataChanges:true }, snap=>{
         if(snap.metadata.fromCache) return; // never render an unverified cached snapshot
+        if(usersGeneration !== usersLoadGeneration) return; // superseded subscription
         users = [];
         snap.forEach(d=>{
           const x = d.data() || {};
-          if(!['supervisor','inspector','contractor'].includes(x.role)) return; // defense in depth
+          if(!belongsOnUsersList(x)) return; // corrupt/incomplete doc only
           users.push({ id:d.id, ...x });
         });
         usersState = 'ready';
         markVerifiedNow(); renderUsers(); renderOperationsOverview(); renderTwinDetail(selectedTwinId?verifiedTwinObservations().find(o=>String(o.docId||o.id)===selectedTwinId):null);
       }, err=>{
+        if(usersGeneration !== usersLoadGeneration) return; // superseded subscription
         console.error('Users subscription failed', err);
-        usersState = 'error';
+        // A transient listener failure must never blank an already-loaded
+        // list — only the very first load (nothing shown yet) can
+        // legitimately show the error state instead of data.
+        if(users.length){ showToast('تعذر تحديث قائمة المستخدمين. ما زالت آخر البيانات المحملة معروضة.'); }
+        else{ usersState = 'error'; }
         renderUsers(); renderOperationsOverview();
       });
 
