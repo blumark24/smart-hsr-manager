@@ -7,3 +7,5 @@ ui-debug.log
 .env
 .env.*
 !.env.example
+.vercel
+.env*

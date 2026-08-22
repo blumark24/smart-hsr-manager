@@ -514,10 +514,6 @@
         </div>
         <div class="md:col-span-2 text-xs text-gray-500">سيتم إنشاء الحساب بدون كلمة مرور. استخدم «إدارة الوصول» من جدول المستخدمين لتعيين كلمة مرور آمنة بعد تأكيد هوية المدير.</div>
         <div id="addUserError" class="md:col-span-2 text-xs text-red-600" hidden></div>
-        <div id="addUserLandsBootstrapBanner" class="md:col-span-2 border border-amber-300 bg-amber-50 rounded-xl p-3 flex flex-col gap-2 items-start" hidden>
-          <p>تم تسجيل طلب حصر الأراضي، لكن مؤسستك لم تفعّل بعد صلاحية إدارة الأراضي الداخلية (إعداد لمرة واحدة لكل بلدية). فعّلها الآن ليكتمل ربط الحسابات تلقائيًا.</p>
-          <button type="button" class="btn" onclick="bootstrapLandsAuthority('addUserLandsBootstrapBanner')">تفعيل صلاحية إدارة الأراضي (إعداد لمرة واحدة)</button>
-        </div>
         <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveUser()">حفظ</button></div>
       </div>
     </div>
@@ -547,10 +543,6 @@
         </div>
         <div class="md:col-span-2 text-xs text-gray-500">إلغاء تفعيل خدمة هنا يزيل صلاحيتها فقط ولا يحذف حساب المستخدم أو الخدمة الأخرى.</div>
         <div id="servicesError" class="md:col-span-2 text-xs text-red-600" hidden></div>
-        <div id="servicesLandsBootstrapBanner" class="md:col-span-2 border border-amber-300 bg-amber-50 rounded-xl p-3 flex flex-col gap-2 items-start" hidden>
-          <p>تم تسجيل طلب حصر الأراضي، لكن مؤسستك لم تفعّل بعد صلاحية إدارة الأراضي الداخلية (إعداد لمرة واحدة لكل بلدية). فعّلها الآن ليكتمل ربط الحسابات تلقائيًا.</p>
-          <button type="button" class="btn" onclick="bootstrapLandsAuthority('servicesLandsBootstrapBanner')">تفعيل صلاحية إدارة الأراضي (إعداد لمرة واحدة)</button>
-        </div>
         <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveServices()">حفظ الخدمات</button></div>
       </div>
     </div>
@@ -932,10 +924,9 @@ const firebaseConfig = await resolveFirebaseConfig();
     const LANDS_ROLE_LABELS = { lands_employee:'موظف أراضي', lands_department_manager:'مدير قسم الأراضي' };
     function landsBadge(u){
       const access = u.landsAccess;
-      if(!access || !access.enabled) return `<span class="pill bg-gray-200 text-gray-500">—</span>`;
+      if(!access || !access.enabled || access.syncStatus !== 'synced') return `<span class="pill bg-gray-200 text-gray-500">حصر الأراضي: غير مفعل</span>`;
       const label = LANDS_ROLE_LABELS[access.role] || access.role;
-      if(access.syncStatus === 'synced') return `<span class="pill bg-emerald-600 text-white" title="عضوية أراضي فعلية ومفعّلة">${escapeHTML(label)} · مفعّل</span>`;
-      return `<span class="pill bg-amber-500 text-white" title="طلب مسجّل بانتظار المزامنة مع نظام الأراضي الموثوق">${escapeHTML(label)} · بانتظار المزامنة</span>`;
+      return `<span class="pill bg-emerald-600 text-white">${escapeHTML(label)} · مفعل</span>`;
     }
     function statusSwitch(u){
       const t = u.active? 'تعطيل' : 'تفعيل';
@@ -1051,44 +1042,16 @@ const firebaseConfig = await resolveFirebaseConfig();
       el.hidden = false; el.textContent = message;
     }
 
-    // A Lands sync attempt fails with LANDS_ACCESS_DENIED when the manager's
-    // own account has no landsMunicipalities membership at all yet — i.e.
-    // this municipality was never bootstrapped. Any other failure reason
-    // (not configured, unreachable, a real business-rule denial) is NOT an
-    // invitation to bootstrap, so the banner only ever appears for that one
-    // specific, identifiable cause.
-    const BOOTSTRAP_NEEDED_REASONS = new Set(['LANDS_ACCESS_DENIED']);
-    function maybeShowLandsBootstrapBanner(bannerId, landsResult){
-      const banner = $('#'+bannerId);
-      if(!banner) return;
-      const needsBootstrap = landsResult && landsResult.syncStatus !== 'synced' && BOOTSTRAP_NEEDED_REASONS.has(landsResult.syncError);
-      banner.hidden = !needsBootstrap;
+    // Institution-municipality Lands administration authority is a one-time
+    // platform/backend initialization step (api/admin/lands-bootstrap.js),
+    // performed once per municipality outside this dashboard — the manager
+    // never sees it as part of normal Add User / إدارة الخدمات. If a Lands
+    // sync attempt ever fails for that underlying reason, it surfaces to the
+    // manager as the same generic message as any other transient failure
+    // (see landsSyncFailureMessage below) — never a call to action.
+    function landsSyncFailureMessage(){
+      return 'تعذر تفعيل الخدمة حاليًا. حاول مرة أخرى.';
     }
-
-    // ONE-TIME municipality setup — never called automatically, only from a
-    // dedicated confirmed control shown contextually when a Lands sync
-    // attempt reveals the municipality was never bootstrapped.
-    async function bootstrapLandsAuthority(bannerId){
-      if(!requireManagerMode()) return;
-      if(!confirm('سيتم تفعيل صلاحية إدارة الأراضي الداخلية لمؤسستك — إجراء إعداد لمرة واحدة لكل بلدية. متابعة؟')) return;
-      try{
-        const token = await auth.currentUser.getIdToken();
-        const resp = await fetch('/api/admin/lands-bootstrap', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }
-        });
-        const data = await resp.json().catch(()=>({}));
-        if(!resp.ok){
-          showToast(data.reason==='manager_required' ? 'إدارة الأراضي متاحة لمدير المؤسسة فقط.' : 'تعذر تفعيل صلاحية إدارة الأراضي. حاول لاحقًا.');
-          return;
-        }
-        const el = $('#'+bannerId); if(el) el.hidden = true;
-        showToast(data.alreadyBootstrapped ? '✅ صلاحية إدارة الأراضي مفعّلة مسبقًا لمؤسستك.' : '✅ تم تفعيل صلاحية إدارة الأراضي. أعد المحاولة لإكمال ربط الحسابات.');
-      }catch(err){
-        showToast('تعذر تفعيل صلاحية إدارة الأراضي. تحقق من الاتصال وحاول لاحقًا.');
-      }
-    }
-    window.bootstrapLandsAuthority = bootstrapLandsAuthority;
 
     // إنشاء مستخدم عبر واجهة الخادم الآمنة — الحصر الميداني وحصر الأراضي
     // خدمتان مستقلتان؛ يمكن تفعيل إحداهما أو كلتيهما لنفس الحساب.
@@ -1106,21 +1069,15 @@ const firebaseConfig = await resolveFirebaseConfig();
       const lands = { enabled: landsEnabled, role: landsEnabled ? $('#addLandsRole').value : null };
       try{
         const data = await callAdminApi({ action:'create', organizationId: managerContext.organizationId, email, name, field, lands });
-        maybeShowLandsBootstrapBanner('addUserLandsBootstrapBanner', data.lands);
-        if(landsEnabled && data.lands && data.lands.syncStatus !== 'synced'){
-          // Keep the modal open so the manager sees the bootstrap banner (if
-          // shown) or can otherwise retry — the account WAS created, but
-          // Lands access is not active yet.
-          showToast('تم إنشاء المستخدم، لكن ربط حصر الأراضي لم يكتمل بعد.');
-          return;
-        }
         closeModal('modalAddUser');
         $('#addName').value=''; $('#addEmail').value='';
         $('#addFieldEnabled').checked = true; $('#addRole').value='inspector';
         $('#addLandsEnabled').checked = false; $('#addLandsRole').value='lands_employee';
         syncAddServiceInputs();
+        const landsActive = landsEnabled && data.lands && data.lands.syncStatus === 'synced';
+        if(landsEnabled && !landsActive){ showToast(landsSyncFailureMessage()); return; }
         showToast(landsEnabled
-          ? '✅ تم إنشاء المستخدم وتفعيل حصر الأراضي فعليًا.'
+          ? '✅ تم إنشاء المستخدم وتفعيل حصر الأراضي.'
           : '✅ تم إنشاء المستخدم بنجاح. استخدم «إدارة الوصول» لتعيين كلمة الدخول.');
       }catch(err){
         setInlineError('addUserError', safeAdminErrorMessage(err));
@@ -1160,13 +1117,10 @@ const firebaseConfig = await resolveFirebaseConfig();
       const lands = { enabled: $('#svcLandsEnabled').checked, role: $('#svcLandsEnabled').checked ? $('#svcLandsRole').value : null };
       try{
         const data = await callAdminApi({ action:'setServices', uid: servicesTargetId, field, lands });
-        maybeShowLandsBootstrapBanner('servicesLandsBootstrapBanner', data.lands);
-        if(lands.enabled && data.lands && data.lands.syncStatus !== 'synced'){
-          showToast('تم حفظ الخدمات، لكن ربط حصر الأراضي لم يكتمل بعد.');
-          return;
-        }
         closeModal('modalServices');
-        showToast(lands.enabled ? '✅ تم حفظ الخدمات وتفعيل حصر الأراضي فعليًا.' : '✅ تم حفظ الخدمات.');
+        const landsActive = lands.enabled && data.lands && data.lands.syncStatus === 'synced';
+        if(lands.enabled && !landsActive){ showToast(landsSyncFailureMessage()); return; }
+        showToast(lands.enabled ? '✅ تم حفظ الخدمات وتفعيل حصر الأراضي.' : '✅ تم حفظ الخدمات.');
       }catch(err){
         setInlineError('servicesError', safeAdminErrorMessage(err));
       }
