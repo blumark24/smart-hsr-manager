@@ -43,6 +43,14 @@ const MANAGEABLE_ROLES = ['manager', 'supervisor', 'inspector', 'contractor'];
 // Roles an organization manager (as opposed to an owner) may manage.
 const MANAGER_SCOPED_ROLES = ['supervisor', 'inspector', 'contractor'];
 
+// Smart HSR Lands roles a manager may assign as a SERVICE ENTITLEMENT DECLARATION
+// (see api/admin/users.js `setServices`/`create`). This is deliberately a
+// separate, smaller list from Field's roles: lands_municipal_manager is an
+// institution-level Lands role and is never exposed as an employee option
+// here, matching the same "manager cannot create another manager" boundary
+// Field already enforces via MANAGER_SCOPED_ROLES.
+const LANDS_MANAGEABLE_ROLES = ['lands_employee', 'lands_department_manager'];
+
 // Stage B flag: manager-initiated, same-organization management is enabled.
 const MANAGER_MANAGEMENT_ENABLED = true;
 
@@ -125,6 +133,7 @@ function assertCanManage(caller, target) {
 module.exports = {
   MANAGEABLE_ROLES,
   MANAGER_SCOPED_ROLES,
+  LANDS_MANAGEABLE_ROLES,
   MANAGER_MANAGEMENT_ENABLED,
   collectionForRole,
   activeIsNotFalse,
