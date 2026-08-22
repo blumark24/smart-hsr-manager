@@ -22,11 +22,27 @@
 //
 // LANDS_TRUSTED_API_URL is an env var (unset by default) so this bridge is a
 // safe, explicit no-op wherever it isn't configured.
+//
+// LANDS_TRUSTED_API_BYPASS_SECRET (optional): the Lands Preview deployment
+// itself sits behind Vercel Deployment Protection, same as this app's own
+// Preview. Vercel's own "Protection Bypass for Automation" secret for the
+// Lands project — a pre-existing credential meant exactly for
+// server-to-server automation like this, not something created for this
+// bridge — is forwarded as the x-vercel-protection-bypass header so the
+// request reaches Lands' actual handler instead of a 401 protection page.
+// This never bypasses Lands' OWN authorization (verifyIdToken,
+// canManageEntitlements, the anti-self-escalation rule, etc.) — it only gets
+// past Vercel's platform-level access gate to let those real checks run.
 // ============================================================================
 
 function bridgeBaseUrl() {
   const value = process.env.LANDS_TRUSTED_API_URL;
   return typeof value === 'string' && value.trim().length > 0 ? value.trim().replace(/\/$/, '') : '';
+}
+
+function bridgeBypassSecret() {
+  const value = process.env.LANDS_TRUSTED_API_BYPASS_SECRET;
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '';
 }
 
 function bridgeConfigured() {
@@ -52,6 +68,7 @@ async function callLandsTrustedMutation({ idToken, municipalityId, operation, re
         'content-type': 'application/json',
         authorization: `Bearer ${idToken}`,
         'x-municipality-id': municipalityId,
+        ...(bridgeBypassSecret() ? { 'x-vercel-protection-bypass': bridgeBypassSecret() } : {}),
       },
       body: JSON.stringify({
         operation,
