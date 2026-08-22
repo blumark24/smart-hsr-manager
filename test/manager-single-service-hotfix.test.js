@@ -88,7 +88,7 @@ test('login.html routes an active Lands-only account to the Lands trusted runtim
 test('login.html never places a token, password, or credential in the Lands redirect URL', () => {
   // Superseded by the one-time SSO handoff (see test/manager-lands-sso.test.js
   // for the full architecture): the employee's ID token IS now used in this
-  // branch — to call the same-origin api/lands-sso-handoff.js over HTTPS,
+  // branch — to call the same-origin POST /api/organization/context over HTTPS,
   // never placed in a URL — so this test checks the actual invariant (no
   // token/password/credential in the URL-building code) rather than banning
   // getIdToken() outright, which is no longer the real security property.

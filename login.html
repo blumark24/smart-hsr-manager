@@ -203,7 +203,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     // One operational employee = one operational service (server-enforced).
     // A Lands employee/department-manager is routed to the Lands trusted
-    // runtime via a one-time server-side SSO handoff (api/lands-sso-handoff.js
+    // runtime via a one-time server-side SSO handoff (POST /api/organization/context
     // -> Lands' /api/lands-sso-register), so they land on the Lands dashboard
     // directly instead of seeing a second login screen. Only an opaque,
     // single-use, short-lived handoff code crosses the redirect URL — never
@@ -213,7 +213,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       let handoffCode = null;
       try {
         const idToken = await user.getIdToken();
-        const handoffResp = await fetch('/api/lands-sso-handoff', {
+        const handoffResp = await fetch('/api/organization/context', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
         });

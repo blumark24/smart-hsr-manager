@@ -2,13 +2,19 @@
 // Regression coverage for the direct Lands SSO handoff (Manager side) and
 // the P1 users-search autofill hardening.
 //
-// Architecture: /login.html authenticates the employee once, then calls the
-// NEW api/lands-sso-handoff.js (self-service: the caller only ever acts on
-// their OWN uid) which forwards the employee's own already-verified ID
+// Architecture: /login.html authenticates the employee once, then calls
+// POST /api/organization/context (self-service: the caller only ever acts
+// on their OWN uid) which forwards the employee's own already-verified ID
 // token to Lands' /api/lands-sso-register (api/_lib/landsBridge.js). Only an
 // opaque, single-use, short-lived handoff code returns to the browser and
 // crosses the redirect URL to Lands — never a password, ID token, or custom
 // token. See test/lands-sso.test.js (Lands repo) for the receiving side.
+//
+// The handoff handler lives inside api/organization/context.js (dispatched
+// on POST, alongside that file's existing GET org-context lookup) rather
+// than its own top-level api/*.js file, solely to stay within the Vercel
+// Hobby plan's 12-Serverless-Function limit — see the comment above
+// handleLandsSsoHandoff() in that file for the full reasoning.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -31,13 +37,13 @@ test('1. login.html: the Field branch (contractor/supervisor/other) is untouched
 
 // ---- eligibility (pure) ----
 test('isSsoEligible: a lands_employee and a lands_department_manager with a synced, enabled entitlement are eligible', () => {
-  const { isSsoEligible } = require(path.join(root, 'api/lands-sso-handoff.js'))._test;
+  const { isSsoEligible } = require(path.join(root, 'api/organization/context.js'))._test;
   assert.equal(isSsoEligible({ active: true, organizationId: 'org-a', landsAccess: { enabled: true, syncStatus: 'synced', role: 'lands_employee' } }), true);
   assert.equal(isSsoEligible({ active: true, organizationId: 'org-a', landsAccess: { enabled: true, syncStatus: 'synced', role: 'lands_department_manager' } }), true);
 });
 
 test('isSsoEligible: denies a disabled account, a pending (not yet synced) entitlement, a Field role, and a missing organization', () => {
-  const { isSsoEligible } = require(path.join(root, 'api/lands-sso-handoff.js'))._test;
+  const { isSsoEligible } = require(path.join(root, 'api/organization/context.js'))._test;
   const base = { active: true, organizationId: 'org-a', landsAccess: { enabled: true, syncStatus: 'synced', role: 'lands_employee' } };
   assert.equal(isSsoEligible({ ...base, active: false }), false, 'disabled account');
   assert.equal(isSsoEligible({ ...base, landsAccess: { ...base.landsAccess, syncStatus: 'pending_trusted_sync' } }), false, 'not yet synced');
@@ -48,10 +54,11 @@ test('isSsoEligible: denies a disabled account, a pending (not yet synced) entit
 });
 
 // ---- 2/3. Lands employee / Lands department manager direct login wiring ----
-test('2/3. login.html calls /api/lands-sso-handoff with the employee\'s own bearer token before redirecting to Lands', () => {
+test('2/3. login.html calls POST /api/organization/context with the employee\'s own bearer token before redirecting to Lands', () => {
   const source = read('login.html');
   const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole)'), source.indexOf('showMsg(\'✅ تم التحقق بنجاح... جارٍ التوجيه\', \'success\');'));
-  assert.match(landsBranch, /fetch\('\/api\/lands-sso-handoff'/);
+  assert.match(landsBranch, /fetch\('\/api\/organization\/context'/);
+  assert.match(landsBranch, /method: 'POST'/);
   assert.match(landsBranch, /'Authorization': 'Bearer ' \+ idToken/);
   assert.match(landsBranch, /await user\.getIdToken\(\)/);
 });
@@ -64,11 +71,12 @@ test('landsBridge.js: callLandsSsoRegister forwards the employee token to Lands,
   assert.match(fn, /'x-municipality-id': municipalityId/);
 });
 
-test('api/lands-sso-handoff.js: is self-service only — it never accepts a target uid, never calls assertCanManage', () => {
-  const source = read('api/lands-sso-handoff.js');
-  assert.doesNotMatch(source, /assertCanManage/);
-  assert.doesNotMatch(source, /body\.uid/);
-  assert.match(source, /decoded\.uid/, 'must act on the verified caller\'s own uid');
+test('api/organization/context.js: the SSO handoff branch is self-service only — it never accepts a target uid, never calls assertCanManage', () => {
+  const source = read('api/organization/context.js');
+  const fn = source.slice(source.indexOf('async function handleLandsSsoHandoff'), source.indexOf('async function handleLandsSsoHandoff') + 1200);
+  assert.doesNotMatch(fn, /assertCanManage/);
+  assert.doesNotMatch(fn, /body\.uid/);
+  assert.match(fn, /decoded\.uid/, 'must act on the verified caller\'s own uid');
 });
 
 // ---- 12. no auth secrets in the redirect URL ----
