@@ -106,7 +106,7 @@
 <div class="card" role="main">
   <div class="card-header-line"></div>
   <h1>Smart HSR</h1>
-  <p class="lead">تسجيل الدخول إلى النظام الميداني</p>
+  <p class="lead">تسجيل دخول الموظفين</p>
 
   <form id="loginForm">
     <div class="field">
@@ -123,7 +123,8 @@
   </form>
 
   <div id="msg" class="message"></div>
-  <div class="muted">هذا النظام مخصص للمديرين والمراقبين والمقاولين المعتمدين فقط.</div>
+  <div id="serviceSelector" style="display:none;margin-top:16px;"></div>
+  <div class="muted">هذا النظام مخصص للمستخدمين المعتمدين والمصرح لهم فقط.</div>
 </div>
 
 <script type="module">
@@ -149,10 +150,85 @@ const probeDb = getFirestore(probeApp);
 await setPersistence(probeAuth, inMemoryPersistence);
 const loginButton = document.getElementById('loginButton');
 const msgBox = document.getElementById('msg');
+const selectorBox = document.getElementById('serviceSelector');
+
+// Lands is a separate product/origin (Smart HSR Lands) sharing this same
+// Firebase project only on Preview (see firebase-runtime-config.js — Production
+// resolves to the smart-hsr-manager project, which has no landsMunicipalities
+// data, so this probe is naturally a no-op there). Revisit this constant once
+// Lands has its own Production deployment.
+const LANDS_APP_URL = 'https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/';
+const LANDS_ROLES = ['municipal_manager', 'lands_department_manager', 'lands_employee'];
 
 function showMsg(text, type='') {
   msgBox.textContent = text;
   msgBox.className = 'message ' + type;
+}
+
+function resetButton() {
+  loginButton.disabled = false;
+  loginButton.textContent = 'تسجيل الدخول';
+}
+
+// organizationId (Field's tenant key) is used only as a fail-closed candidate
+// for municipality_id (Lands' tenant key) — the two products have no declared
+// mapping today. This lookup can never grant Lands access on its own: a real,
+// enabled landsMunicipalities/{id}/userAccess/{uid} document — created only
+// through Lands' own trusted entitlement admin flow — must already exist and
+// match this exact uid. If the candidate id is wrong or no such document
+// exists, this simply returns null and nothing changes for the user.
+async function probeLandsEntitlement(uid, organizationIdCandidate) {
+  if (!organizationIdCandidate) return null;
+  try {
+    const snap = await getDoc(doc(probeDb, 'landsMunicipalities', organizationIdCandidate, 'userAccess', uid));
+    if (!snap.exists()) return null;
+    const membership = snap.data() || {};
+    const valid = membership.enabled === true
+      && membership.firebase_uid === uid
+      && membership.municipality_id === organizationIdCandidate
+      && LANDS_ROLES.includes(membership.lands_role);
+    return valid ? { municipalityId: organizationIdCandidate } : null;
+  } catch {
+    // Fail closed: any read error (including a permission denial for a
+    // guessed id that isn't this user's own path) means "no Lands access",
+    // never a crash of the existing Field login.
+    return null;
+  }
+}
+
+function goToLands(municipalityId) {
+  const url = new URL(LANDS_APP_URL);
+  // Non-secret tenant identifier only — no password, token, or other auth
+  // material is ever placed in a URL.
+  url.searchParams.set('municipality', municipalityId);
+  window.location.href = url.toString();
+}
+
+async function goToField(email, password, fieldTarget) {
+  if (fieldTarget.kind === 'supervisor' || fieldTarget.kind === 'manager') {
+    await signInWithEmailAndPassword(managerAuth, email, password);
+  } else {
+    await signInWithEmailAndPassword(auth, email, password);
+  }
+  window.location.href = fieldTarget.page;
+}
+
+function renderSelector(email, password, fieldTarget, landsTarget) {
+  showMsg('✅ تم التحقق بنجاح — اختر مساحة العمل', 'success');
+  selectorBox.style.display = 'flex';
+  selectorBox.style.gap = '10px';
+  selectorBox.innerHTML = `
+    <button type="button" id="goFieldBtn" class="btn btn-primary" style="flex:1;">النظام الميداني</button>
+    <button type="button" id="goLandsBtn" class="btn btn-primary" style="flex:1;background:linear-gradient(90deg,#0b2b3a,#0ea5a1);">نظام الأراضي</button>
+  `;
+  document.getElementById('goFieldBtn').addEventListener('click', async () => {
+    selectorBox.querySelectorAll('button').forEach(b => b.disabled = true);
+    await goToField(email, password, fieldTarget);
+  });
+  document.getElementById('goLandsBtn').addEventListener('click', () => {
+    selectorBox.querySelectorAll('button').forEach(b => b.disabled = true);
+    goToLands(landsTarget.municipalityId);
+  });
 }
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -167,61 +243,72 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
   loginButton.disabled = true;
   loginButton.innerHTML = `<div class="loading-spinner"></div> جاري الدخول...`;
+  selectorBox.style.display = 'none';
+  selectorBox.innerHTML = '';
 
   try {
     const cred = await signInWithEmailAndPassword(probeAuth, email, password);
     const user = cred.user;
     // managers/{uid} is authoritative. A legacy users/{uid} record must never
     // override a valid organization manager and route them to the wrong page.
+    // Fetched unconditionally (not just when active) so its organizationId can
+    // still serve as a Lands lookup candidate even when the Field role itself
+    // isn't valid — that candidate is fail-closed either way (see above).
     const managerSnap = await getDoc(doc(probeDb, "managers", user.uid));
-    if (managerSnap.exists()) {
-      const manager = managerSnap.data() || {};
-      const managerOrg = typeof manager.organizationId === 'string' ? manager.organizationId.trim() : '';
-      if (manager.role === 'manager' && manager.active !== false && managerOrg) {
-        await signInWithEmailAndPassword(managerAuth, email, password);
-        await signOut(probeAuth);
-        window.location.href = 'manager.html';
-        return;
-      }
-    }
+    const manager = managerSnap.exists() ? (managerSnap.data() || {}) : null;
+    const managerOrg = typeof manager?.organizationId === 'string' ? manager.organizationId.trim() : '';
 
     const userDoc = await getDoc(doc(probeDb, "users", user.uid));
     const data = userDoc.exists() ? (userDoc.data() || {}) : {};
     const role = data.role;
     const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
-    if (!userDoc.exists() || !['supervisor','inspector','contractor'].includes(role)
-        || data.active === false || !organizationId) {
+
+    // Existing Field routing decision — unchanged from prior behavior.
+    let fieldTarget = null;
+    if (manager && manager.role === 'manager' && manager.active !== false && managerOrg) {
+      fieldTarget = { kind: 'manager', page: 'manager.html' };
+    } else if (userDoc.exists() && ['supervisor', 'inspector', 'contractor'].includes(role)
+        && data.active !== false && organizationId) {
+      fieldTarget = { kind: role, page: role === 'contractor' ? 'mobile-map.html' : role === 'supervisor' ? 'manager.html' : 'dashboard.html' };
+    }
+
+    const landsTarget = await probeLandsEntitlement(user.uid, managerOrg || organizationId);
+
+    if (!fieldTarget && !landsTarget) {
       await signOut(probeAuth);
       showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
-      loginButton.disabled = false;
-      loginButton.textContent = 'تسجيل الدخول';
+      resetButton();
       return;
     }
 
-    showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
+    if (fieldTarget && landsTarget) {
+      await signOut(probeAuth);
+      resetButton();
+      renderSelector(email, password, fieldTarget, landsTarget);
+      return;
+    }
 
-    if (role === 'supervisor') {
+    if (landsTarget) {
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى نظام الأراضي', 'success');
+      await signOut(probeAuth);
+      setTimeout(() => goToLands(landsTarget.municipalityId), 1000);
+      return;
+    }
+
+    // Field-only — identical to prior behavior.
+    showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
+    if (fieldTarget.kind === 'supervisor') {
       await signInWithEmailAndPassword(managerAuth, email, password);
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
     await signOut(probeAuth);
-
-    setTimeout(() => {
-      if (role === 'contractor') {
-        window.location.href = 'mobile-map.html';
-      } else if (role === 'supervisor') {
-        window.location.href = 'manager.html';
-      } else {
-        window.location.href = 'dashboard.html';
-      }
-    }, 1000);
+    setTimeout(() => { window.location.href = fieldTarget.page; }, 1000);
 
   } catch (e) {
     console.error(e);
     showMsg('❌ البريد الإلكتروني أو كلمة المرور غير صحيحة.', 'error');
-    loginButton.disabled = false;
-    loginButton.textContent = 'تسجيل الدخول';
+    resetButton();
   }
 });
 </script>
