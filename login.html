@@ -189,12 +189,32 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = userDoc.exists() ? (userDoc.data() || {}) : {};
     const role = data.role;
     const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
-    if (!userDoc.exists() || !['supervisor','inspector','contractor'].includes(role)
-        || data.active === false || !organizationId) {
+    const hasFieldRole = ['supervisor','inspector','contractor'].includes(role);
+    const landsAccess = data.landsAccess;
+    const hasLandsRole = Boolean(landsAccess && landsAccess.enabled
+      && ['lands_employee','lands_department_manager'].includes(landsAccess.role));
+    if (!userDoc.exists() || data.active === false || !organizationId || (!hasFieldRole && !hasLandsRole)) {
       await signOut(probeAuth);
       showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
       loginButton.disabled = false;
       loginButton.textContent = 'تسجيل الدخول';
+      return;
+    }
+
+    // One operational employee = one operational service (server-enforced).
+    // A Lands employee/department-manager is routed to the Lands trusted
+    // runtime — a separate deployment with its own Firebase Auth session, so
+    // there is no shared browser session to hand off. Only the
+    // non-sensitive municipality id is passed as a pre-fill hint; no token,
+    // password, or credential ever goes into the URL.
+    if (hasLandsRole && !hasFieldRole) {
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى حصر منح الأراضي الذكي', 'success');
+      setTimeout(() => {
+        const landsUrl = new URL('https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/');
+        landsUrl.searchParams.set('municipality', organizationId);
+        window.location.href = landsUrl.toString();
+      }, 1000);
       return;
     }
 

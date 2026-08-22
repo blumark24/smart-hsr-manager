@@ -79,9 +79,27 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
+import { classifyManagerLoginError } from './manager-login-error-classification.js';
 
-// إعدادات Firebase
-const firebaseConfig = await resolveFirebaseConfig();
+const errorMsg = document.getElementById("errorMsg");
+const submitBtn = document.querySelector('#loginForm button[type="submit"]');
+function showLoginMessage(text) {
+  errorMsg.textContent = text;
+  errorMsg.classList.remove("hidden");
+}
+
+// إعدادات Firebase — a failure here is a system/environment problem (wrong
+// project, Preview config unavailable), never a credentials problem, so it
+// must never be allowed to silently leave the form non-functional.
+let firebaseConfig;
+try {
+  firebaseConfig = await resolveFirebaseConfig();
+} catch (configErr) {
+  console.error('manager-login: Firebase configuration unavailable', configErr);
+  showLoginMessage('⚠️ تعذر تحميل إعدادات النظام. حاول لاحقًا أو تواصل مع الدعم الفني.');
+  if (submitBtn) submitBtn.disabled = true;
+  throw configErr;
+}
 
 // Dedicated persisted Auth namespace: manager/supervisor actions must never
 // mutate the field-worker session stored by the default Firebase app.
@@ -91,19 +109,36 @@ await setPersistence(auth, browserLocalPersistence);
 const db = getFirestore(app);
 
 const form = document.getElementById("loginForm");
-const errorMsg = document.getElementById("errorMsg");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+  errorMsg.classList.add("hidden");
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
+  // Step 1: Firebase Auth itself. Kept in its own try/catch so a failure
+  // here can never be confused with what happens after — a wrong password
+  // and a Firestore permission/network failure are different problems with
+  // different fixes, and telling the user to "check your password" for the
+  // second one is actively misleading.
+  let user;
   try {
-    // تسجيل الدخول
     const userCred = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCred.user;
+    user = userCred.user;
+  } catch (authErr) {
+    console.error('manager-login: authentication failed', authErr);
+    const kind = classifyManagerLoginError(authErr);
+    showLoginMessage(kind === 'credential-failed'
+      ? "❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور"
+      : "⚠️ تعذر الاتصال بخدمة المصادقة حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.");
+    return;
+  }
 
+  // Step 2: manager/supervisor authorization lookup. Authentication already
+  // succeeded at this point — any failure here is a lookup/authorization
+  // problem, never a credentials problem.
+  try {
     // 🔍 تحقق إذا كان موجود داخل managers
     const ref = doc(db, "managers", user.uid);
     const snap = await getDoc(ref);
@@ -122,7 +157,8 @@ form.addEventListener("submit", async (e) => {
     }
     if (!authorized) {
       await signOut(auth);
-      throw new Error("unauthorized-manager");
+      showLoginMessage("❌ هذا الحساب غير مصرح له بالدخول كمدير");
+      return;
     }
 
     // تخزين الجلسة بعد التحقق من مستند المدير ودوره فقط
@@ -134,12 +170,14 @@ form.addEventListener("submit", async (e) => {
 
     window.location.href = "manager.html";
 
-  } catch (err) {
-    console.error(err);
-    errorMsg.textContent = err.message === "unauthorized-manager"
-      ? "❌ هذا الحساب غير مصرح له بالدخول كمدير"
-      : "❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور";
-    errorMsg.classList.remove("hidden");
+  } catch (lookupErr) {
+    // Authenticated successfully but the manager-authorization lookup
+    // itself failed (Firestore permission-denied, network error, rules
+    // misconfiguration). This is never the password's fault, and the user
+    // must not be left signed in with an unverified authorization state.
+    console.error('manager-login: manager authorization lookup failed', lookupErr);
+    await signOut(auth).catch(() => {});
+    showLoginMessage("⚠️ تعذر التحقق من صلاحياتك حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.");
   }
 });
 </script>

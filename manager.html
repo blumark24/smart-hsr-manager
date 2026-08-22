@@ -47,13 +47,16 @@
        79px mirrors .command-nav's existing sticky offset (the tuned header
        height already used elsewhere in this file). */
     .app-layout{width:min(1560px,100%);margin:auto;display:grid;grid-template-columns:232px minmax(0,1fr);align-items:start;gap:0}
-    .app-sidebar{position:sticky;top:79px;max-height:calc(100vh - 79px);overflow-y:auto;background:var(--surface);border-left:1px solid var(--line);padding:1.1rem .75rem 2rem;display:flex;flex-direction:column;gap:1.15rem;z-index:35;transition:width .18s ease,padding .18s ease}
+    .app-sidebar{position:sticky;top:79px;max-height:calc(100vh - 79px);overflow-y:auto;background:var(--color-gray-bg);border-left:1px solid var(--line);padding:1.1rem .75rem 2rem;display:flex;flex-direction:column;gap:1.15rem;z-index:35;transition:width .18s cubic-bezier(.4,0,.2,1),padding .18s cubic-bezier(.4,0,.2,1)}
     .sidebar-group-label{font-size:.68rem;font-weight:900;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;padding:0 .55rem;margin-bottom:.35rem}
     .sidebar-group{display:flex;flex-direction:column;gap:.2rem}
-    .sidebar-link{display:flex;align-items:center;gap:.65rem;min-height:44px;padding:.55rem .65rem;border-radius:.75rem;color:var(--muted);font-weight:800;font-size:.85rem;text-decoration:none;white-space:nowrap;overflow:hidden;width:100%;text-align:right;background:transparent;border:0;cursor:pointer}
+    .sidebar-link{position:relative;display:flex;align-items:center;gap:.65rem;min-height:44px;padding:.55rem .65rem;border-radius:.75rem;color:var(--muted);font-weight:800;font-size:.85rem;text-decoration:none;white-space:nowrap;overflow:hidden;width:100%;text-align:right;background:transparent;border:0;cursor:pointer;transition:background-color .15s ease,color .15s ease}
     .sidebar-link:hover{background:var(--surface-2);color:var(--text)}
-    .sidebar-link.tab-active{background:var(--color-navy);color:#fff}
-    .sidebar-link i{flex:0 0 auto;width:19px;height:19px}
+    .sidebar-link.tab-active{background:rgba(27,167,184,.14);color:var(--color-navy);font-weight:900}
+    .dark .sidebar-link.tab-active{background:rgba(27,167,184,.2);color:#eaf7fa}
+    .sidebar-link.tab-active:before{content:"";position:absolute;inset-inline-start:0;top:18%;bottom:18%;width:3px;border-radius:999px;background:var(--color-cyan)}
+    .sidebar-link.tab-active i{color:var(--color-cyan)}
+    .sidebar-link i{flex:0 0 auto;width:19px;height:19px;transition:color .15s ease}
     .sidebar-link span{overflow:hidden;text-overflow:ellipsis}
     .sidebar-external-note{font-size:.66rem;font-weight:700;color:var(--muted);opacity:.85}
     .app-shell-content{min-width:0}
@@ -264,23 +267,23 @@
       <nav aria-label="أقسام مركز القيادة">
         <div class="sidebar-group">
           <p class="sidebar-group-label">القيادة</p>
-          <button class="sidebar-link tab-active" data-tab="overview" aria-current="page"><i data-lucide="layout-dashboard"></i><span>الرئيسية</span></button>
-          <button class="sidebar-link" data-tab="twin"><i data-lucide="map-pinned"></i><span>الخريطة التشغيلية</span></button>
+          <button class="sidebar-link tab-active" data-tab="overview" aria-current="page" title="الرئيسية"><i data-lucide="layout-dashboard"></i><span>الرئيسية</span></button>
+          <button class="sidebar-link" data-tab="twin" title="الخريطة التشغيلية"><i data-lucide="map-pinned"></i><span>الخريطة التشغيلية</span></button>
         </div>
         <div class="sidebar-group">
           <p class="sidebar-group-label">الخدمات</p>
-          <button class="sidebar-link" data-tab="observations"><i data-lucide="kanban-square"></i><span>الحصر الميداني</span></button>
-          <a class="sidebar-link" href="https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/" target="_blank" rel="noopener"><i data-lucide="landmark"></i><span>حصر منح الأراضي الذكي</span></a>
+          <button class="sidebar-link" data-tab="observations" title="الحصر الميداني"><i data-lucide="kanban-square"></i><span>الحصر الميداني</span></button>
+          <button class="sidebar-link" data-tab="landsView" title="حصر منح الأراضي الذكي"><i data-lucide="landmark"></i><span>حصر منح الأراضي الذكي</span></button>
         </div>
         <div class="sidebar-group">
           <p class="sidebar-group-label">الإدارة</p>
-          <button class="sidebar-link" data-tab="users"><i data-lucide="users"></i><span>المستخدمون والصلاحيات</span></button>
-          <button class="sidebar-link" data-tab="reports"><i data-lucide="file-bar-chart"></i><span>التقارير</span></button>
-          <button class="sidebar-link" data-tab="overview" data-scroll-target="recentActivity"><i data-lucide="history"></i><span>النشاط والتدقيق</span></button>
+          <button class="sidebar-link" data-tab="users" title="المستخدمون والصلاحيات"><i data-lucide="users"></i><span>المستخدمون والصلاحيات</span></button>
+          <button class="sidebar-link" data-tab="reports" title="التقارير"><i data-lucide="file-bar-chart"></i><span>التقارير</span></button>
+          <button class="sidebar-link" data-tab="overview" data-scroll-target="recentActivity" title="النشاط والتدقيق"><i data-lucide="history"></i><span>النشاط والتدقيق</span></button>
         </div>
         <div class="sidebar-group">
           <p class="sidebar-group-label">النظام</p>
-          <button class="sidebar-link" data-tab="settings"><i data-lucide="settings"></i><span>الإعدادات</span></button>
+          <button class="sidebar-link" data-tab="settings" title="الإعدادات"><i data-lucide="settings"></i><span>الإعدادات</span></button>
         </div>
       </nav>
     </aside>
@@ -567,6 +570,30 @@
         </div>
       </div>
     </section>
+
+    <section id="tab-landsView" class="mt-4 hidden" aria-labelledby="landsViewTitle">
+      <div class="card">
+        <div class="mb-4 flex items-start justify-between gap-3 flex-wrap">
+          <div><p class="section-label">نظرة تنفيذية</p><h2 id="landsViewTitle" class="text-2xl font-black">حصر منح الأراضي الذكي</h2><p class="type-meta mt-1">ملخص إداري للخدمة ضمن مركز القيادة — ليس مساحة العمل التشغيلية.</p></div>
+          <span id="landsViewStatusPill" class="service-status-pill">—</span>
+        </div>
+        <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+          <article class="kpi-card"><span class="metric-label">موظفو الأراضي</span><strong id="landsViewEmployeeCount" class="metric-value">—</strong><span class="metric-note">موظف أراضي مفعّل</span></article>
+          <article class="kpi-card"><span class="metric-label">مديرو الأقسام</span><strong id="landsViewDeptManagerCount" class="metric-value">—</strong><span class="metric-note">مدير قسم أراضي مفعّل</span></article>
+        </div>
+        <div class="card mt-3" style="background:var(--surface-2);box-shadow:none">
+          <h3 class="font-black mb-2">بيانات المنح</h3>
+          <p class="type-meta" id="landsViewGrantsUnavailable">إجمالي المنح، المكتمل، غير المكتمل، ونسبة الاكتمال غير متاحة حاليًا كملخص داخل مركز القيادة. افتح مساحة عمل حصر الأراضي لعرض هذه البيانات الفعلية.</p>
+        </div>
+        <div class="card mt-3" style="background:var(--surface-2);box-shadow:none">
+          <h3 class="font-black mb-2">موظفو خدمة الأراضي</h3>
+          <div id="landsViewStaffList" class="identity-list"><div class="state-box py-2">لا يوجد موظفو أراضي مفعّلون بعد.</div></div>
+        </div>
+        <div class="mt-4">
+          <a id="landsViewOpenWorkspace" class="btn" href="https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/" target="_blank" rel="noopener"><i data-lucide="external-link" class="w-4 h-4"></i>فتح مساحة عمل حصر منح الأراضي</a>
+        </div>
+      </div>
+    </section>
   </main>
   </div>
 
@@ -579,34 +606,51 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label class="text-sm font-bold">الاسم</label>
+          <label class="text-sm font-bold">الاسم الكامل</label>
           <input id="addName" class="border rounded-xl p-2 w-full" placeholder="مثال: أحمد"/>
         </div>
         <div>
-          <label class="text-sm font-bold">البريد</label>
+          <label class="text-sm font-bold">البريد الإلكتروني</label>
           <input id="addEmail" type="email" class="border rounded-xl p-2 w-full" placeholder="ahmed@example.com"/>
         </div>
+        <div class="md:col-span-2">
+          <label class="text-sm font-bold">كلمة مرور مؤقتة</label>
+          <div class="flex gap-2">
+            <input id="addPassword" type="password" class="border rounded-xl p-2 w-full" placeholder="كلمة مرور مؤقتة قوية" autocomplete="new-password"/>
+            <button type="button" class="btn-secondary" onclick="revealAddPassword()" title="توليد كلمة مرور قوية"><i data-lucide="key-round" class="w-4 h-4"></i></button>
+          </div>
+          <p class="type-meta mt-1">سيُطلب من المستخدم تغييرها عند أول تسجيل دخول.</p>
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-sm font-bold">حالة الحساب</label>
+          <select id="addActiveStatus" class="border rounded-xl p-2 w-full">
+            <option value="true">نشط</option>
+            <option value="false">معطل</option>
+          </select>
+        </div>
         <div class="md:col-span-2 border-t pt-3 mt-1">
-          <label class="text-sm font-bold block mb-2">الخدمات المفعّلة</label>
+          <label class="text-sm font-bold block mb-2">القسم / الخدمة</label>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div class="border rounded-xl p-3">
-              <label class="flex items-center gap-2 font-bold"><input type="checkbox" id="addFieldEnabled" checked onchange="syncAddServiceInputs()"> الحصر الميداني</label>
-              <select id="addRole" class="border rounded-xl p-2 w-full mt-2">
-                <option value="supervisor">مشرف مساعد</option>
-                <option value="inspector">مراقب</option>
-                <option value="contractor">مقاول</option>
-              </select>
-            </div>
-            <div class="border rounded-xl p-3">
-              <label class="flex items-center gap-2 font-bold"><input type="checkbox" id="addLandsEnabled" onchange="syncAddServiceInputs()"> حصر منح الأراضي الذكي</label>
-              <select id="addLandsRole" class="border rounded-xl p-2 w-full mt-2" disabled>
-                <option value="lands_employee">موظف أراضي</option>
-                <option value="lands_department_manager">مدير قسم الأراضي</option>
-              </select>
-            </div>
+            <label class="border rounded-xl p-3 flex items-center gap-2 font-bold cursor-pointer">
+              <input type="radio" name="addService" id="addServiceField" value="field" checked onchange="syncAddServiceInputs()"> الحصر الميداني
+            </label>
+            <label class="border rounded-xl p-3 flex items-center gap-2 font-bold cursor-pointer">
+              <input type="radio" name="addService" id="addServiceLands" value="lands" onchange="syncAddServiceInputs()"> حصر منح الأراضي الذكي
+            </label>
           </div>
         </div>
-        <div class="md:col-span-2 text-xs text-gray-500">سيتم إنشاء الحساب بدون كلمة مرور. استخدم «إدارة الوصول» من جدول المستخدمين لتعيين كلمة مرور آمنة بعد تأكيد هوية المدير.</div>
+        <div class="md:col-span-2">
+          <label class="text-sm font-bold">الدور</label>
+          <select id="addRole" class="border rounded-xl p-2 w-full">
+            <option value="supervisor">مشرف مساعد</option>
+            <option value="inspector">مراقب</option>
+            <option value="contractor">مقاول</option>
+          </select>
+          <select id="addLandsRole" class="border rounded-xl p-2 w-full hidden">
+            <option value="lands_employee">موظف أراضي</option>
+            <option value="lands_department_manager">مدير قسم الأراضي</option>
+          </select>
+        </div>
         <div id="addUserError" class="md:col-span-2 text-xs text-red-600" hidden></div>
         <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveUser()">حفظ</button></div>
       </div>
@@ -620,22 +664,31 @@
         <button class="text-2xl" aria-label="إغلاق نافذة إدارة الخدمات" onclick="closeModal('modalServices')">&times;</button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div class="border rounded-xl p-3">
-          <label class="flex items-center gap-2 font-bold"><input type="checkbox" id="svcFieldEnabled" onchange="syncServicesInputs()"> الحصر الميداني</label>
-          <select id="svcFieldRole" class="border rounded-xl p-2 w-full mt-2">
+        <div class="md:col-span-2">
+          <label class="text-sm font-bold block mb-2">القسم / الخدمة</label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="border rounded-xl p-3 flex items-center gap-2 font-bold cursor-pointer">
+              <input type="radio" name="svcService" id="svcServiceField" value="field" onchange="syncServicesInputs()"> الحصر الميداني
+            </label>
+            <label class="border rounded-xl p-3 flex items-center gap-2 font-bold cursor-pointer">
+              <input type="radio" name="svcService" id="svcServiceLands" value="lands" onchange="syncServicesInputs()"> حصر منح الأراضي الذكي
+            </label>
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-sm font-bold">الدور</label>
+          <select id="svcFieldRole" class="border rounded-xl p-2 w-full">
             <option value="supervisor">مشرف مساعد</option>
             <option value="inspector">مراقب</option>
             <option value="contractor">مقاول</option>
           </select>
-        </div>
-        <div class="border rounded-xl p-3">
-          <label class="flex items-center gap-2 font-bold"><input type="checkbox" id="svcLandsEnabled" onchange="syncServicesInputs()"> حصر منح الأراضي الذكي</label>
-          <select id="svcLandsRole" class="border rounded-xl p-2 w-full mt-2">
+          <select id="svcLandsRole" class="border rounded-xl p-2 w-full hidden">
             <option value="lands_employee">موظف أراضي</option>
             <option value="lands_department_manager">مدير قسم الأراضي</option>
           </select>
         </div>
-        <div class="md:col-span-2 text-xs text-gray-500">إلغاء تفعيل خدمة هنا يزيل صلاحيتها فقط ولا يحذف حساب المستخدم أو الخدمة الأخرى.</div>
+        <div id="svcTransferNotice" class="md:col-span-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-2" hidden>تغيير الخدمة سينقل هذا الموظف بالكامل: ستُزال صلاحية الخدمة الحالية فور تفعيل الخدمة الجديدة.</div>
+        <div class="md:col-span-2 text-xs text-gray-500">كل موظف تشغيلي ينتمي إلى خدمة واحدة فقط. لتغيير خدمة موظف، اختر الخدمة الجديدة وسيتم نقله إليها تلقائيًا.</div>
         <div id="servicesError" class="md:col-span-2 text-xs text-red-600" hidden></div>
         <div class="md:col-span-2 flex items-end justify-end"><button class="btn" onclick="saveServices()">حفظ الخدمات</button></div>
       </div>
@@ -822,7 +875,7 @@ const firebaseConfig = await resolveFirebaseConfig();
     let usersUnsub = null, obsUnsub = null;
     // Authenticated manager's own organization — set once by bootForManager()
     // and never trusted from anywhere else (fail closed if absent).
-    const managerContext = { uid: null, role: null, organizationId: null, organizationName: '' };
+    const managerContext = { uid: null, role: null, organizationId: null, organizationName: '', name: '' };
     let organizationMapContext=null;
     const isManagerMode = () => managerContext.role === 'manager';
     function requireManagerMode(){
@@ -858,7 +911,7 @@ const firebaseConfig = await resolveFirebaseConfig();
     // deliberately absent from this allowlist and are never persisted here.
     const PREFERENCES_KEY = 'smartHSRManagerPreferences';
     const DEFAULT_PREFERENCES = Object.freeze({theme:'light',fontSize:'standard',contrast:'standard',motion:'system',landingTab:'overview',reportPeriod:'30',defaultStatus:'ALL',density:'comfortable',mapStyle:'standard',twinDetails:'automatic'});
-    const PREFERENCE_ALLOWLIST = Object.freeze({theme:['light','dark'],fontSize:['standard','large','xlarge'],contrast:['standard','high'],motion:['system','reduced'],landingTab:['overview','users','observations','reports','twin','settings'],reportPeriod:['7','30','90'],defaultStatus:['ALL','PENDING','IN_PROGRESS','COMPLETED'],density:['comfortable','compact'],mapStyle:['standard','muted'],twinDetails:['automatic','manual']});
+    const PREFERENCE_ALLOWLIST = Object.freeze({theme:['light','dark'],fontSize:['standard','large','xlarge'],contrast:['standard','high'],motion:['system','reduced'],landingTab:['overview','users','observations','reports','twin','settings','landsView'],reportPeriod:['7','30','90'],defaultStatus:['ALL','PENDING','IN_PROGRESS','COMPLETED'],density:['comfortable','compact'],mapStyle:['standard','muted'],twinDetails:['automatic','manual']});
     let managerPreferences = {...DEFAULT_PREFERENCES};
     function sanitizePreferences(value){
       const clean={...DEFAULT_PREFERENCES};
@@ -890,6 +943,7 @@ const firebaseConfig = await resolveFirebaseConfig();
       if(safeTab!=='settings')clearPasswordFields();
       if(safeTab==='overview')setTimeout(()=>map?.invalidateSize(),200);
       if(safeTab==='twin')setTimeout(()=>{initTwinMap();renderTwin();twinMap?.invalidateSize()},200);
+      if(safeTab==='landsView')renderLandsView();
       if(persistFocus)activeButton?.focus();
     }
     window.activateTab = activateTab;
@@ -1072,6 +1126,32 @@ const firebaseConfig = await resolveFirebaseConfig();
       const label = LANDS_ROLE_LABELS[access.role] || access.role;
       return `<span class="pill bg-emerald-600 text-white">${escapeHTML(label)} · مفعل</span>`;
     }
+    // Manager-side Lands executive summary. Only ever reads data already
+    // fetched into this dashboard (the live users/{organizationId} listener)
+    // — no new Lands data pipeline. Employee/department-manager counts are
+    // real; grant-level statistics have no manager-backend source yet and
+    // are shown as an honest unavailable state rather than fabricated.
+    function renderLandsView(){
+      const landsUsers = users.filter(u => u.landsAccess && u.landsAccess.enabled && u.landsAccess.syncStatus === 'synced');
+      const employees = landsUsers.filter(u => u.landsAccess.role === 'lands_employee');
+      const deptManagers = landsUsers.filter(u => u.landsAccess.role === 'lands_department_manager');
+      const statusPill = document.getElementById('landsViewStatusPill');
+      if(statusPill){
+        const active = landsUsers.length > 0;
+        statusPill.textContent = active ? 'الخدمة نشطة' : 'لم يتم تفعيل الخدمة بعد';
+        statusPill.classList.toggle('is-active', active);
+      }
+      const empCount = document.getElementById('landsViewEmployeeCount'); if(empCount) empCount.textContent = employees.length;
+      const deptCount = document.getElementById('landsViewDeptManagerCount'); if(deptCount) deptCount.textContent = deptManagers.length;
+      const staffList = document.getElementById('landsViewStaffList');
+      if(staffList){
+        staffList.innerHTML = landsUsers.length
+          ? landsUsers.map(u => `<div class="identity-row"><span class="type-meta">${escapeHTML(u.name || u.email || u.id)}</span><span class="identity-value">${escapeHTML(LANDS_ROLE_LABELS[u.landsAccess.role] || u.landsAccess.role)}</span></div>`).join('')
+          : `<div class="state-box py-2">لا يوجد موظفو أراضي مفعّلون بعد.</div>`;
+      }
+    }
+    window.renderLandsView = renderLandsView;
+
     function statusSwitch(u){
       const t = u.active? 'تعطيل' : 'تفعيل';
       const c = u.active? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700';
@@ -1172,12 +1252,21 @@ const firebaseConfig = await resolveFirebaseConfig();
       return chars.join('');
     }
 
-    // إنشاء مستخدم عبر واجهة الخادم الآمنة — يُقتصر على مراقب/مقاول ضمن مؤسسة المدير نفسه
+    // إنشاء مستخدم عبر واجهة الخادم الآمنة — يُقتصر على مراقب/مقاول ضمن مؤسسة المدير نفسه.
+    // القسم/الخدمة اختيار وحيد (radio): موظف تشغيلي واحد = خدمة واحدة فقط.
     function syncAddServiceInputs(){
-      $('#addRole').disabled = !$('#addFieldEnabled').checked;
-      $('#addLandsRole').disabled = !$('#addLandsEnabled').checked;
+      const isLands = $('#addServiceLands').checked;
+      $('#addRole').classList.toggle('hidden', isLands);
+      $('#addLandsRole').classList.toggle('hidden', !isLands);
     }
     window.syncAddServiceInputs = syncAddServiceInputs;
+
+    function revealAddPassword(){
+      const input = $('#addPassword');
+      input.value = generateStrongPassword();
+      input.type = 'text';
+    }
+    window.revealAddPassword = revealAddPassword;
 
     function setInlineError(id, message){
       const el = $('#'+id);
@@ -1197,43 +1286,47 @@ const firebaseConfig = await resolveFirebaseConfig();
       return 'تعذر تفعيل الخدمة حاليًا. حاول مرة أخرى.';
     }
 
-    // إنشاء مستخدم عبر واجهة الخادم الآمنة — الحصر الميداني وحصر الأراضي
-    // خدمتان مستقلتان؛ يمكن تفعيل إحداهما أو كلتيهما لنفس الحساب.
+    // إنشاء مستخدم عبر واجهة الخادم الآمنة — موظف تشغيلي واحد ينتمي إلى خدمة
+    // واحدة فقط (الحصر الميداني أو حصر منح الأراضي)، أبدًا كلتيهما معًا.
     async function saveUser(){
       if(!requireManagerMode()) return;
       setInlineError('addUserError', null);
       const name=$('#addName').value.trim();
       const email=$('#addEmail').value.trim();
-      const fieldEnabled = $('#addFieldEnabled').checked;
-      const landsEnabled = $('#addLandsEnabled').checked;
+      const password=$('#addPassword').value;
+      const active = $('#addActiveStatus').value !== 'false';
+      const isLands = $('#addServiceLands').checked;
       if(!name||!email){ setInlineError('addUserError','الرجاء تعبئة الاسم والبريد.'); return; }
-      if(!fieldEnabled && !landsEnabled){ setInlineError('addUserError','فعّل خدمة واحدة على الأقل قبل الحفظ.'); return; }
+      if(!password){ setInlineError('addUserError','الرجاء إدخال كلمة مرور مؤقتة.'); return; }
       if(!managerContext.organizationId){ setInlineError('addUserError','تعذر تحديد مؤسستك. الرجاء إعادة تسجيل الدخول.'); return; }
-      const field = { enabled: fieldEnabled, role: fieldEnabled ? $('#addRole').value : null };
-      const lands = { enabled: landsEnabled, role: landsEnabled ? $('#addLandsRole').value : null };
+      const field = { enabled: !isLands, role: !isLands ? $('#addRole').value : null };
+      const lands = { enabled: isLands, role: isLands ? $('#addLandsRole').value : null };
       try{
-        const data = await callAdminApi({ action:'create', organizationId: managerContext.organizationId, email, name, field, lands });
+        const data = await callAdminApi({ action:'create', organizationId: managerContext.organizationId, email, name, field, lands, password, active });
         closeModal('modalAddUser');
-        $('#addName').value=''; $('#addEmail').value='';
-        $('#addFieldEnabled').checked = true; $('#addRole').value='inspector';
-        $('#addLandsEnabled').checked = false; $('#addLandsRole').value='lands_employee';
+        $('#addName').value=''; $('#addEmail').value=''; $('#addPassword').value=''; $('#addPassword').type='password';
+        $('#addActiveStatus').value='true';
+        $('#addServiceField').checked = true; $('#addServiceLands').checked = false;
+        $('#addRole').value='inspector'; $('#addLandsRole').value='lands_employee';
         syncAddServiceInputs();
-        const landsActive = landsEnabled && data.lands && data.lands.syncStatus === 'synced';
-        if(landsEnabled && !landsActive){ showToast(landsSyncFailureMessage()); return; }
-        showToast(landsEnabled
-          ? '✅ تم إنشاء المستخدم وتفعيل حصر الأراضي.'
-          : '✅ تم إنشاء المستخدم بنجاح. استخدم «إدارة الوصول» لتعيين كلمة الدخول.');
+        const landsActive = isLands && data.lands && data.lands.syncStatus === 'synced';
+        if(isLands && !landsActive){ showToast(landsSyncFailureMessage()); return; }
+        showToast('✅ تم إنشاء المستخدم بنجاح. سيُطلب منه تغيير كلمة المرور عند أول دخول.');
       }catch(err){
         setInlineError('addUserError', safeAdminErrorMessage(err));
       }
     }
     window.saveUser = saveUser;
 
-    // ===== الخدمات (Field + Lands) لمستخدم قائم =====
-    let servicesTargetId = null;
+    // ===== الخدمة (Field أو Lands) لمستخدم قائم — نقل خدمة، وليس إضافة خدمة ثانية =====
+    let servicesTargetId = null, servicesOriginalService = null;
     function syncServicesInputs(){
-      $('#svcFieldRole').disabled = !$('#svcFieldEnabled').checked;
-      $('#svcLandsRole').disabled = !$('#svcLandsEnabled').checked;
+      const isLands = $('#svcServiceLands').checked;
+      $('#svcFieldRole').classList.toggle('hidden', isLands);
+      $('#svcLandsRole').classList.toggle('hidden', !isLands);
+      const selected = isLands ? 'lands' : 'field';
+      const notice = $('#svcTransferNotice');
+      if(notice) notice.hidden = !(servicesOriginalService && servicesOriginalService !== selected);
     }
     window.syncServicesInputs = syncServicesInputs;
 
@@ -1244,11 +1337,13 @@ const firebaseConfig = await resolveFirebaseConfig();
       setInlineError('servicesError', null);
       $('#servicesUserName').textContent = u.name || u.email || id;
       const hasFieldRole = ['supervisor','inspector','contractor'].includes(u.role);
-      $('#svcFieldEnabled').checked = hasFieldRole;
-      $('#svcFieldRole').value = hasFieldRole ? u.role : 'inspector';
       const landsAccess = u.landsAccess;
-      $('#svcLandsEnabled').checked = Boolean(landsAccess && landsAccess.enabled);
-      $('#svcLandsRole').value = (landsAccess && landsAccess.enabled && landsAccess.role) ? landsAccess.role : 'lands_employee';
+      const hasLands = Boolean(landsAccess && landsAccess.enabled);
+      servicesOriginalService = hasLands ? 'lands' : (hasFieldRole ? 'field' : null);
+      $('#svcServiceField').checked = !hasLands;
+      $('#svcServiceLands').checked = hasLands;
+      $('#svcFieldRole').value = hasFieldRole ? u.role : 'inspector';
+      $('#svcLandsRole').value = (hasLands && landsAccess.role) ? landsAccess.role : 'lands_employee';
       syncServicesInputs();
       openModal('modalServices');
     }
@@ -1257,14 +1352,21 @@ const firebaseConfig = await resolveFirebaseConfig();
     async function saveServices(){
       if(!requireManagerMode() || !servicesTargetId) return;
       setInlineError('servicesError', null);
-      const field = { enabled: $('#svcFieldEnabled').checked, role: $('#svcFieldEnabled').checked ? $('#svcFieldRole').value : null };
-      const lands = { enabled: $('#svcLandsEnabled').checked, role: $('#svcLandsEnabled').checked ? $('#svcLandsRole').value : null };
+      const isLands = $('#svcServiceLands').checked;
+      // Both services are always sent together, explicitly, so a change of
+      // selection is always a proper transfer (old service disabled, new
+      // service enabled, in one request) — never a partial update that could
+      // leave both enabled.
+      const field = { enabled: !isLands, role: !isLands ? $('#svcFieldRole').value : null };
+      const lands = { enabled: isLands, role: isLands ? $('#svcLandsRole').value : null };
       try{
         const data = await callAdminApi({ action:'setServices', uid: servicesTargetId, field, lands });
         closeModal('modalServices');
         const landsActive = lands.enabled && data.lands && data.lands.syncStatus === 'synced';
         if(lands.enabled && !landsActive){ showToast(landsSyncFailureMessage()); return; }
-        showToast(lands.enabled ? '✅ تم حفظ الخدمات وتفعيل حصر الأراضي.' : '✅ تم حفظ الخدمات.');
+        showToast(servicesOriginalService && servicesOriginalService !== (isLands?'lands':'field')
+          ? '✅ تم نقل الموظف إلى الخدمة الجديدة.'
+          : '✅ تم حفظ الخدمة.');
       }catch(err){
         setInlineError('servicesError', safeAdminErrorMessage(err));
       }
@@ -2069,7 +2171,8 @@ const firebaseConfig = await resolveFirebaseConfig();
         if(manager.role === 'manager' && manager.active !== false && organizationId) {
           const organizationName = typeof manager.organizationName === 'string' && manager.organizationName.trim()
             ? manager.organizationName.trim() : organizationId;
-          return { role:'manager', organizationId, organizationName };
+          const name = typeof manager.name === 'string' ? manager.name.trim() : '';
+          return { role:'manager', organizationId, organizationName, name };
         }
       }
       const userSnap = await getDoc(doc(db, 'users', user.uid));
@@ -2079,7 +2182,8 @@ const firebaseConfig = await resolveFirebaseConfig();
       if(supervisor.role !== 'supervisor' || supervisor.active === false || !organizationId) return null;
       const organizationName = typeof supervisor.organizationName === 'string' && supervisor.organizationName.trim()
         ? supervisor.organizationName.trim() : organizationId;
-      return { role:'supervisor', organizationId, organizationName };
+      const name = typeof supervisor.name === 'string' ? supervisor.name.trim() : '';
+      return { role:'supervisor', organizationId, organizationName, name };
     }
 
     async function denyManagerAccess(message){
@@ -2136,6 +2240,7 @@ const firebaseConfig = await resolveFirebaseConfig();
       managerContext.role = orgContext.role;
       managerContext.organizationId = orgContext.organizationId;
       managerContext.organizationName = orgContext.organizationName;
+      managerContext.name = orgContext.name || '';
       try{
         organizationMapContext=await fetchOrganizationMapContext(auth,{organizationId:managerContext.organizationId});
         managerContext.organizationName=organizationMapContext.organizationName;
@@ -2145,10 +2250,16 @@ const firebaseConfig = await resolveFirebaseConfig();
       }
       await refreshDemoStorageBadge().catch(()=>{});
 
+      // Identity display priority: the approved manager/staff name field ->
+      // Firebase displayName -> email only as a final fallback. Never the
+      // email as the primary visible identity when a real name is on file.
+      const displayName = managerContext.name
+        || (typeof user.displayName==='string' && user.displayName.trim())
+        || user.email || 'حساب مصادق عليه';
       const userBadge=document.getElementById('userBadge');
-      if(userBadge){userBadge.textContent=user.email||'حساب مصادق عليه';userBadge.classList.remove('hidden')}
+      if(userBadge){userBadge.textContent=displayName;userBadge.classList.remove('hidden')}
       const settingsEmail=document.getElementById('settingsEmail');if(settingsEmail)settingsEmail.textContent=user.email||'غير متاح';
-      const settingsUserName=document.getElementById('settingsUserName');if(settingsUserName)settingsUserName.textContent=(typeof user.displayName==='string'&&user.displayName.trim())?user.displayName.trim():(user.email||'حساب مصادق عليه');
+      const settingsUserName=document.getElementById('settingsUserName');if(settingsUserName)settingsUserName.textContent=displayName;
       const settingsConnection=document.getElementById('settingsConnection');if(settingsConnection)settingsConnection.textContent='اتصال آمن';
 
       sessionStorage.setItem('smartHSRUser', JSON.stringify({
