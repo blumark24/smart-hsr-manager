@@ -102,9 +102,9 @@ function makeAuth(store) {
   let counter = 0;
   const users = new Map();
   return {
-    async createUser({ email, displayName, disabled }) {
+    async createUser({ email, displayName, disabled, password }) {
       const uid = `uid_${++counter}`;
-      users.set(uid, { uid, email, displayName, disabled: Boolean(disabled) });
+      users.set(uid, { uid, email, displayName, disabled: Boolean(disabled), password });
       return { uid };
     },
     async getUser(uid) {

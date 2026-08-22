@@ -74,23 +74,113 @@ test('2. Lands department-manager creation: correct real role forwarded to the b
   } finally { fakes.restore(); }
 });
 
-test('3. Existing Field user: enabling Lands preserves the Field role exactly and adds Lands membership', async () => {
+test('3. Service transfer: Field employee -> Lands removes Field and grants real Lands membership', async () => {
   const fakes = installFakes({ bridgeResponses: [{ ok: true, bridged: true, eventId: 'lands_evt_3' }] });
   try {
     const { uid: managerUid, organizationId } = seedManager(fakes);
     fakes.store.seed('users/emp-field-1', { uid: 'emp-field-1', role: 'inspector', active: true, organizationId, email: 'field@example.com' });
     const { usersHandler } = loadFreshHandlers();
 
-    const req = fakeRequest({ uid: managerUid, body: { action: 'setServices', uid: 'emp-field-1', lands: { enabled: true, role: 'lands_employee' } } });
+    // One operational employee = one operational service: a transfer sends
+    // both the disable and the enable together in a single request.
+    const req = fakeRequest({ uid: managerUid, body: { action: 'setServices', uid: 'emp-field-1', field: { enabled: false }, lands: { enabled: true, role: 'lands_employee' } } });
     const res = fakeResponse();
     await usersHandler(req, res);
 
     assert.equal(res.statusCode, 200, JSON.stringify(res.body));
     assert.equal(res.body.lands.syncStatus, 'synced');
     const stored = fakes.store.docs.get('users/emp-field-1');
-    assert.equal(stored.role, 'inspector', 'Field role untouched by enabling Lands');
+    assert.equal(stored.role, null, 'Field access removed by the transfer');
     assert.equal(stored.landsAccess.enabled, true);
     assert.equal(stored.landsAccess.role, 'lands_employee');
+  } finally { fakes.restore(); }
+});
+
+test('dual-service request is denied: enabling Lands on an active Field employee without disabling Field', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid: managerUid, organizationId } = seedManager(fakes);
+    fakes.store.seed('users/emp-field-2', { uid: 'emp-field-2', role: 'inspector', active: true, organizationId, email: 'field2@example.com' });
+    const { usersHandler } = loadFreshHandlers();
+
+    const req = fakeRequest({ uid: managerUid, body: { action: 'setServices', uid: 'emp-field-2', lands: { enabled: true, role: 'lands_employee' } } });
+    const res = fakeResponse();
+    await usersHandler(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.reason, 'dual_service_denied');
+    assert.equal(fakes.bridgeCalls.length, 0, 'no Lands call attempted for a denied dual-service request');
+    const stored = fakes.store.docs.get('users/emp-field-2');
+    assert.equal(stored.role, 'inspector', 'Field record untouched by the denied request');
+    assert.equal(stored.landsAccess, undefined);
+  } finally { fakes.restore(); }
+});
+
+test('dual-service request is denied at creation: Field and Lands both enabled in one create call', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid, organizationId } = seedManager(fakes);
+    const { usersHandler } = loadFreshHandlers();
+    const req = fakeRequest({ uid, body: { action: 'create', organizationId, email: 'dual@example.com', name: 'Dual', field: { enabled: true, role: 'inspector' }, lands: { enabled: true, role: 'lands_employee' } } });
+    const res = fakeResponse();
+    await usersHandler(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.reason, 'dual_service_denied');
+    assert.equal(fakes.bridgeCalls.length, 0);
+  } finally { fakes.restore(); }
+});
+
+test('temporary password on Lands-only creation: real Auth password set and mustChangePassword recorded', async () => {
+  const fakes = installFakes({ bridgeResponses: [{ ok: true, bridged: true, eventId: 'lands_evt_pw' }] });
+  try {
+    const { uid, organizationId } = seedManager(fakes);
+    const { usersHandler } = loadFreshHandlers();
+    const req = fakeRequest({ uid, body: { action: 'create', organizationId, email: 'pw-lands@example.com', name: 'Password Test', field: { enabled: false }, lands: { enabled: true, role: 'lands_department_manager' }, password: 'Br7$Munic1pal' } });
+    const res = fakeResponse();
+    await usersHandler(req, res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.mustChangePassword, true);
+    assert.equal(res.body.lands.role, 'lands_department_manager');
+    const createdUid = res.body.uid;
+    assert.equal(fakes.auth._users.get(createdUid).password, 'Br7$Munic1pal');
+    const stored = fakes.store.docs.get(`users/${createdUid}`);
+    assert.equal(stored.mustChangePassword, true);
+  } finally { fakes.restore(); }
+});
+
+test('temporary password on Lands employee creation (not just department manager): real Auth password set and mustChangePassword recorded', async () => {
+  const fakes = installFakes({ bridgeResponses: [{ ok: true, bridged: true, eventId: 'lands_evt_pw_emp' }] });
+  try {
+    const { uid, organizationId } = seedManager(fakes);
+    const { usersHandler } = loadFreshHandlers();
+    const req = fakeRequest({ uid, body: { action: 'create', organizationId, email: 'pw-emp@example.com', name: 'Employee Password Test', field: { enabled: false }, lands: { enabled: true, role: 'lands_employee' }, password: 'Br7$Munic1pal' } });
+    const res = fakeResponse();
+    await usersHandler(req, res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.mustChangePassword, true);
+    assert.equal(res.body.lands.role, 'lands_employee');
+    const createdUid = res.body.uid;
+    assert.equal(fakes.auth._users.get(createdUid).password, 'Br7$Munic1pal');
+    const stored = fakes.store.docs.get(`users/${createdUid}`);
+    assert.equal(stored.mustChangePassword, true);
+    assert.equal(stored.landsAccess.role, 'lands_employee');
+  } finally { fakes.restore(); }
+});
+
+test('temporary password creation still enforces the existing password policy', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid, organizationId } = seedManager(fakes);
+    const { usersHandler } = loadFreshHandlers();
+    const req = fakeRequest({ uid, body: { action: 'create', organizationId, email: 'weakpw@example.com', name: 'Weak', field: { enabled: true, role: 'inspector' }, password: 'password' } });
+    const res = fakeResponse();
+    await usersHandler(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.reason, 'password_policy_failed');
   } finally { fakes.restore(); }
 });
 

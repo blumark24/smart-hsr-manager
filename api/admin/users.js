@@ -132,6 +132,27 @@ function validateLandsSelection(lands) {
   return { ok: true, present: true, enabled: lands.enabled, role: lands.enabled ? lands.role : null };
 }
 
+// ONE operational employee = ONE operational service only (manager/owner are
+// the sole exception, and this function is never used for them — it only
+// ever gates the operational users/{uid} create/setServices paths). Pure,
+// no I/O: takes the EFFECTIVE enabled state of each service after applying
+// whatever this request changes (a service not mentioned in the request
+// keeps its existing stored state — see resolveEffectiveServiceState).
+function assertSingleService(fieldEffectiveEnabled, landsEffectiveEnabled) {
+  if (fieldEffectiveEnabled && landsEffectiveEnabled) return { ok: false, reason: 'dual_service_denied' };
+  return { ok: true };
+}
+
+// Combines a (possibly absent) requested selection with the existing stored
+// state to determine what the enabled state WOULD BE after this request —
+// needed because setServices allows a request to mention only one service,
+// leaving the other's current state unchanged.
+function resolveEffectiveServiceState(fieldSel, landsSel, existingRole, existingLandsAccess) {
+  const fieldEffectiveEnabled = fieldSel.present ? fieldSel.enabled : MANAGER_SCOPED_ROLES.includes(existingRole);
+  const landsEffectiveEnabled = landsSel.present ? landsSel.enabled : Boolean(existingLandsAccess && existingLandsAccess.enabled);
+  return { fieldEffectiveEnabled, landsEffectiveEnabled };
+}
+
 function safeAdminFailure(error) {
   const code = error && error.errorInfo && error.errorInfo.code;
   if (code === 'auth/email-already-exists') return { statusCode: 409, reason: 'email_already_exists' };
@@ -271,19 +292,26 @@ async function handler(req, res) {
           uid: userRecord.uid, email: email.trim(), role, organizationId, active: true,
         });
       } else {
-        // ---- create a multi-service (Field and/or Lands) operational user ----
+        // ---- create a single-service (Field OR Lands) operational user ----
         // Only ever creates users/{uid} records — never managers — so this
         // path can never be used to create another manager or owner.
-        const { organizationId, email, name, field, lands } = body;
+        const { organizationId, email, name, field, lands, password, active } = body;
         if (!isNonEmptyString(email) || !isNonEmptyString(organizationId)) {
           return sendJson(res, 400, { error: 'email_and_organizationId_required' });
         }
+        const initialActive = active !== false;
         const fieldSel = validateFieldSelection(field);
         if (!fieldSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: fieldSel.reason });
         const landsSel = validateLandsSelection(lands);
         if (!landsSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: landsSel.reason });
         if (!fieldSel.enabled && !landsSel.enabled) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'at_least_one_service_required' });
+        }
+        const singleServiceCheck = assertSingleService(fieldSel.enabled, landsSel.enabled);
+        if (!singleServiceCheck.ok) return sendJson(res, 400, { error: 'invalid_request', reason: singleServiceCheck.reason });
+        if (isNonEmptyString(password)) {
+          const policyFailure = passwordPolicyReason(password, { email, name });
+          if (policyFailure) return sendJson(res, 400, { error: 'invalid_request', reason: policyFailure });
         }
         // Same organization-scoping decision Field creation already applies;
         // a nominal manageable Field role is used for the authorization check
@@ -297,8 +325,9 @@ async function handler(req, res) {
           return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
         }
 
-        const createParams = { email: email.trim(), disabled: false };
+        const createParams = { email: email.trim(), disabled: !initialActive };
         if (isNonEmptyString(name)) createParams.displayName = name.trim();
+        if (isNonEmptyString(password)) createParams.password = password; // set, never stored
         const userRecord = await auth.createUser(createParams);
 
         // A brand-new Lands membership is always entitlement.enable — never
@@ -319,9 +348,10 @@ async function handler(req, res) {
           name: isNonEmptyString(name) ? name.trim() : '',
           role: fieldSel.role,
           organizationId,
-          active: true,
+          active: initialActive,
           createdBy: caller.uid,
           createdAt: FieldValue.serverTimestamp(),
+          ...(isNonEmptyString(password) ? { mustChangePassword: true } : {}),
         };
         if (landsSel.enabled) {
           doc.landsAccess = {
@@ -334,7 +364,8 @@ async function handler(req, res) {
         await db.collection('users').doc(userRecord.uid).set(doc);
 
         return sendJson(res, 200, {
-          uid: userRecord.uid, email: email.trim(), organizationId, active: true,
+          uid: userRecord.uid, email: email.trim(), organizationId, active: initialActive,
+          mustChangePassword: isNonEmptyString(password),
           field: { enabled: fieldSel.enabled, role: fieldSel.role },
           lands: landsSel.enabled
             ? { enabled: true, role: landsSel.role, syncStatus: landsSync.ok ? 'synced' : 'pending_trusted_sync', syncError: landsSync.ok ? null : landsSync.reason }
@@ -361,6 +392,14 @@ async function handler(req, res) {
         if (!fieldSel.present && !landsSel.present) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'no_service_changes' });
         }
+        // Service transfer safety: resolve what the FULL post-request state
+        // would be (a request may only mention one service, leaving the
+        // other's current stored state in effect) and reject if that would
+        // leave both services enabled at once — one operational employee
+        // may only ever hold one operational service.
+        const { fieldEffectiveEnabled, landsEffectiveEnabled } = resolveEffectiveServiceState(fieldSel, landsSel, record.data.role, record.data.landsAccess);
+        const singleServiceCheck = assertSingleService(fieldEffectiveEnabled, landsEffectiveEnabled);
+        if (!singleServiceCheck.ok) return sendJson(res, 400, { error: 'invalid_request', reason: singleServiceCheck.reason });
 
         // users/{uid} only ever holds supervisor/inspector/contractor/null
         // (Lands-only) records — never a manager/owner — so the same-org
@@ -508,4 +547,4 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
-module.exports._test = { passwordPolicyReason, validateFieldSelection, validateLandsSelection, computeLandsSyncOperation };
+module.exports._test = { passwordPolicyReason, validateFieldSelection, validateLandsSelection, computeLandsSyncOperation, assertSingleService, resolveEffectiveServiceState };
