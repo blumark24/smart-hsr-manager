@@ -90,4 +90,43 @@ async function callLandsTrustedMutation({ idToken, municipalityId, operation, re
   return { ok: true, bridged: true, eventId: data.event_id, result: data.result };
 }
 
-module.exports = { callLandsTrustedMutation, bridgeConfigured };
+/**
+ * Registers a one-time SSO handoff on Lands' own /api/lands-sso-register
+ * endpoint, forwarding the EMPLOYEE'S OWN already-verified ID token (never a
+ * manager's, never a service credential) — the same forwarding pattern as
+ * callLandsTrustedMutation above. Lands performs its own independent,
+ * authoritative eligibility check against its real membership record; this
+ * call never asserts eligibility itself, only carries the identity across.
+ * Never throws — every failure mode comes back as { ok:false, reason }.
+ */
+async function callLandsSsoRegister({ idToken, municipalityId }) {
+  const base = bridgeBaseUrl();
+  if (!base) return { ok: false, reason: 'lands_bridge_not_configured' };
+
+  let response;
+  try {
+    response = await fetch(`${base}/api/lands-sso-register`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${idToken}`,
+        'x-municipality-id': municipalityId,
+        ...(bridgeBypassSecret() ? { 'x-vercel-protection-bypass': bridgeBypassSecret() } : {}),
+      },
+      body: JSON.stringify({}),
+    });
+  } catch (_) {
+    return { ok: false, reason: 'lands_bridge_unreachable' };
+  }
+
+  let data = {};
+  try { data = await response.json(); } catch (_) { /* ignore non-JSON body */ }
+
+  if (!response.ok) {
+    return { ok: false, status: response.status, reason: typeof data.error === 'string' ? data.error : 'lands_sso_register_failed' };
+  }
+  // Never logged, never persisted here — passed straight through to the caller's response body.
+  return { ok: true, code: data.code, expiresAt: data.expires_at };
+}
+
+module.exports = { callLandsTrustedMutation, callLandsSsoRegister, bridgeConfigured };

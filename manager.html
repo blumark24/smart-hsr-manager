@@ -448,7 +448,7 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
           <h2 class="text-2xl font-extrabold">إدارة المستخدمين</h2>
           <div class="management-toolbar">
-            <input id="userSearch" type="text" placeholder="بحث بالاسم أو البريد" class="management-search" autocomplete="off" autocorrect="off" spellcheck="false" oninput="filterUsers()"/>
+            <input id="userSearch" type="search" placeholder="بحث بالاسم أو البريد" class="management-search" autocomplete="off" autocorrect="off" spellcheck="false" name="usersTableFilter" readonly onfocus="this.removeAttribute('readonly')" oninput="filterUsers()"/>
             <button type="button" class="btn-soft" onclick="clearUserSearch()"><i data-lucide="x" class="w-4 h-4 ml-1"></i> مسح البحث</button>
             <button class="btn" data-manager-only onclick="openModal('modalAddUser')"><i data-lucide="user-plus" class="w-4 h-4 ml-1"></i> إضافة مستخدم</button>
           </div>
