@@ -908,6 +908,11 @@ const firebaseConfig = await resolveFirebaseConfig();
     function setSidebarOpen(open){
       appLayout?.classList.toggle('sidebar-open',open);
       sidebarToggle?.setAttribute('aria-expanded',String(open));
+      // Set explicitly rather than relying solely on the CSS descendant
+      // selector, so the backdrop's visible/interactive state can never
+      // silently drift from the sidebar's open state.
+      const backdrop=document.getElementById('sidebarBackdrop');
+      if(backdrop){backdrop.style.opacity=open?'1':'0';backdrop.style.pointerEvents=open?'auto':'none'}
     }
     (function initSidebarState(){
       if(isMobileSidebar()){setSidebarCollapsed(true);setSidebarOpen(false);return}
