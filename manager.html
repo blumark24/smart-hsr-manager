@@ -40,12 +40,57 @@
     .header-meta{min-width:0;flex-wrap:wrap}.header-actions{min-width:0;justify-self:end;flex-wrap:nowrap}
     .icon-button{min-width:44px;min-height:44px;border-radius:12px;display:inline-grid;place-items:center;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;transition:.2s}.icon-button:hover{background:rgba(255,255,255,.16)}
     .shell{width:min(1480px,100%);margin:auto;padding:1.25rem clamp(1rem,2.4vw,2rem) 3rem}
+
+    /* ===== Collapsible right sidebar + app layout =====
+       RTL: the sidebar is the FIRST grid track, which CSS Grid places on the
+       right under dir="rtl" — no direction-specific column ordering needed.
+       79px mirrors .command-nav's existing sticky offset (the tuned header
+       height already used elsewhere in this file). */
+    .app-layout{width:min(1560px,100%);margin:auto;display:grid;grid-template-columns:232px minmax(0,1fr);align-items:start;gap:0}
+    .app-sidebar{position:sticky;top:79px;max-height:calc(100vh - 79px);overflow-y:auto;background:var(--surface);border-left:1px solid var(--line);padding:1.1rem .75rem 2rem;display:flex;flex-direction:column;gap:1.15rem;z-index:35;transition:width .18s ease,padding .18s ease}
+    .sidebar-group-label{font-size:.68rem;font-weight:900;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;padding:0 .55rem;margin-bottom:.35rem}
+    .sidebar-group{display:flex;flex-direction:column;gap:.2rem}
+    .sidebar-link{display:flex;align-items:center;gap:.65rem;min-height:44px;padding:.55rem .65rem;border-radius:.75rem;color:var(--muted);font-weight:800;font-size:.85rem;text-decoration:none;white-space:nowrap;overflow:hidden;width:100%;text-align:right;background:transparent;border:0;cursor:pointer}
+    .sidebar-link:hover{background:var(--surface-2);color:var(--text)}
+    .sidebar-link.tab-active{background:var(--color-navy);color:#fff}
+    .sidebar-link i{flex:0 0 auto;width:19px;height:19px}
+    .sidebar-link span{overflow:hidden;text-overflow:ellipsis}
+    .sidebar-external-note{font-size:.66rem;font-weight:700;color:var(--muted);opacity:.85}
+    .app-shell-content{min-width:0}
+    @media(min-width:901px){
+      .app-layout.sidebar-collapsed{grid-template-columns:72px minmax(0,1fr)}
+      .app-layout.sidebar-collapsed .app-sidebar{width:72px;padding-inline:.55rem}
+      .app-layout.sidebar-collapsed .sidebar-link span,.app-layout.sidebar-collapsed .sidebar-group-label,.app-layout.sidebar-collapsed .sidebar-external-note{display:none}
+      .app-layout.sidebar-collapsed .sidebar-link{justify-content:center;padding-inline:0}
+    }
+    .sidebar-backdrop{display:none}
+    @media(max-width:900px){
+      .app-layout{grid-template-columns:1fr;width:100%}
+      .app-sidebar{position:fixed;inset-block:0;right:0;width:280px;max-width:82vw;max-height:100vh;transform:translateX(100%);box-shadow:-18px 0 40px rgba(0,0,0,.3);z-index:70;transition:transform .2s ease}
+      .app-layout.sidebar-open .app-sidebar{transform:translateX(0)}
+      .app-layout.sidebar-collapsed:not(.sidebar-open) .app-sidebar{transform:translateX(100%)}
+      .sidebar-backdrop{display:block;position:fixed;inset:0;background:rgba(4,12,20,.5);z-index:65;opacity:0;pointer-events:none;transition:opacity .18s}
+      .app-layout.sidebar-open .sidebar-backdrop{opacity:1;pointer-events:auto}
+    }
     .executive-intro{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1rem;align-items:end;padding:1rem 0 1.1rem;border-bottom:1px solid var(--line)}
     .executive-intro h1{font-size:clamp(1.55rem,2.5vw,2.35rem);font-weight:900;letter-spacing:-.04em;color:var(--color-navy);line-height:1.2}.dark .executive-intro h1{color:var(--text)}
     .section-label{font-size:.72rem;font-weight:900;color:var(--color-green);letter-spacing:.06em}
     .card{background:var(--surface);border:1px solid var(--line);border-radius:1.2rem;box-shadow:var(--shadow);padding:1.15rem;min-width:0}
     .kpi-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.75rem;margin:1rem 0}
     .kpi-card{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding:1rem;min-height:128px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 24px rgba(7,29,51,.05)}
+    .service-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+    .service-card{background:var(--surface);border:1px solid var(--line);border-radius:1.1rem;padding:1.1rem;display:flex;flex-direction:column;gap:.7rem;box-shadow:0 8px 24px rgba(7,29,51,.05)}
+    .service-card-head{display:flex;align-items:center;gap:.7rem}
+    .service-icon{width:44px;height:44px;border-radius:.9rem;display:grid;place-items:center;flex:0 0 auto;background:var(--surface-2);color:var(--color-navy)}.dark .service-icon{color:var(--text)}
+    .service-card h3{margin:0;font-size:1rem}
+    .service-card p.type-meta{margin:0}
+    .service-stat-row{display:flex;gap:.6rem;flex-wrap:wrap}
+    .service-stat{flex:1 1 90px;background:var(--surface-2);border-radius:.75rem;padding:.6rem .7rem}
+    .service-stat strong{display:block;font-size:1.15rem;color:var(--color-navy)}.dark .service-stat strong{color:var(--text)}
+    .service-stat span{font-size:.68rem;color:var(--muted)}
+    .service-card-foot{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-top:auto}
+    .service-status-pill{display:inline-flex;align-items:center;gap:.35rem;font-size:.7rem;font-weight:800;padding:.3rem .6rem;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+    .service-status-pill.is-active{color:var(--color-green);background:rgba(16,167,122,.12)}
     [hidden]{display:none!important}
     .kpi-card:before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--metric,#1ba7b8)}
     .kpi-card .metric-label{font-size:.75rem;font-weight:800;color:var(--muted)}.kpi-card .metric-value{font-size:clamp(1.7rem,2.4vw,2.35rem);font-weight:900;color:var(--color-navy);line-height:1}.dark .kpi-card .metric-value{color:var(--text)}
@@ -206,24 +251,41 @@
           <div id="hijriDate" class="text-[11px] text-slate-300"></div>
         </div>
         <span class="header-chip" title="حالة الاتصال والمصادقة"><span id="secureDot" class="secure-dot pending"></span><span id="secureLabel" class="hidden sm:inline">جاري التحقق</span></span>
+        <button id="sidebarToggle" class="icon-button" type="button" aria-label="طي/فتح القائمة الجانبية" aria-pressed="false" aria-expanded="true" aria-controls="appSidebar" title="القائمة الجانبية"><i data-lucide="panel-right" class="w-5 h-5"></i></button>
         <button id="themeToggle" class="icon-button" type="button" aria-label="تفعيل الوضع الداكن" aria-pressed="false" title="الوضع الداكن"><i data-lucide="moon" class="w-5 h-5"></i></button>
         <button id="logoutBtn" class="icon-button" type="button" aria-label="تسجيل الخروج" title="تسجيل الخروج"><i data-lucide="log-out" class="w-5 h-5"></i></button>
       </div>
     </div>
   </header>
 
-  <nav class="command-nav no-print" aria-label="أقسام مركز القيادة">
-    <ul>
-      <li><button class="tab-active" data-tab="overview" aria-current="page"><i data-lucide="layout-dashboard" class="w-4 h-4 inline ml-1"></i>نظرة تنفيذية</button></li>
-      <li><button data-tab="observations"><i data-lucide="kanban-square" class="w-4 h-4 inline ml-1"></i>البلاغات</button></li>
-      <li><button data-tab="users"><i data-lucide="users" class="w-4 h-4 inline ml-1"></i>الفرق</button></li>
-      <li><button data-tab="reports"><i data-lucide="file-bar-chart" class="w-4 h-4 inline ml-1"></i>التقارير</button></li>
-      <li><button data-tab="twin"><i data-lucide="map-pinned" class="w-4 h-4 inline ml-1"></i>التوأم الرقمي</button></li>
-      <li><button data-tab="settings"><i data-lucide="settings" class="w-4 h-4 inline ml-1"></i>الإعدادات</button></li>
-    </ul>
-  </nav>
+  <div class="app-layout no-print" id="appLayout">
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+    <aside class="app-sidebar" id="appSidebar" aria-label="التنقل الرئيسي">
+      <nav aria-label="أقسام مركز القيادة">
+        <div class="sidebar-group">
+          <p class="sidebar-group-label">القيادة</p>
+          <button class="sidebar-link tab-active" data-tab="overview" aria-current="page"><i data-lucide="layout-dashboard"></i><span>الرئيسية</span></button>
+          <button class="sidebar-link" data-tab="twin"><i data-lucide="map-pinned"></i><span>الخريطة التشغيلية</span></button>
+        </div>
+        <div class="sidebar-group">
+          <p class="sidebar-group-label">الخدمات</p>
+          <button class="sidebar-link" data-tab="observations"><i data-lucide="kanban-square"></i><span>الحصر الميداني</span></button>
+          <a class="sidebar-link" href="https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/" target="_blank" rel="noopener"><i data-lucide="landmark"></i><span>حصر منح الأراضي الذكي</span></a>
+        </div>
+        <div class="sidebar-group">
+          <p class="sidebar-group-label">الإدارة</p>
+          <button class="sidebar-link" data-tab="users"><i data-lucide="users"></i><span>المستخدمون والصلاحيات</span></button>
+          <button class="sidebar-link" data-tab="reports"><i data-lucide="file-bar-chart"></i><span>التقارير</span></button>
+          <button class="sidebar-link" data-tab="overview" data-scroll-target="recentActivity"><i data-lucide="history"></i><span>النشاط والتدقيق</span></button>
+        </div>
+        <div class="sidebar-group">
+          <p class="sidebar-group-label">النظام</p>
+          <button class="sidebar-link" data-tab="settings"><i data-lucide="settings"></i><span>الإعدادات</span></button>
+        </div>
+      </nav>
+    </aside>
 
-  <main id="commandMain" class="shell">
+  <main id="commandMain" class="shell app-shell-content">
     <section class="executive-intro" aria-labelledby="commandTitle">
       <div>
         <p class="section-label">المشهد التشغيلي الموحّد</p>
@@ -300,6 +362,37 @@
           </article>
         </aside>
       </div>
+
+      <section class="mt-4" aria-labelledby="servicesTitle">
+        <div class="mb-3"><p class="section-label">02 / منظومة Smart HSR</p><h2 id="servicesTitle" class="text-xl font-black">خدمات المنصة</h2></div>
+        <div class="service-grid">
+          <article class="service-card">
+            <div class="service-card-head">
+              <span class="service-icon"><i data-lucide="kanban-square" class="w-5 h-5"></i></span>
+              <div><h3>الحصر الميداني</h3><p class="type-meta">بلاغات الفرق الميدانية ومتابعتها</p></div>
+            </div>
+            <div class="service-stat-row">
+              <div class="service-stat"><strong id="svc-field-total">—</strong><span>إجمالي البلاغات</span></div>
+              <div class="service-stat"><strong id="svc-field-rate">—</strong><span>نسبة الإنجاز</span></div>
+            </div>
+            <div class="service-card-foot">
+              <span class="service-status-pill is-active"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i>نشطة</span>
+              <button class="btn-soft" type="button" onclick="activateTab('observations')"><i data-lucide="arrow-left" class="w-4 h-4"></i>فتح الخدمة</button>
+            </div>
+          </article>
+          <article class="service-card">
+            <div class="service-card-head">
+              <span class="service-icon"><i data-lucide="landmark" class="w-5 h-5"></i></span>
+              <div><h3>حصر منح الأراضي الذكي</h3><p class="type-meta">إدارة سجلات منح الأراضي واعتمادها</p></div>
+            </div>
+            <p class="type-meta">ملخص تنفيذي مباشر لهذه الخدمة غير متاح بعد ضمن مركز القيادة. يمكن فتح النظام مباشرة لعرض البيانات الفعلية.</p>
+            <div class="service-card-foot">
+              <span class="service-status-pill"><i data-lucide="circle-dot" class="w-3.5 h-3.5"></i>نظام منفصل</span>
+              <a class="btn-soft" href="https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/" target="_blank" rel="noopener"><i data-lucide="external-link" class="w-4 h-4"></i>فتح الخدمة</a>
+            </div>
+          </article>
+        </div>
+      </section>
 
       <article class="card mt-4" aria-labelledby="workflowTitle">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -475,6 +568,7 @@
       </div>
     </section>
   </main>
+  </div>
 
   <!-- MODALS -->
   <div id="modalAddUser" class="modal">
@@ -798,10 +892,49 @@ const firebaseConfig = await resolveFirebaseConfig();
       if(safeTab==='twin')setTimeout(()=>{initTwinMap();renderTwin();twinMap?.invalidateSize()},200);
       if(persistFocus)activeButton?.focus();
     }
+    window.activateTab = activateTab;
+
+    // ===== Sidebar (collapse/expand desktop, off-canvas drawer mobile) =====
+    const SIDEBAR_STATE_KEY='smartHSRSidebarCollapsed';
+    const appLayout=document.getElementById('appLayout');
+    const sidebarToggle=document.getElementById('sidebarToggle');
+    function isMobileSidebar(){return window.matchMedia('(max-width:900px)').matches}
+    function setSidebarCollapsed(collapsed){
+      appLayout?.classList.toggle('sidebar-collapsed',collapsed);
+      sidebarToggle?.setAttribute('aria-pressed',String(collapsed));
+      sidebarToggle?.setAttribute('aria-label',collapsed?'فتح القائمة الجانبية':'طي القائمة الجانبية');
+      if(!isMobileSidebar()){try{localStorage.setItem(SIDEBAR_STATE_KEY,collapsed?'1':'0')}catch(_){}}
+    }
+    function setSidebarOpen(open){
+      appLayout?.classList.toggle('sidebar-open',open);
+      sidebarToggle?.setAttribute('aria-expanded',String(open));
+    }
+    (function initSidebarState(){
+      if(isMobileSidebar()){setSidebarCollapsed(true);setSidebarOpen(false);return}
+      let stored='0';
+      try{stored=localStorage.getItem(SIDEBAR_STATE_KEY)||'0'}catch(_){}
+      setSidebarCollapsed(stored==='1');
+      setSidebarOpen(false);
+    })();
+    sidebarToggle?.addEventListener('click',()=>{
+      if(isMobileSidebar()){setSidebarOpen(!appLayout?.classList.contains('sidebar-open'));return}
+      setSidebarCollapsed(!appLayout?.classList.contains('sidebar-collapsed'));
+    });
+    document.getElementById('sidebarBackdrop')?.addEventListener('click',()=>setSidebarOpen(false));
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isMobileSidebar())setSidebarOpen(false)});
+    window.addEventListener('resize',()=>{
+      if(isMobileSidebar()){setSidebarOpen(false)}
+      else{setSidebarOpen(false);let stored='0';try{stored=localStorage.getItem(SIDEBAR_STATE_KEY)||'0'}catch(_){}setSidebarCollapsed(stored==='1')}
+    });
 
     // ===== Tabs =====
     $$("nav [data-tab]").forEach(btn=>{
-      btn.addEventListener('click',()=>activateTab(btn.getAttribute('data-tab')))
+      btn.addEventListener('click',()=>{
+        activateTab(btn.getAttribute('data-tab'));
+        const scrollTarget=btn.getAttribute('data-scroll-target');
+        if(scrollTarget)setTimeout(()=>document.getElementById(scrollTarget)?.scrollIntoView({behavior:motionReduced()?'auto':'smooth',block:'start'}),150);
+        if(isMobileSidebar())setSidebarOpen(false);
+      })
     });
 
     // ===== KPIs =====
@@ -835,6 +968,12 @@ const firebaseConfig = await resolveFirebaseConfig();
       document.getElementById('briefMessage').textContent = total
         ? `${open} بلاغاً مفتوحاً، منها ${pending} بانتظار بدء المعالجة.`
         : 'لا توجد بلاغات موثّقة ضمن المؤسسة حالياً.';
+      // Same real total/rate already computed above — the service card is a
+      // presentation-only mirror, not a second data source.
+      const svcFieldTotal=document.getElementById('svc-field-total');
+      const svcFieldRate=document.getElementById('svc-field-rate');
+      if(svcFieldTotal) svcFieldTotal.textContent = total;
+      if(svcFieldRate) svcFieldRate.textContent = rate===null ? 'غير متاح' : `${rate}%`;
       renderOperationsOverview();
       try{ lucide.createIcons(); }catch(e){}
     }
