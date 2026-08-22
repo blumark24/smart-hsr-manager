@@ -59,7 +59,24 @@ async function readJsonBody(req) {
 function isNonEmptyString(v) { return typeof v === 'string' && v.trim().length > 0; }
 
 const RECENT_AUTH_WINDOW_SECONDS = 10 * 60;
+// Deliberately excludes 'supervisor': a supervisor signs into manager.html
+// directly and already has a self-service password-change flow there
+// (#passwordChangeForm) — this endpoint is for accounts that have no such
+// self-service option. Lands-only accounts (role: null) are eligible the
+// same way inspector/contractor are, via isPasswordEligibleTarget below.
 const PASSWORD_TARGET_ROLES = ['inspector', 'contractor'];
+
+// A Lands-only account (role: null, single-service-exclusive with Field —
+// see validateFieldSelection/validateLandsSelection above) is just as much
+// a real operational employee as an inspector/contractor, and must be
+// equally eligible for a manager-issued temporary password. Recognized by
+// an explicit `landsAccess.enabled === true` declaration, never merely by
+// the absence of a role (which could also mean a malformed record).
+function isPasswordEligibleTarget(data) {
+  if (!data) return false;
+  if (PASSWORD_TARGET_ROLES.includes(data.role)) return true;
+  return data.role === null && Boolean(data.landsAccess && data.landsAccess.enabled === true);
+}
 
 function hasRecentAuthentication(decoded, nowSeconds = Math.floor(Date.now() / 1000)) {
   const authTime = Number(decoded && decoded.auth_time);
@@ -466,7 +483,7 @@ async function handler(req, res) {
           return sendJson(res, 401, { error: 'unauthenticated', reason: 'reauthentication_required' });
         }
         const record = await findRecord(db, uid);
-        if (!record || !PASSWORD_TARGET_ROLES.includes(record.data.role)) {
+        if (!record || !isPasswordEligibleTarget(record.data)) {
           return sendJson(res, 403, { error: 'forbidden', reason: 'password_target_denied' });
         }
         if (!isNonEmptyString(record.data.organizationId) || record.data.organizationId !== caller.organizationId) {
@@ -547,4 +564,4 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
-module.exports._test = { passwordPolicyReason, validateFieldSelection, validateLandsSelection, computeLandsSyncOperation, assertSingleService, resolveEffectiveServiceState };
+module.exports._test = { passwordPolicyReason, validateFieldSelection, validateLandsSelection, computeLandsSyncOperation, assertSingleService, resolveEffectiveServiceState, isPasswordEligibleTarget };

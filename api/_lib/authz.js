@@ -104,13 +104,26 @@ async function getCallerContext(uid) {
 }
 
 // Pure authorization decision. Owner -> anything manageable. Manager -> only
-// supervisors/inspectors/contractors in its OWN organization; never managers,
-// owners, or another organization. Everyone else -> denied.
+// supervisors/inspectors/contractors OR a Lands-only account (targetRole is
+// exactly `null`) in its OWN organization; never managers, owners, or
+// another organization. Everyone else -> denied.
+//
+// Account security (temp password, enable/disable, session revocation)
+// belongs to the Firebase Auth identity, not to which operational service
+// an employee happens to work in. A Lands-only employee's users/{uid} doc
+// legitimately has role === null (Lands is single-service-exclusive with
+// Field — see api/admin/users.js) and is recognized here by that exact
+// `null`, never by `undefined`/a missing field, so a malformed or
+// unexpected record still fails closed exactly as before.
+function isManagerScopedTarget(targetRole) {
+  return targetRole === null || MANAGER_SCOPED_ROLES.includes(targetRole);
+}
+
 function assertCanManage(caller, target) {
   const targetRole = target && target.targetRole;
   const targetOrg = target && target.targetOrganizationId;
 
-  if (!MANAGEABLE_ROLES.includes(targetRole)) {
+  if (targetRole !== null && !MANAGEABLE_ROLES.includes(targetRole)) {
     return { allowed: false, reason: 'target_role_not_manageable' };
   }
   if (!caller) return { allowed: false, reason: 'no_caller' };
@@ -119,7 +132,7 @@ function assertCanManage(caller, target) {
     return { allowed: true, reason: 'owner' };
   }
   if (caller.isManager) {
-    if (!MANAGER_SCOPED_ROLES.includes(targetRole)) {
+    if (!isManagerScopedTarget(targetRole)) {
       return { allowed: false, reason: 'manager_cannot_manage_managers' };
     }
     if (!caller.organizationId || targetOrg !== caller.organizationId) {
@@ -135,6 +148,7 @@ module.exports = {
   MANAGER_SCOPED_ROLES,
   LANDS_MANAGEABLE_ROLES,
   MANAGER_MANAGEMENT_ENABLED,
+  isManagerScopedTarget,
   collectionForRole,
   activeIsNotFalse,
   verifyRequestToken,
