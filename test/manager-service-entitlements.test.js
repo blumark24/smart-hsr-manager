@@ -48,3 +48,41 @@ test('lands selection: rejects unknown roles and malformed input', () => {
 test('lands selection: disabled clears the role regardless of what was sent', () => {
   assert.deepEqual(validateLandsSelection({ enabled: false, role: 'lands_employee' }), { ok: true, present: true, enabled: false, role: null });
 });
+
+// ---- combinations matching the required manager-sprint test checklist ----
+// Mirrors exactly what the `create`/`setServices` handlers do with the two
+// validators' results before deciding whether to proceed.
+function wouldAllowCreate(fieldInput, landsInput) {
+  const fieldSel = validateFieldSelection(fieldInput);
+  const landsSel = validateLandsSelection(landsInput);
+  if (!fieldSel.ok || !landsSel.ok) return { allowed: false, reason: !fieldSel.ok ? fieldSel.reason : landsSel.reason };
+  if (!fieldSel.enabled && !landsSel.enabled) return { allowed: false, reason: 'at_least_one_service_required' };
+  return { allowed: true, fieldEnabled: fieldSel.enabled, landsEnabled: landsSel.enabled };
+}
+
+test('Field-only: allowed, Lands stays off', () => {
+  const result = wouldAllowCreate({ enabled: true, role: 'inspector' }, { enabled: false });
+  assert.deepEqual(result, { allowed: true, fieldEnabled: true, landsEnabled: false });
+});
+
+test('Lands-only: allowed, Field stays off', () => {
+  const result = wouldAllowCreate({ enabled: false }, { enabled: true, role: 'lands_employee' });
+  assert.deepEqual(result, { allowed: true, fieldEnabled: false, landsEnabled: true });
+});
+
+test('Field + Lands: both allowed together', () => {
+  const result = wouldAllowCreate({ enabled: true, role: 'supervisor' }, { enabled: true, role: 'lands_department_manager' });
+  assert.deepEqual(result, { allowed: true, fieldEnabled: true, landsEnabled: true });
+});
+
+test('neither service selected: denied', () => {
+  const result = wouldAllowCreate({ enabled: false }, { enabled: false });
+  assert.equal(result.allowed, false);
+  assert.equal(result.reason, 'at_least_one_service_required');
+});
+
+test('an invalid Lands role denies the whole request even if Field is valid', () => {
+  const result = wouldAllowCreate({ enabled: true, role: 'inspector' }, { enabled: true, role: 'lands_municipal_manager' });
+  assert.equal(result.allowed, false);
+  assert.equal(result.reason, 'invalid_lands_role');
+});
