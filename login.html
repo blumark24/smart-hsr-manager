@@ -203,18 +203,42 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     // One operational employee = one operational service (server-enforced).
     // A Lands employee/department-manager is routed to the Lands trusted
-    // runtime — a separate deployment with its own Firebase Auth session, so
-    // there is no shared browser session to hand off. Only the
-    // non-sensitive municipality id is passed as a pre-fill hint; no token,
-    // password, or credential ever goes into the URL.
+    // runtime via a one-time server-side SSO handoff (api/lands-sso-handoff.js
+    // -> Lands' /api/lands-sso-register), so they land on the Lands dashboard
+    // directly instead of seeing a second login screen. Only an opaque,
+    // single-use, short-lived handoff code crosses the redirect URL — never
+    // a password, ID token, or custom token. Lands independently re-verifies
+    // the entitlement at consumption time before minting any session.
     if (hasLandsRole && !hasFieldRole) {
+      let handoffCode = null;
+      try {
+        const idToken = await user.getIdToken();
+        const handoffResp = await fetch('/api/lands-sso-handoff', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        });
+        const handoffData = await handoffResp.json().catch(() => ({}));
+        if (handoffResp.ok && typeof handoffData.code === 'string' && handoffData.code) {
+          handoffCode = handoffData.code;
+        }
+      } catch (e) {
+        console.error('lands-sso-handoff request failed', e);
+      }
       await signOut(probeAuth);
+
+      if (!handoffCode) {
+        showMsg('❌ تعذر إعداد الدخول الآمن إلى حصر منح الأراضي الذكي. حاول لاحقًا.', 'error');
+        loginButton.disabled = false;
+        loginButton.textContent = 'تسجيل الدخول';
+        return;
+      }
+
       showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى حصر منح الأراضي الذكي', 'success');
       setTimeout(() => {
         const landsUrl = new URL('https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/');
-        landsUrl.searchParams.set('municipality', organizationId);
+        landsUrl.searchParams.set('code', handoffCode);
         window.location.href = landsUrl.toString();
-      }, 1000);
+      }, 600);
       return;
     }
 

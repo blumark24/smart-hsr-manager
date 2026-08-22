@@ -86,9 +86,18 @@ test('login.html routes an active Lands-only account to the Lands trusted runtim
 });
 
 test('login.html never places a token, password, or credential in the Lands redirect URL', () => {
+  // Superseded by the one-time SSO handoff (see test/manager-lands-sso.test.js
+  // for the full architecture): the employee's ID token IS now used in this
+  // branch — to call the same-origin api/lands-sso-handoff.js over HTTPS,
+  // never placed in a URL — so this test checks the actual invariant (no
+  // token/password/credential in the URL-building code) rather than banning
+  // getIdToken() outright, which is no longer the real security property.
   const source = read('login.html');
-  const fn = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole)'), source.indexOf('if (hasLandsRole && !hasFieldRole)') + 500);
-  assert.doesNotMatch(fn, /getIdToken/);
-  assert.doesNotMatch(fn, /password/i);
-  assert.match(fn, /landsUrl\.searchParams\.set\('municipality', organizationId\)/);
+  const start = source.indexOf('const landsUrl = new URL');
+  const end = source.indexOf('window.location.href = landsUrl.toString();') + 40;
+  const urlBlock = source.slice(start, end);
+  assert.doesNotMatch(urlBlock, /getIdToken/);
+  assert.doesNotMatch(urlBlock, /password/i);
+  assert.doesNotMatch(urlBlock, /idToken/i);
+  assert.match(urlBlock, /landsUrl\.searchParams\.set\('code', handoffCode\)/);
 });
