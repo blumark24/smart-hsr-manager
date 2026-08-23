@@ -135,6 +135,25 @@ import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 // إعدادات Firebase
 const firebaseConfig = await resolveFirebaseConfig();
 
+// Same hostname-based decision rule firebase-runtime-config.js already uses
+// for this app's OWN identity: any hostname that isn't a recognized
+// Preview/staging *.vercel.app host (a real Production/custom domain, for
+// instance) is Production by default — never the reverse. The unified SSO
+// redirect target must follow the SAME rule Lands' own client already uses
+// to pick its Firebase project (lands-smart's index.html), or a Production
+// employee gets handed off to a deployment running the wrong project
+// entirely and the handoff code is meaningless there.
+const LANDS_PRODUCTION_HOSTNAMES = Object.freeze(['smart-hsr-manager.vercel.app', 'smart-hsr-manager-blumark24-os.vercel.app']);
+const LANDS_PRODUCTION_URL = 'https://lands-smart.vercel.app/';
+const LANDS_STAGING_PREVIEW_URL = 'https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/';
+function resolveLandsRedirectBase() {
+  const hostname = location.hostname;
+  if (!hostname.endsWith('.vercel.app') || LANDS_PRODUCTION_HOSTNAMES.includes(hostname)) {
+    return LANDS_PRODUCTION_URL;
+  }
+  return LANDS_STAGING_PREVIEW_URL;
+}
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -235,7 +254,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
       showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى حصر منح الأراضي الذكي', 'success');
       setTimeout(() => {
-        const landsUrl = new URL('https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/');
+        const landsUrl = new URL(resolveLandsRedirectBase());
         landsUrl.searchParams.set('code', handoffCode);
         window.location.href = landsUrl.toString();
       }, 600);

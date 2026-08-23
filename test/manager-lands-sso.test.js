@@ -20,9 +20,26 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+
+// Runs login.html's resolveLandsRedirectBase() for real, in a sandboxed VM
+// with a mocked location.hostname â€” the same real-execution technique
+// test/firebase-runtime-config.test.js already uses for this app's OWN
+// Production/Preview split, applied to the cross-app SSO redirect target.
+function resolveLandsRedirectBaseFor(hostname) {
+  const source = read('login.html');
+  const start = source.indexOf('const LANDS_PRODUCTION_HOSTNAMES');
+  const end = source.indexOf('const app = initializeApp(firebaseConfig);');
+  const snippet = source.slice(start, end) + 'module.exports = { resolveLandsRedirectBase };';
+  const sandbox = { module: { exports: {} }, location: { hostname }, Object };
+  sandbox.exports = sandbox.module.exports;
+  vm.createContext(sandbox);
+  vm.runInContext(snippet, sandbox, { filename: 'login.html (extracted)' });
+  return sandbox.module.exports.resolveLandsRedirectBase();
+}
 
 // ---- 1. Field login unchanged ----
 test('1. login.html: the Field branch (contractor/supervisor/other) is untouched by the SSO handoff work', () => {
@@ -77,6 +94,22 @@ test('api/organization/context.js: the SSO handoff branch is self-service only â
   assert.doesNotMatch(fn, /assertCanManage/);
   assert.doesNotMatch(fn, /body\.uid/);
   assert.match(fn, /decoded\.uid/, 'must act on the verified caller\'s own uid');
+});
+
+// ---- final routing bug: the Lands redirect target must match the real
+// environment, never a hardcoded stale Preview URL ----
+test('resolveLandsRedirectBase: on Manager Production hostnames, redirects to real Lands Production, not a Preview URL', () => {
+  assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager.vercel.app'), 'https://lands-smart.vercel.app/');
+  assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager-blumark24-os.vercel.app'), 'https://lands-smart.vercel.app/');
+});
+
+test('resolveLandsRedirectBase: a real custom/non-vercel.app domain defaults to Lands Production, same rule as this app\'s own firebase-runtime-config.js', () => {
+  assert.equal(resolveLandsRedirectBaseFor('smart-hsr.gov.sa'), 'https://lands-smart.vercel.app/');
+  assert.equal(resolveLandsRedirectBaseFor('localhost'), 'https://lands-smart.vercel.app/');
+});
+
+test('resolveLandsRedirectBase: an unrecognized *.vercel.app Preview hostname falls back to the Lands staging Preview URL, never Production', () => {
+  assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager-git-some-branch-blumark24-os.vercel.app'), 'https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/');
 });
 
 // ---- 12. no auth secrets in the redirect URL ----
