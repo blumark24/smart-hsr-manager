@@ -28,6 +28,7 @@ const {
 } = require('../_lib/authz');
 const { callLandsTrustedMutation } = require('../_lib/landsBridge');
 const { ensureManagerLandsBootstrap } = require('../_lib/landsManagerBootstrap');
+const { resolveLandsSyncOutcome } = require('../_lib/landsSyncReconciliation');
 
 // The manager's own already-verified bearer token, forwarded as-is to Lands'
 // trusted mutation endpoint (see api/_lib/landsBridge.js). Extracted
@@ -365,6 +366,16 @@ async function handler(req, res) {
               recordChanges: { lands_role: landsSel.role },
             })
           : null;
+        // A mutation conflict (already exists in exactly the requested
+        // state) is reconciled to synced rather than left stuck as a false
+        // failure — see api/_lib/landsSyncReconciliation.js. Any other
+        // failure reason is left untouched.
+        const landsOutcome = landsSel.enabled
+          ? await resolveLandsSyncOutcome({
+              landsSync, idToken: rawToken, municipalityId: organizationId, uid: userRecord.uid,
+              desiredEnabled: true, desiredRole: landsSel.role,
+            })
+          : null;
 
         const doc = {
           uid: userRecord.uid,
@@ -381,8 +392,9 @@ async function handler(req, res) {
           doc.landsAccess = {
             enabled: true, role: landsSel.role,
             requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(),
-            syncStatus: landsSync.ok ? 'synced' : 'pending_trusted_sync',
-            ...(landsSync.ok ? { lastAuditEventId: landsSync.eventId || null } : { syncError: landsSync.reason }),
+            syncStatus: landsOutcome.syncStatus,
+            ...(landsOutcome.eventId ? { lastAuditEventId: landsOutcome.eventId } : {}),
+            ...(landsOutcome.syncError ? { syncError: landsOutcome.syncError } : {}),
           };
         }
         await db.collection('users').doc(userRecord.uid).set(doc);
@@ -392,7 +404,7 @@ async function handler(req, res) {
           mustChangePassword: isNonEmptyString(password),
           field: { enabled: fieldSel.enabled, role: fieldSel.role },
           lands: landsSel.enabled
-            ? { enabled: true, role: landsSel.role, syncStatus: landsSync.ok ? 'synced' : 'pending_trusted_sync', syncError: landsSync.ok ? null : landsSync.reason }
+            ? { enabled: true, role: landsSel.role, syncStatus: landsOutcome.syncStatus, syncError: landsOutcome.syncError }
             : { enabled: false, role: null, syncStatus: null },
         });
       }
@@ -439,6 +451,7 @@ async function handler(req, res) {
         if (fieldSel.present) update.role = fieldSel.role;
 
         let landsSync = null;
+        let landsOutcome = null;
         if (landsSel.present) {
           const previous = record.data.landsAccess;
           const { operation, recordChanges, wasSynced } = computeLandsSyncOperation(previous, landsSel);
@@ -453,15 +466,22 @@ async function handler(req, res) {
               operation, recordId: uid,
               ...(recordChanges !== undefined ? { recordChanges } : {}),
             });
+            // A mutation conflict (already exists in exactly the requested
+            // state) is reconciled to synced rather than left stuck as a
+            // false failure — see api/_lib/landsSyncReconciliation.js.
+            landsOutcome = await resolveLandsSyncOutcome({
+              landsSync, idToken: rawToken, municipalityId, uid,
+              desiredEnabled: landsSel.enabled, desiredRole: landsSel.role,
+            });
           }
 
           if (landsSel.enabled) {
             update.landsAccess = {
               enabled: true, role: landsSel.role,
               requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(),
-              syncStatus: landsSync ? (landsSync.ok ? 'synced' : 'pending_trusted_sync') : (wasSynced ? 'synced' : 'pending_trusted_sync'),
-              ...(landsSync && landsSync.ok ? { lastAuditEventId: landsSync.eventId || null } : {}),
-              ...(landsSync && !landsSync.ok ? { syncError: landsSync.reason } : {}),
+              syncStatus: landsOutcome ? landsOutcome.syncStatus : (wasSynced ? 'synced' : 'pending_trusted_sync'),
+              ...(landsOutcome && landsOutcome.eventId ? { lastAuditEventId: landsOutcome.eventId } : {}),
+              ...(landsOutcome && landsOutcome.syncError ? { syncError: landsOutcome.syncError } : {}),
             };
           } else {
             update.landsAccess = FieldValue.delete();
@@ -473,7 +493,7 @@ async function handler(req, res) {
           uid,
           field: fieldSel.present ? { enabled: fieldSel.enabled, role: fieldSel.role } : undefined,
           lands: landsSel.present
-            ? { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? (update.landsAccess.syncStatus) : null, syncError: landsSync && !landsSync.ok ? landsSync.reason : null }
+            ? { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? (update.landsAccess.syncStatus) : null, syncError: landsOutcome ? landsOutcome.syncError : null }
             : undefined,
         });
       }

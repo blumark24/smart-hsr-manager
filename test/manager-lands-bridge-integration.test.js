@@ -14,12 +14,15 @@ const { installFakes, fakeRequest, fakeResponse } = require('./helpers/fakeFireb
 const USERS_HANDLER_PATH = require.resolve('../api/admin/users.js');
 const BOOTSTRAP_HANDLER_PATH = require.resolve('../api/admin/lands-bootstrap.js');
 const AUTHZ_PATH = require.resolve('../api/_lib/authz.js');
+const RECONCILIATION_PATH = require.resolve('../api/_lib/landsSyncReconciliation.js');
 
 function loadFreshHandlers() {
-  // authz.js destructures getAuth/getDb from firebaseAdmin.js at require
-  // time — it must be re-required too, every time, or it keeps using
+  // authz.js and landsSyncReconciliation.js both destructure their
+  // dependencies (getAuth/getDb, callLandsMembershipStatus) at require
+  // time — each must be re-required too, every time, or it keeps using
   // whichever fake was active the first time it was ever loaded.
   delete require.cache[AUTHZ_PATH];
+  delete require.cache[RECONCILIATION_PATH];
   delete require.cache[USERS_HANDLER_PATH];
   delete require.cache[BOOTSTRAP_HANDLER_PATH];
   return { usersHandler: require(USERS_HANDLER_PATH), bootstrapHandler: require(BOOTSTRAP_HANDLER_PATH) };

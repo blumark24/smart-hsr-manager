@@ -137,10 +137,11 @@ function makeAuth(store) {
  * resolves to these doubles instead of touching a real Firebase project or
  * the network. Returns { store, auth, restore, bridgeCalls }.
  */
-function installFakes({ bridgeResponses = [] } = {}) {
+function installFakes({ bridgeResponses = [], membershipStatusResponses = [] } = {}) {
   const store = makeStore();
   const auth = makeAuth(store);
   const bridgeCalls = [];
+  const membershipStatusCalls = [];
 
   const firebaseAdminPath = require.resolve('../../api/_lib/firebaseAdmin.js');
   const landsBridgePath = require.resolve('../../api/_lib/landsBridge.js');
@@ -160,6 +161,17 @@ function installFakes({ bridgeResponses = [] } = {}) {
         const next = bridgeResponses[bridgeCalls.length - 1] || bridgeResponses[bridgeResponses.length - 1] || { ok: true, bridged: true, eventId: 'lands_test_event' };
         return next;
       },
+      // Mirrors the REAL callLandsMembershipStatus's shape (see
+      // api/_lib/landsBridge.js) — a mockable double so
+      // api/_lib/landsSyncReconciliation.js can be exercised through the
+      // real handlers (api/admin/users.js) without a real Lands deployment.
+      async callLandsMembershipStatus(args) {
+        membershipStatusCalls.push(args);
+        const next = membershipStatusResponses[membershipStatusCalls.length - 1]
+          || membershipStatusResponses[membershipStatusResponses.length - 1]
+          || { ok: true, exists: false, firebase_uid: null, municipality_id: null, lands_role: null, enabled: false };
+        return next;
+      },
     },
   };
 
@@ -168,7 +180,7 @@ function installFakes({ bridgeResponses = [] } = {}) {
     if (originalLandsBridge) require.cache[landsBridgePath] = originalLandsBridge; else delete require.cache[landsBridgePath];
   }
 
-  return { store, auth, bridgeCalls, restore };
+  return { store, auth, bridgeCalls, membershipStatusCalls, restore };
 }
 
 function fakeRequest({ uid, method = 'POST', body = {} }) {

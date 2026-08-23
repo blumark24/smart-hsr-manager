@@ -13,9 +13,11 @@ const { ensureManagerLandsBootstrap } = require('../api/_lib/landsManagerBootstr
 
 const USERS_HANDLER_PATH = require.resolve('../api/admin/users.js');
 const AUTHZ_PATH = require.resolve('../api/_lib/authz.js');
+const RECONCILIATION_PATH = require.resolve('../api/_lib/landsSyncReconciliation.js');
 
 function loadFreshUsersHandler() {
   delete require.cache[AUTHZ_PATH];
+  delete require.cache[RECONCILIATION_PATH];
   delete require.cache[USERS_HANDLER_PATH];
   return require(USERS_HANDLER_PATH);
 }

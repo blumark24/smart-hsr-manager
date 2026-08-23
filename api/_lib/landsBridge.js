@@ -129,4 +129,50 @@ async function callLandsSsoRegister({ idToken, municipalityId }) {
   return { ok: true, code: data.code, expiresAt: data.expires_at };
 }
 
-module.exports = { callLandsTrustedMutation, callLandsSsoRegister, bridgeConfigured };
+/**
+ * Read-only lookup of the authoritative Lands membership record for one
+ * target uid, scoped to the caller's own verified municipality (see Lands'
+ * server/lands-membership-status.js — the caller's own manager identity,
+ * never anything the client supplies, decides which municipality is read).
+ * Used ONLY by api/_lib/landsSyncReconciliation.js to distinguish "the
+ * record already matches what I asked for" from a real conflict after
+ * MUTATION_EXECUTION_FAILED — never a general query surface, never a write.
+ * Never throws — every failure mode comes back as { ok:false, reason }.
+ */
+async function callLandsMembershipStatus({ idToken, municipalityId, targetUid }) {
+  const base = bridgeBaseUrl();
+  if (!base) return { ok: false, reason: 'lands_bridge_not_configured' };
+
+  let response;
+  try {
+    response = await fetch(`${base}/api/lands-membership-status`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${idToken}`,
+        'x-municipality-id': municipalityId,
+        ...(bridgeBypassSecret() ? { 'x-vercel-protection-bypass': bridgeBypassSecret() } : {}),
+      },
+      body: JSON.stringify({ target_uid: targetUid }),
+    });
+  } catch (_) {
+    return { ok: false, reason: 'lands_bridge_unreachable' };
+  }
+
+  let data = {};
+  try { data = await response.json(); } catch (_) { /* ignore non-JSON body */ }
+
+  if (!response.ok) {
+    return { ok: false, status: response.status, reason: typeof data.error === 'string' ? data.error : 'lands_membership_status_failed' };
+  }
+  return {
+    ok: true,
+    exists: data.exists === true,
+    firebase_uid: typeof data.firebase_uid === 'string' ? data.firebase_uid : null,
+    municipality_id: typeof data.municipality_id === 'string' ? data.municipality_id : null,
+    lands_role: typeof data.lands_role === 'string' ? data.lands_role : null,
+    enabled: data.enabled === true,
+  };
+}
+
+module.exports = { callLandsTrustedMutation, callLandsSsoRegister, callLandsMembershipStatus, bridgeConfigured };
