@@ -27,6 +27,7 @@ const {
   assertCanManage,
 } = require('../_lib/authz');
 const { callLandsTrustedMutation } = require('../_lib/landsBridge');
+const { ensureManagerLandsBootstrap } = require('../_lib/landsManagerBootstrap');
 
 // The manager's own already-verified bearer token, forwarded as-is to Lands'
 // trusted mutation endpoint (see api/_lib/landsBridge.js). Extracted
@@ -351,6 +352,12 @@ async function handler(req, res) {
         // change_role, since no prior membership can exist for a uid that
         // was just created. See setServices below for the change_role and
         // disable cases on an EXISTING account.
+        //
+        // Before the FIRST trusted Lands mutation this manager ever makes,
+        // ensure their own municipal_manager bootstrap membership exists —
+        // see api/_lib/landsManagerBootstrap.js. No-op after the first time
+        // (idempotent) and no-op entirely for a non-manager (owner) caller.
+        if (landsSel.enabled) await ensureManagerLandsBootstrap(db, caller);
         const landsSync = landsSel.enabled
           ? await callLandsTrustedMutation({
               idToken: rawToken, municipalityId: organizationId,
@@ -437,6 +444,10 @@ async function handler(req, res) {
           const { operation, recordChanges, wasSynced } = computeLandsSyncOperation(previous, landsSel);
 
           if (operation) {
+            // Same one-time, idempotent bootstrap as the create path above —
+            // covers a manager whose FIRST-ever Lands entitlement action
+            // happens to be a setServices change/disable rather than create.
+            await ensureManagerLandsBootstrap(db, caller);
             landsSync = await callLandsTrustedMutation({
               idToken: rawToken, municipalityId,
               operation, recordId: uid,

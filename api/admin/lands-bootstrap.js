@@ -38,70 +38,14 @@
 //    ever calls this from a dedicated, explicitly-confirmed one-time setup
 //    control, never a persistent/repeatable action once bootstrapped
 // ============================================================================
-const { getDb, FieldValue } = require('../_lib/firebaseAdmin');
+const { getDb } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, getCallerContext } = require('../_lib/authz');
+const { runBootstrapTransaction, computeBootstrapDecision } = require('../_lib/landsManagerBootstrap');
 
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(payload));
-}
-
-const LANDS_NAMESPACE = 'landsMunicipalities';
-// Fixed, valid-shaped request_id for this one deterministic bootstrap event
-// per (municipality, manager) pair — never generated per-call, so a retried
-// bootstrap can never create a second audit document.
-const BOOTSTRAP_REQUEST_ID = '00000000-0000-4000-8000-000000000001';
-
-/**
- * Pure decision function — no I/O, fully unit-testable. Takes ONLY the
- * server-verified caller context (never anything from the request body) and
- * whether a membership document already exists, and decides what (if
- * anything) should be written. This is the single place that determines the
- * bootstrap target — since it accepts no uid/municipality/role parameter of
- * any kind, there is structurally no way for a request to target any
- * identity or municipality other than the caller's own.
- */
-function computeBootstrapDecision(caller, accessAlreadyExists) {
-  if (!caller || !caller.isManager) return { allowed: false, reason: 'manager_required' };
-  if (accessAlreadyExists) return { allowed: true, alreadyBootstrapped: true, write: null };
-
-  const municipalityId = caller.organizationId;
-  const uid = caller.uid;
-  return {
-    allowed: true,
-    alreadyBootstrapped: false,
-    write: {
-      municipalityId,
-      uid,
-      auditDocId: `lands_bootstrap_${municipalityId}_${uid}`,
-      accessDoc: {
-        firebase_uid: uid,
-        municipality_id: municipalityId,
-        lands_role: 'municipal_manager',
-        enabled: true,
-        bootstrapped: true,
-        bootstrapped_by: uid,
-      },
-      // Deliberately NOT one of Lands' normal TRUSTED_AUDIT_ACTIONS/
-      // TRUSTED_AUDIT_REASON_CODES values — this must read unambiguously as
-      // an exceptional, one-time security-administration event, never
-      // confusable with an ordinary employee entitlement grant.
-      auditDoc: {
-        schema_version: '1',
-        actor_uid: uid,
-        actor_role: 'municipal_manager',
-        municipality_id: municipalityId,
-        product: 'smart_hsr_lands',
-        action: 'lands.manager_bootstrapped',
-        domain: 'userAccess',
-        record_id: uid,
-        result: 'success',
-        request_id: BOOTSTRAP_REQUEST_ID,
-        safe_metadata: { reason_code: 'initial_municipality_lands_authority', source: 'web' },
-      },
-    },
-  };
 }
 
 async function handler(req, res) {
@@ -116,41 +60,16 @@ async function handler(req, res) {
 
   // No request body is ever read for identity/target purposes — the ONLY
   // inputs to this whole operation are the verified caller's own uid and
-  // their own organizationId, resolved server-side from Firestore.
+  // their own organizationId, resolved server-side from Firestore. Shares
+  // its actual decision/write logic with the automatic bootstrap performed
+  // inline by api/admin/users.js (see api/_lib/landsManagerBootstrap.js) —
+  // this endpoint is now just the manual, explicit way to trigger the exact
+  // same idempotent operation.
   const caller = await getCallerContext(decoded.uid);
   const db = getDb();
 
   try {
-    const outcome = await db.runTransaction(async (tx) => {
-      // A manager-only check against a not-yet-computed access path would
-      // still need a read; do the cheapest possible check (whether ANY
-      // write is even permitted) before touching Firestore for a denied
-      // caller, then re-derive the real decision with the actual read.
-      if (!caller.isManager) return { decision: computeBootstrapDecision(caller, false) };
-
-      const probeRef = db.doc(`${LANDS_NAMESPACE}/${caller.organizationId}/userAccess/${caller.uid}`);
-      const accessSnap = await tx.get(probeRef);
-      const decision = computeBootstrapDecision(caller, accessSnap.exists);
-      if (!decision.write) return { decision };
-
-      const { write } = decision;
-      const accessRef = db.doc(`${LANDS_NAMESPACE}/${write.municipalityId}/userAccess/${write.uid}`);
-      const auditRef = db.doc(`${LANDS_NAMESPACE}/${write.municipalityId}/auditLogs/${write.auditDocId}`);
-      const auditSnap = await tx.get(auditRef);
-
-      // Field shape matches exactly what Lands' own entitlement.enable
-      // mutation writes (server/lands-mutation-executor.js) — the four
-      // canonical fields Lands' Firestore Rules and session() checks read
-      // (firebase_uid, municipality_id, lands_role, enabled) — plus harmless
-      // bootstrap-provenance fields Lands never reads but a human reviewer
-      // can use to tell this record apart from a normally-granted one.
-      tx.set(accessRef, { ...write.accessDoc, bootstrapped_at: FieldValue.serverTimestamp() });
-      if (!auditSnap.exists) {
-        tx.set(auditRef, { event_id: write.auditDocId, occurred_at: new Date().toISOString(), ...write.auditDoc });
-      }
-      return { decision };
-    });
-
+    const outcome = await runBootstrapTransaction(db, caller);
     if (!outcome.decision.allowed) {
       return sendJson(res, 403, { error: 'forbidden', reason: outcome.decision.reason });
     }
