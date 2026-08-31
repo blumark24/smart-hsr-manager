@@ -6,6 +6,7 @@
     "build:css": "npx tailwindcss -i ./input.css -o ./output.css --minify",
     "watch:css": "npx tailwindcss -i ./input.css -o ./output.css --watch",
     "test:rules": "node test/run-firestore-rules.js",
+    "test:mobility-rules": "node test/run-mobility-mission-rules.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -59,6 +59,27 @@ service cloud.firestore {
       return isActiveOrgUser() ? userRecord().data.role : null;
     }
 
+    // --- Smart Mobility roles (users/{uid}) ---
+    // municipality_manager reuses the existing manager account above; these
+    // four are new role values in the same users/{uid} collection.
+    function isActiveMobilityUser() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userRecord().data.role in ['mobility_head', 'department_head', 'administrative_affairs', 'employee']
+        && userRecord().data.active != false
+        && userRecord().data.organizationId is string
+        && userRecord().data.organizationId.size() > 0;
+    }
+    function mobilityUserOrgId() {
+      return isActiveMobilityUser() ? userRecord().data.organizationId : null;
+    }
+    function mobilityUserRole() {
+      return isActiveMobilityUser() ? userRecord().data.role : null;
+    }
+    function mobilityUserDept() {
+      return isActiveMobilityUser() ? userRecord().data.department : null;
+    }
+
     // ==========================================================
     // managers/{managerId} — signed-in self-read only, no client writes
     // ==========================================================
@@ -149,6 +170,102 @@ service cloud.firestore {
       return orgUserRole() == 'contractor'
         && resource.data.organizationId == orgUserOrgId()
         && changedKeys.hasOnly(['status', 'resolutionNote', 'afterImagePath', 'updatedByUid', 'updatedAt'])
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // ==========================================================
+    // missions/{missionId} — Smart Mobility shared mission lifecycle.
+    // Tenant isolation, department scoping for department_head, and
+    // assignment scoping for employee. Mirrors
+    // platform/policies/mission-workflow-policy.js — keep both in sync.
+    // ==========================================================
+    match /missions/{missionId} {
+      allow read: if (isActiveManager() && resource.data.organizationId == managerOrgId())
+        || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'administrative_affairs' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'department_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.department == mobilityUserDept())
+        || (mobilityUserRole() == 'employee' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.assignedEmployeeUid == request.auth.uid);
+
+      // Only a department head may create a mission request, as a DRAFT, in
+      // their own organization and department, self-attributed.
+      allow create: if mobilityUserRole() == 'department_head'
+        && request.resource.data.organizationId == mobilityUserOrgId()
+        && request.resource.data.department == mobilityUserDept()
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.status == 'DRAFT';
+
+      allow update: if request.resource.data.organizationId == resource.data.organizationId
+        && (canDeptHeadSubmitMission() || canAdminAffairsDecideMission()
+            || canMobilityHeadAdvanceMission() || canEmployeeAdvanceMission());
+
+      // Missions are append/close only — never deleted.
+      allow delete: if false;
+    }
+
+    // department_head: DRAFT -> PENDING_APPROVAL, own mission only.
+    function canDeptHeadSubmitMission() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return mobilityUserRole() == 'department_head'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && resource.data.department == mobilityUserDept()
+        && resource.data.createdByUid == request.auth.uid
+        && resource.data.status == 'DRAFT' && request.resource.data.status == 'PENDING_APPROVAL'
+        && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid'])
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // administrative_affairs: PENDING_APPROVAL -> APPROVED | REJECTED | DRAFT.
+    function canAdminAffairsDecideMission() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return mobilityUserRole() == 'administrative_affairs'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && resource.data.status == 'PENDING_APPROVAL'
+        && (request.resource.data.status == 'APPROVED'
+            || request.resource.data.status == 'REJECTED'
+            || request.resource.data.status == 'DRAFT')
+        && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid'])
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // mobility_head: allocate vehicle, handover, resume after incident,
+    // confirm return.
+    function canMobilityHeadAdvanceMission() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return mobilityUserRole() == 'mobility_head'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && (
+          (resource.data.status == 'APPROVED' && request.resource.data.status == 'VEHICLE_ALLOCATED'
+            && changedKeys.hasOnly(['status', 'vehicleId', 'assignedEmployeeUid', 'updatedAt', 'updatedByUid'])
+            && request.resource.data.vehicleId is string && request.resource.data.vehicleId.size() > 0
+            && request.resource.data.assignedEmployeeUid is string && request.resource.data.assignedEmployeeUid.size() > 0)
+          || (resource.data.status == 'VEHICLE_ALLOCATED' && request.resource.data.status == 'HANDED_OVER'
+            && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
+          || (resource.data.status == 'INCIDENT_HOLD' && request.resource.data.status == 'IN_PROGRESS'
+            && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
+          || (resource.data.status == 'AWAITING_RETURN' && request.resource.data.status == 'CLOSED'
+            && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
+        )
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // employee: receive, start, report/resolve incident, finish, return
+    // vehicle — only on a mission assigned to them.
+    function canEmployeeAdvanceMission() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return mobilityUserRole() == 'employee'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && resource.data.assignedEmployeeUid == request.auth.uid
+        && (
+          (resource.data.status == 'HANDED_OVER' && request.resource.data.status == 'READY')
+          || (resource.data.status == 'READY' && request.resource.data.status == 'IN_PROGRESS')
+          || (resource.data.status == 'IN_PROGRESS' && (request.resource.data.status == 'INCIDENT_HOLD'
+              || request.resource.data.status == 'COMPLETED'))
+          || (resource.data.status == 'INCIDENT_HOLD' && request.resource.data.status == 'IN_PROGRESS')
+          || (resource.data.status == 'COMPLETED' && request.resource.data.status == 'AWAITING_RETURN')
+        )
+        && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid'])
         && request.resource.data.updatedByUid == request.auth.uid;
     }
 
