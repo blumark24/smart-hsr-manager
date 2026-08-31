@@ -123,7 +123,7 @@
   </form>
 
   <div id="msg" class="message"></div>
-  <div class="muted">هذا النظام مخصص للمديرين والمراقبين والمقاولين المعتمدين فقط.</div>
+  <div class="muted">هذا النظام مخصص للمديرين والمراقبين والمقاولين وفرق حركة السير المعتمدين فقط.</div>
 </div>
 
 <script type="module">
@@ -191,11 +191,12 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       }
     }
 
+    const MOBILITY_ROLES = ['mobility_head', 'department_head', 'administrative_affairs', 'employee'];
     const userDoc = await getDoc(doc(probeDb, "users", user.uid));
     const data = userDoc.exists() ? (userDoc.data() || {}) : {};
     const role = data.role;
     const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
-    if (!userDoc.exists() || !['supervisor','inspector','contractor'].includes(role)
+    if (!userDoc.exists() || !['supervisor','inspector','contractor',...MOBILITY_ROLES].includes(role)
         || data.active === false || !organizationId) {
       await signOut(probeAuth);
       showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
@@ -208,6 +209,11 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     if (role === 'supervisor') {
       await signInWithEmailAndPassword(managerAuth, email, password);
+    } else if (MOBILITY_ROLES.includes(role)) {
+      const mobilityApp = initializeApp(firebaseConfig, 'smart-hsr-mobility-session');
+      const mobilityAuth = getAuth(mobilityApp);
+      await setPersistence(mobilityAuth, browserLocalPersistence);
+      await signInWithEmailAndPassword(mobilityAuth, email, password);
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
@@ -218,6 +224,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         window.location.href = 'mobile-map.html';
       } else if (role === 'supervisor') {
         window.location.href = 'manager.html';
+      } else if (MOBILITY_ROLES.includes(role)) {
+        window.location.href = 'smart-mobility.html';
       } else {
         window.location.href = 'dashboard.html';
       }

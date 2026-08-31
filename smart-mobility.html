@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart HSR - حركة السير الذكية</title>
+<script src="./vendor/react.production.min.js"></script>
+<script src="./vendor/react-dom.production.min.js"></script>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;background:#03060d}
+  body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  *{box-sizing:border-box}
+  a{color:#4cc9f0;text-decoration:none}
+  a:hover{opacity:.85}
+  input,button,select,textarea{font-family:inherit}
+  @keyframes mPulse{0%{transform:scale(1);opacity:.8}70%{transform:scale(2.4);opacity:0}100%{transform:scale(2.4);opacity:0}}
+  @keyframes mBreathe{0%,100%{opacity:.5}50%{opacity:1}}
+  @keyframes mRise{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+  @keyframes mIn{0%{opacity:0}100%{opacity:1}}
+  @keyframes mSlide{0%{opacity:0;transform:translateX(-24px)}100%{opacity:1;transform:translateX(0)}}
+  [data-f]:focus-visible{outline:2px solid #4cc9f0;outline-offset:2px;border-radius:8px}
+  .sm-xscroll{scrollbar-width:none;-ms-overflow-style:none}
+  .sm-xscroll::-webkit-scrollbar{display:none;width:0;height:0}
+  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+
+<sc-if value="{{ gateShow }}">
+  <div style="position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#03060d;color:#a9bdd4;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;font-size:13px;text-align:center;padding:20px">
+    <div style="width:34px;height:34px;border-radius:50%;border:3px solid rgba(122,164,224,0.25);border-top-color:#4cc9f0;animation:mBreathe 1.1s linear infinite"></div>
+    <div>{{ gateMsg }}</div>
+  </div>
+</sc-if>
+
+<div dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
+<div style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5">
+
+  <header style="min-height:62px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--hdrBlur,blur(22px))">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
+      <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" style="display:var(--mobNav,none);width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+
+      <div class="sm-xscroll" style="display:var(--roleDisp,flex);align-items:center;gap:3px;padding:3px 12px;border-radius:12px;background:var(--sunk,rgba(12,20,36,0.6));border:1px solid var(--div,rgba(122,164,224,0.14));flex-wrap:nowrap;min-width:0">
+        <span style="height:30px;display:flex;align-items:center;font-size:11px;font-weight:600;white-space:nowrap;color:var(--tx,#eaf4ff)">{{ roleTitle }}</span>
+      </div>
+
+      <button onClick="{{ logout }}" data-f="1" aria-label="تسجيل الخروج" style="height:34px;padding:0 12px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--tx2,#9db2cc);background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">تسجيل الخروج</button>
+
+      <div style="display:var(--metaDisp,flex);align-items:center;gap:9px;height:34px;padding:0 11px;border-radius:10px;background:var(--sunk,rgba(12,20,36,0.55));border:1px solid var(--div,rgba(122,164,224,0.11))">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:mBreathe 2.6s ease-in-out infinite"></span>
+        <span style="font-size:11px;color:var(--tx2,#9db2cc)">بيانات تجريبية · بيئة تصميم</span>
+        <span style="width:1px;height:13px;background:var(--div,rgba(122,164,224,0.16))"></span>
+        <span style="font-size:11px;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">9:41 ص · الثلاثاء 27 ذو القعدة</span>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--sunk,rgba(12,20,36,0.6));border:1px solid var(--div,rgba(122,164,224,0.14))">
+        <button onClick="{{ setDay }}" data-f="1" aria-label="النمط النهاري" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--dayBtnBd,transparent);background:var(--dayBtnBg,transparent);color:var(--dayBtnTx,#7d8ea6);font-size:10.5px;font-weight:600;cursor:pointer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"></path></svg>
+          نهاري
+        </button>
+        <button onClick="{{ setNight }}" data-f="1" aria-label="النمط الليلي" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--nightBtnBd,rgba(76,201,240,0.4));background:var(--nightBtnBg,rgba(56,132,220,0.28));color:var(--nightBtnTx,#eaf4ff);font-size:10.5px;font-weight:600;cursor:pointer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"></path></svg>
+          ليلي
+        </button>
+      </div>
+
+      <div style="position:relative">
+        <button onClick="{{ tNotif }}" data-f="1" aria-label="التنبيهات" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"></path><path d="M10.5 20a2 2 0 0 0 3 0"></path></svg>
+          <span style="position:absolute;top:-5px;left:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--bad,#ef4444);color:#fff;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--badge,#0b1220)">{{ notifCount }}</span>
+        </button>
+        <sc-if value="{{ notifOpen }}">
+          <div style="position:absolute;top:44px;left:0;width:316px;z-index:60;border-radius:14px;background:var(--pop,rgba(12,20,36,0.98));border:1px solid var(--cardBd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:mRise .16s ease-out">
+            <div style="display:flex;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+              <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">تنبيهات حركة السير</span>
+              <span onClick="{{ readAll }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">تعليم الكل</span>
+            </div>
+            <div style="max-height:330px;overflow:auto">
+              <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="6">
+                <div onClick="{{ n.on }}" data-f="1" style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.09));cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+                  <span style="width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none;background:{{ n.col }}"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:11.5px;font-weight:500;color:var(--tx,#e9f1fb)">{{ n.title }}</div>
+                    <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ n.meta }}</div>
+                  </div>
+                  <span style="flex:none;font-size:9px;padding:2px 6px;border-radius:5px;color:{{ n.col }};background:{{ n.bg }}">{{ n.sev }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:11px">
+        <div style="text-align:right;display:var(--brandTxt,block);padding-right:11px;border-right:1px solid var(--div,rgba(122,164,224,0.14))">
+          <div style="font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">حركة السير الذكية</div>
+          <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ orgName }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px">
+          <div style="text-align:left;display:var(--brandTxt,block)">
+            <div dir="ltr" style="display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:700;letter-spacing:2.5px;line-height:1">
+              <span style="color:var(--logoNavy,#e9f1fb)">SMART</span><span style="color:var(--logoGreen,#2aa84a)">HSR</span>
+            </div>
+            <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--tx3,#7d8ea6);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
+          </div>
+          <svg width="38" height="42" viewBox="0 0 76 84" fill="none" style="flex:none">
+            <path d="M38 4a30 30 0 1 0 0 60 30 30 0 0 0 0-60z" fill="none" stroke="var(--logoNavy,#dbe6f5)" stroke-width="7"></path>
+            <rect x="26" y="30" width="7.5" height="22" rx="1.5" fill="var(--logoNavy,#dbe6f5)"></rect>
+            <rect x="35.5" y="20" width="7.5" height="32" rx="1.5" fill="var(--logoNavy,#dbe6f5)"></rect>
+            <rect x="45" y="26" width="7.5" height="26" rx="1.5" fill="var(--logoGreen,#2aa84a)"></rect>
+            <path d="M12 46 38 80 64 46 51 46 38 63 25 46z" fill="var(--logoGreen,#2aa84a)"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div style="display:flex;gap:14px;align-items:stretch;flex:1;min-height:0">
+
+    <aside style="display:var(--sbDisp,flex);width:var(--sbW,224px);flex:none;flex-direction:column;gap:12px">
+      <div style="padding:12px 10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--div,rgba(122,164,224,0.12))">
+          <div style="flex:1;text-align:right;display:var(--sbLabel,block);min-width:0">
+            <div style="font-size:11.5px;font-weight:600;color:var(--tx2,#cfe0f2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleTitle }}</div>
+            <div style="font-size:9.5px;color:var(--tx3,#6f8299);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleSub }}</div>
+          </div>
+          <button onClick="{{ tSb }}" data-f="1" aria-label="طي القائمة" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+        </div>
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="9">
+          <div onClick="{{ n.on }}" data-f="1" role="button" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;font-size:12px;cursor:pointer;color:{{ n.tx }};background:{{ n.bg }};border:1px solid {{ n.bd }}">
+            <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ n.dot }}"></span>
+            <span style="flex:1;display:var(--sbLabel,block);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.label }}</span>
+            <span style="display:var(--sbLabel,block);font-size:9px;font-weight:600;color:{{ n.tagTx }};background:{{ n.tagBg }};padding:2px 6px;border-radius:5px">{{ n.tag }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:var(--sbLabel,block);padding:11px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
+        <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);text-align:center;margin-bottom:9px">المهمة المرجعية للعرض</div>
+        <div onClick="{{ openDemoMission }}" data-f="1" style="padding:10px;border-radius:11px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13));cursor:pointer">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="flex:1;font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ demoNo }}</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:6px;color:{{ demoCol }};background:{{ demoBg }}">{{ demoStatus }}</span>
+          </div>
+          <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:5px">{{ demoMeta }}</div>
+        </div>
+      </div>
+
+      <div style="display:var(--sbLabel,block);flex:1;min-height:20px"></div>
+      <div style="display:var(--sbLabel,block);text-align:center;padding-bottom:4px;opacity:.6">
+        <div style="font-size:8.5px;color:var(--tx3,#5f7d9c);letter-spacing:1.3px">SMART HSR · MOBILITY OPS</div>
+      </div>
+    </aside>
+
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
+
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:17px;font-weight:700;color:var(--tx,#f0f6ff);letter-spacing:-.2px">{{ screenTitle }}</div>
+          <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ screenSub }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ screenActions }}" as="a" hint-placeholder-count="2">
+            <button onClick="{{ a.on }}" data-f="1" style="height:34px;padding:0 14px;border-radius:10px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ a.tx }};background:{{ a.bg }};border:1px solid {{ a.bd }}">{{ a.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ isOpsLayout }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
+
+          <sc-if value="{{ hasKpis }}" hint-placeholder-val="{{ true }}">
+            <section aria-label="المؤشرات" style="flex:none;display:grid;grid-template-columns:var(--kpiCols,repeat(5,1fr));gap:10px">
+              <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="10">
+                <div onClick="{{ k.on }}" data-f="1" style="padding:11px 12px;border-radius:13px;cursor:pointer;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;align-items:center;gap:10px">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:{{ k.col }}"></span>
+                  <div style="flex:1;min-width:0;text-align:right">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.label }}</div>
+                    <div style="display:flex;align-items:baseline;gap:6px;justify-content:flex-start;flex-direction:row-reverse">
+                      <span style="font-size:23px;font-weight:600;color:var(--tx,#f0f6ff);letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.3">{{ k.value }}</span>
+                      <span style="font-size:10px;color:{{ k.col }};font-weight:600">{{ k.delta }}</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </section>
+          </sc-if>
+
+          <section style="flex:1;min-height:var(--midH,430px);display:flex;gap:14px;flex-wrap:var(--midWrap,nowrap)">
+
+            <div style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,430px);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+              <canvas ref="{{ cvRef }}" aria-label="التوأم الرقمي لحركة السير" style="position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab"></canvas>
+
+              <div style="position:absolute;top:11px;left:11px;display:flex;align-items:center;gap:3px;padding:3px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));z-index:6">
+                <button onClick="{{ setOps }}" data-f="1" style="height:32px;padding:0 14px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ opsTx }};background:{{ opsBg }};border:1px solid {{ opsBd }}">الخريطة التشغيلية</button>
+                <button onClick="{{ setTwin }}" data-f="1" style="height:32px;padding:0 14px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ twinTx }};background:{{ twinBg }};border:1px solid {{ twinBd }}">التوأم الرقمي</button>
+              </div>
+
+              <div style="position:absolute;top:11px;right:11px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 150px)">
+                <div style="position:relative">
+                  <button onClick="{{ tLayers }}" data-f="1" style="display:flex;align-items:center;gap:7px;height:31px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);font-size:11px;cursor:pointer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>
+                    الطبقات <span style="font-size:9.5px;font-weight:600;color:var(--acc,#8ee6ff)">{{ layerCount }}</span>
+                  </button>
+                  <sc-if value="{{ layersOpen }}">
+                    <div style="position:absolute;top:39px;right:0;width:214px;z-index:30;padding:8px;border-radius:12px;background:var(--pop,rgba(10,17,30,0.98));border:1px solid var(--glassBd,rgba(122,164,224,0.2));box-shadow:0 22px 48px -20px rgba(0,0,0,0.8);animation:mRise .16s ease-out">
+                      <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px 8px;margin-bottom:4px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+                        <span style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb)">طبقات الخريطة</span>
+                        <span onClick="{{ allLayers }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">الكل</span>
+                      </div>
+                      <sc-for list="{{ layerList }}" as="l" hint-placeholder-count="7">
+                        <div onClick="{{ l.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:7px;border-radius:9px;cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+                          <span style="width:15px;height:15px;flex:none;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;border:1.5px solid {{ l.bd }};background:{{ l.bg }}">{{ l.mark }}</span>
+                          <span style="flex:1;font-size:11px;color:var(--tx2,#a9bdd4)">{{ l.name }}</span>
+                          <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ l.n }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px))">
+                  <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:mBreathe 2.6s ease-in-out infinite"></span>
+                  <span style="font-size:10.5px;color:var(--glassTx,#a9c0d8);font-variant-numeric:tabular-nums">{{ liveCount }} مركبة في مهمة</span>
+                </div>
+
+                <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+                </button>
+                <button onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
+                </button>
+              </div>
+
+              <div style="position:absolute;top:55px;left:11px;display:flex;flex-direction:column;gap:8px;z-index:5">
+                <div style="width:186px;position:relative">
+                  <input value="{{ mapQ }}" onChange="{{ setMapQ }}" aria-label="بحث في الخريطة" placeholder="مركبة، مهمة، وجهة..." style="width:100%;height:31px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 28px;outline:none">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                </div>
+                <div style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:33px">
+                  <button onClick="{{ zIn }}" data-f="1" aria-label="تكبير" style="width:33px;height:30px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer">+</button>
+                  <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
+                  <button onClick="{{ zOut }}" data-f="1" aria-label="تصغير" style="width:33px;height:30px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer">−</button>
+                </div>
+                <div style="font-size:9px;color:var(--glassTx,#7d8ea6);text-align:center;width:33px;font-variant-numeric:tabular-nums">{{ zoomLbl }}</div>
+              </div>
+
+              <sc-for list="{{ zoneLabels }}" as="z" hint-placeholder-count="4">
+                <div style="position:absolute;transform:translate(-50%,-100%);pointer-events:none;left:{{ z.left }};top:{{ z.top }}">
+                  <div style="padding:5px 10px 6px;border-radius:10px;background:var(--lblBg,rgba(6,11,22,0.78));backdrop-filter:var(--blur,blur(12px));text-align:center;border:1px solid {{ z.bd }}">
+                    <div style="font-size:9.5px;color:var(--lblTx,#c8d9ec);white-space:nowrap">{{ z.name }}</div>
+                    <div style="font-size:15px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums;color:{{ z.col }}">{{ z.n }}</div>
+                  </div>
+                </div>
+              </sc-for>
+
+              <sc-for list="{{ mapPins }}" as="p" hint-placeholder-count="12">
+                <div onClick="{{ p.on }}" data-f="1" role="button" aria-label="{{ p.title }}" title="{{ p.title }}" style="position:absolute;width:{{ p.size }};height:{{ p.size }};margin:{{ p.off }};cursor:pointer;left:{{ p.left }};top:{{ p.top }};z-index:{{ p.z }}">
+                  <span style="position:absolute;inset:0;border-radius:{{ p.radius }};background:{{ p.col }};border:{{ p.ring }};box-shadow:{{ p.glow }}"></span>
+                  <span style="position:absolute;inset:0;border-radius:50%;border:1.5px solid {{ p.col }};animation:mPulse 2.8s ease-out infinite;opacity:{{ p.pulse }}"></span>
+                </div>
+              </sc-for>
+
+              <div style="position:absolute;bottom:11px;left:11px;display:flex;align-items:center;gap:11px;padding:7px 13px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.18));backdrop-filter:var(--blur,blur(16px));flex-wrap:wrap;max-width:calc(100% - 22px)">
+                <sc-for list="{{ legend }}" as="g" hint-placeholder-count="6">
+                  <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd);white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:{{ g.col }}"></span>{{ g.label }}</span>
+                </sc-for>
+              </div>
+
+              <sc-if value="{{ hasSel }}">
+                <div style="position:absolute;bottom:12px;right:12px;width:272px;max-width:calc(100% - 24px);z-index:20;border-radius:14px;overflow:hidden;background:var(--pop,rgba(10,17,30,0.98));border:1px solid var(--glassBd,rgba(122,164,224,0.22));box-shadow:0 26px 56px -22px rgba(0,0,0,0.85);animation:mRise .18s ease-out">
+                  <div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+                    <span style="width:9px;height:9px;flex:none;border-radius:50%;background:{{ selCol }}"></span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ selTitle }}</div>
+                      <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ selKind }}</div>
+                    </div>
+                    <button onClick="{{ clearSel }}" data-f="1" aria-label="إغلاق" style="width:20px;height:20px;flex:none;border:none;background:none;color:var(--tx3,#6f8299);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+                    </button>
+                  </div>
+                  <div style="padding:10px 12px;display:flex;flex-direction:column;gap:7px;max-height:190px;overflow:auto">
+                    <sc-for list="{{ selRows }}" as="r" hint-placeholder-count="5">
+                      <div style="display:flex;align-items:center;gap:8px;font-size:10.5px">
+                        <span style="flex:none;width:76px;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
+                        <span style="flex:1;text-align:left;color:var(--tx,#dbe6f5);font-weight:500">{{ r.v }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="padding:0 12px 12px;display:flex;gap:7px">
+                    <sc-for list="{{ selActions }}" as="a" hint-placeholder-count="2">
+                      <button onClick="{{ a.on }}" data-f="1" style="flex:1;height:32px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;color:{{ a.tx }};background:{{ a.bg }};border:1px solid {{ a.bd }}">{{ a.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ hasSide }}" hint-placeholder-val="{{ true }}">
+              <div style="width:var(--sideW,282px);flex:none;display:flex;flex-direction:column;gap:12px">
+                <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                    <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#e4eefb)">{{ sideATitle }}</span>
+                    <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ sideACount }}</span>
+                  </div>
+                  <div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:auto">
+                    <sc-for list="{{ sideA }}" as="i" hint-placeholder-count="4">
+                      <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
+                        <span style="width:30px;height:30px;flex:none;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;color:{{ i.col }};background:{{ i.chipBg }}">{{ i.badge }}</span>
+                        <div style="flex:1;min-width:0;text-align:right">
+                          <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.title }}</div>
+                          <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.meta }}</div>
+                        </div>
+                        <span style="flex:none;font-size:9px;padding:3px 7px;border-radius:6px;color:{{ i.col }};background:{{ i.chipBg }};white-space:nowrap">{{ i.tag }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                    <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#e4eefb)">{{ sideBTitle }}</span>
+                    <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ sideBCount }}</span>
+                  </div>
+                  <div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:auto">
+                    <sc-for list="{{ sideB }}" as="i" hint-placeholder-count="3">
+                      <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
+                        <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ i.col }}"></span>
+                        <div style="flex:1;min-width:0;text-align:right">
+                          <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.title }}</div>
+                          <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.meta }}</div>
+                        </div>
+                        <span style="flex:none;font-size:9px;padding:3px 7px;border-radius:6px;color:{{ i.col }};background:{{ i.chipBg }};white-space:nowrap">{{ i.tag }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+          </section>
+
+          <sc-if value="{{ hasBottom }}" hint-placeholder-val="{{ true }}">
+            <section style="flex:none;display:grid;grid-template-columns:var(--botCols,1.1fr 1.2fr 1.3fr);gap:14px">
+              <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">كفاءة استخدام الأسطول</div>
+                <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:8px;min-height:104px">
+                  <div style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0">
+                    <sc-for list="{{ utilRows }}" as="u" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:6px;font-size:10.5px"><span style="width:6px;height:6px;border-radius:50%;flex:none;background:{{ u.col }}"></span><span style="flex:1;text-align:right;color:var(--tx2,#9db2cc);white-space:nowrap">{{ u.label }}</span><span style="color:var(--tx,#e4eefb);font-weight:600;font-variant-numeric:tabular-nums">{{ u.v }}</span></div>
+                    </sc-for>
+                  </div>
+                  <div style="position:relative;width:100px;height:100px;flex:none">
+                    <svg width="100" height="100" viewBox="0 0 100 100" style="transform:rotate(-90deg)">
+                      <circle cx="50" cy="50" r="42" fill="none" stroke="var(--track,rgba(122,164,224,0.12))" stroke-width="9"></circle>
+                      <circle cx="50" cy="50" r="42" fill="none" stroke="var(--ok,#22c55e)" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ utilDash }}"></circle>
+                    </svg>
+                    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                      <div style="font-size:23px;font-weight:600;color:var(--tx,#eafff2);font-variant-numeric:tabular-nums;line-height:1">{{ utilPct }}</div>
+                      <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:3px">استخدام</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">الطلب حسب الأقسام</div>
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;margin-top:6px;min-height:104px">
+                  <sc-for list="{{ deptRows }}" as="d" hint-placeholder-count="5">
+                    <div onClick="{{ d.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;cursor:pointer">
+                      <span style="width:74px;flex:none;text-align:right;font-size:10.5px;color:var(--tx2,#a9bdd4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</span>
+                      <span style="flex:1;height:6px;border-radius:3px;background:var(--track,rgba(122,164,224,0.12));overflow:hidden;display:block"><span style="display:block;height:100%;border-radius:3px;background:var(--barFill,linear-gradient(90deg,#22c55e,#4cc9f0));width:{{ d.w }}"></span></span>
+                      <span style="width:26px;flex:none;text-align:left;font-size:10.5px;font-weight:600;color:var(--tx,#e4eefb);font-variant-numeric:tabular-nums">{{ d.v }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">التنبيهات الحرجة</span>
+                  <span onClick="{{ goIncidents }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">عرض الكل</span>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:7px;margin-top:8px;min-height:104px;overflow:auto">
+                  <sc-for list="{{ critical }}" as="c" hint-placeholder-count="3">
+                    <div onClick="{{ c.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;cursor:pointer;background:{{ c.bg }};border:1px solid {{ c.bd }}">
+                      <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ c.col }}"></span>
+                      <div style="flex:1;min-width:0;text-align:right">
+                        <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.title }}</div>
+                        <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.meta }}</div>
+                      </div>
+                      <span style="flex:none;font-size:9px;color:{{ c.col }};white-space:nowrap">{{ c.time }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isTable }}">
+        <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
+          <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+            <div style="position:relative;width:var(--tSearch,232px)">
+              <input value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+              <sc-for list="{{ tFilters }}" as="f" hint-placeholder-count="6">
+                <button onClick="{{ f.on }}" data-f="1" style="height:30px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+            <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
+              <sc-for list="{{ tCols }}" as="c" hint-placeholder-count="6">
+                <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--tx3,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
+              </sc-for>
+            </div>
+            <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+              <sc-for list="{{ tRows }}" as="r" hint-placeholder-count="8">
+                <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--div,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="background:var(--ctl,rgba(20,32,54,0.5))">
+                  <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
+                    <span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
+                  </sc-for>
+                  <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;white-space:nowrap;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span>
+                </div>
+              </sc-for>
+              <sc-if value="{{ tEmpty }}">
+                <div style="padding:44px 20px;text-align:center;color:var(--tx3,#7d8ea6);font-size:12px">لا توجد نتائج مطابقة للتصفية الحالية</div>
+              </sc-if>
+            </div>
+            <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:center;gap:10px">
+              <span style="flex:1;font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ tCount }}</span>
+              <span style="font-size:10px;color:var(--tx3,#7d8ea6)">بيانات تجريبية للتصميم</span>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isHandover }}">
+        <div style="display:grid;grid-template-columns:var(--hoCols,1fr 1fr);gap:14px;flex:1;min-height:0">
+          <div style="padding:14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:11px">
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="flex:1;font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">بانتظار التسليم للموظف</span>
+              <span style="font-size:10px;color:var(--tx3,#7d8ea6)">{{ hoOutCount }}</span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:9px;overflow:auto">
+              <sc-for list="{{ hoOut }}" as="h" hint-placeholder-count="3">
+                <div style="padding:12px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13))">
+                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
+                    <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">{{ h.title }}</span>
+                    <span style="font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:6px;color:{{ h.chipCol }};background:{{ h.chipBg }}">{{ h.chip }}</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin-bottom:11px">
+                    <sc-for list="{{ h.rows }}" as="r" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;min-width:0">
+                        <span style="flex:none;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
+                        <span style="flex:1;text-align:left;color:var(--tx,#e9f1fb);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.v }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <button onClick="{{ h.on }}" data-f="1" style="width:100%;height:36px;border-radius:10px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">{{ h.action }}</button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ hoOutEmpty }}">
+                <div style="padding:30px;text-align:center;font-size:11.5px;color:var(--tx3,#7d8ea6)">لا توجد مركبات بانتظار التسليم</div>
+              </sc-if>
+            </div>
+          </div>
+
+          <div style="padding:14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:11px">
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="flex:1;font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">بانتظار استلام المركبة</span>
+              <span style="font-size:10px;color:var(--tx3,#7d8ea6)">{{ hoInCount }}</span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:9px;overflow:auto">
+              <sc-for list="{{ hoIn }}" as="h" hint-placeholder-count="2">
+                <div style="padding:12px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13))">
+                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
+                    <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">{{ h.title }}</span>
+                    <span style="font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:6px;color:{{ h.chipCol }};background:{{ h.chipBg }}">{{ h.chip }}</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin-bottom:11px">
+                    <sc-for list="{{ h.rows }}" as="r" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;min-width:0">
+                        <span style="flex:none;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
+                        <span style="flex:1;text-align:left;color:var(--tx,#e9f1fb);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.v }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <button onClick="{{ h.on }}" data-f="1" style="width:100%;height:36px;border-radius:10px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">{{ h.action }}</button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ hoInEmpty }}">
+                <div style="padding:30px;text-align:center;font-size:11.5px;color:var(--tx3,#7d8ea6)">لا توجد مركبات بانتظار الاستلام</div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isReports }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 12px;border-radius:14px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
+            <span style="font-size:11px;color:var(--tx3,#7d8ea6);margin-left:6px">الفترة</span>
+            <sc-for list="{{ periods }}" as="p" hint-placeholder-count="5">
+              <button onClick="{{ p.on }}" data-f="1" style="height:30px;padding:0 13px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;color:{{ p.tx }};background:{{ p.bg }};border:1px solid {{ p.bd }}">{{ p.label }}</button>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:var(--repCols,repeat(4,1fr));gap:12px">
+            <sc-for list="{{ repKpis }}" as="k" hint-placeholder-count="4">
+              <div style="padding:14px;border-radius:14px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                <div style="font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ k.label }}</div>
+                <div style="font-size:25px;font-weight:600;color:var(--tx,#f0f6ff);margin-top:5px;font-variant-numeric:tabular-nums">{{ k.v }}</div>
+                <div style="font-size:10px;color:{{ k.col }};margin-top:4px">{{ k.sub }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:var(--repCols2,repeat(3,1fr));gap:14px">
+            <sc-for list="{{ repCards }}" as="c" hint-placeholder-count="6">
+              <div onClick="{{ c.on }}" data-f="1" style="padding:14px;border-radius:16px;cursor:pointer;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <span style="flex:1;font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ c.title }}</span>
+                  <span style="font-size:9.5px;color:var(--acc,#4cc9f0)">تفصيل</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ c.rows }}" as="r" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:center;gap:9px">
+                      <span style="width:88px;flex:none;font-size:10.5px;color:var(--tx2,#a9bdd4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.k }}</span>
+                      <span style="flex:1;height:6px;border-radius:3px;background:var(--track,rgba(122,164,224,0.12));overflow:hidden;display:block"><span style="display:block;height:100%;border-radius:3px;background:var(--barFill,linear-gradient(90deg,#22c55e,#4cc9f0));width:{{ r.w }}"></span></span>
+                      <span style="width:38px;flex:none;text-align:left;font-size:10.5px;font-weight:600;color:var(--tx,#e4eefb);font-variant-numeric:tabular-nums">{{ r.v }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSettings }}">
+        <div style="display:grid;grid-template-columns:var(--setCols,1.2fr 1fr);gap:14px">
+          <div style="padding:16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:14px">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">سياسة اعتماد المهام</div>
+              <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:4px">قابلة للتهيئة لكل بلدية · لا توجد دورة عمل ثابتة</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ policies }}" as="p" hint-placeholder-count="3">
+                <div onClick="{{ p.on }}" data-f="1" style="padding:13px;border-radius:13px;cursor:pointer;background:{{ p.bg }};border:1px solid {{ p.bd }}">
+                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
+                    <span style="width:15px;height:15px;flex:none;border-radius:50%;border:2px solid {{ p.dot }};background:{{ p.fill }}"></span>
+                    <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">{{ p.name }}</span>
+                    <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ p.tag }}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-right:24px">
+                    <sc-for list="{{ p.steps }}" as="s" hint-placeholder-count="4">
+                      <span style="font-size:10px;padding:4px 9px;border-radius:7px;color:var(--tx2,#a9bdd4);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));white-space:nowrap">{{ s.label }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="padding:16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">النطاق الجغرافي التشغيلي</div>
+              <div style="display:flex;gap:8px">
+                <sc-for list="{{ geoModes }}" as="g" hint-placeholder-count="3">
+                  <button onClick="{{ g.on }}" data-f="1" style="flex:1;height:34px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;color:{{ g.tx }};background:{{ g.bg }};border:1px solid {{ g.bd }}">{{ g.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ geoStates }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:9px;padding:10px;border-radius:11px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))">
+                    <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ s.col }}"></span>
+                    <span style="flex:1;font-size:11px;color:var(--tx,#e9f1fb)">{{ s.label }}</span>
+                    <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ s.note }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="padding:16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:11px">
+              <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">خصوصية تتبع الموقع</div>
+              <p style="margin:0;font-size:11px;line-height:1.85;color:var(--tx2,#a9bdd4);text-wrap:pretty">يُفعّل تتبع الموقع للموظف أثناء المهمة المعتمدة فقط، ويتوقف تلقائياً بانتهائها. لا يوجد تتبع دائم خارج المهام.</p>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <sc-for list="{{ gpsStates }}" as="g" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:9px;font-size:11px">
+                    <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ g.col }}"></span>
+                    <span style="flex:1;color:var(--tx2,#a9bdd4)">{{ g.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="padding:14px 16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px dashed var(--ctlBd,rgba(122,164,224,0.22));display:flex;align-items:center;gap:11px">
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">اللجان متعددة الأقسام</div>
+                <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:4px">تشكيل لجنة، تعيين رئيس، إسناد مهمة، طلب مركبة</div>
+              </div>
+              <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 10px;border-radius:7px;color:var(--tx3,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">قريباً</span>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isEmp }}">
+        <div style="display:flex;justify-content:center;padding:var(--empPad,6px 0 20px)">
+          <div style="width:100%;max-width:var(--empW,412px);display:flex;flex-direction:column;gap:12px">
+
+            <div style="padding:16px;border-radius:20px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:46px;height:46px;flex:none;border-radius:15px;background:var(--orgBg,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBd,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--acc,#8ee6ff)">سم</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12px;color:var(--tx3,#7d8ea6)">{{ empGreet }}</div>
+                  <div style="font-size:17px;font-weight:700;color:var(--tx,#f0f6ff);margin-top:2px">سعد المطيري</div>
+                  <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:3px">مفتش · الرقابة البلدية</div>
+                </div>
+              </div>
+            </div>
+
+            <sc-if value="{{ empHome }}">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="padding:16px;border-radius:20px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid {{ empStBd }};box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
+                    <span style="flex:1;font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">مهمتي الحالية</span>
+                    <span style="font-size:11px;font-weight:600;padding:5px 11px;border-radius:8px;color:{{ empStCol }};background:{{ empStBg }};border:1px solid {{ empStBd }}">{{ empStatus }}</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:11px">
+                    <sc-for list="{{ empRows }}" as="r" hint-placeholder-count="5">
+                      <div style="display:flex;align-items:center;gap:10px">
+                        <span style="flex:none;width:74px;font-size:12px;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
+                        <span style="flex:1;text-align:left;font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">{{ r.v }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:9px;margin-top:14px;padding:11px 12px;border-radius:12px;background:{{ gpsBg }};border:1px solid {{ gpsBd }}">
+                    <span style="width:9px;height:9px;flex:none;border-radius:50%;background:{{ gpsCol }};animation:{{ gpsAnim }}"></span>
+                    <span style="flex:1;font-size:12px;color:var(--tx,#e9f1fb)">{{ gpsLabel }}</span>
+                  </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <sc-for list="{{ empActions }}" as="a" hint-placeholder-count="3">
+                    <button onClick="{{ a.on }}" data-f="1" style="width:100%;min-height:56px;padding:0 16px;border-radius:16px;font-size:14px;font-weight:700;line-height:1.4;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;text-align:center;color:{{ a.tx }};background:{{ a.bg }};border:1px solid {{ a.bd }}">{{ a.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ empActive }}">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="padding:18px 16px;border-radius:20px;text-align:center;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid {{ empStBd }}">
+                  <div style="font-size:12px;color:var(--tx3,#7d8ea6)">زمن المهمة</div>
+                  <div style="font-size:42px;font-weight:600;color:var(--tx,#f0f6ff);letter-spacing:1px;font-variant-numeric:tabular-nums;line-height:1.2">{{ empTimer }}</div>
+                  <div style="font-size:12px;color:{{ empStCol }};margin-top:4px">{{ empStatus }}</div>
+                </div>
+
+                <div style="height:186px;border-radius:20px;overflow:hidden;position:relative;border:1px solid var(--twinBd,rgba(122,164,224,0.16));background:var(--twinBg,#03060d)">
+                  <canvas ref="{{ miniRef }}" aria-label="مسار المهمة" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>
+                  <div style="position:absolute;top:10px;right:10px;left:10px;display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px))">
+                    <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ gpsCol }}"></span>
+                    <span style="flex:1;font-size:11px;color:var(--glassTx,#a9c0d8)">{{ geoLabel }}</span>
+                  </div>
+                </div>
+
+                <div style="padding:14px 16px;border-radius:18px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
+                  <div style="font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:12px">مراحل المهمة</div>
+                  <div style="display:flex;flex-direction:column">
+                    <sc-for list="{{ empSteps }}" as="s" hint-placeholder-count="6">
+                      <div style="display:flex;gap:11px">
+                        <div style="width:14px;flex:none;display:flex;flex-direction:column;align-items:center">
+                          <span style="width:10px;height:10px;border-radius:50%;flex:none;margin-top:3px;background:{{ s.col }}"></span>
+                          <span style="flex:1;width:1.5px;min-height:12px;background:{{ s.line }}"></span>
+                        </div>
+                        <div style="flex:1;padding-bottom:12px">
+                          <div style="font-size:12.5px;font-weight:600;color:{{ s.tx }}">{{ s.label }}</div>
+                          <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ s.time }}</div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <sc-for list="{{ empActions }}" as="a" hint-placeholder-count="3">
+                    <button onClick="{{ a.on }}" data-f="1" style="width:100%;min-height:56px;padding:0 16px;border-radius:16px;font-size:14px;font-weight:700;line-height:1.4;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;text-align:center;color:{{ a.tx }};background:{{ a.bg }};border:1px solid {{ a.bd }}">{{ a.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ empTasks }}">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;gap:7px;padding:4px;border-radius:14px;background:var(--sunk,rgba(12,20,36,0.6));border:1px solid var(--div,rgba(122,164,224,0.13))">
+                  <sc-for list="{{ empTabs }}" as="t" hint-placeholder-count="3">
+                    <button onClick="{{ t.on }}" data-f="1" style="flex:1;height:38px;border-radius:11px;font-size:12.5px;font-weight:600;cursor:pointer;color:{{ t.tx }};background:{{ t.bg }};border:1px solid {{ t.bd }}">{{ t.label }}</button>
+                  </sc-for>
+                </div>
+                <sc-for list="{{ empList }}" as="m" hint-placeholder-count="3">
+                  <div onClick="{{ m.on }}" data-f="1" style="padding:15px;border-radius:18px;cursor:pointer;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
+                    <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
+                      <span style="flex:1;font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">{{ m.title }}</span>
+                      <span style="font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:8px;color:{{ m.chipCol }};background:{{ m.chipBg }}">{{ m.chip }}</span>
+                    </div>
+                    <div style="font-size:12px;color:var(--tx2,#a9bdd4)">{{ m.dest }}</div>
+                    <div style="font-size:11.5px;color:var(--tx3,#7d8ea6);margin-top:4px">{{ m.meta }}</div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ empListEmpty }}">
+                  <div style="padding:36px;text-align:center;font-size:12.5px;color:var(--tx3,#7d8ea6)">لا توجد مهام في هذا التصنيف</div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ empAlerts }}">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ empNotifs }}" as="n" hint-placeholder-count="4">
+                  <div onClick="{{ n.on }}" data-f="1" style="display:flex;align-items:flex-start;gap:11px;padding:15px;border-radius:18px;cursor:pointer;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
+                    <span style="width:9px;height:9px;flex:none;border-radius:50%;margin-top:5px;background:{{ n.col }}"></span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">{{ n.title }}</div>
+                      <div style="font-size:11.5px;color:var(--tx3,#7d8ea6);margin-top:4px">{{ n.meta }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ empAcc }}">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="padding:16px;border-radius:18px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:11px">
+                  <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">بيانات الموظف</div>
+                  <sc-for list="{{ empProfile }}" as="r" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:center;gap:10px;font-size:12.5px">
+                      <span style="flex:none;width:88px;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
+                      <span style="flex:1;text-align:left;color:var(--tx,#e9f1fb);font-weight:500">{{ r.v }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="padding:16px;border-radius:18px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
+                  <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:9px">مؤشرات تشغيلية</div>
+                  <div style="display:flex;flex-direction:column;gap:10px">
+                    <sc-for list="{{ empIndicators }}" as="i" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:10px">
+                        <span style="flex:1;font-size:12px;color:var(--tx2,#a9bdd4)">{{ i.k }}</span>
+                        <span style="font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ i.v }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:11px;line-height:1.7">مؤشرات تشغيلية مبنية على الأدلة — لا تُستخدم كتقييم نهائي للموظف.</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="position:sticky;bottom:0;margin-top:4px;display:flex;gap:5px;padding:7px;border-radius:18px;background:var(--pop,rgba(10,17,30,0.97));border:1px solid var(--cardBd,rgba(122,164,224,0.16));box-shadow:0 -8px 28px -16px rgba(0,0,0,0.6)">
+              <sc-for list="{{ empNav }}" as="n" hint-placeholder-count="5">
+                <button onClick="{{ n.on }}" data-f="1" style="flex:1;min-height:52px;border-radius:13px;border:none;cursor:pointer;background:{{ n.bg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:{{ n.tx }}">
+                  <span style="width:7px;height:7px;border-radius:50%;background:{{ n.dot }}"></span>
+                  <span style="font-size:11px;font-weight:600">{{ n.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+</div>
+
+<sc-if value="{{ mobNavOpen }}">
+  <div onClick="{{ tMobNav }}" style="position:fixed;inset:0;z-index:70;background:rgba(3,6,13,0.6);backdrop-filter:blur(3px);animation:mIn .18s ease-out">
+    <div onClick="{{ stop }}" style="position:absolute;top:0;right:0;bottom:0;width:264px;padding:16px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));display:flex;flex-direction:column;gap:4px;overflow:auto">
+      <div style="display:flex;align-items:center;gap:9px;padding-bottom:11px;margin-bottom:5px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+        <span style="flex:1;font-size:12.5px;font-weight:700;color:var(--tx,#f0f6ff)">{{ roleTitle }}</span>
+        <span style="font-size:9px;color:var(--tx3,#7d8ea6)">حركة السير</span>
+      </div>
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="9">
+        <div onClick="{{ n.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:12px 10px;border-radius:10px;font-size:12.5px;cursor:pointer;color:{{ n.tx }};background:{{ n.bg }}">
+          <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ n.dot }}"></span>
+          <span style="flex:1">{{ n.label }}</span>
+          <span style="font-size:9px;color:{{ n.tagTx }}">{{ n.tag }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ drawerOpen }}">
+  <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;justify-content:flex-start;animation:mIn .18s ease-out">
+    <div onClick="{{ stop }}" style="width:min(440px,94vw);background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;animation:mSlide .2s ease-out">
+      <div style="padding:18px 18px 14px;border-bottom:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:flex-start;gap:11px;position:sticky;top:0;background:var(--drawer,#0a1120);z-index:2">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">{{ dTitle }}</span>
+            <span style="font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:6px;color:{{ dChipCol }};background:{{ dChipBg }};border:1px solid {{ dChipBd }}">{{ dChip }}</span>
+          </div>
+          <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:4px">{{ dSub }}</div>
+        </div>
+        <button onClick="{{ closeDrawer }}" data-f="1" aria-label="إغلاق" style="width:30px;height:30px;flex:none;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+        </button>
+      </div>
+
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:16px">
+        <sc-if value="{{ dHasBanner }}">
+          <div style="padding:11px 12px;border-radius:12px;display:flex;align-items:center;gap:9px;background:{{ dBannerBg }};border:1px solid {{ dBannerBd }}">
+            <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ dBannerCol }}"></span>
+            <span style="flex:1;font-size:11px;color:var(--tx,#e9f1fb);line-height:1.6">{{ dBanner }}</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ dHasRows }}">
+          <div style="padding:13px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12));display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ dRows }}" as="r" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;gap:10px;font-size:11px">
+                <span style="flex:none;width:96px;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
+                <span style="flex:1;text-align:left;color:var(--tx,#e9f1fb);font-weight:500">{{ r.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ dHasTimeline }}">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:11px">السجل التشغيلي للمهمة</div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ dTimeline }}" as="t" hint-placeholder-count="6">
+                <div style="display:flex;gap:11px">
+                  <div style="width:14px;flex:none;display:flex;flex-direction:column;align-items:center">
+                    <span style="width:9px;height:9px;border-radius:50%;flex:none;margin-top:3px;background:{{ t.col }};border:2px solid {{ t.ring }}"></span>
+                    <span style="flex:1;width:1.5px;min-height:14px;background:{{ t.line }}"></span>
+                  </div>
+                  <div style="flex:1;padding-bottom:13px;min-width:0">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                      <span style="font-size:11.5px;font-weight:600;color:{{ t.tx }}">{{ t.label }}</span>
+                      <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ t.time }}</span>
+                    </div>
+                    <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ t.who }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ dHasForm }}">
+          <div style="padding:13px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12));display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ dFormTitle }}</div>
+            <sc-for list="{{ dFields }}" as="f" hint-placeholder-count="4">
+              <div>
+                <label style="display:block;font-size:10.5px;color:var(--tx2,#a9bdd4);margin-bottom:6px">{{ f.label }}</label>
+                <input value="{{ f.value }}" onChange="{{ f.on }}" placeholder="{{ f.ph }}" style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+              </div>
+            </sc-for>
+            <sc-if value="{{ dHasChips }}">
+              <div>
+                <label style="display:block;font-size:10.5px;color:var(--tx2,#a9bdd4);margin-bottom:7px">{{ dChipsLabel }}</label>
+                <div style="display:flex;flex-wrap:wrap;gap:7px">
+                  <sc-for list="{{ dChips }}" as="c" hint-placeholder-count="6">
+                    <button onClick="{{ c.on }}" data-f="1" style="height:30px;padding:0 11px;border-radius:9px;font-size:10.5px;cursor:pointer;color:{{ c.tx }};background:{{ c.bg }};border:1px solid {{ c.bd }}">{{ c.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ dHasEvidence }}">
+              <div style="display:flex;align-items:center;gap:11px;padding:12px;border-radius:11px;border:1px dashed var(--ctlBd,rgba(122,164,224,0.28));background:var(--ctl,rgba(20,32,54,0.4))">
+                <span style="width:38px;height:38px;flex:none;border-radius:10px;background:var(--chipBg,rgba(122,164,224,0.1));display:flex;align-items:center;justify-content:center;color:var(--tx3,#7d8ea6)">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="14" rx="2"></rect><circle cx="12" cy="13" r="3.4"></circle><path d="M8 6l1.6-2h4.8L16 6"></path></svg>
+                </span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:11px;color:var(--tx,#e9f1fb)">إرفاق دليل مصور</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:3px">نموذج أولي — لا يتم رفع ملفات فعلية</div>
+                </div>
+                <button onClick="{{ proto }}" data-f="1" style="flex:none;height:30px;padding:0 12px;border-radius:9px;font-size:10.5px;font-weight:600;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">إرفاق</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ dHasList }}">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:10px">{{ dListTitle }}</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ dList }}" as="i" hint-placeholder-count="4">
+                <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
+                  <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ i.col }}"></span>
+                  <div style="flex:1;min-width:0;text-align:right">
+                    <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb)">{{ i.title }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ i.meta }}</div>
+                  </div>
+                  <span style="flex:none;font-size:9.5px;color:{{ i.col }}">{{ i.tag }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ dHasActions }}">
+        <div style="margin-top:auto;position:sticky;bottom:0;padding:14px 18px;background:var(--drawer,#0a1120);border-top:1px solid var(--div,rgba(122,164,224,0.12));display:flex;gap:9px;flex-wrap:wrap">
+          <sc-for list="{{ dActions }}" as="a" hint-placeholder-count="2">
+            <button onClick="{{ a.on }}" data-f="1" style="flex:1 1 130px;height:38px;border-radius:10px;font-size:11.5px;font-weight:600;cursor:pointer;color:{{ a.tx }};background:{{ a.bg }};border:1px solid {{ a.bd }}">{{ a.label }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ hasToast }}">
+  <div style="position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:95;display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:12px;background:var(--pop,rgba(10,17,30,0.98));border:1px solid var(--accBd,rgba(76,201,240,0.35));box-shadow:0 22px 48px -18px rgba(0,0,0,0.7);animation:mRise .2s ease-out;max-width:92vw">
+    <span style="width:7px;height:7px;flex:none;border-radius:50%;background:var(--acc,#4cc9f0)"></span>
+    <span style="font-size:11.5px;color:var(--tx,#e9f1fb)">{{ toast }}</span>
+  </div>
+</sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:990},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;night&quot;,&quot;day&quot;],&quot;default&quot;:&quot;night&quot;,&quot;tsType&quot;:&quot;'night' | 'day'&quot;,&quot;section&quot;:&quot;المظهر&quot;},&quot;organizationName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;اسم البلدية&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;هوية المنظمة&quot;}}">
+class Component extends DCLogic {
+  state = {
+    theme: this.props.theme === 'day' ? 'day' : 'night',
+    role: null, screen: null, authPending: true, orgName: '', sessionName: '',
+    sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
+    twin3D: true, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
+    layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true },
+    sel: null, drawer: null, drawerId: null,
+    stat: {}, form: {}, chip: {},
+    fleetFilter: 'الكل', misFilter: 'الكل', period: 'اليوم',
+    empScreen: 'home', elapsed: 0, tick: 0,
+    toast: '', bp: 'xl', tw: 700, th: 430
+  };
+
+  DEPTS = ['الرقابة البلدية', 'إدارة النظافة', 'إدارة الطرق', 'إدارة الرخص', 'الحصر الميداني'];
+
+  ST = {
+    'مسودة': '#7d8ea6', 'بانتظار الاعتماد': '#f5a524', 'معتمدة': '#38bdf8', 'بانتظار المركبة': '#f5a524',
+    'تم تخصيص المركبة': '#38bdf8', 'تم التسليم': '#a78bfa', 'جاهزة للبدء': '#a78bfa', 'قيد التنفيذ': '#22c55e',
+    'متوقفة بسبب حادث': '#ef4444', 'مكتملة': '#22c55e', 'في انتظار إعادة المركبة': '#f5a524',
+    'مغلقة': '#7d8ea6', 'ملغاة': '#ef4444',
+    'متاحة': '#22c55e', 'محجوزة': '#38bdf8', 'في مهمة': '#a78bfa', 'عائدة': '#38bdf8',
+    'صيانة': '#f5a524', 'خارج الخدمة': '#ef4444',
+    'جديد': '#ef4444', 'تم الاستلام': '#f5a524', 'تحت المعالجة': '#38bdf8', 'تم الحل': '#22c55e', 'مغلق': '#7d8ea6'
+  };
+
+  ROUTES = [
+    [[-0.55, -0.42], [-0.28, -0.30], [0.02, -0.18], [0.30, -0.26], [0.52, -0.40]],
+    [[0.10, 0.46], [0.16, 0.20], [0.06, -0.02], [-0.16, -0.20], [-0.40, -0.24]],
+    [[0.62, -0.10], [0.40, 0.02], [0.14, 0.06], [-0.10, 0.20], [-0.30, 0.40]],
+    [[-0.60, 0.18], [-0.34, 0.10], [-0.06, 0.00], [0.22, -0.06], [0.50, 0.02]],
+    [[0.04, -0.62], [0.02, -0.34], [-0.04, -0.06], [-0.02, 0.22], [0.08, 0.50]]
+  ];
+
+  ZONES = [
+    { id: 'n', name: 'النطاق الشمالي', col: '#22c55e', a0: 40, a1: 130, n: '6' },
+    { id: 'e', name: 'النطاق الشرقي', col: '#38bdf8', a0: -50, a1: 40, n: '5' },
+    { id: 's', name: 'النطاق الجنوبي', col: '#a855f7', a0: -140, a1: -50, n: '4' },
+    { id: 'w', name: 'النطاق الغربي', col: '#f5a524', a0: 130, a1: 220, n: '3' }
+  ];
+
+  DEST = [
+    { id: 'd1', name: 'مستودع البلدية', x: -0.52, y: 0.30 },
+    { id: 'd2', name: 'سوق الخضار المركزي', x: 0.48, y: 0.28 },
+    { id: 'd3', name: 'محطة الصيانة', x: -0.46, y: -0.44 },
+    { id: 'd4', name: 'مقر البلدية', x: 0.02, y: -0.04 }
+  ];
+
+  componentDidMount() {
+    this.onWin = () => this.measure();
+    window.addEventListener('resize', this.onWin);
+    this.measure();
+    if (typeof ResizeObserver !== 'undefined' && this.cv) { this._ro = new ResizeObserver(() => this.sync()); this._ro.observe(this.cv); }
+    this.bindCanvas();
+    this._iv = setInterval(() => {
+      this.setState(s => ({ tick: s.tick + 1, elapsed: this.missionStatus('M-2418') === 'قيد التنفيذ' ? s.elapsed + 1 : s.elapsed }));
+    }, 1000);
+    this.onDoc = e => {
+      const t = e.target;
+      if ((this.state.notifOpen || this.state.layersOpen) && t && t.closest && !t.closest('[data-f]')) {
+        this.setState({ notifOpen: false, layersOpen: false });
+      }
+    };
+    document.addEventListener('mousedown', this.onDoc);
+    this.onAdapterReady = () => window.SmartHSRMobilityAdapter?.connect(this);
+    window.addEventListener('smart-hsr-mobility-adapter-ready', this.onAdapterReady, { once: true });
+    window.SmartHSRMobilityAdapter?.connect(this);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onWin);
+    document.removeEventListener('mousedown', this.onDoc);
+    window.removeEventListener('smart-hsr-mobility-adapter-ready', this.onAdapterReady);
+    window.SmartHSRMobilityAdapter?.disconnect(this);
+    clearInterval(this._iv); if (this._ro) this._ro.disconnect();
+  }
+  componentDidUpdate() { this.bindCanvas(); this.draw(); this.drawMini(); }
+
+  bindCanvas() {
+    const el = this.cv;
+    if (!el || el._m) return;
+    el._m = true;
+    el.addEventListener('wheel', e => { e.preventDefault(); this.setState(s => ({ zoom: Math.max(0.6, Math.min(2.8, s.zoom + (e.deltaY > 0 ? -0.12 : 0.12))) })); }, { passive: false });
+    let drag = null;
+    el.addEventListener('mousedown', e => { drag = { x: e.clientX, y: e.clientY, px: this.state.panX, py: this.state.panY, moved: false }; });
+    window.addEventListener('mousemove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+      this.setState({ panX: drag.px + dx, panY: drag.py + dy });
+    });
+    window.addEventListener('mouseup', () => { if (drag && !drag.moved && this.state.sel) this.setState({ sel: null }); drag = null; });
+  }
+
+  measure() {
+    const w = window.innerWidth;
+    const bp = w >= 1560 ? 'xl' : w >= 1400 ? 'lg' : w >= 1180 ? 'md' : w >= 1000 ? 'tabL' : w >= 760 ? 'tabP' : 'mob';
+    if (bp !== this.state.bp) this.setState({ bp: bp });
+    this.sync();
+  }
+  sync() {
+    const el = this.cv; if (!el) return;
+    const w = Math.round(el.clientWidth) || 700, h = Math.round(el.clientHeight) || 430;
+    if (w !== this.state.tw || h !== this.state.th) this.setState({ tw: w, th: h }); else this.draw();
+  }
+
+  rgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+  tint(h, a) { const c = this.rgb(h); return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+  mix(h, a, b) { const c = this.rgb(h); return 'rgb(' + Math.round(b[0] + (c[0] - b[0]) * a) + ',' + Math.round(b[1] + (c[1] - b[1]) * a) + ',' + Math.round(b[2] + (c[2] - b[2]) * a) + ')'; }
+  sc(name) { const day = this.state.theme === 'day'; const c = this.ST[name] || '#7d8ea6'; return day ? this.mix(c, 0.82, [12, 40, 28]) : c; }
+  chipOf(name) { const c = this.sc(name); return { col: c, bg: this.tint(c, this.state.theme === 'day' ? 0.09 : 0.14), bd: this.tint(c, this.state.theme === 'day' ? 0.26 : 0.3) }; }
+
+  vehicles() {
+    if (this._veh) return this._veh;
+    let s = 77;
+    const rnd = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const types = ['سيارة دورية', 'شاحنة خفيفة', 'مركبة نظافة', 'مركبة تفتيش', 'حافلة صغيرة'];
+    const makes = [['تويوتا', 'هايلكس'], ['نيسان', 'باترول'], ['إيسوزو', 'دي-ماكس'], ['هيونداي', 'H1'], ['فورد', 'رينجر']];
+    const letters = ['أ ب د', 'ر س ط', 'ك ل م', 'ن ه و', 'ص ع ق'];
+    const statuses = ['في مهمة', 'في مهمة', 'في مهمة', 'في مهمة', 'في مهمة', 'في مهمة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'محجوزة', 'محجوزة', 'محجوزة', 'عائدة', 'عائدة', 'صيانة', 'صيانة', 'خارج الخدمة'];
+    const out = [];
+    for (let i = 0; i < statuses.length; i++) {
+      const mk = makes[i % makes.length];
+      out.push({
+        id: 'V' + String(101 + i), no: 'م-' + String(101 + i),
+        plate: (1000 + Math.floor(rnd() * 8999)) + ' ' + letters[i % letters.length],
+        type: types[i % types.length], make: mk[0], model: mk[1], year: 2019 + (i % 6),
+        dept: this.DEPTS[i % this.DEPTS.length], status: statuses[i],
+        odo: (18000 + Math.floor(rnd() * 90000)), fuel: Math.round(30 + rnd() * 65),
+        last: '2' + (2 + i % 6) + '/05 — ' + (7 + i % 9) + ':' + (10 + i % 49),
+        maintLast: '1' + (2 + i % 7) + '/04', maintNext: '0' + (2 + i % 8) + '/07',
+        route: i % 5, phase: rnd(), note: i % 7 === 0 ? 'يتطلب فحص إطارات' : '—'
+      });
+    }
+    out[0].no = 'م-101'; out[0].plate = '4821 أ ب د';
+    this._veh = out;
+    return out;
+  }
+
+  missions() {
+    if (this._mis) return this._mis;
+    const d = [
+      ['M-2418', 'تفتيش ميداني', 'الرقابة البلدية', 'سعد المطيري', 'سوق الخضار المركزي', 'V101', 'تم التسليم', '27/05 09:00', '3 ساعات', 'داخل النطاق', 'جولة رقابية على المنشآت الغذائية'],
+      ['M-2417', 'نقل معدات', 'إدارة النظافة', 'خالد الدوسري', 'مستودع البلدية', 'V102', 'قيد التنفيذ', '27/05 08:15', 'ساعتان', 'داخل النطاق', 'نقل معدات حاويات'],
+      ['M-2416', 'صيانة إنارة', 'إدارة الطرق', 'فهد الحربي', 'شارع الملك — القطاع الغربي', 'V103', 'قيد التنفيذ', '27/05 07:40', '4 ساعات', 'داخل النطاق', 'إصلاح أعمدة إنارة'],
+      ['M-2415', 'زيارة ترخيص', 'إدارة الرخص', 'عبدالله القحطاني', 'مجمع تجاري — القطاع الشرقي', 'V104', 'بانتظار الاعتماد', '27/05 11:00', 'ساعة', 'داخل النطاق', 'معاينة اشتراطات'],
+      ['M-2414', 'حصر ميداني', 'الحصر الميداني', 'ماجد العنزي', 'مربع 14 — القطاع الشمالي', '', 'بانتظار المركبة', '27/05 10:30', '5 ساعات', 'داخل النطاق', 'حصر منشآت المربع'],
+      ['M-2413', 'مهمة خارج النطاق', 'الرقابة البلدية', 'تركي الشمري', 'مركز التدريب — خارج النطاق', 'V105', 'معتمدة', '27/05 12:00', '6 ساعات', 'خارج النطاق بتصريح', 'ورشة تدريب مفتشين'],
+      ['M-2412', 'نقل موظفين', 'الشؤون الإدارية', 'نايف السبيعي', 'مقر البلدية', 'V106', 'مكتملة', '26/05 08:00', 'ساعتان', 'داخل النطاق', 'نقل لجنة'],
+      ['M-2411', 'متابعة بلاغ', 'إدارة النظافة', 'مشعل الرشيدي', 'حي النور — القطاع الجنوبي', 'V107', 'في انتظار إعادة المركبة', '26/05 13:20', '3 ساعات', 'داخل النطاق', 'متابعة بلاغ نظافة'],
+      ['M-2410', 'صيانة طارئة', 'إدارة الطرق', 'بندر العتيبي', 'تقاطع 21 — القطاع الغربي', 'V108', 'متوقفة بسبب حادث', '26/05 15:05', '4 ساعات', 'داخل النطاق', 'حفرة في الطريق'],
+      ['M-2409', 'جولة رقابية', 'الرقابة البلدية', 'سلطان الزهراني', 'القطاع الشرقي', 'V109', 'مغلقة', '25/05 09:30', '3 ساعات', 'داخل النطاق', 'جولة دورية']
+    ];
+    this._mis = d.map((r, i) => ({
+      id: r[0], no: r[0], type: r[1], dept: r[2], emp: r[3], dest: r[4], veh: r[5],
+      status: r[6], when: r[7], dur: r[8], scope: r[9], why: r[10],
+      requester: 'رئيس ' + r[2], route: i % 5, gps: r[6] === 'قيد التنفيذ' || r[6] === 'تم التسليم'
+    }));
+    return this._mis;
+  }
+
+  incidents() {
+    if (this._inc) return this._inc;
+    this._inc = [
+      { id: 'I-118', cat: 'حادث مروري', sev: 'حرجة', status: 'تحت المعالجة', mis: 'M-2410', veh: 'V108', emp: 'بندر العتيبي', dept: 'إدارة الطرق', loc: 'تقاطع 21 — القطاع الغربي', time: '26/05 15:40', x: -0.34, y: -0.18, note: 'اصطدام جانبي بسيط أثناء التوجه للموقع', ev: 'صورتان مرفقتان' },
+      { id: 'I-117', cat: 'عطل مركبة', sev: 'متوسطة', status: 'تم الاستلام', mis: 'M-2411', veh: 'V107', emp: 'مشعل الرشيدي', dept: 'إدارة النظافة', loc: 'حي النور — القطاع الجنوبي', time: '26/05 14:05', x: 0.22, y: 0.30, note: 'ارتفاع حرارة المحرك', ev: 'صورة واحدة' },
+      { id: 'I-116', cat: 'نقص وقود', sev: 'منخفضة', status: 'تم الحل', mis: 'M-2409', veh: 'V109', emp: 'سلطان الزهراني', dept: 'الرقابة البلدية', loc: 'القطاع الشرقي', time: '25/05 11:10', x: 0.50, y: -0.20, note: 'تمت التعبئة من محطة معتمدة', ev: '—' },
+      { id: 'I-115', cat: 'حالة طارئة', sev: 'حرجة', status: 'جديد', mis: 'M-2416', veh: 'V103', emp: 'فهد الحربي', dept: 'إدارة الطرق', loc: 'شارع الملك — القطاع الغربي', time: '27/05 09:22', x: -0.48, y: -0.34, note: 'طلب دعم عاجل من الموقع', ev: 'بانتظار الدليل' }
+    ];
+    return this._inc;
+  }
+
+  missionStatus(id) { return this.state.stat[id] || (this.missions().filter(m => m.id === id)[0] || {}).status; }
+  setStatus(id, st, msg) { this.setState(s => { const n = Object.assign({}, s.stat); n[id] = st; return { stat: n }; }); this.flash(msg || ('تم تحديث الحالة: ' + st)); }
+
+  flash(m) { this.setState({ toast: m, notifOpen: false, layersOpen: false, mobNavOpen: false }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  proto() { this.flash('إجراء نموذجي — يُربط بالنظام التشغيلي لاحقاً'); }
+
+  geo(w, h) {
+    const t = this.state.twin3D, z = this.state.zoom;
+    return { c: Math.cos(-0.5), s: Math.sin(-0.5), f: 2.2, k: t ? 0.9 : 0,
+      cx: w * 0.5 + this.state.panX, cy: h * (t ? 0.58 : 0.5) + this.state.panY,
+      S: w * 0.52 * z, sq: t ? 0.44 : 0.8, zh: t ? 0.6 : 0 };
+  }
+  proj(x, y, z, G) {
+    const X = x * G.c - y * G.s, Y = x * G.s + y * G.c, sc = G.f / (G.f + G.k * Y);
+    return { x: G.cx + X * G.S * sc, y: G.cy + Y * G.S * G.sq * sc - (z || 0) * G.S * G.zh * sc, s: sc };
+  }
+
+  zonePolys() {
+    if (this._zp) return this._zp;
+    this._zp = this.ZONES.map(z => {
+      const pts = [];
+      const R = t => 0.86 + 0.07 * Math.sin(3 * t + z.a0) - 0.04 * Math.cos(5 * t);
+      for (let a = z.a0; a <= z.a1; a += 3) { const t = a * Math.PI / 180; pts.push([R(t) * Math.cos(t), -R(t) * Math.sin(t)]); }
+      for (let a = z.a1; a >= z.a0; a -= 6) { const t = a * Math.PI / 180, r = 0.20; pts.push([r * Math.cos(t), -r * Math.sin(t)]); }
+      return Object.assign({}, z, { pts: pts });
+    });
+    return this._zp;
+  }
+
+  inside(pts, x, y) {
+    let ins = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) ins = !ins;
+    }
+    return ins;
+  }
+
+  city() {
+    if (this._city) return this._city;
+    let s = 4242;
+    const rnd = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const out = [], S = Math.sin(-0.5), C = Math.cos(-0.5);
+    this.zonePolys().forEach(z => {
+      let n = 0, tries = 0;
+      while (n < 200 && tries < 5000) {
+        tries++;
+        const x = rnd() * 2 - 1, y = rnd() * 2 - 1;
+        if (!this.inside(z.pts, x, y)) continue;
+        n++;
+        const d = Math.sqrt(x * x + y * y);
+        let hh = 0.02 + Math.pow(rnd(), 2.5) * 0.13;
+        hh *= 1 + 1.7 * Math.max(0, 1 - d / 0.6);
+        out.push({ x: x, y: y, h: hh, b: 0.006 + rnd() * 0.007, lum: 0.16 + rnd() * 0.3, zc: z.col, lit: rnd() > 0.6, k: x * S + y * C });
+      }
+    });
+    out.sort((a, b) => a.k - b.k);
+    this._city = out;
+    return out;
+  }
+
+  pal() {
+    return this.state.theme === 'day' ? {
+      bg: '#e9ede9', r1: 'rgba(255,255,255,0.95)', r2: 'rgba(226,234,228,0.6)',
+      zoneFill: 'rgba(233,240,235,0.94)', tint: 0.11, road: 'rgba(255,255,255,0.92)', roadW: 1.5,
+      base: [196, 208, 200], side1: 'rgba(150,166,156,0.97)', side2: 'rgba(174,187,178,0.97)',
+      lit: 'rgba(110,132,121,0.45)', lumK: 0.32, blur: 0, strokeMix: [16, 48, 34], strokeK: 0.62, strokeA: 0.8,
+      routeA: 0.85, routeW: 2.4, routeCol: '#0b6442'
+    } : {
+      bg: '#03060d', r1: 'rgba(24,68,126,0.42)', r2: 'rgba(12,34,72,0.22)',
+      zoneFill: 'rgba(5,10,20,0.92)', tint: 0.085, road: 'rgba(255,196,130,0.1)', roadW: 1,
+      base: [18, 30, 52], side1: 'rgba(6,11,22,0.96)', side2: 'rgba(12,21,38,0.96)',
+      lit: 'rgba(255,214,150,0.55)', lumK: 0.62, blur: 5, strokeMix: [26, 44, 70], strokeK: 0.78, strokeA: 0.7,
+      routeA: 0.5, routeW: 1.8, routeCol: '#38bdf8'
+    };
+  }
+
+  vehPos(v) {
+    const r = this.ROUTES[v.route];
+    const t = (v.phase + this.state.tick * 0.006) % 1;
+    const seg = t * (r.length - 1), i = Math.floor(seg), f = seg - i;
+    const a = r[Math.min(i, r.length - 1)], b = r[Math.min(i + 1, r.length - 1)];
+    return { x: a[0] + (b[0] - a[0]) * f, y: a[1] + (b[1] - a[1]) * f };
+  }
+
+  draw() {
+    const cv = this.cv; if (!cv) return;
+    const w = Math.round(cv.clientWidth) || 700, h = Math.round(cv.clientHeight) || 430;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const g = cv.getContext('2d'); if (!g) return;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const G = this.geo(w, h), P = (x, y, z) => this.proj(x, y, z, G), p = this.pal(), L = this.state.layers;
+
+    g.fillStyle = p.bg; g.fillRect(0, 0, w, h);
+    const rg = g.createRadialGradient(G.cx, G.cy - h * 0.06, 0, G.cx, G.cy - h * 0.06, w * 0.62);
+    rg.addColorStop(0, p.r1); rg.addColorStop(0.45, p.r2); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, w, h);
+
+    const zp = this.zonePolys();
+    const path = pts => { g.beginPath(); for (let i = 0; i < pts.length; i++) { const q = P(pts[i][0], pts[i][1], 0); if (i) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); } g.closePath(); };
+
+    if (L.zone) zp.forEach(z => { path(z.pts); g.fillStyle = p.zoneFill; g.fill(); g.fillStyle = this.tint(z.col, p.tint); g.fill(); });
+
+    g.lineWidth = p.roadW; g.strokeStyle = p.road;
+    for (let a = -140; a < 220; a += 8) {
+      const t = a * Math.PI / 180;
+      const p1 = P(0.22 * Math.cos(t), -0.22 * Math.sin(t), 0), p2 = P(0.86 * Math.cos(t), -0.86 * Math.sin(t), 0);
+      g.beginPath(); g.moveTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.stroke();
+    }
+    [0.38, 0.56, 0.74].forEach(r => { g.beginPath(); for (let a = 0; a <= 360; a += 5) { const t = a * Math.PI / 180, q = P(r * Math.cos(t), -r * Math.sin(t), 0); if (a) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); } g.stroke(); });
+
+    const city = this.city();
+    for (let i = 0; i < city.length; i++) {
+      const b = city[i];
+      const s0 = P(b.x - b.b, b.y + b.b, 0), s1 = P(b.x + b.b, b.y + b.b, 0), s2 = P(b.x + b.b, b.y - b.b, 0), s3 = P(b.x - b.b, b.y - b.b, 0);
+      const dz = b.h * G.S * G.zh * s0.s;
+      if (dz > 0.6) {
+        g.fillStyle = p.side1; g.beginPath(); g.moveTo(s0.x, s0.y); g.lineTo(s1.x, s1.y); g.lineTo(s1.x, s1.y - dz); g.lineTo(s0.x, s0.y - dz); g.closePath(); g.fill();
+        g.fillStyle = p.side2; g.beginPath(); g.moveTo(s0.x, s0.y); g.lineTo(s3.x, s3.y); g.lineTo(s3.x, s3.y - dz); g.lineTo(s0.x, s0.y - dz); g.closePath(); g.fill();
+      }
+      g.fillStyle = this.mix(b.zc, b.lum * p.lumK, p.base);
+      g.beginPath(); g.moveTo(s0.x, s0.y - dz); g.lineTo(s1.x, s1.y - dz); g.lineTo(s2.x, s2.y - dz); g.lineTo(s3.x, s3.y - dz); g.closePath(); g.fill();
+      if (b.lit && dz > 5) { g.fillStyle = p.lit; g.fillRect(s0.x + (s1.x - s0.x) * 0.26, s0.y - dz * 0.66, Math.max(1, (s1.x - s0.x) * 0.3), 1.2); }
+    }
+
+    if (L.bound) {
+      g.save();
+      zp.forEach(z => {
+        g.shadowColor = z.col; g.shadowBlur = p.blur;
+        g.strokeStyle = p.strokeMix ? this.mix(z.col, p.strokeK, p.strokeMix) : this.tint(z.col, p.strokeA);
+        g.lineWidth = 1.6; path(z.pts); g.stroke(); if (!p.strokeMix) g.stroke();
+      });
+      g.restore();
+    }
+
+    if (L.route) {
+      g.save();
+      this.ROUTES.forEach((r, i) => {
+        g.strokeStyle = this.tint(p.routeCol, p.routeA); g.lineWidth = p.routeW; g.setLineDash([6, 5]);
+        g.lineDashOffset = -this.state.tick * 1.6;
+        g.beginPath();
+        r.forEach((pt, j) => { const q = P(pt[0], pt[1], 0.01); if (j) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); });
+        g.stroke();
+      });
+      g.setLineDash([]); g.restore();
+    }
+
+    if (L.dest) {
+      this.DEST.forEach(d => {
+        const q = P(d.x, d.y, 0.02);
+        g.strokeStyle = this.tint('#a78bfa', 0.9); g.lineWidth = 1.6;
+        g.beginPath(); g.moveTo(q.x - 5, q.y); g.lineTo(q.x, q.y - 7); g.lineTo(q.x + 5, q.y); g.lineTo(q.x, q.y + 3); g.closePath(); g.stroke();
+      });
+    }
+
+    if (this.state.sel) {
+      const s = this.selObj();
+      if (s && s.pos) {
+        const q = P(s.pos.x, s.pos.y, 0);
+        g.save(); g.strokeStyle = this.tint(s.col, 0.9); g.lineWidth = 1.6;
+        g.beginPath(); g.ellipse(q.x, q.y, 24 * q.s, 24 * q.s * G.sq, 0, 0, Math.PI * 2); g.stroke();
+        g.setLineDash([3, 4]); g.beginPath(); g.ellipse(q.x, q.y, 38 * q.s, 38 * q.s * G.sq, 0, 0, Math.PI * 2); g.stroke();
+        g.restore();
+      }
+    }
+  }
+
+  selObj() {
+    const s = this.state.sel; if (!s) return null;
+    if (s.t === 'v') {
+      const v = this.vehicles().filter(x => x.id === s.id)[0]; if (!v) return null;
+      return { col: this.sc(v.status), pos: v.status === 'في مهمة' || v.status === 'عائدة' ? this.vehPos(v) : this.parkPos(v) };
+    }
+    if (s.t === 'i') { const i = this.incidents().filter(x => x.id === s.id)[0]; return i ? { col: '#ef4444', pos: { x: i.x, y: i.y } } : null; }
+    if (s.t === 'd') { const d = this.DEST.filter(x => x.id === s.id)[0]; return d ? { col: '#a78bfa', pos: { x: d.x, y: d.y } } : null; }
+    return null;
+  }
+  parkPos(v) { const i = this.vehicles().indexOf(v); const a = (i * 37) * Math.PI / 180; const r = 0.13; return { x: r * Math.cos(a) + 0.02, y: r * Math.sin(a) - 0.04 }; }
+
+  DAY = {
+    '--pgBg': 'radial-gradient(1100px 620px at 50% -12%,#ffffff,transparent 70%),#eef1ee',
+    '--card': '#ffffff', '--card2': '#ffffff', '--cardBd': 'rgba(17,54,40,0.11)',
+    '--cardSh': '0 1px 2px rgba(16,42,32,0.05),0 14px 30px -22px rgba(16,42,32,0.3)',
+    '--sunk': '#f4f7f4', '--sunk2': '#f7f9f7', '--ctl': '#f2f5f2', '--ctlBd': 'rgba(17,54,40,0.12)', '--ctlH': '#e7ece8',
+    '--field': '#ffffff', '--pop': '#ffffff', '--drawer': '#ffffff',
+    '--tx': '#0d1f19', '--tx2': '#4a5c53', '--tx3': '#7b8a82',
+    '--div': 'rgba(17,54,40,0.10)', '--track': 'rgba(17,54,40,0.10)',
+    '--acc': '#0e7a4f', '--accBd': 'rgba(14,122,79,0.3)',
+    '--navBg': 'linear-gradient(90deg,rgba(14,122,79,0.14),rgba(14,122,79,0.03))', '--navTx': '#0b5c3b',
+    '--btn': 'linear-gradient(180deg,#12855a,#0b6442)', '--btnTx': '#ffffff', '--btnBd': 'rgba(9,80,52,0.45)',
+    '--chipBg': '#f0f3f0', '--blur': 'none',
+    '--ok': '#12855a', '--warn': '#b8730a', '--bad': '#c2372c', '--info': '#12688f', '--vio': '#5f43a8',
+    '--barFill': 'linear-gradient(90deg,#12855a,#3fa87c)',
+    '--twinBd': 'rgba(17,54,40,0.14)', '--twinBg': '#eaeeea',
+    '--glass': 'rgba(255,255,255,0.92)', '--glassBd': 'rgba(17,54,40,0.14)', '--glassTx': '#3d5148',
+    '--lblBg': 'rgba(255,255,255,0.95)', '--lblTx': '#35463e',
+    '--orgBg': '#f2f5f2', '--orgBd': 'rgba(17,54,40,0.16)', '--badge': '#ffffff',
+    '--dayBtnBg': '#ffffff', '--dayBtnBd': 'rgba(14,122,79,0.35)', '--dayBtnTx': '#0b5c3b',
+    '--nightBtnBg': 'transparent', '--nightBtnBd': 'transparent', '--nightBtnTx': '#7b8a82',
+    '--logoNavy': '#152a4a', '--logoGreen': '#2aa84a',
+    '--hdrBg': 'linear-gradient(180deg,rgba(232,243,236,0.9),rgba(248,251,249,0.94))',
+    '--hdrBd': 'rgba(18,133,90,0.2)', '--hdrBlur': 'blur(18px) saturate(140%)',
+    '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.85),0 10px 26px -20px rgba(12,60,40,0.5)'
+  };
+  NIGHT = {
+    '--dayBtnBg': 'transparent', '--dayBtnBd': 'transparent', '--dayBtnTx': '#7d8ea6',
+    '--nightBtnBg': 'rgba(56,132,220,0.28)', '--nightBtnBd': 'rgba(76,201,240,0.4)', '--nightBtnTx': '#eaf4ff',
+    '--logoNavy': '#dbe6f5', '--logoGreen': '#37c05b',
+    '--hdrBg': 'linear-gradient(180deg,rgba(17,26,44,0.85),rgba(9,15,28,0.88))',
+    '--hdrBd': 'rgba(122,164,224,0.16)', '--hdrBlur': 'blur(22px) saturate(140%)',
+    '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95)'
+  };
+  BP = {
+    xl: { '--pgMaxW': '1600px', '--kpiCols': 'repeat(5,1fr)' },
+    lg: { '--pgMaxW': '100%', '--sbW': '212px', '--sideW': '262px', '--kpiCols': 'repeat(5,1fr)' },
+    md: { '--pgMaxW': '100%', '--sbW': '64px', '--sbLabel': 'none', '--sideW': '244px', '--kpiCols': 'repeat(5,1fr)', '--metaDisp': 'none', '--botCols': 'repeat(3,1fr)', '--repCols': 'repeat(4,1fr)', '--repCols2': 'repeat(3,1fr)' },
+    tabL: { '--pgMaxW': '100%', '--sbW': '64px', '--sbLabel': 'none', '--sideW': '236px', '--kpiCols': 'repeat(4,1fr)', '--metaDisp': 'none', '--midH': '400px', '--twinH': '400px', '--botCols': 'repeat(3,1fr)', '--brandTxt': 'none', '--repCols': 'repeat(4,1fr)', '--repCols2': 'repeat(2,1fr)', '--tSearch': '190px' },
+    tabP: { '--pgMaxW': '100%', '--sbDisp': 'none', '--mobNav': 'flex', '--metaDisp': 'none', '--kpiCols': 'repeat(3,1fr)',
+      '--midWrap': 'wrap', '--twinBasis': '100%', '--twinH': '380px', '--midH': 'auto', '--sideW': '100%', '--botCols': 'repeat(2,1fr)', '--brandTxt': 'none',
+      '--repCols': 'repeat(2,1fr)', '--repCols2': 'repeat(2,1fr)', '--hoCols': '1fr', '--setCols': '1fr', '--tSearch': '100%', '--thead': 'none', '--rowWrap': 'wrap' },
+    mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--metaDisp': 'none', '--kpiCols': 'repeat(2,1fr)',
+      '--midWrap': 'wrap', '--twinBasis': '100%', '--twinH': '300px', '--twinMin': '220px', '--midH': 'auto', '--sideW': '100%', '--botCols': '1fr', '--brandTxt': 'none',
+      '--repCols': '1fr', '--repCols2': '1fr', '--hoCols': '1fr', '--setCols': '1fr', '--tSearch': '100%', '--thead': 'none', '--rowWrap': 'wrap', '--empPad': '0 0 12px', '--roleDisp': 'none', '--roleDrawer': 'flex' }
+  };
+
+  ext(day, st) {
+    const V = this.vehicles(), M = this.missions(), I = this.incidents();
+    const s = st.screen, role = st.role;
+    const scope = role === 'dept' ? 'الرقابة البلدية' : null;
+    const isTable = ['missions', 'fleet', 'incidents', 'audit', 'approvals'].indexOf(s) >= 0;
+    const btn = { tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' };
+    const ghost = { tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' };
+    const q = (st.tq || '').trim();
+    const pill = (label, active, on) => ({ label: label, on: on,
+      tx: active ? (day ? '#0b5c3b' : '#eaf4ff') : 'var(--tx3,#7d8ea6)',
+      bg: active ? (day ? 'rgba(14,122,79,0.12)' : 'rgba(56,132,220,0.3)') : 'var(--ctl,rgba(20,32,54,0.5))',
+      bd: active ? (day ? 'rgba(14,122,79,0.35)' : 'rgba(76,201,240,0.4)') : 'var(--ctlBd,rgba(122,164,224,0.14))' });
+    const cell = (v, flex, opt) => ({ v: v, flex: String(flex), align: (opt && opt.align) || 'right',
+      size: (opt && opt.size) || '11.5px', weight: (opt && opt.weight) || '400', col: (opt && opt.col) || 'var(--tx2,#a9bdd4)' });
+
+    const out = { isTable: isTable, isHandover: s === 'handover', isReports: s === 'reports', isSettings: s === 'settings', isEmp: s === 'emp',
+      tQ: st.tq || '', setTQ: e => this.setState({ tq: e.target.value }) };
+
+    if (isTable) {
+      let cols = [], rows = [], filters = [], ph = 'بحث';
+      const f = st.tfilter || 'الكل';
+      const setF = v => this.setState({ tfilter: v });
+
+      if (s === 'fleet') {
+        ph = 'رقم داخلي، لوحة، نوع...';
+        cols = [{ label: 'الرقم', flex: '0 0 66px', align: 'right' }, { label: 'اللوحة', flex: '0 0 100px', align: 'right' },
+          { label: 'النوع', flex: '1.1', align: 'right' }, { label: 'الطراز', flex: '1', align: 'right' },
+          { label: 'القسم', flex: '1', align: 'right' }, { label: 'العداد', flex: '0 0 82px', align: 'left' },
+          { label: 'الصيانة القادمة', flex: '0 0 84px', align: 'left' }, { label: 'الحالة', flex: '0 0 92px', align: 'left' }];
+        filters = ['الكل', 'متاحة', 'في مهمة', 'محجوزة', 'صيانة', 'خارج الخدمة'].map(x => pill(x, f === x, () => setF(x)));
+        rows = V.filter(v => (f === 'الكل' || v.status === f) && (!q || (v.no + v.plate + v.type + v.make + v.model).indexOf(q) >= 0)).map(v => {
+          const c = this.chipOf(v.status);
+          return { chip: v.status, chipCol: c.col, chipBg: c.bg, chipBd: c.bd, on: () => this.openDrawer('veh', v.id),
+            cells: [cell(v.no, '0 0 66px', { weight: '600', col: 'var(--tx,#e9f1fb)' }), cell(v.plate, '0 0 100px', { size: '11px' }),
+              cell(v.type, '1.1'), cell(v.make + ' ' + v.model, '1', { size: '11px' }), cell(v.dept, '1', { size: '11px' }),
+              cell(v.odo.toLocaleString('en'), '0 0 82px', { align: 'left', size: '11px' }), cell(v.maintNext, '0 0 84px', { align: 'left', size: '11px' })] };
+        });
+      } else if (s === 'missions') {
+        ph = 'رقم المهمة، موظف، وجهة...';
+        cols = [{ label: 'رقم المهمة', flex: '0 0 74px', align: 'right' }, { label: 'النوع', flex: '1.1', align: 'right' },
+          { label: 'القسم', flex: '1', align: 'right' }, { label: 'الموظف', flex: '1', align: 'right' },
+          { label: 'الوجهة', flex: '1.3', align: 'right' }, { label: 'المركبة', flex: '0 0 62px', align: 'left' },
+          { label: 'التوقيت', flex: '0 0 92px', align: 'left' }, { label: 'الحالة', flex: '0 0 116px', align: 'left' }];
+        filters = ['الكل', 'بانتظار الاعتماد', 'بانتظار المركبة', 'قيد التنفيذ', 'في انتظار إعادة المركبة', 'مغلقة'].map(x => pill(x, f === x, () => setF(x)));
+        rows = M.filter(m => !scope || m.dept === scope).filter(m => (f === 'الكل' || this.missionStatus(m.id) === f) && (!q || (m.no + m.emp + m.dest + m.type).indexOf(q) >= 0)).map(m => {
+          const stt = this.missionStatus(m.id), c = this.chipOf(stt);
+          const v = V.filter(x => x.id === m.veh)[0];
+          return { chip: stt, chipCol: c.col, chipBg: c.bg, chipBd: c.bd, on: () => this.openDrawer('mission', m.id),
+            cells: [cell(m.no, '0 0 74px', { weight: '600', col: 'var(--tx,#e9f1fb)' }), cell(m.type, '1.1'), cell(m.dept, '1', { size: '11px' }),
+              cell(m.emp, '1', { size: '11px' }), cell(m.dest, '1.3', { size: '11px' }), cell(v ? v.no : '—', '0 0 62px', { align: 'left', size: '11px' }),
+              cell(m.when, '0 0 92px', { align: 'left', size: '11px' })] };
+        });
+      } else if (s === 'incidents') {
+        ph = 'رقم الحادث، موظف، موقع...';
+        cols = [{ label: 'الرقم', flex: '0 0 62px', align: 'right' }, { label: 'التصنيف', flex: '1.1', align: 'right' },
+          { label: 'الخطورة', flex: '0 0 70px', align: 'right' }, { label: 'الموظف', flex: '1', align: 'right' },
+          { label: 'المهمة', flex: '0 0 74px', align: 'right' }, { label: 'المركبة', flex: '0 0 62px', align: 'right' },
+          { label: 'الموقع', flex: '1.4', align: 'right' }, { label: 'الحالة', flex: '0 0 92px', align: 'left' }];
+        filters = ['الكل', 'جديد', 'تم الاستلام', 'تحت المعالجة', 'تم الحل', 'مغلق'].map(x => pill(x, f === x, () => setF(x)));
+        rows = I.filter(i => !scope || i.dept === scope).filter(i => (f === 'الكل' || i.status === f) && (!q || (i.id + i.emp + i.loc + i.cat).indexOf(q) >= 0)).map(i => {
+          const c = this.chipOf(i.status);
+          return { chip: i.status, chipCol: c.col, chipBg: c.bg, chipBd: c.bd, on: () => this.openDrawer('inc', i.id),
+            cells: [cell(i.id, '0 0 62px', { weight: '600', col: 'var(--tx,#e9f1fb)' }), cell(i.cat, '1.1'),
+              cell(i.sev, '0 0 70px', { size: '11px', col: i.sev === 'حرجة' ? this.sc('جديد') : 'var(--tx2,#a9bdd4)' }),
+              cell(i.emp, '1', { size: '11px' }), cell(i.mis, '0 0 74px', { size: '11px' }), cell(i.veh, '0 0 62px', { size: '11px' }),
+              cell(i.loc, '1.4', { size: '11px' })] };
+        });
+      } else if (s === 'approvals') {
+        ph = 'رقم الطلب، موظف، قسم...';
+        cols = [{ label: 'رقم الطلب', flex: '0 0 78px', align: 'right' }, { label: 'النوع', flex: '1.1', align: 'right' },
+          { label: 'القسم', flex: '1', align: 'right' }, { label: 'الموظف', flex: '1', align: 'right' },
+          { label: 'التوفر التشغيلي', flex: '0 0 96px', align: 'right' }, { label: 'النطاق', flex: '1', align: 'right' },
+          { label: 'التوقيت', flex: '0 0 92px', align: 'left' }, { label: 'الحالة', flex: '0 0 116px', align: 'left' }];
+        filters = ['الكل', 'بانتظار الاعتماد', 'معتمدة', 'ملغاة'].map(x => pill(x, f === x, () => setF(x)));
+        rows = M.filter(m => (f === 'الكل' ? ['بانتظار الاعتماد', 'معتمدة', 'ملغاة', 'مسودة'].indexOf(this.missionStatus(m.id)) >= 0 : this.missionStatus(m.id) === f) && (!q || (m.no + m.emp + m.dept).indexOf(q) >= 0)).map(m => {
+          const stt = this.missionStatus(m.id), c = this.chipOf(stt);
+          return { chip: stt, chipCol: c.col, chipBg: c.bg, chipBd: c.bd, on: () => this.openDrawer('approve', m.id),
+            cells: [cell(m.no, '0 0 78px', { weight: '600', col: 'var(--tx,#e9f1fb)' }), cell(m.type, '1.1'), cell(m.dept, '1', { size: '11px' }),
+              cell(m.emp, '1', { size: '11px' }), cell('متاح', '0 0 96px', { size: '11px', col: this.sc('متاحة') }),
+              cell(m.scope, '1', { size: '11px', col: m.scope.indexOf('خارج') >= 0 ? this.sc('محجوزة') : 'var(--tx2,#a9bdd4)' }),
+              cell(m.when, '0 0 92px', { align: 'left', size: '11px' })] };
+        });
+      } else {
+        ph = 'حدث، مهمة، منفّذ...';
+        cols = [{ label: 'الوقت', flex: '0 0 96px', align: 'right' }, { label: 'المهمة', flex: '0 0 74px', align: 'right' },
+          { label: 'الحدث', flex: '1.4', align: 'right' }, { label: 'المنفّذ', flex: '1', align: 'right' },
+          { label: 'الدور', flex: '1', align: 'right' }, { label: 'الدليل', flex: '0 0 78px', align: 'left' }, { label: 'الحالة', flex: '0 0 96px', align: 'left' }];
+        filters = ['الكل', 'اعتماد', 'تخصيص', 'تسليم', 'تنفيذ', 'إغلاق'].map(x => pill(x, f === x, () => setF(x)));
+        const evs = [];
+        M.filter(m => !scope || m.dept === scope).slice(0, 6).forEach(m => {
+          this.timelineFor(m.id).filter(t => t.time !== '—').forEach(t => evs.push({ m: m, t: t }));
+        });
+        rows = evs.filter(e => !q || (e.m.no + e.t.label + e.t.who).indexOf(q) >= 0).slice(0, 40).map(e => {
+          const c = this.chipOf('مغلقة');
+          return { chip: 'مسجّل', chipCol: c.col, chipBg: c.bg, chipBd: c.bd, on: () => this.openDrawer('mission', e.m.id),
+            cells: [cell(e.t.time, '0 0 96px', { size: '11px' }), cell(e.m.no, '0 0 74px', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
+              cell(e.t.label, '1.4'), cell(e.m.emp, '1', { size: '11px' }), cell(e.t.who, '1', { size: '11px' }),
+              cell('—', '0 0 78px', { align: 'left', size: '11px' })] };
+        });
+      }
+
+      out.tCols = cols; out.tRows = rows; out.tFilters = filters; out.tPlaceholder = ph;
+      out.tEmpty = rows.length === 0; out.tCount = rows.length + ' سجل معروض';
+    }
+
+    if (s === 'handover') {
+      const mk = (m, kind) => {
+        const v = V.filter(x => x.id === m.veh)[0];
+        const c = this.chipOf(this.missionStatus(m.id));
+        return { title: m.no + ' · ' + m.type, chip: this.missionStatus(m.id), chipCol: c.col, chipBg: c.bg,
+          rows: [{ k: 'الموظف', v: m.emp }, { k: 'القسم', v: m.dept }, { k: 'المركبة', v: v ? v.no : '—' },
+            { k: 'اللوحة', v: v ? v.plate : '—' }, { k: 'العداد', v: v ? v.odo.toLocaleString('en') + ' كم' : '—' },
+            { k: 'الوقود', v: v ? v.fuel + '%' : '—' }, { k: 'الوجهة', v: m.dest }, { k: 'الوقت', v: m.when }],
+          action: kind === 'out' ? 'بدء التسليم للموظف' : 'تسجيل استلام المركبة',
+          on: () => this.openDrawer(kind === 'out' ? 'handover' : 'ret', m.id) };
+      };
+      const outs = M.filter(m => ['تم تخصيص المركبة', 'معتمدة'].indexOf(this.missionStatus(m.id)) >= 0).map(m => mk(m, 'out'));
+      const ins = M.filter(m => ['في انتظار إعادة المركبة', 'مكتملة'].indexOf(this.missionStatus(m.id)) >= 0).map(m => mk(m, 'in'));
+      out.hoOut = outs; out.hoIn = ins;
+      out.hoOutCount = outs.length + ' مركبة'; out.hoInCount = ins.length + ' مركبة';
+      out.hoOutEmpty = outs.length === 0; out.hoInEmpty = ins.length === 0;
+    }
+
+    if (s === 'reports') {
+      const p = st.period || 'اليوم';
+      out.periods = ['اليوم', 'الأسبوع', 'الشهر', 'السنة', 'فترة مخصصة'].map(x => pill(x, p === x, () => this.setState({ period: x })));
+      const mul = { 'اليوم': 1, 'الأسبوع': 6, 'الشهر': 24, 'السنة': 280, 'فترة مخصصة': 12 }[p] || 1;
+      out.repKpis = [
+        { label: 'المهام المنفّذة', v: String(8 * mul), sub: 'خلال ' + p, col: this.sc('قيد التنفيذ') },
+        { label: 'متوسط مدة المهمة', v: '2.6 س', sub: '−0.3 عن السابق', col: this.sc('متاحة') },
+        { label: 'التأخر في العودة', v: String(Math.max(1, Math.round(mul * 0.4))), sub: 'حالة تأخر', col: this.sc('صيانة') },
+        { label: 'الحوادث المسجّلة', v: String(Math.max(1, Math.round(mul * 0.3))), sub: 'خلال ' + p, col: this.sc('جديد') }
+      ];
+      const bar = (k, n, max) => ({ k: k, v: String(n), w: Math.round((n / max) * 100) + '%' });
+      out.repCards = [
+        { title: 'استخدام المركبات', rows: V.slice(0, 5).map((v, i) => bar(v.no, 90 - i * 12, 100)), on: () => this.flash('تفصيل استخدام المركبات — نموذج أولي') },
+        { title: 'المهام حسب القسم', rows: this.DEPTS.map((d, i) => bar(d, (5 - i) * mul, 5 * mul)), on: () => this.flash('تفصيل مهام الأقسام — نموذج أولي') },
+        { title: 'الوجهات الأكثر تكراراً', rows: this.DEST.map((d, i) => bar(d.name, (4 - i) * mul, 4 * mul)), on: () => this.flash('تفصيل الوجهات — نموذج أولي') },
+        { title: 'توفر الأسطول', rows: ['متاحة', 'في مهمة', 'محجوزة', 'صيانة'].map(x => bar(x, V.filter(v => v.status === x).length, V.length)), on: () => this.flash('تفصيل توفر الأسطول — نموذج أولي') },
+        { title: 'الحوادث حسب التصنيف', rows: ['حادث مروري', 'عطل مركبة', 'نقص وقود', 'حالة طارئة'].map((c, i) => bar(c, 4 - i, 4)), on: () => this.flash('تفصيل الحوادث — نموذج أولي') },
+        { title: 'الصيانة القادمة', rows: V.filter(v => v.status === 'صيانة' || v.maintNext).slice(0, 4).map((v, i) => bar(v.no + ' · ' + v.maintNext, 4 - i, 4)), on: () => this.flash('تفصيل الصيانة — نموذج أولي') }
+      ];
+    }
+
+    if (s === 'settings') {
+      const pol = st.policy || 'p1';
+      const mkPol = (id, name, tag, steps) => ({ name: name, tag: tag,
+        steps: steps.map(x => ({ label: x })),
+        dot: pol === id ? (day ? '#12855a' : '#4cc9f0') : (day ? 'rgba(17,54,40,0.25)' : 'rgba(122,164,224,0.3)'),
+        fill: pol === id ? (day ? '#12855a' : '#4cc9f0') : 'transparent',
+        bg: pol === id ? (day ? 'rgba(18,133,90,0.06)' : 'rgba(56,132,220,0.12)') : 'var(--sunk2,rgba(11,18,32,0.55))',
+        bd: pol === id ? (day ? 'rgba(18,133,90,0.3)' : 'rgba(76,201,240,0.35)') : 'var(--div,rgba(122,164,224,0.12))',
+        on: () => { this.setState({ policy: id }); this.flash('تم اختيار: ' + name); } });
+      out.policies = [
+        mkPol('p1', 'السياسة الكاملة', 'افتراضية', ['رئيس القسم', 'الشؤون الإدارية', 'حركة السير', 'تخصيص المركبة', 'الموظف']),
+        mkPol('p2', 'سياسة مختصرة', 'مهام اعتيادية', ['رئيس القسم', 'حركة السير', 'الموظف']),
+        mkPol('p3', 'مهمة تنفيذية مباشرة', 'صلاحية خاصة', ['جهة تنفيذية مخوّلة', 'حركة السير', 'الموظف'])
+      ];
+      const gm = st.geo || 'poly';
+      out.geoModes = [['poly', 'مضلّع'], ['circle', 'دائرة'], ['admin', 'حدود إدارية']].map(g => pill(g[1], gm === g[0], () => this.setState({ geo: g[0] })));
+      out.geoStates = [
+        { label: 'داخل النطاق', note: 'وضع طبيعي', col: this.sc('متاحة') },
+        { label: 'خارج النطاق بتصريح', note: 'لا يُعد مخالفة', col: this.sc('محجوزة') },
+        { label: 'خروج غير متوقع', note: 'تنبيه تشغيلي', col: this.sc('صيانة') }
+      ];
+      out.gpsStates = [
+        { label: 'GPS غير نشط — خارج المهام', col: day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)' },
+        { label: 'GPS نشط أثناء المهمة المعتمدة', col: this.sc('متاحة') },
+        { label: 'انتهى التتبع بانتهاء المهمة', col: this.sc('مغلقة') }
+      ];
+    }
+
+    if (s === 'emp') {
+      const m = M.filter(x => x.id === 'M-2418')[0];
+      const stt = this.missionStatus('M-2418'), c = this.chipOf(stt);
+      const v = V.filter(x => x.id === m.veh)[0];
+      const tab = st.empScreen;
+      const running = stt === 'قيد التنفيذ' || stt === 'متوقفة بسبب حادث';
+      const secs = st.elapsed;
+      const pad = n => (n < 10 ? '0' : '') + n;
+
+      out.empGreet = 'صباح الخير';
+      out.empStatus = stt; out.empStCol = c.col; out.empStBg = c.bg; out.empStBd = c.bd;
+      out.empHome = tab === 'home'; out.empActive = tab === 'active'; out.empTasks = tab === 'tasks';
+      out.empAlerts = tab === 'alerts'; out.empAcc = tab === 'account';
+      out.empTimer = pad(Math.floor(secs / 3600)) + ':' + pad(Math.floor(secs / 60) % 60) + ':' + pad(secs % 60);
+      out.empRows = [{ k: 'رقم المهمة', v: m.no }, { k: 'النوع', v: m.type }, { k: 'الوجهة', v: m.dest },
+        { k: 'التاريخ', v: m.when }, { k: 'المدة', v: m.dur }, { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : '—' }];
+
+      const gpsOn = running;
+      out.gpsCol = gpsOn ? this.sc('متاحة') : (day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)');
+      out.gpsBg = gpsOn ? this.tint('#22c55e', day ? 0.08 : 0.12) : 'var(--sunk2,rgba(11,18,32,0.5))';
+      out.gpsBd = gpsOn ? this.tint('#22c55e', 0.3) : 'var(--div,rgba(122,164,224,0.13))';
+      out.gpsLabel = gpsOn ? 'GPS نشط أثناء المهمة' : (stt === 'مغلقة' ? 'انتهى التتبع بانتهاء المهمة' : 'GPS غير نشط');
+      out.gpsAnim = gpsOn ? 'mBreathe 2.2s ease-in-out infinite' : 'none';
+      out.geoLabel = m.scope === 'داخل النطاق' ? 'داخل النطاق التشغيلي' : 'خارج النطاق بتصريح';
+
+      const P = { tx: '#ffffff', bg: day ? 'linear-gradient(180deg,#12855a,#0b6442)' : 'linear-gradient(180deg,rgba(34,197,94,0.9),rgba(20,120,60,0.9))', bd: day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)' };
+      const S = { tx: 'var(--tx,#e9f1fb)', bg: 'var(--ctl,rgba(20,32,54,0.7))', bd: 'var(--ctlBd,rgba(122,164,224,0.2))' };
+      const D = { tx: '#ffffff', bg: day ? '#c2372c' : 'rgba(220,60,50,0.9)', bd: day ? 'rgba(150,35,28,0.5)' : 'rgba(239,68,68,0.55)' };
+      const acts = [];
+      if (stt === 'تم التسليم' || stt === 'جاهزة للبدء') {
+        acts.push({ label: 'استلام المركبة وبدء المهمة', on: () => { this.setStatus('M-2418', 'قيد التنفيذ', 'بدأت المهمة · تم تفعيل GPS'); this.setState({ empScreen: 'active', elapsed: 0 }); }, tx: P.tx, bg: P.bg, bd: P.bd });
+        acts.push({ label: 'فتح المسار على الخريطة', on: () => this.setState({ empScreen: 'active' }), tx: S.tx, bg: S.bg, bd: S.bd });
+      } else if (running) {
+        acts.push({ label: 'إنهاء المهمة', on: () => { this.setStatus('M-2418', 'في انتظار إعادة المركبة', 'انتهت المهمة · بانتظار إعادة المركبة'); this.setState({ empScreen: 'home' }); }, tx: P.tx, bg: P.bg, bd: P.bd });
+        acts.push({ label: 'طلب دعم / بلاغ حادث', on: () => this.openDrawer('incnew', 'M-2418'), tx: D.tx, bg: D.bg, bd: D.bd });
+      } else if (stt === 'في انتظار إعادة المركبة') {
+        acts.push({ label: 'تسليم المركبة', on: () => { this.setStatus('M-2418', 'مغلقة', 'تمت إعادة المركبة · أُغلق السجل'); }, tx: P.tx, bg: P.bg, bd: P.bd });
+      } else {
+        acts.push({ label: 'عرض تفاصيل المهمة', on: () => this.openDrawer('mission', 'M-2418'), tx: S.tx, bg: S.bg, bd: S.bd });
+        acts.push({ label: 'إعادة تشغيل العرض التجريبي', on: () => { this.setStatus('M-2418', 'تم التسليم', 'أُعيد ضبط العرض التجريبي'); this.setState({ elapsed: 0, empScreen: 'home' }); }, tx: S.tx, bg: S.bg, bd: S.bd });
+      }
+      if (tab === 'home' && running) acts.unshift({ label: 'متابعة المهمة الجارية', on: () => this.setState({ empScreen: 'active' }), tx: P.tx, bg: P.bg, bd: P.bd });
+      out.empActions = acts;
+
+      const done = ['تم التسليم', 'بدأت المهمة', 'تم الوصول'];
+      const stepsAll = ['استلمت المركبة', 'بدأت المهمة', 'تم الوصول للوجهة', 'جاري التنفيذ', 'إنهاء المهمة', 'تسليم المركبة'];
+      const reach = stt === 'قيد التنفيذ' ? 4 : stt === 'في انتظار إعادة المركبة' ? 5 : stt === 'مغلقة' ? 6 : 1;
+      out.empSteps = stepsAll.map((l, i) => ({ label: l, time: i < reach ? '27/05 · 0' + (8 + i) + ':' + (10 + i * 7) : 'بانتظار',
+        col: i < reach ? this.sc('متاحة') : (day ? 'rgba(17,54,40,0.18)' : 'rgba(122,164,224,0.22)'),
+        line: i < reach ? this.tint('#22c55e', 0.35) : (day ? 'rgba(17,54,40,0.12)' : 'rgba(122,164,224,0.14)'),
+        tx: i < reach ? 'var(--tx,#e9f1fb)' : 'var(--tx3,#7d8ea6)' }));
+
+      const et = st.empTab || 'الحالية';
+      out.empTabs = ['الحالية', 'القادمة', 'المكتملة'].map(x => pill(x, et === x, () => this.setState({ empTab: x })));
+      const mine = M.filter(x => x.emp === 'سعد المطيري' || x.id === 'M-2418');
+      const listSrc = et === 'الحالية' ? mine.filter(x => ['قيد التنفيذ', 'تم التسليم', 'جاهزة للبدء', 'متوقفة بسبب حادث', 'في انتظار إعادة المركبة'].indexOf(this.missionStatus(x.id)) >= 0)
+        : et === 'القادمة' ? M.filter(x => ['معتمدة', 'بانتظار المركبة', 'بانتظار الاعتماد'].indexOf(this.missionStatus(x.id)) >= 0).slice(0, 3)
+          : M.filter(x => ['مغلقة', 'مكتملة'].indexOf(this.missionStatus(x.id)) >= 0);
+      out.empList = listSrc.map(x => { const cc = this.chipOf(this.missionStatus(x.id));
+        return { title: x.no + ' · ' + x.type, dest: x.dest, meta: x.when + ' · ' + x.dur, chip: this.missionStatus(x.id),
+          chipCol: cc.col, chipBg: cc.bg, on: () => this.openDrawer('mission', x.id) }; });
+      out.empListEmpty = listSrc.length === 0;
+
+      out.empNotifs = [
+        { title: 'تم تخصيص المركبة م-101', meta: 'قبل 20 دقيقة · حركة السير', col: this.sc('محجوزة'), on: () => this.openDrawer('mission', 'M-2418') },
+        { title: 'المركبة جاهزة للاستلام', meta: 'قبل 18 دقيقة · مسؤول التسليم', col: this.sc('متاحة'), on: () => this.setState({ empScreen: 'home' }) },
+        { title: 'تذكير ببدء المهمة', meta: 'اليوم 09:00 · النظام', col: this.sc('صيانة'), on: () => this.setState({ empScreen: 'home' }) },
+        { title: 'تعليمات السلامة الميدانية', meta: 'أمس · الشؤون الإدارية', col: this.sc('مغلقة'), on: () => this.flash('تعليمات السلامة — نموذج أولي') }
+      ];
+      out.empProfile = [{ k: 'الاسم', v: 'سعد المطيري' }, { k: 'الرقم الوظيفي', v: '10428' }, { k: 'القسم', v: 'الرقابة البلدية' },
+        { k: 'الدور', v: 'مفتش ميداني' }, { k: 'رخصة القيادة', v: 'سارية' }];
+      out.empIndicators = [{ k: 'المهام المكتملة', v: '38' }, { k: 'الالتزام بالتوقيت', v: '94%' }, { k: 'إعادة المركبة في الوقت', v: '97%' }, { k: 'الحوادث المسجّلة', v: '1' }];
+
+      out.empNav = [['home', 'الرئيسية'], ['tasks', 'مهامي'], ['active', 'الخريطة'], ['alerts', 'التنبيهات'], ['account', 'حسابي']].map(n => {
+        const a = tab === n[0];
+        return { label: n[1], tx: a ? (day ? '#0b5c3b' : '#eaf4ff') : 'var(--tx3,#7d8ea6)',
+          bg: a ? (day ? 'rgba(14,122,79,0.1)' : 'rgba(56,132,220,0.24)') : 'transparent',
+          dot: a ? (day ? '#12855a' : '#4cc9f0') : (day ? 'rgba(17,54,40,0.2)' : 'rgba(122,164,224,0.25)'),
+          on: () => this.setState({ empScreen: n[0] }) };
+      });
+      out.miniRef = el => { this.mini = el; };
+    }
+
+    return out;
+  }
+
+  drawMini() {
+    const cv = this.mini; if (!cv) return;
+    const w = Math.round(cv.clientWidth) || 380, h = Math.round(cv.clientHeight) || 186;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const g = cv.getContext('2d'); if (!g) return;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const day = this.state.theme === 'day';
+    g.fillStyle = day ? '#eaeeea' : '#050b16'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = day ? 'rgba(17,54,40,0.07)' : 'rgba(122,164,224,0.07)'; g.lineWidth = 1;
+    for (let x = 0; x < w; x += 26) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+    for (let y = 0; y < h; y += 26) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+    const pts = [[0.1, 0.75], [0.3, 0.55], [0.45, 0.62], [0.66, 0.34], [0.86, 0.28]].map(p => [p[0] * w, p[1] * h]);
+    g.strokeStyle = day ? 'rgba(18,133,90,0.35)' : 'rgba(76,201,240,0.32)'; g.lineWidth = 5; g.lineCap = 'round'; g.lineJoin = 'round';
+    g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke();
+    g.strokeStyle = day ? '#12855a' : '#8ee6ff'; g.lineWidth = 2; g.setLineDash([5, 6]); g.lineDashOffset = -this.state.tick * 2;
+    g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke(); g.setLineDash([]);
+    const end = pts[pts.length - 1];
+    g.fillStyle = day ? '#5f43a8' : '#a78bfa';
+    g.beginPath(); g.moveTo(end[0] - 6, end[1]); g.lineTo(end[0], end[1] - 9); g.lineTo(end[0] + 6, end[1]); g.lineTo(end[0], end[1] + 4); g.closePath(); g.fill();
+    const t = (this.state.tick % 60) / 60;
+    const seg = t * (pts.length - 1), i = Math.floor(seg), f = seg - i;
+    const a = pts[Math.min(i, pts.length - 1)], b = pts[Math.min(i + 1, pts.length - 1)];
+    const cx = a[0] + (b[0] - a[0]) * f, cy = a[1] + (b[1] - a[1]) * f;
+    g.fillStyle = day ? '#12855a' : '#22c55e';
+    g.beginPath(); g.arc(cx, cy, 6, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = day ? '#ffffff' : 'rgba(255,255,255,0.85)'; g.lineWidth = 2; g.stroke();
+  }
+
+  renderVals() {
+    const st = this.state, day = st.theme === 'day';
+    const gateShow = !!st.authPending || !st.role;
+    const gateMsg = st.authPending ? 'جارٍ التحقق من صلاحية الدخول…' : 'لا تملك صلاحية للوصول إلى حركة السير الذكية.';
+    const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
+    if (st.sb && st.bp !== 'tabP' && st.bp !== 'mob') { vars['--sbW'] = '64px'; vars['--sbLabel'] = 'none'; }
+    if (st.role === 'employee') {
+      vars['--sbDisp'] = 'none';
+      vars['--mobNav'] = st.bp === 'mob' ? 'flex' : 'none';
+      vars['--empW'] = st.bp === 'mob' ? '100%' : '412px';
+    }
+    if (st.fs) { vars['--twinPos'] = 'fixed'; vars['--twinInset'] = '12px'; vars['--twinZ'] = '75'; vars['--twinH'] = 'auto'; }
+
+    const G = this.geo(st.tw, st.th), L = st.layers;
+    const V = this.vehicles(), M = this.missions(), I = this.incidents();
+    const cnt = s => V.filter(v => v.status === s).length;
+
+
+    const navDefs = this.navFor(st.role);
+    const nav = navDefs.map(n => {
+      const a = st.screen === n.id;
+      return { label: n.label, tag: n.tag || '', dot: a ? (day ? '#12855a' : '#4cc9f0') : (day ? 'rgba(17,54,40,0.2)' : 'rgba(122,164,224,0.25)'),
+        tx: a ? 'var(--navTx,#eaf4ff)' : 'var(--tx2,#9db2cc)',
+        bg: a ? 'var(--navBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)))' : 'transparent',
+        bd: a ? 'var(--accBd,rgba(76,201,240,0.4))' : 'transparent',
+        tagTx: 'var(--tx3,#7d8ea6)', tagBg: n.tag ? 'var(--chipBg,rgba(122,164,224,0.1))' : 'transparent',
+        on: () => n.soon ? this.flash(n.label + ' — قريباً') : this.setState({ screen: n.id, sel: null, mobNavOpen: false }) };
+    });
+
+    const layerList = [
+      { id: 'veh', name: 'المركبات', n: String(V.length), col: '#22c55e' },
+      { id: 'mis', name: 'المهام', n: String(M.length), col: '#38bdf8' },
+      { id: 'route', name: 'المسارات', n: '5', col: '#38bdf8' },
+      { id: 'inc', name: 'الحوادث', n: String(I.length), col: '#ef4444' },
+      { id: 'zone', name: 'المناطق التشغيلية', n: '4', col: '#a78bfa' },
+      { id: 'bound', name: 'الحدود', n: '4', col: '#f5a524' },
+      { id: 'dest', name: 'الوجهات', n: String(this.DEST.length), col: '#a78bfa' }
+    ].map(l => ({ name: l.name, n: l.n, mark: L[l.id] ? '✓' : '',
+      bd: L[l.id] ? l.col : (day ? 'rgba(17,54,40,0.25)' : 'rgba(122,164,224,0.3)'),
+      bg: L[l.id] ? l.col : 'transparent',
+      on: () => this.setState(s => { const n = Object.assign({}, s.layers); n[l.id] = !n[l.id]; return { layers: n, sel: null }; }) }));
+
+    const pins = [];
+    if (L.veh) V.forEach(v => {
+      const moving = v.status === 'في مهمة' || v.status === 'عائدة';
+      const pos = moving ? this.vehPos(v) : this.parkPos(v);
+      const q = this.proj(pos.x, pos.y, 0.04, G);
+      const s = st.sel && st.sel.t === 'v' && st.sel.id === v.id;
+      const c = this.sc(v.status);
+      pins.push({ title: v.no + ' · ' + v.status, col: c, radius: '3px',
+        size: s ? '14px' : '10px', off: s ? '-7px 0 0 -7px' : '-5px 0 0 -5px',
+        ring: s ? '2px solid ' + (day ? '#ffffff' : '#eaf9ff') : 'none',
+        glow: day ? 'none' : '0 0 8px ' + this.tint(c, 0.7), pulse: moving ? '0.55' : '0', z: s ? '12' : '6',
+        left: Math.round(q.x) + 'px', top: Math.round(q.y) + 'px',
+        on: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ sel: { t: 'v', id: v.id }, layersOpen: false }); } });
+    });
+    if (L.inc) I.forEach(i => {
+      const q = this.proj(i.x, i.y, 0.05, G);
+      const s = st.sel && st.sel.t === 'i' && st.sel.id === i.id;
+      pins.push({ title: i.cat + ' · ' + i.id, col: this.sc('جديد'), radius: '50%',
+        size: s ? '16px' : '12px', off: s ? '-8px 0 0 -8px' : '-6px 0 0 -6px',
+        ring: '2px solid ' + (day ? '#ffffff' : 'rgba(255,255,255,0.85)'),
+        glow: day ? 'none' : '0 0 10px rgba(239,68,68,0.8)', pulse: '1', z: '14',
+        left: Math.round(q.x) + 'px', top: Math.round(q.y) + 'px',
+        on: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ sel: { t: 'i', id: i.id }, layersOpen: false }); } });
+    });
+    if (L.dest) this.DEST.forEach(d => {
+      const q = this.proj(d.x, d.y, 0.02, G);
+      const s = st.sel && st.sel.t === 'd' && st.sel.id === d.id;
+      pins.push({ title: d.name, col: this.sc('تم التسليم'), radius: '2px',
+        size: s ? '12px' : '8px', off: s ? '-6px 0 0 -6px' : '-4px 0 0 -4px',
+        ring: s ? '2px solid ' + (day ? '#ffffff' : '#eaf9ff') : 'none', glow: 'none', pulse: '0', z: '5',
+        left: Math.round(q.x) + 'px', top: Math.round(q.y) + 'px',
+        on: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ sel: { t: 'd', id: d.id } }); } });
+    });
+
+    const zoneLabels = L.zone ? this.zonePolys().map((z, i) => {
+      const a = (z.a0 + z.a1) / 2 * Math.PI / 180, r = 0.58;
+      const q = this.proj(r * Math.cos(a), -r * Math.sin(a), 0.06, G);
+      const lx = Math.min(Math.max(q.x, 108), Math.max(130, st.tw - 120));
+      const ly = Math.min(Math.max(q.y, 150), Math.max(170, st.th - 80));
+      return { name: z.name, n: z.n, col: day ? this.mix(z.col, 0.8, [16, 46, 32]) : z.col,
+        bd: this.tint(z.col, day ? 0.35 : 0.45), left: Math.round(lx) + 'px', top: Math.round(ly) + 'px' };
+    }) : [];
+
+    const sel = this.selDetail();
+    const dr = this.drawerData();
+
+    const notifs = [
+      { title: 'حادث مروري — المهمة M-2410', meta: 'قبل 6 دقائق · إدارة الطرق', sev: 'حرج', col: '#ef4444', on: () => this.openDrawer('inc', 'I-118') },
+      { title: 'طلب اعتماد جديد — M-2415', meta: 'قبل 14 دقيقة · إدارة الرخص', sev: 'متوسط', col: '#f5a524', on: () => { this.setState({ role: 'admin', screen: 'approvals', notifOpen: false }); } },
+      { title: 'المركبة م-101 جاهزة للاستلام', meta: 'قبل 20 دقيقة · حركة السير', sev: 'عادي', col: '#38bdf8', on: () => this.openDrawer('handover', 'M-2418') },
+      { title: 'تأخر في العودة — M-2411', meta: 'قبل ساعة · إدارة النظافة', sev: 'متوسط', col: '#f5a524', on: () => this.openDrawer('mission', 'M-2411') },
+      { title: 'بانتظار تخصيص مركبة — M-2414', meta: 'قبل ساعتين · الحصر الميداني', sev: 'عادي', col: '#38bdf8', on: () => this.openDrawer('alloc', 'M-2414') },
+      { title: 'خروج غير متوقع من النطاق', meta: 'أمس · الرقابة البلدية', sev: 'متوسط', col: '#f5a524', on: () => this.flash('سجل الخروج من النطاق — نموذج أولي') }
+    ];
+
+    const sd = this.screenDef();
+    const demoSt = this.missionStatus('M-2418'), demoChip = this.chipOf(demoSt);
+
+    const base = {
+      rootRef: el => { this.root = el; }, cvRef: el => { this.cv = el; },
+      gateShow, gateMsg,
+      themeVars: vars, orgName: st.orgName || 'اسم البلدية', orgMono: (st.orgName || 'ب').trim().charAt(0) || 'ب',
+      nav: nav, roleTitle: this.roleTitle(), roleSub: this.roleSub(),
+      screenTitle: sd.title, screenSub: sd.sub, screenActions: sd.actions || [],
+      isOpsLayout: sd.ops === true, hasKpis: !!(sd.kpis && sd.kpis.length), kpis: sd.kpis || [],
+      hasSide: !!sd.sideA, hasBottom: sd.bottom === true,
+      sideATitle: sd.sideATitle || '', sideACount: sd.sideACount || '', sideA: sd.sideA || [],
+      sideBTitle: sd.sideBTitle || '', sideBCount: sd.sideBCount || '', sideB: sd.sideB || [],
+
+      notifOpen: st.notifOpen, notifs: notifs, notifCount: String(notifs.length),
+      readAll: () => this.flash('تم تعليم التنبيهات كمقروءة'),
+      layersOpen: st.layersOpen, layerList: layerList,
+      layerCount: Object.keys(L).filter(k => L[k]).length + '/7',
+      mapPins: pins, zoneLabels: zoneLabels, mapQ: st.mapQ,
+      setMapQ: e => { const v = e.target.value; this.setState({ mapQ: v }); },
+      zoomLbl: Math.round(st.zoom * 100) + '%',
+      liveCount: String(V.filter(v => v.status === 'في مهمة').length),
+      legend: ['متاحة', 'محجوزة', 'في مهمة', 'عائدة', 'صيانة', 'خارج الخدمة'].map(s => ({ label: s, col: this.sc(s) })),
+      opsTx: !st.twin3D ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
+      opsBg: !st.twin3D ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
+      opsBd: !st.twin3D ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)') : 'transparent',
+      twinTx: st.twin3D ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
+      twinBg: st.twin3D ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
+      twinBd: st.twin3D ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)') : 'transparent',
+      setOps: () => this.setState({ twin3D: false }),
+      setTwin: () => this.setState({ twin3D: true }),
+
+      hasSel: !!sel, selTitle: sel ? sel.title : '', selKind: sel ? sel.kind : '',
+      selCol: sel ? sel.col : '#38bdf8', selRows: sel ? sel.rows : [], selActions: sel ? sel.actions : [],
+      clearSel: () => this.setState({ sel: null }),
+
+      utilRows: [
+        { label: 'في مهمة الآن', v: String(cnt('في مهمة')), col: this.sc('في مهمة') },
+        { label: 'متاحة', v: String(cnt('متاحة')), col: this.sc('متاحة') },
+        { label: 'صيانة', v: String(cnt('صيانة')), col: this.sc('صيانة') },
+        { label: 'خارج الخدمة', v: String(cnt('خارج الخدمة')), col: this.sc('خارج الخدمة') }
+      ],
+      utilPct: Math.round(((cnt('في مهمة') + cnt('محجوزة')) / V.length) * 100) + '%',
+      utilDash: Math.round(((cnt('في مهمة') + cnt('محجوزة')) / V.length) * 264) + ' 264',
+      deptRows: this.DEPTS.map((d, i) => {
+        const n = M.filter(m => m.dept === d).length + 2 + i;
+        return { name: d, v: String(n), w: Math.min(100, n * 14) + '%', on: () => this.flash('تفصيل طلب ' + d + ' — نموذج أولي') };
+      }),
+      critical: I.slice(0, 3).map(i => {
+        const c = this.chipOf(i.status === 'تم الحل' ? 'تم الحل' : 'جديد');
+        return { title: i.cat + ' · ' + i.id, meta: i.emp + ' · ' + i.loc, time: i.time.split(' ')[1],
+          col: c.col, bg: c.bg, bd: c.bd, on: () => this.openDrawer('inc', i.id) };
+      }),
+      goIncidents: () => this.setState({ role: 'mobility', screen: 'incidents' }),
+
+      demoNo: 'M-2418', demoStatus: demoSt, demoCol: demoChip.col, demoBg: demoChip.bg,
+      demoMeta: 'سعد المطيري · الرقابة البلدية · م-101',
+      openDemoMission: () => this.openDrawer('mission', 'M-2418'),
+
+      logout: () => window.SmartHSRMobilityAdapter?.logout(),
+      mobNavOpen: st.mobNavOpen, tMobNav: () => this.setState(s => ({ mobNavOpen: !s.mobNavOpen })),
+      tNotif: () => this.setState(s => ({ notifOpen: !s.notifOpen })),
+      tLayers: () => this.setState(s => ({ layersOpen: !s.layersOpen })),
+      tSb: () => this.setState(s => ({ sb: !s.sb })),
+      t3D: () => this.setState(s => ({ twin3D: !s.twin3D })),
+      tFs: () => this.setState(s => ({ fs: !s.fs })),
+      zIn: () => this.setState(s => ({ zoom: Math.min(2.8, s.zoom + 0.2) })),
+      zOut: () => this.setState(s => ({ zoom: Math.max(0.6, s.zoom - 0.2) })),
+      resetView: () => this.setState({ zoom: 1, panX: 0, panY: 0, sel: null }),
+      allLayers: () => this.setState({ layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true } }),
+      setDay: () => this.setState({ theme: 'day' }), setNight: () => this.setState({ theme: 'night' }),
+      stop: e => { if (e && e.stopPropagation) e.stopPropagation(); },
+      proto: () => this.proto(),
+      hasToast: !!st.toast, toast: st.toast,
+
+      drawerOpen: !!st.drawer, closeDrawer: () => this.setState({ drawer: null, drawerId: null }),
+      dTitle: dr.title, dSub: dr.sub, dChip: dr.chip, dChipCol: dr.chipCol, dChipBg: dr.chipBg, dChipBd: dr.chipBd,
+      dHasBanner: !!dr.banner, dBanner: dr.banner, dBannerCol: dr.bannerCol, dBannerBg: dr.bannerBg, dBannerBd: dr.bannerBd,
+      dHasRows: !!(dr.rows && dr.rows.length), dRows: dr.rows || [],
+      dHasTimeline: !!(dr.timeline && dr.timeline.length), dTimeline: dr.timeline || [],
+      dHasForm: !!dr.form, dFormTitle: dr.formTitle || '', dFields: dr.fields || [],
+      dHasChips: !!(dr.chips && dr.chips.length), dChipsLabel: dr.chipsLabel || '', dChips: dr.chips || [],
+      dHasEvidence: !!dr.evidence,
+      dHasList: !!(dr.list && dr.list.length), dListTitle: dr.listTitle || '', dList: dr.list || [],
+      dHasActions: !!(dr.actions && dr.actions.length), dActions: dr.actions || []
+    };
+    return Object.assign(base, this.ext(day, st));
+  }
+
+  homeOf(r) { return r === 'manager' ? 'exec' : r === 'mobility' ? 'ops' : r === 'dept' ? 'deptops' : r === 'admin' ? 'approvals' : 'emp'; }
+  roleTitle() {
+    const r = this.state.role;
+    return r === 'manager' ? 'مدير البلدية' : r === 'mobility' ? 'مركز عمليات حركة السير' : r === 'dept' ? 'مركز قيادة القسم' : r === 'admin' ? 'مركز الاعتماد الإداري' : 'عملياتي';
+  }
+  roleSub() {
+    const r = this.state.role;
+    return r === 'manager' ? 'إشراف تنفيذي' : r === 'mobility' ? 'التشغيل اليومي للأسطول' : r === 'dept' ? 'الرقابة البلدية' : r === 'admin' ? 'الشؤون الإدارية' : (this.state.sessionName || 'الموظف');
+  }
+  navFor(r) {
+    if (r === 'manager') return [{ id: 'exec', label: 'نظرة تنفيذية' }, { id: 'reports', label: 'التقارير التنفيذية' }, { id: 'incidents', label: 'الحوادث' }, { id: 'audit', label: 'السجل التشغيلي' }];
+    if (r === 'mobility') return [
+      { id: 'ops', label: 'مركز العمليات' }, { id: 'missions', label: 'المهام والطلبات' }, { id: 'fleet', label: 'الأسطول' },
+      { id: 'handover', label: 'التسليم والاستلام' }, { id: 'map', label: 'الخريطة التشغيلية' }, { id: 'incidents', label: 'الحوادث والطوارئ' },
+      { id: 'reports', label: 'التقارير' }, { id: 'audit', label: 'السجل التشغيلي' }, { id: 'settings', label: 'الإعدادات والسياسات' },
+      { id: 'committees', label: 'اللجان', tag: 'قريباً', soon: true }];
+    if (r === 'dept') return [{ id: 'deptops', label: 'مركز قيادة القسم' }, { id: 'missions', label: 'مهام القسم' }, { id: 'incidents', label: 'حوادث القسم' }, { id: 'audit', label: 'سجل القسم' }];
+    if (r === 'admin') return [{ id: 'approvals', label: 'طلبات الاعتماد' }, { id: 'audit', label: 'سجل الاعتمادات' }, { id: 'settings', label: 'سياسة الاعتماد' }];
+    return [{ id: 'emp', label: 'عملياتي' }];
+  }
+
+  screenDef() {
+    const st = this.state, V = this.vehicles(), M = this.missions(), I = this.incidents();
+    const cnt = s => V.filter(v => v.status === s).length;
+    const mcnt = s => M.filter(m => this.missionStatus(m.id) === s).length;
+    const K = (label, value, name, delta) => ({ label: label, value: String(value), delta: delta || '', col: this.sc(name), on: () => this.flash(label + ': ' + value) });
+
+    if (st.role === 'mobility' && st.screen === 'ops') {
+      return { ops: true, bottom: true, title: 'مركز عمليات حركة السير الذكية', sub: 'التشغيل المباشر للأسطول والمهام والحوادث',
+        actions: [
+          { label: 'تخصيص مركبة', on: () => this.openDrawer('alloc', 'M-2414'), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' },
+          { label: 'الخريطة التشغيلية', on: () => this.setState({ screen: 'map' }), tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }
+        ],
+        kpis: [
+          K('إجمالي المركبات', V.length, 'مغلقة'), K('المتاحة الآن', cnt('متاحة'), 'متاحة'), K('في مهمة', cnt('في مهمة'), 'في مهمة'),
+          K('محجوزة', cnt('محجوزة'), 'محجوزة'), K('في الصيانة', cnt('صيانة'), 'صيانة'), K('خارج الخدمة', cnt('خارج الخدمة'), 'خارج الخدمة'),
+          K('المهام النشطة', mcnt('قيد التنفيذ') + mcnt('تم التسليم'), 'قيد التنفيذ'), K('بانتظار المركبة', mcnt('بانتظار المركبة'), 'بانتظار المركبة'),
+          K('المتأخرة في العودة', mcnt('في انتظار إعادة المركبة'), 'في انتظار إعادة المركبة'), K('الحوادث المفتوحة', I.filter(i => i.status !== 'مغلق' && i.status !== 'تم الحل').length, 'جديد')
+        ],
+        sideATitle: 'طابور تخصيص المركبات', sideACount: mcnt('بانتظار المركبة') + ' طلب',
+        sideA: M.filter(m => ['بانتظار المركبة', 'معتمدة', 'بانتظار الاعتماد'].indexOf(this.missionStatus(m.id)) >= 0).map(m => {
+          const c = this.chipOf(this.missionStatus(m.id));
+          return { badge: m.no.split('-')[1], title: m.type + ' · ' + m.dept, meta: m.emp + ' · ' + m.when, tag: this.missionStatus(m.id),
+            col: c.col, chipBg: c.bg, bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))',
+            on: () => this.openDrawer(this.missionStatus(m.id) === 'بانتظار المركبة' ? 'alloc' : 'mission', m.id) };
+        }),
+        sideBTitle: 'الحوادث المفتوحة', sideBCount: I.filter(i => i.status !== 'مغلق').length + ' حادث',
+        sideB: I.filter(i => i.status !== 'مغلق').map(i => {
+          const c = this.chipOf(i.status);
+          return { title: i.cat + ' · ' + i.id, meta: i.emp + ' · ' + i.veh, tag: i.status, col: c.col, chipBg: c.bg,
+            bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('inc', i.id) };
+        }) };
+    }
+
+    if (st.role === 'manager' && st.screen === 'exec') {
+      return { ops: true, bottom: true, title: 'حركة السير الذكية — نظرة تنفيذية', sub: 'مؤشرات الأسطول والمهام على مستوى البلدية',
+        actions: [{ label: 'التقرير التنفيذي', on: () => this.setState({ screen: 'reports' }), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' }],
+        kpis: [
+          K('إجمالي الأسطول', V.length, 'مغلقة'), K('المتاحة', cnt('متاحة'), 'متاحة'), K('في المهام', cnt('في مهمة'), 'في مهمة'),
+          K('في الصيانة', cnt('صيانة'), 'صيانة'), K('المهام النشطة', mcnt('قيد التنفيذ') + mcnt('تم التسليم'), 'قيد التنفيذ'),
+          K('المهام المتأخرة', mcnt('في انتظار إعادة المركبة'), 'في انتظار إعادة المركبة'),
+          K('الحوادث المفتوحة', I.filter(i => i.status !== 'مغلق' && i.status !== 'تم الحل').length, 'جديد'),
+          K('كفاءة استخدام الأسطول', Math.round(((cnt('في مهمة') + cnt('محجوزة')) / V.length) * 100) + '%', 'متاحة'),
+          K('الأقسام النشطة', this.DEPTS.length, 'محجوزة'), K('إجمالي المهام', M.length, 'تم التسليم')
+        ],
+        sideATitle: 'تنبيهات تنفيذية', sideACount: '3',
+        sideA: I.slice(0, 3).map(i => { const c = this.chipOf(i.status);
+          return { badge: '!', title: i.cat, meta: i.dept + ' · ' + i.loc, tag: i.sev, col: c.col, chipBg: c.bg,
+            bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('inc', i.id) }; }),
+        sideBTitle: 'أعلى الأقسام طلباً', sideBCount: '',
+        sideB: this.DEPTS.slice(0, 4).map((d, i) => ({ title: d, meta: (4 - i) + ' مهام نشطة', tag: String(8 - i * 2), col: this.sc('محجوزة'),
+          chipBg: this.tint('#38bdf8', 0.14), bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.flash('تفصيل ' + d) })) };
+    }
+
+    if (st.role === 'dept' && st.screen === 'deptops') {
+      const dm = M.filter(m => m.dept === 'الرقابة البلدية');
+      return { ops: true, bottom: false, title: 'مركز قيادة القسم — الرقابة البلدية', sub: 'نطاق القسم فقط · مهام وموظفو القسم',
+        actions: [{ label: 'إنشاء طلب مهمة', on: () => this.openDrawer('create', null), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' }],
+        kpis: [
+          K('مهام القسم', dm.length, 'تم التسليم'), K('قيد التنفيذ', dm.filter(m => this.missionStatus(m.id) === 'قيد التنفيذ').length, 'قيد التنفيذ'),
+          K('بانتظار الاعتماد', dm.filter(m => this.missionStatus(m.id) === 'بانتظار الاعتماد').length, 'بانتظار الاعتماد'),
+          K('بانتظار مركبة', dm.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة').length, 'بانتظار المركبة'),
+          K('حوادث القسم', I.filter(i => i.dept === 'الرقابة البلدية').length, 'جديد')
+        ],
+        sideATitle: 'مهام القسم الجارية', sideACount: dm.length + ' مهمة',
+        sideA: dm.map(m => { const c = this.chipOf(this.missionStatus(m.id));
+          return { badge: m.no.split('-')[1], title: m.type, meta: m.emp + ' · ' + m.dest, tag: this.missionStatus(m.id), col: c.col, chipBg: c.bg,
+            bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('mission', m.id) }; }),
+        sideBTitle: 'موظفو القسم في مهمة', sideBCount: '',
+        sideB: dm.filter(m => ['قيد التنفيذ', 'تم التسليم'].indexOf(this.missionStatus(m.id)) >= 0).map(m => ({
+          title: m.emp, meta: 'GPS نشط أثناء المهمة · ' + m.dest, tag: m.no, col: this.sc('قيد التنفيذ'), chipBg: this.tint('#22c55e', 0.14),
+          bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('mission', m.id) })) };
+    }
+
+    if (st.screen === 'map') {
+      return { ops: true, bottom: false, title: 'الخريطة التشغيلية', sub: 'التوأم الرقمي لحركة السير · مركبات ومهام وحوادث ومناطق',
+        actions: [{ label: 'إعادة ضبط العرض', on: () => this.setState({ zoom: 1, panX: 0, panY: 0, sel: null }), tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }],
+        kpis: [], sideA: null };
+    }
+
+    const btn = { tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' };
+    const ghost = { tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' };
+    const acts = [];
+    if (st.screen === 'fleet') acts.push(Object.assign({ label: '+ إضافة مركبة', on: () => this.proto() }, btn));
+    if (st.screen === 'missions' && st.role === 'dept') acts.push(Object.assign({ label: '+ إنشاء طلب مهمة', on: () => this.openDrawer('create', null) }, btn));
+    if (st.screen === 'reports') {
+      acts.push(Object.assign({ label: 'تصدير PDF', on: () => this.flash('تصدير PDF — نموذج أولي، يُنفّذ لاحقاً') }, ghost));
+      acts.push(Object.assign({ label: 'تصدير Excel', on: () => this.flash('تصدير Excel — نموذج أولي، يُنفّذ لاحقاً') }, ghost));
+    }
+    if (st.screen === 'audit') acts.push(Object.assign({ label: 'تصدير السجل', on: () => this.flash('تصدير السجل — نموذج أولي') }, ghost));
+    const titleMap = { missions: st.role === 'dept' ? 'مهام القسم' : 'المهام والطلبات', incidents: st.role === 'dept' ? 'حوادث القسم' : 'الحوادث والطوارئ', audit: st.role === 'dept' ? 'سجل القسم' : (st.role === 'admin' ? 'سجل الاعتمادات' : 'السجل التشغيلي'), settings: st.role === 'admin' ? 'سياسة الاعتماد' : 'الإعدادات والسياسات' };
+    return { ops: false, title: titleMap[st.screen] || this.titleOf(st.screen), sub: this.subOf(st.screen), actions: acts };
+  }
+
+  titleOf(s) {
+    const m = { missions: 'المهام والطلبات', fleet: 'الأسطول', handover: 'التسليم والاستلام', incidents: 'الحوادث والطوارئ',
+      reports: 'التقارير', audit: 'السجل التشغيلي', settings: 'الإعدادات والسياسات', approvals: 'طلبات الاعتماد', emp: 'عملياتي' };
+    return m[s] || 'حركة السير الذكية';
+  }
+  subOf(s) {
+    const m = { missions: 'دورة حياة المهمة من الطلب حتى الإغلاق', fleet: 'سجل المركبات البلدية وحالتها التشغيلية',
+      handover: 'تسليم المركبة للموظف واستلامها عند العودة', incidents: 'مركز إدارة الحوادث والطوارئ الميدانية',
+      reports: 'تقارير تشغيلية قابلة للتصفية والتصدير', audit: 'سجل تدقيق رسمي لكل حدث تشغيلي',
+      settings: 'سياسة الاعتماد والنطاق الجغرافي وإعدادات التشغيل', approvals: 'مراجعة واعتماد طلبات المهام',
+      emp: 'مهمتك الحالية وإجراءاتها' };
+    return m[s] || '';
+  }
+  actionsOf(s) { return []; }
+
+  selDetail() {
+    const s = this.state.sel; if (!s) return null;
+    if (s.t === 'v') {
+      const v = this.vehicles().filter(x => x.id === s.id)[0]; if (!v) return null;
+      const m = this.missions().filter(x => x.veh === v.id)[0];
+      return { title: v.no + ' · ' + v.plate, kind: v.type + ' — ' + v.make + ' ' + v.model, col: this.sc(v.status),
+        rows: [{ k: 'الحالة', v: v.status }, { k: 'القسم', v: v.dept }, { k: 'الموظف الحالي', v: m ? m.emp : '—' },
+          { k: 'المهمة', v: m ? m.no : '—' }, { k: 'الوجهة', v: m ? m.dest : '—' }, { k: 'العداد', v: v.odo.toLocaleString('en') + ' كم' }],
+        actions: [{ label: 'تفاصيل المركبة', on: () => this.openDrawer('veh', v.id), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' },
+          { label: m ? 'المهمة' : 'تخصيص', on: () => m ? this.openDrawer('mission', m.id) : this.openDrawer('alloc', 'M-2414'), tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }] };
+    }
+    if (s.t === 'i') {
+      const i = this.incidents().filter(x => x.id === s.id)[0]; if (!i) return null;
+      return { title: i.cat + ' · ' + i.id, kind: 'حادث ميداني — ' + i.sev, col: this.sc('جديد'),
+        rows: [{ k: 'الحالة', v: i.status }, { k: 'المهمة', v: i.mis }, { k: 'الموظف', v: i.emp }, { k: 'المركبة', v: i.veh }, { k: 'الموقع', v: i.loc }, { k: 'الوقت', v: i.time }],
+        actions: [{ label: 'فتح ملف الحادث', on: () => this.openDrawer('inc', i.id), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' }] };
+    }
+    if (s.t === 'd') {
+      const d = this.DEST.filter(x => x.id === s.id)[0]; if (!d) return null;
+      const ms = this.missions().filter(m => m.dest.indexOf(d.name) >= 0);
+      return { title: d.name, kind: 'وجهة تشغيلية', col: this.sc('تم التسليم'),
+        rows: [{ k: 'المهام', v: String(ms.length) }, { k: 'النطاق', v: 'داخل النطاق' }],
+        actions: [{ label: 'المهام المرتبطة', on: () => this.setState({ screen: 'missions', sel: null }), tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }] };
+    }
+    return null;
+  }
+
+  openDrawer(kind, id) { this.setState({ drawer: kind, drawerId: id, notifOpen: false, layersOpen: false, mobNavOpen: false }); }
+
+  timelineFor(id) {
+    const st = this.missionStatus(id);
+    const order = ['تم إنشاء الطلب', 'تم الاعتماد', 'تم تخصيص المركبة', 'تم التسليم', 'بدأت المهمة', 'تم الوصول', 'تم التنفيذ', 'بدأت العودة', 'تمت إعادة المركبة', 'أُغلق السجل'];
+    let reached = 1;
+    if (['معتمدة', 'بانتظار المركبة'].indexOf(st) >= 0) reached = 2;
+    if (st === 'تم تخصيص المركبة') reached = 3;
+    if (st === 'تم التسليم' || st === 'جاهزة للبدء') reached = 4;
+    if (st === 'قيد التنفيذ') reached = 6;
+    if (st === 'متوقفة بسبب حادث') reached = 6;
+    if (st === 'مكتملة') reached = 7;
+    if (st === 'في انتظار إعادة المركبة') reached = 8;
+    if (st === 'مغلقة') reached = 10;
+    const who = ['رئيس القسم', 'الشؤون الإدارية', 'حركة السير', 'مسؤول التسليم', 'الموظف', 'الموظف', 'الموظف', 'الموظف', 'مسؤول الاستلام', 'حركة السير'];
+    const times = ['08:02', '08:20', '08:41', '08:55', '09:05', '09:34', '10:48', '11:20', '11:52', '11:58'];
+    const day = this.state.theme === 'day';
+    return order.map((l, i) => {
+      const done = i < reached;
+      const col = done ? this.sc('قيد التنفيذ') : (day ? 'rgba(17,54,40,0.18)' : 'rgba(122,164,224,0.22)');
+      return { label: l, time: done ? '27/05 · ' + times[i] : '—', who: done ? who[i] : 'بانتظار التنفيذ',
+        col: col, ring: day ? '#ffffff' : '#0a1120', line: done ? this.tint('#22c55e', 0.35) : (day ? 'rgba(17,54,40,0.12)' : 'rgba(122,164,224,0.14)'),
+        tx: done ? 'var(--tx,#e9f1fb)' : 'var(--tx3,#7d8ea6)' };
+    });
+  }
+
+  drawerData() {
+    const k = this.state.drawer, id = this.state.drawerId;
+    const none = { title: '', sub: '', chip: '', chipCol: '', chipBg: '', chipBd: '' };
+    if (!k) return none;
+    const M = this.missions(), V = this.vehicles(), I = this.incidents();
+    const btn = { tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' };
+    const ghost = { tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' };
+    const danger = { tx: 'var(--bad,#ef4444)', bg: this.tint('#ef4444', 0.1), bd: this.tint('#ef4444', 0.3) };
+
+    if (k === 'mission' || k === 'alloc' || k === 'handover' || k === 'ret' || k === 'approve') {
+      const m = M.filter(x => x.id === id)[0] || M[0];
+      const stt = this.missionStatus(m.id), c = this.chipOf(stt);
+      const v = V.filter(x => x.id === m.veh)[0];
+      const rows = [
+        { k: 'رقم المهمة', v: m.no }, { k: 'نوع المهمة', v: m.type }, { k: 'القسم', v: m.dept },
+        { k: 'طالب المهمة', v: m.requester }, { k: 'الموظف', v: m.emp }, { k: 'الوجهة', v: m.dest },
+        { k: 'التاريخ والوقت', v: m.when }, { k: 'المدة المتوقعة', v: m.dur }, { k: 'النطاق', v: m.scope },
+        { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : 'لم تُخصص بعد' },
+        { k: 'حالة GPS', v: m.gps ? 'نشط أثناء المهمة' : 'غير نشط' }, { k: 'المبرر', v: m.why }
+      ];
+      const acts = [];
+      if (k === 'alloc') {
+        acts.push({ label: 'تخصيص المركبة المحددة', on: () => { this.setStatus(m.id, 'تم تخصيص المركبة', 'تم تخصيص مركبة للمهمة ' + m.no); this.setState({ drawer: 'handover' }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        acts.push({ label: 'إغلاق', on: () => this.setState({ drawer: null }), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
+      } else if (k === 'handover') {
+        acts.push({ label: 'تأكيد تسليم المركبة', on: () => { this.setStatus(m.id, 'تم التسليم', 'تم تسليم المركبة — بانتظار استلام الموظف'); this.setState({ drawer: null }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        acts.push({ label: 'إلغاء', on: () => this.setState({ drawer: null }), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
+      } else if (k === 'ret') {
+        acts.push({ label: 'تأكيد إعادة المركبة وإغلاق السجل', on: () => { this.setStatus(m.id, 'مغلقة', 'تمت إعادة المركبة · تم إغلاق المهمة'); this.setState({ drawer: null }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+      } else if (k === 'approve') {
+        acts.push({ label: 'اعتماد', on: () => { this.setStatus(m.id, 'بانتظار المركبة', 'تم اعتماد الطلب — أُرسل إلى حركة السير'); this.setState({ drawer: null }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        acts.push({ label: 'إعادة للمراجعة', on: () => { this.setStatus(m.id, 'مسودة', 'أُعيد الطلب للمراجعة'); this.setState({ drawer: null }); }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
+        acts.push({ label: 'رفض', on: () => { this.setStatus(m.id, 'ملغاة', 'تم رفض الطلب — يلزم ذكر السبب'); this.setState({ drawer: null }); }, tx: danger.tx, bg: danger.bg, bd: danger.bd });
+      } else {
+        if (stt === 'بانتظار المركبة') acts.push({ label: 'تخصيص مركبة', on: () => this.setState({ drawer: 'alloc' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        if (stt === 'تم تخصيص المركبة') acts.push({ label: 'تسليم المركبة', on: () => this.setState({ drawer: 'handover' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        if (stt === 'في انتظار إعادة المركبة') acts.push({ label: 'استلام المركبة', on: () => this.setState({ drawer: 'ret' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        acts.push({ label: 'عرض في الخريطة', on: () => { const vv = V.filter(x => x.id === m.veh)[0]; this.setState({ drawer: null, screen: 'map', sel: vv ? { t: 'v', id: vv.id } : null }); }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
+      }
+      const titles = { mission: 'المهمة ' + m.no, alloc: 'تخصيص مركبة · ' + m.no, handover: 'تسليم المركبة · ' + m.no, ret: 'استلام المركبة · ' + m.no, approve: 'اعتماد الطلب · ' + m.no };
+      const forms = { alloc: 'اختيار المركبة', handover: 'بيانات التسليم', ret: 'بيانات الاستلام', approve: 'ملاحظة الاعتماد' };
+      const d = { title: titles[k], sub: m.type + ' · ' + m.dept + ' · ' + m.emp, chip: stt, chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
+        rows: rows, timeline: k === 'mission' ? this.timelineFor(m.id) : null, actions: acts };
+      if (k === 'alloc') {
+        d.form = true; d.formTitle = forms[k];
+        d.fields = [{ label: 'ملاحظة التخصيص', value: this.state.form.allocNote || '', ph: 'اختياري', on: e => this.setForm('allocNote', e.target.value) }];
+        d.chipsLabel = 'المركبات المتاحة الآن';
+        d.chips = V.filter(x => x.status === 'متاحة').slice(0, 6).map(x => {
+          const on = this.state.chip.veh === x.id;
+          return { label: x.no + ' · ' + x.type, on: () => this.setChip('veh', x.id),
+            tx: on ? (this.state.theme === 'day' ? '#0b5c3b' : '#eaf4ff') : 'var(--tx2,#a9bdd4)',
+            bg: on ? this.tint('#22c55e', 0.16) : 'var(--ctl,rgba(20,32,54,0.5))', bd: on ? this.tint('#22c55e', 0.4) : 'var(--ctlBd,rgba(122,164,224,0.14))' };
+        });
+      }
+      if (k === 'handover' || k === 'ret') {
+        d.form = true; d.formTitle = forms[k];
+        d.fields = [
+          { label: 'قراءة العداد', value: this.state.form.odo || (v ? String(v.odo) : ''), ph: 'كم', on: e => this.setForm('odo', e.target.value) },
+          { label: 'الوقود %', value: this.state.form.fuel || (v ? String(v.fuel) : ''), ph: '0-100', on: e => this.setForm('fuel', e.target.value) },
+          { label: k === 'ret' ? 'ملاحظات الاستلام / الأضرار' : 'حالة المركبة عند التسليم', value: this.state.form.note || '', ph: 'سليمة / ملاحظات', on: e => this.setForm('note', e.target.value) }
+        ];
+        d.evidence = k === 'ret';
+        d.banner = k === 'handover' ? 'يقر الموظف إلكترونياً باستلام المركبة عند تأكيد التسليم.' : 'بعد تأكيد الاستلام يتم إغلاق السجل التشغيلي للمهمة.';
+        d.bannerCol = this.sc('محجوزة'); d.bannerBg = this.tint('#38bdf8', 0.1); d.bannerBd = this.tint('#38bdf8', 0.28);
+      }
+      if (k === 'approve') {
+        d.form = true; d.formTitle = forms[k];
+        d.fields = [{ label: 'ملاحظة / سبب', value: this.state.form.appNote || '', ph: 'يُشترط عند الرفض', on: e => this.setForm('appNote', e.target.value) }];
+        d.banner = 'التوفر التشغيلي للموظف: متاح · لا توجد إجازة مسجلة · لا يوجد تعارض مع مهمة أخرى.';
+        d.bannerCol = this.sc('متاحة'); d.bannerBg = this.tint('#22c55e', 0.1); d.bannerBd = this.tint('#22c55e', 0.28);
+      }
+      return d;
+    }
+
+    if (k === 'veh') {
+      const v = V.filter(x => x.id === id)[0] || V[0];
+      const c = this.chipOf(v.status);
+      const ms = M.filter(x => x.veh === v.id);
+      return { title: v.no + ' · ' + v.plate, sub: v.type + ' — ' + v.make + ' ' + v.model + ' ' + v.year, chip: v.status, chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
+        rows: [{ k: 'الرقم الداخلي', v: v.no }, { k: 'رقم اللوحة', v: v.plate }, { k: 'النوع', v: v.type }, { k: 'الشركة/الموديل', v: v.make + ' ' + v.model },
+          { k: 'السنة', v: String(v.year) }, { k: 'القسم', v: v.dept }, { k: 'الحالة', v: v.status }, { k: 'قراءة العداد', v: v.odo.toLocaleString('en') + ' كم' },
+          { k: 'الوقود', v: v.fuel + '%' }, { k: 'آخر استخدام', v: v.last }, { k: 'آخر صيانة', v: v.maintLast }, { k: 'الصيانة القادمة', v: v.maintNext }, { k: 'ملاحظات', v: v.note }],
+        listTitle: 'سجل مهام المركبة',
+        list: (ms.length ? ms : M.slice(0, 3)).map(m => { const cc = this.chipOf(this.missionStatus(m.id));
+          return { title: m.no + ' · ' + m.type, meta: m.emp + ' · ' + m.when, tag: this.missionStatus(m.id), col: cc.col,
+            bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('mission', m.id) }; }),
+        actions: [{ label: 'تعديل بيانات المركبة', on: () => this.proto(), tx: btn.tx, bg: btn.bg, bd: btn.bd },
+          { label: 'تحديد صيانة', on: () => this.proto(), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
+    }
+
+    if (k === 'inc') {
+      const i = I.filter(x => x.id === id)[0] || I[0];
+      const c = this.chipOf(i.status);
+      return { title: i.cat + ' · ' + i.id, sub: 'خطورة ' + i.sev + ' · ' + i.dept, chip: i.status, chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
+        banner: 'زمن الحادث لا يُحتسب ضمن تأخر الموظف الاعتيادي.', bannerCol: this.sc('محجوزة'), bannerBg: this.tint('#38bdf8', 0.1), bannerBd: this.tint('#38bdf8', 0.28),
+        rows: [{ k: 'الحالة', v: i.status }, { k: 'الخطورة', v: i.sev }, { k: 'المهمة', v: i.mis }, { k: 'المركبة', v: i.veh },
+          { k: 'الموظف', v: i.emp }, { k: 'القسم', v: i.dept }, { k: 'الموقع', v: i.loc }, { k: 'الوقت', v: i.time }, { k: 'الدليل', v: i.ev }, { k: 'الوصف', v: i.note }],
+        actions: [{ label: 'تم الاستلام', on: () => this.flash('تم استلام الحادث ' + i.id), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd },
+          { label: 'تحت المعالجة', on: () => this.flash('الحادث ' + i.id + ' تحت المعالجة'), tx: btn.tx, bg: btn.bg, bd: btn.bd },
+          { label: 'تم الحل', on: () => this.flash('تم حل الحادث ' + i.id), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
+    }
+
+    if (k === 'create') {
+      const f = this.state.form;
+      return { title: 'إنشاء طلب مهمة', sub: 'الرقابة البلدية · رئيس القسم', chip: 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
+        form: true, formTitle: 'بيانات الطلب',
+        fields: [
+          { label: 'الموظف', value: f.cEmp || '', ph: 'اختر موظف القسم', on: e => this.setForm('cEmp', e.target.value) },
+          { label: 'الوجهة', value: f.cDest || '', ph: 'الموقع المستهدف', on: e => this.setForm('cDest', e.target.value) },
+          { label: 'التاريخ والوقت', value: f.cWhen || '', ph: '27/05 — 13:00', on: e => this.setForm('cWhen', e.target.value) },
+          { label: 'المدة المتوقعة', value: f.cDur || '', ph: 'ساعتان', on: e => this.setForm('cDur', e.target.value) },
+          { label: 'المبرر', value: f.cWhy || '', ph: 'سبب المهمة', on: e => this.setForm('cWhy', e.target.value) }
+        ],
+        chipsLabel: 'نوع المهمة',
+        chips: ['تفتيش ميداني', 'نقل معدات', 'زيارة ترخيص', 'متابعة بلاغ', 'حصر ميداني'].map(t => {
+          const on = this.state.chip.type === t;
+          return { label: t, on: () => this.setChip('type', t),
+            tx: on ? (this.state.theme === 'day' ? '#0b5c3b' : '#eaf4ff') : 'var(--tx2,#a9bdd4)',
+            bg: on ? this.tint('#22c55e', 0.16) : 'var(--ctl,rgba(20,32,54,0.5))', bd: on ? this.tint('#22c55e', 0.4) : 'var(--ctlBd,rgba(122,164,224,0.14))' };
+        }),
+        banner: 'حسب السياسة الحالية: رئيس القسم ← الشؤون الإدارية ← حركة السير ← تخصيص المركبة ← الموظف.',
+        bannerCol: this.sc('محجوزة'), bannerBg: this.tint('#38bdf8', 0.1), bannerBd: this.tint('#38bdf8', 0.28),
+        actions: [{ label: 'إرسال للاعتماد', on: () => { this.setState({ drawer: null }); this.flash('تم إرسال الطلب للاعتماد الإداري'); }, tx: btn.tx, bg: btn.bg, bd: btn.bd },
+          { label: 'حفظ كمسودة', on: () => { this.setState({ drawer: null }); this.flash('تم حفظ الطلب كمسودة'); }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
+    }
+
+    if (k === 'incnew') {
+      return { title: 'طلب دعم / بلاغ حادث', sub: 'تُرفق بيانات المهمة والمركبة والموقع تلقائياً', chip: 'جديد', chipCol: this.sc('جديد'), chipBg: this.tint('#ef4444', 0.12), chipBd: this.tint('#ef4444', 0.3),
+        banner: 'مرفق تلقائياً: الموظف سعد المطيري · المهمة M-2418 · المركبة م-101 · الموقع الحالي · 09:41',
+        bannerCol: this.sc('جديد'), bannerBg: this.tint('#ef4444', 0.1), bannerBd: this.tint('#ef4444', 0.28),
+        form: true, formTitle: 'بيانات البلاغ',
+        fields: [{ label: 'ملاحظة قصيرة', value: this.state.form.incNote || '', ph: 'وصف مختصر', on: e => this.setForm('incNote', e.target.value) }],
+        chipsLabel: 'نوع الحالة',
+        chips: ['حادث مروري', 'عطل مركبة', 'نقص وقود', 'مشكلة في المهمة', 'حالة طارئة', 'أخرى'].map(t => {
+          const on = this.state.chip.inc === t;
+          return { label: t, on: () => this.setChip('inc', t),
+            tx: on ? '#ffffff' : 'var(--tx2,#a9bdd4)', bg: on ? this.tint('#ef4444', 0.75) : 'var(--ctl,rgba(20,32,54,0.5))', bd: on ? this.tint('#ef4444', 0.5) : 'var(--ctlBd,rgba(122,164,224,0.14))' };
+        }),
+        evidence: true,
+        actions: [{ label: 'إرسال البلاغ', on: () => { this.setState({ drawer: null }); this.setStatus('M-2418', 'متوقفة بسبب حادث', 'تم إرسال البلاغ — أُشعر رئيس حركة السير ورئيس القسم'); }, tx: danger.tx, bg: this.tint('#ef4444', 0.16), bd: this.tint('#ef4444', 0.45) },
+          { label: 'إلغاء', on: () => this.setState({ drawer: null }), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
+    }
+
+    return none;
+  }
+
+  setForm(k, v) { this.setState(s => { const n = Object.assign({}, s.form); n[k] = v; return { form: n }; }); }
+  setChip(k, v) { this.setState(s => { const n = Object.assign({}, s.chip); n[k] = v; return { chip: n }; }); }
+}
+</script>
+<script type="module" src="./smart-mobility-adapter.js"></script>
+</body>
+</html>

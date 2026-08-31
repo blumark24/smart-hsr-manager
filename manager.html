@@ -194,11 +194,10 @@
               <span style="flex:1;display:var(--sbLabel,block)">حصر الأراضي الذكي</span>
               <span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">بانتظار الربط</span>
             </div>
-            <div aria-disabled="true" title="حركة السير الذكية قريباً" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx3,#7d8ea6);cursor:not-allowed">
-              <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--tx3,#64748b)"></span>
+            <a href="#" onClick="{{ goMobility }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
+              <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">حركة السير الذكية</span>
-              <span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">قريباً</span>
-            </div>
+            </a>
           </div>
         </sc-if>
 
@@ -1310,7 +1309,7 @@ class Component extends DCLogic {
         { label: 'الرئيسية', tag: '', on: () => this.goHome() },
         { label: 'الحصر الميداني الذكي', tag: '', on: () => this.goRoute('survey') },
         { label: 'حصر الأراضي الذكي', tag: 'بانتظار الربط', disabled: true },
-        { label: 'حركة السير الذكية', tag: 'قريباً', disabled: true },
+        { label: 'حركة السير الذكية', tag: '', on: () => this.goRoute('mobility') },
         { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.openView('observations') },
         { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap() },
         { label: 'التقارير', tag: '', on: () => this.openView('reports') },
@@ -1377,6 +1376,7 @@ class Component extends DCLogic {
       resetView: () => this.resetMapView(),
       hideQuick: () => this.setState({ quick: false }),
       goSurvey: () => this.goRoute('survey'),
+      goMobility: () => this.goRoute('mobility'),
       goHome: e => this.goHome(e),
       goMap: e => this.openMap(e),
       goReports: e => this.openView('reports', e),
@@ -1455,6 +1455,7 @@ class Component extends DCLogic {
 
   goRoute(r) {
     if (r === 'survey') { window.location.assign('dashboard.html'); return; }
+    if (r === 'mobility') { window.location.assign('smart-mobility.html'); return; }
     this.flash('هذا المسار غير متاح حتى يتم التحقق من ربطه التشغيلي.');
   }
 }
