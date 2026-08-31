@@ -13,16 +13,25 @@ const STATUS = Object.freeze({
   COMPLETED: { label: 'تمت المعالجة', color: '#22c55e' }
 });
 
+const format = window.SmartHSRFormat || {
+  integer: value => String(Number(value) || 0),
+  decimal: value => Number(value || 0).toFixed(1),
+  percent: value => `${Math.round(Number(value) || 0)}%`,
+  dateTime: () => 'غير متاح'
+};
+
 let activeComponent = null;
 let stopAuth = null;
 let stopObservations = null;
 let stopUsers = null;
+let activeAuth = null;
+let activeAuthApi = null;
 
 const isLocalPreview = () => ['localhost', '127.0.0.1'].includes(location.hostname)
   && new URLSearchParams(location.search).get('preview') === '1';
 
 const asMillis = value => value?.toMillis ? value.toMillis() : 0;
-const number = value => new Intl.NumberFormat('ar-SA').format(Number(value) || 0);
+const number = value => format.integer(value);
 const statusFor = value => STATUS[value] || STATUS.PENDING;
 
 function readCoordinates(data) {
@@ -45,6 +54,8 @@ function normalizeObservations(snapshot) {
       status: data.status || 'PENDING',
       inspector: data.inspector || 'غير متاح',
       contractor: data.contractor || 'غير مسند',
+      type: data.type || data.category || 'غير مصنف',
+      description: data.description || '',
       createdAt: asMillis(data.createdAt),
       updatedAt: asMillis(data.updatedAt),
       coordinates: readCoordinates(data)
@@ -112,12 +123,20 @@ function buildViewData(observations, users) {
       pending: number(pending.length),
       inProgress: number(inProgress.length),
       completed: number(completed.length),
-      completionRate: `${completionPercent}%`,
+      completionRate: format.percent(completionPercent),
       completionArcSmall: `${(232.5 * completionPercent / 100).toFixed(1)} 232.5`,
       completionArcLarge: `${(264 * completionPercent / 100).toFixed(1)} 264`,
-      avgOpenDays: averageAge ? averageAge.toFixed(1) : '0.0',
+      avgOpenDays: format.decimal(averageAge),
       activeTeams: number(activeUsers.length)
     },
+    observations,
+    users: users.map(item => ({
+      id: item.id,
+      name: item.name || item.displayName || item.email || item.id,
+      role: item.role || 'غير محدد',
+      active: item.active !== false,
+      email: item.email || 'غير متاح'
+    })),
     objects: toTwinObjects(observations),
     layers: [
       { id: 'survey', name: 'الحصر الميداني', col: '#22c55e', n: 'رابط' },
@@ -132,6 +151,7 @@ function buildViewData(observations, users) {
     })),
     zones: [{ id: 'reports', name: 'بلاغات موثّقة الموقع', count: number(toTwinObjects(observations).length), col: '#ef4444', x: 0.03, y: -0.05 }],
     priorities: [...pending, ...inProgress].slice(0, 4).map(item => ({
+      id: item.id,
       n: item.displayId,
       title: item.title,
       meta: statusFor(item.status).label,
@@ -161,6 +181,10 @@ function publish(component, payload) {
   component.livePriorities = payload.priorities;
   component.liveCategories = payload.categories;
   component.liveDepartments = payload.departments;
+  component.liveObservations = payload.observations;
+  component.liveUsers = payload.users;
+  component.liveDataState = 'ready';
+  component.liveDataError = '';
   component.setState(state => ({ liveRevision: (state.liveRevision || 0) + 1 }));
 }
 
@@ -192,6 +216,8 @@ async function start(component) {
     || appApi.initializeApp(FIREBASE_CONFIG, 'smart-hsr-manager-session');
   const db = firestoreApi.getFirestore(app);
   const auth = authApi.getAuth(app);
+  activeAuth = auth;
+  activeAuthApi = authApi;
   await authApi.setPersistence(auth, authApi.browserLocalPersistence);
 
   stopAuth = authApi.onAuthStateChanged(auth, async user => {
@@ -202,7 +228,13 @@ async function start(component) {
       return;
     }
     if (component !== activeComponent) return;
-    component.setState({ orgName: context.organizationName });
+    component.setState({
+      orgName: context.organizationName,
+      sessionName: user.displayName || user.email || 'الحساب الموثق',
+      sessionRole: context.role === 'manager' ? 'مدير البلدية' : 'مشرف البلدية',
+      dataState: 'loading',
+      dataError: ''
+    });
     const filter = firestoreApi.query(firestoreApi.collection(db, 'observations'), firestoreApi.where('organizationId', '==', context.organizationId));
     const userFilter = firestoreApi.query(firestoreApi.collection(db, 'users'), firestoreApi.where('organizationId', '==', context.organizationId));
     let observations = [];
@@ -212,12 +244,22 @@ async function start(component) {
       if (snapshot.metadata.fromCache) return;
       observations = normalizeObservations(snapshot);
       update();
-    }, () => component.flash('تعذر تحميل البلاغات الموثّقة.'));
+    }, () => {
+      component.liveDataState = 'error';
+      component.liveDataError = 'تعذر تحميل البلاغات الموثّقة.';
+      component.setState({ dataState: 'error', dataError: component.liveDataError });
+      component.flash(component.liveDataError);
+    });
     stopUsers = firestoreApi.onSnapshot(userFilter, { includeMetadataChanges: true }, snapshot => {
       if (snapshot.metadata.fromCache) return;
       users = snapshot.docs.map(entry => ({ id: entry.id, ...(entry.data() || {}) }));
       update();
-    }, () => component.flash('تعذر تحميل الفرق التشغيلية.'));
+    }, () => {
+      component.liveDataState = 'error';
+      component.liveDataError = 'تعذر تحميل الفرق التشغيلية.';
+      component.setState({ dataState: 'error', dataError: component.liveDataError });
+      component.flash(component.liveDataError);
+    });
   });
 }
 
@@ -227,6 +269,8 @@ function disconnect(component) {
   stopObservations?.();
   stopUsers?.();
   stopAuth = stopObservations = stopUsers = null;
+  activeAuth = null;
+  activeAuthApi = null;
   activeComponent = null;
 }
 
@@ -236,16 +280,29 @@ window.SmartHSRManagerAdapter = {
     disconnect();
     activeComponent = component;
     if (isLocalPreview()) {
-      component.setState({ orgName: 'معاينة محلية — لا بيانات تشغيلية' });
+      component.setState({
+        orgName: 'معاينة محلية — لا بيانات تشغيلية',
+        sessionName: 'معاينة محلية',
+        sessionRole: 'بيانات تشغيلية غير متصلة',
+        dataState: 'ready',
+        dataError: ''
+      });
       publish(component, buildViewData([], []));
       return;
     }
     start(component).catch(() => {
+      component.liveDataState = 'error';
+      component.liveDataError = 'تعذر بدء جلسة لوحة المدير بأمان.';
+      component.setState({ dataState: 'error', dataError: component.liveDataError });
       component.flash('تعذر بدء جلسة لوحة المدير بأمان.');
       setTimeout(() => location.replace('manager-login.html'), 800);
     });
   },
-  disconnect
+  disconnect,
+  async logout() {
+    await activeAuthApi?.signOut(activeAuth);
+    location.replace('manager-login.html');
+  }
 };
 
 window.dispatchEvent(new Event('smart-hsr-manager-adapter-ready'));

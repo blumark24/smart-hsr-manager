@@ -11,15 +11,21 @@ const operations = fs.readFileSync(path.join(root, 'manager-operations.html'), '
 
 assert.match(dashboard, /class Component extends DCLogic/);
 assert.match(dashboard, /dashboard\.html/);
-assert.match(dashboard, /manager-operations\.html#reports/);
-assert.match(dashboard, /manager-operations\.html#twin/);
-assert.match(dashboard, /حصر الأراضي الذكي بانتظار مساره التشغيلي الحقيقي/);
-assert.match(dashboard, /حركة السير الذكية — قريباً/);
+assert.doesNotMatch(dashboard, /manager-operations\.html#/);
+assert.match(dashboard, /openView\('observations'/);
+assert.match(dashboard, /openView\('reports'/);
+assert.match(dashboard, /openView\('users'/);
+assert.match(dashboard, /openMap\(/);
+assert.match(dashboard, /L\.map\(/);
+assert.match(dashboard, /حصر الأراضي الذكي/);
+assert.match(dashboard, /حركة السير الذكية/);
 assert.match(dashboard, /الهيكل الإداري/);
 assert.match(dashboard, /المساعد التنفيذي الذكي/);
+assert.match(dashboard, /SmartHSRFormat/);
 assert.match(adapter, /where\('organizationId', '==', context\.organizationId\)/);
 assert.match(adapter, /verifyManagerAccess/);
 assert.match(adapter, /snapshot\.metadata\.fromCache/);
+assert.match(adapter, /activeAuthApi/);
 assert.match(operations, /manager-operations-route-adapter\.js/);
 
 console.log('manager dashboard preview contract OK');

@@ -6,6 +6,9 @@
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
 <script src="./support.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./manager-dashboard-format.js"></script>
 </head>
 <body>
 <x-dc>
@@ -33,27 +36,27 @@
 
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <div style="position:relative;display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid var(--div,rgba(122,164,224,0.14))">
-        <div onClick="{{ tProf }}" data-f="1" style="text-align:left;cursor:pointer">
-          <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">أ. محمد العتيبي</div>
-          <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:1px">مدير البلدية</div>
-        </div>
-        <div onClick="{{ tProf }}" data-f="1" role="button" aria-label="قائمة الحساب" style="width:38px;height:38px;border-radius:12px;background:var(--avBg,linear-gradient(160deg,#1d3a5c,#0e1c30));border:1px solid var(--accBd,rgba(122,164,224,0.28));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--acc,#9fc7e8);cursor:pointer">م.ع</div>
+          <div onClick="{{ tProf }}" data-f="1" style="text-align:left;cursor:pointer">
+            <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">{{ sessionName }}</div>
+            <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:1px">{{ sessionRole }}</div>
+          </div>
+          <div onClick="{{ tProf }}" data-f="1" role="button" aria-label="قائمة الحساب" style="width:38px;height:38px;border-radius:12px;background:var(--avBg,linear-gradient(160deg,#1d3a5c,#0e1c30));border:1px solid var(--accBd,rgba(122,164,224,0.28));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--acc,#9fc7e8);cursor:pointer">{{ accountMono }}</div>
 
         <sc-if value="{{ profOpen }}">
           <div style="position:absolute;top:52px;left:0;width:214px;z-index:40;padding:7px;border-radius:13px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--cardBd,rgba(122,164,224,0.18));box-shadow:0 24px 50px -20px rgba(0,0,0,0.8);animation:hsrRise .16s ease-out">
             <div style="padding:8px 9px 10px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13));margin-bottom:6px">
-              <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">أ. محمد العتيبي</div>
+              <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ sessionName }}</div>
               <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ orgName }}</div>
             </div>
             <div onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--tx2,#a9bdd4);cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6));color:var(--tx,#e9f1fb)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"></path></svg>
               الإعدادات والهوية
             </div>
-            <div onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--tx2,#a9bdd4);cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6));color:var(--tx,#e9f1fb)">
+            <div onClick="{{ goUsers }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--tx2,#a9bdd4);cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6));color:var(--tx,#e9f1fb)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v6c0 4.4-3 8.2-7 9-4-.8-7-4.6-7-9V6z"></path></svg>
               الصلاحيات والسجل
             </div>
-            <div onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--badTx,#f87171);cursor:pointer" style-hover="background:var(--badBg,rgba(239,68,68,0.1))">
+            <div onClick="{{ logout }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--badTx,#f87171);cursor:pointer" style-hover="background:var(--badBg,rgba(239,68,68,0.1))">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"></path><path d="M10 8 6 12l4 4M6 12h9"></path></svg>
               تسجيل الخروج
             </div>
@@ -62,21 +65,21 @@
       </div>
 
       <div style="display:flex;align-items:center;gap:6px">
-        <button onClick="{{ soon }}" data-f="1" aria-label="المحادثات" style="width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--ctlH,rgba(44,64,100,0.7))">
+        <button disabled aria-label="المحادثات — غير متاحة" title="غير متاح حالياً" style="width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:not-allowed;opacity:.6">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"></path></svg>
         </button>
 
         <div style="position:relative">
-          <button onClick="{{ tNotif }}" data-f="1" aria-label="الإشعارات، 24 غير مقروء" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--ctlH,rgba(44,64,100,0.7))">
+          <button onClick="{{ tNotif }}" data-f="1" aria-label="{{ notifAria }}" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--ctlH,rgba(44,64,100,0.7))">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"></path><path d="M10.5 20a2 2 0 0 0 3 0"></path></svg>
-            <span style="position:absolute;top:-5px;left:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--bad,#ef4444);color:#fff;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--badge,#0b1220)">24</span>
+            <span style="position:absolute;top:-5px;left:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--bad,#ef4444);color:#fff;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--badge,#0b1220)">{{ notifCount }}</span>
           </button>
 
           <sc-if value="{{ notifOpen }}">
             <div style="position:absolute;top:44px;left:0;width:308px;z-index:40;border-radius:14px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--cardBd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:hsrRise .16s ease-out">
               <div style="display:flex;align-items:center;gap:8px;padding:12px 13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
                 <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">الإشعارات</span>
-                <span style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">تعليم الكل كمقروء</span>
+                <span style="font-size:10px;color:var(--tx3,#7d8ea6)">موجز البلاغات الأخيرة</span>
               </div>
               <div style="max-height:300px;overflow:auto">
                 <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
@@ -89,28 +92,28 @@
                   </div>
                 </sc-for>
               </div>
-              <div onClick="{{ soon }}" data-f="1" style="padding:10px;text-align:center;font-size:11px;color:var(--acc,#4cc9f0);cursor:pointer">عرض كل الإشعارات</div>
+              <div onClick="{{ goObservations }}" data-f="1" style="padding:10px;text-align:center;font-size:11px;color:var(--acc,#4cc9f0);cursor:pointer">عرض كل البلاغات</div>
             </div>
           </sc-if>
         </div>
 
         <div style="position:relative">
-          <button onClick="{{ soon }}" data-f="1" aria-label="المساعد التنفيذي الذكي — قريباً" style="width:38px;height:38px;border-radius:50%;background:var(--aiBg,radial-gradient(circle at 30% 25%,rgba(76,201,240,0.3),rgba(24,42,74,0.9)));border:1px solid var(--accBd,rgba(76,201,240,0.5));color:var(--acc,#8ee6ff);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer">AI</button>
+          <button disabled aria-label="المساعد التنفيذي الذكي — قريباً" style="width:38px;height:38px;border-radius:50%;background:var(--aiBg,radial-gradient(circle at 30% 25%,rgba(76,201,240,0.3),rgba(24,42,74,0.9)));border:1px solid var(--accBd,rgba(76,201,240,0.5));color:var(--acc,#8ee6ff);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:not-allowed;opacity:.75">AI</button>
           <span style="position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);font-size:7.5px;line-height:1.3;font-weight:600;white-space:nowrap;color:var(--tx3,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.14));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));padding:0 4px;border-radius:4px">قريباً</span>
         </div>
       </div>
 
       <div style="position:relative;width:var(--searchW,212px);display:var(--searchDisp,block)">
-        <input aria-label="ابحث في المنصة" placeholder="ابحث في المنصة..." style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#dbe6f5);font-size:11.5px;padding:0 12px 0 34px;outline:none">
+        <input aria-label="ابحث في البلاغات" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#dbe6f5);font-size:11.5px;padding:0 12px 0 34px;outline:none">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:11px;top:11px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
       </div>
 
       <div style="display:var(--metaDisp,flex);align-items:center;gap:10px;padding:0 12px;height:36px;border-radius:10px;background:var(--sunk,rgba(12,20,36,0.55));border:1px solid var(--div,rgba(122,164,224,0.11))">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn,#f5a524)" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
-        <span style="font-size:11.5px;color:var(--tx2,#cfe0f2);font-weight:500">24°</span>
+        <span style="font-size:10.5px;color:var(--tx3,#7d8ea6);font-weight:500">لا يوجد مصدر طقس موثّق</span>
         <span style="width:1px;height:14px;background:var(--div,rgba(122,164,224,0.16))"></span>
-        <span style="font-size:11.5px;color:var(--tx2,#9db2cc);font-variant-numeric:tabular-nums">9:41 AM</span>
-        <span style="font-size:11.5px;color:var(--tx3,#7d8ea6)">الثلاثاء 27 ذو القعدة 1446 هـ</span>
+        <span style="font-size:11.5px;color:var(--tx2,#9db2cc);font-variant-numeric:tabular-nums">{{ currentTime }}</span>
+        <span style="font-size:11.5px;color:var(--tx3,#7d8ea6)">{{ currentDate }}</span>
       </div>
     </div>
 
@@ -131,9 +134,9 @@
       </div>
 
       <nav aria-label="التنقل الرئيسي" style="display:var(--hdrNav,flex);align-items:center;gap:3px;margin:0 6px">
-        <a href="#" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;font-weight:600;color:var(--navTx,#eaf4ff);background:var(--navBg,linear-gradient(180deg,rgba(56,132,220,0.35),rgba(30,72,140,0.3)));border:1px solid var(--accBd,rgba(76,201,240,0.42))">الرئيسية</a>
+        <a href="#" onClick="{{ goHome }}" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;font-weight:600;color:var(--navTx,#eaf4ff);background:var(--navBg,linear-gradient(180deg,rgba(56,132,220,0.35),rgba(30,72,140,0.3)));border:1px solid var(--accBd,rgba(76,201,240,0.42))">الرئيسية</a>
         <a href="#" onClick="{{ goMap }}" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;color:var(--tx2,#94a7c0);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5))">الخريطة التشغيلية</a>
-        <a href="#" onClick="{{ goReports }}" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;color:var(--tx2,#94a7c0);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5))">البلاغات</a>
+        <a href="#" onClick="{{ goObservations }}" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;color:var(--tx2,#94a7c0);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5))">البلاغات</a>
         <a href="#" onClick="{{ goReports }}" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;color:var(--tx2,#94a7c0);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5))">التقارير</a>
       </nav>
 
@@ -191,7 +194,7 @@
               <span style="flex:1;display:var(--sbLabel,block)">حصر الأراضي الذكي</span>
               <span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">بانتظار الربط</span>
             </div>
-            <div onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx3,#7d8ea6);cursor:not-allowed">
+            <div aria-disabled="true" title="حركة السير الذكية قريباً" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx3,#7d8ea6);cursor:not-allowed">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--tx3,#64748b)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">حركة السير الذكية</span>
               <span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">قريباً</span>
@@ -199,7 +202,7 @@
           </div>
         </sc-if>
 
-        <a href="#" onClick="{{ goReports }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--tx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
+        <a href="#" onClick="{{ goObservations }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--tx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M4 5h16v11a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"></path><path d="M8 10h8M8 14h5"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">البلاغات</span>
           <span style="display:var(--sbLabel,block);font-size:9.5px;font-weight:600;color:var(--badTx,#f87171);padding:2px 7px;border-radius:6px;background:var(--badBg,rgba(239,68,68,0.12))">{{ inProgress }}</span>
@@ -225,7 +228,7 @@
 
         <sc-if value="{{ expAdmin }}">
           <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--div,rgba(122,164,224,0.14))">
-            <a href="#" onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span><span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">قريباً</span></a>
+            <div aria-disabled="true" title="الهيكل الإداري قريباً" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx3,#7d8ea6);cursor:not-allowed"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span><span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">قريباً</span></div>
             <a href="#" onClick="{{ goUsers }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">المستخدمون والصلاحيات</span></a>
             <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهوية والشعار</span></a>
           </div>
@@ -236,7 +239,7 @@
           <span style="flex:1;display:var(--sbLabel,block)">الإعدادات</span>
         </a>
 
-        <div onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;margin-top:4px;border-radius:11px;font-size:12px;color:var(--tx3,#7d8ea6);cursor:not-allowed;border:1px dashed var(--ctlBd,rgba(122,164,224,0.18))">
+        <div aria-disabled="true" title="المساعد التنفيذي الذكي قريباً" style="display:flex;align-items:center;gap:11px;padding:10px 11px;margin-top:4px;border-radius:11px;font-size:12px;color:var(--tx3,#7d8ea6);cursor:not-allowed;border:1px dashed var(--ctlBd,rgba(122,164,224,0.18))">
           <span style="width:17px;height:17px;flex:none;border-radius:6px;background:var(--chipBg,rgba(122,164,224,0.12));display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--tx3,#7d8ea6)">AI</span>
           <span style="flex:1;display:var(--sbLabel,block)">المساعد التنفيذي الذكي</span>
           <span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1))">قريباً</span>
@@ -377,41 +380,32 @@
             <span style="font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:3px 7px;border-radius:6px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">قريباً</span>
           </div>
 
-          <div style="padding:12px;border-radius:13px;background:var(--sunk,linear-gradient(160deg,rgba(30,58,110,0.3),rgba(14,24,44,0.5)));border:1px solid var(--accBd,rgba(76,201,240,0.2))">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-              <span style="flex:1;text-align:right;font-size:11.5px;font-weight:600;color:var(--tx,#cfe6f8)">ملخص تنفيذي</span>
-            </div>
-            <p style="margin:0;font-size:11.5px;line-height:1.85;color:var(--tx2,#b9cee4);text-wrap:pretty">تم رصد زيادة في البلاغات المتعلقة بالنظافة العامة في أحياء جنوب النطاق البلدي بنسبة <span style="color:var(--acc,#8ee6ff);font-weight:600">15%</span> خلال آخر 7 أيام. النظام يقترح توجيه 3 فرق إضافية.</p>
-            <button onClick="{{ soon }}" data-f="1" style="width:100%;margin-top:11px;height:33px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">عرض التحليل التفصيلي</button>
+          <div aria-label="الملخص التنفيذي غير متاح" style="padding:12px;border-radius:13px;background:var(--sunk,linear-gradient(160deg,rgba(30,58,110,0.3),rgba(14,24,44,0.5)));border:1px solid var(--accBd,rgba(76,201,240,0.2));text-align:center">
+            <div style="font-size:11.5px;font-weight:600;color:var(--tx,#cfe6f8)">ملخص تنفيذي</div>
+            <p style="margin:8px 0 0;font-size:10.5px;line-height:1.8;color:var(--tx3,#7d8ea6)">لا تتوفر تحليلات أو توصيات معتمدة في هذه الجلسة.</p>
           </div>
 
-          <div style="flex:1;min-height:0;padding:12px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12));display:flex;flex-direction:column">
-            <div style="font-size:11.5px;font-weight:600;color:var(--tx2,#cfe0f2);text-align:right;margin-bottom:10px">توصيات مقترحة</div>
-            <div style="display:flex;flex-direction:column;gap:8px;flex:1">
-              <sc-for list="{{ recs }}" as="r" hint-placeholder-count="3">
-                <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.12));cursor:pointer" style-hover="border-color:var(--accBd,rgba(76,201,240,0.35))">
-                  <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ r.col }}"></span>
-                  <div style="flex:1;text-align:right;min-width:0">
-                    <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e0eaf8)">{{ r.title }}</div>
-                    <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.meta }}</div>
-                  </div>
-                  <span style="flex:none;font-size:10px;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">{{ r.tag }}</span>
-                </div>
-              </sc-for>
-            </div>
-            <button onClick="{{ soon }}" data-f="1" style="width:100%;margin-top:10px;height:33px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.4),rgba(40,72,150,0.38)));border:1px solid var(--btnBd,rgba(120,170,255,0.3));cursor:pointer">مراجعة التوصيات</button>
+          <div aria-label="المساعد التنفيذي الذكي غير مفعّل" style="flex:1;min-height:0;padding:12px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12));display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+            <div style="font-size:11.5px;font-weight:600;color:var(--tx2,#cfe0f2)">التوصيات التنفيذية</div>
+            <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:8px;line-height:1.7">لا توجد توصيات تشغيلية موثّقة في هذه الجلسة.</div>
+            <span style="margin-top:11px;font-size:9px;font-weight:600;color:var(--tx3,#7d8ea6);padding:3px 8px;border-radius:6px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">المساعد التنفيذي الذكي — قريباً</span>
           </div>
         </div>
 
-        <div style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);order:var(--twinOrd,0);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,auto);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
-          <canvas ref="{{ cvRef }}" aria-label="التوأم الرقمي — سطح تحكم جغرافي للنطاق البلدي" style="position:absolute;inset:0;width:100%;height:100%;display:block;cursor:var(--twinCur,grab)"></canvas>
+        <div ref="{{ mapShellRef }}" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);order:var(--twinOrd,0);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,auto);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+          <canvas ref="{{ cvRef }}" aria-label="التوأم الرقمي — سطح تحكم جغرافي للنطاق البلدي" style="position:absolute;inset:0;width:100%;height:100%;display:{{ twinDisplay }};cursor:var(--twinCur,grab)"></canvas>
+          <div ref="{{ mapRef }}" aria-label="الخريطة التشغيلية للبلاغات الموثّقة" style="position:absolute;inset:0;display:{{ mapDisplay }};background:var(--twinBg,#03060d)"></div>
 
           <div dir="ltr" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
             <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
-            Digital Twin · GIS
+            {{ mapSurfaceLabel }}
           </div>
 
           <div style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+            <div role="group" aria-label="نوع السطح الجغرافي" style="display:flex;align-items:center;height:32px;padding:3px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));gap:3px">
+              <button onClick="{{ showTwin }}" data-f="1" aria-pressed="{{ isTwin }}" style="height:24px;padding:0 8px;border:0;border-radius:6px;background:{{ twinModeBg }};color:{{ twinModeTx }};font-size:9.5px;cursor:pointer">التوأم</button>
+              <button onClick="{{ showMap }}" data-f="1" aria-pressed="{{ isMap }}" style="height:24px;padding:0 8px;border:0;border-radius:6px;background:{{ mapModeBg }};color:{{ mapModeTx }};font-size:9.5px;cursor:pointer">الخريطة</button>
+            </div>
             <div style="position:relative">
               <button onClick="{{ tLayers }}" data-f="1" aria-label="الطبقات" style="display:flex;align-items:center;gap:7px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);font-size:11px;cursor:pointer">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>
@@ -425,7 +419,7 @@
                     <span onClick="{{ allLayers }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">الكل</span>
                   </div>
                   <sc-for list="{{ layerList }}" as="l" hint-placeholder-count="4">
-                    <div onClick="{{ l.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+                    <div onClick="{{ l.on }}" data-f="1" aria-disabled="{{ l.enabledText }}" style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;cursor:{{ l.cursor }}" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
                       <span style="width:15px;height:15px;flex:none;border-radius:5px;border:1.5px solid {{ l.bd }};background:{{ l.bg }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px">{{ l.mark }}</span>
                       <span style="flex:1;font-size:11px;color:var(--tx2,#a9bdd4)">{{ l.name }}</span>
                       <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ l.n }}</span>
@@ -440,7 +434,7 @@
               </sc-if>
             </div>
 
-            <div onClick="{{ t3D }}" data-f="1" role="switch" style="display:flex;align-items:center;gap:9px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));cursor:pointer;user-select:none">
+            <div onClick="{{ t3D }}" data-f="1" role="switch" aria-checked="{{ twin3D }}" style="display:{{ twinControlDisplay }};align-items:center;gap:9px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));cursor:pointer;user-select:none">
               <span style="font-size:10.5px;color:var(--glassTx,#a9c0d8)">ثلاثي الأبعاد</span>
               <span style="position:relative;width:30px;height:16px;border-radius:8px;display:block;background:{{ swBg }};border:1px solid {{ swBd }}">
                 <span style="position:absolute;top:1.5px;width:11px;height:11px;border-radius:50%;background:{{ swKnobBg }};right:{{ swR }};left:{{ swL }}"></span>
@@ -457,9 +451,14 @@
 
           <div style="position:absolute;top:56px;left:12px;display:flex;flex-direction:column;gap:8px">
             <div style="width:196px;position:relative">
-              <input aria-label="ابحث في الخريطة" placeholder="ابحث عن حي أو قطعة..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
+              <input aria-label="ابحث في البلاغات الموثّقة" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
             </div>
+            <sc-if value="{{ isMap }}">
+              <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}" style="width:196px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#dbe6f5);font-size:10.5px;padding:0 8px;outline:none">
+                <option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option>
+              </select>
+            </sc-if>
             <div style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:34px">
               <button onClick="{{ zIn }}" data-f="1" aria-label="تكبير" style="width:34px;height:32px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer">+</button>
               <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
@@ -467,6 +466,12 @@
             </div>
             <div style="font-size:9px;color:var(--glassTx,#7d8ea6);text-align:center;width:34px;font-variant-numeric:tabular-nums">{{ zoomLbl }}</div>
           </div>
+
+          <sc-if value="{{ mapEmpty }}">
+            <div style="position:absolute;inset:0;z-index:4;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
+              <div style="max-width:300px;padding:13px 16px;border-radius:12px;background:var(--glass,rgba(8,14,26,0.84));border:1px solid var(--glassBd,rgba(122,164,224,0.2));color:var(--glassTx,#c3d6ea);font-size:11px;line-height:1.7">{{ mapEmptyText }}</div>
+            </div>
+          </sc-if>
 
           <sc-for list="{{ zoneLabels }}" as="z" hint-placeholder-count="5">
             <div onClick="{{ z.on }}" data-f="1" style="position:absolute;transform:translate(-50%,-100%);cursor:pointer;left:{{ z.left }};top:{{ z.top }}">
@@ -528,7 +533,7 @@
         <div style="width:var(--prioW,272px);flex:none;order:var(--prioOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
           <div style="display:flex;align-items:center;gap:9px">
             <div style="flex:1;text-align:right;font-size:13px;font-weight:600;color:var(--tx,#e4eefb)">الأولويات التشغيلية</div>
-            <button onClick="{{ soon }}" data-f="1" aria-label="تصفية" style="width:27px;height:27px;border-radius:8px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <button onClick="{{ goMap }}" data-f="1" aria-label="تصفية البلاغات على الخريطة" style="width:27px;height:27px;border-radius:8px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
             </button>
           </div>
@@ -546,37 +551,22 @@
             </sc-for>
           </div>
 
-          <button onClick="{{ soon }}" data-f="1" style="width:100%;height:37px;border-radius:11px;font-size:12px;font-weight:600;color:var(--tx,#dceaf8);background:var(--ctl,rgba(20,32,54,0.7));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));cursor:pointer">عرض جميع الأولويات</button>
+          <button onClick="{{ goObservations }}" data-f="1" style="width:100%;height:37px;border-radius:11px;font-size:12px;font-weight:600;color:var(--tx,#dceaf8);background:var(--ctl,rgba(20,32,54,0.7));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));cursor:pointer">عرض جميع الأولويات</button>
         </div>
       </section>
 
       <section style="min-height:var(--anaH,216px);flex:none;display:grid;grid-template-columns:var(--anaCols,0.96fr 1.06fr 1fr 1.06fr 1.02fr);gap:14px">
 
-        <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
-          <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">الطقس اليوم</div>
-          <div style="flex:1;display:flex;align-items:center;gap:6px;min-height:84px">
-            <div style="flex:1;text-align:right">
-              <div style="font-size:38px;font-weight:300;color:var(--tx,#f0f6ff);letter-spacing:-1px;line-height:1">24°</div>
-              <div style="font-size:11.5px;color:var(--tx2,#a9bdd4);margin-top:8px">مشمس</div>
-              <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:2px">النطاق البلدي</div>
-            </div>
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--warn,#f5a524)" stroke-width="1.3" style="flex:none"><circle cx="12" cy="12" r="4.4"></circle><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"></path></svg>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding-top:10px;border-top:1px solid var(--div,rgba(122,164,224,0.12))">
-            <div style="text-align:center;flex:1"><div style="font-size:11px;font-weight:600;color:var(--okTx,#7ee2a8);font-variant-numeric:tabular-nums">18%</div><div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">الرطوبة</div></div>
-            <span style="width:1px;height:22px;background:var(--div,rgba(122,164,224,0.14))"></span>
-            <div style="text-align:center;flex:1"><div style="font-size:11px;font-weight:600;color:var(--acc,#8ee6ff);font-variant-numeric:tabular-nums">12 كم/س</div><div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">الرياح</div></div>
-            <span style="width:1px;height:22px;background:var(--div,rgba(122,164,224,0.14))"></span>
-            <div style="text-align:center;flex:1"><div style="font-size:11px;font-weight:600;color:var(--tx2,#cfe0f2)">شمالية</div><div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">الاتجاه</div></div>
-          </div>
+        <div aria-label="حالة بيانات الطقس" style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;justify-content:center;text-align:center">
+          <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">الطقس اليوم</div>
+          <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:13px;line-height:1.8">لا يوجد مصدر طقس تشغيلي موثّق متصل بهذه اللوحة.</div>
+          <span style="align-self:center;margin-top:10px;font-size:9.5px;color:var(--tx3,#7d8ea6);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">غير متاح</span>
         </div>
 
         <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">الكفاءة التشغيلية</span>
-            <button onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.09));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">هذا الشهر
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
-            </button>
+            <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">البيانات الحالية</span>
           </div>
           <div style="flex:1;display:flex;align-items:center;gap:10px;margin-top:4px;min-height:110px">
             <div style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0">
@@ -601,9 +591,7 @@
         <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">أداء الإدارات</span>
-            <button onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.09));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">هذا الشهر
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
-            </button>
+            <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">المستخدمون النشطون</span>
           </div>
           <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;margin-top:6px;min-height:110px">
             <sc-for list="{{ depts }}" as="d" hint-placeholder-count="5">
@@ -614,15 +602,13 @@
               </div>
             </sc-for>
           </div>
-          <a href="#" onClick="{{ soon }}" data-f="1" style="text-align:center;font-size:10.5px;color:var(--acc,#4cc9f0);padding-top:8px">عرض جميع الإدارات</a>
+          <a href="#" onClick="{{ goUsers }}" data-f="1" style="text-align:center;font-size:10.5px;color:var(--acc,#4cc9f0);padding-top:8px">عرض المستخدمين والصلاحيات</a>
         </div>
 
         <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">تصنيف البلاغات</span>
-            <button onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.09));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">هذا الشهر
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
-            </button>
+            <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">حسب الحالة الحالية</span>
           </div>
           <div style="flex:1;display:flex;align-items:center;gap:8px;margin-top:4px;min-height:112px">
             <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0">
@@ -630,53 +616,18 @@
                 <div style="display:flex;align-items:center;gap:6px;font-size:10px"><span style="width:7px;height:7px;border-radius:50%;flex:none;background:{{ c.col }}"></span><span style="flex:1;text-align:right;color:var(--tx2,#a9bdd4);white-space:nowrap">{{ c.name }}</span><span style="color:var(--tx,#e4eefb);font-weight:600;font-variant-numeric:tabular-nums">{{ c.n }}</span><span style="color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ c.p }}</span></div>
               </sc-for>
             </div>
-            <div style="position:relative;width:108px;height:108px;flex:none">
-              <svg width="108" height="108" viewBox="0 0 108 108" style="transform:rotate(-90deg)">
-                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--track,rgba(122,164,224,0.1))" stroke-width="13"></circle>
-                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--ok,#22c55e)" stroke-width="13" stroke-dasharray="94.4 175.7"></circle>
-                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--info,#38bdf8)" stroke-width="13" stroke-dasharray="67.4 202.7" stroke-dashoffset="-97.4"></circle>
-                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--bad,#ef4444)" stroke-width="13" stroke-dasharray="51.2 218.9" stroke-dashoffset="-167.8"></circle>
-                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--warn,#f5a524)" stroke-width="13" stroke-dasharray="24.2 245.9" stroke-dashoffset="-222"></circle>
-                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--vio,#a78bfa)" stroke-width="13" stroke-dasharray="18.7 251.4" stroke-dashoffset="-249.2"></circle>
-              </svg>
-              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-                <div style="font-size:18px;font-weight:600;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums;line-height:1">{{ totalReports }}</div>
-                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:3px">إجمالي</div>
-              </div>
+            <div style="width:108px;min-height:108px;flex:none;border-radius:54px;border:1px solid var(--ctlBd,rgba(122,164,224,0.16));background:var(--sunk2,rgba(11,18,32,0.55));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px">
+              <div style="font-size:18px;font-weight:600;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums;line-height:1">{{ totalReports }}</div>
+              <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:4px">إجمالي البلاغات</div>
+              <div style="font-size:8.5px;color:var(--tx3,#7d8ea6);margin-top:6px">النسب محسوبة من الحالة الحالية</div>
             </div>
           </div>
         </div>
 
-        <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">اتجاه البلاغات</span>
-            <button onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.09));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">آخر 7 أيام
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
-            </button>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:6px">
-            <span style="font-size:11px;font-weight:600;color:var(--okTx,#22c55e);font-variant-numeric:tabular-nums">18%+</span>
-            <span style="font-size:10px;color:var(--tx3,#7d8ea6)">عن الأسبوع السابق</span>
-          </div>
-          <div style="flex:1;min-height:104px;margin-top:2px">
-            <svg viewBox="0 0 240 118" preserveAspectRatio="none" style="width:100%;height:100%;display:block">
-              <g stroke="var(--track,rgba(122,164,224,0.1))" stroke-width="0.7">
-                <line x1="30" y1="8" x2="238" y2="8"></line><line x1="30" y1="30.5" x2="238" y2="30.5"></line><line x1="30" y1="53" x2="238" y2="53"></line><line x1="30" y1="75.5" x2="238" y2="75.5"></line><line x1="30" y1="98" x2="238" y2="98"></line>
-              </g>
-              <g fill="var(--tx3,#6f8299)" font-size="7.5" text-anchor="end">
-                <text x="26" y="10.5">2000</text><text x="26" y="33">1500</text><text x="26" y="55.5">1000</text><text x="26" y="78">500</text>
-              </g>
-              <defs><linearGradient id="hsrTrendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--areaTop,rgba(34,197,94,0.32))"></stop><stop offset="100%" stop-color="var(--areaBot,rgba(34,197,94,0))"></stop></linearGradient></defs>
-              <path d="M36 66.5 L69 75.5 L102 48.5 L135 39.5 L168 44 L201 57.5 L234 30.5 L234 98 L36 98 Z" fill="url(#hsrTrendFill)"></path>
-              <path d="M36 66.5 L69 75.5 L102 48.5 L135 39.5 L168 44 L201 57.5 L234 30.5" fill="none" stroke="var(--ok,#22c55e)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-              <g fill="var(--card2,#03060d)" stroke="var(--ok,#22c55e)" stroke-width="1.6">
-                <circle cx="36" cy="66.5" r="2.4"></circle><circle cx="69" cy="75.5" r="2.4"></circle><circle cx="102" cy="48.5" r="2.4"></circle><circle cx="135" cy="39.5" r="2.4"></circle><circle cx="168" cy="44" r="2.4"></circle><circle cx="201" cy="57.5" r="2.4"></circle><circle cx="234" cy="30.5" r="3.1" fill="var(--ok,#22c55e)"></circle>
-              </g>
-              <g fill="var(--tx3,#6f8299)" font-size="7.5" text-anchor="middle">
-                <text x="36" y="112">21/5</text><text x="69" y="112">22/5</text><text x="102" y="112">23/5</text><text x="135" y="112">24/5</text><text x="168" y="112">25/5</text><text x="201" y="112">26/5</text><text x="234" y="112">27/5</text>
-              </g>
-            </svg>
-          </div>
+        <div aria-label="اتجاه البلاغات غير متاح" style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;justify-content:center;text-align:center">
+          <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">اتجاه البلاغات</div>
+          <div style="font-size:11px;color:var(--tx3,#7d8ea6);line-height:1.8;margin-top:13px">لا تتوفر بيانات زمنية موثّقة لعرض المقارنة أو الاتجاه.</div>
+          <span style="align-self:center;margin-top:10px;font-size:9.5px;color:var(--tx3,#7d8ea6);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">غير متاح</span>
         </div>
       </section>
 
@@ -689,7 +640,7 @@
             </button>
           </div>
           <div style="flex:1;display:flex;align-items:center;gap:9px;flex-wrap:var(--qaWrap,nowrap)">
-            <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="7">
+            <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="4">
               <button onClick="{{ q.on }}" data-f="1" style="flex:1 1 var(--qaBasis,0);min-width:var(--qaMin,0);height:36px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-size:11.5px;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));cursor:pointer;white-space:nowrap" style-hover="background:var(--ctlH,rgba(32,50,84,0.8));color:var(--tx,#eaf4ff)">{{ q.label }}</button>
             </sc-for>
           </div>
@@ -697,6 +648,57 @@
       </sc-if>
     </main>
   </div>
+
+  <sc-if value="{{ viewOpen }}">
+    <div onClick="{{ closeView }}" style="position:fixed;inset:0;z-index:74;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);padding:clamp(10px,3vw,34px);display:flex;align-items:center;justify-content:center;animation:hsrIn .18s ease-out">
+      <section onClick="{{ stop }}" aria-label="{{ viewTitle }}" role="dialog" aria-modal="true" style="width:min(940px,100%);max-height:min(820px,calc(100vh - 20px));overflow:auto;padding:18px;border-radius:16px;background:var(--drawer,#0a1120);border:1px solid var(--cardBd,rgba(122,164,224,0.16));box-shadow:0 28px 70px -28px rgba(0,0,0,.85)">
+        <div style="display:flex;align-items:flex-start;gap:12px;padding-bottom:13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+          <div style="flex:1;min-width:0">
+            <h2 style="font-size:16px;margin:0;color:var(--tx,#f0f6ff)">{{ viewTitle }}</h2>
+            <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0;line-height:1.7">{{ viewIntro }}</p>
+          </div>
+          <button onClick="{{ closeView }}" data-f="1" aria-label="إغلاق" style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);cursor:pointer">×</button>
+        </div>
+
+        <sc-if value="{{ viewIsObservations }}">
+          <div style="display:flex;align-items:center;gap:8px;margin:14px 0">
+            <input aria-label="تصفية البلاغات" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث بالرقم أو العنوان أو المراقب..." style="flex:1;min-width:0;height:38px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:11px;padding:0 11px;outline:none">
+            <button onClick="{{ goMap }}" data-f="1" style="height:38px;padding:0 12px;border-radius:10px;background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));color:var(--btnTx,#eaf4ff);font-size:11px;cursor:pointer">الخريطة</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
+            <sc-for list="{{ viewObservations }}" as="o" hint-placeholder-count="4">
+              <button onClick="{{ o.on }}" data-f="1" style="text-align:right;padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid {{ o.selected }};color:var(--tx,#e9f1fb);cursor:pointer">
+                <div style="display:flex;align-items:center;gap:8px"><span style="flex:1;font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.title }}</span><span style="font-size:9px;color:var(--acc,#4cc9f0);font-variant-numeric:tabular-nums">{{ o.code }}</span></div>
+                <div style="font-size:10px;color:var(--tx2,#a9bdd4);margin-top:7px">{{ o.status }} · {{ o.inspector }}</div>
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:4px;font-variant-numeric:tabular-nums">{{ o.date }}</div>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ viewIsReports }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin:14px 0">
+            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">إجمالي البلاغات</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ totalReports }}</div></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">نسبة الإتمام</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ completionRate }}</div></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">قيد المعالجة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ inProgress }}</div></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">فرق نشطة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ activeTeams }}</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">حسب الحالة</div><sc-for list="{{ cats }}" as="c" hint-placeholder-count="3"><div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="width:7px;height:7px;border-radius:50%;margin-top:4px;background:{{ c.col }}"></span><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ c.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ c.n }} {{ c.p }}</span></div></sc-for></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">فرق ومستخدمون نشطون</div><sc-for list="{{ depts }}" as="d" hint-placeholder-count="3"><div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ d.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ d.v }}</span></div></sc-for></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ viewIsUsers }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px">
+            <sc-for list="{{ viewUsers }}" as="u" hint-placeholder-count="4"><div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.name }}</div><div style="font-size:10px;color:var(--tx2,#a9bdd4);margin-top:6px">{{ u.role }} · {{ u.status }}</div><div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.email }}</div></div></sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ viewEmpty }}"><div style="padding:24px 10px;text-align:center;font-size:11px;color:var(--tx3,#7d8ea6)">{{ viewEmptyText }}</div></sc-if>
+      </section>
+    </div>
+  </sc-if>
 
   <sc-if value="{{ mobNavOpen }}">
     <div onClick="{{ tMobNav }}" style="position:fixed;inset:0;z-index:70;background:rgba(3,6,13,0.6);backdrop-filter:blur(3px);animation:hsrIn .18s ease-out">
@@ -706,7 +708,7 @@
           <span style="font-size:9px;color:var(--tx3,#7d8ea6)">سمارت حصر</span>
         </div>
         <sc-for list="{{ mobNav }}" as="i" hint-placeholder-count="8">
-          <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:11px 10px;border-radius:10px;font-size:12px;color:var(--tx2,#a9bdd4);cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+          <div onClick="{{ i.on }}" data-f="1" aria-disabled="{{ i.disabledText }}" style="display:flex;align-items:center;gap:9px;padding:11px 10px;border-radius:10px;font-size:12px;color:var(--tx2,#a9bdd4);cursor:{{ i.cursor }}" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
             <span style="flex:1">{{ i.label }}</span>
             <span style="font-size:8.5px;color:var(--tx3,#7d8ea6)">{{ i.tag }}</span>
           </div>
@@ -731,7 +733,8 @@
         <div style="padding:14px;border-radius:14px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:13px">
           <div>
             <label style="display:block;font-size:11px;color:var(--tx2,#a9bdd4);margin-bottom:7px">اسم البلدية <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">organization.name</span></label>
-            <input value="{{ orgName }}" onChange="{{ setOrgName }}" style="width:100%;height:38px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:12px;padding:0 12px;outline:none">
+            <div aria-label="اسم البلدية للقراءة فقط" style="width:100%;min-height:38px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:12px;padding:9px 12px">{{ orgName }}</div>
+            <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:6px">تُدار الهوية من إعدادات المنظمة المعتمدة؛ لا تُحفظ تعديلات من هذه المعاينة.</div>
           </div>
 
           <div>
@@ -739,10 +742,10 @@
             <div style="display:flex;align-items:center;gap:12px;padding:13px;border-radius:12px;border:1px dashed var(--ctlBd,rgba(122,164,224,0.28));background:var(--ctl,rgba(20,32,54,0.4))">
               <div style="width:52px;height:52px;flex:none;border-radius:14px;background:var(--orgBg,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBd,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--acc,#8ee6ff)">{{ orgMono }}</div>
               <div style="flex:1;min-width:0">
-                <div style="font-size:11px;color:var(--tx,#e9f1fb)">لم يُرفع شعار بعد</div>
-                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:3px;line-height:1.6">SVG أو PNG شفاف · 512×512 كحد أدنى. يُستخدم الحرفان تلقائياً حتى رفع الشعار.</div>
+                <div style="font-size:11px;color:var(--tx,#e9f1fb)">لا تتوفر بيانات شعار موثّقة في هذه الجلسة</div>
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:3px;line-height:1.6">تظل معلومات الهوية للقراءة فقط في لوحة المدير.</div>
               </div>
-              <button onClick="{{ soon }}" data-f="1" style="flex:none;height:32px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">رفع</button>
+              <span style="flex:none;font-size:9.5px;color:var(--tx3,#7d8ea6);padding:5px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">قراءة فقط</span>
             </div>
           </div>
 
@@ -792,10 +795,12 @@ class Component extends DCLogic {
     orgName: this.props.organizationName || 'اسم البلدية',
     sb: false, expSvc: true, expAdmin: false,
     notifOpen: false, profOpen: false, layersOpen: false, settingsOpen: false, mobNavOpen: false,
-    twin3D: this.props.twin3D !== false, fs: false,
+    twin3D: this.props.twin3D !== false, fs: false, mapMode: 'twin', mapFilter: 'ALL',
     zoom: 1, panX: 0, panY: 0,
     sel: null, layers: { survey: true, land: true, report: true, task: true },
-    quick: true, toast: '', bp: 'xl', tw: 734, th: 450
+    quick: true, toast: '', bp: 'xl', tw: 734, th: 450,
+    view: 'home', search: '', dataState: 'loading', dataError: '',
+    sessionName: 'الحساب الموثّق', sessionRole: 'جارٍ التحقق من الصلاحيات', clock: Date.now()
   };
 
   // Filled only by the Firebase adapter after organization-scoped access is verified.
@@ -814,6 +819,10 @@ class Component extends DCLogic {
   livePriorities = [];
   liveCategories = [];
   liveDepartments = [];
+  liveObservations = [];
+  liveUsers = [];
+  liveDataState = 'loading';
+  liveDataError = '';
 
   ZONES = [
     { id: 'south', a0: -75, a1: -5, col: '#a855f7', seed: 1.2 },
@@ -822,55 +831,6 @@ class Component extends DCLogic {
     { id: 'west', a0: 95, a1: 150, col: '#f5a524', seed: 5.6 },
     { id: 'none', a0: 150, a1: 285, col: '#64748b', seed: 0.4 },
     { id: 'center', center: true, col: '#ef4444', seed: 3.3 }
-  ];
-
-  LBL = [
-    { id: 'north', name: 'القطاع الشمالي', count: '128', col: '#22c55e', x: 0.207, y: -0.590 },
-    { id: 'east', name: 'القطاع الشرقي', count: '45', col: '#38bdf8', x: 0.524, y: -0.242 },
-    { id: 'west', name: 'القطاع الغربي', count: '72', col: '#f5a524', x: -0.2115, y: -0.459 },
-    { id: 'center', name: 'وسط النطاق', count: '11', col: '#ef4444', x: 0.03, y: -0.05 },
-    { id: 'south', name: 'القطاع الجنوبي', count: '33', col: '#a855f7', x: 0.3404, y: 0.2974 }
-  ];
-
-  OBJ = [
-    { id: 'o1', layer: 'survey', x: 0.26, y: -0.66, col: '#22c55e', title: 'حصر ميداني · قطاع شمالي', kind: 'كائن حصر ميداني',
-      rows: [['الحالة', 'مكتمل — بانتظار التدقيق'], ['الموقع', 'القطاع الشمالي · مربع 14'], ['التاريخ', '27/05 — 08:42'], ['الإدارة', 'إدارة الحصر الميداني'], ['المنشآت', '38 منشأة']],
-      action: 'فتح في الحصر الميداني', route: 'survey' },
-    { id: 'o2', layer: 'land', x: 0.60, y: -0.13, col: '#a78bfa', title: 'قطعة أرض · 1042/ش', kind: 'كائن أرض',
-      rows: [['حالة الأرض', 'فضاء — غير مطوّر'], ['الموقع', 'القطاع الشرقي · مخطط 7'], ['المساحة', '1,240 م²'], ['التصنيف', 'سكني'], ['الملكية', 'أملاك بلدية']],
-      action: 'فتح في حصر الأراضي الذكي', route: 'lands' },
-    { id: 'o3', layer: 'report', x: -0.32, y: -0.36, col: '#f5a524', title: 'بلاغ نظافة عامة', kind: 'بلاغ',
-      rows: [['الحالة', 'قيد المعالجة'], ['الأولوية', 'متوسطة'], ['الموقع', 'القطاع الغربي · شارع 21'], ['التاريخ', '27/05 — 07:10'], ['الإدارة', 'إدارة النظافة']],
-      action: 'فتح البلاغ', route: 'report' },
-    { id: 'o4', layer: 'task', x: 0.52, y: 0.20, col: '#38bdf8', title: 'مهمة ميدانية · فرقة 12', kind: 'مهمة',
-      rows: [['الحالة', 'جارية'], ['الفرقة', 'فرقة 12 — 4 أفراد'], ['الموقع', 'القطاع الجنوبي'], ['البدء', '27/05 — 09:05'], ['الإدارة', 'إدارة الخدمات']],
-      action: 'فتح المهمة', route: 'task' },
-    { id: 'o5', layer: 'report', x: -0.05, y: 0.06, col: '#ef4444', title: 'بلاغ حرج · تجاوز إنشائي', kind: 'بلاغ',
-      rows: [['الحالة', 'تدخل عاجل'], ['الأولوية', 'حرجة'], ['الموقع', 'وسط النطاق · مربع 3'], ['التاريخ', '27/05 — 06:31'], ['الإدارة', 'إدارة الرخص']],
-      action: 'فتح البلاغ', route: 'report' },
-    { id: 'o6', layer: 'survey', x: 0.66, y: -0.44, col: '#22c55e', title: 'حصر ميداني · قطاع شرقي', kind: 'كائن حصر ميداني',
-      rows: [['الحالة', 'جاري التنفيذ'], ['الموقع', 'القطاع الشرقي · مربع 9'], ['التاريخ', '27/05 — 09:20'], ['الإدارة', 'إدارة الحصر الميداني'], ['المنشآت', '17 منشأة']],
-      action: 'فتح في الحصر الميداني', route: 'survey' },
-    { id: 'o7', layer: 'land', x: -0.10, y: -0.52, col: '#a78bfa', title: 'قطعة أرض · 0871/غ', kind: 'كائن أرض',
-      rows: [['حالة الأرض', 'مستثمرة'], ['الموقع', 'القطاع الغربي · مخطط 3'], ['المساحة', '860 م²'], ['التصنيف', 'تجاري'], ['الملكية', 'مستثمر']],
-      action: 'فتح في حصر الأراضي الذكي', route: 'lands' },
-    { id: 'o8', layer: 'task', x: -0.42, y: -0.20, col: '#38bdf8', title: 'مهمة ميدانية · فرقة 5', kind: 'مهمة',
-      rows: [['الحالة', 'بانتظار الإسناد'], ['الفرقة', 'غير مسندة'], ['الموقع', 'القطاع الغربي'], ['البدء', '—'], ['الإدارة', 'إدارة الطرق']],
-      action: 'فتح المهمة', route: 'task' }
-  ];
-
-  LAYERS = [
-    { id: 'survey', name: 'الحصر الميداني', col: '#22c55e', n: '2' },
-    { id: 'land', name: 'الأراضي', col: '#a78bfa', n: '2' },
-    { id: 'report', name: 'البلاغات', col: '#ef4444', n: '2' },
-    { id: 'task', name: 'المهام', col: '#38bdf8', n: '2' }
-  ];
-
-  NOTIFS = [
-    { title: 'بلاغ حرج جديد في وسط النطاق', meta: 'قبل 4 دقائق · إدارة الرخص', col: '#ef4444' },
-    { title: 'اكتمل حصر المربع 14', meta: 'قبل 22 دقيقة · إدارة الحصر الميداني', col: '#22c55e' },
-    { title: 'تجاوز زمن معالجة في 3 معاملات', meta: 'قبل ساعة · إدارة الخدمات', col: '#f5a524' },
-    { title: 'تقرير الأداء الأسبوعي جاهز', meta: 'قبل 3 ساعات · التقارير', col: '#38bdf8' }
   ];
 
   DAY = {
@@ -950,15 +910,74 @@ class Component extends DCLogic {
     this.onAdapterReady = () => window.SmartHSRManagerAdapter?.connect(this);
     window.addEventListener('smart-hsr-manager-adapter-ready', this.onAdapterReady, { once: true });
     window.SmartHSRManagerAdapter?.connect(this);
+    this._clock = setInterval(() => this.setState({ clock: Date.now() }), 30000);
+    this.onFullscreen = () => {
+      if (!document.fullscreenElement && this.state.fs) this.setState({ fs: false });
+      setTimeout(() => this._opMap?.invalidateSize(), 80);
+    };
+    document.addEventListener('fullscreenchange', this.onFullscreen);
   }
   componentWillUnmount() {
     window.removeEventListener('resize', this.onWin);
     document.removeEventListener('mousedown', this.onDoc);
     window.removeEventListener('smart-hsr-manager-adapter-ready', this.onAdapterReady);
+    document.removeEventListener('fullscreenchange', this.onFullscreen);
     window.SmartHSRManagerAdapter?.disconnect(this);
     if (this._ro) this._ro.disconnect();
+    clearInterval(this._clock);
+    this._opMap?.remove();
   }
-  componentDidUpdate() { this.bindCanvas(); this.draw(); }
+  componentDidUpdate() { this.bindCanvas(); this.draw(); this.syncOperationalMap(); }
+
+  operationalObservations() {
+    const query = (this.state.search || '').trim().toLocaleLowerCase('ar');
+    return (Array.isArray(this.liveObservations) ? this.liveObservations : []).filter(item => {
+      if (!item.coordinates) return false;
+      if (this.state.mapFilter !== 'ALL' && item.status !== this.state.mapFilter) return false;
+      if (!query) return true;
+      return [item.displayId, item.title, item.inspector, item.contractor, item.type]
+        .filter(Boolean).join(' ').toLocaleLowerCase('ar').includes(query);
+    });
+  }
+
+  initOperationalMap() {
+    if (!this.mapEl || this._opMap || !window.L) return;
+    const L = window.L;
+    this._opMap = L.map(this.mapEl, { zoomControl: false, attributionControl: true, preferCanvas: true }).setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(this._opMap);
+    this._opMarkers = L.layerGroup().addTo(this._opMap);
+  }
+
+  syncOperationalMap(forceFit = false) {
+    if (this.state.mapMode !== 'map') return;
+    this.initOperationalMap();
+    if (!this._opMap || !this._opMarkers || !window.L) return;
+    const L = window.L;
+    const points = this.operationalObservations();
+    const signature = points.map(item => `${item.id}:${item.status}:${item.coordinates.lat}:${item.coordinates.lng}`).join('|');
+    this._opMarkers.clearLayers();
+    const colors = { PENDING: '#ef4444', IN_PROGRESS: '#f5a524', COMPLETED: '#22c55e' };
+    const bounds = [];
+    points.forEach(item => {
+      const marker = L.circleMarker([item.coordinates.lat, item.coordinates.lng], {
+        radius: 8, color: colors[item.status] || '#64748b', weight: 2, fillColor: colors[item.status] || '#64748b', fillOpacity: 0.78
+      });
+      marker.on('click', () => this.openObservation(item.id));
+      marker.addTo(this._opMarkers);
+      bounds.push([item.coordinates.lat, item.coordinates.lng]);
+    });
+    if (bounds.length && (forceFit || this._mapSignature !== signature)) this._opMap.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
+    this._mapSignature = signature;
+    setTimeout(() => this._opMap?.invalidateSize(), 60);
+  }
+
+  resetOperationalMap() {
+    this._mapSignature = '';
+    this.syncOperationalMap(true);
+  }
 
   objects() { return Array.isArray(this.liveObjects) ? this.liveObjects : []; }
 
@@ -1191,19 +1210,37 @@ class Component extends DCLogic {
     const L = st.layers;
     const on = Object.keys(L).filter(k => L[k]).length;
     const metrics = this.liveMetrics || {};
-
-    const prio = [
-      { n: '12', title: 'منطقة بحاجة إلى تدخل عاجل', meta: 'وسط النطاق · مربع 3', col: '#ef4444', tk: 'bad' },
-      { n: '8', title: 'تجاوزات إنشائية', meta: 'القطاع الشرقي · مخطط 7', col: '#fb7185', tk: 'bad' },
-      { n: '15', title: 'نظافة عامة', meta: 'القطاع الغربي · شارع 21', col: '#f5a524', tk: 'warn' },
-      { n: '9', title: 'إشغالات طرق', meta: 'القطاع الجنوبي · حي النور', col: '#38bdf8', tk: 'info' }
-    ];
+    const format = window.SmartHSRFormat || {};
+    const query = (st.search || '').trim().toLocaleLowerCase('ar');
+    const allObservations = Array.isArray(this.liveObservations) ? this.liveObservations : [];
+    const matchingObservations = allObservations.filter(item => !query || [item.displayId, item.title, item.inspector, item.contractor, item.type]
+      .filter(Boolean).join(' ').toLocaleLowerCase('ar').includes(query));
+    const mapPoints = this.operationalObservations();
+    const mapEmptyText = st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البلاغات الموثّقة.')
+      : mapPoints.length ? '' : 'لا توجد بلاغات ذات إحداثيات موثّقة ضمن النطاق الحالي.';
+    const roleLabel = role => ({ manager: 'مدير', supervisor: 'مشرف', inspector: 'مراقب', contractor: 'مقاول' }[role] || 'غير محدد');
+    const statusLabel = status => ({ PENDING: 'قيد الانتظار', IN_PROGRESS: 'قيد المعالجة', COMPLETED: 'تمت المعالجة' }[status] || 'غير محدد');
+    const viewObservations = matchingObservations.map(item => ({
+      id: item.id, title: item.title, code: item.displayId, status: statusLabel(item.status), inspector: item.inspector,
+      date: item.createdAt && format.dateTime ? format.dateTime(item.createdAt) : 'غير متاح', selected: st.sel === item.id ? 'var(--accBd,rgba(76,201,240,0.45))' : 'var(--div,rgba(122,164,224,0.12))',
+      on: () => this.openObservation(item.id)
+    }));
+    const viewUsers = (Array.isArray(this.liveUsers) ? this.liveUsers : []).map(item => ({
+      name: item.name, role: roleLabel(item.role), email: item.email, status: item.active ? 'نشط' : 'غير نشط'
+    }));
 
     return {
       rootRef: el => { this.root = el; },
       cvRef: el => { this.cv = el; },
+      mapShellRef: el => { this.mapShell = el; },
+      mapRef: el => { this.mapEl = el; },
       themeVars: vars,
       orgName: st.orgName,
+      sessionName: st.sessionName,
+      sessionRole: st.sessionRole,
+      accountMono: (st.sessionName || 'حساب').trim().split(/\s+/).slice(0, 2).map(s => s.charAt(0)).join('') || 'ح',
+      currentTime: format.time ? format.time(st.clock) : '—',
+      currentDate: format.date ? format.date(st.clock) : 'غير متاح',
       totalReports: metrics.totalReports || '—',
       pending: metrics.pending || '—',
       inProgress: metrics.inProgress || '—',
@@ -1214,6 +1251,8 @@ class Component extends DCLogic {
       avgOpenDays: metrics.avgOpenDays || '—',
       activeTeams: metrics.activeTeams || '—',
       orgMono: (st.orgName || '').trim().split(/\s+/).slice(0, 2).map(s => s.charAt(0)).join('') || 'ب',
+      notifCount: this.liveNotifications.length,
+      notifAria: `الإشعارات، ${format.integer ? format.integer(this.liveNotifications.length) : this.liveNotifications.length} بلاغات حديثة`,
       profOpen: st.profOpen, notifOpen: st.notifOpen, layersOpen: st.layersOpen,
       settingsOpen: st.settingsOpen, mobNavOpen: st.mobNavOpen,
       expSvc: st.expSvc, expAdmin: st.expAdmin,
@@ -1227,45 +1266,59 @@ class Component extends DCLogic {
       swBd: st.twin3D ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(76,201,240,0.6)') : (day ? 'rgba(17,54,40,0.2)' : 'rgba(122,164,224,0.28)'),
       swKnobBg: st.twin3D ? '#ffffff' : (day ? '#8d9c94' : '#8b9db5'),
       swR: st.twin3D ? '1.5px' : 'auto', swL: st.twin3D ? 'auto' : '1.5px',
+      twin3D: st.twin3D,
+      isTwin: st.mapMode === 'twin', isMap: st.mapMode === 'map',
+      twinDisplay: st.mapMode === 'twin' ? 'block' : 'none', mapDisplay: st.mapMode === 'map' ? 'block' : 'none',
+      twinControlDisplay: st.mapMode === 'twin' ? 'flex' : 'none',
+      mapSurfaceLabel: st.mapMode === 'twin' ? 'Digital Twin · GIS' : 'الخريطة التشغيلية · بلاغات موثّقة',
+      twinModeBg: st.mapMode === 'twin' ? (day ? '#ffffff' : 'rgba(76,201,240,0.24)') : 'transparent',
+      twinModeTx: st.mapMode === 'twin' ? (day ? '#0b5c3b' : '#eaf4ff') : 'var(--glassTx,#a9c0d8)',
+      mapModeBg: st.mapMode === 'map' ? (day ? '#ffffff' : 'rgba(76,201,240,0.24)') : 'transparent',
+      mapModeTx: st.mapMode === 'map' ? (day ? '#0b5c3b' : '#eaf4ff') : 'var(--glassTx,#a9c0d8)',
+      mapFilter: st.mapFilter,
+      mapEmpty: st.mapMode === 'map' && !mapPoints.length,
+      mapEmptyDisplay: st.mapMode === 'map' && !mapPoints.length ? 'flex' : 'none',
+      mapEmptyText,
+      search: st.search,
+      viewOpen: st.view !== 'home',
+      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users',
+      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : 'البلاغات',
+      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
+      viewObservations,
+      viewUsers,
+      viewEmpty: st.view === 'users' ? !viewUsers.length : !viewObservations.length,
+      viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
 
       notifs: this.liveNotifications,
       scopes: [{ label: 'مدير البلدية' }, { label: 'رؤساء الأقسام' }, { label: 'إدارة الحركة' }, { label: 'الشؤون الإدارية' }, { label: 'الموظفون' }, { label: 'المراقبون' }, { label: 'لوحات مستقبلية' }],
       depts: this.liveDepartments,
       cats: this.liveCategories,
-      recs: [
-        { title: 'توجيه فرق ميدانية', meta: 'القطاع الجنوبي · 3 أحياء', tag: '3 فرق', col: day ? '#12688f' : '#38bdf8', on: () => this.flash('التوصيات التنفيذية ستُفعّل مع المساعد الذكي') },
-        { title: 'حملة نظافة مكثفة', meta: '5 مناطق مستهدفة', tag: '15 يوم', col: day ? '#12855a' : '#22c55e', on: () => this.flash('التوصيات التنفيذية ستُفعّل مع المساعد الذكي') },
-        { title: 'مراجعة تراخيص', meta: '23 منشأة منتهية', tag: 'مراجعة', col: day ? '#b8730a' : '#f5a524', on: () => this.flash('التوصيات التنفيذية ستُفعّل مع المساعد الذكي') }
-      ],
       prios: this.livePriorities.map(p => ({
         n: p.n, title: p.title, meta: p.meta, col: p.col,
         bg: this.tint(p.col, day ? 0.05 : 0.08),
         bd: this.tint(p.col, day ? 0.26 : 0.28),
         numBg: this.tint(p.col, day ? 0.1 : 0.16),
-        on: () => this.flash('سيتم فتح الأولوية في الخريطة التشغيلية')
+        on: () => this.openObservation(p.id)
       })),
       quickActions: [
-        { label: 'إضافة فريق ميداني', on: () => this.flash('نموذج إضافة فريق ميداني — يُربط لاحقاً') },
-        { label: 'إنشاء تقرير', on: () => this.flash('مولّد التقارير — يُربط لاحقاً') },
-        { label: 'مراجعة المعاملات', on: () => this.flash('قائمة المعاملات — يُربط لاحقاً') },
-        { label: 'إرسال إشعار', on: () => this.flash('إرسال إشعار للإدارات — يُربط لاحقاً') },
-        { label: 'طلب بيانات', on: () => this.flash('طلب بيانات من إدارة — يُربط لاحقاً') },
-        { label: 'اجتماع افتراضي', on: () => this.flash('الاجتماعات — يُربط لاحقاً') },
-        { label: 'دعم فني', on: () => this.flash('الدعم الفني — يُربط لاحقاً') }
+        { label: 'عرض البلاغات', on: () => this.openView('observations') },
+        { label: 'الخريطة التشغيلية', on: () => this.openMap() },
+        { label: 'المستخدمون والصلاحيات', on: () => this.openView('users') },
+        { label: 'الحصر الميداني الذكي', on: () => this.goRoute('survey') }
       ],
       mobNav: [
-        { label: 'الرئيسية', tag: '', on: () => this.setState({ mobNavOpen: false }) },
+        { label: 'الرئيسية', tag: '', on: () => this.goHome() },
         { label: 'الحصر الميداني الذكي', tag: '', on: () => this.goRoute('survey') },
-        { label: 'حصر الأراضي الذكي', tag: 'بانتظار الربط', on: () => this.goRoute('lands') },
-        { label: 'حركة السير الذكية', tag: 'قريباً', on: () => this.flash('حركة السير الذكية — قريباً') },
-        { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.goRoute('report') },
-        { label: 'الخريطة التشغيلية', tag: '', on: () => this.goRoute('map') },
-        { label: 'التقارير', tag: '', on: () => this.goRoute('reports') },
-        { label: 'الهيكل الإداري', tag: 'قريباً', on: () => this.flash('الهيكل الإداري — قريباً') },
-        { label: 'المستخدمون والصلاحيات', tag: '', on: () => this.flash('المستخدمون والصلاحيات — يُربط لاحقاً') },
+        { label: 'حصر الأراضي الذكي', tag: 'بانتظار الربط', disabled: true },
+        { label: 'حركة السير الذكية', tag: 'قريباً', disabled: true },
+        { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.openView('observations') },
+        { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap() },
+        { label: 'التقارير', tag: '', on: () => this.openView('reports') },
+        { label: 'الهيكل الإداري', tag: 'قريباً', disabled: true },
+        { label: 'المستخدمون والصلاحيات', tag: '', on: () => this.openView('users') },
         { label: 'الإعدادات والهوية', tag: '', on: () => this.setState({ settingsOpen: true, mobNavOpen: false }) },
-        { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', on: () => this.flash('المساعد التنفيذي الذكي — قريباً') }
-      ],
+        { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', disabled: true }
+      ].map(item => Object.assign({ cursor: item.disabled ? 'not-allowed' : 'pointer', disabledText: item.disabled ? 'true' : 'false' }, item)),
 
       layerList: this.liveLayers.map(l => ({
         name: l.name, n: l.n,
@@ -1302,7 +1355,7 @@ class Component extends DCLogic {
       selCol: sel ? sel.col : '#38bdf8',
       selRows: sel ? sel.rows.map(r => ({ k: r[0], v: r[1] })) : [],
       selAction: sel ? sel.action : '',
-      selGo: () => { if (sel) this.goRoute(sel.route); },
+      selGo: () => { if (sel) this.openObservation(sel.id); },
       clearSel: () => this.setState({ sel: null }),
 
       setDay: () => this.setState({ theme: 'day' }),
@@ -1314,40 +1367,95 @@ class Component extends DCLogic {
       tProf: () => this.setState(s => ({ profOpen: !s.profOpen, notifOpen: false })),
       tLayers: () => this.setState(s => ({ layersOpen: !s.layersOpen })),
       tMobNav: () => this.setState(s => ({ mobNavOpen: !s.mobNavOpen })),
-      openSettings: () => this.setState({ settingsOpen: true, profOpen: false, mobNavOpen: false }),
+      openSettings: e => { this.prevent(e); this.setState({ settingsOpen: true, profOpen: false, mobNavOpen: false }); },
       closeSettings: () => this.setState({ settingsOpen: false }),
-      setOrgName: e => this.setState({ orgName: e.target.value }),
       stop: e => { if (e && e.stopPropagation) e.stopPropagation(); },
       t3D: () => this.setState(s => ({ twin3D: !s.twin3D })),
-      tFs: () => this.setState(s => ({ fs: !s.fs })),
-      zIn: () => this.setState(s => ({ zoom: Math.min(2.6, s.zoom + 0.2) })),
-      zOut: () => this.setState(s => ({ zoom: Math.max(0.6, s.zoom - 0.2) })),
-      resetView: () => this.setState({ zoom: 1, panX: 0, panY: 0, sel: null }),
+      tFs: () => this.toggleFullscreen(),
+      zIn: () => this.zoomMap(1),
+      zOut: () => this.zoomMap(-1),
+      resetView: () => this.resetMapView(),
       hideQuick: () => this.setState({ quick: false }),
       goSurvey: () => this.goRoute('survey'),
-      goLands: () => this.goRoute('lands'),
-      goMap: () => this.goRoute('map'),
-      goReports: () => this.goRoute('reports'),
-      goUsers: () => this.goRoute('users'),
-      soon: e => { if (e && e.preventDefault) e.preventDefault(); this.flash('هذا المسار سيُربط بالنظام التشغيلي'); }
+      goHome: e => this.goHome(e),
+      goMap: e => this.openMap(e),
+      goReports: e => this.openView('reports', e),
+      goObservations: e => this.openView('observations', e),
+      goUsers: e => this.openView('users', e),
+      showTwin: () => this.setState({ mapMode: 'twin', sel: null }),
+      showMap: () => this.openMap(),
+      setMapFilter: e => this.setState({ mapFilter: e.target.value }),
+      setSearch: e => this.setSearch(e),
+      closeView: () => this.setState({ view: 'home' }),
+      logout: () => window.SmartHSRManagerAdapter?.logout()
     };
   }
 
-  goRoute(r) {
-    const routes = {
-      survey: 'dashboard.html',
-      report: 'manager-operations.html#observations',
-      reports: 'manager-operations.html#reports',
-      map: 'manager-operations.html#twin',
-      task: 'manager-operations.html#users',
-      users: 'manager-operations.html#users'
-    };
-    if (r === 'lands') {
-      this.flash('حصر الأراضي الذكي بانتظار مساره التشغيلي الحقيقي.');
+  prevent(e) { if (e && e.preventDefault) e.preventDefault(); }
+
+  goHome(e) {
+    this.prevent(e);
+    this.setState({ view: 'home', mobNavOpen: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  openView(view, e) {
+    this.prevent(e);
+    this.setState({ view, mobNavOpen: false, notifOpen: false, profOpen: false });
+  }
+
+  openObservation(id) {
+    this.setState({ view: 'observations', sel: id, mobNavOpen: false, notifOpen: false, profOpen: false });
+  }
+
+  openMap(e) {
+    this.prevent(e);
+    this.setState({ mapMode: 'map', view: 'home', mobNavOpen: false, notifOpen: false, profOpen: false });
+    setTimeout(() => {
+      this.mapShell?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      this.syncOperationalMap();
+    }, 80);
+  }
+
+  setSearch(e) {
+    const search = e?.target?.value || '';
+    this.setState({ search, view: this.state.mapMode === 'map' ? this.state.view : 'observations' });
+  }
+
+  zoomMap(delta) {
+    if (this.state.mapMode === 'map' && this._opMap) {
+      this._opMap.setZoom(this._opMap.getZoom() + delta);
       return;
     }
-    if (routes[r]) { window.location.assign(routes[r]); return; }
-    this.flash('المسار التشغيلي غير متاح حالياً.');
+    this.setState(s => ({ zoom: Math.max(0.6, Math.min(2.6, s.zoom + delta * 0.2)) }));
+  }
+
+  resetMapView() {
+    if (this.state.mapMode === 'map') {
+      this.resetOperationalMap();
+      return;
+    }
+    this.setState({ zoom: 1, panX: 0, panY: 0, sel: null });
+  }
+
+  async toggleFullscreen() {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen?.();
+      return;
+    }
+    if (this.mapShell?.requestFullscreen) {
+      try {
+        await this.mapShell.requestFullscreen();
+        this.setState({ fs: true });
+        return;
+      } catch (_) { /* fall through to the contained view */ }
+    }
+    this.setState(s => ({ fs: !s.fs }));
+  }
+
+  goRoute(r) {
+    if (r === 'survey') { window.location.assign('dashboard.html'); return; }
+    this.flash('هذا المسار غير متاح حتى يتم التحقق من ربطه التشغيلي.');
   }
 }
 </script>
