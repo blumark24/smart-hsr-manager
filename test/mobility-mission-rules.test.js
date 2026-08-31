@@ -1,7 +1,11 @@
 'use strict';
 // ============================================================================
-// Firestore Rules unit tests for missions/{missionId} — run ONLY against the
-// local Firestore Emulator. Mirrors test/firestore.rules.test.js's harness.
+// Firestore Rules unit tests for missions/{missionId} and vehicles/{vehicleId}
+// — run ONLY against the local Firestore Emulator. Mirrors
+// test/firestore.rules.test.js's harness. The two collections are tested
+// together because vehicle allocation cross-checks the referenced mission
+// (and vice versa) — see firestore.rules' canMobilityHeadAdvanceMission and
+// canMobilityHeadManageVehicle.
 //
 // Run: node test/run-mobility-mission-rules.js
 // ============================================================================
@@ -88,6 +92,14 @@ async function seed() {
     await setDoc(doc(db, 'missions', 'pendingB'), {
       organizationId: ORG_B, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadB, status: 'PENDING_APPROVAL',
     });
+
+    // vehicles
+    await setDoc(doc(db, 'vehicles', 'V101'), { organizationId: ORG_A, status: 'IN_MISSION', assignedEmployeeUid: UID.employeeA, currentMissionId: 'inProgressA' });
+    await setDoc(doc(db, 'vehicles', 'V102'), { organizationId: ORG_A, status: 'AVAILABLE' });
+    await setDoc(doc(db, 'vehicles', 'V103'), { organizationId: ORG_A, status: 'RESERVED', assignedEmployeeUid: UID.employeeA2, currentMissionId: 'approvedA' });
+    await setDoc(doc(db, 'vehicles', 'V104'), { organizationId: ORG_A, status: 'RETURN_PENDING', assignedEmployeeUid: UID.employeeA, currentMissionId: 'awaitingReturnA' });
+    await setDoc(doc(db, 'vehicles', 'V105'), { organizationId: ORG_A, status: 'MAINTENANCE' });
+    await setDoc(doc(db, 'vehicles', 'V201'), { organizationId: ORG_B, status: 'AVAILABLE' });
   });
 }
 
@@ -203,6 +215,13 @@ test('T6 mobility_head allocating without vehicleId/assignedEmployeeUid is denie
   }));
 });
 
+test('T6b CONFLICT PREVENTION: a mission cannot be allocated a vehicle that is not AVAILABLE', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
+    status: 'VEHICLE_ALLOCATED', vehicleId: 'V101', assignedEmployeeUid: UID.employeeA,
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
 test('T7 mobility_head hands the vehicle over', async () => {
   await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'allocatedA'), {
     status: 'HANDED_OVER', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
@@ -266,4 +285,110 @@ test('D1 missions are never deleted, by anyone', async () => {
   await assertFails(deleteDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'draftA')));
 });
 
-console.log('mobility mission Firestore rules OK');
+// ============================================================
+// vehicles/{vehicleId} — fleet lifecycle + conflict prevention
+// ============================================================
+test('V1 same-org manager may read a vehicle', async () => {
+  await assertSucceeds(getDoc(doc(ctx(UID.mgrA), 'vehicles', 'V102')));
+});
+
+test('V2 cross-org manager may not read a vehicle', async () => {
+  await assertFails(getDoc(doc(ctx(UID.mgrA), 'vehicles', 'V201')));
+});
+
+test('V3 an employee may read the vehicle assigned to them, not another', async () => {
+  await assertSucceeds(getDoc(doc(ctx(UID.employeeA), 'vehicles', 'V101')));
+  await assertFails(getDoc(doc(ctx(UID.employeeA), 'vehicles', 'V103')));
+});
+
+test('V4 only mobility_head may add a vehicle to the roster, and only as AVAILABLE with no stale commitment', async () => {
+  await assertSucceeds(setDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V106'), {
+    organizationId: ORG_A, status: 'AVAILABLE',
+  }));
+  await assertFails(setDoc(doc(ctx(UID.adminAffairsA), 'vehicles', 'V107'), {
+    organizationId: ORG_A, status: 'AVAILABLE',
+  }));
+  await assertFails(setDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V108'), {
+    organizationId: ORG_A, status: 'AVAILABLE', assignedEmployeeUid: UID.employeeA,
+  }));
+});
+
+test('V5 mobility_head reserves an available vehicle for an APPROVED mission', async () => {
+  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V6 CONFLICT PREVENTION: an already-reserved vehicle cannot be reserved again', async () => {
+  // V103 is already RESERVED in the seed. A second allocation attempt,
+  // even for a different (also APPROVED) mission, must be denied because
+  // the vehicle's committed status is no longer AVAILABLE.
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V103'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.employeeA2, currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V7 CONFLICT PREVENTION: reserving a vehicle for a mission that is not APPROVED is denied', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'pendingA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V8 CONFLICT PREVENTION (sequential race): once the first allocation commits, a second racing allocation of the same vehicle fails', async () => {
+  const first = updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  });
+  await assertSucceeds(first);
+  // V102 is now RESERVED. A second mobility_head trying to allocate the
+  // very same vehicle to a different mission is correctly refused because
+  // the rule requires the vehicle's CURRENT status to be AVAILABLE.
+  const second = updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.employeeA2, currentMissionId: 'pendingA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 2,
+  });
+  await assertFails(second);
+});
+
+test('V9 mobility_head hands over a reserved vehicle', async () => {
+  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V103'), {
+    status: 'IN_MISSION', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V10 the assigned employee reports a return; a non-assigned employee cannot', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.employeeA2), 'vehicles', 'V101'), {
+    status: 'RETURN_PENDING', updatedByUid: UID.employeeA2, updatedAt: 1,
+  }));
+  await assertSucceeds(updateDoc(doc(ctx(UID.employeeA), 'vehicles', 'V101'), {
+    status: 'RETURN_PENDING', updatedByUid: UID.employeeA, updatedAt: 1,
+  }));
+});
+
+test('V11 mobility_head confirms the return, clearing the mission commitment', async () => {
+  const { deleteField } = require('firebase/firestore');
+  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V104'), {
+    status: 'AVAILABLE', assignedEmployeeUid: deleteField(), currentMissionId: deleteField(),
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V12 mobility_head can take a vehicle out of service and back into service', async () => {
+  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'MAINTENANCE', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V105'), {
+    status: 'AVAILABLE', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V13 vehicles are never deleted, by anyone', async () => {
+  const { deleteDoc } = require('firebase/firestore');
+  await assertFails(deleteDoc(doc(ctx(UID.mgrA), 'vehicles', 'V102')));
+  await assertFails(deleteDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102')));
+});
+
+console.log('mobility mission + vehicle Firestore rules OK');
