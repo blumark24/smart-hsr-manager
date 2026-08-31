@@ -1864,7 +1864,10 @@ class Component extends DCLogic {
 
     if (st.role === 'manager' && st.screen === 'exec') {
       return { ops: true, bottom: true, title: 'حركة السير الذكية — نظرة تنفيذية', sub: 'مؤشرات الأسطول والمهام على مستوى البلدية',
-        actions: [{ label: 'التقرير التنفيذي', on: () => this.setState({ screen: 'reports' }), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' }],
+        actions: [
+          { label: 'التقرير التنفيذي', on: () => this.setState({ screen: 'reports' }), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' },
+          { label: 'إدارة المستخدمين والصلاحيات', on: () => { window.location.href = 'manager-operations.html#users'; }, tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }
+        ],
         kpis: [
           K('إجمالي الأسطول', V.length, 'مغلقة'), K('المتاحة', cnt('متاحة'), 'متاحة'), K('في المهام', cnt('في مهمة'), 'في مهمة'),
           K('في الصيانة', cnt('صيانة'), 'صيانة'), K('المهام النشطة', mcnt('قيد التنفيذ') + mcnt('تم التسليم'), 'قيد التنفيذ'),

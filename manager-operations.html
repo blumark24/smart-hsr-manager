@@ -498,6 +498,10 @@
             <option value="supervisor">مشرف مساعد</option>
             <option value="inspector">مراقب</option>
             <option value="contractor">مقاول</option>
+            <option value="mobility_head">رئيس حركة السير</option>
+            <option value="department_head">رئيس القسم</option>
+            <option value="administrative_affairs">الشؤون الإدارية</option>
+            <option value="employee">موظف حركة السير</option>
           </select>
         </div>
         <div class="md:col-span-2 text-xs text-gray-500">سيتم إنشاء الحساب بدون كلمة مرور. استخدم «إدارة الوصول» من جدول المستخدمين لتعيين كلمة مرور آمنة بعد تأكيد هوية المدير.</div>
@@ -880,8 +884,8 @@ const firebaseConfig = {
 
     // ===== Users =====
     function roleBadge(role){
-      const map={manager:'مدير المؤسسة', supervisor:'مشرف مساعد', inspector:'مراقب', contractor:'مقاول'};
-      const cls={manager:'bg-slate-800 text-white', supervisor:'bg-indigo-600 text-white', inspector:'bg-sky-600 text-white', contractor:'bg-emerald-600 text-white'};
+      const map={manager:'مدير المؤسسة', supervisor:'مشرف مساعد', inspector:'مراقب', contractor:'مقاول', mobility_head:'رئيس حركة السير', department_head:'رئيس القسم', administrative_affairs:'الشؤون الإدارية', employee:'موظف حركة السير'};
+      const cls={manager:'bg-slate-800 text-white', supervisor:'bg-indigo-600 text-white', inspector:'bg-sky-600 text-white', contractor:'bg-emerald-600 text-white', mobility_head:'bg-teal-600 text-white', department_head:'bg-cyan-700 text-white', administrative_affairs:'bg-amber-600 text-white', employee:'bg-green-600 text-white'};
       return `<span class="pill ${cls[role]||'bg-gray-400 text-white'}">${escapeHTML(map[role]||role)}</span>`
     }
     function statusSwitch(u){
@@ -909,7 +913,7 @@ const firebaseConfig = {
           <td data-label="إجراءات" class="text-center">
             <div class="management-actions">
               ${isManagerMode() ? `${statusSwitch(u)}
-              ${['inspector','contractor'].includes(u.role)?`<button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="openAccessManagement(decodeURIComponent('${safeActionId(u.id)}'),this)">إدارة الوصول</button>`:''}
+              ${['inspector','contractor','mobility_head','department_head','administrative_affairs','employee'].includes(u.role)?`<button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full" onclick="openAccessManagement(decodeURIComponent('${safeActionId(u.id)}'),this)">إدارة الوصول</button>`:''}
               <button class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-full" onclick="revokeUserSessions(decodeURIComponent('${safeActionId(u.id)}'))">إنهاء الجلسات</button>` : '<span class="text-xs text-gray-500">عرض فقط</span>'}
             </div>
           </td>
@@ -982,10 +986,10 @@ const firebaseConfig = {
       const name=$('#addName').value.trim();
       const email=$('#addEmail').value.trim();
       const role=$('#addRole').value;
-      const ALLOWED_ROLES = ['supervisor', 'inspector', 'contractor'];
+      const ALLOWED_ROLES = ['supervisor', 'inspector', 'contractor', 'mobility_head', 'department_head', 'administrative_affairs', 'employee'];
       if(!name||!email){ alert('الرجاء تعبئة الاسم والبريد.'); return; }
       if(!ALLOWED_ROLES.includes(role)){
-        alert('الدور المحدد غير صالح. يُسمح بمشرف مساعد أو مراقب أو مقاول.');
+        alert('الدور المحدد غير صالح.');
         return;
       }
       if(!managerContext.organizationId){ alert('تعذر تحديد مؤسستك. الرجاء إعادة تسجيل الدخول.'); return; }
@@ -1018,7 +1022,7 @@ const firebaseConfig = {
     // targets only same-organization inspectors and contractors.
     let accessTarget=null,accessOrigin=null,accessOperationActive=false;
     const accessModal=document.getElementById('modalAccess'),accessDialog=accessModal?.querySelector('.access-dialog');
-    function accessRoleLabel(role){return role==='inspector'?'مراقب':role==='contractor'?'مقاول':role==='supervisor'?'مشرف مساعد':role==='manager'?'مدير المؤسسة':'غير مصرح'}
+    function accessRoleLabel(role){const map={inspector:'مراقب',contractor:'مقاول',supervisor:'مشرف مساعد',manager:'مدير المؤسسة',mobility_head:'رئيس حركة السير',department_head:'رئيس القسم',administrative_affairs:'الشؤون الإدارية',employee:'موظف حركة السير'};return map[role]||'غير مصرح'}
     function maskEmail(email){const value=typeof email==='string'?email.trim():'';const at=value.indexOf('@');if(at<1)return '—';const local=value.slice(0,at),domain=value.slice(at+1);return `${local.slice(0,Math.min(2,local.length))}${'•'.repeat(Math.max(3,Math.min(7,local.length-2)))}@${domain}`}
     function accessPasswordChecks(password,target=accessTarget){
       const value=typeof password==='string'?password:'',normalized=value.toLowerCase();
@@ -1037,7 +1041,7 @@ const firebaseConfig = {
     function setAccessBusy(active){accessOperationActive=active;['accessSubmitBtn','accessBackBtn','accessCancelBtn','accessCloseBtn','accessReviewBtn','accessGenerateBtn','accessCopyBtn'].forEach(id=>{const button=document.getElementById(id);if(button){button.disabled=active;button.setAttribute('aria-busy',active?'true':'false')}})}
     function closeAccessManagement(){if(accessOperationActive)return;clearAccessSecrets();accessTarget=null;accessModal.style.display='none';accessModal.setAttribute('aria-hidden','true');document.body.classList.remove('access-modal-open');const origin=accessOrigin;accessOrigin=null;origin?.focus()}
     function openAccessManagement(id,origin){
-      if(!requireManagerMode())return;const target=users.find(user=>user.id===id);if(!target||!['inspector','contractor'].includes(target.role)){showToast('لا تملك صلاحية إدارة هذا الحساب.');return}accessTarget=target;accessOrigin=origin instanceof HTMLElement?origin:document.activeElement;
+      if(!requireManagerMode())return;const target=users.find(user=>user.id===id);if(!target||!['inspector','contractor','mobility_head','department_head','administrative_affairs','employee'].includes(target.role)){showToast('لا تملك صلاحية إدارة هذا الحساب.');return}accessTarget=target;accessOrigin=origin instanceof HTMLElement?origin:document.activeElement;
       const values={accessTargetName:target.name||'—',accessTargetRole:accessRoleLabel(target.role),accessTargetEmail:target.email||'—',accessTargetStatus:target.active===false?'معطل':'نشط',accessTargetOrganization:managerContext.organizationName||managerContext.organizationId||'—'};Object.entries(values).forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.textContent=value});document.getElementById('accessConfirmName').textContent=target.name||'—';document.getElementById('accessConfirmRole').textContent=accessRoleLabel(target.role);document.getElementById('accessConfirmEmail').textContent=maskEmail(target.email);
       clearAccessSecrets();setAccessStatus('أدخل كلمة مرور قوية، ثم أكّد هويتك للمتابعة.');setAccessStatus('راجع هوية الموظف والإجراء قبل التنفيذ.','',true);setAccessStep('edit');accessModal.style.display='flex';accessModal.setAttribute('aria-hidden','false');document.body.classList.add('access-modal-open');requestAnimationFrame(()=>accessDialog?.focus());try{lucide.createIcons()}catch(_){}
     }

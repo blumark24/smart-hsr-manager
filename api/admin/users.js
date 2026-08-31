@@ -17,6 +17,7 @@
 // ============================================================================
 const { getAuth, getDb, FieldValue } = require('../_lib/firebaseAdmin');
 const {
+  MOBILITY_MANAGEABLE_ROLES,
   MANAGEABLE_ROLES,
   MANAGER_SCOPED_ROLES,
   MANAGER_MANAGEMENT_ENABLED,
@@ -47,7 +48,7 @@ async function readJsonBody(req) {
 function isNonEmptyString(v) { return typeof v === 'string' && v.trim().length > 0; }
 
 const RECENT_AUTH_WINDOW_SECONDS = 10 * 60;
-const PASSWORD_TARGET_ROLES = ['inspector', 'contractor'];
+const PASSWORD_TARGET_ROLES = ['inspector', 'contractor', ...MOBILITY_MANAGEABLE_ROLES];
 
 function hasRecentAuthentication(decoded, nowSeconds = Math.floor(Date.now() / 1000)) {
   const authTime = Number(decoded && decoded.auth_time);

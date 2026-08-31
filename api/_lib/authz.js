@@ -3,33 +3,44 @@
 // Authentication + authorization helpers for the Admin API.
 //
 // Model (matches firestore.rules):
-//   owner      -> owners/{uid}      (allowlist; active != false)
-//   manager    -> managers/{uid}    (role 'manager';  active != false)
-//   supervisor -> users/{uid}       (role 'supervisor'; no Admin API access)
-//   inspector  -> users/{uid}       (role 'inspector')
-//   contractor -> users/{uid}       (role 'contractor')
+//   owner                   -> owners/{uid}   (allowlist; active != false)
+//   manager                 -> managers/{uid} (role 'manager'; active != false)
+//                              also the municipality_manager Smart Mobility role
+//   supervisor              -> users/{uid}    (role 'supervisor'; no Admin API access)
+//   inspector               -> users/{uid}    (role 'inspector')
+//   contractor              -> users/{uid}    (role 'contractor')
+//   mobility_head           -> users/{uid}    (Smart Mobility)
+//   department_head         -> users/{uid}    (Smart Mobility)
+//   administrative_affairs  -> users/{uid}    (Smart Mobility)
+//   employee                -> users/{uid}    (Smart Mobility)
 //
 // Phase 2: owners may call the live API for any organization. An
 // organization manager (managers/{uid}, role 'manager', active != false,
 // non-empty organizationId) may additionally call it, but assertCanManage
-// restricts them to supervisors/inspectors/contractors of their OWN
-// organizationId only. Supervisors never receive account-management access.
+// restricts them to supervisors/inspectors/contractors/Smart Mobility roles
+// of their OWN organizationId only. Supervisors never receive
+// account-management access.
 // ============================================================================
 const { getAuth, getDb } = require('./firebaseAdmin');
 
+// Smart Mobility roles (Phase 2/3 integration). municipality_manager reuses
+// the existing 'manager' role/collection rather than a new value — same
+// account, same organizationId scope.
+const MOBILITY_MANAGEABLE_ROLES = ['mobility_head', 'department_head', 'administrative_affairs', 'employee'];
+
 // Roles this API is ever allowed to create/manage. 'owner' is intentionally
 // excluded — the API must never create or manage owners or escalate to owner.
-const MANAGEABLE_ROLES = ['manager', 'supervisor', 'inspector', 'contractor'];
+const MANAGEABLE_ROLES = ['manager', 'supervisor', 'inspector', 'contractor', ...MOBILITY_MANAGEABLE_ROLES];
 
 // Roles an organization manager (as opposed to an owner) may manage.
-const MANAGER_SCOPED_ROLES = ['supervisor', 'inspector', 'contractor'];
+const MANAGER_SCOPED_ROLES = ['supervisor', 'inspector', 'contractor', ...MOBILITY_MANAGEABLE_ROLES];
 
 // Stage B flag: manager-initiated, same-organization management is enabled.
 const MANAGER_MANAGEMENT_ENABLED = true;
 
 function collectionForRole(role) {
   if (role === 'manager') return 'managers';
-  if (role === 'supervisor' || role === 'inspector' || role === 'contractor') return 'users';
+  if (['supervisor', 'inspector', 'contractor', ...MOBILITY_MANAGEABLE_ROLES].includes(role)) return 'users';
   return null;
 }
 
@@ -104,6 +115,7 @@ function assertCanManage(caller, target) {
 }
 
 module.exports = {
+  MOBILITY_MANAGEABLE_ROLES,
   MANAGEABLE_ROLES,
   MANAGER_SCOPED_ROLES,
   MANAGER_MANAGEMENT_ENABLED,
