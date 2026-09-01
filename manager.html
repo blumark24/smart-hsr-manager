@@ -32,7 +32,7 @@
 <div dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
 <div style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5;transition:background .3s ease,color .3s ease">
 
-  <header style="min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--cardBd,rgba(122,164,224,0.15));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(22px))">
+  <header style="min-height:64px;flex:none;display:flex;flex-wrap:var(--hdrWrap,nowrap);align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--cardBd,rgba(122,164,224,0.15));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(22px))">
 
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <div style="position:relative;display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid var(--div,rgba(122,164,224,0.14))">
@@ -882,7 +882,7 @@ class Component extends DCLogic {
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '400px', '--midH': 'auto',
       '--aiW': 'calc(50% - 7px)', '--prioW': 'calc(50% - 7px)', '--anaCols': 'repeat(2,1fr)', '--anaH': 'auto',
       '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none' },
-    mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none',
+    mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none', '--hdrWrap': 'wrap',
       '--kpiWrap': 'wrap', '--kpiCell': '50%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '320px', '--twinMin': '240px', '--midH': 'auto',
       '--aiW': '100%', '--prioW': '100%', '--anaCols': '1fr', '--anaH': 'auto',

@@ -562,8 +562,11 @@
         <div style="display:grid;grid-template-columns:var(--setCols,1.2fr 1fr);gap:14px">
           <div style="padding:16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:14px">
             <div>
-              <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">سياسة اعتماد المهام</div>
-              <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:4px">قابلة للتهيئة لكل بلدية · لا توجد دورة عمل ثابتة</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">سياسة اعتماد المهام</span>
+                <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:6px;color:var(--tx3,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">معاينة تصميم — غير مفعّلة</span>
+              </div>
+              <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:4px">هذه بطاقات معاينة فقط. دورة العمل الفعلية المطبقة على كل مهمة هي السياسة الكاملة أدناه دائماً، ولا يمكن تغييرها من هذه الشاشة.</div>
             </div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <sc-for list="{{ policies }}" as="p" hint-placeholder-count="3">
@@ -1492,7 +1495,7 @@ class Component extends DCLogic {
         fill: pol === id ? (day ? '#12855a' : '#4cc9f0') : 'transparent',
         bg: pol === id ? (day ? 'rgba(18,133,90,0.06)' : 'rgba(56,132,220,0.12)') : 'var(--sunk2,rgba(11,18,32,0.55))',
         bd: pol === id ? (day ? 'rgba(18,133,90,0.3)' : 'rgba(76,201,240,0.35)') : 'var(--div,rgba(122,164,224,0.12))',
-        on: () => { this.setState({ policy: id }); this.flash('تم اختيار: ' + name); } });
+        on: () => { this.setState({ policy: id }); this.flash('معاينة فقط — السياسة المطبَّقة فعلياً تبقى السياسة الكاملة'); } });
       out.policies = [
         mkPol('p1', 'السياسة الكاملة', 'افتراضية', ['رئيس القسم', 'الشؤون الإدارية', 'حركة السير', 'تخصيص المركبة', 'الموظف']),
         mkPol('p2', 'سياسة مختصرة', 'مهام اعتيادية', ['رئيس القسم', 'حركة السير', 'الموظف']),
