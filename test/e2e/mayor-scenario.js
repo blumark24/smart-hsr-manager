@@ -165,7 +165,10 @@ async function main() {
       await mobilityPage.getByText('الحوادث والطوارئ', { exact: true }).first().click();
       await mobilityPage.waitForTimeout(500);
       await mobilityPage.getByText('عطل مركبة', { exact: false }).first().click();
-      await mobilityPage.getByRole('button', { name: button, exact: true }).click();
+      // The incident-status label (e.g. "تم الاستلام") also appears as a
+      // table filter pill; the drawer's action button renders later in the
+      // DOM, so .last() reliably picks it over the filter pill.
+      await mobilityPage.getByRole('button', { name: button, exact: true }).last().click();
       await mobilityPage.waitForTimeout(1200);
       const snap = await db.collection('incidents').doc(incidentId).get();
       if (snap.data().status !== expect) throw new Error(`Incident ${incidentId} expected ${expect}, got ${snap.data().status}`);
