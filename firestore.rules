@@ -241,7 +241,7 @@ service cloud.firestore {
         && resource.data.organizationId == mobilityUserOrgId()
         && (
           (resource.data.status == 'APPROVED' && request.resource.data.status == 'VEHICLE_ALLOCATED'
-            && changedKeys.hasOnly(['status', 'vehicleId', 'assignedEmployeeUid', 'updatedAt', 'updatedByUid'])
+            && changedKeys.hasOnly(['status', 'vehicleId', 'assignedEmployeeUid', 'assignedEmployeeName', 'updatedAt', 'updatedByUid'])
             && request.resource.data.vehicleId is string && request.resource.data.vehicleId.size() > 0
             && request.resource.data.assignedEmployeeUid is string && request.resource.data.assignedEmployeeUid.size() > 0
             // Conflict-prevention cross-check: refuse to allocate a vehicle
