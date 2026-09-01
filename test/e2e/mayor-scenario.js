@@ -119,6 +119,7 @@ async function main() {
 
     step(4, 'Mobility Head hands the vehicle over to the employee');
     {
+      console.log('  [debug] viewport innerWidth/innerHeight:', await mobilityPage.evaluate(() => `${window.innerWidth}x${window.innerHeight}`));
       const navLink = mobilityPage.getByText('التسليم والاستلام', { exact: true }).first();
       console.log('  [debug] nav link box:', JSON.stringify(await navLink.boundingBox()));
       console.log('  [debug] nav link visible:', await navLink.isVisible());
