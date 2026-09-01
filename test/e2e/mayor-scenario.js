@@ -59,8 +59,12 @@ async function main() {
 
   const browser = await chromium.launch({ executablePath: CHROMIUM_PATH });
 
+  // 1600x990 matches the spec's primary desktop breakpoint and keeps the
+  // sidebar in its full labeled form (below ~1400px wide it deliberately
+  // collapses to an icon-only rail, by responsive design — confirmed while
+  // debugging this script, not a product bug).
   async function openAs(email) {
-    const ctx = await browser.newContext();
+    const ctx = await browser.newContext({ viewport: { width: 1600, height: 990 } });
     await installFbMock(ctx);
     const page = await loginAs(ctx, harness.baseUrl, email);
     await waitForGateClear(page);
@@ -106,12 +110,10 @@ async function main() {
       mobilityCtx = ctx; mobilityPage = page;
       await page.getByText(MISSION_TYPE, { exact: false }).first().click();
       await page.waitForTimeout(500);
-      console.log('  [debug] drawer state after row click:', await page.evaluate(() => document.body.innerText.slice(0, 300)));
       await page.locator('select').selectOption(employeeUid);
       await page.getByRole('button', { name: 'E2E-V1 · سيارة دورية', exact: true }).click();
       await page.getByRole('button', { name: 'تخصيص المركبة المحددة', exact: true }).click();
       await page.waitForTimeout(1500);
-      console.log('  [debug] toast after submit:', await page.evaluate(() => document.body.innerText.match(/تم تخصيص|تعذر التخصيص|الرجاء اختيار/)?.[0] || 'none'));
     }
     await assertMissionStatus(db, missionId, 'VEHICLE_ALLOCATED');
     await assertVehicleStatus(db, 'E2E-V1', 'RESERVED');
@@ -119,29 +121,7 @@ async function main() {
 
     step(4, 'Mobility Head hands the vehicle over to the employee');
     {
-      console.log('  [debug] viewport innerWidth/innerHeight:', await mobilityPage.evaluate(() => `${window.innerWidth}x${window.innerHeight}`));
-      console.log('  [debug] aside display:', await mobilityPage.evaluate(() => {
-        const aside = document.querySelector('aside');
-        if (!aside) return 'NO_ASIDE_IN_DOM';
-        const cs = getComputedStyle(aside);
-        return JSON.stringify({ display: cs.display, width: cs.width, sbDisp: cs.getPropertyValue('--sbDisp') });
-      }));
-      console.log('  [debug] matches for التسليم والاستلام:', await mobilityPage.evaluate(() => {
-        const matches = [...document.querySelectorAll('span')].filter(el => el.textContent.trim() === 'التسليم والاستلام');
-        return matches.map(el => {
-          const chain = [];
-          let node = el;
-          for (let i = 0; i < 6 && node; i++, node = node.parentElement) {
-            chain.push(`${node.tagName}[display=${getComputedStyle(node).display}]`);
-          }
-          return chain.join(' < ');
-        });
-      }));
-      const navLink = mobilityPage.getByText('التسليم والاستلام', { exact: true }).first();
-      console.log('  [debug] nav link box:', JSON.stringify(await navLink.boundingBox()));
-      console.log('  [debug] nav link visible:', await navLink.isVisible());
-      await mobilityPage.screenshot({ path: '/tmp/claude-0/-home-user-smart-hsr-manager/0ea6ea42-8758-5a2f-8b7b-30493c714b6f/scratchpad/mayor-step4-debug.png', fullPage: true });
-      await navLink.click();
+      await mobilityPage.getByText('التسليم والاستلام', { exact: true }).first().click();
       await mobilityPage.getByRole('button', { name: 'بدء التسليم للموظف', exact: true }).click();
       await mobilityPage.getByRole('button', { name: 'تأكيد تسليم المركبة', exact: true }).click();
       await mobilityPage.waitForTimeout(1500);
