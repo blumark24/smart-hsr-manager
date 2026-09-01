@@ -102,7 +102,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth.uid == userId
         || (isActiveManager() && resource.data.organizationId == managerOrgId())
-        || (orgUserRole() == 'supervisor' && resource.data.organizationId == orgUserOrgId());
+        || (orgUserRole() == 'supervisor' && resource.data.organizationId == orgUserOrgId())
+        // mobility_head must list org employees to allocate a vehicle to
+        // one — scoped strictly to employee-role records, not every user.
+        || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.role == 'employee');
       allow write: if false;
     }
 

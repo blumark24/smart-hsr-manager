@@ -224,6 +224,14 @@ async function start(component) {
     || appApi.initializeApp(FIREBASE_CONFIG, 'smart-hsr-mobility-session');
   const db = firestoreApi.getFirestore(app);
   const auth = authApi.getAuth(app);
+  // Test-only: connects to the local Firebase emulators instead of
+  // production Firebase. Gated on localhost AND an explicit opt-in query
+  // param, mirroring isLocalPreview() above — never reachable in
+  // production, and inert for every existing/real usage of this file.
+  if (['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('useEmulators') === '1') {
+    authApi.connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    firestoreApi.connectFirestoreEmulator(db, '127.0.0.1', 8080);
+  }
   activeAuth = auth;
   activeAuthApi = authApi;
   activeDb = db;

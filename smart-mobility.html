@@ -524,6 +524,7 @@
               <button onClick="{{ p.on }}" data-f="1" style="height:30px;padding:0 13px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;color:{{ p.tx }};background:{{ p.bg }};border:1px solid {{ p.bd }}">{{ p.label }}</button>
             </sc-for>
           </div>
+          <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);padding:0 4px">{{ reportsPeriodNote }}</div>
 
           <div style="display:grid;grid-template-columns:var(--repCols,repeat(4,1fr));gap:12px">
             <sc-for list="{{ repKpis }}" as="k" hint-placeholder-count="4">
@@ -634,8 +635,8 @@
                 <div style="width:46px;height:46px;flex:none;border-radius:15px;background:var(--orgBg,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBd,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--acc,#8ee6ff)">سم</div>
                 <div style="flex:1;min-width:0">
                   <div style="font-size:12px;color:var(--tx3,#7d8ea6)">{{ empGreet }}</div>
-                  <div style="font-size:17px;font-weight:700;color:var(--tx,#f0f6ff);margin-top:2px">سعد المطيري</div>
-                  <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:3px">مفتش · الرقابة البلدية</div>
+                  <div style="font-size:17px;font-weight:700;color:var(--tx,#f0f6ff);margin-top:2px">{{ empName }}</div>
+                  <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ empRoleDeptLine }}</div>
                 </div>
               </div>
             </div>
@@ -752,6 +753,9 @@
                     </div>
                   </div>
                 </sc-for>
+                <sc-if value="{{ empNotifsEmpty }}">
+                  <div style="padding:36px;text-align:center;font-size:12.5px;color:var(--tx3,#7d8ea6)">لا توجد تنبيهات حالياً</div>
+                </sc-if>
               </div>
             </sc-if>
 
@@ -1015,7 +1019,8 @@ class Component extends DCLogic {
     if (typeof ResizeObserver !== 'undefined' && this.cv) { this._ro = new ResizeObserver(() => this.sync()); this._ro.observe(this.cv); }
     this.bindCanvas();
     this._iv = setInterval(() => {
-      this.setState(s => ({ tick: s.tick + 1, elapsed: this.missionStatus('M-2418') === 'قيد التنفيذ' ? s.elapsed + 1 : s.elapsed }));
+      const hasActiveMission = this.missions().some(m => this.missionStatus(m.id) === 'قيد التنفيذ');
+      this.setState(s => ({ tick: s.tick + 1, elapsed: hasActiveMission ? s.elapsed + 1 : s.elapsed }));
     }, 1000);
     this.onDoc = e => {
       const t = e.target;
@@ -1097,6 +1102,10 @@ class Component extends DCLogic {
   }
 
   missionStatus(id) { return this.state.stat[id] || (this.missions().filter(m => m.id === id)[0] || {}).status; }
+  // Real Firestore auto-ids never contain '-', unlike the old fake "M-2418"
+  // demo ids this UI was originally built around — fall back to the last 4
+  // characters instead of an undefined split() result.
+  missionBadge(no) { const parts = String(no).split('-'); return parts.length > 1 ? parts[1] : String(no).slice(-4).toUpperCase(); }
   setStatus(id, st, msg) { this.setState(s => { const n = Object.assign({}, s.stat); n[id] = st; return { stat: n }; }); this.flash(msg || ('تم تحديث الحالة: ' + st)); }
 
   flash(m) { this.setState({ toast: m, notifOpen: false, layersOpen: false, mobNavOpen: false }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 2600); }
@@ -1443,21 +1452,35 @@ class Component extends DCLogic {
     if (s === 'reports') {
       const p = st.period || 'اليوم';
       out.periods = ['اليوم', 'الأسبوع', 'الشهر', 'السنة', 'فترة مخصصة'].map(x => pill(x, p === x, () => this.setState({ period: x })));
-      const mul = { 'اليوم': 1, 'الأسبوع': 6, 'الشهر': 24, 'السنة': 280, 'فترة مخصصة': 12 }[p] || 1;
+      // No per-period historical query exists yet (missions/incidents carry
+      // no client-exposed timestamp to bucket by) — every number below is a
+      // real, all-time count rather than a number invented to move when a
+      // period pill is clicked.
+      out.reportsPeriodNote = 'الأرقام أدناه إجمالية على مستوى البلدية حتى الآن — التصفية حسب فترة زمنية محددة غير متاحة بعد.';
+      const closedCount = M.filter(m => this.missionStatus(m.id) === 'مغلقة').length;
       out.repKpis = [
-        { label: 'المهام المنفّذة', v: String(8 * mul), sub: 'خلال ' + p, col: this.sc('قيد التنفيذ') },
-        { label: 'متوسط مدة المهمة', v: '2.6 س', sub: '−0.3 عن السابق', col: this.sc('متاحة') },
-        { label: 'التأخر في العودة', v: String(Math.max(1, Math.round(mul * 0.4))), sub: 'حالة تأخر', col: this.sc('صيانة') },
-        { label: 'الحوادث المسجّلة', v: String(Math.max(1, Math.round(mul * 0.3))), sub: 'خلال ' + p, col: this.sc('جديد') }
+        { label: 'المهام المغلقة', v: String(closedCount), sub: 'إجمالي حتى الآن', col: this.sc('قيد التنفيذ') },
+        { label: 'متوسط مدة المهمة', v: 'غير متاح', sub: 'لا تتوفر بيانات توقيت كافية بعد', col: this.sc('متاحة') },
+        { label: 'التأخر في العودة', v: 'غير متاح', sub: 'لا يوجد وقت استحقاق مسجَّل', col: this.sc('صيانة') },
+        { label: 'الحوادث المسجّلة', v: String(I.length), sub: 'إجمالي حتى الآن', col: this.sc('جديد') }
       ];
-      const bar = (k, n, max) => ({ k: k, v: String(n), w: Math.round((n / max) * 100) + '%' });
+      const bar = (k, n, max) => ({ k: k, v: String(n), w: Math.round((n / Math.max(1, max)) * 100) + '%' });
+      const byOdo = V.slice().sort((a, b) => b.odo - a.odo).slice(0, 5);
+      const maxOdo = byOdo.length ? byOdo[0].odo : 1;
+      const deptRows = this.DEPTS.map(d => ({ d, n: M.filter(m => m.dept === d).length }));
+      const maxDept = Math.max(1, ...deptRows.map(x => x.n));
+      const destCounts = {};
+      M.forEach(m => { if (m.dest && m.dest !== '—') destCounts[m.dest] = (destCounts[m.dest] || 0) + 1; });
+      const topDest = Object.entries(destCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const maxDest = topDest.length ? topDest[0][1] : 1;
+      const catRows = ['حادث مروري', 'عطل مركبة', 'نقص وقود', 'حالة طارئة'].map(c => ({ c, n: I.filter(i => i.cat === c).length }));
+      const maxCat = Math.max(1, ...catRows.map(x => x.n));
       out.repCards = [
-        { title: 'استخدام المركبات', rows: V.slice(0, 5).map((v, i) => bar(v.no, 90 - i * 12, 100)), on: () => this.flash('تفصيل استخدام المركبات — نموذج أولي') },
-        { title: 'المهام حسب القسم', rows: this.DEPTS.map((d, i) => bar(d, (5 - i) * mul, 5 * mul)), on: () => this.flash('تفصيل مهام الأقسام — نموذج أولي') },
-        { title: 'الوجهات الأكثر تكراراً', rows: this.DEST.map((d, i) => bar(d.name, (4 - i) * mul, 4 * mul)), on: () => this.flash('تفصيل الوجهات — نموذج أولي') },
+        { title: 'الأعلى استخداماً بقراءة العداد', rows: byOdo.map(v => bar(v.no + ' · ' + v.plate, v.odo, maxOdo)), on: () => this.flash('تفصيل استخدام المركبات — نموذج أولي') },
+        { title: 'المهام حسب القسم', rows: deptRows.map(x => bar(x.d, x.n, maxDept)), on: () => this.flash('تفصيل مهام الأقسام — نموذج أولي') },
+        { title: 'الوجهات الأكثر تكراراً', rows: topDest.map(([name, n]) => bar(name, n, maxDest)), on: () => this.flash('تفصيل الوجهات — نموذج أولي') },
         { title: 'توفر الأسطول', rows: ['متاحة', 'في مهمة', 'محجوزة', 'صيانة'].map(x => bar(x, V.filter(v => v.status === x).length, V.length)), on: () => this.flash('تفصيل توفر الأسطول — نموذج أولي') },
-        { title: 'الحوادث حسب التصنيف', rows: ['حادث مروري', 'عطل مركبة', 'نقص وقود', 'حالة طارئة'].map((c, i) => bar(c, 4 - i, 4)), on: () => this.flash('تفصيل الحوادث — نموذج أولي') },
-        { title: 'الصيانة القادمة', rows: V.filter(v => v.status === 'صيانة' || v.maintNext).slice(0, 4).map((v, i) => bar(v.no + ' · ' + v.maintNext, 4 - i, 4)), on: () => this.flash('تفصيل الصيانة — نموذج أولي') }
+        { title: 'الحوادث حسب التصنيف', rows: catRows.map(x => bar(x.c, x.n, maxCat)), on: () => this.flash('تفصيل الحوادث — نموذج أولي') }
       ];
     }
 
@@ -1506,6 +1529,8 @@ class Component extends DCLogic {
       out.empHasMission = !!m;
       out.empNoMission = !m;
       out.empGreet = 'صباح الخير';
+      out.empName = st.sessionName || 'موظف ميداني';
+      out.empRoleDeptLine = 'موظف ميداني' + (st.department ? ' · ' + st.department : '');
       out.empStatus = stt; out.empStCol = c.col; out.empStBg = c.bg; out.empStBd = c.bd;
       out.empHome = tab === 'home'; out.empActive = tab === 'active'; out.empTasks = tab === 'tasks';
       out.empAlerts = tab === 'alerts'; out.empAcc = tab === 'account';
@@ -1576,15 +1601,26 @@ class Component extends DCLogic {
           chipCol: cc.col, chipBg: cc.bg, on: () => this.openDrawer('mission', x.id) }; });
       out.empListEmpty = listSrc.length === 0;
 
-      out.empNotifs = [
-        { title: 'تم تخصيص المركبة م-101', meta: 'قبل 20 دقيقة · حركة السير', col: this.sc('محجوزة'), on: () => this.openDrawer('mission', 'M-2418') },
-        { title: 'المركبة جاهزة للاستلام', meta: 'قبل 18 دقيقة · مسؤول التسليم', col: this.sc('متاحة'), on: () => this.setState({ empScreen: 'home' }) },
-        { title: 'تذكير ببدء المهمة', meta: 'اليوم 09:00 · النظام', col: this.sc('صيانة'), on: () => this.setState({ empScreen: 'home' }) },
-        { title: 'تعليمات السلامة الميدانية', meta: 'أمس · الشؤون الإدارية', col: this.sc('مغلقة'), on: () => this.flash('تعليمات السلامة — نموذج أولي') }
+      // No real notifications backend exists yet — an honest empty list,
+      // not fabricated alerts, until one is actually built.
+      out.empNotifs = [];
+      out.empNotifsEmpty = true;
+      out.empProfile = [
+        { k: 'الاسم', v: st.sessionName || 'غير متاح' },
+        { k: 'القسم', v: st.department || '—' },
+        { k: 'الدور', v: 'موظف ميداني' },
+        { k: 'الرقم الوظيفي', v: 'غير مسجَّل في النظام' }
       ];
-      out.empProfile = [{ k: 'الاسم', v: 'سعد المطيري' }, { k: 'الرقم الوظيفي', v: '10428' }, { k: 'القسم', v: 'الرقابة البلدية' },
-        { k: 'الدور', v: 'مفتش ميداني' }, { k: 'رخصة القيادة', v: 'سارية' }];
-      out.empIndicators = [{ k: 'المهام المكتملة', v: '38' }, { k: 'الالتزام بالتوقيت', v: '94%' }, { k: 'إعادة المركبة في الوقت', v: '97%' }, { k: 'الحوادث المسجّلة', v: '1' }];
+      // Only the two counts below are derived from real, already-fetched
+      // data (M/I are server-scoped to this employee). The other two
+      // metrics would need due-time tracking this system doesn't have —
+      // shown honestly as unavailable rather than a fabricated percentage.
+      out.empIndicators = [
+        { k: 'المهام المكتملة', v: String(M.filter(x => this.missionStatus(x.id) === 'مغلقة').length) },
+        { k: 'الحوادث المسجّلة', v: String(I.length) },
+        { k: 'الالتزام بالتوقيت', v: 'لا تتوفر بيانات كافية' },
+        { k: 'إعادة المركبة في الوقت', v: 'لا تتوفر بيانات كافية' }
+      ];
 
       out.empNav = [['home', 'الرئيسية'], ['tasks', 'مهامي'], ['active', 'الخريطة'], ['alerts', 'التنبيهات'], ['account', 'حسابي']].map(n => {
         const a = tab === n[0];
@@ -1852,9 +1888,12 @@ class Component extends DCLogic {
     const K = (label, value, name, delta) => ({ label: label, value: String(value), delta: delta || '', col: this.sc(name), on: () => this.flash(label + ': ' + value) });
 
     if (st.role === 'mobility' && st.screen === 'ops') {
+      // A real mission awaiting allocation, if any — the toolbar shortcut
+      // below must open a real mission's drawer, never a fake demo id.
+      const pendingAlloc = M.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة')[0];
       return { ops: true, bottom: true, title: 'مركز عمليات حركة السير الذكية', sub: 'التشغيل المباشر للأسطول والمهام والحوادث',
         actions: [
-          { label: 'تخصيص مركبة', on: () => this.openDrawer('alloc', 'M-2414'), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' },
+          ...(pendingAlloc ? [{ label: 'تخصيص مركبة', on: () => this.openDrawer('alloc', pendingAlloc.id), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' }] : []),
           { label: 'الخريطة التشغيلية', on: () => this.setState({ screen: 'map' }), tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }
         ],
         kpis: [
@@ -1866,7 +1905,7 @@ class Component extends DCLogic {
         sideATitle: 'طابور تخصيص المركبات', sideACount: mcnt('بانتظار المركبة') + ' طلب',
         sideA: M.filter(m => ['بانتظار المركبة', 'معتمدة', 'بانتظار الاعتماد'].indexOf(this.missionStatus(m.id)) >= 0).map(m => {
           const c = this.chipOf(this.missionStatus(m.id));
-          return { badge: m.no.split('-')[1], title: m.type + ' · ' + m.dept, meta: m.emp + ' · ' + m.when, tag: this.missionStatus(m.id),
+          return { badge: this.missionBadge(m.no), title: m.type + ' · ' + m.dept, meta: m.emp + ' · ' + m.when, tag: this.missionStatus(m.id),
             col: c.col, chipBg: c.bg, bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))',
             on: () => this.openDrawer(this.missionStatus(m.id) === 'بانتظار المركبة' ? 'alloc' : 'mission', m.id) };
         }),
@@ -1918,7 +1957,7 @@ class Component extends DCLogic {
         ],
         sideATitle: 'مهام القسم الجارية', sideACount: dm.length + ' مهمة',
         sideA: dm.map(m => { const c = this.chipOf(this.missionStatus(m.id));
-          return { badge: m.no.split('-')[1], title: m.type, meta: m.emp + ' · ' + m.dest, tag: this.missionStatus(m.id), col: c.col, chipBg: c.bg,
+          return { badge: this.missionBadge(m.no), title: m.type, meta: m.emp + ' · ' + m.dest, tag: this.missionStatus(m.id), col: c.col, chipBg: c.bg,
             bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('mission', m.id) }; }),
         sideBTitle: 'موظفو القسم في مهمة', sideBCount: '',
         sideB: dm.filter(m => ['قيد التنفيذ', 'تم التسليم'].indexOf(this.missionStatus(m.id)) >= 0).map(m => ({
@@ -1970,7 +2009,12 @@ class Component extends DCLogic {
         rows: [{ k: 'الحالة', v: v.status }, { k: 'القسم', v: v.dept }, { k: 'الموظف الحالي', v: m ? m.emp : '—' },
           { k: 'المهمة', v: m ? m.no : '—' }, { k: 'الوجهة', v: m ? m.dest : '—' }, { k: 'العداد', v: v.odo.toLocaleString('en') + ' كم' }],
         actions: [{ label: 'تفاصيل المركبة', on: () => this.openDrawer('veh', v.id), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' },
-          { label: m ? 'المهمة' : 'تخصيص', on: () => m ? this.openDrawer('mission', m.id) : this.openDrawer('alloc', 'M-2414'), tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }] };
+          { label: m ? 'المهمة' : 'تخصيص', on: () => {
+            if (m) { this.openDrawer('mission', m.id); return; }
+            const pendingAlloc = this.missions().filter(x => this.missionStatus(x.id) === 'بانتظار المركبة')[0];
+            if (pendingAlloc) this.openDrawer('alloc', pendingAlloc.id);
+            else this.flash('لا توجد مهمة بانتظار تخصيص مركبة حالياً');
+          }, tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }] };
     }
     if (s.t === 'i') {
       const i = this.incidents().filter(x => x.id === s.id)[0]; if (!i) return null;
@@ -2129,7 +2173,9 @@ class Component extends DCLogic {
           { k: 'السنة', v: String(v.year) }, { k: 'القسم', v: v.dept }, { k: 'الحالة', v: v.status }, { k: 'قراءة العداد', v: v.odo.toLocaleString('en') + ' كم' },
           { k: 'الوقود', v: v.fuel + '%' }, { k: 'آخر استخدام', v: v.last }, { k: 'آخر صيانة', v: v.maintLast }, { k: 'الصيانة القادمة', v: v.maintNext }, { k: 'ملاحظات', v: v.note }],
         listTitle: 'سجل مهام المركبة',
-        list: (ms.length ? ms : M.slice(0, 3)).map(m => { const cc = this.chipOf(this.missionStatus(m.id));
+        // Real history only — falling back to unrelated missions when this
+        // vehicle simply has none yet would misrepresent them as its own.
+        list: ms.map(m => { const cc = this.chipOf(this.missionStatus(m.id));
           return { title: m.no + ' · ' + m.type, meta: m.emp + ' · ' + m.when, tag: this.missionStatus(m.id), col: cc.col,
             bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('mission', m.id) }; }),
         actions: [{ label: 'تعديل بيانات المركبة', on: () => this.proto(), tx: btn.tx, bg: btn.bg, bd: btn.bd },

@@ -391,4 +391,32 @@ test('V13 vehicles are never deleted, by anyone', async () => {
   await assertFails(deleteDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102')));
 });
 
+// ============================================================
+// users/{userId} read scoping for the employee picker (mobility_head
+// must be able to list org employees to allocate a vehicle to one).
+// ============================================================
+test('U1 mobility_head may read an employee record in their own org', async () => {
+  await assertSucceeds(getDoc(doc(ctx(UID.mobilityHeadA), 'users', UID.employeeA)));
+});
+
+test('U2 mobility_head may NOT read a non-employee record (least privilege)', async () => {
+  await assertFails(getDoc(doc(ctx(UID.mobilityHeadA), 'users', UID.deptHeadA)));
+  await assertFails(getDoc(doc(ctx(UID.mobilityHeadA), 'users', UID.adminAffairsA)));
+});
+
+test('U3 mobility_head may NOT read an employee record in a different org', async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'users', 'employee-b-uid'), {
+      role: 'employee', active: true, organizationId: ORG_B,
+    });
+  });
+  await assertFails(getDoc(doc(ctx(UID.mobilityHeadA), 'users', 'employee-b-uid')));
+});
+
+test('U4 department_head, administrative_affairs and employee still cannot read other users', async () => {
+  await assertFails(getDoc(doc(ctx(UID.deptHeadA), 'users', UID.employeeA)));
+  await assertFails(getDoc(doc(ctx(UID.adminAffairsA), 'users', UID.employeeA)));
+  await assertFails(getDoc(doc(ctx(UID.employeeA), 'users', UID.employeeA2)));
+});
+
 console.log('mobility mission + vehicle Firestore rules OK');

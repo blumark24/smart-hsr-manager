@@ -8,6 +8,9 @@
     "test:rules": "node test/run-firestore-rules.js",
     "test:mobility-rules": "node test/run-mobility-mission-rules.js",
     "test:mobility-incident-rules": "node test/run-mobility-incident-audit-rules.js",
+    "test:e2e:mayor-scenario": "node test/e2e/mayor-scenario.js",
+    "test:e2e:negative-security": "node test/e2e/negative-security.js",
+    "test:e2e:responsive-qa": "node test/e2e/responsive-qa.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -20,8 +23,10 @@
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^3.0.4",
+    "esbuild": "^0.28.2",
     "firebase": "^10.14.1",
     "firebase-tools": "^13.35.1",
+    "playwright": "^1.62.1",
     "tailwindcss": "^3.4.18"
   }
 }

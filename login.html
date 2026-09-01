@@ -128,8 +128,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserLocalPersistence, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 // إعدادات Firebase
 const firebaseConfig = {
@@ -140,6 +140,12 @@ const firebaseConfig = {
   messagingSenderId: "38965508031",
   appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
 };
+
+// Test-only: connects to the local Firebase emulators instead of production
+// Firebase. Gated on localhost AND an explicit opt-in query param — never
+// reachable in production, and inert for every real login.
+const useEmulators = ['localhost', '127.0.0.1'].includes(location.hostname)
+  && new URLSearchParams(location.search).get('useEmulators') === '1';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -153,6 +159,13 @@ const probeApp = initializeApp(firebaseConfig, 'smart-hsr-role-probe');
 const probeAuth = getAuth(probeApp);
 const probeDb = getFirestore(probeApp);
 await setPersistence(probeAuth, inMemoryPersistence);
+if (useEmulators) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+  connectAuthEmulator(managerAuth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectAuthEmulator(probeAuth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(probeDb, '127.0.0.1', 8080);
+}
 const loginButton = document.getElementById('loginButton');
 const msgBox = document.getElementById('msg');
 
@@ -212,6 +225,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     } else if (MOBILITY_ROLES.includes(role)) {
       const mobilityApp = initializeApp(firebaseConfig, 'smart-hsr-mobility-session');
       const mobilityAuth = getAuth(mobilityApp);
+      if (useEmulators) connectAuthEmulator(mobilityAuth, 'http://127.0.0.1:9099', { disableWarnings: true });
       await setPersistence(mobilityAuth, browserLocalPersistence);
       await signInWithEmailAndPassword(mobilityAuth, email, password);
     } else {

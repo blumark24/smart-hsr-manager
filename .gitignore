@@ -7,3 +7,4 @@ ui-debug.log
 .env
 .env.*
 !.env.example
+test/e2e/.generated/
