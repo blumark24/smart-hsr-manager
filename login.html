@@ -198,6 +198,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       const managerOrg = typeof manager.organizationId === 'string' ? manager.organizationId.trim() : '';
       if (manager.role === 'manager' && manager.active !== false && managerOrg) {
         await signInWithEmailAndPassword(managerAuth, email, password);
+        // smart-mobility.html/smart-mobility-adapter.js checks its own
+        // named 'smart-hsr-mobility-session' app for a signed-in user —
+        // without also signing into it here, a manager who later clicks
+        // through to Smart Mobility from manager.html would find no
+        // session there and get bounced back to this page.
+        const managerMobilityApp = initializeApp(firebaseConfig, 'smart-hsr-mobility-session');
+        const managerMobilityAuth = getAuth(managerMobilityApp);
+        if (useEmulators) connectAuthEmulator(managerMobilityAuth, 'http://127.0.0.1:9099', { disableWarnings: true });
+        await setPersistence(managerMobilityAuth, browserLocalPersistence);
+        await signInWithEmailAndPassword(managerMobilityAuth, email, password);
         await signOut(probeAuth);
         window.location.href = 'manager.html';
         return;
