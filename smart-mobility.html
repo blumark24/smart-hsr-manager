@@ -280,6 +280,7 @@
                 <sc-for list="{{ legend }}" as="g" hint-placeholder-count="6">
                   <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd);white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:{{ g.col }}"></span>{{ g.label }}</span>
                 </sc-for>
+                <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);white-space:nowrap;border-right:1px solid var(--div,rgba(122,164,224,0.16));padding-right:9px">مواقع تخطيطية — لا تتوفر بيانات GPS حقيقية</span>
               </div>
 
               <sc-if value="{{ hasSel }}">
@@ -990,11 +991,14 @@ class Component extends DCLogic {
     [[0.04, -0.62], [0.02, -0.34], [-0.04, -0.06], [-0.02, 0.22], [0.08, 0.50]]
   ];
 
+  // Zone counts are computed in renderVals() from the real fleet size
+  // (zoneShare), not stored here — there is no real per-vehicle geolocation
+  // to assign a vehicle to one of these decorative compass regions.
   ZONES = [
-    { id: 'n', name: 'النطاق الشمالي', col: '#22c55e', a0: 40, a1: 130, n: '6' },
-    { id: 'e', name: 'النطاق الشرقي', col: '#38bdf8', a0: -50, a1: 40, n: '5' },
-    { id: 's', name: 'النطاق الجنوبي', col: '#a855f7', a0: -140, a1: -50, n: '4' },
-    { id: 'w', name: 'النطاق الغربي', col: '#f5a524', a0: 130, a1: 220, n: '3' }
+    { id: 'n', name: 'النطاق الشمالي', col: '#22c55e', a0: 40, a1: 130 },
+    { id: 'e', name: 'النطاق الشرقي', col: '#38bdf8', a0: -50, a1: 40 },
+    { id: 's', name: 'النطاق الجنوبي', col: '#a855f7', a0: -140, a1: -50 },
+    { id: 'w', name: 'النطاق الغربي', col: '#f5a524', a0: 130, a1: 220 }
   ];
 
   DEST = [
@@ -1172,14 +1176,6 @@ class Component extends DCLogic {
     };
   }
 
-  vehPos(v) {
-    const r = this.ROUTES[v.route];
-    const t = (v.phase + this.state.tick * 0.006) % 1;
-    const seg = t * (r.length - 1), i = Math.floor(seg), f = seg - i;
-    const a = r[Math.min(i, r.length - 1)], b = r[Math.min(i + 1, r.length - 1)];
-    return { x: a[0] + (b[0] - a[0]) * f, y: a[1] + (b[1] - a[1]) * f };
-  }
-
   draw() {
     const cv = this.cv; if (!cv) return;
     const w = Math.round(cv.clientWidth) || 700, h = Math.round(cv.clientHeight) || 430;
@@ -1267,7 +1263,7 @@ class Component extends DCLogic {
     const s = this.state.sel; if (!s) return null;
     if (s.t === 'v') {
       const v = this.vehicles().filter(x => x.id === s.id)[0]; if (!v) return null;
-      return { col: this.sc(v.status), pos: v.status === 'في مهمة' || v.status === 'عائدة' ? this.vehPos(v) : this.parkPos(v) };
+      return { col: this.sc(v.status), pos: this.parkPos(v) };
     }
     if (s.t === 'i') { const i = this.incidents().filter(x => x.id === s.id)[0]; return i ? { col: '#ef4444', pos: { x: i.x, y: i.y } } : null; }
     if (s.t === 'd') { const d = this.DEST.filter(x => x.id === s.id)[0]; return d ? { col: '#a78bfa', pos: { x: d.x, y: d.y } } : null; }
@@ -1678,16 +1674,20 @@ class Component extends DCLogic {
       on: () => this.setState(s => { const n = Object.assign({}, s.layers); n[l.id] = !n[l.id]; return { layers: n, sel: null }; }) }));
 
     const pins = [];
+    // Vehicles are placed at a fixed, deterministic schematic position
+    // (parkPos), never animated along a route — this system has no real
+    // GPS source, so a moving marker would falsely imply live tracking.
+    // See gpsLabel/gpsCol in renderVals() for the honest, state-gated GPS
+    // disclosure shown per mission.
     if (L.veh) V.forEach(v => {
-      const moving = v.status === 'في مهمة' || v.status === 'عائدة';
-      const pos = moving ? this.vehPos(v) : this.parkPos(v);
+      const pos = this.parkPos(v);
       const q = this.proj(pos.x, pos.y, 0.04, G);
       const s = st.sel && st.sel.t === 'v' && st.sel.id === v.id;
       const c = this.sc(v.status);
       pins.push({ title: v.no + ' · ' + v.status, col: c, radius: '3px',
         size: s ? '14px' : '10px', off: s ? '-7px 0 0 -7px' : '-5px 0 0 -5px',
         ring: s ? '2px solid ' + (day ? '#ffffff' : '#eaf9ff') : 'none',
-        glow: day ? 'none' : '0 0 8px ' + this.tint(c, 0.7), pulse: moving ? '0.55' : '0', z: s ? '12' : '6',
+        glow: day ? 'none' : '0 0 8px ' + this.tint(c, 0.7), pulse: '0', z: s ? '12' : '6',
         left: Math.round(q.x) + 'px', top: Math.round(q.y) + 'px',
         on: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ sel: { t: 'v', id: v.id }, layersOpen: false }); } });
     });
@@ -1711,12 +1711,17 @@ class Component extends DCLogic {
         on: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ sel: { t: 'd', id: d.id } }); } });
     });
 
+    // Zone counts reflect the real fleet size, split evenly across the four
+    // decorative compass regions (no real per-vehicle geolocation exists to
+    // assign a vehicle to a specific zone) rather than the fixed
+    // placeholder numbers ('6'/'5'/'4'/'3') the design shipped with.
+    const zoneShare = this.ZONES.map((_, i) => Math.floor(V.length / this.ZONES.length) + (i < V.length % this.ZONES.length ? 1 : 0));
     const zoneLabels = L.zone ? this.zonePolys().map((z, i) => {
       const a = (z.a0 + z.a1) / 2 * Math.PI / 180, r = 0.58;
       const q = this.proj(r * Math.cos(a), -r * Math.sin(a), 0.06, G);
       const lx = Math.min(Math.max(q.x, 108), Math.max(130, st.tw - 120));
       const ly = Math.min(Math.max(q.y, 150), Math.max(170, st.th - 80));
-      return { name: z.name, n: z.n, col: day ? this.mix(z.col, 0.8, [16, 46, 32]) : z.col,
+      return { name: z.name, n: String(zoneShare[i]), col: day ? this.mix(z.col, 0.8, [16, 46, 32]) : z.col,
         bd: this.tint(z.col, day ? 0.35 : 0.45), left: Math.round(lx) + 'px', top: Math.round(ly) + 'px' };
     }) : [];
 

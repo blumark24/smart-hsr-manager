@@ -100,7 +100,6 @@ function normalizeMission(id, data) {
     scope: data.scope || 'داخل النطاق',
     why: data.reason || '—',
     requester: data.requesterName || 'رئيس القسم',
-    route: 0,
     gps: data.status === 'IN_PROGRESS' || data.status === 'HANDED_OVER',
     // Raw fields the adapter's action functions and rules-mirrored checks need.
     organizationId: data.organizationId, department: data.department,
@@ -116,7 +115,7 @@ function normalizeVehicle(id, data) {
     dept: data.department || '—',
     status: VEHICLE_STATUS_TO_ARABIC[data.status] || data.status,
     odo: data.odo || 0, fuel: data.fuel || 0,
-    last: data.updatedAtLabel || '—', maintLast: '—', maintNext: '—', route: 0, phase: 0, note: '—',
+    last: data.updatedAtLabel || '—', maintLast: '—', maintNext: '—', note: '—',
     organizationId: data.organizationId, assignedEmployeeUid: data.assignedEmployeeUid || '',
     currentMissionId: data.currentMissionId || '', rawStatus: data.status
   };
