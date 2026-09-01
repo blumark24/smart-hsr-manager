@@ -47,6 +47,14 @@ async function main() {
         const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
         await installFbMock(context);
         const page = await loginAs(context, harness.baseUrl, role.email);
+        // manager@e2e.test lands on the pre-existing Manager Dashboard
+        // (manager.html) first, same as any real manager — follow the same
+        // nav click a person would use to reach Smart Mobility, since that
+        // is what this QA pass is actually reviewing.
+        if (role.key === 'manager') {
+          await page.getByText('حركة السير الذكية', { exact: true }).first().click();
+          await page.waitForTimeout(1500);
+        }
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
         const shotPath = path.join(OUT_DIR, `${role.key}-${vp.name}.png`);
         await page.screenshot({ path: shotPath, fullPage: false });
