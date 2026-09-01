@@ -48,11 +48,14 @@ async function main() {
         await installFbMock(context);
         const page = await loginAs(context, harness.baseUrl, role.email);
         // manager@e2e.test lands on the pre-existing Manager Dashboard
-        // (manager.html) first, same as any real manager — follow the same
-        // nav click a person would use to reach Smart Mobility, since that
-        // is what this QA pass is actually reviewing.
+        // (manager.html) first, same as any real manager. Its own nav link
+        // to Smart Mobility collapses into a per-viewport mobile menu at
+        // narrow widths (a separate, already-covered interaction) — for
+        // this screenshot pass we only care about Smart Mobility's own
+        // rendering, so navigate there directly rather than replicating
+        // every width's specific menu-opening flow.
         if (role.key === 'manager') {
-          await page.getByText('حركة السير الذكية', { exact: true }).first().click();
+          await page.goto(`${harness.baseUrl}/smart-mobility.html?useEmulators=1`);
           await page.waitForTimeout(1500);
         }
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
