@@ -119,7 +119,11 @@ async function main() {
 
     step(4, 'Mobility Head hands the vehicle over to the employee');
     {
-      await mobilityPage.getByText('التسليم والاستلام', { exact: true }).first().click();
+      const navLink = mobilityPage.getByText('التسليم والاستلام', { exact: true }).first();
+      console.log('  [debug] nav link box:', JSON.stringify(await navLink.boundingBox()));
+      console.log('  [debug] nav link visible:', await navLink.isVisible());
+      await mobilityPage.screenshot({ path: '/tmp/claude-0/-home-user-smart-hsr-manager/0ea6ea42-8758-5a2f-8b7b-30493c714b6f/scratchpad/mayor-step4-debug.png', fullPage: true });
+      await navLink.click();
       await mobilityPage.getByRole('button', { name: 'بدء التسليم للموظف', exact: true }).click();
       await mobilityPage.getByRole('button', { name: 'تأكيد تسليم المركبة', exact: true }).click();
       await mobilityPage.waitForTimeout(1500);
