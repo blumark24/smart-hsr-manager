@@ -960,7 +960,7 @@ class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
     role: null, screen: null, authPending: true, orgName: '', sessionName: '', department: '',
-    liveMissions: [], liveVehicles: [], liveEmployees: [],
+    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [],
     sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
     twin3D: true, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
     layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true },
@@ -1088,15 +1088,12 @@ class Component extends DCLogic {
     return this.state.liveMissions || [];
   }
 
+  // Real data, published by smart-mobility-adapter.js from the
+  // organizationId-scoped (department-scoped for department_head,
+  // own-reports-only for employee) incidents/{incidentId} Firestore
+  // collection (Phase 9). Empty until a real incident is reported.
   incidents() {
-    if (this._inc) return this._inc;
-    this._inc = [
-      { id: 'I-118', cat: 'حادث مروري', sev: 'حرجة', status: 'تحت المعالجة', mis: 'M-2410', veh: 'V108', emp: 'بندر العتيبي', dept: 'إدارة الطرق', loc: 'تقاطع 21 — القطاع الغربي', time: '26/05 15:40', x: -0.34, y: -0.18, note: 'اصطدام جانبي بسيط أثناء التوجه للموقع', ev: 'صورتان مرفقتان' },
-      { id: 'I-117', cat: 'عطل مركبة', sev: 'متوسطة', status: 'تم الاستلام', mis: 'M-2411', veh: 'V107', emp: 'مشعل الرشيدي', dept: 'إدارة النظافة', loc: 'حي النور — القطاع الجنوبي', time: '26/05 14:05', x: 0.22, y: 0.30, note: 'ارتفاع حرارة المحرك', ev: 'صورة واحدة' },
-      { id: 'I-116', cat: 'نقص وقود', sev: 'منخفضة', status: 'تم الحل', mis: 'M-2409', veh: 'V109', emp: 'سلطان الزهراني', dept: 'الرقابة البلدية', loc: 'القطاع الشرقي', time: '25/05 11:10', x: 0.50, y: -0.20, note: 'تمت التعبئة من محطة معتمدة', ev: '—' },
-      { id: 'I-115', cat: 'حالة طارئة', sev: 'حرجة', status: 'جديد', mis: 'M-2416', veh: 'V103', emp: 'فهد الحربي', dept: 'إدارة الطرق', loc: 'شارع الملك — القطاع الغربي', time: '27/05 09:22', x: -0.48, y: -0.34, note: 'طلب دعم عاجل من الموقع', ev: 'بانتظار الدليل' }
-    ];
-    return this._inc;
+    return this.state.liveIncidents || [];
   }
 
   missionStatus(id) { return this.state.stat[id] || (this.missions().filter(m => m.id === id)[0] || {}).status; }
@@ -2140,15 +2137,21 @@ class Component extends DCLogic {
     }
 
     if (k === 'inc') {
-      const i = I.filter(x => x.id === id)[0] || I[0];
+      const i = I.filter(x => x.id === id)[0];
+      if (!i) return Object.assign({}, none, { title: 'تعذر تحديد الحادث' });
       const c = this.chipOf(i.status);
+      const process = (toStatus, msg) => window.SmartHSRMobilityAdapter.mobilityProcessIncident(i.id, toStatus)
+        .then(() => { this.setState({ drawer: null }); this.flash(msg); })
+        .catch(() => this.flash('تعذر تنفيذ الإجراء'));
+      const iActs = [];
+      if (i.status === 'جديد') iActs.push({ label: 'تم الاستلام', on: () => process('ACKNOWLEDGED', 'تم استلام الحادث ' + i.id), tx: btn.tx, bg: btn.bg, bd: btn.bd });
+      if (i.status === 'تم الاستلام') iActs.push({ label: 'بدء المعالجة', on: () => process('IN_PROGRESS', 'الحادث ' + i.id + ' تحت المعالجة'), tx: btn.tx, bg: btn.bg, bd: btn.bd });
+      if (i.status === 'تحت المعالجة') iActs.push({ label: 'تم الحل', on: () => process('RESOLVED', 'تم حل الحادث ' + i.id), tx: btn.tx, bg: btn.bg, bd: btn.bd });
       return { title: i.cat + ' · ' + i.id, sub: 'خطورة ' + i.sev + ' · ' + i.dept, chip: i.status, chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
         banner: 'زمن الحادث لا يُحتسب ضمن تأخر الموظف الاعتيادي.', bannerCol: this.sc('محجوزة'), bannerBg: this.tint('#38bdf8', 0.1), bannerBd: this.tint('#38bdf8', 0.28),
         rows: [{ k: 'الحالة', v: i.status }, { k: 'الخطورة', v: i.sev }, { k: 'المهمة', v: i.mis }, { k: 'المركبة', v: i.veh },
           { k: 'الموظف', v: i.emp }, { k: 'القسم', v: i.dept }, { k: 'الموقع', v: i.loc }, { k: 'الوقت', v: i.time }, { k: 'الدليل', v: i.ev }, { k: 'الوصف', v: i.note }],
-        actions: [{ label: 'تم الاستلام', on: () => this.flash('تم استلام الحادث ' + i.id), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd },
-          { label: 'تحت المعالجة', on: () => this.flash('الحادث ' + i.id + ' تحت المعالجة'), tx: btn.tx, bg: btn.bg, bd: btn.bd },
-          { label: 'تم الحل', on: () => this.flash('تم حل الحادث ' + i.id), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
+        actions: iActs };
     }
 
     if (k === 'create') {
@@ -2204,7 +2207,11 @@ class Component extends DCLogic {
         evidence: true,
         actions: [{ label: 'إرسال البلاغ', on: () => {
           if (!im) { this.flash('تعذر تحديد المهمة'); return; }
-          window.SmartHSRMobilityAdapter.employeeAdvanceMission(im.id, 'INCIDENT_HOLD').then(() => {
+          const category = this.state.chip.inc || 'أخرى';
+          const severity = category === 'حالة طارئة' || category === 'حادث مروري' ? 'CRITICAL' : 'MEDIUM';
+          window.SmartHSRMobilityAdapter.createIncident({
+            missionId: im.id, vehicleId: im.veh, category, severity, note: this.state.form.incNote || ''
+          }).then(() => window.SmartHSRMobilityAdapter.employeeAdvanceMission(im.id, 'INCIDENT_HOLD')).then(() => {
             this.setState({ drawer: null }); this.flash('تم إرسال البلاغ — أُشعر رئيس حركة السير ورئيس القسم');
           }).catch(() => this.flash('تعذر إرسال البلاغ'));
         }, tx: danger.tx, bg: this.tint('#ef4444', 0.16), bd: this.tint('#ef4444', 0.45) },

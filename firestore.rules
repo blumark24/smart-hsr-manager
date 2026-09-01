@@ -374,6 +374,72 @@ service cloud.firestore {
     }
 
     // ==========================================================
+    // incidents/{incidentId} — Smart Mobility incident lifecycle. Created
+    // only by the employee assigned to the referenced mission while it is
+    // IN_PROGRESS; processed only by mobility_head. Mirrors
+    // platform/policies/incident-workflow-policy.js — keep both in sync.
+    // ==========================================================
+    match /incidents/{incidentId} {
+      allow read: if (isActiveManager() && resource.data.organizationId == managerOrgId())
+        || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'administrative_affairs' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'department_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.department == mobilityUserDept())
+        || (mobilityUserRole() == 'employee' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.createdByUid == request.auth.uid);
+
+      // Only the employee assigned to the referenced (currently
+      // IN_PROGRESS) mission may open an incident against it.
+      allow create: if mobilityUserRole() == 'employee'
+        && request.resource.data.organizationId == mobilityUserOrgId()
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.status == 'NEW'
+        && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.organizationId == mobilityUserOrgId()
+        && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.assignedEmployeeUid == request.auth.uid
+        && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.status == 'IN_PROGRESS';
+
+      // mobility_head processes: NEW -> ACKNOWLEDGED -> IN_PROGRESS -> RESOLVED.
+      allow update: if request.resource.data.organizationId == resource.data.organizationId
+        && mobilityUserRole() == 'mobility_head'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && (
+          (resource.data.status == 'NEW' && request.resource.data.status == 'ACKNOWLEDGED')
+          || (resource.data.status == 'ACKNOWLEDGED' && request.resource.data.status == 'IN_PROGRESS')
+          || (resource.data.status == 'IN_PROGRESS' && request.resource.data.status == 'RESOLVED')
+        )
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedByUid'])
+        && request.resource.data.updatedByUid == request.auth.uid;
+
+      // Incidents are never deleted — they are the record of what happened.
+      allow delete: if false;
+    }
+
+    // ==========================================================
+    // auditEvents/{eventId} — append-only Smart Mobility audit trail.
+    // Every mission/vehicle/incident transition writes one of these.
+    // Mirrors platform/audit/mobility-audit-event-contract.js.
+    // ==========================================================
+    match /auditEvents/{eventId} {
+      allow read: if (isActiveManager() && resource.data.organizationId == managerOrgId())
+        || (mobilityUserRole() in ['mobility_head', 'administrative_affairs'] && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'department_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.department == mobilityUserDept())
+        || (mobilityUserRole() == 'employee' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.actorId == request.auth.uid);
+
+      // An actor may only ever record an event as themselves, in their own
+      // organization — never on another user's behalf, never cross-tenant.
+      allow create: if isActiveMobilityUser()
+        && request.resource.data.organizationId == mobilityUserOrgId()
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.actorRole == mobilityUserRole()
+        && request.resource.data.resourceType in ['mission', 'vehicle', 'incident'];
+
+      // Audit records are immutable once written.
+      allow update, delete: if false;
+    }
+
+    // ==========================================================
     // Final fallback — everything else denied.
     // ==========================================================
     match /{document=**} {

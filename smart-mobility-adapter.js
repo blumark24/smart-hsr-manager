@@ -46,11 +46,19 @@ const VEHICLE_STATUS_TO_ARABIC = Object.freeze({
   OUT_OF_SERVICE: 'خارج الخدمة'
 });
 
+const INCIDENT_STATUS_TO_ARABIC = Object.freeze({
+  NEW: 'جديد',
+  ACKNOWLEDGED: 'تم الاستلام',
+  IN_PROGRESS: 'تحت المعالجة',
+  RESOLVED: 'تم الحل'
+});
+
 let activeComponent = null;
 let stopAuth = null;
 let stopMissions = null;
 let stopVehicles = null;
 let stopEmployees = null;
+let stopIncidents = null;
 let activeAuth = null;
 let activeAuthApi = null;
 let activeDb = null;
@@ -121,6 +129,30 @@ function normalizeVehicle(id, data) {
   };
 }
 
+// Incidents are plotted on the twin at a fixed position derived from their
+// id (deterministic, not real geolocation — this system has no real GPS
+// source; see the "مواقع تخطيطية" disclosure on the map screen).
+function incidentPosition(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const angle = (h % 360) * Math.PI / 180;
+  const r = 0.2 + (h % 100) / 100 * 0.3;
+  return { x: r * Math.cos(angle), y: r * Math.sin(angle) };
+}
+
+function normalizeIncident(id, data) {
+  const pos = incidentPosition(id);
+  return {
+    id, cat: data.category || 'حادث',
+    sev: { CRITICAL: 'حرجة', MEDIUM: 'متوسطة', LOW: 'منخفضة' }[data.severity] || 'متوسطة',
+    status: INCIDENT_STATUS_TO_ARABIC[data.status] || data.status,
+    mis: data.missionId || '—', veh: data.vehicleId || '—', emp: data.employeeName || '—',
+    dept: data.department || '—', loc: data.location || '—', time: data.timeLabel || '—',
+    note: data.note || '—', ev: 'بلا دليل مرفق', x: pos.x, y: pos.y,
+    organizationId: data.organizationId, createdByUid: data.createdByUid, rawStatus: data.status
+  };
+}
+
 function publishMissions(component, snapshot) {
   const missions = snapshot.docs.map(d => normalizeMission(d.id, d.data() || {}));
   component.setState({ liveMissions: missions });
@@ -129,6 +161,11 @@ function publishMissions(component, snapshot) {
 function publishVehicles(component, snapshot) {
   const vehicles = snapshot.docs.map(d => normalizeVehicle(d.id, d.data() || {}));
   component.setState({ liveVehicles: vehicles });
+}
+
+function publishIncidents(component, snapshot) {
+  const incidents = snapshot.docs.map(d => normalizeIncident(d.id, d.data() || {}));
+  component.setState({ liveIncidents: incidents });
 }
 
 function subscribeMissions(firestoreApi, db, component, context) {
@@ -151,6 +188,17 @@ function subscribeVehicles(firestoreApi, db, component, context) {
     if (snapshot.metadata.fromCache) return;
     publishVehicles(component, snapshot);
   }, () => component.setState({ liveVehicles: [] }));
+}
+
+function subscribeIncidents(firestoreApi, db, component, context) {
+  const clauses = [firestoreApi.where('organizationId', '==', context.organizationId)];
+  if (context.designRole === 'dept') clauses.push(firestoreApi.where('department', '==', context.department));
+  if (context.designRole === 'employee') clauses.push(firestoreApi.where('createdByUid', '==', context.uid));
+  const q = firestoreApi.query(firestoreApi.collection(db, 'incidents'), ...clauses);
+  return firestoreApi.onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
+    if (snapshot.metadata.fromCache) return;
+    publishIncidents(component, snapshot);
+  }, () => component.setState({ liveIncidents: [] }));
 }
 
 function subscribeEmployees(firestoreApi, db, component, context) {
@@ -198,10 +246,10 @@ async function start(component) {
       sessionName: user.displayName || user.email || 'الحساب الموثق',
       department: context.department || '',
       authPending: false,
-      liveMissions: [], liveVehicles: [], liveEmployees: []
+      liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: []
     });
 
-    stopMissions?.(); stopVehicles?.(); stopEmployees?.();
+    stopMissions?.(); stopVehicles?.(); stopEmployees?.(); stopIncidents?.();
     stopMissions = subscribeMissions(firestoreApi, db, component, context);
     if (['manager', 'mobility', 'admin', 'employee'].includes(context.designRole)) {
       stopVehicles = subscribeVehicles(firestoreApi, db, component, context);
@@ -209,13 +257,14 @@ async function start(component) {
     if (context.designRole === 'mobility') {
       stopEmployees = subscribeEmployees(firestoreApi, db, component, context);
     }
+    stopIncidents = subscribeIncidents(firestoreApi, db, component, context);
   });
 }
 
 function disconnect(component) {
   if (component && component !== activeComponent) return;
-  stopAuth?.(); stopMissions?.(); stopVehicles?.(); stopEmployees?.();
-  stopAuth = stopMissions = stopVehicles = stopEmployees = null;
+  stopAuth?.(); stopMissions?.(); stopVehicles?.(); stopEmployees?.(); stopIncidents?.();
+  stopAuth = stopMissions = stopVehicles = stopEmployees = stopIncidents = null;
   activeAuth = null;
   activeAuthApi = null;
   activeDb = null;
@@ -228,6 +277,29 @@ function requireRole(...roles) {
   if (!activeContext || !roles.includes(activeContext.designRole)) {
     throw new Error('not_authorized');
   }
+}
+
+// Every mutation below writes one append-only auditEvents/{eventId} record
+// alongside its real write — inside the same transaction where one is
+// already used, so the audit trail and the state change are atomic.
+// firestore.rules enforces that an actor may only ever record an event as
+// themselves (see the auditEvents match block).
+function auditEventData(resourceType, resourceId, action, extra) {
+  const ctx = activeContext;
+  return Object.assign({
+    organizationId: ctx.organizationId, actorId: ctx.uid, actorRole: rawRoleOf(ctx),
+    resourceType, resourceId, action, timestamp: activeFirestoreApi.serverTimestamp()
+  }, extra || {});
+}
+
+function rawRoleOf(ctx) {
+  const reverse = { manager: 'manager', mobility: 'mobility_head', dept: 'department_head', admin: 'administrative_affairs', employee: 'employee' };
+  return reverse[ctx.designRole] || ctx.designRole;
+}
+
+async function recordAudit(resourceType, resourceId, action, extra) {
+  const api = activeFirestoreApi, db = activeDb;
+  await api.setDoc(api.doc(api.collection(db, 'auditEvents')), auditEventData(resourceType, resourceId, action, extra));
 }
 
 async function createMissionRequest({ type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel }) {
@@ -243,6 +315,7 @@ async function createMissionRequest({ type, destination, reason, scope, requeste
     whenLabel: whenLabel || '', durationLabel: durationLabel || '',
     createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
+  await recordAudit('mission', ref.id, 'create', { toStatus: 'DRAFT' });
   return ref.id;
 }
 
@@ -252,6 +325,7 @@ async function submitMissionForApproval(missionId) {
   await api.updateDoc(api.doc(db, 'missions', missionId), {
     status: 'PENDING_APPROVAL', updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
+  await recordAudit('mission', missionId, 'submit_for_approval', { fromStatus: 'DRAFT', toStatus: 'PENDING_APPROVAL' });
 }
 
 async function decideMission(missionId, toStatus) {
@@ -261,6 +335,7 @@ async function decideMission(missionId, toStatus) {
   await api.updateDoc(api.doc(db, 'missions', missionId), {
     status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
+  await recordAudit('mission', missionId, 'decide', { fromStatus: 'PENDING_APPROVAL', toStatus });
 }
 
 // Allocates a vehicle to an approved mission. Performed as one Firestore
@@ -286,6 +361,10 @@ async function allocateVehicle(missionId, vehicleId, assignedEmployeeUid, assign
       status: 'RESERVED', assignedEmployeeUid, currentMissionId: missionId,
       updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
     });
+    transaction.set(api.doc(api.collection(db, 'auditEvents')),
+      auditEventData('mission', missionId, 'allocate_vehicle', { fromStatus: 'APPROVED', toStatus: 'VEHICLE_ALLOCATED', vehicleId }));
+    transaction.set(api.doc(api.collection(db, 'auditEvents')),
+      auditEventData('vehicle', vehicleId, 'allocate', { fromStatus: 'AVAILABLE', toStatus: 'RESERVED', missionId }));
   });
 }
 
@@ -300,6 +379,10 @@ async function handoverMission(missionId, vehicleId) {
     if (!vehicleSnap.exists() || vehicleSnap.data().status !== 'RESERVED') throw new Error('vehicle_not_reserved');
     transaction.update(missionRef, { status: 'HANDED_OVER', updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid });
     transaction.update(vehicleRef, { status: 'IN_MISSION', updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid });
+    transaction.set(api.doc(api.collection(db, 'auditEvents')),
+      auditEventData('mission', missionId, 'handover', { fromStatus: 'VEHICLE_ALLOCATED', toStatus: 'HANDED_OVER', vehicleId }));
+    transaction.set(api.doc(api.collection(db, 'auditEvents')),
+      auditEventData('vehicle', vehicleId, 'handover', { fromStatus: 'RESERVED', toStatus: 'IN_MISSION', missionId }));
   });
 }
 
@@ -317,6 +400,10 @@ async function confirmVehicleReturn(missionId, vehicleId) {
       status: 'AVAILABLE', assignedEmployeeUid: api.deleteField(), currentMissionId: api.deleteField(),
       updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
     });
+    transaction.set(api.doc(api.collection(db, 'auditEvents')),
+      auditEventData('mission', missionId, 'confirm_return', { fromStatus: 'AWAITING_RETURN', toStatus: 'CLOSED', vehicleId }));
+    transaction.set(api.doc(api.collection(db, 'auditEvents')),
+      auditEventData('vehicle', vehicleId, 'confirm_return', { fromStatus: 'RETURN_PENDING', toStatus: 'AVAILABLE', missionId }));
   });
 }
 
@@ -330,6 +417,7 @@ async function employeeAdvanceMission(missionId, toStatus) {
   await api.updateDoc(api.doc(db, 'missions', missionId), {
     status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
+  await recordAudit('mission', missionId, 'employee_advance', { toStatus });
 }
 
 // The employee's own act of handing the vehicle back — COMPLETED ->
@@ -350,7 +438,35 @@ async function employeeReturnVehicle(missionId, vehicleId) {
     if (!vehicleSnap.exists() || vehicleSnap.data().status !== 'IN_MISSION') throw new Error('vehicle_not_in_mission');
     transaction.update(missionRef, { status: 'AWAITING_RETURN', updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid });
     transaction.update(vehicleRef, { status: 'RETURN_PENDING', updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid });
+    transaction.set(api.doc(api.collection(db, 'auditEvents')),
+      auditEventData('mission', missionId, 'employee_return_vehicle', { fromStatus: 'COMPLETED', toStatus: 'AWAITING_RETURN', vehicleId }));
+    transaction.set(api.doc(api.collection(db, 'auditEvents')),
+      auditEventData('vehicle', vehicleId, 'employee_return_vehicle', { fromStatus: 'IN_MISSION', toStatus: 'RETURN_PENDING', missionId }));
   });
+}
+
+async function createIncident({ missionId, vehicleId, category, severity, note }) {
+  requireRole('employee');
+  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
+  const ref = api.doc(api.collection(db, 'incidents'));
+  await api.setDoc(ref, {
+    organizationId: ctx.organizationId, missionId, vehicleId: vehicleId || '',
+    createdByUid: ctx.uid, employeeName: ctx.sessionName || '', department: ctx.department || '',
+    category: category || 'أخرى', severity: severity || 'MEDIUM', note: note || '',
+    status: 'NEW', createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
+  });
+  await recordAudit('incident', ref.id, 'create', { toStatus: 'NEW', missionId });
+  return ref.id;
+}
+
+async function mobilityProcessIncident(incidentId, toStatus) {
+  requireRole('mobility');
+  if (!['ACKNOWLEDGED', 'IN_PROGRESS', 'RESOLVED'].includes(toStatus)) throw new Error('invalid_decision');
+  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
+  await api.updateDoc(api.doc(db, 'incidents', incidentId), {
+    status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
+  });
+  await recordAudit('incident', incidentId, 'process', { toStatus });
 }
 
 window.SmartHSRMobilityAdapter = {
@@ -365,7 +481,7 @@ window.SmartHSRMobilityAdapter = {
         orgName: 'معاينة محلية — لا بيانات تشغيلية',
         sessionName: 'معاينة محلية',
         authPending: false,
-        liveMissions: [], liveVehicles: [], liveEmployees: []
+        liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: []
       });
       return;
     }
@@ -386,7 +502,9 @@ window.SmartHSRMobilityAdapter = {
   handoverMission,
   confirmVehicleReturn,
   employeeAdvanceMission,
-  employeeReturnVehicle
+  employeeReturnVehicle,
+  createIncident,
+  mobilityProcessIncident
 };
 
 window.dispatchEvent(new Event('smart-hsr-mobility-adapter-ready'));
