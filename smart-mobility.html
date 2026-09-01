@@ -640,32 +640,39 @@
             </div>
 
             <sc-if value="{{ empHome }}">
-              <div style="display:flex;flex-direction:column;gap:12px">
-                <div style="padding:16px;border-radius:20px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid {{ empStBd }};box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
-                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
-                    <span style="flex:1;font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">مهمتي الحالية</span>
-                    <span style="font-size:11px;font-weight:600;padding:5px 11px;border-radius:8px;color:{{ empStCol }};background:{{ empStBg }};border:1px solid {{ empStBd }}">{{ empStatus }}</span>
+              <sc-if value="{{ empHasMission }}">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div style="padding:16px;border-radius:20px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid {{ empStBd }};box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                    <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
+                      <span style="flex:1;font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">مهمتي الحالية</span>
+                      <span style="font-size:11px;font-weight:600;padding:5px 11px;border-radius:8px;color:{{ empStCol }};background:{{ empStBg }};border:1px solid {{ empStBd }}">{{ empStatus }}</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:11px">
+                      <sc-for list="{{ empRows }}" as="r" hint-placeholder-count="5">
+                        <div style="display:flex;align-items:center;gap:10px">
+                          <span style="flex:none;width:74px;font-size:12px;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
+                          <span style="flex:1;text-align:left;font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">{{ r.v }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:9px;margin-top:14px;padding:11px 12px;border-radius:12px;background:{{ gpsBg }};border:1px solid {{ gpsBd }}">
+                      <span style="width:9px;height:9px;flex:none;border-radius:50%;background:{{ gpsCol }};animation:{{ gpsAnim }}"></span>
+                      <span style="flex:1;font-size:12px;color:var(--tx,#e9f1fb)">{{ gpsLabel }}</span>
+                    </div>
                   </div>
-                  <div style="display:flex;flex-direction:column;gap:11px">
-                    <sc-for list="{{ empRows }}" as="r" hint-placeholder-count="5">
-                      <div style="display:flex;align-items:center;gap:10px">
-                        <span style="flex:none;width:74px;font-size:12px;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
-                        <span style="flex:1;text-align:left;font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">{{ r.v }}</span>
-                      </div>
+
+                  <div style="display:flex;flex-direction:column;gap:10px">
+                    <sc-for list="{{ empActions }}" as="a" hint-placeholder-count="3">
+                      <button onClick="{{ a.on }}" data-f="1" style="width:100%;min-height:56px;padding:0 16px;border-radius:16px;font-size:14px;font-weight:700;line-height:1.4;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;text-align:center;color:{{ a.tx }};background:{{ a.bg }};border:1px solid {{ a.bd }}">{{ a.label }}</button>
                     </sc-for>
                   </div>
-                  <div style="display:flex;align-items:center;gap:9px;margin-top:14px;padding:11px 12px;border-radius:12px;background:{{ gpsBg }};border:1px solid {{ gpsBd }}">
-                    <span style="width:9px;height:9px;flex:none;border-radius:50%;background:{{ gpsCol }};animation:{{ gpsAnim }}"></span>
-                    <span style="flex:1;font-size:12px;color:var(--tx,#e9f1fb)">{{ gpsLabel }}</span>
-                  </div>
                 </div>
-
-                <div style="display:flex;flex-direction:column;gap:10px">
-                  <sc-for list="{{ empActions }}" as="a" hint-placeholder-count="3">
-                    <button onClick="{{ a.on }}" data-f="1" style="width:100%;min-height:56px;padding:0 16px;border-radius:16px;font-size:14px;font-weight:700;line-height:1.4;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;text-align:center;color:{{ a.tx }};background:{{ a.bg }};border:1px solid {{ a.bd }}">{{ a.label }}</button>
-                  </sc-for>
+              </sc-if>
+              <sc-if value="{{ empNoMission }}">
+                <div style="padding:32px 16px;border-radius:20px;text-align:center;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));color:var(--tx2,#a9bdd4);font-size:13px">
+                  لا توجد مهمة نشطة حالياً
                 </div>
-              </div>
+              </sc-if>
             </sc-if>
 
             <sc-if value="{{ empActive }}">
@@ -1490,21 +1497,28 @@ class Component extends DCLogic {
     }
 
     if (s === 'emp') {
-      const m = M.filter(x => x.id === 'M-2418')[0];
-      const stt = this.missionStatus('M-2418'), c = this.chipOf(stt);
-      const v = V.filter(x => x.id === m.veh)[0];
+      // M is already scoped to this employee's own assignedEmployeeUid by
+      // smart-mobility-adapter.js. Pick whichever mission is currently
+      // moving through the active stages as the one shown on "الرئيسية".
+      const ACTIVE_STAGES = ['تم التسليم', 'جاهزة للبدء', 'قيد التنفيذ', 'متوقفة بسبب حادث', 'مكتملة', 'في انتظار إعادة المركبة'];
+      const m = M.filter(x => ACTIVE_STAGES.indexOf(this.missionStatus(x.id)) >= 0)[0] || null;
+      const stt = m ? this.missionStatus(m.id) : '';
+      const c = this.chipOf(stt);
+      const v = m ? V.filter(x => x.id === m.veh)[0] : null;
       const tab = st.empScreen;
       const running = stt === 'قيد التنفيذ' || stt === 'متوقفة بسبب حادث';
       const secs = st.elapsed;
       const pad = n => (n < 10 ? '0' : '') + n;
 
+      out.empHasMission = !!m;
+      out.empNoMission = !m;
       out.empGreet = 'صباح الخير';
       out.empStatus = stt; out.empStCol = c.col; out.empStBg = c.bg; out.empStBd = c.bd;
       out.empHome = tab === 'home'; out.empActive = tab === 'active'; out.empTasks = tab === 'tasks';
       out.empAlerts = tab === 'alerts'; out.empAcc = tab === 'account';
       out.empTimer = pad(Math.floor(secs / 3600)) + ':' + pad(Math.floor(secs / 60) % 60) + ':' + pad(secs % 60);
-      out.empRows = [{ k: 'رقم المهمة', v: m.no }, { k: 'النوع', v: m.type }, { k: 'الوجهة', v: m.dest },
-        { k: 'التاريخ', v: m.when }, { k: 'المدة', v: m.dur }, { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : '—' }];
+      out.empRows = m ? [{ k: 'رقم المهمة', v: m.no }, { k: 'النوع', v: m.type }, { k: 'الوجهة', v: m.dest },
+        { k: 'التاريخ', v: m.when }, { k: 'المدة', v: m.dur }, { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : '—' }] : [];
 
       const gpsOn = running;
       out.gpsCol = gpsOn ? this.sc('متاحة') : (day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)');
@@ -1512,41 +1526,58 @@ class Component extends DCLogic {
       out.gpsBd = gpsOn ? this.tint('#22c55e', 0.3) : 'var(--div,rgba(122,164,224,0.13))';
       out.gpsLabel = gpsOn ? 'GPS نشط أثناء المهمة' : (stt === 'مغلقة' ? 'انتهى التتبع بانتهاء المهمة' : 'GPS غير نشط');
       out.gpsAnim = gpsOn ? 'mBreathe 2.2s ease-in-out infinite' : 'none';
-      out.geoLabel = m.scope === 'داخل النطاق' ? 'داخل النطاق التشغيلي' : 'خارج النطاق بتصريح';
+      out.geoLabel = m && m.scope === 'داخل النطاق' ? 'داخل النطاق التشغيلي' : 'خارج النطاق بتصريح';
 
       const P = { tx: '#ffffff', bg: day ? 'linear-gradient(180deg,#12855a,#0b6442)' : 'linear-gradient(180deg,rgba(34,197,94,0.9),rgba(20,120,60,0.9))', bd: day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)' };
       const S = { tx: 'var(--tx,#e9f1fb)', bg: 'var(--ctl,rgba(20,32,54,0.7))', bd: 'var(--ctlBd,rgba(122,164,224,0.2))' };
       const D = { tx: '#ffffff', bg: day ? '#c2372c' : 'rgba(220,60,50,0.9)', bd: day ? 'rgba(150,35,28,0.5)' : 'rgba(239,68,68,0.55)' };
       const acts = [];
-      if (stt === 'تم التسليم' || stt === 'جاهزة للبدء') {
-        acts.push({ label: 'استلام المركبة وبدء المهمة', on: () => { this.setStatus('M-2418', 'قيد التنفيذ', 'بدأت المهمة · تم تفعيل GPS'); this.setState({ empScreen: 'active', elapsed: 0 }); }, tx: P.tx, bg: P.bg, bd: P.bd });
-        acts.push({ label: 'فتح المسار على الخريطة', on: () => this.setState({ empScreen: 'active' }), tx: S.tx, bg: S.bg, bd: S.bd });
-      } else if (running) {
-        acts.push({ label: 'إنهاء المهمة', on: () => { this.setStatus('M-2418', 'في انتظار إعادة المركبة', 'انتهت المهمة · بانتظار إعادة المركبة'); this.setState({ empScreen: 'home' }); }, tx: P.tx, bg: P.bg, bd: P.bd });
-        acts.push({ label: 'طلب دعم / بلاغ حادث', on: () => this.openDrawer('incnew', 'M-2418'), tx: D.tx, bg: D.bg, bd: D.bd });
-      } else if (stt === 'في انتظار إعادة المركبة') {
-        acts.push({ label: 'تسليم المركبة', on: () => { this.setStatus('M-2418', 'مغلقة', 'تمت إعادة المركبة · أُغلق السجل'); }, tx: P.tx, bg: P.bg, bd: P.bd });
-      } else {
-        acts.push({ label: 'عرض تفاصيل المهمة', on: () => this.openDrawer('mission', 'M-2418'), tx: S.tx, bg: S.bg, bd: S.bd });
-        acts.push({ label: 'إعادة تشغيل العرض التجريبي', on: () => { this.setStatus('M-2418', 'تم التسليم', 'أُعيد ضبط العرض التجريبي'); this.setState({ elapsed: 0, empScreen: 'home' }); }, tx: S.tx, bg: S.bg, bd: S.bd });
+      const advance = (toStatus, msg, extra) => window.SmartHSRMobilityAdapter.employeeAdvanceMission(m.id, toStatus)
+        .then(() => { this.setState(Object.assign({}, extra)); this.flash(msg); })
+        .catch(() => this.flash('تعذر تنفيذ الإجراء'));
+      if (m) {
+        if (stt === 'تم التسليم') {
+          // One-tap experience over two real, separately-audited transitions.
+          acts.push({ label: 'استلام المركبة وبدء المهمة', on: () => {
+            window.SmartHSRMobilityAdapter.employeeAdvanceMission(m.id, 'READY')
+              .then(() => window.SmartHSRMobilityAdapter.employeeAdvanceMission(m.id, 'IN_PROGRESS'))
+              .then(() => { this.setState({ empScreen: 'active', elapsed: 0 }); this.flash('بدأت المهمة · تم تفعيل GPS'); })
+              .catch(() => this.flash('تعذر بدء المهمة'));
+          }, tx: P.tx, bg: P.bg, bd: P.bd });
+        } else if (stt === 'جاهزة للبدء') {
+          acts.push({ label: 'بدء المهمة', on: () => advance('IN_PROGRESS', 'بدأت المهمة · تم تفعيل GPS', { empScreen: 'active', elapsed: 0 }), tx: P.tx, bg: P.bg, bd: P.bd });
+        } else if (stt === 'قيد التنفيذ') {
+          acts.push({ label: 'إنهاء المهمة', on: () => advance('COMPLETED', 'انتهت المهمة · جاهزة لتسليم المركبة', { empScreen: 'home' }), tx: P.tx, bg: P.bg, bd: P.bd });
+          acts.push({ label: 'طلب دعم / بلاغ حادث', on: () => this.openDrawer('incnew', m.id), tx: D.tx, bg: D.bg, bd: D.bd });
+        } else if (stt === 'متوقفة بسبب حادث') {
+          acts.push({ label: 'استئناف المهمة', on: () => advance('IN_PROGRESS', 'تم استئناف المهمة', {}), tx: P.tx, bg: P.bg, bd: P.bd });
+        } else if (stt === 'مكتملة') {
+          acts.push({ label: 'تسليم المركبة', on: () => {
+            window.SmartHSRMobilityAdapter.employeeReturnVehicle(m.id, m.veh)
+              .then(() => { this.setState({ empScreen: 'home' }); this.flash('تمت إعادة المركبة · بانتظار تأكيد حركة السير'); })
+              .catch(() => this.flash('تعذر تأكيد الإعادة'));
+          }, tx: P.tx, bg: P.bg, bd: P.bd });
+        } else if (stt === 'في انتظار إعادة المركبة') {
+          acts.push({ label: 'بانتظار تأكيد الاستلام من حركة السير', on: () => this.flash('تم إرسال طلب الإعادة — بانتظار تأكيد حركة السير'), tx: S.tx, bg: S.bg, bd: S.bd });
+        } else {
+          acts.push({ label: 'عرض تفاصيل المهمة', on: () => this.openDrawer('mission', m.id), tx: S.tx, bg: S.bg, bd: S.bd });
+        }
+        if (tab === 'home' && running) acts.unshift({ label: 'متابعة المهمة الجارية', on: () => this.setState({ empScreen: 'active' }), tx: P.tx, bg: P.bg, bd: P.bd });
       }
-      if (tab === 'home' && running) acts.unshift({ label: 'متابعة المهمة الجارية', on: () => this.setState({ empScreen: 'active' }), tx: P.tx, bg: P.bg, bd: P.bd });
       out.empActions = acts;
 
-      const done = ['تم التسليم', 'بدأت المهمة', 'تم الوصول'];
-      const stepsAll = ['استلمت المركبة', 'بدأت المهمة', 'تم الوصول للوجهة', 'جاري التنفيذ', 'إنهاء المهمة', 'تسليم المركبة'];
-      const reach = stt === 'قيد التنفيذ' ? 4 : stt === 'في انتظار إعادة المركبة' ? 5 : stt === 'مغلقة' ? 6 : 1;
-      out.empSteps = stepsAll.map((l, i) => ({ label: l, time: i < reach ? '27/05 · 0' + (8 + i) + ':' + (10 + i * 7) : 'بانتظار',
+      const stepsAll = ['استلمت المركبة', 'بدأت المهمة', 'جاري التنفيذ', 'إنهاء المهمة', 'تسليم المركبة'];
+      const reachMap = { 'تم التسليم': 0, 'جاهزة للبدء': 1, 'قيد التنفيذ': 3, 'متوقفة بسبب حادث': 3, 'مكتملة': 4, 'في انتظار إعادة المركبة': 5, 'مغلقة': 5 };
+      const reach = m ? (reachMap[stt] || 0) : 0;
+      out.empSteps = m ? stepsAll.map((l, i) => ({ label: l, time: i < reach ? 'تم' : 'بانتظار',
         col: i < reach ? this.sc('متاحة') : (day ? 'rgba(17,54,40,0.18)' : 'rgba(122,164,224,0.22)'),
         line: i < reach ? this.tint('#22c55e', 0.35) : (day ? 'rgba(17,54,40,0.12)' : 'rgba(122,164,224,0.14)'),
-        tx: i < reach ? 'var(--tx,#e9f1fb)' : 'var(--tx3,#7d8ea6)' }));
+        tx: i < reach ? 'var(--tx,#e9f1fb)' : 'var(--tx3,#7d8ea6)' })) : [];
 
       const et = st.empTab || 'الحالية';
-      out.empTabs = ['الحالية', 'القادمة', 'المكتملة'].map(x => pill(x, et === x, () => this.setState({ empTab: x })));
-      const mine = M.filter(x => x.emp === 'سعد المطيري' || x.id === 'M-2418');
-      const listSrc = et === 'الحالية' ? mine.filter(x => ['قيد التنفيذ', 'تم التسليم', 'جاهزة للبدء', 'متوقفة بسبب حادث', 'في انتظار إعادة المركبة'].indexOf(this.missionStatus(x.id)) >= 0)
-        : et === 'القادمة' ? M.filter(x => ['معتمدة', 'بانتظار المركبة', 'بانتظار الاعتماد'].indexOf(this.missionStatus(x.id)) >= 0).slice(0, 3)
-          : M.filter(x => ['مغلقة', 'مكتملة'].indexOf(this.missionStatus(x.id)) >= 0);
+      out.empTabs = ['الحالية', 'المكتملة'].map(x => pill(x, et === x, () => this.setState({ empTab: x })));
+      const listSrc = et === 'الحالية' ? M.filter(x => ACTIVE_STAGES.indexOf(this.missionStatus(x.id)) >= 0)
+        : M.filter(x => ['مغلقة'].indexOf(this.missionStatus(x.id)) >= 0);
       out.empList = listSrc.map(x => { const cc = this.chipOf(this.missionStatus(x.id));
         return { title: x.no + ' · ' + x.type, dest: x.dest, meta: x.when + ' · ' + x.dur, chip: this.missionStatus(x.id),
           chipCol: cc.col, chipBg: cc.bg, on: () => this.openDrawer('mission', x.id) }; });
@@ -1692,17 +1723,17 @@ class Component extends DCLogic {
     const sel = this.selDetail();
     const dr = this.drawerData();
 
-    const notifs = [
-      { title: 'حادث مروري — المهمة M-2410', meta: 'قبل 6 دقائق · إدارة الطرق', sev: 'حرج', col: '#ef4444', on: () => this.openDrawer('inc', 'I-118') },
-      { title: 'طلب اعتماد جديد — M-2415', meta: 'قبل 14 دقيقة · إدارة الرخص', sev: 'متوسط', col: '#f5a524', on: () => { this.setState({ role: 'admin', screen: 'approvals', notifOpen: false }); } },
-      { title: 'المركبة م-101 جاهزة للاستلام', meta: 'قبل 20 دقيقة · حركة السير', sev: 'عادي', col: '#38bdf8', on: () => this.openDrawer('handover', 'M-2418') },
-      { title: 'تأخر في العودة — M-2411', meta: 'قبل ساعة · إدارة النظافة', sev: 'متوسط', col: '#f5a524', on: () => this.openDrawer('mission', 'M-2411') },
-      { title: 'بانتظار تخصيص مركبة — M-2414', meta: 'قبل ساعتين · الحصر الميداني', sev: 'عادي', col: '#38bdf8', on: () => this.openDrawer('alloc', 'M-2414') },
-      { title: 'خروج غير متوقع من النطاق', meta: 'أمس · الرقابة البلدية', sev: 'متوسط', col: '#f5a524', on: () => this.flash('سجل الخروج من النطاق — نموذج أولي') }
-    ];
+    // Honest empty state: a real notifications feed (tied to real mission/
+    // incident events) is Phase 9 (audit) work, not fabricated demo alerts.
+    const notifs = [];
 
     const sd = this.screenDef();
-    const demoSt = this.missionStatus('M-2418'), demoChip = this.chipOf(demoSt);
+    // Sidebar "reference mission" widget: shows the first real in-progress
+    // mission, if any — an honest empty state, no fabricated demo mission.
+    const pinned = M.filter(x => this.missionStatus(x.id) === 'قيد التنفيذ')[0] || M[0];
+    const pinnedVeh = pinned ? V.filter(x => x.id === pinned.veh)[0] : null;
+    const demoSt = pinned ? this.missionStatus(pinned.id) : '';
+    const demoChip = this.chipOf(demoSt);
 
     const base = {
       rootRef: el => { this.root = el; }, cvRef: el => { this.cv = el; },
@@ -1756,9 +1787,9 @@ class Component extends DCLogic {
       }),
       goIncidents: () => this.setState({ role: 'mobility', screen: 'incidents' }),
 
-      demoNo: 'M-2418', demoStatus: demoSt, demoCol: demoChip.col, demoBg: demoChip.bg,
-      demoMeta: 'سعد المطيري · الرقابة البلدية · م-101',
-      openDemoMission: () => this.openDrawer('mission', 'M-2418'),
+      demoNo: pinned ? pinned.no : 'لا توجد مهمة', demoStatus: pinned ? demoSt : '—', demoCol: demoChip.col, demoBg: demoChip.bg,
+      demoMeta: pinned ? (pinned.emp + ' · ' + pinned.dept + (pinnedVeh ? ' · ' + pinnedVeh.no : '')) : 'لا توجد مهمة نشطة حالياً',
+      openDemoMission: () => { if (pinned) this.openDrawer('mission', pinned.id); },
 
       logout: () => window.SmartHSRMobilityAdapter?.logout(),
       mobNavOpen: st.mobNavOpen, tMobNav: () => this.setState(s => ({ mobNavOpen: !s.mobNavOpen })),
@@ -2153,8 +2184,9 @@ class Component extends DCLogic {
     }
 
     if (k === 'incnew') {
+      const im = M.filter(x => x.id === id)[0];
       return { title: 'طلب دعم / بلاغ حادث', sub: 'تُرفق بيانات المهمة والمركبة والموقع تلقائياً', chip: 'جديد', chipCol: this.sc('جديد'), chipBg: this.tint('#ef4444', 0.12), chipBd: this.tint('#ef4444', 0.3),
-        banner: 'مرفق تلقائياً: الموظف سعد المطيري · المهمة M-2418 · المركبة م-101 · الموقع الحالي · 09:41',
+        banner: im ? ('مرفق تلقائياً: المهمة ' + im.no + (im.veh ? ' · المركبة ' + im.veh : '')) : 'تعذر تحديد المهمة',
         bannerCol: this.sc('جديد'), bannerBg: this.tint('#ef4444', 0.1), bannerBd: this.tint('#ef4444', 0.28),
         form: true, formTitle: 'بيانات البلاغ',
         fields: [{ label: 'ملاحظة قصيرة', value: this.state.form.incNote || '', ph: 'وصف مختصر', on: e => this.setForm('incNote', e.target.value) }],
@@ -2165,7 +2197,12 @@ class Component extends DCLogic {
             tx: on ? '#ffffff' : 'var(--tx2,#a9bdd4)', bg: on ? this.tint('#ef4444', 0.75) : 'var(--ctl,rgba(20,32,54,0.5))', bd: on ? this.tint('#ef4444', 0.5) : 'var(--ctlBd,rgba(122,164,224,0.14))' };
         }),
         evidence: true,
-        actions: [{ label: 'إرسال البلاغ', on: () => { this.setState({ drawer: null }); this.setStatus('M-2418', 'متوقفة بسبب حادث', 'تم إرسال البلاغ — أُشعر رئيس حركة السير ورئيس القسم'); }, tx: danger.tx, bg: this.tint('#ef4444', 0.16), bd: this.tint('#ef4444', 0.45) },
+        actions: [{ label: 'إرسال البلاغ', on: () => {
+          if (!im) { this.flash('تعذر تحديد المهمة'); return; }
+          window.SmartHSRMobilityAdapter.employeeAdvanceMission(im.id, 'INCIDENT_HOLD').then(() => {
+            this.setState({ drawer: null }); this.flash('تم إرسال البلاغ — أُشعر رئيس حركة السير ورئيس القسم');
+          }).catch(() => this.flash('تعذر إرسال البلاغ'));
+        }, tx: danger.tx, bg: this.tint('#ef4444', 0.16), bd: this.tint('#ef4444', 0.45) },
           { label: 'إلغاء', on: () => this.setState({ drawer: null }), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
     }
 

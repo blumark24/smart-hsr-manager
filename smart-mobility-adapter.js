@@ -136,6 +136,7 @@ function subscribeMissions(firestoreApi, db, component, context) {
   const base = firestoreApi.collection(db, 'missions');
   const clauses = [firestoreApi.where('organizationId', '==', context.organizationId)];
   if (context.designRole === 'dept') clauses.push(firestoreApi.where('department', '==', context.department));
+  if (context.designRole === 'employee') clauses.push(firestoreApi.where('assignedEmployeeUid', '==', context.uid));
   const q = firestoreApi.query(base, ...clauses);
   return firestoreApi.onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
     if (snapshot.metadata.fromCache) return;
@@ -144,7 +145,9 @@ function subscribeMissions(firestoreApi, db, component, context) {
 }
 
 function subscribeVehicles(firestoreApi, db, component, context) {
-  const q = firestoreApi.query(firestoreApi.collection(db, 'vehicles'), firestoreApi.where('organizationId', '==', context.organizationId));
+  const clauses = [firestoreApi.where('organizationId', '==', context.organizationId)];
+  if (context.designRole === 'employee') clauses.push(firestoreApi.where('assignedEmployeeUid', '==', context.uid));
+  const q = firestoreApi.query(firestoreApi.collection(db, 'vehicles'), ...clauses);
   return firestoreApi.onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
     if (snapshot.metadata.fromCache) return;
     publishVehicles(component, snapshot);
@@ -201,7 +204,7 @@ async function start(component) {
 
     stopMissions?.(); stopVehicles?.(); stopEmployees?.();
     stopMissions = subscribeMissions(firestoreApi, db, component, context);
-    if (['manager', 'mobility', 'admin'].includes(context.designRole)) {
+    if (['manager', 'mobility', 'admin', 'employee'].includes(context.designRole)) {
       stopVehicles = subscribeVehicles(firestoreApi, db, component, context);
     }
     if (context.designRole === 'mobility') {
@@ -318,6 +321,39 @@ async function confirmVehicleReturn(missionId, vehicleId) {
   });
 }
 
+// Single-document mission transitions the assigned employee may request:
+// receive (HANDED_OVER->READY), start (READY->IN_PROGRESS), report_incident
+// (IN_PROGRESS->INCIDENT_HOLD), resume (INCIDENT_HOLD->IN_PROGRESS), finish
+// (IN_PROGRESS->COMPLETED). No vehicle document is touched by any of these.
+async function employeeAdvanceMission(missionId, toStatus) {
+  requireRole('employee');
+  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
+  await api.updateDoc(api.doc(db, 'missions', missionId), {
+    status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
+  });
+}
+
+// The employee's own act of handing the vehicle back — COMPLETED ->
+// AWAITING_RETURN on the mission, IN_MISSION -> RETURN_PENDING on the
+// vehicle. mobility_head then confirms the physical return separately
+// (confirmVehicleReturn), which is the transition that actually frees the
+// vehicle back to AVAILABLE.
+async function employeeReturnVehicle(missionId, vehicleId) {
+  requireRole('employee');
+  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
+  const missionRef = api.doc(db, 'missions', missionId);
+  const vehicleRef = api.doc(db, 'vehicles', vehicleId);
+  await api.runTransaction(db, async transaction => {
+    const [missionSnap, vehicleSnap] = await Promise.all([transaction.get(missionRef), transaction.get(vehicleRef)]);
+    if (!missionSnap.exists() || missionSnap.data().status !== 'COMPLETED' || missionSnap.data().assignedEmployeeUid !== ctx.uid) {
+      throw new Error('mission_not_completed_or_not_assigned');
+    }
+    if (!vehicleSnap.exists() || vehicleSnap.data().status !== 'IN_MISSION') throw new Error('vehicle_not_in_mission');
+    transaction.update(missionRef, { status: 'AWAITING_RETURN', updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid });
+    transaction.update(vehicleRef, { status: 'RETURN_PENDING', updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid });
+  });
+}
+
 window.SmartHSRMobilityAdapter = {
   connect(component) {
     if (activeComponent === component) return;
@@ -349,7 +385,9 @@ window.SmartHSRMobilityAdapter = {
   decideMission,
   allocateVehicle,
   handoverMission,
-  confirmVehicleReturn
+  confirmVehicleReturn,
+  employeeAdvanceMission,
+  employeeReturnVehicle
 };
 
 window.dispatchEvent(new Event('smart-hsr-mobility-adapter-ready'));
