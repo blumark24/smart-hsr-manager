@@ -162,6 +162,8 @@ async function main() {
       { button: 'تم الحل', expect: 'RESOLVED' },
     ];
     for (const { button, expect } of incidentSteps) {
+      await mobilityPage.getByText('الحوادث والطوارئ', { exact: true }).first().click();
+      await mobilityPage.waitForTimeout(500);
       await mobilityPage.getByText('عطل مركبة', { exact: false }).first().click();
       await mobilityPage.getByRole('button', { name: button, exact: true }).click();
       await mobilityPage.waitForTimeout(1200);
