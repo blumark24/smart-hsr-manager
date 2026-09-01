@@ -870,7 +870,17 @@
             <sc-for list="{{ dFields }}" as="f" hint-placeholder-count="4">
               <div>
                 <label style="display:block;font-size:10.5px;color:var(--tx2,#a9bdd4);margin-bottom:6px">{{ f.label }}</label>
-                <input value="{{ f.value }}" onChange="{{ f.on }}" placeholder="{{ f.ph }}" style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+                <sc-if value="{{ f.isSelect }}">
+                  <select value="{{ f.value }}" onChange="{{ f.on }}" style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 10px;outline:none">
+                    <option value="">{{ f.ph }}</option>
+                    <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3">
+                      <option value="{{ o.value }}">{{ o.label }}</option>
+                    </sc-for>
+                  </select>
+                </sc-if>
+                <sc-if value="{{ f.isText }}">
+                  <input value="{{ f.value }}" onChange="{{ f.on }}" placeholder="{{ f.ph }}" style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+                </sc-if>
               </div>
             </sc-for>
             <sc-if value="{{ dHasChips }}">
@@ -941,7 +951,8 @@
 class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
-    role: null, screen: null, authPending: true, orgName: '', sessionName: '',
+    role: null, screen: null, authPending: true, orgName: '', sessionName: '', department: '',
+    liveMissions: [], liveVehicles: [], liveEmployees: [],
     sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
     twin3D: true, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
     layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true },
@@ -1049,53 +1060,21 @@ class Component extends DCLogic {
   sc(name) { const day = this.state.theme === 'day'; const c = this.ST[name] || '#7d8ea6'; return day ? this.mix(c, 0.82, [12, 40, 28]) : c; }
   chipOf(name) { const c = this.sc(name); return { col: c, bg: this.tint(c, this.state.theme === 'day' ? 0.09 : 0.14), bd: this.tint(c, this.state.theme === 'day' ? 0.26 : 0.3) }; }
 
+  // Real data, published by smart-mobility-adapter.js from the
+  // organizationId-scoped vehicles/{vehicleId} Firestore collection
+  // (Phase 5). Empty until the fleet roster has real entries — an honest
+  // empty state, not fabricated demo vehicles.
   vehicles() {
-    if (this._veh) return this._veh;
-    let s = 77;
-    const rnd = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-    const types = ['سيارة دورية', 'شاحنة خفيفة', 'مركبة نظافة', 'مركبة تفتيش', 'حافلة صغيرة'];
-    const makes = [['تويوتا', 'هايلكس'], ['نيسان', 'باترول'], ['إيسوزو', 'دي-ماكس'], ['هيونداي', 'H1'], ['فورد', 'رينجر']];
-    const letters = ['أ ب د', 'ر س ط', 'ك ل م', 'ن ه و', 'ص ع ق'];
-    const statuses = ['في مهمة', 'في مهمة', 'في مهمة', 'في مهمة', 'في مهمة', 'في مهمة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'متاحة', 'محجوزة', 'محجوزة', 'محجوزة', 'عائدة', 'عائدة', 'صيانة', 'صيانة', 'خارج الخدمة'];
-    const out = [];
-    for (let i = 0; i < statuses.length; i++) {
-      const mk = makes[i % makes.length];
-      out.push({
-        id: 'V' + String(101 + i), no: 'م-' + String(101 + i),
-        plate: (1000 + Math.floor(rnd() * 8999)) + ' ' + letters[i % letters.length],
-        type: types[i % types.length], make: mk[0], model: mk[1], year: 2019 + (i % 6),
-        dept: this.DEPTS[i % this.DEPTS.length], status: statuses[i],
-        odo: (18000 + Math.floor(rnd() * 90000)), fuel: Math.round(30 + rnd() * 65),
-        last: '2' + (2 + i % 6) + '/05 — ' + (7 + i % 9) + ':' + (10 + i % 49),
-        maintLast: '1' + (2 + i % 7) + '/04', maintNext: '0' + (2 + i % 8) + '/07',
-        route: i % 5, phase: rnd(), note: i % 7 === 0 ? 'يتطلب فحص إطارات' : '—'
-      });
-    }
-    out[0].no = 'م-101'; out[0].plate = '4821 أ ب د';
-    this._veh = out;
-    return out;
+    return this.state.liveVehicles || [];
   }
 
+  // Real data, published by smart-mobility-adapter.js from the
+  // organizationId-scoped (and, for department_head, department-scoped)
+  // missions/{missionId} Firestore collection (Phase 4). Empty until real
+  // mission requests exist — an honest empty state, not fabricated demo
+  // missions.
   missions() {
-    if (this._mis) return this._mis;
-    const d = [
-      ['M-2418', 'تفتيش ميداني', 'الرقابة البلدية', 'سعد المطيري', 'سوق الخضار المركزي', 'V101', 'تم التسليم', '27/05 09:00', '3 ساعات', 'داخل النطاق', 'جولة رقابية على المنشآت الغذائية'],
-      ['M-2417', 'نقل معدات', 'إدارة النظافة', 'خالد الدوسري', 'مستودع البلدية', 'V102', 'قيد التنفيذ', '27/05 08:15', 'ساعتان', 'داخل النطاق', 'نقل معدات حاويات'],
-      ['M-2416', 'صيانة إنارة', 'إدارة الطرق', 'فهد الحربي', 'شارع الملك — القطاع الغربي', 'V103', 'قيد التنفيذ', '27/05 07:40', '4 ساعات', 'داخل النطاق', 'إصلاح أعمدة إنارة'],
-      ['M-2415', 'زيارة ترخيص', 'إدارة الرخص', 'عبدالله القحطاني', 'مجمع تجاري — القطاع الشرقي', 'V104', 'بانتظار الاعتماد', '27/05 11:00', 'ساعة', 'داخل النطاق', 'معاينة اشتراطات'],
-      ['M-2414', 'حصر ميداني', 'الحصر الميداني', 'ماجد العنزي', 'مربع 14 — القطاع الشمالي', '', 'بانتظار المركبة', '27/05 10:30', '5 ساعات', 'داخل النطاق', 'حصر منشآت المربع'],
-      ['M-2413', 'مهمة خارج النطاق', 'الرقابة البلدية', 'تركي الشمري', 'مركز التدريب — خارج النطاق', 'V105', 'معتمدة', '27/05 12:00', '6 ساعات', 'خارج النطاق بتصريح', 'ورشة تدريب مفتشين'],
-      ['M-2412', 'نقل موظفين', 'الشؤون الإدارية', 'نايف السبيعي', 'مقر البلدية', 'V106', 'مكتملة', '26/05 08:00', 'ساعتان', 'داخل النطاق', 'نقل لجنة'],
-      ['M-2411', 'متابعة بلاغ', 'إدارة النظافة', 'مشعل الرشيدي', 'حي النور — القطاع الجنوبي', 'V107', 'في انتظار إعادة المركبة', '26/05 13:20', '3 ساعات', 'داخل النطاق', 'متابعة بلاغ نظافة'],
-      ['M-2410', 'صيانة طارئة', 'إدارة الطرق', 'بندر العتيبي', 'تقاطع 21 — القطاع الغربي', 'V108', 'متوقفة بسبب حادث', '26/05 15:05', '4 ساعات', 'داخل النطاق', 'حفرة في الطريق'],
-      ['M-2409', 'جولة رقابية', 'الرقابة البلدية', 'سلطان الزهراني', 'القطاع الشرقي', 'V109', 'مغلقة', '25/05 09:30', '3 ساعات', 'داخل النطاق', 'جولة دورية']
-    ];
-    this._mis = d.map((r, i) => ({
-      id: r[0], no: r[0], type: r[1], dept: r[2], emp: r[3], dest: r[4], veh: r[5],
-      status: r[6], when: r[7], dur: r[8], scope: r[9], why: r[10],
-      requester: 'رئيس ' + r[2], route: i % 5, gps: r[6] === 'قيد التنفيذ' || r[6] === 'تم التسليم'
-    }));
-    return this._mis;
+    return this.state.liveMissions || [];
   }
 
   incidents() {
@@ -1338,7 +1317,10 @@ class Component extends DCLogic {
   ext(day, st) {
     const V = this.vehicles(), M = this.missions(), I = this.incidents();
     const s = st.screen, role = st.role;
-    const scope = role === 'dept' ? 'الرقابة البلدية' : null;
+    // M is already department-scoped server-side for dept_head via
+    // smart-mobility-adapter.js's Firestore query; scope here only affects
+    // the incidents list (I), which is not department-filtered upstream yet.
+    const scope = role === 'dept' ? this.state.department : null;
     const isTable = ['missions', 'fleet', 'incidents', 'audit', 'approvals'].indexOf(s) >= 0;
     const btn = { tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' };
     const ghost = { tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' };
@@ -1408,12 +1390,12 @@ class Component extends DCLogic {
           { label: 'القسم', flex: '1', align: 'right' }, { label: 'الموظف', flex: '1', align: 'right' },
           { label: 'التوفر التشغيلي', flex: '0 0 96px', align: 'right' }, { label: 'النطاق', flex: '1', align: 'right' },
           { label: 'التوقيت', flex: '0 0 92px', align: 'left' }, { label: 'الحالة', flex: '0 0 116px', align: 'left' }];
-        filters = ['الكل', 'بانتظار الاعتماد', 'معتمدة', 'ملغاة'].map(x => pill(x, f === x, () => setF(x)));
-        rows = M.filter(m => (f === 'الكل' ? ['بانتظار الاعتماد', 'معتمدة', 'ملغاة', 'مسودة'].indexOf(this.missionStatus(m.id)) >= 0 : this.missionStatus(m.id) === f) && (!q || (m.no + m.emp + m.dept).indexOf(q) >= 0)).map(m => {
+        filters = ['الكل', 'بانتظار الاعتماد', 'بانتظار المركبة', 'ملغاة'].map(x => pill(x, f === x, () => setF(x)));
+        rows = M.filter(m => (f === 'الكل' ? ['بانتظار الاعتماد', 'بانتظار المركبة', 'ملغاة', 'مسودة'].indexOf(this.missionStatus(m.id)) >= 0 : this.missionStatus(m.id) === f) && (!q || (m.no + m.emp + m.dept).indexOf(q) >= 0)).map(m => {
           const stt = this.missionStatus(m.id), c = this.chipOf(stt);
           return { chip: stt, chipCol: c.col, chipBg: c.bg, chipBd: c.bd, on: () => this.openDrawer('approve', m.id),
             cells: [cell(m.no, '0 0 78px', { weight: '600', col: 'var(--tx,#e9f1fb)' }), cell(m.type, '1.1'), cell(m.dept, '1', { size: '11px' }),
-              cell(m.emp, '1', { size: '11px' }), cell('متاح', '0 0 96px', { size: '11px', col: this.sc('متاحة') }),
+              cell(m.emp, '1', { size: '11px' }), cell('—', '0 0 96px', { size: '11px', col: 'var(--tx2,#a9bdd4)' }),
               cell(m.scope, '1', { size: '11px', col: m.scope.indexOf('خارج') >= 0 ? this.sc('محجوزة') : 'var(--tx2,#a9bdd4)' }),
               cell(m.when, '0 0 92px', { align: 'left', size: '11px' })] };
         });
@@ -1761,11 +1743,11 @@ class Component extends DCLogic {
         { label: 'صيانة', v: String(cnt('صيانة')), col: this.sc('صيانة') },
         { label: 'خارج الخدمة', v: String(cnt('خارج الخدمة')), col: this.sc('خارج الخدمة') }
       ],
-      utilPct: Math.round(((cnt('في مهمة') + cnt('محجوزة')) / V.length) * 100) + '%',
-      utilDash: Math.round(((cnt('في مهمة') + cnt('محجوزة')) / V.length) * 264) + ' 264',
-      deptRows: this.DEPTS.map((d, i) => {
-        const n = M.filter(m => m.dept === d).length + 2 + i;
-        return { name: d, v: String(n), w: Math.min(100, n * 14) + '%', on: () => this.flash('تفصيل طلب ' + d + ' — نموذج أولي') };
+      utilPct: (V.length ? Math.round(((cnt('في مهمة') + cnt('محجوزة')) / V.length) * 100) : 0) + '%',
+      utilDash: Math.round((V.length ? (cnt('في مهمة') + cnt('محجوزة')) / V.length : 0) * 264) + ' 264',
+      deptRows: this.DEPTS.map(d => {
+        const n = M.filter(m => m.dept === d).length;
+        return { name: d, v: String(n), w: (n ? Math.min(100, n * 14) : 0) + '%', on: () => this.flash('تفصيل طلب ' + d + ' — نموذج أولي') };
       }),
       critical: I.slice(0, 3).map(i => {
         const c = this.chipOf(i.status === 'تم الحل' ? 'تم الحل' : 'جديد');
@@ -1799,7 +1781,8 @@ class Component extends DCLogic {
       dHasBanner: !!dr.banner, dBanner: dr.banner, dBannerCol: dr.bannerCol, dBannerBg: dr.bannerBg, dBannerBd: dr.bannerBd,
       dHasRows: !!(dr.rows && dr.rows.length), dRows: dr.rows || [],
       dHasTimeline: !!(dr.timeline && dr.timeline.length), dTimeline: dr.timeline || [],
-      dHasForm: !!dr.form, dFormTitle: dr.formTitle || '', dFields: dr.fields || [],
+      dHasForm: !!dr.form, dFormTitle: dr.formTitle || '',
+      dFields: (dr.fields || []).map(f => Object.assign({ isSelect: false, isText: true, options: [] }, f, f.type === 'select' ? { isSelect: true, isText: false } : {})),
       dHasChips: !!(dr.chips && dr.chips.length), dChipsLabel: dr.chipsLabel || '', dChips: dr.chips || [],
       dHasEvidence: !!dr.evidence,
       dHasList: !!(dr.list && dr.list.length), dListTitle: dr.listTitle || '', dList: dr.list || [],
@@ -1873,7 +1856,7 @@ class Component extends DCLogic {
           K('في الصيانة', cnt('صيانة'), 'صيانة'), K('المهام النشطة', mcnt('قيد التنفيذ') + mcnt('تم التسليم'), 'قيد التنفيذ'),
           K('المهام المتأخرة', mcnt('في انتظار إعادة المركبة'), 'في انتظار إعادة المركبة'),
           K('الحوادث المفتوحة', I.filter(i => i.status !== 'مغلق' && i.status !== 'تم الحل').length, 'جديد'),
-          K('كفاءة استخدام الأسطول', Math.round(((cnt('في مهمة') + cnt('محجوزة')) / V.length) * 100) + '%', 'متاحة'),
+          K('كفاءة استخدام الأسطول', V.length ? (Math.round(((cnt('في مهمة') + cnt('محجوزة')) / V.length) * 100) + '%') : '—', 'متاحة'),
           K('الأقسام النشطة', this.DEPTS.length, 'محجوزة'), K('إجمالي المهام', M.length, 'تم التسليم')
         ],
         sideATitle: 'تنبيهات تنفيذية', sideACount: '3',
@@ -1881,19 +1864,24 @@ class Component extends DCLogic {
           return { badge: '!', title: i.cat, meta: i.dept + ' · ' + i.loc, tag: i.sev, col: c.col, chipBg: c.bg,
             bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('inc', i.id) }; }),
         sideBTitle: 'أعلى الأقسام طلباً', sideBCount: '',
-        sideB: this.DEPTS.slice(0, 4).map((d, i) => ({ title: d, meta: (4 - i) + ' مهام نشطة', tag: String(8 - i * 2), col: this.sc('محجوزة'),
-          chipBg: this.tint('#38bdf8', 0.14), bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.flash('تفصيل ' + d) })) };
+        sideB: this.DEPTS.map(d => ({ dept: d, active: M.filter(m => m.dept === d && m.status !== 'مغلقة' && m.status !== 'ملغاة').length, total: M.filter(m => m.dept === d).length }))
+          .sort((a, b) => b.total - a.total).slice(0, 4)
+          .map(row => ({ title: row.dept, meta: row.active + ' مهام نشطة', tag: String(row.total), col: this.sc('محجوزة'),
+            chipBg: this.tint('#38bdf8', 0.14), bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.flash('تفصيل ' + row.dept) })) };
     }
 
     if (st.role === 'dept' && st.screen === 'deptops') {
-      const dm = M.filter(m => m.dept === 'الرقابة البلدية');
-      return { ops: true, bottom: false, title: 'مركز قيادة القسم — الرقابة البلدية', sub: 'نطاق القسم فقط · مهام وموظفو القسم',
+      // M is already department-scoped by smart-mobility-adapter.js's
+      // Firestore query (where department == the logged-in dept head's own
+      // department) — no client-side re-filtering needed or safe to trust.
+      const dm = M;
+      return { ops: true, bottom: false, title: 'مركز قيادة القسم — ' + (this.state.department || '—'), sub: 'نطاق القسم فقط · مهام وموظفو القسم',
         actions: [{ label: 'إنشاء طلب مهمة', on: () => this.openDrawer('create', null), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' }],
         kpis: [
           K('مهام القسم', dm.length, 'تم التسليم'), K('قيد التنفيذ', dm.filter(m => this.missionStatus(m.id) === 'قيد التنفيذ').length, 'قيد التنفيذ'),
           K('بانتظار الاعتماد', dm.filter(m => this.missionStatus(m.id) === 'بانتظار الاعتماد').length, 'بانتظار الاعتماد'),
           K('بانتظار مركبة', dm.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة').length, 'بانتظار المركبة'),
-          K('حوادث القسم', I.filter(i => i.dept === 'الرقابة البلدية').length, 'جديد')
+          K('حوادث القسم', I.filter(i => i.dept === this.state.department).length, 'جديد')
         ],
         sideATitle: 'مهام القسم الجارية', sideACount: dm.length + ' مهمة',
         sideA: dm.map(m => { const c = this.chipOf(this.missionStatus(m.id));
@@ -2015,17 +2003,44 @@ class Component extends DCLogic {
       ];
       const acts = [];
       if (k === 'alloc') {
-        acts.push({ label: 'تخصيص المركبة المحددة', on: () => { this.setStatus(m.id, 'تم تخصيص المركبة', 'تم تخصيص مركبة للمهمة ' + m.no); this.setState({ drawer: 'handover' }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        const vehId = this.state.chip.veh, empUid = this.state.form.allocEmployeeUid;
+        acts.push({ label: 'تخصيص المركبة المحددة', on: () => {
+          if (!vehId || !empUid) { this.flash('الرجاء اختيار مركبة متاحة وموظف.'); return; }
+          const empName = (this.state.liveEmployees || []).find(e => e.uid === empUid)?.name || '';
+          window.SmartHSRMobilityAdapter.allocateVehicle(m.id, vehId, empUid, empName).then(() => {
+            this.setState({ drawer: null }); this.flash('تم تخصيص مركبة للمهمة ' + m.no);
+          }).catch(() => this.flash('تعذر التخصيص — قد تكون المركبة أو المهمة لم تعد متاحة'));
+        }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
         acts.push({ label: 'إغلاق', on: () => this.setState({ drawer: null }), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
       } else if (k === 'handover') {
-        acts.push({ label: 'تأكيد تسليم المركبة', on: () => { this.setStatus(m.id, 'تم التسليم', 'تم تسليم المركبة — بانتظار استلام الموظف'); this.setState({ drawer: null }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        acts.push({ label: 'تأكيد تسليم المركبة', on: () => {
+          window.SmartHSRMobilityAdapter.handoverMission(m.id, m.veh).then(() => {
+            this.setState({ drawer: null }); this.flash('تم تسليم المركبة — بانتظار استلام الموظف');
+          }).catch(() => this.flash('تعذر تأكيد التسليم'));
+        }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
         acts.push({ label: 'إلغاء', on: () => this.setState({ drawer: null }), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
       } else if (k === 'ret') {
-        acts.push({ label: 'تأكيد إعادة المركبة وإغلاق السجل', on: () => { this.setStatus(m.id, 'مغلقة', 'تمت إعادة المركبة · تم إغلاق المهمة'); this.setState({ drawer: null }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        acts.push({ label: 'تأكيد إعادة المركبة وإغلاق السجل', on: () => {
+          window.SmartHSRMobilityAdapter.confirmVehicleReturn(m.id, m.veh).then(() => {
+            this.setState({ drawer: null }); this.flash('تمت إعادة المركبة · تم إغلاق المهمة');
+          }).catch(() => this.flash('تعذر تأكيد الإعادة'));
+        }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
       } else if (k === 'approve') {
-        acts.push({ label: 'اعتماد', on: () => { this.setStatus(m.id, 'بانتظار المركبة', 'تم اعتماد الطلب — أُرسل إلى حركة السير'); this.setState({ drawer: null }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
-        acts.push({ label: 'إعادة للمراجعة', on: () => { this.setStatus(m.id, 'مسودة', 'أُعيد الطلب للمراجعة'); this.setState({ drawer: null }); }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
-        acts.push({ label: 'رفض', on: () => { this.setStatus(m.id, 'ملغاة', 'تم رفض الطلب — يلزم ذكر السبب'); this.setState({ drawer: null }); }, tx: danger.tx, bg: danger.bg, bd: danger.bd });
+        acts.push({ label: 'اعتماد', on: () => {
+          window.SmartHSRMobilityAdapter.decideMission(m.id, 'APPROVED').then(() => {
+            this.setState({ drawer: null }); this.flash('تم اعتماد الطلب — أُرسل إلى حركة السير');
+          }).catch(() => this.flash('تعذر الاعتماد'));
+        }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        acts.push({ label: 'إعادة للمراجعة', on: () => {
+          window.SmartHSRMobilityAdapter.decideMission(m.id, 'DRAFT').then(() => {
+            this.setState({ drawer: null }); this.flash('أُعيد الطلب للمراجعة');
+          }).catch(() => this.flash('تعذر الإجراء'));
+        }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
+        acts.push({ label: 'رفض', on: () => {
+          window.SmartHSRMobilityAdapter.decideMission(m.id, 'REJECTED').then(() => {
+            this.setState({ drawer: null }); this.flash('تم رفض الطلب');
+          }).catch(() => this.flash('تعذر الإجراء'));
+        }, tx: danger.tx, bg: danger.bg, bd: danger.bd });
       } else {
         if (stt === 'بانتظار المركبة') acts.push({ label: 'تخصيص مركبة', on: () => this.setState({ drawer: 'alloc' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
         if (stt === 'تم تخصيص المركبة') acts.push({ label: 'تسليم المركبة', on: () => this.setState({ drawer: 'handover' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
@@ -2038,7 +2053,12 @@ class Component extends DCLogic {
         rows: rows, timeline: k === 'mission' ? this.timelineFor(m.id) : null, actions: acts };
       if (k === 'alloc') {
         d.form = true; d.formTitle = forms[k];
-        d.fields = [{ label: 'ملاحظة التخصيص', value: this.state.form.allocNote || '', ph: 'اختياري', on: e => this.setForm('allocNote', e.target.value) }];
+        d.fields = [
+          { label: 'الموظف', type: 'select', value: this.state.form.allocEmployeeUid || '', ph: 'اختر موظفاً',
+            options: (this.state.liveEmployees || []).map(e => ({ value: e.uid, label: e.name })),
+            on: e => this.setForm('allocEmployeeUid', e.target.value) },
+          { label: 'ملاحظة التخصيص', value: this.state.form.allocNote || '', ph: 'اختياري', on: e => this.setForm('allocNote', e.target.value) }
+        ];
         d.chipsLabel = 'المركبات المتاحة الآن';
         d.chips = V.filter(x => x.status === 'متاحة').slice(0, 6).map(x => {
           const on = this.state.chip.veh === x.id;
@@ -2097,10 +2117,23 @@ class Component extends DCLogic {
 
     if (k === 'create') {
       const f = this.state.form;
-      return { title: 'إنشاء طلب مهمة', sub: 'الرقابة البلدية · رئيس القسم', chip: 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
+      const canSave = !!(this.state.chip.type && (f.cDest || '').trim() && (f.cWhy || '').trim());
+      const saveMission = submit => {
+        if (!canSave) { this.flash('الرجاء تعبئة نوع المهمة والوجهة والمبرر.'); return; }
+        const payload = {
+          type: this.state.chip.type, destination: (f.cDest || '').trim(), reason: (f.cWhy || '').trim(),
+          requestedEmployeeName: (f.cEmp || '').trim(), whenLabel: (f.cWhen || '').trim(), durationLabel: (f.cDur || '').trim()
+        };
+        this.setState({ drawer: null });
+        window.SmartHSRMobilityAdapter.createMissionRequest(payload).then(missionId => {
+          if (!submit) { this.flash('تم حفظ الطلب كمسودة'); return Promise.resolve(); }
+          return window.SmartHSRMobilityAdapter.submitMissionForApproval(missionId).then(() => this.flash('تم إرسال الطلب للاعتماد الإداري'));
+        }).catch(() => this.flash('تعذر حفظ الطلب — الرجاء المحاولة مجدداً'));
+      };
+      return { title: 'إنشاء طلب مهمة', sub: (this.state.department || '—') + ' · رئيس القسم', chip: 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
         form: true, formTitle: 'بيانات الطلب',
         fields: [
-          { label: 'الموظف', value: f.cEmp || '', ph: 'اختر موظف القسم', on: e => this.setForm('cEmp', e.target.value) },
+          { label: 'الموظف المقترح (اختياري)', value: f.cEmp || '', ph: 'يُخصَّص الموظف فعلياً عند تخصيص المركبة', on: e => this.setForm('cEmp', e.target.value) },
           { label: 'الوجهة', value: f.cDest || '', ph: 'الموقع المستهدف', on: e => this.setForm('cDest', e.target.value) },
           { label: 'التاريخ والوقت', value: f.cWhen || '', ph: '27/05 — 13:00', on: e => this.setForm('cWhen', e.target.value) },
           { label: 'المدة المتوقعة', value: f.cDur || '', ph: 'ساعتان', on: e => this.setForm('cDur', e.target.value) },
@@ -2115,8 +2148,8 @@ class Component extends DCLogic {
         }),
         banner: 'حسب السياسة الحالية: رئيس القسم ← الشؤون الإدارية ← حركة السير ← تخصيص المركبة ← الموظف.',
         bannerCol: this.sc('محجوزة'), bannerBg: this.tint('#38bdf8', 0.1), bannerBd: this.tint('#38bdf8', 0.28),
-        actions: [{ label: 'إرسال للاعتماد', on: () => { this.setState({ drawer: null }); this.flash('تم إرسال الطلب للاعتماد الإداري'); }, tx: btn.tx, bg: btn.bg, bd: btn.bd },
-          { label: 'حفظ كمسودة', on: () => { this.setState({ drawer: null }); this.flash('تم حفظ الطلب كمسودة'); }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
+        actions: [{ label: 'إرسال للاعتماد', on: () => saveMission(true), tx: btn.tx, bg: btn.bg, bd: btn.bd },
+          { label: 'حفظ كمسودة', on: () => saveMission(false), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
     }
 
     if (k === 'incnew') {
