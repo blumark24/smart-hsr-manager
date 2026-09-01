@@ -120,6 +120,23 @@ async function main() {
     step(4, 'Mobility Head hands the vehicle over to the employee');
     {
       console.log('  [debug] viewport innerWidth/innerHeight:', await mobilityPage.evaluate(() => `${window.innerWidth}x${window.innerHeight}`));
+      console.log('  [debug] aside display:', await mobilityPage.evaluate(() => {
+        const aside = document.querySelector('aside');
+        if (!aside) return 'NO_ASIDE_IN_DOM';
+        const cs = getComputedStyle(aside);
+        return JSON.stringify({ display: cs.display, width: cs.width, sbDisp: cs.getPropertyValue('--sbDisp') });
+      }));
+      console.log('  [debug] matches for التسليم والاستلام:', await mobilityPage.evaluate(() => {
+        const matches = [...document.querySelectorAll('span')].filter(el => el.textContent.trim() === 'التسليم والاستلام');
+        return matches.map(el => {
+          const chain = [];
+          let node = el;
+          for (let i = 0; i < 6 && node; i++, node = node.parentElement) {
+            chain.push(`${node.tagName}[display=${getComputedStyle(node).display}]`);
+          }
+          return chain.join(' < ');
+        });
+      }));
       const navLink = mobilityPage.getByText('التسليم والاستلام', { exact: true }).first();
       console.log('  [debug] nav link box:', JSON.stringify(await navLink.boundingBox()));
       console.log('  [debug] nav link visible:', await navLink.isVisible());
