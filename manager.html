@@ -424,10 +424,9 @@
                       <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ l.n }}</span>
                     </div>
                   </sc-for>
-                  <div style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;margin-top:3px;border-top:1px solid var(--div,rgba(122,164,224,0.1));opacity:.55">
-                    <span style="width:15px;height:15px;flex:none;border-radius:5px;border:1.5px dashed var(--ctlBd,rgba(122,164,224,0.3))"></span>
-                    <span style="flex:1;font-size:11px;color:var(--tx3,#7d8ea6)">حركة السير الذكية</span>
-                    <span style="font-size:8.5px;padding:2px 5px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));color:var(--tx3,#7d8ea6)">قريباً</span>
+                  <div onClick="{{ goMobility }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;margin-top:3px;border-top:1px solid var(--div,rgba(122,164,224,0.1));cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+                    <span style="width:15px;height:15px;flex:none;border-radius:5px;border:1.5px solid var(--ok,#22c55e);background:var(--ok,#22c55e)"></span>
+                    <span style="flex:1;font-size:11px;color:var(--tx2,#a9bdd4)">حركة السير الذكية</span>
                   </div>
                 </div>
               </sc-if>
