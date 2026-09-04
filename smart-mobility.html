@@ -47,54 +47,55 @@
 
   <header style="min-height:62px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--hdrBlur,blur(22px))">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
-      <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" style="display:var(--mobNav,none);width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
+      <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" style="display:var(--mobNav,none);width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
 
-      <div class="sm-xscroll" style="display:var(--roleDisp,flex);align-items:center;gap:3px;padding:3px 12px;border-radius:12px;background:var(--sunk,rgba(12,20,36,0.6));border:1px solid var(--div,rgba(122,164,224,0.14));flex-wrap:nowrap;min-width:0">
-        <span style="height:30px;display:flex;align-items:center;font-size:11px;font-weight:600;white-space:nowrap;color:var(--tx,#eaf4ff)">{{ roleTitle }}</span>
+      <div class="sm-xscroll" style="display:var(--roleDisp,flex);align-items:center;gap:3px;padding:3px;border-radius:12px;background:var(--hdrSunk,rgba(12,20,36,0.6));border:1px solid var(--hdrDiv,rgba(122,164,224,0.14));flex-wrap:nowrap;min-width:0">
+        <span style="height:30px;display:flex;align-items:center;font-size:11px;font-weight:600;white-space:nowrap;color:var(--hdrTx,#eaf4ff)">{{ roleTitle }}</span>
       </div>
 
-      <button onClick="{{ logout }}" data-f="1" aria-label="تسجيل الخروج" style="height:34px;padding:0 12px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--tx2,#9db2cc);background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">تسجيل الخروج</button>
+      <button onClick="{{ logout }}" data-f="1" aria-label="تسجيل الخروج" style="height:34px;padding:0 12px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--hdrTx2,#9db2cc);background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16))">تسجيل الخروج</button>
 
-      <div style="display:var(--metaDisp,flex);align-items:center;gap:9px;height:34px;padding:0 11px;border-radius:10px;background:var(--sunk,rgba(12,20,36,0.55));border:1px solid var(--div,rgba(122,164,224,0.11))">
+      <div style="display:var(--metaDisp,flex);align-items:center;gap:9px;height:34px;padding:0 11px;border-radius:10px;background:var(--hdrSunk,rgba(12,20,36,0.55));border:1px solid var(--hdrDiv,rgba(122,164,224,0.11))">
         <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:mBreathe 2.6s ease-in-out infinite"></span>
-        <span style="font-size:11px;color:var(--tx2,#9db2cc)">بيانات تجريبية · بيئة تصميم</span>
+        <span style="font-size:11px;color:var(--hdrTx2,#9db2cc)">بيانات تجريبية · بيئة تصميم</span>
         <span style="width:1px;height:13px;background:var(--div,rgba(122,164,224,0.16))"></span>
-        <span style="font-size:11px;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">9:41 ص · الثلاثاء 27 ذو القعدة</span>
+        <span style="font-size:11px;color:var(--hdrTx3,#7d8ea6);font-variant-numeric:tabular-nums">9:41 ص · الثلاثاء 27 ذو القعدة</span>
       </div>
     </div>
 
     <div style="display:flex;align-items:center;gap:8px">
-      <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--sunk,rgba(12,20,36,0.6));border:1px solid var(--div,rgba(122,164,224,0.14))">
-        <button onClick="{{ setDay }}" data-f="1" aria-label="النمط النهاري" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--dayBtnBd,transparent);background:var(--dayBtnBg,transparent);color:var(--dayBtnTx,#7d8ea6);font-size:10.5px;font-weight:600;cursor:pointer">
+      <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--hdrSunk,rgba(12,20,36,0.6));border:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+        <button onClick="{{ setDay }}" data-f="1" aria-label="النمط النهاري" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--dayBtnBdH,transparent);background:var(--dayBtnBgH,transparent);color:var(--dayBtnTxH,#7d8ea6);font-size:10.5px;font-weight:600;cursor:pointer">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"></path></svg>
           نهاري
         </button>
-        <button onClick="{{ setNight }}" data-f="1" aria-label="النمط الليلي" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--nightBtnBd,rgba(76,201,240,0.4));background:var(--nightBtnBg,rgba(56,132,220,0.28));color:var(--nightBtnTx,#eaf4ff);font-size:10.5px;font-weight:600;cursor:pointer">
+        <button onClick="{{ setNight }}" data-f="1" aria-label="النمط الليلي" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--nightBtnBdH,rgba(76,201,240,0.4));background:var(--nightBtnBgH,rgba(56,132,220,0.28));color:var(--nightBtnTxH,#eaf4ff);font-size:10.5px;font-weight:600;cursor:pointer">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"></path></svg>
           ليلي
         </button>
       </div>
 
       <div style="position:relative">
-        <button onClick="{{ tNotif }}" data-f="1" aria-label="التنبيهات" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <button onClick="{{ tNotif }}" data-f="1" aria-label="التنبيهات" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"></path><path d="M10.5 20a2 2 0 0 0 3 0"></path></svg>
           <span style="position:absolute;top:-5px;left:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--bad,#ef4444);color:#fff;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--badge,#0b1220)">{{ notifCount }}</span>
         </button>
         <sc-if value="{{ notifOpen }}">
-          <div style="position:absolute;top:44px;left:0;width:316px;z-index:60;border-radius:14px;background:var(--pop,rgba(12,20,36,0.98));border:1px solid var(--cardBd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:mRise .16s ease-out">
-            <div style="display:flex;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
-              <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">تنبيهات حركة السير</span>
+          <div style="position:absolute;top:44px;left:0;width:316px;z-index:60;border-radius:14px;background:var(--pop,rgba(12,20,36,0.98));border:1px solid var(--drawerBd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:mRise .16s ease-out">
+            <div style="display:flex;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
+              <span style="flex:1;font-size:12px;font-weight:600;color:var(--hdrTx,#e9f1fb)">تنبيهات حركة السير</span>
               <span onClick="{{ readAll }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">تعليم الكل</span>
             </div>
             <div style="max-height:330px;overflow:auto">
               <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="6">
-                <div onClick="{{ n.on }}" data-f="1" style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.09));cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+                <div onClick="{{ n.on }}" data-f="1" style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.09));cursor:pointer" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--hdrCtl,rgba(20,32,54,0.6))">
                   <span style="width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none;background:{{ n.col }}"></span>
                   <div style="flex:1;min-width:0">
-                    <div style="font-size:11.5px;font-weight:500;color:var(--tx,#e9f1fb)">{{ n.title }}</div>
-                    <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ n.meta }}</div>
+                    <div style="font-size:11.5px;font-weight:500;color:var(--hdrTx,#e9f1fb)">{{ n.title }}</div>
+                    <div style="font-size:10px;color:var(--hdrTx3,#7d8ea6);margin-top:3px">{{ n.meta }}</div>
                   </div>
                   <span style="flex:none;font-size:9px;padding:2px 6px;border-radius:5px;color:{{ n.col }};background:{{ n.bg }}">{{ n.sev }}</span>
                 </div>
@@ -107,14 +108,14 @@
       <div style="display:flex;align-items:center;gap:11px">
         <div style="text-align:right;display:var(--brandTxt,block);padding-right:11px;border-right:1px solid var(--div,rgba(122,164,224,0.14))">
           <div style="font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">حركة السير الذكية</div>
-          <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ orgName }}</div>
+          <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:2px">{{ orgName }}</div>
         </div>
         <div style="display:flex;align-items:center;gap:9px">
           <div style="text-align:left;display:var(--brandTxt,block)">
             <div dir="ltr" style="display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:700;letter-spacing:2.5px;line-height:1">
-              <span style="color:var(--logoNavy,#e9f1fb)">SMART</span><span style="color:var(--logoGreen,#2aa84a)">HSR</span>
+              <span style="color:var(--logoNavyH,#e9f1fb)">SMART</span><span style="color:var(--logoGreenH,#149c2b)">HSR</span>
             </div>
-            <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--tx3,#7d8ea6);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
+            <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--thTx,#7d8ea6);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
           </div>
           <svg width="38" height="42" viewBox="0 0 76 84" fill="none" style="flex:none">
             <path d="M38 4a30 30 0 1 0 0 60 30 30 0 0 0 0-60z" fill="none" stroke="var(--logoNavy,#dbe6f5)" stroke-width="7"></path>
@@ -131,13 +132,13 @@
   <div style="display:flex;gap:14px;align-items:stretch;flex:1;min-height:0">
 
     <aside style="display:var(--sbDisp,flex);width:var(--sbW,224px);flex:none;flex-direction:column;gap:12px">
-      <div style="padding:12px 10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:3px">
-        <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--div,rgba(122,164,224,0.12))">
+      <div style="padding:12px 10px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--sbSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12))">
           <div style="flex:1;text-align:right;display:var(--sbLabel,block);min-width:0">
-            <div style="font-size:11.5px;font-weight:600;color:var(--tx2,#cfe0f2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleTitle }}</div>
-            <div style="font-size:9.5px;color:var(--tx3,#6f8299);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleSub }}</div>
+            <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleTitle }}</div>
+            <div style="font-size:9.5px;color:var(--sbTx3,#6f8299);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleSub }}</div>
           </div>
-          <button onClick="{{ tSb }}" data-f="1" aria-label="طي القائمة" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <button onClick="{{ tSb }}" data-f="1" aria-label="طي القائمة" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--sbCtl,rgba(20,32,54,0.6));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14));color:var(--sbTx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
         </div>
@@ -150,14 +151,14 @@
         </sc-for>
       </div>
 
-      <div style="display:var(--sbLabel,block);padding:11px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
-        <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);text-align:center;margin-bottom:9px">المهمة المرجعية للعرض</div>
-        <div onClick="{{ openDemoMission }}" data-f="1" style="padding:10px;border-radius:11px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13));cursor:pointer">
+      <div style="display:var(--sbLabel,block);padding:11px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13))">
+        <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);text-align:center;margin-bottom:9px">المهمة المرجعية للعرض</div>
+        <div onClick="{{ openDemoMission }}" data-f="1" style="padding:10px;border-radius:11px;background:var(--sbSunk,rgba(11,18,32,0.55));border:1px solid var(--sbDiv,rgba(122,164,224,0.13));cursor:pointer">
           <div style="display:flex;align-items:center;gap:7px">
-            <span style="flex:1;font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ demoNo }}</span>
+            <span style="flex:1;font-size:11.5px;font-weight:600;color:var(--sbTx,#e9f1fb)">{{ demoNo }}</span>
             <span style="font-size:9px;padding:2px 7px;border-radius:6px;color:{{ demoCol }};background:{{ demoBg }}">{{ demoStatus }}</span>
           </div>
-          <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:5px">{{ demoMeta }}</div>
+          <div style="font-size:10px;color:var(--thTx,#7d8ea6);margin-top:5px">{{ demoMeta }}</div>
         </div>
       </div>
 
@@ -172,7 +173,7 @@
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <div style="flex:1;min-width:200px">
           <div style="font-size:17px;font-weight:700;color:var(--tx,#f0f6ff);letter-spacing:-.2px">{{ screenTitle }}</div>
-          <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ screenSub }}</div>
+          <div style="font-size:11px;color:var(--thTx,#7d8ea6);margin-top:3px">{{ screenSub }}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <sc-for list="{{ screenActions }}" as="a" hint-placeholder-count="2">
@@ -187,12 +188,12 @@
           <sc-if value="{{ hasKpis }}" hint-placeholder-val="{{ true }}">
             <section aria-label="المؤشرات" style="flex:none;display:grid;grid-template-columns:var(--kpiCols,repeat(5,1fr));gap:10px">
               <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="10">
-                <div onClick="{{ k.on }}" data-f="1" style="padding:11px 12px;border-radius:13px;cursor:pointer;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;align-items:center;gap:10px">
+                <div onClick="{{ k.on }}" data-f="1" style="padding:11px 12px;border-radius:13px;cursor:pointer;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;align-items:center;gap:10px;transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease">
                   <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:{{ k.col }}"></span>
                   <div style="flex:1;min-width:0;text-align:right">
                     <div style="font-size:10.5px;color:var(--tx3,#8b9db5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.label }}</div>
                     <div style="display:flex;align-items:baseline;gap:6px;justify-content:flex-start;flex-direction:row-reverse">
-                      <span style="font-size:23px;font-weight:600;color:var(--tx,#f0f6ff);letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.3">{{ k.value }}</span>
+                      <span style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.3">{{ k.value }}</span>
                       <span style="font-size:10px;color:{{ k.col }};font-weight:600">{{ k.delta }}</span>
                     </div>
                   </div>
@@ -219,15 +220,15 @@
                   </button>
                   <sc-if value="{{ layersOpen }}">
                     <div style="position:absolute;top:39px;right:0;width:214px;z-index:30;padding:8px;border-radius:12px;background:var(--pop,rgba(10,17,30,0.98));border:1px solid var(--glassBd,rgba(122,164,224,0.2));box-shadow:0 22px 48px -20px rgba(0,0,0,0.8);animation:mRise .16s ease-out">
-                      <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px 8px;margin-bottom:4px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
-                        <span style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb)">طبقات الخريطة</span>
+                      <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px 8px;margin-bottom:4px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
+                        <span style="font-size:11px;font-weight:650;color:var(--tx,#e9f1fb)">طبقات الخريطة</span>
                         <span onClick="{{ allLayers }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">الكل</span>
                       </div>
                       <sc-for list="{{ layerList }}" as="l" hint-placeholder-count="7">
-                        <div onClick="{{ l.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:7px;border-radius:9px;cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+                        <div onClick="{{ l.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:7px;border-radius:9px;cursor:pointer" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--hdrCtl,rgba(20,32,54,0.6))">
                           <span style="width:15px;height:15px;flex:none;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;border:1.5px solid {{ l.bd }};background:{{ l.bg }}">{{ l.mark }}</span>
                           <span style="flex:1;font-size:11px;color:var(--tx2,#a9bdd4)">{{ l.name }}</span>
-                          <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ l.n }}</span>
+                          <span style="font-size:9.5px;color:var(--thTx,#7d8ea6);font-variant-numeric:tabular-nums">{{ l.n }}</span>
                         </div>
                       </sc-for>
                     </div>
@@ -280,18 +281,18 @@
                 <sc-for list="{{ legend }}" as="g" hint-placeholder-count="6">
                   <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd);white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:{{ g.col }}"></span>{{ g.label }}</span>
                 </sc-for>
-                <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);white-space:nowrap;border-right:1px solid var(--div,rgba(122,164,224,0.16));padding-right:9px">مواقع تخطيطية — لا تتوفر بيانات GPS حقيقية</span>
+                <span style="font-size:9.5px;color:var(--thTx,#7d8ea6);white-space:nowrap;border-right:1px solid var(--div,rgba(122,164,224,0.16));padding-right:9px">مواقع تخطيطية — لا تتوفر بيانات GPS حقيقية</span>
               </div>
 
               <sc-if value="{{ hasSel }}">
                 <div style="position:absolute;bottom:12px;right:12px;width:272px;max-width:calc(100% - 24px);z-index:20;border-radius:14px;overflow:hidden;background:var(--pop,rgba(10,17,30,0.98));border:1px solid var(--glassBd,rgba(122,164,224,0.22));box-shadow:0 26px 56px -22px rgba(0,0,0,0.85);animation:mRise .18s ease-out">
-                  <div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+                  <div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
                     <span style="width:9px;height:9px;flex:none;border-radius:50%;background:{{ selCol }}"></span>
                     <div style="flex:1;min-width:0">
-                      <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ selTitle }}</div>
-                      <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ selKind }}</div>
+                      <div style="font-size:11.5px;font-weight:650;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ selTitle }}</div>
+                      <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:2px">{{ selKind }}</div>
                     </div>
-                    <button onClick="{{ clearSel }}" data-f="1" aria-label="إغلاق" style="width:20px;height:20px;flex:none;border:none;background:none;color:var(--tx3,#6f8299);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                    <button onClick="{{ clearSel }}" data-f="1" aria-label="إغلاق" style="width:20px;height:20px;flex:none;border:none;background:none;color:var(--sbTx3,#6f8299);cursor:pointer;display:flex;align-items:center;justify-content:center">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
                     </button>
                   </div>
@@ -314,7 +315,7 @@
 
             <sc-if value="{{ hasSide }}" hint-placeholder-val="{{ true }}">
               <div style="width:var(--sideW,282px);flex:none;display:flex;flex-direction:column;gap:12px">
-                <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                     <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#e4eefb)">{{ sideATitle }}</span>
                     <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ sideACount }}</span>
@@ -324,8 +325,8 @@
                       <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
                         <span style="width:30px;height:30px;flex:none;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;color:{{ i.col }};background:{{ i.chipBg }}">{{ i.badge }}</span>
                         <div style="flex:1;min-width:0;text-align:right">
-                          <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.title }}</div>
-                          <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.meta }}</div>
+                          <div style="font-size:11.5px;font-weight:650;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.title }}</div>
+                          <div style="font-size:10px;color:var(--thTx,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.meta }}</div>
                         </div>
                         <span style="flex:none;font-size:9px;padding:3px 7px;border-radius:6px;color:{{ i.col }};background:{{ i.chipBg }};white-space:nowrap">{{ i.tag }}</span>
                       </div>
@@ -333,7 +334,7 @@
                   </div>
                 </div>
 
-                <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                     <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#e4eefb)">{{ sideBTitle }}</span>
                     <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ sideBCount }}</span>
@@ -343,8 +344,8 @@
                       <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
                         <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ i.col }}"></span>
                         <div style="flex:1;min-width:0;text-align:right">
-                          <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.title }}</div>
-                          <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.meta }}</div>
+                          <div style="font-size:11.5px;font-weight:650;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.title }}</div>
+                          <div style="font-size:10px;color:var(--thTx,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.meta }}</div>
                         </div>
                         <span style="flex:none;font-size:9px;padding:3px 7px;border-radius:6px;color:{{ i.col }};background:{{ i.chipBg }};white-space:nowrap">{{ i.tag }}</span>
                       </div>
@@ -357,7 +358,7 @@
 
           <sc-if value="{{ hasBottom }}" hint-placeholder-val="{{ true }}">
             <section style="flex:none;display:grid;grid-template-columns:var(--botCols,1.1fr 1.2fr 1.3fr);gap:14px">
-              <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+              <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                 <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">كفاءة استخدام الأسطول</div>
                 <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:8px;min-height:104px">
                   <div style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0">
@@ -371,14 +372,14 @@
                       <circle cx="50" cy="50" r="42" fill="none" stroke="var(--ok,#22c55e)" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ utilDash }}"></circle>
                     </svg>
                     <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-                      <div style="font-size:23px;font-weight:600;color:var(--tx,#eafff2);font-variant-numeric:tabular-nums;line-height:1">{{ utilPct }}</div>
-                      <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:3px">استخدام</div>
+                      <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#eafff2);font-variant-numeric:tabular-nums;line-height:1">{{ utilPct }}</div>
+                      <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:3px">استخدام</div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+              <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                 <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">الطلب حسب الأقسام</div>
                 <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;margin-top:6px;min-height:104px">
                   <sc-for list="{{ deptRows }}" as="d" hint-placeholder-count="5">
@@ -391,7 +392,7 @@
                 </div>
               </div>
 
-              <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+              <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                 <div style="display:flex;align-items:center;gap:8px">
                   <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">التنبيهات الحرجة</span>
                   <span onClick="{{ goIncidents }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">عرض الكل</span>
@@ -401,8 +402,8 @@
                     <div onClick="{{ c.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;cursor:pointer;background:{{ c.bg }};border:1px solid {{ c.bd }}">
                       <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ c.col }}"></span>
                       <div style="flex:1;min-width:0;text-align:right">
-                        <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.title }}</div>
-                        <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.meta }}</div>
+                        <div style="font-size:11px;font-weight:650;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.title }}</div>
+                        <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.meta }}</div>
                       </div>
                       <span style="flex:none;font-size:9px;color:{{ c.col }};white-space:nowrap">{{ c.time }}</span>
                     </div>
@@ -415,7 +416,7 @@
       </sc-if>
       <sc-if value="{{ isTable }}">
         <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
-          <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+          <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
             <div style="position:relative;width:var(--tSearch,232px)">
               <input value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -427,15 +428,15 @@
             </div>
           </div>
 
-          <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
-            <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
+          <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
+            <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
               <sc-for list="{{ tCols }}" as="c" hint-placeholder-count="6">
-                <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--tx3,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
+                <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
               </sc-for>
             </div>
             <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
               <sc-for list="{{ tRows }}" as="r" hint-placeholder-count="8">
-                <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--div,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="background:var(--ctl,rgba(20,32,54,0.5))">
+                <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--ctl,rgba(20,32,54,0.5))">
                   <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
                     <span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
                   </sc-for>
@@ -443,7 +444,7 @@
                 </div>
               </sc-for>
               <sc-if value="{{ tEmpty }}">
-                <div style="padding:44px 20px;text-align:center;color:var(--tx3,#7d8ea6);font-size:12px">لا توجد نتائج مطابقة للتصفية الحالية</div>
+                <div style="padding:44px 20px;text-align:center;color:var(--thTx,#7d8ea6);font-size:12px">لا توجد نتائج مطابقة للتصفية الحالية</div>
               </sc-if>
             </div>
             <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:center;gap:10px">
@@ -456,16 +457,16 @@
 
       <sc-if value="{{ isHandover }}">
         <div style="display:grid;grid-template-columns:var(--hoCols,1fr 1fr);gap:14px;flex:1;min-height:0">
-          <div style="padding:14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:11px">
+          <div style="padding:14px;border-radius:16px;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column;gap:11px">
             <div style="display:flex;align-items:center;gap:9px">
-              <span style="flex:1;font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">بانتظار التسليم للموظف</span>
+              <span style="flex:1;font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">بانتظار التسليم للموظف</span>
               <span style="font-size:10px;color:var(--tx3,#7d8ea6)">{{ hoOutCount }}</span>
             </div>
             <div style="flex:1;display:flex;flex-direction:column;gap:9px;overflow:auto">
               <sc-for list="{{ hoOut }}" as="h" hint-placeholder-count="3">
                 <div style="padding:12px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13))">
                   <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
-                    <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">{{ h.title }}</span>
+                    <span style="flex:1;font-size:12px;font-weight:650;color:var(--tx,#e9f1fb)">{{ h.title }}</span>
                     <span style="font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:6px;color:{{ h.chipCol }};background:{{ h.chipBg }}">{{ h.chip }}</span>
                   </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin-bottom:11px">
@@ -485,16 +486,16 @@
             </div>
           </div>
 
-          <div style="padding:14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:11px">
+          <div style="padding:14px;border-radius:16px;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column;gap:11px">
             <div style="display:flex;align-items:center;gap:9px">
-              <span style="flex:1;font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">بانتظار استلام المركبة</span>
+              <span style="flex:1;font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">بانتظار استلام المركبة</span>
               <span style="font-size:10px;color:var(--tx3,#7d8ea6)">{{ hoInCount }}</span>
             </div>
             <div style="flex:1;display:flex;flex-direction:column;gap:9px;overflow:auto">
               <sc-for list="{{ hoIn }}" as="h" hint-placeholder-count="2">
                 <div style="padding:12px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13))">
                   <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
-                    <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">{{ h.title }}</span>
+                    <span style="flex:1;font-size:12px;font-weight:650;color:var(--tx,#e9f1fb)">{{ h.title }}</span>
                     <span style="font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:6px;color:{{ h.chipCol }};background:{{ h.chipBg }}">{{ h.chip }}</span>
                   </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin-bottom:11px">
@@ -518,17 +519,17 @@
 
       <sc-if value="{{ isReports }}">
         <div style="display:flex;flex-direction:column;gap:14px">
-          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 12px;border-radius:14px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
-            <span style="font-size:11px;color:var(--tx3,#7d8ea6);margin-left:6px">الفترة</span>
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 12px;border-radius:14px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13))">
+            <span style="font-size:11px;color:var(--thTx,#7d8ea6);margin-left:6px">الفترة</span>
             <sc-for list="{{ periods }}" as="p" hint-placeholder-count="5">
               <button onClick="{{ p.on }}" data-f="1" style="height:30px;padding:0 13px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;color:{{ p.tx }};background:{{ p.bg }};border:1px solid {{ p.bd }}">{{ p.label }}</button>
             </sc-for>
           </div>
-          <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);padding:0 4px">{{ reportsPeriodNote }}</div>
+          <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);padding:0 4px">{{ reportsPeriodNote }}</div>
 
           <div style="display:grid;grid-template-columns:var(--repCols,repeat(4,1fr));gap:12px">
             <sc-for list="{{ repKpis }}" as="k" hint-placeholder-count="4">
-              <div style="padding:14px;border-radius:14px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+              <div style="padding:14px;border-radius:14px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
                 <div style="font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ k.label }}</div>
                 <div style="font-size:25px;font-weight:600;color:var(--tx,#f0f6ff);margin-top:5px;font-variant-numeric:tabular-nums">{{ k.v }}</div>
                 <div style="font-size:10px;color:{{ k.col }};margin-top:4px">{{ k.sub }}</div>
@@ -538,9 +539,9 @@
 
           <div style="display:grid;grid-template-columns:var(--repCols2,repeat(3,1fr));gap:14px">
             <sc-for list="{{ repCards }}" as="c" hint-placeholder-count="6">
-              <div onClick="{{ c.on }}" data-f="1" style="padding:14px;border-radius:16px;cursor:pointer;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:10px">
+              <div onClick="{{ c.on }}" data-f="1" style="padding:14px;border-radius:16px;cursor:pointer;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column;gap:10px">
                 <div style="display:flex;align-items:center;gap:9px">
-                  <span style="flex:1;font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ c.title }}</span>
+                  <span style="flex:1;font-size:12.5px;font-weight:650;color:var(--tx,#e9f1fb)">{{ c.title }}</span>
                   <span style="font-size:9.5px;color:var(--acc,#4cc9f0)">تفصيل</span>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px">
@@ -560,20 +561,20 @@
 
       <sc-if value="{{ isSettings }}">
         <div style="display:grid;grid-template-columns:var(--setCols,1.2fr 1fr);gap:14px">
-          <div style="padding:16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:14px">
+          <div style="padding:16px;border-radius:16px;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column;gap:14px">
             <div>
               <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">سياسة اعتماد المهام</span>
-                <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:6px;color:var(--tx3,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">معاينة تصميم — غير مفعّلة</span>
+                <span style="font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">سياسة اعتماد المهام</span>
+                <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:6px;color:var(--thTx,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">معاينة تصميم — غير مفعّلة</span>
               </div>
-              <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:4px">هذه بطاقات معاينة فقط. دورة العمل الفعلية المطبقة على كل مهمة هي السياسة الكاملة أدناه دائماً، ولا يمكن تغييرها من هذه الشاشة.</div>
+              <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);margin-top:4px">هذه بطاقات معاينة فقط. دورة العمل الفعلية المطبقة على كل مهمة هي السياسة الكاملة أدناه دائماً، ولا يمكن تغييرها من هذه الشاشة.</div>
             </div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <sc-for list="{{ policies }}" as="p" hint-placeholder-count="3">
                 <div onClick="{{ p.on }}" data-f="1" style="padding:13px;border-radius:13px;cursor:pointer;background:{{ p.bg }};border:1px solid {{ p.bd }}">
                   <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
                     <span style="width:15px;height:15px;flex:none;border-radius:50%;border:2px solid {{ p.dot }};background:{{ p.fill }}"></span>
-                    <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">{{ p.name }}</span>
+                    <span style="flex:1;font-size:12px;font-weight:650;color:var(--tx,#e9f1fb)">{{ p.name }}</span>
                     <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ p.tag }}</span>
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-right:24px">
@@ -587,8 +588,8 @@
           </div>
 
           <div style="display:flex;flex-direction:column;gap:14px">
-            <div style="padding:16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:12px">
-              <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">النطاق الجغرافي التشغيلي</div>
+            <div style="padding:16px;border-radius:16px;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">النطاق الجغرافي التشغيلي</div>
               <div style="display:flex;gap:8px">
                 <sc-for list="{{ geoModes }}" as="g" hint-placeholder-count="3">
                   <button onClick="{{ g.on }}" data-f="1" style="flex:1;height:34px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;color:{{ g.tx }};background:{{ g.bg }};border:1px solid {{ g.bd }}">{{ g.label }}</button>
@@ -605,8 +606,8 @@
               </div>
             </div>
 
-            <div style="padding:16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:11px">
-              <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">خصوصية تتبع الموقع</div>
+            <div style="padding:16px;border-radius:16px;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column;gap:11px">
+              <div style="font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">خصوصية تتبع الموقع</div>
               <p style="margin:0;font-size:11px;line-height:1.85;color:var(--tx2,#a9bdd4);text-wrap:pretty">يُفعّل تتبع الموقع للموظف أثناء المهمة المعتمدة فقط، ويتوقف تلقائياً بانتهائها. لا يوجد تتبع دائم خارج المهام.</p>
               <div style="display:flex;flex-direction:column;gap:7px">
                 <sc-for list="{{ gpsStates }}" as="g" hint-placeholder-count="3">
@@ -618,12 +619,12 @@
               </div>
             </div>
 
-            <div style="padding:14px 16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px dashed var(--ctlBd,rgba(122,164,224,0.22));display:flex;align-items:center;gap:11px">
+            <div style="padding:14px 16px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px dashed var(--ctlBd,rgba(122,164,224,0.22));display:flex;align-items:center;gap:11px">
               <div style="flex:1">
-                <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">اللجان متعددة الأقسام</div>
-                <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:4px">تشكيل لجنة، تعيين رئيس، إسناد مهمة، طلب مركبة</div>
+                <div style="font-size:12px;font-weight:650;color:var(--tx,#e9f1fb)">اللجان متعددة الأقسام</div>
+                <div style="font-size:10px;color:var(--thTx,#7d8ea6);margin-top:4px">تشكيل لجنة، تعيين رئيس، إسناد مهمة، طلب مركبة</div>
               </div>
-              <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 10px;border-radius:7px;color:var(--tx3,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">قريباً</span>
+              <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 10px;border-radius:7px;color:var(--thTx,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">قريباً</span>
             </div>
           </div>
         </div>
@@ -633,13 +634,13 @@
         <div style="display:flex;justify-content:center;padding:var(--empPad,6px 0 20px)">
           <div style="width:100%;max-width:var(--empW,412px);display:flex;flex-direction:column;gap:12px">
 
-            <div style="padding:16px;border-radius:20px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+            <div style="padding:16px;border-radius:20px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
               <div style="display:flex;align-items:center;gap:12px">
                 <div style="width:46px;height:46px;flex:none;border-radius:15px;background:var(--orgBg,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBd,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--acc,#8ee6ff)">سم</div>
                 <div style="flex:1;min-width:0">
                   <div style="font-size:12px;color:var(--tx3,#7d8ea6)">{{ empGreet }}</div>
                   <div style="font-size:17px;font-weight:700;color:var(--tx,#f0f6ff);margin-top:2px">{{ empName }}</div>
-                  <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ empRoleDeptLine }}</div>
+                  <div style="font-size:11px;color:var(--thTx,#7d8ea6);margin-top:3px">{{ empRoleDeptLine }}</div>
                 </div>
               </div>
             </div>
@@ -647,7 +648,7 @@
             <sc-if value="{{ empHome }}">
               <sc-if value="{{ empHasMission }}">
                 <div style="display:flex;flex-direction:column;gap:12px">
-                  <div style="padding:16px;border-radius:20px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid {{ empStBd }};box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <div style="padding:16px;border-radius:20px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid {{ empStBd }};box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
                     <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
                       <span style="flex:1;font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">مهمتي الحالية</span>
                       <span style="font-size:11px;font-weight:600;padding:5px 11px;border-radius:8px;color:{{ empStCol }};background:{{ empStBg }};border:1px solid {{ empStBd }}">{{ empStatus }}</span>
@@ -656,7 +657,7 @@
                       <sc-for list="{{ empRows }}" as="r" hint-placeholder-count="5">
                         <div style="display:flex;align-items:center;gap:10px">
                           <span style="flex:none;width:74px;font-size:12px;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
-                          <span style="flex:1;text-align:left;font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">{{ r.v }}</span>
+                          <span style="flex:1;text-align:left;font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">{{ r.v }}</span>
                         </div>
                       </sc-for>
                     </div>
@@ -674,7 +675,7 @@
                 </div>
               </sc-if>
               <sc-if value="{{ empNoMission }}">
-                <div style="padding:32px 16px;border-radius:20px;text-align:center;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));color:var(--tx2,#a9bdd4);font-size:13px">
+                <div style="padding:32px 16px;border-radius:20px;text-align:center;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));color:var(--tx2,#a9bdd4);font-size:13px">
                   لا توجد مهمة نشطة حالياً
                 </div>
               </sc-if>
@@ -682,7 +683,7 @@
 
             <sc-if value="{{ empActive }}">
               <div style="display:flex;flex-direction:column;gap:12px">
-                <div style="padding:18px 16px;border-radius:20px;text-align:center;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid {{ empStBd }}">
+                <div style="padding:18px 16px;border-radius:20px;text-align:center;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid {{ empStBd }}">
                   <div style="font-size:12px;color:var(--tx3,#7d8ea6)">زمن المهمة</div>
                   <div style="font-size:42px;font-weight:600;color:var(--tx,#f0f6ff);letter-spacing:1px;font-variant-numeric:tabular-nums;line-height:1.2">{{ empTimer }}</div>
                   <div style="font-size:12px;color:{{ empStCol }};margin-top:4px">{{ empStatus }}</div>
@@ -696,8 +697,8 @@
                   </div>
                 </div>
 
-                <div style="padding:14px 16px;border-radius:18px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
-                  <div style="font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:12px">مراحل المهمة</div>
+                <div style="padding:14px 16px;border-radius:18px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--sbBd,rgba(122,164,224,0.13))">
+                  <div style="font-size:12.5px;font-weight:650;color:var(--tx,#e9f1fb);margin-bottom:12px">مراحل المهمة</div>
                   <div style="display:flex;flex-direction:column">
                     <sc-for list="{{ empSteps }}" as="s" hint-placeholder-count="6">
                       <div style="display:flex;gap:11px">
@@ -707,7 +708,7 @@
                         </div>
                         <div style="flex:1;padding-bottom:12px">
                           <div style="font-size:12.5px;font-weight:600;color:{{ s.tx }}">{{ s.label }}</div>
-                          <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ s.time }}</div>
+                          <div style="font-size:11px;color:var(--thTx,#7d8ea6);margin-top:2px">{{ s.time }}</div>
                         </div>
                       </div>
                     </sc-for>
@@ -730,13 +731,13 @@
                   </sc-for>
                 </div>
                 <sc-for list="{{ empList }}" as="m" hint-placeholder-count="3">
-                  <div onClick="{{ m.on }}" data-f="1" style="padding:15px;border-radius:18px;cursor:pointer;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
+                  <div onClick="{{ m.on }}" data-f="1" style="padding:15px;border-radius:18px;cursor:pointer;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--sbBd,rgba(122,164,224,0.13))">
                     <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
                       <span style="flex:1;font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">{{ m.title }}</span>
                       <span style="font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:8px;color:{{ m.chipCol }};background:{{ m.chipBg }}">{{ m.chip }}</span>
                     </div>
                     <div style="font-size:12px;color:var(--tx2,#a9bdd4)">{{ m.dest }}</div>
-                    <div style="font-size:11.5px;color:var(--tx3,#7d8ea6);margin-top:4px">{{ m.meta }}</div>
+                    <div style="font-size:11.5px;color:var(--thTx,#7d8ea6);margin-top:4px">{{ m.meta }}</div>
                   </div>
                 </sc-for>
                 <sc-if value="{{ empListEmpty }}">
@@ -748,11 +749,11 @@
             <sc-if value="{{ empAlerts }}">
               <div style="display:flex;flex-direction:column;gap:10px">
                 <sc-for list="{{ empNotifs }}" as="n" hint-placeholder-count="4">
-                  <div onClick="{{ n.on }}" data-f="1" style="display:flex;align-items:flex-start;gap:11px;padding:15px;border-radius:18px;cursor:pointer;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
+                  <div onClick="{{ n.on }}" data-f="1" style="display:flex;align-items:flex-start;gap:11px;padding:15px;border-radius:18px;cursor:pointer;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--sbBd,rgba(122,164,224,0.13))">
                     <span style="width:9px;height:9px;flex:none;border-radius:50%;margin-top:5px;background:{{ n.col }}"></span>
                     <div style="flex:1;min-width:0">
-                      <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">{{ n.title }}</div>
-                      <div style="font-size:11.5px;color:var(--tx3,#7d8ea6);margin-top:4px">{{ n.meta }}</div>
+                      <div style="font-size:13px;font-weight:600;color:var(--hdrTx,#e9f1fb)">{{ n.title }}</div>
+                      <div style="font-size:11.5px;color:var(--thTx,#7d8ea6);margin-top:4px">{{ n.meta }}</div>
                     </div>
                   </div>
                 </sc-for>
@@ -764,8 +765,8 @@
 
             <sc-if value="{{ empAcc }}">
               <div style="display:flex;flex-direction:column;gap:12px">
-                <div style="padding:16px;border-radius:18px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:11px">
-                  <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">بيانات الموظف</div>
+                <div style="padding:16px;border-radius:18px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:11px">
+                  <div style="font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">بيانات الموظف</div>
                   <sc-for list="{{ empProfile }}" as="r" hint-placeholder-count="4">
                     <div style="display:flex;align-items:center;gap:10px;font-size:12.5px">
                       <span style="flex:none;width:88px;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
@@ -773,22 +774,22 @@
                     </div>
                   </sc-for>
                 </div>
-                <div style="padding:16px;border-radius:18px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13))">
-                  <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:9px">مؤشرات تشغيلية</div>
+                <div style="padding:16px;border-radius:18px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--sbBd,rgba(122,164,224,0.13))">
+                  <div style="font-size:13px;font-weight:650;color:var(--tx,#e9f1fb);margin-bottom:9px">مؤشرات تشغيلية</div>
                   <div style="display:flex;flex-direction:column;gap:10px">
                     <sc-for list="{{ empIndicators }}" as="i" hint-placeholder-count="4">
                       <div style="display:flex;align-items:center;gap:10px">
                         <span style="flex:1;font-size:12px;color:var(--tx2,#a9bdd4)">{{ i.k }}</span>
-                        <span style="font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ i.v }}</span>
+                        <span style="font-size:12.5px;font-weight:650;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ i.v }}</span>
                       </div>
                     </sc-for>
                   </div>
-                  <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:11px;line-height:1.7">مؤشرات تشغيلية مبنية على الأدلة — لا تُستخدم كتقييم نهائي للموظف.</div>
+                  <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);margin-top:11px;line-height:1.7">مؤشرات تشغيلية مبنية على الأدلة — لا تُستخدم كتقييم نهائي للموظف.</div>
                 </div>
               </div>
             </sc-if>
 
-            <div style="position:sticky;bottom:0;margin-top:4px;display:flex;gap:5px;padding:7px;border-radius:18px;background:var(--pop,rgba(10,17,30,0.97));border:1px solid var(--cardBd,rgba(122,164,224,0.16));box-shadow:0 -8px 28px -16px rgba(0,0,0,0.6)">
+            <div style="position:sticky;bottom:0;margin-top:4px;display:flex;gap:5px;padding:7px;border-radius:18px;background:var(--pop,rgba(10,17,30,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.16));box-shadow:0 -8px 28px -16px rgba(0,0,0,0.6)">
               <sc-for list="{{ empNav }}" as="n" hint-placeholder-count="5">
                 <button onClick="{{ n.on }}" data-f="1" style="flex:1;min-height:52px;border-radius:13px;border:none;cursor:pointer;background:{{ n.bg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:{{ n.tx }}">
                   <span style="width:7px;height:7px;border-radius:50%;background:{{ n.dot }}"></span>
@@ -806,7 +807,7 @@
 <sc-if value="{{ mobNavOpen }}">
   <div onClick="{{ tMobNav }}" style="position:fixed;inset:0;z-index:70;background:rgba(3,6,13,0.6);backdrop-filter:blur(3px);animation:mIn .18s ease-out">
     <div onClick="{{ stop }}" style="position:absolute;top:0;right:0;bottom:0;width:264px;padding:16px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));display:flex;flex-direction:column;gap:4px;overflow:auto">
-      <div style="display:flex;align-items:center;gap:9px;padding-bottom:11px;margin-bottom:5px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+      <div style="display:flex;align-items:center;gap:9px;padding-bottom:11px;margin-bottom:5px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
         <span style="flex:1;font-size:12.5px;font-weight:700;color:var(--tx,#f0f6ff)">{{ roleTitle }}</span>
         <span style="font-size:9px;color:var(--tx3,#7d8ea6)">حركة السير</span>
       </div>
@@ -824,13 +825,13 @@
 <sc-if value="{{ drawerOpen }}">
   <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;justify-content:flex-start;animation:mIn .18s ease-out">
     <div onClick="{{ stop }}" style="width:min(440px,94vw);background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;animation:mSlide .2s ease-out">
-      <div style="padding:18px 18px 14px;border-bottom:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:flex-start;gap:11px;position:sticky;top:0;background:var(--drawer,#0a1120);z-index:2">
+      <div style="padding:18px 18px 14px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12));display:flex;align-items:flex-start;gap:11px;position:sticky;top:0;background:var(--drawer,#0a1120);z-index:2">
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">{{ dTitle }}</span>
             <span style="font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:6px;color:{{ dChipCol }};background:{{ dChipBg }};border:1px solid {{ dChipBd }}">{{ dChip }}</span>
           </div>
-          <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:4px">{{ dSub }}</div>
+          <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);margin-top:4px">{{ dSub }}</div>
         </div>
         <button onClick="{{ closeDrawer }}" data-f="1" aria-label="إغلاق" style="width:30px;height:30px;flex:none;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
@@ -858,7 +859,7 @@
 
         <sc-if value="{{ dHasTimeline }}">
           <div>
-            <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:11px">السجل التشغيلي للمهمة</div>
+            <div style="font-size:12px;font-weight:650;color:var(--tx,#e9f1fb);margin-bottom:11px">السجل التشغيلي للمهمة</div>
             <div style="display:flex;flex-direction:column">
               <sc-for list="{{ dTimeline }}" as="t" hint-placeholder-count="6">
                 <div style="display:flex;gap:11px">
@@ -869,9 +870,9 @@
                   <div style="flex:1;padding-bottom:13px;min-width:0">
                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                       <span style="font-size:11.5px;font-weight:600;color:{{ t.tx }}">{{ t.label }}</span>
-                      <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ t.time }}</span>
+                      <span style="font-size:9.5px;color:var(--thTx,#7d8ea6);font-variant-numeric:tabular-nums">{{ t.time }}</span>
                     </div>
-                    <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ t.who }}</div>
+                    <div style="font-size:10px;color:var(--thTx,#7d8ea6);margin-top:3px">{{ t.who }}</div>
                   </div>
                 </div>
               </sc-for>
@@ -881,7 +882,7 @@
 
         <sc-if value="{{ dHasForm }}">
           <div style="padding:13px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12));display:flex;flex-direction:column;gap:12px">
-            <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ dFormTitle }}</div>
+            <div style="font-size:11.5px;font-weight:650;color:var(--tx,#e9f1fb)">{{ dFormTitle }}</div>
             <sc-for list="{{ dFields }}" as="f" hint-placeholder-count="4">
               <div>
                 <label style="display:block;font-size:10.5px;color:var(--tx2,#a9bdd4);margin-bottom:6px">{{ f.label }}</label>
@@ -915,7 +916,7 @@
                 </span>
                 <div style="flex:1;min-width:0">
                   <div style="font-size:11px;color:var(--tx,#e9f1fb)">إرفاق دليل مصور</div>
-                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:3px">نموذج أولي — لا يتم رفع ملفات فعلية</div>
+                  <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:3px">نموذج أولي — لا يتم رفع ملفات فعلية</div>
                 </div>
                 <button onClick="{{ proto }}" data-f="1" style="flex:none;height:30px;padding:0 12px;border-radius:9px;font-size:10.5px;font-weight:600;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">إرفاق</button>
               </div>
@@ -925,14 +926,14 @@
 
         <sc-if value="{{ dHasList }}">
           <div>
-            <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:10px">{{ dListTitle }}</div>
+            <div style="font-size:12px;font-weight:650;color:var(--tx,#e9f1fb);margin-bottom:10px">{{ dListTitle }}</div>
             <div style="display:flex;flex-direction:column;gap:8px">
               <sc-for list="{{ dList }}" as="i" hint-placeholder-count="4">
                 <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
                   <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ i.col }}"></span>
                   <div style="flex:1;min-width:0;text-align:right">
-                    <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb)">{{ i.title }}</div>
-                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ i.meta }}</div>
+                    <div style="font-size:11px;font-weight:650;color:var(--tx,#e9f1fb)">{{ i.title }}</div>
+                    <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:2px">{{ i.meta }}</div>
                   </div>
                   <span style="flex:none;font-size:9.5px;color:{{ i.col }}">{{ i.tag }}</span>
                 </div>
