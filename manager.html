@@ -32,10 +32,13 @@
 <div dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
 <div style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5;transition:background .3s ease,color .3s ease">
 
-  <header style="min-height:64px;flex:none;display:flex;flex-wrap:var(--hdrWrap,nowrap);align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--cardBd,rgba(122,164,224,0.15));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(22px))">
+  <header style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(22px))">
 
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <div style="position:relative;display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid var(--div,rgba(122,164,224,0.14))">
+      <div style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+        <div onClick="{{ openSettings }}" data-f="1" role="button" aria-label="هوية البلدية" title="{{ orgName }}" style="width:36px;height:36px;flex:none;border-radius:11px;background:var(--orgBgH,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBdH,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden">
+          <span style="font-size:12px;font-weight:700;color:var(--hdrAcc,#8ee6ff);letter-spacing:.5px">{{ orgMono }}</span>
+        </div>
           <div onClick="{{ tProf }}" data-f="1" style="text-align:left;cursor:pointer">
             <div style="font-size:13px;font-weight:600;color:var(--tx,#e9f1fb)">{{ sessionName }}</div>
             <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:1px">{{ sessionRole }}</div>
@@ -43,12 +46,12 @@
           <div onClick="{{ tProf }}" data-f="1" role="button" aria-label="قائمة الحساب" style="width:38px;height:38px;border-radius:12px;background:var(--avBg,linear-gradient(160deg,#1d3a5c,#0e1c30));border:1px solid var(--accBd,rgba(122,164,224,0.28));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--acc,#9fc7e8);cursor:pointer">{{ accountMono }}</div>
 
         <sc-if value="{{ profOpen }}">
-          <div style="position:absolute;top:52px;left:0;width:214px;z-index:40;padding:7px;border-radius:13px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--cardBd,rgba(122,164,224,0.18));box-shadow:0 24px 50px -20px rgba(0,0,0,0.8);animation:hsrRise .16s ease-out">
-            <div style="padding:8px 9px 10px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13));margin-bottom:6px">
-              <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ sessionName }}</div>
-              <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ orgName }}</div>
+          <div style="position:absolute;top:52px;left:0;width:214px;z-index:40;padding:7px;border-radius:13px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.18));box-shadow:0 24px 50px -20px rgba(0,0,0,0.8);animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
+            <div style="padding:8px 9px 10px;border-bottom:1px solid var(--hdrDiv,rgba(122,164,224,0.13));margin-bottom:6px">
+              <div style="font-size:11.5px;font-weight:600;color:var(--hdrTx,#e9f1fb)">{{ sessionName }}</div>
+              <div style="font-size:10px;color:var(--hdrTx3,#7d8ea6);margin-top:2px">{{ orgName }}</div>
             </div>
-            <div onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--tx2,#a9bdd4);cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6));color:var(--tx,#e9f1fb)">
+            <div onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--hdrTx2,#a9bdd4);cursor:pointer" style-hover="background:var(--hdrCtl,rgba(20,32,54,0.6));color:var(--hdrTx,#e9f1fb)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"></path></svg>
               الإعدادات والهوية
             </div>
@@ -65,34 +68,34 @@
       </div>
 
       <div style="display:flex;align-items:center;gap:6px">
-        <button disabled aria-label="المحادثات — غير متاحة" title="غير متاح حالياً" style="width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:not-allowed;opacity:.6">
+        <button onClick="{{ soon }}" data-f="1" aria-label="المحادثات" style="width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--ctlH,rgba(44,64,100,0.7))">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"></path></svg>
         </button>
 
         <div style="position:relative">
-          <button onClick="{{ tNotif }}" data-f="1" aria-label="{{ notifAria }}" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--ctlH,rgba(44,64,100,0.7))">
+          <button onClick="{{ tNotif }}" data-f="1" aria-label="{{ notifAria }}" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--ctlH,rgba(44,64,100,0.7))">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"></path><path d="M10.5 20a2 2 0 0 0 3 0"></path></svg>
             <span style="position:absolute;top:-5px;left:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--bad,#ef4444);color:#fff;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--badge,#0b1220)">{{ notifCount }}</span>
           </button>
 
           <sc-if value="{{ notifOpen }}">
-            <div style="position:absolute;top:44px;left:0;width:308px;z-index:40;border-radius:14px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--cardBd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:hsrRise .16s ease-out">
-              <div style="display:flex;align-items:center;gap:8px;padding:12px 13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
-                <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">الإشعارات</span>
-                <span style="font-size:10px;color:var(--tx3,#7d8ea6)">موجز البلاغات الأخيرة</span>
+            <div style="position:absolute;top:44px;left:0;width:308px;z-index:40;border-radius:14px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
+              <div style="display:flex;align-items:center;gap:8px;padding:12px 13px;border-bottom:1px solid var(--popDiv,rgba(122,164,224,0.13))">
+                <span style="flex:1;font-size:12px;font-weight:600;color:var(--popTx,#e9f1fb)">الإشعارات</span>
+                <span style="font-size:10px;color:var(--popAcc,#4cc9f0)">موجز البلاغات الأخيرة</span>
               </div>
               <div style="max-height:300px;overflow:auto">
                 <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
-                  <div style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.09));cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+                  <div style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-bottom:1px solid var(--popDiv,rgba(122,164,224,0.09));cursor:pointer" style-hover="background:var(--hdrCtl,rgba(20,32,54,0.6))">
                     <span style="width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none;background:{{ n.col }}"></span>
                     <div style="flex:1;min-width:0">
-                      <div style="font-size:11.5px;font-weight:500;color:var(--tx,#e9f1fb)">{{ n.title }}</div>
-                      <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ n.meta }}</div>
+                      <div style="font-size:11.5px;font-weight:600;color:var(--popTx,#e9f1fb)">{{ n.title }}</div>
+                      <div style="font-size:10px;color:var(--popTx2,#a9bdd4);margin-top:3px">{{ n.meta }}</div>
                     </div>
                   </div>
                 </sc-for>
               </div>
-              <div onClick="{{ goObservations }}" data-f="1" style="padding:10px;text-align:center;font-size:11px;color:var(--acc,#4cc9f0);cursor:pointer">عرض كل البلاغات</div>
+              <div onClick="{{ goObservations }}" data-f="1" style="padding:10px;text-align:center;font-size:11px;color:var(--popAcc,#4cc9f0);cursor:pointer">عرض كل البلاغات</div>
             </div>
           </sc-if>
         </div>
@@ -104,16 +107,16 @@
       </div>
 
       <div style="position:relative;width:var(--searchW,212px);display:var(--searchDisp,block)">
-        <input aria-label="ابحث في البلاغات" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#dbe6f5);font-size:11.5px;padding:0 12px 0 34px;outline:none">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:11px;top:11px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input aria-label="ابحث في البلاغات" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:36px;border-radius:10px;background:var(--hdrField,rgba(12,20,36,0.75));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx,#dbe6f5);font-size:11.5px;padding:0 12px 0 34px;outline:none">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:11px;top:11px;color:var(--hdrTx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
       </div>
 
-      <div style="display:var(--metaDisp,flex);align-items:center;gap:10px;padding:0 12px;height:36px;border-radius:10px;background:var(--sunk,rgba(12,20,36,0.55));border:1px solid var(--div,rgba(122,164,224,0.11))">
+      <div style="display:var(--metaDisp,flex);align-items:center;gap:10px;padding:0 12px;height:36px;border-radius:10px;background:var(--hdrSunk,rgba(12,20,36,0.55));border:1px solid var(--hdrDiv,rgba(122,164,224,0.11))">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn,#f5a524)" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
-        <span style="font-size:10.5px;color:var(--tx3,#7d8ea6);font-weight:500">لا يوجد مصدر طقس موثّق</span>
-        <span style="width:1px;height:14px;background:var(--div,rgba(122,164,224,0.16))"></span>
-        <span style="font-size:11.5px;color:var(--tx2,#9db2cc);font-variant-numeric:tabular-nums">{{ currentTime }}</span>
-        <span style="font-size:11.5px;color:var(--tx3,#7d8ea6)">{{ currentDate }}</span>
+        <span style="font-size:10.5px;color:var(--hdrTx2,#9db2cc);font-weight:500">لا يوجد مصدر طقس موثّق</span>
+        <span style="width:1px;height:14px;background:var(--hdrDiv,rgba(122,164,224,0.16))"></span>
+        <span style="font-size:11.5px;color:var(--hdrTx2,#9db2cc);font-variant-numeric:tabular-nums">{{ currentTime }}</span>
+        <span style="font-size:11.5px;color:var(--hdrTx3,#7d8ea6)">{{ currentDate }}</span>
       </div>
     </div>
 
@@ -122,7 +125,7 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
 
-      <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--sunk,rgba(12,20,36,0.6));border:1px solid var(--div,rgba(122,164,224,0.14))">
+      <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--hdrSunk,rgba(12,20,36,0.6));border:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
         <button onClick="{{ setDay }}" data-f="1" aria-label="النمط النهاري" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--dayBtnBd,transparent);background:var(--dayBtnBg,transparent);color:var(--dayBtnTx,#7d8ea6);font-size:11px;font-weight:600;cursor:pointer">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"></path></svg>
           نهاري
@@ -133,58 +136,49 @@
         </button>
       </div>
 
-      <nav aria-label="التنقل الرئيسي" style="display:var(--hdrNav,flex);align-items:center;gap:3px;margin:0 6px">
-        <a href="#" onClick="{{ goHome }}" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;font-weight:600;color:var(--navTx,#eaf4ff);background:var(--navBg,linear-gradient(180deg,rgba(56,132,220,0.35),rgba(30,72,140,0.3)));border:1px solid var(--accBd,rgba(76,201,240,0.42))">الرئيسية</a>
-        <a href="#" onClick="{{ goMap }}" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;color:var(--tx2,#94a7c0);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5))">الخريطة التشغيلية</a>
-        <a href="#" onClick="{{ goObservations }}" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;color:var(--tx2,#94a7c0);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5))">البلاغات</a>
-        <a href="#" onClick="{{ goReports }}" data-f="1" style="padding:8px 13px;border-radius:10px;font-size:12.5px;color:var(--tx2,#94a7c0);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5))">التقارير</a>
-      </nav>
-
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="text-align:right;display:var(--brandTxt,block)">
-          <div style="font-size:14.5px;font-weight:700;color:var(--tx,#f0f6ff)">{{ orgName }}</div>
-          <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">
-            <span>مدعوم بمنصة</span><span style="font-weight:600;color:var(--acc,#8ee6ff)">سمارت حصر</span>
+      <div style="display:flex;align-items:center;gap:10px;padding-right:12px;border-right:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+        <div style="text-align:left;display:var(--brandTxt,block)">
+          <div dir="ltr" style="display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:700;letter-spacing:2.5px;line-height:1">
+            <span style="color:var(--logoNavyH,#e9f1fb)">SMART</span><span style="color:var(--logoGreenH,#149c2b)">HSR</span>
           </div>
+          <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--hdrTx3,#7d8ea6);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
         </div>
-        <div onClick="{{ openSettings }}" data-f="1" role="button" aria-label="هوية البلدية" title="{{ orgName }}" style="width:42px;height:42px;flex:none;border-radius:13px;background:var(--orgBg,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBd,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden">
-          <span style="font-size:13px;font-weight:700;color:var(--acc,#8ee6ff);letter-spacing:.5px">{{ orgMono }}</span>
-        </div>
+        <img src="smart-hsr-mark-reversed.png" alt="سمارت حصر" width="30" height="42" style="flex:none;display:block;height:42px;width:auto;object-fit:contain">
       </div>
     </div>
   </header>
 
   <div style="display:flex;gap:14px;align-items:stretch">
 
-    <aside style="display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease">
-      <div style="padding:12px 11px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.05),0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(18px));display:flex;flex-direction:column;gap:3px">
+    <aside style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease">
+      <div style="padding:12px 11px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));backdrop-filter:var(--sbBlur,none);border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.05),0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(18px));display:flex;flex-direction:column;gap:3px">
 
-        <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--div,rgba(122,164,224,0.12))">
+        <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12))">
           <div style="flex:1;text-align:right;display:var(--sbLabel,block)">
-            <div style="font-size:11.5px;font-weight:600;color:var(--tx2,#cfe0f2)">مركز القيادة</div>
-            <div style="font-size:9.5px;color:var(--tx3,#6f8299);margin-top:2px">إدارة العمليات البلدية</div>
+            <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2)">مركز القيادة</div>
+            <div style="font-size:9.5px;color:var(--sbTx3,#6f8299);margin-top:2px">إدارة العمليات البلدية</div>
           </div>
-          <button onClick="{{ tSb }}" data-f="1" aria-label="تصغير القائمة" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="color:var(--tx,#e9f1fb)">
+          <button onClick="{{ tSb }}" data-f="1" aria-label="تصغير القائمة" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--sbCtl,rgba(20,32,54,0.6));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14));color:var(--sbTx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="color:var(--sbTx,#e9f1fb)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
         </div>
 
-        <a href="#" data-f="1" aria-current="page" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:600;color:var(--navTx,#eaf4ff);background:var(--navBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)));border:1px solid var(--accBd,rgba(76,201,240,0.4))">
+        <a href="#" data-f="1" aria-current="page" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:600;color:var(--sbNavTx,#eaf4ff);background:var(--sbNavBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)));border:1px solid var(--sbNavBd,rgba(76,201,240,0.4))">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex:none"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
           <span style="flex:1;display:var(--sbLabel,block)">الرئيسية</span>
         </a>
 
-        <div onClick="{{ tSvc }}" data-f="1" role="button" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--tx2,#9db2cc);cursor:pointer;border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
+        <div onClick="{{ tSvc }}" data-f="1" role="button" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);cursor:pointer;border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="3" width="8" height="8" rx="2"></rect><rect x="3" y="13" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect></svg>
           <span style="flex:1;display:var(--sbLabel,block)">خدمات البلدية الرقمية</span>
-          <span style="display:var(--sbLabel,block);color:var(--tx3,#6f8299);transform:{{ svcCaret }}">
+          <span style="display:var(--sbLabel,block);color:var(--sbTx3,#6f8299);transform:{{ svcCaret }}">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
           </span>
         </div>
 
         <sc-if value="{{ expSvc }}" hint-placeholder-val="{{ true }}">
-          <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--div,rgba(122,164,224,0.14))">
-            <a href="#" onClick="{{ goSurvey }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
+          <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
+            <a href="#" onClick="{{ goSurvey }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">الحصر الميداني الذكي</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
@@ -201,13 +195,13 @@
           </div>
         </sc-if>
 
-        <a href="#" onClick="{{ goObservations }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--tx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
+        <a href="#" onClick="{{ goObservations }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M4 5h16v11a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"></path><path d="M8 10h8M8 14h5"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">البلاغات</span>
           <span style="display:var(--sbLabel,block);font-size:9.5px;font-weight:600;color:var(--badTx,#f87171);padding:2px 7px;border-radius:6px;background:var(--badBg,rgba(239,68,68,0.12))">{{ inProgress }}</span>
         </a>
 
-        <a href="#" onClick="{{ goMap }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--tx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
+        <a href="#" onClick="{{ goMap }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z"></path><path d="M9 4v14M15 6v14"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">الخريطة التشغيلية</span>
         </a>
@@ -217,36 +211,36 @@
           <span style="flex:1;display:var(--sbLabel,block)">التقارير</span>
         </a>
 
-        <div onClick="{{ tAdmin }}" data-f="1" role="button" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--tx2,#9db2cc);cursor:pointer;border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
+        <div onClick="{{ tAdmin }}" data-f="1" role="button" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);cursor:pointer;border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M3 21h18M5 21V9l7-5 7 5v12"></path><path d="M9 21v-6h6v6"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">إدارة البلدية</span>
-          <span style="display:var(--sbLabel,block);color:var(--tx3,#6f8299);transform:{{ admCaret }}">
+          <span style="display:var(--sbLabel,block);color:var(--sbTx3,#6f8299);transform:{{ admCaret }}">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
           </span>
         </div>
 
         <sc-if value="{{ expAdmin }}">
-          <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--div,rgba(122,164,224,0.14))">
-            <div aria-disabled="true" title="الهيكل الإداري قريباً" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx3,#7d8ea6);cursor:not-allowed"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span><span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">قريباً</span></div>
-            <a href="#" onClick="{{ goUsers }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">المستخدمون والصلاحيات</span></a>
-            <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهوية والشعار</span></a>
+          <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
+            <div aria-disabled="true" title="الهيكل الإداري قريباً" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx3,#7d8ea6);cursor:not-allowed"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span><span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--sbTx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--sbChip,rgba(122,164,224,0.1));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14))">قريباً</span></div>
+            <a href="#" onClick="{{ goUsers }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">المستخدمون والصلاحيات</span></a>
+            <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهوية والشعار</span></a>
           </div>
         </sc-if>
 
-        <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--tx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
+        <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">الإعدادات</span>
         </a>
 
-        <div aria-disabled="true" title="المساعد التنفيذي الذكي قريباً" style="display:flex;align-items:center;gap:11px;padding:10px 11px;margin-top:4px;border-radius:11px;font-size:12px;color:var(--tx3,#7d8ea6);cursor:not-allowed;border:1px dashed var(--ctlBd,rgba(122,164,224,0.18))">
-          <span style="width:17px;height:17px;flex:none;border-radius:6px;background:var(--chipBg,rgba(122,164,224,0.12));display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--tx3,#7d8ea6)">AI</span>
+        <div onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;margin-top:4px;border-radius:11px;font-size:12px;color:var(--sbTx3,#7d8ea6);cursor:not-allowed;border:1px dashed var(--sbCtlBd,rgba(122,164,224,0.18))">
+          <span style="width:17px;height:17px;flex:none;border-radius:6px;background:var(--sbChip,rgba(122,164,224,0.12));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--sbTx3,#7d8ea6)">AI</span>
           <span style="flex:1;display:var(--sbLabel,block)">المساعد التنفيذي الذكي</span>
-          <span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1))">قريباً</span>
+          <span style="display:var(--sbLabel,block);font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;background:var(--sbChip,rgba(122,164,224,0.1))">قريباً</span>
         </div>
       </div>
 
-      <div style="display:var(--sbLabel,block);padding:12px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
-        <div style="font-size:11.5px;font-weight:600;color:var(--tx2,#cfe0f2);text-align:center;margin-bottom:10px">الخدمات النشطة</div>
+      <div style="display:var(--sbLabel,block);padding:12px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--sbSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+        <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2);text-align:center;margin-bottom:10px">الخدمات النشطة</div>
         <div style="display:flex;flex-direction:column;gap:7px">
           <div onClick="{{ goSurvey }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--okBg,rgba(34,197,94,0.07));border:1px solid var(--okBd,rgba(34,197,94,0.24));cursor:pointer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ok,#22c55e)" stroke-width="1.6" style="flex:none"><path d="M12 21s-7-5.4-7-11a7 7 0 1 1 14 0c0 5.6-7 11-7 11z"></path><circle cx="12" cy="10" r="2.4"></circle></svg>
@@ -263,14 +257,14 @@
 
       <div style="display:var(--sbLabel,block);flex:1;min-height:30px"></div>
       <div style="display:var(--sbLabel,block);text-align:center;padding-bottom:4px;opacity:.6">
-        <div style="font-size:8.5px;color:var(--tx3,#5f7d9c);letter-spacing:1.4px">SMART HSR PLATFORM · v2.4</div>
+        <div style="font-size:10px;color:var(--sbTx3,#5f7d9c);letter-spacing:1.4px">SMART HSR PLATFORM · v2.4</div>
       </div>
     </aside>
 
     <main style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
 
       <section aria-label="المؤشرات التنفيذية" style="min-height:var(--kpiH,122px);flex:none;display:flex;gap:14px;flex-wrap:var(--rowWrap,nowrap)">
-        <div style="flex:1;min-width:var(--kpiMin,0);display:flex;flex-wrap:var(--kpiWrap,nowrap);align-items:stretch;padding:0 4px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+        <div style="flex:1;min-width:var(--kpiMin,0);display:flex;flex-wrap:var(--kpiWrap,nowrap);align-items:stretch;padding:0 4px;border-radius:16px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl1,none)">
 
           <div style="flex:1;min-width:var(--kpiCell,0);padding:16px 13px;display:flex;flex-direction:column;justify-content:center;gap:5px">
             <div style="display:flex;align-items:flex-start;gap:10px">
@@ -354,7 +348,7 @@
           </div>
         </div>
 
-        <div style="width:var(--scoreW,238px);flex:none;padding:14px 16px;display:flex;align-items:center;gap:14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+        <div style="width:var(--scoreW,238px);flex:none;padding:14px 16px;display:flex;align-items:center;gap:14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
           <div style="flex:1;text-align:right">
             <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">نسبة إتمام البلاغات</div>
             <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:10.5px;color:var(--tx3,#8b9db5);margin-top:8px">
@@ -384,7 +378,7 @@
             <p style="margin:8px 0 0;font-size:10.5px;line-height:1.8;color:var(--tx3,#7d8ea6)">لا تتوفر تحليلات أو توصيات معتمدة في هذه الجلسة.</p>
           </div>
 
-          <div aria-label="المساعد التنفيذي الذكي غير مفعّل" style="flex:1;min-height:0;padding:12px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12));display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+          <div aria-label="المساعد التنفيذي الذكي غير مفعّل" style="flex:1;min-height:0;padding:12px;border-radius:13px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12));display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
             <div style="font-size:11.5px;font-weight:600;color:var(--tx2,#cfe0f2)">التوصيات التنفيذية</div>
             <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:8px;line-height:1.7">لا توجد توصيات تشغيلية موثّقة في هذه الجلسة.</div>
             <span style="margin-top:11px;font-size:9px;font-weight:600;color:var(--tx3,#7d8ea6);padding:3px 8px;border-radius:6px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">المساعد التنفيذي الذكي — قريباً</span>
@@ -555,13 +549,13 @@
 
       <section style="min-height:var(--anaH,216px);flex:none;display:grid;grid-template-columns:var(--anaCols,0.96fr 1.06fr 1fr 1.06fr 1.02fr);gap:14px">
 
-        <div aria-label="حالة بيانات الطقس" style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;justify-content:center;text-align:center">
+        <div aria-label="حالة بيانات الطقس" style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column;justify-content:center;text-align:center">
           <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">الطقس اليوم</div>
           <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:13px;line-height:1.8">لا يوجد مصدر طقس تشغيلي موثّق متصل بهذه اللوحة.</div>
           <span style="align-self:center;margin-top:10px;font-size:9.5px;color:var(--tx3,#7d8ea6);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">غير متاح</span>
         </div>
 
-        <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+        <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">الكفاءة التشغيلية</span>
             <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">البيانات الحالية</span>
@@ -586,7 +580,7 @@
           </div>
         </div>
 
-        <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+        <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">أداء الإدارات</span>
             <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">المستخدمون النشطون</span>
@@ -603,7 +597,7 @@
           <a href="#" onClick="{{ goUsers }}" data-f="1" style="text-align:center;font-size:10.5px;color:var(--acc,#4cc9f0);padding-top:8px">عرض المستخدمين والصلاحيات</a>
         </div>
 
-        <div style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+        <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">تصنيف البلاغات</span>
             <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">حسب الحالة الحالية</span>
@@ -622,7 +616,7 @@
           </div>
         </div>
 
-        <div aria-label="اتجاه البلاغات غير متاح" style="padding:13px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;justify-content:center;text-align:center">
+        <div aria-label="اتجاه البلاغات غير متاح" style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column;justify-content:center;text-align:center">
           <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">اتجاه البلاغات</div>
           <div style="font-size:11px;color:var(--tx3,#7d8ea6);line-height:1.8;margin-top:13px">لا تتوفر بيانات زمنية موثّقة لعرض المقارنة أو الاتجاه.</div>
           <span style="align-self:center;margin-top:10px;font-size:9.5px;color:var(--tx3,#7d8ea6);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">غير متاح</span>
@@ -630,7 +624,7 @@
       </section>
 
       <sc-if value="{{ showQuick }}" hint-placeholder-val="{{ true }}">
-        <section aria-label="إجراءات سريعة" style="min-height:54px;flex:none;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95));flex-wrap:var(--qaWrap,nowrap)">
+        <section aria-label="إجراءات سريعة" style="min-height:54px;flex:none;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);flex-wrap:var(--qaWrap,nowrap)">
           <div style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--div,rgba(122,164,224,0.14))">
             <span style="font-size:12px;font-weight:600;color:var(--tx,#dbe6f5);white-space:nowrap">إجراءات سريعة</span>
             <button onClick="{{ hideQuick }}" data-f="1" aria-label="إخفاء" style="width:20px;height:20px;border:none;background:none;color:var(--tx3,#6f8299);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">
@@ -649,7 +643,7 @@
 
   <sc-if value="{{ viewOpen }}">
     <div onClick="{{ closeView }}" style="position:fixed;inset:0;z-index:74;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);padding:clamp(10px,3vw,34px);display:flex;align-items:center;justify-content:center;animation:hsrIn .18s ease-out">
-      <section onClick="{{ stop }}" aria-label="{{ viewTitle }}" role="dialog" aria-modal="true" style="width:min(940px,100%);max-height:min(820px,calc(100vh - 20px));overflow:auto;padding:18px;border-radius:16px;background:var(--drawer,#0a1120);border:1px solid var(--cardBd,rgba(122,164,224,0.16));box-shadow:0 28px 70px -28px rgba(0,0,0,.85)">
+      <section onClick="{{ stop }}" aria-label="{{ viewTitle }}" role="dialog" aria-modal="true" style="width:min(940px,100%);max-height:min(820px,calc(100vh - 20px));overflow:auto;padding:18px;border-radius:16px;background:var(--drawer,#0a1120);border:1px solid var(--drawerBd,rgba(122,164,224,0.16));box-shadow:var(--dwSh,0 28px 70px -28px rgba(0,0,0,.85))">
         <div style="display:flex;align-items:flex-start;gap:12px;padding-bottom:13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
           <div style="flex:1;min-width:0">
             <h2 style="font-size:16px;margin:0;color:var(--tx,#f0f6ff)">{{ viewTitle }}</h2>
@@ -676,20 +670,20 @@
 
         <sc-if value="{{ viewIsReports }}">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin:14px 0">
-            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">إجمالي البلاغات</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ totalReports }}</div></div>
-            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">نسبة الإتمام</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ completionRate }}</div></div>
-            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">قيد المعالجة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ inProgress }}</div></div>
-            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">فرق نشطة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ activeTeams }}</div></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">إجمالي البلاغات</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ totalReports }}</div></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">نسبة الإتمام</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ completionRate }}</div></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">قيد المعالجة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ inProgress }}</div></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">فرق نشطة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ activeTeams }}</div></div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
-            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">حسب الحالة</div><sc-for list="{{ cats }}" as="c" hint-placeholder-count="3"><div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="width:7px;height:7px;border-radius:50%;margin-top:4px;background:{{ c.col }}"></span><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ c.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ c.n }} {{ c.p }}</span></div></sc-for></div>
-            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">فرق ومستخدمون نشطون</div><sc-for list="{{ depts }}" as="d" hint-placeholder-count="3"><div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ d.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ d.v }}</span></div></sc-for></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">حسب الحالة</div><sc-for list="{{ cats }}" as="c" hint-placeholder-count="3"><div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="width:7px;height:7px;border-radius:50%;margin-top:4px;background:{{ c.col }}"></span><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ c.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ c.n }} {{ c.p }}</span></div></sc-for></div>
+            <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">فرق ومستخدمون نشطون</div><sc-for list="{{ depts }}" as="d" hint-placeholder-count="3"><div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ d.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ d.v }}</span></div></sc-for></div>
           </div>
         </sc-if>
 
         <sc-if value="{{ viewIsUsers }}">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px">
-            <sc-for list="{{ viewUsers }}" as="u" hint-placeholder-count="4"><div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12))"><div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.name }}</div><div style="font-size:10px;color:var(--tx2,#a9bdd4);margin-top:6px">{{ u.role }} · {{ u.status }}</div><div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.email }}</div></div></sc-for>
+            <sc-for list="{{ viewUsers }}" as="u" hint-placeholder-count="4"><div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.name }}</div><div style="font-size:10px;color:var(--tx2,#a9bdd4);margin-top:6px">{{ u.role }} · {{ u.status }}</div><div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.email }}</div></div></sc-for>
           </div>
         </sc-if>
 
@@ -854,10 +848,14 @@ class Component extends DCLogic {
     '--barFill': 'linear-gradient(90deg,#12855a,#3fa87c)',
     '--areaTop': 'rgba(18,133,90,0.22)', '--areaBot': 'rgba(18,133,90,0)',
     '--twinBd': 'rgba(17,54,40,0.14)', '--twinBg': '#eaeeea',
-    '--glass': 'rgba(255,255,255,0.9)', '--glassBd': 'rgba(17,54,40,0.14)', '--glassTx': '#3d5148',
+    '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.9),inset 0 0 0 1px rgba(255,255,255,0.45),0 1px 1px rgba(14,52,38,0.06),0 2px 3px rgba(14,52,38,0.05),0 20px 38px -22px rgba(12,60,42,0.5)',
+    '--glass': 'rgba(255,255,255,0.9)', '--glassBd': 'rgba(17,54,40,0.14)', '--glassTx': '#3d5148', '--glassH': 'rgba(0,0,0,0.05)',
     '--lblBg': 'rgba(255,255,255,0.95)', '--lblTx': '#35463e',
     '--avBg': 'linear-gradient(160deg,#e8f0ea,#dbe6df)', '--aiBg': 'radial-gradient(circle at 30% 25%,rgba(14,122,79,0.14),#eef2ef)',
     '--orgBg': '#f2f5f2', '--orgBd': 'rgba(17,54,40,0.16)', '--badge': '#ffffff',
+    '--mapSearchW': '214px',
+    '--thBg': 'linear-gradient(180deg,#dceae1,#e5f0e9)', '--thBd': 'rgba(18,133,90,0.22)',
+    '--hdrChip': 'rgba(255,255,255,0.12)',
     '--dayBtnBg': '#ffffff', '--dayBtnBd': 'rgba(14,122,79,0.35)', '--dayBtnTx': '#0b5c3b',
     '--nightBtnBg': 'transparent', '--nightBtnBd': 'transparent', '--nightBtnTx': '#7b8a82',
     '--dayCardBd': 'rgba(14,122,79,0.45)', '--dayCardBg': 'rgba(14,122,79,0.07)',
@@ -865,6 +863,10 @@ class Component extends DCLogic {
   };
 
   NIGHT = {
+    '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.07),inset 0 0 0 1px rgba(90,190,150,0.05),0 20px 44px -26px rgba(0,0,0,0.95)',
+    '--glassH': 'rgba(255,255,255,0.1)',
+    '--thBg': 'rgba(12,20,36,0.5)', '--thBd': 'rgba(122,164,224,0.13)',
+    '--hdrChip': 'rgba(122,164,224,0.14)',
     '--dayBtnBg': 'transparent', '--dayBtnBd': 'transparent', '--dayBtnTx': '#7d8ea6',
     '--nightBtnBg': 'rgba(56,132,220,0.28)', '--nightBtnBd': 'rgba(76,201,240,0.4)', '--nightBtnTx': '#eaf4ff',
     '--dayCardBd': 'rgba(122,164,224,0.16)', '--dayCardBg': 'transparent',
