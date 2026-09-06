@@ -851,8 +851,15 @@
             <div style="font-size:11.5px;color:var(--tx2,#a9bdd4)">{{ selectedIncidentSeverity }}</div>
           </div>
         </div>
+        <sc-if value="{{ hasIncidentTransition }}">
+          <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ incidentTransitions }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.on }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">{{ t.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
         <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:9px">
-          <button onClick="{{ viewIncidentOnMap }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">عرض على الخريطة<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 6 4 12l6 6M4 12h16"></path></svg></button>
+          <button onClick="{{ viewIncidentOnMap }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">عرض على الخريطة<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 6 4 12l6 6M4 12h16"></path></svg></button>
         </div>
       </div>
     </div>
@@ -942,7 +949,7 @@ class Component extends DCLogic {
     sel: null, layers: { survey: true, land: true, report: true, task: true },
     quick: true, toast: '', bp: 'xl', tw: 734, th: 450,
     view: 'home', search: '', dataState: 'loading', dataError: '',
-    sessionName: 'الحساب الموثّق', sessionRole: 'جارٍ التحقق من الصلاحيات', clock: Date.now()
+    sessionName: 'الحساب الموثّق', sessionRole: 'جارٍ التحقق من الصلاحيات', sessionRoleCode: 'unknown', clock: Date.now()
   };
 
   // Filled only by the Firebase adapter after organization-scoped access is verified.
@@ -1526,6 +1533,31 @@ class Component extends DCLogic {
         const severityMap = { 'LOW': 'منخفضة', 'MEDIUM': 'متوسطة', 'CRITICAL': 'حرجة' };
         return severityMap[st.selectedIncident?.severity] || st.selectedIncident?.severity || '—';
       })(),
+      hasIncidentTransition: (() => {
+        if (!st.selectedIncident) return false;
+        const transitionMatrix = {
+          'NEW': ['ACKNOWLEDGED'],
+          'ACKNOWLEDGED': ['IN_PROGRESS'],
+          'IN_PROGRESS': ['RESOLVED'],
+          'RESOLVED': []
+        };
+        return transitionMatrix[st.selectedIncident.status]?.length > 0 && st.sessionRoleCode === 'manager';
+      })(),
+      incidentTransitions: (() => {
+        if (!st.selectedIncident) return [];
+        const transitionMatrix = {
+          'NEW': ['ACKNOWLEDGED'],
+          'ACKNOWLEDGED': ['IN_PROGRESS'],
+          'IN_PROGRESS': ['RESOLVED'],
+          'RESOLVED': []
+        };
+        const statusLabels = { 'NEW': 'جديد', 'ACKNOWLEDGED': 'تم الاستلام', 'IN_PROGRESS': 'تحت المعالجة', 'RESOLVED': 'تم الحل' };
+        const statusActionLabels = { 'ACKNOWLEDGED': 'تأكيد الاستقبال', 'IN_PROGRESS': 'بدء المعالجة', 'RESOLVED': 'إغلاق الحادث' };
+        return (transitionMatrix[st.selectedIncident.status] || []).map(toStatus => ({
+          label: statusActionLabels[toStatus] || `تحديث إلى ${statusLabels[toStatus]}`,
+          on: () => this.transitionIncidentStatus(toStatus)
+        }));
+      })(),
       viewIncidentOnMap: () => this.viewIncidentOnMap(), stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
       expSvc: st.expSvc, expAdmin: st.expAdmin,
       svcCaret: st.expSvc ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -1819,6 +1851,35 @@ class Component extends DCLogic {
       this.mapShell?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       this.syncOperationalMap();
     }, 80);
+  }
+
+  async transitionIncidentStatus(toStatus) {
+    if (!this.state.selectedIncident) return;
+    const incident = this.state.selectedIncident;
+    const statusMap = { 'NEW': 'جديد', 'ACKNOWLEDGED': 'تم الاستلام', 'IN_PROGRESS': 'تحت المعالجة', 'RESOLVED': 'تم الحل' };
+    this.flash(`جاري تحديث حالة الحادث...`);
+    try {
+      const token = await this.getAuthToken?.();
+      const response = await fetch('/api/admin/incidents', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          incidentId: incident.id,
+          organizationId: this.state.orgId,
+          toStatus: toStatus
+        })
+      });
+      if (response.ok) {
+        this.flash(`تم تحديث حالة الحادث إلى ${statusMap[toStatus]}`);
+      } else {
+        this.flash(`فشل تحديث الحالة: ${response.statusText}`);
+      }
+    } catch (e) {
+      this.flash(`خطأ عند تحديث الحالة: ${e.message}`);
+    }
   }
 }
 </script>

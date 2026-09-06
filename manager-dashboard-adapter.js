@@ -265,6 +265,8 @@ async function start(component) {
       orgName: context.organizationName,
       sessionName: user.displayName || user.email || 'الحساب الموثق',
       sessionRole: context.role === 'manager' ? 'مدير البلدية' : 'مشرف البلدية',
+      sessionRoleCode: context.role,
+      orgId: context.organizationId,
       dataState: 'loading',
       dataError: ''
     });
