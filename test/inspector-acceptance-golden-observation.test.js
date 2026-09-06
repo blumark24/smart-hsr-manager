@@ -50,11 +50,22 @@ test('pre-save upload uses a canonical tenant-and-observation-scoped private key
 });
 
 test('Manager receives canonical and legacy evidence plus the persisted advisory for the same record', () => {
-  assert.match(manager, /imagePath: x\.imageObjectKey \|\| x\.imagePath \|\| x\.imageUrl \|\| x\.beforeImagePath \|\| null/);
-  assert.match(manager, /afterImagePath: x\.afterImagePath \|\| x\.afterImageUrl \|\| null/);
-  assert.match(manager, /aiAnalysis: x\.aiAnalysis && typeof x\.aiAnalysis === 'object' \? x\.aiAnalysis : null/);
-  assert.match(manager, /resolveObservationImage\(\{/);
-  assert.match(manager, /renderAiVisionSection\(o\)/);
+  // manager.html's own inline script no longer maps raw Firestore documents
+  // or talks to Firebase Storage directly — that now happens in
+  // manager-dashboard-adapter.js's normalizeObservations()/
+  // resolveEvidenceImage (same precedent as manager-login-preview-config.
+  // test.js for Firebase config resolution), which manager.html's evidence
+  // drawer calls into. The AI-vision rendering itself is declarative
+  // (render() properties), not an imperative renderAiVisionSection()
+  // function — see manager-phase3-functional-parity.test.js: "AI-vision
+  // only renders the real persisted-analysis allowlist fields...".
+  const adapter = fs.readFileSync(path.join(root, 'manager-dashboard-adapter.js'), 'utf8');
+  assert.match(adapter, /imagePath: data\.imageObjectKey \|\| data\.imagePath \|\| data\.imageUrl \|\| data\.beforeImagePath \|\| null/);
+  assert.match(adapter, /afterImagePath: data\.afterImagePath \|\| data\.afterImageUrl \|\| null/);
+  assert.match(adapter, /aiAnalysis: data\.aiAnalysis && typeof data\.aiAnalysis === 'object' \? data\.aiAnalysis : null/);
+  assert.match(adapter, /resolveObservationImage\(\{/);
+  assert.match(manager, /evidenceHasAi: !!st\.selectedUser\?\.aiAnalysis|evidenceHasAi: !!st\.selectedObservation\?\.aiAnalysis/);
+  assert.doesNotMatch(manager, /function renderAiVisionSection\(/, 'AI-vision rendering must stay declarative, never revert to an imperative DOM-writing function');
 });
 
 test('AI persists only an allowlisted advisory and leaves workflow mutation to explicit human actions', () => {

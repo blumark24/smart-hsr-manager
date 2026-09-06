@@ -26,30 +26,38 @@ const adapter = fs.readFileSync(path.join(root, 'manager-dashboard-adapter.js'),
 // like 'openServiceEdit()', which also appears earlier as a render-prop
 // arrow reference (`openServiceEdit: () => this.openServiceEdit()`) and
 // would make an unanchored indexOf find that instead of the definition.
-function methodBody(source, signature, maxLen = 800) {
+function methodBody(source, signature, maxLen = 1500) {
   const start = source.indexOf(signature);
   assert.notEqual(start, -1, `${signature} not found`);
   return source.slice(start, start + maxLen);
 }
 
 // ---- Add User ----
-test('Add User: opens a drawer and calls the real create contract, not a second API', () => {
+test('Add User: opens a drawer and calls the real multi-service create contract, not a second API', () => {
   assert.match(manager, /addUserOpen: false/);
   assert.match(manager, /openAddUser\(\)\s*\{[\s\S]{0,120}addUserOpen: true/);
   const fn = methodBody(manager, 'async submitAddUser()');
   assert.match(fn, /callAdminUsersApi\('create',/);
   assert.match(fn, /organizationId: this\.state\.orgId/);
-  assert.match(fn, /role: auRole/);
+  // the multi-service (field/lands) create path, not the single-role one —
+  // this is what lets Add User create a Lands-only account at all.
+  assert.match(fn, /field: \{ enabled: auKind === 'field'/);
+  assert.match(fn, /lands: \{ enabled: auKind === 'lands'/);
   assert.match(fn, /generateTempPassword\(\)/);
   // no second/invented endpoint
   assert.doesNotMatch(fn, /fetch\((?!.*\/api\/admin\/users)/);
 });
 
-test('Add User: role selection is a true single-select (each option sets one auRole value), not independent checkboxes', () => {
-  const start = manager.indexOf('auRoleOptions:');
-  const block = manager.slice(start, start + 500);
-  assert.match(block, /this\.setState\(\{\s*auRole: o\.role\s*\}\)/);
-  assert.doesNotMatch(block, /enabled:\s*!/, 'must not toggle independent booleans per role');
+test('Add User: Field vs Lands is a single-select choice, and each service offers only its own real roles', () => {
+  const kindStart = manager.indexOf('auKindOptions:');
+  const kindBlock = manager.slice(kindStart, kindStart + 300);
+  assert.match(kindBlock, /this\.setState\(\{\s*auKind: o\.kind/, 'Field/Lands must be one mutually-exclusive choice');
+  const roleStart = manager.indexOf('auRoleOptions:');
+  const roleBlock = manager.slice(roleStart, roleStart + 700);
+  assert.match(roleBlock, /this\.setState\(\{\s*auRole: o\.role\s*\}\)/);
+  assert.doesNotMatch(roleBlock, /enabled:\s*!/, 'must not toggle independent booleans per role');
+  assert.match(roleBlock, /lands_employee/);
+  assert.match(roleBlock, /lands_department_manager/);
 });
 
 test('Add User: the temporary password is shown once and never sent to the audit trail', () => {
@@ -67,11 +75,16 @@ test('User drawer shows the real current service (Field role or Lands entitlemen
   assert.match(manager, /selectedUserServiceLabel: st\.selectedUser \? userDisplayRole\(st\.selectedUser\) : '—'/);
 });
 
-test('Service editing calls the real setServices contract with field OR lands, matching single-service exclusivity', () => {
+test('Service editing sends an explicit field+lands transfer, never a partial request that could leave both enabled', () => {
   const fn = methodBody(manager, 'async submitServiceChange(');
   assert.match(fn, /callAdminUsersApi\('setServices',/);
-  assert.match(fn, /params\.field\s*=\s*\{\s*enabled:\s*true,\s*role:\s*choice\.role\s*\}/);
-  assert.match(fn, /params\.lands\s*=\s*\{\s*enabled:\s*true,\s*role:\s*choice\.role\s*\}/);
+  // api/admin/users.js's resolveEffectiveServiceState leaves an
+  // unmentioned service's EXISTING stored state in effect — so sending
+  // only the newly-chosen service, without also explicitly disabling the
+  // other, could try to enable both at once and get dual_service_denied.
+  // Both fields must always be stated together.
+  assert.match(fn, /field:\s*\{\s*enabled:\s*choice\.kind === 'field'/);
+  assert.match(fn, /lands:\s*\{\s*enabled:\s*choice\.kind === 'lands'/);
 });
 
 test('Service options include the real LANDS_MANAGEABLE_ROLES, not an invented Lands role', () => {

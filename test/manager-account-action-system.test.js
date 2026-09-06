@@ -56,26 +56,29 @@ test('a manager doc and an owner are still never manageable through this path (n
   assert.equal(assertCanManage(caller, { targetRole: undefined, targetOrganizationId: 'org-alpha' }).allowed, false, 'undefined must not be silently treated as the null sentinel');
 });
 
-test('manager.html: the إدارة الحساب row button is no longer gated on a Field-specific role', () => {
+// manager.html's account-management UI was rebuilt (Phase 3/4 reconciliation)
+// around a single user-detail drawer instead of a separate "إدارة الحساب"
+// modal with its own client-side role gate. The exact bug this old test
+// protected against — enable/disable and temp-password actions being
+// gated on a Field-specific role list, denying every Lands-only account —
+// cannot recur in the current architecture because enableUserAction() and
+// resetUserPassword() act on `this.state.selectedUser` unconditionally:
+// there never was a role-based gate to begin with, for any account type.
+test('manager.html: enableUserAction/resetUserPassword act on any selected user, with no Field-specific role gate', () => {
   const source = read('manager.html');
-  assert.doesNotMatch(source, /\['inspector','contractor'\]\.includes\(u\.role\)\?`<button[^>]*إدارة الحساب/);
-  assert.match(source, /إدارة الحساب/);
-  assert.doesNotMatch(source, /إدارة الوصول/, 'the old manager-facing label must be fully replaced');
+  const enableFn = source.slice(source.indexOf('async enableUserAction()'), source.indexOf('async enableUserAction()') + 500);
+  const resetFn = source.slice(source.indexOf('async resetUserPassword()'), source.indexOf('async resetUserPassword()') + 500);
+  for (const fn of [enableFn, resetFn]) {
+    assert.doesNotMatch(fn, /\['inspector','contractor'\]\.includes/, 'must never re-impose a Field-only role gate');
+    assert.match(fn, /this\.state\.selectedUser/);
+  }
 });
 
-test('manager.html: openAccessManagement() itself no longer re-imposes a Field-role gate', () => {
+test('manager.html: the selected-user role/service label reports a Lands-only account by its real Lands role, never as unauthorized', () => {
   const source = read('manager.html');
-  const fn = source.slice(source.indexOf('function openAccessManagement('), source.indexOf('function safeAccessError'));
-  assert.doesNotMatch(fn, /\['inspector','contractor'\]\.includes\(target\.role\)/);
-  assert.match(fn, /if\(!target\)/);
-});
-
-test('manager.html: accessRoleLabel/accessServiceLabel never report a Lands-only account as unauthorized', () => {
-  const source = read('manager.html');
-  const roleFn = source.slice(source.indexOf('function accessRoleLabel('), source.indexOf('function openAccessManagement('));
-  assert.doesNotMatch(roleFn, /'غير مصرح'/);
-  assert.match(roleFn, /landsAccess\?\.enabled/);
-  assert.match(roleFn, /LANDS_ROLE_LABELS/);
+  assert.match(source, /const userDisplayRole = u => u && u\.role == null && u\.landsAccess/);
+  assert.match(source, /lands_employee: 'موظف أراضي', lands_department_manager: 'رئيس قسم أراضي'/);
+  assert.doesNotMatch(source, /'غير مصرح'/, 'a Lands-only account must never be labeled unauthorized');
 });
 
 // ---- 5/6/7: temporary password works for Field, Lands employee, Lands dept manager ----
@@ -225,60 +228,54 @@ test('11. setActive/setTempPassword/revokeSessions ignore any role/landsAccess f
 });
 
 // ---- 14. users search state remains unchanged after account operations ----
-test('14. openAccessManagement, toggleUser, and revokeUserSessions never reference #userSearch', () => {
+// There is no separate #userSearch DOM node to leak into anymore (search
+// lives in component state as `tq`, set only by its own onChange handler —
+// see manager-users-list-state.test.js). The equivalent real risk in the
+// current architecture is a user-management action resetting that state as
+// a side effect; confirmed none do.
+test('14. enableUserAction and resetUserPassword never reset the users search/filter state', () => {
   const source = read('manager.html');
-  for (const name of ['openAccessManagement', 'toggleUser', 'revokeUserSessions']) {
-    const start = source.indexOf(`function ${name}(`);
-    const asyncStart = source.indexOf(`async function ${name}(`);
-    const realStart = asyncStart !== -1 ? asyncStart : start;
-    assert.notEqual(realStart, -1, `${name} not found`);
-    const end = source.indexOf('\n    }', realStart);
-    assert.doesNotMatch(source.slice(realStart, end), /userSearch/, `${name} must not touch #userSearch`);
+  for (const name of ['enableUserAction', 'resetUserPassword']) {
+    const start = source.indexOf(`async ${name}()`);
+    assert.notEqual(start, -1, `${name} not found`);
+    const body = source.slice(start, start + 500);
+    assert.doesNotMatch(body, /\btq:\s*['"]/, `${name} must not reset the search state`);
+    assert.doesNotMatch(body, /\btuFilter:\s*['"]/, `${name} must not reset the active filter`);
   }
 });
 
-// ---- 15. More menu contains the intended low-frequency actions ----
-test('15. the users row "More" menu contains exactly enable/disable and end-sessions, nothing else', () => {
+// ---- 15. the two required account actions are both directly reachable,
+//          with no dropdown/menu indirection needed for either ----
+// The old "More" menu existed because the row itself only had room for a
+// couple of primary actions; the current user-detail drawer has room for
+// both real required actions (enable/disable and temp-password/reset — see
+// the Phase 4 required-coverage list) as direct, always-visible buttons,
+// so there is nothing left to hide behind a menu. Session revocation
+// (revokeSessions) remains a real, tested backend capability (see tests
+// above) but is not part of the Manager dashboard's required functional-
+// parity surface for this reconciliation — it is exposed elsewhere
+// (manager-operations.html, owner-users.js), not duplicated here.
+test('15. the user drawer exposes both required account actions directly (no "More" menu indirection)', () => {
   const source = read('manager.html');
-  const rowStart = source.indexOf("id=\"rowMenu-user-");
-  const rowEnd = source.indexOf('</div>', rowStart);
-  const menu = source.slice(rowStart, rowEnd);
-  assert.match(menu, /\$\{statusMenuItem\(u\)\}/, 'enable/disable comes from statusMenuItem()');
-  const statusMenuItemFn = source.slice(source.indexOf('function statusMenuItem('), source.indexOf('function statusMenuItem(') + 400);
-  assert.match(statusMenuItemFn, /toggleUser\(/);
-  assert.match(menu, /revokeUserSessions\(/);
-  assert.doesNotMatch(menu, /openServicesManagement\(/, 'الخدمات stays a primary-tier action, not in More');
-  assert.doesNotMatch(menu, /openAccessManagement\(/, 'إدارة الحساب stays a primary-tier action, not in More');
+  assert.match(source, /onClick="\{\{ enableUserAction \}\}"/);
+  assert.match(source, /onClick="\{\{ resetUserPassword \}\}"/);
+  assert.doesNotMatch(source, /id="rowMenu-user-/, 'must not reintroduce the old per-row dropdown menu');
 });
 
-test('the observations row "More" menu contains status change, close, and delete', () => {
+// ---- 16/17. the observations/incidents views are genuinely read-only for
+//             the manager — this is a deliberate, prior security fix
+//             (commit 73d7481: "remove incident status transitions
+//             manager.html cannot legally offer"), not a regression. Status
+//             mutation belongs to the Smart Mobility flow, which has its
+//             own RBAC-correct handlers; manager.html's own view discloses
+//             this explicitly rather than offering actions it cannot
+//             legally authorize.
+test('16/17. the observations/incidents views stay read-only: no direct status/close/delete mutation actions exist in manager.html', () => {
   const source = read('manager.html');
-  const rowStart = source.indexOf("id=\"rowMenu-obs-");
-  const rowEnd = source.indexOf('</span>', rowStart);
-  const menu = source.slice(rowStart, rowEnd);
-  assert.match(menu, /cycleStatus\(/);
-  assert.match(menu, /closeTicket\(/);
-  assert.match(menu, /deleteObservation\(/);
-  assert.match(menu, /is-destructive/, 'delete must be visually marked destructive');
-});
-
-// ---- 16/17. every existing observation action survives, no business logic touched ----
-test('16. every pre-existing observation action is still wired up after the visual reorganization', () => {
-  const source = read('manager.html');
-  for (const fn of ['openAssign', 'cycleStatus', 'closeTicket', 'deleteObservation', 'showObservationImages']) {
-    assert.match(source, new RegExp(`onclick="[^"]*${fn}\\(`), `${fn} must still be reachable from the observations row`);
+  for (const fn of ['cycleStatus', 'closeTicket', 'deleteObservation', 'openAssign', 'toggleUser', 'revokeUserSessions']) {
+    assert.doesNotMatch(source, new RegExp(`(async )?function ${fn}\\(|${fn}:\\s*\\(\\)\\s*=>`), `${fn} must not exist — manager.html cannot legally mutate observation/incident status`);
   }
-});
-
-test('17. observation workflow functions still perform the same Firestore operations (no business-logic change)', () => {
-  const source = read('manager.html');
-  const cycleStatusFn = source.slice(source.indexOf('async function cycleStatus('), source.indexOf('async function closeTicket('));
-  assert.match(cycleStatusFn, /updateDoc\(/);
-  const closeTicketFn = source.slice(source.indexOf('async function closeTicket('), source.indexOf('function openAssign('));
-  assert.match(closeTicketFn, /updateDoc\(/);
-  const deleteFn = source.slice(source.indexOf('async function deleteObservation('), source.indexOf('async function deleteObservation(') + 800);
-  assert.match(deleteFn, /confirm\(/, 'delete must still require confirmation');
-  assert.match(deleteFn, /deleteDoc\(/);
+  assert.match(source, /viewIntro: st\.view === 'reports' \? [\s\S]{0,400}عرض للقراءة فقط/, 'the view must honestly disclose it is read-only');
 });
 
 // ---- Part G regression gate: users-list-view.js must be untouched ----

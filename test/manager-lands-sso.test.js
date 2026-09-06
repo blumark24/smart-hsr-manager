@@ -138,13 +138,21 @@ test('login.html never logs the handoff code, the employee password, or any toke
 });
 
 // ---- P1: users-search autofill hardening ----
-test('13/14. #userSearch is hardened against browser autofill with readonly-until-focus, type=search, and autocomplete=off (not merely cleared after the fact)', () => {
+// manager.html's search box moved from a raw DOM #userSearch input to the
+// Designer component's own template-bound input (value="{{ tQ }}"), but the
+// same real hardening this test protects still applies to it — see
+// test/manager-users-list-state.test.js: "manager.html: the users/incidents
+// search inputs are hardened against autofill (readonly-until-focus,
+// type=search, autocomplete=off)", which checks both the users-list and
+// incidents-list search inputs by their current markup.
+test('13/14. the users-list search input is still hardened against browser autofill (see manager-users-list-state.test.js for the full assertion)', () => {
   const source = read('manager.html');
-  const inputTag = source.slice(source.indexOf('<input id="userSearch"'), source.indexOf('/>', source.indexOf('<input id="userSearch"')) + 2);
-  assert.match(inputTag, /type="search"/);
-  assert.match(inputTag, /autocomplete="off"/);
-  assert.match(inputTag, /readonly/);
-  assert.match(inputTag, /onfocus="this\.removeAttribute\('readonly'\)"/);
+  const inputs = [...source.matchAll(/<input type="search"[^>]*value="\{\{ tQ \}\}"[^>]*>/g)];
+  assert.equal(inputs.length, 2);
+  for (const [inputTag] of inputs) {
+    assert.match(inputTag, /autocomplete="off"/);
+    assert.match(inputTag, /readonly/);
+  }
 });
 
 test('15. users list stability is unaffected by the search hardening: users-list-view.js and the render pipeline are unchanged', () => {
@@ -152,6 +160,6 @@ test('15. users list stability is unaffected by the search hardening: users-list
   assert.match(viewSource, /export function belongsOnUsersList/);
   assert.match(viewSource, /export function deriveVisibleUsers/);
   const managerSource = read('manager.html');
-  assert.match(managerSource, /usersViewState\.search = document\.getElementById\('userSearch'\)\.value/);
-  assert.match(managerSource, /deriveVisibleUsers\(users, usersViewState\)/);
+  assert.match(managerSource, /const tq = \(st\.tq \|\| ''\)\.trim\(\)\.toLocaleLowerCase\('ar'\)/);
+  assert.match(managerSource, /usersListView\.deriveVisibleUsers\(roleScoped, \{ search: tq \}\)/);
 });
