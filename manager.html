@@ -727,6 +727,46 @@
           </div>
         </sc-if>
 
+        <sc-if value="{{ viewIsIncidents }}">
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;flex:1;min-height:0">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
+              <div style="position:relative;width:var(--tSearch,232px)">
+                <input value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              </div>
+              <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+                <sc-for list="{{ tFilters }}" as="f" hint-placeholder-count="6">
+                  <button onClick="{{ f.on }}" data-f="1" style="height:30px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
+              <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
+                <sc-for list="{{ tCols }}" as="c" hint-placeholder-count="6">
+                  <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
+                </sc-for>
+              </div>
+              <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+                <sc-for list="{{ tRows }}" as="r" hint-placeholder-count="8">
+                  <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--ctl,rgba(20,32,54,0.5))">
+                    <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
+                      <span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
+                    </sc-for>
+                    <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;white-space:nowrap;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ tEmpty }}">
+                  <div style="padding:44px 20px;text-align:center;color:var(--thTx,#7d8ea6);font-size:12px">لا توجد حوادث مطابقة للتصفية الحالية</div>
+                </sc-if>
+              </div>
+              <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:center;gap:10px">
+                <span style="flex:1;font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ tCount }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
         <sc-if value="{{ viewEmpty }}"><div style="padding:24px 10px;text-align:center;font-size:11px;color:var(--tx3,#7d8ea6)">{{ viewEmptyText }}</div></sc-if>
       </section>
     </div>
@@ -853,6 +893,7 @@ class Component extends DCLogic {
   liveDepartments = [];
   liveObservations = [];
   liveUsers = [];
+  liveIncidents = [];
   liveDataState = 'loading';
   liveDataError = '';
 
@@ -1316,6 +1357,50 @@ class Component extends DCLogic {
       tEmpty = tRows.length === 0;
       tCount = tRows.length + ' مستخدم';
       tQ = st.tq || '';
+    } else if (st.view === 'incidents') {
+      const statusMap = { 'NEW': 'جديد', 'ACKNOWLEDGED': 'تم الاستلام', 'IN_PROGRESS': 'تحت المعالجة', 'RESOLVED': 'تم الحل' };
+      const severityMap = { 'LOW': 'منخفضة', 'MEDIUM': 'متوسطة', 'CRITICAL': 'حرجة' };
+      const tfilter = st.tiFilter || 'الكل';
+      const tq = (st.tq || '').trim().toLocaleLowerCase('ar');
+      tPlaceholder = 'رقم الحادث، الفئة، الموقع...';
+      tCols = [
+        { label: 'الرقم', flex: '0 0 62px', align: 'right' },
+        { label: 'الفئة', flex: '1.1', align: 'right' },
+        { label: 'الخطورة', flex: '0 0 70px', align: 'right' },
+        { label: 'الموقع', flex: '1.4', align: 'right' },
+        { label: 'الحالة', flex: '0 0 92px', align: 'left' }
+      ];
+      const statusFilters = ['الكل', 'جديد', 'تم الاستلام', 'تحت المعالجة', 'تم الحل'];
+      const statusFilterMap = { 'الكل': null, 'جديد': 'NEW', 'تم الاستلام': 'ACKNOWLEDGED', 'تحت المعالجة': 'IN_PROGRESS', 'تم الحل': 'RESOLVED' };
+      tFilters = statusFilters.map(sf => pill(sf, tfilter === sf, () => this.setState({ tiFilter: sf })));
+      const targetStatus = statusFilterMap[tfilter];
+      const allIncidents = Array.isArray(this.liveIncidents) ? this.liveIncidents : [];
+      const filteredIncidents = allIncidents
+        .filter(i => !targetStatus || i.status === targetStatus)
+        .filter(i => !tq || (i.id + ' ' + i.category + ' ' + i.location).toLocaleLowerCase('ar').includes(tq));
+      tRows = filteredIncidents.map(i => {
+        const severityCol = i.severity === 'CRITICAL' ? (day ? '#b91c1c' : '#ef4444') : (day ? '#666' : '#a9bdd4');
+        const statusChipMap = {
+          'NEW': { col: day ? '#b91c1c' : '#ef4444', bg: day ? 'rgba(185,28,28,0.12)' : 'rgba(239,68,68,0.15)', bd: day ? 'rgba(185,28,28,0.3)' : 'rgba(239,68,68,0.4)' },
+          'ACKNOWLEDGED': { col: day ? '#d97706' : '#f59e0b', bg: day ? 'rgba(217,119,6,0.12)' : 'rgba(245,158,11,0.15)', bd: day ? 'rgba(217,119,6,0.3)' : 'rgba(245,158,11,0.4)' },
+          'IN_PROGRESS': { col: day ? '#7c3aed' : '#a78bfa', bg: day ? 'rgba(124,58,237,0.12)' : 'rgba(167,139,250,0.15)', bd: day ? 'rgba(124,58,237,0.3)' : 'rgba(167,139,250,0.4)' },
+          'RESOLVED': { col: day ? '#0b5c3b' : '#22c55e', bg: day ? 'rgba(14,122,79,0.12)' : 'rgba(34,197,85,0.15)', bd: day ? 'rgba(14,122,79,0.3)' : 'rgba(34,197,85,0.4)' }
+        };
+        const c = statusChipMap[i.status] || statusChipMap['NEW'];
+        return {
+          chip: statusMap[i.status] || i.status, chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
+          on: () => this.flash(`تفاصيل الحادث: ${i.id}`),
+          cells: [
+            cell(i.id, '0 0 62px', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
+            cell(i.category, '1.1'),
+            cell(severityMap[i.severity] || i.severity, '0 0 70px', { size: '11px', col: severityCol }),
+            cell(i.location, '1.4', { size: '11px' })
+          ]
+        };
+      });
+      tEmpty = tRows.length === 0;
+      tCount = tRows.length + ' حادث';
+      tQ = st.tq || '';
     }
 
     return {
@@ -1370,12 +1455,12 @@ class Component extends DCLogic {
       mapEmptyText,
       search: st.search,
       viewOpen: st.view !== 'home',
-      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users',
-      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : 'البلاغات',
-      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
+      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents',
+      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : st.view === 'incidents' ? 'الحوادث والطوارئ' : 'البلاغات',
+      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : st.view === 'incidents' ? 'مركز إدارة الحوادث والطوارئ الميدانية المسجّلة.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
       viewUsers,
-      viewEmpty: st.view === 'users' ? !viewUsers.length : !viewObservations.length,
+      viewEmpty: (st.view === 'users' ? !viewUsers.length : (st.view === 'incidents' ? !tRows.length : !viewObservations.length)),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
 
       tCols, tRows, tFilters, tPlaceholder, tQ, setTQ, tEmpty, tCount,
@@ -1395,7 +1480,7 @@ class Component extends DCLogic {
         { label: 'عرض البلاغات', on: () => this.openView('observations') },
         { label: 'الخريطة التشغيلية', on: () => this.openMap() },
         { label: 'المستخدمون والصلاحيات', on: () => this.openView('users') },
-        { label: 'الحصر الميداني الذكي', on: () => this.goRoute('survey') }
+        { label: 'الحوادث والطوارئ', on: () => this.openView('incidents') }
       ],
       mobNav: [
         { label: 'الرئيسية', tag: '', on: () => this.goHome() },
@@ -1407,6 +1492,7 @@ class Component extends DCLogic {
         { label: 'التقارير', tag: '', on: () => this.openView('reports') },
         { label: 'الهيكل الإداري', tag: 'قريباً', disabled: true },
         { label: 'المستخدمون والصلاحيات', tag: '', on: () => this.openView('users') },
+        { label: 'الحوادث والطوارئ', tag: '', on: () => this.openView('incidents') },
         { label: 'الإعدادات والهوية', tag: '', on: () => this.setState({ settingsOpen: true, mobNavOpen: false }) },
         { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', disabled: true }
       ].map(item => Object.assign({ cursor: item.disabled ? 'not-allowed' : 'pointer', disabledText: item.disabled ? 'true' : 'false' }, item)),
