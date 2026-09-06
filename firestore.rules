@@ -80,6 +80,33 @@ service cloud.firestore {
       return isActiveMobilityUser() ? userRecord().data.department : null;
     }
 
+    // An auditEvents write's actorId/actorRole/organizationId alone say
+    // nothing about whether the resourceId it names is real, in the
+    // actor's own organization, or something the actor actually has a
+    // relationship to — a same-org employee could otherwise write a
+    // perfectly self-consistent event that semantically forges someone
+    // else's mission, a cross-org resource, or a nonexistent id. This
+    // closes that gap with one bounded get()/exists() pair (short-circuited
+    // by resourceType, so exactly one branch below ever touches Firestore)
+    // per create, checked against each resource's own recorded
+    // organizationId and, for an employee actor, its own ownership field —
+    // the same fields each resource's own rules below already trust.
+    function auditReferencedResourceOk(role, uid, resourceType, resourceId, organizationId) {
+      return
+        (resourceType == 'mission'
+          && exists(/databases/$(database)/documents/missions/$(resourceId))
+          && get(/databases/$(database)/documents/missions/$(resourceId)).data.organizationId == organizationId
+          && (role != 'employee' || get(/databases/$(database)/documents/missions/$(resourceId)).data.assignedEmployeeUid == uid))
+        || (resourceType == 'vehicle'
+          && exists(/databases/$(database)/documents/vehicles/$(resourceId))
+          && get(/databases/$(database)/documents/vehicles/$(resourceId)).data.organizationId == organizationId
+          && (role != 'employee' || get(/databases/$(database)/documents/vehicles/$(resourceId)).data.assignedEmployeeUid == uid))
+        || (resourceType == 'incident'
+          && exists(/databases/$(database)/documents/incidents/$(resourceId))
+          && get(/databases/$(database)/documents/incidents/$(resourceId)).data.organizationId == organizationId
+          && (role != 'employee' || get(/databases/$(database)/documents/incidents/$(resourceId)).data.createdByUid == uid));
+    }
+
     // ==========================================================
     // managers/{managerId} — signed-in self-read only, no client writes
     // ==========================================================
@@ -432,12 +459,17 @@ service cloud.firestore {
             && resource.data.actorId == request.auth.uid);
 
       // An actor may only ever record an event as themselves, in their own
-      // organization — never on another user's behalf, never cross-tenant.
+      // organization — never on another user's behalf, never cross-tenant —
+      // and the resource it names must be real, in that same organization,
+      // and (for an employee) actually theirs. See auditReferencedResourceOk.
       allow create: if isActiveMobilityUser()
         && request.resource.data.organizationId == mobilityUserOrgId()
         && request.resource.data.actorId == request.auth.uid
         && request.resource.data.actorRole == mobilityUserRole()
-        && request.resource.data.resourceType in ['mission', 'vehicle', 'incident'];
+        && request.resource.data.resourceType in ['mission', 'vehicle', 'incident']
+        && auditReferencedResourceOk(mobilityUserRole(), request.auth.uid,
+             request.resource.data.resourceType, request.resource.data.resourceId,
+             request.resource.data.organizationId);
 
       // Audit records are immutable once written.
       allow update, delete: if false;

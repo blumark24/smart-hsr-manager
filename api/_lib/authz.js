@@ -23,6 +23,25 @@
 // ============================================================================
 const { getAuth, getDb } = require('./firebaseAdmin');
 
+const AUTH_CODES = Object.freeze({ HEADER_MISSING: 'AUTH_HEADER_MISSING', TOKEN_INVALID: 'AUTH_TOKEN_INVALID', TOKEN_EXPIRED: 'AUTH_TOKEN_EXPIRED', PROJECT_MISMATCH: 'AUTH_PROJECT_MISMATCH' });
+
+function authError(code) {
+  const error = new Error(code);
+  error.code = code;
+  error.statusCode = 401;
+  return error;
+}
+
+function tokenProject(token) {
+  try {
+    const payload = JSON.parse(Buffer.from(String(token).split('.')[1] || '', 'base64url').toString('utf8'));
+    const audience = typeof payload.aud === 'string' ? payload.aud : '';
+    const prefix = 'https://securetoken.google.com/';
+    const issuerProject = typeof payload.iss === 'string' && payload.iss.startsWith(prefix) ? payload.iss.slice(prefix.length) : '';
+    return audience && audience === issuerProject ? audience : '';
+  } catch (_) { return ''; }
+}
+
 // Smart Mobility roles (Phase 2/3 integration). municipality_manager reuses
 // the existing 'manager' role/collection rather than a new value — same
 // account, same organizationId scope.
@@ -34,6 +53,14 @@ const MANAGEABLE_ROLES = ['manager', 'supervisor', 'inspector', 'contractor', ..
 
 // Roles an organization manager (as opposed to an owner) may manage.
 const MANAGER_SCOPED_ROLES = ['supervisor', 'inspector', 'contractor', ...MOBILITY_MANAGEABLE_ROLES];
+
+// Smart HSR Lands roles a manager may assign as a SERVICE ENTITLEMENT DECLARATION
+// (see api/admin/users.js `setServices`/`create`). This is deliberately a
+// separate, smaller list from Field's roles: lands_municipal_manager is an
+// institution-level Lands role and is never exposed as an employee option
+// here, matching the same "manager cannot create another manager" boundary
+// Field already enforces via MANAGER_SCOPED_ROLES.
+const LANDS_MANAGEABLE_ROLES = ['lands_employee', 'lands_department_manager'];
 
 // Stage B flag: manager-initiated, same-organization management is enabled.
 const MANAGER_MANAGEMENT_ENABLED = true;
@@ -50,20 +77,20 @@ function activeIsNotFalse(data) {
 
 // Verify the Firebase ID token from the Authorization header.
 // checkRevoked=true so revoked sessions (disabled/rotated) are rejected.
-async function verifyRequestToken(req) {
+async function verifyRequestToken(req, verifyIdToken = (token, checkRevoked) => getAuth().verifyIdToken(token, checkRevoked)) {
   const header = (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
   const m = /^Bearer\s+(.+)$/i.exec(String(header).trim());
   if (!m) {
-    const err = new Error('missing_bearer_token');
-    err.statusCode = 401;
-    throw err;
+    throw authError(AUTH_CODES.HEADER_MISSING);
   }
   try {
-    return await getAuth().verifyIdToken(m[1], true);
+    // Firebase Admin is the single verification authority. A local comparison
+    // against app.options.projectId can diverge from the credential project on
+    // Vercel Preview and reject a token that Admin can verify correctly.
+    return await verifyIdToken(m[1], true);
   } catch (e) {
-    const err = new Error('invalid_or_revoked_token');
-    err.statusCode = 401;
-    throw err;
+    if (e && e.code === 'auth/id-token-expired') throw authError(AUTH_CODES.TOKEN_EXPIRED);
+    throw authError(AUTH_CODES.TOKEN_INVALID);
   }
 }
 
@@ -88,13 +115,26 @@ async function getCallerContext(uid) {
 }
 
 // Pure authorization decision. Owner -> anything manageable. Manager -> only
-// supervisors/inspectors/contractors in its OWN organization; never managers,
-// owners, or another organization. Everyone else -> denied.
+// supervisors/inspectors/contractors/Smart Mobility roles OR a Lands-only
+// account (targetRole is exactly `null`) in its OWN organization; never
+// managers, owners, or another organization. Everyone else -> denied.
+//
+// Account security (temp password, enable/disable, session revocation)
+// belongs to the Firebase Auth identity, not to which operational service
+// an employee happens to work in. A Lands-only employee's users/{uid} doc
+// legitimately has role === null (Lands is single-service-exclusive with
+// Field — see api/admin/users.js) and is recognized here by that exact
+// `null`, never by `undefined`/a missing field, so a malformed or
+// unexpected record still fails closed exactly as before.
+function isManagerScopedTarget(targetRole) {
+  return targetRole === null || MANAGER_SCOPED_ROLES.includes(targetRole);
+}
+
 function assertCanManage(caller, target) {
   const targetRole = target && target.targetRole;
   const targetOrg = target && target.targetOrganizationId;
 
-  if (!MANAGEABLE_ROLES.includes(targetRole)) {
+  if (targetRole !== null && !MANAGEABLE_ROLES.includes(targetRole)) {
     return { allowed: false, reason: 'target_role_not_manageable' };
   }
   if (!caller) return { allowed: false, reason: 'no_caller' };
@@ -103,7 +143,7 @@ function assertCanManage(caller, target) {
     return { allowed: true, reason: 'owner' };
   }
   if (caller.isManager) {
-    if (!MANAGER_SCOPED_ROLES.includes(targetRole)) {
+    if (!isManagerScopedTarget(targetRole)) {
       return { allowed: false, reason: 'manager_cannot_manage_managers' };
     }
     if (!caller.organizationId || targetOrg !== caller.organizationId) {
@@ -115,13 +155,17 @@ function assertCanManage(caller, target) {
 }
 
 module.exports = {
-  MOBILITY_MANAGEABLE_ROLES,
   MANAGEABLE_ROLES,
   MANAGER_SCOPED_ROLES,
+  MOBILITY_MANAGEABLE_ROLES,
+  LANDS_MANAGEABLE_ROLES,
   MANAGER_MANAGEMENT_ENABLED,
+  isManagerScopedTarget,
   collectionForRole,
   activeIsNotFalse,
   verifyRequestToken,
   getCallerContext,
   assertCanManage,
+  AUTH_CODES,
+  tokenProject,
 };

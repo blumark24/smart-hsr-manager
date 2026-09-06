@@ -58,6 +58,14 @@ async function seed() {
       organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'READY',
       vehicleId: 'V101', assignedEmployeeUid: UID.employeeA,
     });
+    await setDoc(doc(db, 'missions', 'inProgressB'), {
+      organizationId: ORG_B, department: DEPT_TRAFFIC, createdByUid: 'x', status: 'IN_PROGRESS',
+      vehicleId: 'V901', assignedEmployeeUid: 'x',
+    });
+
+    await setDoc(doc(db, 'vehicles', 'V101'), {
+      organizationId: ORG_A, status: 'IN_MISSION', assignedEmployeeUid: UID.employeeA, currentMissionId: 'inProgressA',
+    });
 
     await setDoc(doc(db, 'incidents', 'newA'), {
       organizationId: ORG_A, missionId: 'inProgressA', vehicleId: 'V101', createdByUid: UID.employeeA,
@@ -207,6 +215,53 @@ test('W3 an actor cannot record an audit event with a fabricated role', async ()
 test('U1 audit events are never updated or deleted', async () => {
   await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'auditEvents', 'evtA'), { action: 'tampered' }));
   await assertFails(deleteDoc(doc(ctx(UID.mobilityHeadA), 'auditEvents', 'evtA')));
+});
+
+// ============================================================
+// Audit resource-reference forgery (auditReferencedResourceOk)
+// organizationId/actorId/actorRole alone don't prove the resourceId a
+// write names is real, same-org, or actually the actor's — these prove it.
+// ============================================================
+test('F1 cross-organization resourceId reference is denied (own org fields, resource actually in org B)', async () => {
+  await assertFails(setDoc(doc(ctx(UID.mobilityHeadA), 'auditEvents', 'evtF1'), {
+    organizationId: ORG_A, actorId: UID.mobilityHeadA, actorRole: 'mobility_head',
+    resourceType: 'mission', resourceId: 'inProgressB', action: 'allocate_vehicle',
+  }));
+});
+
+test('F2 an employee referencing another employee\'s mission is denied', async () => {
+  await assertFails(setDoc(doc(ctx(UID.employeeA2), 'auditEvents', 'evtF2'), {
+    organizationId: ORG_A, actorId: UID.employeeA2, actorRole: 'employee',
+    resourceType: 'mission', resourceId: 'inProgressA', action: 'employee_advance',
+  }));
+});
+
+test('F3 a nonexistent resourceId is denied', async () => {
+  await assertFails(setDoc(doc(ctx(UID.mobilityHeadA), 'auditEvents', 'evtF3'), {
+    organizationId: ORG_A, actorId: UID.mobilityHeadA, actorRole: 'mobility_head',
+    resourceType: 'mission', resourceId: 'does-not-exist-xyz', action: 'allocate_vehicle',
+  }));
+});
+
+test('F4 a resourceType/resourceId mismatch is denied (declared vehicle, id is actually a mission)', async () => {
+  await assertFails(setDoc(doc(ctx(UID.mobilityHeadA), 'auditEvents', 'evtF4'), {
+    organizationId: ORG_A, actorId: UID.mobilityHeadA, actorRole: 'mobility_head',
+    resourceType: 'vehicle', resourceId: 'inProgressA', action: 'allocate_vehicle',
+  }));
+});
+
+test('F5 a legitimate same-org, correctly-typed reference still succeeds (no regression)', async () => {
+  await assertSucceeds(setDoc(doc(ctx(UID.mobilityHeadA), 'auditEvents', 'evtF5'), {
+    organizationId: ORG_A, actorId: UID.mobilityHeadA, actorRole: 'mobility_head',
+    resourceType: 'mission', resourceId: 'inProgressA', action: 'allocate_vehicle',
+  }));
+});
+
+test('F6 an employee recording their own assigned vehicle still succeeds (no regression)', async () => {
+  await assertSucceeds(setDoc(doc(ctx(UID.employeeA), 'auditEvents', 'evtF6'), {
+    organizationId: ORG_A, actorId: UID.employeeA, actorRole: 'employee',
+    resourceType: 'vehicle', resourceId: 'V101', action: 'employee_return_vehicle',
+  }));
 });
 
 console.log('mobility incident + audit Firestore rules OK');
