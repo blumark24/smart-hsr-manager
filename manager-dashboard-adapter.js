@@ -1,19 +1,11 @@
 import { belongsOnUsersList, deriveVisibleUsers } from './users-list-view.js';
+import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 
 // manager.html's own inline script runs as a non-module Designer canvas
 // script (type="text/x-dc"), so it cannot `import` this module directly —
 // exposed on window the same way manager-dashboard-format.js already
 // exposes window.SmartHSRFormat.
 window.SmartHSRUsersListView = { belongsOnUsersList, deriveVisibleUsers };
-
-const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM',
-  authDomain: 'smart-hsr-manager.firebaseapp.com',
-  projectId: 'smart-hsr-manager',
-  storageBucket: 'smart-hsr-manager.firebasestorage.app',
-  messagingSenderId: '38965508031',
-  appId: '1:38965508031:web:6fd0b6c6b0b63fa513930a'
-};
 
 const STATUS = Object.freeze({
   PENDING: { label: 'قيد الانتظار', color: '#ef4444' },
@@ -247,13 +239,14 @@ async function verifyManagerAccess(api, db, user) {
 }
 
 async function start(component) {
-  const [appApi, firestoreApi, authApi] = await Promise.all([
+  const [appApi, firestoreApi, authApi, firebaseConfig] = await Promise.all([
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'),
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js'),
+    resolveFirebaseConfig()
   ]);
   const app = appApi.getApps().find(item => item.name === 'smart-hsr-manager-session')
-    || appApi.initializeApp(FIREBASE_CONFIG, 'smart-hsr-manager-session');
+    || appApi.initializeApp(firebaseConfig, 'smart-hsr-manager-session');
   const db = firestoreApi.getFirestore(app);
   const auth = authApi.getAuth(app);
   // Test-only: connects to the local Firebase emulators instead of
