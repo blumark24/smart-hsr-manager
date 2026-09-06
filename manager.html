@@ -1751,15 +1751,64 @@ class Component extends DCLogic {
     this.setState({ incidentDrawerOpen: false, selectedIncident: null });
   }
 
-  enableUserAction() {
+  async enableUserAction() {
     if (!this.state.selectedUser) return;
-    const action = this.state.selectedUser.active ? 'تعطيل' : 'تفعيل';
+    const user = this.state.selectedUser;
+    const isActive = user.active;
+    const action = isActive ? 'تعطيل' : 'تفعيل';
     this.flash(`جاري ${action} حساب المستخدم...`);
+    try {
+      const token = await this.getAuthToken?.();
+      const response = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: user.id || user.uid,
+          organizationId: this.state.orgId,
+          active: !isActive
+        })
+      });
+      if (response.ok) {
+        this.flash(`تم ${action} حساب المستخدم بنجاح`);
+        this.closeUserDrawer();
+      } else {
+        this.flash(`فشل ${action} حساب المستخدم: ${response.statusText}`);
+      }
+    } catch (e) {
+      this.flash(`خطأ عند ${action} حساب المستخدم: ${e.message}`);
+    }
   }
 
-  resetUserPassword() {
+  async resetUserPassword() {
     if (!this.state.selectedUser) return;
+    const user = this.state.selectedUser;
     this.flash('جاري إعادة تعيين كلمة المرور...');
+    try {
+      const token = await this.getAuthToken?.();
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'resetPassword',
+          userId: user.id || user.uid,
+          organizationId: this.state.orgId
+        })
+      });
+      if (response.ok) {
+        const result = await response.json();
+        this.flash(`تم إعادة تعيين كلمة المرور. الرابط: ${result.link || 'تم الإرسال عبر البريد'}`);
+      } else {
+        this.flash(`فشل إعادة تعيين كلمة المرور: ${response.statusText}`);
+      }
+    } catch (e) {
+      this.flash(`خطأ عند إعادة تعيين كلمة المرور: ${e.message}`);
+    }
   }
 
   viewIncidentOnMap() {
