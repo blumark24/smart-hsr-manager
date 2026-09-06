@@ -24,6 +24,7 @@ let activeComponent = null;
 let stopAuth = null;
 let stopObservations = null;
 let stopUsers = null;
+let stopIncidents = null;
 let activeAuth = null;
 let activeAuthApi = null;
 
@@ -98,7 +99,29 @@ function toTwinObjects(observations) {
   });
 }
 
-function buildViewData(observations, users) {
+function normalizeIncidents(snapshot) {
+  return snapshot.docs.map(entry => {
+    const data = entry.data() || {};
+    return {
+      id: entry.id,
+      category: data.category || 'غير محدد',
+      severity: data.severity || 'LOW',
+      status: data.status || 'NEW',
+      createdByUid: data.createdByUid || '',
+      missionId: data.missionId || '',
+      vehicleId: data.vehicleId || '',
+      organizationId: data.organizationId || '',
+      location: data.location || '',
+      note: data.note || '',
+      department: data.department || '',
+      createdAt: asMillis(data.createdAt),
+      updatedAt: asMillis(data.updatedAt),
+      updatedByUid: data.updatedByUid
+    };
+  }).sort((a, b) => b.createdAt - a.createdAt);
+}
+
+function buildViewData(observations, users, incidents = []) {
   const pending = observations.filter(item => item.status === 'PENDING');
   const inProgress = observations.filter(item => item.status === 'IN_PROGRESS');
   const completed = observations.filter(item => item.status === 'COMPLETED');
@@ -137,6 +160,7 @@ function buildViewData(observations, users) {
       active: item.active !== false,
       email: item.email || 'غير متاح'
     })),
+    incidents: incidents,
     objects: toTwinObjects(observations),
     layers: [
       { id: 'survey', name: 'الحصر الميداني', col: '#22c55e', n: 'رابط' },
@@ -183,6 +207,7 @@ function publish(component, payload) {
   component.liveDepartments = payload.departments;
   component.liveObservations = payload.observations;
   component.liveUsers = payload.users;
+  component.liveIncidents = payload.incidents;
   component.liveDataState = 'ready';
   component.liveDataError = '';
   component.setState(state => ({ liveRevision: (state.liveRevision || 0) + 1 }));
@@ -245,9 +270,11 @@ async function start(component) {
     });
     const filter = firestoreApi.query(firestoreApi.collection(db, 'observations'), firestoreApi.where('organizationId', '==', context.organizationId));
     const userFilter = firestoreApi.query(firestoreApi.collection(db, 'users'), firestoreApi.where('organizationId', '==', context.organizationId));
+    const incidentFilter = firestoreApi.query(firestoreApi.collection(db, 'incidents'), firestoreApi.where('organizationId', '==', context.organizationId));
     let observations = [];
     let users = [];
-    const update = () => publish(component, buildViewData(observations, users));
+    let incidents = [];
+    const update = () => publish(component, buildViewData(observations, users, incidents));
     stopObservations = firestoreApi.onSnapshot(filter, { includeMetadataChanges: true }, snapshot => {
       if (snapshot.metadata.fromCache) return;
       observations = normalizeObservations(snapshot);
@@ -268,6 +295,16 @@ async function start(component) {
       component.setState({ dataState: 'error', dataError: component.liveDataError });
       component.flash(component.liveDataError);
     });
+    stopIncidents = firestoreApi.onSnapshot(incidentFilter, { includeMetadataChanges: true }, snapshot => {
+      if (snapshot.metadata.fromCache) return;
+      incidents = normalizeIncidents(snapshot);
+      update();
+    }, () => {
+      component.liveDataState = 'error';
+      component.liveDataError = 'تعذر تحميل الحوادث.';
+      component.setState({ dataState: 'error', dataError: component.liveDataError });
+      component.flash(component.liveDataError);
+    });
   });
 }
 
@@ -276,7 +313,8 @@ function disconnect(component) {
   stopAuth?.();
   stopObservations?.();
   stopUsers?.();
-  stopAuth = stopObservations = stopUsers = null;
+  stopIncidents?.();
+  stopAuth = stopObservations = stopUsers = stopIncidents = null;
   activeAuth = null;
   activeAuthApi = null;
   activeComponent = null;
