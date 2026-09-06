@@ -59,6 +59,11 @@ function makeStore() {
         const generatedId = id || `auto_${Math.random().toString(36).slice(2)}`;
         return docRef(`${name}/${generatedId}`);
       },
+      async add(data) {
+        const ref = docRef(`${name}/auto_${Math.random().toString(36).slice(2)}`);
+        await ref.set(data);
+        return ref;
+      },
       where(field, op, value) {
         return {
           async get() {

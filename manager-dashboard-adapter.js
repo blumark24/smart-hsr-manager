@@ -1,3 +1,11 @@
+import { belongsOnUsersList, deriveVisibleUsers } from './users-list-view.js';
+
+// manager.html's own inline script runs as a non-module Designer canvas
+// script (type="text/x-dc"), so it cannot `import` this module directly —
+// exposed on window the same way manager-dashboard-format.js already
+// exposes window.SmartHSRFormat.
+window.SmartHSRUsersListView = { belongsOnUsersList, deriveVisibleUsers };
+
 const FIREBASE_CONFIG = {
   apiKey: 'AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM',
   authDomain: 'smart-hsr-manager.firebaseapp.com',
@@ -153,10 +161,17 @@ function buildViewData(observations, users, incidents = []) {
       activeTeams: number(activeUsers.length)
     },
     observations,
-    users: users.map(item => ({
+    // A real operational account is either a Field account (role is one of
+    // the existing Field roles/Smart Mobility roles) or a Lands-only
+    // account (role is null — Lands is single-service-exclusive with
+    // Field, see api/admin/users.js — recognized instead by landsAccess).
+    // A strict Field-role whitelist here would silently drop every
+    // Lands-only employee, since their role is legitimately null.
+    users: users.filter(belongsOnUsersList).map(item => ({
       id: item.id,
       name: item.name || item.displayName || item.email || item.id,
-      role: item.role || 'غير محدد',
+      role: item.role,
+      landsAccess: item.landsAccess || null,
       active: item.active !== false,
       email: item.email || 'غير متاح'
     })),
@@ -251,6 +266,14 @@ async function start(component) {
   }
   activeAuth = auth;
   activeAuthApi = authApi;
+  // Real Firebase ID token for the signed-in manager/supervisor, used by
+  // the component's User Center actions to authenticate /api/admin/users
+  // calls. Never undefined-by-omission: no signed-in user resolves to
+  // null, which fails the request cleanly (401) rather than sending the
+  // literal string "undefined" as a bearer token.
+  component.getAuthToken = () => (activeAuth && activeAuth.currentUser)
+    ? activeAuth.currentUser.getIdToken()
+    : Promise.resolve(null);
   await authApi.setPersistence(auth, authApi.browserLocalPersistence);
 
   stopAuth = authApi.onAuthStateChanged(auth, async user => {

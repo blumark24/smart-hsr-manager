@@ -41,6 +41,31 @@ function extractBearerToken(req) {
   return m ? m[1] : null;
 }
 
+// Append-only audit trail for security-relevant User Center mutations
+// (see firestore.rules adminAuditEvents match block). Written with the
+// Admin SDK, so it bypasses client rules entirely — actorId/actorRole/
+// organizationId always come from the ALREADY-VERIFIED `caller` context
+// derived server-side from the caller's own bearer token, never from the
+// request body, so a client can never forge, spoof, or suppress an
+// entry. Never pass a password, temp password, token, or any other
+// credential material in `detail` — this function does not sanitize it.
+async function recordAdminAudit(db, { caller, organizationId, targetUid, action, detail }) {
+  const doc = {
+    // The TARGET's organization, not necessarily the caller's — an owner
+    // has no organizationId of their own (getCallerContext returns null
+    // for owner), but the record must still be scoped to the affected
+    // organization so that organization's own manager can read it.
+    organizationId,
+    actorId: caller.uid,
+    actorRole: caller.role,
+    targetUid,
+    action,
+    createdAt: FieldValue.serverTimestamp(),
+  };
+  if (detail && typeof detail === 'object') doc.detail = detail;
+  await db.collection('adminAuditEvents').add(doc);
+}
+
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -310,6 +335,10 @@ async function handler(req, res) {
           createdAt: FieldValue.serverTimestamp(),
         });
 
+        await recordAdminAudit(db, {
+          caller, organizationId, targetUid: userRecord.uid, action: 'create', detail: { role },
+        });
+
         // Response never includes the password.
         return sendJson(res, 200, {
           uid: userRecord.uid, email: email.trim(), role, organizationId, active: true,
@@ -403,6 +432,11 @@ async function handler(req, res) {
         }
         await db.collection('users').doc(userRecord.uid).set(doc);
 
+        await recordAdminAudit(db, {
+          caller, organizationId, targetUid: userRecord.uid, action: 'create',
+          detail: { field: { enabled: fieldSel.enabled, role: fieldSel.role }, lands: { enabled: landsSel.enabled, role: landsSel.role } },
+        });
+
         return sendJson(res, 200, {
           uid: userRecord.uid, email: email.trim(), organizationId, active: initialActive,
           mustChangePassword: isNonEmptyString(password),
@@ -493,6 +527,14 @@ async function handler(req, res) {
         }
         await record.ref.set(update, { merge: true });
 
+        await recordAdminAudit(db, {
+          caller, organizationId: municipalityId, targetUid: uid, action: 'set_services',
+          detail: {
+            field: fieldSel.present ? { enabled: fieldSel.enabled, role: fieldSel.role } : undefined,
+            lands: landsSel.present ? { enabled: landsSel.enabled, role: landsSel.role } : undefined,
+          },
+        });
+
         return sendJson(res, 200, {
           uid,
           field: fieldSel.present ? { enabled: fieldSel.enabled, role: fieldSel.role } : undefined,
@@ -535,7 +577,9 @@ async function handler(req, res) {
           sessionsRevokedAt: FieldValue.serverTimestamp(),
         }, { merge: true });
 
-        // No password echoed back.
+        // No password echoed back, and never audited — only the fact that
+        // a reset happened, never the value.
+        await recordAdminAudit(db, { caller, organizationId: record.data.organizationId, targetUid: uid, action: 'password_reset' });
         return sendJson(res, 200, { uid, mustChangePassword: true, revoked: true });
       }
 
@@ -554,6 +598,10 @@ async function handler(req, res) {
 
         await auth.updateUser(uid, { disabled: !active });
         await record.ref.set({ active, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        await recordAdminAudit(db, {
+          caller, organizationId: record.data.organizationId, targetUid: uid,
+          action: active ? 'enable' : 'disable',
+        });
         return sendJson(res, 200, { uid, active });
       }
 

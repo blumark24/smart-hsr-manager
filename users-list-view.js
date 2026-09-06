@@ -6,7 +6,14 @@
 //
 // allUsers must never be mutated by anything in this file.
 
-const FIELD_ROLES = new Set(['supervisor', 'inspector', 'contractor']);
+// 'Field' here means this app (Smart HSR Manager) as opposed to the
+// separate Lands app — it covers both the original supervisor/inspector/
+// contractor roles and the later Smart Mobility roles, since both live in
+// this same users/{uid} collection and are managed from this same page.
+const FIELD_ROLES = new Set([
+  'supervisor', 'inspector', 'contractor',
+  'mobility_head', 'department_head', 'administrative_affairs', 'employee',
+]);
 
 /**
  * Which Firestore users/{uid} documents belong on the manager's Users list

@@ -691,7 +691,7 @@
           <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;flex:1;min-height:0">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
               <div style="position:relative;width:var(--tSearch,232px)">
-                <input value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
+                <input type="search" autocomplete="off" value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
               </div>
               <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
@@ -731,7 +731,7 @@
           <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;flex:1;min-height:0">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
               <div style="position:relative;width:var(--tSearch,232px)">
-                <input value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
+                <input type="search" autocomplete="off" value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
               </div>
               <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
@@ -1371,17 +1371,29 @@ class Component extends DCLogic {
     const mapPoints = this.operationalObservations();
     const mapEmptyText = st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البلاغات الموثّقة.')
       : mapPoints.length ? '' : 'لا توجد بلاغات ذات إحداثيات موثّقة ضمن النطاق الحالي.';
-    const roleLabel = role => ({ manager: 'مدير', supervisor: 'مشرف', inspector: 'مراقب', contractor: 'مقاول' }[role] || 'غير محدد');
+    const roleLabel = role => ({
+      manager: 'مدير', supervisor: 'مشرف', inspector: 'مراقب', contractor: 'مقاول',
+      mobility_head: 'رئيس حركة', department_head: 'رئيس قسم', administrative_affairs: 'شؤون إدارية', employee: 'موظف'
+    }[role] || 'غير محدد');
+    // A Lands-only account (role is legitimately null — Lands is
+    // single-service-exclusive with Field, see api/admin/users.js) is
+    // labeled from its landsAccess declaration instead of the Field role map.
+    const userDisplayRole = u => u && u.role == null && u.landsAccess
+      ? ({ lands_employee: 'موظف أراضي', lands_department_manager: 'رئيس قسم أراضي' }[u.landsAccess.role] || 'أراضي')
+      : roleLabel(u && u.role);
+    const usersListView = window.SmartHSRUsersListView || {
+      deriveVisibleUsers: (all, viewState) => {
+        const q = String(viewState?.search || '').trim().toLocaleLowerCase('ar');
+        if (!q) return all.slice();
+        return all.filter(u => String(u?.name || '').toLocaleLowerCase('ar').includes(q) || String(u?.email || '').toLocaleLowerCase('ar').includes(q));
+      }
+    };
     const statusLabel = status => ({ PENDING: 'قيد الانتظار', IN_PROGRESS: 'قيد المعالجة', COMPLETED: 'تمت المعالجة' }[status] || 'غير محدد');
     const viewObservations = matchingObservations.map(item => ({
       id: item.id, title: item.title, code: item.displayId, status: statusLabel(item.status), inspector: item.inspector,
       date: item.createdAt && format.dateTime ? format.dateTime(item.createdAt) : 'غير متاح', selected: st.sel === item.id ? 'var(--accBd,rgba(76,201,240,0.45))' : 'var(--div,rgba(122,164,224,0.12))',
       on: () => this.openObservation(item.id)
     }));
-    const viewUsers = (Array.isArray(this.liveUsers) ? this.liveUsers : []).map(item => ({
-      name: item.name, role: roleLabel(item.role), email: item.email, status: item.active ? 'نشط' : 'غير نشط'
-    }));
-
     // Table data generation for users and incidents
     const pill = (label, active, on) => ({ label: label, on: on,
       tx: active ? (day ? '#0b5c3b' : '#eaf4ff') : 'var(--tx3,#7d8ea6)',
@@ -1404,14 +1416,15 @@ class Component extends DCLogic {
         { label: 'الدور', flex: '0.9', align: 'right' },
         { label: 'الحالة', flex: '0 0 80px', align: 'right' }
       ];
-      const roleFilters = ['الكل', 'مدير', 'رئيس حركة', 'رئيس قسم', 'شؤون إدارية', 'موظف'];
-      const roleMap = { 'الكل': null, 'مدير': 'manager', 'رئيس حركة': 'mobility_head', 'رئيس قسم': 'department_head', 'شؤون إدارية': 'administrative_affairs', 'موظف': 'employee' };
+      const roleFilters = ['الكل', 'مدير', 'رئيس حركة', 'رئيس قسم', 'شؤون إدارية', 'موظف', 'أراضي'];
+      const roleMap = { 'الكل': null, 'مدير': 'manager', 'رئيس حركة': 'mobility_head', 'رئيس قسم': 'department_head', 'شؤون إدارية': 'administrative_affairs', 'موظف': 'employee', 'أراضي': 'lands' };
       tFilters = roleFilters.map(rf => pill(rf, tfilter === rf, () => setTFilter(rf)));
       const targetRole = roleMap[tfilter];
       const allUsers = Array.isArray(this.liveUsers) ? this.liveUsers : [];
-      const filteredUsers = allUsers
-        .filter(u => !targetRole || u.role === targetRole)
-        .filter(u => !tq || (u.name + ' ' + u.email).toLocaleLowerCase('ar').includes(tq));
+      const roleScoped = !targetRole ? allUsers
+        : targetRole === 'lands' ? allUsers.filter(u => u.role == null && u.landsAccess)
+        : allUsers.filter(u => u.role === targetRole);
+      const filteredUsers = usersListView.deriveVisibleUsers(roleScoped, { search: tq });
       tRows = filteredUsers.map(u => {
         const c = { col: u.active ? (day ? '#0b5c3b' : '#22c55e') : (day ? '#666' : '#999'), bg: u.active ? (day ? 'rgba(14,122,79,0.12)' : 'rgba(34,197,85,0.15)') : (day ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)'), bd: u.active ? (day ? 'rgba(14,122,79,0.3)' : 'rgba(34,197,85,0.4)') : 'var(--ctlBd,rgba(122,164,224,0.14))' };
         return {
@@ -1420,7 +1433,7 @@ class Component extends DCLogic {
           cells: [
             cell(u.name, '1', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
             cell(u.email, '1.2'),
-            cell(roleLabel(u.role), '0.9', { size: '11px' })
+            cell(userDisplayRole(u), '0.9', { size: '11px' })
           ]
         };
       });
@@ -1502,7 +1515,7 @@ class Component extends DCLogic {
       userDrawerOpen: st.userDrawerOpen, incidentDrawerOpen: st.incidentDrawerOpen,
       closeUserDrawer: () => this.closeUserDrawer(), closeIncidentDrawer: () => this.closeIncidentDrawer(),
       selectedUserName: st.selectedUser?.name || '—', selectedUserEmail: st.selectedUser?.email || '—',
-      selectedUserRole: roleLabel(st.selectedUser?.role || 'employee'),
+      selectedUserRole: st.selectedUser ? userDisplayRole(st.selectedUser) : '—',
       selectedUserStatus: st.selectedUser?.active ? 'نشط' : 'غير نشط',
       selectedUserStatusCol: st.selectedUser?.active ? (day ? '#0b5c3b' : '#22c55e') : (day ? '#666' : '#999'),
       selectedUserActionLabel: st.selectedUser?.active ? 'تعطيل المستخدم' : 'تفعيل المستخدم',
@@ -1557,8 +1570,7 @@ class Component extends DCLogic {
       viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : st.view === 'incidents' ? 'الحوادث والطوارئ' : 'البلاغات',
       viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر حركة السير الذكية.' :'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
-      viewUsers,
-      viewEmpty: (st.view === 'users' ? !viewUsers.length : (st.view === 'incidents' ? !tRows.length : !viewObservations.length)),
+      viewEmpty: ((st.view === 'users' || st.view === 'incidents') ? !tRows.length : !viewObservations.length),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
 
       tCols, tRows, tFilters, tPlaceholder, tQ, setTQ, tEmpty, tCount,
@@ -1751,34 +1763,79 @@ class Component extends DCLogic {
     this.setState({ incidentDrawerOpen: false, selectedIncident: null });
   }
 
+  // Single call point for every User Center action, matching the real
+  // reconciled /api/admin/users contract exactly: one POST endpoint, one
+  // `action` discriminator field, Authorization from the actual signed-in
+  // Firebase session (never a client-invented header/endpoint). Returns
+  // the parsed body on 2xx; throws an Error carrying the server's own
+  // safe `error`/`reason` codes on failure, so callers can show an
+  // honest, specific message instead of a generic one.
+  async callAdminUsersApi(action, params) {
+    const token = await this.getAuthToken?.();
+    if (!token) {
+      const err = new Error('unauthenticated');
+      err.reason = 'no_session';
+      throw err;
+    }
+    const response = await fetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action, ...params })
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(body.error || 'request_failed');
+      err.reason = body.reason || null;
+      err.status = response.status;
+      throw err;
+    }
+    return body;
+  }
+
+  adminApiErrorMessage(e) {
+    const messages = {
+      cross_organization_denied: 'المستخدم خارج نطاق مؤسستك.',
+      manager_cannot_manage_managers: 'لا يمكن إدارة حساب مدير آخر من هنا.',
+      forbidden: 'لا تملك صلاحية تنفيذ هذا الإجراء.',
+      reauthentication_required: 'الرجاء تسجيل الخروج والدخول مرة أخرى قبل إعادة تعيين كلمة المرور.',
+      password_management_denied: 'إعادة تعيين كلمة المرور متاحة للمدير فقط.',
+      password_target_denied: 'لا يمكن إعادة تعيين كلمة المرور لهذا الحساب.',
+      target_organization_mismatch: 'الحساب المستهدف خارج نطاق مؤسستك.',
+      password_policy_failed: 'تعذر توليد كلمة مرور مطابقة للسياسة، أعد المحاولة.',
+      record_not_found: 'تعذر العثور على الحساب.',
+      no_session: 'الجلسة غير موثقة، الرجاء تسجيل الدخول من جديد.'
+    };
+    return messages[e.reason] || messages[e.message] || 'حدث خطأ غير متوقع.';
+  }
+
+  // Server never returns a temp password — it must be supplied by the
+  // caller and pass the same policy the server itself enforces
+  // (api/admin/users.js passwordPolicyReason): 8+ chars, no leading/
+  // trailing whitespace, at least one upper/lower/digit/symbol, no
+  // obvious word or repeated pattern. The server check is the actual
+  // security boundary; this only avoids a round-trip for the common case.
+  generateTempPassword() {
+    const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ', lower = 'abcdefghijkmnpqrstuvwxyz', digits = '23456789', symbols = '!@#$%^&*-_';
+    const all = upper + lower + digits + symbols;
+    const pick = set => set[Math.floor(Math.random() * set.length)];
+    let chars = [pick(upper), pick(lower), pick(digits), pick(symbols)];
+    while (chars.length < 12) chars.push(pick(all));
+    for (let i = chars.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [chars[i], chars[j]] = [chars[j], chars[i]]; }
+    return chars.join('');
+  }
+
   async enableUserAction() {
     if (!this.state.selectedUser) return;
     const user = this.state.selectedUser;
     const isActive = user.active;
-    const action = isActive ? 'تعطيل' : 'تفعيل';
-    this.flash(`جاري ${action} حساب المستخدم...`);
+    const actionLabel = isActive ? 'تعطيل' : 'تفعيل';
+    this.flash(`جاري ${actionLabel} حساب المستخدم...`);
     try {
-      const token = await this.getAuthToken?.();
-      const response = await fetch('/api/admin/users', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          userId: user.id || user.uid,
-          organizationId: this.state.orgId,
-          active: !isActive
-        })
-      });
-      if (response.ok) {
-        this.flash(`تم ${action} حساب المستخدم بنجاح`);
-        this.closeUserDrawer();
-      } else {
-        this.flash(`فشل ${action} حساب المستخدم: ${response.statusText}`);
-      }
+      await this.callAdminUsersApi('setActive', { uid: user.id, active: !isActive });
+      this.flash(`تم ${actionLabel} حساب المستخدم بنجاح`);
+      this.closeUserDrawer();
     } catch (e) {
-      this.flash(`خطأ عند ${action} حساب المستخدم: ${e.message}`);
+      this.flash(`فشل ${actionLabel} حساب المستخدم: ${this.adminApiErrorMessage(e)}`);
     }
   }
 
@@ -1787,27 +1844,13 @@ class Component extends DCLogic {
     const user = this.state.selectedUser;
     this.flash('جاري إعادة تعيين كلمة المرور...');
     try {
-      const token = await this.getAuthToken?.();
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          action: 'resetPassword',
-          userId: user.id || user.uid,
-          organizationId: this.state.orgId
-        })
-      });
-      if (response.ok) {
-        const result = await response.json();
-        this.flash(`تم إعادة تعيين كلمة المرور. الرابط: ${result.link || 'تم الإرسال عبر البريد'}`);
-      } else {
-        this.flash(`فشل إعادة تعيين كلمة المرور: ${response.statusText}`);
-      }
+      const tempPassword = this.generateTempPassword();
+      await this.callAdminUsersApi('setTempPassword', { uid: user.id, password: tempPassword });
+      // The temp password is shown once, here, and never persisted client
+      // or server-side (server confirms only { mustChangePassword, revoked }).
+      this.flash(`كلمة المرور المؤقتة: ${tempPassword} — يجب على المستخدم تغييرها عند الدخول التالي.`);
     } catch (e) {
-      this.flash(`خطأ عند إعادة تعيين كلمة المرور: ${e.message}`);
+      this.flash(`فشل إعادة تعيين كلمة المرور: ${this.adminApiErrorMessage(e)}`);
     }
   }
 

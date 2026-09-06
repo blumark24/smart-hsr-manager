@@ -532,6 +532,22 @@ service cloud.firestore {
     }
 
     // ==========================================================
+    // adminAuditEvents/{eventId} — append-only User Center audit trail
+    // (account creation, enable/disable, role/service-entitlement change,
+    // password reset). Written ONLY by api/admin/users.js via the Firebase
+    // Admin SDK, which bypasses these rules entirely and derives
+    // actorId/actorRole/organizationId itself from the verified caller's
+    // own token (getCallerContext) — never from client-supplied fields —
+    // so a client can never forge, write, or spoof one of these records.
+    // No password/token/credential is ever stored in these documents.
+    // ==========================================================
+    match /adminAuditEvents/{eventId} {
+      allow read: if isActiveOwner()
+        || (isActiveManager() && resource.data.organizationId == managerOrgId());
+      allow write: if false;
+    }
+
+    // ==========================================================
     // Final fallback — everything else denied.
     // ==========================================================
     match /{document=**} {
