@@ -73,7 +73,12 @@ test('isSsoEligible: denies a disabled account, a pending (not yet synced) entit
 // ---- 2/3. Lands employee / Lands department manager direct login wiring ----
 test('2/3. login.html calls POST /api/organization/context with the employee\'s own bearer token before redirecting to Lands', () => {
   const source = read('login.html');
-  const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole)'), source.indexOf('showMsg(\'✅ تم التحقق بنجاح... جارٍ التوجيه\', \'success\');'));
+  // The condition also excludes an active Smart Mobility role (a later,
+  // independently-merged feature — see login.html) so that role takes the
+  // same priority over a stale Lands declaration that hasFieldRole already
+  // did; matched with a prefix rather than the full literal so this test
+  // doesn't re-couple to one exact clause list.
+  const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole'), source.indexOf('showMsg(\'✅ تم التحقق بنجاح... جارٍ التوجيه\', \'success\');'));
   assert.match(landsBranch, /fetch\('\/api\/organization\/context'/);
   assert.match(landsBranch, /method: 'POST'/);
   assert.match(landsBranch, /'Authorization': 'Bearer ' \+ idToken/);
