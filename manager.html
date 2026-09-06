@@ -691,7 +691,7 @@
           <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;flex:1;min-height:0">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
               <div style="position:relative;width:var(--tSearch,232px)">
-                <input type="search" autocomplete="off" value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
+                <input type="search" autocomplete="off" readonly onfocus="this.removeAttribute(&#39;readonly&#39;)" value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
               </div>
               <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
@@ -735,7 +735,7 @@
           <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;flex:1;min-height:0">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
               <div style="position:relative;width:var(--tSearch,232px)">
-                <input type="search" autocomplete="off" value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
+                <input type="search" autocomplete="off" readonly onfocus="this.removeAttribute(&#39;readonly&#39;)" value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
               </div>
               <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
@@ -860,6 +860,14 @@
           <div>
             <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:5px">البريد الإلكتروني</div>
             <input type="email" value="{{ auEmail }}" onChange="{{ setAuEmail }}" autocomplete="off" style="width:100%;height:36px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:7px">الخدمة</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ auKindOptions }}" as="o" hint-placeholder-count="2">
+                <button onClick="{{ o.on }}" data-f="1" style="height:30px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ o.tx }};background:{{ o.bg }};border:1px solid {{ o.bd }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
           </div>
           <div>
             <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:7px">الدور</div>
@@ -1054,7 +1062,7 @@ class Component extends DCLogic {
     sb: false, expSvc: true, expAdmin: false,
     notifOpen: false, profOpen: false, layersOpen: false, settingsOpen: false, mobNavOpen: false,
     userDrawerOpen: false, selectedUser: null, incidentDrawerOpen: false, selectedIncident: null,
-    addUserOpen: false, auName: '', auEmail: '', auRole: 'employee',
+    addUserOpen: false, auName: '', auEmail: '', auRole: 'employee', auKind: 'field',
     serviceEditOpen: false,
     evidenceDrawerOpen: false, selectedObservation: null,
     evidenceBeforeState: 'idle', evidenceBeforeUrl: null,
@@ -1538,11 +1546,21 @@ class Component extends DCLogic {
         { label: 'الدور', flex: '0.9', align: 'right' },
         { label: 'الحالة', flex: '0 0 80px', align: 'right' }
       ];
+      const allUsers = Array.isArray(this.liveUsers) ? this.liveUsers : [];
+      // Real counts from the live users list — never fabricated. Only the
+      // Lands filter shows a count (the one place a manager needs to see
+      // "how many are actually on Lands right now" at a glance); the other
+      // pills stay label-only, matching the existing design. The filter's
+      // stored identity ('الكل', 'مدير', ...) stays stable text — only the
+      // rendered pill LABEL for Lands embeds the live count, so a new user
+      // arriving mid-session can never silently reset an active filter by
+      // changing the count string the filter is keyed on.
+      const landsCount = allUsers.filter(u => u.role == null && u.landsAccess && u.landsAccess.enabled).length;
       const roleFilters = ['الكل', 'مدير', 'رئيس حركة', 'رئيس قسم', 'شؤون إدارية', 'موظف', 'أراضي'];
       const roleMap = { 'الكل': null, 'مدير': 'manager', 'رئيس حركة': 'mobility_head', 'رئيس قسم': 'department_head', 'شؤون إدارية': 'administrative_affairs', 'موظف': 'employee', 'أراضي': 'lands' };
-      tFilters = roleFilters.map(rf => pill(rf, tfilter === rf, () => setTFilter(rf)));
+      const filterLabel = rf => rf === 'أراضي' ? `أراضي (${landsCount})` : rf;
+      tFilters = roleFilters.map(rf => pill(filterLabel(rf), tfilter === rf, () => setTFilter(rf)));
       const targetRole = roleMap[tfilter];
-      const allUsers = Array.isArray(this.liveUsers) ? this.liveUsers : [];
       const roleScoped = !targetRole ? allUsers
         : targetRole === 'lands' ? allUsers.filter(u => u.role == null && u.landsAccess)
         : allUsers.filter(u => u.role === targetRole);
@@ -1646,11 +1664,20 @@ class Component extends DCLogic {
       addUserOpen: st.addUserOpen, submitAddUser: () => this.submitAddUser(),
       auName: st.auName, setAuName: e => this.setState({ auName: e.target.value }),
       auEmail: st.auEmail, setAuEmail: e => this.setState({ auEmail: e.target.value }),
-      auRoleOptions: [
+      // Field vs Lands is itself a single-select choice (never both at
+      // once — Lands is single-service-exclusive with Field), picked
+      // before the role list, which then only offers roles valid for
+      // that one chosen service.
+      auKindOptions: [
+        { label: 'حصر ميداني', kind: 'field' }, { label: 'حصر أراضي', kind: 'lands' }
+      ].map(o => pill(o.label, st.auKind === o.kind, () => this.setState({ auKind: o.kind, auRole: o.kind === 'field' ? 'employee' : 'lands_employee' }))),
+      auRoleOptions: (st.auKind === 'lands' ? [
+        { label: 'موظف أراضي', role: 'lands_employee' }, { label: 'رئيس قسم أراضي', role: 'lands_department_manager' }
+      ] : [
         { label: 'مدير حركة', role: 'mobility_head' }, { label: 'رئيس قسم', role: 'department_head' },
         { label: 'شؤون إدارية', role: 'administrative_affairs' }, { label: 'موظف', role: 'employee' },
         { label: 'مشرف', role: 'supervisor' }, { label: 'مراقب', role: 'inspector' }, { label: 'مقاول', role: 'contractor' }
-      ].map(o => pill(o.label, st.auRole === o.role, () => this.setState({ auRole: o.role }))),
+      ]).map(o => pill(o.label, st.auRole === o.role, () => this.setState({ auRole: o.role }))),
       openServiceEdit: () => this.openServiceEdit(), serviceEditOpen: st.serviceEditOpen,
       selectedUserServiceLabel: st.selectedUser ? userDisplayRole(st.selectedUser) : '—',
       serviceOptions: [
@@ -1916,7 +1943,7 @@ class Component extends DCLogic {
   }
 
   openAddUser() {
-    this.setState({ addUserOpen: true, auName: '', auEmail: '', auRole: 'employee' });
+    this.setState({ addUserOpen: true, auName: '', auEmail: '', auRole: 'employee', auKind: 'field' });
   }
 
   closeAddUserDrawer() {
@@ -1924,17 +1951,24 @@ class Component extends DCLogic {
   }
 
   async submitAddUser() {
-    const { auName, auEmail, auRole } = this.state;
+    const { auName, auEmail, auRole, auKind } = this.state;
     if (!auEmail || !auEmail.trim()) { this.flash('البريد الإلكتروني مطلوب.'); return; }
     this.flash('جاري إنشاء المستخدم...');
     try {
       const tempPassword = this.generateTempPassword();
+      // The multi-service create path (no top-level `role`) covers both
+      // Field and Lands creation uniformly — the same explicit-transfer
+      // shape setServices uses, so a manager can create either kind of
+      // account from one form instead of Lands-only accounts having no
+      // creation path at all.
       await this.callAdminUsersApi('create', {
         organizationId: this.state.orgId,
-        role: auRole,
         email: auEmail.trim(),
         name: (auName || '').trim(),
         password: tempPassword,
+        active: true,
+        field: { enabled: auKind === 'field', role: auKind === 'field' ? auRole : undefined },
+        lands: { enabled: auKind === 'lands', role: auKind === 'lands' ? auRole : undefined },
       });
       // The live users subscription (manager-dashboard-adapter.js) picks
       // up the new Firestore document automatically — no separate refetch.
@@ -1954,9 +1988,19 @@ class Component extends DCLogic {
     if (!user) return;
     this.flash('جاري تحديث الخدمة...');
     try {
-      const params = { uid: user.id };
-      if (choice.kind === 'field') params.field = { enabled: true, role: choice.role };
-      else params.lands = { enabled: true, role: choice.role };
+      // Single-service exclusivity is enforced against the EFFECTIVE state
+      // after this request (api/admin/users.js resolveEffectiveServiceState):
+      // a request naming only one service leaves the other's existing
+      // stored state in effect. Sending only { lands: {...} } for a user who
+      // currently has an active Field role would therefore try to enable
+      // Lands WITHOUT disabling Field, and assertSingleService rejects that
+      // as dual_service_denied. A service change must always be an explicit
+      // transfer — both services stated together — never a partial request.
+      const params = {
+        uid: user.id,
+        field: { enabled: choice.kind === 'field', role: choice.kind === 'field' ? choice.role : null },
+        lands: { enabled: choice.kind === 'lands', role: choice.kind === 'lands' ? choice.role : null },
+      };
       await this.callAdminUsersApi('setServices', params);
       this.flash('تم تحديث الخدمة بنجاح.');
       this.setState({ serviceEditOpen: false });

@@ -234,7 +234,8 @@ async function verifyManagerAccess(api, db, user) {
     const data = manager.data() || {};
     const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
     if (data.role === 'manager' && data.active !== false && organizationId) {
-      return { role: 'manager', organizationId, organizationName: data.organizationName?.trim() || organizationId };
+      const name = typeof data.name === 'string' ? data.name.trim() : '';
+      return { role: 'manager', organizationId, organizationName: data.organizationName?.trim() || organizationId, name };
     }
   }
   const supervisor = await api.getDoc(api.doc(db, 'users', user.uid));
@@ -242,7 +243,8 @@ async function verifyManagerAccess(api, db, user) {
   const data = supervisor.data() || {};
   const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
   if (data.role !== 'supervisor' || data.active === false || !organizationId) return null;
-  return { role: 'supervisor', organizationId, organizationName: data.organizationName?.trim() || organizationId };
+  const name = typeof data.name === 'string' ? data.name.trim() : '';
+  return { role: 'supervisor', organizationId, organizationName: data.organizationName?.trim() || organizationId, name };
 }
 
 async function start(component) {
@@ -284,9 +286,21 @@ async function start(component) {
       return;
     }
     if (component !== activeComponent) return;
+    // onAuthStateChanged can fire more than once for the same component
+    // (e.g. the Firebase user object being reloaded). Without tearing down
+    // any previous listeners first, reassigning stop* below would leak the
+    // OLD Firestore listeners — never unsubscribed — leaving two live
+    // subscriptions racing to call update() with independent local
+    // observations/users/incidents arrays, so a stale event from the older
+    // listener could overwrite newer data from the new one.
+    stopObservations?.(); stopUsers?.(); stopIncidents?.();
     component.setState({
       orgName: context.organizationName,
-      sessionName: user.displayName || user.email || 'الحساب الموثق',
+      // The manager/supervisor's own approved Firestore name is the
+      // authoritative identity — Firebase Auth's displayName (self-set,
+      // never reviewed) and email are fallbacks only, never the primary
+      // source.
+      sessionName: context.name || user.displayName || user.email || 'الحساب الموثق',
       sessionRole: context.role === 'manager' ? 'مدير البلدية' : 'مشرف البلدية',
       sessionRoleCode: context.role,
       orgId: context.organizationId,
