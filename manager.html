@@ -698,6 +698,10 @@
                 <sc-for list="{{ tFilters }}" as="f" hint-placeholder-count="6">
                   <button onClick="{{ f.on }}" data-f="1" style="height:30px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
                 </sc-for>
+                <button onClick="{{ openAddUser }}" data-f="1" style="height:30px;padding:0 14px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35))">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                  إضافة مستخدم
+                </button>
               </div>
             </div>
 
@@ -813,10 +817,62 @@
               <span style="font-size:11.5px;color:var(--tx2,#a9bdd4)">{{ selectedUserStatus }}</span>
             </div>
           </div>
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:10px;color:var(--tx3,#7d8ea6)">الخدمة</span>
+              <span onClick="{{ openServiceEdit }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">تعديل</span>
+            </div>
+            <div style="font-size:11.5px;color:var(--tx2,#a9bdd4);padding:10px;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">{{ selectedUserServiceLabel }}</div>
+            <sc-if value="{{ serviceEditOpen }}">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+                <sc-for list="{{ serviceOptions }}" as="o" hint-placeholder-count="6">
+                  <button onClick="{{ o.on }}" data-f="1" style="height:28px;padding:0 11px;border-radius:8px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ o.tx }};background:{{ o.bg }};border:1px solid {{ o.bd }}">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
         </div>
         <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:9px">
           <button onClick="{{ enableUserAction }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">{{ selectedUserActionLabel }}</button>
           <button onClick="{{ resetUserPassword }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">إعادة تعيين كلمة المرور</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ addUserOpen }}">
+    <div onClick="{{ closeAddUserDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
+      <div onClick="{{ stop }}" style="width:min(420px,92vw);padding:20px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">إضافة مستخدم</div>
+            <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:4px">حساب تشغيلي جديد ضمن المنظمة الحالية</div>
+          </div>
+          <button onClick="{{ closeAddUserDrawer }}" data-f="1" aria-label="إغلاق" style="width:32px;height:32px;flex:none;border:none;background:var(--ctl,rgba(20,32,54,0.5));border-radius:10px;color:var(--tx3,#7d8ea6);cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:5px">الاسم</div>
+            <input value="{{ auName }}" onChange="{{ setAuName }}" autocomplete="off" style="width:100%;height:36px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:5px">البريد الإلكتروني</div>
+            <input type="email" value="{{ auEmail }}" onChange="{{ setAuEmail }}" autocomplete="off" style="width:100%;height:36px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:7px">الدور</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ auRoleOptions }}" as="o" hint-placeholder-count="7">
+                <button onClick="{{ o.on }}" data-f="1" style="height:30px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ o.tx }};background:{{ o.bg }};border:1px solid {{ o.bd }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);line-height:1.7">سيتم إصدار كلمة مرور مؤقتة تلقائياً؛ يجب على المستخدم تغييرها عند الدخول الأول. لا تُحفظ كلمة المرور في سجل النظام.</div>
+        </div>
+        <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px">
+          <button onClick="{{ submitAddUser }}" data-f="1" style="width:100%;height:38px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">إنشاء المستخدم</button>
         </div>
       </div>
     </div>
@@ -854,6 +910,67 @@
         <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:9px">
           <button onClick="{{ viewIncidentOnMap }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">عرض على الخريطة<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 6 4 12l6 6M4 12h16"></path></svg></button>
         </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ evidenceDrawerOpen }}">
+    <div onClick="{{ closeEvidenceDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
+      <div onClick="{{ stop }}" style="width:min(460px,92vw);padding:20px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">{{ evidenceTitle }}</div>
+            <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:4px">{{ evidenceCode }} · {{ evidenceStatus }} · {{ evidenceInspector }}</div>
+          </div>
+          <button onClick="{{ closeEvidenceDrawer }}" data-f="1" aria-label="إغلاق" style="width:32px;height:32px;flex:none;border:none;background:var(--ctl,rgba(20,32,54,0.5));border-radius:10px;color:var(--tx3,#7d8ea6);cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+          </button>
+        </div>
+
+        <sc-if value="{{ evidenceHasBefore }}">
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:6px">صورة قبل المعالجة</div>
+            <sc-if value="{{ evidenceBeforeLoading }}">
+              <div style="height:180px;border-radius:12px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--tx3,#7d8ea6)">جاري تحميل الصورة الموثّقة...</div>
+            </sc-if>
+            <sc-if value="{{ evidenceBeforeReady }}">
+              <img src="{{ evidenceBeforeUrl }}" alt="صورة قبل المعالجة" style="width:100%;border-radius:12px;border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:block">
+            </sc-if>
+            <sc-if value="{{ evidenceBeforeUnavailable }}">
+              <div style="height:120px;border-radius:12px;background:var(--ctl,rgba(20,32,54,0.5));border:1px dashed var(--ctlBd,rgba(122,164,224,0.2));display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--tx3,#7d8ea6)">تعذّر الوصول إلى الصورة الموثّقة لهذا البلاغ</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ evidenceHasAfter }}">
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:6px">صورة بعد المعالجة</div>
+            <sc-if value="{{ evidenceAfterLoading }}">
+              <div style="height:180px;border-radius:12px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--tx3,#7d8ea6)">جاري تحميل الصورة الموثّقة...</div>
+            </sc-if>
+            <sc-if value="{{ evidenceAfterReady }}">
+              <img src="{{ evidenceAfterUrl }}" alt="صورة بعد المعالجة" style="width:100%;border-radius:12px;border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:block">
+            </sc-if>
+            <sc-if value="{{ evidenceAfterUnavailable }}">
+              <div style="height:120px;border-radius:12px;background:var(--ctl,rgba(20,32,54,0.5));border:1px dashed var(--ctlBd,rgba(122,164,224,0.2));display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--tx3,#7d8ea6)">تعذّر الوصول إلى الصورة الموثّقة لهذا البلاغ</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ evidenceHasAi }}">
+          <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px">
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:8px">تحليل الذكاء الاصطناعي</div>
+            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="flex:1;font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ evidenceAiCategory }}</span>
+                <span style="font-size:9.5px;font-weight:600;padding:4px 8px;border-radius:7px;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">{{ evidenceAiSeverity }}</span>
+              </div>
+              <div style="font-size:10px;color:var(--tx3,#7d8ea6)">دقة التصنيف: {{ evidenceAiConfidence }}</div>
+              <sc-if value="{{ evidenceAiExplanation }}"><div style="font-size:11px;color:var(--tx2,#a9bdd4);line-height:1.7">{{ evidenceAiExplanation }}</div></sc-if>
+              <sc-if value="{{ evidenceAiAction }}"><div style="font-size:10.5px;color:var(--tx2,#a9bdd4);line-height:1.7;padding-top:6px;border-top:1px solid var(--div,rgba(122,164,224,0.1))"><span style="color:var(--tx3,#7d8ea6)">الإجراء الموصى به: </span>{{ evidenceAiAction }}</div></sc-if>
+            </div>
+          </div>
+        </sc-if>
       </div>
     </div>
   </sc-if>
@@ -937,6 +1054,11 @@ class Component extends DCLogic {
     sb: false, expSvc: true, expAdmin: false,
     notifOpen: false, profOpen: false, layersOpen: false, settingsOpen: false, mobNavOpen: false,
     userDrawerOpen: false, selectedUser: null, incidentDrawerOpen: false, selectedIncident: null,
+    addUserOpen: false, auName: '', auEmail: '', auRole: 'employee',
+    serviceEditOpen: false,
+    evidenceDrawerOpen: false, selectedObservation: null,
+    evidenceBeforeState: 'idle', evidenceBeforeUrl: null,
+    evidenceAfterState: 'idle', evidenceAfterUrl: null,
     twin3D: this.props.twin3D !== false, fs: false, mapMode: 'twin', mapFilter: 'ALL',
     zoom: 1, panX: 0, panY: 0,
     sel: null, layers: { survey: true, land: true, report: true, task: true },
@@ -1392,7 +1514,7 @@ class Component extends DCLogic {
     const viewObservations = matchingObservations.map(item => ({
       id: item.id, title: item.title, code: item.displayId, status: statusLabel(item.status), inspector: item.inspector,
       date: item.createdAt && format.dateTime ? format.dateTime(item.createdAt) : 'غير متاح', selected: st.sel === item.id ? 'var(--accBd,rgba(76,201,240,0.45))' : 'var(--div,rgba(122,164,224,0.12))',
-      on: () => this.openObservation(item.id)
+      on: () => this.openEvidenceDrawer(item)
     }));
     // Table data generation for users and incidents
     const pill = (label, active, on) => ({ label: label, on: on,
@@ -1520,6 +1642,22 @@ class Component extends DCLogic {
       selectedUserStatusCol: st.selectedUser?.active ? (day ? '#0b5c3b' : '#22c55e') : (day ? '#666' : '#999'),
       selectedUserActionLabel: st.selectedUser?.active ? 'تعطيل المستخدم' : 'تفعيل المستخدم',
       enableUserAction: () => this.enableUserAction(), resetUserPassword: () => this.resetUserPassword(),
+      openAddUser: () => this.openAddUser(), closeAddUserDrawer: () => this.closeAddUserDrawer(),
+      addUserOpen: st.addUserOpen, submitAddUser: () => this.submitAddUser(),
+      auName: st.auName, setAuName: e => this.setState({ auName: e.target.value }),
+      auEmail: st.auEmail, setAuEmail: e => this.setState({ auEmail: e.target.value }),
+      auRoleOptions: [
+        { label: 'مدير حركة', role: 'mobility_head' }, { label: 'رئيس قسم', role: 'department_head' },
+        { label: 'شؤون إدارية', role: 'administrative_affairs' }, { label: 'موظف', role: 'employee' },
+        { label: 'مشرف', role: 'supervisor' }, { label: 'مراقب', role: 'inspector' }, { label: 'مقاول', role: 'contractor' }
+      ].map(o => pill(o.label, st.auRole === o.role, () => this.setState({ auRole: o.role }))),
+      openServiceEdit: () => this.openServiceEdit(), serviceEditOpen: st.serviceEditOpen,
+      selectedUserServiceLabel: st.selectedUser ? userDisplayRole(st.selectedUser) : '—',
+      serviceOptions: [
+        { label: 'مدير حركة', kind: 'field', role: 'mobility_head' }, { label: 'رئيس قسم', kind: 'field', role: 'department_head' },
+        { label: 'شؤون إدارية', kind: 'field', role: 'administrative_affairs' }, { label: 'موظف', kind: 'field', role: 'employee' },
+        { label: 'موظف أراضي', kind: 'lands', role: 'lands_employee' }, { label: 'رئيس قسم أراضي', kind: 'lands', role: 'lands_department_manager' }
+      ].map(o => pill(o.label, false, () => this.submitServiceChange({ kind: o.kind, role: o.role }))),
       selectedIncidentId: st.selectedIncident?.id || '—', selectedIncidentCategory: st.selectedIncident?.category || '—',
       selectedIncidentLocation: st.selectedIncident?.location || '—',
       selectedIncidentStatus: (() => {
@@ -1540,6 +1678,28 @@ class Component extends DCLogic {
         return severityMap[st.selectedIncident?.severity] || st.selectedIncident?.severity || '—';
       })(),
       viewIncidentOnMap: () => this.viewIncidentOnMap(), stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
+      evidenceDrawerOpen: st.evidenceDrawerOpen, closeEvidenceDrawer: () => this.closeEvidenceDrawer(),
+      evidenceTitle: st.selectedObservation?.title || '—', evidenceCode: st.selectedObservation?.displayId || '—',
+      evidenceStatus: st.selectedObservation ? statusLabel(st.selectedObservation.status) : '—',
+      evidenceInspector: st.selectedObservation?.inspector || 'غير متاح',
+      evidenceHasBefore: st.evidenceBeforeState !== 'none',
+      evidenceBeforeLoading: st.evidenceBeforeState === 'loading', evidenceBeforeReady: st.evidenceBeforeState === 'ready',
+      evidenceBeforeUnavailable: st.evidenceBeforeState === 'unavailable', evidenceBeforeUrl: st.evidenceBeforeUrl,
+      evidenceHasAfter: st.evidenceAfterState !== 'none',
+      evidenceAfterLoading: st.evidenceAfterState === 'loading', evidenceAfterReady: st.evidenceAfterState === 'ready',
+      evidenceAfterUnavailable: st.evidenceAfterState === 'unavailable', evidenceAfterUrl: st.evidenceAfterUrl,
+      evidenceHasAi: !!st.selectedObservation?.aiAnalysis,
+      evidenceAiCategory: st.selectedObservation?.aiAnalysis?.categoryLabelAr || 'غير مصنف',
+      evidenceAiSeverity: (() => {
+        const sev = st.selectedObservation?.aiAnalysis?.severity;
+        return { LOW: 'منخفضة', MEDIUM: 'متوسطة', HIGH: 'عالية', CRITICAL: 'حرجة' }[sev] || sev || 'غير محدد';
+      })(),
+      evidenceAiConfidence: (() => {
+        const c = st.selectedObservation?.aiAnalysis?.confidence;
+        return Number.isFinite(c) ? Math.round(c * 100) + '%' : '—';
+      })(),
+      evidenceAiExplanation: st.selectedObservation?.aiAnalysis?.explanation || '',
+      evidenceAiAction: st.selectedObservation?.aiAnalysis?.recommendedActionAr || '',
       expSvc: st.expSvc, expAdmin: st.expAdmin,
       svcCaret: st.expSvc ? 'rotate(180deg)' : 'rotate(0deg)',
       admCaret: st.expAdmin ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -1752,7 +1912,91 @@ class Component extends DCLogic {
   }
 
   closeUserDrawer() {
-    this.setState({ userDrawerOpen: false, selectedUser: null });
+    this.setState({ userDrawerOpen: false, selectedUser: null, serviceEditOpen: false });
+  }
+
+  openAddUser() {
+    this.setState({ addUserOpen: true, auName: '', auEmail: '', auRole: 'employee' });
+  }
+
+  closeAddUserDrawer() {
+    this.setState({ addUserOpen: false });
+  }
+
+  async submitAddUser() {
+    const { auName, auEmail, auRole } = this.state;
+    if (!auEmail || !auEmail.trim()) { this.flash('البريد الإلكتروني مطلوب.'); return; }
+    this.flash('جاري إنشاء المستخدم...');
+    try {
+      const tempPassword = this.generateTempPassword();
+      await this.callAdminUsersApi('create', {
+        organizationId: this.state.orgId,
+        role: auRole,
+        email: auEmail.trim(),
+        name: (auName || '').trim(),
+        password: tempPassword,
+      });
+      // The live users subscription (manager-dashboard-adapter.js) picks
+      // up the new Firestore document automatically — no separate refetch.
+      this.flash(`تم إنشاء المستخدم بنجاح. كلمة المرور المؤقتة: ${tempPassword}`);
+      this.closeAddUserDrawer();
+    } catch (e) {
+      this.flash(`فشل إنشاء المستخدم: ${this.adminApiErrorMessage(e)}`);
+    }
+  }
+
+  openServiceEdit() {
+    this.setState({ serviceEditOpen: true });
+  }
+
+  async submitServiceChange(choice) {
+    const user = this.state.selectedUser;
+    if (!user) return;
+    this.flash('جاري تحديث الخدمة...');
+    try {
+      const params = { uid: user.id };
+      if (choice.kind === 'field') params.field = { enabled: true, role: choice.role };
+      else params.lands = { enabled: true, role: choice.role };
+      await this.callAdminUsersApi('setServices', params);
+      this.flash('تم تحديث الخدمة بنجاح.');
+      this.setState({ serviceEditOpen: false });
+      this.closeUserDrawer();
+    } catch (e) {
+      this.flash(`فشل تحديث الخدمة: ${this.adminApiErrorMessage(e)}`);
+    }
+  }
+
+  async openEvidenceDrawer(observation) {
+    this.setState({
+      evidenceDrawerOpen: true, selectedObservation: observation,
+      evidenceBeforeState: observation.imagePath ? 'loading' : 'none', evidenceBeforeUrl: null,
+      evidenceAfterState: observation.afterImagePath ? 'loading' : 'none', evidenceAfterUrl: null,
+    });
+    // Resolved on demand, only for the one observation being opened —
+    // never eagerly for the whole list. Real authenticated private-object
+    // reads (storage-adapter.js), never a fabricated or placeholder image.
+    if (observation.imagePath && this.resolveEvidenceImage) {
+      this.resolveEvidenceImage(observation.imagePath).then(result => {
+        if (this.state.selectedObservation !== observation) return;
+        this.setState({ evidenceBeforeState: result.available ? 'ready' : 'unavailable', evidenceBeforeUrl: result.available ? result.url : null });
+      }).catch(() => {
+        if (this.state.selectedObservation !== observation) return;
+        this.setState({ evidenceBeforeState: 'unavailable' });
+      });
+    }
+    if (observation.afterImagePath && this.resolveEvidenceImage) {
+      this.resolveEvidenceImage(observation.afterImagePath).then(result => {
+        if (this.state.selectedObservation !== observation) return;
+        this.setState({ evidenceAfterState: result.available ? 'ready' : 'unavailable', evidenceAfterUrl: result.available ? result.url : null });
+      }).catch(() => {
+        if (this.state.selectedObservation !== observation) return;
+        this.setState({ evidenceAfterState: 'unavailable' });
+      });
+    }
+  }
+
+  closeEvidenceDrawer() {
+    this.setState({ evidenceDrawerOpen: false, selectedObservation: null });
   }
 
   openIncidentDetail(incident) {

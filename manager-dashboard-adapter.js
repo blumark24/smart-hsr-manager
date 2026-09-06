@@ -1,5 +1,6 @@
 import { belongsOnUsersList, deriveVisibleUsers } from './users-list-view.js';
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
+import { resolveObservationImage } from './storage-adapter.js';
 
 // manager.html's own inline script runs as a non-module Designer canvas
 // script (type="text/x-dc"), so it cannot `import` this module directly —
@@ -59,7 +60,13 @@ function normalizeObservations(snapshot) {
       description: data.description || '',
       createdAt: asMillis(data.createdAt),
       updatedAt: asMillis(data.updatedAt),
-      coordinates: readCoordinates(data)
+      coordinates: readCoordinates(data),
+      // Canonical key preferred, legacy field names accepted as fallbacks —
+      // the same precedence the real evidence-authorization path already
+      // uses (test/inspector-acceptance-golden-observation.test.js).
+      imagePath: data.imageObjectKey || data.imagePath || data.imageUrl || data.beforeImagePath || null,
+      afterImagePath: data.afterImagePath || data.afterImageUrl || null,
+      aiAnalysis: data.aiAnalysis && typeof data.aiAnalysis === 'object' ? data.aiAnalysis : null
     };
   }).sort((a, b) => b.createdAt - a.createdAt);
 }
@@ -285,6 +292,16 @@ async function start(component) {
       orgId: context.organizationId,
       dataState: 'loading',
       dataError: ''
+    });
+    // Real, on-demand (never eager) authenticated evidence image
+    // resolution — reuses storage-adapter.js's resolveObservationImage
+    // unchanged, the same private-object-key + Firebase-auth path
+    // dashboard.html's Inspector/Manager evidence viewer already uses.
+    // Only ever called when a manager opens a specific observation's
+    // evidence drawer.
+    component.resolveEvidenceImage = (reference) => resolveObservationImage({
+      reference,
+      context: { organizationId: context.organizationId, uid: user.uid, role: context.role, authUser: user },
     });
     const filter = firestoreApi.query(firestoreApi.collection(db, 'observations'), firestoreApi.where('organizationId', '==', context.organizationId));
     const userFilter = firestoreApi.query(firestoreApi.collection(db, 'users'), firestoreApi.where('organizationId', '==', context.organizationId));
