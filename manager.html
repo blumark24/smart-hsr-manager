@@ -789,6 +789,75 @@
     </div>
   </sc-if>
 
+  <sc-if value="{{ userDrawerOpen }}">
+    <div onClick="{{ closeUserDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
+      <div onClick="{{ stop }}" style="width:min(420px,92vw);padding:20px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">{{ selectedUserName }}</div>
+            <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:4px">{{ selectedUserRole }}</div>
+          </div>
+          <button onClick="{{ closeUserDrawer }}" data-f="1" aria-label="إغلاق" style="width:32px;height:32px;flex:none;border:none;background:var(--ctl,rgba(20,32,54,0.5));border-radius:10px;color:var(--tx3,#7d8ea6);cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:4px">البريد الإلكتروني</div>
+            <div style="font-size:11.5px;color:var(--tx2,#a9bdd4);padding:10px;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">{{ selectedUserEmail }}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:4px">الحالة</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="width:8px;height:8px;border-radius:50%;background:{{ selectedUserStatusCol }};flex:none"></span>
+              <span style="font-size:11.5px;color:var(--tx2,#a9bdd4)">{{ selectedUserStatus }}</span>
+            </div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:9px">
+          <button onClick="{{ enableUserAction }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">{{ selectedUserActionLabel }}</button>
+          <button onClick="{{ resetUserPassword }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">إعادة تعيين كلمة المرور</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ incidentDrawerOpen }}">
+    <div onClick="{{ closeIncidentDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
+      <div onClick="{{ stop }}" style="width:min(420px,92vw);padding:20px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">{{ selectedIncidentId }}</div>
+            <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:4px">{{ selectedIncidentCategory }}</div>
+          </div>
+          <button onClick="{{ closeIncidentDrawer }}" data-f="1" aria-label="إغلاق" style="width:32px;height:32px;flex:none;border:none;background:var(--ctl,rgba(20,32,54,0.5));border-radius:10px;color:var(--tx3,#7d8ea6);cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:4px">الموقع</div>
+            <div style="font-size:11.5px;color:var(--tx2,#a9bdd4);padding:10px;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">{{ selectedIncidentLocation }}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:4px">الحالة</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="width:8px;height:8px;border-radius:50%;background:{{ selectedIncidentStatusCol }};flex:none"></span>
+              <span style="font-size:11.5px;color:var(--tx2,#a9bdd4)">{{ selectedIncidentStatus }}</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:4px">الخطورة</div>
+            <div style="font-size:11.5px;color:var(--tx2,#a9bdd4)">{{ selectedIncidentSeverity }}</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:9px">
+          <button onClick="{{ viewIncidentOnMap }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">عرض على الخريطة<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 6 4 12l6 6M4 12h16"></path></svg></button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
   <sc-if value="{{ settingsOpen }}">
     <div onClick="{{ closeSettings }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
       <div onClick="{{ stop }}" style="width:min(420px,92vw);padding:20px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;gap:16px">
@@ -867,6 +936,7 @@ class Component extends DCLogic {
     orgName: this.props.organizationName || 'اسم البلدية',
     sb: false, expSvc: true, expAdmin: false,
     notifOpen: false, profOpen: false, layersOpen: false, settingsOpen: false, mobNavOpen: false,
+    userDrawerOpen: false, selectedUser: null, incidentDrawerOpen: false, selectedIncident: null,
     twin3D: this.props.twin3D !== false, fs: false, mapMode: 'twin', mapFilter: 'ALL',
     zoom: 1, panX: 0, panY: 0,
     sel: null, layers: { survey: true, land: true, report: true, task: true },
@@ -1346,7 +1416,7 @@ class Component extends DCLogic {
         const c = { col: u.active ? (day ? '#0b5c3b' : '#22c55e') : (day ? '#666' : '#999'), bg: u.active ? (day ? 'rgba(14,122,79,0.12)' : 'rgba(34,197,85,0.15)') : (day ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)'), bd: u.active ? (day ? 'rgba(14,122,79,0.3)' : 'rgba(34,197,85,0.4)') : 'var(--ctlBd,rgba(122,164,224,0.14))' };
         return {
           chip: u.active ? 'نشط' : 'غير نشط', chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
-          on: () => this.flash(`تفاصيل المستخدم: ${u.name}`),
+          on: () => this.openUserDetail(u),
           cells: [
             cell(u.name, '1', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
             cell(u.email, '1.2'),
@@ -1389,7 +1459,7 @@ class Component extends DCLogic {
         const c = statusChipMap[i.status] || statusChipMap['NEW'];
         return {
           chip: statusMap[i.status] || i.status, chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
-          on: () => this.flash(`تفاصيل الحادث: ${i.id}`),
+          on: () => this.openIncidentDetail(i),
           cells: [
             cell(i.id, '0 0 62px', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
             cell(i.category, '1.1'),
@@ -1429,6 +1499,34 @@ class Component extends DCLogic {
       notifAria: `الإشعارات، ${format.integer ? format.integer(this.liveNotifications.length) : this.liveNotifications.length} بلاغات حديثة`,
       profOpen: st.profOpen, notifOpen: st.notifOpen, layersOpen: st.layersOpen,
       settingsOpen: st.settingsOpen, mobNavOpen: st.mobNavOpen,
+      userDrawerOpen: st.userDrawerOpen, incidentDrawerOpen: st.incidentDrawerOpen,
+      closeUserDrawer: () => this.closeUserDrawer(), closeIncidentDrawer: () => this.closeIncidentDrawer(),
+      selectedUserName: st.selectedUser?.name || '—', selectedUserEmail: st.selectedUser?.email || '—',
+      selectedUserRole: roleLabel(st.selectedUser?.role || 'employee'),
+      selectedUserStatus: st.selectedUser?.active ? 'نشط' : 'غير نشط',
+      selectedUserStatusCol: st.selectedUser?.active ? (day ? '#0b5c3b' : '#22c55e') : (day ? '#666' : '#999'),
+      selectedUserActionLabel: st.selectedUser?.active ? 'تعطيل المستخدم' : 'تفعيل المستخدم',
+      enableUserAction: () => this.enableUserAction(), resetUserPassword: () => this.resetUserPassword(),
+      selectedIncidentId: st.selectedIncident?.id || '—', selectedIncidentCategory: st.selectedIncident?.category || '—',
+      selectedIncidentLocation: st.selectedIncident?.location || '—',
+      selectedIncidentStatus: (() => {
+        const statusMap = { 'NEW': 'جديد', 'ACKNOWLEDGED': 'تم الاستلام', 'IN_PROGRESS': 'تحت المعالجة', 'RESOLVED': 'تم الحل' };
+        return statusMap[st.selectedIncident?.status] || st.selectedIncident?.status || '—';
+      })(),
+      selectedIncidentStatusCol: (() => {
+        const statusChipMap = {
+          'NEW': day ? '#b91c1c' : '#ef4444',
+          'ACKNOWLEDGED': day ? '#d97706' : '#f59e0b',
+          'IN_PROGRESS': day ? '#7c3aed' : '#a78bfa',
+          'RESOLVED': day ? '#0b5c3b' : '#22c55e'
+        };
+        return statusChipMap[st.selectedIncident?.status] || '#b91c1c';
+      })(),
+      selectedIncidentSeverity: (() => {
+        const severityMap = { 'LOW': 'منخفضة', 'MEDIUM': 'متوسطة', 'CRITICAL': 'حرجة' };
+        return severityMap[st.selectedIncident?.severity] || st.selectedIncident?.severity || '—';
+      })(),
+      viewIncidentOnMap: () => this.viewIncidentOnMap(), stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
       expSvc: st.expSvc, expAdmin: st.expAdmin,
       svcCaret: st.expSvc ? 'rotate(180deg)' : 'rotate(0deg)',
       admCaret: st.expAdmin ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -1635,6 +1733,43 @@ class Component extends DCLogic {
     if (r === 'survey') { window.location.assign('dashboard.html'); return; }
     if (r === 'mobility') { window.location.assign('smart-mobility.html'); return; }
     this.flash('هذا المسار غير متاح حتى يتم التحقق من ربطه التشغيلي.');
+  }
+
+  openUserDetail(user) {
+    this.setState({ userDrawerOpen: true, selectedUser: user });
+  }
+
+  closeUserDrawer() {
+    this.setState({ userDrawerOpen: false, selectedUser: null });
+  }
+
+  openIncidentDetail(incident) {
+    this.setState({ incidentDrawerOpen: true, selectedIncident: incident });
+  }
+
+  closeIncidentDrawer() {
+    this.setState({ incidentDrawerOpen: false, selectedIncident: null });
+  }
+
+  enableUserAction() {
+    if (!this.state.selectedUser) return;
+    const action = this.state.selectedUser.active ? 'تعطيل' : 'تفعيل';
+    this.flash(`جاري ${action} حساب المستخدم...`);
+  }
+
+  resetUserPassword() {
+    if (!this.state.selectedUser) return;
+    this.flash('جاري إعادة تعيين كلمة المرور...');
+  }
+
+  viewIncidentOnMap() {
+    if (!this.state.selectedIncident) return;
+    this.closeIncidentDrawer();
+    this.setState({ mapMode: 'map', view: 'home' });
+    setTimeout(() => {
+      this.mapShell?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      this.syncOperationalMap();
+    }, 80);
   }
 }
 </script>
