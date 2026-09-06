@@ -12,7 +12,8 @@
 //         { contentType, dataBase64, scope?, observationId? }
 // Limits: image/jpeg | image/png | image/webp only, declared type must match
 //         the file's magic bytes, decoded size 1..700KB.
-// Key:    [<B2_FILE_PREFIX>/]observations/<organizationId>/<scope>/<yyyy>/<mm>/<uuid>.<ext>
+// Key:    observations/<organizationId>/<observationId>/<scope>/<uuid>.<ext>
+//      or observations/<organizationId>/<scope>/<yyyy>/<mm>/<uuid>.<ext>
 // Out:    { ok: true, objectKey }
 //
 // SECURITY: B2 credentials live only in process.env on the server. They are
@@ -20,7 +21,7 @@
 // bucket is private, so no public/permanent URL is ever produced here.
 // ============================================================================
 const crypto = require('crypto');
-const { getDb } = require('../_lib/firebaseAdmin');
+const { getDb, FieldValue } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 const { validateImage } = require('../_lib/imageValidation');
 
@@ -35,6 +36,7 @@ const ALLOWED_IMAGE_TYPES = Object.freeze({
   'image/webp': 'webp',
 });
 const ALLOWED_SCOPES = Object.freeze(['before', 'after']);
+const PENDING_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000;
 
 // Required B2 settings. Names are fixed by the Vercel project configuration.
 const REQUIRED_ENV = ['B2_KEY_ID', 'B2_APPLICATION_KEY', 'B2_BUCKET_NAME', 'B2_S3_ENDPOINT', 'B2_REGION'];
@@ -102,25 +104,21 @@ function normalizedPrefix(value) {
   return normalizedPrefixSegments(value).join('/');
 }
 
-function buildObjectKey({ prefix, organizationId, scope, extension, now = new Date(), uuid = crypto.randomUUID() }) {
+function buildObjectKey({ prefix, organizationId, observationId, scope, extension, now = new Date(), uuid = crypto.randomUUID() }) {
+  const observation = typeof observationId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(observationId.trim())
+    ? observationId.trim() : '';
+  if (observation) {
+    return `${OBJECT_ROOT}/${organizationId}/${observation}/${scope}/${uuid}.${extension}`;
+  }
   const year = String(now.getUTCFullYear());
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
   // The tail is authoritative and is never rewritten: organizationId, scope,
   // date and filename pass through exactly as given.
-  const tail = [OBJECT_ROOT, organizationId, scope, year, month, `${uuid}.${extension}`];
-  const head = normalizedPrefixSegments(prefix);
+  return [OBJECT_ROOT, organizationId, scope, year, month, `${uuid}.${extension}`].join('/');
+}
 
-  // Junction de-duplication only. B2_FILE_PREFIX is commonly set to
-  // 'observations' (or '<something>/observations'), which used to produce
-  // 'observations/observations/<org>/...'. If the prefix already ends at the
-  // object root, don't repeat it.
-  //
-  // Deliberately limited to this one join: collapsing repeats *inside* the
-  // tail would corrupt a key whenever organizationId or scope happened to
-  // equal the segment before it.
-  if (head.length && head[head.length - 1] === OBJECT_ROOT) tail.shift();
-
-  return [...head, ...tail].join('/');
+function pendingUploadId(objectKey) {
+  return crypto.createHash('sha256').update(objectKey, 'utf8').digest('hex');
 }
 
 // Reads the caller's OWN users/{uid} document. No other collection, no other
@@ -222,7 +220,8 @@ async function handler(req, res) {
     return sendJson(res, error.statusCode || 401, { error: 'unauthenticated' });
   }
 
-  const caller = await resolveInspectorContext(getDb(), decoded.uid);
+  const db = getDb();
+  const caller = await resolveInspectorContext(db, decoded.uid);
   if (!caller) return sendJson(res, 403, { error: 'forbidden', reason: 'inspector_role_required' });
 
   let body;
@@ -262,6 +261,7 @@ async function handler(req, res) {
   const objectKey = buildObjectKey({
     prefix: config.prefix,
     organizationId: caller.organizationId,
+    observationId: typeof body.observationId === 'string' ? body.observationId : '',
     scope: safeScope(body.scope),
     extension,
   });
@@ -274,6 +274,15 @@ async function handler(req, res) {
       contentType,
       uid: caller.uid,
       organizationId: caller.organizationId,
+    });
+    await db.collection('pendingEvidenceUploads').doc(pendingUploadId(objectKey)).set({
+      objectKey,
+      observationId: typeof body.observationId === 'string' ? body.observationId.trim() : '',
+      organizationId: caller.organizationId,
+      ownerUid: caller.uid,
+      status: 'PENDING',
+      createdAt: FieldValue.serverTimestamp(),
+      expiresAt: new Date(Date.now() + PENDING_UPLOAD_TTL_MS),
     });
   } catch (error) {
     logStorageFailure(error);
@@ -297,6 +306,7 @@ module.exports._test = {
   normalizedPrefixSegments,
   OBJECT_ROOT,
   buildObjectKey,
+  pendingUploadId,
   resolveInspectorContext,
   b2Configuration,
   handler,

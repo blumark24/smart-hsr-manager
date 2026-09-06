@@ -51,12 +51,15 @@ test('legacy evidence records normalize to the same secure read flow', () => {
 });
 
 test('private evidence resolution still uses an authenticated token', () => {
-  assert.match(dashboard, /getIdToken:\(\)=>auth\.currentUser\?\.getIdToken\(\)/);
+  assert.match(dashboard, /authUser:auth\.currentUser/);
+  assert.match(dashboard, /fetchWithFirebaseAuth/);
   assert.match(dashboard, /resolveObservationImage\(\{/);
 });
 
 test('authenticated storage read authorizes the canonical and legacy path fields', () => {
-  assert.deepEqual([...storageRead.EVIDENCE_FIELDS], ['imagePath', 'afterImagePath', 'imageObjectKey']);
+  assert.deepEqual([...storageRead.EVIDENCE_FIELDS], [
+    'imageObjectKey', 'imagePath', 'imageUrl', 'beforeImagePath', 'afterImagePath', 'afterImageUrl'
+  ]);
 });
 
 test('inspector capture starts GPS automatically and hides every manual-location path', () => {

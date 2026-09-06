@@ -130,22 +130,35 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserLocalPersistence, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 
 // إعدادات Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-  authDomain: "smart-hsr-manager.firebaseapp.com",
-  projectId: "smart-hsr-manager",
-  storageBucket: "smart-hsr-manager.firebasestorage.app",
-  messagingSenderId: "38965508031",
-  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-};
+const firebaseConfig = await resolveFirebaseConfig();
 
 // Test-only: connects to the local Firebase emulators instead of production
 // Firebase. Gated on localhost AND an explicit opt-in query param — never
 // reachable in production, and inert for every real login.
 const useEmulators = ['localhost', '127.0.0.1'].includes(location.hostname)
   && new URLSearchParams(location.search).get('useEmulators') === '1';
+
+// Same hostname-based decision rule firebase-runtime-config.js already uses
+// for this app's OWN identity: any hostname that isn't a recognized
+// Preview/staging *.vercel.app host (a real Production/custom domain, for
+// instance) is Production by default — never the reverse. The unified SSO
+// redirect target must follow the SAME rule Lands' own client already uses
+// to pick its Firebase project (lands-smart's index.html), or a Production
+// employee gets handed off to a deployment running the wrong project
+// entirely and the handoff code is meaningless there.
+const LANDS_PRODUCTION_HOSTNAMES = Object.freeze(['smart-hsr-manager.vercel.app', 'smart-hsr-manager-blumark24-os.vercel.app']);
+const LANDS_PRODUCTION_URL = 'https://lands-smart.vercel.app/';
+const LANDS_STAGING_PREVIEW_URL = 'https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/';
+function resolveLandsRedirectBase() {
+  const hostname = location.hostname;
+  if (!hostname.endsWith('.vercel.app') || LANDS_PRODUCTION_HOSTNAMES.includes(hostname)) {
+    return LANDS_PRODUCTION_URL;
+  }
+  return LANDS_STAGING_PREVIEW_URL;
+}
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -219,12 +232,60 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = userDoc.exists() ? (userDoc.data() || {}) : {};
     const role = data.role;
     const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
-    if (!userDoc.exists() || !['supervisor','inspector','contractor',...MOBILITY_ROLES].includes(role)
-        || data.active === false || !organizationId) {
+    const hasFieldRole = ['supervisor','inspector','contractor'].includes(role);
+    const hasMobilityRole = MOBILITY_ROLES.includes(role);
+    const landsAccess = data.landsAccess;
+    const hasLandsRole = Boolean(landsAccess && landsAccess.enabled
+      && ['lands_employee','lands_department_manager'].includes(landsAccess.role));
+    if (!userDoc.exists() || data.active === false || !organizationId || (!hasFieldRole && !hasMobilityRole && !hasLandsRole)) {
       await signOut(probeAuth);
       showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
       loginButton.disabled = false;
       loginButton.textContent = 'تسجيل الدخول';
+      return;
+    }
+
+    // One operational employee = one operational service (server-enforced).
+    // A Lands employee/department-manager is routed to the Lands trusted
+    // runtime via a one-time server-side SSO handoff (POST /api/organization/context
+    // -> Lands' /api/lands-sso-register), so they land on the Lands dashboard
+    // directly instead of seeing a second login screen. Only an opaque,
+    // single-use, short-lived handoff code crosses the redirect URL — never
+    // a password, ID token, or custom token. Lands independently re-verifies
+    // the entitlement at consumption time before minting any session.
+    // Field and Smart Mobility roles take priority: a record with an active
+    // Field or Mobility role is never routed to Lands, even if it also
+    // carries a landsAccess declaration.
+    if (hasLandsRole && !hasFieldRole && !hasMobilityRole) {
+      let handoffCode = null;
+      try {
+        const idToken = await user.getIdToken();
+        const handoffResp = await fetch('/api/organization/context', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        });
+        const handoffData = await handoffResp.json().catch(() => ({}));
+        if (handoffResp.ok && typeof handoffData.code === 'string' && handoffData.code) {
+          handoffCode = handoffData.code;
+        }
+      } catch (e) {
+        console.error('lands-sso-handoff request failed', e);
+      }
+      await signOut(probeAuth);
+
+      if (!handoffCode) {
+        showMsg('❌ تعذر إعداد الدخول الآمن إلى حصر منح الأراضي الذكي. حاول لاحقًا.', 'error');
+        loginButton.disabled = false;
+        loginButton.textContent = 'تسجيل الدخول';
+        return;
+      }
+
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى حصر منح الأراضي الذكي', 'success');
+      setTimeout(() => {
+        const landsUrl = new URL(resolveLandsRedirectBase());
+        landsUrl.searchParams.set('code', handoffCode);
+        window.location.href = landsUrl.toString();
+      }, 600);
       return;
     }
 

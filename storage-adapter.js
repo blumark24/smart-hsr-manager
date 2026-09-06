@@ -10,6 +10,8 @@ export const DEMO_NOTICE = 'بيئة عرض تجريبية — الصور محف
 export const MAYOR_NOTICE = 'تدعم المنصة ربط بيانات ومرفقات كل مؤسسة بخادمها الخاص. يعمل العرض الحالي في وضع تخزين محلي تجريبي، ويُفعّل الربط الفعلي بعد اعتماد مواصفات الخادم من تقنية معلومات المؤسسة.';
 
 const objectUrls = new Set();
+const evidenceRequests = new Map();
+const resolvedEvidence = new Map();
 
 function requiredText(value, label) {
   const result = typeof value === 'string' ? value.trim() : '';
@@ -89,17 +91,40 @@ export function isServerObjectKey(reference) {
 
 // Fetches a private object through the server and hands back a blob URL.
 // The B2 bucket is never made public and no bucket URL reaches the browser.
-export async function resolveServerObjectImage({ reference, idToken }) {
+export async function resolveServerObjectImage({ reference, getIdToken, authUser }) {
   const key = typeof reference === 'string' ? reference.trim() : '';
   if (!isServerObjectKey(key)) return { kind: 'server', available: false, url: null, reason: 'invalid-object-key' };
-  if (!idToken) return { kind: 'server', available: false, url: null, reason: 'missing-id-token' };
+  if (authUser && typeof authUser.getIdToken === 'function') {
+    getIdToken = forceRefresh => authUser.getIdToken(forceRefresh === true);
+  }
+  if (typeof getIdToken !== 'function') return { kind: 'server', available: false, url: null, reason: 'missing-id-token' };
+
+  const cacheKey = `${authUser?.uid || 'token-provider'}:${key}`;
+  if (resolvedEvidence.has(cacheKey)) return resolvedEvidence.get(cacheKey);
+  if (evidenceRequests.has(cacheKey)) return evidenceRequests.get(cacheKey);
+  const request = resolveServerObjectImageUncached({ key, getIdToken });
+  evidenceRequests.set(cacheKey, request);
+  try {
+    const result = await request;
+    if (result.available) resolvedEvidence.set(cacheKey, result);
+    return result;
+  } finally {
+    evidenceRequests.delete(cacheKey);
+  }
+}
+
+async function resolveServerObjectImageUncached({ key, getIdToken }) {
 
   let response;
   try {
-    response = await fetch(`/api/storage/read?key=${encodeURIComponent(key)}`, {
-      headers: { Authorization: `Bearer ${idToken}` }
+    response = await fetchWithFirebaseAuth({
+      getIdToken,
+      input: `/api/storage/read?key=${encodeURIComponent(key)}`,
     });
-  } catch (_) {
+  } catch (error) {
+    if (error?.code === REAUTHENTICATION_REQUIRED) {
+      return { kind: 'server', available: false, url: null, reason: REAUTHENTICATION_REQUIRED };
+    }
     return { kind: 'server', available: false, url: null, reason: 'network-error' };
   }
   if (!response.ok) {
@@ -204,8 +229,10 @@ export async function resolveObservationImage({ reference, context }) {
       return { kind: 'external', available: true, url: raw };
     }
     if (isServerObjectKey(raw)) {
-      const idToken = typeof context?.getIdToken === 'function' ? await context.getIdToken() : context?.idToken;
-      return resolveServerObjectImage({ reference: raw, idToken });
+      const getIdToken = typeof context?.getIdToken === 'function'
+        ? context.getIdToken
+        : async () => context?.idToken;
+      return resolveServerObjectImage({ reference: raw, getIdToken, authUser: context?.authUser });
     }
     return { kind: 'external', available: false, url: null, reason: 'unsupported-reference' };
   }
@@ -224,12 +251,17 @@ export function revokeObservationImageUrl(url) {
   if (typeof url === 'string' && objectUrls.has(url)) {
     URL.revokeObjectURL(url);
     objectUrls.delete(url);
+    for (const [key, value] of resolvedEvidence) {
+      if (value.url === url) resolvedEvidence.delete(key);
+    }
   }
 }
 
 export function revokeAllObservationImageUrls() {
   objectUrls.forEach(url => URL.revokeObjectURL(url));
   objectUrls.clear();
+  resolvedEvidence.clear();
+  evidenceRequests.clear();
 }
 
 export async function deleteObservationImage({ reference, context }) {
@@ -264,3 +296,4 @@ export async function clearLocalDemoStorage({ organizationId, ownerContext, conf
 // issue short-lived URLs, audit every operation and fail closed. Request-body
 // identity/organization scope is never authoritative and providers never
 // fall back across connectors or organizations.
+import { fetchWithFirebaseAuth, REAUTHENTICATION_REQUIRED } from './firebase-auth-fetch.js';

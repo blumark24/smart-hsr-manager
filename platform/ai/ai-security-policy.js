@@ -2,6 +2,8 @@
 
 const { validateShortSummaryAr, LOW_CONFIDENCE_FALLBACK_AR } = require('./arabic-summary-policy');
 const { SEVERITIES, PRIORITIES, IMAGE_QUALITIES } = require('./ai-provider-contract');
+const { ASSET_VALUES, DEFECT_VALUES } = require('../intelligence/municipal-taxonomy');
+const { MAX_EVIDENCE_STATEMENTS, MAX_UNCERTAINTIES } = require('./server/municipal-vision-prompt');
 
 const ALLOWED_IMAGE_MIME_TYPES = Object.freeze(['image/jpeg', 'image/png', 'image/webp']);
 const MAX_IMAGE_PAYLOAD_BYTES = 700 * 1024;
@@ -39,6 +41,32 @@ function validateAIOutput(output = {}) {
   if (!Number.isFinite(output.processingTimeMs) || output.processingTimeMs < 0 || !Array.isArray(output.warnings) || typeof output.requiresHumanReview !== 'boolean') return decision(false, 'AI_OUTPUT_SHAPE_INVALID', 'Output timing, warnings, or review flag is invalid.');
   const summary = validateShortSummaryAr(output.shortSummaryAr, { confidence: output.confidence }); if (!summary.allowed) return summary;
   if (output.confidence < CONFIDENCE_THRESHOLD && (output.shortSummaryAr !== LOW_CONFIDENCE_FALLBACK_AR || output.requiresHumanReview !== true)) return decision(false, 'AI_LOW_CONFIDENCE_POLICY_VIOLATION', 'Low confidence must use the fallback and require human review.');
+  // visualEvidence/uncertainties (Municipal Decision Intelligence hardening):
+  // both fields are OPTIONAL at this validator so every pre-existing
+  // provider/fixture that never mentions them (offline Gemini fixtures,
+  // older sprint tests) stays valid exactly as before. When a provider DOES
+  // supply visualEvidence -- which the OpenAI schema now requires on every
+  // real call -- it must be fully well-formed: a closed-taxonomy-derived
+  // asset/defect pair (never a second, independently maintained enum; see
+  // ASSET_VALUES/DEFECT_VALUES in municipal-taxonomy.js) and 1-4 concise
+  // evidence statements. This is where "must not fabricate certainty"
+  // becomes enforceable: a present-but-empty evidenceStatements array, an
+  // asset/defect outside the approved municipal vocabulary, or a
+  // non-string/oversized statement is rejected outright, never silently
+  // coerced or dropped.
+  if (output.visualEvidence !== undefined) {
+    const evidence = output.visualEvidence;
+    if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) return decision(false, 'AI_VISUAL_EVIDENCE_INVALID', 'visualEvidence must be a structured object.');
+    if (!ASSET_VALUES.includes(evidence.affectedAsset)) return decision(false, 'AI_VISUAL_EVIDENCE_ASSET_INVALID', 'affectedAsset is not an approved municipal asset value.');
+    if (!DEFECT_VALUES.includes(evidence.visibleDefect)) return decision(false, 'AI_VISUAL_EVIDENCE_DEFECT_INVALID', 'visibleDefect is not an approved visible-defect value.');
+    const statements = evidence.evidenceStatements;
+    if (!Array.isArray(statements) || statements.length < 1 || statements.length > MAX_EVIDENCE_STATEMENTS) return decision(false, 'AI_VISUAL_EVIDENCE_STATEMENTS_COUNT_INVALID', `evidenceStatements must contain between 1 and ${MAX_EVIDENCE_STATEMENTS} items.`);
+    if (statements.some(statement => typeof statement !== 'string' || !statement.trim() || statement.length > 300)) return decision(false, 'AI_VISUAL_EVIDENCE_STATEMENTS_SHAPE_INVALID', 'Each evidence statement must be a short, non-empty string.');
+  }
+  if (output.uncertainties !== undefined) {
+    if (!Array.isArray(output.uncertainties) || output.uncertainties.length > MAX_UNCERTAINTIES) return decision(false, 'AI_UNCERTAINTIES_COUNT_INVALID', `uncertainties must contain at most ${MAX_UNCERTAINTIES} items.`);
+    if (output.uncertainties.some(item => typeof item !== 'string' || !item.trim() || item.length > 300)) return decision(false, 'AI_UNCERTAINTIES_SHAPE_INVALID', 'Each uncertainty must be a short, non-empty string.');
+  }
   const serialized = JSON.stringify(output);
   if (/(?:api[_-]?key|private[_-]?key|authorization|bearer\s|secret)/i.test(serialized)) return decision(false, 'AI_OUTPUT_SENSITIVE_DATA', 'Provider output contains sensitive material.');
   return decision(true, 'AI_OUTPUT_VALID', 'Provider output matches the canonical schema.');
