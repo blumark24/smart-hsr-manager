@@ -149,7 +149,7 @@
           </div>
           <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--hdrTx3,#7d8ea6);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
         </div>
-        <img src="smart-hsr-mark-reversed.png" alt="سمارت حصر" width="30" height="42" style="flex:none;display:block;height:42px;width:auto;object-fit:contain">
+        <img src="smart-hsr-mark-reversed.png" alt="سمارت حصر" width="30" height="42" style="flex:none;display:block;height:42px;width:auto;object-fit:contain" onerror="this.style.display='none'">
       </div>
     </div>
   </header>
@@ -189,11 +189,11 @@
               <span style="flex:1;display:var(--sbLabel,block)">الحصر الميداني الذكي</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
             </a>
-            <div aria-disabled="true" title="بانتظار إضافة المسار التشغيلي الحقيقي" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx3,#7d8ea6);cursor:not-allowed">
+            <a href="#" onClick="{{ goLands }}" data-f="1" title="عرض صلاحيات حصر الأراضي الذكي الحقيقية — الربط التشغيلي الكامل قيد الإعداد" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--vio,#a78bfa)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">حصر الأراضي الذكي</span>
               <span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">بانتظار الربط</span>
-            </div>
+            </a>
             <a href="#" onClick="{{ goMobility }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">حركة السير الذكية</span>
@@ -1109,6 +1109,73 @@ class Component extends DCLogic {
   DAY = {
     '--pgMaxW': '1600px',
     '--pgBg': 'radial-gradient(1100px 620px at 50% -12%,#ffffff,transparent 70%),#eef1ee',
+    // The following are the approved Day-mode surface/header/sidebar tokens
+    // from "Smart HSR Manager Dashboard.dc.html" (the approved Claude Design
+    // source). Without them, every card/table/section/header/sidebar built
+    // on --l1/--l2/--l3/--rowX/--sect/--hdrX/--sbX silently fell back to
+    // their Night-mode markup defaults even while Day mode was selected —
+    // this is the fix for the "dark/grey cards remaining inside Day mode"
+    // defect.
+    '--l1': 'linear-gradient(155deg,rgba(234,247,240,0.82),rgba(253,255,254,0.86) 52%,rgba(238,249,243,0.82))',
+    '--l1Bd': 'rgba(18,133,90,0.26)',
+    '--l1ShH': 'inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.5),0 1px 1px rgba(14,52,38,0.07),0 3px 5px rgba(14,52,38,0.06),0 26px 46px -24px rgba(12,60,42,0.58)',
+    '--l1BdH': 'rgba(18,133,90,0.42)',
+    '--l1Grid': 'repeating-linear-gradient(45deg,rgba(17,54,40,0.02) 0 1px,transparent 1px 3px),linear-gradient(rgba(18,133,90,0.04) 1px,transparent 1px) 0 0/100% 15px,linear-gradient(90deg,rgba(18,133,90,0.04) 1px,transparent 1px) 0 0/15px 100%',
+    '--l2Grain': 'repeating-linear-gradient(45deg,rgba(17,54,40,0.022) 0 1px,transparent 1px 3px)',
+    '--l2': 'linear-gradient(160deg,rgba(222,234,227,0.78),rgba(233,243,238,0.82))',
+    '--l2Bd': 'rgba(18,133,90,0.2)',
+    '--l2Sh': 'inset 0 1px 0 rgba(255,255,255,0.7),0 1px 1px rgba(14,52,38,0.05),0 14px 28px -22px rgba(12,60,42,0.42)',
+    '--l3': 'linear-gradient(180deg,rgba(247,251,249,0.94),rgba(241,247,244,0.94))',
+    '--l3Bd': 'rgba(18,133,90,0.2)',
+    '--l3Sh': '0 1px 2px rgba(16,42,32,0.05),0 10px 24px -20px rgba(16,42,32,0.26)',
+    '--thTx': '#083f2c',
+    '--rowH': 'rgba(18,133,90,0.07)',
+    '--rowAlt': 'rgba(18,133,90,0.028)',
+    '--rowSel': 'rgba(18,133,90,0.1)',
+    '--rowBd': 'rgba(18,133,90,0.09)',
+    '--sect': 'linear-gradient(160deg,#e6efe9,#edf4f0)',
+    '--sectBd': 'rgba(18,133,90,0.2)',
+    '--hdrBg': 'linear-gradient(168deg,rgba(10,74,52,0.97),rgba(8,58,42,0.98) 52%,rgba(11,46,38,0.97)),radial-gradient(600px 200px at 88% -40%,rgba(90,200,150,0.16),transparent 70%)',
+    '--hdrBd': 'rgba(120,200,165,0.26)',
+    '--hdrBlur': 'blur(20px) saturate(150%)',
+    '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.14),inset 0 -1px 0 rgba(0,0,0,0.14),0 14px 32px -22px rgba(6,40,28,0.7)',
+    '--hdrTx': '#f2faf5',
+    '--hdrTx2': 'rgba(220,240,228,0.85)',
+    '--hdrTx3': 'rgba(190,218,201,0.78)',
+    '--hdrCtl': 'rgba(255,255,255,0.1)',
+    '--hdrCtlBd': 'rgba(255,255,255,0.18)',
+    '--hdrSunk': 'rgba(0,0,0,0.18)',
+    '--hdrDiv': 'rgba(255,255,255,0.16)',
+    '--hdrAcc': '#8fe6b8',
+    '--hdrField': 'rgba(255,255,255,0.1)',
+    '--orgBgH': 'rgba(255,255,255,0.12)',
+    '--orgBdH': 'rgba(255,255,255,0.24)',
+    '--sbBg': 'linear-gradient(180deg,rgba(8,60,44,0.97),rgba(7,45,34,0.98))',
+    '--sbBd': 'rgba(120,200,165,0.2)',
+    '--sbSh': 'inset 0 1px 0 rgba(255,255,255,0.1),0 16px 36px -24px rgba(6,40,28,0.65)',
+    '--sbTx': '#eaf5ee',
+    '--sbTx2': 'rgba(216,236,224,0.85)',
+    '--sbTx3': 'rgba(186,214,196,0.75)',
+    '--sbNavBg': 'linear-gradient(90deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))',
+    '--sbNavBd': 'rgba(255,255,255,0.26)',
+    '--sbNavTx': '#ffffff',
+    '--sbDiv': 'rgba(255,255,255,0.14)',
+    '--sbCtl': 'rgba(255,255,255,0.1)',
+    '--sbCtlBd': 'rgba(255,255,255,0.18)',
+    '--sbSunk': 'rgba(0,0,0,0.16)',
+    '--sbChip': 'rgba(255,255,255,0.12)',
+    '--sbBlur': 'blur(18px) saturate(140%)',
+    '--logoNavyH': '#eaf3ee',
+    '--logoGreenH': '#3fc25a',
+    '--fieldBd': 'rgba(18,133,90,0.3)',
+    '--fieldFc': 'rgba(18,133,90,0.6)',
+    '--focusRing': 'rgba(18,133,90,0.12)',
+    '--popTx3': '#546a5f',
+    '--popHov': 'rgba(18,133,90,0.06)',
+    '--dwSh': '0 40px 80px -30px rgba(6,40,28,0.5)',
+    '--gl1': 'blur(16px) saturate(135%)',
+    '--gl2': 'blur(12px) saturate(125%)',
+    '--gl3': 'blur(8px) saturate(115%)',
     '--card': '#ffffff', '--card2': '#ffffff',
     '--cardBd': 'rgba(17,54,40,0.11)',
     '--cardSh': '0 1px 2px rgba(16,42,32,0.05),0 14px 30px -22px rgba(16,42,32,0.3)',
@@ -1742,7 +1809,10 @@ class Component extends DCLogic {
       isTwin: st.mapMode === 'twin', isMap: st.mapMode === 'map',
       twinDisplay: st.mapMode === 'twin' ? 'block' : 'none', mapDisplay: st.mapMode === 'map' ? 'block' : 'none',
       twinControlDisplay: st.mapMode === 'twin' ? 'flex' : 'none',
-      mapSurfaceLabel: st.mapMode === 'twin' ? 'Digital Twin · GIS' : 'الخريطة التشغيلية · بلاغات موثّقة',
+      // SMART HSR MAP and SMART HSR TWIN are two distinct product surfaces
+      // (real operational/GIS map vs. a separate municipal digital-twin
+      // visualization) and must never be labeled as one another.
+      mapSurfaceLabel: st.mapMode === 'twin' ? 'التوأم البلدي الذكي · SMART HSR TWIN' : 'الخريطة التشغيلية · SMART HSR MAP · بلاغات موثّقة',
       twinModeBg: st.mapMode === 'twin' ? (day ? '#ffffff' : 'rgba(76,201,240,0.24)') : 'transparent',
       twinModeTx: st.mapMode === 'twin' ? (day ? '#0b5c3b' : '#eaf4ff') : 'var(--glassTx,#a9c0d8)',
       mapModeBg: st.mapMode === 'map' ? (day ? '#ffffff' : 'rgba(76,201,240,0.24)') : 'transparent',
@@ -1782,7 +1852,7 @@ class Component extends DCLogic {
       mobNav: [
         { label: 'الرئيسية', tag: '', on: () => this.goHome() },
         { label: 'الحصر الميداني الذكي', tag: '', on: () => this.goRoute('survey') },
-        { label: 'حصر الأراضي الذكي', tag: 'بانتظار الربط', disabled: true },
+        { label: 'حصر الأراضي الذكي', tag: 'بانتظار الربط', on: () => this.goLandsGateway() },
         { label: 'حركة السير الذكية', tag: '', on: () => this.goRoute('mobility') },
         { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.openView('observations') },
         { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap() },
@@ -1852,6 +1922,7 @@ class Component extends DCLogic {
       hideQuick: () => this.setState({ quick: false }),
       goSurvey: () => this.goRoute('survey'),
       goMobility: () => this.goRoute('mobility'),
+      goLands: e => this.goLandsGateway(e),
       goHome: e => this.goHome(e),
       goMap: e => this.openMap(e),
       goReports: e => this.openView('reports', e),
@@ -1929,9 +2000,27 @@ class Component extends DCLogic {
   }
 
   goRoute(r) {
-    if (r === 'survey') { window.location.assign('dashboard.html'); return; }
+    // dashboard.html is the Inspector's own operational capture screen — a
+    // Manager is an executive role and must never land there. The Manager's
+    // real Field Survey oversight experience is this component's own
+    // observations view (real Firestore-backed observations/KPIs/evidence,
+    // already wired), never a second product page.
+    if (r === 'survey') { this.openView('observations'); return; }
     if (r === 'mobility') { window.location.assign('smart-mobility.html'); return; }
     this.flash('هذا المسار غير متاح حتى يتم التحقق من ربطه التشغيلي.');
+  }
+
+  // Truthful Smart Lands Manager gateway shell: the operational Lands
+  // product (grants/parcels/documents) is a separate application whose SSO
+  // routing from here is not yet wired (Phase 05) — this control must never
+  // pretend otherwise. What IS real today is Lands entitlement oversight
+  // (who in this organization has Lands access), already backed by live
+  // Firestore data via the existing Users view's Lands filter, so the
+  // gateway opens that real view instead of doing nothing.
+  goLandsGateway(e) {
+    this.prevent(e);
+    this.setState({ view: 'users', tuFilter: 'أراضي', mobNavOpen: false, notifOpen: false, profOpen: false });
+    this.flash('حصر الأراضي الذكي: الربط التشغيلي الكامل قيد الإعداد — المعروض هنا صلاحيات الأراضي الحقيقية للمستخدمين.');
   }
 
   openUserDetail(user) {

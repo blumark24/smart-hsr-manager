@@ -168,6 +168,24 @@ form.addEventListener("submit", async (e) => {
       role: "manager"
     }));
 
+    // smart-mobility.html/smart-mobility-adapter.js checks its own named
+    // 'smart-hsr-mobility-session' app for a signed-in user — the same
+    // silent priming login.html already performs for a manager signing in
+    // there, applied here too so a manager who signs in via THIS page (the
+    // dedicated manager login) is not bounced back to a second, visible
+    // login when they click through to Smart Mobility from manager.html.
+    // Best-effort only: a failure here must never block the manager's own,
+    // already-authorized sign-in — Smart Mobility may simply prompt once if
+    // this priming step could not complete.
+    try {
+      const managerMobilityApp = initializeApp(firebaseConfig, 'smart-hsr-mobility-session');
+      const managerMobilityAuth = getAuth(managerMobilityApp);
+      await setPersistence(managerMobilityAuth, browserLocalPersistence);
+      await signInWithEmailAndPassword(managerMobilityAuth, email, password);
+    } catch (mobilityPrimeErr) {
+      console.error('manager-login: Smart Mobility session priming failed (non-fatal)', mobilityPrimeErr);
+    }
+
     window.location.href = "manager.html";
 
   } catch (lookupErr) {
