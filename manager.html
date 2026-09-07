@@ -687,6 +687,90 @@
           </div>
         </sc-if>
 
+        <sc-if value="{{ viewIsFieldSurvey }}">
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;flex:1;min-height:0;overflow:auto">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+              <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">إجمالي أعمال الحصر</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ fsTotal }}</div></div>
+              <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">مفتوحة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ fsOpen }}</div></div>
+              <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">مكتملة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ fsCompleted }}</div></div>
+              <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">نسبة الإنجاز</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ fsCompletionRate }}</div></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+              <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))">
+                <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">الأولويات التشغيلية</div>
+                <sc-for list="{{ fsPriorities }}" as="p" hint-placeholder-count="3">
+                  <div onClick="{{ p.on }}" data-f="1" style="display:flex;gap:8px;align-items:center;padding:7px 4px;cursor:pointer;border-radius:8px" style-hover="background:var(--ctl,rgba(20,32,54,0.5))">
+                    <span style="width:7px;height:7px;border-radius:50%;flex:none;background:{{ p.col }}"></span>
+                    <span style="flex:1;font-size:10.5px;color:var(--tx,#e9f1fb);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</span>
+                    <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);white-space:nowrap">{{ p.meta }}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ !fsHasPriorities }}"><div style="padding:10px 4px;font-size:10.5px;color:var(--tx3,#7d8ea6)">لا توجد أعمال حصر مفتوحة حالياً.</div></sc-if>
+              </div>
+              <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))">
+                <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">التصنيف</div>
+                <sc-for list="{{ fsCategoryDistribution }}" as="c" hint-placeholder-count="3">
+                  <div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ c.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ c.n }}</span></div>
+                </sc-for>
+                <sc-if value="{{ !fsHasCategories }}"><div style="font-size:10.5px;color:var(--tx3,#7d8ea6)">لا توجد بيانات تصنيف متاحة بعد.</div></sc-if>
+              </div>
+              <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))">
+                <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">إشراف المراقبين</div>
+                <sc-for list="{{ fsInspectors }}" as="i" hint-placeholder-count="3">
+                  <div style="display:flex;gap:7px;align-items:center;font-size:10.5px;margin:6px 0" title="{{ i.activeLabel }}">
+                    <span style="width:6px;height:6px;border-radius:50%;flex:none;background:{{ i.activeCol }}"></span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                      <span style="color:var(--tx,#e9f1fb)">{{ i.name }}</span>
+                      <span style="color:var(--tx3,#7d8ea6)"> · {{ i.role }}</span>
+                    </span>
+                    <span style="color:var(--tx3,#7d8ea6);white-space:nowrap">مفتوح {{ i.openCount }} · مكتمل {{ i.doneCount }}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ !fsHasInspectors }}"><div style="font-size:10.5px;color:var(--tx3,#7d8ea6)">لا يوجد مراقبون مسجّلون ضمن المنظمة حالياً.</div></sc-if>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
+              <div style="position:relative;width:var(--tSearch,232px)">
+                <input type="search" autocomplete="off" readonly onfocus="this.removeAttribute(&#39;readonly&#39;)" value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              </div>
+              <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+                <sc-for list="{{ tFilters }}" as="f" hint-placeholder-count="6">
+                  <button onClick="{{ f.on }}" data-f="1" style="height:30px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
+                </sc-for>
+                <button onClick="{{ goMap }}" data-f="1" style="height:30px;padding:0 14px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35))">الخريطة التشغيلية</button>
+                <button onClick="{{ closeView }}" data-f="1" style="height:30px;padding:0 14px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">لوحة المدير</button>
+              </div>
+            </div>
+
+            <div style="flex:1;min-height:280px;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
+              <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
+                <sc-for list="{{ tCols }}" as="c" hint-placeholder-count="6">
+                  <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
+                </sc-for>
+              </div>
+              <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+                <sc-for list="{{ tRows }}" as="r" hint-placeholder-count="8">
+                  <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--ctl,rgba(20,32,54,0.5))">
+                    <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
+                      <span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
+                    </sc-for>
+                    <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;white-space:nowrap;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ tEmpty }}">
+                  <div style="padding:44px 20px;text-align:center;color:var(--thTx,#7d8ea6);font-size:12px">لا توجد سجلات حصر مطابقة للتصفية الحالية</div>
+                </sc-if>
+              </div>
+              <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:center;gap:10px">
+                <span style="flex:1;font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ tCount }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
         <sc-if value="{{ viewIsUsers }}">
           <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;flex:1;min-height:0">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
@@ -1586,6 +1670,41 @@ class Component extends DCLogic {
       }
     };
     const statusLabel = status => ({ PENDING: 'قيد الانتظار', IN_PROGRESS: 'قيد المعالجة', COMPLETED: 'تمت المعالجة' }[status] || 'غير محدد');
+    const categoryLabel = type => ({ MAINTENANCE: 'صيانة', QUALITY: 'جودة', SAFETY: 'سلامة', ENVIRONMENT: 'بيئة', ROAD: 'طرق' }[type] || type || 'غير مصنف');
+    // الحصر الميداني الذكي — Manager Dashboard. Every value below is derived
+    // from allObservations (this.liveObservations, real Firestore data) and
+    // this.liveUsers (already loaded for the Users tab) — nothing here is
+    // invented. priority comes from the real riskAssessment.priority field
+    // dashboard.html's own create flow already writes (AI-derived, never
+    // client-fabricated here); an absent/unknown value renders as "غير
+    // محدد" (undetermined), never a guessed severity.
+    const fsPriorityLabel = p => ({ HIGH: 'مرتفعة', MEDIUM: 'متوسطة', LOW: 'منخفضة' }[p] || (p && p !== 'UNKNOWN' ? p : 'غير محدد'));
+    const fsPriorityWeight = p => ({ HIGH: 3, MEDIUM: 2, LOW: 1 }[p] || 0);
+    const fsOpenObservations = allObservations.filter(o => o.status !== 'COMPLETED');
+    const fsPriorities = [...fsOpenObservations]
+      .sort((a, b) => fsPriorityWeight(b.priority) - fsPriorityWeight(a.priority) || b.createdAt - a.createdAt)
+      .slice(0, 5)
+      .map(o => ({
+        id: o.id, n: o.displayId, title: o.title,
+        meta: `${fsPriorityLabel(o.priority)} · ${statusLabel(o.status)}`,
+        col: fsPriorityWeight(o.priority) >= 3 ? '#ef4444' : fsPriorityWeight(o.priority) === 2 ? '#f5a524' : '#64748b',
+        on: () => this.openEvidenceDrawer(o)
+      }));
+    const fsInspectorUsers = (Array.isArray(this.liveUsers) ? this.liveUsers : []).filter(u => ['inspector', 'contractor', 'supervisor'].includes(u.role));
+    const fsInspectors = fsInspectorUsers.map(u => {
+      const owned = allObservations.filter(o => o.createdByUid === u.id);
+      const openCount = owned.filter(o => o.status !== 'COMPLETED').length;
+      const doneCount = owned.filter(o => o.status === 'COMPLETED').length;
+      return {
+        id: u.id, name: u.name || u.email || u.id, role: roleLabel(u.role),
+        activeLabel: u.active !== false ? 'نشط' : 'غير نشط',
+        activeCol: u.active !== false ? (day ? '#0b5c3b' : '#22c55e') : 'var(--tx3,#7d8ea6)',
+        openCount: String(openCount), doneCount: String(doneCount), totalCount: String(owned.length)
+      };
+    });
+    const fsCategoryDistribution = ['MAINTENANCE', 'QUALITY', 'SAFETY', 'ENVIRONMENT', 'ROAD']
+      .map(type => ({ name: categoryLabel(type), n: String(allObservations.filter(o => o.type === type).length) }))
+      .filter(row => row.n !== '0');
     const viewObservations = matchingObservations.map(item => ({
       id: item.id, title: item.title, code: item.displayId, status: statusLabel(item.status), inspector: item.inspector,
       date: item.createdAt && format.dateTime ? format.dateTime(item.createdAt) : 'غير متاح', selected: st.sel === item.id ? 'var(--accBd,rgba(76,201,240,0.45))' : 'var(--div,rgba(122,164,224,0.12))',
@@ -1690,6 +1809,49 @@ class Component extends DCLogic {
       });
       tEmpty = tRows.length === 0;
       tCount = tRows.length + ' حادث';
+      tQ = st.tq || '';
+    } else if (st.view === 'fieldSurvey') {
+      const tfilter = st.tfsFilter || 'الكل';
+      const tq = (st.tq || '').trim().toLocaleLowerCase('ar');
+      tPlaceholder = 'الرقم، العنوان، الفئة...';
+      tCols = [
+        { label: 'الرقم', flex: '0 0 56px', align: 'right' },
+        { label: 'العنوان', flex: '1.3', align: 'right' },
+        { label: 'الفئة', flex: '0.9', align: 'right' },
+        { label: 'المراقب', flex: '1', align: 'right' },
+        { label: 'التاريخ', flex: '0 0 92px', align: 'left' }
+      ];
+      const statusFiltersFS = ['الكل', 'قيد الانتظار', 'قيد المعالجة', 'تمت المعالجة'];
+      const statusFilterMapFS = { 'الكل': null, 'قيد الانتظار': 'PENDING', 'قيد المعالجة': 'IN_PROGRESS', 'تمت المعالجة': 'COMPLETED' };
+      tFilters = statusFiltersFS.map(sf => pill(sf, tfilter === sf, () => this.setState({ tfsFilter: sf })));
+      const targetStatusFS = statusFilterMapFS[tfilter];
+      const inspectorById = new Map((Array.isArray(this.liveUsers) ? this.liveUsers : []).map(u => [u.id, u]));
+      const filteredObsFS = allObservations
+        .filter(o => !targetStatusFS || o.status === targetStatusFS)
+        .filter(o => !tq || [o.displayId, o.title, o.type].filter(Boolean).join(' ').toLocaleLowerCase('ar').includes(tq));
+      const statusChipMapFS = {
+        PENDING: { col: day ? '#b91c1c' : '#ef4444', bg: day ? 'rgba(185,28,28,0.12)' : 'rgba(239,68,68,0.15)', bd: day ? 'rgba(185,28,28,0.3)' : 'rgba(239,68,68,0.4)' },
+        IN_PROGRESS: { col: day ? '#a16207' : '#f5a524', bg: day ? 'rgba(161,98,7,0.12)' : 'rgba(245,165,36,0.15)', bd: day ? 'rgba(161,98,7,0.3)' : 'rgba(245,165,36,0.4)' },
+        COMPLETED: { col: day ? '#0b5c3b' : '#22c55e', bg: day ? 'rgba(14,122,79,0.12)' : 'rgba(34,197,85,0.15)', bd: day ? 'rgba(14,122,79,0.3)' : 'rgba(34,197,85,0.4)' }
+      };
+      tRows = filteredObsFS.map(o => {
+        const c = statusChipMapFS[o.status] || statusChipMapFS.PENDING;
+        const inspectorUser = o.createdByUid ? inspectorById.get(o.createdByUid) : null;
+        const inspectorLabel = inspectorUser ? (inspectorUser.name || inspectorUser.email) : (o.inspector && o.inspector !== 'غير متاح' ? o.inspector : 'غير معروف');
+        return {
+          chip: statusLabel(o.status), chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
+          on: () => this.openEvidenceDrawer(o),
+          cells: [
+            cell(o.displayId, '0 0 56px', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
+            cell(o.title, '1.3'),
+            cell(categoryLabel(o.type), '0.9', { size: '11px' }),
+            cell(inspectorLabel, '1', { size: '11px' }),
+            cell(o.createdAt && format.dateTime ? format.dateTime(o.createdAt) : 'غير متاح', '0 0 92px', { size: '10.5px' })
+          ]
+        };
+      });
+      tEmpty = tRows.length === 0;
+      tCount = tRows.length + ' سجل حصر';
       tQ = st.tq || '';
     }
 
@@ -1823,12 +1985,19 @@ class Component extends DCLogic {
       mapEmptyText,
       search: st.search,
       viewOpen: st.view !== 'home',
-      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents',
-      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : st.view === 'incidents' ? 'الحوادث والطوارئ' : 'البلاغات',
-      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر حركة السير الذكية.' :'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
+      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey',
+      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير الحصر الميداني الذكي' : 'البلاغات',
+      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر حركة السير الذكية.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال الحصر الميداني الذكي — بيانات حية من المنظمة الحالية فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
-      viewEmpty: ((st.view === 'users' || st.view === 'incidents') ? !tRows.length : !viewObservations.length),
+      viewEmpty: ((st.view === 'users' || st.view === 'incidents' || st.view === 'fieldSurvey') ? !tRows.length : !viewObservations.length),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
+
+      fsTotal: String(allObservations.length), fsOpen: String(fsOpenObservations.length),
+      fsCompleted: String(allObservations.filter(o => o.status === 'COMPLETED').length),
+      fsCompletionRate: metrics.completionRate || '—',
+      fsPriorities, fsHasPriorities: fsPriorities.length > 0,
+      fsInspectors, fsHasInspectors: fsInspectors.length > 0,
+      fsCategoryDistribution, fsHasCategories: fsCategoryDistribution.length > 0,
 
       tCols, tRows, tFilters, tPlaceholder, tQ, setTQ, tEmpty, tCount,
 
@@ -2003,9 +2172,11 @@ class Component extends DCLogic {
     // dashboard.html is the Inspector's own operational capture screen — a
     // Manager is an executive role and must never land there. The Manager's
     // real Field Survey oversight experience is this component's own
-    // observations view (real Firestore-backed observations/KPIs/evidence,
-    // already wired), never a second product page.
-    if (r === 'survey') { this.openView('observations'); return; }
+    // dedicated Field Survey Manager Dashboard view (real Firestore-backed
+    // KPIs/priorities/table/inspector-oversight/evidence, all derived from
+    // the same authenticated Manager session — never a second product page,
+    // never a second login).
+    if (r === 'survey') { this.openView('fieldSurvey'); return; }
     if (r === 'mobility') { window.location.assign('smart-mobility.html'); return; }
     this.flash('هذا المسار غير متاح حتى يتم التحقق من ربطه التشغيلي.');
   }

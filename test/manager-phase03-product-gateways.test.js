@@ -15,11 +15,16 @@ const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 // ---- 1/2. Field Survey: Manager is never sent to the Inspector screen ----
-test('1/2. Field Survey gateway never routes the Manager to dashboard.html (the Inspector screen) — it opens the real Manager observations view', () => {
+// Phase 04 note: this gateway now opens the dedicated Field Survey Manager
+// Dashboard ('fieldSurvey') rather than the plain 'observations' drawer —
+// see test/manager-phase04-field-survey.test.js for the full assertion of
+// that richer, real-data-only dashboard. This test's own job stays the
+// same: prove the Manager is never sent to dashboard.html.
+test('1/2. Field Survey gateway never routes the Manager to dashboard.html (the Inspector screen) — it opens a real Manager dashboard view', () => {
   const manager = read('manager.html');
-  const fn = manager.slice(manager.indexOf('goRoute(r) {'), manager.indexOf('goRoute(r) {') + 500);
+  const fn = manager.slice(manager.indexOf('goRoute(r) {'), manager.indexOf('goRoute(r) {') + 900);
   assert.doesNotMatch(fn, /r === 'survey'[\s\S]{0,60}dashboard\.html/, 'Field Survey must never navigate the Manager to dashboard.html');
-  assert.match(fn, /r === 'survey'\s*\)\s*\{\s*this\.openView\('observations'\)/, 'Field Survey must open the real, already-wired Manager observations view');
+  assert.match(fn, /r === 'survey'\s*\)\s*\{\s*this\.openView\('fieldSurvey'\)/, 'Field Survey must open the dedicated Field Survey Manager Dashboard view');
 });
 
 // ---- 3. Smart Mobility Manager SSO ----

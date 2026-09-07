@@ -61,6 +61,14 @@ function normalizeObservations(snapshot) {
       createdAt: asMillis(data.createdAt),
       updatedAt: asMillis(data.updatedAt),
       coordinates: readCoordinates(data),
+      // Real fields already written by dashboard.html's own create payload
+      // (createdByUid, riskAssessment.priority) — surfaced here so the
+      // Field Survey Manager dashboard can join the real inspector identity
+      // against users/{uid} and show the real AI-derived priority, instead
+      // of inventing either. Never defaulted to a fabricated value: absent
+      // means genuinely unknown.
+      createdByUid: typeof data.createdByUid === 'string' && data.createdByUid ? data.createdByUid : null,
+      priority: (data.riskAssessment && typeof data.riskAssessment.priority === 'string') ? data.riskAssessment.priority : null,
       // Canonical key preferred, legacy field names accepted as fallbacks —
       // the same precedence the real evidence-authorization path already
       // uses (test/inspector-acceptance-golden-observation.test.js).

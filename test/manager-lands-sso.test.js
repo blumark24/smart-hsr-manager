@@ -148,7 +148,10 @@ test('login.html never logs the handoff code, the employee password, or any toke
 test('13/14. the users-list search input is still hardened against browser autofill (see manager-users-list-state.test.js for the full assertion)', () => {
   const source = read('manager.html');
   const inputs = [...source.matchAll(/<input type="search"[^>]*value="\{\{ tQ \}\}"[^>]*>/g)];
-  assert.equal(inputs.length, 2);
+  // Phase 04 adds a third such input for the new Field Survey Manager
+  // Dashboard's table search — it reuses this exact same hardened markup
+  // pattern, so the count grows from 2 to 3 rather than a new one appearing.
+  assert.equal(inputs.length, 3);
   for (const [inputTag] of inputs) {
     assert.match(inputTag, /autocomplete="off"/);
     assert.match(inputTag, /readonly/);

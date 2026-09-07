@@ -76,7 +76,9 @@ test('2/3. deriveVisibleUsers: an empty search returns every user, unfiltered', 
 test('manager.html: the users/incidents search inputs are hardened against autofill (readonly-until-focus, type=search, autocomplete=off)', () => {
   const source = read('manager.html');
   const inputs = [...source.matchAll(/<input type="search"[^>]*value="\{\{ tQ \}\}"[^>]*>/g)];
-  assert.equal(inputs.length, 2, 'expected exactly the users-list and incidents-list search inputs');
+  // Phase 04 adds a third hardened search input, reusing this exact markup,
+  // for the new Field Survey Manager Dashboard's table.
+  assert.equal(inputs.length, 3, 'expected exactly the users-list, incidents-list, and field-survey-list search inputs');
   for (const [inputTag] of inputs) {
     assert.match(inputTag, /autocomplete="off"/);
     assert.match(inputTag, /readonly/);
@@ -157,7 +159,10 @@ test('switching views (openView) never touches the users search/filter state', (
 // error text only in that already-empty case.
 test('13. the users/incidents placeholder only appears when there is genuinely no data yet, never merely because of a transient error', () => {
   const source = read('manager.html');
-  assert.match(source, /viewEmpty: \(\(st\.view === 'users' \|\| st\.view === 'incidents'\) \? !tRows\.length : !viewObservations\.length\)/);
+  // Phase 04 extends the same never-blank-on-error rule to the new
+  // fieldSurvey view — it is keyed on the same tRows.length check, not on
+  // dataState.
+  assert.match(source, /viewEmpty: \(\(st\.view === 'users' \|\| st\.view === 'incidents' \|\| st\.view === 'fieldSurvey'\) \? !tRows\.length : !viewObservations\.length\)/);
   assert.match(source, /viewEmptyText: st\.dataState === 'error' \? \(st\.dataError \|\| /);
 });
 
