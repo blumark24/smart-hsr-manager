@@ -548,6 +548,92 @@ service cloud.firestore {
     }
 
     // ==========================================================
+    // SMART LANDS — reconciled verbatim from the authoritative source
+    // (blumark24/smart-hsr-lands, branch staging/lands-trusted-audit,
+    // firebase/firestore.rules, targeting the same shared
+    // smart-hsr-staging-blumark24 project via that repo's own .firebaserc).
+    // Included unmodified except for signedIn(), which is identical to
+    // this file's own signedIn() above and is not redefined here (Firestore
+    // rejects a duplicate function name in one service block). No other
+    // helper name here collides with a Platform Core/Field Survey/Smart
+    // Mobility helper above — verified by diffing every `function` name in
+    // both source files before merging. Every collection below is scoped
+    // under landsMunicipalities/{municipalityId}/..., isolating Lands
+    // tenancy by municipality independently of this file's own
+    // organizationId-based isolation for Core/Field Survey/Mobility —
+    // deliberately left as two coexisting, independently-correct tenancy
+    // mechanisms rather than force-unified in this phase.
+    // ==========================================================
+    function accessPath(municipalityId, uid) { return /databases/$(database)/documents/landsMunicipalities/$(municipalityId)/userAccess/$(uid); }
+    function membership(municipalityId) { return get(accessPath(municipalityId, request.auth.uid)).data; }
+    function enabledMember(municipalityId) { return signedIn() && exists(accessPath(municipalityId, request.auth.uid)) && membership(municipalityId).enabled == true && membership(municipalityId).municipality_id == municipalityId && membership(municipalityId).firebase_uid == request.auth.uid; }
+    function hasRole(municipalityId, role) { return enabledMember(municipalityId) && membership(municipalityId).lands_role == role; }
+    function manager(municipalityId) { return hasRole(municipalityId, 'municipal_manager') || hasRole(municipalityId, 'lands_department_manager'); }
+    function regularDomain(domain) { return domain in ['royalOrders', 'allocationDecisions', 'beneficiaries', 'plans', 'parcels']; }
+    function safeId(value) { return value is string && value.matches('^[A-Za-z0-9_-]{1,128}$'); }
+    function documentRecordDomain(domain) { return domain in ['landGrants', 'royalOrders', 'allocationDecisions', 'beneficiaries', 'plans', 'parcels']; }
+    function recordPath(municipalityId, domain, recordId) { return /databases/$(database)/documents/landsMunicipalities/$(municipalityId)/$(domain)/$(recordId); }
+    function recordExists(municipalityId, domain, recordId) { return documentRecordDomain(domain) && safeId(recordId) && exists(recordPath(municipalityId, domain, recordId)) && get(recordPath(municipalityId, domain, recordId)).data.municipality_id == municipalityId; }
+    function canAttachDocument(municipalityId, domain, recordId) { return recordExists(municipalityId, domain, recordId) && (manager(municipalityId) || get(recordPath(municipalityId, domain, recordId)).data.created_by == request.auth.uid); }
+    function expectedStoragePath(municipalityId, domain, recordId, fileId) { return 'landsMunicipalities/' + municipalityId + '/documents/' + domain + '/' + recordId + '/' + fileId; }
+    function hasNoDerivedState() { return !('completeness' in request.resource.data) && !('completenessPercentage' in request.resource.data) && !('completionPercentage' in request.resource.data) && !('isComplete' in request.resource.data) && !('percentage' in request.resource.data) && !('missingRequirements' in request.resource.data) && !('missingFields' in request.resource.data) && !('completedRequirements' in request.resource.data) && !('computedStatus' in request.resource.data); }
+    function tenantDocument(municipalityId) { return request.resource.data.municipality_id == municipalityId && hasNoDerivedState(); }
+    function validLandGrant(municipalityId) {
+      return tenantDocument(municipalityId) && request.resource.data.keys().hasOnly(['municipality_id', 'beneficiary', 'royal_order', 'allocation_decision', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'document_ids', 'status', 'created_by', 'created_at', 'updated_at']) && request.resource.data.created_by is string && request.resource.data.status in ['draft', 'under_review', 'incomplete', 'approved', 'rejected'];
+    }
+    function validDomainDocument(municipalityId) {
+      return tenantDocument(municipalityId) && request.resource.data.keys().hasOnly(['municipality_id', 'created_by', 'created_at', 'updated_at', 'reference_id', 'name', 'description', 'land_grant_id', 'royal_order_id', 'allocation_decision_id', 'beneficiary_id', 'plan_id', 'parcel_id', 'document_ids']) && request.resource.data.created_by is string;
+    }
+    function validDocumentMetadata(municipalityId, documentId) {
+      return tenantDocument(municipalityId) && request.resource.data.keys().hasOnly(['municipality_id', 'created_by', 'created_at', 'updated_at', 'record_domain', 'record_id', 'file_id', 'filename', 'mime_type', 'storage_path', 'size_bytes']) &&
+        request.resource.data.created_by is string && documentRecordDomain(request.resource.data.record_domain) && safeId(request.resource.data.record_id) &&
+        safeId(request.resource.data.file_id) && request.resource.data.file_id == documentId && request.resource.data.filename is string &&
+        request.resource.data.filename.matches('^[A-Za-z0-9][A-Za-z0-9._ -]{0,127}$') && request.resource.data.mime_type in ['application/pdf', 'image/jpeg', 'image/png'] &&
+        request.resource.data.size_bytes is int && request.resource.data.size_bytes > 0 && request.resource.data.size_bytes <= 10 * 1024 * 1024 &&
+        request.resource.data.storage_path == expectedStoragePath(municipalityId, request.resource.data.record_domain, request.resource.data.record_id, request.resource.data.file_id) &&
+        canAttachDocument(municipalityId, request.resource.data.record_domain, request.resource.data.record_id);
+    }
+    match /landsMunicipalities/{municipalityId}/userAccess/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || hasRole(municipalityId, 'municipal_manager'));
+      allow list: if hasRole(municipalityId, 'municipal_manager');
+      // Entitlement grant/enable/disable/role-change is a consequential,
+      // trusted-audited operation. The trusted server runtime writes this
+      // through Admin access (which Rules do not gate); the browser Client
+      // SDK may never write it directly.
+      allow create, update, delete: if false;
+    }
+    match /landsMunicipalities/{municipalityId}/landGrants/{grantId} {
+      allow read: if enabledMember(municipalityId);
+      allow create: if enabledMember(municipalityId) && validLandGrant(municipalityId) && request.resource.data.created_by == request.auth.uid && request.resource.data.status == 'draft';
+      // A draft's own author may still edit its (pre-workflow) content
+      // directly. Any status transition (transition/approve/reject) is a
+      // consequential, trusted-audited operation and is server-only.
+      allow update: if validLandGrant(municipalityId) && resource.data.municipality_id == municipalityId && request.resource.data.created_by == resource.data.created_by && request.resource.data.municipality_id == resource.data.municipality_id && resource.data.created_by == request.auth.uid && resource.data.status == 'draft' && request.resource.data.status == 'draft' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['beneficiary', 'royal_order', 'allocation_decision', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'document_ids', 'updated_at']);
+      // land_grant.delete is a consequential, trusted-audited operation.
+      allow delete: if false;
+    }
+    match /landsMunicipalities/{municipalityId}/documents/{documentId} {
+      allow read: if enabledMember(municipalityId);
+      allow create: if enabledMember(municipalityId) && request.resource.data.created_by == request.auth.uid && validDocumentMetadata(municipalityId, documentId);
+      // document.replace and document.delete are consequential, trusted-audited
+      // operations and are server-only. Initial upload (create) stays client-side.
+      allow update, delete: if false;
+    }
+    match /landsMunicipalities/{municipalityId}/{domain}/{entityId} {
+      allow read: if enabledMember(municipalityId) && regularDomain(domain);
+      allow create: if enabledMember(municipalityId) && regularDomain(domain) && validDomainDocument(municipalityId) && request.resource.data.created_by == request.auth.uid;
+      // *.update and *.delete for every regular domain are consequential,
+      // trusted-audited operations and are server-only.
+      allow update, delete: if false;
+    }
+    match /landsMunicipalities/{municipalityId}/auditLogs/{auditId} {
+      allow read: if manager(municipalityId);
+      // A client-writable audit trail is forgeable. Trusted server ingestion is a
+      // separate production decision and is intentionally not provided here.
+      allow create, update, delete: if false;
+    }
+
+    // ==========================================================
     // Final fallback — everything else denied.
     // ==========================================================
     match /{document=**} {
