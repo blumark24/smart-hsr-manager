@@ -659,7 +659,6 @@
               <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0;line-height:1.7">{{ viewIntro }}</p>
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <button onClick="{{ goMap }}" data-f="1" style="height:34px;padding:0 14px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35))">الخريطة التشغيلية</button>
               <button onClick="{{ closeView }}" data-f="1" style="height:34px;padding:0 14px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">
                 <span>العودة إلى لوحة مدير البلدية</span>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
@@ -676,31 +675,161 @@
           <div style="flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:14px">
 
             <sc-if value="{{ fsScreenIsExec }}">
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
-                <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">إجمالي أعمال الحصر</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ fsTotal }}</div></div>
-                <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">مفتوحة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ fsOpen }}</div></div>
-                <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">مكتملة</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ fsCompleted }}</div></div>
-                <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">نسبة الإنجاز</div><div style="font-size:22px;font-weight:600;color:var(--tx,#e9f1fb);font-variant-numeric:tabular-nums">{{ fsCompletionRate }}</div></div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+                <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--acc,#4cc9f0)"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">إجمالي أعمال الحصر</div>
+                    <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ fsTotal }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ fsOpen }} مفتوحة · {{ fsCompleted }} مكتملة</div>
+                  </div>
+                </div>
+                <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--warn,#f5a524)"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">المفتوحة</div>
+                    <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ fsOpen }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ fsPending }} قيد الانتظار · {{ fsInProgress }} قيد المعالجة</div>
+                  </div>
+                </div>
+                <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--ok,#22c55e)"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">المكتملة</div>
+                    <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ fsCompleted }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">من إجمالي {{ fsTotal }}</div>
+                  </div>
+                </div>
+                <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--acc,#4cc9f0)"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">نسبة الإنجاز</div>
+                    <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ fsCompletionRate }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ fsCompleted }} من {{ fsTotal }}</div>
+                  </div>
+                </div>
               </div>
 
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
-                <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))">
-                  <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">الأولويات التشغيلية</div>
-                  <sc-for list="{{ fsPriorities }}" as="p" hint-placeholder-count="3">
-                    <div onClick="{{ p.on }}" data-f="1" style="display:flex;gap:8px;align-items:center;padding:7px 4px;cursor:pointer;border-radius:8px" style-hover="background:var(--ctl,rgba(20,32,54,0.5))">
-                      <span style="width:7px;height:7px;border-radius:50%;flex:none;background:{{ p.col }}"></span>
-                      <span style="flex:1;font-size:10.5px;color:var(--tx,#e9f1fb);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</span>
-                      <span style="font-size:9.5px;color:var(--tx3,#7d8ea6);white-space:nowrap">{{ p.meta }}</span>
+              <div style="display:flex;gap:14px;flex-wrap:var(--fsWrap,nowrap);min-height:var(--fsMapH,420px)">
+                <div ref="{{ mapShellRef }}" style="flex:1;min-width:280px;position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+                  <div ref="{{ mapRef }}" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0"></div>
+                  <div dir="ltr" style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
+                    الخريطة التشغيلية · SMART HSR MAP
+                  </div>
+                  <div style="position:absolute;top:12px;right:12px;z-index:5;display:flex;align-items:center;gap:7px">
+                    <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}" style="height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#dbe6f5);font-size:10.5px;padding:0 8px;outline:none">
+                      <option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option>
+                    </select>
+                    <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" title="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+                    </button>
+                  </div>
+                  <sc-if value="{{ mapEmpty }}">
+                    <div style="position:absolute;inset:0;z-index:4;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
+                      <div style="max-width:300px;padding:13px 16px;border-radius:12px;background:var(--glass,rgba(8,14,26,0.84));border:1px solid var(--glassBd,rgba(122,164,224,0.2));color:var(--glassTx,#c3d6ea);font-size:11px;line-height:1.7">{{ mapEmptyText }}</div>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <div style="width:var(--fsSideW,282px);flex:none;display:flex;flex-direction:column;gap:12px">
+                  <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                    <div style="font-size:12.5px;font-weight:600;color:var(--tx,#e4eefb);margin-bottom:9px">الأولويات التشغيلية</div>
+                    <div style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px">
+                      <sc-for list="{{ fsPriorities }}" as="p" hint-placeholder-count="3">
+                        <div onClick="{{ p.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;background:{{ p.bg }};border:1px solid {{ p.bd }}">
+                          <span style="width:26px;height:26px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;color:{{ p.col }};background:var(--pop,rgba(10,17,30,0.5))">{{ p.rank }}</span>
+                          <div style="flex:1;min-width:0">
+                            <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</div>
+                            <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ p.meta }}</div>
+                          </div>
+                        </div>
+                      </sc-for>
+                      <sc-if value="{{ !fsHasPriorities }}"><div style="padding:10px 4px;font-size:10.5px;color:var(--tx3,#7d8ea6)">لا توجد أعمال حصر مفتوحة حالياً.</div></sc-if>
+                    </div>
+                  </div>
+                  <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+                      <span style="flex:1;font-size:12.5px;font-weight:600;color:var(--tx,#e4eefb)">المراقبون</span>
+                      <span onClick="{{ goFsInspectors }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">عرض الكل</span>
+                    </div>
+                    <div style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px">
+                      <sc-for list="{{ fsInspectorsTop }}" as="i" hint-placeholder-count="3">
+                        <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:11px;background:{{ i.bg }};border:1px solid {{ i.bd }}" title="{{ i.activeLabel }}">
+                          <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ i.activeCol }}"></span>
+                          <div style="flex:1;min-width:0">
+                            <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.name }}</div>
+                            <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ i.role }}</div>
+                          </div>
+                          <span style="flex:none;font-size:9px;color:var(--tx3,#7d8ea6);white-space:nowrap">مفتوح {{ i.openCount }}</span>
+                        </div>
+                      </sc-for>
+                      <sc-if value="{{ !fsHasInspectors }}"><div style="padding:10px 4px;font-size:10.5px;color:var(--tx3,#7d8ea6)">لا يوجد مراقبون مسجّلون ضمن المنظمة حالياً.</div></sc-if>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+                <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                  <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">التصنيف</div>
+                  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;margin-top:6px;min-height:104px">
+                    <sc-for list="{{ fsCategoryDistribution }}" as="c" hint-placeholder-count="5">
+                      <div style="display:flex;align-items:center;gap:9px">
+                        <span style="width:60px;flex:none;text-align:right;font-size:10.5px;color:var(--tx2,#a9bdd4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</span>
+                        <span style="flex:1;height:6px;border-radius:3px;background:var(--track,rgba(122,164,224,0.12));overflow:hidden;display:block"><span style="display:block;height:100%;border-radius:3px;background:var(--barFill,linear-gradient(90deg,#22c55e,#4cc9f0));width:{{ c.w }}"></span></span>
+                        <span style="width:22px;flex:none;text-align:left;font-size:10.5px;font-weight:600;color:var(--tx,#e4eefb);font-variant-numeric:tabular-nums">{{ c.n }}</span>
+                      </div>
+                    </sc-for>
+                    <sc-if value="{{ !fsHasCategories }}"><div style="font-size:10.5px;color:var(--tx3,#7d8ea6)">لا توجد بيانات تصنيف متاحة بعد.</div></sc-if>
+                  </div>
+                </div>
+
+                <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                  <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">نسبة الإنجاز</div>
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;margin-top:8px;min-height:104px">
+                    <div style="position:relative;width:100px;height:100px;flex:none">
+                      <svg width="100" height="100" viewBox="0 0 100 100" style="transform:rotate(-90deg)">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--track,rgba(122,164,224,0.12))" stroke-width="9"></circle>
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--ok,#22c55e)" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ fsCompletionDash }}"></circle>
+                      </svg>
+                      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                        <div style="font-size:20px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#eafff2);font-variant-numeric:tabular-nums;line-height:1">{{ fsCompletionRate }}</div>
+                        <div style="font-size:9px;color:var(--thTx,#7d8ea6);margin-top:3px">إنجاز</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                  <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">ملخص تشغيلي</div>
+                  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;margin-top:8px;min-height:104px;font-size:10.5px">
+                    <div style="display:flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:50%;flex:none;background:var(--warn,#f5a524)"></span><span style="flex:1;color:var(--tx2,#a9bdd4)">قيد الانتظار</span><span style="font-weight:600;color:var(--tx,#e4eefb);font-variant-numeric:tabular-nums">{{ fsPending }}</span></div>
+                    <div style="display:flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:50%;flex:none;background:#38bdf8"></span><span style="flex:1;color:var(--tx2,#a9bdd4)">قيد المعالجة</span><span style="font-weight:600;color:var(--tx,#e4eefb);font-variant-numeric:tabular-nums">{{ fsInProgress }}</span></div>
+                    <sc-if value="{{ fsHasNoCoords }}">
+                      <div style="display:flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:50%;flex:none;background:#64748b"></span><span style="flex:1;color:var(--tx2,#a9bdd4)">بلا إحداثيات (غير ظاهرة على الخريطة)</span><span style="font-weight:600;color:var(--tx,#e4eefb);font-variant-numeric:tabular-nums">{{ fsNoCoords }}</span></div>
+                    </sc-if>
+                  </div>
+                </div>
+              </div>
+
+              <div style="border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
+                  <span style="flex:1;font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">أحدث أعمال الحصر</span>
+                  <span onClick="{{ goFsLog }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">عرض السجل الكامل</span>
+                </div>
+                <div style="display:flex;flex-direction:column">
+                  <sc-for list="{{ fsRecentRows }}" as="r" hint-placeholder-count="5">
+                    <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--ctl,rgba(20,32,54,0.5))">
+                      <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
+                        <span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
+                      </sc-for>
+                      <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;white-space:nowrap;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span>
                     </div>
                   </sc-for>
-                  <sc-if value="{{ !fsHasPriorities }}"><div style="padding:10px 4px;font-size:10.5px;color:var(--tx3,#7d8ea6)">لا توجد أعمال حصر مفتوحة حالياً.</div></sc-if>
-                </div>
-                <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))">
-                  <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">التصنيف</div>
-                  <sc-for list="{{ fsCategoryDistribution }}" as="c" hint-placeholder-count="3">
-                    <div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ c.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ c.n }}</span></div>
-                  </sc-for>
-                  <sc-if value="{{ !fsHasCategories }}"><div style="font-size:10.5px;color:var(--tx3,#7d8ea6)">لا توجد بيانات تصنيف متاحة بعد.</div></sc-if>
+                  <sc-if value="{{ !fsHasRecent }}">
+                    <div style="padding:30px 20px;text-align:center;color:var(--thTx,#7d8ea6);font-size:12px">لا توجد سجلات حصر بعد.</div>
+                  </sc-if>
                 </div>
               </div>
             </sc-if>
@@ -746,17 +875,62 @@
             <sc-if value="{{ fsScreenIsInspectors }}">
               <div style="border-radius:16px;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);padding:14px 16px">
                 <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:10px">إشراف المراقبين — {{ fsInspectorsCount }}</div>
-                <sc-for list="{{ fsInspectors }}" as="i" hint-placeholder-count="6">
-                  <div style="display:flex;gap:9px;align-items:center;font-size:11px;padding:9px 4px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08))" title="{{ i.activeLabel }}">
-                    <span style="width:7px;height:7px;border-radius:50%;flex:none;background:{{ i.activeCol }}"></span>
-                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                      <span style="color:var(--tx,#e9f1fb)">{{ i.name }}</span>
-                      <span style="color:var(--tx3,#7d8ea6)"> · {{ i.role }}</span>
-                    </span>
-                    <span style="color:var(--tx3,#7d8ea6);white-space:nowrap">مفتوح {{ i.openCount }} · مكتمل {{ i.doneCount }} · الإجمالي {{ i.totalCount }}</span>
-                  </div>
-                </sc-for>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ fsInspectors }}" as="i" hint-placeholder-count="6">
+                    <div style="display:flex;gap:9px;align-items:center;font-size:11px;padding:9px 10px;border-radius:11px;background:{{ i.bg }};border:1px solid {{ i.bd }}" title="{{ i.activeLabel }}">
+                      <span style="width:7px;height:7px;border-radius:50%;flex:none;background:{{ i.activeCol }}"></span>
+                      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                        <span style="color:var(--tx,#e9f1fb)">{{ i.name }}</span>
+                        <span style="color:var(--tx3,#7d8ea6)"> · {{ i.role }}</span>
+                      </span>
+                      <span style="color:var(--tx3,#7d8ea6);white-space:nowrap">مفتوح {{ i.openCount }} · مكتمل {{ i.doneCount }} · الإجمالي {{ i.totalCount }}</span>
+                    </div>
+                  </sc-for>
+                </div>
                 <sc-if value="{{ !fsHasInspectors }}"><div style="padding:14px 4px;font-size:10.5px;color:var(--tx3,#7d8ea6)">لا يوجد مراقبون مسجّلون ضمن المنظمة حالياً.</div></sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ fsScreenIsMap }}">
+              <div ref="{{ mapShellRef }}" style="flex:1;min-height:var(--fsMapH,420px);position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+                <div ref="{{ mapRef }}" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0"></div>
+
+                <div dir="ltr" style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
+                  <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
+                  الخريطة التشغيلية · SMART HSR MAP
+                </div>
+
+                <div style="position:absolute;top:12px;right:12px;z-index:5;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 160px)">
+                  <div style="width:190px;position:relative">
+                    <input value="{{ search }}" onChange="{{ setSearch }}" aria-label="ابحث في أعمال الحصر على الخريطة" placeholder="الرقم، العنوان، المراقب..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                  </div>
+                  <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}" style="height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#dbe6f5);font-size:10.5px;padding:0 8px;outline:none">
+                    <option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option>
+                  </select>
+                  <div style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:33px">
+                    <button onClick="{{ zIn }}" data-f="1" aria-label="تكبير" style="width:33px;height:30px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer">+</button>
+                    <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
+                    <button onClick="{{ zOut }}" data-f="1" aria-label="تصغير" style="width:33px;height:30px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer">−</button>
+                  </div>
+                  <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" title="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+                  </button>
+                </div>
+
+                <sc-if value="{{ mapEmpty }}">
+                  <div style="position:absolute;inset:0;z-index:4;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
+                    <div style="max-width:300px;padding:13px 16px;border-radius:12px;background:var(--glass,rgba(8,14,26,0.84));border:1px solid var(--glassBd,rgba(122,164,224,0.2));color:var(--glassTx,#c3d6ea);font-size:11px;line-height:1.7">{{ mapEmptyText }}</div>
+                  </div>
+                </sc-if>
+
+                <div style="position:absolute;bottom:12px;left:14px;display:flex;align-items:center;gap:8px">
+                  <div style="display:flex;align-items:center;gap:13px;padding:7px 14px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.18));backdrop-filter:var(--blur,blur(16px))">
+                    <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444"></span>قيد الانتظار</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#f5a524"></span>قيد المعالجة</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#22c55e"></span>تمت المعالجة</span>
+                  </div>
+                </div>
               </div>
             </sc-if>
 
@@ -1344,20 +1518,22 @@ class Component extends DCLogic {
   };
 
   BP = {
-    xl: { '--pgMaxW': '1600px', '--sbW': '232px', '--aiW': '292px', '--prioW': '272px', '--twinH': '450px', '--midH': '450px' },
-    lg: { '--pgMaxW': '100%', '--sbW': '216px', '--aiW': '272px', '--prioW': '256px', '--twinH': '450px', '--midH': '450px' },
+    xl: { '--pgMaxW': '1600px', '--sbW': '232px', '--aiW': '292px', '--prioW': '272px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px' },
+    lg: { '--pgMaxW': '100%', '--sbW': '216px', '--aiW': '272px', '--prioW': '256px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px' },
     md: { '--pgMaxW': '100%', '--sbW': '68px', '--sbLabel': 'none', '--subInd': '0px', '--aiW': '252px', '--prioW': '240px',
-      '--twinH': '430px', '--midH': '430px', '--hdrNav': 'none', '--searchW': '150px', '--metaDisp': 'none', '--anaCols': 'repeat(3,1fr)', '--anaH': 'auto', '--kpiCell': '120px', '--scoreW': '210px' },
+      '--twinH': '430px', '--midH': '430px', '--hdrNav': 'none', '--searchW': '150px', '--metaDisp': 'none', '--anaCols': 'repeat(3,1fr)', '--anaH': 'auto', '--kpiCell': '120px', '--scoreW': '210px', '--fsMapH': '380px' },
     tab: { '--pgMaxW': '100%', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchW': '160px',
       '--kpiWrap': 'wrap', '--kpiCell': '33%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '400px', '--midH': 'auto',
       '--aiW': 'calc(50% - 7px)', '--prioW': 'calc(50% - 7px)', '--anaCols': 'repeat(2,1fr)', '--anaH': 'auto',
-      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none' },
+      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none',
+      '--fsWrap': 'wrap', '--fsMapH': '340px', '--fsSideW': '100%' },
     mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none', '--hdrWrap': 'wrap',
       '--kpiWrap': 'wrap', '--kpiCell': '50%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '320px', '--twinMin': '240px', '--midH': 'auto',
       '--aiW': '100%', '--prioW': '100%', '--anaCols': '1fr', '--anaH': 'auto',
-      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '132px', '--brandTxt': 'none' }
+      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '132px', '--brandTxt': 'none',
+      '--fsWrap': 'wrap', '--fsMapH': '260px', '--fsSideW': '100%' }
   };
 
   componentDidMount() {
@@ -1410,6 +1586,27 @@ class Component extends DCLogic {
     });
   }
 
+  // The real operational map's DOM container is shared: the exact same
+  // ref="{{ mapRef }}" div is rendered in the general Manager home
+  // dashboard's map card AND, from Phase 04B on, inside the Field Survey
+  // executive/map screens — but only ONE of those markup positions is ever
+  // mounted at a time (they are mutually exclusive sc-if branches), so at
+  // most one physical container exists. Every time the Manager switches
+  // between those screens, that container is destroyed and a brand-new DOM
+  // node is created — this.mapEl would otherwise keep pointing at a
+  // detached node while this._opMap stayed bound to it (a stale reference:
+  // no crash, but a silently frozen, invisible map). This callback detects
+  // a real container change and safely tears down the old Leaflet instance
+  // before ever binding to a new one, so there is always at most one live
+  // L.map() for this component, never two, and never one bound to a
+  // removed node.
+  bindMapContainer(el) {
+    if (el === this.mapEl) return;
+    if (this._opMap) { this._opMap.remove(); this._opMap = null; this._opMarkers = null; this._mapSignature = ''; }
+    this.mapEl = el;
+    if (el) this.syncOperationalMap(true);
+  }
+
   initOperationalMap() {
     if (!this.mapEl || this._opMap || !window.L) return;
     const L = window.L;
@@ -1435,7 +1632,7 @@ class Component extends DCLogic {
       const marker = L.circleMarker([item.coordinates.lat, item.coordinates.lng], {
         radius: 8, color: colors[item.status] || '#64748b', weight: 2, fillColor: colors[item.status] || '#64748b', fillOpacity: 0.78
       });
-      marker.on('click', () => this.openObservation(item.id));
+      marker.on('click', () => this.selectOperationalObservation(item.id));
       marker.addTo(this._opMarkers);
       bounds.push([item.coordinates.lat, item.coordinates.lng]);
     });
@@ -1720,27 +1917,45 @@ class Component extends DCLogic {
     const fsPriorities = [...fsOpenObservations]
       .sort((a, b) => fsPriorityWeight(b.priority) - fsPriorityWeight(a.priority) || b.createdAt - a.createdAt)
       .slice(0, 5)
-      .map(o => ({
-        id: o.id, n: o.displayId, title: o.title,
-        meta: `${fsPriorityLabel(o.priority)} · ${statusLabel(o.status)}`,
-        col: fsPriorityWeight(o.priority) >= 3 ? '#ef4444' : fsPriorityWeight(o.priority) === 2 ? '#f5a524' : '#64748b',
-        on: () => this.openEvidenceDrawer(o)
-      }));
+      .map((o, idx) => {
+        const col = fsPriorityWeight(o.priority) >= 3 ? '#ef4444' : fsPriorityWeight(o.priority) === 2 ? '#f5a524' : '#64748b';
+        return {
+          id: o.id, rank: String(idx + 1), n: o.displayId, title: o.title,
+          meta: `${fsPriorityLabel(o.priority)} · ${statusLabel(o.status)}`,
+          col, bg: this.tint(col, day ? 0.1 : 0.14), bd: this.tint(col, day ? 0.28 : 0.34),
+          on: () => this.openEvidenceDrawer(o)
+        };
+      });
     const fsInspectorUsers = (Array.isArray(this.liveUsers) ? this.liveUsers : []).filter(u => ['inspector', 'contractor', 'supervisor'].includes(u.role));
     const fsInspectors = fsInspectorUsers.map(u => {
       const owned = allObservations.filter(o => o.createdByUid === u.id);
       const openCount = owned.filter(o => o.status !== 'COMPLETED').length;
       const doneCount = owned.filter(o => o.status === 'COMPLETED').length;
+      const active = u.active !== false;
+      const activeCol = active ? (day ? '#0b5c3b' : '#22c55e') : 'var(--tx3,#7d8ea6)';
       return {
         id: u.id, name: u.name || u.email || u.id, role: roleLabel(u.role),
-        activeLabel: u.active !== false ? 'نشط' : 'غير نشط',
-        activeCol: u.active !== false ? (day ? '#0b5c3b' : '#22c55e') : 'var(--tx3,#7d8ea6)',
+        activeLabel: active ? 'نشط' : 'غير نشط', activeCol,
+        bg: active ? (day ? 'rgba(14,122,79,0.06)' : 'rgba(34,197,94,0.08)') : 'var(--sect,rgba(11,18,32,0.4))',
+        bd: active ? (day ? 'rgba(14,122,79,0.18)' : 'rgba(34,197,94,0.2)') : 'var(--sectBd,rgba(122,164,224,0.1))',
         openCount: String(openCount), doneCount: String(doneCount), totalCount: String(owned.length)
       };
     });
+    const fsTotalForPct = allObservations.length || 1;
     const fsCategoryDistribution = ['MAINTENANCE', 'QUALITY', 'SAFETY', 'ENVIRONMENT', 'ROAD']
-      .map(type => ({ name: categoryLabel(type), n: String(allObservations.filter(o => o.type === type).length) }))
+      .map(type => {
+        const n = allObservations.filter(o => o.type === type).length;
+        return { name: categoryLabel(type), n: String(n), w: Math.round((n / fsTotalForPct) * 100) + '%' };
+      })
       .filter(row => row.n !== '0');
+    // "ملخص تشغيلي" — a truthful third analytics card built only from
+    // counts already derivable from allObservations: how the open workload
+    // splits between not-yet-started and in-progress, and how many
+    // documented observations still lack the coordinates the operational
+    // map needs. No independent metric was fabricated to fill this slot.
+    const fsPendingCount = allObservations.filter(o => o.status === 'PENDING').length;
+    const fsInProgressCount = allObservations.filter(o => o.status === 'IN_PROGRESS').length;
+    const fsNoCoordsCount = allObservations.filter(o => !o.coordinates).length;
     const viewObservations = matchingObservations.map(item => ({
       id: item.id, title: item.title, code: item.displayId, status: statusLabel(item.status), inspector: item.inspector,
       date: item.createdAt && format.dateTime ? format.dateTime(item.createdAt) : 'غير متاح', selected: st.sel === item.id ? 'var(--accBd,rgba(76,201,240,0.45))' : 'var(--div,rgba(122,164,224,0.12))',
@@ -1764,8 +1979,9 @@ class Component extends DCLogic {
     const fsNav = [
       { id: 'exec', label: 'نظرة تنفيذية' },
       { id: 'log', label: 'سجل أعمال الحصر' },
-      { id: 'inspectors', label: 'المراقبون' }
-    ].map(n => pill(n.label, fsScreen === n.id, () => this.setState({ fsScreen: n.id })));
+      { id: 'inspectors', label: 'المراقبون' },
+      { id: 'map', label: 'الخريطة التشغيلية' }
+    ].map(n => pill(n.label, fsScreen === n.id, () => this.setState({ fsScreen: n.id, mapMode: 'map' })));
 
     let tCols = [], tRows = [], tFilters = [], tPlaceholder = 'بحث', tQ = st.tq || '', tEmpty = false, tCount = '0 سجل';
     const setTQ = e => this.setState({ tq: e.target.value });
@@ -1908,7 +2124,7 @@ class Component extends DCLogic {
       rootRef: el => { this.root = el; },
       cvRef: el => { this.cv = el; },
       mapShellRef: el => { this.mapShell = el; },
-      mapRef: el => { this.mapEl = el; },
+      mapRef: el => this.bindMapContainer(el),
       themeVars: vars,
       orgName: st.orgName,
       sessionName: st.sessionName,
@@ -2045,13 +2261,28 @@ class Component extends DCLogic {
       viewEmpty: ((st.view === 'users' || st.view === 'incidents' || st.view === 'fieldSurvey') ? !tRows.length : !viewObservations.length),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
 
-      fsNav, fsScreenIsExec: fsScreen === 'exec', fsScreenIsLog: fsScreen === 'log', fsScreenIsInspectors: fsScreen === 'inspectors',
+      fsNav, fsScreenIsExec: fsScreen === 'exec', fsScreenIsLog: fsScreen === 'log', fsScreenIsInspectors: fsScreen === 'inspectors', fsScreenIsMap: fsScreen === 'map',
+      goFsLog: () => this.setState({ fsScreen: 'log' }), goFsInspectors: () => this.setState({ fsScreen: 'inspectors' }),
       fsTotal: String(allObservations.length), fsOpen: String(fsOpenObservations.length),
       fsCompleted: String(allObservations.filter(o => o.status === 'COMPLETED').length),
       fsCompletionRate: metrics.completionRate || '—',
+      // Donut arc geometry — the same real completed/total counts above,
+      // just expressed as an SVG stroke-dasharray; never a second/competing
+      // completion metric.
+      fsCompletionDash: (() => {
+        const total = allObservations.length;
+        const completed = allObservations.filter(o => o.status === 'COMPLETED').length;
+        const pct = total ? completed / total : 0;
+        const c = 2 * Math.PI * 42;
+        return `${Math.round(c * pct)} ${Math.round(c)}`;
+      })(),
       fsPriorities, fsHasPriorities: fsPriorities.length > 0,
       fsInspectors, fsHasInspectors: fsInspectors.length > 0, fsInspectorsCount: fsInspectors.length + ' مراقب',
+      fsInspectorsTop: fsInspectors.slice(0, 5),
       fsCategoryDistribution, fsHasCategories: fsCategoryDistribution.length > 0,
+      fsPending: String(fsPendingCount), fsInProgress: String(fsInProgressCount),
+      fsNoCoords: String(fsNoCoordsCount), fsHasNoCoords: fsNoCoordsCount > 0,
+      fsRecentRows: tRows.slice(0, 5), fsHasRecent: tRows.length > 0,
 
       tCols, tRows, tFilters, tPlaceholder, tQ, setTQ, tEmpty, tCount,
 
@@ -2177,6 +2408,22 @@ class Component extends DCLogic {
     this.setState({ view: 'observations', sel: id, mobNavOpen: false, notifOpen: false, profOpen: false });
   }
 
+  // The real operational map's marker click handler is shared between the
+  // general Manager map and the Field Survey map screens. Clicking a
+  // marker must never silently exit whichever product the Manager is
+  // currently inside — while in Field Survey it opens the same real,
+  // already-secured evidence drawer Field Survey's own table/priorities
+  // already use; everywhere else it keeps the existing general-dashboard
+  // behavior unchanged.
+  selectOperationalObservation(id) {
+    if (this.state.view === 'fieldSurvey') {
+      const obs = (Array.isArray(this.liveObservations) ? this.liveObservations : []).find(o => o.id === id);
+      if (obs) this.openEvidenceDrawer(obs);
+      return;
+    }
+    this.openObservation(id);
+  }
+
   openMap(e) {
     this.prevent(e);
     this.setState({ mapMode: 'map', view: 'home', mobNavOpen: false, notifOpen: false, profOpen: false });
@@ -2184,6 +2431,16 @@ class Component extends DCLogic {
       this.mapShell?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       this.syncOperationalMap();
     }, 80);
+  }
+
+  // Field Survey never uses the Twin canvas — it always shows the real
+  // Leaflet/OSM map — so opening the product forces mapMode to 'map' up
+  // front. Unlike openMap() above, this never touches view:'home': it is
+  // the Field Survey product's own entry point. The map container's own
+  // bindMapContainer() ref callback (re)initializes the real map the
+  // moment its DOM node mounts, so no extra sync call is needed here.
+  openFieldSurvey() {
+    this.setState({ view: 'fieldSurvey', mapMode: 'map', mobNavOpen: false, notifOpen: false, profOpen: false });
   }
 
   setSearch(e) {
@@ -2230,7 +2487,7 @@ class Component extends DCLogic {
     // KPIs/priorities/table/inspector-oversight/evidence, all derived from
     // the same authenticated Manager session — never a second product page,
     // never a second login).
-    if (r === 'survey') { this.openView('fieldSurvey'); return; }
+    if (r === 'survey') { this.openFieldSurvey(); return; }
     if (r === 'mobility') { window.location.assign('smart-mobility.html'); return; }
     this.flash('هذا المسار غير متاح حتى يتم التحقق من ربطه التشغيلي.');
   }

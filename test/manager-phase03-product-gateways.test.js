@@ -24,7 +24,7 @@ test('1/2. Field Survey gateway never routes the Manager to dashboard.html (the 
   const manager = read('manager.html');
   const fn = manager.slice(manager.indexOf('goRoute(r) {'), manager.indexOf('goRoute(r) {') + 900);
   assert.doesNotMatch(fn, /r === 'survey'[\s\S]{0,60}dashboard\.html/, 'Field Survey must never navigate the Manager to dashboard.html');
-  assert.match(fn, /r === 'survey'\s*\)\s*\{\s*this\.openView\('fieldSurvey'\)/, 'Field Survey must open the dedicated Field Survey Manager Dashboard view');
+  assert.match(fn, /r === 'survey'\s*\)\s*\{\s*this\.openFieldSurvey\(\)/, 'Field Survey must open the dedicated Field Survey Manager Dashboard view');
 });
 
 // ---- 3. Smart Mobility Manager SSO ----

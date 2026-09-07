@@ -80,19 +80,20 @@ test('fsNav offers only real, already-implemented sections (executive overview, 
 });
 
 test('each fsNav screen gates real, previously-verified content (KPIs/priorities/categories, the real table, or real inspector oversight) — never an empty/fake screen', () => {
-  assert.match(manager, /fsScreenIsExec: fsScreen === 'exec', fsScreenIsLog: fsScreen === 'log', fsScreenIsInspectors: fsScreen === 'inspectors'/);
+  assert.match(manager, /fsScreenIsExec: fsScreen === 'exec', fsScreenIsLog: fsScreen === 'log', fsScreenIsInspectors: fsScreen === 'inspectors', fsScreenIsMap: fsScreen === 'map'/);
   const start = manager.indexOf('<sc-if value="{{ viewIsFieldSurvey }}">');
   const end = manager.indexOf('</main>', start);
   const block = manager.slice(start, end);
-  assert.match(block, /sc-if value="\{\{ fsScreenIsExec \}\}"[\s\S]{0,600}fsTotal/, 'exec screen must show the real KPI row');
+  assert.match(block, /sc-if value="\{\{ fsScreenIsExec \}\}"[\s\S]{0,1000}fsTotal/, 'exec screen must show the real KPI row');
   assert.match(block, /sc-if value="\{\{ fsScreenIsLog \}\}"[\s\S]{0,2800}tRows/, 'log screen must show the real observations table');
   assert.match(block, /sc-if value="\{\{ fsScreenIsInspectors \}\}"[\s\S]{0,600}fsInspectors/, 'inspectors screen must show the real inspector oversight list');
+  assert.match(block, /sc-if value="\{\{ fsScreenIsMap \}\}"[\s\S]{0,600}mapRef/, 'the dedicated map screen must render the real operational map container');
 });
 
 // ---- Inspector separation still holds (unchanged by this correction) ----
 test('goRoute still opens the promoted fieldSurvey view, never dashboard.html', () => {
   const fn = methodBody(manager, 'goRoute(r) {', 900);
-  assert.match(fn, /r === 'survey'\s*\)\s*\{\s*this\.openView\('fieldSurvey'\)/);
+  assert.match(fn, /r === 'survey'\s*\)\s*\{\s*this\.openFieldSurvey\(\)/);
   assert.doesNotMatch(fn, /r === 'survey'[\s\S]{0,60}dashboard\.html/);
 });
 

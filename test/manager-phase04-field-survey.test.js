@@ -25,7 +25,7 @@ function methodBody(source, signature, maxLen = 1500) {
 // ---- Gateway / routing ----
 test('the Field Survey gateway opens the dedicated fieldSurvey view, never the Inspector screen', () => {
   const fn = methodBody(manager, 'goRoute(r) {', 900);
-  assert.match(fn, /r === 'survey'\s*\)\s*\{\s*this\.openView\('fieldSurvey'\)/);
+  assert.match(fn, /r === 'survey'\s*\)\s*\{\s*this\.openFieldSurvey\(\)/);
   assert.doesNotMatch(fn, /r === 'survey'[\s\S]{0,60}dashboard\.html/);
 });
 
@@ -84,16 +84,18 @@ test('the Field Survey table filters real observations by real status values and
   assert.doesNotMatch(fn, /Math\.random|fakeInspector|\bplaceholder\b/i, 'must never fabricate row/search data (the legitimate tPlaceholder input-hint variable is intentionally excluded)');
 });
 
-// ---- Map: real existing Leaflet engine reused, never a new map/fake data ----
-test('the dashboard links to the real, already-existing operational map (openMap/goMap) — no new map engine, no fake markers', () => {
+// ---- Map: real existing Leaflet engine embedded directly, never a new map/fake data ----
+// Superseded/expanded by test/manager-phase04b-master-ui.test.js — kept here
+// as the original narrow assertion, updated for Phase 04B's real embedded
+// map (the map is no longer a mere exit-to-home button).
+test('the dashboard embeds the real, already-existing operational map container directly — no new map engine, no fake markers', () => {
   const fieldSurveyBlockStart = manager.indexOf("sc-if value=\"{{ viewIsFieldSurvey }}\"");
-  const fieldSurveyBlockEnd = manager.indexOf('sc-if value="{{ viewIsUsers }}"', fieldSurveyBlockStart);
+  const fieldSurveyBlockEnd = manager.indexOf('</main>', fieldSurveyBlockStart);
   const block = manager.slice(fieldSurveyBlockStart, fieldSurveyBlockEnd);
-  assert.match(block, /onClick="\{\{ goMap \}\}"/);
-  // No second Leaflet instance or marker source is created for this view —
-  // the same operationalObservations()/syncOperationalMap() already
-  // audited in Phase 03/prior phases remains the only map code path.
-  assert.doesNotMatch(manager, /L\.map\(this\.mapEl.*fieldSurvey/);
+  assert.match(block, /ref="\{\{ mapRef \}\}"/, 'must render the real, shared Leaflet container, not merely link away to it');
+  // Only ONE initOperationalMap/L.map call site exists anywhere in the file
+  // — Field Survey embeds the same singleton engine, never a second one.
+  assert.equal((manager.match(/L\.map\(this\.mapEl/g) || []).length, 1);
 });
 
 // ---- No new products, no unrelated changes ----
