@@ -31,7 +31,7 @@ test('the Field Survey gateway opens the dedicated fieldSurvey view, never the I
 
 test('the Field Survey Manager Dashboard is reachable and titled distinctly from the general observations/reports views', () => {
   assert.match(manager, /viewIsFieldSurvey: st\.view === 'fieldSurvey'/);
-  assert.match(manager, /'لوحة مدير الحصر الميداني الذكي'/);
+  assert.match(manager, /'لوحة مدير إدارة الحصر الميداني'/);
 });
 
 test('the dashboard provides a return path to the Municipality Manager Dashboard without a second login', () => {

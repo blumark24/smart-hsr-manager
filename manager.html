@@ -32,7 +32,7 @@
 <div dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
 <div style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5;transition:background .3s ease,color .3s ease">
 
-  <header style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:var(--hdrWrap,nowrap);gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(22px))">
+  <header style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:var(--hdrWrap,nowrap);gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.22));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.09),inset 0 -1px 0 rgba(0,0,0,0.3),0 4px 12px -6px rgba(0,0,0,0.6),0 26px 54px -22px rgba(0,0,0,0.98));backdrop-filter:var(--blur,blur(22px))">
 
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
       <div style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
@@ -149,7 +149,7 @@
           </div>
           <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--hdrTx3,#7d8ea6);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
         </div>
-        <img src="smart-hsr-mark-reversed.png" alt="سمارت حصر" width="30" height="42" style="flex:none;display:block;height:42px;width:auto;object-fit:contain" onerror="this.style.display='none'">
+        <img src="smart-hsr-mark-reversed.png" alt="سمارت حصر" width="30" height="42" style="flex:none;display:block;height:42px;width:auto;object-fit:contain">
       </div>
     </div>
   </header>
@@ -157,7 +157,7 @@
   <div style="display:flex;gap:14px;align-items:stretch">
 
     <aside style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease">
-      <div style="padding:12px 11px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));backdrop-filter:var(--sbBlur,none);border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.05),0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(18px));display:flex;flex-direction:column;gap:3px">
+      <div style="padding:12px 11px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));backdrop-filter:var(--sbBlur,none);border:1px solid var(--sbBd,rgba(122,164,224,0.2));box-shadow:var(--sbSh,inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96));backdrop-filter:var(--blur,blur(18px));display:flex;flex-direction:column;gap:3px">
 
         <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12))">
           <div style="flex:1;text-align:right;display:var(--sbLabel,block)">
@@ -176,7 +176,7 @@
 
         <div onClick="{{ tSvc }}" data-f="1" role="button" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);cursor:pointer;border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="3" width="8" height="8" rx="2"></rect><rect x="3" y="13" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect></svg>
-          <span style="flex:1;display:var(--sbLabel,block)">خدمات البلدية الرقمية</span>
+          <span style="flex:1;font-weight:600;display:var(--sbLabel,block)">خدمات البلدية الرقمية</span>
           <span style="display:var(--sbLabel,block);color:var(--sbTx3,#6f8299);transform:{{ svcCaret }}">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
           </span>
@@ -186,17 +186,17 @@
           <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
             <a href="#" onClick="{{ goSurvey }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
-              <span style="flex:1;display:var(--sbLabel,block)">الحصر الميداني الذكي</span>
+              <span style="flex:1;display:var(--sbLabel,block)">إدارة الحصر الميداني</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
             </a>
-            <a href="#" onClick="{{ goLands }}" data-f="1" title="لوحة مدير إدارة الأراضي والممتلكات" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" onClick="{{ goLands }}" data-f="1" title="لوحة مدير إدارة الأراضي والممتلكات" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--vio,#a78bfa)"></span>
-              <span style="flex:1;display:var(--sbLabel,block)">حصر الأراضي الذكي</span>
+              <span style="flex:1;display:var(--sbLabel,block)">إدارة الأراضي والممتلكات</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
             </a>
-            <a href="#" onClick="{{ goMobility }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
+            <a href="#" onClick="{{ goMobility }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
-              <span style="flex:1;display:var(--sbLabel,block)">حركة السير الذكية</span>
+              <span style="flex:1;display:var(--sbLabel,block)">إدارة الحركة والسير</span>
             </a>
           </div>
         </sc-if>
@@ -245,17 +245,17 @@
         </div>
       </div>
 
-      <div style="display:var(--sbLabel,block);padding:12px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--sbSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+      <div style="display:var(--sbLabel,block);padding:12px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.2));box-shadow:var(--sbSh,inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96))">
         <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2);text-align:center;margin-bottom:10px">الخدمات النشطة</div>
         <div style="display:flex;flex-direction:column;gap:7px">
           <div onClick="{{ goSurvey }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--okBg,rgba(34,197,94,0.07));border:1px solid var(--okBd,rgba(34,197,94,0.24));cursor:pointer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ok,#22c55e)" stroke-width="1.6" style="flex:none"><path d="M12 21s-7-5.4-7-11a7 7 0 1 1 14 0c0 5.6-7 11-7 11z"></path><circle cx="12" cy="10" r="2.4"></circle></svg>
-            <span style="flex:1;font-size:11px;font-weight:550;color:var(--tx,#dcefe2)">الحصر الميداني</span>
+            <span style="flex:1;font-size:11px;font-weight:550;color:var(--tx,#dcefe2)">إدارة الحصر الميداني</span>
             <span style="display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:550;color:var(--okTx,#7ee2a8)"><span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.4s ease-in-out infinite"></span>نشط</span>
           </div>
           <div onClick="{{ goLands }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--vioBg,rgba(139,92,246,0.06));border:1px solid var(--vioBd,rgba(139,92,246,0.22));cursor:pointer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--vio,#a78bfa)" stroke-width="1.6" style="flex:none"><path d="M4 6h7v6H4zM13 8h7v10h-7zM4 14h7v6H4z"></path></svg>
-            <span style="flex:1;font-size:11px;color:var(--tx,#e0dcf5)">حصر الأراضي الذكي</span>
+            <span style="flex:1;font-size:11px;color:var(--tx,#e0dcf5)">إدارة الأراضي والممتلكات</span>
             <span style="display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:550;color:var(--vioTx,#c4b5fd)"><span style="width:6px;height:6px;border-radius:50%;background:var(--vio,#a78bfa);animation:hsrBreathe 2.4s ease-in-out infinite"></span>نشط</span>
           </div>
         </div>
@@ -428,7 +428,7 @@
                   </sc-for>
                   <div onClick="{{ goMobility }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;margin-top:3px;border-top:1px solid var(--div,rgba(122,164,224,0.1));cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
                     <span style="width:15px;height:15px;flex:none;border-radius:5px;border:1.5px solid var(--ok,#22c55e);background:var(--ok,#22c55e)"></span>
-                    <span style="flex:1;font-size:11px;color:var(--tx2,#a9bdd4)">حركة السير الذكية</span>
+                    <span style="flex:1;font-size:11px;color:var(--tx2,#a9bdd4)">إدارة الحركة والسير</span>
                   </div>
                 </div>
               </sc-if>
@@ -654,7 +654,7 @@
 
           <div style="flex:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
             <div style="flex:1;min-width:220px">
-              <div style="font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--acc,#4cc9f0);margin-bottom:4px">الخدمات البلدية الرقمية · الحصر الميداني الذكي</div>
+              <div style="font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--acc,#4cc9f0);margin-bottom:4px">الخدمات البلدية الرقمية · إدارة الحصر الميداني</div>
               <h2 style="font-size:17px;margin:0;color:var(--tx,#f0f6ff)">{{ viewTitle }}</h2>
               <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0;line-height:1.7">{{ viewIntro }}</p>
             </div>
@@ -1726,6 +1726,10 @@ class Component extends DCLogic {
   NIGHT = {
     '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.07),inset 0 0 0 1px rgba(90,190,150,0.05),0 20px 44px -26px rgba(0,0,0,0.95)',
     '--glassH': 'rgba(255,255,255,0.1)',
+    '--hdrBd': 'rgba(122,164,224,0.22)',
+    '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.09),inset 0 -1px 0 rgba(0,0,0,0.3),0 4px 12px -6px rgba(0,0,0,0.6),0 26px 54px -22px rgba(0,0,0,0.98)',
+    '--sbBd': 'rgba(122,164,224,0.2)',
+    '--sbSh': 'inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96)',
     '--thBg': 'rgba(12,20,36,0.5)', '--thBd': 'rgba(122,164,224,0.13)',
     '--hdrChip': 'rgba(122,164,224,0.14)',
     '--dayBtnBg': 'transparent', '--dayBtnBd': 'transparent', '--dayBtnTx': '#7d8ea6',
@@ -2555,8 +2559,8 @@ class Component extends DCLogic {
       // exactly like every other sc-if in this file already does.
       viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands',
       viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands',
-      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير الحصر الميداني الذكي' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : 'البلاغات',
-      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر حركة السير الذكية.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال الحصر الميداني الذكي — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
+      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : 'البلاغات',
+      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة الحركة والسير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
       viewEmpty: ((st.view === 'users' || st.view === 'incidents' || st.view === 'fieldSurvey') ? !tRows.length : !viewObservations.length),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
@@ -2618,9 +2622,9 @@ class Component extends DCLogic {
       ],
       mobNav: [
         { label: 'الرئيسية', tag: '', on: () => this.goHome() },
-        { label: 'الحصر الميداني الذكي', tag: '', on: () => this.goRoute('survey') },
-        { label: 'حصر الأراضي الذكي', tag: '', on: () => this.goLandsGateway() },
-        { label: 'حركة السير الذكية', tag: '', on: () => this.goRoute('mobility') },
+        { label: 'إدارة الحصر الميداني', tag: '', on: () => this.goRoute('survey') },
+        { label: 'إدارة الأراضي والممتلكات', tag: '', on: () => this.goLandsGateway() },
+        { label: 'إدارة الحركة والسير', tag: '', on: () => this.goRoute('mobility') },
         { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.openView('observations') },
         { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap() },
         { label: 'التقارير', tag: '', on: () => this.openView('reports') },

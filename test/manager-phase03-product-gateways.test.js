@@ -68,7 +68,7 @@ test('2b. Smart Lands gateway opens the real, dedicated Lands Manager Dashboard 
   // that the real product is live.
   assert.doesNotMatch(manager, /aria-disabled="true"[^>]*بانتظار إضافة المسار التشغيلي الحقيقي/, 'the Lands sidebar item must not be a dead disabled control');
   assert.match(manager, /onClick="\{\{ goLands \}\}"/, 'the sidebar Lands link must be wired to the real gateway handler');
-  assert.match(manager, /'حصر الأراضي الذكي', tag: '', on: \(\) => this\.goLandsGateway\(\)/, 'the mobile nav Lands entry must be real, with no stale pending-linking tag');
+  assert.match(manager, /'إدارة الأراضي والممتلكات', tag: '', on: \(\) => this\.goLandsGateway\(\)/, 'the mobile nav Lands entry must be real, with no stale pending-linking tag');
 });
 
 // ---- 4. Day/Night switch does not destroy state ----
