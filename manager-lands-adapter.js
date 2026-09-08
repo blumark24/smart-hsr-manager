@@ -26,12 +26,36 @@
 // only for the caller's own uid/organizationId (that endpoint takes no
 // target parameter at all).
 //
-// This bridge only actually resolves data where the Manager and Lands apps
-// share one Firebase project (Preview/staging, smart-hsr-staging-blumark24)
-// — the same documented boundary api/_lib/landsBridge.js already operates
-// under. Where they don't share a project (Production today), Lands reads
-// fail closed with a real permission/network error, surfaced honestly as
-// liveLandsDataState:'error' — never masked, never backed by fake data.
+// PHASE 05C — Production boundary, proven (not assumed): Manager and Lands
+// share ONE Firebase project in every real environment, not just Preview.
+// Preview: both apps use smart-hsr-staging-blumark24 (this repo's own
+// firebase-runtime-config.js). Production: both apps use smart-hsr-manager
+// — confirmed directly in smart-hsr-lands' own source
+// (client/lands-client.js's PRODUCTION_PROJECT_ID, introduced in that repo's
+// commit ec2f0e5 "make Lands client environment-aware... the SAME existing
+// Smart HSR Production Firebase project smart-hsr-manager already uses —
+// not a new project"). The prior belief that Lands' own server-side
+// verifyIdToken() would reject a Manager-issued Production token was true
+// only while a since-fixed Workload Identity Federation quota-project gap
+// on Lands' side blocked its Production Firestore/Storage access (that
+// repo's commit 6cd5b8c, "IAM is not the gap... Full 62-test suite
+// re-verified green") — it does not apply once Lands' Production runtime is
+// deployed against smart-hsr-manager as its own source now declares.
+// Because both apps' real-time Firestore reads terminate at the SAME
+// project in both environments, this adapter's direct onSnapshot calls
+// against the manager's own already-authenticated Firebase app are the
+// complete, sufficient Manager -> Lands read path everywhere — no separate
+// cross-project bridge is required or exists. Tenant isolation is enforced
+// exactly once, at the one real boundary that matters regardless of which
+// project is active: Firestore Rules' enabledMember(municipalityId), keyed
+// off request.auth.uid, never off anything this file or its caller
+// supplies — a manager whose real landsMunicipalities/{X}/userAccess/{uid}
+// document does not exist or is not enabled cannot read municipality X's
+// data no matter what this adapter's local orgId variable claims.
+// A real permission/network error (e.g. an unbootstrapped manager, or a
+// genuine outage) still surfaces honestly as liveLandsDataState:'error' —
+// never masked, never backed by fake data — but that is an authorization or
+// availability outcome, not a project-boundary one.
 
 const isLocalPreview = () => ['localhost', '127.0.0.1'].includes(location.hostname)
   && new URLSearchParams(location.search).get('preview') === '1';

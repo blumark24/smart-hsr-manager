@@ -13,12 +13,22 @@
 // The manager's OWN already-verified Firebase ID token (the same one this
 // Admin API just verified for the current request) is forwarded as-is — no
 // service-account JSON, refresh token, or other secret ever leaves this
-// process. Forwarding only succeeds when both apps currently share the same
-// Firebase project, which today is true only on Preview
-// (smart-hsr-staging-blumark24, see firebase-runtime-config.js). In
-// Production, where smart-hsr-manager uses its own separate Firebase
-// project, Lands' own verifyIdToken() call simply rejects the forwarded
-// token with 401 — this bridge fails closed there with no special-casing.
+// process. Forwarding succeeds only when the token's audience (its Firebase
+// project) matches the project Lands' own verifyIdToken() checks against —
+// true in both real environments, not only Preview: Preview uses
+// smart-hsr-staging-blumark24 (see firebase-runtime-config.js) on both
+// sides, and Production uses smart-hsr-manager on both sides (Lands' own
+// client/lands-client.js declares smart-hsr-manager as its Production
+// project — "the SAME existing Smart HSR Production Firebase project the
+// unified employee gateway already uses — not a new project", that repo's
+// commit ec2f0e5; the Workload Identity Federation gap that once kept
+// Lands' Production server from actually reaching that project's
+// Firestore/Storage was root-caused and fixed in that repo's commit
+// 6cd5b8c). This bridge's fail-closed behavior when it IS misconfigured or
+// unreachable (LANDS_TRUSTED_API_URL unset, a genuine outage, or a
+// mismatched-project token) is unconditional either way — see the ok:false
+// paths below — so this note changes only which conditions are expected to
+// reach that path, not the fail-closed guarantee itself.
 //
 // LANDS_TRUSTED_API_URL is an env var (unset by default) so this bridge is a
 // safe, explicit no-op wherever it isn't configured.
