@@ -32,9 +32,9 @@
 <div dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
 <div style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5;transition:background .3s ease,color .3s ease">
 
-  <header style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(22px))">
+  <header style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:var(--hdrWrap,nowrap);gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(22px))">
 
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
       <div style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
         <div onClick="{{ openSettings }}" data-f="1" role="button" aria-label="هوية البلدية" title="{{ orgName }}" style="width:36px;height:36px;flex:none;border-radius:11px;background:var(--orgBgH,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBdH,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden">
           <span style="font-size:12px;font-weight:700;color:var(--hdrAcc,#8ee6ff);letter-spacing:.5px">{{ orgMono }}</span>
@@ -126,23 +126,23 @@
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:8px">
-      <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" style="display:var(--mobNav,none);width:36px;height:36px;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
+    <div style="display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:var(--hdrWrap,nowrap)">
+      <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" style="display:var(--mobNav,none);width:36px;height:36px;flex:none;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
 
-      <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--hdrSunk,rgba(12,20,36,0.6));border:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+      <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--hdrSunk,rgba(12,20,36,0.6));border:1px solid var(--hdrDiv,rgba(122,164,224,0.14));flex:none">
         <button onClick="{{ setDay }}" data-f="1" aria-label="النمط النهاري" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--dayBtnBd,transparent);background:var(--dayBtnBg,transparent);color:var(--dayBtnTx,#7d8ea6);font-size:11px;font-weight:600;cursor:pointer">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"></path></svg>
-          نهاري
+          <span style="display:var(--hdrLabel,inline)">نهاري</span>
         </button>
         <button onClick="{{ setNight }}" data-f="1" aria-label="النمط الليلي" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--nightBtnBd,rgba(76,201,240,0.4));background:var(--nightBtnBg,rgba(56,132,220,0.28));color:var(--nightBtnTx,#eaf4ff);font-size:11px;font-weight:600;cursor:pointer">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"></path></svg>
-          ليلي
+          <span style="display:var(--hdrLabel,inline)">ليلي</span>
         </button>
       </div>
 
-      <div style="display:flex;align-items:center;gap:10px;padding-right:12px;border-right:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+      <div style="display:flex;align-items:center;gap:10px;padding-right:12px;border-right:1px solid var(--hdrDiv,rgba(122,164,224,0.14));flex:none;min-width:0">
         <div style="text-align:left;display:var(--brandTxt,block)">
           <div dir="ltr" style="display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:700;letter-spacing:2.5px;line-height:1">
             <span style="color:var(--logoNavyH,#e9f1fb)">SMART</span><span style="color:var(--logoGreenH,#149c2b)">HSR</span>
@@ -710,8 +710,8 @@
                 </div>
               </div>
 
-              <div style="display:flex;gap:14px;flex-wrap:var(--fsWrap,nowrap);min-height:var(--fsMapH,420px)">
-                <div ref="{{ mapShellRef }}" style="flex:1;min-width:280px;position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+              <div style="display:flex;gap:14px;flex-wrap:var(--fsWrap,nowrap)">
+                <div ref="{{ mapShellRef }}" style="flex:1;min-width:280px;min-height:var(--fsMapH,420px);position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
                   <div ref="{{ mapRef }}" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0"></div>
                   <div dir="ltr" style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
                     <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
@@ -850,14 +850,14 @@
               <div style="flex:1;min-height:280px;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                 <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
                   <sc-for list="{{ tCols }}" as="c" hint-placeholder-count="6">
-                    <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
+                    <span style="flex:{{ c.flex }};min-width:var(--fsCellMinW,0);font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
                   </sc-for>
                 </div>
                 <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
                   <sc-for list="{{ tRows }}" as="r" hint-placeholder-count="8">
                     <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--ctl,rgba(20,32,54,0.5))">
                       <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
-                        <span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
+                        <span style="flex:{{ c.flex }};min-width:var(--fsCellMinW,0);font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
                       </sc-for>
                       <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;white-space:nowrap;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span>
                     </div>
@@ -1528,12 +1528,12 @@ class Component extends DCLogic {
       '--aiW': 'calc(50% - 7px)', '--prioW': 'calc(50% - 7px)', '--anaCols': 'repeat(2,1fr)', '--anaH': 'auto',
       '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none',
       '--fsWrap': 'wrap', '--fsMapH': '340px', '--fsSideW': '100%' },
-    mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none', '--hdrWrap': 'wrap',
+    mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none', '--hdrWrap': 'wrap', '--hdrLabel': 'none',
       '--kpiWrap': 'wrap', '--kpiCell': '50%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '320px', '--twinMin': '240px', '--midH': 'auto',
       '--aiW': '100%', '--prioW': '100%', '--anaCols': '1fr', '--anaH': 'auto',
-      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '132px', '--brandTxt': 'none',
-      '--fsWrap': 'wrap', '--fsMapH': '260px', '--fsSideW': '100%' }
+      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '132px',
+      '--fsWrap': 'wrap', '--fsMapH': '260px', '--fsSideW': '100%', '--fsCellMinW': '92px' }
   };
 
   componentDidMount() {
