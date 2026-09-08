@@ -44,12 +44,22 @@ test('only one viewIsFieldSurvey block exists — the old modal-based implementa
   assert.equal(occurrences.length, 1, 'the failed modal-based Field Survey markup must be removed, not merely made unreachable');
 });
 
-test('the general Municipality Manager home dashboard content is hidden (not merely covered) while Field Survey is open — it is wrapped in the negated condition, not left rendering underneath', () => {
+test('the general Municipality Manager home dashboard content is hidden (not merely covered) while Field Survey or Lands is open — it is wrapped in a single computed boolean, not left rendering underneath', () => {
   const mainStart = manager.indexOf('<main style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">');
-  const homeGuardIdx = manager.indexOf('<sc-if value="{{ !viewIsFieldSurvey }}">', mainStart);
+  // Phase 05B extended this guard to also exclude viewIsLands. This template
+  // engine's {{ }} resolver has no && operator support (support.js's
+  // resolve()/resolvePath() stop at the first identifier), so the combined
+  // condition is computed once as its own plain boolean (viewIsHomeContent)
+  // and referenced as a single identifier — a raw
+  // "{{ !viewIsFieldSurvey && !viewIsLands }}" would have silently degraded
+  // to just "{{ !viewIsFieldSurvey }}", rendering the home dashboard
+  // underneath Lands too. See the viewIsHomeContent definition itself for
+  // the full explanation.
+  const homeGuardIdx = manager.indexOf('<sc-if value="{{ viewIsHomeContent }}">', mainStart);
   const fieldSurveyBlockStart = manager.indexOf('<sc-if value="{{ viewIsFieldSurvey }}">', mainStart);
-  assert.notEqual(homeGuardIdx, -1, 'the home dashboard content must be gated on !viewIsFieldSurvey, not always rendered');
+  assert.notEqual(homeGuardIdx, -1, 'the home dashboard content must be gated on viewIsHomeContent, not always rendered');
   assert.ok(homeGuardIdx > mainStart && homeGuardIdx < fieldSurveyBlockStart, 'the home-dashboard guard must open before the Field Survey block, as its sibling — never both visible at once');
+  assert.match(manager, /viewIsHomeContent: st\.view !== 'fieldSurvey' && st\.view !== 'lands'/, 'viewIsHomeContent must be computed as a real JS boolean in the render function, not as a template-level && expression');
 });
 
 test('the Field Survey product area is not a centered dialog: no role="dialog"/aria-modal, no fixed-inset backdrop, no "x" close glyph inside its block', () => {

@@ -50,18 +50,25 @@ test('Smart Mobility itself still branches to a dedicated executive/manager scre
 
 // ---- 2 (continued). Smart Lands gateway resolves to a real, dedicated
 //      Manager destination — never a fake integration, never nothing ----
-test('2b. Smart Lands gateway opens a real Manager view (live Lands-entitlement oversight), not a dead/disabled control and not a fabricated dashboard', () => {
+// PHASE 05B: the gateway now opens the dedicated إدارة الأراضي والممتلكات
+// Manager Dashboard ('view: lands') — a native full-page product view
+// following the exact same pattern as openFieldSurvey(), replacing the
+// Phase 03/04 placeholder (Users-view-filtered-to-Lands redirect). See
+// test/manager-phase05b-lands-dashboard.test.js for the full assertion of
+// that richer, real-data-only dashboard.
+test('2b. Smart Lands gateway opens the real, dedicated Lands Manager Dashboard — not the old Users-view placeholder, not a dead/disabled control, not a fabricated dashboard', () => {
   const manager = read('manager.html');
   assert.match(manager, /goLandsGateway\(e\)\s*\{/);
-  const fn = manager.slice(manager.indexOf('goLandsGateway(e) {'), manager.indexOf('goLandsGateway(e) {') + 700);
-  // Real, already-tested data path: the Users view's own Lands filter.
-  assert.match(fn, /tuFilter: 'أراضي'/);
-  // The sidebar/mobile-nav entries must actually invoke it now, not sit
-  // disabled — but the honest "not yet fully integrated" disclosure must
-  // still be visible to the manager.
-  assert.doesNotMatch(manager, /aria-disabled="true"[^>]*بانتظار إضافة المسار التشغيلي الحقيقي/, 'the Lands sidebar item must no longer be a dead disabled control');
+  const fn = manager.slice(manager.indexOf('goLandsGateway(e) {'), manager.indexOf('goLandsGateway(e) {') + 400);
+  assert.match(fn, /view: 'lands'/, 'must open the dedicated Lands view, not the Users view');
+  assert.doesNotMatch(fn, /tuFilter: 'أراضي'/, 'the old Users-view-filter placeholder must be retired now that the real dashboard exists');
+  assert.match(fn, /SmartHSRLandsAdapter\?\.connect\(this\)/, 'must connect the real Lands data adapter');
+  // The sidebar/mobile-nav entries must actually invoke it — no dead/
+  // disabled control, and no leftover "pending linking" disclosure now
+  // that the real product is live.
+  assert.doesNotMatch(manager, /aria-disabled="true"[^>]*بانتظار إضافة المسار التشغيلي الحقيقي/, 'the Lands sidebar item must not be a dead disabled control');
   assert.match(manager, /onClick="\{\{ goLands \}\}"/, 'the sidebar Lands link must be wired to the real gateway handler');
-  assert.match(manager, /'حصر الأراضي الذكي', tag: 'بانتظار الربط', on: \(\) => this\.goLandsGateway\(\)/, 'the mobile nav Lands entry must also be real and honest about pending full integration');
+  assert.match(manager, /'حصر الأراضي الذكي', tag: '', on: \(\) => this\.goLandsGateway\(\)/, 'the mobile nav Lands entry must be real, with no stale pending-linking tag');
 });
 
 // ---- 4. Day/Night switch does not destroy state ----

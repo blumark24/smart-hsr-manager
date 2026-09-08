@@ -189,10 +189,10 @@
               <span style="flex:1;display:var(--sbLabel,block)">الحصر الميداني الذكي</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
             </a>
-            <a href="#" onClick="{{ goLands }}" data-f="1" title="عرض صلاحيات حصر الأراضي الذكي الحقيقية — الربط التشغيلي الكامل قيد الإعداد" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" onClick="{{ goLands }}" data-f="1" title="لوحة مدير إدارة الأراضي والممتلكات" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--vio,#a78bfa)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">حصر الأراضي الذكي</span>
-              <span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">بانتظار الربط</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
             </a>
             <a href="#" onClick="{{ goMobility }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--tx2,#9db2cc)" style-hover="background:var(--ctl,rgba(30,44,70,0.5));color:var(--tx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
@@ -253,10 +253,10 @@
             <span style="flex:1;font-size:11px;font-weight:550;color:var(--tx,#dcefe2)">الحصر الميداني</span>
             <span style="display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:550;color:var(--okTx,#7ee2a8)"><span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.4s ease-in-out infinite"></span>نشط</span>
           </div>
-          <div aria-disabled="true" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--vioBg,rgba(139,92,246,0.06));border:1px solid var(--vioBd,rgba(139,92,246,0.22));cursor:not-allowed">
+          <div onClick="{{ goLands }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--vioBg,rgba(139,92,246,0.06));border:1px solid var(--vioBd,rgba(139,92,246,0.22));cursor:pointer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--vio,#a78bfa)" stroke-width="1.6" style="flex:none"><path d="M4 6h7v6H4zM13 8h7v10h-7zM4 14h7v6H4z"></path></svg>
             <span style="flex:1;font-size:11px;color:var(--tx,#e0dcf5)">حصر الأراضي الذكي</span>
-            <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">بانتظار الربط</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:550;color:var(--vioTx,#c4b5fd)"><span style="width:6px;height:6px;border-radius:50%;background:var(--vio,#a78bfa);animation:hsrBreathe 2.4s ease-in-out infinite"></span>نشط</span>
           </div>
         </div>
       </div>
@@ -269,7 +269,7 @@
 
     <main style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
 
-      <sc-if value="{{ !viewIsFieldSurvey }}">
+      <sc-if value="{{ viewIsHomeContent }}">
 
       <section aria-label="المؤشرات التنفيذية" style="min-height:var(--kpiH,122px);flex:none;display:flex;gap:14px;flex-wrap:var(--rowWrap,nowrap)">
         <div style="flex:1;min-width:var(--kpiMin,0);display:flex;flex-wrap:var(--kpiWrap,nowrap);align-items:stretch;padding:0 4px;border-radius:16px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl1,none)">
@@ -938,6 +938,209 @@
         </div>
       </sc-if>
 
+      <sc-if value="{{ viewIsLands }}">
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+
+          <div style="flex:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
+            <div style="flex:1;min-width:220px">
+              <div style="font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--acc,#4cc9f0);margin-bottom:4px">الخدمات البلدية الرقمية · إدارة الأراضي والممتلكات</div>
+              <h2 style="font-size:17px;margin:0;color:var(--tx,#f0f6ff)">{{ viewTitle }}</h2>
+              <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0;line-height:1.7">{{ viewIntro }}</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button onClick="{{ closeView }}" data-f="1" style="height:34px;padding:0 14px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">
+                <span>العودة إلى لوحة مدير البلدية</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          <div style="flex:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <sc-for list="{{ landsNav }}" as="n" hint-placeholder-count="4">
+              <button onClick="{{ n.on }}" data-f="1" style="height:32px;padding:0 14px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ n.tx }};background:{{ n.bg }};border:1px solid {{ n.bd }}">{{ n.label }}</button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ landsDataIsError }}">
+            <div style="flex:none;padding:11px 14px;border-radius:11px;background:var(--badBg,rgba(239,68,68,0.1));border:1px solid var(--badBd,rgba(239,68,68,0.3));color:var(--badTx,#f87171);font-size:11.5px">{{ landsDataError }}</div>
+          </sc-if>
+
+          <div style="flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:14px">
+
+            <sc-if value="{{ landsScreenIsExec }}">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+                <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--acc,#4cc9f0)"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">إجمالي سجلات الأراضي</div>
+                    <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ landsKpiTotal }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ landsKpiReview }} تحت المراجعة · {{ landsKpiNeedsWork }} تحتاج استكمال</div>
+                  </div>
+                </div>
+                <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--ok,#22c55e)"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">المعتمدة</div>
+                    <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ landsKpiApproved }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ landsKpiComplete }} مكتملة البيانات</div>
+                  </div>
+                </div>
+                <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--acc,#4cc9f0)"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">متوسط نسبة الاكتمال</div>
+                    <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ landsKpiAvgPercent }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">من إجمالي {{ landsKpiTotal }} سجل</div>
+                  </div>
+                </div>
+                <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--warn,#f5a524)"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">نقص المستندات</div>
+                    <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ landsKpiMissingDocs }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">سجل بدون مستندات مرفقة</div>
+                  </div>
+                </div>
+                <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                  <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--tx3,#7d8ea6)"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">غير مرتبطة هندسيًا</div>
+                    <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ landsKpiNoLocation }}</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">من إجمالي {{ landsKpiTotal }} سجل</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:14px;flex-wrap:var(--lndWrap,nowrap)">
+                <div style="flex:2;min-width:280px;border-radius:16px;overflow:hidden;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+                  <div style="padding:13px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
+                    <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">السجلات ذات نسبة الاكتمال الأقل</div>
+                    <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">أقل خمسة سجلات اكتمالًا من بين السجلات غير المكتملة حاليًا</div>
+                  </div>
+                  <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+                    <sc-for list="{{ landsPriorities }}" as="p" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08))">
+                        <span style="flex:1;min-width:0;font-size:11.5px;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.reference }} · {{ p.beneficiary }}</span>
+                        <span style="flex:none;font-size:10.5px;font-weight:700;color:var(--warn,#f5a524);font-variant-numeric:tabular-nums">{{ p.percentage }}%</span>
+                      </div>
+                    </sc-for>
+                    <sc-if value="{{ landsPrioritiesEmpty }}">
+                      <div style="padding:30px 20px;text-align:center;color:var(--tx3,#7d8ea6);font-size:11.5px">لا توجد سجلات غير مكتملة حاليًا</div>
+                    </sc-if>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:220px;border-radius:16px;overflow:hidden;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95));padding:13px 14px">
+                  <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:10px">تركيز القضايا</div>
+                  <sc-for list="{{ landsIssueFocus }}" as="f" hint-placeholder-count="3">
+                    <div style="margin-bottom:9px">
+                      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--tx3,#8b9db5);margin-bottom:4px"><span>{{ f.name }}</span><span style="font-variant-numeric:tabular-nums">{{ f.n }}</span></div>
+                      <div style="height:6px;border-radius:4px;background:var(--sunk,rgba(12,20,36,0.5));overflow:hidden"><div style="height:100%;border-radius:4px;background:var(--acc,#4cc9f0);width:{{ f.w }}"></div></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="border-radius:16px;overflow:hidden;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                <div style="padding:13px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
+                  <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">أحدث أحداث التدقيق الموثوقة</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">مقصور على أدوار المراجعة — بيانات وصفية آمنة فقط</div>
+                </div>
+                <sc-if value="{{ landsAuditIsUnavailable }}">
+                  <div style="padding:24px 20px;text-align:center;color:var(--tx3,#7d8ea6);font-size:11.5px">سجل التدقيق غير متاح حاليًا لهذه الجلسة.</div>
+                </sc-if>
+                <sc-if value="{{ landsAuditIsReady }}">
+                  <sc-for list="{{ landsAuditEvents }}" as="e" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08))">
+                      <span style="flex:1;font-size:11px;color:var(--tx2,#a9bdd4)">{{ e.action }}</span>
+                      <span style="flex:none;font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ e.actorRole }}</span>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ landsAuditEmpty }}">
+                    <div style="padding:24px 20px;text-align:center;color:var(--tx3,#7d8ea6);font-size:11.5px">لا توجد أحداث تدقيق مسجّلة بعد.</div>
+                  </sc-if>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ landsScreenIsRegistry }}">
+              <div style="flex:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
+                <div style="position:relative;width:232px">
+                  <input type="search" autocomplete="off" readonly onfocus="this.removeAttribute(&#39;readonly&#39;)" value="{{ landsQ }}" onChange="{{ setLandsQ }}" aria-label="بحث في سجل الأراضي" placeholder="المرجع، المستفيد، القرار..." style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                </div>
+                <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+                  <sc-for list="{{ landsStatusFilters }}" as="f" hint-placeholder-count="5">
+                    <button onClick="{{ f.on }}" data-f="1" style="height:30px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="flex:1;min-height:280px;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
+                <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
+                  <sc-for list="{{ landsCols }}" as="c" hint-placeholder-count="6">
+                    <span style="flex:{{ c.flex }};min-width:var(--lndCellMinW,0);font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
+                  </sc-for>
+                </div>
+                <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+                  <sc-for list="{{ landsRows }}" as="r" hint-placeholder-count="8">
+                    <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--ctl,rgba(20,32,54,0.5))">
+                      <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
+                        <span style="flex:{{ c.flex }};min-width:var(--lndCellMinW,0);font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ landsRegistryEmpty }}">
+                    <div style="padding:44px 20px;text-align:center;color:var(--thTx,#7d8ea6);font-size:12px">لا توجد سجلات أراضٍ مطابقة للتصفية الحالية</div>
+                  </sc-if>
+                </div>
+                <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:center;gap:10px">
+                  <span style="flex:1;font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ landsRegistryCount }}</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ landsScreenIsDocuments }}">
+              <div style="flex:1;min-height:280px;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
+                <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
+                  <sc-for list="{{ landsDocCols }}" as="c" hint-placeholder-count="4">
+                    <span style="flex:{{ c.flex }};min-width:var(--lndCellMinW,0);font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
+                  </sc-for>
+                </div>
+                <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+                  <sc-for list="{{ landsDocRows }}" as="r" hint-placeholder-count="8">
+                    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08));flex-wrap:var(--rowWrap,nowrap)">
+                      <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="4">
+                        <span style="flex:{{ c.flex }};min-width:var(--lndCellMinW,0);font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ landsDocumentsEmpty }}">
+                    <div style="padding:44px 20px;text-align:center;color:var(--thTx,#7d8ea6);font-size:12px">لا توجد مستندات مسجّلة لهذه المنظمة حاليًا</div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ landsScreenIsGis }}">
+              <div style="flex:1;min-height:var(--lndMapH,320px);border-radius:16px;overflow:hidden;position:relative;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d);display:flex;align-items:center;justify-content:center">
+                <div dir="ltr" style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
+                  <span style="width:6px;height:6px;border-radius:50%;background:var(--tx3,#7d8ea6)"></span>
+                  الخريطة · GIS الأراضي
+                </div>
+                <div style="text-align:center;max-width:360px;padding:20px">
+                  <div style="width:52px;height:52px;margin:0 auto 14px;border-radius:14px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.16));display:flex;align-items:center;justify-content:center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--tx3,#7d8ea6)" stroke-width="1.6"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z"></path><path d="M9 4v14M15 6v14"></path></svg>
+                  </div>
+                  <div style="font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb)">لا تتوفر بيانات مكانية مرتبطة بالقطع الحالية</div>
+                  <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:8px;line-height:1.8">{{ landsGeoreferencedCount }} من {{ landsKpiTotal }} سجل يحمل إحداثيات هندسية موثّقة حتى الآن. يعرض هذا القسم القطع فور توفر بيانات مساحية رسمية لها.</p>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+        </div>
+      </sc-if>
+
     </main>
   </div>
 
@@ -1391,6 +1594,21 @@ class Component extends DCLogic {
   liveDataState = 'loading';
   liveDataError = '';
 
+  // إدارة الأراضي والممتلكات (Phase 05B) — published by
+  // manager-lands-adapter.js, connected lazily only once goLandsGateway()
+  // is used, never on initial page load (this is a separate real product,
+  // not part of the general dashboard's own live data).
+  liveLandsKpi = null;
+  liveLandsRegistry = [];
+  liveLandsDocuments = [];
+  liveLandsPriorities = [];
+  liveLandsIssueFocus = [];
+  liveLandsAuditEvents = [];
+  liveLandsAuditState = 'unavailable';
+  liveLandsGeoreferencedCount = 0;
+  liveLandsDataState = 'idle';
+  liveLandsDataError = '';
+
   ZONES = [
     { id: 'south', a0: -75, a1: -5, col: '#a855f7', seed: 1.2 },
     { id: 'east', a0: -5, a1: 50, col: '#38bdf8', seed: 2.7 },
@@ -1527,13 +1745,15 @@ class Component extends DCLogic {
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '400px', '--midH': 'auto',
       '--aiW': 'calc(50% - 7px)', '--prioW': 'calc(50% - 7px)', '--anaCols': 'repeat(2,1fr)', '--anaH': 'auto',
       '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none',
-      '--fsWrap': 'wrap', '--fsMapH': '340px', '--fsSideW': '100%' },
+      '--fsWrap': 'wrap', '--fsMapH': '340px', '--fsSideW': '100%',
+      '--lndWrap': 'wrap', '--lndMapH': '240px' },
     mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none', '--hdrWrap': 'wrap', '--hdrLabel': 'none',
       '--kpiWrap': 'wrap', '--kpiCell': '50%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '320px', '--twinMin': '240px', '--midH': 'auto',
       '--aiW': '100%', '--prioW': '100%', '--anaCols': '1fr', '--anaH': 'auto',
       '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '132px',
-      '--fsWrap': 'wrap', '--fsMapH': '260px', '--fsSideW': '100%', '--fsCellMinW': '92px' }
+      '--fsWrap': 'wrap', '--fsMapH': '260px', '--fsSideW': '100%', '--fsCellMinW': '92px',
+      '--lndWrap': 'wrap', '--lndMapH': '200px', '--lndCellMinW': '92px' }
   };
 
   componentDidMount() {
@@ -1983,6 +2203,76 @@ class Component extends DCLogic {
       { id: 'map', label: 'الخريطة التشغيلية' }
     ].map(n => pill(n.label, fsScreen === n.id, () => this.setState({ fsScreen: n.id, mapMode: 'map' })));
 
+    // إدارة الأراضي والممتلكات Manager Dashboard (Phase 05B) — its own
+    // independent in-product navigation/screen state, deliberately never
+    // sharing fsScreen/tCols/tRows with Field Survey so the two products
+    // can evolve independently (per the Phase 05B brief's isolation
+    // requirement). Real data only, published by manager-lands-adapter.js
+    // onto this.liveLandsXxx exactly the way manager-dashboard-adapter.js
+    // already publishes onto this.liveObservations/liveUsers/liveIncidents.
+    const landsScreen = st.landsScreen || 'exec';
+    const landsNav = [
+      { id: 'exec', label: 'نظرة تنفيذية' },
+      { id: 'registry', label: 'سجل الأراضي' },
+      { id: 'documents', label: 'المستندات' },
+      { id: 'gis', label: 'الخريطة' }
+    ].map(n => pill(n.label, landsScreen === n.id, () => this.setState({ landsScreen: n.id })));
+
+    const landsKpi = this.liveLandsKpi || { total: '—', review: '—', needsWork: '—', approved: '—', complete: '—', avgPercent: '—', missingDocs: '—', noLocation: '—' };
+    const landsRegistryAll = Array.isArray(this.liveLandsRegistry) ? this.liveLandsRegistry : [];
+    const landsDocumentsAll = Array.isArray(this.liveLandsDocuments) ? this.liveLandsDocuments : [];
+    const landsPriorities = Array.isArray(this.liveLandsPriorities) ? this.liveLandsPriorities : [];
+    const landsIssueFocusRaw = Array.isArray(this.liveLandsIssueFocus) ? this.liveLandsIssueFocus : [];
+    const landsIssueFocusMax = Math.max(1, ...landsIssueFocusRaw.map(f => f.n || 0));
+    const landsIssueFocus = landsIssueFocusRaw.map(f => ({ name: f.name, n: String(f.n || 0), w: `${Math.max(4, Math.round((f.n || 0) / landsIssueFocusMax * 100))}%` }));
+    const landsAuditEvents = Array.isArray(this.liveLandsAuditEvents) ? this.liveLandsAuditEvents : [];
+    const landsAuditState = this.liveLandsAuditState || 'unavailable';
+    const landsDataState = this.liveLandsDataState || 'idle';
+
+    const landsQRaw = st.landsQ || '';
+    const landsQNorm = landsQRaw.trim().toLowerCase();
+    const landsStatusOptions = ['الكل', 'مسودة', 'تحت المراجعة', 'تحتاج استكمال', 'معتمدة', 'مرفوضة'];
+    const landsStatusFilter = st.landsStatusFilter || 'الكل';
+    const landsFilteredRegistry = landsRegistryAll.filter(r => {
+      if (landsStatusFilter !== 'الكل' && r.status !== landsStatusFilter) return false;
+      if (!landsQNorm) return true;
+      return [r.reference, r.beneficiary, r.royalOrder, r.allocationDecision].some(v => String(v || '').toLowerCase().includes(landsQNorm));
+    });
+    const landsCols = [
+      { label: 'المرجع', flex: '0 0 92px', align: 'right' },
+      { label: 'المستفيد', flex: '1.2', align: 'right' },
+      { label: 'القرار الملكي', flex: '0.9', align: 'right' },
+      { label: 'قرار التخصيص', flex: '0.9', align: 'right' },
+      { label: 'الحالة', flex: '0.8', align: 'right' },
+      { label: 'الاكتمال', flex: '0 0 70px', align: 'left' }
+    ];
+    const landsRows = landsFilteredRegistry.map(r => ({
+      cells: [
+        cell(r.reference, '0 0 92px'),
+        cell(r.beneficiary, '1.2'),
+        cell(r.royalOrder, '0.9'),
+        cell(r.allocationDecision, '0.9'),
+        cell(r.status, '0.8', { col: r.statusCode === 'approved' ? 'var(--ok,#22c55e)' : r.statusCode === 'rejected' ? 'var(--badTx,#f87171)' : r.statusCode === 'under_review' ? 'var(--warn,#f5a524)' : 'var(--tx2,#a9bdd4)' }),
+        cell(`${r.completion}`, '0 0 70px', { align: 'left', weight: '600' })
+      ]
+    }));
+    const landsDocCols = [
+      { label: 'الملف', flex: '1.3', align: 'right' },
+      { label: 'السجل المرتبط', flex: '0.9', align: 'right' },
+      { label: 'النوع', flex: '0.7', align: 'right' },
+      { label: 'التاريخ', flex: '0 0 92px', align: 'left' }
+    ];
+    const landsDocRows = landsDocumentsAll.map(d => ({
+      cells: [
+        cell(d.filename, '1.3'),
+        cell(d.recordDomain === 'landGrants' ? 'سجل أرض' : (d.recordDomain || '—'), '0.9'),
+        cell(d.mimeType, '0.7'),
+        cell(d.createdAt ? (format.dateTime ? format.dateTime(d.createdAt) : 'غير متاح') : 'غير متاح', '0 0 92px', { align: 'left' })
+      ]
+    }));
+    const setLandsQ = e => this.setState({ landsQ: e.target.value });
+    const landsStatusFilters = landsStatusOptions.map(opt => pill(opt, landsStatusFilter === opt, () => this.setState({ landsStatusFilter: opt })));
+
     let tCols = [], tRows = [], tFilters = [], tPlaceholder = 'بحث', tQ = st.tq || '', tEmpty = false, tCount = '0 سجل';
     const setTQ = e => this.setState({ tq: e.target.value });
     const setTFilter = (filter) => this.setState({ tuFilter: filter });
@@ -2253,16 +2543,39 @@ class Component extends DCLogic {
       // rendered inside <main> itself (see viewIsFieldSurvey below) — it
       // must never also open the shared quick-view modal/backdrop used by
       // the lighter Observations/Reports/Users/Incidents panels.
-      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey',
-      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey',
-      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير الحصر الميداني الذكي' : 'البلاغات',
-      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر حركة السير الذكية.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال الحصر الميداني الذكي — بيانات حية من المنظمة الحالية فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
+      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey' && st.view !== 'lands',
+      // This template engine's {{ }} expressions resolve only a single
+      // property/equality/negation — it has no && / || operator support
+      // (see support.js's resolve()/resolvePath()). A compound
+      // "{{ !viewIsFieldSurvey && !viewIsLands }}" would silently degrade to
+      // just "{{ !viewIsFieldSurvey }}" (resolvePath stops at the first
+      // identifier), rendering the home dashboard underneath Field Survey OR
+      // Lands instead of hiding it — so the combined check is computed once
+      // here as its own plain boolean and referenced as a single identifier,
+      // exactly like every other sc-if in this file already does.
+      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands',
+      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands',
+      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير الحصر الميداني الذكي' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : 'البلاغات',
+      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر حركة السير الذكية.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال الحصر الميداني الذكي — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
       viewEmpty: ((st.view === 'users' || st.view === 'incidents' || st.view === 'fieldSurvey') ? !tRows.length : !viewObservations.length),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
 
       fsNav, fsScreenIsExec: fsScreen === 'exec', fsScreenIsLog: fsScreen === 'log', fsScreenIsInspectors: fsScreen === 'inspectors', fsScreenIsMap: fsScreen === 'map',
       goFsLog: () => this.setState({ fsScreen: 'log' }), goFsInspectors: () => this.setState({ fsScreen: 'inspectors' }),
+
+      landsNav, landsScreenIsExec: landsScreen === 'exec', landsScreenIsRegistry: landsScreen === 'registry', landsScreenIsDocuments: landsScreen === 'documents', landsScreenIsGis: landsScreen === 'gis',
+      landsDataIsError: landsDataState === 'error', landsDataError: this.liveLandsDataError || '',
+      landsKpiTotal: landsKpi.total, landsKpiReview: landsKpi.review, landsKpiNeedsWork: landsKpi.needsWork,
+      landsKpiApproved: landsKpi.approved, landsKpiComplete: landsKpi.complete, landsKpiAvgPercent: landsKpi.avgPercent,
+      landsKpiMissingDocs: landsKpi.missingDocs, landsKpiNoLocation: landsKpi.noLocation,
+      landsPriorities, landsPrioritiesEmpty: !landsPriorities.length,
+      landsIssueFocus,
+      landsAuditEvents, landsAuditIsReady: landsAuditState === 'ready', landsAuditIsUnavailable: landsAuditState === 'unavailable', landsAuditEmpty: landsAuditState === 'ready' && !landsAuditEvents.length,
+      landsQ: landsQRaw, setLandsQ, landsStatusFilters,
+      landsCols, landsRows, landsRegistryEmpty: !landsRows.length, landsRegistryCount: `${landsFilteredRegistry.length} سجل`,
+      landsDocCols, landsDocRows, landsDocumentsEmpty: !landsDocRows.length,
+      landsGeoreferencedCount: String(this.liveLandsGeoreferencedCount || 0),
       fsTotal: String(allObservations.length), fsOpen: String(fsOpenObservations.length),
       fsCompleted: String(allObservations.filter(o => o.status === 'COMPLETED').length),
       fsCompletionRate: metrics.completionRate || '—',
@@ -2306,7 +2619,7 @@ class Component extends DCLogic {
       mobNav: [
         { label: 'الرئيسية', tag: '', on: () => this.goHome() },
         { label: 'الحصر الميداني الذكي', tag: '', on: () => this.goRoute('survey') },
-        { label: 'حصر الأراضي الذكي', tag: 'بانتظار الربط', on: () => this.goLandsGateway() },
+        { label: 'حصر الأراضي الذكي', tag: '', on: () => this.goLandsGateway() },
         { label: 'حركة السير الذكية', tag: '', on: () => this.goRoute('mobility') },
         { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.openView('observations') },
         { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap() },
@@ -2492,17 +2805,21 @@ class Component extends DCLogic {
     this.flash('هذا المسار غير متاح حتى يتم التحقق من ربطه التشغيلي.');
   }
 
-  // Truthful Smart Lands Manager gateway shell: the operational Lands
-  // product (grants/parcels/documents) is a separate application whose SSO
-  // routing from here is not yet wired (Phase 05) — this control must never
-  // pretend otherwise. What IS real today is Lands entitlement oversight
-  // (who in this organization has Lands access), already backed by live
-  // Firestore data via the existing Users view's Lands filter, so the
-  // gateway opens that real view instead of doing nothing.
+  // PHASE 05B — real إدارة الأراضي والممتلكات Manager gateway: opens the
+  // dedicated, native, full-page Lands Manager Dashboard view inside this
+  // same authenticated session (view:'lands'), exactly the way
+  // openFieldSurvey() opens Field Survey's — never a modal, never the
+  // Users-view redirect this control used before the dashboard existed.
+  // manager-lands-adapter.js is connected lazily, only once the manager
+  // actually opens this product, and reads ONLY real
+  // landsMunicipalities/{organizationId} data under the existing,
+  // unmodified Firestore Rules — never the operational employee Lands UI,
+  // never the employee-only SSO handoff (municipal_manager is not one of
+  // its allowed roles; see manager-lands-adapter.js's header comment).
   goLandsGateway(e) {
     this.prevent(e);
-    this.setState({ view: 'users', tuFilter: 'أراضي', mobNavOpen: false, notifOpen: false, profOpen: false });
-    this.flash('حصر الأراضي الذكي: الربط التشغيلي الكامل قيد الإعداد — المعروض هنا صلاحيات الأراضي الحقيقية للمستخدمين.');
+    this.setState({ view: 'lands', mobNavOpen: false, notifOpen: false, profOpen: false });
+    window.SmartHSRLandsAdapter?.connect(this);
   }
 
   openUserDetail(user) {
@@ -2726,5 +3043,6 @@ class Component extends DCLogic {
 }
 </script>
 <script type="module" src="./manager-dashboard-adapter.js"></script>
+<script type="module" src="./manager-lands-adapter.js"></script>
 </body>
 </html>
