@@ -132,8 +132,8 @@ test('employees: department head cannot write even within their own department',
 // ============================================================
 // vehicleEligible — real, server-enforced entitlement on allocation
 // ============================================================
-test('vehicleEligible: a record with NO vehicleEligible field at all remains allocatable (backward-compatible default)', async () => {
-  await assertSucceeds(allocate('V-no-field', UID.employeeNoField));
+test('vehicleEligible: Phase 03B.1 fail-safe default — a record with NO vehicleEligible field at all is NOT allocatable', async () => {
+  await assertFails(allocate('V-no-field', UID.employeeNoField));
 });
 
 test('vehicleEligible: true allows allocation', async () => {
@@ -146,6 +146,20 @@ test('vehicleEligible: an explicit true (set via setVehicleEligible) still allow
 
 test('vehicleEligible: an explicit false denies allocation to that employee', async () => {
   await assertFails(allocate('V-ineligible', UID.employeeIneligibleExplicit));
+});
+
+test('vehicleEligible: revocation (true -> false) denies a subsequent NEW allocation attempt', async () => {
+  // First allocation with vehicleEligible: true succeeds.
+  await assertSucceeds(allocate('V-eligible', UID.employeeEligible));
+  // Return the vehicle to AVAILABLE, then revoke eligibility (a real
+  // write, mirroring api/admin/employees.js setVehicleEligible), and
+  // confirm a fresh allocation to the same employee is now denied.
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, 'vehicles', 'V-eligible'), { organizationId: ORG_A, status: 'AVAILABLE' });
+    await updateDoc(doc(db, 'users', UID.employeeEligible), { vehicleEligible: false });
+  });
+  await assertFails(allocate('V-eligible', UID.employeeEligible));
 });
 
 test('vehicleEligible: does not block any OTHER vehicle transition (handover) once already allocated', async () => {

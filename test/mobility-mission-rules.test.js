@@ -60,8 +60,12 @@ async function seed() {
     await setDoc(doc(db, 'users', UID.deptHeadB), { role: 'department_head', active: true, organizationId: ORG_B, department: DEPT_TRAFFIC });
     await setDoc(doc(db, 'users', UID.adminAffairsA), { role: 'administrative_affairs', active: true, organizationId: ORG_A });
     await setDoc(doc(db, 'users', UID.mobilityHeadA), { role: 'mobility_head', active: true, organizationId: ORG_A });
-    await setDoc(doc(db, 'users', UID.employeeA), { role: 'employee', active: true, organizationId: ORG_A });
-    await setDoc(doc(db, 'users', UID.employeeA2), { role: 'employee', active: true, organizationId: ORG_A });
+    // vehicleEligible: true — required for the V5/V8 vehicle-allocation
+    // tests below under the Phase 03B.1 fail-safe default (missing means
+    // NOT eligible); harmless for every other test, which never exercises
+    // the allocate transition for these two employees.
+    await setDoc(doc(db, 'users', UID.employeeA), { role: 'employee', active: true, organizationId: ORG_A, vehicleEligible: true });
+    await setDoc(doc(db, 'users', UID.employeeA2), { role: 'employee', active: true, organizationId: ORG_A, vehicleEligible: true });
     await setDoc(doc(db, 'users', UID.inactiveMobilityHeadA), { role: 'mobility_head', active: false, organizationId: ORG_A });
 
     await setDoc(doc(db, 'missions', 'draftA'), {

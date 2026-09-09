@@ -487,3 +487,61 @@ test('activation never fakes success: if the Firestore linking write fails, the 
     assert.equal(fakes.auth._users.size, 1, 'the Auth account genuinely was created — this is a real partial-failure state, not a full rollback');
   } finally { fakes.restore(); }
 });
+
+// ---- Phase 03B.1 hotfix: explicit activateAccount authorization coverage ----
+
+test('activateAccount: an unauthorized caller (no owner/manager/department_head identity at all) is denied outright', async () => {
+  const fakes = installFakes();
+  try {
+    const { organizationId } = seedManager(fakes);
+    const employeeId = 'emp-unauth-1';
+    seedEmployee(fakes, employeeId, { organizationId });
+    // A random signed-in uid with no owners/managers/users record at all.
+    fakes.store.seed('users/random-uid', undefined);
+    const handler = loadFreshHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: 'random-uid', body: { action: 'activateAccount', employeeId, email: 'x@example.com' } }), res);
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.body.reason, 'owner_manager_or_department_head_required');
+    assert.equal(fakes.auth._users.size, 0, 'no Firebase Auth account was created for a denied caller');
+    assert.equal(fakes.store.docs.get(`employees/${employeeId}`).accountStatus, 'NO_ACCOUNT', 'the employee record is untouched by a denied request');
+  } finally { fakes.restore(); }
+});
+
+test('activateAccount: cross-org manager is denied', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid } = seedManager(fakes, { organizationId: 'org-alpha' });
+    const employeeId = 'emp-cross-org-1';
+    seedEmployee(fakes, employeeId, { organizationId: 'org-beta' });
+    const handler = loadFreshHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid, body: { action: 'activateAccount', employeeId, email: 'x@example.com' } }), res);
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.body.reason, 'cross_organization_denied');
+    assert.equal(fakes.auth._users.size, 0);
+  } finally { fakes.restore(); }
+});
+
+test('activateAccount: department head limited to their own department — other department denied, own department allowed', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid, organizationId, department } = seedDepartmentHead(fakes);
+    const otherDeptEmployee = 'emp-other-dept-activate';
+    seedEmployee(fakes, otherDeptEmployee, { organizationId, department: 'أخرى' });
+    const ownDeptEmployee = 'emp-own-dept-activate';
+    seedEmployee(fakes, ownDeptEmployee, { organizationId, department });
+    const handler = loadFreshHandler();
+
+    const deniedRes = fakeResponse();
+    await handler(fakeRequest({ uid, body: { action: 'activateAccount', employeeId: otherDeptEmployee, email: 'other@example.com' } }), deniedRes);
+    assert.equal(deniedRes.statusCode, 403);
+    assert.equal(deniedRes.body.reason, 'cross_department_denied');
+    assert.equal(fakes.auth._users.size, 0);
+
+    const allowedRes = fakeResponse();
+    await handler(fakeRequest({ uid, body: { action: 'activateAccount', employeeId: ownDeptEmployee, email: 'own@example.com' } }), allowedRes);
+    assert.equal(allowedRes.statusCode, 200, JSON.stringify(allowedRes.body));
+    assert.equal(allowedRes.body.accountStatus, 'ACTIVE');
+  } finally { fakes.restore(); }
+});

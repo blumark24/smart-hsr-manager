@@ -52,9 +52,9 @@ test('one Mobility role only: role is a single string field, so two roles at onc
   assert.equal(typeof out.mobility.role, 'string');
 });
 
-test('vehicleEligible defaults to true when absent (backward-compatible with every pre-Phase-03B record)', () => {
+test('vehicleEligible: Phase 03B.1 fail-safe default — absent means NOT eligible', () => {
   const out = resolveProductEntitlements({ role: 'employee' });
-  assert.equal(out.mobility.vehicleEligible, true);
+  assert.equal(out.mobility.vehicleEligible, false);
 });
 
 test('vehicleEligible: true is preserved', () => {
@@ -78,12 +78,19 @@ test('a Lands role value outside the manageable set is never reported as enabled
   assert.equal(out.lands.enabled, false, 'an institution-level Lands role is never exposed via this employee-facing resolver');
 });
 
-test('no account at all: everything disabled, vehicleEligible still defaults true', () => {
+test('no account at all: everything disabled, vehicleEligible defaults false (fail-safe)', () => {
   const out = resolveProductEntitlements({});
   assert.equal(out.field.enabled, false);
   assert.equal(out.lands.enabled, false);
   assert.equal(out.mobility.enabled, false);
-  assert.equal(out.mobility.vehicleEligible, true);
+  assert.equal(out.mobility.vehicleEligible, false);
+});
+
+test('vehicleEligible: any non-true value (string "true", 1, null) is still NOT eligible — only the boolean true counts', () => {
+  for (const value of ['true', 1, null, undefined, 0, 'false']) {
+    const out = resolveProductEntitlements({ role: 'employee', vehicleEligible: value });
+    assert.equal(out.mobility.vehicleEligible, false, `expected ${JSON.stringify(value)} to be treated as not eligible`);
+  }
 });
 
 test('legacy compatibility: a record with only the fields that existed before Phase 03B resolves identically to how it always behaved', () => {

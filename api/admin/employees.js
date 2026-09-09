@@ -105,7 +105,8 @@ function safeEmployee(id, data) {
     products: data.products || {
       field: { enabled: false, role: null },
       lands: { enabled: false, role: null },
-      mobility: { enabled: false, role: null, vehicleEligible: true },
+      // Phase 03B.1 hotfix: fail-safe default — not eligible until explicit.
+      mobility: { enabled: false, role: null, vehicleEligible: false },
     },
     createdAt: data.createdAt || null,
     updatedAt: data.updatedAt || null,
@@ -185,7 +186,8 @@ async function handler(req, res) {
           products: {
             field: { enabled: false, role: null },
             lands: { enabled: false, role: null },
-            mobility: { enabled: false, role: null, vehicleEligible: true },
+            // Phase 03B.1 hotfix: fail-safe default — not eligible until explicit.
+            mobility: { enabled: false, role: null, vehicleEligible: false },
           },
           createdBy: caller.uid,
           createdAt: FieldValue.serverTimestamp(),
@@ -251,7 +253,9 @@ async function handler(req, res) {
           mobility: {
             enabled: fieldSel.enabled && ['mobility_head', 'department_head', 'administrative_affairs', 'employee'].includes(fieldSel.role),
             role: fieldSel.enabled && ['mobility_head', 'department_head', 'administrative_affairs', 'employee'].includes(fieldSel.role) ? fieldSel.role : null,
-            vehicleEligible: vehicleEligible !== false,
+            // Phase 03B.1 hotfix: fail-safe default — an activation that
+            // doesn't explicitly grant vehicleEligible leaves it false.
+            vehicleEligible: vehicleEligible === true,
           },
         };
 
@@ -391,7 +395,10 @@ async function handler(req, res) {
           mobility: {
             enabled: nextFieldEnabled && isMobilityRole,
             role: nextFieldEnabled && isMobilityRole ? nextFieldRole : null,
-            vehicleEligible: vehicleEligible !== undefined ? vehicleEligible : (existingProducts.mobility ? existingProducts.mobility.vehicleEligible !== false : true),
+            // Phase 03B.1 hotfix: fail-safe default — preserve the
+            // existing REAL value (only true stays eligible) when this
+            // call doesn't explicitly change it; never invent eligibility.
+            vehicleEligible: vehicleEligible !== undefined ? vehicleEligible : (existingProducts.mobility ? existingProducts.mobility.vehicleEligible === true : false),
           },
         };
         await employee.ref.set({ products, updatedAt: FieldValue.serverTimestamp() }, { merge: true });

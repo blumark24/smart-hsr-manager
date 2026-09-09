@@ -105,12 +105,12 @@ test('Lands entitlement management is real (Add User + service editing), and the
   assert.doesNotMatch(source, /landsViewGrantsUnavailable/);
 });
 
-test('the Lands filter count on the users list is real, derived from the same live users array, never a fabricated statistic', () => {
+test('the Lands filter count on the users list is real, derived from the same live combined rows (accounts + registry-only employees), never a fabricated statistic', () => {
   const source = read('manager.html');
   const start = source.indexOf('const landsCount =');
   assert.notEqual(start, -1);
   const line = source.slice(start, source.indexOf(';', start) + 1);
-  assert.match(line, /allUsers\.filter\(u => u\.role == null && u\.landsAccess && u\.landsAccess\.enabled\)\.length/);
+  assert.match(line, /combinedRows\.filter\(r => r\.role == null && r\.landsAccess && r\.landsAccess\.enabled\)\.length/);
 });
 
 // ---- manager identity display prioritizes the approved name over email ----

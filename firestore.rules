@@ -425,15 +425,15 @@ service cloud.firestore {
             // must actually be APPROVED and in this same organization.
             && get(/databases/$(database)/documents/missions/$(request.resource.data.currentMissionId)).data.organizationId == mobilityUserOrgId()
             && get(/databases/$(database)/documents/missions/$(request.resource.data.currentMissionId)).data.status == 'APPROVED'
-            // Phase 03B: vehicleEligible is an independent, real,
-            // server-enforced entitlement (a UI checkbox alone is not
-            // sufficient authorization) — an EXPLICIT false on the target
-            // employee's own record blocks a NEW allocation to them.
-            // Backward-compatible: a record with no vehicleEligible field
-            // at all (every employee created before this field existed)
-            // stays allocatable, exactly as before.
-            && (!('vehicleEligible' in get(/databases/$(database)/documents/users/$(request.resource.data.assignedEmployeeUid)).data)
-              || get(/databases/$(database)/documents/users/$(request.resource.data.assignedEmployeeUid)).data.vehicleEligible != false))
+            // Phase 03B.1 hotfix — fail-safe default: vehicleEligible is an
+            // independent, real, server-enforced entitlement (a UI
+            // checkbox alone is not sufficient authorization). ONLY an
+            // EXPLICIT true on the target employee's own record allows a
+            // NEW allocation to them; a missing field or any other value
+            // denies. This intentionally reverses the previous "missing
+            // means eligible" default — no bulk migration of existing
+            // records is performed by this hotfix.
+            && get(/databases/$(database)/documents/users/$(request.resource.data.assignedEmployeeUid)).data.vehicleEligible == true)
           || (resource.data.status == 'AVAILABLE'
             && (request.resource.data.status == 'MAINTENANCE' || request.resource.data.status == 'OUT_OF_SERVICE')
             && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))

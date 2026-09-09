@@ -1476,6 +1476,57 @@
     </div>
   </sc-if>
 
+  <sc-if value="{{ employeeDrawerOpen }}">
+    <div onClick="{{ closeEmployeeDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
+      <div onClick="{{ stop }}" style="width:min(420px,92vw);padding:20px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">{{ selectedEmployeeName }}</div>
+            <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:4px">سجل موظف — بدون حساب دخول مفعّل بعد</div>
+          </div>
+          <button onClick="{{ closeEmployeeDrawer }}" data-f="1" aria-label="إغلاق" style="width:32px;height:32px;flex:none;border:none;background:var(--ctl,rgba(20,32,54,0.5));border-radius:10px;color:var(--tx3,#7d8ea6);cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:4px">حالة الحساب</div>
+            <div style="font-size:11.5px;color:var(--tx2,#a9bdd4);padding:10px;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">{{ selectedEmployeeAccountStatus }}</div>
+          </div>
+          <sc-if value="{{ selectedEmployeeIsPending }}">
+            <div style="font-size:10.5px;color:#f5b93d;padding:10px;border-radius:9px;background:rgba(245,185,61,0.1);border:1px solid rgba(245,185,61,0.3);line-height:1.7">
+              التفعيل قيد التنفيذ.
+              <sc-if value="{{ selectedEmployeeActivationError }}">
+                <div style="margin-top:4px">تعذر إكمال الربط: {{ selectedEmployeeActivationError }}. أعد المحاولة أدناه.</div>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ selectedEmployeeIsNoAccount }}">
+            <div>
+              <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:5px">البريد الإلكتروني</div>
+              <input type="email" value="{{ actEmail }}" onChange="{{ setActEmail }}" autocomplete="off" style="width:100%;height:36px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ selectedEmployeeIsNoAccount }}">
+          <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:9px">
+            <button onClick="{{ activateSelectedEmployee }}" data-f="1" style="width:100%;height:38px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">تفعيل الحساب</button>
+            <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);line-height:1.7">سيتم إصدار كلمة مرور مؤقتة تلقائياً؛ يجب على الموظف تغييرها عند الدخول الأول. لا تُحفظ كلمة المرور في سجل النظام.</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ selectedEmployeeIsPending }}">
+          <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:9px">
+            <div>
+              <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:5px">البريد الإلكتروني</div>
+              <input type="email" value="{{ actEmail }}" onChange="{{ setActEmail }}" autocomplete="off" style="width:100%;height:36px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+            </div>
+            <button onClick="{{ activateSelectedEmployee }}" data-f="1" style="width:100%;height:38px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">إعادة محاولة التفعيل</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
   <sc-if value="{{ incidentDrawerOpen }}">
     <div onClick="{{ closeIncidentDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
       <div onClick="{{ stop }}" style="width:min(420px,92vw);padding:20px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;gap:16px">
@@ -1662,7 +1713,9 @@ function resolveManagerProductEntitlements(u) {
   const landsEnabled = Boolean(landsAccess && landsAccess.enabled === true && LANDS_ROLES.includes(landsAccess.role));
   return {
     field: { enabled: isFieldRole, role: isFieldRole ? role : null },
-    mobility: { enabled: isMobilityRole, role: isMobilityRole ? role : null, vehicleEligible: data.vehicleEligible !== false },
+    // Phase 03B.1 hotfix — fail-safe default: ONLY an EXPLICIT true
+    // counts as eligible; a missing field is NOT eligible.
+    mobility: { enabled: isMobilityRole, role: isMobilityRole ? role : null, vehicleEligible: data.vehicleEligible === true },
     lands: { enabled: landsEnabled, role: landsEnabled ? landsAccess.role : null },
   };
 }
@@ -1675,8 +1728,9 @@ class Component extends DCLogic {
     userDrawerOpen: false, selectedUser: null, incidentDrawerOpen: false, selectedIncident: null,
     addUserOpen: false, auName: '', auEmail: '', auRole: 'employee', auKind: 'field',
     serviceEditOpen: false,
-    svcFieldEnabled: false, svcFieldRole: 'employee', svcLandsEnabled: false, svcLandsRole: 'lands_employee', svcVehicleEligible: true,
+    svcFieldEnabled: false, svcFieldRole: 'employee', svcLandsEnabled: false, svcLandsRole: 'lands_employee', svcVehicleEligible: false,
     addEmployeeOpen: false, aeName: '', aeAdministration: '', aeDepartment: '', aeJobTitle: '',
+    employeeDrawerOpen: false, selectedEmployee: null, actEmail: '',
     evidenceDrawerOpen: false, selectedObservation: null,
     evidenceBeforeState: 'idle', evidenceBeforeUrl: null,
     evidenceAfterState: 'idle', evidenceAfterUrl: null,
@@ -2422,6 +2476,22 @@ class Component extends DCLogic {
         { label: 'الحالة', flex: '0 0 70px', align: 'right' }
       ];
       const allUsers = Array.isArray(this.liveUsers) ? this.liveUsers : [];
+      const allEmployees = Array.isArray(this.liveEmployees) ? this.liveEmployees : [];
+      // Phase 03B.1: unify real login accounts (users/{uid}) with
+      // registry-only employee records (employees/{employeeId} with no
+      // Firebase Auth account yet, or an activation still in progress) into
+      // ONE row model, so مركز المستخدمين shows the whole real roster —
+      // never just the subset that already has a login. An employee whose
+      // account is already ACTIVE and genuinely linked to a live users/{uid}
+      // doc is represented ONLY by that account row, never duplicated.
+      const activeAuthUids = new Set(allUsers.map(u => u.id));
+      const registryOnlyEmployees = allEmployees.filter(e => !(e.accountStatus === 'ACTIVE' && e.authUid && activeAuthUids.has(e.authUid)));
+      const emptyEntitlements = { field: { enabled: false, role: null }, lands: { enabled: false, role: null }, mobility: { enabled: false, role: null, vehicleEligible: false } };
+      const combinedRows = [
+        ...allUsers.map(u => ({ id: u.id, kind: 'account', raw: u, name: u.name, email: u.email, administration: u.administration, department: u.department, jobTitle: u.jobTitle, role: u.role, landsAccess: u.landsAccess, accountStatus: u.active === false ? 'SUSPENDED' : 'ACTIVE' })),
+        ...registryOnlyEmployees.map(e => ({ id: e.id, kind: 'employee', raw: e, name: e.name, email: e.email, administration: e.administration, department: e.department, jobTitle: e.jobTitle, role: null, landsAccess: null, accountStatus: e.accountStatus || 'NO_ACCOUNT' })),
+      ];
+      const entitlementsFor = (row) => row.kind === 'account' ? resolveProductEntitlements(row.raw) : (row.raw.products || emptyEntitlements);
       // Real counts from the live users list — never fabricated. Only the
       // Lands filter shows a count (the one place a manager needs to see
       // "how many are actually on Lands right now" at a glance); the other
@@ -2430,28 +2500,31 @@ class Component extends DCLogic {
       // rendered pill LABEL for Lands embeds the live count, so a new user
       // arriving mid-session can never silently reset an active filter by
       // changing the count string the filter is keyed on.
-      const landsCount = allUsers.filter(u => u.role == null && u.landsAccess && u.landsAccess.enabled).length;
+      const landsCount = combinedRows.filter(r => r.role == null && r.landsAccess && r.landsAccess.enabled).length;
       const roleFilters = ['الكل', 'مدير', 'رئيس حركة', 'رئيس قسم', 'شؤون إدارية', 'موظف', 'أراضي'];
       const roleMap = { 'الكل': null, 'مدير': 'manager', 'رئيس حركة': 'mobility_head', 'رئيس قسم': 'department_head', 'شؤون إدارية': 'administrative_affairs', 'موظف': 'employee', 'أراضي': 'lands' };
       const filterLabel = rf => rf === 'أراضي' ? `أراضي (${landsCount})` : rf;
       tFilters = roleFilters.map(rf => pill(filterLabel(rf), tfilter === rf, () => setTFilter(rf)));
 
-      // --- Phase 03B: KPI cards, product/vehicle/department filters — all
-      // derived from this SAME real, already-loaded allUsers array. No new
-      // fetch, no fabricated statistic. ---
-      const entitlementsByUid = new Map(allUsers.map(u => [u.id, resolveProductEntitlements(u)]));
-      const activatedCount = allUsers.filter(u => u.active !== false).length;
-      const deactivatedCount = allUsers.length - activatedCount;
-      const fieldCount = allUsers.filter(u => entitlementsByUid.get(u.id).field.enabled).length;
-      const landsProductCount = allUsers.filter(u => entitlementsByUid.get(u.id).lands.enabled).length;
-      const mobilityCount = allUsers.filter(u => entitlementsByUid.get(u.id).mobility.enabled).length;
-      const vehicleEligibleCount = allUsers.filter(u => {
-        const ent = entitlementsByUid.get(u.id);
+      // --- Phase 03B / 03B.1: KPI cards, product/vehicle/department filters
+      // — all derived from this SAME real, already-loaded combinedRows
+      // (live accounts + live registry-only employees). No new fetch, no
+      // fabricated statistic. "الحسابات المفعلة" counts real ACTIVE login
+      // accounts only — NO_ACCOUNT/PENDING_ACTIVATION/SUSPENDED are all
+      // honestly "غير المفعلة". ---
+      const entitlementsById = new Map(combinedRows.map(r => [r.id, entitlementsFor(r)]));
+      const activatedCount = combinedRows.filter(r => r.accountStatus === 'ACTIVE').length;
+      const deactivatedCount = combinedRows.length - activatedCount;
+      const fieldCount = combinedRows.filter(r => entitlementsById.get(r.id).field.enabled).length;
+      const landsProductCount = combinedRows.filter(r => entitlementsById.get(r.id).lands.enabled).length;
+      const mobilityCount = combinedRows.filter(r => entitlementsById.get(r.id).mobility.enabled).length;
+      const vehicleEligibleCount = combinedRows.filter(r => {
+        const ent = entitlementsById.get(r.id);
         return ent.mobility.enabled && ent.mobility.vehicleEligible;
       }).length;
       const kpiCard = (label, value) => ({ label, value: String(value) });
       userCenterKpis = [
-        kpiCard('إجمالي الموظفين', allUsers.length),
+        kpiCard('إجمالي الموظفين', combinedRows.length),
         kpiCard('الحسابات المفعلة', activatedCount),
         kpiCard('غير المفعلة', deactivatedCount),
         kpiCard('المستخدمون حسب المنتجات', `${fieldCount} حصر · ${landsProductCount} أراضي · ${mobilityCount} حركة`),
@@ -2462,40 +2535,46 @@ class Component extends DCLogic {
       tProductFilters = productFilterNames.map(pf => pill(pf, tProductFilter === pf, () => this.setState({ tuProductFilter: pf })));
       const vehicleFilterNames = ['الكل', 'مؤهل', 'غير مؤهل'];
       tVehicleFilters = vehicleFilterNames.map(vf => pill(vf, tVehicleFilter === vf, () => this.setState({ tuVehicleFilter: vf })));
-      const deptValues = Array.from(new Set(allUsers.map(u => u.department).filter(Boolean)));
+      const deptValues = Array.from(new Set(combinedRows.map(r => r.department).filter(Boolean)));
       const deptFilterNames = ['الكل', ...deptValues];
       tDeptFilters = deptFilterNames.map(df => pill(df, tDeptFilter === df, () => this.setState({ tuDeptFilter: df })));
 
       const targetRole = roleMap[tfilter];
-      const roleScoped = !targetRole ? allUsers
-        : targetRole === 'lands' ? allUsers.filter(u => u.role == null && u.landsAccess)
-        : allUsers.filter(u => u.role === targetRole);
+      const roleScoped = !targetRole ? combinedRows
+        : targetRole === 'lands' ? combinedRows.filter(r => r.role == null && r.landsAccess)
+        : combinedRows.filter(r => r.role === targetRole);
       const productScoped = tProductFilter === 'الكل' ? roleScoped
-        : roleScoped.filter(u => {
-          const ent = entitlementsByUid.get(u.id);
+        : roleScoped.filter(r => {
+          const ent = entitlementsById.get(r.id);
           return tProductFilter === 'الحصر' ? ent.field.enabled : tProductFilter === 'الأراضي' ? ent.lands.enabled : ent.mobility.enabled;
         });
       const vehicleScoped = tVehicleFilter === 'الكل' ? productScoped
-        : productScoped.filter(u => {
-          const ent = entitlementsByUid.get(u.id);
+        : productScoped.filter(r => {
+          const ent = entitlementsById.get(r.id);
           const eligible = ent.mobility.enabled && ent.mobility.vehicleEligible;
           return tVehicleFilter === 'مؤهل' ? eligible : ent.mobility.enabled && !eligible;
         });
-      const deptScoped = tDeptFilter === 'الكل' ? vehicleScoped : vehicleScoped.filter(u => u.department === tDeptFilter);
-      const filteredUsers = usersListView.deriveVisibleUsers(deptScoped, { search: tq });
+      const deptScoped = tDeptFilter === 'الكل' ? vehicleScoped : vehicleScoped.filter(r => r.department === tDeptFilter);
+      const filteredRows = usersListView.deriveVisibleUsers(deptScoped, { search: tq });
       const mobilityRoleLabel = r => ({ mobility_head: 'رئيس حركة', department_head: 'رئيس قسم', administrative_affairs: 'شؤون إدارية', employee: 'موظف' }[r] || '—');
-      tRows = filteredUsers.map(u => {
-        const ent = entitlementsByUid.get(u.id);
-        const c = { col: u.active ? (day ? '#0b5c3b' : '#22c55e') : (day ? '#666' : '#999'), bg: u.active ? (day ? 'rgba(14,122,79,0.12)' : 'rgba(34,197,85,0.15)') : (day ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)'), bd: u.active ? (day ? 'rgba(14,122,79,0.3)' : 'rgba(34,197,85,0.4)') : 'var(--ctlBd,rgba(122,164,224,0.14))' };
+      const accountStatusLabel = s => ({ NO_ACCOUNT: 'بلا حساب', PENDING_ACTIVATION: 'قيد التفعيل', ACTIVE: 'نشط', SUSPENDED: 'معطل' }[s] || s);
+      const accountStatusColor = s => {
+        if (s === 'ACTIVE') return { col: day ? '#0b5c3b' : '#22c55e', bg: day ? 'rgba(14,122,79,0.12)' : 'rgba(34,197,85,0.15)', bd: day ? 'rgba(14,122,79,0.3)' : 'rgba(34,197,85,0.4)' };
+        if (s === 'PENDING_ACTIVATION') return { col: day ? '#8a5a00' : '#f5b93d', bg: day ? 'rgba(180,130,0,0.12)' : 'rgba(245,185,61,0.15)', bd: day ? 'rgba(180,130,0,0.3)' : 'rgba(245,185,61,0.4)' };
+        return { col: day ? '#666' : '#999', bg: day ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)', bd: 'var(--ctlBd,rgba(122,164,224,0.14))' };
+      };
+      tRows = filteredRows.map(r => {
+        const ent = entitlementsById.get(r.id);
+        const c = accountStatusColor(r.accountStatus);
         const yesNo = (v) => v ? '✓' : '—';
         return {
-          chip: u.active ? 'نشط' : 'غير نشط', chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
-          on: () => this.openUserDetail(u),
+          chip: accountStatusLabel(r.accountStatus), chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
+          on: () => r.kind === 'account' ? this.openUserDetail(r.raw) : this.openEmployeeDetail(r.raw),
           cells: [
-            cell(u.name, '1.1', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
-            cell(u.administration || '—', '0.8', { size: '11px' }),
-            cell(u.department || '—', '0.8', { size: '11px' }),
-            cell(u.jobTitle || '—', '0.8', { size: '11px' }),
+            cell(r.name, '1.1', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
+            cell(r.administration || '—', '0.8', { size: '11px' }),
+            cell(r.department || '—', '0.8', { size: '11px' }),
+            cell(r.jobTitle || '—', '0.8', { size: '11px' }),
             cell(yesNo(ent.field.enabled), '0 0 56px', { align: 'center' }),
             cell(yesNo(ent.lands.enabled), '0 0 56px', { align: 'center' }),
             cell(yesNo(ent.mobility.enabled), '0 0 56px', { align: 'center' }),
@@ -2637,6 +2716,15 @@ class Component extends DCLogic {
       aeAdministration: st.aeAdministration, setAeAdministration: e => this.setState({ aeAdministration: e.target.value }),
       aeDepartment: st.aeDepartment, setAeDepartment: e => this.setState({ aeDepartment: e.target.value }),
       aeJobTitle: st.aeJobTitle, setAeJobTitle: e => this.setState({ aeJobTitle: e.target.value }),
+      // Phase 03B.1 — account activation UI for a registry-only employee.
+      employeeDrawerOpen: st.employeeDrawerOpen, closeEmployeeDrawer: () => this.closeEmployeeDrawer(),
+      selectedEmployeeName: st.selectedEmployee?.name || '—',
+      selectedEmployeeAccountStatus: st.selectedEmployee ? ({ NO_ACCOUNT: 'بلا حساب', PENDING_ACTIVATION: 'قيد التفعيل', ACTIVE: 'نشط', SUSPENDED: 'معطل' }[st.selectedEmployee.accountStatus] || st.selectedEmployee.accountStatus) : '—',
+      selectedEmployeeIsNoAccount: st.selectedEmployee?.accountStatus === 'NO_ACCOUNT',
+      selectedEmployeeIsPending: st.selectedEmployee?.accountStatus === 'PENDING_ACTIVATION',
+      selectedEmployeeActivationError: st.selectedEmployee?.activationError || '',
+      actEmail: st.actEmail, setActEmail: e => this.setState({ actEmail: e.target.value }),
+      activateSelectedEmployee: () => this.activateSelectedEmployee(),
       addUserOpen: st.addUserOpen, submitAddUser: () => this.submitAddUser(),
       auName: st.auName, setAuName: e => this.setState({ auName: e.target.value }),
       auEmail: st.auEmail, setAuEmail: e => this.setState({ auEmail: e.target.value }),
@@ -3129,6 +3217,55 @@ class Component extends DCLogic {
     return body;
   }
 
+  openEmployeeDetail(employee) {
+    this.setState({ employeeDrawerOpen: true, selectedEmployee: employee, actEmail: (employee && employee.email) || '' });
+  }
+
+  closeEmployeeDrawer() {
+    this.setState({ employeeDrawerOpen: false, selectedEmployee: null, actEmail: '' });
+  }
+
+  // Re-reads the employee doc from the live registry (this.liveEmployees,
+  // kept current by manager-dashboard-adapter.js's own onSnapshot) so the
+  // drawer always reflects the REAL current state after an activation
+  // attempt — success, or an honest PENDING_ACTIVATION + activationError.
+  refreshSelectedEmployee(employeeId) {
+    const list = Array.isArray(this.liveEmployees) ? this.liveEmployees : [];
+    const fresh = list.find(e => e.id === employeeId) || null;
+    this.setState({ selectedEmployee: fresh });
+    return fresh;
+  }
+
+  // Phase 03B.1: activates a NO_ACCOUNT employee via the existing, already
+  // tested backend flow (api/admin/employees.js activateAccount) — a real
+  // Firebase Auth account, never a second identity, password generated
+  // client-side and never stored in Firestore (only mustChangePassword:
+  // true). No product is auto-assigned here — the manager grants Field/
+  // Lands/Mobility access afterward via the existing service editor, so
+  // this stays a minimal, honest "create the login" step. Manager/
+  // department-head scope and the NO_ACCOUNT -> PENDING_ACTIVATION ->
+  // ACTIVE state machine are both enforced server-side, unchanged.
+  async activateSelectedEmployee() {
+    const employee = this.state.selectedEmployee;
+    if (!employee) return;
+    const email = (this.state.actEmail || '').trim();
+    if (!email) { this.flash('البريد الإلكتروني مطلوب لتفعيل الحساب.'); return; }
+    this.flash('جاري تفعيل الحساب...');
+    try {
+      const tempPassword = this.generateTempPassword();
+      await this.callAdminEmployeesApi('activateAccount', { employeeId: employee.id, email, password: tempPassword });
+      this.flash(`تم تفعيل الحساب بنجاح. كلمة المرور المؤقتة: ${tempPassword}`);
+      this.refreshSelectedEmployee(employee.id);
+    } catch (e) {
+      // A partial failure (502 firestore_link_failed) already left the
+      // employee record honestly in PENDING_ACTIVATION with
+      // activationError on the server — re-read it from the live registry
+      // rather than inventing a client-side message.
+      this.refreshSelectedEmployee(employee.id);
+      this.flash(`تعذر إكمال تفعيل الحساب: ${this.adminApiErrorMessage(e)}`);
+    }
+  }
+
   // Phase 03B: seeds the independent Field/Lands toggles from the
   // selected user's REAL current entitlements (never blank/guessed), so
   // opening the editor shows exactly what is already granted.
@@ -3257,7 +3394,17 @@ class Component extends DCLogic {
       target_organization_mismatch: 'الحساب المستهدف خارج نطاق مؤسستك.',
       password_policy_failed: 'تعذر توليد كلمة مرور مطابقة للسياسة، أعد المحاولة.',
       record_not_found: 'تعذر العثور على الحساب.',
-      no_session: 'الجلسة غير موثقة، الرجاء تسجيل الدخول من جديد.'
+      no_session: 'الجلسة غير موثقة، الرجاء تسجيل الدخول من جديد.',
+      // Phase 03B.1 — employee registry / activation reason codes.
+      employee_not_found: 'تعذر العثور على سجل الموظف.',
+      cross_department_denied: 'الموظف خارج نطاق قسمك.',
+      self_elevation_denied: 'لا يمكن تنفيذ هذا الإجراء على حسابك الخاص.',
+      owner_manager_or_department_head_required: 'لا تملك صلاحية تنفيذ هذا الإجراء.',
+      account_already_active_or_invalid_state: 'الحساب مُفعّل بالفعل أو في حالة غير صالحة لهذا الإجراء.',
+      employeeId_and_email_required: 'البريد الإلكتروني مطلوب لتفعيل الحساب.',
+      firestore_link_failed: 'تعذر إكمال الربط بعد إنشاء الحساب. حالة الحساب الآن قيد التفعيل، أعد المحاولة.',
+      no_linked_account: 'لا يوجد حساب دخول مرتبط بهذا الموظف بعد.',
+      illegal_account_status_transition: 'تعذر تنفيذ هذا التغيير على حالة الحساب الحالية.'
     };
     return messages[e.reason] || messages[e.message] || 'حدث خطأ غير متوقع.';
   }

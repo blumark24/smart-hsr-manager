@@ -26,6 +26,7 @@ let stopAuth = null;
 let stopObservations = null;
 let stopUsers = null;
 let stopIncidents = null;
+let stopEmployees = null;
 let activeAuth = null;
 let activeAuthApi = null;
 
@@ -301,7 +302,7 @@ async function start(component) {
     // subscriptions racing to call update() with independent local
     // observations/users/incidents arrays, so a stale event from the older
     // listener could overwrite newer data from the new one.
-    stopObservations?.(); stopUsers?.(); stopIncidents?.();
+    stopObservations?.(); stopUsers?.(); stopIncidents?.(); stopEmployees?.();
     component.setState({
       orgName: context.organizationName,
       // The manager/supervisor's own approved Firestore name is the
@@ -328,9 +329,16 @@ async function start(component) {
     const filter = firestoreApi.query(firestoreApi.collection(db, 'observations'), firestoreApi.where('organizationId', '==', context.organizationId));
     const userFilter = firestoreApi.query(firestoreApi.collection(db, 'users'), firestoreApi.where('organizationId', '==', context.organizationId));
     const incidentFilter = firestoreApi.query(firestoreApi.collection(db, 'incidents'), firestoreApi.where('organizationId', '==', context.organizationId));
+    // Phase 03B — مركز المستخدمين: the employee master registry
+    // (employees/{employeeId}) is a SEPARATE live subscription from
+    // users/{uid} — an employee can exist here with no Firebase Auth
+    // account at all (accountStatus NO_ACCOUNT/PENDING_ACTIVATION), so it
+    // is never merged into the users query itself.
+    const employeeFilter = firestoreApi.query(firestoreApi.collection(db, 'employees'), firestoreApi.where('organizationId', '==', context.organizationId));
     let observations = [];
     let users = [];
     let incidents = [];
+    let employees = [];
     const update = () => publish(component, buildViewData(observations, users, incidents));
     stopObservations = firestoreApi.onSnapshot(filter, { includeMetadataChanges: true }, snapshot => {
       if (snapshot.metadata.fromCache) return;
@@ -362,6 +370,18 @@ async function start(component) {
       component.setState({ dataState: 'error', dataError: component.liveDataError });
       component.flash(component.liveDataError);
     });
+    // Independent of buildViewData's metrics pipeline (employees never
+    // feed any KPI/chart derived there) — published directly so مركز
+    // المستخدمين always reflects the real, live registry, including a
+    // just-completed account activation.
+    stopEmployees = firestoreApi.onSnapshot(employeeFilter, { includeMetadataChanges: true }, snapshot => {
+      if (snapshot.metadata.fromCache || component !== activeComponent) return;
+      employees = snapshot.docs.map(entry => ({ id: entry.id, ...(entry.data() || {}) }));
+      component.liveEmployees = employees;
+      component.setState(state => ({ liveRevision: (state.liveRevision || 0) + 1 }));
+    }, () => {
+      component.flash('تعذر تحميل سجل الموظفين.');
+    });
   });
 }
 
@@ -371,7 +391,8 @@ function disconnect(component) {
   stopObservations?.();
   stopUsers?.();
   stopIncidents?.();
-  stopAuth = stopObservations = stopUsers = stopIncidents = null;
+  stopEmployees?.();
+  stopAuth = stopObservations = stopUsers = stopIncidents = stopEmployees = null;
   activeAuth = null;
   activeAuthApi = null;
   activeComponent = null;
@@ -390,6 +411,7 @@ window.SmartHSRManagerAdapter = {
         dataState: 'ready',
         dataError: ''
       });
+      component.liveEmployees = [];
       publish(component, buildViewData([], []));
       return;
     }

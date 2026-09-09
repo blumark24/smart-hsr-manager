@@ -97,15 +97,18 @@ function evaluateVehicleTransition({ actor, vehicle, toStatus, requestedFields, 
     }
   }
 
-  // Phase 03B: vehicleEligible is an independent entitlement, not a role —
-  // enforced here, not merely by a UI checkbox, so a manager revoking it
-  // genuinely blocks a NEW allocation to that employee. Backward-compatible
-  // by construction: `assignedEmployee` is an optional parameter, so every
-  // existing caller that never passes it (and therefore every employee
-  // record created before this field existed) sees zero behavior change.
-  // Only an EXPLICIT `assignedEmployee.vehicleEligible === false` denies.
-  if (contract.action === 'allocate' && assignedEmployee && assignedEmployee.vehicleEligible === false) {
-    return decision(false, 'VEHICLE_ELIGIBILITY_DENIED', 'The employee assigned to this vehicle is not vehicle-eligible.');
+  // Phase 03B.1 hotfix — fail-safe default: vehicleEligible is an
+  // independent entitlement, not a role, enforced here rather than merely
+  // by a UI checkbox. ONLY an EXPLICIT `assignedEmployee.vehicleEligible
+  // === true` counts as eligible; a missing field, an omitted
+  // `assignedEmployee` argument, or any other value all deny — the
+  // previous "missing means eligible" default was found to be unsafe and
+  // is intentionally reversed here. This is a real behavior change for
+  // every pre-existing record with no vehicleEligible field: it must now
+  // be explicitly granted before a NEW allocation succeeds (no bulk
+  // migration is performed by this hotfix).
+  if (contract.action === 'allocate' && !(assignedEmployee && assignedEmployee.vehicleEligible === true)) {
+    return decision(false, 'VEHICLE_ELIGIBILITY_DENIED', 'The employee assigned to this vehicle is not confirmed vehicle-eligible.');
   }
 
   return decision(true, 'TRANSITION_ALLOWED', `The ${actor.role} role may request ${fromStatus} -> ${toStatus}.`);

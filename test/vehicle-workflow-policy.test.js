@@ -31,10 +31,11 @@ test('mobility_head cannot reserve a vehicle without assignedEmployeeUid and cur
   assert.equal(decision.code, 'REQUIRED_FIELDS_MISSING');
 });
 
-test('mobility_head reserves an available vehicle with the required fields', () => {
+test('mobility_head reserves an available vehicle with the required fields (and confirmed vehicle eligibility)', () => {
   const decision = evaluateVehicleTransition({
     actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
     requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+    assignedEmployee: { vehicleEligible: true },
   });
   assert.equal(decision.allowed, true);
 });
@@ -80,6 +81,10 @@ test('the full fleet lifecycle is walkable end to end', () => {
       vehicle: vehicle(from, { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' }),
       toStatus: to,
       requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+      // Only the allocate step (AVAILABLE -> RESERVED) is gated by
+      // vehicleEligible; a confirmed-eligible employee lets the whole
+      // lifecycle walk through unaffected by the Phase 03B.1 fail-safe.
+      assignedEmployee: { vehicleEligible: true },
     });
     assert.equal(decision.allowed, true, `${from} -> ${to} by ${role} should be allowed: ${decision.code}`);
   }
@@ -105,7 +110,8 @@ test('a cross-organization actor is denied regardless of role', () => {
   assert.equal(decision.code, 'ORGANIZATION_SCOPE_DENIED');
 });
 
-// ---- Phase 03B: vehicleEligible is an independent, server-enforced entitlement ----
+// ---- Phase 03B.1 hotfix: vehicleEligible is fail-safe — ONLY an explicit
+// true is eligible; missing/false/anything else denies a NEW allocation ----
 
 test('vehicleEligible: true allows allocation', () => {
   const decision = evaluateVehicleTransition({
@@ -126,12 +132,42 @@ test('vehicleEligible: an explicit false on the target employee denies allocatio
   assert.equal(decision.code, 'VEHICLE_ELIGIBILITY_DENIED');
 });
 
-test('vehicleEligible: absent assignedEmployee (every pre-Phase-03B caller) has zero behavior change', () => {
+test('vehicleEligible: a record with no vehicleEligible field at all is denied (fail-safe default)', () => {
+  const decision = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+    requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+    assignedEmployee: {},
+  });
+  assert.equal(decision.allowed, false);
+  assert.equal(decision.code, 'VEHICLE_ELIGIBILITY_DENIED');
+});
+
+test('vehicleEligible: an omitted assignedEmployee argument is denied (fail-safe default)', () => {
   const decision = evaluateVehicleTransition({
     actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
     requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
   });
-  assert.equal(decision.allowed, true, 'omitting assignedEmployee must never newly deny an existing caller');
+  assert.equal(decision.allowed, false, 'omitting eligibility data must never be silently treated as eligible');
+  assert.equal(decision.code, 'VEHICLE_ELIGIBILITY_DENIED');
+});
+
+test('vehicleEligible: revocation (true -> false) denies a subsequent NEW allocation attempt', () => {
+  const employee = { vehicleEligible: true };
+  const firstAttempt = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+    requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+    assignedEmployee: employee,
+  });
+  assert.equal(firstAttempt.allowed, true);
+
+  employee.vehicleEligible = false; // manager revokes eligibility
+  const secondAttempt = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+    requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+    assignedEmployee: employee,
+  });
+  assert.equal(secondAttempt.allowed, false);
+  assert.equal(secondAttempt.code, 'VEHICLE_ELIGIBILITY_DENIED');
 });
 
 test('vehicleEligible removal only blocks a NEW allocation, never a transition where it is not passed (e.g. handover, return)', () => {

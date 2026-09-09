@@ -200,21 +200,22 @@ test('manager-dashboard-adapter.js: the live users list is filtered through belo
 // loadFromFirestore() could be invoked repeatedly, layering new onSnapshot
 // listeners over old ones with no way to tell an old callback's data apart
 // from a new one's. The current architecture removes the race at its root
-// instead of counting around it: stopObservations/stopUsers/stopIncidents
-// unconditionally tear down any previous listeners before the auth-state
-// handler ever creates new ones (see the "onAuthStateChanged" fix below),
-// and manager-phase3-functional-parity.test.js's "No user-mutation handler
-// manually refetches the user list" confirms there is no other code path
-// that could re-invoke subscription setup mid-session at all — so there is
-// never more than one live listener whose callbacks could race.
-test("16. any previous users/observations/incidents listeners are torn down before new ones are created, so a stale callback can never fire after a fresh subscription starts", () => {
+// instead of counting around it: stopObservations/stopUsers/stopIncidents/
+// stopEmployees unconditionally tear down any previous listeners before the
+// auth-state handler ever creates new ones (see the "onAuthStateChanged"
+// fix below), and manager-phase3-functional-parity.test.js's "No
+// user-mutation handler manually refetches the user list" confirms there
+// is no other code path that could re-invoke subscription setup mid-session
+// at all — so there is never more than one live listener whose callbacks
+// could race.
+test("16. any previous users/observations/incidents/employees listeners are torn down before new ones are created, so a stale callback can never fire after a fresh subscription starts", () => {
   const source = read('manager-dashboard-adapter.js');
   const authHandlerStart = source.indexOf('onAuthStateChanged(auth, async user =>') !== -1
     ? source.indexOf('onAuthStateChanged(auth, async user =>')
     : source.indexOf('onAuthStateChanged(auth,');
   assert.notEqual(authHandlerStart, -1, 'onAuthStateChanged wiring not found');
   const fn = source.slice(authHandlerStart, authHandlerStart + 900);
-  assert.match(fn, /stopObservations\?\.\(\); stopUsers\?\.\(\); stopIncidents\?\.\(\);/);
+  assert.match(fn, /stopObservations\?\.\(\); stopUsers\?\.\(\); stopIncidents\?\.\(\); stopEmployees\?\.\(\);/);
   // and the subscription setup itself never happens anywhere except inside
   // this one auth-state handler.
   const setupCount = (source.match(/stopUsers = firestoreApi\.onSnapshot\(userFilter/g) || []).length;

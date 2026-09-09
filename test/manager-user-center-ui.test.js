@@ -43,19 +43,24 @@ test('the stale "read-only view" claim is gone — real capabilities (activation
   assert.doesNotMatch(manager, /عرض للقراءة فقط للمستخدمين/);
 });
 
-test('KPI cards are derived from the real, already-loaded allUsers array — never a fabricated/hardcoded statistic', () => {
+test('KPI cards are derived from the real, already-loaded combinedRows (live accounts + registry-only employees) — never a fabricated/hardcoded statistic', () => {
   const start = manager.indexOf("if (st.view === 'users')");
   const block = manager.slice(start, manager.indexOf("} else if (st.view === 'incidents')", start));
   assert.match(block, /const allUsers = Array\.isArray\(this\.liveUsers\) \? this\.liveUsers : \[\]/);
+  assert.match(block, /const allEmployees = Array\.isArray\(this\.liveEmployees\) \? this\.liveEmployees : \[\]/);
+  assert.match(block, /const combinedRows = \[/);
   assert.match(block, /userCenterKpis = \[/);
-  assert.match(block, /kpiCard\('إجمالي الموظفين', allUsers\.length\)/);
+  assert.match(block, /kpiCard\('إجمالي الموظفين', combinedRows\.length\)/);
   assert.match(block, /kpiCard\('الحسابات المفعلة', activatedCount\)/);
   assert.match(block, /kpiCard\('غير المفعلة', deactivatedCount\)/);
   assert.match(block, /kpiCard\('المستخدمون حسب المنتجات',/);
   assert.match(block, /kpiCard\('المؤهلون لاستلام مركبة', vehicleEligibleCount\)/);
-  // Every count is a real .filter(...).length off allUsers, never a
+  // Every count is a real .filter(...).length off combinedRows, never a
   // literal number.
   assert.doesNotMatch(block, /kpiCard\('[^']+',\s*\d+\)/, 'no KPI card may be a hardcoded literal number');
+  // "activated" honestly means a real ACTIVE login account — NO_ACCOUNT/
+  // PENDING_ACTIVATION/SUSPENDED registry rows must never count as activated.
+  assert.match(block, /const activatedCount = combinedRows\.filter\(r => r\.accountStatus === 'ACTIVE'\)\.length/);
 });
 
 test('filters exist for role, product, vehicle eligibility, and department — all derived from live data', () => {
@@ -63,7 +68,7 @@ test('filters exist for role, product, vehicle eligibility, and department — a
   const block = manager.slice(start, manager.indexOf("} else if (st.view === 'incidents')", start));
   assert.match(block, /tProductFilters = productFilterNames\.map/);
   assert.match(block, /tVehicleFilters = vehicleFilterNames\.map/);
-  assert.match(block, /const deptValues = Array\.from\(new Set\(allUsers\.map\(u => u\.department\)\.filter\(Boolean\)\)\)/);
+  assert.match(block, /const deptValues = Array\.from\(new Set\(combinedRows\.map\(r => r\.department\)\.filter\(Boolean\)\)\)/);
 });
 
 test('the table shows الإدارة/القسم/المسمى/الحصر/الأراضي/الحركة/دور الحركة/المركبة columns', () => {
@@ -76,7 +81,7 @@ test('the table shows الإدارة/القسم/المسمى/الحصر/الأر
 
 test('"إضافة موظف بلا حساب" opens a real drawer wired to the new employees registry endpoint, never /api/admin/users', () => {
   assert.match(manager, /openAddEmployee/);
-  const fn = methodBody(manager, 'async submitAddEmployee() {');
+  const fn = methodBody(manager, 'async submitAddEmployee() {', 700);
   assert.match(fn, /callAdminEmployeesApi\('create',/);
   assert.doesNotMatch(fn, /callAdminUsersApi/);
   // A registry-only record must never carry a password or role field.
@@ -91,9 +96,9 @@ test('callAdminEmployeesApi posts to /api/admin/employees with a verified bearer
   assert.match(fn, /getAuthToken\?\.\(\)/);
 });
 
-test('resolveManagerProductEntitlements never invents a landsAccess.role outside LANDS_MANAGEABLE_ROLES, and defaults vehicleEligible to true', () => {
+test('resolveManagerProductEntitlements never invents a landsAccess.role outside LANDS_MANAGEABLE_ROLES, and defaults vehicleEligible to false (Phase 03B.1 fail-safe)', () => {
   const fn = methodBody(manager, 'function resolveManagerProductEntitlements(u) {');
   assert.match(fn, /lands_employee/);
   assert.match(fn, /lands_department_manager/);
-  assert.match(fn, /vehicleEligible: data\.vehicleEligible !== false/);
+  assert.match(fn, /vehicleEligible: data\.vehicleEligible === true/);
 });

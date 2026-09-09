@@ -37,12 +37,13 @@ function resolveProductEntitlements(userDoc) {
     mobility: Object.freeze({
       enabled: isMobilityRole,
       role: isMobilityRole ? role : null,
-      // Backward-compatible default: an employee record created before this
-      // field existed has vehicleEligible === undefined, and must NOT be
-      // silently treated as ineligible — only an EXPLICIT false revokes
-      // eligibility. See platform/policies/vehicle-workflow-policy.js for
-      // where this is actually enforced server-side.
-      vehicleEligible: data.vehicleEligible !== false,
+      // Phase 03B.1 hotfix — fail-safe default: ONLY an EXPLICIT true
+      // counts as eligible. A record with no vehicleEligible field at all
+      // (every employee created before this field existed) is now NOT
+      // eligible until a manager/department head explicitly grants it —
+      // see platform/policies/vehicle-workflow-policy.js and
+      // firestore.rules for where this is actually enforced server-side.
+      vehicleEligible: data.vehicleEligible === true,
     }),
     lands: Object.freeze({ enabled: landsEnabled, role: landsEnabled ? landsAccess.role : null }),
   });
