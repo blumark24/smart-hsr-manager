@@ -91,18 +91,29 @@ test('Service editing sends the full field+lands state together, and both may no
   assert.doesNotMatch(fn, /choice\.kind/, 'must not regress to the old single-choice parameter shape');
 });
 
+// PHASE 06A hotfix — Field and Mobility now seed two fully independent
+// toggle pairs (svcFieldEnabled/svcFieldRole and
+// svcMobilityEnabled/svcMobilityRole), each straight from the resolver's
+// already-independent field/mobility entitlements, instead of collapsing
+// both into one shared control.
 test('openServiceEdit seeds the independent toggles from the REAL current entitlements, never blank', () => {
   const fn = methodBody(manager, 'openServiceEdit() {');
   assert.match(fn, /resolveManagerProductEntitlements\(this\.state\.selectedUser\)/);
-  assert.match(fn, /svcFieldEnabled:\s*ent\.field\.enabled \|\| ent\.mobility\.enabled/);
+  assert.match(fn, /svcFieldEnabled:\s*ent\.field\.enabled/);
+  assert.match(fn, /svcMobilityEnabled:\s*ent\.mobility\.enabled/);
   assert.match(fn, /svcLandsEnabled:\s*ent\.lands\.enabled/);
 });
 
-test('Field and Lands role options include the real manageable roles, not an invented Lands role', () => {
+test('Field, Mobility, and Lands role options are each scoped to their own real manageable roles, never mixed or invented', () => {
   const fieldStart = manager.indexOf('svcFieldRoleOptions:');
   const fieldBlock = manager.slice(fieldStart, manager.indexOf(']', fieldStart) + 1);
-  assert.match(fieldBlock, /mobility_head/);
-  assert.match(fieldBlock, /employee/);
+  assert.doesNotMatch(fieldBlock, /mobility_head/, 'Field role options must no longer include a Mobility role');
+  assert.match(fieldBlock, /supervisor/);
+  const mobilityStart = manager.indexOf('svcMobilityRoleOptions:');
+  const mobilityBlock = manager.slice(mobilityStart, manager.indexOf(']', mobilityStart) + 1);
+  assert.match(mobilityBlock, /mobility_head/);
+  assert.match(mobilityBlock, /employee/);
+  assert.doesNotMatch(mobilityBlock, /supervisor/, 'Mobility role options must no longer include a Field role');
   const landsStart = manager.indexOf('svcLandsRoleOptions:');
   const landsBlock = manager.slice(landsStart, manager.indexOf(']', landsStart) + 1);
   assert.match(landsBlock, /lands_employee/);
@@ -110,10 +121,9 @@ test('Field and Lands role options include the real manageable roles, not an inv
   assert.doesNotMatch(landsBlock, /lands_municipal_manager/, 'the institutional Lands role must never be manager-assignable here');
 });
 
-test('vehicleEligible is only sent when the Field role selected is a real Mobility role', () => {
+test('vehicleEligible is only sent when Mobility itself is enabled, independent of Field', () => {
   const fn = methodBody(manager, 'async submitServiceChange()');
-  assert.match(fn, /mobilityRoles\.includes\(svcFieldRole\)/);
-  assert.match(fn, /params\.vehicleEligible = svcVehicleEligible/);
+  assert.match(fn, /if \(svcMobilityEnabled\) params\.vehicleEligible = svcVehicleEligible/);
 });
 
 // ---- User list refresh after mutation (no manual refetch — real live subscription) ----

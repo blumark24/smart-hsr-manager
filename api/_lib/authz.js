@@ -54,6 +54,16 @@ const MANAGEABLE_ROLES = ['manager', 'supervisor', 'inspector', 'contractor', ..
 // Roles an organization manager (as opposed to an owner) may manage.
 const MANAGER_SCOPED_ROLES = ['supervisor', 'inspector', 'contractor', ...MOBILITY_MANAGEABLE_ROLES];
 
+// PHASE 06A hotfix — Field's own three role values, kept as their own list
+// (distinct from MANAGER_SCOPED_ROLES, which still covers "any role the
+// legacy scalar `role` field may hold at all" for the broader
+// can-a-manager-manage-this-record checks above, unaffected by this
+// hotfix). Used to scope the `field` service-entitlement selection to Field
+// roles only, now that Mobility has its own independent
+// validateMobilitySelection()/MOBILITY_MANAGEABLE_ROLES check — Field must
+// no longer accept a Mobility role value, and vice versa.
+const FIELD_MANAGEABLE_ROLES = ['supervisor', 'inspector', 'contractor'];
+
 // Smart HSR Lands roles a manager may assign as a SERVICE ENTITLEMENT DECLARATION
 // (see api/admin/users.js `setServices`/`create`). This is deliberately a
 // separate, smaller list from Field's roles: lands_municipal_manager is an
@@ -219,6 +229,7 @@ module.exports = {
   MANAGEABLE_ROLES,
   MANAGER_SCOPED_ROLES,
   MOBILITY_MANAGEABLE_ROLES,
+  FIELD_MANAGEABLE_ROLES,
   LANDS_MANAGEABLE_ROLES,
   MANAGER_MANAGEMENT_ENABLED,
   isManagerScopedTarget,

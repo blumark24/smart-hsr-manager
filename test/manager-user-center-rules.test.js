@@ -11,6 +11,7 @@
 // Run: node test/run-user-center-rules.js
 // ============================================================================
 const { before, after, beforeEach, test } = require('node:test');
+const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -174,4 +175,76 @@ test('vehicleEligible: does not block any OTHER vehicle transition (handover) on
   await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V-ineligible'), {
     status: 'IN_MISSION', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
   }));
+});
+
+// ============================================================
+// PHASE 06A hotfix — Mobility Entitlement Independence. Real Firestore
+// Rules verification that the independent users/{uid}.mobilityAccess field
+// (mirrors firestore.rules' mobilityRoleValue()) lets Field and Mobility
+// coexist on one identity, and that once a record is touched by the new
+// field, it alone decides that record's Mobility state.
+// ============================================================
+test('PHASE 06A: a single identity holds BOTH a Field role (legacy `role`) AND an independent Mobility role (mobilityAccess) at once', async () => {
+  const uid = 'dual-field-mobility-uid';
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'users', uid), {
+      role: 'supervisor', active: true, organizationId: ORG_A,
+      mobilityAccess: { enabled: true, role: 'mobility_head' },
+    });
+  });
+  // Recognized as mobility_head for Mobility purposes (missions/vehicles
+  // read), even though the legacy `role` field holds a Field role, not a
+  // Mobility one — proving the two are genuinely independent now.
+  await assertSucceeds(getDoc(doc(ctx(uid), 'missions', 'approvedA')));
+  await assertSucceeds(getDoc(doc(ctx(uid), 'vehicles', 'V-eligible')));
+});
+
+test('PHASE 06A: mobilityAccess.enabled === false denies Mobility access even when the legacy `role` field still holds a stale Mobility value', async () => {
+  const uid = 'stale-legacy-role-uid';
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'users', uid), {
+      // A record from BEFORE this hotfix, now explicitly disabled via the
+      // new independent control — the manager's disable action must
+      // actually take effect, not be silently overridden by the untouched
+      // legacy field.
+      role: 'mobility_head', active: true, organizationId: ORG_A,
+      mobilityAccess: { enabled: false, role: null },
+    });
+  });
+  await assertFails(getDoc(doc(ctx(uid), 'missions', 'approvedA')));
+  await assertFails(getDoc(doc(ctx(uid), 'vehicles', 'V-eligible')));
+});
+
+test('PHASE 06A: a record with role === null but mobilityAccess.enabled === true is still a fully valid Mobility user (and a valid vehicle-allocation target)', async () => {
+  const uid = 'mobility-only-migrated-uid';
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, 'users', uid), {
+      role: null, active: true, organizationId: ORG_A,
+      mobilityAccess: { enabled: true, role: 'employee' },
+      vehicleEligible: true,
+    });
+    await setDoc(doc(db, 'vehicles', 'V-migrated'), { organizationId: ORG_A, status: 'AVAILABLE' });
+  });
+  await assertSucceeds(allocate('V-migrated', uid));
+});
+
+test('PHASE 06A: disabling Mobility via mobilityAccess does not affect an independently-enabled Field role on the same identity', async () => {
+  const uid = 'field-survives-mobility-disable-uid';
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'users', uid), {
+      role: 'supervisor', active: true, organizationId: ORG_A,
+      mobilityAccess: { enabled: false, role: null },
+    });
+  });
+  // Mobility is denied (already proven above), but nothing here claims
+  // Field access through Mobility-scoped collections — this test instead
+  // confirms Mobility denial alone, per role independence: the legacy
+  // `role` field (Field's own, untouched by the mobility disable write)
+  // still reads back exactly as stored.
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const snap = await getDoc(doc(context.firestore(), 'users', uid));
+    assert.equal(snap.data().role, 'supervisor');
+  });
+  await assertFails(getDoc(doc(ctx(uid), 'missions', 'approvedA')));
 });

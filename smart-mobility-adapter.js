@@ -84,7 +84,16 @@ async function verifyMobilityAccess(api, db, user) {
   const orgUser = await api.getDoc(api.doc(db, 'users', user.uid));
   if (!orgUser.exists()) return null;
   const data = orgUser.data() || {};
-  const designRole = MOBILITY_ROLE_TO_DESIGN_ID[data.role];
+  // PHASE 06A hotfix — Mobility's role may now live in the independent
+  // mobilityAccess field instead of the legacy scalar `role` (see
+  // firestore.rules' mobilityRoleValue() for the exact same dual-read,
+  // server-side). Once mobilityAccess exists on a record at all, it is the
+  // sole source of truth for Mobility purposes — only a record that has
+  // never been touched by the new field falls back to the legacy `role`.
+  const mobilityRole = ('mobilityAccess' in data)
+    ? (data.mobilityAccess && data.mobilityAccess.enabled === true ? data.mobilityAccess.role : null)
+    : data.role;
+  const designRole = MOBILITY_ROLE_TO_DESIGN_ID[mobilityRole];
   const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
   if (!designRole || data.active === false || !organizationId) return null;
   return {
@@ -108,6 +117,12 @@ function normalizeMission(id, data) {
     scope: data.scope || 'داخل النطاق',
     why: data.reason || '—',
     requester: data.requesterName || 'رئيس القسم',
+    // PHASE 06A hotfix (GPS honesty) — this is mission-lifecycle context
+    // only (is a real device in motion for this mission), never a claim
+    // that real GPS/location data exists. smart-mobility.html's own
+    // gpsLabel/gpsCol/gps-status rows are the honest, worded-accordingly
+    // disclosure — this raw boolean must never be rendered as "GPS نشط"
+    // or similar directly.
     gps: data.status === 'IN_PROGRESS' || data.status === 'HANDED_OVER',
     // Raw fields the adapter's action functions and rules-mirrored checks need.
     organizationId: data.organizationId, department: data.department,

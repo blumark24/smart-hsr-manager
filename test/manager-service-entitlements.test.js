@@ -142,11 +142,15 @@ test('assertSingleService: allows Field-only, Lands-only, neither, or both toget
   assert.equal(assertSingleService(true, true).ok, true);
 });
 
+// PHASE 06A hotfix: resolveEffectiveServiceState now also returns
+// existingMobilityEnabled (a third, independent entitlement) — false in
+// all three cases below since none of them pass an existing Mobility role
+// or mobilityAccess field.
 test('resolveEffectiveServiceState: a request mentioning only Lands keeps the existing Field role in effect, and combined access is now allowed', () => {
   const fieldSel = validateFieldSelection(undefined); // not present in this request
   const landsSel = validateLandsSelection({ enabled: true, role: 'lands_employee' });
   const result = resolveEffectiveServiceState(fieldSel, landsSel, 'inspector', undefined);
-  assert.deepEqual(result, { fieldEffectiveEnabled: true, landsEffectiveEnabled: true });
+  assert.deepEqual(result, { fieldEffectiveEnabled: true, landsEffectiveEnabled: true, existingMobilityEnabled: false });
   // Phase 03B: an employee gaining Lands access while keeping their existing
   // Field role is now an explicitly supported combined-access outcome.
   assert.equal(assertSingleService(result.fieldEffectiveEnabled, result.landsEffectiveEnabled).ok, true);
@@ -156,7 +160,7 @@ test('resolveEffectiveServiceState: an explicit transfer (both mentioned) can st
   const fieldSel = validateFieldSelection({ enabled: false });
   const landsSel = validateLandsSelection({ enabled: true, role: 'lands_employee' });
   const result = resolveEffectiveServiceState(fieldSel, landsSel, 'inspector', undefined);
-  assert.deepEqual(result, { fieldEffectiveEnabled: false, landsEffectiveEnabled: true });
+  assert.deepEqual(result, { fieldEffectiveEnabled: false, landsEffectiveEnabled: true, existingMobilityEnabled: false });
   assert.equal(assertSingleService(result.fieldEffectiveEnabled, result.landsEffectiveEnabled).ok, true);
 });
 
@@ -164,6 +168,6 @@ test('resolveEffectiveServiceState: a request mentioning only Field keeps an exi
   const fieldSel = validateFieldSelection({ enabled: true, role: 'inspector' });
   const landsSel = validateLandsSelection(undefined);
   const result = resolveEffectiveServiceState(fieldSel, landsSel, null, { enabled: true, role: 'lands_employee', syncStatus: 'synced' });
-  assert.deepEqual(result, { fieldEffectiveEnabled: true, landsEffectiveEnabled: true });
+  assert.deepEqual(result, { fieldEffectiveEnabled: true, landsEffectiveEnabled: true, existingMobilityEnabled: false });
   assert.equal(assertSingleService(result.fieldEffectiveEnabled, result.landsEffectiveEnabled).ok, true);
 });

@@ -13,6 +13,13 @@ function actor(role, overrides = {}) {
 function vehicle(status, overrides = {}) {
   return { organizationId: ORG_A, status, ...overrides };
 }
+// PHASE 06A hotfix — a valid allocation target must be a real, same-org,
+// active, genuinely-Mobility-role employee with vehicleEligible === true;
+// this is the "everything correct" baseline every positive test starts
+// from, overridden per test to probe exactly one failure at a time.
+function mobilityEmployee(overrides = {}) {
+  return { organizationId: ORG_A, active: true, role: 'employee', vehicleEligible: true, ...overrides };
+}
 
 test('every canonical vehicle status is unique and non-empty', () => {
   const seen = new Set();
@@ -35,7 +42,7 @@ test('mobility_head reserves an available vehicle with the required fields (and 
   const decision = evaluateVehicleTransition({
     actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
     requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
-    assignedEmployee: { vehicleEligible: true },
+    assignedEmployee: mobilityEmployee(),
   });
   assert.equal(decision.allowed, true);
 });
@@ -84,7 +91,7 @@ test('the full fleet lifecycle is walkable end to end', () => {
       // Only the allocate step (AVAILABLE -> RESERVED) is gated by
       // vehicleEligible; a confirmed-eligible employee lets the whole
       // lifecycle walk through unaffected by the Phase 03B.1 fail-safe.
-      assignedEmployee: { vehicleEligible: true },
+      assignedEmployee: mobilityEmployee(),
     });
     assert.equal(decision.allowed, true, `${from} -> ${to} by ${role} should be allowed: ${decision.code}`);
   }
@@ -117,7 +124,7 @@ test('vehicleEligible: true allows allocation', () => {
   const decision = evaluateVehicleTransition({
     actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
     requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
-    assignedEmployee: { vehicleEligible: true },
+    assignedEmployee: mobilityEmployee(),
   });
   assert.equal(decision.allowed, true);
 });
@@ -126,7 +133,7 @@ test('vehicleEligible: an explicit false on the target employee denies allocatio
   const decision = evaluateVehicleTransition({
     actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
     requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
-    assignedEmployee: { vehicleEligible: false },
+    assignedEmployee: mobilityEmployee({ vehicleEligible: false }),
   });
   assert.equal(decision.allowed, false);
   assert.equal(decision.code, 'VEHICLE_ELIGIBILITY_DENIED');
@@ -136,10 +143,65 @@ test('vehicleEligible: a record with no vehicleEligible field at all is denied (
   const decision = evaluateVehicleTransition({
     actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
     requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
-    assignedEmployee: {},
+    assignedEmployee: { organizationId: ORG_A, active: true, role: 'employee' },
   });
   assert.equal(decision.allowed, false);
   assert.equal(decision.code, 'VEHICLE_ELIGIBILITY_DENIED');
+});
+
+// ---- PHASE 06A hotfix: the target employee itself must be real, same-org,
+// active, and a genuine Mobility role — not just vehicleEligible ----
+
+test('PHASE 06A: a nonexistent/unverifiable target employee (assignedEmployee omitted) is denied', () => {
+  const decision = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+    requestedFields: { assignedEmployeeUid: 'ghost-uid', currentMissionId: 'm-1' },
+  });
+  assert.equal(decision.allowed, false);
+  assert.equal(decision.code, 'ASSIGNED_EMPLOYEE_NOT_FOUND');
+});
+
+test('PHASE 06A: a target employee from a different organization is denied, even if vehicleEligible', () => {
+  const decision = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+    requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+    assignedEmployee: mobilityEmployee({ organizationId: 'org-b' }),
+  });
+  assert.equal(decision.allowed, false);
+  assert.equal(decision.code, 'ASSIGNED_EMPLOYEE_ORGANIZATION_MISMATCH');
+});
+
+test('PHASE 06A: an inactive target employee is denied, even if vehicleEligible', () => {
+  const decision = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+    requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+    assignedEmployee: mobilityEmployee({ active: false }),
+  });
+  assert.equal(decision.allowed, false);
+  assert.equal(decision.code, 'ASSIGNED_EMPLOYEE_INACTIVE');
+});
+
+test('PHASE 06A: a target employee holding a non-Mobility role (e.g. a Field/Lands role) is denied, even if vehicleEligible', () => {
+  for (const role of ['supervisor', 'inspector', 'contractor', 'lands_employee', 'lands_department_manager']) {
+    const decision = evaluateVehicleTransition({
+      actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+      requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+      assignedEmployee: mobilityEmployee({ role }),
+    });
+    assert.equal(decision.allowed, false, `role ${role} must not be allocatable a vehicle`);
+    assert.equal(decision.code, 'ASSIGNED_EMPLOYEE_NOT_MOBILITY_ROLE');
+  }
+});
+
+test('PHASE 06A: each of the four real Mobility operational roles is a valid allocation target when otherwise eligible', () => {
+  for (const role of ['mobility_head', 'department_head', 'administrative_affairs', 'employee']) {
+    const decision = evaluateVehicleTransition({
+      actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+      requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+      assignedEmployee: mobilityEmployee({ role }),
+    });
+    assert.equal(decision.allowed, true, `role ${role} should be a valid allocation target: ${decision.code}`);
+  }
 });
 
 test('vehicleEligible: an omitted assignedEmployee argument is denied (fail-safe default)', () => {
@@ -148,11 +210,14 @@ test('vehicleEligible: an omitted assignedEmployee argument is denied (fail-safe
     requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
   });
   assert.equal(decision.allowed, false, 'omitting eligibility data must never be silently treated as eligible');
-  assert.equal(decision.code, 'VEHICLE_ELIGIBILITY_DENIED');
+  // PHASE 06A hotfix: an omitted target is now caught by the earlier,
+  // broader "could not verify the target at all" check, before eligibility
+  // is even reached — same fail-safe outcome, more specific reason.
+  assert.equal(decision.code, 'ASSIGNED_EMPLOYEE_NOT_FOUND');
 });
 
 test('vehicleEligible: revocation (true -> false) denies a subsequent NEW allocation attempt', () => {
-  const employee = { vehicleEligible: true };
+  const employee = mobilityEmployee();
   const firstAttempt = evaluateVehicleTransition({
     actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
     requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },

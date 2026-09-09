@@ -34,6 +34,10 @@ const UID = {
   employeeA: 'employee-a-uid',
   employeeA2: 'employee-a2-uid',
   inactiveMobilityHeadA: 'inactive-mobility-head-a-uid',
+  // PHASE 06A hotfix — vehicle-allocation target-employee fixtures.
+  employeeB: 'employee-b-uid',
+  inactiveEmployeeA: 'inactive-employee-a-uid',
+  noVehicleEligibleFieldA: 'field-supervisor-a-uid',
 };
 
 let testEnv;
@@ -67,6 +71,14 @@ async function seed() {
     await setDoc(doc(db, 'users', UID.employeeA), { role: 'employee', active: true, organizationId: ORG_A, vehicleEligible: true });
     await setDoc(doc(db, 'users', UID.employeeA2), { role: 'employee', active: true, organizationId: ORG_A, vehicleEligible: true });
     await setDoc(doc(db, 'users', UID.inactiveMobilityHeadA), { role: 'mobility_head', active: false, organizationId: ORG_A });
+    // PHASE 06A hotfix — vehicle-allocation target-employee fixtures: a
+    // real employee in a DIFFERENT organization, a real but inactive
+    // employee in ORG_A, and a real ORG_A user who is NOT a Mobility role
+    // (a Field supervisor) — all vehicleEligible: true, so eligibility
+    // alone must not be enough to let any of them be allocated a vehicle.
+    await setDoc(doc(db, 'users', UID.employeeB), { role: 'employee', active: true, organizationId: ORG_B, vehicleEligible: true });
+    await setDoc(doc(db, 'users', UID.inactiveEmployeeA), { role: 'employee', active: false, organizationId: ORG_A, vehicleEligible: true });
+    await setDoc(doc(db, 'users', UID.noVehicleEligibleFieldA), { role: 'supervisor', active: true, organizationId: ORG_A, vehicleEligible: true });
 
     await setDoc(doc(db, 'missions', 'draftA'), {
       organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'DRAFT',
@@ -355,6 +367,71 @@ test('V8 CONFLICT PREVENTION (sequential race): once the first allocation commit
     updatedByUid: UID.mobilityHeadA, updatedAt: 2,
   });
   await assertFails(second);
+});
+
+// ---- PHASE 06A hotfix: a NEW vehicle allocation must independently verify
+// the TARGET employee — not just vehicleEligible on whatever doc happens
+// to sit at that uid — server/Rules-side, never merely UI-filtered. ----
+
+test('V8b PHASE 06A: allocating to an eligible employee in the SAME organization still succeeds', async () => {
+  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V8c PHASE 06A: allocating to an employee from a DIFFERENT organization is denied, even though vehicleEligible is true', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.employeeB, currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V8d PHASE 06A: allocating to an INACTIVE employee is denied, even though vehicleEligible is true', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.inactiveEmployeeA, currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V8e PHASE 06A: allocating to a user who does NOT hold a Mobility operational role (a Field supervisor) is denied, even though vehicleEligible is true', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.noVehicleEligibleFieldA, currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V8f PHASE 06A: allocating to a NONEXISTENT employee uid is denied', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: 'no-such-user-uid', currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V8g PHASE 06A: the mission-side APPROVED -> VEHICLE_ALLOCATED write is independently gated the same way — a bad target denies even if the vehicle write is not attempted', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
+    status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: UID.employeeB,
+    assignedEmployeeName: 'x', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
+    status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: 'no-such-user-uid',
+    assignedEmployeeName: 'x', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
+    status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: UID.employeeA,
+    assignedEmployeeName: 'x', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V8h PHASE 06A: a direct Firestore bypass attempt (no mobility_head role at all) is denied regardless of target validity', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.employeeA2), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
+    updatedByUid: UID.employeeA2, updatedAt: 1,
+  }));
+  await assertFails(updateDoc(doc(testEnv.unauthenticatedContext().firestore(), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
+    updatedByUid: 'anonymous',
+  }));
 });
 
 test('V9 mobility_head hands over a reserved vehicle', async () => {

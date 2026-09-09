@@ -607,10 +607,10 @@
             </div>
 
             <div style="padding:16px;border-radius:16px;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column;gap:11px">
-              <div style="font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">خصوصية تتبع الموقع</div>
-              <p style="margin:0;font-size:11px;line-height:1.85;color:var(--tx2,#a9bdd4);text-wrap:pretty">يُفعّل تتبع الموقع للموظف أثناء المهمة المعتمدة فقط، ويتوقف تلقائياً بانتهائها. لا يوجد تتبع دائم خارج المهام.</p>
+              <div style="font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">حالة تتبع الموقع</div>
+              <p style="margin:0;font-size:11px;line-height:1.85;color:var(--tx2,#a9bdd4);text-wrap:pretty">لا يتوفر مصدر GPS حقيقي حاليًا في هذا النظام. المواضع المعروضة أثناء المهمة تخطيطية فقط، وليست إحداثيات جهاز فعلية.</p>
               <div style="display:flex;flex-direction:column;gap:7px">
-                <sc-for list="{{ gpsStates }}" as="g" hint-placeholder-count="3">
+                <sc-for list="{{ gpsStates }}" as="g" hint-placeholder-count="2">
                   <div style="display:flex;align-items:center;gap:9px;font-size:11px">
                     <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ g.col }}"></span>
                     <span style="flex:1;color:var(--tx2,#a9bdd4)">{{ g.label }}</span>
@@ -1509,10 +1509,12 @@ class Component extends DCLogic {
         { label: 'خارج النطاق بتصريح', note: 'لا يُعد مخالفة', col: this.sc('محجوزة') },
         { label: 'خروج غير متوقع', note: 'تنبيه تشغيلي', col: this.sc('صيانة') }
       ];
+      // PHASE 06A hotfix (GPS honesty) — no real device/location source
+      // exists anywhere in this app; these states describe schematic/
+      // planned position only, never a live-GPS claim.
       out.gpsStates = [
-        { label: 'GPS غير نشط — خارج المهام', col: day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)' },
-        { label: 'GPS نشط أثناء المهمة المعتمدة', col: this.sc('متاحة') },
-        { label: 'انتهى التتبع بانتهاء المهمة', col: this.sc('مغلقة') }
+        { label: 'التتبع الفعلي للموقع غير متاح', col: day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)' },
+        { label: 'المسار تخطيطي أثناء المهمة المعتمدة', col: day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)' }
       ];
     }
 
@@ -1542,12 +1544,17 @@ class Component extends DCLogic {
       out.empRows = m ? [{ k: 'رقم المهمة', v: m.no }, { k: 'النوع', v: m.type }, { k: 'الوجهة', v: m.dest },
         { k: 'التاريخ', v: m.when }, { k: 'المدة', v: m.dur }, { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : '—' }] : [];
 
-      const gpsOn = running;
-      out.gpsCol = gpsOn ? this.sc('متاحة') : (day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)');
-      out.gpsBg = gpsOn ? this.tint('#22c55e', day ? 0.08 : 0.12) : 'var(--sunk2,rgba(11,18,32,0.5))';
-      out.gpsBd = gpsOn ? this.tint('#22c55e', 0.3) : 'var(--div,rgba(122,164,224,0.13))';
-      out.gpsLabel = gpsOn ? 'GPS نشط أثناء المهمة' : (stt === 'مغلقة' ? 'انتهى التتبع بانتهاء المهمة' : 'GPS غير نشط');
-      out.gpsAnim = gpsOn ? 'mBreathe 2.2s ease-in-out infinite' : 'none';
+      // PHASE 06A hotfix (GPS honesty) — this app has no real device/location
+      // source anywhere; the mission-running state below is operational
+      // context only, never a claim that real GPS is active. No green
+      // "live" color, no pulsing animation (both previously implied real
+      // live tracking), and never the words "GPS نشط"/"تم تفعيل" — only an
+      // honest planned/unavailable label. MISSION STATUS != GPS STATUS.
+      out.gpsCol = day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)';
+      out.gpsBg = 'var(--sunk2,rgba(11,18,32,0.5))';
+      out.gpsBd = 'var(--div,rgba(122,164,224,0.13))';
+      out.gpsLabel = running ? 'المسار تخطيطي — لا تتوفر بيانات GPS حقيقية' : 'التتبع الفعلي للموقع غير متاح';
+      out.gpsAnim = 'none';
       out.geoLabel = m && m.scope === 'داخل النطاق' ? 'داخل النطاق التشغيلي' : 'خارج النطاق بتصريح';
 
       const P = { tx: '#ffffff', bg: day ? 'linear-gradient(180deg,#12855a,#0b6442)' : 'linear-gradient(180deg,rgba(34,197,94,0.9),rgba(20,120,60,0.9))', bd: day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)' };
@@ -1563,11 +1570,11 @@ class Component extends DCLogic {
           acts.push({ label: 'استلام المركبة وبدء المهمة', on: () => {
             window.SmartHSRMobilityAdapter.employeeAdvanceMission(m.id, 'READY')
               .then(() => window.SmartHSRMobilityAdapter.employeeAdvanceMission(m.id, 'IN_PROGRESS'))
-              .then(() => { this.setState({ empScreen: 'active', elapsed: 0 }); this.flash('بدأت المهمة · تم تفعيل GPS'); })
+              .then(() => { this.setState({ empScreen: 'active', elapsed: 0 }); this.flash('بدأت المهمة'); })
               .catch(() => this.flash('تعذر بدء المهمة'));
           }, tx: P.tx, bg: P.bg, bd: P.bd });
         } else if (stt === 'جاهزة للبدء') {
-          acts.push({ label: 'بدء المهمة', on: () => advance('IN_PROGRESS', 'بدأت المهمة · تم تفعيل GPS', { empScreen: 'active', elapsed: 0 }), tx: P.tx, bg: P.bg, bd: P.bd });
+          acts.push({ label: 'بدء المهمة', on: () => advance('IN_PROGRESS', 'بدأت المهمة', { empScreen: 'active', elapsed: 0 }), tx: P.tx, bg: P.bg, bd: P.bd });
         } else if (stt === 'قيد التنفيذ') {
           acts.push({ label: 'إنهاء المهمة', on: () => advance('COMPLETED', 'انتهت المهمة · جاهزة لتسليم المركبة', { empScreen: 'home' }), tx: P.tx, bg: P.bg, bd: P.bd });
           acts.push({ label: 'طلب دعم / بلاغ حادث', on: () => this.openDrawer('incnew', m.id), tx: D.tx, bg: D.bg, bd: D.bd });
@@ -1965,7 +1972,7 @@ class Component extends DCLogic {
             bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('mission', m.id) }; }),
         sideBTitle: 'موظفو القسم في مهمة', sideBCount: '',
         sideB: dm.filter(m => ['قيد التنفيذ', 'تم التسليم'].indexOf(this.missionStatus(m.id)) >= 0).map(m => ({
-          title: m.emp, meta: 'GPS نشط أثناء المهمة · ' + m.dest, tag: m.no, col: this.sc('قيد التنفيذ'), chipBg: this.tint('#22c55e', 0.14),
+          title: m.emp, meta: 'موقع تخطيطي أثناء المهمة · ' + m.dest, tag: m.no, col: this.sc('قيد التنفيذ'), chipBg: this.tint('#22c55e', 0.14),
           bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('mission', m.id) })) };
     }
 
@@ -2080,7 +2087,10 @@ class Component extends DCLogic {
         { k: 'طالب المهمة', v: m.requester }, { k: 'الموظف', v: m.emp }, { k: 'الوجهة', v: m.dest },
         { k: 'التاريخ والوقت', v: m.when }, { k: 'المدة المتوقعة', v: m.dur }, { k: 'النطاق', v: m.scope },
         { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : 'لم تُخصص بعد' },
-        { k: 'حالة GPS', v: m.gps ? 'نشط أثناء المهمة' : 'غير نشط' }, { k: 'المبرر', v: m.why }
+        // PHASE 06A hotfix (GPS honesty) — no real device/location source
+        // exists; never claim "GPS active", only an honest schematic/
+        // unavailable disclosure. MISSION STATUS != GPS STATUS.
+        { k: 'حالة الموقع', v: m.gps ? 'موقع تخطيطي أثناء المهمة' : 'التتبع الفعلي للموقع غير متاح' }, { k: 'المبرر', v: m.why }
       ];
       const acts = [];
       if (k === 'alloc') {

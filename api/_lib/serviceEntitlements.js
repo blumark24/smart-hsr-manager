@@ -13,17 +13,39 @@
 // existing field is renamed or removed, and a record that only ever held one
 // service continues to behave exactly as before.
 // ============================================================================
-const { MANAGER_SCOPED_ROLES, LANDS_MANAGEABLE_ROLES } = require('./authz');
+const { FIELD_MANAGEABLE_ROLES, MOBILITY_MANAGEABLE_ROLES, LANDS_MANAGEABLE_ROLES } = require('./authz');
 
 function isNonEmptyString(v) { return typeof v === 'string' && v.trim().length > 0; }
 
+// PHASE 06A hotfix — Field is now scoped to its own three role values only
+// (FIELD_MANAGEABLE_ROLES). Previously this accepted any MANAGER_SCOPED_ROLE
+// (Field OR Mobility), which is exactly the "incorrectly mixes Field and
+// Mobility" defect this hotfix closes — see validateMobilitySelection below
+// for Mobility's own, now-independent selection.
 function validateFieldSelection(field) {
   if (field === undefined) return { ok: true, present: false, enabled: false, role: null };
   if (typeof field !== 'object' || field === null || typeof field.enabled !== 'boolean') {
     return { ok: false, reason: 'invalid_field_selection' };
   }
-  if (field.enabled && !MANAGER_SCOPED_ROLES.includes(field.role)) return { ok: false, reason: 'invalid_field_role' };
+  if (field.enabled && !FIELD_MANAGEABLE_ROLES.includes(field.role)) return { ok: false, reason: 'invalid_field_role' };
   return { ok: true, present: true, enabled: field.enabled, role: field.enabled ? field.role : null };
+}
+
+// PHASE 06A hotfix — Mobility as its own independent service-entitlement
+// selection, exactly mirroring validateLandsSelection's shape. Written to
+// the NEW, independent users/{uid}.mobilityAccess field (never the legacy
+// scalar `role` field a Field selection also writes to) — see
+// firestore.rules' mobilityRoleValue() for the read-side of this same
+// independence, and the "structural note" comment on resolveMobilitySelection
+// in api/admin/users.js for exactly how backward compatibility with
+// records that still only hold a legacy Mobility `role` value is preserved.
+function validateMobilitySelection(mobility) {
+  if (mobility === undefined) return { ok: true, present: false, enabled: false, role: null };
+  if (typeof mobility !== 'object' || mobility === null || typeof mobility.enabled !== 'boolean') {
+    return { ok: false, reason: 'invalid_mobility_selection' };
+  }
+  if (mobility.enabled && !MOBILITY_MANAGEABLE_ROLES.includes(mobility.role)) return { ok: false, reason: 'invalid_mobility_role' };
+  return { ok: true, present: true, enabled: mobility.enabled, role: mobility.enabled ? mobility.role : null };
 }
 
 // Pure decision function — no I/O. Lands' own entitlement.enable/disable are
@@ -77,10 +99,19 @@ function assertSingleService(_fieldEffectiveEnabled, _landsEffectiveEnabled) {
 // state to determine what the enabled state WOULD BE after this request —
 // needed because setServices allows a request to mention only one service,
 // leaving the other's current state unchanged.
-function resolveEffectiveServiceState(fieldSel, landsSel, existingRole, existingLandsAccess) {
-  const fieldEffectiveEnabled = fieldSel.present ? fieldSel.enabled : MANAGER_SCOPED_ROLES.includes(existingRole);
+//
+// PHASE 06A hotfix — existingMobilityAccess/existingRole together mirror
+// firestore.rules' mobilityRoleValue(): once a record has ever been touched
+// by the new independent mobilityAccess field, that field alone decides its
+// Mobility state; only a record that has NEVER been touched (no
+// mobilityAccess key at all) still falls back to the legacy scalar `role`.
+function resolveEffectiveServiceState(fieldSel, landsSel, existingRole, existingLandsAccess, existingMobilityAccess) {
+  const fieldEffectiveEnabled = fieldSel.present ? fieldSel.enabled : FIELD_MANAGEABLE_ROLES.includes(existingRole);
   const landsEffectiveEnabled = landsSel.present ? landsSel.enabled : Boolean(existingLandsAccess && existingLandsAccess.enabled);
-  return { fieldEffectiveEnabled, landsEffectiveEnabled };
+  const existingMobilityEnabled = existingMobilityAccess !== undefined
+    ? Boolean(existingMobilityAccess && existingMobilityAccess.enabled)
+    : MOBILITY_MANAGEABLE_ROLES.includes(existingRole);
+  return { fieldEffectiveEnabled, landsEffectiveEnabled, existingMobilityEnabled };
 }
 
 function passwordPolicyReason(password, target) {
@@ -109,12 +140,18 @@ const PASSWORD_TARGET_ROLES = ['inspector', 'contractor', 'mobility_head', 'depa
 function isPasswordEligibleTarget(data) {
   if (!data) return false;
   if (PASSWORD_TARGET_ROLES.includes(data.role)) return true;
+  // PHASE 06A hotfix — a record whose Mobility access now lives in the
+  // independent mobilityAccess field (role no longer needs to hold the
+  // mobility value at all) must remain password-eligible exactly as it was
+  // before migration, same as the existing Lands-only case right below.
+  if (data.mobilityAccess && data.mobilityAccess.enabled === true) return true;
   return data.role === null && Boolean(data.landsAccess && data.landsAccess.enabled === true);
 }
 
 module.exports = {
   isNonEmptyString,
   validateFieldSelection,
+  validateMobilitySelection,
   validateLandsSelection,
   computeLandsSyncOperation,
   assertSingleService,

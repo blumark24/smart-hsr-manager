@@ -18,25 +18,40 @@ const MOBILITY_ROLES = Object.freeze(['mobility_head', 'department_head', 'admin
 const LANDS_ROLES = Object.freeze(['lands_employee', 'lands_department_manager']);
 
 // A user's `role` field is scalar by construction (one string value), so
-// "one Field-or-Mobility role at a time" and "one Mobility role at a time"
-// both hold automatically — there is no way for a single Firestore document
-// to carry two role values at once. Vehicle eligibility is independent of
-// role and defaults to eligible when absent (see the backward-compatibility
-// note below) — never a role in itself.
+// BEFORE Phase 06A, "one Field-or-Mobility role at a time" held only
+// because both products shared this single field — there was no way for a
+// single Firestore document to carry two role values at once.
+//
+// PHASE 06A hotfix — Mobility Entitlement Independence: Mobility now has
+// its OWN independent `mobilityAccess` field ({enabled, role}), structurally
+// parallel to `landsAccess`, so Field and Mobility (and Lands) can all be
+// enabled at once on the same identity. Backward compatibility for every
+// EXISTING record never touched by this new field (no bulk migration was
+// performed): once `mobilityAccess` exists on a document at all, it alone
+// decides that document's Mobility state (mirrors firestore.rules'
+// mobilityRoleValue() exactly — keep both in sync); only a document that
+// has NEVER been touched by the new field still falls back to reading the
+// legacy scalar `role`. `role` itself remains scalar and is now Field-only
+// going forward for any record that also carries mobilityAccess.
 function resolveProductEntitlements(userDoc) {
   const data = userDoc || {};
   const role = data.role === undefined ? null : data.role;
   const landsAccess = data.landsAccess;
+  const mobilityAccess = data.mobilityAccess;
 
   const isFieldRole = FIELD_ROLES.includes(role);
-  const isMobilityRole = MOBILITY_ROLES.includes(role);
+  const hasMobilityAccessField = mobilityAccess !== undefined;
+  const mobilityRole = hasMobilityAccessField
+    ? (mobilityAccess && mobilityAccess.enabled === true ? mobilityAccess.role : null)
+    : role;
+  const isMobilityRole = MOBILITY_ROLES.includes(mobilityRole);
   const landsEnabled = Boolean(landsAccess && landsAccess.enabled === true && LANDS_ROLES.includes(landsAccess.role));
 
   return Object.freeze({
     field: Object.freeze({ enabled: isFieldRole, role: isFieldRole ? role : null }),
     mobility: Object.freeze({
       enabled: isMobilityRole,
-      role: isMobilityRole ? role : null,
+      role: isMobilityRole ? mobilityRole : null,
       // Phase 03B.1 hotfix — fail-safe default: ONLY an EXPLICIT true
       // counts as eligible. A record with no vehicleEligible field at all
       // (every employee created before this field existed) is now NOT

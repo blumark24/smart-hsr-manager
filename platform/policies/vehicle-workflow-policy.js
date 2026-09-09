@@ -29,6 +29,9 @@ const VEHICLE_STATUSES = Object.freeze([
   'OUT_OF_SERVICE',
 ]);
 
+// The four real Mobility operational role keys — never invent a fifth.
+const MOBILITY_OPERATIONAL_ROLES = Object.freeze(['mobility_head', 'department_head', 'administrative_affairs', 'employee']);
+
 function decision(allowed, code, reason) {
   return Object.freeze({ allowed, code, reason });
 }
@@ -97,18 +100,38 @@ function evaluateVehicleTransition({ actor, vehicle, toStatus, requestedFields, 
     }
   }
 
-  // Phase 03B.1 hotfix — fail-safe default: vehicleEligible is an
-  // independent entitlement, not a role, enforced here rather than merely
-  // by a UI checkbox. ONLY an EXPLICIT `assignedEmployee.vehicleEligible
-  // === true` counts as eligible; a missing field, an omitted
-  // `assignedEmployee` argument, or any other value all deny — the
-  // previous "missing means eligible" default was found to be unsafe and
-  // is intentionally reversed here. This is a real behavior change for
-  // every pre-existing record with no vehicleEligible field: it must now
-  // be explicitly granted before a NEW allocation succeeds (no bulk
-  // migration is performed by this hotfix).
-  if (contract.action === 'allocate' && !(assignedEmployee && assignedEmployee.vehicleEligible === true)) {
-    return decision(false, 'VEHICLE_ELIGIBILITY_DENIED', 'The employee assigned to this vehicle is not confirmed vehicle-eligible.');
+  // PHASE 06A hotfix — a NEW allocation's target employee was previously
+  // validated on vehicleEligible alone; nothing here confirmed the target
+  // actually exists as a real record, shares the actor's organization, is
+  // active, or genuinely holds one of the four real Mobility operational
+  // roles (this mirrors the firestore.rules validMobilityAllocationTarget()
+  // check added the same phase — keep both in sync). The caller is
+  // responsible for fetching the real target record and passing it as
+  // `assignedEmployee`; an omitted argument is treated as "target could
+  // not be verified" and denies, same as every other failure below.
+  if (contract.action === 'allocate') {
+    if (!assignedEmployee) {
+      return decision(false, 'ASSIGNED_EMPLOYEE_NOT_FOUND', 'The employee assigned to this vehicle could not be verified.');
+    }
+    if (assignedEmployee.organizationId !== actor.organizationId) {
+      return decision(false, 'ASSIGNED_EMPLOYEE_ORGANIZATION_MISMATCH', 'The employee assigned to this vehicle must be in the same organization.');
+    }
+    if (assignedEmployee.active === false) {
+      return decision(false, 'ASSIGNED_EMPLOYEE_INACTIVE', 'The employee assigned to this vehicle is not active.');
+    }
+    if (!MOBILITY_OPERATIONAL_ROLES.includes(assignedEmployee.role)) {
+      return decision(false, 'ASSIGNED_EMPLOYEE_NOT_MOBILITY_ROLE', 'The employee assigned to this vehicle does not hold a Mobility operational role.');
+    }
+    // Phase 03B.1 hotfix — fail-safe default: vehicleEligible is an
+    // independent entitlement, not a role, enforced here rather than
+    // merely by a UI checkbox. ONLY an EXPLICIT
+    // `assignedEmployee.vehicleEligible === true` counts as eligible; a
+    // missing field or any other value denies — the previous "missing
+    // means eligible" default was found to be unsafe and is intentionally
+    // reversed here.
+    if (assignedEmployee.vehicleEligible !== true) {
+      return decision(false, 'VEHICLE_ELIGIBILITY_DENIED', 'The employee assigned to this vehicle is not confirmed vehicle-eligible.');
+    }
   }
 
   return decision(true, 'TRANSITION_ALLOWED', `The ${actor.role} role may request ${fromStatus} -> ${toStatus}.`);
@@ -120,6 +143,7 @@ function describeVehicleTransition(fromStatus, toStatus) {
 
 module.exports = Object.freeze({
   VEHICLE_STATUSES,
+  MOBILITY_OPERATIONAL_ROLES,
   TRANSITION_MATRIX,
   evaluateVehicleTransition,
   describeVehicleTransition,

@@ -30,6 +30,7 @@ const { ensureManagerLandsBootstrap } = require('../_lib/landsManagerBootstrap')
 const { resolveLandsSyncOutcome } = require('../_lib/landsSyncReconciliation');
 const {
   validateFieldSelection,
+  validateMobilitySelection,
   validateLandsSelection,
   computeLandsSyncOperation,
   assertSingleService,
@@ -244,19 +245,23 @@ async function handler(req, res) {
           uid: userRecord.uid, email: email.trim(), role, organizationId, active: true,
         });
       } else {
-        // ---- create a single-service (Field OR Lands) operational user ----
+        // ---- create a single-service (Field, Mobility, OR Lands) operational user ----
         // Only ever creates users/{uid} records — never managers — so this
         // path can never be used to create another manager or owner.
-        const { organizationId, email, name, field, lands, password, active } = body;
+        // PHASE 06A hotfix: Mobility is its own independent selection here
+        // too, never accepted through `field` any more.
+        const { organizationId, email, name, field, mobility, lands, password, active } = body;
         if (!isNonEmptyString(email) || !isNonEmptyString(organizationId)) {
           return sendJson(res, 400, { error: 'email_and_organizationId_required' });
         }
         const initialActive = active !== false;
         const fieldSel = validateFieldSelection(field);
         if (!fieldSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: fieldSel.reason });
+        const mobilitySel = validateMobilitySelection(mobility);
+        if (!mobilitySel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: mobilitySel.reason });
         const landsSel = validateLandsSelection(lands);
         if (!landsSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: landsSel.reason });
-        if (!fieldSel.enabled && !landsSel.enabled) {
+        if (!fieldSel.enabled && !mobilitySel.enabled && !landsSel.enabled) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'at_least_one_service_required' });
         }
         const singleServiceCheck = assertSingleService(fieldSel.enabled, landsSel.enabled);
@@ -270,7 +275,7 @@ async function handler(req, res) {
         // even when Lands-only, since a Lands-only account is still a
         // same-organization operational user, never a manager/owner.
         const decision = assertCanManage(caller, {
-          targetRole: fieldSel.enabled ? fieldSel.role : 'inspector',
+          targetRole: fieldSel.enabled ? fieldSel.role : mobilitySel.enabled ? mobilitySel.role : 'inspector',
           targetOrganizationId: organizationId,
         });
         if (!decision.allowed) {
@@ -330,17 +335,32 @@ async function handler(req, res) {
             ...(landsOutcome.syncError ? { syncError: landsOutcome.syncError } : {}),
           };
         }
+        // PHASE 06A hotfix — Mobility's own independent entitlement field on
+        // a brand-new record, structurally parallel to landsAccess above but
+        // native to this same project (no remote trusted-mutation sync
+        // needed, unlike Lands).
+        if (mobilitySel.enabled) {
+          doc.mobilityAccess = {
+            enabled: true, role: mobilitySel.role,
+            requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(),
+          };
+        }
         await db.collection('users').doc(userRecord.uid).set(doc);
 
         await recordAdminAudit(db, {
           caller, organizationId, targetUid: userRecord.uid, action: 'create',
-          detail: { field: { enabled: fieldSel.enabled, role: fieldSel.role }, lands: { enabled: landsSel.enabled, role: landsSel.role } },
+          detail: {
+            field: { enabled: fieldSel.enabled, role: fieldSel.role },
+            mobility: { enabled: mobilitySel.enabled, role: mobilitySel.role },
+            lands: { enabled: landsSel.enabled, role: landsSel.role },
+          },
         });
 
         return sendJson(res, 200, {
           uid: userRecord.uid, email: email.trim(), organizationId, active: initialActive,
           mustChangePassword: isNonEmptyString(password),
           field: { enabled: fieldSel.enabled, role: fieldSel.role },
+          mobility: { enabled: mobilitySel.enabled, role: mobilitySel.role },
           lands: landsSel.enabled
             ? { enabled: true, role: landsSel.role, syncStatus: landsOutcome.syncStatus, syncError: landsOutcome.syncError }
             : { enabled: false, role: null, syncStatus: null },
@@ -354,19 +374,23 @@ async function handler(req, res) {
       // Firebase Auth account or the other service — "remove a service
       // without deleting the user account".
       case 'setServices': {
-        const { uid, field, lands, vehicleEligible } = body;
+        const { uid, field, mobility, lands, vehicleEligible } = body;
         if (!isNonEmptyString(uid)) return sendJson(res, 400, { error: 'uid_required' });
         const record = await findRecord(db, uid);
         if (!record || record.collection !== 'users') return sendJson(res, 404, { error: 'record_not_found' });
 
         const fieldSel = validateFieldSelection(field);
         if (!fieldSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: fieldSel.reason });
+        // PHASE 06A hotfix — Mobility as its own independent selection,
+        // never mixed into `field` any more (see validateMobilitySelection).
+        const mobilitySel = validateMobilitySelection(mobility);
+        if (!mobilitySel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: mobilitySel.reason });
         const landsSel = validateLandsSelection(lands);
         if (!landsSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: landsSel.reason });
         if (vehicleEligible !== undefined && typeof vehicleEligible !== 'boolean') {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_vehicle_eligible' });
         }
-        if (!fieldSel.present && !landsSel.present && vehicleEligible === undefined) {
+        if (!fieldSel.present && !mobilitySel.present && !landsSel.present && vehicleEligible === undefined) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'no_service_changes' });
         }
         // Phase 03B: Field and Lands may now both be enabled at once on the
@@ -374,8 +398,9 @@ async function handler(req, res) {
         // — this resolves what the FULL post-request state would be (a
         // request may only mention one service, leaving the other's current
         // stored state in effect) purely for bookkeeping; it no longer
-        // blocks the combined case.
-        const { fieldEffectiveEnabled, landsEffectiveEnabled } = resolveEffectiveServiceState(fieldSel, landsSel, record.data.role, record.data.landsAccess);
+        // blocks the combined case. PHASE 06A hotfix: Mobility is now a
+        // third fully independent entitlement in this same computation.
+        const { fieldEffectiveEnabled, landsEffectiveEnabled } = resolveEffectiveServiceState(fieldSel, landsSel, record.data.role, record.data.landsAccess, record.data.mobilityAccess);
         const singleServiceCheck = assertSingleService(fieldEffectiveEnabled, landsEffectiveEnabled);
         if (!singleServiceCheck.ok) return sendJson(res, 400, { error: 'invalid_request', reason: singleServiceCheck.reason });
 
@@ -391,6 +416,25 @@ async function handler(req, res) {
 
         const update = { updatedAt: FieldValue.serverTimestamp() };
         if (fieldSel.present) update.role = fieldSel.role;
+        // PHASE 06A hotfix — Mobility's own independent entitlement field,
+        // structurally parallel to landsAccess. Deliberately NEVER deleted
+        // on disable (unlike landsAccess below): once this key exists at
+        // all, firestore.rules' mobilityRoleValue() treats it as the sole
+        // source of truth for this record's Mobility state and stops
+        // falling back to the legacy scalar `role` field — so an explicit
+        // disable must leave {enabled:false} in place, not delete the key,
+        // or a stale legacy `role` value (from before this record was ever
+        // touched by the new independent control) could still grant access
+        // through the backward-compatibility fallback. The legacy `role`
+        // field itself is never touched here — Field's own selection above
+        // is the only thing that ever writes it, preserving Field
+        // independence in both directions.
+        if (mobilitySel.present) {
+          update.mobilityAccess = {
+            enabled: mobilitySel.enabled, role: mobilitySel.role,
+            requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(),
+          };
+        }
         // Phase 03B: an independent entitlement, never a role — see
         // platform/policies/vehicle-workflow-policy.js for where this is
         // actually enforced server-side (firestore.rules vehicle allocation).
@@ -439,6 +483,7 @@ async function handler(req, res) {
           caller, organizationId: municipalityId, targetUid: uid, action: 'set_services',
           detail: {
             field: fieldSel.present ? { enabled: fieldSel.enabled, role: fieldSel.role } : undefined,
+            mobility: mobilitySel.present ? { enabled: mobilitySel.enabled, role: mobilitySel.role } : undefined,
             lands: landsSel.present ? { enabled: landsSel.enabled, role: landsSel.role } : undefined,
             vehicleEligible,
           },
@@ -447,6 +492,7 @@ async function handler(req, res) {
         return sendJson(res, 200, {
           uid,
           field: fieldSel.present ? { enabled: fieldSel.enabled, role: fieldSel.role } : undefined,
+          mobility: mobilitySel.present ? { enabled: mobilitySel.enabled, role: mobilitySel.role } : undefined,
           lands: landsSel.present
             ? { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? (update.landsAccess.syncStatus) : null, syncError: landsOutcome ? landsOutcome.syncError : null }
             : undefined,

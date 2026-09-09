@@ -76,7 +76,12 @@ test('manager.html: enableUserAction/resetUserPassword act on any selected user,
 
 test('manager.html: the selected-user role/service label reports a Lands-only account by its real Lands role, never as unauthorized', () => {
   const source = read('manager.html');
-  assert.match(source, /const userDisplayRole = u => u && u\.role == null && u\.landsAccess/);
+  // PHASE 06A hotfix: userDisplayRole() was restructured (an if/else body
+  // instead of one ternary chain) to also correctly label a Mobility-only
+  // account whose role now lives in the independent mobilityAccess field —
+  // the Lands-only branch's own logic is unchanged, just no longer the
+  // very first token in the function body.
+  assert.match(source, /if \(u\.role == null && u\.landsAccess\)/);
   assert.match(source, /lands_employee: 'موظف أراضي', lands_department_manager: 'رئيس قسم أراضي'/);
   assert.doesNotMatch(source, /'غير مصرح'/, 'a Lands-only account must never be labeled unauthorized');
 });

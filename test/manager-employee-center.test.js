@@ -239,6 +239,10 @@ test('11. Field + Lands same identity: both entitlements coexist on one activate
 });
 
 // ---- 12/13/14. Mobility access, single role only, conflicting roles denied ----
+// PHASE 06A hotfix: Mobility is now its own independent `mobility` selection
+// on activateAccount/assignProducts, written to the independent
+// mobilityAccess field — never mixed into `field`/the legacy scalar `role`
+// any more (see api/admin/employees.js and api/_lib/serviceEntitlements.js).
 test('12. Mobility access on the same identity', async () => {
   const fakes = installFakes();
   try {
@@ -247,25 +251,29 @@ test('12. Mobility access on the same identity', async () => {
     const handler = loadFreshHandler();
     await handler(fakeRequest({ uid, body: { action: 'create', organizationId, name: 'Mobility Emp' } }), create);
     const res = fakeResponse();
-    await handler(fakeRequest({ uid, body: { action: 'activateAccount', employeeId: create.body.employee.employeeId, email: 'm@example.com', field: { enabled: true, role: 'employee' } } }), res);
+    await handler(fakeRequest({ uid, body: { action: 'activateAccount', employeeId: create.body.employee.employeeId, email: 'm@example.com', mobility: { enabled: true, role: 'employee' } } }), res);
     assert.equal(res.body.products.mobility.enabled, true);
     assert.equal(res.body.products.mobility.role, 'employee');
+    const userDoc = fakes.store.docs.get(`users/${res.body.authUid}`);
+    assert.equal(userDoc.mobilityAccess.enabled, true);
+    assert.equal(userDoc.mobilityAccess.role, 'employee');
+    assert.equal(userDoc.role, null, 'Mobility must never be written to the legacy scalar `role` field any more');
   } finally { fakes.restore(); }
 });
 
-test('13. one Mobility role only: assignProducts always overwrites role, never accumulates a second one', async () => {
+test('13. one Mobility role only: assignProducts always overwrites mobilityAccess.role, never accumulates a second one', async () => {
   const fakes = installFakes();
   try {
     const { uid, organizationId } = seedManager(fakes);
     const employeeId = 'emp-mob-1';
-    seedEmployee(fakes, employeeId, { organizationId, authUid: 'uid_mob', accountStatus: 'ACTIVE', products: { field: { enabled: true, role: 'mobility_head' }, lands: { enabled: false, role: null }, mobility: { enabled: true, role: 'mobility_head', vehicleEligible: true } } });
-    fakes.store.seed('users/uid_mob', { uid: 'uid_mob', role: 'mobility_head', active: true, organizationId });
+    seedEmployee(fakes, employeeId, { organizationId, authUid: 'uid_mob', accountStatus: 'ACTIVE', products: { field: { enabled: false, role: null }, lands: { enabled: false, role: null }, mobility: { enabled: true, role: 'mobility_head', vehicleEligible: true } } });
+    fakes.store.seed('users/uid_mob', { uid: 'uid_mob', role: null, mobilityAccess: { enabled: true, role: 'mobility_head' }, active: true, organizationId });
     const handler = loadFreshHandler();
     const res = fakeResponse();
-    await handler(fakeRequest({ uid, body: { action: 'assignProducts', employeeId, field: { enabled: true, role: 'department_head' } } }), res);
+    await handler(fakeRequest({ uid, body: { action: 'assignProducts', employeeId, mobility: { enabled: true, role: 'department_head' } } }), res);
     assert.equal(res.statusCode, 200, JSON.stringify(res.body));
     const userDoc = fakes.store.docs.get('users/uid_mob');
-    assert.equal(userDoc.role, 'department_head', 'the single role field is overwritten, never a second role added alongside it');
+    assert.equal(userDoc.mobilityAccess.role, 'department_head', 'the single mobility role field is overwritten, never a second role added alongside it');
   } finally { fakes.restore(); }
 });
 
@@ -278,9 +286,9 @@ test('14. conflicting Mobility roles denied: the API rejects a non-string/array 
     fakes.store.seed('users/uid_mob2', { uid: 'uid_mob2', role: 'employee', active: true, organizationId });
     const handler = loadFreshHandler();
     const res = fakeResponse();
-    await handler(fakeRequest({ uid, body: { action: 'assignProducts', employeeId, field: { enabled: true, role: ['mobility_head', 'employee'] } } }), res);
+    await handler(fakeRequest({ uid, body: { action: 'assignProducts', employeeId, mobility: { enabled: true, role: ['mobility_head', 'employee'] } } }), res);
     assert.equal(res.statusCode, 400);
-    assert.equal(res.body.reason, 'invalid_field_role');
+    assert.equal(res.body.reason, 'invalid_mobility_role');
   } finally { fakes.restore(); }
 });
 

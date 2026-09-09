@@ -31,6 +31,7 @@ const { getAuth, getDb, FieldValue } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, getCallerContext, assertCanManageEmployee } = require('../_lib/authz');
 const {
   validateFieldSelection,
+  validateMobilitySelection,
   validateLandsSelection,
   passwordPolicyReason,
 } = require('../_lib/serviceEntitlements');
@@ -204,7 +205,7 @@ async function handler(req, res) {
       // an honest PENDING_ACTIVATION (with activationError) rather than a
       // silently-fabricated ACTIVE state — see ACCOUNT_STATUS_TRANSITIONS.
       case 'activateAccount': {
-        const { employeeId, email, password, field, lands, vehicleEligible } = body;
+        const { employeeId, email, password, field, mobility, lands, vehicleEligible } = body;
         if (!isNonEmptyString(employeeId) || !isNonEmptyString(email)) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'employeeId_and_email_required' });
         }
@@ -223,6 +224,10 @@ async function handler(req, res) {
 
         const fieldSel = validateFieldSelection(field);
         if (!fieldSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: fieldSel.reason });
+        // PHASE 06A hotfix — Mobility as its own independent selection,
+        // never mixed into `field` any more (mirrors api/admin/users.js).
+        const mobilitySel = validateMobilitySelection(mobility);
+        if (!mobilitySel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: mobilitySel.reason });
         const landsSel = validateLandsSelection(lands);
         if (!landsSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: landsSel.reason });
         if (isNonEmptyString(password)) {
@@ -247,12 +252,14 @@ async function handler(req, res) {
           throw e;
         }
 
+        // PHASE 06A hotfix — Mobility is now its own independent selection,
+        // never derived from fieldSel any more.
         const products = {
           field: { enabled: fieldSel.enabled, role: fieldSel.enabled ? fieldSel.role : null },
           lands: { enabled: landsSel.enabled, role: landsSel.enabled ? landsSel.role : null },
           mobility: {
-            enabled: fieldSel.enabled && ['mobility_head', 'department_head', 'administrative_affairs', 'employee'].includes(fieldSel.role),
-            role: fieldSel.enabled && ['mobility_head', 'department_head', 'administrative_affairs', 'employee'].includes(fieldSel.role) ? fieldSel.role : null,
+            enabled: mobilitySel.enabled,
+            role: mobilitySel.enabled ? mobilitySel.role : null,
             // Phase 03B.1 hotfix: fail-safe default — an activation that
             // doesn't explicitly grant vehicleEligible leaves it false.
             vehicleEligible: vehicleEligible === true,
@@ -275,6 +282,11 @@ async function handler(req, res) {
               createdAt: FieldValue.serverTimestamp(),
               ...(isNonEmptyString(password) ? { mustChangePassword: true } : {}),
               ...(landsSel.enabled ? { landsAccess: { enabled: true, role: landsSel.role, requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(), syncStatus: 'pending_trusted_sync' } } : {}),
+              // PHASE 06A hotfix — Mobility's own independent entitlement
+              // field on the newly-created account, structurally parallel
+              // to landsAccess above, so this identity may hold Field AND
+              // Mobility (and Lands) at once.
+              ...(mobilitySel.enabled ? { mobilityAccess: { enabled: true, role: mobilitySel.role, requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp() } } : {}),
             };
             tx.set(db.collection('users').doc(userRecord.uid), userDoc);
             tx.set(employee.ref, {
@@ -301,7 +313,7 @@ async function handler(req, res) {
 
         await recordAdminAudit(db, {
           caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_activate',
-          detail: { field: products.field, lands: products.lands },
+          detail: { field: products.field, mobility: products.mobility, lands: products.lands },
         });
 
         return sendJson(res, 200, {
@@ -343,7 +355,7 @@ async function handler(req, res) {
 
       // ---- change an active employee's product entitlements ----
       case 'assignProducts': {
-        const { employeeId, field, lands, vehicleEligible } = body;
+        const { employeeId, field, mobility, lands, vehicleEligible } = body;
         if (!isNonEmptyString(employeeId)) return sendJson(res, 400, { error: 'employeeId_required' });
         const employee = await findEmployee(db, employeeId);
         if (!employee) return sendJson(res, 404, { error: 'employee_not_found' });
@@ -362,9 +374,13 @@ async function handler(req, res) {
 
         const fieldSel = validateFieldSelection(field);
         if (!fieldSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: fieldSel.reason });
+        // PHASE 06A hotfix — Mobility as its own independent selection,
+        // never derived from fieldSel any more (mirrors api/admin/users.js).
+        const mobilitySel = validateMobilitySelection(mobility);
+        if (!mobilitySel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: mobilitySel.reason });
         const landsSel = validateLandsSelection(lands);
         if (!landsSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: landsSel.reason });
-        if (!fieldSel.present && !landsSel.present && vehicleEligible === undefined) {
+        if (!fieldSel.present && !mobilitySel.present && !landsSel.present && vehicleEligible === undefined) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'no_changes_requested' });
         }
         if (vehicleEligible !== undefined && typeof vehicleEligible !== 'boolean') {
@@ -374,6 +390,13 @@ async function handler(req, res) {
         const userRef = db.collection('users').doc(employee.data.authUid);
         const userUpdate = { updatedAt: FieldValue.serverTimestamp() };
         if (fieldSel.present) userUpdate.role = fieldSel.role;
+        // PHASE 06A hotfix — Mobility's own independent entitlement field,
+        // never deleted on disable (see api/admin/users.js's setServices
+        // for the full rationale: once this key exists at all, it becomes
+        // the sole source of truth over the legacy scalar `role`).
+        if (mobilitySel.present) {
+          userUpdate.mobilityAccess = { enabled: mobilitySel.enabled, role: mobilitySel.role, requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp() };
+        }
         if (landsSel.present) {
           userUpdate.landsAccess = landsSel.enabled
             ? { enabled: true, role: landsSel.role, requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(), syncStatus: 'pending_trusted_sync' }
@@ -385,16 +408,17 @@ async function handler(req, res) {
         const existingProducts = employee.data.products || { field: {}, lands: {}, mobility: {} };
         const nextFieldEnabled = fieldSel.present ? fieldSel.enabled : Boolean(existingProducts.field && existingProducts.field.enabled);
         const nextFieldRole = fieldSel.present ? (fieldSel.enabled ? fieldSel.role : null) : (existingProducts.field && existingProducts.field.role) || null;
-        const isMobilityRole = ['mobility_head', 'department_head', 'administrative_affairs', 'employee'].includes(nextFieldRole);
+        const nextMobilityEnabled = mobilitySel.present ? mobilitySel.enabled : Boolean(existingProducts.mobility && existingProducts.mobility.enabled);
+        const nextMobilityRole = mobilitySel.present ? (mobilitySel.enabled ? mobilitySel.role : null) : (existingProducts.mobility && existingProducts.mobility.role) || null;
         const products = {
-          field: { enabled: nextFieldEnabled && !isMobilityRole, role: nextFieldEnabled && !isMobilityRole ? nextFieldRole : null },
+          field: { enabled: nextFieldEnabled, role: nextFieldEnabled ? nextFieldRole : null },
           lands: {
             enabled: landsSel.present ? landsSel.enabled : Boolean(existingProducts.lands && existingProducts.lands.enabled),
             role: landsSel.present ? (landsSel.enabled ? landsSel.role : null) : (existingProducts.lands && existingProducts.lands.role) || null,
           },
           mobility: {
-            enabled: nextFieldEnabled && isMobilityRole,
-            role: nextFieldEnabled && isMobilityRole ? nextFieldRole : null,
+            enabled: nextMobilityEnabled,
+            role: nextMobilityEnabled ? nextMobilityRole : null,
             // Phase 03B.1 hotfix: fail-safe default — preserve the
             // existing REAL value (only true stays eligible) when this
             // call doesn't explicitly change it; never invent eligibility.
@@ -405,7 +429,12 @@ async function handler(req, res) {
 
         await recordAdminAudit(db, {
           caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_assign_products',
-          detail: { field: fieldSel.present ? { enabled: fieldSel.enabled, role: fieldSel.role } : undefined, lands: landsSel.present ? { enabled: landsSel.enabled, role: landsSel.role } : undefined, vehicleEligible },
+          detail: {
+            field: fieldSel.present ? { enabled: fieldSel.enabled, role: fieldSel.role } : undefined,
+            mobility: mobilitySel.present ? { enabled: mobilitySel.enabled, role: mobilitySel.role } : undefined,
+            lands: landsSel.present ? { enabled: landsSel.enabled, role: landsSel.role } : undefined,
+            vehicleEligible,
+          },
         });
         return sendJson(res, 200, { employeeId, products });
       }

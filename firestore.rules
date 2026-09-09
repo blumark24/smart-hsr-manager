@@ -62,10 +62,30 @@ service cloud.firestore {
     // --- Smart Mobility roles (users/{uid}) ---
     // municipality_manager reuses the existing manager account above; these
     // four are new role values in the same users/{uid} collection.
+    //
+    // PHASE 06A hotfix — Mobility entitlement independence. Before this
+    // hotfix, Mobility's role lived in the SAME scalar `role` field Field
+    // also uses (mutually exclusive by construction: one string can only
+    // hold one value). Mobility now has its own independent
+    // users/{uid}.mobilityAccess field ({enabled, role}), structurally
+    // parallel to landsAccess, so a single identity can hold Field AND
+    // Mobility (and Lands) at once. Backward compatibility for every
+    // EXISTING record that has never been touched by this new field (no
+    // bulk migration was performed): once `mobilityAccess` exists on a
+    // document at all, it is the SOLE source of truth for that document's
+    // Mobility state (an explicit {enabled:false} correctly denies, even if
+    // the legacy `role` field still happens to hold a stale Mobility value
+    // from before migration) — only a document that has NEVER been touched
+    // by the new field falls back to reading the legacy scalar `role`.
+    function mobilityRoleValue() {
+      return ('mobilityAccess' in userRecord().data)
+        ? (userRecord().data.mobilityAccess.enabled == true ? userRecord().data.mobilityAccess.role : null)
+        : userRecord().data.role;
+    }
     function isActiveMobilityUser() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && userRecord().data.role in ['mobility_head', 'department_head', 'administrative_affairs', 'employee']
+        && mobilityRoleValue() in ['mobility_head', 'department_head', 'administrative_affairs', 'employee']
         && userRecord().data.active != false
         && userRecord().data.organizationId is string
         && userRecord().data.organizationId.size() > 0;
@@ -74,10 +94,39 @@ service cloud.firestore {
       return isActiveMobilityUser() ? userRecord().data.organizationId : null;
     }
     function mobilityUserRole() {
-      return isActiveMobilityUser() ? userRecord().data.role : null;
+      return isActiveMobilityUser() ? mobilityRoleValue() : null;
     }
     function mobilityUserDept() {
       return isActiveMobilityUser() ? userRecord().data.department : null;
+    }
+
+    // PHASE 06A hotfix — a NEW vehicle allocation names its target employee
+    // (assignedEmployeeUid) purely as a caller-supplied uid on the mission/
+    // vehicle documents being written; nothing about that uid was
+    // previously verified except vehicleEligible on whatever document
+    // happened to exist at that path. This closes that gap: the target
+    // must be a real, same-organization, active, genuinely-Mobility-role
+    // user (the same mobilityRoleValue() dual-read isActiveMobilityUser()
+    // uses for the CALLER, just evaluated against an arbitrary target uid)
+    // AND carry an explicit vehicleEligible === true — missing or false
+    // denies, exactly like the Phase 03B.1 fail-safe default already
+    // established elsewhere. Used by both documents a real allocation
+    // writes in one transaction (vehicles/{id}: AVAILABLE->RESERVED,
+    // missions/{id}: APPROVED->VEHICLE_ALLOCATED) so neither write alone is
+    // a bypass. The target document is fetched exactly ONCE via `let` (a
+    // single bound expression, not a fresh get() per field) — this rule's
+    // evaluation graph is already large enough that repeating get() calls
+    // per field previously blew the platform's per-request expression
+    // budget on this exact write path.
+    function validMobilityAllocationTarget(employeeUid, orgId) {
+      let target = get(/databases/$(database)/documents/users/$(employeeUid)).data;
+      return exists(/databases/$(database)/documents/users/$(employeeUid))
+        && target.organizationId == orgId
+        && target.active != false
+        && (('mobilityAccess' in target)
+              ? (target.mobilityAccess.enabled == true && target.mobilityAccess.role in ['mobility_head', 'department_head', 'administrative_affairs', 'employee'])
+              : target.role in ['mobility_head', 'department_head', 'administrative_affairs', 'employee'])
+        && target.vehicleEligible == true;
     }
 
     // An auditEvents write's actorId/actorRole/organizationId alone say
@@ -132,8 +181,14 @@ service cloud.firestore {
         || (orgUserRole() == 'supervisor' && resource.data.organizationId == orgUserOrgId())
         // mobility_head must list org employees to allocate a vehicle to
         // one — scoped strictly to employee-role records, not every user.
+        // PHASE 06A hotfix: an 'employee' role may now live in the
+        // independent mobilityAccess field instead of the legacy scalar
+        // `role` — same dual-read fallback as mobilityRoleValue() above,
+        // evaluated directly against this document's own resource.data.
         || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId()
-            && resource.data.role == 'employee');
+            && (('mobilityAccess' in resource.data)
+                  ? (resource.data.mobilityAccess.enabled == true && resource.data.mobilityAccess.role == 'employee')
+                  : resource.data.role == 'employee'));
       allow write: if false;
     }
 
@@ -350,7 +405,12 @@ service cloud.firestore {
             // this and the vehicle doc inside one runTransaction() — see
             // platform/policies/vehicle-workflow-policy.js.
             && get(/databases/$(database)/documents/vehicles/$(request.resource.data.vehicleId)).data.organizationId == mobilityUserOrgId()
-            && get(/databases/$(database)/documents/vehicles/$(request.resource.data.vehicleId)).data.status == 'AVAILABLE')
+            && get(/databases/$(database)/documents/vehicles/$(request.resource.data.vehicleId)).data.status == 'AVAILABLE'
+            // PHASE 06A hotfix — the mission write is the OTHER half of a
+            // real allocation transaction; it must independently pass the
+            // same target-employee validation the vehicle write requires,
+            // so neither write alone is a bypass.
+            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, mobilityUserOrgId()))
           || (resource.data.status == 'VEHICLE_ALLOCATED' && request.resource.data.status == 'HANDED_OVER'
             && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
           || (resource.data.status == 'INCIDENT_HOLD' && request.resource.data.status == 'IN_PROGRESS'
@@ -425,15 +485,15 @@ service cloud.firestore {
             // must actually be APPROVED and in this same organization.
             && get(/databases/$(database)/documents/missions/$(request.resource.data.currentMissionId)).data.organizationId == mobilityUserOrgId()
             && get(/databases/$(database)/documents/missions/$(request.resource.data.currentMissionId)).data.status == 'APPROVED'
-            // Phase 03B.1 hotfix — fail-safe default: vehicleEligible is an
-            // independent, real, server-enforced entitlement (a UI
-            // checkbox alone is not sufficient authorization). ONLY an
-            // EXPLICIT true on the target employee's own record allows a
-            // NEW allocation to them; a missing field or any other value
-            // denies. This intentionally reverses the previous "missing
-            // means eligible" default — no bulk migration of existing
-            // records is performed by this hotfix.
-            && get(/databases/$(database)/documents/users/$(request.resource.data.assignedEmployeeUid)).data.vehicleEligible == true)
+            // PHASE 06A hotfix — the single vehicleEligible check the
+            // Phase 03B.1 fail-safe default added here is now folded into
+            // the fuller validMobilityAllocationTarget() check below, which
+            // additionally verifies the target exists, is in this same
+            // organization, is active, and genuinely holds one of the four
+            // real Mobility operational roles — a UI checkbox, a stale uid,
+            // a disabled account, or a cross-tenant/non-Mobility uid was
+            // previously not caught here at all.
+            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, mobilityUserOrgId()))
           || (resource.data.status == 'AVAILABLE'
             && (request.resource.data.status == 'MAINTENANCE' || request.resource.data.status == 'OUT_OF_SERVICE')
             && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
