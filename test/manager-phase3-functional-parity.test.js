@@ -75,24 +75,45 @@ test('User drawer shows the real current service (Field role or Lands entitlemen
   assert.match(manager, /selectedUserServiceLabel: st\.selectedUser \? userDisplayRole\(st\.selectedUser\) : '—'/);
 });
 
-test('Service editing sends an explicit field+lands transfer, never a partial request that could leave both enabled', () => {
-  const fn = methodBody(manager, 'async submitServiceChange(');
+// Phase 03B: Field/Mobility and Lands are now INDEPENDENT toggles (a
+// manager can enable both on the same identity) instead of the old
+// one-click-picks-exactly-one-service design. submitServiceChange() takes
+// no argument any more — it reads svcFieldEnabled/svcFieldRole/
+// svcLandsEnabled/svcLandsRole from state and always sends the FULL
+// intended state for both services together (never a partial request).
+test('Service editing sends the full field+lands state together, and both may now be enabled at once', () => {
+  const fn = methodBody(manager, 'async submitServiceChange()');
   assert.match(fn, /callAdminUsersApi\('setServices',/);
-  // api/admin/users.js's resolveEffectiveServiceState leaves an
-  // unmentioned service's EXISTING stored state in effect — so sending
-  // only the newly-chosen service, without also explicitly disabling the
-  // other, could try to enable both at once and get dual_service_denied.
-  // Both fields must always be stated together.
-  assert.match(fn, /field:\s*\{\s*enabled:\s*choice\.kind === 'field'/);
-  assert.match(fn, /lands:\s*\{\s*enabled:\s*choice\.kind === 'lands'/);
+  assert.match(fn, /field:\s*\{\s*enabled:\s*svcFieldEnabled/);
+  assert.match(fn, /lands:\s*\{\s*enabled:\s*svcLandsEnabled/);
+  // The old design could never send both enabled: true at once (each pill
+  // click hard-coded the other to false) — this one legitimately can.
+  assert.doesNotMatch(fn, /choice\.kind/, 'must not regress to the old single-choice parameter shape');
 });
 
-test('Service options include the real LANDS_MANAGEABLE_ROLES, not an invented Lands role', () => {
-  const start = manager.indexOf('serviceOptions:');
-  const block = manager.slice(start, manager.indexOf(']', start) + 1);
-  assert.match(block, /lands_employee/);
-  assert.match(block, /lands_department_manager/);
-  assert.doesNotMatch(block, /lands_municipal_manager/, 'the institutional Lands role must never be manager-assignable here');
+test('openServiceEdit seeds the independent toggles from the REAL current entitlements, never blank', () => {
+  const fn = methodBody(manager, 'openServiceEdit() {');
+  assert.match(fn, /resolveManagerProductEntitlements\(this\.state\.selectedUser\)/);
+  assert.match(fn, /svcFieldEnabled:\s*ent\.field\.enabled \|\| ent\.mobility\.enabled/);
+  assert.match(fn, /svcLandsEnabled:\s*ent\.lands\.enabled/);
+});
+
+test('Field and Lands role options include the real manageable roles, not an invented Lands role', () => {
+  const fieldStart = manager.indexOf('svcFieldRoleOptions:');
+  const fieldBlock = manager.slice(fieldStart, manager.indexOf(']', fieldStart) + 1);
+  assert.match(fieldBlock, /mobility_head/);
+  assert.match(fieldBlock, /employee/);
+  const landsStart = manager.indexOf('svcLandsRoleOptions:');
+  const landsBlock = manager.slice(landsStart, manager.indexOf(']', landsStart) + 1);
+  assert.match(landsBlock, /lands_employee/);
+  assert.match(landsBlock, /lands_department_manager/);
+  assert.doesNotMatch(landsBlock, /lands_municipal_manager/, 'the institutional Lands role must never be manager-assignable here');
+});
+
+test('vehicleEligible is only sent when the Field role selected is a real Mobility role', () => {
+  const fn = methodBody(manager, 'async submitServiceChange()');
+  assert.match(fn, /mobilityRoles\.includes\(svcFieldRole\)/);
+  assert.match(fn, /params\.vehicleEligible = svcVehicleEligible/);
 });
 
 // ---- User list refresh after mutation (no manual refetch — real live subscription) ----

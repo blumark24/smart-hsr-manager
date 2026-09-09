@@ -95,11 +95,21 @@ async function verifyRequestToken(req, verifyIdToken = (token, checkRevoked) => 
 }
 
 // Build the caller's role context from Firestore (owner / manager / other).
+//
+// Phase 03B additionally recognizes an active `department_head` users/{uid}
+// record (isDepartmentHead / department fields, both new). This is purely
+// additive: every existing caller of getCallerContext only ever reads
+// isOwner/isManager/role/organizationId, which are unaffected — a
+// department_head caller still resolves isOwner:false, isManager:false,
+// exactly as before Phase 03B, so the ORIGINAL Admin API
+// (api/admin/users.js) still denies such a caller with the same
+// 'owner_or_manager_required' it always has. Only the NEW employee-registry
+// endpoint (api/admin/employees.js) reads isDepartmentHead/department.
 async function getCallerContext(uid) {
   const db = getDb();
   const ownerSnap = await db.collection('owners').doc(uid).get();
   if (ownerSnap.exists && activeIsNotFalse(ownerSnap.data())) {
-    return { uid, isOwner: true, isManager: false, role: 'owner', organizationId: null };
+    return { uid, isOwner: true, isManager: false, isDepartmentHead: false, role: 'owner', organizationId: null, department: null };
   }
   const mgrSnap = await db.collection('managers').doc(uid).get();
   if (mgrSnap.exists) {
@@ -108,10 +118,61 @@ async function getCallerContext(uid) {
     // Fail closed: a manager record without a non-empty organizationId is
     // never treated as an authorized manager.
     if (d.role === 'manager' && activeIsNotFalse(d) && orgId) {
-      return { uid, isOwner: false, isManager: true, role: 'manager', organizationId: orgId };
+      return { uid, isOwner: false, isManager: true, isDepartmentHead: false, role: 'manager', organizationId: orgId, department: null };
     }
   }
-  return { uid, isOwner: false, isManager: false, role: null, organizationId: null };
+  const usrSnap = await db.collection('users').doc(uid).get();
+  if (usrSnap.exists) {
+    const d = usrSnap.data() || {};
+    const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+    const dept = typeof d.department === 'string' ? d.department.trim() : '';
+    // Fail closed exactly like the manager check above: a department_head
+    // record missing organizationId or department is never treated as an
+    // authorized department head.
+    if (d.role === 'department_head' && activeIsNotFalse(d) && orgId && dept) {
+      return { uid, isOwner: false, isManager: false, isDepartmentHead: true, role: 'department_head', organizationId: orgId, department: dept };
+    }
+  }
+  return { uid, isOwner: false, isManager: false, isDepartmentHead: false, role: null, organizationId: null, department: null };
+}
+
+// Phase 03B — employee-registry authorization (api/admin/employees.js
+// only; the original users.js endpoint and assertCanManage above are
+// untouched). Owner: any organization. Manager: same organizationId, any
+// department, but never targeting another manager/owner. Department head:
+// same organizationId AND same department only, and never targeting
+// themselves for a privileged change (no self-elevation) or another
+// manager/department head. Everyone else: denied.
+function assertCanManageEmployee(caller, target) {
+  const targetOrg = target && target.targetOrganizationId;
+  const targetDept = target && target.targetDepartment;
+  const targetEmployeeUid = target && target.targetAuthUid;
+
+  if (!caller) return { allowed: false, reason: 'no_caller' };
+
+  if (caller.isOwner) return { allowed: true, reason: 'owner' };
+
+  if (caller.isManager) {
+    if (!caller.organizationId || targetOrg !== caller.organizationId) {
+      return { allowed: false, reason: 'cross_organization_denied' };
+    }
+    return { allowed: true, reason: 'manager_same_org' };
+  }
+
+  if (caller.isDepartmentHead) {
+    if (targetEmployeeUid && targetEmployeeUid === caller.uid) {
+      return { allowed: false, reason: 'self_elevation_denied' };
+    }
+    if (!caller.organizationId || targetOrg !== caller.organizationId) {
+      return { allowed: false, reason: 'cross_organization_denied' };
+    }
+    if (!caller.department || targetDept !== caller.department) {
+      return { allowed: false, reason: 'cross_department_denied' };
+    }
+    return { allowed: true, reason: 'department_head_same_department' };
+  }
+
+  return { allowed: false, reason: 'not_authorized' };
 }
 
 // Pure authorization decision. Owner -> anything manageable. Manager -> only
@@ -166,6 +227,7 @@ module.exports = {
   verifyRequestToken,
   getCallerContext,
   assertCanManage,
+  assertCanManageEmployee,
   AUTH_CODES,
   tokenProject,
 };

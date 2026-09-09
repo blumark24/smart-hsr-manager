@@ -228,7 +228,7 @@
         <sc-if value="{{ expAdmin }}">
           <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
             <div aria-disabled="true" title="الهيكل الإداري قريباً" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx3,#7d8ea6);cursor:not-allowed"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span><span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--sbTx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--sbChip,rgba(122,164,224,0.1));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14))">قريباً</span></div>
-            <a href="#" onClick="{{ goUsers }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">المستخدمون والصلاحيات</span></a>
+            <a href="#" onClick="{{ goUsers }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">مركز المستخدمين</span></a>
             <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهوية والشعار</span></a>
           </div>
         </sc-if>
@@ -602,7 +602,7 @@
               </div>
             </sc-for>
           </div>
-          <a href="#" onClick="{{ goUsers }}" data-f="1" style="text-align:center;font-size:10.5px;color:var(--acc,#4cc9f0);padding-top:8px">عرض المستخدمين والصلاحيات</a>
+          <a href="#" onClick="{{ goUsers }}" data-f="1" style="text-align:center;font-size:10.5px;color:var(--acc,#4cc9f0);padding-top:8px">فتح مركز المستخدمين</a>
         </div>
 
         <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column">
@@ -1186,6 +1186,14 @@
 
         <sc-if value="{{ viewIsUsers }}">
           <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;flex:1;min-height:0">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <sc-for list="{{ userCenterKpis }}" as="k" hint-placeholder-count="5">
+                <div style="flex:1;min-width:150px;padding:12px 14px;border-radius:14px;background:var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:5px">
+                  <span style="font-size:10px;color:var(--tx3,#7d8ea6);white-space:nowrap">{{ k.label }}</span>
+                  <span style="font-size:15px;font-weight:700;color:var(--tx,#e9f1fb);white-space:nowrap">{{ k.value }}</span>
+                </div>
+              </sc-for>
+            </div>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
               <div style="position:relative;width:var(--tSearch,232px)">
                 <input type="search" autocomplete="off" readonly onfocus="this.removeAttribute(&#39;readonly&#39;)" value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
@@ -1199,13 +1207,39 @@
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
                   إضافة مستخدم
                 </button>
+                <button onClick="{{ openAddEmployee }}" data-f="1" style="height:30px;padding:0 14px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                  إضافة موظف بلا حساب
+                </button>
               </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span style="font-size:10px;color:var(--tx3,#7d8ea6)">المنتج</span>
+                <sc-for list="{{ tProductFilters }}" as="f" hint-placeholder-count="4">
+                  <button onClick="{{ f.on }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span style="font-size:10px;color:var(--tx3,#7d8ea6)">أهلية المركبة</span>
+                <sc-for list="{{ tVehicleFilters }}" as="f" hint-placeholder-count="3">
+                  <button onClick="{{ f.on }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ hasDeptFilters }}">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:10px;color:var(--tx3,#7d8ea6)">القسم</span>
+                  <sc-for list="{{ tDeptFilters }}" as="f" hint-placeholder-count="4">
+                    <button onClick="{{ f.on }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
             </div>
 
             <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
               <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
                 <sc-for list="{{ tCols }}" as="c" hint-placeholder-count="6">
-                  <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
+                  <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:{{ c.align }}">{{ c.label }}</span>
                 </sc-for>
               </div>
               <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
@@ -1316,15 +1350,36 @@
           </div>
           <div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:10px;color:var(--tx3,#7d8ea6)">الخدمة</span>
+              <span style="font-size:10px;color:var(--tx3,#7d8ea6)">المنتجات</span>
               <span onClick="{{ openServiceEdit }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">تعديل</span>
             </div>
             <div style="font-size:11.5px;color:var(--tx2,#a9bdd4);padding:10px;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">{{ selectedUserServiceLabel }}</div>
             <sc-if value="{{ serviceEditOpen }}">
-              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
-                <sc-for list="{{ serviceOptions }}" as="o" hint-placeholder-count="6">
-                  <button onClick="{{ o.on }}" data-f="1" style="height:28px;padding:0 11px;border-radius:8px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ o.tx }};background:{{ o.bg }};border:1px solid {{ o.bd }}">{{ o.label }}</button>
-                </sc-for>
+              <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+                <div>
+                  <button onClick="{{ toggleSvcField }}" data-f="1" style="height:26px;padding:0 11px;border-radius:8px;font-size:10.5px;font-weight:700;cursor:pointer;margin-bottom:6px;color:{{ svcFieldEnabled ? 'var(--btnTx,#eaf4ff)' : 'var(--tx3,#7d8ea6)' }};background:{{ svcFieldEnabled ? 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))' : 'var(--ctl,rgba(20,32,54,0.5))' }};border:1px solid {{ svcFieldEnabled ? 'var(--btnBd,rgba(120,170,255,0.35))' : 'var(--ctlBd,rgba(122,164,224,0.14))' }}">{{ svcFieldEnabled ? '✓ الحصر / الحركة مفعّل' : 'تفعيل الحصر / الحركة' }}</button>
+                  <sc-if value="{{ svcFieldEnabled }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <sc-for list="{{ svcFieldRoleOptions }}" as="o" hint-placeholder-count="7">
+                        <button onClick="{{ o.on }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ o.tx }};background:{{ o.bg }};border:1px solid {{ o.bd }}">{{ o.label }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+                <div>
+                  <button onClick="{{ toggleSvcLands }}" data-f="1" style="height:26px;padding:0 11px;border-radius:8px;font-size:10.5px;font-weight:700;cursor:pointer;margin-bottom:6px;color:{{ svcLandsEnabled ? 'var(--btnTx,#eaf4ff)' : 'var(--tx3,#7d8ea6)' }};background:{{ svcLandsEnabled ? 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))' : 'var(--ctl,rgba(20,32,54,0.5))' }};border:1px solid {{ svcLandsEnabled ? 'var(--btnBd,rgba(120,170,255,0.35))' : 'var(--ctlBd,rgba(122,164,224,0.14))' }}">{{ svcLandsEnabled ? '✓ الأراضي مفعّل' : 'تفعيل الأراضي' }}</button>
+                  <sc-if value="{{ svcLandsEnabled }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <sc-for list="{{ svcLandsRoleOptions }}" as="o" hint-placeholder-count="2">
+                        <button onClick="{{ o.on }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ o.tx }};background:{{ o.bg }};border:1px solid {{ o.bd }}">{{ o.label }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ showSvcVehicleToggle }}">
+                  <button onClick="{{ toggleSvcVehicleEligible }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ svcVehicleEligible ? '#0b5c3b' : 'var(--tx3,#7d8ea6)' }};background:{{ svcVehicleEligible ? 'rgba(34,197,85,0.15)' : 'var(--ctl,rgba(20,32,54,0.5))' }};border:1px solid {{ svcVehicleEligible ? 'rgba(34,197,85,0.35)' : 'var(--ctlBd,rgba(122,164,224,0.14))' }}">{{ svcVehicleLabel }}</button>
+                </sc-if>
+                <button onClick="{{ saveServiceChanges }}" data-f="1" style="height:32px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35))">حفظ الصلاحيات</button>
               </div>
             </sc-if>
           </div>
@@ -1378,6 +1433,44 @@
         </div>
         <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px">
           <button onClick="{{ submitAddUser }}" data-f="1" style="width:100%;height:38px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">إنشاء المستخدم</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ addEmployeeOpen }}">
+    <div onClick="{{ closeAddEmployeeDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
+      <div onClick="{{ stop }}" style="width:min(420px,92vw);padding:20px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">إضافة موظف بلا حساب</div>
+            <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:4px">سجل في مركز المستخدمين فقط — بلا حساب دخول حتى يتم تفعيله لاحقًا</div>
+          </div>
+          <button onClick="{{ closeAddEmployeeDrawer }}" data-f="1" aria-label="إغلاق" style="width:32px;height:32px;flex:none;border:none;background:var(--ctl,rgba(20,32,54,0.5));border-radius:10px;color:var(--tx3,#7d8ea6);cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:5px">الاسم</div>
+            <input value="{{ aeName }}" onChange="{{ setAeName }}" autocomplete="off" style="width:100%;height:36px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:5px">الإدارة</div>
+            <input value="{{ aeAdministration }}" onChange="{{ setAeAdministration }}" autocomplete="off" style="width:100%;height:36px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:5px">القسم</div>
+            <input value="{{ aeDepartment }}" onChange="{{ setAeDepartment }}" autocomplete="off" style="width:100%;height:36px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:5px">المسمى الوظيفي</div>
+            <input value="{{ aeJobTitle }}" onChange="{{ setAeJobTitle }}" autocomplete="off" style="width:100%;height:36px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+          </div>
+          <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);line-height:1.7">هذا السجل لا يُنشئ حساب دخول ولا يمنح أي صلاحية. يمكن تفعيل حساب لاحقًا من سجل الموظفين.</div>
+        </div>
+        <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px">
+          <button onClick="{{ submitAddEmployee }}" data-f="1" style="width:100%;height:38px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">إضافة السجل</button>
         </div>
       </div>
     </div>
@@ -1552,6 +1645,27 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:990},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;night&quot;,&quot;day&quot;],&quot;default&quot;:&quot;night&quot;,&quot;tsType&quot;:&quot;'night' | 'day'&quot;,&quot;section&quot;:&quot;المظهر&quot;},&quot;organizationName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;اسم البلدية&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;هوية المنظمة&quot;},&quot;twin3D&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;التوأم الرقمي&quot;},&quot;cityDensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1100,&quot;min&quot;:300,&quot;max&quot;:2200,&quot;step&quot;:100,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;التوأم الرقمي&quot;},&quot;glowIntensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.2,&quot;max&quot;:1.8,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;التوأم الرقمي&quot;},&quot;showQuickActions&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;الواجهة&quot;}}">
+// Phase 03B — مركز المستخدمين: compatibility resolver over the EXISTING
+// users/{uid} schema (role, landsAccess, vehicleEligible). Mirrors
+// platform/contracts/product-entitlement-contract.js exactly — purely
+// additive/read-only, never migrates or renames a legacy field. A plain
+// function declaration (hoisted) so both render() and class methods
+// (openServiceEdit) can call the same single implementation.
+function resolveManagerProductEntitlements(u) {
+  const FIELD_ROLES = ['supervisor', 'inspector', 'contractor'];
+  const MOBILITY_ROLES = ['mobility_head', 'department_head', 'administrative_affairs', 'employee'];
+  const LANDS_ROLES = ['lands_employee', 'lands_department_manager'];
+  if (window.SmartHSRProductEntitlements?.resolveProductEntitlements) return window.SmartHSRProductEntitlements.resolveProductEntitlements(u);
+  const data = u || {}; const role = data.role === undefined ? null : data.role;
+  const landsAccess = data.landsAccess;
+  const isFieldRole = FIELD_ROLES.includes(role); const isMobilityRole = MOBILITY_ROLES.includes(role);
+  const landsEnabled = Boolean(landsAccess && landsAccess.enabled === true && LANDS_ROLES.includes(landsAccess.role));
+  return {
+    field: { enabled: isFieldRole, role: isFieldRole ? role : null },
+    mobility: { enabled: isMobilityRole, role: isMobilityRole ? role : null, vehicleEligible: data.vehicleEligible !== false },
+    lands: { enabled: landsEnabled, role: landsEnabled ? landsAccess.role : null },
+  };
+}
 class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
@@ -1561,6 +1675,8 @@ class Component extends DCLogic {
     userDrawerOpen: false, selectedUser: null, incidentDrawerOpen: false, selectedIncident: null,
     addUserOpen: false, auName: '', auEmail: '', auRole: 'employee', auKind: 'field',
     serviceEditOpen: false,
+    svcFieldEnabled: false, svcFieldRole: 'employee', svcLandsEnabled: false, svcLandsRole: 'lands_employee', svcVehicleEligible: true,
+    addEmployeeOpen: false, aeName: '', aeAdministration: '', aeDepartment: '', aeJobTitle: '',
     evidenceDrawerOpen: false, selectedObservation: null,
     evidenceBeforeState: 'idle', evidenceBeforeUrl: null,
     evidenceAfterState: 'idle', evidenceAfterUrl: null,
@@ -2126,6 +2242,10 @@ class Component extends DCLogic {
         return all.filter(u => String(u?.name || '').toLocaleLowerCase('ar').includes(q) || String(u?.email || '').toLocaleLowerCase('ar').includes(q));
       }
     };
+    // Phase 03B — مركز المستخدمين: see resolveManagerProductEntitlements()
+    // (top-level, shared with openServiceEdit()) for the compatibility
+    // resolver over the EXISTING users/{uid} schema.
+    const resolveProductEntitlements = resolveManagerProductEntitlements;
     const statusLabel = status => ({ PENDING: 'قيد الانتظار', IN_PROGRESS: 'قيد المعالجة', COMPLETED: 'تمت المعالجة' }[status] || 'غير محدد');
     const categoryLabel = type => ({ MAINTENANCE: 'صيانة', QUALITY: 'جودة', SAFETY: 'سلامة', ENVIRONMENT: 'بيئة', ROAD: 'طرق' }[type] || type || 'غير مصنف');
     // الحصر الميداني الذكي — Manager Dashboard. Every value below is derived
@@ -2281,15 +2401,25 @@ class Component extends DCLogic {
     const setTQ = e => this.setState({ tq: e.target.value });
     const setTFilter = (filter) => this.setState({ tuFilter: filter });
 
+    let userCenterKpis = [], tProductFilters = [], tVehicleFilters = [], tDeptFilters = [];
     if (st.view === 'users') {
       const tfilter = st.tuFilter || 'الكل';
+      const tProductFilter = st.tuProductFilter || 'الكل';
+      const tVehicleFilter = st.tuVehicleFilter || 'الكل';
+      const tDeptFilter = st.tuDeptFilter || 'الكل';
       const tq = (st.tq || '').trim().toLocaleLowerCase('ar');
       tPlaceholder = 'الاسم، البريد الإلكتروني...';
       tCols = [
-        { label: 'الاسم', flex: '1', align: 'right' },
-        { label: 'البريد الإلكتروني', flex: '1.2', align: 'right' },
-        { label: 'الدور', flex: '0.9', align: 'right' },
-        { label: 'الحالة', flex: '0 0 80px', align: 'right' }
+        { label: 'الموظف', flex: '1.1', align: 'right' },
+        { label: 'الإدارة', flex: '0.8', align: 'right' },
+        { label: 'القسم', flex: '0.8', align: 'right' },
+        { label: 'المسمى', flex: '0.8', align: 'right' },
+        { label: 'الحصر', flex: '0 0 56px', align: 'center' },
+        { label: 'الأراضي', flex: '0 0 56px', align: 'center' },
+        { label: 'الحركة', flex: '0 0 56px', align: 'center' },
+        { label: 'دور الحركة', flex: '0.8', align: 'right' },
+        { label: 'المركبة', flex: '0 0 64px', align: 'center' },
+        { label: 'الحالة', flex: '0 0 70px', align: 'right' }
       ];
       const allUsers = Array.isArray(this.liveUsers) ? this.liveUsers : [];
       // Real counts from the live users list — never fabricated. Only the
@@ -2305,25 +2435,77 @@ class Component extends DCLogic {
       const roleMap = { 'الكل': null, 'مدير': 'manager', 'رئيس حركة': 'mobility_head', 'رئيس قسم': 'department_head', 'شؤون إدارية': 'administrative_affairs', 'موظف': 'employee', 'أراضي': 'lands' };
       const filterLabel = rf => rf === 'أراضي' ? `أراضي (${landsCount})` : rf;
       tFilters = roleFilters.map(rf => pill(filterLabel(rf), tfilter === rf, () => setTFilter(rf)));
+
+      // --- Phase 03B: KPI cards, product/vehicle/department filters — all
+      // derived from this SAME real, already-loaded allUsers array. No new
+      // fetch, no fabricated statistic. ---
+      const entitlementsByUid = new Map(allUsers.map(u => [u.id, resolveProductEntitlements(u)]));
+      const activatedCount = allUsers.filter(u => u.active !== false).length;
+      const deactivatedCount = allUsers.length - activatedCount;
+      const fieldCount = allUsers.filter(u => entitlementsByUid.get(u.id).field.enabled).length;
+      const landsProductCount = allUsers.filter(u => entitlementsByUid.get(u.id).lands.enabled).length;
+      const mobilityCount = allUsers.filter(u => entitlementsByUid.get(u.id).mobility.enabled).length;
+      const vehicleEligibleCount = allUsers.filter(u => {
+        const ent = entitlementsByUid.get(u.id);
+        return ent.mobility.enabled && ent.mobility.vehicleEligible;
+      }).length;
+      const kpiCard = (label, value) => ({ label, value: String(value) });
+      userCenterKpis = [
+        kpiCard('إجمالي الموظفين', allUsers.length),
+        kpiCard('الحسابات المفعلة', activatedCount),
+        kpiCard('غير المفعلة', deactivatedCount),
+        kpiCard('المستخدمون حسب المنتجات', `${fieldCount} حصر · ${landsProductCount} أراضي · ${mobilityCount} حركة`),
+        kpiCard('المؤهلون لاستلام مركبة', vehicleEligibleCount),
+      ];
+
+      const productFilterNames = ['الكل', 'الحصر', 'الأراضي', 'الحركة'];
+      tProductFilters = productFilterNames.map(pf => pill(pf, tProductFilter === pf, () => this.setState({ tuProductFilter: pf })));
+      const vehicleFilterNames = ['الكل', 'مؤهل', 'غير مؤهل'];
+      tVehicleFilters = vehicleFilterNames.map(vf => pill(vf, tVehicleFilter === vf, () => this.setState({ tuVehicleFilter: vf })));
+      const deptValues = Array.from(new Set(allUsers.map(u => u.department).filter(Boolean)));
+      const deptFilterNames = ['الكل', ...deptValues];
+      tDeptFilters = deptFilterNames.map(df => pill(df, tDeptFilter === df, () => this.setState({ tuDeptFilter: df })));
+
       const targetRole = roleMap[tfilter];
       const roleScoped = !targetRole ? allUsers
         : targetRole === 'lands' ? allUsers.filter(u => u.role == null && u.landsAccess)
         : allUsers.filter(u => u.role === targetRole);
-      const filteredUsers = usersListView.deriveVisibleUsers(roleScoped, { search: tq });
+      const productScoped = tProductFilter === 'الكل' ? roleScoped
+        : roleScoped.filter(u => {
+          const ent = entitlementsByUid.get(u.id);
+          return tProductFilter === 'الحصر' ? ent.field.enabled : tProductFilter === 'الأراضي' ? ent.lands.enabled : ent.mobility.enabled;
+        });
+      const vehicleScoped = tVehicleFilter === 'الكل' ? productScoped
+        : productScoped.filter(u => {
+          const ent = entitlementsByUid.get(u.id);
+          const eligible = ent.mobility.enabled && ent.mobility.vehicleEligible;
+          return tVehicleFilter === 'مؤهل' ? eligible : ent.mobility.enabled && !eligible;
+        });
+      const deptScoped = tDeptFilter === 'الكل' ? vehicleScoped : vehicleScoped.filter(u => u.department === tDeptFilter);
+      const filteredUsers = usersListView.deriveVisibleUsers(deptScoped, { search: tq });
+      const mobilityRoleLabel = r => ({ mobility_head: 'رئيس حركة', department_head: 'رئيس قسم', administrative_affairs: 'شؤون إدارية', employee: 'موظف' }[r] || '—');
       tRows = filteredUsers.map(u => {
+        const ent = entitlementsByUid.get(u.id);
         const c = { col: u.active ? (day ? '#0b5c3b' : '#22c55e') : (day ? '#666' : '#999'), bg: u.active ? (day ? 'rgba(14,122,79,0.12)' : 'rgba(34,197,85,0.15)') : (day ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)'), bd: u.active ? (day ? 'rgba(14,122,79,0.3)' : 'rgba(34,197,85,0.4)') : 'var(--ctlBd,rgba(122,164,224,0.14))' };
+        const yesNo = (v) => v ? '✓' : '—';
         return {
           chip: u.active ? 'نشط' : 'غير نشط', chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
           on: () => this.openUserDetail(u),
           cells: [
-            cell(u.name, '1', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
-            cell(u.email, '1.2'),
-            cell(userDisplayRole(u), '0.9', { size: '11px' })
+            cell(u.name, '1.1', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
+            cell(u.administration || '—', '0.8', { size: '11px' }),
+            cell(u.department || '—', '0.8', { size: '11px' }),
+            cell(u.jobTitle || '—', '0.8', { size: '11px' }),
+            cell(yesNo(ent.field.enabled), '0 0 56px', { align: 'center' }),
+            cell(yesNo(ent.lands.enabled), '0 0 56px', { align: 'center' }),
+            cell(yesNo(ent.mobility.enabled), '0 0 56px', { align: 'center' }),
+            cell(ent.mobility.enabled ? mobilityRoleLabel(ent.mobility.role) : '—', '0.8', { size: '11px' }),
+            cell(ent.mobility.enabled ? (ent.mobility.vehicleEligible ? 'مؤهل' : 'غير مؤهل') : '—', '0 0 64px', { align: 'center', size: '10.5px' })
           ]
         };
       });
       tEmpty = tRows.length === 0;
-      tCount = tRows.length + ' مستخدم';
+      tCount = tRows.length + ' موظف';
       tQ = st.tq || '';
     } else if (st.view === 'incidents') {
       const statusMap = { 'NEW': 'جديد', 'ACKNOWLEDGED': 'تم الاستلام', 'IN_PROGRESS': 'تحت المعالجة', 'RESOLVED': 'تم الحل' };
@@ -2449,13 +2631,19 @@ class Component extends DCLogic {
       selectedUserActionLabel: st.selectedUser?.active ? 'تعطيل المستخدم' : 'تفعيل المستخدم',
       enableUserAction: () => this.enableUserAction(), resetUserPassword: () => this.resetUserPassword(),
       openAddUser: () => this.openAddUser(), closeAddUserDrawer: () => this.closeAddUserDrawer(),
+      openAddEmployee: () => this.openAddEmployee(), closeAddEmployeeDrawer: () => this.closeAddEmployeeDrawer(),
+      addEmployeeOpen: st.addEmployeeOpen, submitAddEmployee: () => this.submitAddEmployee(),
+      aeName: st.aeName, setAeName: e => this.setState({ aeName: e.target.value }),
+      aeAdministration: st.aeAdministration, setAeAdministration: e => this.setState({ aeAdministration: e.target.value }),
+      aeDepartment: st.aeDepartment, setAeDepartment: e => this.setState({ aeDepartment: e.target.value }),
+      aeJobTitle: st.aeJobTitle, setAeJobTitle: e => this.setState({ aeJobTitle: e.target.value }),
       addUserOpen: st.addUserOpen, submitAddUser: () => this.submitAddUser(),
       auName: st.auName, setAuName: e => this.setState({ auName: e.target.value }),
       auEmail: st.auEmail, setAuEmail: e => this.setState({ auEmail: e.target.value }),
-      // Field vs Lands is itself a single-select choice (never both at
-      // once — Lands is single-service-exclusive with Field), picked
-      // before the role list, which then only offers roles valid for
-      // that one chosen service.
+      // The initial account is created with ONE starting service (Field or
+      // Lands); Phase 03B's combined access is added afterwards via the
+      // service-editing drawer (submitServiceChange), which can grant the
+      // second service without removing the first.
       auKindOptions: [
         { label: 'حصر ميداني', kind: 'field' }, { label: 'حصر أراضي', kind: 'lands' }
       ].map(o => pill(o.label, st.auKind === o.kind, () => this.setState({ auKind: o.kind, auRole: o.kind === 'field' ? 'employee' : 'lands_employee' }))),
@@ -2468,11 +2656,26 @@ class Component extends DCLogic {
       ]).map(o => pill(o.label, st.auRole === o.role, () => this.setState({ auRole: o.role }))),
       openServiceEdit: () => this.openServiceEdit(), serviceEditOpen: st.serviceEditOpen,
       selectedUserServiceLabel: st.selectedUser ? userDisplayRole(st.selectedUser) : '—',
-      serviceOptions: [
-        { label: 'مدير حركة', kind: 'field', role: 'mobility_head' }, { label: 'رئيس قسم', kind: 'field', role: 'department_head' },
-        { label: 'شؤون إدارية', kind: 'field', role: 'administrative_affairs' }, { label: 'موظف', kind: 'field', role: 'employee' },
-        { label: 'موظف أراضي', kind: 'lands', role: 'lands_employee' }, { label: 'رئيس قسم أراضي', kind: 'lands', role: 'lands_department_manager' }
-      ].map(o => pill(o.label, false, () => this.submitServiceChange({ kind: o.kind, role: o.role }))),
+      // Phase 03B: الحصر/الحركة and الأراضي are now INDEPENDENT toggles — a
+      // manager can enable both together on the same identity — instead of
+      // the old one-click-picks-exactly-one-service pill list.
+      svcFieldEnabled: st.svcFieldEnabled,
+      toggleSvcField: () => this.setState({ svcFieldEnabled: !st.svcFieldEnabled }),
+      svcFieldRoleOptions: [
+        { label: 'مدير حركة', role: 'mobility_head' }, { label: 'رئيس قسم', role: 'department_head' },
+        { label: 'شؤون إدارية', role: 'administrative_affairs' }, { label: 'موظف', role: 'employee' },
+        { label: 'مشرف', role: 'supervisor' }, { label: 'مراقب', role: 'inspector' }, { label: 'مقاول', role: 'contractor' }
+      ].map(o => pill(o.label, st.svcFieldRole === o.role, () => this.setState({ svcFieldRole: o.role }))),
+      svcLandsEnabled: st.svcLandsEnabled,
+      toggleSvcLands: () => this.setState({ svcLandsEnabled: !st.svcLandsEnabled }),
+      svcLandsRoleOptions: [
+        { label: 'موظف أراضي', role: 'lands_employee' }, { label: 'رئيس قسم أراضي', role: 'lands_department_manager' }
+      ].map(o => pill(o.label, st.svcLandsRole === o.role, () => this.setState({ svcLandsRole: o.role }))),
+      showSvcVehicleToggle: st.svcFieldEnabled && ['mobility_head', 'department_head', 'administrative_affairs', 'employee'].includes(st.svcFieldRole),
+      svcVehicleEligible: st.svcVehicleEligible,
+      toggleSvcVehicleEligible: () => this.setState({ svcVehicleEligible: !st.svcVehicleEligible }),
+      svcVehicleLabel: st.svcVehicleEligible ? '✓ مؤهل لاستلام مركبة' : 'غير مؤهل لاستلام مركبة',
+      saveServiceChanges: () => this.submitServiceChange(),
       selectedIncidentId: st.selectedIncident?.id || '—', selectedIncidentCategory: st.selectedIncident?.category || '—',
       selectedIncidentLocation: st.selectedIncident?.location || '—',
       selectedIncidentStatus: (() => {
@@ -2559,8 +2762,8 @@ class Component extends DCLogic {
       // exactly like every other sc-if in this file already does.
       viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands',
       viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands',
-      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'المستخدمون والصلاحيات' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : 'البلاغات',
-      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'عرض للقراءة فقط للمستخدمين داخل المنظمة الحالية.' : st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة الحركة والسير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
+      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : 'البلاغات',
+      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة الحركة والسير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
       viewEmpty: ((st.view === 'users' || st.view === 'incidents' || st.view === 'fieldSurvey') ? !tRows.length : !viewObservations.length),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
@@ -2602,6 +2805,8 @@ class Component extends DCLogic {
       fsRecentRows: tRows.slice(0, 5), fsHasRecent: tRows.length > 0,
 
       tCols, tRows, tFilters, tPlaceholder, tQ, setTQ, tEmpty, tCount,
+      userCenterKpis, tProductFilters, tVehicleFilters, tDeptFilters,
+      hasDeptFilters: tDeptFilters.length > 1,
 
       notifs: this.liveNotifications,
       scopes: [{ label: 'مدير البلدية' }, { label: 'رؤساء الأقسام' }, { label: 'إدارة الحركة' }, { label: 'الشؤون الإدارية' }, { label: 'الموظفون' }, { label: 'المراقبون' }, { label: 'لوحات مستقبلية' }],
@@ -2617,7 +2822,7 @@ class Component extends DCLogic {
       quickActions: [
         { label: 'عرض البلاغات', on: () => this.openView('observations') },
         { label: 'الخريطة التشغيلية', on: () => this.openMap() },
-        { label: 'المستخدمون والصلاحيات', on: () => this.openView('users') },
+        { label: 'مركز المستخدمين', on: () => this.openView('users') },
         { label: 'الحوادث والطوارئ', on: () => this.openView('incidents') }
       ],
       mobNav: [
@@ -2629,7 +2834,7 @@ class Component extends DCLogic {
         { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap() },
         { label: 'التقارير', tag: '', on: () => this.openView('reports') },
         { label: 'الهيكل الإداري', tag: 'قريباً', disabled: true },
-        { label: 'المستخدمون والصلاحيات', tag: '', on: () => this.openView('users') },
+        { label: 'مركز المستخدمين', tag: '', on: () => this.openView('users') },
         { label: 'الحوادث والطوارئ', tag: '', on: () => this.openView('incidents') },
         { label: 'الإعدادات والهوية', tag: '', on: () => this.setState({ settingsOpen: true, mobNavOpen: false }) },
         { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', disabled: true }
@@ -2871,34 +3076,103 @@ class Component extends DCLogic {
     }
   }
 
-  openServiceEdit() {
-    this.setState({ serviceEditOpen: true });
+  openAddEmployee() {
+    this.setState({ addEmployeeOpen: true, aeName: '', aeAdministration: '', aeDepartment: '', aeJobTitle: '' });
   }
 
-  async submitServiceChange(choice) {
+  closeAddEmployeeDrawer() {
+    this.setState({ addEmployeeOpen: false });
+  }
+
+  // Phase 03B: registry-only record via the new /api/admin/employees
+  // endpoint — no Firebase Auth account, no product entitlement, no login
+  // access. An employee can exist here long before (or without ever)
+  // being activated; see openUserDetail's future activation path.
+  async submitAddEmployee() {
+    const { aeName, aeAdministration, aeDepartment, aeJobTitle } = this.state;
+    if (!aeName || !aeName.trim()) { this.flash('الاسم مطلوب.'); return; }
+    this.flash('جاري إضافة السجل...');
+    try {
+      await this.callAdminEmployeesApi('create', {
+        organizationId: this.state.orgId,
+        name: aeName.trim(),
+        administration: (aeAdministration || '').trim() || undefined,
+        department: (aeDepartment || '').trim() || undefined,
+        jobTitle: (aeJobTitle || '').trim() || undefined,
+      });
+      this.flash('تمت إضافة سجل الموظف بنجاح.');
+      this.closeAddEmployeeDrawer();
+    } catch (e) {
+      this.flash(`فشلت إضافة السجل: ${this.adminApiErrorMessage(e)}`);
+    }
+  }
+
+  async callAdminEmployeesApi(action, params) {
+    const token = await this.getAuthToken?.();
+    if (!token) {
+      const err = new Error('unauthenticated');
+      err.reason = 'no_session';
+      throw err;
+    }
+    const response = await fetch('/api/admin/employees', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action, ...params })
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = new Error(body.error || 'request_failed');
+      err.reason = body.reason || null;
+      err.status = response.status;
+      throw err;
+    }
+    return body;
+  }
+
+  // Phase 03B: seeds the independent Field/Lands toggles from the
+  // selected user's REAL current entitlements (never blank/guessed), so
+  // opening the editor shows exactly what is already granted.
+  openServiceEdit() {
+    const ent = resolveManagerProductEntitlements(this.state.selectedUser);
+    this.setState({
+      serviceEditOpen: true,
+      svcFieldEnabled: ent.field.enabled || ent.mobility.enabled,
+      svcFieldRole: ent.field.role || ent.mobility.role || 'employee',
+      svcLandsEnabled: ent.lands.enabled,
+      svcLandsRole: ent.lands.role || 'lands_employee',
+      svcVehicleEligible: ent.mobility.vehicleEligible,
+    });
+  }
+
+  // Phase 03B: Field/Mobility and Lands are independent toggles — both may
+  // be enabled at once on the same identity (see
+  // api/_lib/serviceEntitlements.js assertSingleService). This still sends
+  // the FULL intended state for both services together (never a partial
+  // request), matching the same "explicit transfer" safety the previous
+  // single-select design relied on — only now either or both can be true.
+  async submitServiceChange() {
     const user = this.state.selectedUser;
     if (!user) return;
-    this.flash('جاري تحديث الخدمة...');
+    const { svcFieldEnabled, svcFieldRole, svcLandsEnabled, svcLandsRole, svcVehicleEligible } = this.state;
+    if (!svcFieldEnabled && !svcLandsEnabled) {
+      this.flash('يجب تفعيل منتج واحد على الأقل.');
+      return;
+    }
+    this.flash('جاري تحديث الصلاحيات...');
     try {
-      // Single-service exclusivity is enforced against the EFFECTIVE state
-      // after this request (api/admin/users.js resolveEffectiveServiceState):
-      // a request naming only one service leaves the other's existing
-      // stored state in effect. Sending only { lands: {...} } for a user who
-      // currently has an active Field role would therefore try to enable
-      // Lands WITHOUT disabling Field, and assertSingleService rejects that
-      // as dual_service_denied. A service change must always be an explicit
-      // transfer — both services stated together — never a partial request.
       const params = {
         uid: user.id,
-        field: { enabled: choice.kind === 'field', role: choice.kind === 'field' ? choice.role : null },
-        lands: { enabled: choice.kind === 'lands', role: choice.kind === 'lands' ? choice.role : null },
+        field: { enabled: svcFieldEnabled, role: svcFieldEnabled ? svcFieldRole : null },
+        lands: { enabled: svcLandsEnabled, role: svcLandsEnabled ? svcLandsRole : null },
       };
+      const mobilityRoles = ['mobility_head', 'department_head', 'administrative_affairs', 'employee'];
+      if (svcFieldEnabled && mobilityRoles.includes(svcFieldRole)) params.vehicleEligible = svcVehicleEligible;
       await this.callAdminUsersApi('setServices', params);
-      this.flash('تم تحديث الخدمة بنجاح.');
+      this.flash('تم تحديث الصلاحيات بنجاح.');
       this.setState({ serviceEditOpen: false });
       this.closeUserDrawer();
     } catch (e) {
-      this.flash(`فشل تحديث الخدمة: ${this.adminApiErrorMessage(e)}`);
+      this.flash(`فشل تحديث الصلاحيات: ${this.adminApiErrorMessage(e)}`);
     }
   }
 

@@ -105,4 +105,41 @@ test('a cross-organization actor is denied regardless of role', () => {
   assert.equal(decision.code, 'ORGANIZATION_SCOPE_DENIED');
 });
 
+// ---- Phase 03B: vehicleEligible is an independent, server-enforced entitlement ----
+
+test('vehicleEligible: true allows allocation', () => {
+  const decision = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+    requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+    assignedEmployee: { vehicleEligible: true },
+  });
+  assert.equal(decision.allowed, true);
+});
+
+test('vehicleEligible: an explicit false on the target employee denies allocation', () => {
+  const decision = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+    requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+    assignedEmployee: { vehicleEligible: false },
+  });
+  assert.equal(decision.allowed, false);
+  assert.equal(decision.code, 'VEHICLE_ELIGIBILITY_DENIED');
+});
+
+test('vehicleEligible: absent assignedEmployee (every pre-Phase-03B caller) has zero behavior change', () => {
+  const decision = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('AVAILABLE'), toStatus: 'RESERVED',
+    requestedFields: { assignedEmployeeUid: 'emp-1', currentMissionId: 'm-1' },
+  });
+  assert.equal(decision.allowed, true, 'omitting assignedEmployee must never newly deny an existing caller');
+});
+
+test('vehicleEligible removal only blocks a NEW allocation, never a transition where it is not passed (e.g. handover, return)', () => {
+  const handover = evaluateVehicleTransition({
+    actor: actor('mobility_head'), vehicle: vehicle('RESERVED'), toStatus: 'IN_MISSION',
+    assignedEmployee: { vehicleEligible: false },
+  });
+  assert.equal(handover.allowed, true, 'vehicleEligible is only checked on the allocate transition, not on transitions of an already-allocated vehicle');
+});
+
 console.log('vehicle workflow policy OK');

@@ -40,18 +40,29 @@ test('Add User: Field/Lands single-select still exists (see manager-phase3-funct
   assert.doesNotMatch(source, /id="addFieldEnabled"|id="addLandsEnabled"/, 'must never regress to two independent service checkboxes');
 });
 
-// ---- single-select Field vs Lands (service editing) ----
-// Old intent: same independent-checkbox risk in the edit-user drawer. Now:
-// serviceOptions is a flat list of one-click role pills — each click
-// immediately calls submitServiceChange({kind, role}) for exactly one
-// service/role pair, so there is no way to select more than one at a time.
-// See manager-phase3-functional-parity.test.js: "Service options include
-// the real LANDS_MANAGEABLE_ROLES..." and "Service editing sends an
-// explicit field+lands transfer...".
-test('Edit user services: single-click service options still exist (see manager-phase3-functional-parity.test.js)', () => {
+// ---- service editing: Phase 03B intentionally REPLACES single-select with
+// independent Field/Lands toggles ----
+// Old intent (pre-Phase-03B): serviceOptions was a flat list of one-click
+// role pills — each click immediately called submitServiceChange({kind,
+// role}) for exactly one service/role pair, with no way to select more
+// than one at a time. That constraint was an explicit, intentional product
+// decision that Phase 03B reverses: "ONE USER = ONE IDENTITY + MULTIPLE
+// CONTROLLED PRODUCT ENTITLEMENTS" requires a manager to be able to enable
+// Field/Mobility AND Lands together on the same identity. This is still
+// never the old pre-Designer-refactor jQuery pattern of two raw DOM
+// checkboxes with literal ids (`#svcFieldEnabled`/`#svcLandsEnabled`) that
+// could be checked without any server-side transfer logic at all — the new
+// toggles are real component state (svcFieldEnabled/svcLandsEnabled),
+// submitted together through the same real setServices contract. See
+// manager-phase3-functional-parity.test.js: "Service editing sends the
+// full field+lands state together, and both may now be enabled at once".
+test('Edit user services: independent Field/Lands toggles exist as real state, never the old raw DOM checkboxes (see manager-phase3-functional-parity.test.js)', () => {
   const source = read('manager.html');
-  assert.match(source, /serviceOptions:/);
-  assert.doesNotMatch(source, /id="svcFieldEnabled"|id="svcLandsEnabled"/, 'must never regress to two independent service checkboxes');
+  assert.match(source, /svcFieldRoleOptions:/);
+  assert.match(source, /svcLandsRoleOptions:/);
+  assert.match(source, /toggleSvcField:\s*\(\)\s*=>\s*this\.setState\(\{\s*svcFieldEnabled:\s*!st\.svcFieldEnabled\s*\}\)/);
+  assert.match(source, /toggleSvcLands:\s*\(\)\s*=>\s*this\.setState\(\{\s*svcLandsEnabled:\s*!st\.svcLandsEnabled\s*\}\)/);
+  assert.doesNotMatch(source, /id="svcFieldEnabled"|id="svcLandsEnabled"/, 'must never regress to raw, un-audited DOM checkboxes with no server-side transfer contract');
 });
 
 // ---- temporary password reaches the create call ----

@@ -66,7 +66,7 @@ function checkOwnership(kind, actor, vehicle) {
   return decision(false, 'OWNERSHIP_RULE_UNKNOWN', `Unknown ownership rule: ${kind}`);
 }
 
-function evaluateVehicleTransition({ actor, vehicle, toStatus, requestedFields } = {}) {
+function evaluateVehicleTransition({ actor, vehicle, toStatus, requestedFields, assignedEmployee } = {}) {
   const fromStatus = vehicle && vehicle.status;
   if (!VEHICLE_STATUSES.includes(fromStatus) || !VEHICLE_STATUSES.includes(toStatus)) {
     return decision(false, 'UNSUPPORTED_STATUS', 'The current or requested vehicle status is not supported.');
@@ -95,6 +95,17 @@ function evaluateVehicleTransition({ actor, vehicle, toStatus, requestedFields }
     if (missing.length) {
       return decision(false, 'REQUIRED_FIELDS_MISSING', `Missing required fields: ${missing.join(', ')}`);
     }
+  }
+
+  // Phase 03B: vehicleEligible is an independent entitlement, not a role —
+  // enforced here, not merely by a UI checkbox, so a manager revoking it
+  // genuinely blocks a NEW allocation to that employee. Backward-compatible
+  // by construction: `assignedEmployee` is an optional parameter, so every
+  // existing caller that never passes it (and therefore every employee
+  // record created before this field existed) sees zero behavior change.
+  // Only an EXPLICIT `assignedEmployee.vehicleEligible === false` denies.
+  if (contract.action === 'allocate' && assignedEmployee && assignedEmployee.vehicleEligible === false) {
+    return decision(false, 'VEHICLE_ELIGIBILITY_DENIED', 'The employee assigned to this vehicle is not vehicle-eligible.');
   }
 
   return decision(true, 'TRANSITION_ALLOWED', `The ${actor.role} role may request ${fromStatus} -> ${toStatus}.`);

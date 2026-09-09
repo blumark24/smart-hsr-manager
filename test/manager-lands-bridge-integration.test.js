@@ -99,8 +99,8 @@ test('3. Service transfer: Field employee -> Lands removes Field and grants real
   } finally { fakes.restore(); }
 });
 
-test('dual-service request is denied: enabling Lands on an active Field employee without disabling Field', async () => {
-  const fakes = installFakes();
+test('Phase 03B: combined access is allowed — enabling Lands on an active Field employee without disabling Field now succeeds', async () => {
+  const fakes = installFakes({ bridgeResponses: [{ ok: true, bridged: true, eventId: 'lands_evt_combo_1' }] });
   try {
     const { uid: managerUid, organizationId } = seedManager(fakes);
     fakes.store.seed('users/emp-field-2', { uid: 'emp-field-2', role: 'inspector', active: true, organizationId, email: 'field2@example.com' });
@@ -110,17 +110,18 @@ test('dual-service request is denied: enabling Lands on an active Field employee
     const res = fakeResponse();
     await usersHandler(req, res);
 
-    assert.equal(res.statusCode, 400);
-    assert.equal(res.body.reason, 'dual_service_denied');
-    assert.equal(fakes.bridgeCalls.length, 0, 'no Lands call attempted for a denied dual-service request');
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(fakes.bridgeCalls.length, 1, 'the real Lands trusted mutation is still called for the new combined grant');
+    assert.equal(fakes.bridgeCalls[0].operation, 'entitlement.enable');
     const stored = fakes.store.docs.get('users/emp-field-2');
-    assert.equal(stored.role, 'inspector', 'Field record untouched by the denied request');
-    assert.equal(stored.landsAccess, undefined);
+    assert.equal(stored.role, 'inspector', 'Field access is preserved, not silently dropped, by the combined grant');
+    assert.equal(stored.landsAccess.enabled, true);
+    assert.equal(stored.landsAccess.role, 'lands_employee');
   } finally { fakes.restore(); }
 });
 
-test('dual-service request is denied at creation: Field and Lands both enabled in one create call', async () => {
-  const fakes = installFakes();
+test('Phase 03B: combined access is allowed at creation — Field and Lands both enabled in one create call', async () => {
+  const fakes = installFakes({ bridgeResponses: [{ ok: true, bridged: true, eventId: 'lands_evt_combo_2' }] });
   try {
     const { uid, organizationId } = seedManager(fakes);
     const { usersHandler } = loadFreshHandlers();
@@ -128,9 +129,16 @@ test('dual-service request is denied at creation: Field and Lands both enabled i
     const res = fakeResponse();
     await usersHandler(req, res);
 
-    assert.equal(res.statusCode, 400);
-    assert.equal(res.body.reason, 'dual_service_denied');
-    assert.equal(fakes.bridgeCalls.length, 0);
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.field.enabled, true);
+    assert.equal(res.body.field.role, 'inspector');
+    assert.equal(res.body.lands.enabled, true);
+    assert.equal(res.body.lands.role, 'lands_employee');
+    assert.equal(fakes.bridgeCalls.length, 1);
+    const created = [...fakes.store.docs.entries()].find(([path]) => path.startsWith('users/'));
+    assert.ok(created, 'user document was written');
+    assert.equal(created[1].role, 'inspector');
+    assert.equal(created[1].landsAccess.enabled, true);
   } finally { fakes.restore(); }
 });
 
@@ -373,5 +381,39 @@ test('arbitrary uid/role/municipality/path input in the bootstrap request body i
     assert.equal(res.body.municipalityId, organizationId);
     assert.ok(fakes.store.docs.get(`landsMunicipalities/${organizationId}/userAccess/${uid}`));
     assert.equal(fakes.store.docs.get('landsMunicipalities/org-victim/userAccess/attacker-uid'), undefined);
+  } finally { fakes.restore(); }
+});
+
+// ---- Phase 03B: vehicleEligible via setServices (api/admin/users.js) ----
+test('Phase 03B: setServices can set vehicleEligible independently of field/lands', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid: managerUid, organizationId } = seedManager(fakes);
+    fakes.store.seed('users/emp-veh-x', { uid: 'emp-veh-x', role: 'employee', active: true, organizationId, email: 'vehx@example.com' });
+    const { usersHandler } = loadFreshHandlers();
+
+    const req = fakeRequest({ uid: managerUid, body: { action: 'setServices', uid: 'emp-veh-x', vehicleEligible: false } });
+    const res = fakeResponse();
+    await usersHandler(req, res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.vehicleEligible, false);
+    const stored = fakes.store.docs.get('users/emp-veh-x');
+    assert.equal(stored.vehicleEligible, false);
+    assert.equal(stored.role, 'employee', 'role/Mobility access is untouched by a vehicle-eligibility-only change');
+  } finally { fakes.restore(); }
+});
+
+test('Phase 03B: setServices rejects a non-boolean vehicleEligible', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid: managerUid, organizationId } = seedManager(fakes);
+    fakes.store.seed('users/emp-veh-y', { uid: 'emp-veh-y', role: 'employee', active: true, organizationId, email: 'vehy@example.com' });
+    const { usersHandler } = loadFreshHandlers();
+    const req = fakeRequest({ uid: managerUid, body: { action: 'setServices', uid: 'emp-veh-y', vehicleEligible: 'yes' } });
+    const res = fakeResponse();
+    await usersHandler(req, res);
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.reason, 'invalid_vehicle_eligible');
   } finally { fakes.restore(); }
 });

@@ -164,5 +164,5 @@ test('15. users list stability is unaffected by the search hardening: users-list
   assert.match(viewSource, /export function deriveVisibleUsers/);
   const managerSource = read('manager.html');
   assert.match(managerSource, /const tq = \(st\.tq \|\| ''\)\.trim\(\)\.toLocaleLowerCase\('ar'\)/);
-  assert.match(managerSource, /usersListView\.deriveVisibleUsers\(roleScoped, \{ search: tq \}\)/);
+  assert.match(managerSource, /usersListView\.deriveVisibleUsers\(deptScoped, \{ search: tq \}\)/);
 });

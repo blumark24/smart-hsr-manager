@@ -138,6 +138,23 @@ service cloud.firestore {
     }
 
     // ==========================================================
+    // employees/{employeeId} — Phase 03B Unified User Center. Municipal
+    // employee MASTER REGISTRY records, separate from users/{uid} login
+    // accounts (an employee can exist here with no Auth account at all —
+    // see api/admin/employees.js). Same tenant-isolation shape as users/:
+    // manager reads their whole organization, a department_head reads only
+    // their own department within it. All writes go through the Admin API
+    // only (real Auth account creation, audit trail) — never a direct
+    // client write.
+    // ==========================================================
+    match /employees/{employeeId} {
+      allow read: if (isActiveManager() && resource.data.organizationId == managerOrgId())
+        || (mobilityUserRole() == 'department_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.department == mobilityUserDept());
+      allow write: if false;
+    }
+
+    // ==========================================================
     // observations/{obsId} — tenant isolation, NO owner access
     // ==========================================================
     match /observations/{obsId} {
@@ -407,7 +424,16 @@ service cloud.firestore {
             // Conflict-prevention cross-check: the mission being allocated
             // must actually be APPROVED and in this same organization.
             && get(/databases/$(database)/documents/missions/$(request.resource.data.currentMissionId)).data.organizationId == mobilityUserOrgId()
-            && get(/databases/$(database)/documents/missions/$(request.resource.data.currentMissionId)).data.status == 'APPROVED')
+            && get(/databases/$(database)/documents/missions/$(request.resource.data.currentMissionId)).data.status == 'APPROVED'
+            // Phase 03B: vehicleEligible is an independent, real,
+            // server-enforced entitlement (a UI checkbox alone is not
+            // sufficient authorization) — an EXPLICIT false on the target
+            // employee's own record blocks a NEW allocation to them.
+            // Backward-compatible: a record with no vehicleEligible field
+            // at all (every employee created before this field existed)
+            // stays allocatable, exactly as before.
+            && (!('vehicleEligible' in get(/databases/$(database)/documents/users/$(request.resource.data.assignedEmployeeUid)).data)
+              || get(/databases/$(database)/documents/users/$(request.resource.data.assignedEmployeeUid)).data.vehicleEligible != false))
           || (resource.data.status == 'AVAILABLE'
             && (request.resource.data.status == 'MAINTENANCE' || request.resource.data.status == 'OUT_OF_SERVICE')
             && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))

@@ -119,7 +119,7 @@ test('deriveVisibleUsers matches by name too, case-insensitively, and never muta
 test('5. the users table is recomputed fresh from state.tq on every render — clearing the input immediately restores every user', () => {
   const source = read('manager.html');
   assert.match(source, /const tq = \(st\.tq \|\| ''\)\.trim\(\)\.toLocaleLowerCase\('ar'\)/);
-  assert.match(source, /usersListView\.deriveVisibleUsers\(roleScoped, \{ search: tq \}\)/);
+  assert.match(source, /usersListView\.deriveVisibleUsers\(deptScoped, \{ search: tq \}\)/);
   const setTQFn = source.slice(source.indexOf('const setTQ ='), source.indexOf('const setTQ =') + 80);
   assert.match(setTQFn, /this\.setState\(\{ tq: e\.target\.value \}\)/, 'typing must go through setState so render() re-derives tq');
 });
