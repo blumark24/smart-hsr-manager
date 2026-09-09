@@ -1141,6 +1141,95 @@
         </div>
       </sc-if>
 
+      <sc-if value="{{ viewIsMobility }}">
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+
+          <div style="flex:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
+            <div style="flex:1;min-width:220px">
+              <div style="font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--acc,#4cc9f0);margin-bottom:4px">الخدمات البلدية الرقمية · إدارة الحركة والسير</div>
+              <h2 style="font-size:17px;margin:0;color:var(--tx,#f0f6ff)">{{ viewTitle }}</h2>
+              <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0;line-height:1.7">{{ viewIntro }}</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button onClick="{{ closeView }}" data-f="1" style="height:34px;padding:0 14px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">
+                <span>العودة إلى لوحة مدير البلدية</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          <sc-if value="{{ mobilityDataIsError }}">
+            <div style="flex:none;padding:11px 14px;border-radius:11px;background:var(--badBg,rgba(239,68,68,0.1));border:1px solid var(--badBd,rgba(239,68,68,0.3));color:var(--badTx,#f87171);font-size:11.5px">{{ mobilityDataError }}</div>
+          </sc-if>
+
+          <div style="flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:14px">
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+              <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--acc,#4cc9f0)"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">المهام النشطة</div>
+                  <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ mobilityKpiMissionsActive }}</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">من إجمالي {{ mobilityKpiMissionsTotal }} مهمة</div>
+                </div>
+              </div>
+              <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--tx3,#7d8ea6)"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">مسودات بانتظار الرفع</div>
+                  <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ mobilityKpiMissionsDraft }}</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ mobilityKpiMissionsClosed }} مغلقة</div>
+                </div>
+              </div>
+              <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--ok,#22c55e)"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">المركبات المتاحة</div>
+                  <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ mobilityKpiVehiclesAvailable }}</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">من إجمالي {{ mobilityKpiVehiclesTotal }} مركبة</div>
+                </div>
+              </div>
+              <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--warn,#f5a524)"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">مركبات غير متاحة</div>
+                  <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ mobilityKpiVehiclesUnavailable }}</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ mobilityKpiVehiclesInMission }} في مهمة حاليًا</div>
+                </div>
+              </div>
+              <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
+                <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--bad,#ef4444)"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:10.5px;color:var(--tx3,#8b9db5)">حوادث مفتوحة</div>
+                  <div style="font-size:23px;font-weight:700;letter-spacing:-.4px;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums">{{ mobilityKpiIncidentsOpen }}</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ mobilityKpiIncidentsResolved }} تم حلها</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-radius:16px;overflow:hidden;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column">
+              <div style="padding:13px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
+                <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">ملخص المهام النشطة حسب الإدارة</div>
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">عدد المهام غير المغلقة حاليًا لكل إدارة، بيانات حية من هذه المنظمة فقط</div>
+              </div>
+              <div style="padding:14px;display:flex;flex-direction:column;gap:9px">
+                <sc-if value="{{ mobilityDepartmentsEmpty }}">
+                  <div style="padding:20px;text-align:center;font-size:11px;color:var(--tx3,#7d8ea6)">لا توجد مهام نشطة حاليًا لأي إدارة</div>
+                </sc-if>
+                <sc-for list="{{ mobilityDepartments }}" as="d">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span style="flex:none;width:110px;font-size:10.5px;color:var(--tx2,#a9bdd4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</span>
+                    <div style="flex:1;height:8px;border-radius:5px;background:var(--barTrack,rgba(122,164,224,0.12));overflow:hidden"><div style="height:100%;border-radius:5px;background:var(--acc,#4cc9f0);width:{{ d.barPct }}"></div></div>
+                    <span style="flex:none;font-size:11px;font-weight:600;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums;min-width:18px;text-align:left">{{ d.count }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </sc-if>
+
     </main>
   </div>
 
@@ -2397,6 +2486,18 @@ class Component extends DCLogic {
     ].map(n => pill(n.label, landsScreen === n.id, () => this.setState({ landsScreen: n.id })));
 
     const landsKpi = this.liveLandsKpi || { total: '—', review: '—', needsWork: '—', approved: '—', complete: '—', avgPercent: '—', missingDocs: '—', noLocation: '—' };
+
+    // إدارة الحركة والسير Manager executive view (Phase 06) — real data only,
+    // published by manager-mobility-adapter.js onto this.liveMobilityXxx,
+    // exactly the way manager-lands-adapter.js publishes onto
+    // this.liveLandsXxx above. Municipality Manager is never one of the
+    // four Mobility operational roles — this is a read-only summary,
+    // independent of and never sharing state with smart-mobility.html's own
+    // operational screens.
+    const mobilityDataState = this.liveMobilityDataState || 'loading';
+    const mobilityKpi = this.liveMobilityKpi || { missionsTotal: '—', missionsActive: '—', missionsDraft: '—', missionsClosed: '—', vehiclesTotal: '—', vehiclesAvailable: '—', vehiclesInMission: '—', vehiclesUnavailable: '—', incidentsOpen: '—', incidentsResolved: '—' };
+    const mobilityDepartments = Array.isArray(this.liveMobilityDepartments) ? this.liveMobilityDepartments : [];
+    const mobilityDepartmentsMax = Math.max(1, ...mobilityDepartments.map(d => d.count || 0));
     const landsRegistryAll = Array.isArray(this.liveLandsRegistry) ? this.liveLandsRegistry : [];
     const landsDocumentsAll = Array.isArray(this.liveLandsDocuments) ? this.liveLandsDocuments : [];
     const landsPriorities = Array.isArray(this.liveLandsPriorities) ? this.liveLandsPriorities : [];
@@ -2848,10 +2949,10 @@ class Component extends DCLogic {
       // Lands instead of hiding it — so the combined check is computed once
       // here as its own plain boolean and referenced as a single identifier,
       // exactly like every other sc-if in this file already does.
-      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands',
-      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands',
-      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : 'البلاغات',
-      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة الحركة والسير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
+      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility',
+      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands', viewIsMobility: st.view === 'mobility',
+      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : st.view === 'mobility' ? 'لوحة مدير إدارة الحركة والسير' : 'البلاغات',
+      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة الحركة والسير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : st.view === 'mobility' ? 'إشراف تنفيذي للقراءة فقط على إدارة الحركة والسير — بيانات حية من نظام الحركة الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
       viewEmpty: ((st.view === 'users' || st.view === 'incidents' || st.view === 'fieldSurvey') ? !tRows.length : !viewObservations.length),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
@@ -2871,6 +2972,15 @@ class Component extends DCLogic {
       landsCols, landsRows, landsRegistryEmpty: !landsRows.length, landsRegistryCount: `${landsFilteredRegistry.length} سجل`,
       landsDocCols, landsDocRows, landsDocumentsEmpty: !landsDocRows.length,
       landsGeoreferencedCount: String(this.liveLandsGeoreferencedCount || 0),
+
+      mobilityDataIsError: mobilityDataState === 'error', mobilityDataError: this.liveMobilityDataError || '',
+      mobilityKpiMissionsTotal: mobilityKpi.missionsTotal, mobilityKpiMissionsActive: mobilityKpi.missionsActive,
+      mobilityKpiMissionsDraft: mobilityKpi.missionsDraft, mobilityKpiMissionsClosed: mobilityKpi.missionsClosed,
+      mobilityKpiVehiclesTotal: mobilityKpi.vehiclesTotal, mobilityKpiVehiclesAvailable: mobilityKpi.vehiclesAvailable,
+      mobilityKpiVehiclesInMission: mobilityKpi.vehiclesInMission, mobilityKpiVehiclesUnavailable: mobilityKpi.vehiclesUnavailable,
+      mobilityKpiIncidentsOpen: mobilityKpi.incidentsOpen, mobilityKpiIncidentsResolved: mobilityKpi.incidentsResolved,
+      mobilityDepartments: mobilityDepartments.map(d => ({ name: d.name, count: d.count, barPct: `${Math.max(4, Math.round((d.count / mobilityDepartmentsMax) * 100))}%` })),
+      mobilityDepartmentsEmpty: !mobilityDepartments.length,
       fsTotal: String(allObservations.length), fsOpen: String(fsOpenObservations.length),
       fsCompleted: String(allObservations.filter(o => o.status === 'COMPLETED').length),
       fsCompletionRate: metrics.completionRate || '—',
@@ -3098,8 +3208,27 @@ class Component extends DCLogic {
     // the same authenticated Manager session — never a second product page,
     // never a second login).
     if (r === 'survey') { this.openFieldSurvey(); return; }
-    if (r === 'mobility') { window.location.assign('smart-mobility.html'); return; }
+    if (r === 'mobility') { this.goMobilityGateway(); return; }
     this.flash('هذا المسار غير متاح حتى يتم التحقق من ربطه التشغيلي.');
+  }
+
+  // PHASE 06 — real إدارة الحركة والسير Manager executive gateway: opens the
+  // dedicated, native, full-page Mobility executive view inside this same
+  // authenticated session (view:'mobility'), exactly the way
+  // goLandsGateway() opens Lands'. Municipality Manager is never treated as
+  // one of the four Mobility operational roles (mobility_head/
+  // department_head/administrative_affairs/employee) and never signs into
+  // the separate Mobility session app or opens smart-mobility.html from
+  // here — that dedicated operational tool, and its own login experience,
+  // remain completely untouched for those four roles.
+  // manager-mobility-adapter.js is connected lazily, only once the manager
+  // actually opens this product, and reads ONLY real missions/vehicles/
+  // incidents data (org-scoped) under the existing, unmodified Firestore
+  // Rules (isActiveManager() already allowed on all three collections).
+  goMobilityGateway(e) {
+    this.prevent(e);
+    this.setState({ view: 'mobility', mobNavOpen: false, notifOpen: false, profOpen: false });
+    window.SmartHSRMobilityAdapter?.connect(this);
   }
 
   // PHASE 05B — real إدارة الأراضي والممتلكات Manager gateway: opens the
@@ -3469,5 +3598,6 @@ class Component extends DCLogic {
 </script>
 <script type="module" src="./manager-dashboard-adapter.js"></script>
 <script type="module" src="./manager-lands-adapter.js"></script>
+<script type="module" src="./manager-mobility-adapter.js"></script>
 </body>
 </html>

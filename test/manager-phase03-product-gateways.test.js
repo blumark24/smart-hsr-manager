@@ -27,11 +27,29 @@ test('1/2. Field Survey gateway never routes the Manager to dashboard.html (the 
   assert.match(fn, /r === 'survey'\s*\)\s*\{\s*this\.openFieldSurvey\(\)/, 'Field Survey must open the dedicated Field Survey Manager Dashboard view');
 });
 
-// ---- 3. Smart Mobility Manager SSO ----
-test('3. Smart Mobility gateway still navigates to the real product, and manager-login.html primes the shared Mobility session so no second login is forced', () => {
+// ---- 3. Smart Mobility Manager executive integration (Phase 06) ----
+// PHASE 06: the Manager gateway now opens the dedicated إدارة الحركة والسير
+// Manager executive view ('view: mobility') natively inside this same
+// authenticated session — following the exact same pattern
+// goLandsGateway()/'view: lands' already established (see 2b. above) —
+// rather than navigating the Manager away to smart-mobility.html. The
+// Manager priming a shared Mobility named-app session at login is
+// unrelated and still required (smart-mobility.html itself still supports
+// a manager who opens it directly and still branches to its own exec
+// screen for role==='manager' — see the test right below — this gateway
+// change only affects where the MAIN Manager dashboard sends the manager
+// when they click through from the sidebar).
+test('3. Smart Mobility gateway opens the real, dedicated Mobility Manager executive view — not an external navigation, not a fabricated dashboard', () => {
   const manager = read('manager.html');
-  const fn = manager.slice(manager.indexOf('goRoute(r) {'), manager.indexOf('goRoute(r) {') + 900);
-  assert.match(fn, /r === 'mobility'[\s\S]{0,60}smart-mobility\.html/);
+  assert.match(manager, /goMobilityGateway\(e\)\s*\{/);
+  const fn = manager.slice(manager.indexOf('goMobilityGateway(e) {'), manager.indexOf('goMobilityGateway(e) {') + 400);
+  assert.match(fn, /view: 'mobility'/, 'must open the dedicated Mobility executive view');
+  assert.match(fn, /SmartHSRMobilityAdapter\?\.connect\(this\)/, 'must connect the real Mobility data adapter');
+  assert.match(manager, /onClick="\{\{ goMobility \}\}"/, 'the sidebar Mobility link must still be wired');
+  assert.match(manager, /goMobility: \(\) => this\.goRoute\('mobility'\)/);
+  const routeFn = manager.slice(manager.indexOf('goRoute(r) {'), manager.indexOf('goRoute(r) {') + 900);
+  assert.match(routeFn, /r === 'mobility'\s*\)\s*\{\s*this\.goMobilityGateway\(\)/, 'goRoute must dispatch to the real gateway, not navigate away');
+  assert.doesNotMatch(routeFn, /r === 'mobility'[\s\S]{0,60}smart-mobility\.html/, 'the Manager dashboard must no longer navigate away for the mobility route');
 
   const managerLogin = read('manager-login.html');
   assert.match(managerLogin, /smart-hsr-mobility-session/, 'manager-login.html must silently prime the Mobility named-app session, matching login.html\'s existing behavior for the same product');

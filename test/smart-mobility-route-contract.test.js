@@ -11,8 +11,13 @@ const page = fs.readFileSync(path.join(root, 'smart-mobility.html'), 'utf8');
 const adapter = fs.readFileSync(path.join(root, 'smart-mobility-adapter.js'), 'utf8');
 
 // manager.html: Smart Mobility must be a real route now, never a قريباً placeholder.
+// PHASE 06: the route now opens the real, dedicated Mobility Manager
+// executive view natively (view:'mobility') rather than navigating the
+// Manager away to smart-mobility.html — see
+// test/manager-phase06-mobility-dashboard.test.js for the full assertion.
 assert.match(manager, /goMobility:\s*\(\)\s*=>\s*this\.goRoute\('mobility'\)/);
-assert.match(manager, /if\s*\(r === 'mobility'\)\s*\{\s*window\.location\.assign\('smart-mobility\.html'\)/);
+assert.match(manager, /if\s*\(r === 'mobility'\)\s*\{\s*this\.goMobilityGateway\(\)/);
+assert.doesNotMatch(manager, /if\s*\(r === 'mobility'\)\s*\{\s*window\.location\.assign\('smart-mobility\.html'\)/);
 assert.doesNotMatch(manager, /label:\s*'حركة السير الذكية',\s*tag:\s*'قريباً',\s*disabled:\s*true/);
 
 // smart-mobility.html: no client-side role switcher may exist (design/QA-only

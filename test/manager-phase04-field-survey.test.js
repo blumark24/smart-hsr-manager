@@ -99,9 +99,15 @@ test('the dashboard embeds the real, already-existing operational map container 
 });
 
 // ---- No new products, no unrelated changes ----
+// PHASE 05B/06 note: the Lands and Mobility Manager dashboards are now real,
+// legitimate, separate top-level views (sc-if viewIsLands / viewIsMobility)
+// that immediately follow this one in the file — this test's own job is
+// only to guard the Field Survey block's OWN markup, so the slice must stop
+// at Field Survey's own closing </sc-if>, not at some unrelated later
+// string that happens to appear after those other products' own content.
 test('this dashboard introduces no Smart Lands or Smart Mobility content (vehicles, missions, land grants)', () => {
   const fieldSurveyBlockStart = manager.indexOf("sc-if value=\"{{ viewIsFieldSurvey }}\"");
-  const fieldSurveyBlockEnd = manager.indexOf('sc-if value="{{ viewIsUsers }}"', fieldSurveyBlockStart);
+  const fieldSurveyBlockEnd = manager.indexOf('\n      </sc-if>', fieldSurveyBlockStart);
   const block = manager.slice(fieldSurveyBlockStart, fieldSurveyBlockEnd);
   assert.doesNotMatch(block, /vehicle|mission|landGrant|parcel/i);
 });

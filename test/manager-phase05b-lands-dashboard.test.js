@@ -151,8 +151,13 @@ test('J. openFieldSurvey()/goRoute("survey") remain exactly as Phase 04 left the
   assert.match(goRouteFn, /r === 'survey'\)\s*\{\s*this\.openFieldSurvey\(\)/);
 });
 
-// ---- K. Mobility gateway unchanged ----
-test('K. goRoute("mobility") still navigates to smart-mobility.html, unaffected by the Lands dashboard addition', () => {
+// ---- K. Mobility gateway (superseded by Phase 06's own native executive
+// view — see test/manager-phase06-mobility-dashboard.test.js) ----
+// PHASE 06: the Mobility gateway now follows the exact same native-view
+// pattern this file's own Lands gateway established (view:'lands' /
+// SmartHSRLandsAdapter), rather than navigating away to smart-mobility.html.
+test('K. goRoute("mobility") now opens the real, dedicated Mobility Manager executive view, exactly like goRoute("lands")', () => {
   const goRouteFn = methodBody(manager, 'goRoute(r) {', 900);
-  assert.match(goRouteFn, /r === 'mobility'[\s\S]{0,60}smart-mobility\.html/);
+  assert.match(goRouteFn, /r === 'mobility'\)\s*\{\s*this\.goMobilityGateway\(\)/);
+  assert.doesNotMatch(goRouteFn, /r === 'mobility'[\s\S]{0,60}smart-mobility\.html/);
 });
