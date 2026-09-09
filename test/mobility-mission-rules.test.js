@@ -38,6 +38,9 @@ const UID = {
   employeeB: 'employee-b-uid',
   inactiveEmployeeA: 'inactive-employee-a-uid',
   noVehicleEligibleFieldA: 'field-supervisor-a-uid',
+  // PHASE 06A.1 — independent mobilityAccess employee fixtures.
+  mobilityAccessEmployeeA: 'mobility-access-employee-a-uid',
+  staleDisabledEmployeeA: 'stale-disabled-employee-a-uid',
 };
 
 let testEnv;
@@ -79,6 +82,21 @@ async function seed() {
     await setDoc(doc(db, 'users', UID.employeeB), { role: 'employee', active: true, organizationId: ORG_B, vehicleEligible: true });
     await setDoc(doc(db, 'users', UID.inactiveEmployeeA), { role: 'employee', active: false, organizationId: ORG_A, vehicleEligible: true });
     await setDoc(doc(db, 'users', UID.noVehicleEligibleFieldA), { role: 'supervisor', active: true, organizationId: ORG_A, vehicleEligible: true });
+    // PHASE 06A.1 — a real Mobility employee whose role lives ONLY in the
+    // independent mobilityAccess field (legacy scalar role is null, exactly
+    // like an account created post-06A), and a stale record where the
+    // legacy scalar role is still 'employee' but mobilityAccess explicitly
+    // disables Mobility — allocation must honor the independent field alone
+    // in both directions, never falling back to the stale legacy role once
+    // mobilityAccess exists.
+    await setDoc(doc(db, 'users', UID.mobilityAccessEmployeeA), {
+      role: null, active: true, organizationId: ORG_A, vehicleEligible: true,
+      mobilityAccess: { enabled: true, role: 'employee' },
+    });
+    await setDoc(doc(db, 'users', UID.staleDisabledEmployeeA), {
+      role: 'employee', active: true, organizationId: ORG_A, vehicleEligible: true,
+      mobilityAccess: { enabled: false, role: null },
+    });
 
     await setDoc(doc(db, 'missions', 'draftA'), {
       organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'DRAFT',
@@ -404,6 +422,25 @@ test('V8e PHASE 06A: allocating to a user who does NOT hold a Mobility operation
 test('V8f PHASE 06A: allocating to a NONEXISTENT employee uid is denied', async () => {
   await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
     status: 'RESERVED', assignedEmployeeUid: 'no-such-user-uid', currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+// ---- PHASE 06A.1 — Blocker 2 case G/H: allocation must honor an employee
+// discovered ONLY via the independent mobilityAccess field, and must never
+// resurrect a stale legacy role:'employee' once mobilityAccess explicitly
+// disables Mobility for that account. ----
+
+test('V8g PHASE 06A.1 case G: allocating to an employee whose role lives ONLY in the independent mobilityAccess field succeeds', async () => {
+  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.mobilityAccessEmployeeA, currentMissionId: 'approvedA',
+    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
+  }));
+});
+
+test('V8h PHASE 06A.1 case H: allocating to a user with a stale legacy role:employee but explicit mobilityAccess.enabled:false is denied, even though vehicleEligible is true', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+    status: 'RESERVED', assignedEmployeeUid: UID.staleDisabledEmployeeA, currentMissionId: 'approvedA',
     updatedByUid: UID.mobilityHeadA, updatedAt: 1,
   }));
 });

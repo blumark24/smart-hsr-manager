@@ -7,34 +7,59 @@
 // allUsers must never be mutated by anything in this file.
 
 // 'Field' here means this app (Smart HSR Manager) as opposed to the
-// separate Lands app — it covers both the original supervisor/inspector/
-// contractor roles and the later Smart Mobility roles, since both live in
-// this same users/{uid} collection and are managed from this same page.
-const FIELD_ROLES = new Set([
-  'supervisor', 'inspector', 'contractor',
-  'mobility_head', 'department_head', 'administrative_affairs', 'employee',
-]);
+// separate Lands app — the ORIGINAL supervisor/inspector/contractor roles
+// only. Smart Mobility's four roles are handled separately below: PHASE
+// 06A gave Mobility its own independent `mobilityAccess` field ({enabled,
+// role}), structurally parallel to landsAccess, so a Mobility role no
+// longer necessarily lives in this same scalar `role` a Field role also
+// uses — see resolveMobilityRole() for the dual-read that keeps every
+// pre-06A record (Mobility role still in the legacy scalar `role`) working
+// unchanged.
+const TRUE_FIELD_ROLES = new Set(['supervisor', 'inspector', 'contractor']);
+const MOBILITY_ROLES = new Set(['mobility_head', 'department_head', 'administrative_affairs', 'employee']);
+
+/**
+ * PHASE 06A.1 — mirrors firestore.rules' mobilityRoleValue() and
+ * platform/contracts/product-entitlement-contract.js's resolveProductEntitlements()
+ * exactly: once a document has ever been touched by the new independent
+ * mobilityAccess field (the key exists at all, regardless of its enabled
+ * value), that field alone decides the document's Mobility role — an
+ * explicit {enabled:false} must never be overridden by a stale legacy
+ * `role` value left over from before the document was migrated. Only a
+ * document that has NEVER been touched by the new field (no mobilityAccess
+ * key at all) still falls back to reading the legacy scalar `role`.
+ *
+ * @param {{role?: string|null, mobilityAccess?: {enabled?: boolean, role?: string|null}|null}} userDoc
+ * @returns {string|null}
+ */
+function resolveMobilityRole(userDoc) {
+  if (userDoc.mobilityAccess != null && typeof userDoc.mobilityAccess === 'object') {
+    return userDoc.mobilityAccess.enabled === true ? userDoc.mobilityAccess.role : null;
+  }
+  return MOBILITY_ROLES.has(userDoc.role) ? userDoc.role : null;
+}
 
 /**
  * Which Firestore users/{uid} documents belong on the manager's Users list
- * at all. A real operational account is either a Field account (role is
- * one of the existing Field roles) or a Lands-only account (role is
- * null/absent — Lands is single-service-exclusive with Field, see
- * api/admin/users.js — and recognized instead by having a landsAccess
- * object). Only a document that is neither is excluded.
+ * at all. A real operational account is a true Field account (role is
+ * supervisor/inspector/contractor), a Lands-only account (recognized by a
+ * landsAccess object — role may legitimately be null), and/or a Mobility
+ * account (recognized via resolveMobilityRole()'s independent-field-first
+ * dual-read — role may legitimately be null or a Field role now that
+ * Mobility has its own field). Any one of the three is sufficient; a
+ * document matching none of them is excluded. This is a pure OR: Field +
+ * Mobility, Mobility + Lands, Field + Lands, and all three at once are all
+ * exactly as visible as any single one alone.
  *
- * This replaces a stricter Field-only role whitelist that silently
- * dropped every Lands-only employee from the list the moment their
- * account existed, because their role is legitimately null.
- *
- * @param {{role?: string|null, landsAccess?: object}} userDoc
+ * @param {{role?: string|null, landsAccess?: object, mobilityAccess?: object}} userDoc
  * @returns {boolean}
  */
 export function belongsOnUsersList(userDoc) {
   if (!userDoc || typeof userDoc !== 'object') return false;
-  const hasFieldRole = FIELD_ROLES.has(userDoc.role);
+  const hasFieldRole = TRUE_FIELD_ROLES.has(userDoc.role);
   const hasLandsAccess = userDoc.landsAccess != null && typeof userDoc.landsAccess === 'object';
-  return hasFieldRole || hasLandsAccess;
+  const hasMobilityRole = MOBILITY_ROLES.has(resolveMobilityRole(userDoc));
+  return hasFieldRole || hasLandsAccess || hasMobilityRole;
 }
 
 /**

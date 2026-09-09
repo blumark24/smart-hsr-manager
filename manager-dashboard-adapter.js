@@ -180,6 +180,14 @@ function buildViewData(observations, users, incidents = []) {
       name: item.name || item.displayName || item.email || item.id,
       role: item.role,
       landsAccess: item.landsAccess || null,
+      // PHASE 06A.1 — Mobility's own independent entitlement field
+      // (mirrors landsAccess) must survive into the normalized Manager
+      // liveUsers model, or every downstream consumer that resolves
+      // entitlements from a liveUsers row (resolveManagerProductEntitlements,
+      // the User Center service editor, belongsOnUsersList itself) silently
+      // falls back to the legacy scalar `role` even when a real,
+      // independent mobilityAccess exists in Firestore.
+      mobilityAccess: item.mobilityAccess || null,
       active: item.active !== false,
       email: item.email || 'غير متاح'
     })),

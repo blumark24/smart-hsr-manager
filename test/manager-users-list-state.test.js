@@ -221,3 +221,62 @@ test("16. any previous users/observations/incidents/employees listeners are torn
   const setupCount = (source.match(/stopUsers = firestoreApi\.onSnapshot\(userFilter/g) || []).length;
   assert.equal(setupCount, 1, 'the users listener must only ever be established in one place');
 });
+
+// ============================================================================
+// PHASE 06A.1 — Blocker 1: manager-dashboard-adapter.js must preserve
+// mobilityAccess into liveUsers, and belongsOnUsersList() must recognize an
+// independent mobilityAccess entitlement as sufficient on its own, while
+// keeping every legacy compatibility case unchanged.
+// ============================================================================
+
+test('17. manager-dashboard-adapter.js: mobilityAccess is preserved into the normalized liveUsers model, not dropped', () => {
+  const source = read('manager-dashboard-adapter.js');
+  const mapStart = source.indexOf('users.filter(belongsOnUsersList).map(item => ({');
+  assert.notEqual(mapStart, -1);
+  const mapBody = source.slice(mapStart, mapStart + 1100);
+  assert.match(mapBody, /mobilityAccess:\s*item\.mobilityAccess \|\| null/, 'mobilityAccess must be carried through onto each normalized user row');
+});
+
+test('18. belongsOnUsersList: all 8 legacy/independent Field+Mobility+Lands combinations are handled correctly', async () => {
+  const { belongsOnUsersList } = await viewPromise;
+
+  // a) legacy Field only (unaffected by this hotfix)
+  assert.equal(belongsOnUsersList({ role: 'supervisor' }), true, 'legacy Field');
+  // b) legacy Mobility scalar role only (record never touched by mobilityAccess)
+  assert.equal(belongsOnUsersList({ role: 'employee' }), true, 'legacy Mobility scalar role');
+  // c) Lands-only
+  assert.equal(belongsOnUsersList({ role: null, landsAccess: { enabled: true, role: 'lands_employee' } }), true, 'Lands-only');
+  // d) Field + independent Mobility (role holds the Field value; Mobility lives in mobilityAccess)
+  assert.equal(belongsOnUsersList({ role: 'supervisor', mobilityAccess: { enabled: true, role: 'employee' } }), true, 'Field + Mobility');
+  // e) Mobility-only via the independent field (role is null)
+  assert.equal(belongsOnUsersList({ role: null, mobilityAccess: { enabled: true, role: 'mobility_head' } }), true, 'Mobility-only');
+  // f) Field + Lands
+  assert.equal(belongsOnUsersList({ role: 'inspector', landsAccess: { enabled: true, role: 'lands_employee' } }), true, 'Field + Lands');
+  // g) Mobility + Lands (role null, Mobility via independent field, Lands also enabled)
+  assert.equal(belongsOnUsersList({ role: null, mobilityAccess: { enabled: true, role: 'department_head' }, landsAccess: { enabled: true, role: 'lands_department_manager' } }), true, 'Mobility + Lands');
+  // h) all three at once
+  assert.equal(belongsOnUsersList({ role: 'contractor', mobilityAccess: { enabled: true, role: 'administrative_affairs' }, landsAccess: { enabled: true, role: 'lands_employee' } }), true, 'Field + Mobility + Lands');
+});
+
+test('19. belongsOnUsersList: an explicit mobilityAccess.enabled:false is never overridden by a stale legacy Mobility role', async () => {
+  const { belongsOnUsersList } = await viewPromise;
+  // The record was migrated (mobilityAccess key exists) and Mobility was
+  // explicitly disabled, but the legacy `role` column was never cleared —
+  // this must NOT count as an active Mobility entitlement, and with no
+  // other entitlement at all, the record has nothing left to be visible for.
+  assert.equal(belongsOnUsersList({ role: 'employee', mobilityAccess: { enabled: false, role: null } }), false, 'a fully-disabled, migrated record with only a stale legacy role must not appear');
+  // Same disable, but the record separately still has a REAL Field role —
+  // it must remain visible via Field, with Mobility correctly off.
+  assert.equal(belongsOnUsersList({ role: 'supervisor', mobilityAccess: { enabled: false, role: null } }), true, 'Field must remain visible independent of an explicit Mobility disable');
+});
+
+test('20. resolveManagerProductEntitlements/User Center: openServiceEdit reopens with the exact persisted independent state, since selectedUser now carries mobilityAccess', () => {
+  const manager = read('manager.html');
+  // openServiceEdit() seeds its toggles from resolveManagerProductEntitlements(this.state.selectedUser)
+  // (see the PHASE 06A test file) — this test's own job is to confirm the
+  // OTHER half of that contract: this.state.selectedUser is populated from
+  // this.liveUsers rows, which (after this hotfix) genuinely carry
+  // mobilityAccess through from Firestore, so the resolver has real data
+  // to read instead of always falling back to the legacy scalar role.
+  assert.match(manager, /openUserDetail\(user\)\s*\{\s*this\.setState\(\{\s*userDrawerOpen:\s*true,\s*selectedUser:\s*user\s*\}\);/, 'selectedUser must be the real liveUsers row object, not a re-derived/stripped copy');
+});

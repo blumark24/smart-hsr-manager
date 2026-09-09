@@ -1,3 +1,5 @@
+import { mergeLiveEmployees } from './mobility-employee-discovery.js';
+
 const FIREBASE_CONFIG = {
   apiKey: 'AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM',
   authDomain: 'smart-hsr-manager.firebaseapp.com',
@@ -217,16 +219,60 @@ function subscribeIncidents(firestoreApi, db, component, context) {
 }
 
 function subscribeEmployees(firestoreApi, db, component, context) {
-  const q = firestoreApi.query(
+  // A single Firestore query cannot OR across the two representations of
+  // "is a Mobility employee" (the legacy scalar `role` vs. the independent
+  // mobilityAccess field) without either widening the read to every
+  // same-org user (forbidden — mobility_head must never read arbitrary org
+  // users) or filtering client-side over such an over-broad read (also
+  // forbidden). Instead, run two queries in parallel, each scoped to
+  // organizationId plus exactly one entitlement filter (role=='employee', or
+  // mobilityAccess.enabled==true && mobilityAccess.role=='employee') —
+  // never a bare same-org read — and merge their results by uid.
+  //
+  // Firestore only verifies a list query's OWN where() filters against the
+  // matching branch of the users/{userId} rule; it does not additionally
+  // re-check the rule's other, unfiltered field per result document the way
+  // a direct getDoc() would (confirmed against the real emulator: the
+  // legacy query above still returns a doc with a stale role:'employee'
+  // even when its mobilityAccess.enabled is explicitly false, although a
+  // getDoc() on that same doc is correctly denied). So mergeLiveEmployees()
+  // — which re-applies the same dual-read the rule itself encodes — is the
+  // actual enforcement point that excludes such a doc, and any inactive
+  // one, from the final liveEmployees the allocation drawer sees; it is not
+  // merely a defense-in-depth nicety on top of an already-fully-narrowed
+  // read.
+  const legacyQuery = firestoreApi.query(
     firestoreApi.collection(db, 'users'),
     firestoreApi.where('organizationId', '==', context.organizationId),
     firestoreApi.where('role', '==', 'employee')
   );
-  return firestoreApi.onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
+  const mobilityQuery = firestoreApi.query(
+    firestoreApi.collection(db, 'users'),
+    firestoreApi.where('organizationId', '==', context.organizationId),
+    firestoreApi.where('mobilityAccess.enabled', '==', true),
+    firestoreApi.where('mobilityAccess.role', '==', 'employee')
+  );
+
+  let legacyDocs = new Map();
+  let mobilityDocs = new Map();
+
+  function publish() {
+    component.setState({ liveEmployees: mergeLiveEmployees(legacyDocs, mobilityDocs) });
+  }
+
+  const stopLegacy = firestoreApi.onSnapshot(legacyQuery, { includeMetadataChanges: true }, snapshot => {
     if (snapshot.metadata.fromCache) return;
-    const employees = snapshot.docs.map(d => ({ uid: d.id, name: (d.data() || {}).name || (d.data() || {}).email || d.id }));
-    component.setState({ liveEmployees: employees });
-  }, () => component.setState({ liveEmployees: [] }));
+    legacyDocs = new Map(snapshot.docs.map(d => [d.id, d.data() || {}]));
+    publish();
+  }, () => { legacyDocs = new Map(); publish(); });
+
+  const stopMobility = firestoreApi.onSnapshot(mobilityQuery, { includeMetadataChanges: true }, snapshot => {
+    if (snapshot.metadata.fromCache) return;
+    mobilityDocs = new Map(snapshot.docs.map(d => [d.id, d.data() || {}]));
+    publish();
+  }, () => { mobilityDocs = new Map(); publish(); });
+
+  return () => { stopLegacy?.(); stopMobility?.(); };
 }
 
 async function start(component) {
