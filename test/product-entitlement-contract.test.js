@@ -93,6 +93,69 @@ test('vehicleEligible: any non-true value (string "true", 1, null) is still NOT 
   }
 });
 
+// ---- PHASE 02B/06C — the mobilityAccess dual-read (independent field
+// authoritative when present) was already implemented here since Phase
+// 06A, but had no dedicated test coverage until now; login.html's own
+// inline mirror of this exact logic is covered separately in
+// test/unified-login-entitlement-routing.test.js. ----
+
+test('mobilityAccess: an independent Mobility entitlement enables Mobility even when the legacy role is null', () => {
+  const out = resolveProductEntitlements({ role: null, mobilityAccess: { enabled: true, role: 'employee' } });
+  assert.equal(out.mobility.enabled, true);
+  assert.equal(out.mobility.role, 'employee');
+});
+
+test('mobilityAccess: Field and Mobility both enabled on one identity — role supervisor, mobilityAccess enabled as employee', () => {
+  const out = resolveProductEntitlements({ role: 'supervisor', mobilityAccess: { enabled: true, role: 'employee' } });
+  assert.equal(out.field.enabled, true);
+  assert.equal(out.field.role, 'supervisor');
+  assert.equal(out.mobility.enabled, true);
+  assert.equal(out.mobility.role, 'employee');
+});
+
+test('mobilityAccess.enabled === false overrides a stale legacy Mobility role — never reactivated', () => {
+  const out = resolveProductEntitlements({ role: 'mobility_head', mobilityAccess: { enabled: false, role: null } });
+  assert.equal(out.mobility.enabled, false);
+  assert.equal(out.mobility.role, null);
+});
+
+test('mobilityAccess.enabled === false does not affect an independently-enabled Field role on the same identity', () => {
+  const out = resolveProductEntitlements({ role: 'supervisor', mobilityAccess: { enabled: false, role: null } });
+  assert.equal(out.field.enabled, true, 'Field survives a Mobility disable');
+  assert.equal(out.mobility.enabled, false);
+});
+
+test('a legacy Mobility role is honored ONLY when mobilityAccess is absent entirely', () => {
+  const untouched = resolveProductEntitlements({ role: 'department_head' });
+  assert.equal(untouched.mobility.enabled, true, 'never touched by mobilityAccess — legacy role still applies');
+  const touched = resolveProductEntitlements({ role: 'department_head', mobilityAccess: { enabled: false, role: null } });
+  assert.equal(touched.mobility.enabled, false, 'once mobilityAccess exists at all, it alone decides — legacy role is never consulted again');
+});
+
+test('an invalid Mobility role inside mobilityAccess is never reported as enabled', () => {
+  const out = resolveProductEntitlements({ role: null, mobilityAccess: { enabled: true, role: 'not_a_real_role' } });
+  assert.equal(out.mobility.enabled, false);
+  assert.equal(out.mobility.role, null);
+});
+
+test('mobilityAccess + Lands combine independently of Field', () => {
+  const out = resolveProductEntitlements({ role: null, mobilityAccess: { enabled: true, role: 'mobility_head' }, landsAccess: { enabled: true, role: 'lands_employee' } });
+  assert.equal(out.mobility.enabled, true);
+  assert.equal(out.lands.enabled, true);
+  assert.equal(out.field.enabled, false);
+});
+
+test('all three products (Field, independent Mobility, Lands) can be enabled at once', () => {
+  const out = resolveProductEntitlements({
+    role: 'inspector',
+    mobilityAccess: { enabled: true, role: 'administrative_affairs' },
+    landsAccess: { enabled: true, role: 'lands_employee' },
+  });
+  assert.equal(out.field.enabled, true);
+  assert.equal(out.mobility.enabled, true);
+  assert.equal(out.lands.enabled, true);
+});
+
 test('legacy compatibility: a record with only the fields that existed before Phase 03B resolves identically to how it always behaved', () => {
   const legacyFieldOnly = resolveProductEntitlements({ role: 'contractor', organizationId: 'org-1', active: true });
   assert.equal(legacyFieldOnly.field.enabled, true);

@@ -89,6 +89,8 @@
         .error { color: #dc3545; }
         .success { color: #198754; }
         .muted { font-size: 13px; color: #7b8a90; text-align: center; margin-top: 15px; }
+        .btn-choice { margin-bottom: 12px; }
+        .btn-choice:last-child { margin-bottom: 0; }
         .loading-spinner {
             border: 3px solid rgba(255,255,255,0.3);
             border-top: 3px solid white;
@@ -103,7 +105,7 @@
 </head>
 <body>
 
-<div class="card" role="main">
+<div class="card" id="loginCard" role="main">
   <div class="card-header-line"></div>
   <h1>Smart HSR</h1>
   <p class="lead">تسجيل الدخول إلى النظام الميداني</p>
@@ -124,6 +126,19 @@
 
   <div id="msg" class="message"></div>
   <div class="muted">هذا النظام مخصص للمديرين والمراقبين والمقاولين وفرق حركة السير المعتمدين فقط.</div>
+</div>
+
+<!-- Product Chooser — an entitlement/router layer only, never a second
+     authentication system. Shown after a single successful sign-in, ONLY
+     when that account holds more than one authorized SMART HSR service, so
+     the employee can pick which one to enter. Reuses the exact same card/
+     button visual family as the login form above; hidden until populated. -->
+<div class="card" id="chooserCard" role="main" style="display:none">
+  <div class="card-header-line"></div>
+  <h1 style="font-size:26px;">Smart HSR</h1>
+  <p class="lead">اختر الخدمة التي تريد الدخول إليها</p>
+  <div id="chooserOptions"></div>
+  <div class="muted">تظهر هنا فقط الخدمات المصرح بها لحسابك.</div>
 </div>
 
 <script type="module">
@@ -233,7 +248,21 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const role = data.role;
     const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
     const hasFieldRole = ['supervisor','inspector','contractor'].includes(role);
-    const hasMobilityRole = MOBILITY_ROLES.includes(role);
+    // PHASE 02B/06C — unified entitlement contract: once mobilityAccess
+    // exists on a record at all, it ALONE decides Mobility state — mirrors
+    // firestore.rules' mobilityRoleValue() and platform/contracts/product-
+    // entitlement-contract.js's resolveProductEntitlements() exactly. An
+    // explicit mobilityAccess.enabled:false must never be reactivated by a
+    // stale legacy `role` value, and a record whose Mobility role lives
+    // ONLY in this independent field (role may be null, or even a Field
+    // role like 'supervisor' — Field and Mobility are independent) must
+    // still be recognized. Only a record never touched by the new field
+    // still falls back to the legacy scalar `role`.
+    const mobilityAccess = data.mobilityAccess;
+    const mobilityRole = mobilityAccess !== undefined
+      ? (mobilityAccess && mobilityAccess.enabled === true ? mobilityAccess.role : null)
+      : role;
+    const hasMobilityRole = MOBILITY_ROLES.includes(mobilityRole);
     const landsAccess = data.landsAccess;
     const hasLandsRole = Boolean(landsAccess && landsAccess.enabled
       && ['lands_employee','lands_department_manager'].includes(landsAccess.role));
@@ -289,32 +318,115 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       return;
     }
 
-    showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
+    // Routes to exactly one already-determined product. Used both for the
+    // auto-direct single-service case below AND for whichever option the
+    // Product Chooser's user picks — the SAME session/redirect logic either
+    // way, never a second/duplicate authentication. Preserves the existing
+    // authenticated Firebase identity/session for same-project products
+    // (Manager/Field/Mobility all share this one Firebase project).
+    async function performFieldRouting() {
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
+      if (role === 'supervisor') {
+        await signInWithEmailAndPassword(managerAuth, email, password);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+      await signOut(probeAuth);
+      setTimeout(() => {
+        if (role === 'contractor') {
+          window.location.href = 'mobile-map.html';
+        } else if (role === 'supervisor') {
+          window.location.href = 'manager.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
+      }, 1000);
+    }
 
-    if (role === 'supervisor') {
-      await signInWithEmailAndPassword(managerAuth, email, password);
-    } else if (MOBILITY_ROLES.includes(role)) {
+    async function performMobilityRouting() {
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
       const mobilityApp = initializeApp(firebaseConfig, 'smart-hsr-mobility-session');
       const mobilityAuth = getAuth(mobilityApp);
       if (useEmulators) connectAuthEmulator(mobilityAuth, 'http://127.0.0.1:9099', { disableWarnings: true });
       await setPersistence(mobilityAuth, browserLocalPersistence);
       await signInWithEmailAndPassword(mobilityAuth, email, password);
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signOut(probeAuth);
+      setTimeout(() => { window.location.href = 'smart-mobility.html'; }, 1000);
     }
-    await signOut(probeAuth);
 
-    setTimeout(() => {
-      if (role === 'contractor') {
-        window.location.href = 'mobile-map.html';
-      } else if (role === 'supervisor') {
-        window.location.href = 'manager.html';
-      } else if (MOBILITY_ROLES.includes(role)) {
-        window.location.href = 'smart-mobility.html';
-      } else {
-        window.location.href = 'dashboard.html';
+    // The SAME trusted, single-use Lands SSO handoff as the auto-route
+    // branch above — invoked from the Product Chooser instead of
+    // automatically, for an account that ALSO holds Field and/or Mobility
+    // access. Never a second credential, never a shared Firebase project/
+    // session with Lands, never a stronger or weaker handoff than the
+    // solo-Lands path already uses.
+    async function performLandsRouting() {
+      let handoffCode = null;
+      try {
+        const idToken = await user.getIdToken();
+        const handoffResp = await fetch('/api/organization/context', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        });
+        const handoffData = await handoffResp.json().catch(() => ({}));
+        if (handoffResp.ok && typeof handoffData.code === 'string' && handoffData.code) {
+          handoffCode = handoffData.code;
+        }
+      } catch (e) {
+        console.error('lands-sso-handoff request failed', e);
       }
-    }, 1000);
+      await signOut(probeAuth);
+      if (!handoffCode) {
+        showMsg('❌ تعذر إعداد الدخول الآمن إلى حصر منح الأراضي الذكي. حاول لاحقًا.', 'error');
+        return;
+      }
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى حصر منح الأراضي الذكي', 'success');
+      setTimeout(() => {
+        const landsUrl = new URL(resolveLandsRedirectBase());
+        landsUrl.searchParams.set('code', handoffCode);
+        window.location.href = landsUrl.toString();
+      }, 600);
+    }
+
+    const enabledServiceCount = (hasFieldRole ? 1 : 0) + (hasMobilityRole ? 1 : 0) + (hasLandsRole ? 1 : 0);
+
+    // Product Chooser — an entitlement/router layer only, never a second
+    // authentication system, never a role chooser. Shown ONLY when this
+    // already-authenticated account holds more than one authorized SMART
+    // HSR product; each option simply invokes the exact same routing a
+    // single-service account would already get automatically above.
+    if (enabledServiceCount > 1) {
+      const loginCard = document.getElementById('loginCard');
+      const chooserCard = document.getElementById('chooserCard');
+      const chooserOptions = document.getElementById('chooserOptions');
+      const options = [];
+      if (hasFieldRole) options.push({ label: 'إدارة الحصر الميداني', run: performFieldRouting });
+      if (hasMobilityRole) options.push({ label: 'إدارة الحركة والسير', run: performMobilityRouting });
+      if (hasLandsRole) options.push({ label: 'إدارة الأراضي والممتلكات', run: performLandsRouting });
+      chooserOptions.innerHTML = '';
+      for (const opt of options) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-primary btn-choice';
+        btn.textContent = opt.label;
+        btn.addEventListener('click', () => {
+          for (const other of chooserOptions.querySelectorAll('button')) other.disabled = true;
+          opt.run();
+        });
+        chooserOptions.appendChild(btn);
+      }
+      loginCard.style.display = 'none';
+      chooserCard.style.display = 'block';
+      loginButton.disabled = false;
+      loginButton.textContent = 'تسجيل الدخول';
+      return;
+    }
+
+    if (hasFieldRole) {
+      await performFieldRouting();
+    } else {
+      await performMobilityRouting();
+    }
 
   } catch (e) {
     console.error(e);

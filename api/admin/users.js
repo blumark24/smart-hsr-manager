@@ -20,6 +20,7 @@ const {
   MANAGEABLE_ROLES,
   MANAGER_SCOPED_ROLES,
   MANAGER_MANAGEMENT_ENABLED,
+  MOBILITY_MANAGEABLE_ROLES,
   collectionForRole,
   verifyRequestToken,
   getCallerContext,
@@ -131,6 +132,13 @@ async function safeMetadata(auth, uid, record) {
     email = u.email || email;
   } catch (_) { /* auth user may not exist yet */ }
   const landsAccess = record.data.landsAccess;
+  // PHASE 02B/06C — the same dual-read as firestore.rules' mobilityRoleValue()
+  // and resolveMobilityRole() elsewhere: once mobilityAccess exists on a
+  // record at all, it alone decides that record's Mobility state (an
+  // explicit {enabled:false} is never resurrected by a stale legacy `role`);
+  // only a record never touched by the new field falls back to `role`.
+  const mobilityRole = resolveMobilityRole(record.data);
+  const mobilityEnabled = MOBILITY_MANAGEABLE_ROLES.includes(mobilityRole);
   return {
     uid,
     email,
@@ -144,6 +152,12 @@ async function safeMetadata(auth, uid, record) {
     landsAccess: landsAccess && landsAccess.enabled === true
       ? { enabled: true, role: landsAccess.role || null, syncStatus: landsAccess.syncStatus || 'pending_trusted_sync' }
       : { enabled: false, role: null, syncStatus: null },
+    // Normalized safe Mobility entitlement — structurally parallel to
+    // landsAccess above. No internal fields (requestedBy/requestedAt) are
+    // ever exposed here.
+    mobilityAccess: mobilityEnabled
+      ? { enabled: true, role: mobilityRole }
+      : { enabled: false, role: null },
   };
 }
 
@@ -185,11 +199,14 @@ async function handler(req, res) {
         if (d.active === false) continue;
         if (resolveMobilityRole(d) !== 'employee') continue;
         // Minimal safe projection only — no email, no role/mobilityAccess
-        // internals, no other account metadata. The allocation drawer only
-        // ever needs a uid to write and a name to display; Rules
-        // (validMobilityAllocationTarget) remain the sole authority over
-        // whether an allocation to this uid actually succeeds.
-        employees.push({ uid: doc.id, name: d.name || d.email || doc.id });
+        // internals, no other account metadata. PHASE 02B/06C: email is
+        // never used as a display-name fallback, even when name is absent —
+        // fall back straight to the safe, non-sensitive doc id instead. The
+        // allocation drawer only ever needs a uid to write and a name to
+        // display; Rules (validMobilityAllocationTarget) remain the sole
+        // authority over whether an allocation to this uid actually
+        // succeeds.
+        employees.push({ uid: doc.id, name: d.name || doc.id });
       }
       return sendJson(res, 200, { employees });
     } catch (_) {
@@ -224,11 +241,19 @@ async function handler(req, res) {
           for (const doc of snap.docs) {
             const data = doc.data() || {};
             // A manager sees same-org Field-role records as before, PLUS any
-            // record that only has a declared Lands entitlement (role is
-            // null there since Field was never enabled for that account).
+            // record with a declared Lands entitlement (role is null there
+            // since Field was never enabled for that account), PLUS any
+            // record whose Mobility role lives ONLY in the independent
+            // mobilityAccess field (role may also be null there, or a Field
+            // role — see resolveMobilityRole()'s dual-read). Any one of the
+            // three is sufficient; this must never be based on the legacy
+            // `role` field or a Lands declaration alone, or a genuine
+            // same-org Mobility-only account silently disappears from the
+            // Manager User Center.
             const hasFieldRole = MANAGER_SCOPED_ROLES.includes(data.role);
+            const hasMobilityRole = MOBILITY_MANAGEABLE_ROLES.includes(resolveMobilityRole(data));
             const hasLandsDeclared = Boolean(data.landsAccess && data.landsAccess.enabled);
-            if (caller.isManager && !hasFieldRole && !hasLandsDeclared) continue;
+            if (caller.isManager && !hasFieldRole && !hasMobilityRole && !hasLandsDeclared) continue;
             out.push(await safeMetadata(auth, doc.id, { data }));
           }
         }

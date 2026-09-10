@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Smart HSR - حركة السير الذكية</title>
+<title>Smart HSR - إدارة الحركة والسير</title>
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
 <script src="./support.js"></script>
@@ -57,12 +57,6 @@
 
       <button onClick="{{ logout }}" data-f="1" aria-label="تسجيل الخروج" style="height:34px;padding:0 12px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--hdrTx2,#9db2cc);background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16))">تسجيل الخروج</button>
 
-      <div style="display:var(--metaDisp,flex);align-items:center;gap:9px;height:34px;padding:0 11px;border-radius:10px;background:var(--hdrSunk,rgba(12,20,36,0.55));border:1px solid var(--hdrDiv,rgba(122,164,224,0.11))">
-        <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:mBreathe 2.6s ease-in-out infinite"></span>
-        <span style="font-size:11px;color:var(--hdrTx2,#9db2cc)">بيانات تجريبية · بيئة تصميم</span>
-        <span style="width:1px;height:13px;background:var(--div,rgba(122,164,224,0.16))"></span>
-        <span style="font-size:11px;color:var(--hdrTx3,#7d8ea6);font-variant-numeric:tabular-nums">9:41 ص · الثلاثاء 27 ذو القعدة</span>
-      </div>
     </div>
 
     <div style="display:flex;align-items:center;gap:8px">
@@ -79,7 +73,6 @@
 
       <div style="position:relative">
         <button onClick="{{ tNotif }}" data-f="1" aria-label="التنبيهات" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
-          <svg
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"></path><path d="M10.5 20a2 2 0 0 0 3 0"></path></svg>
           <span style="position:absolute;top:-5px;left:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--bad,#ef4444);color:#fff;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--badge,#0b1220)">{{ notifCount }}</span>
         </button>
@@ -107,7 +100,7 @@
 
       <div style="display:flex;align-items:center;gap:11px">
         <div style="text-align:right;display:var(--brandTxt,block);padding-right:11px;border-right:1px solid var(--div,rgba(122,164,224,0.14))">
-          <div style="font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">حركة السير الذكية</div>
+          <div style="font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">إدارة الحركة والسير</div>
           <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:2px">{{ orgName }}</div>
         </div>
         <div style="display:flex;align-items:center;gap:9px">
@@ -449,7 +442,6 @@
             </div>
             <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:center;gap:10px">
               <span style="flex:1;font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ tCount }}</span>
-              <span style="font-size:10px;color:var(--tx3,#7d8ea6)">بيانات تجريبية للتصميم</span>
             </div>
           </div>
         </div>
@@ -1678,7 +1670,7 @@ class Component extends DCLogic {
   renderVals() {
     const st = this.state, day = st.theme === 'day';
     const gateShow = !!st.authPending || !st.role;
-    const gateMsg = st.authPending ? 'جارٍ التحقق من صلاحية الدخول…' : 'لا تملك صلاحية للوصول إلى حركة السير الذكية.';
+    const gateMsg = st.authPending ? 'جارٍ التحقق من صلاحية الدخول…' : 'لا تملك صلاحية للوصول إلى إدارة الحركة والسير.';
     const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
     if (st.sb && st.bp !== 'tabP' && st.bp !== 'mob') { vars['--sbW'] = '64px'; vars['--sbLabel'] = 'none'; }
     if (st.role === 'employee') {
@@ -1902,7 +1894,7 @@ class Component extends DCLogic {
       // A real mission awaiting allocation, if any — the toolbar shortcut
       // below must open a real mission's drawer, never a fake demo id.
       const pendingAlloc = M.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة')[0];
-      return { ops: true, bottom: true, title: 'مركز عمليات حركة السير الذكية', sub: 'التشغيل المباشر للأسطول والمهام والحوادث',
+      return { ops: true, bottom: true, title: 'مركز عمليات إدارة الحركة والسير', sub: 'التشغيل المباشر للأسطول والمهام والحوادث',
         actions: [
           ...(pendingAlloc ? [{ label: 'تخصيص مركبة', on: () => this.openDrawer('alloc', pendingAlloc.id), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' }] : []),
           { label: 'الخريطة التشغيلية', on: () => this.setState({ screen: 'map' }), tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }
@@ -1929,7 +1921,7 @@ class Component extends DCLogic {
     }
 
     if (st.role === 'manager' && st.screen === 'exec') {
-      return { ops: true, bottom: true, title: 'حركة السير الذكية — نظرة تنفيذية', sub: 'مؤشرات الأسطول والمهام على مستوى البلدية',
+      return { ops: true, bottom: true, title: 'إدارة الحركة والسير — نظرة تنفيذية', sub: 'مؤشرات الأسطول والمهام على مستوى البلدية',
         actions: [
           { label: 'التقرير التنفيذي', on: () => this.setState({ screen: 'reports' }), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' },
           { label: 'إدارة المستخدمين والصلاحيات', on: () => { window.location.href = 'manager-operations.html#users'; }, tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }
@@ -1999,7 +1991,7 @@ class Component extends DCLogic {
   titleOf(s) {
     const m = { missions: 'المهام والطلبات', fleet: 'الأسطول', handover: 'التسليم والاستلام', incidents: 'الحوادث والطوارئ',
       reports: 'التقارير', audit: 'السجل التشغيلي', settings: 'الإعدادات والسياسات', approvals: 'طلبات الاعتماد', emp: 'عملياتي' };
-    return m[s] || 'حركة السير الذكية';
+    return m[s] || 'إدارة الحركة والسير';
   }
   subOf(s) {
     const m = { missions: 'دورة حياة المهمة من الطلب حتى الإغلاق', fleet: 'سجل المركبات البلدية وحالتها التشغيلية',

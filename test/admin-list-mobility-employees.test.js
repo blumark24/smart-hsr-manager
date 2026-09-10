@@ -219,6 +219,28 @@ test('I: only the minimal {uid, name} projection is ever returned — no email, 
   } finally { fakes.restore(); }
 });
 
+test('28. PHASE 02B/06C: when name is absent, the safe doc-id fallback is used — email is NEVER used as a display-name fallback', async () => {
+  const head = { uid: 'head-i2', organizationId: 'org-i2' };
+  const fakes = installFakes();
+  try {
+    fakes.store.seed(`users/${head.uid}`, { uid: head.uid, role: 'mobility_head', active: true, organizationId: head.organizationId });
+    fakes.store.seed('users/emp-no-name', {
+      uid: 'emp-no-name', role: 'employee', active: true, organizationId: head.organizationId,
+      email: 'should-never-appear@example.com',
+    });
+    const handler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: head.uid, body: { action: 'listMobilityEmployees' } }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.employees.length, 1);
+    const projected = res.body.employees[0];
+    assert.equal(projected.uid, 'emp-no-name');
+    assert.equal(projected.name, 'emp-no-name', 'falls back to the safe doc id, never the email');
+    assert.doesNotMatch(JSON.stringify(res.body), /should-never-appear@example\.com/, 'email must never appear anywhere in the response');
+  } finally { fakes.restore(); }
+});
+
 test('a mobility_head whose own role lives only in mobilityAccess (post-06A migration) can still call the action', async () => {
   const head = { uid: 'head-migrated', organizationId: 'org-j' };
   const fakes = installFakes();
@@ -259,6 +281,124 @@ test('existing owner/manager actions on this same endpoint are completely unaffe
     await handler(fakeRequest({ uid: 'mgr-unaffected', body: { action: 'list', organizationId: 'org-l' } }), res);
     assert.equal(res.statusCode, 200, JSON.stringify(res.body));
     assert.ok(Array.isArray(res.body.users));
+  } finally { fakes.restore(); }
+});
+
+// ============================================================================
+// PHASE 02B/06C — the 'list' action's manager-visibility filter and
+// safeMetadata()'s normalized mobilityAccess shape. 'list' previously
+// derived visibility only from the legacy `role` field (MANAGER_SCOPED_ROLES,
+// which already covers legacy Mobility role VALUES) and a Lands
+// declaration — a genuine same-org account whose Mobility role lives ONLY
+// in the independent mobilityAccess field (role: null) was invisible to
+// the Manager User Center. Fixed additively, mirroring the exact same
+// belongsOnUsersList() pattern already used by manager-dashboard-adapter.js.
+// ============================================================================
+
+test('26. a valid same-org Mobility-only account (role: null, mobilityAccess independent) appears in the Manager User Center list', async () => {
+  const fakes = installFakes();
+  try {
+    fakes.store.seed('managers/mgr-26', { uid: 'mgr-26', role: 'manager', active: true, organizationId: 'org-26' });
+    fakes.store.seed('users/mobility-only-26', {
+      uid: 'mobility-only-26', role: null, active: true, organizationId: 'org-26',
+      mobilityAccess: { enabled: true, role: 'employee' }, name: 'Mobility Only',
+    });
+    const handler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: 'mgr-26', body: { action: 'list', organizationId: 'org-26' } }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    const uids = res.body.users.map(u => u.uid);
+    assert.ok(uids.includes('mobility-only-26'), 'a Mobility-only account must be visible in the Manager User Center');
+  } finally { fakes.restore(); }
+});
+
+test('27. a disabled Mobility entitlement (mobilityAccess.enabled:false, no other service) does NOT appear as an enabled account, and is excluded when it has no other service at all', async () => {
+  const fakes = installFakes();
+  try {
+    fakes.store.seed('managers/mgr-27', { uid: 'mgr-27', role: 'manager', active: true, organizationId: 'org-27' });
+    // No Field role, no Lands declaration, and Mobility explicitly disabled
+    // — this record has NO real service left and must not appear at all.
+    fakes.store.seed('users/no-service-27', {
+      uid: 'no-service-27', role: null, active: true, organizationId: 'org-27',
+      mobilityAccess: { enabled: false, role: null }, name: 'No Service',
+    });
+    const handler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: 'mgr-27', body: { action: 'list', organizationId: 'org-27' } }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    const uids = res.body.users.map(u => u.uid);
+    assert.ok(!uids.includes('no-service-27'), 'a record with no real enabled service must not appear');
+  } finally { fakes.restore(); }
+});
+
+test('27b. a stale legacy role:employee with mobilityAccess.enabled:false is NOT reported as an enabled Mobility account by safeMetadata()', async () => {
+  const fakes = installFakes();
+  try {
+    fakes.store.seed('managers/mgr-27b', { uid: 'mgr-27b', role: 'manager', active: true, organizationId: 'org-27b' });
+    fakes.store.seed('users/stale-27b', {
+      uid: 'stale-27b', role: 'employee', active: true, organizationId: 'org-27b',
+      mobilityAccess: { enabled: false, role: null }, name: 'Stale Disabled',
+    });
+    const handler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: 'mgr-27b', body: { action: 'list', organizationId: 'org-27b' } }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    // Still visible (legacy role:employee alone is enough to appear), but
+    // its NORMALIZED mobilityAccess metadata must correctly report disabled.
+    const record = res.body.users.find(u => u.uid === 'stale-27b');
+    assert.ok(record, 'the legacy role keeps it visible in the list');
+    assert.deepEqual(record.mobilityAccess, { enabled: false, role: null });
+  } finally { fakes.restore(); }
+});
+
+test('Field-only, Lands-only, and legacy-Mobility-only accounts all still appear (no regression to the pre-existing visibility rules)', async () => {
+  const fakes = installFakes();
+  try {
+    fakes.store.seed('managers/mgr-combo', { uid: 'mgr-combo', role: 'manager', active: true, organizationId: 'org-combo' });
+    fakes.store.seed('users/field-only', { uid: 'field-only', role: 'inspector', active: true, organizationId: 'org-combo', name: 'Field Only' });
+    fakes.store.seed('users/lands-only', { uid: 'lands-only', role: null, active: true, organizationId: 'org-combo', name: 'Lands Only', landsAccess: { enabled: true, role: 'lands_employee' } });
+    fakes.store.seed('users/legacy-mobility-only', { uid: 'legacy-mobility-only', role: 'mobility_head', active: true, organizationId: 'org-combo', name: 'Legacy Mobility' });
+    const handler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: 'mgr-combo', body: { action: 'list', organizationId: 'org-combo' } }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    const uids = res.body.users.map(u => u.uid).sort();
+    assert.deepEqual(uids, ['field-only', 'lands-only', 'legacy-mobility-only']);
+  } finally { fakes.restore(); }
+});
+
+test('safeMetadata(): returns a normalized mobilityAccess shape alongside the existing safe Field/Lands/account metadata, with no internal fields leaked', async () => {
+  const fakes = installFakes();
+  try {
+    fakes.store.seed('managers/mgr-meta', { uid: 'mgr-meta', role: 'manager', active: true, organizationId: 'org-meta' });
+    fakes.store.seed('users/mobility-meta', {
+      uid: 'mobility-meta', role: null, active: true, organizationId: 'org-meta', name: 'Mobility Meta',
+      mobilityAccess: { enabled: true, role: 'department_head', requestedBy: 'someone', requestedAt: 'sometime' },
+    });
+    const handler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: 'mgr-meta', body: { action: 'getMetadata', uid: 'mobility-meta' } }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.deepEqual(res.body.user.mobilityAccess, { enabled: true, role: 'department_head' }, 'no requestedBy/requestedAt internals leaked');
+  } finally { fakes.restore(); }
+});
+
+test('safeMetadata(): a record never touched by mobilityAccess reports mobilityAccess disabled even with a legacy Field role', async () => {
+  const fakes = installFakes();
+  try {
+    fakes.store.seed('managers/mgr-meta2', { uid: 'mgr-meta2', role: 'manager', active: true, organizationId: 'org-meta2' });
+    fakes.store.seed('users/field-meta', { uid: 'field-meta', role: 'inspector', active: true, organizationId: 'org-meta2', name: 'Field Meta' });
+    const handler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: 'mgr-meta2', body: { action: 'getMetadata', uid: 'field-meta' } }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.deepEqual(res.body.user.mobilityAccess, { enabled: false, role: null });
   } finally { fakes.restore(); }
 });
 
