@@ -70,6 +70,33 @@ test('authz.js resolveMobilityRole: absent key + no role at all resolves to null
   assert.equal(authzResolve({ role: null }), null);
 });
 
+// ---- PRE-PHASE-07 IAM HARDENING — the absent-key fallback branch must
+// validate against MOBILITY_MANAGEABLE_ROLES too, not return `data.role`
+// unvalidated. Every one of the 4 valid Mobility roles falls back
+// correctly; every non-Mobility role (including a Field role, the
+// municipality-manager role, an arbitrary string, and an empty string)
+// must resolve to null, never leak through as if it were a Mobility role. ----
+
+for (const role of ['mobility_head', 'department_head', 'administrative_affairs', 'employee']) {
+  test(`authz.js resolveMobilityRole: absent key + legacy role "${role}" (valid Mobility role) falls back correctly`, () => {
+    assert.equal(authzResolve({ role }), role);
+  });
+}
+
+for (const role of ['supervisor', 'inspector', 'contractor', 'manager', 'random_role', '']) {
+  test(`authz.js resolveMobilityRole: absent key + legacy role "${role || '(empty string)'}" (NOT a Mobility role) resolves to null, never leaks through`, () => {
+    assert.equal(authzResolve({ role }), null, `a non-Mobility legacy role ("${role}") must never be returned as if it were a Mobility role`);
+  });
+}
+
+test('authz.js resolveMobilityRole: MOBILITY_MANAGEABLE_ROLES is the single source of truth for the fallback vocabulary — no duplicated role list', () => {
+  const source = read('api/_lib/authz.js');
+  const fnStart = source.indexOf('function resolveMobilityRole(data) {');
+  assert.ok(fnStart >= 0, 'resolveMobilityRole implementation not found');
+  const fnBody = source.slice(fnStart, source.indexOf('\n}', fnStart));
+  assert.match(fnBody, /MOBILITY_MANAGEABLE_ROLES\.includes\(legacyRole\)/, 'the absent-key fallback must validate against the existing MOBILITY_MANAGEABLE_ROLES constant, not a new/duplicated role list');
+});
+
 for (const [label, value] of MALFORMED_MOBILITY_ACCESS_VALUES) {
   test(`authz.js resolveMobilityRole: mobilityAccess = ${label} (key present) never falls back to a stale legacy role`, () => {
     for (const staleRole of ['employee', 'mobility_head', 'department_head', 'administrative_affairs']) {

@@ -185,13 +185,27 @@ async function getCallerContext(uid) {
 // closed to null and is NEVER reactivated by a stale legacy role. Only a
 // record that has NEVER been touched by this field (the key is genuinely
 // absent) falls back to the legacy scalar `role`.
+//
+// PRE-PHASE-07 IAM HARDENING — the absent-key fallback branch now validates
+// against the SAME MOBILITY_MANAGEABLE_ROLES vocabulary as the present-key
+// branch, instead of returning `data.role` unvalidated. Previously
+// resolveMobilityRole({role:'supervisor'}) returned the raw string
+// 'supervisor' — never exploitable today because every current caller
+// re-validates the result with a strict `===`/`.includes()` check before
+// trusting it, but a latent contract gap and an inconsistency with the
+// sibling resolver in users-list-view.js, which already validated this
+// branch. A non-Mobility legacy role (manager, supervisor, inspector,
+// contractor, an empty string, or any other unrecognized value) now
+// resolves to null here too, exactly like a present-but-malformed
+// mobilityAccess value already does.
 function resolveMobilityRole(data) {
   if (data && Object.prototype.hasOwnProperty.call(data, 'mobilityAccess')) {
     const access = data.mobilityAccess;
     const enabled = Boolean(access) && typeof access === 'object' && access.enabled === true;
     return enabled && MOBILITY_MANAGEABLE_ROLES.includes(access.role) ? access.role : null;
   }
-  return (data && data.role) || null;
+  const legacyRole = data && data.role;
+  return MOBILITY_MANAGEABLE_ROLES.includes(legacyRole) ? legacyRole : null;
 }
 
 // PHASE 06A.2 — a narrow, fail-closed caller-context resolver for exactly

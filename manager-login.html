@@ -149,11 +149,20 @@ form.addEventListener("submit", async (e) => {
     // المساعد من users/{uid} فقط، وكلاهما فعّال ومرتبط بمؤسسة.
     const managerOrg = typeof managerData?.organizationId === 'string' ? managerData.organizationId.trim() : '';
     let authorized = !!(managerData && managerData.role === 'manager' && managerData.active !== false && managerOrg);
+    // PRE-PHASE-07 IAM HARDENING — this must record which branch actually
+    // authorized, never a hardcoded "manager". A Field supervisor (users/
+    // {uid}, role:'supervisor') must never be represented internally as
+    // role:'manager' for authorization purposes, even in a display-only
+    // session field — see manager-dashboard-adapter.js's verifyManagerAccess()
+    // and manager-operations.html's verifyStaffAccess(), which already
+    // store this same truthful distinction.
+    let resolvedRole = authorized ? 'manager' : null;
     if (!authorized) {
       const userSnap = await getDoc(doc(db, 'users', user.uid));
       const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
       const userOrg = typeof userData.organizationId === 'string' ? userData.organizationId.trim() : '';
       authorized = userData.role === 'supervisor' && userData.active !== false && !!userOrg;
+      if (authorized) resolvedRole = 'supervisor';
     }
     if (!authorized) {
       await signOut(auth);
@@ -161,11 +170,14 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
-    // تخزين الجلسة بعد التحقق من مستند المدير ودوره فقط
+    // تخزين الجلسة بعد التحقق من مستند المدير ودوره فقط — الدور المخزَّن هو
+    // الدور الحقيقي الذي تحقق منه الخادم (مدير أو مشرف ميداني)، وليس قيمة
+    // ثابتة. manager.html/manager-operations.html يعيدان التحقق من الدور
+    // الحقيقي بأنفسهما دائمًا؛ هذا الحقل عرضي فقط ولا يُستخدم للتفويض.
     sessionStorage.setItem("smartHSRUser", JSON.stringify({
       uid: user.uid,
       email: user.email,
-      role: "manager"
+      role: resolvedRole
     }));
 
     // smart-mobility.html/smart-mobility-adapter.js checks its own named
