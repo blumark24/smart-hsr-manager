@@ -126,42 +126,48 @@ test('Field-only field selection never influences the Lands operation decision',
   assert.equal(computeLandsSyncOperation.length, 2);
 });
 
-// ---- assertSingleService / resolveEffectiveServiceState: one employee, one service ----
+// ---- assertSingleService / resolveEffectiveServiceState ----
+// Phase 03B product decision: Field/Mobility (`role`) and Lands
+// (`landsAccess`) are independent fields on the same users/{uid} document,
+// and a single identity may now legitimately hold both at once ("ONE USER =
+// ONE IDENTITY + MULTIPLE CONTROLLED PRODUCT ENTITLEMENTS"). assertSingleService
+// no longer denies the combined case — see api/_lib/serviceEntitlements.js
+// for the full rationale. `dual_service_denied` remains a documented reason
+// code but this function never returns it anymore.
 
-test('assertSingleService: allows Field-only, Lands-only, or neither', () => {
+test('assertSingleService: allows Field-only, Lands-only, neither, or both together', () => {
   assert.equal(assertSingleService(true, false).ok, true);
   assert.equal(assertSingleService(false, true).ok, true);
   assert.equal(assertSingleService(false, false).ok, true);
+  assert.equal(assertSingleService(true, true).ok, true);
 });
 
-test('assertSingleService: denies both services enabled at once', () => {
-  const result = assertSingleService(true, true);
-  assert.equal(result.ok, false);
-  assert.equal(result.reason, 'dual_service_denied');
-});
-
-test('resolveEffectiveServiceState: a request mentioning only Lands keeps the existing Field role in effect', () => {
+// PHASE 06A hotfix: resolveEffectiveServiceState now also returns
+// existingMobilityEnabled (a third, independent entitlement) — false in
+// all three cases below since none of them pass an existing Mobility role
+// or mobilityAccess field.
+test('resolveEffectiveServiceState: a request mentioning only Lands keeps the existing Field role in effect, and combined access is now allowed', () => {
   const fieldSel = validateFieldSelection(undefined); // not present in this request
   const landsSel = validateLandsSelection({ enabled: true, role: 'lands_employee' });
   const result = resolveEffectiveServiceState(fieldSel, landsSel, 'inspector', undefined);
-  assert.deepEqual(result, { fieldEffectiveEnabled: true, landsEffectiveEnabled: true });
-  // Combined with assertSingleService, this is exactly the "silently keep
-  // both services" case the transfer rule must catch:
-  assert.equal(assertSingleService(result.fieldEffectiveEnabled, result.landsEffectiveEnabled).ok, false);
-});
-
-test('resolveEffectiveServiceState: an explicit transfer (both mentioned) resolves to exactly one service', () => {
-  const fieldSel = validateFieldSelection({ enabled: false });
-  const landsSel = validateLandsSelection({ enabled: true, role: 'lands_employee' });
-  const result = resolveEffectiveServiceState(fieldSel, landsSel, 'inspector', undefined);
-  assert.deepEqual(result, { fieldEffectiveEnabled: false, landsEffectiveEnabled: true });
+  assert.deepEqual(result, { fieldEffectiveEnabled: true, landsEffectiveEnabled: true, existingMobilityEnabled: false });
+  // Phase 03B: an employee gaining Lands access while keeping their existing
+  // Field role is now an explicitly supported combined-access outcome.
   assert.equal(assertSingleService(result.fieldEffectiveEnabled, result.landsEffectiveEnabled).ok, true);
 });
 
-test('resolveEffectiveServiceState: a request mentioning only Field keeps an existing synced Lands membership in effect', () => {
+test('resolveEffectiveServiceState: an explicit transfer (both mentioned) can still resolve to exactly one service', () => {
+  const fieldSel = validateFieldSelection({ enabled: false });
+  const landsSel = validateLandsSelection({ enabled: true, role: 'lands_employee' });
+  const result = resolveEffectiveServiceState(fieldSel, landsSel, 'inspector', undefined);
+  assert.deepEqual(result, { fieldEffectiveEnabled: false, landsEffectiveEnabled: true, existingMobilityEnabled: false });
+  assert.equal(assertSingleService(result.fieldEffectiveEnabled, result.landsEffectiveEnabled).ok, true);
+});
+
+test('resolveEffectiveServiceState: a request mentioning only Field keeps an existing synced Lands membership in effect, and combined access is now allowed', () => {
   const fieldSel = validateFieldSelection({ enabled: true, role: 'inspector' });
   const landsSel = validateLandsSelection(undefined);
   const result = resolveEffectiveServiceState(fieldSel, landsSel, null, { enabled: true, role: 'lands_employee', syncStatus: 'synced' });
-  assert.deepEqual(result, { fieldEffectiveEnabled: true, landsEffectiveEnabled: true });
-  assert.equal(assertSingleService(result.fieldEffectiveEnabled, result.landsEffectiveEnabled).ok, false);
+  assert.deepEqual(result, { fieldEffectiveEnabled: true, landsEffectiveEnabled: true, existingMobilityEnabled: false });
+  assert.equal(assertSingleService(result.fieldEffectiveEnabled, result.landsEffectiveEnabled).ok, true);
 });

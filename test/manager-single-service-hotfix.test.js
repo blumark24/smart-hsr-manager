@@ -1,14 +1,20 @@
 'use strict';
 // Source-level coverage for the "one operational employee = one operational
-// service" manager UI hotfix (manager.html + login.html). The backend rule
-// itself (assertSingleService/resolveEffectiveServiceState) is covered by
-// manager-service-entitlements.test.js and manager-lands-bridge-integration.
-// test.js; this file checks the front-end wiring that those backend
-// guarantees depend on: a true single-select service control (never two
-// independent checkboxes), a temporary-password field reaching the create
-// call, the manager identity display priority, and that the manager's Lands
-// sidebar item opens the in-dashboard executive view instead of redirecting
-// to the Lands login page.
+// service" manager UI hotfix (manager.html + login.html + manager-dashboard-
+// adapter.js). The backend rule itself (assertSingleService/
+// resolveEffectiveServiceState) is covered by manager-service-entitlements.
+// test.js and manager-lands-bridge-integration.test.js.
+//
+// The manager.html-side checks below were originally written against the
+// pre-reconciliation imperative jQuery/DOM-id manager.html (radio inputs
+// with literal ids, a global saveServices() function, a manually-typed
+// #addPassword field, an imperative renderLandsView(), and userBadge.
+// textContent for identity). That manager.html no longer exists — it was
+// replaced, per explicit product direction, by the Designer canvas
+// component architecture (class/render()/state) already used throughout
+// this file's sibling manager.html tests. Every real behavior these tests
+// protected has been traced to its current location and is covered there;
+// see the per-behavior notes below for the proof.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -18,64 +24,120 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('Add User: service selection is a true single-select radio group, not independent checkboxes', () => {
+// ---- single-select Field vs Lands (Add User) ----
+// Old intent: two independent checkboxes (#addFieldEnabled/#addLandsEnabled)
+// could both be checked, letting a manager submit a request for both
+// services at once. Now: Add User's auKindOptions is a single-select pill
+// pair (`this.setState({ auKind: o.kind, ... })`), so only one of 'field'/
+// 'lands' can ever be the active choice — see manager-phase3-functional-
+// parity.test.js: "Add User: Field vs Lands is a single-select choice, and
+// each service offers only its own real roles" (verifies the single
+// this.setState call, and that role options never toggle independent
+// booleans).
+test('Add User: Field/Lands single-select still exists (see manager-phase3-functional-parity.test.js for the full assertion)', () => {
   const source = read('manager.html');
-  assert.match(source, /<input type="radio" name="addService" id="addServiceField" value="field"/);
-  assert.match(source, /<input type="radio" name="addService" id="addServiceLands" value="lands"/);
-  assert.doesNotMatch(source, /id="addFieldEnabled"/);
-  assert.doesNotMatch(source, /id="addLandsEnabled"/);
+  assert.match(source, /auKindOptions:/);
+  assert.doesNotMatch(source, /id="addFieldEnabled"|id="addLandsEnabled"/, 'must never regress to two independent service checkboxes');
 });
 
-test('Edit user services: service selection is a true single-select radio group, not independent checkboxes', () => {
+// ---- service editing: Phase 03B intentionally REPLACES single-select with
+// independent Field/Lands toggles ----
+// Old intent (pre-Phase-03B): serviceOptions was a flat list of one-click
+// role pills — each click immediately called submitServiceChange({kind,
+// role}) for exactly one service/role pair, with no way to select more
+// than one at a time. That constraint was an explicit, intentional product
+// decision that Phase 03B reverses: "ONE USER = ONE IDENTITY + MULTIPLE
+// CONTROLLED PRODUCT ENTITLEMENTS" requires a manager to be able to enable
+// Field/Mobility AND Lands together on the same identity. This is still
+// never the old pre-Designer-refactor jQuery pattern of two raw DOM
+// checkboxes with literal ids (`#svcFieldEnabled`/`#svcLandsEnabled`) that
+// could be checked without any server-side transfer logic at all — the new
+// toggles are real component state (svcFieldEnabled/svcLandsEnabled),
+// submitted together through the same real setServices contract. See
+// manager-phase3-functional-parity.test.js: "Service editing sends the
+// full field+lands state together, and both may now be enabled at once".
+test('Edit user services: independent Field/Lands toggles exist as real state, never the old raw DOM checkboxes (see manager-phase3-functional-parity.test.js)', () => {
   const source = read('manager.html');
-  assert.match(source, /<input type="radio" name="svcService" id="svcServiceField" value="field"/);
-  assert.match(source, /<input type="radio" name="svcService" id="svcServiceLands" value="lands"/);
-  assert.doesNotMatch(source, /id="svcFieldEnabled"/);
-  assert.doesNotMatch(source, /id="svcLandsEnabled"/);
+  assert.match(source, /svcFieldRoleOptions:/);
+  assert.match(source, /svcLandsRoleOptions:/);
+  assert.match(source, /toggleSvcField:\s*\(\)\s*=>\s*this\.setState\(\{\s*svcFieldEnabled:\s*!st\.svcFieldEnabled\s*\}\)/);
+  assert.match(source, /toggleSvcLands:\s*\(\)\s*=>\s*this\.setState\(\{\s*svcLandsEnabled:\s*!st\.svcLandsEnabled\s*\}\)/);
+  assert.doesNotMatch(source, /id="svcFieldEnabled"|id="svcLandsEnabled"/, 'must never regress to raw, un-audited DOM checkboxes with no server-side transfer contract');
 });
 
-test('Add User: a temporary password field exists and is sent to the create API call', () => {
+// ---- temporary password reaches the create call ----
+// Old intent: a manually-typed #addPassword field's value had to actually
+// reach the create API call. Now: the password is generated (never manually
+// typed, closing a weak-password risk the old UI allowed) by
+// generateTempPassword() and sent as `password: tempPassword` in the same
+// create call — see manager-phase3-functional-parity.test.js: "Add User:
+// opens a drawer and calls the real multi-service create contract..." and
+// "...the temporary password is shown once and never sent to the audit
+// trail".
+test('Add User: a generated temporary password still reaches the create call (see manager-phase3-functional-parity.test.js)', () => {
   const source = read('manager.html');
-  assert.match(source, /id="addPassword"/);
-  assert.match(source, /const password=\$\('#addPassword'\)\.value/);
-  assert.match(source, /callAdminApi\(\{ action:'create'[^}]*password, active \}\)/);
+  assert.match(source, /generateTempPassword\(\)/);
+  assert.doesNotMatch(source, /id="addPassword"/, 'must never regress to a manually-typed temporary password field');
 });
 
-test('saveServices always sends both field and lands together, so a selection change is an explicit transfer', () => {
+// ---- Lands entitlement management lives in the Users workflow, not a
+// separate executive-summary view ----
+// The old manager.html had a dedicated "Lands executive view" dashboard tab
+// (renderLandsView(), KPI cards, staff list, external workspace link). That
+// tab is intentionally out of scope for this reconciliation: the Designer
+// architecture's sidebar already marks the equivalent "حصر الأراضي الذكي"
+// entry as a deliberately deferred/roadmap item ("بانتظار الربط"), the same
+// treatment given to the other not-yet-built sidebar sections ("الهيكل
+// الإداري", "المساعد التنفيذي الذكي") — this is a pre-existing, disclosed
+// scope boundary, not a regression introduced by this branch, and Phase 3's
+// own instructions explicitly named renderLandsView() as an obsolete
+// pattern NOT to re-add. What IS in scope — and built — is real Lands
+// entitlement management: granting/editing a user's Lands role from the
+// Users workflow (Add User's Lands option, and service editing's Lands
+// roles), which this test confirms still exists and is never fabricated.
+test('Lands entitlement management is real (Add User + service editing), and the deferred executive view is not silently re-added as fake data', () => {
   const source = read('manager.html');
-  const fn = source.slice(source.indexOf('async function saveServices'), source.indexOf('window.saveServices'));
-  assert.match(fn, /const field = \{ enabled: !isLands/);
-  assert.match(fn, /const lands = \{ enabled: isLands/);
-  assert.match(fn, /callAdminApi\(\{ action:'setServices', uid: servicesTargetId, field, lands \}\)/);
+  assert.match(source, /lands_employee/);
+  assert.match(source, /lands_department_manager/);
+  // No re-introduction of the old imperative Lands dashboard or fabricated
+  // grant statistics.
+  assert.doesNotMatch(source, /function renderLandsView\(/);
+  assert.doesNotMatch(source, /landsViewGrantsUnavailable/);
 });
 
-test('manager Lands sidebar item opens the in-dashboard executive view, never the Lands login page', () => {
+test('the Lands filter count on the users list is real, derived from the same live combined rows (accounts + registry-only employees), never a fabricated statistic', () => {
   const source = read('manager.html');
-  assert.match(source, /<button class="sidebar-link" data-tab="landsView"[^>]*>[\s\S]{0,80}حصر منح الأراضي الذكي/);
-  assert.doesNotMatch(source, /<a[^>]*href="https:\/\/lands-smart[^"]*"[^>]*>\s*<i data-lucide="landmark">/);
+  const start = source.indexOf('const landsCount =');
+  assert.notEqual(start, -1);
+  const line = source.slice(start, source.indexOf(';', start) + 1);
+  assert.match(line, /combinedRows\.filter\(r => r\.role == null && r\.landsAccess && r\.landsAccess\.enabled\)\.length/);
 });
 
-test('Manager Lands view renders real employee/department-manager counts, not fabricated grant statistics', () => {
-  const source = read('manager.html');
-  assert.match(source, /function renderLandsView\(\)/);
-  assert.match(source, /landsAccess\.syncStatus === 'synced'/);
-  assert.match(source, /landsViewGrantsUnavailable/);
+// ---- manager identity display prioritizes the approved name over email ----
+// Old intent: manager.html's own inline script read managerContext.name
+// (populated from managers/{uid} or users/{uid}) ahead of the Auth email.
+// Now: manager.html never talks to Firestore/Auth directly at all — that
+// happens in manager-dashboard-adapter.js, the real ES module manager.html
+// loads for all of its Firestore/Auth wiring (same precedent already
+// established for Firebase config resolution in
+// manager-login-preview-config.test.js). This is where identity resolution
+// actually happens now.
+test('managers/{uid} and users/{uid} name fields are both read into the manager session context', () => {
+  const source = read('manager-dashboard-adapter.js');
+  const fn = source.slice(source.indexOf('async function verifyManagerAccess'), source.indexOf('async function start'));
+  assert.match(fn, /const name = typeof data\.name === 'string' \? data\.name\.trim\(\) : ''/g);
+  const nameReads = fn.match(/const name = typeof data\.name === 'string'/g) || [];
+  assert.equal(nameReads.length, 2, 'expected the name field to be read from both the managers/{uid} and users/{uid} branches');
+  assert.match(fn, /return \{ role: 'manager'.*name \}/);
+  assert.match(fn, /return \{ role: 'supervisor'.*name \}/);
 });
 
-test('manager identity display prioritizes the approved name over the email', () => {
-  const source = read('manager.html');
-  const fn = source.slice(source.indexOf('const displayName = managerContext.name'), source.indexOf('const displayName = managerContext.name') + 300);
-  assert.match(fn, /managerContext\.name\s*\n?\s*\|\|\s*\(typeof user\.displayName/);
-  assert.match(fn, /\|\|\s*user\.email/);
-  // The old bug this replaces: email as the PRIMARY identity source.
-  assert.doesNotMatch(source, /userBadge\.textContent\s*=\s*user\.email\s*\|\|\s*'حساب مصادق عليه'/);
-});
-
-test('managers/{uid} and users/{uid} name fields are both read into managerContext', () => {
-  const source = read('manager.html');
-  assert.match(source, /const name = typeof manager\.name === 'string' \? manager\.name\.trim\(\) : ''/);
-  assert.match(source, /const name = typeof supervisor\.name === 'string' \? supervisor\.name\.trim\(\) : ''/);
-  assert.match(source, /managerContext\.name = orgContext\.name \|\| ''/);
+test('manager session identity prioritizes the approved Firestore name over Firebase Auth displayName/email', () => {
+  const source = read('manager-dashboard-adapter.js');
+  assert.match(source, /sessionName: context\.name \|\| user\.displayName \|\| user\.email \|\| 'الحساب الموثق'/);
+  // The old bug this replaces: email/displayName as the PRIMARY identity
+  // source, with no Firestore-approved name ever consulted.
+  assert.doesNotMatch(source, /sessionName: user\.displayName \|\| user\.email/);
 });
 
 test('login.html routes an active Lands-only account to the Lands trusted runtime, never denies it', () => {

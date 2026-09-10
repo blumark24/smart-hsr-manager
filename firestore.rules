@@ -59,6 +59,127 @@ service cloud.firestore {
       return isActiveOrgUser() ? userRecord().data.role : null;
     }
 
+    // --- Smart Mobility roles (users/{uid}) ---
+    // municipality_manager reuses the existing manager account above; these
+    // four are new role values in the same users/{uid} collection.
+    //
+    // PHASE 06A hotfix — Mobility entitlement independence. Before this
+    // hotfix, Mobility's role lived in the SAME scalar `role` field Field
+    // also uses (mutually exclusive by construction: one string can only
+    // hold one value). Mobility now has its own independent
+    // users/{uid}.mobilityAccess field ({enabled, role}), structurally
+    // parallel to landsAccess, so a single identity can hold Field AND
+    // Mobility (and Lands) at once. Backward compatibility for every
+    // EXISTING record that has never been touched by this new field (no
+    // bulk migration was performed): once `mobilityAccess` exists on a
+    // document at all, it is the SOLE source of truth for that document's
+    // Mobility state (an explicit {enabled:false} correctly denies, even if
+    // the legacy `role` field still happens to hold a stale Mobility value
+    // from before migration) — only a document that has NEVER been touched
+    // by the new field falls back to reading the legacy scalar `role`.
+    function mobilityRoleValue() {
+      return ('mobilityAccess' in userRecord().data)
+        ? (userRecord().data.mobilityAccess.enabled == true ? userRecord().data.mobilityAccess.role : null)
+        : userRecord().data.role;
+    }
+    function isActiveMobilityUser() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && mobilityRoleValue() in ['mobility_head', 'department_head', 'administrative_affairs', 'employee']
+        && userRecord().data.active != false
+        && userRecord().data.organizationId is string
+        && userRecord().data.organizationId.size() > 0;
+    }
+    function mobilityUserOrgId() {
+      return isActiveMobilityUser() ? userRecord().data.organizationId : null;
+    }
+    function mobilityUserRole() {
+      return isActiveMobilityUser() ? mobilityRoleValue() : null;
+    }
+    function mobilityUserDept() {
+      return isActiveMobilityUser() ? userRecord().data.department : null;
+    }
+
+    // PHASE 06A hotfix — a NEW vehicle allocation names its target employee
+    // (assignedEmployeeUid) purely as a caller-supplied uid on the mission/
+    // vehicle documents being written; nothing about that uid was
+    // previously verified except vehicleEligible on whatever document
+    // happened to exist at that path. This closes that gap: the target
+    // must be a real, same-organization, active, genuinely-Mobility-role
+    // user (the same mobilityRoleValue() dual-read isActiveMobilityUser()
+    // uses for the CALLER, just evaluated against an arbitrary target uid)
+    // AND carry an explicit vehicleEligible === true — missing or false
+    // denies, exactly like the Phase 03B.1 fail-safe default already
+    // established elsewhere. Used by both documents a real allocation
+    // writes in one transaction (vehicles/{id}: AVAILABLE->RESERVED,
+    // missions/{id}: APPROVED->VEHICLE_ALLOCATED) so neither write alone is
+    // a bypass. The target document is fetched exactly ONCE via `let` (a
+    // single bound expression, not a fresh get() per field) — this rule's
+    // evaluation graph is already large enough that repeating get() calls
+    // per field previously blew the platform's per-request expression
+    // budget on this exact write path.
+    // PHASE 06A.2 — single-get cross-checks for the ALLOCATE transition's
+    // other-document conflict-prevention check (vehicle, when writing the
+    // mission; mission, when writing the vehicle). Each used to be two
+    // separate get() calls on the identical path (one per field compared) —
+    // harmless for a legacy role:'employee' target, but combined with
+    // mobilityUserOrgId() being independently re-evaluated up to four times
+    // in the SAME calling function (see below), a real two-document
+    // allocation transaction to an independent-mobilityAccess employee (one
+    // extra property-access level in validMobilityAllocationTarget's
+    // dual-read ternary) could tip the per-request expression budget over
+    // Firestore's 1000-expression ceiling and fail closed with
+    // PERMISSION_DENIED even though every actual authorization condition is
+    // satisfied. Binding the fetched document once via `let` here — exactly
+    // the same fix already applied to validMobilityAllocationTarget itself —
+    // removes that redundancy without changing what is actually checked.
+    function allocationTargetVehicleValid(vehicleId, orgId) {
+      let v = get(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
+      return v.organizationId == orgId && v.status == 'AVAILABLE';
+    }
+    function allocationTargetMissionValid(missionId, orgId) {
+      let m = get(/databases/$(database)/documents/missions/$(missionId)).data;
+      return m.organizationId == orgId && m.status == 'APPROVED';
+    }
+
+    function validMobilityAllocationTarget(employeeUid, orgId) {
+      let target = get(/databases/$(database)/documents/users/$(employeeUid)).data;
+      return exists(/databases/$(database)/documents/users/$(employeeUid))
+        && target.organizationId == orgId
+        && target.active != false
+        && (('mobilityAccess' in target)
+              ? (target.mobilityAccess.enabled == true && target.mobilityAccess.role in ['mobility_head', 'department_head', 'administrative_affairs', 'employee'])
+              : target.role in ['mobility_head', 'department_head', 'administrative_affairs', 'employee'])
+        && target.vehicleEligible == true;
+    }
+
+    // An auditEvents write's actorId/actorRole/organizationId alone say
+    // nothing about whether the resourceId it names is real, in the
+    // actor's own organization, or something the actor actually has a
+    // relationship to — a same-org employee could otherwise write a
+    // perfectly self-consistent event that semantically forges someone
+    // else's mission, a cross-org resource, or a nonexistent id. This
+    // closes that gap with one bounded get()/exists() pair (short-circuited
+    // by resourceType, so exactly one branch below ever touches Firestore)
+    // per create, checked against each resource's own recorded
+    // organizationId and, for an employee actor, its own ownership field —
+    // the same fields each resource's own rules below already trust.
+    function auditReferencedResourceOk(role, uid, resourceType, resourceId, organizationId) {
+      return
+        (resourceType == 'mission'
+          && exists(/databases/$(database)/documents/missions/$(resourceId))
+          && get(/databases/$(database)/documents/missions/$(resourceId)).data.organizationId == organizationId
+          && (role != 'employee' || get(/databases/$(database)/documents/missions/$(resourceId)).data.assignedEmployeeUid == uid))
+        || (resourceType == 'vehicle'
+          && exists(/databases/$(database)/documents/vehicles/$(resourceId))
+          && get(/databases/$(database)/documents/vehicles/$(resourceId)).data.organizationId == organizationId
+          && (role != 'employee' || get(/databases/$(database)/documents/vehicles/$(resourceId)).data.assignedEmployeeUid == uid))
+        || (resourceType == 'incident'
+          && exists(/databases/$(database)/documents/incidents/$(resourceId))
+          && get(/databases/$(database)/documents/incidents/$(resourceId)).data.organizationId == organizationId
+          && (role != 'employee' || get(/databases/$(database)/documents/incidents/$(resourceId)).data.createdByUid == uid));
+    }
+
     // ==========================================================
     // managers/{managerId} — signed-in self-read only, no client writes
     // ==========================================================
@@ -81,7 +202,44 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth.uid == userId
         || (isActiveManager() && resource.data.organizationId == managerOrgId())
-        || (orgUserRole() == 'supervisor' && resource.data.organizationId == orgUserOrgId());
+        || (orgUserRole() == 'supervisor' && resource.data.organizationId == orgUserOrgId())
+        // mobility_head must list org employees to allocate a vehicle to
+        // one — scoped strictly to employee-role records, not every user.
+        // PHASE 06A hotfix: an 'employee' role may now live in the
+        // independent mobilityAccess field instead of the legacy scalar
+        // `role` — same dual-read fallback as mobilityRoleValue() above,
+        // evaluated directly against this document's own resource.data.
+        // PHASE 06A.2: also requires the target to be active — an inactive
+        // employee record is never readable through this branch, matching
+        // the equivalent check already made in validMobilityAllocationTarget()
+        // for the allocation write itself. The trusted server-side
+        // listMobilityEmployees action (api/admin/users.js) no longer
+        // depends on this rule at all (it reads via the Admin SDK, which
+        // bypasses these rules entirely) — this tightening is defense in
+        // depth for any remaining direct client read of this branch, not a
+        // regression risk for that action.
+        || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.active != false
+            && (('mobilityAccess' in resource.data)
+                  ? (resource.data.mobilityAccess.enabled == true && resource.data.mobilityAccess.role == 'employee')
+                  : resource.data.role == 'employee'));
+      allow write: if false;
+    }
+
+    // ==========================================================
+    // employees/{employeeId} — Phase 03B Unified User Center. Municipal
+    // employee MASTER REGISTRY records, separate from users/{uid} login
+    // accounts (an employee can exist here with no Auth account at all —
+    // see api/admin/employees.js). Same tenant-isolation shape as users/:
+    // manager reads their whole organization, a department_head reads only
+    // their own department within it. All writes go through the Admin API
+    // only (real Auth account creation, audit trail) — never a direct
+    // client write.
+    // ==========================================================
+    match /employees/{employeeId} {
+      allow read: if (isActiveManager() && resource.data.organizationId == managerOrgId())
+        || (mobilityUserRole() == 'department_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.department == mobilityUserDept());
       allow write: if false;
     }
 
@@ -209,6 +367,201 @@ service cloud.firestore {
     }
 
     // ==========================================================
+    // missions/{missionId} — Smart Mobility shared mission lifecycle.
+    // Tenant isolation, department scoping for department_head, and
+    // assignment scoping for employee. Mirrors
+    // platform/policies/mission-workflow-policy.js — keep both in sync.
+    // ==========================================================
+    match /missions/{missionId} {
+      allow read: if (isActiveManager() && resource.data.organizationId == managerOrgId())
+        || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'administrative_affairs' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'department_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.department == mobilityUserDept())
+        || (mobilityUserRole() == 'employee' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.assignedEmployeeUid == request.auth.uid);
+
+      // Only a department head may create a mission request, as a DRAFT, in
+      // their own organization and department, self-attributed.
+      allow create: if mobilityUserRole() == 'department_head'
+        && request.resource.data.organizationId == mobilityUserOrgId()
+        && request.resource.data.department == mobilityUserDept()
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.status == 'DRAFT';
+
+      allow update: if request.resource.data.organizationId == resource.data.organizationId
+        && (canDeptHeadSubmitMission() || canAdminAffairsDecideMission()
+            || canMobilityHeadAdvanceMission() || canEmployeeAdvanceMission());
+
+      // Missions are append/close only — never deleted.
+      allow delete: if false;
+    }
+
+    // department_head: DRAFT -> PENDING_APPROVAL, own mission only.
+    function canDeptHeadSubmitMission() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return mobilityUserRole() == 'department_head'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && resource.data.department == mobilityUserDept()
+        && resource.data.createdByUid == request.auth.uid
+        && resource.data.status == 'DRAFT' && request.resource.data.status == 'PENDING_APPROVAL'
+        && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid'])
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // administrative_affairs: PENDING_APPROVAL -> APPROVED | REJECTED | DRAFT.
+    function canAdminAffairsDecideMission() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return mobilityUserRole() == 'administrative_affairs'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && resource.data.status == 'PENDING_APPROVAL'
+        && (request.resource.data.status == 'APPROVED'
+            || request.resource.data.status == 'REJECTED'
+            || request.resource.data.status == 'DRAFT')
+        && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid'])
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // mobility_head: allocate vehicle, handover, resume after incident,
+    // confirm return.
+    function canMobilityHeadAdvanceMission() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      // PHASE 06A.2 — bound once instead of re-evaluated at every one of the
+      // four use sites below (each a full re-run of isActiveMobilityUser()/
+      // mobilityRoleValue(), including its own get() on the caller's own
+      // record) — see allocationTargetVehicleValid()'s comment above for why
+      // this matters for the per-request expression budget.
+      let callerOrgId = mobilityUserOrgId();
+      return mobilityUserRole() == 'mobility_head'
+        && resource.data.organizationId == callerOrgId
+        && (
+          (resource.data.status == 'APPROVED' && request.resource.data.status == 'VEHICLE_ALLOCATED'
+            && changedKeys.hasOnly(['status', 'vehicleId', 'assignedEmployeeUid', 'assignedEmployeeName', 'updatedAt', 'updatedByUid'])
+            && request.resource.data.vehicleId is string && request.resource.data.vehicleId.size() > 0
+            && request.resource.data.assignedEmployeeUid is string && request.resource.data.assignedEmployeeUid.size() > 0
+            // Conflict-prevention cross-check: refuse to allocate a vehicle
+            // that is not currently AVAILABLE. Real atomicity against a
+            // second, racing allocation still requires the caller to write
+            // this and the vehicle doc inside one runTransaction() — see
+            // platform/policies/vehicle-workflow-policy.js.
+            && allocationTargetVehicleValid(request.resource.data.vehicleId, callerOrgId)
+            // PHASE 06A hotfix — the mission write is the OTHER half of a
+            // real allocation transaction; it must independently pass the
+            // same target-employee validation the vehicle write requires,
+            // so neither write alone is a bypass.
+            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, callerOrgId))
+          || (resource.data.status == 'VEHICLE_ALLOCATED' && request.resource.data.status == 'HANDED_OVER'
+            && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
+          || (resource.data.status == 'INCIDENT_HOLD' && request.resource.data.status == 'IN_PROGRESS'
+            && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
+          || (resource.data.status == 'AWAITING_RETURN' && request.resource.data.status == 'CLOSED'
+            && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
+        )
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // employee: receive, start, report/resolve incident, finish, return
+    // vehicle — only on a mission assigned to them.
+    function canEmployeeAdvanceMission() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return mobilityUserRole() == 'employee'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && resource.data.assignedEmployeeUid == request.auth.uid
+        && (
+          (resource.data.status == 'HANDED_OVER' && request.resource.data.status == 'READY')
+          || (resource.data.status == 'READY' && request.resource.data.status == 'IN_PROGRESS')
+          || (resource.data.status == 'IN_PROGRESS' && (request.resource.data.status == 'INCIDENT_HOLD'
+              || request.resource.data.status == 'COMPLETED'))
+          || (resource.data.status == 'INCIDENT_HOLD' && request.resource.data.status == 'IN_PROGRESS')
+          || (resource.data.status == 'COMPLETED' && request.resource.data.status == 'AWAITING_RETURN')
+        )
+        && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid'])
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // ==========================================================
+    // vehicles/{vehicleId} — Smart Mobility fleet lifecycle. Tenant
+    // isolation; only mobility_head manages the roster and its state;
+    // the assigned employee may only report a return. Mirrors
+    // platform/policies/vehicle-workflow-policy.js — keep both in sync.
+    // ==========================================================
+    match /vehicles/{vehicleId} {
+      allow read: if (isActiveManager() && resource.data.organizationId == managerOrgId())
+        || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'administrative_affairs' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'employee' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.assignedEmployeeUid == request.auth.uid);
+
+      // Only mobility_head adds vehicles to the roster, always starting
+      // AVAILABLE with no stale mission commitment.
+      allow create: if mobilityUserRole() == 'mobility_head'
+        && request.resource.data.organizationId == mobilityUserOrgId()
+        && request.resource.data.status == 'AVAILABLE'
+        && !('assignedEmployeeUid' in request.resource.data)
+        && !('currentMissionId' in request.resource.data);
+
+      allow update: if request.resource.data.organizationId == resource.data.organizationId
+        && (canMobilityHeadManageVehicle() || canEmployeeReturnVehicle());
+
+      // Vehicles are never deleted — retired vehicles move to
+      // OUT_OF_SERVICE so their history stays auditable.
+      allow delete: if false;
+    }
+
+    // mobility_head: allocate (with conflict-prevention cross-check
+    // against the target mission), maintenance toggles, handover,
+    // confirm return.
+    function canMobilityHeadManageVehicle() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      // PHASE 06A.2 — see canMobilityHeadAdvanceMission()'s identical
+      // comment: bound once instead of re-evaluated at every use site.
+      let callerOrgId = mobilityUserOrgId();
+      return mobilityUserRole() == 'mobility_head'
+        && resource.data.organizationId == callerOrgId
+        && (
+          (resource.data.status == 'AVAILABLE' && request.resource.data.status == 'RESERVED'
+            && changedKeys.hasOnly(['status', 'assignedEmployeeUid', 'currentMissionId', 'updatedAt', 'updatedByUid'])
+            && request.resource.data.assignedEmployeeUid is string && request.resource.data.assignedEmployeeUid.size() > 0
+            && request.resource.data.currentMissionId is string && request.resource.data.currentMissionId.size() > 0
+            // Conflict-prevention cross-check: the mission being allocated
+            // must actually be APPROVED and in this same organization.
+            && allocationTargetMissionValid(request.resource.data.currentMissionId, callerOrgId)
+            // PHASE 06A hotfix — the single vehicleEligible check the
+            // Phase 03B.1 fail-safe default added here is now folded into
+            // the fuller validMobilityAllocationTarget() check below, which
+            // additionally verifies the target exists, is in this same
+            // organization, is active, and genuinely holds one of the four
+            // real Mobility operational roles — a UI checkbox, a stale uid,
+            // a disabled account, or a cross-tenant/non-Mobility uid was
+            // previously not caught here at all.
+            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, callerOrgId))
+          || (resource.data.status == 'AVAILABLE'
+            && (request.resource.data.status == 'MAINTENANCE' || request.resource.data.status == 'OUT_OF_SERVICE')
+            && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
+          || (resource.data.status == 'RESERVED' && request.resource.data.status == 'IN_MISSION'
+            && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
+          || (resource.data.status == 'RETURN_PENDING' && request.resource.data.status == 'AVAILABLE'
+            && changedKeys.hasOnly(['status', 'assignedEmployeeUid', 'currentMissionId', 'updatedAt', 'updatedByUid'])
+            && !('assignedEmployeeUid' in request.resource.data) && !('currentMissionId' in request.resource.data))
+          || ((resource.data.status == 'MAINTENANCE' || resource.data.status == 'OUT_OF_SERVICE')
+            && request.resource.data.status == 'AVAILABLE'
+            && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
+        )
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // employee: report a return, only on the vehicle assigned to them.
+    function canEmployeeReturnVehicle() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return mobilityUserRole() == 'employee'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && resource.data.assignedEmployeeUid == request.auth.uid
+        && resource.data.status == 'IN_MISSION' && request.resource.data.status == 'RETURN_PENDING'
+        && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid'])
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    // ==========================================================
     // presence/{presenceId} — verified deployed behavior, manager-only
     // ==========================================================
     match /presence/{presenceId} {
@@ -232,6 +585,179 @@ service cloud.firestore {
       allow read: if isActiveOwner();
       allow create: if isActiveOwner();
       allow update, delete: if false;
+    }
+
+    // ==========================================================
+    // incidents/{incidentId} — Smart Mobility incident lifecycle. Created
+    // only by the employee assigned to the referenced mission while it is
+    // IN_PROGRESS; processed only by mobility_head. Mirrors
+    // platform/policies/incident-workflow-policy.js — keep both in sync.
+    // ==========================================================
+    match /incidents/{incidentId} {
+      allow read: if (isActiveManager() && resource.data.organizationId == managerOrgId())
+        || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'administrative_affairs' && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'department_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.department == mobilityUserDept())
+        || (mobilityUserRole() == 'employee' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.createdByUid == request.auth.uid);
+
+      // Only the employee assigned to the referenced (currently
+      // IN_PROGRESS) mission may open an incident against it.
+      allow create: if mobilityUserRole() == 'employee'
+        && request.resource.data.organizationId == mobilityUserOrgId()
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.status == 'NEW'
+        && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.organizationId == mobilityUserOrgId()
+        && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.assignedEmployeeUid == request.auth.uid
+        && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.status == 'IN_PROGRESS';
+
+      // mobility_head processes: NEW -> ACKNOWLEDGED -> IN_PROGRESS -> RESOLVED.
+      allow update: if request.resource.data.organizationId == resource.data.organizationId
+        && mobilityUserRole() == 'mobility_head'
+        && resource.data.organizationId == mobilityUserOrgId()
+        && (
+          (resource.data.status == 'NEW' && request.resource.data.status == 'ACKNOWLEDGED')
+          || (resource.data.status == 'ACKNOWLEDGED' && request.resource.data.status == 'IN_PROGRESS')
+          || (resource.data.status == 'IN_PROGRESS' && request.resource.data.status == 'RESOLVED')
+        )
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedByUid'])
+        && request.resource.data.updatedByUid == request.auth.uid;
+
+      // Incidents are never deleted — they are the record of what happened.
+      allow delete: if false;
+    }
+
+    // ==========================================================
+    // auditEvents/{eventId} — append-only Smart Mobility audit trail.
+    // Every mission/vehicle/incident transition writes one of these.
+    // Mirrors platform/audit/mobility-audit-event-contract.js.
+    // ==========================================================
+    match /auditEvents/{eventId} {
+      allow read: if (isActiveManager() && resource.data.organizationId == managerOrgId())
+        || (mobilityUserRole() in ['mobility_head', 'administrative_affairs'] && resource.data.organizationId == mobilityUserOrgId())
+        || (mobilityUserRole() == 'department_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.department == mobilityUserDept())
+        || (mobilityUserRole() == 'employee' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.actorId == request.auth.uid);
+
+      // An actor may only ever record an event as themselves, in their own
+      // organization — never on another user's behalf, never cross-tenant —
+      // and the resource it names must be real, in that same organization,
+      // and (for an employee) actually theirs. See auditReferencedResourceOk.
+      allow create: if isActiveMobilityUser()
+        && request.resource.data.organizationId == mobilityUserOrgId()
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.actorRole == mobilityUserRole()
+        && request.resource.data.resourceType in ['mission', 'vehicle', 'incident']
+        && auditReferencedResourceOk(mobilityUserRole(), request.auth.uid,
+             request.resource.data.resourceType, request.resource.data.resourceId,
+             request.resource.data.organizationId);
+
+      // Audit records are immutable once written.
+      allow update, delete: if false;
+    }
+
+    // ==========================================================
+    // adminAuditEvents/{eventId} — append-only User Center audit trail
+    // (account creation, enable/disable, role/service-entitlement change,
+    // password reset). Written ONLY by api/admin/users.js via the Firebase
+    // Admin SDK, which bypasses these rules entirely and derives
+    // actorId/actorRole/organizationId itself from the verified caller's
+    // own token (getCallerContext) — never from client-supplied fields —
+    // so a client can never forge, write, or spoof one of these records.
+    // No password/token/credential is ever stored in these documents.
+    // ==========================================================
+    match /adminAuditEvents/{eventId} {
+      allow read: if isActiveOwner()
+        || (isActiveManager() && resource.data.organizationId == managerOrgId());
+      allow write: if false;
+    }
+
+    // ==========================================================
+    // SMART LANDS — reconciled verbatim from the authoritative source
+    // (blumark24/smart-hsr-lands, branch staging/lands-trusted-audit,
+    // firebase/firestore.rules, targeting the same shared
+    // smart-hsr-staging-blumark24 project via that repo's own .firebaserc).
+    // Included unmodified except for signedIn(), which is identical to
+    // this file's own signedIn() above and is not redefined here (Firestore
+    // rejects a duplicate function name in one service block). No other
+    // helper name here collides with a Platform Core/Field Survey/Smart
+    // Mobility helper above — verified by diffing every `function` name in
+    // both source files before merging. Every collection below is scoped
+    // under landsMunicipalities/{municipalityId}/..., isolating Lands
+    // tenancy by municipality independently of this file's own
+    // organizationId-based isolation for Core/Field Survey/Mobility —
+    // deliberately left as two coexisting, independently-correct tenancy
+    // mechanisms rather than force-unified in this phase.
+    // ==========================================================
+    function accessPath(municipalityId, uid) { return /databases/$(database)/documents/landsMunicipalities/$(municipalityId)/userAccess/$(uid); }
+    function membership(municipalityId) { return get(accessPath(municipalityId, request.auth.uid)).data; }
+    function enabledMember(municipalityId) { return signedIn() && exists(accessPath(municipalityId, request.auth.uid)) && membership(municipalityId).enabled == true && membership(municipalityId).municipality_id == municipalityId && membership(municipalityId).firebase_uid == request.auth.uid; }
+    function hasRole(municipalityId, role) { return enabledMember(municipalityId) && membership(municipalityId).lands_role == role; }
+    function manager(municipalityId) { return hasRole(municipalityId, 'municipal_manager') || hasRole(municipalityId, 'lands_department_manager'); }
+    function regularDomain(domain) { return domain in ['royalOrders', 'allocationDecisions', 'beneficiaries', 'plans', 'parcels']; }
+    function safeId(value) { return value is string && value.matches('^[A-Za-z0-9_-]{1,128}$'); }
+    function documentRecordDomain(domain) { return domain in ['landGrants', 'royalOrders', 'allocationDecisions', 'beneficiaries', 'plans', 'parcels']; }
+    function recordPath(municipalityId, domain, recordId) { return /databases/$(database)/documents/landsMunicipalities/$(municipalityId)/$(domain)/$(recordId); }
+    function recordExists(municipalityId, domain, recordId) { return documentRecordDomain(domain) && safeId(recordId) && exists(recordPath(municipalityId, domain, recordId)) && get(recordPath(municipalityId, domain, recordId)).data.municipality_id == municipalityId; }
+    function canAttachDocument(municipalityId, domain, recordId) { return recordExists(municipalityId, domain, recordId) && (manager(municipalityId) || get(recordPath(municipalityId, domain, recordId)).data.created_by == request.auth.uid); }
+    function expectedStoragePath(municipalityId, domain, recordId, fileId) { return 'landsMunicipalities/' + municipalityId + '/documents/' + domain + '/' + recordId + '/' + fileId; }
+    function hasNoDerivedState() { return !('completeness' in request.resource.data) && !('completenessPercentage' in request.resource.data) && !('completionPercentage' in request.resource.data) && !('isComplete' in request.resource.data) && !('percentage' in request.resource.data) && !('missingRequirements' in request.resource.data) && !('missingFields' in request.resource.data) && !('completedRequirements' in request.resource.data) && !('computedStatus' in request.resource.data); }
+    function tenantDocument(municipalityId) { return request.resource.data.municipality_id == municipalityId && hasNoDerivedState(); }
+    function validLandGrant(municipalityId) {
+      return tenantDocument(municipalityId) && request.resource.data.keys().hasOnly(['municipality_id', 'beneficiary', 'royal_order', 'allocation_decision', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'document_ids', 'status', 'created_by', 'created_at', 'updated_at']) && request.resource.data.created_by is string && request.resource.data.status in ['draft', 'under_review', 'incomplete', 'approved', 'rejected'];
+    }
+    function validDomainDocument(municipalityId) {
+      return tenantDocument(municipalityId) && request.resource.data.keys().hasOnly(['municipality_id', 'created_by', 'created_at', 'updated_at', 'reference_id', 'name', 'description', 'land_grant_id', 'royal_order_id', 'allocation_decision_id', 'beneficiary_id', 'plan_id', 'parcel_id', 'document_ids']) && request.resource.data.created_by is string;
+    }
+    function validDocumentMetadata(municipalityId, documentId) {
+      return tenantDocument(municipalityId) && request.resource.data.keys().hasOnly(['municipality_id', 'created_by', 'created_at', 'updated_at', 'record_domain', 'record_id', 'file_id', 'filename', 'mime_type', 'storage_path', 'size_bytes']) &&
+        request.resource.data.created_by is string && documentRecordDomain(request.resource.data.record_domain) && safeId(request.resource.data.record_id) &&
+        safeId(request.resource.data.file_id) && request.resource.data.file_id == documentId && request.resource.data.filename is string &&
+        request.resource.data.filename.matches('^[A-Za-z0-9][A-Za-z0-9._ -]{0,127}$') && request.resource.data.mime_type in ['application/pdf', 'image/jpeg', 'image/png'] &&
+        request.resource.data.size_bytes is int && request.resource.data.size_bytes > 0 && request.resource.data.size_bytes <= 10 * 1024 * 1024 &&
+        request.resource.data.storage_path == expectedStoragePath(municipalityId, request.resource.data.record_domain, request.resource.data.record_id, request.resource.data.file_id) &&
+        canAttachDocument(municipalityId, request.resource.data.record_domain, request.resource.data.record_id);
+    }
+    match /landsMunicipalities/{municipalityId}/userAccess/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || hasRole(municipalityId, 'municipal_manager'));
+      allow list: if hasRole(municipalityId, 'municipal_manager');
+      // Entitlement grant/enable/disable/role-change is a consequential,
+      // trusted-audited operation. The trusted server runtime writes this
+      // through Admin access (which Rules do not gate); the browser Client
+      // SDK may never write it directly.
+      allow create, update, delete: if false;
+    }
+    match /landsMunicipalities/{municipalityId}/landGrants/{grantId} {
+      allow read: if enabledMember(municipalityId);
+      allow create: if enabledMember(municipalityId) && validLandGrant(municipalityId) && request.resource.data.created_by == request.auth.uid && request.resource.data.status == 'draft';
+      // A draft's own author may still edit its (pre-workflow) content
+      // directly. Any status transition (transition/approve/reject) is a
+      // consequential, trusted-audited operation and is server-only.
+      allow update: if validLandGrant(municipalityId) && resource.data.municipality_id == municipalityId && request.resource.data.created_by == resource.data.created_by && request.resource.data.municipality_id == resource.data.municipality_id && resource.data.created_by == request.auth.uid && resource.data.status == 'draft' && request.resource.data.status == 'draft' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['beneficiary', 'royal_order', 'allocation_decision', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'document_ids', 'updated_at']);
+      // land_grant.delete is a consequential, trusted-audited operation.
+      allow delete: if false;
+    }
+    match /landsMunicipalities/{municipalityId}/documents/{documentId} {
+      allow read: if enabledMember(municipalityId);
+      allow create: if enabledMember(municipalityId) && request.resource.data.created_by == request.auth.uid && validDocumentMetadata(municipalityId, documentId);
+      // document.replace and document.delete are consequential, trusted-audited
+      // operations and are server-only. Initial upload (create) stays client-side.
+      allow update, delete: if false;
+    }
+    match /landsMunicipalities/{municipalityId}/{domain}/{entityId} {
+      allow read: if enabledMember(municipalityId) && regularDomain(domain);
+      allow create: if enabledMember(municipalityId) && regularDomain(domain) && validDomainDocument(municipalityId) && request.resource.data.created_by == request.auth.uid;
+      // *.update and *.delete for every regular domain are consequential,
+      // trusted-audited operations and are server-only.
+      allow update, delete: if false;
+    }
+    match /landsMunicipalities/{municipalityId}/auditLogs/{auditId} {
+      allow read: if manager(municipalityId);
+      // A client-writable audit trail is forgeable. Trusted server ingestion is a
+      // separate production decision and is intentionally not provided here.
+      allow create, update, delete: if false;
     }
 
     // ==========================================================

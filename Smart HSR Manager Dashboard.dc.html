@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;background:#03060d;}
+  body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  *{box-sizing:border-box}
+  a{color:#4cc9f0;text-decoration:none}
+  a:hover{opacity:.85}
+  input,button,select{font-family:inherit}
+  @keyframes hsrPulse{0%{transform:scale(1);opacity:.8}70%{transform:scale(2.4);opacity:0}100%{transform:scale(2.4);opacity:0}}
+  @keyframes hsrBreathe{0%,100%{opacity:.55}50%{opacity:1}}
+  @keyframes hsrRise{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+  @keyframes hsrIn{0%{opacity:0}100%{opacity:1}}
+  @keyframes hsrFade{0%{opacity:0}100%{opacity:1}}
+  [data-f]:focus-visible{outline:2px solid #4cc9f0;outline-offset:2px;border-radius:8px}
+  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+
+<div dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
+<div style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5;transition:background .3s ease,color .3s ease">
+
+  <header style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(22px))">
+
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+        <div onClick="{{ openSettings }}" data-f="1" role="button" aria-label="هوية البلدية" title="{{ orgName }}" style="width:36px;height:36px;flex:none;border-radius:11px;background:var(--orgBgH,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBdH,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden">
+          <span style="font-size:12px;font-weight:700;color:var(--hdrAcc,#8ee6ff);letter-spacing:.5px">{{ orgMono }}</span>
+        </div>
+        <div style="display:var(--brandTxt,block);min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--hdrTx,#f0f6ff);white-space:nowrap">{{ orgName }}</div>
+          <div style="font-size:9.5px;font-weight:550;color:var(--hdrTx3,#7d8ea6);margin-top:2px;white-space:nowrap">الإدارة التنفيذية</div>
+        </div>
+      </div>
+      <div style="position:relative;display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+        <div onClick="{{ tProf }}" data-f="1" style="text-align:left;cursor:pointer">
+          <div style="font-size:13px;font-weight:600;color:var(--hdrTx,#e9f1fb)">أ. محمد العتيبي</div>
+          <div style="font-size:10.5px;font-weight:550;color:var(--hdrTx3,#7d8ea6);margin-top:1px">مدير البلدية</div>
+        </div>
+        <div onClick="{{ tProf }}" data-f="1" role="button" aria-label="قائمة الحساب" style="width:38px;height:38px;border-radius:12px;background:var(--avBg,linear-gradient(160deg,#1d3a5c,#0e1c30));border:1px solid var(--accBd,rgba(122,164,224,0.28));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--acc,#9fc7e8);cursor:pointer">م.ع</div>
+
+        <sc-if value="{{ profOpen }}">
+          <div style="position:absolute;top:52px;left:0;width:214px;z-index:40;padding:7px;border-radius:13px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.18));box-shadow:0 24px 50px -20px rgba(0,0,0,0.8);animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
+            <div style="padding:8px 9px 10px;border-bottom:1px solid var(--hdrDiv,rgba(122,164,224,0.13));margin-bottom:6px">
+              <div style="font-size:11.5px;font-weight:600;color:var(--hdrTx,#e9f1fb)">أ. محمد العتيبي</div>
+              <div style="font-size:10px;font-weight:550;color:var(--hdrTx3,#7d8ea6);margin-top:2px">{{ orgName }}</div>
+            </div>
+            <div onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--hdrTx2,#a9bdd4);cursor:pointer" style-hover="background:var(--hdrCtl,rgba(20,32,54,0.6));color:var(--hdrTx,#e9f1fb)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"></path></svg>
+              الإعدادات والهوية
+            </div>
+            <div onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--hdrTx2,#a9bdd4);cursor:pointer" style-hover="background:var(--hdrCtl,rgba(20,32,54,0.6));color:var(--hdrTx,#e9f1fb)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v6c0 4.4-3 8.2-7 9-4-.8-7-4.6-7-9V6z"></path></svg>
+              الصلاحيات والسجل
+            </div>
+            <div onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--badTx,#f87171);cursor:pointer" style-hover="background:var(--badBg,rgba(239,68,68,0.1))">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"></path><path d="M10 8 6 12l4 4M6 12h9"></path></svg>
+              تسجيل الخروج
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:6px">
+        <button onClick="{{ soon }}" data-f="1" aria-label="المحادثات" style="width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--ctlH,rgba(44,64,100,0.7))">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"></path></svg>
+        </button>
+
+        <div style="position:relative">
+          <button onClick="{{ tNotif }}" data-f="1" aria-label="الإشعارات، 24 غير مقروء" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--ctlH,rgba(44,64,100,0.7))">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"></path><path d="M10.5 20a2 2 0 0 0 3 0"></path></svg>
+            <span style="position:absolute;top:-5px;left:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--bad,#ef4444);color:#fff;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--badge,#0b1220)">24</span>
+          </button>
+
+          <sc-if value="{{ notifOpen }}">
+            <div style="position:absolute;top:44px;left:0;width:308px;z-index:40;border-radius:14px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
+              <div style="display:flex;align-items:center;gap:8px;padding:12px 13px;border-bottom:1px solid var(--popDiv,rgba(122,164,224,0.13))">
+                <span style="flex:1;font-size:12px;font-weight:600;color:var(--popTx,#e9f1fb)">الإشعارات</span>
+                <span style="font-size:10px;font-weight:550;color:var(--popAcc,#4cc9f0);cursor:pointer">تعليم الكل كمقروء</span>
+              </div>
+              <div style="max-height:300px;overflow:auto">
+                <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-bottom:1px solid var(--popDiv,rgba(122,164,224,0.09));cursor:pointer" style-hover="background:var(--hdrCtl,rgba(20,32,54,0.6))">
+                    <span style="width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none;background:{{ n.col }}"></span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:11.5px;font-weight:600;color:var(--popTx,#e9f1fb);line-height:1.5">{{ n.title }}</div>
+                      <div style="font-size:10px;font-weight:550;color:var(--popTx2,#a9bdd4);margin-top:3px">{{ n.meta }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div onClick="{{ soon }}" data-f="1" style="padding:10px;text-align:center;font-size:11px;font-weight:550;color:var(--popAcc,#4cc9f0);cursor:pointer">عرض كل الإشعارات</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="position:relative">
+          <button onClick="{{ soon }}" data-f="1" aria-label="المساعد التنفيذي الذكي — قريباً" style="width:38px;height:38px;border-radius:50%;background:var(--aiBg,radial-gradient(circle at 30% 25%,rgba(76,201,240,0.3),rgba(24,42,74,0.9)));border:1px solid var(--accBd,rgba(76,201,240,0.5));color:var(--hdrAcc,#8ee6ff);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer">AI</button>
+          <span style="position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:10px;line-height:1.3;font-weight:600;white-space:nowrap;color:var(--hdrTx3,#7d8ea6);background:var(--hdrChip,rgba(122,164,224,0.14));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));padding:0 4px;border-radius:4px">قريباً</span>
+        </div>
+      </div>
+
+      <div style="position:relative;width:var(--searchW,212px);display:var(--searchDisp,block)">
+        <input aria-label="ابحث في المنصة" placeholder="ابحث في المنصة..." style="width:100%;height:36px;border-radius:10px;background:var(--hdrField,rgba(12,20,36,0.75));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx,#dbe6f5);font-size:11.5px;padding:0 12px 0 34px;outline:none">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:11px;top:11px;color:var(--hdrTx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      </div>
+
+      <div style="display:var(--metaDisp,flex);align-items:center;gap:10px;padding:0 12px;height:36px;border-radius:10px;background:var(--hdrSunk,rgba(12,20,36,0.55));border:1px solid var(--hdrDiv,rgba(122,164,224,0.11))">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn,#f5a524)" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+        <span style="font-size:11.5px;font-weight:550;color:var(--hdrTx2,#cfe0f2);font-weight:500">24°</span>
+        <span style="width:1px;height:14px;background:var(--div,rgba(122,164,224,0.16))"></span>
+        <span style="font-size:11.5px;font-weight:550;color:var(--hdrTx2,#9db2cc);font-variant-numeric:tabular-nums">9:41 AM</span>
+        <span style="font-size:11.5px;font-weight:550;color:var(--hdrTx3,#7d8ea6)">الثلاثاء 27 ذو القعدة 1446 هـ</span>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" style="display:var(--mobNav,none);width:36px;height:36px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+
+      <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--hdrSunk,rgba(12,20,36,0.6));border:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+        <button onClick="{{ setDay }}" data-f="1" aria-label="النمط النهاري" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--dayBtnBd,transparent);background:var(--dayBtnBg,transparent);color:var(--dayBtnTx,#7d8ea6);font-size:11px;font-weight:600;cursor:pointer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"></path></svg>
+          نهاري
+        </button>
+        <button onClick="{{ setNight }}" data-f="1" aria-label="النمط الليلي" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--nightBtnBd,rgba(76,201,240,0.4));background:var(--nightBtnBg,rgba(56,132,220,0.28));color:var(--nightBtnTx,#eaf4ff);font-size:11px;font-weight:600;cursor:pointer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"></path></svg>
+          ليلي
+        </button>
+      </div>
+
+
+      <div style="display:flex;align-items:center;gap:10px;padding-right:12px;border-right:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+        <div style="text-align:left;display:var(--brandTxt,block)">
+          <div dir="ltr" style="display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:700;letter-spacing:2.5px;line-height:1">
+            <span style="color:var(--logoNavyH,#e9f1fb)">SMART</span><span style="color:var(--logoGreenH,#149c2b)">HSR</span>
+          </div>
+          <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--hdrTx3,#7d8ea6);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
+        </div>
+        <img src="smart-hsr-mark-reversed.png" alt="سمارت حصر" width="30" height="42" style="flex:none;display:block;height:42px;width:auto;object-fit:contain">
+      </div>
+    </div>
+  </header>
+
+  <div style="display:flex;gap:14px;align-items:stretch">
+
+    <aside style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease">
+      <div style="padding:12px 11px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));backdrop-filter:var(--sbBlur,none);border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,inset 0 1px 0 rgba(255,255,255,0.05),0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--blur,blur(18px));display:flex;flex-direction:column;gap:3px">
+
+        <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12))">
+          <div style="flex:1;text-align:right;display:var(--sbLabel,block)">
+            <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2)">مركز القيادة</div>
+            <div style="font-size:9.5px;font-weight:550;color:var(--sbTx3,#6f8299);margin-top:2px">إدارة العمليات البلدية</div>
+          </div>
+          <button onClick="{{ tSb }}" data-f="1" aria-label="تصغير القائمة" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--sbCtl,rgba(20,32,54,0.6));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14));color:var(--sbTx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="color:var(--sbTx,#e9f1fb)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+        </div>
+
+        <a href="#" onClick="{{ goHome }}" data-f="1" aria-current="{{ homeCur }}" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:{{ homeFw }};color:{{ homeTx }};background:var(--sbNavBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)));border:1px solid var(--sbNavBd,rgba(76,201,240,0.4))">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex:none"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+          <span style="flex:1;display:var(--sbLabel,block)">الرئيسية</span>
+        </a>
+
+        <div onClick="{{ tSvc }}" data-f="1" role="button" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:570;color:var(--sbTx2,#9db2cc);cursor:pointer;border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="3" width="8" height="8" rx="2"></rect><rect x="3" y="13" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect></svg>
+          <span style="flex:1;display:var(--sbLabel,block)">خدمات البلدية الرقمية</span>
+          <span style="display:var(--sbLabel,block);color:var(--sbTx3,#6f8299);transform:{{ svcCaret }}">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
+          </span>
+        </div>
+
+        <sc-if value="{{ expSvc }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
+            <a href="#" onClick="{{ goSurvey }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+              <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
+              <span style="flex:1;display:var(--sbLabel,block)">الحصر الميداني الذكي</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
+            </a>
+            <a href="#" onClick="{{ goLands }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+              <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--vio,#a78bfa)"></span>
+              <span style="flex:1;display:var(--sbLabel,block)">حصر الأراضي الذكي</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
+            </a>
+            <div onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx3,#7d8ea6);cursor:not-allowed">
+              <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
+              <span style="flex:1;display:var(--sbLabel,block)">حركة السير الذكية</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <a href="#" onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:570;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M4 5h16v11a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"></path><path d="M8 10h8M8 14h5"></path></svg>
+          <span style="flex:1;display:var(--sbLabel,block)">البلاغات</span>
+          <span style="display:var(--sbLabel,block);font-size:9.5px;font-weight:600;color:var(--badTx,#f87171);padding:2px 7px;border-radius:6px;background:var(--badBg,rgba(239,68,68,0.12))">362</span>
+        </a>
+
+        <a href="#" onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:570;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z"></path><path d="M9 4v14M15 6v14"></path></svg>
+          <span style="flex:1;display:var(--sbLabel,block)">الخريطة التشغيلية</span>
+        </a>
+
+        <a href="#" onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:570;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h4"></path></svg>
+          <span style="flex:1;display:var(--sbLabel,block)">التقارير</span>
+        </a>
+
+        <div onClick="{{ tAdmin }}" data-f="1" role="button" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:570;color:var(--sbTx2,#9db2cc);cursor:pointer;border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M3 21h18M5 21V9l7-5 7 5v12"></path><path d="M9 21v-6h6v6"></path></svg>
+          <span style="flex:1;display:var(--sbLabel,block)">إدارة البلدية</span>
+          <span style="display:var(--sbLabel,block);color:var(--sbTx3,#6f8299);transform:{{ admCaret }}">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
+          </span>
+        </div>
+
+        <sc-if value="{{ expAdmin }}">
+          <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
+            <a href="#" onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span><span style="display:var(--sbLabel,block);font-size:10px;font-weight:600;color:var(--sbTx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--sbChip,rgba(122,164,224,0.1));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14))">قريباً</span></a>
+            <a href="#" onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">المستخدمون والصلاحيات</span></a>
+            <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهوية والشعار</span></a>
+          </div>
+        </sc-if>
+
+        <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:570;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"></path></svg>
+          <span style="flex:1;display:var(--sbLabel,block)">الإعدادات</span>
+        </a>
+
+        <div onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;margin-top:4px;border-radius:11px;font-size:12px;font-weight:550;color:var(--sbTx3,#7d8ea6);cursor:not-allowed;border:1px dashed var(--sbCtlBd,rgba(122,164,224,0.18))">
+          <span style="width:17px;height:17px;flex:none;border-radius:6px;background:var(--sbChip,rgba(122,164,224,0.12));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--sbTx3,#7d8ea6)">AI</span>
+          <span style="flex:1;display:var(--sbLabel,block)">المساعد التنفيذي الذكي</span>
+          <span style="display:var(--sbLabel,block);font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;background:var(--sbChip,rgba(122,164,224,0.1))">قريباً</span>
+        </div>
+      </div>
+
+      <div style="display:var(--sbLabel,block);padding:12px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--sbSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+        <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2);text-align:center;margin-bottom:10px">الخدمات النشطة</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div onClick="{{ goSurvey }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--okBg,rgba(34,197,94,0.07));border:1px solid var(--okBd,rgba(34,197,94,0.24));cursor:pointer">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ok,#22c55e)" stroke-width="1.6" style="flex:none"><path d="M12 21s-7-5.4-7-11a7 7 0 1 1 14 0c0 5.6-7 11-7 11z"></path><circle cx="12" cy="10" r="2.4"></circle></svg>
+            <span style="flex:1;font-size:11px;font-weight:550;color:var(--tx,#dcefe2)">الحصر الميداني</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:550;color:var(--okTx,#7ee2a8)"><span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.4s ease-in-out infinite"></span>نشط</span>
+          </div>
+          <div onClick="{{ goLands }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--vioBg,rgba(139,92,246,0.06));border:1px solid var(--vioBd,rgba(139,92,246,0.22));cursor:pointer">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--vio,#a78bfa)" stroke-width="1.6" style="flex:none"><path d="M4 6h7v6H4zM13 8h7v10h-7zM4 14h7v6H4z"></path></svg>
+            <span style="flex:1;font-size:11px;font-weight:550;color:var(--tx,#e0dcf5)">حصر الأراضي الذكي</span>
+            <span style="font-size:9.5px;color:var(--vio,#c4b5fd)">نشط</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:var(--sbLabel,block);flex:1;min-height:30px"></div>
+      <div style="display:var(--sbLabel,block);text-align:center;padding-bottom:4px;opacity:.6">
+        <div style="font-size:10px;color:var(--sbTx3,#5f7d9c);letter-spacing:1.4px">SMART HSR PLATFORM · v2.4</div>
+      </div>
+    </aside>
+
+    <main style="position:relative;z-index:1;flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
+    <sc-if value="{{ isHome }}">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
+      
+
+      <section aria-label="المؤشرات التنفيذية" style="min-height:var(--kpiH,122px);flex:none;display:flex;gap:14px;flex-wrap:var(--rowWrap,nowrap)">
+        <div style="flex:1;min-width:var(--kpiMin,0);display:flex;flex-wrap:var(--kpiWrap,nowrap);align-items:stretch;padding:0 4px;border-radius:16px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl1,none)">
+
+          <div style="flex:1;min-width:var(--kpiCell,0);padding:16px 13px;display:flex;flex-direction:column;justify-content:center;gap:5px">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="width:33px;height:33px;flex:none;border-radius:10px;background:var(--okBg,rgba(34,197,94,0.1));border:1px solid var(--okBd,rgba(34,197,94,0.24));display:flex;align-items:center;justify-content:center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ok,#22c55e)" stroke-width="1.6"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>
+              </div>
+              <div style="flex:1;text-align:right">
+                <div style="font-size:11px;font-weight:550;color:var(--tx3,#8b9db5)">متوسط زمن المعالجة</div>
+                <div style="font-size:26px;font-weight:600;color:var(--tx,#f0f6ff);letter-spacing:-.5px;margin-top:2px;font-variant-numeric:tabular-nums">2.4 <span style="font-size:14px;font-weight:550;color:var(--tx3,#8b9db5)">يوم</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:10.5px;font-weight:550;color:var(--tx3,#8b9db5)">
+              <span>عن الشهر الماضي</span><span style="color:var(--okTx,#22c55e);font-weight:600">0.6 −</span>
+            </div>
+          </div>
+
+          <div style="display:var(--kpiDiv,block);width:1px;background:var(--div,rgba(122,164,224,0.16));margin:18px 0"></div>
+
+          <div style="flex:1;min-width:var(--kpiCell,0);padding:16px 13px;display:flex;flex-direction:column;justify-content:center;gap:5px">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="width:33px;height:33px;flex:none;border-radius:10px;background:var(--infoBg,rgba(56,189,248,0.1));border:1px solid var(--infoBd,rgba(56,189,248,0.24));display:flex;align-items:center;justify-content:center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--info,#38bdf8)" stroke-width="1.6"><path d="M12 21s-7-5.4-7-11a7 7 0 1 1 14 0c0 5.6-7 11-7 11z"></path><circle cx="12" cy="10" r="2.4"></circle></svg>
+              </div>
+              <div style="flex:1;text-align:right">
+                <div style="font-size:11px;font-weight:550;color:var(--tx3,#8b9db5)">الميدان الآن</div>
+                <div style="font-size:26px;font-weight:600;color:var(--tx,#f0f6ff);letter-spacing:-.5px;margin-top:2px;font-variant-numeric:tabular-nums">128</div>
+              </div>
+            </div>
+            <div style="text-align:left;font-size:10.5px;font-weight:550;color:var(--tx3,#8b9db5)">فرق ميدانية نشطة</div>
+          </div>
+
+          <div style="display:var(--kpiDiv,block);width:1px;background:var(--div,rgba(122,164,224,0.16));margin:18px 0"></div>
+
+          <div style="flex:1;min-width:var(--kpiCell,0);padding:16px 13px;display:flex;flex-direction:column;justify-content:center;gap:5px">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="width:33px;height:33px;flex:none;border-radius:10px;background:var(--warnBg,rgba(245,165,36,0.1));border:1px solid var(--warnBd,rgba(245,165,36,0.26));display:flex;align-items:center;justify-content:center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn,#f5a524)" stroke-width="1.6"><circle cx="8" cy="8" r="3"></circle><path d="M2.5 19c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"></path><circle cx="17" cy="9" r="2.4"></circle></svg>
+              </div>
+              <div style="flex:1;text-align:right">
+                <div style="font-size:11px;font-weight:550;color:var(--tx3,#8b9db5)">قيد المعالجة</div>
+                <div style="font-size:26px;font-weight:600;color:var(--tx,#f0f6ff);letter-spacing:-.5px;margin-top:2px;font-variant-numeric:tabular-nums">362</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:10.5px;font-weight:550;color:var(--tx3,#8b9db5)">
+              <span>عن الشهر الماضي</span><span style="color:var(--badTx,#f87171);font-weight:600">5%−</span>
+            </div>
+          </div>
+
+          <div style="display:var(--kpiDiv,block);width:1px;background:var(--div,rgba(122,164,224,0.16));margin:18px 0"></div>
+
+          <div style="flex:1;min-width:var(--kpiCell,0);padding:16px 13px;display:flex;flex-direction:column;justify-content:center;gap:5px">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="width:33px;height:33px;flex:none;border-radius:10px;background:var(--okBg,rgba(34,197,94,0.1));border:1px solid var(--okBd,rgba(34,197,94,0.24));display:flex;align-items:center;justify-content:center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ok,#22c55e)" stroke-width="1.6"><path d="M4 19V5M4 19h16"></path><path d="m7 15 4-4 3 3 5-7"></path></svg>
+              </div>
+              <div style="flex:1;text-align:right">
+                <div style="font-size:11px;font-weight:550;color:var(--tx3,#8b9db5)">تمت المعالجة</div>
+                <div style="font-size:26px;font-weight:600;color:var(--tx,#f0f6ff);letter-spacing:-.5px;margin-top:2px;font-variant-numeric:tabular-nums">2,125</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:10.5px;font-weight:550;color:var(--tx3,#8b9db5)">
+              <span>نسبة المعالجة</span><span style="color:var(--okTx,#7ee2a8);font-weight:600">85%</span>
+            </div>
+          </div>
+
+          <div style="display:var(--kpiDiv,block);width:1px;background:var(--div,rgba(122,164,224,0.16));margin:18px 0"></div>
+
+          <div style="flex:1;min-width:var(--kpiCell,0);padding:16px 13px;display:flex;flex-direction:column;justify-content:center;gap:5px">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="width:33px;height:33px;flex:none;border-radius:10px;background:var(--vioBg,rgba(139,92,246,0.12));border:1px solid var(--vioBd,rgba(139,92,246,0.28));display:flex;align-items:center;justify-content:center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vio,#a78bfa)" stroke-width="1.6"><path d="M5 20V9h5v11M14 20V4h5v16"></path><path d="M3 20h18"></path></svg>
+              </div>
+              <div style="flex:1;text-align:right">
+                <div style="font-size:11px;font-weight:550;color:var(--tx3,#8b9db5)">إجمالي البلاغات</div>
+                <div style="font-size:26px;font-weight:600;color:var(--tx,#f0f6ff);letter-spacing:-.5px;margin-top:2px;font-variant-numeric:tabular-nums">2,487</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:10.5px;font-weight:550;color:var(--tx3,#8b9db5)">
+              <span>عن الشهر الماضي</span><span style="color:var(--okTx,#22c55e);font-weight:600">18%+</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:var(--scoreW,238px);flex:none;padding:14px 16px;display:flex;align-items:center;gap:14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
+          <div style="flex:1;text-align:right">
+            <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">مؤشر الأداء العام</div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:10.5px;font-weight:550;color:var(--tx3,#8b9db5);margin-top:8px">
+              <span>عن الشهر السابق</span><span style="color:var(--okTx,#22c55e);font-weight:600">12%+</span>
+            </div>
+          </div>
+          <div style="position:relative;width:86px;height:86px;flex:none">
+            <svg width="86" height="86" viewBox="0 0 86 86" style="transform:rotate(-90deg)">
+              <circle cx="43" cy="43" r="37" fill="none" stroke="var(--track,rgba(122,164,224,0.13))" stroke-width="6"></circle>
+              <circle cx="43" cy="43" r="37" fill="none" stroke="var(--ok,#22c55e)" stroke-width="6" stroke-linecap="round" stroke-dasharray="223.2 232.5"></circle>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:600;color:var(--tx,#eafff2);font-variant-numeric:tabular-nums">96%</div>
+          </div>
+        </div>
+      </section>
+
+      <section style="min-height:var(--midH,450px);flex:none;display:flex;gap:14px;flex-wrap:var(--midWrap,nowrap)">
+
+        <div style="width:var(--aiW,292px);flex:none;order:var(--aiOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="flex:1;text-align:right;font-size:13px;font-weight:600;color:var(--tx,#e4eefb)">مساعد القرار البلدي</div>
+            <span style="font-size:10px;font-weight:600;color:var(--tx3,#7d8ea6);padding:3px 7px;border-radius:6px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">قريباً</span>
+          </div>
+
+          <div style="padding:12px;border-radius:13px;background:var(--sunk,linear-gradient(160deg,rgba(30,58,110,0.3),rgba(14,24,44,0.5)));border:1px solid var(--accBd,rgba(76,201,240,0.2))">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="flex:1;text-align:right;font-size:11.5px;font-weight:600;color:var(--tx,#cfe6f8)">ملخص تنفيذي</span>
+            </div>
+            <p style="margin:0;font-size:11.5px;line-height:1.85;color:var(--tx2,#b9cee4);text-wrap:pretty">تم رصد زيادة في البلاغات المتعلقة بالنظافة العامة في أحياء جنوب النطاق البلدي بنسبة <span style="color:var(--acc,#8ee6ff);font-weight:600">15%</span> خلال آخر 7 أيام. النظام يقترح توجيه 3 فرق إضافية.</p>
+            <button onClick="{{ soon }}" data-f="1" style="width:100%;margin-top:11px;height:33px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">عرض التحليل التفصيلي</button>
+          </div>
+
+          <div style="flex:1;min-height:0;padding:12px;border-radius:13px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12));display:flex;flex-direction:column">
+            <div style="font-size:11.5px;font-weight:600;color:var(--tx2,#cfe0f2);text-align:right;margin-bottom:10px">توصيات مقترحة</div>
+            <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+              <sc-for list="{{ recs }}" as="r" hint-placeholder-count="3">
+                <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.12));cursor:pointer" style-hover="border-color:var(--accBd,rgba(76,201,240,0.35))">
+                  <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ r.col }}"></span>
+                  <div style="flex:1;text-align:right;min-width:0">
+                    <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e0eaf8)">{{ r.title }}</div>
+                    <div style="font-size:10px;font-weight:530;color:var(--tx3,#7d8ea6);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.meta }}</div>
+                  </div>
+                  <span style="flex:none;font-size:10px;font-weight:550;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">{{ r.tag }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <button onClick="{{ soon }}" data-f="1" style="width:100%;margin-top:10px;height:33px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.4),rgba(40,72,150,0.38)));border:1px solid var(--btnBd,rgba(120,170,255,0.3));cursor:pointer">مراجعة التوصيات</button>
+          </div>
+        </div>
+
+        <div style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);order:var(--twinOrd,0);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,5);min-height:var(--twinH,auto);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--l1Sh,none);box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+          <canvas ref="{{ cvRef }}" aria-label="{{ cvLabel }}" style="position:absolute;inset:0;width:100%;height:100%;display:block;cursor:var(--twinCur,grab)"></canvas>
+
+          <div style="position:absolute;top:12px;left:12px;z-index:8;display:flex;align-items:center;gap:3px;padding:3px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px))">
+            <button onClick="{{ setMapMode }}" data-f="1" style="height:32px;padding:0 13px;border-radius:9px;font-size:11.5px;font-weight:650;cursor:pointer;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;color:{{ mmTx }};background:{{ mmBg }};border:1px solid {{ mmBd }}">
+              <span>الخريطة التشغيلية</span>
+              <span dir="ltr" style="font-size:7px;letter-spacing:.8px;opacity:.72">SMART HSR MAP</span>
+            </button>
+            <button onClick="{{ setTwinMode }}" data-f="1" style="height:32px;padding:0 13px;border-radius:9px;font-size:11.5px;font-weight:650;cursor:pointer;white-space:nowrap;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;color:{{ twTx }};background:{{ twBg }};border:1px solid {{ twBd }}">
+              <span>التوأم البلدي الذكي</span>
+              <span dir="ltr" style="font-size:7px;letter-spacing:.8px;opacity:.72">SMART HSR TWIN</span>
+            </button>
+          </div>
+
+          <div style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+            <div style="position:relative">
+              <button onClick="{{ tLayers }}" data-f="1" aria-label="الطبقات" style="display:flex;align-items:center;gap:7px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);font-size:11px;cursor:pointer">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>
+                الطبقات
+                <span style="font-size:9.5px;font-weight:600;color:var(--acc,#8ee6ff)">{{ layerCount }}</span>
+              </button>
+              <sc-if value="{{ layersOpen }}">
+                <div style="position:absolute;top:40px;right:0;width:216px;z-index:30;padding:8px;border-radius:12px;background:var(--pop,rgba(10,17,30,0.97));border:1px solid var(--glassBd,rgba(122,164,224,0.2));box-shadow:0 22px 48px -20px rgba(0,0,0,0.8);animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 6px 9px;margin-bottom:5px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+                    <span style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb)">طبقات الخريطة</span>
+                    <span onClick="{{ allLayers }}" data-f="1" style="font-size:10px;font-weight:550;color:var(--acc,#4cc9f0);cursor:pointer">الكل</span>
+                  </div>
+                  <sc-for list="{{ layerList }}" as="l" hint-placeholder-count="4">
+                    <div onClick="{{ l.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+                      <span style="width:15px;height:15px;flex:none;border-radius:5px;border:1.5px solid {{ l.bd }};background:{{ l.bg }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">{{ l.mark }}</span>
+                      <span style="flex:1;font-size:11px;font-weight:520;color:var(--tx2,#a9bdd4)">{{ l.name }}</span>
+                      <span style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ l.n }}</span>
+                    </div>
+                  </sc-for>
+                  <div onClick="{{ tBounds }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+                    <span style="width:15px;height:15px;flex:none;border-radius:5px;border:1.5px solid {{ bndBd }};background:{{ bndBg }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">{{ bndMark }}</span>
+                    <span style="flex:1;font-size:11px;font-weight:520;color:var(--tx2,#a9bdd4)">الحدود الإدارية</span>
+                    <span style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">6</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;margin-top:3px;border-top:1px solid var(--div,rgba(122,164,224,0.1));opacity:.55">
+                    <span style="width:15px;height:15px;flex:none;border-radius:5px;border:1.5px dashed var(--ctlBd,rgba(122,164,224,0.3))"></span>
+                    <span style="flex:1;font-size:11px;font-weight:550;color:var(--tx3,#7d8ea6)">حركة السير الذكية</span>
+                    <span style="font-size:10px;font-weight:600;padding:2px 5px;border-radius:5px;background:var(--chipBg,rgba(122,164,224,0.1));color:var(--tx3,#7d8ea6)">قريباً</span>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ isMapMode }}">
+              <div style="display:flex;align-items:center;gap:3px;padding:3px;border-radius:10px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px))">
+                <sc-for list="{{ basemaps }}" as="b" hint-placeholder-count="2">
+                  <button onClick="{{ b.on }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10.5px;font-weight:650;cursor:pointer;white-space:nowrap;color:{{ b.tx }};background:{{ b.bg }};border:1px solid {{ b.bd }}">{{ b.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isTwinMode }}">
+              <div style="display:flex;align-items:center;gap:3px;padding:3px;border-radius:10px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px))">
+                <sc-for list="{{ dims }}" as="d" hint-placeholder-count="2">
+                  <button onClick="{{ d.on }}" data-f="1" dir="ltr" style="height:26px;min-width:34px;padding:0 9px;border-radius:7px;font-size:10.5px;font-weight:700;cursor:pointer;color:{{ d.tx }};background:{{ d.bg }};border:1px solid {{ d.bd }}">{{ d.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="position:absolute;top:56px;left:60px;z-index:7">
+            <div style="width:var(--mapSearchW,214px);position:relative">
+              <input aria-label="ابحث في الخريطة" placeholder="ابحث عن حي أو قطعة..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            </div>
+          </div>
+
+          <div data-map-gutter="1" style="position:absolute;top:56px;left:12px;z-index:7;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:36px">
+              <button onClick="{{ zIn }}" data-f="1" aria-label="تكبير" title="تكبير" style="width:36px;height:34px;border:none;background:none;color:var(--glassTx,#c3d6ea);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--glassH,rgba(255,255,255,0.1))"><span style="font-size:17px;line-height:1">+</span></button>
+              <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
+              <button onClick="{{ zOut }}" data-f="1" aria-label="تصغير" title="تصغير" style="width:36px;height:34px;border:none;background:none;color:var(--glassTx,#c3d6ea);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--glassH,rgba(255,255,255,0.1))"><span style="font-size:17px;line-height:1">−</span></button>
+            </div>
+            <div style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:36px">
+              <button onClick="{{ tLayers }}" data-f="1" aria-label="طبقات الخريطة" title="طبقات الخريطة" style="width:36px;height:34px;border:none;background:none;color:var(--glassTx,#c3d6ea);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--glassH,rgba(255,255,255,0.1))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg></button>
+              <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
+              <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" title="إعادة التمركز" style="width:36px;height:34px;border:none;background:none;color:var(--glassTx,#c3d6ea);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--glassH,rgba(255,255,255,0.1))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg></button>
+              <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
+              <button onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" title="ملء الشاشة" style="width:36px;height:34px;border:none;background:none;color:var(--glassTx,#c3d6ea);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--glassH,rgba(255,255,255,0.1))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg></button>
+            </div>
+            <div style="width:36px;text-align:center;font-size:10px;font-weight:600;color:var(--glassTx,#7d8ea6);font-variant-numeric:tabular-nums">{{ zoomLbl }}</div>
+          </div>
+
+          <button onClick="{{ resetNorth }}" data-f="1" aria-label="توجيه نحو الشمال" title="توجيه نحو الشمال" style="position:absolute;bottom:14px;right:12px;z-index:7;width:36px;height:36px;border-radius:50%;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m12 5 3 8-3-1.6L9 13z" fill="var(--bad,#ef4444)" stroke="none"></path><path d="m12 19-3-8 3 1.6 3-1.6z"></path></svg>
+          </button>
+
+          <sc-for list="{{ zoneLabels }}" as="z" hint-placeholder-count="5">
+            <div onClick="{{ z.on }}" data-f="1" data-zone-label="1" style="position:absolute;transform:translate(-50%,-100%);cursor:pointer;left:{{ z.left }};top:{{ z.top }}">
+              <div style="padding:6px 12px 7px;border-radius:11px;background:var(--lblBg,rgba(6,11,22,0.78));backdrop-filter:var(--blur,blur(12px));text-align:center;border:1px solid {{ z.border }}">
+                <div style="font-size:10.5px;font-weight:500;color:var(--lblTx,#c8d9ec);white-space:nowrap">{{ z.name }}</div>
+                <div style="font-size:20px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums;color:{{ z.col }}">{{ z.count }}</div>
+                <div style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:-1px">بلاغ</div>
+              </div>
+            </div>
+          </sc-for>
+
+          <sc-for list="{{ markers }}" as="m" hint-placeholder-count="8">
+            <div onClick="{{ m.on }}" data-f="1" role="button" aria-label="{{ m.title }}" style="position:absolute;width:{{ m.size }};height:{{ m.size }};margin:{{ m.off }};cursor:pointer;left:{{ m.left }};top:{{ m.top }}">
+              <span style="position:absolute;inset:0;border-radius:50% 50% 50% 50%;background:{{ m.col }};border:{{ m.ring }};box-shadow:0 2px 5px rgba(0,0,0,0.35)"></span>
+              <span style="position:absolute;inset:0;border-radius:50%;border:1.5px solid {{ m.col }};animation:hsrPulse 2.8s ease-out infinite"></span>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{ hasSel }}">
+            <div data-map-popup="1" style="position:absolute;left:{{ selLeft }};top:{{ selTop }};transform:translate(-50%,-100%);width:266px;z-index:20;border-radius:14px;overflow:hidden;background:var(--pop,rgba(10,17,30,0.97));border:1px solid var(--glassBd,rgba(122,164,224,0.22));box-shadow:0 26px 56px -22px rgba(0,0,0,0.85);animation:hsrFade .18s ease-out;backdrop-filter:var(--gl2,none)">
+              <div style="display:flex;align-items:center;gap:9px;padding:11px 12px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+                <span style="width:9px;height:9px;flex:none;border-radius:50%;background:{{ selCol }}"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12px;font-weight:700;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ selTitle }}</div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                    <span style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6)">{{ selKind }}</span>
+                    <span style="flex:none;white-space:nowrap;font-size:10px;font-weight:650;padding:3px 7px;border-radius:6px;color:{{ selStTx }};background:{{ selStBg }};border:1px solid {{ selStBd }}">{{ selStatus }}</span>
+                  </div>
+                </div>
+                <button onClick="{{ clearSel }}" data-f="1" aria-label="إغلاق" style="width:20px;height:20px;flex:none;border:none;background:none;color:var(--tx3,#6f8299);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+                </button>
+              </div>
+              <div style="padding:11px 12px;display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ selRows }}" as="r" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:10.5px">
+                    <span style="flex:none;width:74px;font-weight:550;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
+                    <span style="flex:1;text-align:left;color:var(--tx,#dbe6f5);font-weight:500">{{ r.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:0 12px 12px;display:flex;gap:7px">
+                <button onClick="{{ selDetails }}" data-f="1" aria-label="عرض التفاصيل" style="flex:1;height:34px;border-radius:9px;font-size:11.5px;font-weight:650;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
+                  عرض التفاصيل
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
+                </button>
+                <button onClick="{{ selGo }}" data-f="1" aria-label="{{ selAction }}" title="{{ selAction }}" style="flex:none;width:38px;height:34px;border-radius:9px;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer;display:flex;align-items:center;justify-content:center">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>
+                </button>
+              </div>
+            </div>
+          </sc-if>
+
+          <div data-map-legend="1" style="position:absolute;bottom:12px;left:14px;display:flex;align-items:center;gap:8px">
+            <div style="display:flex;align-items:center;gap:13px;padding:7px 14px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.18));backdrop-filter:var(--blur,blur(16px))">
+              <span style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:550;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:var(--ok,#22c55e)"></span>منخفض</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:550;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:var(--warn,#f5a524)"></span>متوسط</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:550;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:var(--bad,#fb7185)"></span>مرتفع</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:550;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:var(--bad,#ef4444)"></span>حرج</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:530;color:var(--tx3,#8b9db5)"><span style="width:8px;height:8px;border-radius:50%;background:#64748b"></span>لا بيانات</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:var(--prioW,272px);flex:none;order:var(--prioOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="flex:1;text-align:right;font-size:13px;font-weight:600;color:var(--tx,#e4eefb)">الأولويات التشغيلية</div>
+            <button onClick="{{ soon }}" data-f="1" aria-label="تصفية" style="width:27px;height:27px;border-radius:8px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+            </button>
+          </div>
+
+          <div style="flex:1;display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ prios }}" as="p" hint-placeholder-count="4">
+              <div onClick="{{ p.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:{{ p.bg }};border:1px solid {{ p.bd }};cursor:pointer">
+                <div style="width:33px;height:33px;flex:none;border-radius:50%;background:{{ p.numBg }};border:1px solid {{ p.bd }};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;color:{{ p.col }};font-variant-numeric:tabular-nums">{{ p.n }}</div>
+                <div style="flex:1;text-align:right;min-width:0">
+                  <div style="font-size:11.5px;font-weight:600;color:var(--tx,#f2e6e6)">{{ p.title }}</div>
+                  <div style="font-size:10px;font-weight:530;color:var(--tx3,#8b9db5);margin-top:2px">{{ p.meta }}</div>
+                </div>
+                <span style="flex:none;font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">بلاغات</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <button onClick="{{ soon }}" data-f="1" style="width:100%;height:37px;border-radius:11px;font-size:12px;font-weight:600;color:var(--tx,#dceaf8);background:var(--ctl,rgba(20,32,54,0.7));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));cursor:pointer">عرض جميع الأولويات</button>
+        </div>
+      </section>
+
+      <section style="min-height:var(--anaH,216px);flex:none;display:grid;grid-template-columns:var(--anaCols,0.96fr 1.06fr 1fr 1.06fr 1.02fr);gap:14px">
+
+        <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;backdrop-filter:var(--gl2,none)">
+          <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">الطقس اليوم</div>
+          <div style="flex:1;display:flex;align-items:center;gap:6px;min-height:84px">
+            <div style="flex:1;text-align:right">
+              <div style="font-size:38px;font-weight:300;color:var(--tx,#f0f6ff);letter-spacing:-1px;line-height:1">24°</div>
+              <div style="font-size:11.5px;font-weight:520;color:var(--tx2,#a9bdd4);margin-top:8px">مشمس</div>
+              <div style="font-size:10.5px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:2px">النطاق البلدي</div>
+            </div>
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--warn,#f5a524)" stroke-width="1.3" style="flex:none"><circle cx="12" cy="12" r="4.4"></circle><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"></path></svg>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding-top:10px;border-top:1px solid var(--div,rgba(122,164,224,0.12))">
+            <div style="text-align:center;flex:1"><div style="font-size:11px;font-weight:600;color:var(--okTx,#7ee2a8);font-variant-numeric:tabular-nums">18%</div><div style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:2px">الرطوبة</div></div>
+            <span style="width:1px;height:22px;background:var(--div,rgba(122,164,224,0.14))"></span>
+            <div style="text-align:center;flex:1"><div style="font-size:11px;font-weight:600;color:var(--acc,#8ee6ff);font-variant-numeric:tabular-nums">12 كم/س</div><div style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:2px">الرياح</div></div>
+            <span style="width:1px;height:22px;background:var(--div,rgba(122,164,224,0.14))"></span>
+            <div style="text-align:center;flex:1"><div style="font-size:11px;font-weight:600;color:var(--tx2,#cfe0f2)">شمالية</div><div style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:2px">الاتجاه</div></div>
+          </div>
+        </div>
+
+        <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;backdrop-filter:var(--gl2,none)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">الكفاءة التشغيلية</span>
+            <button onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:550;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.09));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">هذا الشهر
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+          </div>
+          <div style="flex:1;display:flex;align-items:center;gap:10px;margin-top:4px;min-height:110px">
+            <div style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:550"><span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);flex:none"></span><span style="flex:1;text-align:right;color:var(--tx2,#9db2cc);white-space:nowrap">المعاملات المكتملة</span><span style="color:var(--tx,#e4eefb);font-weight:600;font-variant-numeric:tabular-nums">2,125</span></div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:550"><span style="width:6px;height:6px;border-radius:50%;background:var(--info,#38bdf8);flex:none"></span><span style="flex:1;text-align:right;color:var(--tx2,#9db2cc);white-space:nowrap">المعاملات المرفوضة</span><span style="color:var(--tx,#e4eefb);font-weight:600;font-variant-numeric:tabular-nums">128</span></div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:550"><span style="width:6px;height:6px;border-radius:50%;background:var(--bad,#ef4444);flex:none"></span><span style="flex:1;text-align:right;color:var(--tx2,#9db2cc);white-space:nowrap">قيد المعالجة</span><span style="color:var(--tx,#e4eefb);font-weight:600;font-variant-numeric:tabular-nums">362</span></div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:550"><span style="width:6px;height:6px;border-radius:50%;background:var(--warn,#f5a524);flex:none"></span><span style="flex:1;text-align:right;color:var(--tx2,#9db2cc);white-space:nowrap">متوسط زمن المعالجة</span><span style="color:var(--tx,#e4eefb);font-weight:600;font-variant-numeric:tabular-nums">2.4</span></div>
+            </div>
+            <div style="position:relative;width:100px;height:100px;flex:none">
+              <svg width="100" height="100" viewBox="0 0 100 100" style="transform:rotate(-90deg)">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="var(--track,rgba(122,164,224,0.12))" stroke-width="9"></circle>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="var(--ok,#22c55e)" stroke-width="9" stroke-linecap="round" stroke-dasharray="248 264"></circle>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <div style="font-size:24px;font-weight:600;color:var(--tx,#eafff2);font-variant-numeric:tabular-nums;line-height:1">94%</div>
+                <div style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:3px">كفاءة</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;backdrop-filter:var(--gl2,none)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">أداء الإدارات</span>
+            <button onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:550;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.09));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">هذا الشهر
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;margin-top:6px;min-height:110px">
+            <sc-for list="{{ depts }}" as="d" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="width:66px;flex:none;text-align:right;font-size:10.5px;font-weight:530;color:var(--tx2,#a9bdd4);white-space:nowrap">{{ d.name }}</span>
+                <span style="flex:1;height:6px;border-radius:3px;background:var(--track,rgba(122,164,224,0.12));overflow:hidden;display:block"><span style="display:block;height:100%;border-radius:3px;background:var(--barFill,linear-gradient(90deg,#22c55e,#4cc9f0));width:{{ d.w }}"></span></span>
+                <span style="width:30px;flex:none;text-align:left;font-size:10.5px;font-weight:600;color:var(--tx,#e4eefb);font-variant-numeric:tabular-nums">{{ d.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <a href="#" onClick="{{ soon }}" data-f="1" style="text-align:center;font-size:10.5px;font-weight:600;color:var(--acc,#4cc9f0);padding-top:8px">عرض جميع الإدارات</a>
+        </div>
+
+        <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;backdrop-filter:var(--gl2,none)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">تصنيف البلاغات</span>
+            <button onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:550;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.09));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">هذا الشهر
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+          </div>
+          <div style="flex:1;display:flex;align-items:center;gap:8px;margin-top:4px;min-height:112px">
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0">
+              <sc-for list="{{ cats }}" as="c" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:550"><span style="width:7px;height:7px;border-radius:50%;flex:none;background:{{ c.col }}"></span><span style="flex:1;text-align:right;color:var(--tx2,#a9bdd4);white-space:nowrap">{{ c.name }}</span><span style="color:var(--tx,#e4eefb);font-weight:600;font-variant-numeric:tabular-nums">{{ c.n }}</span><span style="color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ c.p }}</span></div>
+              </sc-for>
+            </div>
+            <div style="position:relative;width:108px;height:108px;flex:none">
+              <svg width="108" height="108" viewBox="0 0 108 108" style="transform:rotate(-90deg)">
+                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--track,rgba(122,164,224,0.1))" stroke-width="13"></circle>
+                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--ok,#22c55e)" stroke-width="13" stroke-dasharray="94.4 175.7"></circle>
+                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--info,#38bdf8)" stroke-width="13" stroke-dasharray="67.4 202.7" stroke-dashoffset="-97.4"></circle>
+                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--bad,#ef4444)" stroke-width="13" stroke-dasharray="51.2 218.9" stroke-dashoffset="-167.8"></circle>
+                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--warn,#f5a524)" stroke-width="13" stroke-dasharray="24.2 245.9" stroke-dashoffset="-222"></circle>
+                <circle cx="54" cy="54" r="43" fill="none" stroke="var(--vio,#a78bfa)" stroke-width="13" stroke-dasharray="18.7 251.4" stroke-dashoffset="-249.2"></circle>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <div style="font-size:18px;font-weight:600;color:var(--tx,#f0f6ff);font-variant-numeric:tabular-nums;line-height:1">2,487</div>
+                <div style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:3px">إجمالي</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;backdrop-filter:var(--gl2,none)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">اتجاه البلاغات</span>
+            <button onClick="{{ soon }}" data-f="1" style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:550;color:var(--tx2,#9db2cc);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.09));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">آخر 7 أيام
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:6px">
+            <span style="font-size:11px;font-weight:600;color:var(--okTx,#22c55e);font-variant-numeric:tabular-nums">18%+</span>
+            <span style="font-size:10px;font-weight:530;color:var(--tx3,#7d8ea6)">عن الأسبوع السابق</span>
+          </div>
+          <div style="flex:1;min-height:104px;margin-top:2px">
+            <svg viewBox="0 0 240 118" preserveAspectRatio="none" style="width:100%;height:100%;display:block">
+              <g stroke="var(--track,rgba(122,164,224,0.1))" stroke-width="0.7">
+                <line x1="30" y1="8" x2="238" y2="8"></line><line x1="30" y1="30.5" x2="238" y2="30.5"></line><line x1="30" y1="53" x2="238" y2="53"></line><line x1="30" y1="75.5" x2="238" y2="75.5"></line><line x1="30" y1="98" x2="238" y2="98"></line>
+              </g>
+              <g fill="var(--tx3,#6f8299)" font-size="9.5" font-weight="500" text-anchor="end">
+                <text x="26" y="10.5">2000</text><text x="26" y="33">1500</text><text x="26" y="55.5">1000</text><text x="26" y="78">500</text>
+              </g>
+              <defs><linearGradient id="hsrTrendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--areaTop,rgba(34,197,94,0.32))"></stop><stop offset="100%" stop-color="var(--areaBot,rgba(34,197,94,0))"></stop></linearGradient></defs>
+              <path d="M36 66.5 L69 75.5 L102 48.5 L135 39.5 L168 44 L201 57.5 L234 30.5 L234 98 L36 98 Z" fill="url(#hsrTrendFill)"></path>
+              <path d="M36 66.5 L69 75.5 L102 48.5 L135 39.5 L168 44 L201 57.5 L234 30.5" fill="none" stroke="var(--ok,#22c55e)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+              <g fill="var(--card2,#03060d)" stroke="var(--ok,#22c55e)" stroke-width="1.6">
+                <circle cx="36" cy="66.5" r="2.4"></circle><circle cx="69" cy="75.5" r="2.4"></circle><circle cx="102" cy="48.5" r="2.4"></circle><circle cx="135" cy="39.5" r="2.4"></circle><circle cx="168" cy="44" r="2.4"></circle><circle cx="201" cy="57.5" r="2.4"></circle><circle cx="234" cy="30.5" r="3.1" fill="var(--ok,#22c55e)"></circle>
+              </g>
+              <g fill="var(--tx3,#6f8299)" font-size="9.5" font-weight="500" text-anchor="middle">
+                <text x="36" y="112">21/5</text><text x="69" y="112">22/5</text><text x="102" y="112">23/5</text><text x="135" y="112">24/5</text><text x="168" y="112">25/5</text><text x="201" y="112">26/5</text><text x="229" y="112">27/5</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <sc-if value="{{ showQuick }}" hint-placeholder-val="{{ true }}">
+        <section aria-label="إجراءات سريعة" style="min-height:54px;flex:none;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));flex-wrap:var(--qaWrap,nowrap);backdrop-filter:var(--gl2,none)">
+          <div style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--div,rgba(122,164,224,0.14))">
+            <span style="font-size:12px;font-weight:600;color:var(--tx,#dbe6f5);white-space:nowrap">إجراءات سريعة</span>
+            <button onClick="{{ hideQuick }}" data-f="1" aria-label="إخفاء" style="width:20px;height:20px;border:none;background:none;color:var(--tx3,#6f8299);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+            </button>
+          </div>
+          <div style="flex:1;display:flex;align-items:center;gap:9px;flex-wrap:var(--qaWrap,nowrap)">
+            <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="7">
+              <button onClick="{{ q.on }}" data-f="1" style="flex:1 1 var(--qaBasis,0);min-width:var(--qaMin,0);height:36px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-size:11.5px;font-weight:520;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));cursor:pointer;white-space:nowrap" style-hover="background:var(--ctlH,rgba(32,50,84,0.8));color:var(--tx,#eaf4ff)">{{ q.label }}</button>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+    </div>
+    </sc-if>
+
+  </main>
+  </div>
+
+  <sc-if value="{{ mobNavOpen }}">
+    <div onClick="{{ tMobNav }}" style="position:fixed;inset:0;z-index:70;background:rgba(3,6,13,0.6);backdrop-filter:blur(3px);animation:hsrIn .18s ease-out">
+      <div style="position:absolute;top:0;right:0;bottom:0;width:262px;padding:16px;background:var(--drawer,#0a1120);box-shadow:var(--dwSh,none);border-left:1px solid var(--l2Bd,rgba(122,164,224,0.16));display:flex;flex-direction:column;gap:4px;overflow:auto;backdrop-filter:var(--gl2,none)">
+        <div style="display:flex;align-items:center;gap:9px;padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
+          <span style="flex:1;font-size:12.5px;font-weight:700;color:var(--tx,#f0f6ff)">{{ orgName }}</span>
+          <span style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">سمارت حصر</span>
+        </div>
+        <sc-for list="{{ mobNav }}" as="i" hint-placeholder-count="8">
+          <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:11px 10px;border-radius:10px;font-size:12px;font-weight:520;color:var(--tx2,#a9bdd4);cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+            <span style="flex:1">{{ i.label }}</span>
+            <span style="font-size:10px;font-weight:550;color:var(--tx3,#7d8ea6)">{{ i.tag }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ detailOpen }}">
+    <div onClick="{{ closeDetail }}" style="position:fixed;inset:0;z-index:84;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
+      <div onClick="{{ stop }}" style="width:min(444px,94vw);background:var(--drawer,#0a1120);backdrop-filter:var(--gl2,none);box-shadow:var(--dwSh,none);border-left:1px solid var(--drawerBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column">
+        <div style="flex:none;position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;gap:11px;padding:18px 20px;background:var(--thBg,rgba(12,20,36,0.5));border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
+          <span style="width:10px;height:10px;flex:none;border-radius:50%;margin-top:6px;background:{{ dCol }}"></span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:700;color:var(--tx,#f0f6ff)">{{ dTitle }}</div>
+            <div style="font-size:11px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:4px">{{ dKind }}</div>
+          </div>
+          <button onClick="{{ closeDetail }}" data-f="1" aria-label="رجوع" title="رجوع" style="flex:none;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div style="flex:1;padding:16px 20px">
+          <div style="padding:14px;border-radius:14px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12));display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ dRows }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <span style="flex:none;width:108px;font-size:11.5px;font-weight:550;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
+                <span style="flex:1;min-width:0;text-align:left;font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ r.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:10.5px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:12px;line-height:1.7">بيانات تجريبية للتصميم — تُربط بالخدمة التشغيلية لاحقاً.</div>
+        </div>
+        <div style="flex:none;position:sticky;bottom:0;display:flex;gap:9px;padding:14px 20px;background:var(--thBg,rgba(12,20,36,0.5));border-top:1px solid var(--thBd,rgba(122,164,224,0.13))">
+          <button onClick="{{ dGo }}" data-f="1" style="flex:1;min-height:42px;padding:0 16px;border-radius:11px;font-size:12.5px;font-weight:650;cursor:pointer;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35))">{{ dAction }}</button>
+          <button onClick="{{ closeDetail }}" data-f="1" style="flex:none;min-height:42px;padding:0 16px;border-radius:11px;font-size:12.5px;font-weight:650;cursor:pointer;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">رجوع للخريطة</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ settingsOpen }}">
+    <div onClick="{{ closeSettings }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;align-items:stretch;justify-content:flex-start;animation:hsrIn .18s ease-out">
+      <div onClick="{{ stop }}" style="width:min(420px,92vw);padding:20px;background:var(--drawer,#0a1120);box-shadow:var(--dwSh,none);border-left:1px solid var(--l2Bd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;gap:16px;backdrop-filter:var(--gl2,none)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">الهوية والشعار</div>
+            <div style="font-size:10.5px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:3px">هوية المنظمة تُطبّق على جميع لوحات سمارت حصر</div>
+          </div>
+          <button onClick="{{ closeSettings }}" data-f="1" aria-label="إغلاق" style="width:30px;height:30px;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+          </button>
+        </div>
+
+        <div style="padding:14px;border-radius:14px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:13px">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:520;color:var(--tx2,#a9bdd4);margin-bottom:7px">اسم البلدية <span style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6)">organization.name</span></label>
+            <input value="{{ orgName }}" onChange="{{ setOrgName }}" style="width:100%;height:38px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:12px;padding:0 12px;outline:none">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:11px;font-weight:520;color:var(--tx2,#a9bdd4);margin-bottom:7px">شعار البلدية <span style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6)">organization.logo</span></label>
+            <div style="display:flex;align-items:center;gap:12px;padding:13px;border-radius:12px;border:1px dashed var(--ctlBd,rgba(122,164,224,0.28));background:var(--ctl,rgba(20,32,54,0.4))">
+              <div style="width:52px;height:52px;flex:none;border-radius:14px;background:var(--orgBg,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBd,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--acc,#8ee6ff)">{{ orgMono }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:11px;font-weight:550;color:var(--tx,#e9f1fb)">لم يُرفع شعار بعد</div>
+                <div style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6);margin-top:3px;line-height:1.6">SVG أو PNG شفاف · 512×512 كحد أدنى. يُستخدم الحرفان تلقائياً حتى رفع الشعار.</div>
+              </div>
+              <button onClick="{{ soon }}" data-f="1" style="flex:none;height:32px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">رفع</button>
+            </div>
+          </div>
+
+          <div style="padding-top:11px;border-top:1px solid var(--div,rgba(122,164,224,0.12))">
+            <div style="font-size:11px;font-weight:520;color:var(--tx2,#a9bdd4);margin-bottom:9px">نطاق تطبيق الهوية</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ scopes }}" as="s" hint-placeholder-count="6">
+                <span style="font-size:10px;font-weight:550;color:var(--tx2,#9db2cc);padding:5px 9px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.09));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">{{ s.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:14px;border-radius:14px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13))">
+          <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:11px">المظهر</div>
+          <div style="display:flex;gap:9px">
+            <div onClick="{{ setDay }}" data-f="1" style="flex:1;padding:12px;border-radius:11px;cursor:pointer;border:1px solid var(--dayCardBd,rgba(122,164,224,0.16));background:var(--dayCardBg,transparent)">
+              <div style="height:34px;border-radius:8px;background:linear-gradient(135deg,#ffffff,#e9efe9);border:1px solid rgba(17,54,40,0.14)"></div>
+              <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-top:9px;text-align:center">نهاري</div>
+            </div>
+            <div onClick="{{ setNight }}" data-f="1" style="flex:1;padding:12px;border-radius:11px;cursor:pointer;border:1px solid var(--nightCardBd,rgba(76,201,240,0.45));background:var(--nightCardBg,rgba(56,132,220,0.14))">
+              <div style="height:34px;border-radius:8px;background:linear-gradient(135deg,#132238,#050a14);border:1px solid rgba(122,164,224,0.2)"></div>
+              <div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-top:9px;text-align:center">ليلي</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:10px;font-weight:530;color:var(--tx3,#7d8ea6);line-height:1.7;text-align:center">سمارت حصر هي منصة التقنية · هوية البلدية تظل ملكاً للمنظمة</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasToast }}">
+    <div style="position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:90;display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:12px;background:var(--pop,rgba(10,17,30,0.97));border:1px solid var(--accBd,rgba(76,201,240,0.35));box-shadow:0 22px 48px -18px rgba(0,0,0,0.7);animation:hsrRise .2s ease-out;backdrop-filter:var(--gl2,none)">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--acc,#4cc9f0)"></span>
+      <span style="font-size:11.5px;font-weight:550;color:var(--tx,#e9f1fb)">{{ toast }}</span>
+    </div>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:990},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;night&quot;,&quot;day&quot;],&quot;default&quot;:&quot;night&quot;,&quot;tsType&quot;:&quot;'night' | 'day'&quot;,&quot;section&quot;:&quot;المظهر&quot;},&quot;organizationName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;اسم البلدية&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;هوية المنظمة&quot;},&quot;twin3D&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;التوأم الرقمي&quot;},&quot;cityDensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1100,&quot;min&quot;:300,&quot;max&quot;:2200,&quot;step&quot;:100,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;التوأم الرقمي&quot;},&quot;glowIntensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.2,&quot;max&quot;:1.8,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;التوأم الرقمي&quot;},&quot;showQuickActions&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;الواجهة&quot;}}">
+class Component extends DCLogic {
+  state = {
+    theme: this.props.theme === 'day' ? 'day' : 'night',
+    orgName: this.props.organizationName || 'اسم البلدية',
+    screen: 'home',
+    sb: false, expSvc: true, expAdmin: false,
+    notifOpen: false, profOpen: false, layersOpen: false, settingsOpen: false, mobNavOpen: false,
+    twin3D: this.props.twin3D !== false, fs: false,
+    mapMode: 'map', basemap: 'normal', bounds: true, detail: null,
+    zoom: 1, panX: 0, panY: 0,
+    sel: null, layers: { survey: true, land: true, report: true, task: true },
+    quick: true, toast: '', bp: 'xl', tw: 734, th: 450
+  };
+
+  ZONES = [
+    { id: 'south', a0: -75, a1: -5, col: '#a855f7', seed: 1.2 },
+    { id: 'east', a0: -5, a1: 50, col: '#38bdf8', seed: 2.7 },
+    { id: 'north', a0: 50, a1: 95, col: '#22c55e', seed: 4.1 },
+    { id: 'west', a0: 95, a1: 150, col: '#f5a524', seed: 5.6 },
+    { id: 'none', a0: 150, a1: 285, col: '#64748b', seed: 0.4 },
+    { id: 'center', center: true, col: '#ef4444', seed: 3.3 }
+  ];
+
+  LBL = [
+    { id: 'north', name: 'القطاع الشمالي', count: '128', col: '#22c55e', x: 0.207, y: -0.590 },
+    { id: 'east', name: 'القطاع الشرقي', count: '45', col: '#38bdf8', x: 0.524, y: -0.242 },
+    { id: 'west', name: 'القطاع الغربي', count: '72', col: '#f5a524', x: -0.2115, y: -0.459 },
+    { id: 'center', name: 'وسط النطاق', count: '11', col: '#ef4444', x: 0.03, y: -0.05 },
+    { id: 'south', name: 'القطاع الجنوبي', count: '33', col: '#a855f7', x: 0.3404, y: 0.2974 }
+  ];
+
+  OBJ = [
+    { id: 'o1', layer: 'survey', x: 0.26, y: -0.66, col: '#22c55e', title: 'حصر ميداني · قطاع شمالي', kind: 'كائن حصر ميداني',
+      rows: [['الحالة', 'مكتمل — بانتظار التدقيق'], ['الموقع', 'القطاع الشمالي · مربع 14'], ['التاريخ', '27/05 — 08:42'], ['الإدارة', 'إدارة الحصر الميداني'], ['المنشآت', '38 منشأة']],
+      action: 'فتح في الحصر الميداني', route: 'survey' },
+    { id: 'o2', layer: 'land', x: 0.60, y: -0.13, col: '#a78bfa', title: 'قطعة أرض · 1042/ش', kind: 'كائن أرض',
+      rows: [['حالة الأرض', 'فضاء — غير مطوّر'], ['الموقع', 'القطاع الشرقي · مخطط 7'], ['المساحة', '1,240 م²'], ['التصنيف', 'سكني'], ['الملكية', 'أملاك بلدية']],
+      action: 'فتح في حصر الأراضي الذكي', route: 'lands' },
+    { id: 'o3', layer: 'report', x: -0.32, y: -0.36, col: '#f5a524', title: 'بلاغ نظافة عامة', kind: 'بلاغ',
+      rows: [['الحالة', 'قيد المعالجة'], ['الأولوية', 'متوسطة'], ['الموقع', 'القطاع الغربي · شارع 21'], ['التاريخ', '27/05 — 07:10'], ['الإدارة', 'إدارة النظافة']],
+      action: 'فتح البلاغ', route: 'report' },
+    { id: 'o4', layer: 'task', x: 0.52, y: 0.20, col: '#38bdf8', title: 'مهمة ميدانية · فرقة 12', kind: 'مهمة',
+      rows: [['الحالة', 'جارية'], ['الفرقة', 'فرقة 12 — 4 أفراد'], ['الموقع', 'القطاع الجنوبي'], ['البدء', '27/05 — 09:05'], ['الإدارة', 'إدارة الخدمات']],
+      action: 'فتح المهمة', route: 'task' },
+    { id: 'o5', layer: 'report', x: -0.05, y: 0.06, col: '#ef4444', title: 'بلاغ حرج · تجاوز إنشائي', kind: 'بلاغ',
+      rows: [['الحالة', 'تدخل عاجل'], ['الأولوية', 'حرجة'], ['الموقع', 'وسط النطاق · مربع 3'], ['التاريخ', '27/05 — 06:31'], ['الإدارة', 'إدارة الرخص']],
+      action: 'فتح البلاغ', route: 'report' },
+    { id: 'o6', layer: 'survey', x: 0.66, y: -0.44, col: '#22c55e', title: 'حصر ميداني · قطاع شرقي', kind: 'كائن حصر ميداني',
+      rows: [['الحالة', 'جاري التنفيذ'], ['الموقع', 'القطاع الشرقي · مربع 9'], ['التاريخ', '27/05 — 09:20'], ['الإدارة', 'إدارة الحصر الميداني'], ['المنشآت', '17 منشأة']],
+      action: 'فتح في الحصر الميداني', route: 'survey' },
+    { id: 'o7', layer: 'land', x: -0.10, y: -0.52, col: '#a78bfa', title: 'قطعة أرض · 0871/غ', kind: 'كائن أرض',
+      rows: [['حالة الأرض', 'مستثمرة'], ['الموقع', 'القطاع الغربي · مخطط 3'], ['المساحة', '860 م²'], ['التصنيف', 'تجاري'], ['الملكية', 'مستثمر']],
+      action: 'فتح في حصر الأراضي الذكي', route: 'lands' },
+    { id: 'o8', layer: 'task', x: -0.42, y: -0.20, col: '#38bdf8', title: 'مهمة ميدانية · فرقة 5', kind: 'مهمة',
+      rows: [['الحالة', 'بانتظار الإسناد'], ['الفرقة', 'غير مسندة'], ['الموقع', 'القطاع الغربي'], ['البدء', '—'], ['الإدارة', 'إدارة الطرق']],
+      action: 'فتح المهمة', route: 'task' }
+  ];
+
+  LAYERS = [
+    { id: 'survey', name: 'الحصر الميداني', col: '#22c55e', n: '2' },
+    { id: 'land', name: 'الأراضي', col: '#a78bfa', n: '2' },
+    { id: 'report', name: 'البلاغات', col: '#ef4444', n: '2' },
+    { id: 'task', name: 'المهام', col: '#38bdf8', n: '2' }
+  ];
+
+  NOTIFS = [
+    { title: 'بلاغ حرج جديد في وسط النطاق', meta: 'قبل 4 دقائق · إدارة الرخص', col: '#ef4444' },
+    { title: 'اكتمل حصر المربع 14', meta: 'قبل 22 دقيقة · إدارة الحصر الميداني', col: '#22c55e' },
+    { title: 'تجاوز زمن معالجة في 3 معاملات', meta: 'قبل ساعة · إدارة الخدمات', col: '#f5a524' },
+    { title: 'تقرير الأداء الأسبوعي جاهز', meta: 'قبل 3 ساعات · التقارير', col: '#38bdf8' }
+  ];
+
+  DAY = {
+    '--pgMaxW': '1600px',
+    '--pgBg': 'radial-gradient(circle at 1px 1px,rgba(17,54,40,0.055) 1px,transparent 0) 0 0/22px 22px,linear-gradient(rgba(17,54,40,0.018) 1px,transparent 1px) 0 0/100% 88px,linear-gradient(90deg,rgba(17,54,40,0.018) 1px,transparent 1px) 0 0/88px 100%,radial-gradient(900px 520px at 78% -8%,rgba(18,133,90,0.07),transparent 72%),radial-gradient(1000px 600px at 12% 4%,rgba(21,42,74,0.05),transparent 70%),linear-gradient(180deg,#dfe7e1,#d5ded8)',
+    '--l1': 'linear-gradient(155deg,rgba(234,247,240,0.82),rgba(253,255,254,0.86) 52%,rgba(238,249,243,0.82))',
+    '--l1Bd': 'rgba(18,133,90,0.26)',
+    '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.9),inset 0 0 0 1px rgba(255,255,255,0.45),0 1px 1px rgba(14,52,38,0.06),0 2px 3px rgba(14,52,38,0.05),0 20px 38px -22px rgba(12,60,42,0.5)',
+    '--l1ShH': 'inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.5),0 1px 1px rgba(14,52,38,0.07),0 3px 5px rgba(14,52,38,0.06),0 26px 46px -24px rgba(12,60,42,0.58)',
+    '--l1BdH': 'rgba(18,133,90,0.42)',
+    '--l1Grid': 'repeating-linear-gradient(45deg,rgba(17,54,40,0.02) 0 1px,transparent 1px 3px),linear-gradient(rgba(18,133,90,0.04) 1px,transparent 1px) 0 0/100% 15px,linear-gradient(90deg,rgba(18,133,90,0.04) 1px,transparent 1px) 0 0/15px 100%',
+    '--l2Grain': 'repeating-linear-gradient(45deg,rgba(17,54,40,0.022) 0 1px,transparent 1px 3px)',
+    '--l2': 'linear-gradient(160deg,rgba(222,234,227,0.78),rgba(233,243,238,0.82))',
+    '--l2Bd': 'rgba(18,133,90,0.2)',
+    '--l2Sh': 'inset 0 1px 0 rgba(255,255,255,0.7),0 1px 1px rgba(14,52,38,0.05),0 14px 28px -22px rgba(12,60,42,0.42)',
+    '--l3': 'linear-gradient(180deg,rgba(247,251,249,0.94),rgba(241,247,244,0.94))', '--l3Bd': 'rgba(18,133,90,0.2)',
+    '--l3Sh': '0 1px 2px rgba(16,42,32,0.05),0 10px 24px -20px rgba(16,42,32,0.26)',
+    '--thBg': 'linear-gradient(180deg,#dceae1,#e5f0e9)', '--thBd': 'rgba(18,133,90,0.22)', '--thTx': '#083f2c',
+    '--rowH': 'rgba(18,133,90,0.07)', '--rowAlt': 'rgba(18,133,90,0.028)', '--rowSel': 'rgba(18,133,90,0.1)', '--rowBd': 'rgba(18,133,90,0.09)',
+    '--sect': 'linear-gradient(160deg,#e6efe9,#edf4f0)', '--sectBd': 'rgba(18,133,90,0.2)',
+    '--hdrBg': 'linear-gradient(168deg,rgba(10,74,52,0.97),rgba(8,58,42,0.98) 52%,rgba(11,46,38,0.97)),radial-gradient(600px 200px at 88% -40%,rgba(90,200,150,0.16),transparent 70%)',
+    '--hdrBd': 'rgba(120,200,165,0.26)', '--hdrBlur': 'blur(20px) saturate(150%)',
+    '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.14),inset 0 -1px 0 rgba(0,0,0,0.14),0 14px 32px -22px rgba(6,40,28,0.7)',
+    '--hdrTx': '#f2faf5', '--hdrTx2': 'rgba(220,240,228,0.85)', '--hdrTx3': 'rgba(190,218,201,0.78)',
+    '--hdrCtl': 'rgba(255,255,255,0.1)', '--hdrCtlBd': 'rgba(255,255,255,0.18)', '--hdrSunk': 'rgba(0,0,0,0.18)',
+    '--hdrDiv': 'rgba(255,255,255,0.16)', '--hdrAcc': '#8fe6b8', '--hdrField': 'rgba(255,255,255,0.1)',
+    '--orgBgH': 'rgba(255,255,255,0.12)', '--orgBdH': 'rgba(255,255,255,0.24)', '--hdrChip': 'rgba(255,255,255,0.12)',
+    '--sbBg': 'linear-gradient(180deg,rgba(8,60,44,0.97),rgba(7,45,34,0.98))',
+    '--sbBd': 'rgba(120,200,165,0.2)',
+    '--sbSh': 'inset 0 1px 0 rgba(255,255,255,0.1),0 16px 36px -24px rgba(6,40,28,0.65)',
+    '--sbTx': '#eaf5ee', '--sbTx2': 'rgba(216,236,224,0.85)', '--sbTx3': 'rgba(186,214,196,0.75)',
+    '--sbNavBg': 'linear-gradient(90deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))',
+    '--sbNavBd': 'rgba(255,255,255,0.26)', '--sbNavTx': '#ffffff',
+    '--sbDiv': 'rgba(255,255,255,0.14)', '--sbCtl': 'rgba(255,255,255,0.1)', '--sbCtlBd': 'rgba(255,255,255,0.18)',
+    '--sbSunk': 'rgba(0,0,0,0.16)', '--sbChip': 'rgba(255,255,255,0.12)', '--sbBlur': 'blur(18px) saturate(140%)',
+    '--logoNavyH': '#eaf3ee', '--logoGreenH': '#3fc25a',
+    '--card': '#ffffff', '--card2': '#ffffff',
+    '--cardBd': 'rgba(17,54,40,0.11)',
+    '--cardSh': '0 1px 2px rgba(16,42,32,0.05),0 14px 30px -22px rgba(16,42,32,0.3)',
+    '--sunk': '#e9f0eb', '--sunk2': '#eff5f1',
+    '--ctl': '#ffffff', '--ctlBd': 'rgba(17,54,40,0.16)', '--ctlH': '#f2f7f4',
+    '--field': '#ffffff', '--fieldBd': 'rgba(18,133,90,0.3)', '--fieldFc': 'rgba(18,133,90,0.6)', '--focusRing': 'rgba(18,133,90,0.12)',
+    '--pop': 'linear-gradient(180deg,rgba(244,250,246,0.97),rgba(236,245,240,0.98))',
+    '--popTx': '#0b2a1e', '--popTx2': '#3f5249', '--popTx3': '#546a5f', '--popAcc': '#0a5c3b', '--popDiv': 'rgba(17,54,40,0.12)', '--popHov': 'rgba(18,133,90,0.06)', '--drawer': 'linear-gradient(180deg,rgba(250,253,251,0.95),rgba(244,250,247,0.96))',
+    '--dwSh': '0 40px 80px -30px rgba(6,40,28,0.5)', '--gl1': 'blur(16px) saturate(135%)', '--gl2': 'blur(12px) saturate(125%)', '--gl3': 'blur(8px) saturate(115%)',
+    '--tx': '#0b1a15', '--tx2': '#3f5249', '--tx3': '#586b61',
+    '--div': 'rgba(17,54,40,0.10)', '--track': 'rgba(17,54,40,0.10)',
+    '--acc': '#0e7a4f', '--accBg': 'rgba(14,122,79,0.08)', '--accBd': 'rgba(14,122,79,0.3)',
+    '--navBg': 'linear-gradient(90deg,rgba(14,122,79,0.14),rgba(14,122,79,0.03))', '--navTx': '#0b5c3b',
+    '--btn': 'linear-gradient(180deg,#12855a,#0b6442)', '--btnTx': '#ffffff', '--btnBd': 'rgba(9,80,52,0.45)',
+    '--chipBg': '#f0f3f0', '--blur': 'none',
+    '--ok': '#12855a', '--okTx': '#0f6e49', '--okBg': 'rgba(18,133,90,0.08)', '--okBd': 'rgba(18,133,90,0.26)',
+    '--warn': '#b8730a', '--warnBg': 'rgba(184,115,10,0.08)', '--warnBd': 'rgba(184,115,10,0.26)',
+    '--bad': '#c2372c', '--badTx': '#b33026', '--badBg': 'rgba(194,55,44,0.08)', '--badBd': 'rgba(194,55,44,0.26)',
+    '--info': '#12688f', '--infoBg': 'rgba(18,104,143,0.08)', '--infoBd': 'rgba(18,104,143,0.24)',
+    '--vio': '#5f43a8', '--vioBg': 'rgba(95,67,168,0.07)', '--vioBd': 'rgba(95,67,168,0.24)',
+    '--barFill': 'linear-gradient(90deg,#12855a,#3fa87c)',
+    '--areaTop': 'rgba(18,133,90,0.22)', '--areaBot': 'rgba(18,133,90,0)',
+    '--twinBd': 'rgba(17,54,40,0.14)', '--twinBg': '#eaeeea',
+    '--glass': 'rgba(255,255,255,0.9)', '--glassBd': 'rgba(17,54,40,0.14)', '--glassTx': '#3d5148',
+    '--lblBg': 'rgba(255,255,255,0.95)', '--lblTx': '#35463e',
+    '--avBg': 'linear-gradient(160deg,#e8f0ea,#dbe6df)', '--aiBg': 'radial-gradient(circle at 30% 25%,rgba(14,122,79,0.14),#eef2ef)',
+    '--orgBg': '#f2f5f2', '--orgBd': 'rgba(17,54,40,0.16)', '--badge': '#ffffff',
+    '--dayBtnBg': '#ffffff', '--dayBtnBd': 'rgba(14,122,79,0.35)', '--dayBtnTx': '#0b5c3b',
+    '--nightBtnBg': 'transparent', '--nightBtnBd': 'transparent', '--nightBtnTx': '#7b8a82',
+    '--dayCardBd': 'rgba(14,122,79,0.45)', '--dayCardBg': 'rgba(14,122,79,0.07)',
+    '--nightCardBd': 'rgba(17,54,40,0.14)', '--nightCardBg': 'transparent'
+  };
+
+  NIGHT = {
+    '--l1': 'linear-gradient(155deg,rgba(20,38,58,0.82),rgba(11,18,32,0.86) 48%,rgba(14,28,44,0.84))',
+    '--l1Bd': 'rgba(90,190,150,0.22)',
+    '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.07),inset 0 0 0 1px rgba(90,190,150,0.05),0 20px 44px -26px rgba(0,0,0,0.95)',
+    '--l1ShH': 'inset 0 1px 0 rgba(255,255,255,0.09),inset 0 0 0 1px rgba(90,190,150,0.08),0 26px 50px -26px rgba(0,0,0,0.95)',
+    '--l1BdH': 'rgba(90,190,150,0.42)',
+    '--l1Grid': 'repeating-linear-gradient(45deg,rgba(150,200,180,0.016) 0 1px,transparent 1px 3px),linear-gradient(rgba(120,200,170,0.043) 1px,transparent 1px) 0 0/100% 15px,linear-gradient(90deg,rgba(120,200,170,0.043) 1px,transparent 1px) 0 0/15px 100%',
+    '--l2Grain': 'repeating-linear-gradient(45deg,rgba(150,200,180,0.018) 0 1px,transparent 1px 3px)',
+    '--l2': 'linear-gradient(160deg,rgba(17,26,44,0.76),rgba(10,16,29,0.82))',
+    '--l2Bd': 'rgba(122,164,224,0.15)',
+    '--l2Sh': 'inset 0 1px 0 rgba(255,255,255,0.05),0 20px 44px -26px rgba(0,0,0,0.95)',
+    '--l3': 'linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78))', '--l3Bd': 'rgba(122,164,224,0.13)',
+    '--l3Sh': 'inset 0 1px 0 rgba(255,255,255,0.04),0 20px 44px -26px rgba(0,0,0,0.95)',
+    '--thBg': 'rgba(12,20,36,0.5)', '--thBd': 'rgba(122,164,224,0.13)', '--thTx': '#9db2cc',
+    '--gl1': 'blur(18px) saturate(130%)', '--gl2': 'blur(14px) saturate(120%)', '--gl3': 'blur(8px)', '--sbBlur': 'blur(22px) saturate(140%)',
+    '--popTx': '#e9f1fb', '--popTx2': '#a9bdd4', '--popTx3': '#7d8ea6', '--popAcc': '#4cc9f0', '--popDiv': 'rgba(122,164,224,0.13)', '--popHov': 'rgba(30,44,70,0.5)',
+    '--rowH': 'rgba(20,32,54,0.5)', '--rowAlt': 'transparent', '--rowSel': 'rgba(56,132,220,0.16)', '--rowBd': 'rgba(122,164,224,0.08)',
+    '--sect': 'rgba(11,18,32,0.55)', '--sectBd': 'rgba(122,164,224,0.12)',
+    '--hdrBg': 'linear-gradient(180deg,rgba(17,26,44,0.85),rgba(9,15,28,0.88))',
+    '--hdrBd': 'rgba(122,164,224,0.16)', '--hdrBlur': 'blur(22px) saturate(140%)',
+    '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95)',
+    '--hdrTx': '#e9f1fb', '--hdrTx2': '#a9bdd4', '--hdrTx3': '#7d8ea6',
+    '--hdrCtl': 'rgba(30,44,70,0.5)', '--hdrCtlBd': 'rgba(122,164,224,0.16)', '--hdrSunk': 'rgba(12,20,36,0.6)',
+    '--hdrDiv': 'rgba(122,164,224,0.14)', '--hdrAcc': '#8ee6ff', '--hdrField': 'rgba(12,20,36,0.75)',
+    '--orgBgH': 'radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95))', '--orgBdH': 'rgba(122,164,224,0.35)', '--hdrChip': 'rgba(122,164,224,0.14)',
+    '--sbBg': 'linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78))',
+    '--sbBd': 'rgba(122,164,224,0.13)', '--sbSh': 'inset 0 1px 0 rgba(255,255,255,0.05),0 20px 44px -26px rgba(0,0,0,0.95)',
+    '--sbTx': '#e9f1fb', '--sbTx2': '#a9bdd4', '--sbTx3': '#7d8ea6',
+    '--sbNavBg': 'linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22))',
+    '--sbNavBd': 'rgba(76,201,240,0.4)', '--sbNavTx': '#eaf4ff',
+    '--sbDiv': 'rgba(122,164,224,0.13)', '--sbCtl': 'rgba(20,32,54,0.6)', '--sbCtlBd': 'rgba(122,164,224,0.14)',
+    '--sbSunk': 'rgba(11,18,32,0.55)', '--sbChip': 'rgba(122,164,224,0.1)',
+    '--logoNavyH': '#dbe6f5', '--logoGreenH': '#3fc25a',
+    '--fieldBd': 'rgba(122,164,224,0.18)', '--fieldFc': 'rgba(76,201,240,0.6)', '--focusRing': 'rgba(76,201,240,0.14)',
+    '--dwSh': '0 40px 90px -30px rgba(0,0,0,0.85)',
+    '--dayBtnBg': 'transparent', '--dayBtnBd': 'transparent', '--dayBtnTx': '#7d8ea6',
+    '--nightBtnBg': 'rgba(56,132,220,0.28)', '--nightBtnBd': 'rgba(76,201,240,0.4)', '--nightBtnTx': '#eaf4ff',
+    '--dayCardBd': 'rgba(122,164,224,0.16)', '--dayCardBg': 'transparent',
+    '--nightCardBd': 'rgba(76,201,240,0.45)', '--nightCardBg': 'rgba(56,132,220,0.14)'
+  };
+
+  BP = {
+    xl: { '--pgMaxW': '1600px', '--sbW': '232px', '--aiW': '292px', '--prioW': '272px', '--twinH': '450px', '--midH': '450px' },
+    lg: { '--pgMaxW': '100%', '--sbW': '216px', '--aiW': '272px', '--prioW': '256px', '--twinH': '450px', '--midH': '450px' },
+    md: { '--pgMaxW': '100%', '--sbW': '68px', '--sbLabel': 'none', '--subInd': '0px', '--aiW': '252px', '--prioW': '240px',
+      '--twinH': '430px', '--midH': '430px', '--hdrNav': 'none', '--searchW': '150px', '--metaDisp': 'none', '--anaCols': 'repeat(3,1fr)', '--anaH': 'auto', '--kpiCell': '120px', '--scoreW': '210px', '--svcCols': 'repeat(3,1fr)', '--uSearch': '200px' },
+    tab: { '--pgMaxW': '100%', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchW': '160px',
+      '--kpiWrap': 'wrap', '--kpiCell': '33%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
+      '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '400px', '--midH': 'auto',
+      '--aiW': 'calc(50% - 7px)', '--prioW': 'calc(50% - 7px)', '--anaCols': 'repeat(2,1fr)', '--anaH': 'auto',
+      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none', '--svcCols': 'repeat(2,1fr)', '--uSearch': '100%', '--thead': 'none', '--rowWrap': 'wrap' },
+    mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none',
+      '--kpiWrap': 'wrap', '--kpiCell': '50%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
+      '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '320px', '--twinMin': '240px', '--midH': 'auto',
+      '--aiW': '100%', '--prioW': '100%', '--anaCols': '1fr', '--anaH': 'auto',
+      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '132px', '--brandTxt': 'none', '--svcCols': '1fr', '--uSearch': '100%', '--thead': 'none', '--rowWrap': 'wrap' }
+  };
+
+  componentDidMount() {
+    this.onWin = () => { this.measure(); };
+    window.addEventListener('resize', this.onWin);
+    this.measure();
+    if (typeof ResizeObserver !== 'undefined' && this.cv) {
+      this._ro = new ResizeObserver(() => this.sync());
+      this._ro.observe(this.cv);
+    }
+    this.bindCanvas();
+    this.onDoc = e => {
+      if (this.root && !this.root.contains(e.target)) return;
+      const t = e.target;
+      if (this.state.notifOpen || this.state.profOpen || this.state.layersOpen) {
+        if (t && t.closest && !t.closest('[data-f]')) this.setState({ notifOpen: false, profOpen: false, layersOpen: false });
+      }
+    };
+    document.addEventListener('mousedown', this.onDoc);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onWin);
+    document.removeEventListener('mousedown', this.onDoc);
+    if (this._ro) this._ro.disconnect();
+  }
+  componentDidUpdate() {
+    this.bindCanvas(); this.draw();
+    const pe = this.root && this.root.querySelector('[data-map-popup]');
+    if (pe) { const ph = Math.round(pe.getBoundingClientRect().height);
+      if (ph > 40 && ph !== this.popH) { this.popH = ph; this.forceUpdate(); } }
+    const el = this.root && this.root.querySelector('[data-zone-label]');
+    if (el) { const hh = Math.round(el.getBoundingClientRect().height);
+      if (hh > 20 && hh !== this.lblH) { this.lblH = hh; this.forceUpdate(); } }
+  }
+
+  bindCanvas() {
+    const el = this.cv;
+    if (!el || el._hsr) return;
+    el._hsr = true;
+    el.addEventListener('wheel', e => {
+      e.preventDefault();
+      const d = e.deltaY > 0 ? -0.12 : 0.12;
+      this.setState(s => ({ zoom: Math.max(0.6, Math.min(2.6, s.zoom + d)) }));
+    }, { passive: false });
+    let drag = null;
+    el.addEventListener('mousedown', e => { drag = { x: e.clientX, y: e.clientY, px: this.state.panX, py: this.state.panY, moved: false }; });
+    window.addEventListener('mousemove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+      this.setState({ panX: drag.px + dx, panY: drag.py + dy });
+    });
+    window.addEventListener('mouseup', () => {
+      if (drag && !drag.moved && this.state.sel) this.setState({ sel: null });
+      drag = null;
+    });
+  }
+
+  measure() {
+    const w = window.innerWidth;
+    const bp = w >= 1560 ? 'xl' : w >= 1400 ? 'lg' : w >= 1180 ? 'md' : w >= 760 ? 'tab' : 'mob';
+    if (bp !== this.state.bp) this.setState({ bp: bp });
+    this.sync();
+  }
+
+  sync() {
+    const el = this.cv; if (!el) return;
+    const w = Math.round(el.clientWidth) || 734, h = Math.round(el.clientHeight) || 450;
+    if (w !== this.state.tw || h !== this.state.th) this.setState({ tw: w, th: h });
+    else { this.draw(); if (h !== this._lastTH) { this._lastTH = h; this.forceUpdate(); } }
+  }
+
+  geo(w, h) {
+    const t = this.state.twin3D, z = this.state.zoom;
+    return { c: Math.cos(-0.5), s: Math.sin(-0.5), f: 2.2, k: t ? 0.9 : 0,
+      cx: w * 0.5 + this.state.panX, cy: h * (t ? 0.63 : 0.5) + this.state.panY,
+      S: w * 0.585 * z, sq: t ? 0.42 : 0.78, zh: t ? 0.72 : 0 };
+  }
+  proj(x, y, z, G) {
+    const X = x * G.c - y * G.s, Y = x * G.s + y * G.c;
+    const sc = G.f / (G.f + G.k * Y);
+    return { x: G.cx + X * G.S * sc, y: G.cy + Y * G.S * G.sq * sc - (z || 0) * G.S * G.zh * sc, s: sc };
+  }
+
+  // Label placement: keeps zone labels inside the map, clear of the left control
+  // gutter (search + zoom stack) and clear of each other. Controls never move.
+  placeLabels(G, day, st) {
+    const LW = 92, LH = this.lblH || 68, GAP = 8;
+    // measure the container live: st.tw/st.th are written only after a measure pass,
+    // so on the first paint after a breakpoint change they still hold the old box
+    const box = this.cv ? this.cv.getBoundingClientRect() : null;
+    const TW = box && box.width ? Math.round(box.width) : st.tw;
+    const TH = box && box.height ? Math.round(box.height) : st.th;
+    // obstacles measured live from the DOM — no hard-coded control geometry
+    const obstacles = [];
+    if (box && this.root) {
+      this.root.querySelectorAll('[data-map-legend],[data-map-gutter]').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if (r.width) obstacles.push({ x: Math.round(r.left - box.left) - GAP, y: Math.round(r.top - box.top) - GAP,
+          w: Math.round(r.width) + GAP * 2, h: Math.round(r.height) + GAP * 2 });
+      });
+    }
+    if (!obstacles.length) obstacles.push({ x: 0, y: 44, w: 236, h: 210 });
+    const minX = 112, maxX = Math.max(minX + 40, TW - 64);
+    // bottom-anchored box: its top is y - LH, so the deepest legal y is th - GAP
+    const maxY = Math.max(LH + GAP, TH - GAP);
+    // label anchor is bottom-centre (translate(-50%,-100%)) -> convert to a plain rect
+    const rect = (x, y) => ({ x: x - LW / 2, y: y - LH, w: LW, h: LH });
+    const hit = (r, b) => r.x < b.x + b.w && r.x + r.w > b.x && r.y < b.y + b.h && r.y + r.h > b.y;
+    const placed = [];
+    return this.LBL.map(l => {
+      const q = this.proj(l.x, l.y, 0.05, G);
+      let x = Math.min(Math.max(q.x, minX), maxX);
+      let y = Math.min(Math.max(q.y, 168), maxY);
+      for (let i = 0; i < 40; i++) {
+        const bx = rect(x, y);
+        const clash = obstacles.some(o => hit(bx, o)) || placed.some(p => hit(bx, {
+          x: p.x - LW / 2 - GAP, y: p.y - LH - GAP, w: LW + GAP * 2, h: LH + GAP * 2 }));
+        if (!clash) break;
+        y += LH / 2 + GAP;
+        if (y > maxY) {
+          y = Math.min(Math.max(q.y, 168), maxY);
+          x += LW * 0.6;
+          if (x > maxX) x = minX + ((x - minX) % Math.max(1, maxX - minX));
+        }
+      }
+      // the nudge loop can exhaust its budget mid-search — clamp before committing
+      x = Math.min(Math.max(x, minX), maxX);
+      y = Math.min(Math.max(y, LH + GAP), maxY);
+      placed.push({ x: x, y: y });
+      return { name: l.name, count: l.count, col: day ? this.mix(l.col, 0.75, [20, 40, 30]) : l.col,
+        left: Math.round(x) + 'px', top: Math.round(y) + 'px',
+        border: this.tint(l.col, day ? 0.4 : 0.45),
+        on: () => this.flash(l.name + ' — ' + l.count + ' بلاغ') };
+    });
+  }
+
+  DIST = [
+    { name: 'حي النخيل', x: 0.10, y: -0.44 }, { name: 'حي الروابي', x: -0.40, y: -0.30 },
+    { name: 'حي المروج', x: 0.44, y: -0.24 }, { name: 'حي الواحة', x: -0.22, y: 0.16 },
+    { name: 'حي الفيصلية', x: 0.30, y: 0.28 }, { name: 'حي السلام', x: -0.52, y: 0.30 },
+    { name: 'حي الرحاب', x: 0.62, y: 0.06 }, { name: 'المنطقة المركزية', x: 0.02, y: -0.04 }
+  ];
+
+  polys() {
+    if (this._polys) return this._polys;
+    const arc = (a0, a1, seed) => {
+      const pts = [];
+      const R = t => 0.87 + 0.08 * Math.sin(3 * t + seed) - 0.05 * Math.cos(5 * t + seed * 1.7);
+      for (let a = a0; a <= a1 + 0.001; a += 2) { const t = a * Math.PI / 180, r = R(t); pts.push([r * Math.cos(t), -r * Math.sin(t)]); }
+      for (let a = a1; a >= a0 - 0.001; a -= 4) { const t = a * Math.PI / 180, r = 0.255 + 0.012 * Math.sin(4 * t); pts.push([r * Math.cos(t), -r * Math.sin(t)]); }
+      return pts;
+    };
+    const cen = [];
+    for (let a = 0; a < 360; a += 6) { const t = a * Math.PI / 180, r = 0.248 + 0.014 * Math.sin(4 * t + 1); cen.push([r * Math.cos(t), -r * Math.sin(t)]); }
+    this._polys = this.ZONES.map(z => Object.assign({}, z, { pts: z.center ? cen : arc(z.a0, z.a1, z.seed) }));
+    return this._polys;
+  }
+
+  rgb(hex) { return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)]; }
+  tint(hex, a) { const c = this.rgb(hex); return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+  mix(hex, a, base) { const c = this.rgb(hex), b = base;
+    return 'rgb(' + Math.round(b[0] + (c[0] - b[0]) * a) + ',' + Math.round(b[1] + (c[1] - b[1]) * a) + ',' + Math.round(b[2] + (c[2] - b[2]) * a) + ')'; }
+
+  inside(pts, x, y) {
+    let ins = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) ins = !ins;
+    }
+    return ins;
+  }
+
+  city() {
+    const dens = Math.round(this.props.cityDensity || 1100);
+    if (this._city && this._cityN === dens) return this._city;
+    let seed = 20240527;
+    const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const out = [];
+    const S = Math.sin(-0.5), C = Math.cos(-0.5);
+    this.polys().forEach(z => {
+      const share = z.id === 'none' ? 0.06 : z.id === 'center' ? 0.24 : 0.20;
+      const target = Math.round(dens * share);
+      let n = 0, tries = 0;
+      while (n < target && tries < target * 25) {
+        tries++;
+        const x = (rnd() * 2 - 1), y = (rnd() * 2 - 1);
+        if (!this.inside(z.pts, x, y)) continue;
+        n++;
+        const d = Math.sqrt(x * x + y * y);
+        let h = 0.022 + Math.pow(rnd(), 2.4) * 0.16;
+        h *= 1 + 2.0 * Math.max(0, 1 - d / 0.62);
+        if (z.id === 'none') h *= 0.35;
+        if (rnd() > 0.99 && d < 0.45) h = 0.34 + rnd() * 0.26;
+        out.push({ x: x, y: y, h: h, b: 0.0052 + rnd() * 0.0068,
+          lum: 0.2 + rnd() * 0.34, dim: z.id === 'none',
+          lit: rnd() > 0.55 && z.id !== 'none', warm: rnd() > 0.5,
+          zc: z.col, k: x * S + y * C });
+      }
+    });
+    out.sort((a, b) => a.k - b.k);
+    this._city = out; this._cityN = dens;
+    return out;
+  }
+
+  pal() {
+    const day = this.state.theme === 'day';
+    return day ? {
+      bg: '#e9ede9', r1: 'rgba(255,255,255,0.95)', r2: 'rgba(226,234,228,0.6)',
+      zoneFill: 'rgba(244,247,244,0.92)', noneFill: 'rgba(228,232,229,0.9)', zoneTint: 0.07,
+      road: 'rgba(255,255,255,0.95)', roadW: 1.2,
+      base: [214, 222, 216], side1: 'rgba(181,193,185,0.96)', side2: 'rgba(199,209,202,0.96)',
+      lit: 'rgba(126,146,136,0.45)', litWarm: 'rgba(126,146,136,0.45)',
+      strokeA: 0.7, blur: 0, noneStroke: 'rgba(122,142,132,0.5)',
+      lumK: 0.24, strokeMix: [22, 58, 42], strokeK: 0.5,
+      bndStroke: 'rgba(11,100,66,0.95)', bndFill: 'rgba(18,133,90,0.07)', bndW: 2.2,
+      mapGround: '#e8edf1', mapZone: 'rgba(233,239,243,0.95)', mapNone: 'rgba(224,231,236,0.95)',
+      mapLocal: 'rgba(255,255,255,0.85)', mapCasing: 'rgba(176,190,201,0.75)',
+      mapRoad: '#ffffff', mapArtery: '#fdfdfc', mapFoot: 'rgba(203,213,222,0.85)', mapFootDim: 'rgba(214,222,229,0.7)',
+      mapLblTx: '#28413a', mapLblHalo: 'rgba(255,255,255,0.92)'
+    } : {
+      bg: '#03060d', r1: 'rgba(24,68,126,0.42)', r2: 'rgba(12,34,72,0.22)',
+      zoneFill: 'rgba(5,10,20,0.92)', noneFill: 'rgba(9,14,25,0.92)', zoneTint: 0.085,
+      road: 'rgba(255,196,130,0.11)', roadW: 1,
+      base: [18, 30, 52], side1: 'rgba(6,11,22,0.96)', side2: 'rgba(12,21,38,0.96)',
+      lit: 'rgba(255,214,150,0.75)', litWarm: 'rgba(140,215,255,0.7)',
+      strokeA: 1, blur: 14, noneStroke: 'rgba(120,140,168,0.35)',
+      lumK: 1, strokeMix: null, strokeK: 0,
+      bndStroke: 'rgba(52,211,153,0.85)', bndFill: 'rgba(34,197,94,0.07)', bndW: 2,
+      mapGround: '#0d1522', mapZone: 'rgba(16,25,40,0.95)', mapNone: 'rgba(12,19,31,0.95)',
+      mapLocal: 'rgba(122,164,224,0.14)', mapCasing: 'rgba(90,120,160,0.3)',
+      mapRoad: 'rgba(186,210,238,0.5)', mapArtery: 'rgba(206,226,248,0.62)',
+      mapFoot: 'rgba(30,44,66,0.85)', mapFootDim: 'rgba(24,36,55,0.7)',
+      mapLblTx: '#dbe6f5', mapLblHalo: 'rgba(6,11,22,0.85)'
+    };
+  }
+
+  satPal(p, day) {
+    if (this.state.basemap !== 'satellite' || this.state.mapMode !== 'map') return p;
+    const s = Object.assign({}, p);
+    if (day) {
+      s.bg = '#3d4a3c'; s.r1 = 'rgba(96,112,88,0.5)'; s.r2 = 'rgba(58,70,54,0.35)';
+      s.zoneFill = 'rgba(62,74,58,0.9)'; s.noneFill = 'rgba(52,62,50,0.92)'; s.zoneTint = 0.06;
+      s.road = 'rgba(226,230,214,0.42)'; s.roadW = 1.3;
+      s.base = [96, 104, 88]; s.side1 = 'rgba(58,64,52,0.96)'; s.side2 = 'rgba(74,82,66,0.96)';
+      s.lit = 'rgba(196,206,176,0.32)'; s.litWarm = 'rgba(196,206,176,0.32)';
+      s.lumK = 0.4; s.strokeMix = null; s.strokeK = 0; s.strokeA = 0.55;
+      s.noneStroke = 'rgba(206,214,192,0.32)';
+      s.bndStroke = 'rgba(94,232,150,0.95)'; s.bndFill = 'rgba(52,211,153,0.1)'; s.bndW = 2.4;
+      s.mapGround = '#46523f'; s.mapZone = 'rgba(66,78,60,0.9)'; s.mapNone = 'rgba(56,66,52,0.92)';
+      s.mapLocal = 'rgba(226,230,214,0.22)'; s.mapCasing = 'rgba(30,38,28,0.45)';
+      s.mapRoad = 'rgba(238,240,228,0.6)'; s.mapArtery = 'rgba(246,248,236,0.72)';
+      s.mapFoot = 'rgba(88,98,78,0.8)'; s.mapFootDim = 'rgba(74,84,66,0.7)';
+      s.mapLblTx = '#f2f6ec'; s.mapLblHalo = 'rgba(20,28,18,0.7)';
+    } else {
+      s.bg = '#0a1410'; s.zoneFill = 'rgba(14,26,20,0.92)'; s.noneFill = 'rgba(11,20,16,0.92)';
+      s.road = 'rgba(214,226,200,0.16)'; s.base = [30, 44, 34];
+      s.side1 = 'rgba(10,18,14,0.96)'; s.side2 = 'rgba(18,30,22,0.96)';
+      s.lit = 'rgba(190,214,168,0.4)'; s.litWarm = 'rgba(190,214,168,0.4)';
+      s.blur = 6; s.bndStroke = 'rgba(94,232,150,0.9)'; s.bndFill = 'rgba(52,211,153,0.09)';
+    }
+    return s;
+  }
+
+  draw() {
+    const cv = this.cv; if (!cv) return;
+    const w = Math.round(cv.clientWidth) || 734, h = Math.round(cv.clientHeight) || 450;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const g = cv.getContext('2d'); if (!g) return;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    const G = this.geo(w, h), P = (x, y, z) => this.proj(x, y, z, G);
+    const gi = this.props.glowIntensity == null ? 1 : this.props.glowIntensity;
+    const p = this.satPal(this.pal(), this.state.theme === 'day');
+    const L = this.state.layers;
+
+    g.fillStyle = p.bg; g.fillRect(0, 0, w, h);
+    const rg = g.createRadialGradient(G.cx, G.cy - h * 0.06, 0, G.cx, G.cy - h * 0.06, w * 0.62);
+    rg.addColorStop(0, p.r1); rg.addColorStop(0.45, p.r2); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, w, h);
+
+    if (this.state.mapMode === 'map') { g.fillStyle = p.mapGround; g.fillRect(0, 0, w, h); }
+
+    const polys = this.polys();
+    const path = pts => { g.beginPath(); for (let i = 0; i < pts.length; i++) { const q = P(pts[i][0], pts[i][1], 0); if (i) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); } g.closePath(); };
+
+    polys.forEach(z => {
+      const flatMode = this.state.mapMode === 'map';
+      path(z.pts); g.fillStyle = flatMode ? (z.id === 'none' ? p.mapNone : p.mapZone) : (z.id === 'none' ? p.noneFill : p.zoneFill); g.fill();
+      g.fillStyle = this.tint(z.col, z.id === 'none' ? 0.02 : (flatMode ? 0.035 : p.zoneTint)); g.fill();
+    });
+
+    const flat = this.state.mapMode === 'map';
+
+    if (flat) {
+      // road hierarchy: local grid -> secondary -> arterial radials + ring roads
+      const casing = p.mapCasing, ink = p.mapRoad;
+      const seg = (x1, y1, x2, y2) => { const a = P(x1, y1, 0), b2 = P(x2, y2, 0); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b2.x, b2.y); g.stroke(); };
+      const ring = r => { g.beginPath(); for (let a = 0; a <= 360; a += 4) { const t = a * Math.PI / 180, q = P(r * Math.cos(t), -r * Math.sin(t), 0); if (a) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); } g.stroke(); };
+      const radial = (t, r0, r1) => seg(r0 * Math.cos(t), -r0 * Math.sin(t), r1 * Math.cos(t), -r1 * Math.sin(t));
+
+      // local street grid
+      g.lineCap = 'butt';
+      g.strokeStyle = p.mapLocal; g.lineWidth = 1;
+      for (let i = -9; i <= 9; i++) { const v = i * 0.095; seg(v, -0.86, v, 0.86); seg(-0.86, v, 0.86, v); }
+
+      // secondary streets (casing + ink)
+      for (let pass = 0; pass < 2; pass++) {
+        g.strokeStyle = pass ? ink : casing; g.lineWidth = pass ? 1.8 : 3.4;
+        [0.40, 0.62, 0.80].forEach(ring);
+        for (let a = -80; a < 300; a += 30) radial(a * Math.PI / 180, 0.16, 0.86);
+      }
+      // arterials
+      for (let pass = 0; pass < 2; pass++) {
+        g.strokeStyle = pass ? p.mapArtery : casing; g.lineWidth = pass ? 3 : 5.4;
+        [0.54].forEach(ring);
+        [-60, 0, 60, 120, 180, 240].forEach(a => radial(a * Math.PI / 180, 0.05, 0.9));
+      }
+      // flat building footprints
+      const city = this.city();
+      for (let i = 0; i < city.length; i++) {
+        const b = city[i];
+        const s0 = P(b.x - b.b, b.y + b.b, 0), s1 = P(b.x + b.b, b.y + b.b, 0), s2 = P(b.x + b.b, b.y - b.b, 0), s3 = P(b.x - b.b, b.y - b.b, 0);
+        g.fillStyle = b.dim ? p.mapFootDim : p.mapFoot;
+        g.beginPath(); g.moveTo(s0.x, s0.y); g.lineTo(s1.x, s1.y); g.lineTo(s2.x, s2.y); g.lineTo(s3.x, s3.y); g.closePath(); g.fill();
+      }
+    }
+
+    if (!flat) {
+    g.lineWidth = p.roadW; g.strokeStyle = p.road;
+    for (let a = -80; a < 300; a += 7.5) {
+      const t = a * Math.PI / 180;
+      const p1 = P(0.27 * Math.cos(t), -0.27 * Math.sin(t), 0), p2 = P(0.88 * Math.cos(t), -0.88 * Math.sin(t), 0);
+      g.beginPath(); g.moveTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.stroke();
+    }
+    [0.40, 0.58, 0.75].forEach(r => { g.beginPath(); for (let a = 0; a <= 360; a += 5) { const t = a * Math.PI / 180, q = P(r * Math.cos(t), -r * Math.sin(t), 0); if (a) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); } g.stroke(); });
+
+    const city = this.city();
+    for (let i = 0; i < city.length; i++) {
+      const b = city[i];
+      const s0 = P(b.x - b.b, b.y + b.b, 0), s1 = P(b.x + b.b, b.y + b.b, 0), s2 = P(b.x + b.b, b.y - b.b, 0), s3 = P(b.x - b.b, b.y - b.b, 0);
+      const dz = b.h * G.S * G.zh * s0.s;
+      if (dz > 0.6) {
+        g.fillStyle = p.side1;
+        g.beginPath(); g.moveTo(s0.x, s0.y); g.lineTo(s1.x, s1.y); g.lineTo(s1.x, s1.y - dz); g.lineTo(s0.x, s0.y - dz); g.closePath(); g.fill();
+        g.fillStyle = p.side2;
+        g.beginPath(); g.moveTo(s0.x, s0.y); g.lineTo(s3.x, s3.y); g.lineTo(s3.x, s3.y - dz); g.lineTo(s0.x, s0.y - dz); g.closePath(); g.fill();
+      }
+      g.fillStyle = this.mix(b.zc, (b.dim ? 0.05 : b.lum) * p.lumK, p.base);
+      g.beginPath(); g.moveTo(s0.x, s0.y - dz); g.lineTo(s1.x, s1.y - dz); g.lineTo(s2.x, s2.y - dz); g.lineTo(s3.x, s3.y - dz); g.closePath(); g.fill();
+      if (b.lit && dz > 5) {
+        g.fillStyle = b.warm ? p.lit : p.litWarm;
+        const bw = Math.max(1, (s1.x - s0.x) * 0.3);
+        g.fillRect(s0.x + (s1.x - s0.x) * 0.24, s0.y - dz * 0.7, bw, 1.2);
+        if (dz > 12) g.fillRect(s0.x + (s1.x - s0.x) * 0.54, s0.y - dz * 0.42, bw, 1.2);
+      }
+    }
+    }
+
+    g.save();
+    polys.forEach(z => {
+      if (z.id === 'none') { g.shadowBlur = 0; g.strokeStyle = p.noneStroke; g.lineWidth = 1; g.setLineDash([4, 5]); path(z.pts); g.stroke(); g.setLineDash([]); return; }
+      if (this.state.bounds) {
+        g.shadowBlur = 0; g.strokeStyle = p.bndStroke; g.lineWidth = p.bndW * gi;
+        g.fillStyle = p.bndFill; path(z.pts); g.fill(); g.stroke();
+      }
+      g.shadowColor = z.col; g.shadowBlur = p.blur * gi;
+      const sc = p.strokeMix ? this.mix(z.col, p.strokeK, p.strokeMix) : z.col;
+      g.strokeStyle = p.strokeMix ? sc : this.tint(z.col, p.strokeA);
+      g.lineWidth = p.strokeMix ? 1.6 : 1.8;
+      path(z.pts); g.stroke(); if (!p.strokeMix) g.stroke();
+    });
+    g.restore();
+
+    if (this.state.mapMode === 'map') {
+      g.save();
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = '600 10px "IBM Plex Sans Arabic", system-ui, sans-serif';
+      this.DIST.forEach(d => {
+        const q = P(d.x, d.y, 0);
+        g.lineWidth = 3; g.strokeStyle = p.mapLblHalo;
+        g.strokeText(d.name, q.x, q.y); g.fillStyle = p.mapLblTx; g.fillText(d.name, q.x, q.y);
+      });
+      g.restore();
+    }
+
+    if (this.state.sel) {
+      const o = this.OBJ.filter(x => x.id === this.state.sel)[0];
+      if (o && L[o.layer]) {
+        const q = P(o.x, o.y, 0);
+        g.save();
+        g.strokeStyle = this.tint(o.col, 0.9); g.lineWidth = 1.6;
+        g.beginPath(); g.ellipse(q.x, q.y, 26 * q.s, 26 * q.s * G.sq, 0, 0, Math.PI * 2); g.stroke();
+        g.setLineDash([3, 4]);
+        g.beginPath(); g.ellipse(q.x, q.y, 40 * q.s, 40 * q.s * G.sq, 0, 0, Math.PI * 2); g.stroke();
+        g.restore();
+      }
+    }
+  }
+
+  flash(msg) {
+    this.setState({ toast: msg, notifOpen: false, profOpen: false, layersOpen: false, mobNavOpen: false });
+    clearTimeout(this._tt);
+    this._tt = setTimeout(() => this.setState({ toast: '' }), 2400);
+  }
+
+  renderVals() {
+    const st = this.state, day = st.theme === 'day';
+    const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
+    if (st.sb && st.bp !== 'tab' && st.bp !== 'mob') { vars['--sbW'] = '68px'; vars['--sbLabel'] = 'none'; vars['--subInd'] = '0px'; }
+    if (st.fs) { vars['--twinPos'] = 'fixed'; vars['--twinInset'] = '14px'; vars['--twinZ'] = '75'; vars['--twinH'] = 'auto'; }
+
+    const G = this.geo(st.tw, st.th);
+    const sel = st.sel ? this.OBJ.filter(o => o.id === st.sel)[0] : null;
+    const L = st.layers;
+    const on = Object.keys(L).filter(k => L[k]).length;
+
+    const prio = [
+      { n: '12', title: 'منطقة بحاجة إلى تدخل عاجل', meta: 'وسط النطاق · مربع 3', col: '#ef4444', tk: 'bad' },
+      { n: '8', title: 'تجاوزات إنشائية', meta: 'القطاع الشرقي · مخطط 7', col: '#fb7185', tk: 'bad' },
+      { n: '15', title: 'نظافة عامة', meta: 'القطاع الغربي · شارع 21', col: '#f5a524', tk: 'warn' },
+      { n: '9', title: 'إشغالات طرق', meta: 'القطاع الجنوبي · حي النور', col: '#38bdf8', tk: 'info' }
+    ];
+
+    return {
+      rootRef: el => { this.root = el; },
+      cvRef: el => { this.cv = el; },
+      themeVars: vars,
+      orgName: st.orgName,
+      orgMono: (st.orgName || '').trim().split(/\s+/).slice(0, 2).map(s => s.charAt(0)).join('') || 'ب',
+      detailOpen: !!st.detail,
+      closeDetail: () => this.setState({ detail: null }),
+      ...(function(self){
+        const d = self.OBJ.filter(o => o.id === st.detail)[0];
+        if (!d) return { dTitle: '', dKind: '', dCol: '', dRows: [], dAction: '', dGo: () => {} };
+        return { dTitle: d.title, dKind: d.kind, dCol: d.col,
+          dRows: d.rows.map(r => ({ k: r[0], v: r[1] })),
+          dAction: d.action, dGo: () => { self.setState({ detail: null }); self.goRoute(d.route); } };
+      })(this),
+      profOpen: st.profOpen, notifOpen: st.notifOpen, layersOpen: st.layersOpen,
+      settingsOpen: st.settingsOpen, mobNavOpen: st.mobNavOpen,
+      expSvc: st.expSvc, expAdmin: st.expAdmin,
+      svcCaret: st.expSvc ? 'rotate(180deg)' : 'rotate(0deg)',
+      admCaret: st.expAdmin ? 'rotate(180deg)' : 'rotate(0deg)',
+      showQuick: st.quick && this.props.showQuickActions !== false,
+      hasToast: !!st.toast, toast: st.toast,
+      zoomLbl: Math.round(st.zoom * 100) + '%',
+      layerCount: on + '/4',
+      isMapMode: st.mapMode === 'map', isTwinMode: st.mapMode === 'twin',
+      cvLabel: st.mapMode === 'map' ? 'الخريطة التشغيلية — سطح جغرافي للنطاق البلدي' : 'التوأم البلدي الذكي — سطح تحكم جغرافي',
+      mmTx: st.mapMode === 'map' ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
+      mmBg: st.mapMode === 'map' ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
+      mmBd: st.mapMode === 'map' ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)') : 'transparent',
+      twTx: st.mapMode === 'twin' ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
+      twBg: st.mapMode === 'twin' ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
+      twBd: st.mapMode === 'twin' ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)') : 'transparent',
+      setMapMode: () => this.setState({ mapMode: 'map', twin3D: false, sel: null }, () => this.draw()),
+      setTwinMode: () => this.setState({ mapMode: 'twin', twin3D: true, sel: null }, () => this.draw()),
+      basemaps: [['normal', 'عادية'], ['satellite', 'قمر صناعي']].map(b => {
+        const a = st.basemap === b[0];
+        return { label: b[1], on: () => this.setState({ basemap: b[0] }, () => this.draw()),
+          tx: a ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
+          bg: a ? (day ? '#12855a' : 'rgba(34,197,94,0.7)') : 'transparent',
+          bd: a ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.45)') : 'transparent' };
+      }),
+      dims: [[false, '2D'], [true, '3D']].map(d => {
+        const a = st.twin3D === d[0];
+        return { label: d[1], on: () => this.setState({ twin3D: d[0] }, () => this.draw()),
+          tx: a ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
+          bg: a ? (day ? '#12855a' : 'rgba(34,197,94,0.7)') : 'transparent',
+          bd: a ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.45)') : 'transparent' };
+      }),
+      resetNorth: () => this.setState({ panX: 0, panY: 0 }),
+      tBounds: () => this.setState(s => ({ bounds: !s.bounds }), () => this.draw()),
+      bndMark: st.bounds ? '✓' : '',
+      bndBg: st.bounds ? (day ? '#12855a' : '#22c55e') : 'transparent',
+      bndBd: st.bounds ? (day ? '#12855a' : '#22c55e') : 'var(--ctlBd,rgba(122,164,224,0.3))',
+
+      notifs: this.NOTIFS,
+      isHome: true,
+      homeCur: 'page', homeFw: '600', homeTx: 'var(--sbNavTx,#eaf4ff)',
+      goHome: e => { if (e && e.preventDefault) e.preventDefault(); },
+      scopes: [{ label: 'مدير البلدية' }, { label: 'رؤساء الأقسام' }, { label: 'إدارة الحركة' }, { label: 'الشؤون الإدارية' }, { label: 'الموظفون' }, { label: 'المراقبون' }, { label: 'لوحات مستقبلية' }],
+      depts: [{ name: 'إدارة النظافة', v: '98%', w: '98%' }, { name: 'إدارة الطرق', v: '94%', w: '94%' }, { name: 'إدارة الرخص', v: '92%', w: '92%' }, { name: 'إدارة التنمية', v: '88%', w: '88%' }, { name: 'إدارة الخدمات', v: '85%', w: '85%' }],
+      cats: [
+        { name: 'نظافة عامة', n: '896', p: '(36%)', col: day ? '#12855a' : '#22c55e' },
+        { name: 'تجاوزات', n: '642', p: '(26%)', col: day ? '#12688f' : '#38bdf8' },
+        { name: 'إشغالات طرق', n: '501', p: '(20%)', col: day ? '#c2372c' : '#ef4444' },
+        { name: 'تشوه بصري', n: '252', p: '(10%)', col: day ? '#b8730a' : '#f5a524' },
+        { name: 'أخرى', n: '196', p: '(8%)', col: day ? '#5f43a8' : '#a78bfa' }
+      ],
+      recs: [
+        { title: 'توجيه فرق ميدانية', meta: 'القطاع الجنوبي · 3 أحياء', tag: '3 فرق', col: day ? '#12688f' : '#38bdf8', on: () => this.flash('التوصيات التنفيذية ستُفعّل مع المساعد الذكي') },
+        { title: 'حملة نظافة مكثفة', meta: '5 مناطق مستهدفة', tag: '15 يوم', col: day ? '#12855a' : '#22c55e', on: () => this.flash('التوصيات التنفيذية ستُفعّل مع المساعد الذكي') },
+        { title: 'مراجعة تراخيص', meta: '23 منشأة منتهية', tag: 'مراجعة', col: day ? '#b8730a' : '#f5a524', on: () => this.flash('التوصيات التنفيذية ستُفعّل مع المساعد الذكي') }
+      ],
+      prios: prio.map(p => ({
+        n: p.n, title: p.title, meta: p.meta, col: p.col,
+        bg: this.tint(p.col, day ? 0.05 : 0.08),
+        bd: this.tint(p.col, day ? 0.26 : 0.28),
+        numBg: this.tint(p.col, day ? 0.1 : 0.16),
+        on: () => this.flash('سيتم فتح الأولوية في الخريطة التشغيلية')
+      })),
+      quickActions: [
+        { label: 'إضافة فريق ميداني', on: () => this.flash('نموذج إضافة فريق ميداني — يُربط لاحقاً') },
+        { label: 'إنشاء تقرير', on: () => this.flash('مولّد التقارير — يُربط لاحقاً') },
+        { label: 'مراجعة المعاملات', on: () => this.flash('قائمة المعاملات — يُربط لاحقاً') },
+        { label: 'إرسال إشعار', on: () => this.flash('إرسال إشعار للإدارات — يُربط لاحقاً') },
+        { label: 'طلب بيانات', on: () => this.flash('طلب بيانات من إدارة — يُربط لاحقاً') },
+        { label: 'اجتماع افتراضي', on: () => this.flash('الاجتماعات — يُربط لاحقاً') },
+        { label: 'دعم فني', on: () => this.flash('الدعم الفني — يُربط لاحقاً') }
+      ],
+      mobNav: [
+        { label: 'الرئيسية', tag: '', on: () => this.setState({ screen: 'home', mobNavOpen: false }) },
+        { label: 'الحصر الميداني الذكي', tag: '', on: () => this.goRoute('survey') },
+        { label: 'حصر الأراضي الذكي', tag: '', on: () => this.goRoute('lands') },
+        { label: 'حركة السير الذكية', tag: '', on: () => this.goRoute('mobility') },
+        { label: 'البلاغات', tag: '362', on: () => this.flash('البلاغات — يُربط لاحقاً') },
+        { label: 'الخريطة التشغيلية', tag: '', on: () => this.flash('الخريطة التشغيلية — يُربط لاحقاً') },
+        { label: 'التقارير', tag: '', on: () => this.flash('التقارير — يُربط لاحقاً') },
+        { label: 'الهيكل الإداري', tag: 'قريباً', on: () => this.flash('الهيكل الإداري — قريباً') },
+        { label: 'المستخدمون والصلاحيات', tag: '', on: () => this.flash('المستخدمون والصلاحيات — يُربط لاحقاً') },
+        { label: 'الإعدادات والهوية', tag: '', on: () => this.setState({ settingsOpen: true, mobNavOpen: false }) },
+        { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', on: () => this.flash('المساعد التنفيذي الذكي — قريباً') }
+      ],
+
+      layerList: this.LAYERS.map(l => ({
+        name: l.name, n: l.n,
+        mark: L[l.id] ? '✓' : '',
+        bd: L[l.id] ? l.col : (day ? 'rgba(17,54,40,0.25)' : 'rgba(122,164,224,0.3)'),
+        bg: L[l.id] ? l.col : 'transparent',
+        on: () => this.setState(s => { const n = Object.assign({}, s.layers); n[l.id] = !n[l.id]; return { layers: n, sel: n[l.id] ? s.sel : null }; })
+      })),
+      allLayers: () => this.setState({ layers: { survey: true, land: true, report: true, task: true } }),
+
+      zoneLabels: this.placeLabels(G, day, st),
+
+      markers: this.OBJ.filter(o => L[o.layer]).map(o => {
+        const q = this.proj(o.x, o.y, 0.055, G);
+        const s = st.sel === o.id;
+        return { col: day ? this.mix(o.col, 0.8, [16, 46, 32]) : o.col, title: o.title,
+          size: s ? '13px' : '9px', off: s ? '-6.5px 0 0 -6.5px' : '-4.5px 0 0 -4.5px',
+          ring: s ? '2px solid ' + (day ? '#ffffff' : '#eaf9ff') : 'none',
+          left: Math.round(q.x) + 'px', top: Math.round(q.y) + 'px',
+          on: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ sel: o.id, layersOpen: false }); } };
+      }),
+
+      hasSel: !!sel,
+      ...(function(self){
+        if (!sel) return { selLeft: '50%', selTop: '50%', selStatus: '', selStTx: '', selStBg: '', selStBd: '' };
+        const q = self.proj(sel.x, sel.y, 0.055, G);
+        const W = 266, PAD = 12;
+        // measure the live map box and the popup's own height: the card is anchored
+        // bottom-centre inside an overflow:hidden container, so both bounds must be real
+        const mb = self.cv ? self.cv.getBoundingClientRect() : null;
+        const TW = mb && mb.width ? Math.round(mb.width) : st.tw;
+        const TH = mb && mb.height ? Math.round(mb.height) : st.th;
+        const PH = self.popH || 248;
+        const minL = W / 2 + PAD + 48;
+        const lx = Math.min(Math.max(q.x, minL), Math.max(minL, TW - W / 2 - PAD));
+        const ly = Math.min(Math.max(q.y - 14, PH + PAD), Math.max(PH + PAD, TH - PAD));
+        const raw = (sel.rows[0] && sel.rows[0][1]) || '';
+        const stt = raw.split('—')[0].trim() || sel.kind;
+        const crit = /حرج|متأخر|عالية/.test(sel.title + raw), warn = /قيد|بانتظار|جاري/.test(raw);
+        const c = crit ? (day ? '#c2372c' : '#f87171') : warn ? (day ? '#b8730a' : '#f5a524') : (day ? '#12855a' : '#22c55e');
+        return { selLeft: Math.round(lx) + 'px', selTop: Math.round(ly) + 'px', selStatus: stt,
+          selStTx: c, selStBg: self.tint(c, day ? 0.1 : 0.16), selStBd: self.tint(c, day ? 0.3 : 0.34) };
+      })(this),
+      selDetails: () => this.setState({ detail: sel ? sel.id : null }),
+      selTitle: sel ? sel.title : '',
+      selKind: sel ? sel.kind : '',
+      selCol: sel ? sel.col : '#38bdf8',
+      selRows: sel ? sel.rows.map(r => ({ k: r[0], v: r[1] })) : [],
+      selAction: sel ? sel.action : '',
+      selGo: () => { if (sel) this.goRoute(sel.route); },
+      clearSel: () => this.setState({ sel: null }),
+
+      setDay: () => this.setState({ theme: 'day' }),
+      setNight: () => this.setState({ theme: 'night' }),
+      tSb: () => this.setState(s => ({ sb: !s.sb })),
+      tSvc: () => this.setState(s => ({ expSvc: !s.expSvc })),
+      tAdmin: () => this.setState(s => ({ expAdmin: !s.expAdmin })),
+      tNotif: () => this.setState(s => ({ notifOpen: !s.notifOpen, profOpen: false })),
+      tProf: () => this.setState(s => ({ profOpen: !s.profOpen, notifOpen: false })),
+      tLayers: () => this.setState(s => ({ layersOpen: !s.layersOpen })),
+      tMobNav: () => this.setState(s => ({ mobNavOpen: !s.mobNavOpen })),
+      openSettings: () => this.setState({ settingsOpen: true, profOpen: false, mobNavOpen: false }),
+      closeSettings: () => this.setState({ settingsOpen: false }),
+      setOrgName: e => this.setState({ orgName: e.target.value }),
+      stop: e => { if (e && e.stopPropagation) e.stopPropagation(); },
+      t3D: () => this.setState(s => ({ twin3D: !s.twin3D })),
+      tFs: () => this.setState(s => ({ fs: !s.fs })),
+      zIn: () => this.setState(s => ({ zoom: Math.min(2.6, s.zoom + 0.2) })),
+      zOut: () => this.setState(s => ({ zoom: Math.max(0.6, s.zoom - 0.2) })),
+      resetView: () => this.setState({ zoom: 1, panX: 0, panY: 0, sel: null }),
+      hideQuick: () => this.setState({ quick: false }),
+      goSurvey: () => this.goRoute('survey'),
+      goLands: () => this.goRoute('lands'),
+      soon: e => { if (e && e.preventDefault) e.preventDefault(); this.flash('هذا المسار سيُربط بالنظام التشغيلي'); }
+    };
+  }
+
+  goRoute(r) {
+    const m = { survey: 'الانتقال إلى خدمة الحصر الميداني الذكي', lands: 'الانتقال إلى خدمة حصر الأراضي الذكي',
+      report: 'الانتقال إلى سجل البلاغات', task: 'الانتقال إلى إدارة المهام',
+      mobility: 'الانتقال إلى لوحة مدير حركة السير الذكية' };
+    this.flash(m[r] || 'تحويل المسار');
+  }
+}
+</script>
+</body>
+</html>

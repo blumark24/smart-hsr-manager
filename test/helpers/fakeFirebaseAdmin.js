@@ -1,8 +1,8 @@
 'use strict';
 // Minimal in-memory Firestore + Auth double, faithful enough to the Admin
-// SDK surface api/admin/users.js, api/admin/lands-bootstrap.js, and
-// api/_lib/authz.js actually use (doc/collection/get/set/where/
-// runTransaction, auth.createUser/getUser/updateUser). This lets the REAL
+// SDK surface api/admin/users.js and api/_lib/authz.js actually use
+// (doc/collection/get/set/where/runTransaction,
+// auth.createUser/getUser/updateUser). This lets the REAL
 // authorization logic (getCallerContext, assertCanManage) and the REAL
 // handlers run unmodified against fake data — no real Firebase project, no
 // network — for genuine integration coverage of the manager -> Lands bridge
@@ -58,6 +58,11 @@ function makeStore() {
       doc(id) {
         const generatedId = id || `auto_${Math.random().toString(36).slice(2)}`;
         return docRef(`${name}/${generatedId}`);
+      },
+      async add(data) {
+        const ref = docRef(`${name}/auto_${Math.random().toString(36).slice(2)}`);
+        await ref.set(data);
+        return ref;
       },
       where(field, op, value) {
         return {

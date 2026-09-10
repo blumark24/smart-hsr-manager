@@ -19,9 +19,15 @@ test('manager login resolves the environment Firebase configuration', () => {
 });
 
 test('manager dashboard resolves the same environment Firebase configuration', () => {
-  const source = fs.readFileSync(path.join(__dirname, '..', 'manager.html'), 'utf8');
+  // manager.html's own inline script is a non-module Designer canvas
+  // script (type="text/x-dc") and never initializes Firebase directly —
+  // that happens in manager-dashboard-adapter.js, the real ES module
+  // manager.html loads for all of its Firestore/Auth wiring. This is
+  // where the reconciled architecture actually performs config
+  // resolution, so that's what this test checks.
+  const source = fs.readFileSync(path.join(__dirname, '..', 'manager-dashboard-adapter.js'), 'utf8');
 
   assert.match(source, /import \{ resolveFirebaseConfig \} from ['"]\.\/firebase-runtime-config\.js['"]/);
-  assert.match(source, /const firebaseConfig = await resolveFirebaseConfig\(\)/);
+  assert.match(source, /resolveFirebaseConfig\(\)/);
   assert.doesNotMatch(source, /projectId:\s*['"]smart-hsr-manager['"]/);
 });
