@@ -274,7 +274,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       return;
     }
 
-    // One operational employee = one operational service (server-enforced).
+    // PHASE 02B.1/06C.1 — one identity may hold multiple independent
+    // product entitlements at once (Field, Mobility, and/or Lands — see the
+    // unified entitlement computation above and the Product Chooser below).
     // A Lands employee/department-manager is routed to the Lands trusted
     // runtime via a one-time server-side SSO handoff (POST /api/organization/context
     // -> Lands' /api/lands-sso-register), so they land on the Lands dashboard
@@ -303,13 +305,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       await signOut(probeAuth);
 
       if (!handoffCode) {
-        showMsg('❌ تعذر إعداد الدخول الآمن إلى حصر منح الأراضي الذكي. حاول لاحقًا.', 'error');
+        showMsg('❌ تعذر إعداد الدخول الآمن إلى إدارة الأراضي والممتلكات. حاول لاحقًا.', 'error');
         loginButton.disabled = false;
         loginButton.textContent = 'تسجيل الدخول';
         return;
       }
 
-      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى حصر منح الأراضي الذكي', 'success');
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى إدارة الأراضي والممتلكات', 'success');
       setTimeout(() => {
         const landsUrl = new URL(resolveLandsRedirectBase());
         landsUrl.searchParams.set('code', handoffCode);
@@ -377,10 +379,10 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       }
       await signOut(probeAuth);
       if (!handoffCode) {
-        showMsg('❌ تعذر إعداد الدخول الآمن إلى حصر منح الأراضي الذكي. حاول لاحقًا.', 'error');
+        showMsg('❌ تعذر إعداد الدخول الآمن إلى إدارة الأراضي والممتلكات. حاول لاحقًا.', 'error');
         return;
       }
-      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى حصر منح الأراضي الذكي', 'success');
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى إدارة الأراضي والممتلكات', 'success');
       setTimeout(() => {
         const landsUrl = new URL(resolveLandsRedirectBase());
         landsUrl.searchParams.set('code', handoffCode);

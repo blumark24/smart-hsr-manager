@@ -156,6 +156,39 @@ test('all three products (Field, independent Mobility, Lands) can be enabled at 
   assert.equal(out.lands.enabled, true);
 });
 
+// ---- PHASE 02B.1/06C.1 SECURITY HOTFIX — resolveProductEntitlements()
+// already used true key-presence semantics (`mobilityAccess !== undefined`)
+// before this hotfix; these cases lock that in against every malformed
+// value shape named in the hotfix brief's test matrix, alongside the two
+// resolvers that DID need fixing (api/_lib/authz.js, users-list-view.js —
+// see test/mobility-entitlement-key-presence-security.test.js). ----
+
+for (const [label, value] of [
+  ['null', null],
+  ['a string', 'employee'],
+  ['a number', 123],
+  ['an array', []],
+  ['an empty object', {}],
+]) {
+  test(`mobilityAccess = ${label} (key present) on a stale legacy Mobility role never falls back — Mobility denied`, () => {
+    const out = resolveProductEntitlements({ role: 'mobility_head', mobilityAccess: value });
+    assert.equal(out.mobility.enabled, false, `mobilityAccess = ${JSON.stringify(value)} must fail closed, not fall back to the legacy role`);
+    assert.equal(out.mobility.role, null);
+  });
+
+  test(`mobilityAccess = ${label} (key present) never affects an independently-enabled Field role`, () => {
+    const out = resolveProductEntitlements({ role: 'supervisor', mobilityAccess: value });
+    assert.equal(out.field.enabled, true, 'Field must survive any Mobility malformation');
+    assert.equal(out.mobility.enabled, false);
+  });
+}
+
+test('mobilityAccess: {enabled:true} with no role is denied, not silently accepted', () => {
+  const out = resolveProductEntitlements({ role: null, mobilityAccess: { enabled: true } });
+  assert.equal(out.mobility.enabled, false);
+  assert.equal(out.mobility.role, null);
+});
+
 test('legacy compatibility: a record with only the fields that existed before Phase 03B resolves identically to how it always behaved', () => {
   const legacyFieldOnly = resolveProductEntitlements({ role: 'contractor', organizationId: 'org-1', active: true });
   assert.equal(legacyFieldOnly.field.enabled, true);

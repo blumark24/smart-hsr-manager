@@ -157,9 +157,24 @@ async function getCallerContext(uid) {
 // `role`. Used both to resolve a caller's own mobility_head identity below
 // and, server-side only, to decide which same-org records are live Mobility
 // employees for the listMobilityEmployees admin action.
+// PHASE 02B.1/06C.1 SECURITY HOTFIX — the presence of the `mobilityAccess`
+// KEY ITSELF is authoritative, not merely a truthy/object-typed value. The
+// previous `data.mobilityAccess != null && typeof === 'object'` check let a
+// present-but-malformed value (null, a string, a number) silently fall
+// through to the legacy `role` fallback below — exactly the drift this
+// hotfix closes. Once the key exists on the record at all (checked via
+// hasOwnProperty, so an explicit `null` counts as present), it alone
+// decides Mobility state: only a valid {enabled:true, role:<valid role>}
+// shape returns a role; every other value for a present key (null, a
+// scalar, an array, {}, enabled:false, a missing/invalid role) fails
+// closed to null and is NEVER reactivated by a stale legacy role. Only a
+// record that has NEVER been touched by this field (the key is genuinely
+// absent) falls back to the legacy scalar `role`.
 function resolveMobilityRole(data) {
-  if (data && data.mobilityAccess != null && typeof data.mobilityAccess === 'object') {
-    return data.mobilityAccess.enabled === true ? (data.mobilityAccess.role || null) : null;
+  if (data && Object.prototype.hasOwnProperty.call(data, 'mobilityAccess')) {
+    const access = data.mobilityAccess;
+    const enabled = Boolean(access) && typeof access === 'object' && access.enabled === true;
+    return enabled && MOBILITY_MANAGEABLE_ROLES.includes(access.role) ? access.role : null;
   }
   return (data && data.role) || null;
 }

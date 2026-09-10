@@ -165,6 +165,49 @@ test('17b. an invalid legacy role value is denied the same way', () => {
   assert.equal(out.hasMobilityRole, false);
 });
 
+// ---- PHASE 02B.1/06C.1 SECURITY HOTFIX — the presence of the
+// mobilityAccess KEY ITSELF is authoritative. Once the key exists on the
+// record at all (even set to a malformed, non-object value), it alone
+// decides Mobility state and a stale legacy role must NEVER be consulted
+// again — every one of these must resolve to hasMobilityRole:false, not
+// silently fall back to a legacy role that happens to be valid. ----
+
+test('mobilityAccess: null (key present) never falls back to a stale legacy Mobility role', () => {
+  const out = resolveLoginEntitlements({ role: 'mobility_head', mobilityAccess: null });
+  assert.equal(out.hasMobilityRole, false, 'a present-but-null mobilityAccess must fail closed, not fall back to the legacy role');
+});
+
+test('mobilityAccess: a string value (key present) never falls back to a stale legacy Mobility role', () => {
+  const out = resolveLoginEntitlements({ role: 'employee', mobilityAccess: 'employee' });
+  assert.equal(out.hasMobilityRole, false);
+});
+
+test('mobilityAccess: a number value (key present) never falls back to a stale legacy Mobility role', () => {
+  const out = resolveLoginEntitlements({ role: 'mobility_head', mobilityAccess: 123 });
+  assert.equal(out.hasMobilityRole, false);
+});
+
+test('mobilityAccess: an array value (key present) never falls back to a stale legacy Mobility role', () => {
+  const out = resolveLoginEntitlements({ role: 'employee', mobilityAccess: [] });
+  assert.equal(out.hasMobilityRole, false);
+});
+
+test('mobilityAccess: an empty object (key present) never falls back to a stale legacy Mobility role', () => {
+  const out = resolveLoginEntitlements({ role: 'mobility_head', mobilityAccess: {} });
+  assert.equal(out.hasMobilityRole, false);
+});
+
+test('mobilityAccess: {enabled:true} with no role is denied, not silently accepted', () => {
+  const out = resolveLoginEntitlements({ role: null, mobilityAccess: { enabled: true } });
+  assert.equal(out.hasMobilityRole, false);
+});
+
+test('Field independence: a Field supervisor with mobilityAccess:null keeps Field enabled while Mobility stays disabled', () => {
+  const out = resolveLoginEntitlements({ role: 'supervisor', mobilityAccess: null });
+  assert.equal(out.hasFieldRole, true, 'Field must never be affected by a malformed Mobility value');
+  assert.equal(out.hasMobilityRole, false);
+});
+
 // ---- 18: missing organization is denied — verified structurally, since
 // the actual check lives in the deny-condition right after this snippet ----
 test('18. login.html denies a record with no organizationId, even if a service role is otherwise present', () => {

@@ -402,4 +402,87 @@ test('safeMetadata(): a record never touched by mobilityAccess reports mobilityA
   } finally { fakes.restore(); }
 });
 
+// ============================================================================
+// PHASE 02B.1 / 06C.1 SECURITY HOTFIX — server-side proof that a malformed
+// `mobilityAccess` value (present key, invalid shape) can never cause
+// mobility_head authorization or employee discovery through a stale legacy
+// role fallback. Runs against the REAL, unmodified handler + authz.js —
+// exactly the "server-side authorization resolver" the hotfix brief
+// requires, distinct from the pure-unit coverage in
+// test/mobility-entitlement-key-presence-security.test.js.
+// ============================================================================
+
+const MALFORMED_MOBILITY_VALUES = [
+  ['null', null],
+  ['a string', 'employee'],
+  ['a number', 123],
+  ['an array', []],
+  ['an empty object', {}],
+  ['{enabled:true} with no role', { enabled: true }],
+  ['{enabled:true, role: an invalid role}', { enabled: true, role: 'not_a_real_role' }],
+];
+
+for (const [label, value] of MALFORMED_MOBILITY_VALUES) {
+  test(`SECURITY: mobilityAccess = ${label} on a stale role:mobility_head record can NOT authorize as mobility_head`, async () => {
+    const fakes = installFakes();
+    try {
+      fakes.store.seed('users/malformed-head', {
+        uid: 'malformed-head', role: 'mobility_head', active: true, organizationId: 'org-mal',
+        mobilityAccess: value,
+      });
+      fakes.store.seed('users/emp-under-malformed-head', { uid: 'emp-under-malformed-head', role: 'employee', active: true, organizationId: 'org-mal', name: 'Employee' });
+      const handler = loadFreshUsersHandler();
+      const res = fakeResponse();
+      await handler(fakeRequest({ uid: 'malformed-head', body: { action: 'listMobilityEmployees' } }), res);
+      assert.equal(res.statusCode, 403, `a malformed mobilityAccess (${label}) must never authorize mobility_head via the stale legacy role, got ${res.statusCode}: ${JSON.stringify(res.body)}`);
+      assert.equal(res.body.reason, 'mobility_head_required');
+    } finally { fakes.restore(); }
+  });
+
+  test(`SECURITY: mobilityAccess = ${label} on a stale role:employee record is EXCLUDED from Mobility employee discovery`, async () => {
+    const fakes = installFakes();
+    try {
+      fakes.store.seed('users/real-head-mal', { uid: 'real-head-mal', role: 'mobility_head', active: true, organizationId: 'org-mal2' });
+      fakes.store.seed('users/malformed-emp', {
+        uid: 'malformed-emp', role: 'employee', active: true, organizationId: 'org-mal2', name: 'Malformed Employee',
+        mobilityAccess: value,
+      });
+      const handler = loadFreshUsersHandler();
+      const res = fakeResponse();
+      await handler(fakeRequest({ uid: 'real-head-mal', body: { action: 'listMobilityEmployees' } }), res);
+      assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+      assert.deepEqual(res.body.employees, [], `a malformed mobilityAccess (${label}) must never let a stale legacy role:employee reach employee discovery`);
+    } finally { fakes.restore(); }
+  });
+
+  test(`SECURITY: mobilityAccess = ${label} on a stale role:employee record is NOT reported as an enabled Mobility user in the Manager User Center list`, async () => {
+    const fakes = installFakes();
+    try {
+      fakes.store.seed('managers/mgr-mal', { uid: 'mgr-mal', role: 'manager', active: true, organizationId: 'org-mal3' });
+      fakes.store.seed('users/malformed-uc', {
+        uid: 'malformed-uc', role: 'employee', active: true, organizationId: 'org-mal3', name: 'Malformed UC',
+        mobilityAccess: value,
+      });
+      const handler = loadFreshUsersHandler();
+      const res = fakeResponse();
+      await handler(fakeRequest({ uid: 'mgr-mal', body: { action: 'getMetadata', uid: 'malformed-uc' } }), res);
+      assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+      assert.deepEqual(res.body.user.mobilityAccess, { enabled: false, role: null }, `a malformed mobilityAccess (${label}) must never report an enabled Mobility state through the stale legacy role`);
+    } finally { fakes.restore(); }
+  });
+}
+
+test('SECURITY: a valid {enabled:true, role:"mobility_head"} still authorizes correctly (positive control for the matrix above)', async () => {
+  const fakes = installFakes();
+  try {
+    fakes.store.seed('users/valid-head', { uid: 'valid-head', role: null, active: true, organizationId: 'org-valid', mobilityAccess: { enabled: true, role: 'mobility_head' } });
+    fakes.store.seed('users/emp-under-valid-head', { uid: 'emp-under-valid-head', role: 'employee', active: true, organizationId: 'org-valid', name: 'Employee' });
+    const handler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: 'valid-head', body: { action: 'listMobilityEmployees' } }), res);
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.deepEqual(res.body.employees.map(e => e.uid), ['emp-under-valid-head']);
+  } finally { fakes.restore(); }
+});
+
 console.log('admin listMobilityEmployees (Blocker 1) OK');

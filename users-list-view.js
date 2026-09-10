@@ -32,9 +32,19 @@ const MOBILITY_ROLES = new Set(['mobility_head', 'department_head', 'administrat
  * @param {{role?: string|null, mobilityAccess?: {enabled?: boolean, role?: string|null}|null}} userDoc
  * @returns {string|null}
  */
+// PHASE 02B.1/06C.1 SECURITY HOTFIX — key PRESENCE is authoritative, not a
+// truthy/object-typed value check. `data.mobilityAccess != null && typeof
+// === 'object'` let a present-but-malformed value (null, a string, a
+// number) fall through to the legacy `role` fallback below instead of
+// failing closed. Object.prototype.hasOwnProperty correctly counts an
+// explicit `null` as present (unlike `!= null`), and the role itself is
+// now validated against MOBILITY_ROLES here too, so an invalid role value
+// can never leak out as "enabled".
 function resolveMobilityRole(userDoc) {
-  if (userDoc.mobilityAccess != null && typeof userDoc.mobilityAccess === 'object') {
-    return userDoc.mobilityAccess.enabled === true ? userDoc.mobilityAccess.role : null;
+  if (Object.prototype.hasOwnProperty.call(userDoc, 'mobilityAccess')) {
+    const access = userDoc.mobilityAccess;
+    const enabled = Boolean(access) && typeof access === 'object' && access.enabled === true;
+    return enabled && MOBILITY_ROLES.has(access.role) ? access.role : null;
   }
   return MOBILITY_ROLES.has(userDoc.role) ? userDoc.role : null;
 }

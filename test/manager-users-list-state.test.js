@@ -233,9 +233,25 @@ test('17. manager-dashboard-adapter.js: mobilityAccess is preserved into the nor
   const source = read('manager-dashboard-adapter.js');
   const mapStart = source.indexOf('users.filter(belongsOnUsersList).map(item => ({');
   assert.notEqual(mapStart, -1);
-  const mapBody = source.slice(mapStart, mapStart + 1100);
-  assert.match(mapBody, /mobilityAccess:\s*item\.mobilityAccess \|\| null/, 'mobilityAccess must be carried through onto each normalized user row');
+  const mapBody = source.slice(mapStart, mapStart + 1600);
+  // PHASE 02B.1/06C.1 SECURITY HOTFIX — a real mobilityAccess value must
+  // still be carried through onto each normalized user row, but it must be
+  // carried through via true key-PRESENCE (hasOwnProperty), never
+  // unconditionally defaulted with `|| null` — the old `item.mobilityAccess
+  // || null` pattern forced the key to exist on every single row (even one
+  // whose source document never had it at all), which permanently defeated
+  // every downstream `mobilityAccess !== undefined`/hasOwnProperty presence
+  // check and made the legacy-role fallback unreachable for any employee.
+  assert.doesNotMatch(mapBody, /mobilityAccess:\s*item\.mobilityAccess \|\| null/, 'must not force the mobilityAccess key onto every row regardless of source presence');
+  assert.match(mapBody, /hasOwnProperty\.call\(item, ['"]mobilityAccess['"]\)/, 'must gate on true key-presence of the source document\'s mobilityAccess field');
 });
+
+// 17b/17c (real-execution proof that a never-touched record's row genuinely
+// lacks the mobilityAccess key, while an explicit null stays present) live
+// in test/mobility-entitlement-key-presence-security.test.js, which runs
+// buildViewData() itself via the same VM-extraction technique already used
+// by test/manager-lands-sso.test.js, since buildViewData is not exported
+// from this browser-global adapter file.
 
 test('18. belongsOnUsersList: all 8 legacy/independent Field+Mobility+Lands combinations are handled correctly', async () => {
   const { belongsOnUsersList } = await viewPromise;

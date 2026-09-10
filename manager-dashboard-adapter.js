@@ -187,7 +187,18 @@ function buildViewData(observations, users, incidents = []) {
       // the User Center service editor, belongsOnUsersList itself) silently
       // falls back to the legacy scalar `role` even when a real,
       // independent mobilityAccess exists in Firestore.
-      mobilityAccess: item.mobilityAccess || null,
+      //
+      // PHASE 02B.1/06C.1 SECURITY HOTFIX — this field must preserve TRUE
+      // key-presence, not just its value. The previous `item.mobilityAccess
+      // || null` unconditionally set this key on every row (even one whose
+      // source document never had mobilityAccess at all), which permanently
+      // defeated every downstream `mobilityAccess !== undefined` /
+      // hasOwnProperty presence check for this row — the legacy-role
+      // fallback could never fire again for ANY employee viewed through
+      // this model, Mobility role or not. Only copy the key across when the
+      // source document actually has it (via hasOwnProperty, so a real
+      // {mobilityAccess: null} stays present and correctly fails closed).
+      ...(Object.prototype.hasOwnProperty.call(item, 'mobilityAccess') ? { mobilityAccess: item.mobilityAccess } : {}),
       active: item.active !== false,
       email: item.email || 'غير متاح'
     })),
