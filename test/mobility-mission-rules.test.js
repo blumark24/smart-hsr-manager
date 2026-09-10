@@ -445,6 +445,34 @@ test('V8h PHASE 06A.1 case H: allocating to a user with a stale legacy role:empl
   }));
 });
 
+// ---- PHASE 06A.2 — every V8* test above writes only ONE of the two
+// documents a REAL allocation touches (see smart-mobility-adapter.js's
+// allocateVehicle(), which updates missions/{id} AND vehicles/{id} together
+// inside one runTransaction()). That gap in coverage hid a real defect,
+// found via real-browser QA: canMobilityHeadAdvanceMission()/
+// canMobilityHeadManageVehicle() each re-evaluated mobilityUserOrgId() up
+// to four times and read the cross-referenced document twice — for a
+// LEGACY role:'employee' target this stayed just under Firestore's
+// 1000-expression-per-request budget, but the independent mobilityAccess
+// dual-read's one extra property-access level tipped a real two-document
+// allocation transaction over that ceiling and failed closed with
+// PERMISSION_DENIED even though every actual authorization condition held.
+// Fixed by binding mobilityUserOrgId() and the cross-referenced document
+// once each via `let` (allocationTargetVehicleValid()/
+// allocationTargetMissionValid()).
+//
+// A real runTransaction() against this specific rules-unit-testing harness
+// (after dozens of prior tests' operations on shared emulator-backed
+// contexts) hits an unrelated SDK harness quirk ("Firestore has already
+// been started...") unrelated to Rules correctness — so the real
+// two-document transaction shape is instead verified with the genuine
+// production client SDK (exactly what smart-mobility-adapter.js itself
+// uses) in a standalone script against this same emulator + these same
+// rules, confirming BOTH a legacy role:'employee' target and an
+// independent-mobilityAccess target succeed after this fix, and
+// reproducing the pre-fix failure for the independent-field case before
+// it — plus end-to-end in a real browser (see the phase report).
+
 test('V8g PHASE 06A: the mission-side APPROVED -> VEHICLE_ALLOCATED write is independently gated the same way — a bad target denies even if the vehicle write is not attempted', async () => {
   await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
     status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: UID.employeeB,

@@ -5,7 +5,8 @@
 // Lands app). This module never runs in the browser, so it is never subject
 // to CORS, and it never writes to Lands' protected Firestore collections
 // directly — every entitlement lifecycle change other than the one-time
-// institution-manager bootstrap (see lands-bootstrap.js) goes through
+// institution-manager bootstrap (see api/admin/users.js action
+// 'landsBootstrap', backed by ./landsManagerBootstrap.js) goes through
 // Lands' own commitMutationAndAudit transaction via this HTTP call, which is
 // the only thing that can atomically write the real membership document AND
 // its Trusted Audit event together.

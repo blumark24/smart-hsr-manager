@@ -118,6 +118,30 @@ service cloud.firestore {
     // evaluation graph is already large enough that repeating get() calls
     // per field previously blew the platform's per-request expression
     // budget on this exact write path.
+    // PHASE 06A.2 — single-get cross-checks for the ALLOCATE transition's
+    // other-document conflict-prevention check (vehicle, when writing the
+    // mission; mission, when writing the vehicle). Each used to be two
+    // separate get() calls on the identical path (one per field compared) —
+    // harmless for a legacy role:'employee' target, but combined with
+    // mobilityUserOrgId() being independently re-evaluated up to four times
+    // in the SAME calling function (see below), a real two-document
+    // allocation transaction to an independent-mobilityAccess employee (one
+    // extra property-access level in validMobilityAllocationTarget's
+    // dual-read ternary) could tip the per-request expression budget over
+    // Firestore's 1000-expression ceiling and fail closed with
+    // PERMISSION_DENIED even though every actual authorization condition is
+    // satisfied. Binding the fetched document once via `let` here — exactly
+    // the same fix already applied to validMobilityAllocationTarget itself —
+    // removes that redundancy without changing what is actually checked.
+    function allocationTargetVehicleValid(vehicleId, orgId) {
+      let v = get(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
+      return v.organizationId == orgId && v.status == 'AVAILABLE';
+    }
+    function allocationTargetMissionValid(missionId, orgId) {
+      let m = get(/databases/$(database)/documents/missions/$(missionId)).data;
+      return m.organizationId == orgId && m.status == 'APPROVED';
+    }
+
     function validMobilityAllocationTarget(employeeUid, orgId) {
       let target = get(/databases/$(database)/documents/users/$(employeeUid)).data;
       return exists(/databases/$(database)/documents/users/$(employeeUid))
@@ -185,7 +209,17 @@ service cloud.firestore {
         // independent mobilityAccess field instead of the legacy scalar
         // `role` — same dual-read fallback as mobilityRoleValue() above,
         // evaluated directly against this document's own resource.data.
+        // PHASE 06A.2: also requires the target to be active — an inactive
+        // employee record is never readable through this branch, matching
+        // the equivalent check already made in validMobilityAllocationTarget()
+        // for the allocation write itself. The trusted server-side
+        // listMobilityEmployees action (api/admin/users.js) no longer
+        // depends on this rule at all (it reads via the Admin SDK, which
+        // bypasses these rules entirely) — this tightening is defense in
+        // depth for any remaining direct client read of this branch, not a
+        // regression risk for that action.
         || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId()
+            && resource.data.active != false
             && (('mobilityAccess' in resource.data)
                   ? (resource.data.mobilityAccess.enabled == true && resource.data.mobilityAccess.role == 'employee')
                   : resource.data.role == 'employee'));
@@ -392,8 +426,14 @@ service cloud.firestore {
     // confirm return.
     function canMobilityHeadAdvanceMission() {
       let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      // PHASE 06A.2 — bound once instead of re-evaluated at every one of the
+      // four use sites below (each a full re-run of isActiveMobilityUser()/
+      // mobilityRoleValue(), including its own get() on the caller's own
+      // record) — see allocationTargetVehicleValid()'s comment above for why
+      // this matters for the per-request expression budget.
+      let callerOrgId = mobilityUserOrgId();
       return mobilityUserRole() == 'mobility_head'
-        && resource.data.organizationId == mobilityUserOrgId()
+        && resource.data.organizationId == callerOrgId
         && (
           (resource.data.status == 'APPROVED' && request.resource.data.status == 'VEHICLE_ALLOCATED'
             && changedKeys.hasOnly(['status', 'vehicleId', 'assignedEmployeeUid', 'assignedEmployeeName', 'updatedAt', 'updatedByUid'])
@@ -404,13 +444,12 @@ service cloud.firestore {
             // second, racing allocation still requires the caller to write
             // this and the vehicle doc inside one runTransaction() — see
             // platform/policies/vehicle-workflow-policy.js.
-            && get(/databases/$(database)/documents/vehicles/$(request.resource.data.vehicleId)).data.organizationId == mobilityUserOrgId()
-            && get(/databases/$(database)/documents/vehicles/$(request.resource.data.vehicleId)).data.status == 'AVAILABLE'
+            && allocationTargetVehicleValid(request.resource.data.vehicleId, callerOrgId)
             // PHASE 06A hotfix — the mission write is the OTHER half of a
             // real allocation transaction; it must independently pass the
             // same target-employee validation the vehicle write requires,
             // so neither write alone is a bypass.
-            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, mobilityUserOrgId()))
+            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, callerOrgId))
           || (resource.data.status == 'VEHICLE_ALLOCATED' && request.resource.data.status == 'HANDED_OVER'
             && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
           || (resource.data.status == 'INCIDENT_HOLD' && request.resource.data.status == 'IN_PROGRESS'
@@ -474,8 +513,11 @@ service cloud.firestore {
     // confirm return.
     function canMobilityHeadManageVehicle() {
       let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      // PHASE 06A.2 — see canMobilityHeadAdvanceMission()'s identical
+      // comment: bound once instead of re-evaluated at every use site.
+      let callerOrgId = mobilityUserOrgId();
       return mobilityUserRole() == 'mobility_head'
-        && resource.data.organizationId == mobilityUserOrgId()
+        && resource.data.organizationId == callerOrgId
         && (
           (resource.data.status == 'AVAILABLE' && request.resource.data.status == 'RESERVED'
             && changedKeys.hasOnly(['status', 'assignedEmployeeUid', 'currentMissionId', 'updatedAt', 'updatedByUid'])
@@ -483,8 +525,7 @@ service cloud.firestore {
             && request.resource.data.currentMissionId is string && request.resource.data.currentMissionId.size() > 0
             // Conflict-prevention cross-check: the mission being allocated
             // must actually be APPROVED and in this same organization.
-            && get(/databases/$(database)/documents/missions/$(request.resource.data.currentMissionId)).data.organizationId == mobilityUserOrgId()
-            && get(/databases/$(database)/documents/missions/$(request.resource.data.currentMissionId)).data.status == 'APPROVED'
+            && allocationTargetMissionValid(request.resource.data.currentMissionId, callerOrgId)
             // PHASE 06A hotfix — the single vehicleEligible check the
             // Phase 03B.1 fail-safe default added here is now folded into
             // the fuller validMobilityAllocationTarget() check below, which
@@ -493,7 +534,7 @@ service cloud.firestore {
             // real Mobility operational roles — a UI checkbox, a stale uid,
             // a disabled account, or a cross-tenant/non-Mobility uid was
             // previously not caught here at all.
-            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, mobilityUserOrgId()))
+            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, callerOrgId))
           || (resource.data.status == 'AVAILABLE'
             && (request.resource.data.status == 'MAINTENANCE' || request.resource.data.status == 'OUT_OF_SERVICE')
             && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))

@@ -14,14 +14,12 @@ const { before, after, beforeEach, test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { pathToFileURL } = require('node:url');
 
 const { initializeTestEnvironment, assertSucceeds, assertFails } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc, deleteDoc } = require('firebase/firestore');
 
 const PROJECT_ID = 'demo-smart-hsr-user-center-tests';
 const RULES_PATH = path.resolve(__dirname, '..', 'firestore.rules');
-const root = path.resolve(__dirname, '..');
 
 const ORG_A = 'orgA';
 const ORG_B = 'orgB';
@@ -310,7 +308,7 @@ test('Blocker2 case E: mobility_head may NOT read a mobilityAccess employee from
   await assertFails(getDoc(doc(ctx(UID.mobilityHeadA), 'users', uid)));
 });
 
-test('Blocker2 case F (documented rule gap): the users/{userId} read rule does not itself gate on active — client-side isLiveMobilityEmployee() excludes inactive employees from liveEmployees instead', async () => {
+test('PHASE 06A.2 Blocker2 case F: mobility_head may NOT read an inactive mobilityAccess employee — the read rule is now tightened, not left to client-side filtering', async () => {
   const uid = 'inactive-mobility-employee-uid';
   await testEnv.withSecurityRulesDisabled(async (context) => {
     await setDoc(doc(context.firestore(), 'users', uid), {
@@ -318,63 +316,13 @@ test('Blocker2 case F (documented rule gap): the users/{userId} read rule does n
       mobilityAccess: { enabled: true, role: 'employee' },
     });
   });
-  // The read itself is still permitted (matches the pre-existing rule
-  // shape, which never checked `active` for this branch even for the
-  // legacy role:employee case) — mobility-employee-discovery.js's
-  // isLiveMobilityEmployee() is what keeps this uid out of liveEmployees.
-  await assertSucceeds(getDoc(doc(ctx(UID.mobilityHeadA), 'users', uid)));
+  await assertFails(getDoc(doc(ctx(UID.mobilityHeadA), 'users', uid)));
 });
 
-test('Blocker2 discovery query: the exact two parallel queries smart-mobility-adapter.js runs succeed with no composite index required, and mergeLiveEmployees produces exactly the expected final set', async () => {
-  // A dedicated org id keeps this test's result set independent of the
-  // other employee fixtures already seeded under ORG_A/ORG_B.
-  const ORG_Q = 'org-discovery-query-test';
+test('PHASE 06A.2: mobility_head may NOT read an inactive LEGACY role:employee record either (the new active check applies to both branches of the dual-read)', async () => {
+  const uid = 'inactive-legacy-employee-uid';
   await testEnv.withSecurityRulesDisabled(async (context) => {
-    const db = context.firestore();
-    await setDoc(doc(db, 'users', 'q-mobility-head'), { role: 'mobility_head', active: true, organizationId: ORG_Q });
-    await setDoc(doc(db, 'users', 'q-legacy-employee'), { role: 'employee', active: true, organizationId: ORG_Q });
-    await setDoc(doc(db, 'users', 'q-mobility-employee'), {
-      role: null, active: true, organizationId: ORG_Q, mobilityAccess: { enabled: true, role: 'employee' },
-    });
-    // Must never reach the final merged set: cross-org, and a stale legacy
-    // role:employee explicitly disabled via mobilityAccess.
-    await setDoc(doc(db, 'users', 'q-cross-org-employee'), {
-      role: null, active: true, organizationId: ORG_B, mobilityAccess: { enabled: true, role: 'employee' },
-    });
-    await setDoc(doc(db, 'users', 'q-disabled-employee'), {
-      role: 'employee', active: true, organizationId: ORG_Q, mobilityAccess: { enabled: false, role: null },
-    });
+    await setDoc(doc(context.firestore(), 'users', uid), { role: 'employee', active: false, organizationId: ORG_A });
   });
-  const db = ctx('q-mobility-head');
-  // Neither query throws (in particular, no FAILED_PRECONDITION asking for a
-  // composite index) — an all-equality multi-field query needs none.
-  const legacySnap = await getDocs(query(
-    collection(db, 'users'),
-    where('organizationId', '==', ORG_Q),
-    where('role', '==', 'employee'),
-  ));
-  const mobilitySnap = await getDocs(query(
-    collection(db, 'users'),
-    where('organizationId', '==', ORG_Q),
-    where('mobilityAccess.enabled', '==', true),
-    where('mobilityAccess.role', '==', 'employee'),
-  ));
-  const legacyIds = legacySnap.docs.map(d => d.id).sort();
-  const mobilityIds = mobilitySnap.docs.map(d => d.id).sort();
-  assert.deepEqual(legacyIds, ['q-disabled-employee', 'q-legacy-employee']);
-  assert.deepEqual(mobilityIds, ['q-mobility-employee']);
-
-  // The users/{userId} rule's mobility_head-employee branch is NOT
-  // re-evaluated per-document against fields outside the query's own
-  // filters for a list/query request the way a direct getDoc() is (Blocker2
-  // case D's getDoc() denies q-disabled-employee individually, but this
-  // query still returns it) — so mergeLiveEmployees()'s client-side
-  // isLiveMobilityEmployee() dual-read, not the Rules query filter alone,
-  // is what excludes it from the final liveEmployees the allocation drawer
-  // actually sees.
-  const { mergeLiveEmployees } = await import(pathToFileURL(path.join(root, 'mobility-employee-discovery.js')).href);
-  const legacyDocs = new Map(legacySnap.docs.map(d => [d.id, d.data()]));
-  const mobilityDocs = new Map(mobilitySnap.docs.map(d => [d.id, d.data()]));
-  const merged = mergeLiveEmployees(legacyDocs, mobilityDocs).map(e => e.uid).sort();
-  assert.deepEqual(merged, ['q-legacy-employee', 'q-mobility-employee']);
+  await assertFails(getDoc(doc(ctx(UID.mobilityHeadA), 'users', uid)));
 });

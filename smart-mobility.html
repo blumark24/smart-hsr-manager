@@ -2133,7 +2133,7 @@ class Component extends DCLogic {
           }).catch(() => this.flash('تعذر الإجراء'));
         }, tx: danger.tx, bg: danger.bg, bd: danger.bd });
       } else {
-        if (stt === 'بانتظار المركبة') acts.push({ label: 'تخصيص مركبة', on: () => this.setState({ drawer: 'alloc' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        if (stt === 'بانتظار المركبة') acts.push({ label: 'تخصيص مركبة', on: () => { window.SmartHSRMobilityAdapter.refreshMobilityEmployees?.(); this.setState({ drawer: 'alloc' }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
         if (stt === 'تم تخصيص المركبة') acts.push({ label: 'تسليم المركبة', on: () => this.setState({ drawer: 'handover' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
         if (stt === 'في انتظار إعادة المركبة') acts.push({ label: 'استلام المركبة', on: () => this.setState({ drawer: 'ret' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
         acts.push({ label: 'عرض في الخريطة', on: () => { const vv = V.filter(x => x.id === m.veh)[0]; this.setState({ drawer: null, screen: 'map', sel: vv ? { t: 'v', id: vv.id } : null }); }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });

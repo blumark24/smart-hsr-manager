@@ -23,10 +23,12 @@ const {
   collectionForRole,
   verifyRequestToken,
   getCallerContext,
+  getMobilityHeadCallerContext,
+  resolveMobilityRole,
   assertCanManage,
 } = require('../_lib/authz');
 const { callLandsTrustedMutation } = require('../_lib/landsBridge');
-const { ensureManagerLandsBootstrap } = require('../_lib/landsManagerBootstrap');
+const { ensureManagerLandsBootstrap, runBootstrapTransaction } = require('../_lib/landsManagerBootstrap');
 const { resolveLandsSyncOutcome } = require('../_lib/landsSyncReconciliation');
 const {
   validateFieldSelection,
@@ -158,17 +160,48 @@ async function handler(req, res) {
     return sendJson(res, e.statusCode || 401, { error: 'unauthenticated' });
   }
   const rawToken = extractBearerToken(req); // forwarded verbatim to the Lands bridge only, never logged or stored
+  const body = await readJsonBody(req);
+  const action = body.action;
+  const auth = getAuth();
+  const db = getDb();
+
+  // PHASE 06A.2 — listMobilityEmployees is authorized completely separately
+  // from every other action below: it is the only action a mobility_head
+  // (never an owner/manager by itself) may ever call on this endpoint, and
+  // every other action's owner/manager gate must stay byte-for-byte
+  // unchanged for every existing caller. See the dedicated case below for
+  // why this is safe (organizationId comes ONLY from this verified
+  // server-side context, never the request body).
+  if (action === 'listMobilityEmployees') {
+    const mobilityCaller = await getMobilityHeadCallerContext(decoded.uid);
+    if (!mobilityCaller.isMobilityHead) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_head_required' });
+    }
+    try {
+      const snap = await db.collection('users').where('organizationId', '==', mobilityCaller.organizationId).get();
+      const employees = [];
+      for (const doc of snap.docs) {
+        const d = doc.data() || {};
+        if (d.active === false) continue;
+        if (resolveMobilityRole(d) !== 'employee') continue;
+        // Minimal safe projection only — no email, no role/mobilityAccess
+        // internals, no other account metadata. The allocation drawer only
+        // ever needs a uid to write and a name to display; Rules
+        // (validMobilityAllocationTarget) remain the sole authority over
+        // whether an allocation to this uid actually succeeds.
+        employees.push({ uid: doc.id, name: d.name || d.email || doc.id });
+      }
+      return sendJson(res, 200, { employees });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
 
   // ---- authorize (owner: any org; manager: own org, inspector/contractor only) ----
   const caller = await getCallerContext(decoded.uid);
   if (!caller.isOwner && !(caller.isManager && MANAGER_MANAGEMENT_ENABLED)) {
     return sendJson(res, 403, { error: 'forbidden', reason: 'owner_or_manager_required' });
   }
-
-  const body = await readJsonBody(req);
-  const action = body.action;
-  const auth = getAuth();
-  const db = getDb();
 
   try {
     switch (action) {
@@ -590,6 +623,31 @@ async function handler(req, res) {
 
         const meta = await safeMetadata(auth, uid, record);
         return sendJson(res, 200, { user: meta });
+      }
+
+      // ---- one-time Lands institution-manager bootstrap (self-only, idempotent) ----
+      // PHASE 06A.2 — consolidated from the former dedicated
+      // api/admin/lands-bootstrap.js endpoint (removed to stay within
+      // Vercel's Hobby-plan serverless-function-per-deployment limit) into
+      // this action. Byte-for-byte the same guarantees as that endpoint: no
+      // request body is ever read for identity/target purposes — the ONLY
+      // inputs are the verified caller's own uid/organizationId, resolved
+      // server-side. computeBootstrapDecision (api/_lib/landsManagerBootstrap.js)
+      // independently re-checks caller.isManager itself, so an owner caller
+      // (allowed past the shared gate above) is still correctly denied here
+      // with reason 'manager_required' — unchanged from the original
+      // endpoint's own behavior. Idempotent: a second call performs no
+      // mutation and returns alreadyBootstrapped:true.
+      case 'landsBootstrap': {
+        const outcome = await runBootstrapTransaction(db, caller);
+        if (!outcome.decision.allowed) {
+          return sendJson(res, 403, { error: 'forbidden', reason: outcome.decision.reason });
+        }
+        return sendJson(res, 200, {
+          municipalityId: caller.organizationId,
+          landsRole: 'municipal_manager',
+          alreadyBootstrapped: outcome.decision.alreadyBootstrapped,
+        });
       }
 
       default:

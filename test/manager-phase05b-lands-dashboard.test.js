@@ -85,7 +85,13 @@ test('D. every KPI/table field in the Lands view is sourced from this.liveLandsX
 test('E. the Lands dashboard performs no writes/mutations — only onSnapshot reads and the existing self-only bootstrap call', () => {
   assert.doesNotMatch(adapter, /setDoc\(|updateDoc\(|deleteDoc\(|addDoc\(/, 'the adapter must never write to Firestore');
   assert.doesNotMatch(adapter, /lands-mutations|lands-sso-register|lands-sso-consume/, 'must never invoke the consequential-mutation or employee SSO endpoints');
-  assert.match(adapter, /fetch\('\/api\/admin\/lands-bootstrap'/, 'the only network call besides reads must be the existing, already-approved, self-only bootstrap endpoint');
+  // PHASE 06A.2: the dedicated bootstrap endpoint was consolidated into
+  // api/admin/users.js action 'landsBootstrap' to stay within Vercel's
+  // Hobby-plan serverless-function limit — same self-only, already-approved
+  // bootstrap operation, just a different action name on the existing
+  // trusted Admin API.
+  assert.match(adapter, /fetch\('\/api\/admin\/users'/, 'the only network call besides reads must be the existing, already-approved, self-only bootstrap action');
+  assert.match(adapter, /action:\s*'landsBootstrap'/, 'must call the consolidated landsBootstrap action, not a bespoke endpoint');
   // the Lands product view itself must contain no approve/reject/delete/
   // entitlement-change controls.
   const start = manager.indexOf('<sc-if value="{{ viewIsLands }}">');

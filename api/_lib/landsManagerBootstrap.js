@@ -1,10 +1,13 @@
 'use strict';
 // ============================================================================
-// Shared institution-manager Lands bootstrap logic. Used two ways:
-//  1. api/admin/lands-bootstrap.js — the existing manual one-time endpoint.
-//  2. api/admin/users.js — automatically, right before the FIRST trusted
-//     Lands entitlement mutation a manager ever triggers, so a manager never
-//     needs to know this step exists.
+// Shared institution-manager Lands bootstrap logic. Used two ways, both in
+// api/admin/users.js (PHASE 06A.2: consolidated from the former dedicated
+// api/admin/lands-bootstrap.js endpoint to stay within Vercel's Hobby-plan
+// serverless-function limit):
+//  1. action 'landsBootstrap' — the manual, explicit one-time trigger.
+//  2. automatically, right before the FIRST trusted Lands entitlement
+//     mutation a manager ever triggers, so a manager never needs to know
+//     this step exists.
 //
 // WHY: Lands' own trusted mutation endpoint forbids a caller from
 // creating/altering their own entitlement record (anti-self-escalation —

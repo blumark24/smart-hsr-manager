@@ -21,10 +21,12 @@
 // Firestore Rules require an existing, enabled `municipal_manager` Lands
 // membership (enabledMember(municipalityId)) before ANY Lands collection can
 // be read. That membership is established by calling the EXISTING, already
-// -approved, idempotent, self-only bootstrap endpoint
-// (api/admin/lands-bootstrap.js) — never redesigned here, only invoked, and
-// only for the caller's own uid/organizationId (that endpoint takes no
-// target parameter at all).
+// -approved, idempotent, self-only bootstrap operation — api/admin/users.js
+// action 'landsBootstrap' (PHASE 06A.2: consolidated from the former
+// dedicated api/admin/lands-bootstrap.js endpoint to stay within Vercel's
+// Hobby-plan serverless-function limit) — never redesigned here, only
+// invoked, and only for the caller's own uid/organizationId (this action
+// takes no target parameter at all).
 //
 // PHASE 05C — Production boundary, proven (not assumed): Manager and Lands
 // share ONE Firebase project in every real environment, not just Preview.
@@ -228,9 +230,16 @@ function fail(component, message) {
 async function ensureBootstrap(idToken) {
   if (bootstrapAttempted) return true;
   try {
-    const res = await fetch('/api/admin/lands-bootstrap', {
+    // PHASE 06A.2 — the dedicated api/admin/lands-bootstrap.js endpoint was
+    // consolidated into api/admin/users.js as action 'landsBootstrap' (to
+    // stay within Vercel's Hobby-plan serverless-function limit); same
+    // self-only, idempotent, already-approved bootstrap operation, no
+    // target parameter, just a different action name on the existing
+    // trusted Admin API.
+    const res = await fetch('/api/admin/users', {
       method: 'POST',
-      headers: { authorization: `Bearer ${idToken}` }
+      headers: { 'Content-Type': 'application/json', authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ action: 'landsBootstrap' })
     });
     if (!res.ok) return false;
     bootstrapAttempted = true;

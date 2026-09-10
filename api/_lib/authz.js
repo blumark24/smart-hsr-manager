@@ -146,6 +146,47 @@ async function getCallerContext(uid) {
   return { uid, isOwner: false, isManager: false, isDepartmentHead: false, role: null, organizationId: null, department: null };
 }
 
+// PHASE 06A.2 — the exact same dual-read as firestore.rules'
+// mobilityRoleValue(), smart-mobility-adapter.js's verifyMobilityAccess(),
+// and users-list-view.js's resolveMobilityRole(): once a users/{uid} record
+// has ever been touched by the independent mobilityAccess field (the key
+// exists at all, regardless of its enabled value), that field alone decides
+// the record's Mobility role — an explicit {enabled:false} must never be
+// overridden by a stale legacy `role` value. Only a record that has never
+// been touched by the new field still falls back to the legacy scalar
+// `role`. Used both to resolve a caller's own mobility_head identity below
+// and, server-side only, to decide which same-org records are live Mobility
+// employees for the listMobilityEmployees admin action.
+function resolveMobilityRole(data) {
+  if (data && data.mobilityAccess != null && typeof data.mobilityAccess === 'object') {
+    return data.mobilityAccess.enabled === true ? (data.mobilityAccess.role || null) : null;
+  }
+  return (data && data.role) || null;
+}
+
+// PHASE 06A.2 — a narrow, fail-closed caller-context resolver for exactly
+// one action (api/admin/users.js's listMobilityEmployees): is this uid an
+// ACTIVE mobility_head of a real organization, right now, per Firestore?
+// Deliberately separate from getCallerContext() above (which knows nothing
+// about Mobility roles at all) so every existing caller of
+// getCallerContext/assertCanManage is completely unaffected by this
+// addition — this is purely additive, exactly like assertCanManageEmployee.
+async function getMobilityHeadCallerContext(uid) {
+  const db = getDb();
+  const usrSnap = await db.collection('users').doc(uid).get();
+  if (usrSnap.exists) {
+    const d = usrSnap.data() || {};
+    const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+    // Fail closed: an inactive record, or one missing a non-empty
+    // organizationId, is never treated as an authorized mobility_head —
+    // mirrors the manager/department_head checks in getCallerContext above.
+    if (resolveMobilityRole(d) === 'mobility_head' && activeIsNotFalse(d) && orgId) {
+      return { uid, isMobilityHead: true, organizationId: orgId };
+    }
+  }
+  return { uid, isMobilityHead: false, organizationId: null };
+}
+
 // Phase 03B — employee-registry authorization (api/admin/employees.js
 // only; the original users.js endpoint and assertCanManage above are
 // untouched). Owner: any organization. Manager: same organizationId, any
@@ -235,8 +276,10 @@ module.exports = {
   isManagerScopedTarget,
   collectionForRole,
   activeIsNotFalse,
+  resolveMobilityRole,
   verifyRequestToken,
   getCallerContext,
+  getMobilityHeadCallerContext,
   assertCanManage,
   assertCanManageEmployee,
   AUTH_CODES,

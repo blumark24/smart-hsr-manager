@@ -3,7 +3,14 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { computeBootstrapDecision } = require('../api/admin/lands-bootstrap.js')._test;
+// PHASE 06A.2 — computeBootstrapDecision now lives only in
+// api/_lib/landsManagerBootstrap.js; the dedicated api/admin/lands-bootstrap.js
+// endpoint that used to re-export it was consolidated into
+// api/admin/users.js action 'landsBootstrap' (see
+// test/manager-lands-bridge-integration.test.js for handler-level coverage
+// of that action) to stay within Vercel's Hobby-plan serverless-function
+// limit. This file's pure-function coverage is unaffected either way.
+const { computeBootstrapDecision } = require('../api/_lib/landsManagerBootstrap.js');
 
 const manager = { uid: 'manager-uid-1', isOwner: false, isManager: true, role: 'manager', organizationId: 'org-alpha' };
 const employee = { uid: 'employee-uid-1', isOwner: false, isManager: false, role: null, organizationId: null };

@@ -101,11 +101,18 @@ test('D1. no new Lands mutation/read HTTP endpoint file was added under api/ —
   const apiDir = path.join(root, 'api');
   const adminDir = path.join(apiDir, 'admin');
   const existingAdminEndpoints = fs.readdirSync(adminDir);
+  // PHASE 06A.2: the formerly dedicated api/admin/lands-bootstrap.js file
+  // was consolidated into api/admin/users.js (action 'landsBootstrap') to
+  // stay within Vercel's Hobby-plan serverless-function-per-deployment
+  // limit — so there is now no separate Lands-named admin endpoint file at
+  // all, which is an even narrower surface than before, not a new one.
   assert.deepEqual(
     existingAdminEndpoints.filter(f => /lands/i.test(f)).sort(),
-    ['lands-bootstrap.js'],
-    'the only Lands-related admin endpoint must remain the existing, already-audited self-only bootstrap — no new lands-read/lands-manager-read endpoint was added'
+    [],
+    'the self-only bootstrap operation must live only as an action on the existing api/admin/users.js — no dedicated lands-*.js endpoint file'
   );
+  const usersHandlerSource = fs.readFileSync(path.join(adminDir, 'users.js'), 'utf8');
+  assert.match(usersHandlerSource, /case 'landsBootstrap':/, 'the consolidated bootstrap action must still exist somewhere trusted');
 });
 
 test('D2. the trusted mutation bridge module exposes no new read-broadening export beyond the existing self-scoped membership-status lookup — still no setDoc/updateDoc/deleteDoc/addDoc, still no client-chosen-municipality read surface', () => {
