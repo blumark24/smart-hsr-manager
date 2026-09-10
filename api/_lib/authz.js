@@ -115,6 +115,17 @@ async function verifyRequestToken(req, verifyIdToken = (token, checkRevoked) => 
 // (api/admin/users.js) still denies such a caller with the same
 // 'owner_or_manager_required' it always has. Only the NEW employee-registry
 // endpoint (api/admin/employees.js) reads isDepartmentHead/department.
+//
+// PHASE 02B.2/06C.2 SECURITY HOTFIX — department-head resolution below uses
+// resolveMobilityRole(d) (the same canonical, key-presence-authoritative
+// resolver already fixed for mobility_head above), NOT a direct `d.role ===
+// 'department_head'` check. The direct check let a stale legacy
+// role:'department_head' record keep employee-registry authorization even
+// after mobilityAccess explicitly disabled it (e.g. {enabled:false,
+// role:null}) — a present mobilityAccess key must always be the sole
+// source of truth once it exists, matching every other resolver in this
+// codebase. Only a record NEVER touched by mobilityAccess still falls back
+// to the legacy scalar `role`.
 async function getCallerContext(uid) {
   const db = getDb();
   const ownerSnap = await db.collection('owners').doc(uid).get();
@@ -138,8 +149,12 @@ async function getCallerContext(uid) {
     const dept = typeof d.department === 'string' ? d.department.trim() : '';
     // Fail closed exactly like the manager check above: a department_head
     // record missing organizationId or department is never treated as an
-    // authorized department head.
-    if (d.role === 'department_head' && activeIsNotFalse(d) && orgId && dept) {
+    // authorized department head. resolveMobilityRole(d) — not a direct
+    // `d.role` check — so an explicit mobilityAccess disable/malformation
+    // can never be overridden by a stale legacy role, and a migrated
+    // department head (role: null, mobilityAccess: {enabled:true,
+    // role:'department_head'}) is correctly recognized.
+    if (resolveMobilityRole(d) === 'department_head' && activeIsNotFalse(d) && orgId && dept) {
       return { uid, isOwner: false, isManager: false, isDepartmentHead: true, role: 'department_head', organizationId: orgId, department: dept };
     }
   }
