@@ -8,11 +8,13 @@
 // test/admin-list-mobility-employees.test.js.
 //
 // Proves, against the REAL handler code:
-//   - AUTH: only owner/manager (same org) may create/end/list assignments;
-//     every operational role (supervisor, inspector, contractor, Mobility
-//     employee, department_head) is denied, and department_head does NOT
+//   - AUTH: only a same-org manager may create/end/list assignments; every
+//     operational role (supervisor, inspector, contractor, Mobility
+//     employee, department_head) is denied, department_head does NOT
 //     silently inherit institutional HR authority from
-//     assertCanManageEmployee()'s same-department carve-out.
+//     assertCanManageEmployee()'s same-department carve-out, and (FINAL
+//     HARDENING ADDENDUM) the platform-level SaaS owner is denied too —
+//     institutional assignment authority never crosses the tenant boundary.
 //   - LIFECYCLE: create -> ACTIVE, end -> ENDED, an ended assignment cannot
 //     be re-ended, identity fields are never mutated, there is no delete
 //     path (the action does not exist at all).
@@ -96,7 +98,7 @@ test('AUTH: manager cross-org denied', async () => {
   } finally { fakes.restore(); }
 });
 
-test('AUTH: owner may create an assignment for any organization', async () => {
+test('AUTH: SaaS owner is denied — institutional assignment authority is kept inside the tenant boundary and never exercised by the platform-level owner (FINAL HARDENING ADDENDUM)', async () => {
   const fakes = installFakes();
   try {
     fakes.store.seed('owners/owner-1', { role: 'owner', active: true });
@@ -104,7 +106,37 @@ test('AUTH: owner may create an assignment for any organization', async () => {
     const handler = loadFreshHandler();
     const res = fakeResponse();
     await handler(fakeRequest({ uid: 'owner-1', body: assignmentBody({ issuedBy: 'owner-1' }) }), res);
-    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.statusCode, 403, JSON.stringify(res.body));
+    assert.equal(res.body.reason, 'manager_required_for_assignments');
+  } finally { fakes.restore(); }
+});
+
+test('AUTH: SaaS owner is denied endAssignment', async () => {
+  const fakes = installFakes();
+  try {
+    fakes.store.seed('owners/owner-1', { role: 'owner', active: true });
+    const { uid, organizationId } = seedManager(fakes);
+    seedEmployee(fakes, 'emp-1', { organizationId });
+    const handler = loadFreshHandler();
+    const createRes = fakeResponse();
+    await handler(fakeRequest({ uid, body: assignmentBody({ issuedBy: uid }) }), createRes);
+    assert.equal(createRes.statusCode, 200, JSON.stringify(createRes.body));
+    const endRes = fakeResponse();
+    await handler(fakeRequest({ uid: 'owner-1', body: { action: 'endAssignment', assignmentId: createRes.body.assignment.assignmentId } }), endRes);
+    assert.equal(endRes.statusCode, 403);
+    assert.equal(endRes.body.reason, 'manager_required_for_assignments');
+  } finally { fakes.restore(); }
+});
+
+test('AUTH: SaaS owner is denied listAssignments', async () => {
+  const fakes = installFakes();
+  try {
+    fakes.store.seed('owners/owner-1', { role: 'owner', active: true });
+    const handler = loadFreshHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid: 'owner-1', body: { action: 'listAssignments', organizationId: 'org-a' } }), res);
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.body.reason, 'manager_required_for_assignments');
   } finally { fakes.restore(); }
 });
 
@@ -133,7 +165,7 @@ for (const [label, seedFn] of [
       // institutional HR authority.
       assert.equal(res.statusCode, 403, `${label}: expected 403, got ${res.statusCode}: ${JSON.stringify(res.body)}`);
       if (uid === 'dept-1') {
-        assert.equal(res.body.reason, 'owner_or_manager_required_for_assignments');
+        assert.equal(res.body.reason, 'manager_required_for_assignments');
       } else {
         assert.equal(res.body.reason, 'owner_manager_or_department_head_required');
       }
@@ -168,7 +200,7 @@ test('AUTH: department_head is denied even though it already has same-department
     const assignRes = fakeResponse();
     await handler(fakeRequest({ uid: 'dept-2', body: assignmentBody({ employeeId: 'emp-dept', issuedBy: 'dept-2' }) }), assignRes);
     assert.equal(assignRes.statusCode, 403);
-    assert.equal(assignRes.body.reason, 'owner_or_manager_required_for_assignments');
+    assert.equal(assignRes.body.reason, 'manager_required_for_assignments');
   } finally { fakes.restore(); }
 });
 
@@ -453,6 +485,150 @@ test('UNIQUENESS: new SECTION_HEAD allowed after previous is ended', async () =>
     const res2 = fakeResponse();
     await handler(fakeRequest({ uid, body: assignmentBody({ employeeId: 'emp-2', assignmentType: 'SECTION_HEAD', issuedBy: uid }) }), res2);
     assert.equal(res2.statusCode, 200, JSON.stringify(res2.body));
+  } finally { fakes.restore(); }
+});
+
+// ============================================================================
+// LOCK — deterministic SHA-256 employeeAssignmentLocks/{lockId}
+// (FINAL HARDENING ADDENDUM)
+// ============================================================================
+
+const { computeSectionHeadLockId } = require('../platform/contracts/employee-assignment-lock-contract');
+
+test('LOCK: creating a SECTION_HEAD assignment atomically creates an ACTIVE lock at the deterministic SHA-256 id, pointing at the winning assignment', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid, organizationId } = seedManager(fakes);
+    seedEmployee(fakes, 'emp-1', { organizationId });
+    const handler = loadFreshHandler();
+    const res = fakeResponse();
+    await handler(fakeRequest({ uid, body: assignmentBody({ assignmentType: 'SECTION_HEAD', issuedBy: uid }) }), res);
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+
+    const lockId = computeSectionHeadLockId({ organizationId, productId: 'mobility', scope: SCOPE });
+    const lockDoc = fakes.store.docs.get(`employeeAssignmentLocks/${lockId}`);
+    assert.ok(lockDoc, 'lock document must exist at the deterministic id');
+    assert.equal(lockDoc.status, 'ACTIVE');
+    assert.equal(lockDoc.assignmentId, res.body.assignment.assignmentId);
+    assert.equal(lockDoc.organizationId, organizationId);
+    assert.equal(lockDoc.productId, 'mobility');
+    assert.equal(lockDoc.scopeType, 'PRODUCT');
+    assert.equal(lockDoc.scopeId, 'mobility');
+    assert.ok(lockDoc.createdAt);
+  } finally { fakes.restore(); }
+});
+
+test('LOCK: ending a SECTION_HEAD assignment atomically releases its lock, and identity fields on the lock are never touched', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid, organizationId } = seedManager(fakes);
+    seedEmployee(fakes, 'emp-1', { organizationId });
+    const handler = loadFreshHandler();
+    const createRes = fakeResponse();
+    await handler(fakeRequest({ uid, body: assignmentBody({ assignmentType: 'SECTION_HEAD', issuedBy: uid }) }), createRes);
+    const assignmentId = createRes.body.assignment.assignmentId;
+
+    const lockId = computeSectionHeadLockId({ organizationId, productId: 'mobility', scope: SCOPE });
+    const beforeLock = { ...fakes.store.docs.get(`employeeAssignmentLocks/${lockId}`) };
+
+    await handler(fakeRequest({ uid, body: { action: 'endAssignment', assignmentId } }), fakeResponse());
+
+    const afterLock = fakes.store.docs.get(`employeeAssignmentLocks/${lockId}`);
+    assert.equal(afterLock.status, 'RELEASED');
+    assert.equal(afterLock.releasedBy, uid);
+    assert.ok(afterLock.releasedAt);
+    // Identity fields never mutated by a release.
+    assert.equal(afterLock.organizationId, beforeLock.organizationId);
+    assert.equal(afterLock.productId, beforeLock.productId);
+    assert.equal(afterLock.scopeType, beforeLock.scopeType);
+    assert.equal(afterLock.scopeId, beforeLock.scopeId);
+    assert.equal(afterLock.createdAt, beforeLock.createdAt);
+  } finally { fakes.restore(); }
+});
+
+test('LOCK: a new SECTION_HEAD assignment re-acquires the same RELEASED lock document (RELEASED -> ACTIVE), preserving createdAt', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid, organizationId } = seedManager(fakes);
+    seedEmployee(fakes, 'emp-1', { organizationId });
+    seedEmployee(fakes, 'emp-2', { organizationId });
+    const handler = loadFreshHandler();
+    const createRes = fakeResponse();
+    await handler(fakeRequest({ uid, body: assignmentBody({ employeeId: 'emp-1', assignmentType: 'SECTION_HEAD', issuedBy: uid }) }), createRes);
+    const firstAssignmentId = createRes.body.assignment.assignmentId;
+    const lockId = computeSectionHeadLockId({ organizationId, productId: 'mobility', scope: SCOPE });
+    const createdAtAfterFirst = fakes.store.docs.get(`employeeAssignmentLocks/${lockId}`).createdAt;
+
+    await handler(fakeRequest({ uid, body: { action: 'endAssignment', assignmentId: firstAssignmentId } }), fakeResponse());
+
+    const res2 = fakeResponse();
+    await handler(fakeRequest({ uid, body: assignmentBody({ employeeId: 'emp-2', assignmentType: 'SECTION_HEAD', issuedBy: uid }) }), res2);
+    assert.equal(res2.statusCode, 200, JSON.stringify(res2.body));
+
+    const reacquiredLock = fakes.store.docs.get(`employeeAssignmentLocks/${lockId}`);
+    assert.equal(reacquiredLock.status, 'ACTIVE');
+    assert.equal(reacquiredLock.assignmentId, res2.body.assignment.assignmentId);
+    assert.notEqual(reacquiredLock.assignmentId, firstAssignmentId);
+    // The very same lock document is reused — same deterministic id, same
+    // createdAt — never a new lock row for the same tuple.
+    assert.equal(reacquiredLock.createdAt, createdAtAfterFirst);
+  } finally { fakes.restore(); }
+});
+
+test('LOCK: an ACTIVE lock whose referenced assignment has been corrupted/diverged fails closed with section_head_lock_inconsistent instead of auto-repairing', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid, organizationId } = seedManager(fakes);
+    seedEmployee(fakes, 'emp-1', { organizationId });
+    seedEmployee(fakes, 'emp-2', { organizationId });
+    const handler = loadFreshHandler();
+    const createRes = fakeResponse();
+    await handler(fakeRequest({ uid, body: assignmentBody({ employeeId: 'emp-1', assignmentType: 'SECTION_HEAD', issuedBy: uid }) }), createRes);
+    const winningAssignmentId = createRes.body.assignment.assignmentId;
+
+    // Simulate divergence: the referenced assignment document is deleted
+    // out from under an otherwise-ACTIVE lock (data corruption / manual
+    // tampering) — the lock itself is left untouched.
+    fakes.store.docs.delete(`employeeAssignments/${winningAssignmentId}`);
+
+    const res2 = fakeResponse();
+    await handler(fakeRequest({ uid, body: assignmentBody({ employeeId: 'emp-2', assignmentType: 'SECTION_HEAD', issuedBy: uid }) }), res2);
+    assert.equal(res2.statusCode, 409, JSON.stringify(res2.body));
+    assert.equal(res2.body.reason, 'section_head_lock_inconsistent');
+
+    // Fail closed: no auto-repair, no overwrite, no silent release — the
+    // lock document is untouched and no replacement assignment was created.
+    const lockId = computeSectionHeadLockId({ organizationId, productId: 'mobility', scope: SCOPE });
+    const lockDoc = fakes.store.docs.get(`employeeAssignmentLocks/${lockId}`);
+    assert.equal(lockDoc.status, 'ACTIVE');
+    assert.equal(lockDoc.assignmentId, winningAssignmentId);
+  } finally { fakes.restore(); }
+});
+
+test('LOCK: ending a SECTION_HEAD assignment whose lock has diverged (points elsewhere) fails closed instead of silently releasing', async () => {
+  const fakes = installFakes();
+  try {
+    const { uid, organizationId } = seedManager(fakes);
+    seedEmployee(fakes, 'emp-1', { organizationId });
+    const handler = loadFreshHandler();
+    const createRes = fakeResponse();
+    await handler(fakeRequest({ uid, body: assignmentBody({ employeeId: 'emp-1', assignmentType: 'SECTION_HEAD', issuedBy: uid }) }), createRes);
+    const assignmentId = createRes.body.assignment.assignmentId;
+
+    // Corrupt the lock so it points at a different assignmentId than the
+    // one actually being ended.
+    const lockId = computeSectionHeadLockId({ organizationId, productId: 'mobility', scope: SCOPE });
+    const lockDoc = fakes.store.docs.get(`employeeAssignmentLocks/${lockId}`);
+    fakes.store.docs.set(`employeeAssignmentLocks/${lockId}`, { ...lockDoc, assignmentId: 'some-other-assignment-id' });
+
+    const endRes = fakeResponse();
+    await handler(fakeRequest({ uid, body: { action: 'endAssignment', assignmentId } }), endRes);
+    assert.equal(endRes.statusCode, 409, JSON.stringify(endRes.body));
+    assert.equal(endRes.body.reason, 'section_head_lock_inconsistent');
+
+    // Fail closed: the assignment itself must not have been silently ended.
+    const assignmentDoc = fakes.store.docs.get(`employeeAssignments/${assignmentId}`);
+    assert.equal(assignmentDoc.status, 'ACTIVE');
   } finally { fakes.restore(); }
 });
 

@@ -262,6 +262,22 @@ service cloud.firestore {
     }
 
     // ==========================================================
+    // employeeAssignmentLocks/{lockId} — FINAL HARDENING ADDENDUM.
+    // Deterministic SECTION_HEAD uniqueness lock keyed by SHA-256 of the
+    // canonical (organizationId, productId, scope.type, scope.id) tuple.
+    // Same trust model as employeeAssignments above: no direct client read
+    // or write, no delete path, mutated only inside a trusted Firestore
+    // transaction reached exclusively through the Admin-SDK-backed
+    // api/admin/employees.js createAssignment/endAssignment actions, which
+    // bypass these Rules entirely. Deny-by-default is already implied by
+    // the final wildcard fallback at the bottom of this file; this explicit
+    // block exists so the intent is unambiguous.
+    // ==========================================================
+    match /employeeAssignmentLocks/{lockId} {
+      allow read, write: if false;
+    }
+
+    // ==========================================================
     // observations/{obsId} — tenant isolation, NO owner access
     // ==========================================================
     match /observations/{obsId} {
