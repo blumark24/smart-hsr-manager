@@ -244,6 +244,24 @@ service cloud.firestore {
     }
 
     // ==========================================================
+    // employeeAssignments/{assignmentId} — INSTITUTIONAL ASSIGNMENT
+    // FOUNDATION (micro-phase). History/governance foundation ONLY: this
+    // collection is NOT yet an authorization source for anything, and no
+    // UI reads it yet. The trusted write/read path is exclusively
+    // api/admin/employees.js's createAssignment/endAssignment/
+    // listAssignments actions, which use the Firebase Admin SDK — that
+    // bypasses these Rules entirely, exactly like employees/{employeeId}
+    // and adminAuditEvents above. Deny-by-default is already implied by the
+    // final wildcard fallback at the bottom of this file; this explicit
+    // block exists so the intent is unambiguous and survives any future
+    // change to that fallback. No client (owner, manager, department_head,
+    // or any operational role) may read or write this collection directly.
+    // ==========================================================
+    match /employeeAssignments/{assignmentId} {
+      allow read, write: if false;
+    }
+
+    // ==========================================================
     // observations/{obsId} — tenant isolation, NO owner access
     // ==========================================================
     match /observations/{obsId} {

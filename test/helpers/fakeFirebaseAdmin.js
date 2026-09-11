@@ -65,16 +65,38 @@ function makeStore() {
         return ref;
       },
       where(field, op, value) {
-        return {
-          async get() {
-            const matches = [];
-            for (const [path, data] of docs.entries()) {
-              if (!path.startsWith(`${name}/`) || path.slice(name.length + 1).includes('/')) continue;
-              if (op === '==' && data[field] === value) matches.push({ id: path.split('/').pop(), data: () => ({ ...data }) });
-            }
-            return { docs: matches };
-          },
-        };
+        return makeQuery(name, [{ field, op, value }]);
+      },
+    };
+  }
+
+  // Resolves a dot-path field (e.g. "scope.id") against a plain object,
+  // matching Firestore's own nested-field query semantics.
+  function resolveFieldPath(data, field) {
+    return field.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), data);
+  }
+
+  // A chainable query builder — real Firestore queries support multiple
+  // .where() calls combined with AND semantics; this fake mirrors that so
+  // real handler code using a multi-filter query (e.g. the SECTION_HEAD
+  // uniqueness check) runs unmodified against it.
+  function makeQuery(name, filters) {
+    return {
+      where(field, op, value) {
+        return makeQuery(name, [...filters, { field, op, value }]);
+      },
+      async get() {
+        const matches = [];
+        for (const [path, data] of docs.entries()) {
+          if (!path.startsWith(`${name}/`) || path.slice(name.length + 1).includes('/')) continue;
+          const isMatch = filters.every(({ field, op, value }) => {
+            const actual = resolveFieldPath(data, field);
+            if (op === '==') return actual === value;
+            throw new Error(`fakeFirebaseAdmin: unsupported query operator "${op}"`);
+          });
+          if (isMatch) matches.push({ id: path.split('/').pop(), data: () => ({ ...data }) });
+        }
+        return { docs: matches, empty: matches.length === 0 };
       },
     };
   }
