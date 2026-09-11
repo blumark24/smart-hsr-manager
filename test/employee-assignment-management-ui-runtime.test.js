@@ -361,4 +361,188 @@ test('MUTATION SUCCESS VS REFRESH FAILURE: a failed post-mutation reload never c
   assert.ok(instance.flashLog.some(m => m.includes('تم تنفيذ الإجراء') && m.includes('تعذر تحديث')), 'an honest refresh-failed message must be shown, never a mutation-failed message');
 });
 
+// ============================================================================
+// UNIFIED MUTATION BUSY GUARD (micro-hotfix)
+// ============================================================================
+
+test('CREATE POST-REFRESH REOPEN RACE: reopening the create form after a successful create, while the reload is still pending, must not clear caSubmitting or allow a second create', async () => {
+  const listDeferred = deferred();
+  const listCalled = signal();
+  let createCallCount = 0;
+  const instance = makeInstance({
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'createAssignment') { createCallCount++; return { assignment: { assignmentId: 'a-1', status: 'ACTIVE' } }; }
+      if (action === 'listAssignments') { listCalled.fire(); return listDeferred.promise; }
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.caCreateOpen = true;
+
+  const submitPromise = instance.submitCreateAssignment();
+  await listCalled.promise; // createAssignment succeeded; the post-mutation reload is now pending
+
+  assert.equal(instance.state.caSubmitting, true);
+  assert.equal(instance.state.caCreateOpen, false, 'the form already closed on mutation success');
+
+  // The exact bug: reopening the form used to reset caSubmitting to false.
+  instance.openCreateAssignmentForm();
+  assert.equal(instance.state.caCreateOpen, false, 'the create form must not reopen while the reload is still pending');
+  assert.equal(instance.state.caSubmitting, true, 'caSubmitting must NOT be cleared by reopening the form');
+
+  // A second create attempted during this window must still be blocked.
+  await instance.submitCreateAssignment();
+  assert.equal(createCallCount, 1, 'createAssignment must not be called a second time');
+
+  listDeferred.resolve({ assignments: [] });
+  await submitPromise;
+  assert.equal(instance.state.caSubmitting, false);
+});
+
+test('CREATE PENDING -> END ATTEMPT: while createAssignment is unresolved, starting or confirming an end action must be fully blocked', async () => {
+  const createDeferred = deferred();
+  const createCalled = signal();
+  let endCallCount = 0;
+  const instance = makeInstance({
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'createAssignment') { createCalled.fire(); return createDeferred.promise; }
+      if (action === 'endAssignment') { endCallCount++; return { assignmentId: 'assign-1', status: 'ENDED' }; }
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.caCreateOpen = true;
+
+  const submitPromise = instance.submitCreateAssignment();
+  await createCalled.promise;
+  assert.equal(instance.state.caSubmitting, true);
+
+  instance.startEndConfirm('assign-1');
+  assert.equal(instance.state.endConfirmingId, null, 'an end confirmation must not become active while CREATE is pending');
+
+  await instance.confirmEndAssignment('assign-1');
+  assert.equal(endCallCount, 0, 'endAssignment must never be called while CREATE is pending');
+
+  createDeferred.resolve({ assignment: { assignmentId: 'a-1', status: 'ACTIVE' } });
+  await submitPromise;
+});
+
+test('END PENDING -> CREATE ATTEMPT: while endAssignment is unresolved, opening or submitting a create action must be fully blocked', async () => {
+  const endDeferred = deferred();
+  const endCalled = signal();
+  let createCallCount = 0;
+  const instance = makeInstance({
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'endAssignment') { endCalled.fire(); return endDeferred.promise; }
+      if (action === 'createAssignment') { createCallCount++; return { assignment: { assignmentId: 'a-1', status: 'ACTIVE' } }; }
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.endConfirmingId = 'assign-1';
+
+  const endPromise = instance.confirmEndAssignment('assign-1');
+  await endCalled.promise;
+  assert.equal(instance.state.endSubmitting, true);
+
+  instance.openCreateAssignmentForm();
+  assert.equal(instance.state.caCreateOpen, false, 'the create form must not open while END is pending');
+
+  await instance.submitCreateAssignment();
+  assert.equal(createCallCount, 0, 'createAssignment must never be called while END is pending');
+
+  endDeferred.resolve({ assignmentId: 'assign-1', status: 'ENDED' });
+  await endPromise;
+});
+
+test('END POST-REFRESH -> CREATE ATTEMPT: after a successful end, while its reload is still pending, opening/submitting a create action must be fully blocked', async () => {
+  const listDeferred = deferred();
+  const listCalled = signal();
+  let createCallCount = 0;
+  const instance = makeInstance({
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'endAssignment') { return { assignmentId: 'assign-1', status: 'ENDED' }; }
+      if (action === 'listAssignments') { listCalled.fire(); return listDeferred.promise; }
+      if (action === 'createAssignment') { createCallCount++; return { assignment: { assignmentId: 'a-1', status: 'ACTIVE' } }; }
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.endConfirmingId = 'assign-1';
+
+  const endPromise = instance.confirmEndAssignment('assign-1');
+  await listCalled.promise; // endAssignment succeeded; the post-mutation reload is now pending
+  assert.equal(instance.state.endSubmitting, true);
+
+  instance.openCreateAssignmentForm();
+  assert.equal(instance.state.caCreateOpen, false, 'the create form must not open while the end reload is still pending');
+
+  await instance.submitCreateAssignment();
+  assert.equal(createCallCount, 0, 'createAssignment must never be called while the end reload is still pending');
+
+  listDeferred.resolve({ assignments: [] });
+  await endPromise;
+  assert.equal(instance.state.endSubmitting, false);
+});
+
+test('CREATE PENDING -> DRAWER/CANCEL: closeCreateAssignmentForm and closeEmployeeDrawer are both no-ops while createAssignment is unresolved', async () => {
+  const createDeferred = deferred();
+  const createCalled = signal();
+  const instance = makeInstance({
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'createAssignment') { createCalled.fire(); return createDeferred.promise; }
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.caCreateOpen = true;
+
+  const submitPromise = instance.submitCreateAssignment();
+  await createCalled.promise;
+
+  instance.closeCreateAssignmentForm();
+  assert.equal(instance.state.caCreateOpen, true);
+  assert.equal(instance.state.caSubmitting, true);
+
+  instance.closeEmployeeDrawer();
+  assert.equal(instance.state.employeeDrawerOpen, true);
+  assert.equal(instance.state.selectedEmployee, EMPLOYEE, 'selectedEmployee must remain intact while pending');
+
+  createDeferred.resolve({ assignment: { assignmentId: 'a-1', status: 'ACTIVE' } });
+  await submitPromise;
+});
+
+test('END PENDING -> DRAWER/CANCEL: cancelEndConfirm and closeEmployeeDrawer are both no-ops while endAssignment is unresolved', async () => {
+  const endDeferred = deferred();
+  const endCalled = signal();
+  const instance = makeInstance({
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'endAssignment') { endCalled.fire(); return endDeferred.promise; }
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.endConfirmingId = 'assign-1';
+
+  const endPromise = instance.confirmEndAssignment('assign-1');
+  await endCalled.promise;
+
+  instance.cancelEndConfirm();
+  assert.equal(instance.state.endConfirmingId, 'assign-1');
+  assert.equal(instance.state.endSubmitting, true);
+
+  instance.closeEmployeeDrawer();
+  assert.equal(instance.state.employeeDrawerOpen, true);
+  assert.equal(instance.state.selectedEmployee, EMPLOYEE, 'selectedEmployee must remain intact while pending');
+
+  endDeferred.resolve({ assignmentId: 'assign-1', status: 'ENDED' });
+  await endPromise;
+});
+
 console.log('employee-assignment-management-ui-runtime tests OK');

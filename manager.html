@@ -1655,7 +1655,7 @@
                never edits employeeId/organizationId/issuedBy/assignmentId/
                lockId/status. -->
           <sc-if value="{{ !caCreateOpen }}">
-            <button onClick="{{ openCreateAssignmentForm }}" data-f="1" style="width:100%;height:34px;border-radius:9px;font-size:11px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px dashed var(--ctlBd,rgba(122,164,224,0.3));cursor:pointer">+ إضافة تكليف</button>
+            <button onClick="{{ openCreateAssignmentForm }}" data-f="1" disabled="{{ assignmentMutationBusy }}" style="width:100%;height:34px;border-radius:9px;font-size:11px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px dashed var(--ctlBd,rgba(122,164,224,0.3));cursor:pointer">+ إضافة تكليف</button>
           </sc-if>
 
           <sc-if value="{{ caCreateOpen }}">
@@ -1754,7 +1754,7 @@
                        any control at all — see the separate history
                        sc-for below, which has no end/edit/delete markup. -->
                   <sc-if value="{{ !a.isConfirmingEnd }}">
-                    <button onClick="{{ a.onStartEndConfirm }}" data-f="1" style="margin-top:4px;width:100%;height:30px;border-radius:8px;font-size:10px;font-weight:600;color:#f87171;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);cursor:pointer">إنهاء التكليف</button>
+                    <button onClick="{{ a.onStartEndConfirm }}" data-f="1" disabled="{{ assignmentMutationBusy }}" style="margin-top:4px;width:100%;height:30px;border-radius:8px;font-size:10px;font-weight:600;color:#f87171;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);cursor:pointer">إنهاء التكليف</button>
                   </sc-if>
                   <sc-if value="{{ a.isConfirmingEnd }}">
                     <div style="margin-top:4px;padding-top:8px;border-top:1px dashed var(--ctlBd,rgba(122,164,224,0.2));display:flex;flex-direction:column;gap:6px">
@@ -3200,6 +3200,13 @@ class Component extends DCLogic {
         };
       }),
       employeeHistoryAssignmentRows: (st.employeeAssignmentsHistory || []).map(formatInstitutionalAssignmentRow),
+      // HOTFIX (unified busy guard) — true while EITHER a create or an end
+      // mutation has a real async request in flight (including through its
+      // post-mutation refresh). Drives the disabled state of every
+      // mutation-entry control ("+ إضافة تكليف", the per-card "إنهاء
+      // التكليف" entry button) so the UI never hides the true precondition
+      // for starting a new mutation of either kind.
+      assignmentMutationBusy: this.isAssignmentMutationBusy(),
       // ASSIGNMENT MANAGEMENT (micro-phase) — create-assignment form. The
       // option lists are the LOCKED vocabulary (3 products, 4 assignment
       // types); employeeId/organizationId/issuedBy/assignmentId/status/
@@ -3791,7 +3798,7 @@ class Component extends DCLogic {
   // also covers the backdrop click and the explicit "×" button, which both
   // call this same method.
   closeEmployeeDrawer() {
-    if (this.state.caSubmitting || this.state.endSubmitting) return;
+    if (this.isAssignmentMutationBusy()) return;
     this.setState({
       employeeDrawerOpen: false, selectedEmployee: null, actEmail: '',
       employeeAssignmentsLoading: false, employeeAssignmentsError: '',
@@ -3910,20 +3917,38 @@ class Component extends DCLogic {
     return this.loadEmployeeAssignments(employee);
   }
 
+  // HOTFIX (unified busy guard) — CREATE and END are mutually exclusive
+  // while either has a real async mutation in flight (through its
+  // post-mutation refresh, not just the mutation call itself). No
+  // UI-opening/cancel/close entry point may ever clear caSubmitting or
+  // endSubmitting — only the owning async mutation flow may clear its own
+  // flag, and only after its trusted refresh has completed.
+  isAssignmentMutationBusy() {
+    return this.state.caSubmitting || this.state.endSubmitting;
+  }
+
+  // HOTFIX — previously reset caSubmitting:false unconditionally, which let
+  // reopening the create form (e.g. right after a successful create, while
+  // the post-mutation listAssignments refresh was still pending) clear the
+  // guard early and allow a second create to start. Opening a form must
+  // NEVER mutate either pending flag, and must not even open while a
+  // mutation (create OR end) is busy.
   openCreateAssignmentForm() {
+    if (this.isAssignmentMutationBusy()) return;
     this.setState({
-      caCreateOpen: true, caError: '', caSubmitting: false,
+      caCreateOpen: true, caError: '',
       caProductId: 'field', caAssignmentType: 'PRIMARY', caScopeType: 'PRODUCT', caScopeId: '',
       caStartAt: '', caEndAt: '', caReason: '',
     });
   }
 
-  // HOTFIX — never clear the mutation guard here: caSubmitting may only
-  // become false once the actual async createAssignment + refresh has
-  // finished (see submitCreateAssignment). Cancelling while a request is
-  // pending must be a no-op, never a way to reset the guard early.
+  // HOTFIX — never clear a mutation guard here: caSubmitting/endSubmitting
+  // may only become false once their own owning async flow (createAssignment
+  // + refresh, or endAssignment + refresh) has actually finished. Cancelling
+  // while ANY mutation is pending must be a no-op, never a way to reset
+  // either guard early.
   closeCreateAssignmentForm() {
-    if (this.state.caSubmitting) return;
+    if (this.isAssignmentMutationBusy()) return;
     this.setState({ caCreateOpen: false, caError: '' });
   }
 
@@ -3946,8 +3971,9 @@ class Component extends DCLogic {
   // same call; the backend's deterministic SHA-256 lock is the sole
   // uniqueness authority — nothing here re-implements or second-guesses it.
   async submitCreateAssignment() {
-    // PART F — duplicate-submission guard.
-    if (this.state.caSubmitting) return;
+    // PART F + HOTFIX (unified busy guard) — duplicate-submission guard,
+    // and CREATE may never start while an END mutation is busy.
+    if (this.isAssignmentMutationBusy()) return;
     const employee = this.state.selectedEmployee;
     if (!employee) return;
     const { caProductId, caAssignmentType, caScopeType, caScopeId, caStartAt, caEndAt, caReason } = this.state;
@@ -4011,15 +4037,18 @@ class Component extends DCLogic {
   // ASSIGNMENT MANAGEMENT (micro-phase) — end-assignment confirmation.
   // Only one card may be "confirming" at a time; starting a new one always
   // resets any previous draft/error.
+  // HOTFIX (unified busy guard) — must not even open an end-confirmation
+  // while a mutation (create OR end) is busy.
   startEndConfirm(assignmentId) {
+    if (this.isAssignmentMutationBusy()) return;
     this.setState({ endConfirmingId: assignmentId, endReasonDraft: '', endError: '' });
   }
 
-  // HOTFIX — never clear the mutation guard here: endSubmitting may only
-  // become false once the actual async endAssignment + refresh has
-  // finished (see confirmEndAssignment).
+  // HOTFIX — never clear a mutation guard here: caSubmitting/endSubmitting
+  // may only become false once their own owning async flow has actually
+  // finished.
   cancelEndConfirm() {
-    if (this.state.endSubmitting) return;
+    if (this.isAssignmentMutationBusy()) return;
     this.setState({ endConfirmingId: null, endReasonDraft: '', endError: '' });
   }
 
@@ -4031,8 +4060,9 @@ class Component extends DCLogic {
   // backend's own state machine and lock-release logic are the sole
   // authority; this only ever sends assignmentId + an optional endReason.
   async confirmEndAssignment(assignmentId) {
-    // PART F — duplicate-submission guard.
-    if (this.state.endSubmitting) return;
+    // PART F + HOTFIX (unified busy guard) — duplicate-submission guard,
+    // and END may never start while a CREATE mutation is busy.
+    if (this.isAssignmentMutationBusy()) return;
     const employee = this.state.selectedEmployee;
     const endReason = this.state.endReasonDraft;
     if (!isValidFreeText(endReason)) { this.setState({ endError: 'سبب الإنهاء غير صالح.' }); return; }

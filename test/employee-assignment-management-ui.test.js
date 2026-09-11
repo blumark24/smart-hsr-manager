@@ -151,9 +151,9 @@ test('CREATE FLOW: request body never sends status, assignmentId, or a client-ch
   assert.doesNotMatch(callBlock, /lockId:/);
 });
 
-test('CREATE FLOW: duplicate submission is blocked while a request is already pending', () => {
+test('CREATE FLOW: duplicate submission is blocked while a request is already pending (unified busy guard — HOTFIX)', () => {
   const fn = methodBody(manager, 'async submitCreateAssignment() {', 400);
-  assert.match(fn, /if \(this\.state\.caSubmitting\) return;/);
+  assert.match(fn, /if \(this\.isAssignmentMutationBusy\(\)\) return;/);
 });
 
 test('CREATE FLOW: on success, the per-employee cache is invalidated and reloaded from the server — never patched locally', () => {
@@ -175,7 +175,7 @@ test('CREATE FLOW: invalidateAndReloadAssignments deletes the cache entry, clear
 });
 
 test('CREATE FLOW: on failure, controls are restored and no fabricated success/UI state occurs', () => {
-  const fn = methodBody(manager, 'async submitCreateAssignment() {');
+  const fn = methodBody(manager, 'async submitCreateAssignment() {', 3600);
   const catchStart = fn.indexOf('} catch (e) {');
   const catchBlock = fn.slice(catchStart, fn.length);
   assert.match(catchBlock, /caSubmitting:\s*false/);
@@ -258,9 +258,9 @@ test('END FLOW: confirmEndAssignment calls endAssignment through the existing tr
   assert.match(fn, /endReason:/);
 });
 
-test('END FLOW: duplicate end submission is blocked while a request is already pending', () => {
+test('END FLOW: duplicate end submission is blocked while a request is already pending (unified busy guard — HOTFIX)', () => {
   const fn = methodBody(manager, 'async confirmEndAssignment(assignmentId) {', 400);
-  assert.match(fn, /if \(this\.state\.endSubmitting\) return;/);
+  assert.match(fn, /if \(this\.isAssignmentMutationBusy\(\)\) return;/);
 });
 
 test('END FLOW: on success, the per-employee cache is invalidated and reloaded from the server — never marked ended locally', () => {

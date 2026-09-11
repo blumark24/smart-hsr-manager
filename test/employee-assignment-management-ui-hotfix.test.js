@@ -23,22 +23,22 @@ function methodBody(source, signature, maxLen = 3200) {
 
 // ---- FIX 1 — never clear a mutation guard while pending ----
 
-test('FIX 1: closeCreateAssignmentForm never clears caSubmitting and refuses to run while a request is pending', () => {
+test('FIX 1: closeCreateAssignmentForm never clears caSubmitting and refuses to run while a mutation is pending (unified busy guard — see the newer unified-guard hotfix)', () => {
   const fn = methodBody(manager, 'closeCreateAssignmentForm() {', 300);
-  assert.match(fn, /if \(this\.state\.caSubmitting\) return;/);
+  assert.match(fn, /if \(this\.isAssignmentMutationBusy\(\)\) return;/);
   assert.doesNotMatch(fn, /caSubmitting:\s*false/, 'this method must never itself clear the mutation guard');
 });
 
 test('FIX 1: closeEmployeeDrawer never clears caSubmitting/endSubmitting and refuses to run while either is pending', () => {
   const fn = methodBody(manager, 'closeEmployeeDrawer() {', 700);
-  assert.match(fn, /if \(this\.state\.caSubmitting \|\| this\.state\.endSubmitting\) return;/);
+  assert.match(fn, /if \(this\.isAssignmentMutationBusy\(\)\) return;/);
   assert.doesNotMatch(fn, /caSubmitting:\s*false/);
   assert.doesNotMatch(fn, /endSubmitting:\s*false/);
 });
 
-test('FIX 1: cancelEndConfirm refuses to run while endSubmitting is pending', () => {
+test('FIX 1: cancelEndConfirm refuses to run while a mutation is pending (unified busy guard)', () => {
   const fn = methodBody(manager, 'cancelEndConfirm() {', 300);
-  assert.match(fn, /if \(this\.state\.endSubmitting\) return;/);
+  assert.match(fn, /if \(this\.isAssignmentMutationBusy\(\)\) return;/);
 });
 
 test('FIX 1: the create-form cancel button and the end-confirmation cancel button are both disabled while their mutation is pending', () => {
