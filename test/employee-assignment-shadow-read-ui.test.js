@@ -55,8 +55,11 @@ test('SHADOW READ: the listAssignments request is scoped to the employee\'s own 
 });
 
 test('SHADOW READ: the render view-model derives displayed assignment rows from fetched state, not from any client-side guess', () => {
-  const start = manager.indexOf('employeeCurrentAssignmentRows: (st.employeeAssignmentsCurrent || []).map(formatInstitutionalAssignmentRow),');
-  assert.notEqual(start, -1, 'employeeCurrentAssignmentRows must be derived from st.employeeAssignmentsCurrent');
+  // ASSIGNMENT MANAGEMENT micro-phase note: employeeCurrentAssignmentRows
+  // now also attaches per-row end-confirmation handlers (see
+  // test/employee-assignment-management-ui.test.js), but it is still built
+  // exclusively from st.employeeAssignmentsCurrent — never fabricated.
+  assert.match(manager, /employeeCurrentAssignmentRows: \(st\.employeeAssignmentsCurrent \|\| \[\]\)\.map\(a => \{/);
   assert.match(manager, /employeeHistoryAssignmentRows: \(st\.employeeAssignmentsHistory \|\| \[\]\)\.map\(formatInstitutionalAssignmentRow\)/);
 });
 
@@ -161,19 +164,30 @@ test('SHADOW READ: adminApiErrorMessage carries a real Arabic message for the ne
   assert.match(fn, /manager_required_for_assignments/);
 });
 
-// ---- 13. no assignment mutation controls exist ----
+// ---- 13. no assignment mutation controls exist (SUPERSEDED) ----
+//
+// The original Shadow Read micro-phase required this section to have zero
+// mutation controls. The subsequent, explicitly-authorized ASSIGNMENT
+// MANAGEMENT UI micro-phase intentionally added create/end controls here
+// (see test/employee-assignment-management-ui.test.js for the full,
+// precise coverage of that: history cards still have none, only ACTIVE
+// cards get an end action gated behind confirmation, etc.). What Shadow
+// Read itself still guarantees — the permanent-home display is still pure
+// read-only and there is still no delete/reactivate/manual-status-change
+// path anywhere — is asserted below instead.
 
-test('SHADOW READ: the institutional-assignments section has no create/end/mutation controls — read-only by construction', () => {
-  const start = manager.indexOf('التكليفات المؤسسية');
+test('SHADOW READ: the permanent organizational home (administration/department/jobTitle) display remains pure read-only — no edit control of any kind', () => {
+  const start = manager.indexOf('الانتماء المؤسسي الأصلي');
   assert.notEqual(start, -1);
-  const sectionEnd = manager.indexOf('<sc-if value="{{ incidentDrawerOpen }}">', start);
-  assert.notEqual(sectionEnd, -1);
-  const section = manager.slice(start, sectionEnd);
-  assert.doesNotMatch(section, /createAssignment/);
-  assert.doesNotMatch(section, /endAssignment/);
-  assert.doesNotMatch(section, /deleteAssignment/);
-  assert.doesNotMatch(section, /<button/i, 'no button of any kind belongs in a read-only shadow-read section');
-  assert.doesNotMatch(section, /onClick/);
+  const block = manager.slice(start, start + 1400);
+  assert.doesNotMatch(block, /<input/i);
+  assert.doesNotMatch(block, /<button/i);
+  assert.doesNotMatch(block, /onClick|onChange/);
+});
+
+test('SHADOW READ: there is still no delete or reactivate path anywhere, even after the Assignment Management UI micro-phase added create/end controls', () => {
+  assert.doesNotMatch(manager, /deleteAssignment/);
+  assert.doesNotMatch(manager, /reactivateAssignment/i);
 });
 
 // ---- 14. existing User Center behavior remains unchanged ----
