@@ -1622,6 +1622,77 @@
             <button onClick="{{ activateSelectedEmployee }}" data-f="1" style="width:100%;height:38px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">إعادة محاولة التفعيل</button>
           </div>
         </sc-if>
+
+        <!-- USER CENTER SHADOW READ (micro-phase) — read-only institutional
+             assignment history/governance display. No edit/create/end
+             controls exist here by design: employeeAssignments is history/
+             governance data only in this phase, never an authorization
+             source, and this section never mutates it. -->
+        <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--tx,#e9f1fb)">التكليفات المؤسسية</div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6)">الانتماء المؤسسي الأصلي</div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:10px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">
+              <div style="display:flex;align-items:center;gap:8px;font-size:10.5px">
+                <span style="flex:none;width:96px;color:var(--tx3,#7d8ea6)">الإدارة الأصلية</span>
+                <span style="flex:1;text-align:left;color:var(--tx,#dbe6f5);font-weight:500">{{ employeeHomeAdministration }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:10.5px">
+                <span style="flex:none;width:96px;color:var(--tx3,#7d8ea6)">القسم الأصلي</span>
+                <span style="flex:1;text-align:left;color:var(--tx,#dbe6f5);font-weight:500">{{ employeeHomeDepartment }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:10.5px">
+                <span style="flex:none;width:96px;color:var(--tx3,#7d8ea6)">المسمى الوظيفي</span>
+                <span style="flex:1;text-align:left;color:var(--tx,#dbe6f5);font-weight:500">{{ employeeHomeJobTitle }}</span>
+              </div>
+            </div>
+          </div>
+
+          <sc-if value="{{ employeeAssignmentsLoading }}">
+            <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);padding:10px;text-align:center">جاري تحميل التكليفات المؤسسية...</div>
+          </sc-if>
+
+          <sc-if value="{{ employeeAssignmentsError }}">
+            <div style="font-size:10.5px;color:#f87171;padding:10px;border-radius:9px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">{{ employeeAssignmentsError }}</div>
+          </sc-if>
+
+          <sc-if value="{{ employeeAssignmentsEmpty }}">
+            <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);padding:10px;text-align:center">لا توجد تكليفات مؤسسية مسجلة لهذا الموظف.</div>
+          </sc-if>
+
+          <sc-if value="{{ employeeCurrentAssignmentRows.length }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:10px;color:var(--tx3,#7d8ea6)">التكليفات الحالية</div>
+              <sc-for list="{{ employeeCurrentAssignmentRows }}" as="a" hint-placeholder-count="2">
+                <div style="padding:10px;border-radius:10px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:flex;flex-direction:column;gap:5px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <span style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ a.productLabel }}</span>
+                    <span style="flex:none;font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:7px;color:{{ a.statusCol }};background:{{ a.statusBg }};border:1px solid {{ a.statusBd }}">{{ a.statusLabel }}</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--tx2,#a9bdd4)">{{ a.typeLabel }} · {{ a.scopeLabel }}</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6)">من {{ a.startLabel }} إلى {{ a.endLabel }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ employeeHistoryAssignmentRows.length }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:10px;color:var(--tx3,#7d8ea6)">السجل التاريخي للتكليفات</div>
+              <sc-for list="{{ employeeHistoryAssignmentRows }}" as="a" hint-placeholder-count="2">
+                <div style="padding:10px;border-radius:10px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:flex;flex-direction:column;gap:5px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <span style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ a.productLabel }}</span>
+                    <span style="flex:none;font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:7px;color:{{ a.statusCol }};background:{{ a.statusBg }};border:1px solid {{ a.statusBd }}">{{ a.statusLabel }}</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--tx2,#a9bdd4)">{{ a.typeLabel }} · {{ a.scopeLabel }}</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6)">من {{ a.startLabel }} إلى {{ a.endLabel }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
       </div>
     </div>
   </sc-if>
@@ -1827,6 +1898,56 @@ function resolveManagerProductEntitlements(u) {
     lands: { enabled: landsEnabled, role: landsEnabled ? landsAccess.role : null },
   };
 }
+// USER CENTER SHADOW READ (micro-phase) — pure, non-fabricating display
+// formatters for employeeAssignments rows returned by the trusted Admin API
+// (api/admin/employees.js listAssignments). This module never reads
+// Firestore directly and these formatters never invent a label for a value
+// they don't recognize — an unrecognized productId/assignmentType/
+// scope.type is shown as its own raw value rather than a fabricated Arabic
+// string. Product labels mirror the same canonical names already used
+// elsewhere in this file (auKindOptions above).
+const INSTITUTIONAL_PRODUCT_LABELS = { field: 'حصر ميداني', mobility: 'إدارة الحركة والسير', lands: 'حصر أراضي' };
+const INSTITUTIONAL_ASSIGNMENT_TYPE_LABELS = { PRIMARY: 'أساسي', SECONDARY: 'ثانوي', TEMPORARY: 'مؤقت', SECTION_HEAD: 'رئيس قسم' };
+const INSTITUTIONAL_ASSIGNMENT_STATUS_LABELS = { ACTIVE: 'نشط', ENDED: 'منتهٍ', CANCELLED: 'ملغى' };
+const INSTITUTIONAL_SCOPE_TYPE_LABELS = { PRODUCT: 'منتج', SECTION: 'قسم' };
+const INSTITUTIONAL_STATUS_COLORS = {
+  ACTIVE: { col: '#22c55e', bg: 'rgba(34,197,85,0.12)', bd: 'rgba(34,197,85,0.3)' },
+  ENDED: { col: '#7d8ea6', bg: 'rgba(122,164,224,0.08)', bd: 'rgba(122,164,224,0.2)' },
+  CANCELLED: { col: '#f87171', bg: 'rgba(248,113,113,0.12)', bd: 'rgba(248,113,113,0.3)' },
+};
+
+// Assignment dates are written server-side as Firestore Timestamps; this
+// only FORMATS whatever shape comes back (Date, ISO string, or a Firestore
+// Timestamp-like {_seconds}/{seconds} object) — it never fabricates a date.
+function formatInstitutionalAssignmentDate(value) {
+  if (!value) return '—';
+  let d = null;
+  if (value instanceof Date) d = value;
+  else if (typeof value === 'string' || typeof value === 'number') d = new Date(value);
+  else if (typeof value === 'object') {
+    if (typeof value.toDate === 'function') d = value.toDate();
+    else if (typeof value._seconds === 'number') d = new Date(value._seconds * 1000);
+    else if (typeof value.seconds === 'number') d = new Date(value.seconds * 1000);
+  }
+  if (!d || Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
+}
+
+function formatInstitutionalAssignmentRow(a) {
+  const scope = a && a.scope;
+  const scopeTypeLabel = scope && INSTITUTIONAL_SCOPE_TYPE_LABELS[scope.type];
+  const statusColors = INSTITUTIONAL_STATUS_COLORS[a.status] || { col: '#7d8ea6', bg: 'rgba(122,164,224,0.08)', bd: 'rgba(122,164,224,0.2)' };
+  return {
+    id: a.assignmentId,
+    productLabel: INSTITUTIONAL_PRODUCT_LABELS[a.productId] || a.productId || '—',
+    typeLabel: INSTITUTIONAL_ASSIGNMENT_TYPE_LABELS[a.assignmentType] || a.assignmentType || '—',
+    scopeLabel: scope ? `${scopeTypeLabel || scope.type || ''}: ${scope.id || ''}`.trim() : '—',
+    startLabel: formatInstitutionalAssignmentDate(a.startAt),
+    endLabel: formatInstitutionalAssignmentDate(a.endAt),
+    statusLabel: INSTITUTIONAL_ASSIGNMENT_STATUS_LABELS[a.status] || a.status || '—',
+    statusCol: statusColors.col, statusBg: statusColors.bg, statusBd: statusColors.bd,
+  };
+}
 class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
@@ -1839,6 +1960,13 @@ class Component extends DCLogic {
     svcFieldEnabled: false, svcFieldRole: 'supervisor', svcMobilityEnabled: false, svcMobilityRole: 'employee', svcLandsEnabled: false, svcLandsRole: 'lands_employee', svcVehicleEligible: false,
     addEmployeeOpen: false, aeName: '', aeAdministration: '', aeDepartment: '', aeJobTitle: '',
     employeeDrawerOpen: false, selectedEmployee: null, actEmail: '',
+    // USER CENTER SHADOW READ (micro-phase) — read-only institutional
+    // assignment history/governance display. employeeAssignments never
+    // backs any authorization decision; this is display data only, fetched
+    // through the same trusted Admin API used everywhere else in this
+    // drawer (api/admin/employees.js, action listAssignments).
+    employeeAssignmentsLoading: false, employeeAssignmentsError: '',
+    employeeAssignmentsCurrent: [], employeeAssignmentsHistory: [],
     evidenceDrawerOpen: false, selectedObservation: null,
     evidenceBeforeState: 'idle', evidenceBeforeUrl: null,
     evidenceAfterState: 'idle', evidenceAfterUrl: null,
@@ -2873,6 +3001,20 @@ class Component extends DCLogic {
       selectedEmployeeIsNoAccount: st.selectedEmployee?.accountStatus === 'NO_ACCOUNT',
       selectedEmployeeIsPending: st.selectedEmployee?.accountStatus === 'PENDING_ACTIVATION',
       selectedEmployeeActivationError: st.selectedEmployee?.activationError || '',
+      // USER CENTER SHADOW READ (micro-phase) — read-only institutional
+      // assignment display. Permanent organizational home always comes
+      // from the employee record itself (employees/{employeeId}), never
+      // inferred from assignment history. employeeAssignments feeds ONLY
+      // this display — no authorization decision anywhere reads it.
+      employeeHomeAdministration: st.selectedEmployee?.administration || '—',
+      employeeHomeDepartment: st.selectedEmployee?.department || '—',
+      employeeHomeJobTitle: st.selectedEmployee?.jobTitle || '—',
+      employeeAssignmentsLoading: st.employeeAssignmentsLoading,
+      employeeAssignmentsError: st.employeeAssignmentsError,
+      employeeAssignmentsEmpty: !st.employeeAssignmentsLoading && !st.employeeAssignmentsError
+        && (st.employeeAssignmentsCurrent || []).length === 0 && (st.employeeAssignmentsHistory || []).length === 0,
+      employeeCurrentAssignmentRows: (st.employeeAssignmentsCurrent || []).map(formatInstitutionalAssignmentRow),
+      employeeHistoryAssignmentRows: (st.employeeAssignmentsHistory || []).map(formatInstitutionalAssignmentRow),
       actEmail: st.actEmail, setActEmail: e => this.setState({ actEmail: e.target.value }),
       activateSelectedEmployee: () => this.activateSelectedEmployee(),
       addUserOpen: st.addUserOpen, submitAddUser: () => this.submitAddUser(),
@@ -3426,10 +3568,70 @@ class Component extends DCLogic {
 
   openEmployeeDetail(employee) {
     this.setState({ employeeDrawerOpen: true, selectedEmployee: employee, actEmail: (employee && employee.email) || '' });
+    this.loadEmployeeAssignments(employee);
   }
 
   closeEmployeeDrawer() {
-    this.setState({ employeeDrawerOpen: false, selectedEmployee: null, actEmail: '' });
+    this.setState({
+      employeeDrawerOpen: false, selectedEmployee: null, actEmail: '',
+      employeeAssignmentsLoading: false, employeeAssignmentsError: '',
+      employeeAssignmentsCurrent: [], employeeAssignmentsHistory: [],
+    });
+  }
+
+  // USER CENTER SHADOW READ (micro-phase) — read-only institutional
+  // assignment history/governance display for the employee currently open
+  // in the drawer. employeeAssignments has no direct client read (Firestore
+  // Rules deny it entirely); the ONLY path here is the same trusted
+  // Admin API this drawer already uses for every other action
+  // (api/admin/employees.js, action listAssignments — manager same-org
+  // only, per the locked Institutional Assignment Foundation). This never
+  // affects login, routing, roles, entitlements, or any employee/users
+  // field — it only feeds this one read-only display.
+  //
+  // A simple per-employeeId cache on the component instance avoids
+  // refetching the same employee's history repeatedly within one open
+  // session — no premature caching framework, just a Map that lives as
+  // long as the page does.
+  async loadEmployeeAssignments(employee) {
+    if (!employee || !employee.id) return;
+    this._employeeAssignmentsCache = this._employeeAssignmentsCache || new Map();
+    const cached = this._employeeAssignmentsCache.get(employee.id);
+    if (cached) {
+      this.setState({
+        employeeAssignmentsLoading: false, employeeAssignmentsError: '',
+        employeeAssignmentsCurrent: cached.current, employeeAssignmentsHistory: cached.history,
+      });
+      return;
+    }
+    this.setState({
+      employeeAssignmentsLoading: true, employeeAssignmentsError: '',
+      employeeAssignmentsCurrent: [], employeeAssignmentsHistory: [],
+    });
+    let body;
+    try {
+      body = await this.callAdminEmployeesApi('listAssignments', {
+        organizationId: employee.organizationId,
+        employeeId: employee.id,
+      });
+    } catch (e) {
+      // FAIL CLOSED — unauthenticated / forbidden / cross_organization_denied
+      // (or any other API failure) show an honest error and an empty list.
+      // Never fall back to a direct Firestore read of employeeAssignments.
+      if (this.state.selectedEmployee && this.state.selectedEmployee.id === employee.id) {
+        this.setState({ employeeAssignmentsLoading: false, employeeAssignmentsError: this.adminApiErrorMessage(e) });
+      }
+      return;
+    }
+    const assignments = Array.isArray(body.assignments) ? body.assignments : [];
+    const current = assignments.filter(a => a.status === 'ACTIVE');
+    const history = assignments.filter(a => a.status === 'ENDED' || a.status === 'CANCELLED');
+    this._employeeAssignmentsCache.set(employee.id, { current, history });
+    // Guard against a fast close/reopen (different employee) race — only
+    // apply the result if the drawer is still open on this same employee.
+    if (this.state.selectedEmployee && this.state.selectedEmployee.id === employee.id) {
+      this.setState({ employeeAssignmentsLoading: false, employeeAssignmentsError: '', employeeAssignmentsCurrent: current, employeeAssignmentsHistory: history });
+    }
   }
 
   // Re-reads the employee doc from the live registry (this.liveEmployees,
@@ -3623,7 +3825,9 @@ class Component extends DCLogic {
       employeeId_and_email_required: 'البريد الإلكتروني مطلوب لتفعيل الحساب.',
       firestore_link_failed: 'تعذر إكمال الربط بعد إنشاء الحساب. حالة الحساب الآن قيد التفعيل، أعد المحاولة.',
       no_linked_account: 'لا يوجد حساب دخول مرتبط بهذا الموظف بعد.',
-      illegal_account_status_transition: 'تعذر تنفيذ هذا التغيير على حالة الحساب الحالية.'
+      illegal_account_status_transition: 'تعذر تنفيذ هذا التغيير على حالة الحساب الحالية.',
+      // USER CENTER SHADOW READ (micro-phase) — listAssignments denial.
+      manager_required_for_assignments: 'عرض التكليفات المؤسسية متاح لمدير المؤسسة فقط.'
     };
     return messages[e.reason] || messages[e.message] || 'حدث خطأ غير متوقع.';
   }
