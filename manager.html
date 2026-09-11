@@ -3992,16 +3992,38 @@ class Component extends DCLogic {
     }
     if (!isValidFreeText(caReason)) { this.setState({ caError: 'سبب التكليف غير صالح.' }); return; }
 
-    // PART B — issuedBy is derived exclusively from the authenticated
-    // session's own real ID token, never typed by the manager and never
-    // fabricated. If it cannot be safely determined, fail visibly.
-    const token = await this.getAuthToken?.();
-    if (!token) { this.setState({ caError: 'الجلسة غير موثقة، الرجاء تسجيل الدخول من جديد.' }); return; }
-    const issuedBy = decodeJwtUid(token);
-    if (!issuedBy) { this.setState({ caError: 'تعذر التحقق من هوية المستخدم الموثقة. الرجاء إعادة تسجيل الدخول.' }); return; }
-
+    // HOTFIX (pre-auth mutation claim) — caSubmitting must be claimed
+    // BEFORE the first await, never after it. All synchronous validation
+    // above has already passed at this point, so this is the earliest
+    // point the guard can honestly be claimed; claiming it any later (e.g.
+    // after awaiting getAuthToken, as before) leaves a race window where
+    // caSubmitting/endSubmitting are both false while a token fetch is in
+    // flight — during which a second create, or an end action, could
+    // slip past the unified busy guard entirely.
     this.setState({ caSubmitting: true, caError: '' });
     try {
+      // PART B — issuedBy is derived exclusively from the authenticated
+      // session's own real ID token, never typed by the manager and never
+      // fabricated. A rejected/throwing getAuthToken is normalized to "no
+      // token" here, exactly like a null/empty return — every token
+      // failure shows the same truthful session error, releases
+      // caSubmitting, and never calls createAssignment.
+      let token = null;
+      try {
+        token = await this.getAuthToken?.();
+      } catch (_) {
+        token = null;
+      }
+      if (!token) {
+        this.setState({ caSubmitting: false, caError: 'الجلسة غير موثقة، الرجاء تسجيل الدخول من جديد.' });
+        return;
+      }
+      const issuedBy = decodeJwtUid(token);
+      if (!issuedBy) {
+        this.setState({ caSubmitting: false, caError: 'تعذر التحقق من هوية المستخدم الموثقة. الرجاء إعادة تسجيل الدخول.' });
+        return;
+      }
+
       await this.callAdminEmployeesApi('createAssignment', {
         employeeId: employee.id,
         organizationId: employee.organizationId,

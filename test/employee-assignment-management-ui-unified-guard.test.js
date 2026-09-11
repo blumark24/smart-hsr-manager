@@ -174,4 +174,91 @@ test('SECURITY: no Authorization Cutover — login/routing/adapter files remain 
   assert.doesNotMatch(smartMobilityAdapter, /employeeAssignments/);
 });
 
+// ============================================================================
+// PRE-AUTH MUTATION CLAIM (micro-hotfix)
+// ============================================================================
+//
+// Bug: caSubmitting was previously set to true AFTER `await
+// this.getAuthToken?.()`, leaving a window — while the token request was
+// in flight — where isAssignmentMutationBusy() was false: a second create,
+// or an end action, could slip past the unified busy guard entirely. See
+// test/employee-assignment-management-ui-runtime.test.js TEST 1/2/3 for the
+// executable proof; this file pins the exact code ordering that makes it
+// true.
+
+test('PRE-AUTH CLAIM: caSubmitting is set to true AFTER all synchronous form validation but BEFORE the first await (getAuthToken)', () => {
+  const fn = methodBody(manager, 'async submitCreateAssignment() {', 4600);
+  const claimIdx = fn.indexOf("this.setState({ caSubmitting: true, caError: '' });");
+  assert.notEqual(claimIdx, -1, 'the claim must exist verbatim');
+
+  // Every synchronous validation guard must appear BEFORE the claim.
+  const validationMarkers = [
+    "if (!isValidDateString(caStartAt))",
+    "if (caEndAt && !isValidDateString(caEndAt))",
+    "if (caEndAt && caEndAt < caStartAt)",
+    "if (!isValidSectionIdentifier(caScopeId))",
+    "if (!isValidFreeText(caReason))",
+  ];
+  for (const marker of validationMarkers) {
+    const idx = fn.indexOf(marker);
+    assert.notEqual(idx, -1, `${marker} not found`);
+    assert.ok(idx < claimIdx, `${marker} must run BEFORE the caSubmitting claim`);
+  }
+
+  // The first await (getAuthToken) must come AFTER the claim, never before.
+  const tokenAwaitIdx = fn.indexOf('token = await this.getAuthToken?.();');
+  assert.notEqual(tokenAwaitIdx, -1);
+  assert.ok(tokenAwaitIdx > claimIdx, 'getAuthToken must be awaited AFTER caSubmitting is claimed, never before');
+
+  // No await of any kind may occur between the claim and the token fetch —
+  // the claim must be the immediate next statement's neighborhood, not
+  // separated by another suspension point.
+  const between = fn.slice(claimIdx, tokenAwaitIdx);
+  assert.doesNotMatch(between, /\bawait\b/, 'no await may occur between claiming caSubmitting and fetching the token');
+});
+
+test('PRE-AUTH CLAIM: createAssignment cannot execute unless token acquisition produced a usable token and uid', () => {
+  const fn = methodBody(manager, 'async submitCreateAssignment() {', 4600);
+  const tokenAwaitIdx = fn.indexOf('token = await this.getAuthToken?.();');
+  const createCallIdx = fn.indexOf("callAdminEmployeesApi('createAssignment',");
+  assert.ok(tokenAwaitIdx < createCallIdx, 'token acquisition must precede the createAssignment call');
+
+  const between = fn.slice(tokenAwaitIdx, createCallIdx);
+  assert.match(between, /if \(!token\) \{\s*this\.setState\(\{ caSubmitting: false, caError:/, 'a missing/falsy token must release the guard and return before createAssignment');
+  assert.match(between, /const issuedBy = decodeJwtUid\(token\);/);
+  assert.match(between, /if \(!issuedBy\) \{\s*this\.setState\(\{ caSubmitting: false, caError:/, 'an undecodable uid must also release the guard and return before createAssignment');
+});
+
+test('PRE-AUTH CLAIM: a rejected/throwing getAuthToken is normalized to "no token" rather than escaping as an uncaught rejection', () => {
+  const fn = methodBody(manager, 'async submitCreateAssignment() {', 4600);
+  assert.match(fn, /let token = null;\s*try \{\s*token = await this\.getAuthToken\?\.\(\);\s*\} catch \(_\) \{\s*token = null;\s*\}/);
+});
+
+test('PRE-AUTH CLAIM: the failure path (missing token, undecodable uid, or a thrown/rejected error from createAssignment itself) always clears caSubmitting', () => {
+  const fn = methodBody(manager, 'async submitCreateAssignment() {', 4600);
+  const claimIdx = fn.indexOf("this.setState({ caSubmitting: true, caError: '' });");
+  assert.notEqual(claimIdx, -1);
+  // Only branches AFTER the claim are relevant here — the synchronous
+  // validation branches before it correctly never touch caSubmitting at
+  // all (it hasn't been claimed yet, so there is nothing to release).
+  const afterClaim = fn.slice(claimIdx);
+  const caErrorSetStateCalls = (afterClaim.match(/this\.setState\(\{[^}]*caError:[^}]*\}\);/g) || [])
+    .filter(call => !call.includes('caSubmitting: true')); // exclude the claim statement itself
+  assert.ok(caErrorSetStateCalls.length >= 3, `expected at least 3 post-claim caError-setting branches, found ${caErrorSetStateCalls.length}`);
+  for (const call of caErrorSetStateCalls) {
+    assert.match(call, /caSubmitting: false/, `every post-claim caError-setting branch must also release caSubmitting: ${call}`);
+  }
+});
+
+test('PRE-AUTH CLAIM: the unified busy guard and every other mutation-entry guard remain exactly as locked by the prior hotfix', () => {
+  assert.match(manager, /isAssignmentMutationBusy\(\) \{\s*return this\.state\.caSubmitting \|\| this\.state\.endSubmitting;\s*\}/);
+  for (const sig of [
+    'openCreateAssignmentForm() {', 'async submitCreateAssignment() {', 'startEndConfirm(assignmentId) {',
+    'async confirmEndAssignment(assignmentId) {', 'closeCreateAssignmentForm() {', 'cancelEndConfirm() {', 'closeEmployeeDrawer() {',
+  ]) {
+    const fn = methodBody(manager, sig, 400);
+    assert.match(fn, /if \(this\.isAssignmentMutationBusy\(\)\) return;/, `${sig} must still guard on the unified busy check`);
+  }
+});
+
 console.log('employee-assignment-management-ui-unified-guard source-contract tests OK');

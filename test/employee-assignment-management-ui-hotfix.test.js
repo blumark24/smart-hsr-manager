@@ -15,7 +15,7 @@ const test = require('node:test');
 
 const manager = fs.readFileSync(path.join(__dirname, '..', 'manager.html'), 'utf8');
 
-function methodBody(source, signature, maxLen = 3200) {
+function methodBody(source, signature, maxLen = 4200) {
   const start = source.indexOf(signature);
   assert.notEqual(start, -1, `${signature} not found`);
   return source.slice(start, start + maxLen);

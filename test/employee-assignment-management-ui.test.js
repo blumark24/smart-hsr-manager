@@ -29,7 +29,7 @@ const managerLoginHtml = fs.readFileSync(path.join(root, 'manager-login.html'), 
 const dashboardAdapter = fs.readFileSync(path.join(root, 'manager-dashboard-adapter.js'), 'utf8');
 const smartMobilityAdapter = fs.readFileSync(path.join(root, 'smart-mobility-adapter.js'), 'utf8');
 
-function methodBody(source, signature, maxLen = 3200) {
+function methodBody(source, signature, maxLen = 4200) {
   const start = source.indexOf(signature);
   assert.notEqual(start, -1, `${signature} not found`);
   return source.slice(start, start + maxLen);
@@ -136,9 +136,9 @@ test('CREATE FLOW: productId and scope are taken from the controlled UI selectio
 
 test('CREATE FLOW: issuedBy is the authenticated manager session\'s own decoded uid — never typed, never fabricated', () => {
   const fn = methodBody(manager, 'async submitCreateAssignment() {');
-  assert.match(fn, /const token = await this\.getAuthToken\?\.\(\);/);
+  assert.match(fn, /token = await this\.getAuthToken\?\.\(\);/);
   assert.match(fn, /const issuedBy = decodeJwtUid\(token\);/);
-  assert.match(fn, /if \(!issuedBy\) \{ this\.setState\(\{ caError:/, 'must fail visibly, never fabricate, if the uid cannot be safely decoded');
+  assert.match(fn, /if \(!issuedBy\) \{\s*this\.setState\(\{ caSubmitting: false, caError:/, 'must fail visibly, never fabricate, and release the guard, if the uid cannot be safely decoded');
   assert.match(fn, /issuedBy,/);
 });
 
@@ -175,7 +175,7 @@ test('CREATE FLOW: invalidateAndReloadAssignments deletes the cache entry, clear
 });
 
 test('CREATE FLOW: on failure, controls are restored and no fabricated success/UI state occurs', () => {
-  const fn = methodBody(manager, 'async submitCreateAssignment() {', 3600);
+  const fn = methodBody(manager, 'async submitCreateAssignment() {', 4600);
   const catchStart = fn.indexOf('} catch (e) {');
   const catchBlock = fn.slice(catchStart, fn.length);
   assert.match(catchBlock, /caSubmitting:\s*false/);

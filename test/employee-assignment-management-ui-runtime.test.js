@@ -67,7 +67,7 @@ function fakeIdToken(uid) {
   return `header.${payload}.signature`;
 }
 
-function makeInstance({ callAdminEmployeesApi } = {}) {
+function makeInstance({ callAdminEmployeesApi, getAuthToken } = {}) {
   const Harness = buildHarnessClass();
   const instance = new Harness();
   instance.state = {
@@ -85,7 +85,7 @@ function makeInstance({ callAdminEmployeesApi } = {}) {
   };
   instance.flashLog = [];
   instance.flash = (msg) => { instance.flashLog.push(msg); };
-  instance.getAuthToken = async () => fakeIdToken('mgr-uid-1');
+  instance.getAuthToken = getAuthToken || (async () => fakeIdToken('mgr-uid-1'));
   instance.callAdminEmployeesApi = callAdminEmployeesApi;
   return instance;
 }
@@ -543,6 +543,121 @@ test('END PENDING -> DRAWER/CANCEL: cancelEndConfirm and closeEmployeeDrawer are
 
   endDeferred.resolve({ assignmentId: 'assign-1', status: 'ENDED' });
   await endPromise;
+});
+
+// ============================================================================
+// PRE-AUTH MUTATION CLAIM (micro-hotfix)
+// ============================================================================
+
+test('TEST 1 — TOKEN-PENDING DOUBLE CREATE: caSubmitting is claimed before getAuthToken resolves, and a second create is blocked until the first finishes', async () => {
+  const tokenDeferred = deferred();
+  let createCallCount = 0;
+  const instance = makeInstance({
+    getAuthToken: () => tokenDeferred.promise,
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'createAssignment') { createCallCount++; return { assignment: { assignmentId: 'a-1', status: 'ACTIVE' } }; }
+      if (action === 'listAssignments') return { assignments: [] };
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.caCreateOpen = true;
+
+  const submitPromise = instance.submitCreateAssignment();
+
+  // Before the token resolves — the guard must already be claimed. This is
+  // the exact bug: previously caSubmitting only became true AFTER awaiting
+  // getAuthToken, leaving both flags false during this entire window.
+  assert.equal(instance.state.caSubmitting, true, 'caSubmitting must be true before getAuthToken resolves');
+  assert.equal(instance.state.endSubmitting, false);
+
+  // A second create attempted while the token is still pending must be blocked.
+  await instance.submitCreateAssignment();
+  assert.equal(createCallCount, 0, 'createAssignment must not have been called yet — the token is still pending');
+
+  tokenDeferred.resolve(fakeIdToken('mgr-uid-1'));
+  await submitPromise;
+
+  assert.equal(createCallCount, 1, 'createAssignment must be called exactly once total, never twice');
+  assert.equal(instance.state.caSubmitting, false);
+});
+
+test('TEST 2 — TOKEN-PENDING CREATE -> END: an end action cannot start while CREATE is claiming the guard during token acquisition', async () => {
+  const tokenDeferred = deferred();
+  let endCallCount = 0;
+  const instance = makeInstance({
+    getAuthToken: () => tokenDeferred.promise,
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'createAssignment') return { assignment: { assignmentId: 'a-1', status: 'ACTIVE' } };
+      if (action === 'listAssignments') return { assignments: [] };
+      if (action === 'endAssignment') { endCallCount++; return { assignmentId: 'assign-1', status: 'ENDED' }; }
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.caCreateOpen = true;
+
+  const submitPromise = instance.submitCreateAssignment();
+  assert.equal(instance.state.caSubmitting, true, 'CREATE must have claimed the guard before the token resolves');
+
+  instance.startEndConfirm('assign-1');
+  assert.equal(instance.state.endConfirmingId, null, 'end confirmation must not become active while CREATE holds the guard');
+
+  await instance.confirmEndAssignment('assign-1');
+  assert.equal(endCallCount, 0, 'endAssignment must never be called while CREATE holds the guard');
+  assert.equal(instance.state.endSubmitting, false, 'CREATE must remain the sole owner of the mutation-busy state');
+
+  tokenDeferred.resolve(fakeIdToken('mgr-uid-1'));
+  await submitPromise;
+});
+
+test('TEST 3A — TOKEN FAILURE RELEASE (rejected): a rejected getAuthToken releases caSubmitting, shows the truthful session error, and never calls createAssignment', async () => {
+  let createCallCount = 0;
+  const instance = makeInstance({
+    getAuthToken: () => Promise.reject(new Error('network down')),
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'createAssignment') { createCallCount++; return { assignment: { assignmentId: 'a-1', status: 'ACTIVE' } }; }
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.caCreateOpen = true;
+
+  await instance.submitCreateAssignment();
+
+  assert.equal(createCallCount, 0, 'createAssignment must never be called when the token request rejects');
+  assert.equal(instance.state.caSubmitting, false, 'the guard must be released after a token failure');
+  assert.equal(instance.state.caError, 'الجلسة غير موثقة، الرجاء تسجيل الدخول من جديد.');
+  assert.equal(instance.state.caCreateOpen, true, 'the create form must remain open/recoverable, never silently closed');
+
+  // The guard being released means a retry is genuinely possible — not
+  // permanently locked out by the failed attempt.
+  await instance.submitCreateAssignment();
+  assert.equal(instance.state.caSubmitting, false);
+});
+
+test('TEST 3B — TOKEN FAILURE RELEASE (no usable token): an empty token releases caSubmitting the same way, never calling createAssignment', async () => {
+  let createCallCount = 0;
+  const instance = makeInstance({
+    getAuthToken: () => Promise.resolve(''),
+    callAdminEmployeesApi: async (action) => {
+      if (action === 'createAssignment') { createCallCount++; return { assignment: { assignmentId: 'a-1', status: 'ACTIVE' } }; }
+      throw new Error('unexpected action ' + action);
+    },
+  });
+  instance.state.selectedEmployee = EMPLOYEE;
+  instance.state.employeeDrawerOpen = true;
+  instance.state.caCreateOpen = true;
+
+  await instance.submitCreateAssignment();
+
+  assert.equal(createCallCount, 0);
+  assert.equal(instance.state.caSubmitting, false);
+  assert.equal(instance.state.caError, 'الجلسة غير موثقة، الرجاء تسجيل الدخول من جديد.');
+  assert.equal(instance.state.caCreateOpen, true);
 });
 
 console.log('employee-assignment-management-ui-runtime tests OK');
