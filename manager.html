@@ -1720,7 +1720,7 @@
 
               <div style="display:flex;gap:8px">
                 <button onClick="{{ submitCreateAssignment }}" data-f="1" disabled="{{ caSubmitting }}" style="flex:1;height:36px;border-radius:9px;font-size:11px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">{{ caSubmitLabel }}</button>
-                <button onClick="{{ closeCreateAssignmentForm }}" data-f="1" style="flex:1;height:36px;border-radius:9px;font-size:11px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">إلغاء</button>
+                <button onClick="{{ closeCreateAssignmentForm }}" data-f="1" disabled="{{ caSubmitting }}" style="flex:1;height:36px;border-radius:9px;font-size:11px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">إلغاء</button>
               </div>
             </div>
           </sc-if>
@@ -1765,7 +1765,7 @@
                       </sc-if>
                       <div style="display:flex;gap:6px">
                         <button onClick="{{ a.onConfirmEnd }}" data-f="1" disabled="{{ endSubmitting }}" style="flex:1;height:30px;border-radius:8px;font-size:10px;font-weight:600;color:#fff;background:#c0392b;border:1px solid rgba(192,57,43,0.6);cursor:pointer">{{ endSubmitLabel }}</button>
-                        <button onClick="{{ cancelEndConfirm }}" data-f="1" style="flex:1;height:30px;border-radius:8px;font-size:10px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">تراجع</button>
+                        <button onClick="{{ cancelEndConfirm }}" data-f="1" disabled="{{ endSubmitting }}" style="flex:1;height:30px;border-radius:8px;font-size:10px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">تراجع</button>
                       </div>
                     </div>
                   </sc-if>
@@ -3783,15 +3783,23 @@ class Component extends DCLogic {
     this.loadEmployeeAssignments(employee);
   }
 
+  // HOTFIX — never close the drawer while a create/end mutation is still
+  // pending: closing would clear selectedEmployee (and thus the eventual
+  // response's same-employee guard) while the request's real server
+  // outcome is still unknown, and it must never race a caSubmitting/
+  // endSubmitting guard closed out from under an in-flight request. This
+  // also covers the backdrop click and the explicit "×" button, which both
+  // call this same method.
   closeEmployeeDrawer() {
+    if (this.state.caSubmitting || this.state.endSubmitting) return;
     this.setState({
       employeeDrawerOpen: false, selectedEmployee: null, actEmail: '',
       employeeAssignmentsLoading: false, employeeAssignmentsError: '',
       employeeAssignmentsCurrent: [], employeeAssignmentsHistory: [],
-      caCreateOpen: false, caSubmitting: false, caError: '',
+      caCreateOpen: false, caError: '',
       caProductId: 'field', caAssignmentType: 'PRIMARY', caScopeType: 'PRODUCT', caScopeId: '',
       caStartAt: '', caEndAt: '', caReason: '',
-      endConfirmingId: null, endReasonDraft: '', endSubmitting: false, endError: '',
+      endConfirmingId: null, endReasonDraft: '', endError: '',
     });
   }
 
@@ -3809,16 +3817,41 @@ class Component extends DCLogic {
   // refetching the same employee's history repeatedly within one open
   // session — no premature caching framework, just a Map that lives as
   // long as the page does.
+  //
+  // HOTFIX — stale-read protection. The prior guard only compared the
+  // employee id (this.state.selectedEmployee.id === employee.id), which
+  // never caught an OLDER request for the SAME employee resolving after a
+  // NEWER request for that same employee (e.g. a pre-mutation load still
+  // in flight when invalidateAndReloadAssignments starts a fresh
+  // post-mutation load). this._employeeAssignmentsLoadSeq is a
+  // monotonically increasing counter bumped once at the very start of
+  // every call; each call captures its own value and re-checks it against
+  // the live counter immediately before every place it would otherwise
+  // write the cache or any employeeAssignments* state. A load whose
+  // captured value no longer matches the live counter has been superseded
+  // by a strictly newer load and is discarded completely — it must never
+  // overwrite cache, current rows, history rows, or error state.
+  //
+  // Returns true if this call's own outcome was applied (or it was
+  // harmlessly superseded by a newer load that will speak for the truth
+  // instead), and false only if THIS call's own fetch genuinely failed
+  // while still current — the signal invalidateAndReloadAssignments and
+  // its mutation callers use to distinguish "the mutation succeeded but
+  // the refresh failed" from "the refresh succeeded".
   async loadEmployeeAssignments(employee) {
-    if (!employee || !employee.id) return;
+    if (!employee || !employee.id) return true;
     this._employeeAssignmentsCache = this._employeeAssignmentsCache || new Map();
+    this._employeeAssignmentsLoadSeq = (this._employeeAssignmentsLoadSeq || 0) + 1;
+    const seq = this._employeeAssignmentsLoadSeq;
+
     const cached = this._employeeAssignmentsCache.get(employee.id);
     if (cached) {
+      if (this._employeeAssignmentsLoadSeq !== seq) return true;
       this.setState({
         employeeAssignmentsLoading: false, employeeAssignmentsError: '',
         employeeAssignmentsCurrent: cached.current, employeeAssignmentsHistory: cached.history,
       });
-      return;
+      return true;
     }
     this.setState({
       employeeAssignmentsLoading: true, employeeAssignmentsError: '',
@@ -3831,14 +3864,20 @@ class Component extends DCLogic {
         employeeId: employee.id,
       });
     } catch (e) {
+      // A strictly newer load already superseded this one — it, not this
+      // stale failure, speaks for the current truth.
+      if (this._employeeAssignmentsLoadSeq !== seq) return true;
       // FAIL CLOSED — unauthenticated / forbidden / cross_organization_denied
       // (or any other API failure) show an honest error and an empty list.
       // Never fall back to a direct Firestore read of employeeAssignments.
       if (this.state.selectedEmployee && this.state.selectedEmployee.id === employee.id) {
         this.setState({ employeeAssignmentsLoading: false, employeeAssignmentsError: this.adminApiErrorMessage(e) });
       }
-      return;
+      return false;
     }
+    // Stale response — a newer load has since started; discard completely,
+    // never write cache or state from this one.
+    if (this._employeeAssignmentsLoadSeq !== seq) return true;
     const assignments = Array.isArray(body.assignments) ? body.assignments : [];
     const current = assignments.filter(a => a.status === 'ACTIVE');
     const history = assignments.filter(a => a.status === 'ENDED' || a.status === 'CANCELLED');
@@ -3848,6 +3887,7 @@ class Component extends DCLogic {
     if (this.state.selectedEmployee && this.state.selectedEmployee.id === employee.id) {
       this.setState({ employeeAssignmentsLoading: false, employeeAssignmentsError: '', employeeAssignmentsCurrent: current, employeeAssignmentsHistory: history });
     }
+    return true;
   }
 
   // ASSIGNMENT MANAGEMENT (micro-phase) — after any successful mutation
@@ -3856,11 +3896,18 @@ class Component extends DCLogic {
   // result. It drops the per-employee shadow-read cache entry, clears the
   // displayed lists, and re-fetches through the same trusted
   // listAssignments path loadEmployeeAssignments already uses.
-  invalidateAndReloadAssignments(employee) {
-    if (!employee || !employee.id) return;
+  //
+  // HOTFIX — now async and awaited by its mutation callers, so
+  // caSubmitting/endSubmitting stay locked through the fresh reload, not
+  // just through the mutation call itself. Because loadEmployeeAssignments
+  // always bumps the shared load-sequence counter first, this call's fetch
+  // is guaranteed to supersede any pre-mutation load already in flight for
+  // this employee. Returns loadEmployeeAssignments's own success signal.
+  async invalidateAndReloadAssignments(employee) {
+    if (!employee || !employee.id) return true;
     if (this._employeeAssignmentsCache) this._employeeAssignmentsCache.delete(employee.id);
     this.setState({ employeeAssignmentsCurrent: [], employeeAssignmentsHistory: [], employeeAssignmentsError: '' });
-    this.loadEmployeeAssignments(employee);
+    return this.loadEmployeeAssignments(employee);
   }
 
   openCreateAssignmentForm() {
@@ -3871,8 +3918,13 @@ class Component extends DCLogic {
     });
   }
 
+  // HOTFIX — never clear the mutation guard here: caSubmitting may only
+  // become false once the actual async createAssignment + refresh has
+  // finished (see submitCreateAssignment). Cancelling while a request is
+  // pending must be a no-op, never a way to reset the guard early.
   closeCreateAssignmentForm() {
-    this.setState({ caCreateOpen: false, caError: '', caSubmitting: false });
+    if (this.state.caSubmitting) return;
+    this.setState({ caCreateOpen: false, caError: '' });
   }
 
   setCaProductId(e) { this.setState({ caProductId: e.target.value }); }
@@ -3936,10 +3988,20 @@ class Component extends DCLogic {
         reason: (caReason || '').trim() || undefined,
       });
       this.flash('تمت إضافة التكليف بنجاح.');
-      this.setState({ caCreateOpen: false, caSubmitting: false });
-      // PART E — server remains the source of truth: never patch the
-      // displayed lists locally, always invalidate the cache and reload.
-      this.invalidateAndReloadAssignments(employee);
+      this.setState({ caCreateOpen: false });
+      // HOTFIX (FIX 2) — the mutation is DONE, but caSubmitting stays true
+      // through this reload too: it may only become false once the fresh
+      // listAssignments read has actually finished. PART E — server
+      // remains the source of truth: never patch the displayed lists
+      // locally.
+      const refreshOk = await this.invalidateAndReloadAssignments(employee);
+      this.setState({ caSubmitting: false });
+      if (!refreshOk) {
+        // HOTFIX (FIX 4) — the mutation itself already succeeded; never
+        // tell the manager it failed, and never auto-retry it to "fix" a
+        // read failure.
+        this.flash('تم تنفيذ الإجراء، لكن تعذر تحديث سجل التكليفات. أعد المحاولة.');
+      }
     } catch (e) {
       // PART G/F — fail closed, restore controls, never fabricate success.
       this.setState({ caSubmitting: false, caError: this.adminApiErrorMessage(e) });
@@ -3953,7 +4015,11 @@ class Component extends DCLogic {
     this.setState({ endConfirmingId: assignmentId, endReasonDraft: '', endError: '' });
   }
 
+  // HOTFIX — never clear the mutation guard here: endSubmitting may only
+  // become false once the actual async endAssignment + refresh has
+  // finished (see confirmEndAssignment).
   cancelEndConfirm() {
+    if (this.state.endSubmitting) return;
     this.setState({ endConfirmingId: null, endReasonDraft: '', endError: '' });
   }
 
@@ -3977,10 +4043,19 @@ class Component extends DCLogic {
         endReason: (endReason || '').trim() || undefined,
       });
       this.flash('تم إنهاء التكليف بنجاح.');
-      this.setState({ endSubmitting: false, endConfirmingId: null, endReasonDraft: '' });
-      // PART E — server remains the source of truth: never mark the card
-      // ended locally, always invalidate the cache and reload.
-      this.invalidateAndReloadAssignments(employee);
+      this.setState({ endConfirmingId: null, endReasonDraft: '' });
+      // HOTFIX (FIX 2) — the mutation is DONE, but endSubmitting stays
+      // true through this reload too: it may only become false once the
+      // fresh listAssignments read has actually finished. PART E — server
+      // remains the source of truth: never mark the card ended locally.
+      const refreshOk = await this.invalidateAndReloadAssignments(employee);
+      this.setState({ endSubmitting: false });
+      if (!refreshOk) {
+        // HOTFIX (FIX 4) — the mutation itself already succeeded; never
+        // tell the manager it failed, and never auto-retry it to "fix" a
+        // read failure.
+        this.flash('تم تنفيذ الإجراء، لكن تعذر تحديث سجل التكليفات. أعد المحاولة.');
+      }
     } catch (e) {
       this.setState({ endSubmitting: false, endError: this.adminApiErrorMessage(e) });
     }
