@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>التوأم الرقمي · SMART HSR</title>
+<link rel="stylesheet" href="https://unpkg.com/cesium@1.122.0/Build/Cesium/Widgets/widgets.css">
+<script src="https://unpkg.com/cesium@1.122.0/Build/Cesium/Cesium.js"></script>
+<script src="geo-core.bundle.js"></script>
+<style>
+  :root{
+    --app-bg:#F8FAFC; --surface:#FFFFFF; --text:#0F172A; --text-2:#475569; --text-muted:#94A3B8;
+    --border:#E2E8F0; --border-subtle:#F1F5F9; --green:#059669; --green-hover:#047857; --green-soft:#ECFDF5;
+    --warning:#D97706; --danger:#DC2626;
+  }
+  html[data-theme="dark"]{ --app-bg:#0B1220; --surface:#111827; --text:#F8FAFC; --text-2:#CBD5E1; --text-muted:#94A3B8; --border:#334155; }
+  *{box-sizing:border-box} html,body{margin:0;padding:0;height:100%;background:var(--app-bg);color:var(--text);
+    font-family:"IBM Plex Sans Arabic","Noto Sans Arabic",system-ui,sans-serif}
+  #authLoading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--app-bg);z-index:100}
+  #appShell.hidden,#authLoading.hidden{display:none}
+  #appShell{display:flex;flex-direction:column;height:100vh}
+  header{display:flex;align-items:center;gap:.75rem;padding:.6rem .9rem;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap}
+  header h1{font-size:15px;font-weight:700;margin:0;white-space:nowrap}
+  header .spacer{flex:1;min-width:0}
+  button.geo-btn{min-height:38px;padding:.45rem .8rem;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-weight:600;font-size:13px;cursor:pointer}
+  button.geo-btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  main{flex:1;min-height:0;position:relative}
+  #cesiumContainer{position:absolute;inset:0}
+  #breadcrumb{position:absolute;top:12px;right:12px;z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:.4rem .8rem;font-size:12px;color:var(--text-2);display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;max-width:70%}
+  #cameraControls{position:absolute;bottom:16px;right:12px;z-index:10;display:flex;flex-direction:column;gap:.4rem}
+  #cameraControls button{width:40px;height:40px;border-radius:10px}
+  #layerToggle{position:absolute;top:12px;left:12px;z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.5rem;font-size:13px}
+  #entityCard{position:absolute;bottom:0;left:0;right:0;z-index:20;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;
+    padding:1rem;transform:translateY(100%);transition:transform .2s ease;max-height:55vh;overflow:auto}
+  #entityCard.open{transform:translateY(0)}
+  @media(min-width:1024px){
+    #entityCard{left:auto;right:0;top:0;bottom:0;width:380px;max-width:90vw;border-radius:0;border-top:0;border-left:1px solid var(--border);
+      max-height:none}
+    /* :not(.open)/.open are mutually exclusive, so there is no specificity
+       tie with the mobile rules above to reason about — exactly one of
+       these ever applies. */
+    #entityCard:not(.open){transform:translateX(100%)}
+    #entityCard.open{transform:translateX(0)}
+  }
+  #entityCard .field{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border-subtle);font-size:13px}
+  #entityCard .label{color:var(--text-2)}
+  #entityCardClose{position:absolute;top:.7rem;left:.7rem;min-width:36px;min-height:36px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}
+  #attributionNote{position:absolute;bottom:8px;left:8px;z-index:5;font-size:11px;color:var(--text-2);background:rgba(255,255,255,.85);padding:.2rem .5rem;border-radius:8px}
+</style>
+</head>
+<body>
+  <div id="authLoading"><div>...جارٍ التحقق</div></div>
+  <div id="appShell" class="hidden">
+    <header>
+      <h1>التوأم الرقمي · SMART HSR</h1>
+      <div class="spacer"></div>
+      <button class="geo-btn" id="themeToggleBtn" aria-label="تبديل المظهر">🌓</button>
+      <button class="geo-btn primary" id="openOperationalBtn">فتح في الخريطة التشغيلية</button>
+      <button class="geo-btn" id="logoutBtn">تسجيل الخروج</button>
+    </header>
+    <main>
+      <div id="cesiumContainer" role="application" aria-label="التوأم الرقمي"></div>
+      <div id="breadcrumb"></div>
+      <div id="layerToggle"><label><input type="checkbox" id="toggleBuildings" checked> المباني</label> &nbsp; <label><input type="checkbox" id="togglePlaces" checked> المنشآت التجارية</label></div>
+      <div id="cameraControls">
+        <button class="geo-btn" id="btnResetNorth" title="إعادة توجيه الشمال" aria-label="إعادة توجيه الشمال">N</button>
+        <button class="geo-btn" id="btnResetMunicipality" title="إعادة التمركز على البلدية" aria-label="إعادة التمركز على البلدية">⌂</button>
+        <button class="geo-btn" id="btnZoomIn" aria-label="تكبير">+</button>
+        <button class="geo-btn" id="btnZoomOut" aria-label="تصغير">−</button>
+      </div>
+      <div id="attributionNote"></div>
+      <aside id="entityCard" aria-hidden="true">
+        <button id="entityCardClose" aria-label="إغلاق">✕</button>
+        <div id="entityCardBody"></div>
+      </aside>
+    </main>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { resolveFirebaseConfig } from './firebase-runtime-config.js';
+
+const { continuity, attribution: attributionModule, policy } = window.SmartHSRGeoCore;
+
+const firebaseConfig = await resolveFirebaseConfig();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+if (['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('useEmulators') === '1') {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+}
+
+const THEME_KEY = 'smartHsrGeoTheme';
+function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); }
+applyTheme(localStorage.getItem(THEME_KEY) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+document.getElementById('themeToggleBtn').addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next); localStorage.setItem(THEME_KEY, next);
+});
+
+async function resolveCallerRole(uid) {
+  const ownerSnap = await getDoc(doc(db, 'owners', uid));
+  if (ownerSnap.exists() && ownerSnap.data().active !== false) return { role: 'owner', organizationId: null };
+  const managerSnap = await getDoc(doc(db, 'managers', uid));
+  if (managerSnap.exists()) {
+    const d = managerSnap.data();
+    if (d.role === 'manager' && d.active !== false && d.organizationId) return { role: 'manager', organizationId: d.organizationId };
+  }
+  const userSnap = await getDoc(doc(db, 'users', uid));
+  if (userSnap.exists()) {
+    const d = userSnap.data();
+    if (d.role === 'supervisor' && d.active !== false && d.organizationId) return { role: 'supervisor', organizationId: d.organizationId };
+  }
+  return null;
+}
+
+async function apiGet(params) {
+  const token = await auth.currentUser.getIdToken();
+  const url = new URL('/api/organization/context', location.origin);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
+  return { ok: res.ok, status: res.status, body: await res.json().catch(() => ({})) };
+}
+
+let viewer, mapContext, caller, loadedEntities = [];
+window.__twinDebugDataSourceCount = () => loadedEntities.length;
+// UAT/dev-only: returns the on-screen pixel position of a real loaded
+// entity so browser UAT can click it precisely instead of guessing
+// coordinates. Read-only, no write, no PII beyond a screen x/y pair.
+window.__twinDebugFirstEntityScreenPosition = () => {
+  const canvas = viewer.scene.canvas;
+  const rect = canvas.getBoundingClientRect();
+  for (const ds of viewer.dataSources._dataSources) {
+    for (const entity of ds.entities.values) {
+      const pos = entity.position ? entity.position.getValue(viewer.clock.currentTime)
+        : entity.polygon ? Cesium.BoundingSphere.fromPoints(entity.polygon.hierarchy.getValue(viewer.clock.currentTime).positions).center
+        : null;
+      if (!pos) continue;
+      // worldToWindowCoordinates returns coordinates relative to the canvas
+      // itself, not the page viewport — add the canvas's own bounding-rect
+      // offset (it sits below the header) to get real, clickable
+      // page-viewport coordinates for automated UAT.
+      const screen = Cesium.SceneTransforms.worldToWindowCoordinates(viewer.scene, pos);
+      if (!screen) continue;
+      if (screen.x < 0 || screen.x > canvas.clientWidth || screen.y < 0 || screen.y > canvas.clientHeight) continue;
+      return { x: screen.x + rect.left, y: screen.y + rect.top, entityId: entity.id };
+    }
+  }
+  return null;
+};
+window.__twinDebugPickAt = (x, y) => {
+  const picked = viewer.scene.pick(new Cesium.Cartesian2(x, y));
+  if (!picked) return { picked: false };
+  return {
+    picked: true, hasId: !!picked.id, idType: picked.id ? picked.id.constructor.name : null,
+    entityIdValue: picked.id ? picked.id.id : null, hasProperties: !!(picked.id && picked.id.properties),
+  };
+};
+
+function setBreadcrumb(steps) { document.getElementById('breadcrumb').textContent = steps.join(' ← '); }
+
+function flatColorFromHex(hex) {
+  return Cesium.Color.fromCssColorString(hex);
+}
+
+function paintPlaces(entities) {
+  const source = viewer.dataSourceDisplay.dataSources.getByName('places')[0];
+  if (source) viewer.dataSources.remove(source, true);
+  const collection = new Cesium.CustomDataSource('places');
+  for (const entity of entities) {
+    if (entity.geometry.type !== 'Point') continue;
+    const [lng, lat] = entity.geometry.coordinates;
+    collection.entities.add({
+      id: entity.id,
+      position: Cesium.Cartesian3.fromDegrees(lng, lat),
+      point: { pixelSize: 9, color: flatColorFromHex('#0EA5E9'), outlineColor: Cesium.Color.WHITE, outlineWidth: 2 },
+      properties: entity,
+    });
+  }
+  viewer.dataSources.add(collection);
+}
+
+function paintBuildings(entities) {
+  const source = viewer.dataSourceDisplay.dataSources.getByName('buildings')[0];
+  if (source) viewer.dataSources.remove(source, true);
+  const collection = new Cesium.CustomDataSource('buildings');
+  for (const entity of entities) {
+    const rings = entity.geometry.type === 'Polygon' ? entity.geometry.coordinates[0]
+      : entity.geometry.type === 'MultiPolygon' ? entity.geometry.coordinates[0][0] : null;
+    if (!rings) continue;
+    const positions = rings.flatMap(([lng, lat]) => [lng, lat]);
+    const hasRealHeight = typeof entity.metadata.heightMeters === 'number';
+    collection.entities.add({
+      id: entity.id,
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray(positions),
+        // 3D-extrusion rule (Phase 08): only extrude to a REAL source
+        // height. No source height -> flat footprint, never an invented
+        // height (see platform/geo/geo-entity-contract.js's
+        // fromOvertureBuilding, which never fabricates this field).
+        extrudedHeight: hasRealHeight ? entity.metadata.heightMeters : undefined,
+        material: flatColorFromHex('#94A3B8').withAlpha(0.75),
+        outline: true,
+        outlineColor: Cesium.Color.WHITE,
+      },
+      properties: entity,
+    });
+  }
+  viewer.dataSources.add(collection);
+}
+
+// Explicit inline-style transform toggle rather than relying purely on the
+// CSS class cascade: in this sandbox's own browser build, the desktop
+// media-query's `.open` transform override was observed to not reliably
+// take effect (the exact cause traced to a CSS engine quirk, not to
+// specificity — confirmed the same behavior persisted even under an
+// injected `!important` rule). Setting the inline style directly is the
+// robust, unambiguous fix and always wins the cascade by definition.
+function setEntityCardOpen(open) {
+  const card = document.getElementById('entityCard');
+  card.classList.toggle('open', open);
+  card.setAttribute('aria-hidden', open ? 'false' : 'true');
+  const isDesktop = matchMedia('(min-width:1024px)').matches;
+  card.style.transform = open ? 'translate(0, 0)' : (isDesktop ? 'translateX(100%)' : 'translateY(100%)');
+}
+window.addEventListener('resize', () => {
+  const card = document.getElementById('entityCard');
+  if (card.classList.contains('open')) setEntityCardOpen(true);
+});
+
+function fieldRow(label, value) { return `<div class="field"><span class="label">${label}</span><span>${value}</span></div>`; }
+const NOT_LINKED = 'غير مربوط ببيانات البلدية';
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function openEntityCard(entity) {
+  const card = document.getElementById('entityCard');
+  const body = document.getElementById('entityCardBody');
+  const name = (entity.metadata && entity.metadata.name) || entity.category || 'عنصر جغرافي';
+  const attribution = attributionModule.getAttribution(entity.source);
+  body.innerHTML = `
+    <h2>${escapeHtml(name)}</h2>
+    <div class="meta">${escapeHtml(entity.category || '')}</div>
+    ${fieldRow('المصدر الجغرافي', attribution ? escapeHtml(attribution.labelAr) : NOT_LINKED)}
+    ${fieldRow('الارتفاع الموثّق', typeof entity.metadata.heightMeters === 'number' ? escapeHtml(entity.metadata.heightMeters + ' م') : NOT_LINKED)}
+    ${fieldRow('الرخصة البلدية', NOT_LINKED)}
+    <div style="margin-top:1rem"><button class="geo-btn primary" id="entityDetailsBtn">عرض التفاصيل</button></div>
+  `;
+  setEntityCardOpen(true);
+  document.getElementById('entityDetailsBtn').onclick = () => {}; // navigation-only, no-op without a real municipal record
+  document.getElementById('openOperationalBtn').onclick = () => {
+    const { url } = continuity.buildContinuityUrl('/operational-map.html' + location.search, {
+      organizationId: mapContext.organizationId, entityId: entity.id, camera: { center: entity.centroid, zoom: 17 },
+    });
+    if (url) location.href = url;
+  };
+}
+
+document.getElementById('entityCardClose').addEventListener('click', () => setEntityCardOpen(false));
+
+function flyToMunicipality() {
+  setBreadcrumb(['العالم', 'المملكة العربية السعودية', mapContext.organizationName || 'البلدية']);
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(mapContext.mapCenter.lng, mapContext.mapCenter.lat, 3000),
+    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 },
+  });
+}
+
+async function loadLayers() {
+  const bbox = [mapContext.mapCenter.lng - 0.02, mapContext.mapCenter.lat - 0.02, mapContext.mapCenter.lng + 0.02, mapContext.mapCenter.lat + 0.02].join(',');
+  if (document.getElementById('togglePlaces').checked) {
+    const res = await apiGet({ organizationId: mapContext.organizationId, geoLayer: 'commercial_places', bbox });
+    if (res.ok) { loadedEntities.push(...res.body.entities); paintPlaces(res.body.entities); renderAttribution(res.body.attributions); }
+  }
+  if (document.getElementById('toggleBuildings').checked) {
+    const res = await apiGet({ organizationId: mapContext.organizationId, geoLayer: 'buildings', bbox });
+    if (res.ok) { loadedEntities.push(...res.body.entities); paintBuildings(res.body.entities); }
+  }
+}
+
+function renderAttribution(attributions) {
+  const el = document.getElementById('attributionNote');
+  el.textContent = (attributions || []).map((a) => `${a.labelAr} · ${a.license}`).join(' — ');
+}
+
+document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+document.getElementById('btnResetNorth').addEventListener('click', () => viewer.camera.setView({ orientation: { heading: 0, pitch: viewer.camera.pitch, roll: 0 } }));
+document.getElementById('btnResetMunicipality').addEventListener('click', flyToMunicipality);
+document.getElementById('btnZoomIn').addEventListener('click', () => viewer.camera.zoomIn(500));
+document.getElementById('btnZoomOut').addEventListener('click', () => viewer.camera.zoomOut(500));
+document.getElementById('toggleBuildings').addEventListener('change', loadLayers);
+document.getElementById('togglePlaces').addEventListener('change', loadLayers);
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { location.href = 'manager-login.html'; return; }
+  caller = await resolveCallerRole(user.uid);
+  const admission = caller ? policy.evaluateTwinAdmission({ actor: caller }) : { allowed: false };
+  if (!admission.allowed) { await signOut(auth); location.href = 'manager-login.html'; return; }
+
+  const contextRes = await apiGet(caller.organizationId ? { organizationId: caller.organizationId } : {});
+  if (!contextRes.ok || !contextRes.body.mapCenter) { document.getElementById('authLoading').textContent = 'لا يتوفر مركز جغرافي موثّق لهذه البلدية بعد.'; return; }
+  mapContext = contextRes.body;
+
+  document.getElementById('authLoading').classList.add('hidden');
+  document.getElementById('appShell').classList.remove('hidden');
+
+  viewer = new Cesium.Viewer('cesiumContainer', {
+    imageryProvider: new Cesium.OpenStreetMapImageryProvider({ url: 'https://tile.openstreetmap.org/' }),
+    baseLayerPicker: false, geocoder: false, timeline: false, animation: false,
+    homeButton: false, navigationHelpButton: false, sceneModePicker: false, fullscreenButton: false,
+  });
+  viewer.scene.globe.enableLighting = false;
+
+  flyToMunicipality();
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  await loadLayers();
+
+  viewer.screenSpaceEventHandler.setInputAction((movement) => {
+    const picked = viewer.scene.pick(movement.position);
+    if (Cesium.defined(picked) && picked.id && picked.id.properties) {
+      const entity = picked.id.properties.getValue ? picked.id.properties.getValue() : picked.id.properties;
+      const raw = loadedEntities.find((e) => e.id === picked.id.id);
+      if (raw) openEntityCard(raw);
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+  const continuityEncoded = new URL(location.href).searchParams.get(continuity.CONTINUITY_PARAM);
+  if (continuityEncoded) {
+    const { context } = continuity.decodeContinuityContext(continuityEncoded);
+    if (context && context.camera) {
+      viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(context.camera.center[0], context.camera.center[1], 400) });
+    }
+  }
+});
+</script>
+</body>
+</html>

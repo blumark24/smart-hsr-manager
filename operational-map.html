@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الخريطة التشغيلية · SMART HSR</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="geo-core.bundle.js"></script>
+<style>
+  /* SMART HSR Geo Core design tokens — mirrors platform/geo/geo-style-tokens.js
+     verbatim (this repo has no CSS-from-JS build step, matching the existing
+     convention already used by dashboard.html/owner.html's own hardcoded
+     token blocks) — keep both in sync if either changes. */
+  :root{
+    --app-bg:#F8FAFC; --surface:#FFFFFF; --text:#0F172A; --text-2:#475569; --text-muted:#94A3B8;
+    --border:#E2E8F0; --border-subtle:#F1F5F9; --green:#059669; --green-hover:#047857; --green-soft:#ECFDF5;
+    --warning:#D97706; --warning-soft:#FFFBEB; --danger:#DC2626; --danger-soft:#FEF2F2;
+    --status-pending:#ef4444; --status-progress:#f59e0b; --status-done:#10b981; --status-neutral:#64748b;
+  }
+  html[data-theme="dark"]{
+    --app-bg:#0B1220; --surface:#111827; --text:#F8FAFC; --text-2:#CBD5E1; --text-muted:#94A3B8; --border:#334155;
+  }
+  *{box-sizing:border-box} html,body{margin:0;padding:0;height:100%;background:var(--app-bg);color:var(--text);
+    font-family:"IBM Plex Sans Arabic","Noto Sans Arabic",system-ui,sans-serif}
+  #authLoading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--app-bg);z-index:100}
+  #appShell.hidden,#authLoading.hidden{display:none}
+  #appShell{display:flex;flex-direction:column;height:100vh}
+  header{display:flex;align-items:center;gap:.75rem;padding:.6rem .9rem;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap}
+  header h1{font-size:15px;font-weight:700;margin:0;white-space:nowrap}
+  header .spacer{flex:1;min-width:0}
+  #searchInput{min-width:0;width:100%;max-width:280px;padding:.5rem .7rem;border:1px solid var(--border);border-radius:10px;background:var(--app-bg);color:var(--text);font:inherit}
+  button.geo-btn{min-height:38px;padding:.45rem .8rem;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-weight:600;font-size:13px;cursor:pointer}
+  button.geo-btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  button.geo-btn.primary:hover{background:var(--green-hover)}
+  main{flex:1;min-height:0;position:relative;display:flex}
+  #map{flex:1;min-width:0}
+  #layerPanel{position:absolute;top:12px;left:12px;z-index:10;background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:.6rem;max-width:240px;box-shadow:0 8px 24px rgba(15,23,42,.12);max-height:70vh;overflow:auto}
+  #layerPanel h2{font-size:12px;margin:.2rem .2rem .5rem;color:var(--text-2);font-weight:700}
+  .layer-row{display:flex;align-items:center;gap:.5rem;padding:.35rem .2rem;font-size:13px}
+  .layer-row input{width:16px;height:16px}
+  #filterChips{position:absolute;top:12px;right:12px;z-index:10;display:flex;gap:.4rem;flex-wrap:wrap;max-width:60%}
+  .chip{padding:.3rem .7rem;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer}
+  .chip.active{background:var(--green-soft);border-color:var(--green);color:var(--green-hover)}
+  #entityCard{position:absolute;bottom:0;right:0;left:0;z-index:20;background:var(--surface);border-top:1px solid var(--border);
+    border-radius:16px 16px 0 0;padding:1rem;transform:translateY(100%);transition:transform .2s ease;max-height:60vh;overflow:auto}
+  #entityCard.open{transform:translateY(0)}
+  @media(min-width:1024px){
+    #entityCard{right:0;left:auto;bottom:0;top:0;width:380px;max-width:90vw;border-radius:0;border-top:0;border-right:1px solid var(--border);
+      transform:translateX(100%);max-height:none}
+    #entityCard.open{transform:translateX(0)}
+  }
+  #entityCard h2{font-size:16px;margin:0 0 .3rem}
+  #entityCard .meta{font-size:12px;color:var(--text-2);margin-bottom:.2rem}
+  #entityCard .field{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border-subtle);font-size:13px}
+  #entityCard .field .label{color:var(--text-2)}
+  #entityCard .empty-state{color:var(--text-muted)}
+  #entityCardClose{position:absolute;top:.7rem;left:.7rem;min-width:36px;min-height:36px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}
+  #attributionNote{position:absolute;bottom:8px;left:8px;z-index:5;font-size:11px;color:var(--text-2);background:rgba(255,255,255,.85);
+    padding:.2rem .5rem;border-radius:8px}
+  html[data-theme="dark"] #attributionNote{background:rgba(17,24,39,.85)}
+  .maplibregl-popup{display:none !important} /* selection uses the entity card, never a popup */
+</style>
+</head>
+<body>
+  <div id="authLoading"><div>...جارٍ التحقق</div></div>
+  <div id="appShell" class="hidden">
+    <header>
+      <h1>الخريطة التشغيلية · SMART HSR</h1>
+      <input id="searchInput" type="text" placeholder="بحث عن منشأة أو مبنى…" aria-label="بحث">
+      <div class="spacer"></div>
+      <button class="geo-btn" id="themeToggleBtn" aria-label="تبديل المظهر">🌓</button>
+      <button class="geo-btn primary" id="openTwinBtn" hidden>فتح في التوأم الرقمي</button>
+      <button class="geo-btn" id="logoutBtn">تسجيل الخروج</button>
+    </header>
+    <main>
+      <div id="map" role="application" aria-label="الخريطة التشغيلية"></div>
+      <div id="layerPanel">
+        <h2>الطبقات</h2>
+        <div id="layerList"></div>
+      </div>
+      <div id="filterChips"></div>
+      <div id="attributionNote"></div>
+      <aside id="entityCard" aria-hidden="true">
+        <button id="entityCardClose" aria-label="إغلاق">✕</button>
+        <div id="entityCardBody"></div>
+      </aside>
+    </main>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { resolveFirebaseConfig } from './firebase-runtime-config.js';
+import { observationCoordinates } from './spatial-map.js';
+
+const { layerRegistry, styleTokens, continuity, search: searchModule, attribution: attributionModule } = window.SmartHSRGeoCore;
+
+const firebaseConfig = await resolveFirebaseConfig();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+// Local-only, explicitly opt-in Firebase Emulator connection — mirrors the
+// pattern already proven safe in the Owner Console (Phase 07B). Never
+// reachable in production: both the hostname check and the explicit query
+// flag must hold.
+if (['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('useEmulators') === '1') {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+}
+
+// Theme (persisted, no reload, matches Owner Console Phase 07B convention).
+const THEME_KEY = 'smartHsrGeoTheme';
+function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); }
+applyTheme(localStorage.getItem(THEME_KEY) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+document.getElementById('themeToggleBtn').addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next); localStorage.setItem(THEME_KEY, next);
+});
+
+// Same self-lookup role-resolution pattern already used independently by
+// manager-operations.html/dashboard.html/mobile-map.html (each page reads
+// its own record; the server independently re-derives the real
+// authorization for every API call — this is UI branching only).
+async function resolveCallerRole(uid) {
+  const ownerSnap = await getDoc(doc(db, 'owners', uid));
+  if (ownerSnap.exists() && ownerSnap.data().active !== false) return { role: 'owner', organizationId: null };
+  const managerSnap = await getDoc(doc(db, 'managers', uid));
+  if (managerSnap.exists()) {
+    const d = managerSnap.data();
+    if (d.role === 'manager' && d.active !== false && d.organizationId) return { role: 'manager', organizationId: d.organizationId };
+  }
+  const userSnap = await getDoc(doc(db, 'users', uid));
+  if (userSnap.exists()) {
+    const d = userSnap.data();
+    if (['supervisor', 'inspector', 'contractor'].includes(d.role) && d.active !== false && d.organizationId) {
+      return { role: d.role, organizationId: d.organizationId };
+    }
+  }
+  return null;
+}
+
+async function apiGet(params) {
+  const token = await auth.currentUser.getIdToken();
+  const url = new URL('/api/organization/context', location.origin);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
+  return { ok: res.ok, status: res.status, body: await res.json().catch(() => ({})) };
+}
+
+let map, caller, mapContext, loadedEntities = [];
+// UAT/dev-only introspection hook — read-only, exposes no PII beyond a
+// count, and performs no write of any kind.
+window.__geoDebugEntityCount = () => loadedEntities.length;
+const activeLayers = new Set();
+
+function labelFor(layerId) { return (layerRegistry.getLayer(layerId) || {}).labelAr || layerId; }
+
+function renderLayerToggles(organizationId) {
+  const list = document.getElementById('layerList');
+  list.innerHTML = '';
+  for (const layer of layerRegistry.layersForExperience('operational')) {
+    const visible = layerRegistry.isLayerVisibleToRole(layer.id, caller.role).allowed;
+    if (!visible) continue;
+    const row = document.createElement('label');
+    row.className = 'layer-row';
+    row.innerHTML = `<input type="checkbox" data-layer="${layer.id}" ${layer.defaultVisible ? 'checked' : ''}><span>${layer.labelAr}</span>`;
+    list.appendChild(row);
+    if (layer.defaultVisible) activeLayers.add(layer.id);
+  }
+  list.querySelectorAll('input[type=checkbox]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) activeLayers.add(cb.dataset.layer); else activeLayers.delete(cb.dataset.layer);
+      loadVisibleLayers(organizationId);
+    });
+  });
+}
+
+function currentBboxParam() {
+  const b = map.getBounds();
+  return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',');
+}
+
+// Field observations are SMART HSR's own trusted municipal data (already
+// real, tenant-scoped Firestore documents) — unlike commercial_places and
+// buildings, they are read directly from Firestore here (a one-shot query,
+// re-run whenever layers/viewport change) using the SAME tenant-safe
+// observationCoordinates() helper spatial-map.js's existing Leaflet map
+// surfaces already rely on, never a second, drifting coordinate-resolution
+// implementation. This is a snapshot fetch, not a live onSnapshot listener
+// — never described as "live"/"مباشر" anywhere in this UI (see the Phase 08
+// brief's REALTIME DEFINITION rule).
+async function loadFieldObservations(organizationId) {
+  const snap = await getDocs(query(collection(db, 'observations'), where('organizationId', '==', organizationId)));
+  const { entity: entityModule } = window.SmartHSRGeoCore;
+  const entities = [];
+  snap.forEach((docSnap) => {
+    const data = { id: docSnap.id, ...docSnap.data() };
+    const coords = observationCoordinates(data, organizationId);
+    if (!coords) return;
+    const { decision, entity } = entityModule.fromFieldObservation(data, coords);
+    if (decision.allowed) entities.push(entity);
+  });
+  return entities;
+}
+
+async function loadVisibleLayers(organizationId) {
+  loadedEntities = [];
+  for (const layerId of ['commercial_places', 'buildings']) {
+    if (!activeLayers.has(layerId)) { removeSourceLayer(layerId); continue; }
+    const res = await apiGet({ organizationId, geoLayer: layerId, bbox: currentBboxParam() });
+    if (!res.ok) continue;
+    loadedEntities.push(...res.body.entities);
+    paintEntities(layerId, res.body.entities);
+    renderAttribution(res.body.attributions);
+  }
+  if (!activeLayers.has('field_observations')) { removeSourceLayer('field_observations'); }
+  else {
+    const entities = await loadFieldObservations(organizationId);
+    loadedEntities.push(...entities);
+    paintObservations(entities);
+  }
+}
+
+const STATUS_COLOR = { PENDING: '#ef4444', IN_PROGRESS: '#f59e0b', PENDING_REVIEW: '#f59e0b', COMPLETED: '#10b981' };
+function paintObservations(entities) {
+  const srcId = 'geo-field_observations';
+  removeSourceLayer('field_observations');
+  const geojson = { type: 'FeatureCollection', features: entities.map((e) => ({ type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, status: e.status || 'PENDING' } })) };
+  map.addSource(srcId, { type: 'geojson', data: geojson });
+  map.addLayer({
+    id: `${srcId}-circles`, type: 'circle', source: srcId,
+    paint: {
+      'circle-color': ['match', ['get', 'status'], 'COMPLETED', STATUS_COLOR.COMPLETED, 'IN_PROGRESS', STATUS_COLOR.IN_PROGRESS, 'PENDING_REVIEW', STATUS_COLOR.PENDING_REVIEW, STATUS_COLOR.PENDING],
+      'circle-radius': 8, 'circle-stroke-width': 2, 'circle-stroke-color': '#fff',
+    },
+  });
+  map.on('click', `${srcId}-circles`, (e) => openEntityCard(e.features[0].properties.id));
+}
+
+function removeSourceLayer(layerId) {
+  const srcId = `geo-${layerId}`;
+  if (map.getLayer(`${srcId}-fill`)) map.removeLayer(`${srcId}-fill`);
+  if (map.getLayer(`${srcId}-circles`)) map.removeLayer(`${srcId}-circles`);
+  if (map.getLayer(`${srcId}-clusters`)) map.removeLayer(`${srcId}-clusters`);
+  if (map.getLayer(`${srcId}-count`)) map.removeLayer(`${srcId}-count`);
+  if (map.getSource(srcId)) map.removeSource(srcId);
+}
+
+function paintEntities(layerId, entities) {
+  const srcId = `geo-${layerId}`;
+  removeSourceLayer(layerId);
+  const geojson = { type: 'FeatureCollection', features: entities.map((e) => ({ type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, category: e.category, name: (e.metadata && e.metadata.name) || '' } })) };
+  const isPoint = entities[0] && entities[0].geometry.type === 'Point';
+  map.addSource(srcId, { type: 'geojson', data: geojson, cluster: isPoint, clusterRadius: 40, clusterMaxZoom: 15 });
+  const color = styleTokens.LAYER_STYLE[layerRegistry.getLayer(layerId).styleToken] || '#0EA5E9';
+  if (isPoint) {
+    // No cluster-count text label: a `symbol` layer's `text-field` requires
+    // the map style to declare a `glyphs` (font) server, which would add an
+    // external font-hosting dependency this phase does not need — cluster
+    // size is still communicated visually via the circle-radius step below.
+    map.addLayer({ id: `${srcId}-clusters`, type: 'circle', source: srcId, filter: ['has', 'point_count'],
+      paint: { 'circle-color': color, 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 18, 50, 24] } });
+    map.addLayer({ id: `${srcId}-circles`, type: 'circle', source: srcId, filter: ['!', ['has', 'point_count']],
+      paint: { 'circle-color': color, 'circle-radius': 7, 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' } });
+    map.on('click', `${srcId}-circles`, (e) => openEntityCard(e.features[0].properties.id));
+    map.on('click', `${srcId}-clusters`, (e) => {
+      const clusterId = e.features[0].properties.cluster_id;
+      map.getSource(srcId).getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return; map.easeTo({ center: e.features[0].geometry.coordinates, zoom });
+      });
+    });
+  } else {
+    map.addLayer({ id: `${srcId}-fill`, type: 'fill', source: srcId, paint: { 'fill-color': color, 'fill-opacity': 0.35, 'fill-outline-color': color } });
+    map.on('click', `${srcId}-fill`, (e) => openEntityCard(e.features[0].properties.id));
+  }
+}
+
+function renderAttribution(attributions) {
+  const el = document.getElementById('attributionNote');
+  if (!attributions || !attributions.length) { el.textContent = ''; return; }
+  el.textContent = attributions.map((a) => `${a.labelAr} · ${a.license}`).join(' — ');
+}
+
+function fieldRow(label, value) {
+  return `<div class="field"><span class="label">${label}</span><span>${value}</span></div>`;
+}
+const NOT_LINKED = 'غير مربوط ببيانات البلدية';
+
+function openEntityCard(entityId) {
+  const entity = loadedEntities.find((e) => e.id === entityId);
+  if (!entity) return;
+  const card = document.getElementById('entityCard');
+  const body = document.getElementById('entityCardBody');
+  const name = (entity.metadata && entity.metadata.name) || entity.category || 'عنصر جغرافي';
+  const attribution = attributionModule.getAttribution(entity.source);
+  body.innerHTML = `
+    <h2>${escapeHtml(name)}</h2>
+    <div class="meta">${escapeHtml(entity.category || '')}</div>
+    ${fieldRow('المصدر الجغرافي', attribution ? escapeHtml(attribution.labelAr) : NOT_LINKED)}
+    ${fieldRow('القسم/الجهة المرتبطة', entity.productId ? escapeHtml(entity.productId) : NOT_LINKED)}
+    ${fieldRow('الرخصة البلدية', NOT_LINKED)}
+    ${fieldRow('آخر تحديث موثوق', entity.sourceUpdatedAt ? escapeHtml(entity.sourceUpdatedAt.slice(0, 10)) : NOT_LINKED)}
+    <div style="margin-top:1rem"><button class="geo-btn primary" id="entityDetailsBtn">عرض التفاصيل</button></div>
+  `;
+  card.classList.add('open');
+  card.setAttribute('aria-hidden', 'false');
+  document.getElementById('entityDetailsBtn').onclick = () => {
+    // Navigation-only — never an inline map-triggered write (see
+    // platform/geo/geo-write-guard.js). There is no existing product
+    // detail screen for a raw open-reference place/building yet, so this
+    // is a no-op placeholder for entities with no municipalRecordId.
+    if (!entity.municipalRecordId) return;
+  };
+  const openTwinBtn = document.getElementById('openTwinBtn');
+  if (!openTwinBtn.hidden) {
+    openTwinBtn.onclick = () => {
+      const { url } = continuity.buildContinuityUrl('/twin.html' + location.search, {
+        organizationId: mapContext.organizationId, entityId: entity.id, camera: { center: entity.centroid, zoom: 17 },
+      });
+      if (url) location.href = url;
+    };
+  }
+}
+document.getElementById('entityCardClose').addEventListener('click', () => {
+  document.getElementById('entityCard').classList.remove('open');
+  document.getElementById('entityCard').setAttribute('aria-hidden', 'true');
+});
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const provider = searchModule.createLocalEntitySearchProvider();
+  const { results } = provider.search(e.target.value, { entities: loadedEntities, organization: mapContext });
+  if (results[0] && results[0].target.entityId) openEntityCard(results[0].target.entityId);
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { location.href = 'manager-login.html'; return; }
+  caller = await resolveCallerRole(user.uid);
+  if (!caller) { await signOut(auth); location.href = 'manager-login.html'; return; }
+
+  const contextRes = await apiGet(caller.organizationId ? { organizationId: caller.organizationId } : {});
+  if (!contextRes.ok) return;
+  mapContext = contextRes.body;
+
+  document.getElementById('authLoading').classList.add('hidden');
+  document.getElementById('appShell').classList.remove('hidden');
+  document.getElementById('openTwinBtn').hidden = !['owner', 'manager', 'supervisor'].includes(caller.role);
+
+  map = new maplibregl.Map({
+    container: 'map',
+    style: { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
+    center: mapContext.mapCenter ? [mapContext.mapCenter.lng, mapContext.mapCenter.lat] : [45, 24],
+    zoom: mapContext.mapDefaultZoom || 6,
+  });
+  map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-left');
+  map.addControl(new maplibregl.AttributionControl({ compact: true }));
+
+  const continuityEncoded = new URL(location.href).searchParams.get(continuity.CONTINUITY_PARAM);
+  if (continuityEncoded) {
+    const { context } = continuity.decodeContinuityContext(continuityEncoded);
+    if (context && context.camera) map.setCenter(context.camera.center), map.setZoom(context.camera.zoom);
+  }
+
+  map.on('load', () => {
+    renderLayerToggles(mapContext.organizationId);
+    loadVisibleLayers(mapContext.organizationId);
+  });
+  map.on('moveend', () => loadVisibleLayers(mapContext.organizationId));
+});
+</script>
+</body>
+</html>
