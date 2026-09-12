@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>الخريطة التشغيلية · SMART HSR</title>
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<!-- PHASE 08.3 — MapLibre GL is served locally (vendor/maplibre-gl/4.7.1/,
+     the exact npm-pinned build previously loaded from unpkg.com) so browser
+     acceptance and Preview/Production never depend on an external CDN. -->
+<link rel="stylesheet" href="vendor/maplibre-gl/4.7.1/maplibre-gl.css">
+<script src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="geo-core.bundle.js"></script>
 <style>
   /* SMART HSR Geo Core design tokens — mirrors platform/geo/geo-style-tokens.js
@@ -90,9 +93,9 @@
   </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { initializeApp } from "./vendor/firebase/11.0.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator } from "./vendor/firebase/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, connectFirestoreEmulator } from "./vendor/firebase/11.0.0/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 import { observationCoordinates } from './spatial-map.js';
 
@@ -106,10 +109,18 @@ const db = getFirestore(app);
 // pattern already proven safe in the Owner Console (Phase 07B). Never
 // reachable in production: both the hostname check and the explicit query
 // flag must hold.
-if (['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('useEmulators') === '1') {
+const isLocalHost = ['localhost', '127.0.0.1'].includes(location.hostname);
+if (isLocalHost && new URLSearchParams(location.search).get('useEmulators') === '1') {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
   connectFirestoreEmulator(db, '127.0.0.1', 8080);
 }
+// PHASE 08.3 — local acceptance-only basemap fallback (see twin.html's
+// identical comment). Production/Preview always render real OpenStreetMap
+// raster tiles; this can only ever be true on localhost with an explicit
+// extra query param, for a sandbox with no outbound access to
+// tile.openstreetmap.org. Renders a solid neutral background layer — never
+// fabricated geographic imagery — so UI/interaction acceptance can proceed.
+const useLocalBasemap = isLocalHost && new URLSearchParams(location.search).get('localBasemap') === '1';
 
 // Theme (persisted, no reload, matches Owner Console Phase 07B convention).
 const THEME_KEY = 'smartHsrGeoTheme';
@@ -366,10 +377,25 @@ onAuthStateChanged(auth, async (user) => {
   // Twin-admission policy (not a hand-maintained role list) so this can
   // never silently drift from geo-policy.js's fail-closed authority again.
   document.getElementById('openTwinBtn').hidden = !policy.evaluateTwinAdmission({ actor: caller }).allowed;
+  // PHASE 08.3 — real-browser acceptance surfaced a genuine defect: the only
+  // place this button's onclick was ever assigned was inside
+  // openEntityCard() (below), gated on the button already being visible —
+  // so clicking "Open in Twin" before selecting any entity did nothing at
+  // all. Give it a real default destination (no entity context yet) here;
+  // openEntityCard() still overrides this with entity-specific continuity
+  // context once an entity is selected, unchanged.
+  if (!document.getElementById('openTwinBtn').hidden) {
+    document.getElementById('openTwinBtn').onclick = () => {
+      const { url } = continuity.buildContinuityUrl('/twin.html' + location.search, { organizationId: mapContext.organizationId });
+      if (url) location.href = url;
+    };
+  }
 
   map = new maplibregl.Map({
     container: 'map',
-    style: { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
+    style: useLocalBasemap
+      ? { version: 8, sources: {}, layers: [{ id: 'neutral-bg', type: 'background', paint: { 'background-color': '#dbe4ee' } }] }
+      : { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
     center: mapContext.mapCenter ? [mapContext.mapCenter.lng, mapContext.mapCenter.lat] : [45, 24],
     zoom: mapContext.mapDefaultZoom || 6,
   });

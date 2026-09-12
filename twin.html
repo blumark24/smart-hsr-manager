@@ -4,8 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>التوأم الرقمي · SMART HSR</title>
-<link rel="stylesheet" href="https://unpkg.com/cesium@1.122.0/Build/Cesium/Widgets/widgets.css">
-<script src="https://unpkg.com/cesium@1.122.0/Build/Cesium/Cesium.js"></script>
+<!-- PHASE 08.3 — CesiumJS is served locally (vendor/cesium/1.122.0/, the
+     exact npm-pinned build previously loaded from unpkg.com) so browser
+     acceptance and Preview/Production never depend on an external CDN.
+     CESIUM_BASE_URL must be set before Cesium.js runs so its Workers/
+     Assets/Widgets resolve relative to this same local path. -->
+<script>window.CESIUM_BASE_URL = 'vendor/cesium/1.122.0/';</script>
+<link rel="stylesheet" href="vendor/cesium/1.122.0/Widgets/widgets.css">
+<script src="vendor/cesium/1.122.0/Cesium.js"></script>
 <script src="geo-core.bundle.js"></script>
 <style>
   :root{
@@ -78,9 +84,9 @@
   </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { initializeApp } from "./vendor/firebase/11.0.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator } from "./vendor/firebase/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, connectFirestoreEmulator } from "./vendor/firebase/11.0.0/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 
 const { continuity, attribution: attributionModule, policy } = window.SmartHSRGeoCore;
@@ -89,10 +95,21 @@ const firebaseConfig = await resolveFirebaseConfig();
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-if (['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('useEmulators') === '1') {
+const isLocalHost = ['localhost', '127.0.0.1'].includes(location.hostname);
+const useEmulators = isLocalHost && new URLSearchParams(location.search).get('useEmulators') === '1';
+if (useEmulators) {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
   connectFirestoreEmulator(db, '127.0.0.1', 8080);
 }
+// PHASE 08.3 — local acceptance-only basemap fallback. Production and
+// Preview ALWAYS use the real OpenStreetMap imagery below; this flag can
+// only ever be true on localhost/127.0.0.1 with an explicit extra query
+// param, so it never affects a real deployment. It exists solely because a
+// closed testing sandbox may have no outbound network to tile.openstreetmap.org
+// at all — it renders Cesium's neutral, textureless globe (no imagery
+// layer), never fabricated or substituted geographic imagery, so UI/entity/
+// camera acceptance can still run honestly without real tile access.
+const useLocalBasemap = isLocalHost && new URLSearchParams(location.search).get('localBasemap') === '1';
 
 const THEME_KEY = 'smartHsrGeoTheme';
 function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); }
@@ -147,7 +164,14 @@ window.__twinDebugFirstEntityScreenPosition = () => {
       const screen = Cesium.SceneTransforms.worldToWindowCoordinates(viewer.scene, pos);
       if (!screen) continue;
       if (screen.x < 0 || screen.x > canvas.clientWidth || screen.y < 0 || screen.y > canvas.clientHeight) continue;
-      return { x: screen.x + rect.left, y: screen.y + rect.top, entityId: entity.id };
+      const pageX = screen.x + rect.left, pageY = screen.y + rect.top;
+      // The globe fills the whole viewport, but fixed chrome (breadcrumb,
+      // layer toggle, camera controls, attribution) sits on top of it at
+      // the four corners — skip a position a real click there would never
+      // reach the canvas through, rather than reporting a point that's
+      // technically "on the canvas" in world-space but actually covered.
+      if (document.elementFromPoint(pageX, pageY) !== canvas) continue;
+      return { x: pageX, y: pageY, entityId: entity.id };
     }
   }
   return null;
@@ -160,6 +184,14 @@ window.__twinDebugPickAt = (x, y) => {
     entityIdValue: picked.id ? picked.id.id : null, hasProperties: !!(picked.id && picked.id.properties),
   };
 };
+// UAT/dev-only: read-only camera pose for automated acceptance of camera
+// controls (zoom/orbit/tilt/reset) — no write, no PII, mirrors the two
+// debug helpers above.
+window.__twinDebugCameraState = () => ({
+  headingDeg: Cesium.Math.toDegrees(viewer.camera.heading),
+  pitchDeg: Cesium.Math.toDegrees(viewer.camera.pitch),
+  height: viewer.camera.positionCartographic.height,
+});
 
 function setBreadcrumb(steps) { document.getElementById('breadcrumb').textContent = steps.join(' ← '); }
 
@@ -308,7 +340,10 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('appShell').classList.remove('hidden');
 
   viewer = new Cesium.Viewer('cesiumContainer', {
-    imageryProvider: new Cesium.OpenStreetMapImageryProvider({ url: 'https://tile.openstreetmap.org/' }),
+    // See the useLocalBasemap comment above — real imagery in every real
+    // deployment, a bare textureless globe only for a localhost acceptance
+    // run with no tile-server access.
+    imageryProvider: useLocalBasemap ? false : new Cesium.OpenStreetMapImageryProvider({ url: 'https://tile.openstreetmap.org/' }),
     baseLayerPicker: false, geocoder: false, timeline: false, animation: false,
     homeButton: false, navigationHelpButton: false, sceneModePicker: false, fullscreenButton: false,
   });
