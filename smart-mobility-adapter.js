@@ -335,11 +335,19 @@ function requireRole(...roles) {
   }
 }
 
-// Every mutation below writes one append-only auditEvents/{eventId} record
-// alongside its real write — inside the same transaction where one is
-// already used, so the audit trail and the state change are atomic.
-// firestore.rules enforces that an actor may only ever record an event as
-// themselves (see the auditEvents match block).
+// PHASE 06 CLOSURE — DEFECT 1 fix: every mutation below writes its
+// business-state change AND its required auditEvents/{eventId} record in
+// ONE atomic commit — a Firestore writeBatch() for a single-document
+// mutation, or the existing runTransaction() for the multi-document
+// (mission+vehicle) ones further down. Firestore guarantees a batch/
+// transaction commits all of its writes or none of them, so a forced audit
+// failure (e.g. a malformed/spoofed audit document firestore.rules
+// rejects) can never leave the business state changed with no audit trail,
+// and the whole operation correctly reports failure rather than a false
+// success. firestore.rules independently enforces that an actor may only
+// ever record an event as themselves, in their own organization (see the
+// auditEvents match block) — that guarantee holds exactly the same whether
+// the write arrives via batch, transaction, or a lone setDoc.
 function auditEventData(resourceType, resourceId, action, extra) {
   const ctx = activeContext;
   return Object.assign({
@@ -353,16 +361,12 @@ function rawRoleOf(ctx) {
   return reverse[ctx.designRole] || ctx.designRole;
 }
 
-async function recordAudit(resourceType, resourceId, action, extra) {
-  const api = activeFirestoreApi, db = activeDb;
-  await api.setDoc(api.doc(api.collection(db, 'auditEvents')), auditEventData(resourceType, resourceId, action, extra));
-}
-
 async function createMissionRequest({ type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel }) {
   requireRole('dept');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
   const ref = api.doc(api.collection(db, 'missions'));
-  await api.setDoc(ref, {
+  const batch = api.writeBatch(db);
+  batch.set(ref, {
     organizationId: ctx.organizationId, department: ctx.department,
     createdByUid: ctx.uid, requesterName: ctx.sessionName || '',
     status: 'DRAFT',
@@ -371,27 +375,34 @@ async function createMissionRequest({ type, destination, reason, scope, requeste
     whenLabel: whenLabel || '', durationLabel: durationLabel || '',
     createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('mission', ref.id, 'create', { toStatus: 'DRAFT' });
+  batch.set(api.doc(api.collection(db, 'auditEvents')), auditEventData('mission', ref.id, 'create', { toStatus: 'DRAFT' }));
+  await batch.commit();
   return ref.id;
 }
 
 async function submitMissionForApproval(missionId) {
   requireRole('dept');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  await api.updateDoc(api.doc(db, 'missions', missionId), {
+  const batch = api.writeBatch(db);
+  batch.update(api.doc(db, 'missions', missionId), {
     status: 'PENDING_APPROVAL', updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('mission', missionId, 'submit_for_approval', { fromStatus: 'DRAFT', toStatus: 'PENDING_APPROVAL' });
+  batch.set(api.doc(api.collection(db, 'auditEvents')),
+    auditEventData('mission', missionId, 'submit_for_approval', { fromStatus: 'DRAFT', toStatus: 'PENDING_APPROVAL' }));
+  await batch.commit();
 }
 
 async function decideMission(missionId, toStatus) {
   requireRole('admin');
   if (!['APPROVED', 'REJECTED', 'DRAFT'].includes(toStatus)) throw new Error('invalid_decision');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  await api.updateDoc(api.doc(db, 'missions', missionId), {
+  const batch = api.writeBatch(db);
+  batch.update(api.doc(db, 'missions', missionId), {
     status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('mission', missionId, 'decide', { fromStatus: 'PENDING_APPROVAL', toStatus });
+  batch.set(api.doc(api.collection(db, 'auditEvents')),
+    auditEventData('mission', missionId, 'decide', { fromStatus: 'PENDING_APPROVAL', toStatus }));
+  await batch.commit();
 }
 
 // Allocates a vehicle to an approved mission. Performed as one Firestore
@@ -470,10 +481,12 @@ async function confirmVehicleReturn(missionId, vehicleId) {
 async function employeeAdvanceMission(missionId, toStatus) {
   requireRole('employee');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  await api.updateDoc(api.doc(db, 'missions', missionId), {
+  const batch = api.writeBatch(db);
+  batch.update(api.doc(db, 'missions', missionId), {
     status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('mission', missionId, 'employee_advance', { toStatus });
+  batch.set(api.doc(api.collection(db, 'auditEvents')), auditEventData('mission', missionId, 'employee_advance', { toStatus }));
+  await batch.commit();
 }
 
 // The employee's own act of handing the vehicle back — COMPLETED ->
@@ -505,13 +518,15 @@ async function createIncident({ missionId, vehicleId, category, severity, note }
   requireRole('employee');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
   const ref = api.doc(api.collection(db, 'incidents'));
-  await api.setDoc(ref, {
+  const batch = api.writeBatch(db);
+  batch.set(ref, {
     organizationId: ctx.organizationId, missionId, vehicleId: vehicleId || '',
     createdByUid: ctx.uid, employeeName: ctx.sessionName || '', department: ctx.department || '',
     category: category || 'أخرى', severity: severity || 'MEDIUM', note: note || '',
     status: 'NEW', createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('incident', ref.id, 'create', { toStatus: 'NEW', missionId });
+  batch.set(api.doc(api.collection(db, 'auditEvents')), auditEventData('incident', ref.id, 'create', { toStatus: 'NEW', missionId }));
+  await batch.commit();
   return ref.id;
 }
 
@@ -519,10 +534,12 @@ async function mobilityProcessIncident(incidentId, toStatus) {
   requireRole('mobility');
   if (!['ACKNOWLEDGED', 'IN_PROGRESS', 'RESOLVED'].includes(toStatus)) throw new Error('invalid_decision');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  await api.updateDoc(api.doc(db, 'incidents', incidentId), {
+  const batch = api.writeBatch(db);
+  batch.update(api.doc(db, 'incidents', incidentId), {
     status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('incident', incidentId, 'process', { toStatus });
+  batch.set(api.doc(api.collection(db, 'auditEvents')), auditEventData('incident', incidentId, 'process', { toStatus }));
+  await batch.commit();
 }
 
 window.SmartHSRMobilityAdapter = {

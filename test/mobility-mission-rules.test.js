@@ -10,11 +10,12 @@
 // Run: node test/run-mobility-mission-rules.js
 // ============================================================================
 const { before, after, beforeEach, test } = require('node:test');
+const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
 const { initializeTestEnvironment, assertSucceeds, assertFails } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc, writeBatch } = require('firebase/firestore');
 
 const PROJECT_ID = 'demo-smart-hsr-mobility-tests';
 const RULES_PATH = path.resolve(__dirname, '..', 'firestore.rules');
@@ -107,6 +108,13 @@ async function seed() {
     await setDoc(doc(db, 'missions', 'approvedA'), {
       organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'APPROVED',
     });
+    // A second, independent APPROVED mission — needed so a racing second
+    // allocation attempt (targeting the same now-RESERVED vehicle) is
+    // denied purely for vehicle unavailability, not confounded with its own
+    // mission not being APPROVED.
+    await setDoc(doc(db, 'missions', 'approvedA2'), {
+      organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'APPROVED',
+    });
     await setDoc(doc(db, 'missions', 'allocatedA'), {
       organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'VEHICLE_ALLOCATED',
       vehicleId: 'V101', assignedEmployeeUid: UID.employeeA,
@@ -144,6 +152,35 @@ beforeEach(async () => {
 
 function ctx(uid) {
   return testEnv.authenticatedContext(uid).firestore();
+}
+
+// PHASE 06 CLOSURE — DEFECT 2 fix helper: mirrors the exact real shape of
+// smart-mobility-adapter.js's allocateVehicle() — one atomic commit writing
+// BOTH the mission (APPROVED -> VEHICLE_ALLOCATED) and the vehicle
+// (AVAILABLE -> RESERVED) together, plus their required audit events, so
+// firestore.rules' getAfter() cross-checks (pairedVehicleAfterAllocation /
+// pairedMissionAfterAllocation) can be satisfied. Returns the batch.commit()
+// promise; callers decide assertSucceeds/assertFails.
+// Verification-only read used after a denied write to confirm the
+// document's true, unchanged state — via the seeded same-org manager, who
+// already has an unconditional org-wide mission read (isActiveManager()).
+async function readMissionUnfiltered(missionId) {
+  const snap = await getDoc(doc(ctx(UID.mgrA), 'missions', missionId));
+  return snap.data();
+}
+
+function atomicAllocationBatch(actorUid, { missionId, vehicleId, employeeUid }) {
+  const db = ctx(actorUid);
+  const batch = writeBatch(db);
+  batch.update(doc(db, 'missions', missionId), {
+    status: 'VEHICLE_ALLOCATED', vehicleId, assignedEmployeeUid: employeeUid,
+    assignedEmployeeName: 'x', updatedByUid: actorUid, updatedAt: 1,
+  });
+  batch.update(doc(db, 'vehicles', vehicleId), {
+    status: 'RESERVED', assignedEmployeeUid: employeeUid, currentMissionId: missionId,
+    updatedByUid: actorUid, updatedAt: 1,
+  });
+  return batch.commit();
 }
 
 // ============================================================
@@ -236,11 +273,52 @@ test('T4 mobility_head cannot approve a pending request (not their authority)', 
   }));
 });
 
-test('T5 mobility_head allocates a vehicle with the required fields', async () => {
-  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
+// PHASE 06 CLOSURE — DEFECT 2 fix: T5 previously proved only a MISSION-only
+// single-document update to VEHICLE_ALLOCATED succeeded — exactly the
+// unsafe behavior this closure fixes (the paired vehicle document was never
+// required to change too, so a mission could claim a vehicle that stayed
+// AVAILABLE). Rules now require getAfter() proof that the paired vehicle
+// document is ALSO committing to RESERVED for this same mission/employee in
+// the SAME atomic write — a mission-only write can never satisfy that, so
+// it must fail. See 'T5b' below for the corrected atomic-pair success case.
+test('T5 mission-only vehicle allocation (no paired vehicle write) now fails — a mission can never claim a vehicle without the vehicle document changing too', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
     status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: UID.employeeA,
     updatedByUid: UID.mobilityHeadA, updatedAt: 1,
   }));
+  const missionData = await readMissionUnfiltered('approvedA');
+  assert.equal(missionData.status, 'APPROVED', 'the mission must remain unchanged after the denied write');
+});
+
+test('T5b the proper atomic paired transition (mission + vehicle together, matching smart-mobility-adapter.js\'s real allocateVehicle()) succeeds', async () => {
+  await assertSucceeds(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
+  const missionSnap = await getDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'));
+  const vehicleSnap = await getDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'));
+  assert.equal(missionSnap.data().status, 'VEHICLE_ALLOCATED');
+  assert.equal(missionSnap.data().vehicleId, 'V102');
+  assert.equal(vehicleSnap.data().status, 'RESERVED');
+  assert.equal(vehicleSnap.data().currentMissionId, 'approvedA');
+});
+
+test('T5c cross-tenant paired allocation fails: an ORG_A mobility_head cannot pair an ORG_A mission with an ORG_B vehicle', async () => {
+  // V201 is the seeded ORG_B vehicle. Denied at the vehicle write's own
+  // organization check before the pairing check is even relevant — cross-
+  // tenant isolation holds regardless of the write's atomic shape.
+  await assertFails(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V201', employeeUid: UID.employeeA }));
+  const missionData = await readMissionUnfiltered('approvedA');
+  assert.equal(missionData.status, 'APPROVED');
+});
+
+test('T5d an employee cannot self-allocate a vehicle — only mobility_head may run the paired allocation', async () => {
+  await assertFails(atomicAllocationBatch(UID.employeeA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
+  const missionData = await readMissionUnfiltered('approvedA');
+  assert.equal(missionData.status, 'APPROVED');
+});
+
+test('T5e an unauthorized role (department_head) cannot run the paired allocation either', async () => {
+  await assertFails(atomicAllocationBatch(UID.deptHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
+  const missionData = await readMissionUnfiltered('approvedA');
+  assert.equal(missionData.status, 'APPROVED');
 });
 
 test('T6 mobility_head allocating without vehicleId/assignedEmployeeUid is denied', async () => {
@@ -347,7 +425,23 @@ test('V4 only mobility_head may add a vehicle to the roster, and only as AVAILAB
   }));
 });
 
-test('V5 mobility_head reserves an available vehicle for an APPROVED mission', async () => {
+// PHASE 06 CLOSURE — DEFECT 2 fix, MEASURED SCOPE: a mirror-image getAfter()
+// check on the vehicle side (denying THIS exact vehicle-only write) was
+// built and tested, but a genuine two-getAfter() batch (one per document)
+// reproducibly exceeds this project's Firestore Emulator's (v1.19.8)
+// per-write expression-evaluation ceiling for this rule graph — see
+// pairedVehicleAfterAllocation()'s own comment in firestore.rules for the
+// full empirical finding. The mission side (T5/T5b below) is the one
+// closed unconditionally, since it directly matches this defect's named
+// scenario (a mission FALSELY claiming an allocation). This vehicle-only
+// write is therefore UNCHANGED from before this closure: it still succeeds
+// on its own existing merits (a real, same-org, currently-AVAILABLE
+// vehicle; a real, same-org, currently-APPROVED mission via
+// allocationTargetMissionValid(); a verified, eligible target employee via
+// validMobilityAllocationTarget()) — none of that protection was weakened.
+// V6/V7 below independently confirm the pre-existing conflict-prevention
+// (an already-RESERVED vehicle, or a not-yet-APPROVED mission) still holds.
+test('V5 vehicle-only allocation still succeeds on its own existing merits — full bidirectional getAfter() protection was not achievable within this project\'s measured platform ceiling (see firestore.rules)', async () => {
   await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
     status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
     updatedByUid: UID.mobilityHeadA, updatedAt: 1,
@@ -371,31 +465,23 @@ test('V7 CONFLICT PREVENTION: reserving a vehicle for a mission that is not APPR
   }));
 });
 
-test('V8 CONFLICT PREVENTION (sequential race): once the first allocation commits, a second racing allocation of the same vehicle fails', async () => {
-  const first = updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
-    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
-    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
-  });
-  await assertSucceeds(first);
+test('V8 CONFLICT PREVENTION (sequential race): once the first REAL atomic allocation commits, a second racing allocation of the same vehicle fails', async () => {
+  // The "first" allocation must now be the real atomic pair — a single
+  // vehicle-only write can no longer succeed at all (see V5 above).
+  await assertSucceeds(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
   // V102 is now RESERVED. A second mobility_head trying to allocate the
   // very same vehicle to a different mission is correctly refused because
-  // the rule requires the vehicle's CURRENT status to be AVAILABLE.
-  const second = updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
-    status: 'RESERVED', assignedEmployeeUid: UID.employeeA2, currentMissionId: 'pendingA',
-    updatedByUid: UID.mobilityHeadA, updatedAt: 2,
-  });
-  await assertFails(second);
+  // the rule requires the vehicle's CURRENT status to be AVAILABLE — even
+  // as a proper atomic pair.
+  await assertFails(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA2', vehicleId: 'V102', employeeUid: UID.employeeA2 }));
 });
 
 // ---- PHASE 06A hotfix: a NEW vehicle allocation must independently verify
 // the TARGET employee — not just vehicleEligible on whatever doc happens
 // to sit at that uid — server/Rules-side, never merely UI-filtered. ----
 
-test('V8b PHASE 06A: allocating to an eligible employee in the SAME organization still succeeds', async () => {
-  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
-    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
-    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
-  }));
+test('V8b PHASE 06A: allocating to an eligible employee in the SAME organization still succeeds (as the real atomic pair)', async () => {
+  await assertSucceeds(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
 });
 
 test('V8c PHASE 06A: allocating to an employee from a DIFFERENT organization is denied, even though vehicleEligible is true', async () => {
@@ -482,10 +568,9 @@ test('V8g PHASE 06A: the mission-side APPROVED -> VEHICLE_ALLOCATED write is ind
     status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: 'no-such-user-uid',
     assignedEmployeeName: 'x', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
   }));
-  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
-    status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: UID.employeeA,
-    assignedEmployeeName: 'x', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
-  }));
+  // PHASE 06 CLOSURE DEFECT 2 — a valid target no longer succeeds as a
+  // mission-only write either; it now requires the real atomic pair.
+  await assertSucceeds(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
 });
 
 test('V8h PHASE 06A: a direct Firestore bypass attempt (no mobility_head role at all) is denied regardless of target validity', async () => {

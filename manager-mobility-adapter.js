@@ -50,89 +50,140 @@ function normalizeIncident(entry) {
   return { id: entry.id, status: data.status || null };
 }
 
-function buildViewData(missions, vehicles, incidents) {
+// PHASE 06 CLOSURE — DEFECT 3 fix: missions/vehicles/incidents are three
+// INDEPENDENT listeners, and a read failure on one must never be erased by
+// a later success on another. Each source now carries its own truthful
+// 'loading' | 'ready' | 'error' state; a KPI field derived from a source
+// that is not 'ready' renders '—' (the same honest-unavailable convention
+// used elsewhere, e.g. the Lands executive view), never a fabricated zero
+// computed from that source's stale/empty array. The single
+// liveMobilityDataState/liveMobilityDataError slots manager.html already
+// renders are now an HONEST AGGREGATE across all three sources — 'error' if
+// any one has failed (even while the others are genuinely ready), 'loading'
+// only while none have failed yet and at least one is still pending, and
+// 'ready' only once all three are truthfully ready — so a real vehicles-read
+// failure can never be masked by missions loading successfully afterward.
+const SOURCE_LABELS = Object.freeze({ missions: 'بيانات المهام', vehicles: 'بيانات المركبات', incidents: 'بيانات الحوادث' });
+
+function missionKpiFields(missions, state) {
+  if (state !== 'ready') return { missionsTotal: '—', missionsActive: '—', missionsDraft: '—', missionsClosed: '—' };
   const activeMissions = missions.filter(m => OPEN_MISSION_STATUSES.includes(m.status));
   const closedMissions = missions.filter(m => m.status === 'CLOSED');
   const draftMissions = missions.filter(m => m.status === 'DRAFT');
+  return {
+    missionsTotal: String(missions.length), missionsActive: String(activeMissions.length),
+    missionsDraft: String(draftMissions.length), missionsClosed: String(closedMissions.length)
+  };
+}
+function vehicleKpiFields(vehicles, state) {
+  if (state !== 'ready') return { vehiclesTotal: '—', vehiclesAvailable: '—', vehiclesInMission: '—', vehiclesUnavailable: '—' };
   const availableVehicles = vehicles.filter(v => v.status === 'AVAILABLE');
   const inMissionVehicles = vehicles.filter(v => v.status === 'IN_MISSION' || v.status === 'RESERVED');
   const unavailableVehicles = vehicles.filter(v => UNAVAILABLE_VEHICLE_STATUSES.includes(v.status));
+  return {
+    vehiclesTotal: String(vehicles.length), vehiclesAvailable: String(availableVehicles.length),
+    vehiclesInMission: String(inMissionVehicles.length), vehiclesUnavailable: String(unavailableVehicles.length)
+  };
+}
+function incidentKpiFields(incidents, state) {
+  if (state !== 'ready') return { incidentsOpen: '—', incidentsResolved: '—' };
   const openIncidents = incidents.filter(i => OPEN_INCIDENT_STATUSES.includes(i.status));
   const resolvedIncidents = incidents.filter(i => i.status === 'RESOLVED');
+  return { incidentsOpen: String(openIncidents.length), incidentsResolved: String(resolvedIncidents.length) };
+}
 
+function departmentsFrom(missions, state) {
+  if (state !== 'ready') return [];
+  const activeMissions = missions.filter(m => OPEN_MISSION_STATUSES.includes(m.status));
   const deptCounts = new Map();
-  for (const m of activeMissions) {
-    deptCounts.set(m.department, (deptCounts.get(m.department) || 0) + 1);
-  }
-  const departments = Array.from(deptCounts.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
+  for (const m of activeMissions) deptCounts.set(m.department, (deptCounts.get(m.department) || 0) + 1);
+  return Array.from(deptCounts.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+}
+
+function buildViewData(sources) {
+  const { missions, vehicles, incidents, missionsState, vehiclesState, incidentsState } = sources;
+  const states = { missions: missionsState, vehicles: vehiclesState, incidents: incidentsState };
+  const failedSources = Object.keys(states).filter(key => states[key] === 'error');
+  const overallState = failedSources.length ? 'error'
+    : Object.values(states).some(s => s !== 'ready') ? 'loading' : 'ready';
+  const overallError = failedSources.length
+    ? failedSources.map(key => `تعذر تحميل ${SOURCE_LABELS[key]}.`).join(' ')
+    : '';
 
   return {
     kpi: {
-      missionsTotal: String(missions.length),
-      missionsActive: String(activeMissions.length),
-      missionsDraft: String(draftMissions.length),
-      missionsClosed: String(closedMissions.length),
-      vehiclesTotal: String(vehicles.length),
-      vehiclesAvailable: String(availableVehicles.length),
-      vehiclesInMission: String(inMissionVehicles.length),
-      vehiclesUnavailable: String(unavailableVehicles.length),
-      incidentsOpen: String(openIncidents.length),
-      incidentsResolved: String(resolvedIncidents.length)
+      ...missionKpiFields(missions, missionsState),
+      ...vehicleKpiFields(vehicles, vehiclesState),
+      ...incidentKpiFields(incidents, incidentsState)
     },
-    departments
+    departments: departmentsFrom(missions, missionsState),
+    overallState,
+    overallError
   };
 }
 
-function publish(component, payload) {
+function publish(component, sources) {
   if (!component || component !== activeComponent) return;
+  const payload = buildViewData(sources);
   component.liveMobilityKpi = payload.kpi;
   component.liveMobilityDepartments = payload.departments;
-  component.liveMobilityDataState = 'ready';
-  component.liveMobilityDataError = '';
+  component.liveMobilityDataState = payload.overallState;
+  component.liveMobilityDataError = payload.overallError;
   component.setState(state => ({ mobilityRevision: (state.mobilityRevision || 0) + 1 }));
 }
 
-function fail(component, message) {
+// Total connection-level failure (no organizationId, no active session, the
+// initial Firebase module import itself rejecting) truthfully marks ALL
+// THREE sources as failed — never silently drops back to a partial/'ready'
+// aggregate for sources that were simply never attempted.
+function failAll(component, message) {
   if (!component || component !== activeComponent) return;
-  component.liveMobilityDataState = 'error';
+  publish(component, {
+    missions: [], vehicles: [], incidents: [],
+    missionsState: 'error', vehiclesState: 'error', incidentsState: 'error'
+  });
   component.liveMobilityDataError = message;
-  component.setState(state => ({ mobilityRevision: (state.mobilityRevision || 0) + 1 }));
 }
 
 async function start(component) {
   const orgId = component.state?.orgId;
-  if (!orgId) { fail(component, 'تعذر تحديد هوية المنظمة الحالية.'); return; }
+  if (!orgId) { failAll(component, 'تعذر تحديد هوية المنظمة الحالية.'); return; }
 
   const [appApi, firestoreApi] = await Promise.all([
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
   ]);
   const app = appApi.getApps().find(item => item.name === 'smart-hsr-manager-session');
-  if (!app) { fail(component, 'لا توجد جلسة Firebase نشطة.'); return; }
+  if (!app) { failAll(component, 'لا توجد جلسة Firebase نشطة.'); return; }
   const db = firestoreApi.getFirestore(app);
 
-  let missions = [], vehicles = [], incidents = [];
-  const update = () => publish(component, buildViewData(missions, vehicles, incidents));
+  // Each source keeps its OWN truthful state — see buildViewData()'s header
+  // comment. A later success on one source publishes an update that still
+  // carries whatever state the OTHER two sources most recently and
+  // genuinely reported, never resetting them to 'ready'/'loading'.
+  const sources = {
+    missions: [], vehicles: [], incidents: [],
+    missionsState: 'loading', vehiclesState: 'loading', incidentsState: 'loading'
+  };
+  const update = () => publish(component, sources);
 
   stopMissions = firestoreApi.onSnapshot(
     firestoreApi.query(firestoreApi.collection(db, 'missions'), firestoreApi.where('organizationId', '==', orgId)),
     { includeMetadataChanges: true },
-    snapshot => { if (snapshot.metadata.fromCache) return; missions = snapshot.docs.map(normalizeMission); update(); },
-    () => fail(component, 'تعذر تحميل بيانات المهام.')
+    snapshot => { if (snapshot.metadata.fromCache) return; sources.missions = snapshot.docs.map(normalizeMission); sources.missionsState = 'ready'; update(); },
+    () => { sources.missionsState = 'error'; update(); }
   );
   stopVehicles = firestoreApi.onSnapshot(
     firestoreApi.query(firestoreApi.collection(db, 'vehicles'), firestoreApi.where('organizationId', '==', orgId)),
     { includeMetadataChanges: true },
-    snapshot => { if (snapshot.metadata.fromCache) return; vehicles = snapshot.docs.map(normalizeVehicle); update(); },
-    () => fail(component, 'تعذر تحميل بيانات المركبات.')
+    snapshot => { if (snapshot.metadata.fromCache) return; sources.vehicles = snapshot.docs.map(normalizeVehicle); sources.vehiclesState = 'ready'; update(); },
+    () => { sources.vehiclesState = 'error'; update(); }
   );
   stopIncidents = firestoreApi.onSnapshot(
     firestoreApi.query(firestoreApi.collection(db, 'incidents'), firestoreApi.where('organizationId', '==', orgId)),
     { includeMetadataChanges: true },
-    snapshot => { if (snapshot.metadata.fromCache) return; incidents = snapshot.docs.map(normalizeIncident); update(); },
-    () => fail(component, 'تعذر تحميل بيانات الحوادث.')
+    snapshot => { if (snapshot.metadata.fromCache) return; sources.incidents = snapshot.docs.map(normalizeIncident); sources.incidentsState = 'ready'; update(); },
+    () => { sources.incidentsState = 'error'; update(); }
   );
 }
 
@@ -144,11 +195,13 @@ window.SmartHSRMobilityAdapter = {
     component.liveMobilityDataState = 'loading';
     component.liveMobilityDataError = '';
     if (isLocalPreview()) {
-      component.liveMobilityDataState = 'ready';
-      publish(component, buildViewData([], [], []));
+      publish(component, {
+        missions: [], vehicles: [], incidents: [],
+        missionsState: 'ready', vehiclesState: 'ready', incidentsState: 'ready'
+      });
       return;
     }
-    start(component).catch(() => fail(component, 'تعذر تحميل بيانات إدارة الحركة والسير.'));
+    start(component).catch(() => failAll(component, 'تعذر تحميل بيانات إدارة الحركة والسير.'));
   },
   disconnect(component) {
     if (component && component !== activeComponent) return;

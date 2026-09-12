@@ -30,16 +30,25 @@ for (const status of INCIDENT_STATUSES) {
   assert.match(adapter, new RegExp(`${status}: '`), `incident status ${status} must be mapped`);
 }
 
-// Audit: every mutation function must record at least one auditEvents
-// write, and the transactional ones must record it inside the same
-// transaction (not as a separate, non-atomic follow-up write).
+// PHASE 06 CLOSURE — DEFECT 1 fix: a single-document mutation that
+// previously wrote its business state via setDoc/updateDoc and then
+// recorded its audit event as a SEPARATE, later write (recordAudit()) could
+// leave the business state changed with no audit trail if that second
+// write failed. Every one of these functions now commits its business
+// write AND its auditEvents/{eventId} write together in one atomic
+// writeBatch() — see test/mobility-audit-atomicity.test.js for the
+// executable (real-emulator) proof that a forced audit failure leaves
+// neither write applied.
 const auditedFns = ['createMissionRequest', 'submitMissionForApproval', 'decideMission', 'employeeAdvanceMission', 'createIncident', 'mobilityProcessIncident'];
 for (const fn of auditedFns) {
   const start = adapter.indexOf(`async function ${fn}(`);
   assert.ok(start >= 0, `${fn} must exist`);
   const end = adapter.indexOf('\nasync function ', start + 1);
   const body = adapter.slice(start, end > 0 ? end : start + 2000);
-  assert.match(body, /recordAudit\(/, `${fn} must record an audit event`);
+  assert.match(body, /const batch = api\.writeBatch\(db\);/, `${fn} must open one atomic batch for its business write and its audit write`);
+  assert.match(body, /batch\.set\(api\.doc\(api\.collection\(db, 'auditEvents'\)\)/, `${fn} must record its audit event inside that same batch`);
+  assert.match(body, /await batch\.commit\(\);/, `${fn} must commit the batch atomically`);
+  assert.doesNotMatch(body, /recordAudit\(/, `${fn} must no longer use the removed non-atomic recordAudit() helper`);
 }
 const transactionalAuditedFns = ['allocateVehicle', 'handoverMission', 'confirmVehicleReturn', 'employeeReturnVehicle'];
 for (const fn of transactionalAuditedFns) {

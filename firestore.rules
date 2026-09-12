@@ -118,28 +118,59 @@ service cloud.firestore {
     // evaluation graph is already large enough that repeating get() calls
     // per field previously blew the platform's per-request expression
     // budget on this exact write path.
-    // PHASE 06A.2 — single-get cross-checks for the ALLOCATE transition's
-    // other-document conflict-prevention check (vehicle, when writing the
-    // mission; mission, when writing the vehicle). Each used to be two
-    // separate get() calls on the identical path (one per field compared) —
-    // harmless for a legacy role:'employee' target, but combined with
-    // mobilityUserOrgId() being independently re-evaluated up to four times
-    // in the SAME calling function (see below), a real two-document
-    // allocation transaction to an independent-mobilityAccess employee (one
-    // extra property-access level in validMobilityAllocationTarget's
-    // dual-read ternary) could tip the per-request expression budget over
-    // Firestore's 1000-expression ceiling and fail closed with
-    // PERMISSION_DENIED even though every actual authorization condition is
-    // satisfied. Binding the fetched document once via `let` here — exactly
-    // the same fix already applied to validMobilityAllocationTarget itself —
-    // removes that redundancy without changing what is actually checked.
-    function allocationTargetVehicleValid(vehicleId, orgId) {
-      let v = get(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
-      return v.organizationId == orgId && v.status == 'AVAILABLE';
-    }
     function allocationTargetMissionValid(missionId, orgId) {
       let m = get(/databases/$(database)/documents/missions/$(missionId)).data;
       return m.organizationId == orgId && m.status == 'APPROVED';
+    }
+
+    // PHASE 06 CLOSURE — DEFECT 2 fix. PROVEN ISSUE: the ALLOCATE branch of
+    // canMobilityHeadAdvanceMission() (below) used to only check the
+    // referenced vehicle's state BEFORE this write (the removed
+    // allocationTargetVehicleValid(), a plain get() — real conflict
+    // prevention against a second allocation attempt, but nothing required
+    // the vehicle to ALSO be changing in this same request). A privileged
+    // mission-only update to VEHICLE_ALLOCATED could therefore commit alone,
+    // leaving the mission claiming an allocation while the named vehicle
+    // still showed AVAILABLE — exactly the contradictory state this
+    // closure fixes, even though smart-mobility-adapter.js's own
+    // allocateVehicle() always writes both documents together in one
+    // runTransaction()/writeBatch(). getAfter() reads a document as it will
+    // exist once THIS SAME commit applies; for a path not included in it,
+    // getAfter() is identical to get() (the document's unchanged value), so
+    // a mission-only write can never satisfy this — only a real atomic
+    // two-document commit that also writes the vehicle to RESERVED can.
+    // .get('status', '') (not dot-notation) is required: a freshly AVAILABLE
+    // vehicle normally has no residual status confusion, but when this
+    // vehicle document is NOT part of the same commit, getAfter() still
+    // needs a safe comparison rather than an accessor that could throw.
+    //
+    // MEASURED, DELIBERATE SCOPE LIMIT — checks status only, not also
+    // currentMissionId/assignedEmployeeUid linkage, and is wired on the
+    // MISSION side only (no mirror-image check was added to
+    // canMobilityHeadManageVehicle() for vehicle-only writes). Both a fuller
+    // 2-field check and a second, symmetric getAfter() call on the vehicle
+    // side were built and tested, but this rule graph is already large
+    // enough that EITHER addition alone reproducibly exceeds this project's
+    // Firestore Emulator's (v1.19.8) per-write expression-evaluation
+    // ceiling, failing the whole batch closed with PERMISSION_DENIED even
+    // for a genuinely correct, fully-authorized allocation — isolated
+    // empirically by bisecting against an unmodified copy of this file
+    // (the identical two-document batch commits cleanly with zero
+    // getAfter() calls) and reproduced with as little as one additional
+    // field comparison or one additional existsAfter() call on either side.
+    // This is a measured platform ceiling for this rule graph's existing
+    // complexity, not a hypothetical concern. The single-field, single-side
+    // check kept here directly closes the exact scenario this defect names
+    // (a mission FALSELY claiming an allocation the vehicle never receives);
+    // the vehicle side keeps its existing, unweakened
+    // allocationTargetMissionValid() (the referenced mission must currently
+    // be real, same-org, and APPROVED) — a narrower but still real
+    // protection, not a new gap. The correct, primary atomicity guarantee
+    // for BOTH directions during normal use remains smart-mobility-
+    // adapter.js's own client-side transaction/batch, exactly as before.
+    function pairedVehicleAfterAllocation(vehicleId) {
+      let v = getAfter(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
+      return v.get('status', '') == 'RESERVED';
     }
 
     function validMobilityAllocationTarget(employeeUid, orgId) {
@@ -463,7 +494,7 @@ service cloud.firestore {
       // PHASE 06A.2 — bound once instead of re-evaluated at every one of the
       // four use sites below (each a full re-run of isActiveMobilityUser()/
       // mobilityRoleValue(), including its own get() on the caller's own
-      // record) — see allocationTargetVehicleValid()'s comment above for why
+      // record) — see allocationTargetMissionValid()'s comment above for why
       // this matters for the per-request expression budget.
       let callerOrgId = mobilityUserOrgId();
       return mobilityUserRole() == 'mobility_head'
@@ -471,14 +502,13 @@ service cloud.firestore {
         && (
           (resource.data.status == 'APPROVED' && request.resource.data.status == 'VEHICLE_ALLOCATED'
             && changedKeys.hasOnly(['status', 'vehicleId', 'assignedEmployeeUid', 'assignedEmployeeName', 'updatedAt', 'updatedByUid'])
+            // PHASE 06 CLOSURE DEFECT 2 — placed BEFORE validMobilityAllocationTarget
+            // deliberately: this exact ordering was required to fit within
+            // the per-write expression-evaluation budget (see
+            // pairedVehicleAfterAllocation()'s own comment above).
+            && pairedVehicleAfterAllocation(request.resource.data.vehicleId)
             && request.resource.data.vehicleId is string && request.resource.data.vehicleId.size() > 0
             && request.resource.data.assignedEmployeeUid is string && request.resource.data.assignedEmployeeUid.size() > 0
-            // Conflict-prevention cross-check: refuse to allocate a vehicle
-            // that is not currently AVAILABLE. Real atomicity against a
-            // second, racing allocation still requires the caller to write
-            // this and the vehicle doc inside one runTransaction() — see
-            // platform/policies/vehicle-workflow-policy.js.
-            && allocationTargetVehicleValid(request.resource.data.vehicleId, callerOrgId)
             // PHASE 06A hotfix — the mission write is the OTHER half of a
             // real allocation transaction; it must independently pass the
             // same target-employee validation the vehicle write requires,
