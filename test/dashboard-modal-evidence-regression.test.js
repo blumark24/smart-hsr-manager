@@ -17,6 +17,105 @@ function loadEvidenceNormalizer() {
   return context.normalize;
 }
 
+// PHASE 04 FINAL MICRO-CLOSURE — executable (not file-global-regex-only) proof
+// that the actual useWeakLocationBtn click handler (and its normal-GPS and
+// manual-map siblings) behave exactly as the kept regex tests above claim.
+// This runs the REAL extracted source of the handler and its direct
+// dependencies inside an isolated vm context with a minimal DOM/geolocation
+// stub — it does not reimplement or approximate the logic under test.
+function sliceSrc(startMarker, endMarker) {
+  const start = dashboard.indexOf(startMarker);
+  const end = dashboard.indexOf(endMarker, start);
+  assert.notEqual(start, -1, `marker not found: ${startMarker}`);
+  assert.notEqual(end, -1, `end marker not found: ${endMarker}`);
+  assert.ok(end > start, `end marker precedes start marker: ${startMarker}`);
+  return dashboard.slice(start, end);
+}
+
+function loadWeakGpsHarness() {
+  const lets = sliceSrc(
+    'let inspectorMap=null,locationMarker=null,accuracyCircle=null;',
+    "let pendingSmartInput=null,pendingSmartCapture=null,smartInputSaveInFlight=false;"
+  ) + "let pendingSmartInput=null,pendingSmartCapture=null,smartInputSaveInFlight=false;";
+  const accuracyLabelSrc = sliceSrc("function accuracyLabel(m){", 'function validLocationSample(');
+  const candidateIsCurrentSrc = sliceSrc('function candidateIsCurrent(', 'function candidateWithinServiceArea(');
+  const candidateWithinServiceAreaSrc = sliceSrc('function candidateWithinServiceArea(', 'function normalLocationConfirmationAllowed(');
+  const normalLocationConfirmationAllowedSrc = sliceSrc('function normalLocationConfirmationAllowed(', 'function stopInspectorGps(');
+  const stopInspectorGpsSrc = sliceSrc('function stopInspectorGps(', 'function setIdentityGpsStatus(');
+  const setIdentityGpsStatusSrc = sliceSrc('function setIdentityGpsStatus(', '// مركز احتياطي للعرض فقط عند غياب مركز المؤسسة');
+  const renderLocationCandidateOnMapSrc = sliceSrc('function renderLocationCandidateOnMap(', 'function renderLocationCandidate(');
+  const renderLocationCandidateSrc = sliceSrc('function renderLocationCandidate(', '// التحديد اليدوي: لا يُعتمد أي موقع تلقائياً');
+  const syncAdoptButtonSrc = sliceSrc('function syncAdoptButton(', '// نقطة واحدة لتحريك الاختيار على الخريطة');
+  const candidateHasCoordsSrc = sliceSrc('function candidateHasCoords(', '// عند انتهاء المهلة');
+  const commitLocationSelectionSrc = sliceSrc('function commitLocationSelection(', '// Preview-only manual location bridge.');
+  const setTextSrc = sliceSrc('function setText(id, text){', 'function setHTML(id, html){');
+  const handlerSrc = sliceSrc(
+    "document.getElementById('useWeakLocationBtn')?.addEventListener('click',",
+    "document.getElementById('confirmLocationBtn')?.addEventListener('click',"
+  );
+
+  const capturedHandlers = {};
+  const elementRegistry = {};
+  function makeElement(id) {
+    if (!elementRegistry[id]) {
+      elementRegistry[id] = {
+        textContent: '', value: '', disabled: false,
+        classList: { add() {}, remove() {}, toggle() {} },
+        addEventListener(evt, fn) { capturedHandlers[`${id}:${evt}`] = fn; }
+      };
+    }
+    return elementRegistry[id];
+  }
+
+  const context = {
+    document: {
+      getElementById: (id) => makeElement(id),
+      querySelector: () => ({ classList: { add() {}, remove() {}, toggle() {} } })
+    },
+    navigator: { geolocation: { clearWatch() {} } },
+    clearTimeout: () => {},
+    organizationMapContext: undefined,
+    console
+  };
+
+  vm.runInNewContext(
+    [
+      lets, accuracyLabelSrc, candidateIsCurrentSrc, candidateWithinServiceAreaSrc,
+      normalLocationConfirmationAllowedSrc, stopInspectorGpsSrc, setIdentityGpsStatusSrc,
+      renderLocationCandidateOnMapSrc, renderLocationCandidateSrc, syncAdoptButtonSrc,
+      candidateHasCoordsSrc, commitLocationSelectionSrc, setTextSrc,
+      'function checkSmartInputState(){}',
+      handlerSrc,
+      "this.__setState = (patch) => { for (const k of Object.keys(patch)) { if (k==='locationCandidate') locationCandidate = patch[k]; else if (k==='locationSamples') locationSamples = patch[k]; else if (k==='locationTimedOut') locationTimedOut = patch[k]; else if (k==='locationDragged') locationDragged = patch[k]; else if (k==='locationWarningOverride') locationWarningOverride = patch[k]; } };",
+      'this.__getState = () => ({ locationSource, locationVerified, locationWarningOverride, locationCandidate });',
+      'this.__commitLocationSelection = commitLocationSelection;',
+      'this.__renderLocationCandidate = renderLocationCandidate;'
+    ].join('\n'),
+    context
+  );
+
+  return {
+    elementRegistry,
+    setState: context.__setState,
+    getState: context.__getState,
+    commitLocationSelection: context.__commitLocationSelection,
+    renderLocationCandidate: context.__renderLocationCandidate,
+    triggerWeakClick: () => {
+      const fn = capturedHandlers["useWeakLocationBtn:click"];
+      assert.ok(fn, 'useWeakLocationBtn click handler must be registered by the extracted source');
+      fn();
+    }
+  };
+}
+
+function evalAcceptedGpsSource(locationVerified, locationSource, locationWarningOverride) {
+  const match = dashboard.match(/const acceptedGpsSource =\s*\(locationVerified === true && locationSource === 'gps'\)\s*\|\|\s*\(locationSource === 'gps_weak' && locationWarningOverride === true\);/);
+  assert.ok(match, 'save-gate acceptedGpsSource formula must remain present verbatim');
+  const ctx = { locationVerified, locationSource, locationWarningOverride };
+  vm.runInNewContext(`${match[0]}\nthis.result = acceptedGpsSource;`, ctx);
+  return ctx.result;
+}
+
 test('smart input controls stack into full-width rows on phones', () => {
   assert.match(
     dashboard,
@@ -99,4 +198,85 @@ test('inspector capture starts GPS automatically; the map-based manual-location 
   assert.match(overrideHandler.slice(0, 700), /if\(!candidateIsCurrent\(locationCandidate\)\)\{/);
   assert.match(overrideHandler.slice(0, 700), /locationWarningOverride=true;/);
   assert.match(dashboard, /غير موثّق بدقة كاملة/, 'a weak-accepted location must be visibly labeled as not fully verified');
+});
+
+// PHASE 04 FINAL MICRO-CLOSURE — WEAK GPS EXPLICIT WARNING + EXECUTABLE PROOF.
+// The test above proves the warning phrase exists somewhere in dashboard.html
+// and that the handler's early lines look right, but it never actually runs
+// the useWeakLocationBtn click handler. These tests execute the real
+// extracted handler (and its real dependencies: candidateIsCurrent,
+// commitLocationSelection, renderLocationCandidate) inside an isolated vm
+// context, proving the exact runtime behavior rather than trusting a
+// file-global regex.
+test('useWeakLocationBtn rejects a stale/invalid candidate without arming the override or showing the weak-GPS warning', () => {
+  const harness = loadWeakGpsHarness();
+  harness.setState({
+    locationCandidate: {
+      lat: 24.7136, lng: 46.6753, accuracy: 45, stable: false,
+      capturedAt: new Date(Date.now() - 60000).toISOString() // stale: 60s old, beyond the 30s freshness window
+    }
+  });
+  harness.triggerWeakClick();
+  assert.equal(harness.elementRegistry.locationStatus.textContent, 'لا يمكن قبول موقع مفقود أو غير صالح أو قديم. أعد المحاولة.');
+  assert.doesNotMatch(harness.elementRegistry.locationStatus.textContent, /GPS ضعيف|غير موثّق بدقة كاملة/);
+  const state = harness.getState();
+  assert.equal(state.locationWarningOverride, false);
+  assert.notEqual(state.locationSource, 'gps_weak');
+});
+
+test('useWeakLocationBtn accepts a current-but-weak candidate only through the real click handler, with an explicit truthful warning, gps_weak source, and locationVerified=false', () => {
+  const harness = loadWeakGpsHarness();
+  harness.setState({
+    locationCandidate: {
+      lat: 24.7136, lng: 46.6753, accuracy: 45, stable: false, // 45m: current+valid but above the 30m normal-accuracy threshold
+      capturedAt: new Date().toISOString()
+    }
+  });
+  harness.triggerWeakClick();
+  const statusText = harness.elementRegistry.locationStatus.textContent;
+  assert.match(statusText, /GPS ضعيف/, 'the real button-path message must explicitly say weak GPS');
+  assert.match(statusText, /غير موثّق بدقة كاملة/, 'the real button-path message must explicitly say not fully verified');
+  assert.match(statusText, /±45م/, 'the real button-path message must include the measured accuracy');
+  const state = harness.getState();
+  assert.equal(state.locationSource, 'gps_weak');
+  assert.equal(state.locationVerified, false);
+  assert.equal(state.locationWarningOverride, true);
+  assert.equal(harness.elementRegistry.inputLatitude.value, 24.7136);
+  assert.equal(harness.elementRegistry.inputLongitude.value, 46.6753);
+  // and the save gate's own real formula accepts exactly this combination
+  assert.equal(evalAcceptedGpsSource(state.locationVerified, state.locationSource, state.locationWarningOverride), true);
+});
+
+test('manual_map can never satisfy the real save-gate formula, even after commitLocationSelection actually runs on a manual candidate', () => {
+  const harness = loadWeakGpsHarness();
+  harness.setState({
+    locationCandidate: {
+      lat: 24.7136, lng: 46.6753, correctedLat: 24.7136, correctedLng: 46.6753,
+      accuracy: null, stable: false, manual: true, capturedAt: new Date().toISOString()
+    },
+    locationWarningOverride: true // even if an override were somehow set, manual_map must still lose
+  });
+  assert.equal(harness.commitLocationSelection(), true);
+  const state = harness.getState();
+  assert.equal(state.locationSource, 'manual_map');
+  assert.equal(evalAcceptedGpsSource(true, 'manual_map', true), false);
+  assert.equal(evalAcceptedGpsSource(false, 'manual_map', false), false);
+});
+
+test('a normal, good-accuracy GPS fix auto-commits via renderLocationCandidate with a distinct message that never carries the weak-GPS warning', () => {
+  const harness = loadWeakGpsHarness();
+  const freshSample = { lat: 24.7136, lng: 46.6753, accuracy: 12, stable: true, capturedAt: new Date().toISOString() };
+  harness.setState({
+    locationSamples: [freshSample, freshSample, freshSample],
+    locationCandidate: freshSample
+  });
+  harness.renderLocationCandidate();
+  const statusText = harness.elementRegistry.locationStatus.textContent;
+  assert.match(statusText, /تم تحديد الموقع — الدقة/);
+  assert.doesNotMatch(statusText, /GPS ضعيف|غير موثّق بدقة كاملة/, 'a normal verified GPS fix must never receive the weak-GPS warning');
+  const state = harness.getState();
+  assert.equal(state.locationSource, 'gps');
+  assert.equal(state.locationVerified, true);
+  assert.equal(state.locationWarningOverride, false);
+  assert.equal(evalAcceptedGpsSource(state.locationVerified, state.locationSource, state.locationWarningOverride), true);
 });

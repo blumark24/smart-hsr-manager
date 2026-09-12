@@ -4556,7 +4556,10 @@ document.getElementById('useWeakLocationBtn')?.addEventListener('click',()=>{
     document.getElementById('useWeakLocationBtn').classList.add('hidden');
     document.getElementById('retryLocationBtn').textContent='تحديث الموقع';
     document.getElementById('retryLocationBtn').classList.remove('hidden');
-    setText('locationStatus',`تم تثبيت الموقع — الدقة ±${Math.round(locationCandidate.accuracy)} م`);
+    // رسالة تنبيه صريحة، غير قابلة للخلط مع رسالة نجاح GPS العادي — الموقع
+    // مقبول بموافقة صريحة من المستخدم فقط، ويبقى غير موثّق بدقة كاملة
+    // (locationSource=gps_weak، locationVerified=false).
+    setText('locationStatus',`تم تثبيت الموقع مع تنبيه — GPS ضعيف، غير موثّق بدقة كاملة (±${Math.round(locationCandidate.accuracy)}م).`);
   }
   checkSmartInputState();
 });
