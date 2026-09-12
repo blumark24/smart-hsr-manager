@@ -158,10 +158,22 @@ const activeLayers = new Set();
 
 function labelFor(layerId) { return (layerRegistry.getLayer(layerId) || {}).labelAr || layerId; }
 
+// Layers this specific page actually implements loading for. The registry
+// also declares lands_parcels/mobility_missions/mobility_incidents (real
+// future layers), but Lands parcels currently carry no geometry field at
+// all and Mobility missions/incidents carry no coordinate field either
+// (both confirmed in the Phase 08 map inventory) — there is nothing real
+// to load for them yet. Showing a toggle for a layer with no real data to
+// honestly show would be a dead control; the registry stays the source of
+// truth for what a FUTURE loader should implement, this page just doesn't
+// claim to load what it can't.
+const IMPLEMENTED_LAYER_IDS = ['commercial_places', 'buildings', 'field_observations'];
+
 function renderLayerToggles(organizationId) {
   const list = document.getElementById('layerList');
   list.innerHTML = '';
   for (const layer of layerRegistry.layersForExperience('operational')) {
+    if (!IMPLEMENTED_LAYER_IDS.includes(layer.id)) continue;
     const visible = layerRegistry.isLayerVisibleToRole(layer.id, caller.role).allowed;
     if (!visible) continue;
     const row = document.createElement('label');
