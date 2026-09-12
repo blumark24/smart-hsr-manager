@@ -231,6 +231,27 @@ async function getMobilityHeadCallerContext(uid) {
   return { uid, isMobilityHead: false, organizationId: null };
 }
 
+// PHASE 06B — mirrors firestore.rules' validMobilityAllocationTarget()
+// exactly: the target of a vehicle allocation must be a real, same-
+// organization, active user whose CURRENT Mobility role (the same
+// mobilityAccess-first dual read resolveMobilityRole() already uses
+// everywhere else) is one of the four real Mobility operational roles, and
+// must carry an explicit vehicleEligible === true (missing or false denies
+// — the Phase 03B.1 fail-safe default). Pure/no I/O: the caller passes the
+// already-fetched target document data (read inside the same Admin SDK
+// transaction that performs the allocation), so this can be reused inside
+// a transaction without any extra reads. Kept in this file, next to
+// resolveMobilityRole(), so both stay in sync by construction rather than
+// by convention.
+function isValidMobilityAllocationTarget(targetData, organizationId) {
+  if (!targetData) return false;
+  const orgId = typeof targetData.organizationId === 'string' ? targetData.organizationId : '';
+  return orgId === organizationId
+    && activeIsNotFalse(targetData)
+    && MOBILITY_MANAGEABLE_ROLES.includes(resolveMobilityRole(targetData))
+    && targetData.vehicleEligible === true;
+}
+
 // Phase 03B — employee-registry authorization (api/admin/employees.js
 // only; the original users.js endpoint and assertCanManage above are
 // untouched). Owner: any organization. Manager: same organizationId, any
@@ -324,6 +345,7 @@ module.exports = {
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,
+  isValidMobilityAllocationTarget,
   assertCanManage,
   assertCanManageEmployee,
   AUTH_CODES,

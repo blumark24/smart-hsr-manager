@@ -25,6 +25,7 @@ const {
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,
+  isValidMobilityAllocationTarget,
   resolveMobilityRole,
   assertCanManage,
 } = require('../_lib/authz');
@@ -209,6 +210,103 @@ async function handler(req, res) {
         employees.push({ uid: doc.id, name: d.name || doc.id });
       }
       return sendJson(res, 200, { employees });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // PHASE 06B — TRUSTED VEHICLE ALLOCATION CUTOVER. Authorized exactly like
+  // listMobilityEmployees above (an ACTIVE mobility_head only — never an
+  // owner/manager by itself), completely separate from the owner/manager
+  // gate below. This is now the ONLY way a mission may move
+  // APPROVED->VEHICLE_ALLOCATED and a vehicle AVAILABLE->RESERVED — see
+  // firestore.rules, where both client-side transitions are now denied
+  // outright (Admin SDK writes below bypass Rules entirely, so Rules no
+  // longer need to, and structurally cannot safely, arbitrate this pair).
+  //
+  // organizationId/actorId/actorRole/audit identity are NEVER read from the
+  // request body — only missionId/vehicleId/employeeUid are. The caller's
+  // own organization is resolved exclusively from their verified server-side
+  // Mobility identity (mobilityCaller.organizationId), exactly like
+  // listMobilityEmployees. Mission, vehicle, and target-employee validation
+  // (existence, same-organization, status, target eligibility) all happen
+  // inside ONE Admin SDK transaction that also performs the writes, so a
+  // stale read can never be acted on and the mission update, the vehicle
+  // update, and the one canonical audit event either all commit or none do.
+  if (action === 'allocateVehicle') {
+    const mobilityCaller = await getMobilityHeadCallerContext(decoded.uid);
+    if (!mobilityCaller.isMobilityHead) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_head_required' });
+    }
+    const { missionId, vehicleId, employeeUid } = body;
+    if (!isNonEmptyString(missionId) || !isNonEmptyString(vehicleId) || !isNonEmptyString(employeeUid)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_vehicleId_employeeUid_required' });
+    }
+    const organizationId = mobilityCaller.organizationId;
+    try {
+      const outcome = await db.runTransaction(async (transaction) => {
+        const missionRef = db.collection('missions').doc(missionId);
+        const vehicleRef = db.collection('vehicles').doc(vehicleId);
+        const employeeRef = db.collection('users').doc(employeeUid);
+        const [missionSnap, vehicleSnap, employeeSnap] = await Promise.all([
+          transaction.get(missionRef), transaction.get(vehicleRef), transaction.get(employeeRef),
+        ]);
+
+        if (!missionSnap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        const mission = missionSnap.data() || {};
+        if (mission.organizationId !== organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        if (mission.status !== 'APPROVED') return { ok: false, statusCode: 409, reason: 'mission_not_approved' };
+
+        if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+        const vehicle = vehicleSnap.data() || {};
+        if (vehicle.organizationId !== organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        if (vehicle.status !== 'AVAILABLE') return { ok: false, statusCode: 409, reason: 'vehicle_not_available' };
+
+        if (!employeeSnap.exists) return { ok: false, statusCode: 404, reason: 'employee_not_found' };
+        const employee = employeeSnap.data() || {};
+        if (!isValidMobilityAllocationTarget(employee, organizationId)) {
+          return { ok: false, statusCode: 403, reason: 'invalid_allocation_target' };
+        }
+
+        const now = FieldValue.serverTimestamp();
+        const employeeName = isNonEmptyString(employee.name) ? employee.name.trim() : '';
+        transaction.update(missionRef, {
+          status: 'VEHICLE_ALLOCATED',
+          vehicleId,
+          assignedEmployeeUid: employeeUid,
+          assignedEmployeeName: employeeName,
+          updatedAt: now,
+          updatedByUid: decoded.uid,
+        });
+        transaction.update(vehicleRef, {
+          status: 'RESERVED',
+          assignedEmployeeUid: employeeUid,
+          currentMissionId: missionId,
+          updatedAt: now,
+          updatedByUid: decoded.uid,
+        });
+        // The one canonical audit event, inside this same transaction —
+        // actor/role/organization are always the trusted server-derived
+        // caller, never request-body values, so neither can ever be spoofed.
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId,
+          actorId: decoded.uid,
+          actorRole: 'mobility_head',
+          resourceType: 'mission',
+          resourceId: missionId,
+          action: 'allocate_vehicle',
+          fromStatus: 'APPROVED',
+          toStatus: 'VEHICLE_ALLOCATED',
+          vehicleId,
+          timestamp: now,
+        });
+        return { ok: true };
+      });
+
+      if (!outcome.ok) {
+        return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      }
+      return sendJson(res, 200, { missionId, vehicleId, employeeUid, status: 'VEHICLE_ALLOCATED' });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }

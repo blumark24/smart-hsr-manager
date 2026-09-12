@@ -44,16 +44,33 @@ for (const status of VEHICLE_STATUSES) {
   assert.match(adapter, new RegExp(`${status}: '`), `vehicle status ${status} must be mapped to an Arabic label`);
 }
 
-// Allocation, handover, and return-confirmation must each be one atomic
-// Firestore transaction — writing the mission and vehicle documents
-// separately would reopen the double-allocation race Phase 5 closed.
-const transactionalFns = ['allocateVehicle', 'handoverMission', 'confirmVehicleReturn'];
+// Handover and return-confirmation must each be one atomic Firestore
+// transaction — writing the mission and vehicle documents separately would
+// reopen the double-allocation race Phase 5 closed.
+const transactionalFns = ['handoverMission', 'confirmVehicleReturn'];
 for (const fn of transactionalFns) {
   const start = adapter.indexOf(`async function ${fn}(`);
   assert.ok(start >= 0, `${fn} must exist`);
   const end = adapter.indexOf('\n}', start);
   const body = adapter.slice(start, end);
   assert.match(body, /runTransaction/, `${fn} must use a Firestore transaction`);
+}
+
+// PHASE 06B CLOSURE — allocateVehicle no longer writes missions/vehicles
+// directly from the client at all (firestore.rules now denies that
+// transition outright — see mobility-mission-rules.test.js). It must call
+// the trusted server-side Admin SDK transaction instead, sending only
+// missionId/vehicleId/employeeUid and never a client-derived organizationId
+// or actor identity.
+{
+  const start = adapter.indexOf('async function allocateVehicle(');
+  assert.ok(start >= 0, 'allocateVehicle must exist');
+  const end = adapter.indexOf('\n}', start);
+  const body = adapter.slice(start, end);
+  assert.doesNotMatch(body, /runTransaction/, 'allocateVehicle must no longer perform a direct client-side Firestore transaction');
+  assert.match(body, /getIdToken\(\)/, 'allocateVehicle must authenticate the trusted API call with the caller\'s own ID token');
+  assert.match(body, /fetch\('\/api\/admin\/users'/, 'allocateVehicle must call the trusted server-side allocation endpoint');
+  assert.match(body, /action:\s*'allocateVehicle'/, 'allocateVehicle must dispatch the allocateVehicle server action');
 }
 
 // Only a department_head-authored draft may be created; role/authority

@@ -100,89 +100,41 @@ service cloud.firestore {
       return isActiveMobilityUser() ? userRecord().data.department : null;
     }
 
-    // PHASE 06A hotfix — a NEW vehicle allocation names its target employee
-    // (assignedEmployeeUid) purely as a caller-supplied uid on the mission/
-    // vehicle documents being written; nothing about that uid was
-    // previously verified except vehicleEligible on whatever document
-    // happened to exist at that path. This closes that gap: the target
-    // must be a real, same-organization, active, genuinely-Mobility-role
-    // user (the same mobilityRoleValue() dual-read isActiveMobilityUser()
-    // uses for the CALLER, just evaluated against an arbitrary target uid)
-    // AND carry an explicit vehicleEligible === true — missing or false
-    // denies, exactly like the Phase 03B.1 fail-safe default already
-    // established elsewhere. Used by both documents a real allocation
-    // writes in one transaction (vehicles/{id}: AVAILABLE->RESERVED,
-    // missions/{id}: APPROVED->VEHICLE_ALLOCATED) so neither write alone is
-    // a bypass. The target document is fetched exactly ONCE via `let` (a
-    // single bound expression, not a fresh get() per field) — this rule's
-    // evaluation graph is already large enough that repeating get() calls
-    // per field previously blew the platform's per-request expression
-    // budget on this exact write path.
-    function allocationTargetMissionValid(missionId, orgId) {
-      let m = get(/databases/$(database)/documents/missions/$(missionId)).data;
-      return m.organizationId == orgId && m.status == 'APPROVED';
-    }
-
-    // PHASE 06 CLOSURE — DEFECT 2 fix. PROVEN ISSUE: the ALLOCATE branch of
-    // canMobilityHeadAdvanceMission() (below) used to only check the
-    // referenced vehicle's state BEFORE this write (the removed
-    // allocationTargetVehicleValid(), a plain get() — real conflict
-    // prevention against a second allocation attempt, but nothing required
-    // the vehicle to ALSO be changing in this same request). A privileged
-    // mission-only update to VEHICLE_ALLOCATED could therefore commit alone,
-    // leaving the mission claiming an allocation while the named vehicle
-    // still showed AVAILABLE — exactly the contradictory state this
-    // closure fixes, even though smart-mobility-adapter.js's own
-    // allocateVehicle() always writes both documents together in one
-    // runTransaction()/writeBatch(). getAfter() reads a document as it will
-    // exist once THIS SAME commit applies; for a path not included in it,
-    // getAfter() is identical to get() (the document's unchanged value), so
-    // a mission-only write can never satisfy this — only a real atomic
-    // two-document commit that also writes the vehicle to RESERVED can.
-    // .get('status', '') (not dot-notation) is required: a freshly AVAILABLE
-    // vehicle normally has no residual status confusion, but when this
-    // vehicle document is NOT part of the same commit, getAfter() still
-    // needs a safe comparison rather than an accessor that could throw.
+    // PHASE 06B CLOSURE — TRUSTED VEHICLE ALLOCATION CUTOVER. Vehicle
+    // allocation (missions/{id}: APPROVED->VEHICLE_ALLOCATED paired with
+    // vehicles/{id}: AVAILABLE->RESERVED) is no longer performed by the
+    // client SDK at all — see canMobilityHeadAdvanceMission() and
+    // canMobilityHeadManageVehicle() below, where that transition is simply
+    // absent (denied by omission) from both documents' `allow update`
+    // rules. It is now performed EXCLUSIVELY by a trusted, authenticated
+    // Admin SDK transaction (api/admin/users.js action:'allocateVehicle',
+    // authorized by api/_lib/authz.js getMobilityHeadCallerContext +
+    // isValidMobilityAllocationTarget), which bypasses these Rules entirely
+    // and validates mission/vehicle/target-employee state, then writes the
+    // mission, the vehicle, and one canonical audit event together in one
+    // server-side transaction.
     //
-    // MEASURED, DELIBERATE SCOPE LIMIT — checks status only, not also
-    // currentMissionId/assignedEmployeeUid linkage, and is wired on the
-    // MISSION side only (no mirror-image check was added to
-    // canMobilityHeadManageVehicle() for vehicle-only writes). Both a fuller
-    // 2-field check and a second, symmetric getAfter() call on the vehicle
-    // side were built and tested, but this rule graph is already large
-    // enough that EITHER addition alone reproducibly exceeds this project's
-    // Firestore Emulator's (v1.19.8) per-write expression-evaluation
-    // ceiling, failing the whole batch closed with PERMISSION_DENIED even
-    // for a genuinely correct, fully-authorized allocation — isolated
-    // empirically by bisecting against an unmodified copy of this file
-    // (the identical two-document batch commits cleanly with zero
-    // getAfter() calls) and reproduced with as little as one additional
-    // field comparison or one additional existsAfter() call on either side.
-    // This is a measured platform ceiling for this rule graph's existing
-    // complexity, not a hypothetical concern. The single-field, single-side
-    // check kept here directly closes the exact scenario this defect names
-    // (a mission FALSELY claiming an allocation the vehicle never receives);
-    // the vehicle side keeps its existing, unweakened
-    // allocationTargetMissionValid() (the referenced mission must currently
-    // be real, same-org, and APPROVED) — a narrower but still real
-    // protection, not a new gap. The correct, primary atomicity guarantee
-    // for BOTH directions during normal use remains smart-mobility-
-    // adapter.js's own client-side transaction/batch, exactly as before.
-    function pairedVehicleAfterAllocation(vehicleId) {
-      let v = getAfter(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
-      return v.get('status', '') == 'RESERVED';
-    }
-
-    function validMobilityAllocationTarget(employeeUid, orgId) {
-      let target = get(/databases/$(database)/documents/users/$(employeeUid)).data;
-      return exists(/databases/$(database)/documents/users/$(employeeUid))
-        && target.organizationId == orgId
-        && target.active != false
-        && (('mobilityAccess' in target)
-              ? (target.mobilityAccess.enabled == true && target.mobilityAccess.role in ['mobility_head', 'department_head', 'administrative_affairs', 'employee'])
-              : target.role in ['mobility_head', 'department_head', 'administrative_affairs', 'employee'])
-        && target.vehicleEligible == true;
-    }
+    // This closes the exact gap the prior Phase 06 closure accepted and
+    // documented as its one remaining limitation: with the old asymmetric
+    // getAfter()-based mission-side-only check, a privileged mobility_head
+    // could still perform a direct client-side vehicle-only write
+    // (AVAILABLE->RESERVED) that left the referenced mission unmodified at
+    // APPROVED — a half-allocation the mission-side check alone could never
+    // prevent from the vehicle's own document. The prior Phase 06 work
+    // proved (by empirical bisection against the Firestore Emulator
+    // v1.19.8) that mirroring that getAfter() check onto the vehicle side
+    // reproducibly exceeds this rule graph's per-write expression-
+    // evaluation ceiling — so rather than extending that approach further,
+    // the mutation itself moved server-side, where Rules-level
+    // getAfter()/existsAfter() budgets are no longer relevant at all: an
+    // Admin SDK transaction is not subject to these Rules, and the client
+    // SDK can no longer perform either half of the pair, or a "correctly
+    // paired" direct batch, since both individual transitions are denied
+    // outright. See test/mobility-mission-rules.test.js for the executable
+    // proof that mission-only, vehicle-only, AND a correctly-paired direct
+    // client batch are now ALL denied, and
+    // test/mobility-allocate-vehicle-endpoint.test.js for the proof that
+    // the trusted server transaction still succeeds and is atomic.
 
     // An auditEvents write's actorId/actorRole/organizationId alone say
     // nothing about whether the resourceId it names is real, in the
@@ -242,13 +194,14 @@ service cloud.firestore {
         // evaluated directly against this document's own resource.data.
         // PHASE 06A.2: also requires the target to be active — an inactive
         // employee record is never readable through this branch, matching
-        // the equivalent check already made in validMobilityAllocationTarget()
-        // for the allocation write itself. The trusted server-side
-        // listMobilityEmployees action (api/admin/users.js) no longer
-        // depends on this rule at all (it reads via the Admin SDK, which
-        // bypasses these rules entirely) — this tightening is defense in
-        // depth for any remaining direct client read of this branch, not a
-        // regression risk for that action.
+        // the equivalent check the trusted server-side allocation
+        // endpoint's isValidMobilityAllocationTarget() (api/_lib/authz.js)
+        // now makes for the allocation write itself. Neither
+        // listMobilityEmployees nor allocateVehicle (api/admin/users.js)
+        // depends on this rule at all (both read/write via the Admin SDK,
+        // which bypasses these rules entirely) — this tightening is defense
+        // in depth for any remaining direct client read of this branch,
+        // not a regression risk for either action.
         || (mobilityUserRole() == 'mobility_head' && resource.data.organizationId == mobilityUserOrgId()
             && resource.data.active != false
             && (('mobilityAccess' in resource.data)
@@ -487,34 +440,19 @@ service cloud.firestore {
         && request.resource.data.updatedByUid == request.auth.uid;
     }
 
-    // mobility_head: allocate vehicle, handover, resume after incident,
-    // confirm return.
+    // mobility_head: handover, resume after incident, confirm return.
+    // PHASE 06B CLOSURE — the APPROVED->VEHICLE_ALLOCATED transition
+    // (vehicle allocation) is deliberately ABSENT here: the client SDK may
+    // no longer perform it at all. Only the trusted server-side Admin SDK
+    // transaction (api/admin/users.js action:'allocateVehicle') can move a
+    // mission into VEHICLE_ALLOCATED now — see the closure comment above
+    // this match block.
     function canMobilityHeadAdvanceMission() {
       let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
-      // PHASE 06A.2 — bound once instead of re-evaluated at every one of the
-      // four use sites below (each a full re-run of isActiveMobilityUser()/
-      // mobilityRoleValue(), including its own get() on the caller's own
-      // record) — see allocationTargetMissionValid()'s comment above for why
-      // this matters for the per-request expression budget.
-      let callerOrgId = mobilityUserOrgId();
       return mobilityUserRole() == 'mobility_head'
-        && resource.data.organizationId == callerOrgId
+        && resource.data.organizationId == mobilityUserOrgId()
         && (
-          (resource.data.status == 'APPROVED' && request.resource.data.status == 'VEHICLE_ALLOCATED'
-            && changedKeys.hasOnly(['status', 'vehicleId', 'assignedEmployeeUid', 'assignedEmployeeName', 'updatedAt', 'updatedByUid'])
-            // PHASE 06 CLOSURE DEFECT 2 — placed BEFORE validMobilityAllocationTarget
-            // deliberately: this exact ordering was required to fit within
-            // the per-write expression-evaluation budget (see
-            // pairedVehicleAfterAllocation()'s own comment above).
-            && pairedVehicleAfterAllocation(request.resource.data.vehicleId)
-            && request.resource.data.vehicleId is string && request.resource.data.vehicleId.size() > 0
-            && request.resource.data.assignedEmployeeUid is string && request.resource.data.assignedEmployeeUid.size() > 0
-            // PHASE 06A hotfix — the mission write is the OTHER half of a
-            // real allocation transaction; it must independently pass the
-            // same target-employee validation the vehicle write requires,
-            // so neither write alone is a bypass.
-            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, callerOrgId))
-          || (resource.data.status == 'VEHICLE_ALLOCATED' && request.resource.data.status == 'HANDED_OVER'
+          (resource.data.status == 'VEHICLE_ALLOCATED' && request.resource.data.status == 'HANDED_OVER'
             && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
           || (resource.data.status == 'INCIDENT_HOLD' && request.resource.data.status == 'IN_PROGRESS'
             && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
@@ -572,34 +510,22 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // mobility_head: allocate (with conflict-prevention cross-check
-    // against the target mission), maintenance toggles, handover,
-    // confirm return.
+    // mobility_head: maintenance toggles, handover, confirm return.
+    // PHASE 06B CLOSURE — the AVAILABLE->RESERVED transition (vehicle
+    // allocation) is deliberately ABSENT here: the client SDK may no
+    // longer perform it at all, closing the exact half-allocation bypass
+    // (a vehicle-only client write with no paired mission change) the
+    // prior Phase 06 closure identified and accepted as its one remaining
+    // limitation. Only the trusted server-side Admin SDK transaction
+    // (api/admin/users.js action:'allocateVehicle') can move a vehicle
+    // into RESERVED now — see the closure comment above the
+    // missions/{missionId} match block.
     function canMobilityHeadManageVehicle() {
       let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
-      // PHASE 06A.2 — see canMobilityHeadAdvanceMission()'s identical
-      // comment: bound once instead of re-evaluated at every use site.
-      let callerOrgId = mobilityUserOrgId();
       return mobilityUserRole() == 'mobility_head'
-        && resource.data.organizationId == callerOrgId
+        && resource.data.organizationId == mobilityUserOrgId()
         && (
-          (resource.data.status == 'AVAILABLE' && request.resource.data.status == 'RESERVED'
-            && changedKeys.hasOnly(['status', 'assignedEmployeeUid', 'currentMissionId', 'updatedAt', 'updatedByUid'])
-            && request.resource.data.assignedEmployeeUid is string && request.resource.data.assignedEmployeeUid.size() > 0
-            && request.resource.data.currentMissionId is string && request.resource.data.currentMissionId.size() > 0
-            // Conflict-prevention cross-check: the mission being allocated
-            // must actually be APPROVED and in this same organization.
-            && allocationTargetMissionValid(request.resource.data.currentMissionId, callerOrgId)
-            // PHASE 06A hotfix — the single vehicleEligible check the
-            // Phase 03B.1 fail-safe default added here is now folded into
-            // the fuller validMobilityAllocationTarget() check below, which
-            // additionally verifies the target exists, is in this same
-            // organization, is active, and genuinely holds one of the four
-            // real Mobility operational roles — a UI checkbox, a stale uid,
-            // a disabled account, or a cross-tenant/non-Mobility uid was
-            // previously not caught here at all.
-            && validMobilityAllocationTarget(request.resource.data.assignedEmployeeUid, callerOrgId))
-          || (resource.data.status == 'AVAILABLE'
+          (resource.data.status == 'AVAILABLE'
             && (request.resource.data.status == 'MAINTENANCE' || request.resource.data.status == 'OUT_OF_SERVICE')
             && changedKeys.hasOnly(['status', 'updatedAt', 'updatedByUid']))
           || (resource.data.status == 'RESERVED' && request.resource.data.status == 'IN_MISSION'

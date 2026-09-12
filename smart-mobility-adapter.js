@@ -410,29 +410,36 @@ async function decideMission(missionId, toStatus) {
 // this is what actually makes two racing allocation attempts against the
 // same vehicle mutually exclusive (rules alone only guard one document at
 // a time; see platform/policies/vehicle-workflow-policy.js).
-async function allocateVehicle(missionId, vehicleId, assignedEmployeeUid, assignedEmployeeName) {
+// PHASE 06B — TRUSTED VEHICLE ALLOCATION CUTOVER. Vehicle allocation no
+// longer writes missions/vehicles directly from the client at all (see
+// firestore.rules — both the mission APPROVED->VEHICLE_ALLOCATED and the
+// vehicle AVAILABLE->RESERVED client transitions are now denied outright).
+// The prior Phase 06 closure proved that fully closing the direct-Firestore
+// allocation bypass with mirrored getAfter() Rules checks exceeds this
+// project's measured per-write expression-evaluation ceiling; moving the
+// mutation itself to a trusted, authenticated server-side Admin SDK
+// transaction (api/admin/users.js action:'allocateVehicle') sidesteps that
+// ceiling entirely rather than trying to extend it further. This function
+// now does nothing but ask that trusted endpoint to perform the allocation
+// and waits for its authoritative result — no optimistic local state, no
+// fallback to the old direct-Firestore transaction. The mission/vehicle
+// documents the UI displays are still driven exclusively by the live
+// Firestore subscriptions set up in start() (subscribeMissions/
+// subscribeVehicles), so a real success is only ever reflected once the
+// server's write is actually visible there.
+async function allocateVehicle(missionId, vehicleId, assignedEmployeeUid) {
   requireRole('mobility');
-  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  const missionRef = api.doc(db, 'missions', missionId);
-  const vehicleRef = api.doc(db, 'vehicles', vehicleId);
-  await api.runTransaction(db, async transaction => {
-    const [missionSnap, vehicleSnap] = await Promise.all([transaction.get(missionRef), transaction.get(vehicleRef)]);
-    if (!missionSnap.exists() || missionSnap.data().status !== 'APPROVED') throw new Error('mission_not_approved');
-    if (!vehicleSnap.exists() || vehicleSnap.data().status !== 'AVAILABLE') throw new Error('vehicle_not_available');
-    transaction.update(missionRef, {
-      status: 'VEHICLE_ALLOCATED', vehicleId, assignedEmployeeUid,
-      assignedEmployeeName: assignedEmployeeName || '',
-      updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
-    });
-    transaction.update(vehicleRef, {
-      status: 'RESERVED', assignedEmployeeUid, currentMissionId: missionId,
-      updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
-    });
-    transaction.set(api.doc(api.collection(db, 'auditEvents')),
-      auditEventData('mission', missionId, 'allocate_vehicle', { fromStatus: 'APPROVED', toStatus: 'VEHICLE_ALLOCATED', vehicleId }));
-    transaction.set(api.doc(api.collection(db, 'auditEvents')),
-      auditEventData('vehicle', vehicleId, 'allocate', { fromStatus: 'AVAILABLE', toStatus: 'RESERVED', missionId }));
+  if (!activeAuth || !activeAuth.currentUser) throw new Error('not_authorized');
+  const token = await activeAuth.currentUser.getIdToken();
+  const response = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ action: 'allocateVehicle', missionId, vehicleId, employeeUid: assignedEmployeeUid })
   });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.reason || 'allocation_failed');
+  }
 }
 
 async function handoverMission(missionId, vehicleId) {
