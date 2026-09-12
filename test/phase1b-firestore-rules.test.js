@@ -71,8 +71,16 @@ function db(uid) {
   return testEnv.authenticatedContext(uid).firestore();
 }
 
-test('PASS: contractor starts own assigned PENDING observation', async () => {
-  await assertSucceeds(updateDoc(doc(db(UID.contractorA), 'observations', 'pendingOwn'), {
+// PHASE 08.1 CLOSURE 2 — this direct client write is now denied by design:
+// the contractor's own status-transition write is performed exclusively by
+// a trusted Admin SDK transaction (api/admin/users.js
+// action:'contractorObservationUpdate'), which bypasses these Rules
+// entirely. See firestore.rules' own PHASE 08.1 CLOSURE 2 comment on the
+// observations `allow update` rule, and
+// test/contractor-observation-update-endpoint.test.js for the server-side
+// authorization coverage that replaces this direct-write path.
+test('CLOSURE 2: contractor can no longer start their own assigned observation via a direct client write — only the trusted server action may', async () => {
+  await assertFails(updateDoc(doc(db(UID.contractorA), 'observations', 'pendingOwn'), {
     status: 'IN_PROGRESS', updatedByUid: UID.contractorA,
   }));
 });

@@ -16,9 +16,10 @@ test('manager (mayor) is admitted to the Twin only with a resolved organizationI
   assert.equal(evaluateTwinAdmission({ actor: { role: ROLES.MANAGER, organizationId: 'org-a' } }).allowed, true);
 });
 
-test('supervisor (general supervisor) is admitted to the Twin at the same organization scope as today\'s authority model', () => {
+test('PHASE 08.1 CLOSURE 4: supervisor (general supervisor) is DENIED Twin admission — no live trusted delegation source exists, so executive access fails closed', () => {
   const decision = evaluateTwinAdmission({ actor: { role: ROLES.SUPERVISOR, organizationId: 'org-a' } });
-  assert.equal(decision.allowed, true);
+  assert.equal(decision.allowed, false);
+  assert.equal(decision.code, 'GEO_TWIN_ROLE_DENIED');
 });
 
 test('inspector (employee) and contractor are never admitted to the Twin — Operational Map only', () => {

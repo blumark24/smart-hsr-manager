@@ -231,6 +231,24 @@ async function getMobilityHeadCallerContext(uid) {
   return { uid, isMobilityHead: false, organizationId: null };
 }
 
+// PHASE 08.1 CLOSURE 2 — a narrow, fail-closed caller-context resolver for
+// exactly one action (api/admin/users.js's contractorObservationUpdate):
+// is this uid an ACTIVE contractor of a real organization, right now, per
+// Firestore? Deliberately separate from getCallerContext() above, same
+// reasoning as getMobilityHeadCallerContext just above.
+async function getContractorCallerContext(uid) {
+  const db = getDb();
+  const usrSnap = await db.collection('users').doc(uid).get();
+  if (usrSnap.exists) {
+    const d = usrSnap.data() || {};
+    const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+    if (d.role === 'contractor' && activeIsNotFalse(d) && orgId) {
+      return { uid, isContractor: true, organizationId: orgId };
+    }
+  }
+  return { uid, isContractor: false, organizationId: null };
+}
+
 // PHASE 06B — mirrors firestore.rules' validMobilityAllocationTarget()
 // exactly: the target of a vehicle allocation must be a real, same-
 // organization, active user whose CURRENT Mobility role (the same
@@ -345,6 +363,7 @@ module.exports = {
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,
+  getContractorCallerContext,
   isValidMobilityAllocationTarget,
   assertCanManage,
   assertCanManageEmployee,

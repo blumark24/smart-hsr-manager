@@ -232,9 +232,16 @@ test('A8 manager updatedByUid set to another uid: deny', async () => {
   }));
 });
 
-test('A9 assigned contractor allowed-field update: allow', async () => {
+// PHASE 08.1 CLOSURE 2 — the contractor's status-transition write is no
+// longer a direct client Firestore write at all (see the comment on this
+// rule's `allow update` block): it is now exclusively a trusted Admin SDK
+// transaction (api/admin/users.js action:'contractorObservationUpdate'),
+// which bypasses these Rules entirely. What was previously an "assigned
+// contractor allowed-field update: allow" case must now deny, proving the
+// direct client path is truly closed, not merely redundant with the API.
+test('A9 assigned contractor direct client update (even with previously-valid fields): deny — server API is now the only path', async () => {
   const db = ctx(UID.conA);
-  await assertSucceeds(updateDoc(doc(db, 'observations', 'obsAssignedConA'), {
+  await assertFails(updateDoc(doc(db, 'observations', 'obsAssignedConA'), {
     status: 'PENDING_REVIEW', resolutionNote: 'done', afterImagePath: 'key', updatedByUid: UID.conA,
   }));
 });
@@ -343,6 +350,23 @@ test('C4 manager writing another email document: deny', async () => {
   const db = ctx(UID.mgrA, { email: EMAIL.mgrA });
   await assertFails(setDoc(doc(db, 'presence', EMAIL.mgrB), {
     organizationId: ORG_A, role: 'manager', lat: 1, lng: 1,
+  }));
+});
+
+// PHASE 08.1 CLOSURE 3 — the presence read rule previously had NO
+// organizationId check at all (`allow read: if isActiveManager();`),
+// relying entirely on the client's own query filter for tenant isolation.
+// These prove the Rule itself now enforces it, independent of any client
+// query discipline.
+test('C5 cross-org manager read (direct doc access, not a query): deny', async () => {
+  const db = ctx(UID.mgrB, { email: EMAIL.mgrB });
+  await assertFails(getDoc(doc(db, 'presence', EMAIL.mgrA)));
+});
+
+test('C6 manager self-write claiming a DIFFERENT organizationId than their own: deny', async () => {
+  const db = ctx(UID.mgrA, { email: EMAIL.mgrA });
+  await assertFails(setDoc(doc(db, 'presence', EMAIL.mgrA), {
+    organizationId: ORG_B, role: 'manager', lat: 1, lng: 1,
   }));
 });
 

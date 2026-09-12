@@ -866,32 +866,43 @@ module.exports = Object.freeze({
 // map as follows. `employeeAssignments`' SECTION_HEAD concept
 // (platform/contracts/employee-assignment-contract.js) is explicitly NOT
 // yet a live authorization source anywhere in this codebase (its own header
-// says so) — so this module does not introduce it as one either. A
-// supervisor is scoped exactly as organization-scope-policy.js already
-// scopes them today (organization-wide), not to a not-yet-wired section.
-// Everything here fails closed: an unrecognized role or missing
-// organizationId is always denied, never defaulted to "allow".
+// says so) — so this module does not introduce it as one either. Everything
+// here fails closed: an unrecognized role or missing organizationId is
+// always denied, never defaulted to "allow".
 //
-//   Mayor / municipal highest authority  -> ROLES.MANAGER
-//   General Supervisor (Twin, when today's authority already allows it)
-//                                         -> ROLES.SUPERVISOR
+//   Mayor / municipal highest authority  -> ROLES.MANAGER (Twin-admitted)
+//   General Supervisor                   -> ROLES.SUPERVISOR — Twin
+//                                            NOT admitted (see below)
 //   Section Head                         -> ROLES.SUPERVISOR (operational
 //                                            scope only, pending the
 //                                            employeeAssignments cutover)
-//   Employee                             -> ROLES.INSPECTOR
-//   Contractor                           -> ROLES.CONTRACTOR
-//   Platform owner                       -> ROLES.OWNER
-// ============================================================================
-
+//   Employee                             -> ROLES.INSPECTOR (operational only)
+//   Contractor                           -> ROLES.CONTRACTOR (operational only)
+//   Platform owner                       -> ROLES.OWNER (Twin-admitted)
+//
+// PHASE 08.1 CLOSURE 4 — General Supervisor Twin admission, corrected.
+// Phase 08 originally admitted ROLES.SUPERVISOR to the Twin unconditionally,
+// reasoning that organization-scope-policy.js already treats supervisor as
+// organization-wide scoped for OPERATIONAL capabilities (assign/review/
+// return — see role-contract.js's ROLE_AUTHORITY). But EXECUTIVE Twin
+// access is a materially different grant than day-to-day operational
+// authority, and this codebase has no live trusted delegation source that
+// proves a given supervisor actually holds executive-level authority (the
+// only candidate, employeeAssignments' SECTION_HEAD, is explicitly not yet
+// live — see above). Per Phase 08.1's explicit rule ("If no live trusted
+// delegation source exists: FAIL CLOSED. Do not grant blanket executive
+// access."), ROLES.SUPERVISOR is REMOVED from TWIN_ADMITTED_ROLES below.
+// A supervisor still has full operational access via
+// evaluateGeoResourceAccess()/the Operational Map — only the Twin is
+// withheld until a real, live delegation source exists to check here.
 const { createDecision } = require("platform/contracts/decision.js");
 const { ROLES } = require("platform/contracts/role-contract.js");
 const { evaluateOrganizationScope, PLATFORM_OWNER_ROLE } = require("platform/policies/organization-scope-policy.js");
 const { isLayerVisibleToRole } = require("platform/geo/geo-layer-registry.js");
 
-// Only these roles may ever open the Twin. Inspector/Contractor are
-// Operational-Map-only by design (see brief: "Employee: primarily
-// Operational Map ... Contractor: Operational Map only").
-const TWIN_ADMITTED_ROLES = Object.freeze([ROLES.OWNER, ROLES.MANAGER, ROLES.SUPERVISOR]);
+// Only these roles may ever open the Twin. Every other role (Supervisor
+// included — see the Closure 4 note above) is Operational-Map-only.
+const TWIN_ADMITTED_ROLES = Object.freeze([ROLES.OWNER, ROLES.MANAGER]);
 
 function normalizeId(value) {
   return typeof value === 'string' ? value.trim() : '';

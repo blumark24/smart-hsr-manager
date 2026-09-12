@@ -96,7 +96,7 @@ import { getFirestore, doc, getDoc, collection, query, where, getDocs, connectFi
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 import { observationCoordinates } from './spatial-map.js';
 
-const { layerRegistry, styleTokens, continuity, search: searchModule, attribution: attributionModule } = window.SmartHSRGeoCore;
+const { layerRegistry, styleTokens, continuity, search: searchModule, attribution: attributionModule, policy } = window.SmartHSRGeoCore;
 
 const firebaseConfig = await resolveFirebaseConfig();
 const app = initializeApp(firebaseConfig);
@@ -362,7 +362,10 @@ onAuthStateChanged(auth, async (user) => {
 
   document.getElementById('authLoading').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
-  document.getElementById('openTwinBtn').hidden = !['owner', 'manager', 'supervisor'].includes(caller.role);
+  // PHASE 08.1 CLOSURE 4: derive button visibility from the real, shared
+  // Twin-admission policy (not a hand-maintained role list) so this can
+  // never silently drift from geo-policy.js's fail-closed authority again.
+  document.getElementById('openTwinBtn').hidden = !policy.evaluateTwinAdmission({ actor: caller }).allowed;
 
   map = new maplibregl.Map({
     container: 'map',

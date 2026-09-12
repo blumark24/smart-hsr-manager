@@ -25,10 +25,12 @@ const {
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,
+  getContractorCallerContext,
   isValidMobilityAllocationTarget,
   resolveMobilityRole,
   assertCanManage,
 } = require('../_lib/authz');
+const { buildContractorObservationUpdate } = require('../../platform/policies/contractor-observation-workflow');
 const { callLandsTrustedMutation } = require('../_lib/landsBridge');
 const { ensureManagerLandsBootstrap, runBootstrapTransaction } = require('../_lib/landsManagerBootstrap');
 const { resolveLandsSyncOutcome } = require('../_lib/landsSyncReconciliation');
@@ -307,6 +309,70 @@ async function handler(req, res) {
         return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
       }
       return sendJson(res, 200, { missionId, vehicleId, employeeUid, status: 'VEHICLE_ALLOCATED' });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // PHASE 08.1 CLOSURE 2 — TRUSTED CONTRACTOR OBSERVATION STATUS TRANSITION.
+  // Authorized exactly like allocateVehicle above (an ACTIVE contractor
+  // only), completely separate from the owner/manager gate below. This is
+  // now the ONLY way an assigned observation may move
+  // PENDING->IN_PROGRESS or IN_PROGRESS->CONTRACTOR_SUBMITTED — see
+  // firestore.rules, where the client-side contractor transition is now
+  // denied outright (this Admin SDK write bypasses Rules entirely, so
+  // Rules no longer need to, and structurally cannot safely, arbitrate
+  // it). organizationId is NEVER read from the request body — only
+  // observationId/transitionKey/note/fix/afterImagePath are. The final
+  // resolutionNote/status/updatedByUid fields are constructed by
+  // platform/policies/contractor-observation-workflow.js — the server,
+  // not the client, is the authority for their exact content. Read +
+  // validate + write all happen inside one transaction so a stale read
+  // can never be acted on.
+  if (action === 'contractorObservationUpdate') {
+    const contractorCaller = await getContractorCallerContext(decoded.uid);
+    if (!contractorCaller.isContractor) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'contractor_required' });
+    }
+    const { observationId, transitionKey, note, fix, afterImagePath } = body;
+    if (!isNonEmptyString(observationId) || !isNonEmptyString(transitionKey)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'observationId_transitionKey_required' });
+    }
+    try {
+      const outcome = await db.runTransaction(async (transaction) => {
+        const obsRef = db.collection('observations').doc(observationId);
+        const obsSnap = await transaction.get(obsRef);
+        const observation = obsSnap.exists ? obsSnap.data() : null;
+        const { decision, update } = buildContractorObservationUpdate({
+          actor: { uid: contractorCaller.uid, organizationId: contractorCaller.organizationId },
+          observation, transitionKey, note, fix, afterImagePath,
+        });
+        if (!decision.allowed) return { ok: false, decision };
+        const now = FieldValue.serverTimestamp();
+        transaction.update(obsRef, { ...update, updatedAt: now });
+        // The one canonical audit event, inside this same transaction —
+        // actor/organization are always the trusted server-derived
+        // caller, never request-body values, so neither can ever be
+        // spoofed.
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: contractorCaller.organizationId,
+          actorId: contractorCaller.uid,
+          actorRole: 'contractor',
+          resourceType: 'observation',
+          resourceId: observationId,
+          action: 'contractor_transition',
+          toStatus: update.status,
+          timestamp: now,
+        });
+        return { ok: true, status: update.status };
+      });
+      if (!outcome.ok) {
+        const statusCode = outcome.decision.code === 'CONTRACTOR_OBSERVATION_NOT_FOUND' ? 404
+          : outcome.decision.code === 'CROSS_ORGANIZATION_DENIED' || outcome.decision.code === 'CONTRACTOR_NOT_ASSIGNED' ? 403
+          : 409;
+        return sendJson(res, statusCode, { error: 'request_failed', reason: outcome.decision.code });
+      }
+      return sendJson(res, 200, { observationId, status: outcome.status });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }

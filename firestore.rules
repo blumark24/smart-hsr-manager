@@ -271,9 +271,19 @@ service cloud.firestore {
       allow create: if orgUserRole() == 'inspector'
         && validInspectorObservationCreate(obsId);
 
+      // PHASE 08.1 CLOSURE 2 — the contractor's own status-transition write
+      // (PENDING->IN_PROGRESS, IN_PROGRESS->PENDING_REVIEW) is deliberately
+      // absent here (denied by omission), mirroring the PHASE 06B CLOSURE
+      // vehicle-allocation cutover pattern above: it is now performed
+      // EXCLUSIVELY by a trusted Admin SDK transaction
+      // (api/admin/users.js action:'contractorObservationUpdate', authorized
+      // by api/_lib/authz.js getContractorCallerContext, field values
+      // constructed by platform/policies/contractor-observation-workflow.js),
+      // which bypasses these Rules entirely and derives the contractor's own
+      // uid/organizationId from their verified token, never from client input.
       allow update: if request.resource.data.organizationId == resource.data.organizationId
         && (canManagerUpdateObservation() || canSupervisorUpdateObservation()
-            || canInspectorUpdateObservation() || canContractorUpdateObservation());
+            || canInspectorUpdateObservation());
 
       // manager-only, same-org (manager.html:1775 deleteObservation)
       allow delete: if isActiveManager() && resource.data.organizationId == managerOrgId();
@@ -366,23 +376,11 @@ service cloud.firestore {
         && changedKeys.hasOnly(['isComparative', 'afterImagePath', 'resolutionNote']);
     }
 
-    // contractor: status/resolution flow (mobile-map.html:1460, :1470/:1171)
-    function canContractorUpdateObservation() {
-      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
-      return orgUserRole() == 'contractor'
-        && resource.data.organizationId == orgUserOrgId()
-        && resource.data.status != 'COMPLETED'
-        && resource.data.assignedContractorUid == request.auth.uid
-        && request.resource.data.assignedContractorUid == resource.data.assignedContractorUid
-        && changedKeys.hasOnly(['status', 'resolutionNote', 'afterImagePath', 'updatedByUid', 'updatedAt'])
-        && request.resource.data.updatedByUid == request.auth.uid
-        && (!changedKeys.hasAny(['status']) || isContractorTransition());
-    }
-
-    function isContractorTransition() {
-      return (resource.data.status == 'PENDING' && request.resource.data.status == 'IN_PROGRESS')
-        || (resource.data.status == 'IN_PROGRESS' && request.resource.data.status == 'PENDING_REVIEW');
-    }
+    // PHASE 08.1 CLOSURE 2 — canContractorUpdateObservation()/
+    // isContractorTransition() (formerly: contractor status/resolution flow,
+    // mobile-map.html:1460, :1470/:1171) removed. That transition is now
+    // performed exclusively server-side — see the comment on the
+    // observations `allow update` rule above.
 
     // ==========================================================
     // missions/{missionId} — Smart Mobility shared mission lifecycle.
@@ -552,12 +550,26 @@ service cloud.firestore {
     }
 
     // ==========================================================
-    // presence/{presenceId} — verified deployed behavior, manager-only
-    // ==========================================================
+    // presence/{presenceId} — manager-only, SAME-ORGANIZATION ONLY.
+    //
+    // PHASE 08.1 CLOSURE 3 — the prior `allow read: if isActiveManager();`
+    // had no organizationId check at all: ANY active manager, from ANY
+    // organization, could read every tenant's live crew GPS positions —
+    // tenant isolation here relied entirely on the client's own query
+    // discipline (manager-operations.html always queries with a
+    // where('organizationId','==', ownOrg) filter), never on the Rule
+    // itself. A manager who issued an unfiltered/cross-org read would have
+    // succeeded. Fixed by requiring resource.data.organizationId to match
+    // the caller's own verified managerOrgId() on read, and
+    // request.resource.data.organizationId to match it on write (so a
+    // manager can never even self-write a presence doc claiming a
+    // different tenant, despite the doc id already being pinned to their
+    // own email).
     match /presence/{presenceId} {
-      allow read: if isActiveManager();
+      allow read: if isActiveManager() && resource.data.organizationId == managerOrgId();
       allow write: if isActiveManager()
-        && presenceId == request.auth.token.email;
+        && presenceId == request.auth.token.email
+        && request.resource.data.organizationId == managerOrgId();
     }
 
     // ==========================================================

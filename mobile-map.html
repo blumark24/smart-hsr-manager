@@ -703,7 +703,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
-    getFirestore, collection, onSnapshot, doc, getDoc, getDocFromServer, updateDoc, query, where, serverTimestamp
+    getFirestore, collection, onSnapshot, doc, getDoc, getDocFromServer, query, where
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls, isLocalDemoReference, isServerObjectKey } from './storage-adapter.js';
@@ -1235,6 +1235,29 @@ const firebaseConfig = {
   const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const MAX_COMPRESSED_IMAGE_BYTES = 700 * 1024;
 
+  // PHASE 08.1 CLOSURE 2 — the contractor's own status-transition writes to
+  // observations/{id} no longer go through a direct client updateDoc(): the
+  // Firestore rule for this transition is now denied outright, and the
+  // trusted server action (api/admin/users.js's contractorObservationUpdate)
+  // is the ONLY path. The server derives the contractor's own uid/organizationId
+  // from the verified token — organizationId is never sent in this request —
+  // and independently constructs the final resolutionNote/status fields
+  // (platform/policies/contractor-observation-workflow.js), so this call
+  // only ever sends the raw inputs (transitionKey, note, fix, afterImagePath).
+  async function callTrustedContractorUpdate(observationId, { transitionKey, note, fix, afterImagePath }){
+    const idToken = await auth.currentUser.getIdToken();
+    const res = await fetch('/api/admin/users', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${idToken}` },
+      body: JSON.stringify({ action:'contractorObservationUpdate', observationId, transitionKey, note, fix, afterImagePath }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(`contractor-observation-update-failed:${body.reason || res.status}`);
+    }
+    return res.json();
+  }
+
   const reviewSaveCoordinator = createReviewSaveCoordinator({
     upload: (blob, docId) => uploadObservationImage({
       blob,
@@ -1245,7 +1268,7 @@ const firebaseConfig = {
         role:'contractor'
       }
     }),
-    update: (docId, payload) => updateDoc(doc(db,'observations',docId), payload)
+    update: (docId, payload) => callTrustedContractorUpdate(docId, payload)
   });
 
   function escapeHTML(value){
@@ -1307,15 +1330,15 @@ const firebaseConfig = {
     return priority==='URGENT'?'عاجل':priority==='HIGH'?'مرتفع':priority==='LOW'?'منخفض':'اعتيادي';
   }
 
-  function buildExecutionEvent(kind,fix){
-    const coordinates=fix?.coords?.length===2?`${fix.coords[0].toFixed(6)},${fix.coords[1].toFixed(6)}`:'غير متاح';
-    const accuracy=Number.isFinite(fix?.accuracy)?`±${fix.accuracy}م`:'دقة غير متاحة';
-    return `[SMART_HSR_${kind}] ${new Date().toISOString()} | ${coordinates} | ${accuracy}`;
-  }
-
+  // PHASE 08.1 CLOSURE 2 — buildExecutionEvent()/combinedExecutionNote() used
+  // to construct the resolutionNote value here before writing it via a
+  // direct client updateDoc(). That write is now server-side (see
+  // callTrustedContractorUpdate() above and
+  // platform/policies/contractor-observation-workflow.js, which owns this
+  // exact same event-line format) — this page only ever reads/displays the
+  // resulting resolutionNote now.
   function executionEventLines(value){return String(value||'').split('\n').filter(line=>line.startsWith(EXECUTION_EVENT_PREFIX))}
   function visibleResolutionNote(value){return String(value||'').split('\n').filter(line=>!line.startsWith(EXECUTION_EVENT_PREFIX)).join('\n').trim()}
-  function combinedExecutionNote(existing,userNote,eventLine){return [...new Set([...executionEventLines(existing),eventLine]),userNote.trim()].filter(Boolean).join('\n')}
 
   function renderTwinModalTimeline(observation){
     const timeline=document.getElementById('twinModalTimeline');if(!timeline)return;
@@ -1699,13 +1722,7 @@ const firebaseConfig = {
       }
 
       if (nextStatus === 'IN_PROGRESS'){
-        const startEvent=buildExecutionEvent('START',executionFix);
-        await updateDoc(doc(db,'observations',currentDocId), {
-          status:'IN_PROGRESS',
-          resolutionNote:combinedExecutionNote(fresh.resolutionNote,'',startEvent),
-          updatedByUid:auth.currentUser.uid,
-          updatedAt:serverTimestamp()
-        });
+        await callTrustedContractorUpdate(currentDocId, { transitionKey:'START', note:'', fix:executionFix });
         toast('تم بدء معالجة البلاغ');
         closeSheet();
         return;
@@ -1716,11 +1733,10 @@ const firebaseConfig = {
         blob:currentAfterData,
         existingAfterReference,
         buildPayload:afterReference => ({
-          status:CONTRACTOR_SUBMITTED,
-          resolutionNote:combinedExecutionNote(fresh.resolutionNote,note,buildExecutionEvent('SUBMISSION',executionFix)),
-          afterImagePath:afterReference,
-          updatedByUid:auth.currentUser.uid,
-          updatedAt:serverTimestamp()
+          transitionKey:'SUBMIT',
+          note,
+          fix:executionFix,
+          afterImagePath:afterReference
         })
       });
       if (!result.ok){
