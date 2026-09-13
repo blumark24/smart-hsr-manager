@@ -218,7 +218,7 @@
       <li><button data-tab="observations"><i data-lucide="kanban-square" class="w-4 h-4 inline ml-1"></i>البلاغات</button></li>
       <li><button data-tab="users"><i data-lucide="users" class="w-4 h-4 inline ml-1"></i>الفرق</button></li>
       <li><button data-tab="reports"><i data-lucide="file-bar-chart" class="w-4 h-4 inline ml-1"></i>التقارير</button></li>
-      <li><button data-tab="twin"><i data-lucide="map-pinned" class="w-4 h-4 inline ml-1"></i>التوأم الرقمي</button></li>
+      <li><button data-tab="twin"><i data-lucide="map-pinned" class="w-4 h-4 inline ml-1"></i>الخريطة الميدانية الموثّقة</button></li>
       <li><button data-tab="settings"><i data-lucide="settings" class="w-4 h-4 inline ml-1"></i>الإعدادات</button></li>
     </ul>
   </nav>
@@ -381,10 +381,19 @@
       </div>
     </section>
 
-    <!-- OPERATIONAL DIGITAL TWIN TAB -->
+    <!-- VERIFIED FIELD MAP TAB (Leaflet, 2D presentation over documented
+         observations — PHASE 08.1 CLOSURE 8: renamed from "التوأم الرقمي"
+         (Digital Twin). This predates, and is unrelated to, the real
+         executive SMART HSR Digital Twin (twin.html, Cesium). Keeping the
+         same "Digital Twin" branding on both would mislead managers into
+         thinking this simple verified-observations map IS the official
+         executive Twin. User-facing text only was changed here — no
+         renderer, data, or authorization change (Closure 5 forbids
+         cosmetic-only renderer migration; this is a truthfulness fix, not
+         a Geo Core conversion). -->
     <section id="tab-twin" class="mt-4 hidden" aria-labelledby="twinTitle">
       <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
-        <div><p class="section-label">تصور ميداني موثّق</p><h2 id="twinTitle" class="text-2xl font-black">التوأم الرقمي التشغيلي</h2><p class="type-meta mt-1">تصور تشغيلي مبني على بيانات البلاغات الموثقة</p></div>
+        <div><p class="section-label">تصور ميداني موثّق</p><h2 id="twinTitle" class="text-2xl font-black">الخريطة الميدانية الموثّقة</h2><p class="type-meta mt-1">تصور تشغيلي مبني على بيانات البلاغات الموثقة</p></div>
         <button id="startPresentationBtn" class="btn" type="button"><i data-lucide="presentation" class="w-4 h-4"></i>بدء العرض التنفيذي</button>
       </div>
       <div id="presentationControls" class="presentation-bar mb-3 hidden" role="group" aria-label="عناصر التحكم في العرض التنفيذي">
@@ -396,8 +405,8 @@
       </div>
       <div class="twin-layout">
         <article class="card twin-map-shell">
-          <div id="twinMapState" class="map-state">اختر التوأم الرقمي لعرض المواقع الموثّقة.</div>
-          <div id="twinMap" class="twin-map" role="region" aria-label="خريطة التوأم الرقمي التشغيلي"></div>
+          <div id="twinMapState" class="map-state">اختر بلاغاً لعرض موقعه الموثّق.</div>
+          <div id="twinMap" class="twin-map" role="region" aria-label="الخريطة الميدانية الموثّقة"></div>
           <div id="twinObservationList" class="twin-list" aria-label="البلاغات ذات المواقع الموثقة"></div>
         </article>
         <aside id="twinDetailPanel" class="card twin-panel" aria-labelledby="twinDetailTitle" aria-live="polite">
@@ -428,12 +437,12 @@
           <section class="settings-card" aria-labelledby="workspaceSettingsTitle">
             <h3 id="workspaceSettingsTitle" class="font-black mb-3">تفضيلات التشغيل</h3>
             <div class="grid gap-3">
-              <label>الصفحة الافتراضية بعد الدخول<select id="preferenceLanding"><option value="overview">نظرة تنفيذية</option><option value="observations">البلاغات</option><option value="users">الفرق</option><option value="reports">التقارير</option><option value="twin">التوأم الرقمي</option><option value="settings">الإعدادات</option></select></label>
+              <label>الصفحة الافتراضية بعد الدخول<select id="preferenceLanding"><option value="overview">نظرة تنفيذية</option><option value="observations">البلاغات</option><option value="users">الفرق</option><option value="reports">التقارير</option><option value="twin">الخريطة الميدانية الموثّقة</option><option value="settings">الإعدادات</option></select></label>
               <label>فترة التقارير الافتراضية<select id="preferenceReportPeriod"><option value="7">آخر 7 أيام</option><option value="30">آخر 30 يوماً</option><option value="90">آخر 90 يوماً</option></select></label>
               <label>حالة البلاغات الافتراضية<select id="preferenceStatus"><option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option></select></label>
               <label>كثافة الجداول<select id="preferenceDensity"><option value="comfortable">مريحة</option><option value="compact">مضغوطة</option></select></label>
               <label>نمط عرض الخريطة<select id="preferenceMap"><option value="standard">قياسي</option><option value="muted">هادئ</option></select></label>
-              <label>فتح تفاصيل التوأم الرقمي<select id="preferenceTwinDetails"><option value="automatic">تلقائياً عند الاختيار</option><option value="manual">عند إعادة اختيار البلاغ</option></select></label>
+              <label>فتح تفاصيل الخريطة الميدانية الموثّقة<select id="preferenceTwinDetails"><option value="automatic">تلقائياً عند الاختيار</option><option value="manual">عند إعادة اختيار البلاغ</option></select></label>
             </div>
           </section>
           <section class="settings-card" aria-labelledby="displaySettingsTitle">

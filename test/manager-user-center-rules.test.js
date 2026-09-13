@@ -131,33 +131,40 @@ test('employees: department head cannot write even within their own department',
 });
 
 // ============================================================
-// vehicleEligible — real, server-enforced entitlement on allocation
+// vehicleEligible — real, server-enforced entitlement on allocation.
+//
+// PHASE 06B CLOSURE — TRUSTED VEHICLE ALLOCATION CUTOVER: the client SDK
+// can no longer perform the AVAILABLE->RESERVED vehicle transition AT ALL
+// (see test/mobility-mission-rules.test.js's V5/T5b) — only the trusted
+// server-side Admin SDK transaction (api/admin/users.js action:
+// 'allocateVehicle') can, via api/_lib/authz.js's
+// isValidMobilityAllocationTarget(), which enforces this EXACT same
+// vehicleEligible === true / fail-safe-default contract. So every
+// `allocate()` call below via the client SDK now denies unconditionally,
+// regardless of vehicleEligible — the positive "eligible target succeeds"
+// and "revoked target now denied" proofs live at the server layer instead,
+// in test/mobility-allocate-vehicle-endpoint.test.js (ALLOC-1, SEC-11).
 // ============================================================
 test('vehicleEligible: Phase 03B.1 fail-safe default — a record with NO vehicleEligible field at all is NOT allocatable', async () => {
   await assertFails(allocate('V-no-field', UID.employeeNoField));
 });
 
-test('vehicleEligible: true allows allocation', async () => {
-  await assertSucceeds(allocate('V-eligible', UID.employeeEligible));
+test('vehicleEligible: PHASE 06B — even an ELIGIBLE target is denied at the client-Rules layer; eligibility is now enforced server-only', async () => {
+  await assertFails(allocate('V-eligible', UID.employeeEligible));
 });
 
-test('vehicleEligible: an explicit true (set via setVehicleEligible) still allows allocation', async () => {
-  await assertSucceeds(allocate('V-eligible-explicit', UID.employeeEligibleExplicit));
+test('vehicleEligible: PHASE 06B — an explicit true (set via setVehicleEligible) is still denied at the client-Rules layer', async () => {
+  await assertFails(allocate('V-eligible-explicit', UID.employeeEligibleExplicit));
 });
 
 test('vehicleEligible: an explicit false denies allocation to that employee', async () => {
   await assertFails(allocate('V-ineligible', UID.employeeIneligibleExplicit));
 });
 
-test('vehicleEligible: revocation (true -> false) denies a subsequent NEW allocation attempt', async () => {
-  // First allocation with vehicleEligible: true succeeds.
-  await assertSucceeds(allocate('V-eligible', UID.employeeEligible));
-  // Return the vehicle to AVAILABLE, then revoke eligibility (a real
-  // write, mirroring api/admin/employees.js setVehicleEligible), and
-  // confirm a fresh allocation to the same employee is now denied.
+test('vehicleEligible: PHASE 06B — revocation (true -> false) still denies, exactly like the unrevoked case, since client allocation is denied outright either way', async () => {
+  await assertFails(allocate('V-eligible', UID.employeeEligible));
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
-    await setDoc(doc(db, 'vehicles', 'V-eligible'), { organizationId: ORG_A, status: 'AVAILABLE' });
     await updateDoc(doc(db, 'users', UID.employeeEligible), { vehicleEligible: false });
   });
   await assertFails(allocate('V-eligible', UID.employeeEligible));
@@ -215,7 +222,7 @@ test('PHASE 06A: mobilityAccess.enabled === false denies Mobility access even wh
   await assertFails(getDoc(doc(ctx(uid), 'vehicles', 'V-eligible')));
 });
 
-test('PHASE 06A: a record with role === null but mobilityAccess.enabled === true is still a fully valid Mobility user (and a valid vehicle-allocation target)', async () => {
+test('PHASE 06A/06B: a record with role === null but mobilityAccess.enabled === true is still a fully valid Mobility user, but even that valid target is denied allocation at the client-Rules layer (PHASE 06B — server-only now)', async () => {
   const uid = 'mobility-only-migrated-uid';
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
@@ -226,7 +233,7 @@ test('PHASE 06A: a record with role === null but mobilityAccess.enabled === true
     });
     await setDoc(doc(db, 'vehicles', 'V-migrated'), { organizationId: ORG_A, status: 'AVAILABLE' });
   });
-  await assertSucceeds(allocate('V-migrated', uid));
+  await assertFails(allocate('V-migrated', uid));
 });
 
 test('PHASE 06A: disabling Mobility via mobilityAccess does not affect an independently-enabled Field role on the same identity', async () => {

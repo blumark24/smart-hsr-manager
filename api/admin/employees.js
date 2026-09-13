@@ -41,6 +41,16 @@ const {
   canTransitionAccountStatus,
   validateEmployeeRecord,
 } = require('../../platform/contracts/employee-registry-contract');
+const {
+  ASSIGNMENT_STATUS,
+  validateAssignmentInput,
+  canEndAssignment,
+} = require('../../platform/contracts/employee-assignment-contract');
+const {
+  LOCK_STATUS,
+  computeSectionHeadLockId,
+  verifyLockConsistency,
+} = require('../../platform/contracts/employee-assignment-lock-contract');
 
 function isNonEmptyString(v) { return typeof v === 'string' && v.trim().length > 0; }
 
@@ -119,6 +129,52 @@ async function findEmployee(db, employeeId) {
   const snap = await ref.get();
   if (!snap.exists) return null;
   return { ref, data: snap.data() || {} };
+}
+
+// INSTITUTIONAL ASSIGNMENT FOUNDATION (micro-phase) — only ever safe,
+// non-sensitive assignment fields; never any raw internal bookkeeping
+// beyond what the contract itself already documents.
+function safeAssignment(id, data) {
+  return {
+    assignmentId: id,
+    employeeId: data.employeeId,
+    organizationId: data.organizationId,
+    productId: data.productId,
+    scope: data.scope || null,
+    assignmentType: data.assignmentType,
+    status: data.status,
+    startAt: data.startAt || null,
+    endAt: data.endAt || null,
+    issuedBy: data.issuedBy,
+    reason: data.reason || null,
+    createdAt: data.createdAt || null,
+    endedBy: data.endedBy || null,
+    endedAt: data.endedAt || null,
+    endReason: data.endReason || null,
+  };
+}
+
+// PART G + FINAL HARDENING ADDENDUM — this phase does not invent new
+// institutional-HR authority, and the addendum tightens it further: ONLY a
+// same-organization manager may create/end/list employee assignments — not
+// a department_head (even though department_head already passes the OUTER
+// gate above for the pre-existing employee-registry actions), and NOT even
+// the platform-level SaaS owner (owners/{uid}), which retains cross-org
+// authority everywhere else in this file. Institutional assignment
+// authority is deliberately kept inside the tenant boundary: the SaaS owner
+// can administer tenants at the platform level but must never directly
+// exercise a municipality's internal HR assignment authority. Deliberately
+// separate from assertCanManageEmployee(), which DOES grant department_head
+// same-department authority for ordinary employee-record actions and DOES
+// grant the owner cross-org authority — neither carries over here.
+function assertCanManageAssignments(caller, targetOrganizationId) {
+  if (caller.isManager) {
+    if (!caller.organizationId || targetOrganizationId !== caller.organizationId) {
+      return { allowed: false, reason: 'cross_organization_denied' };
+    }
+    return { allowed: true, reason: 'manager_same_org' };
+  }
+  return { allowed: false, reason: 'manager_required_for_assignments' };
 }
 
 async function handler(req, res) {
@@ -509,6 +565,268 @@ async function handler(req, res) {
 
         await recordAdminAudit(db, { caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_transfer', detail: { before, after: update } });
         return sendJson(res, 200, { employeeId, administration: update.administration, department: update.department, directManagerEmployeeId: update.directManagerEmployeeId });
+      }
+
+      // ====================================================================
+      // INSTITUTIONAL ASSIGNMENT FOUNDATION (micro-phase) — history/
+      // governance foundation only. These three actions are the ONLY
+      // trusted write/read path for employeeAssignments/{assignmentId};
+      // firestore.rules denies every direct client read/write on this
+      // collection. Nothing in this phase reads employeeAssignments for
+      // authorization — see platform/contracts/employee-assignment-contract.js.
+      // ====================================================================
+
+      // ---- create an institutional assignment record ----
+      case 'createAssignment': {
+        const decisionGate = assertCanManageAssignments(caller, body.organizationId);
+        if (!decisionGate.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decisionGate.reason });
+
+        const validation = validateAssignmentInput({
+          employeeId: body.employeeId,
+          organizationId: body.organizationId,
+          productId: body.productId,
+          scope: body.scope,
+          assignmentType: body.assignmentType,
+          startAt: body.startAt,
+          endAt: body.endAt,
+          issuedBy: body.issuedBy,
+          reason: body.reason,
+        });
+        if (!validation.ok) return sendJson(res, 400, { error: 'invalid_request', reason: validation.reason });
+
+        // issuedBy is caller-supplied text on the wire, but the trusted
+        // record of WHO actually issued this must be the verified caller,
+        // never a client-supplied uid — a caller could otherwise attribute
+        // an assignment to someone else entirely.
+        if (validation.issuedBy !== caller.uid) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'issuedBy_must_be_caller' });
+        }
+
+        const employee = await findEmployee(db, validation.employeeId);
+        if (!employee) return sendJson(res, 404, { error: 'employee_not_found' });
+        if (employee.data.organizationId !== validation.organizationId) {
+          // Defense in depth: the target employee must genuinely belong to
+          // the organization the assignment claims — never trust the
+          // request body's organizationId alone.
+          return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
+        }
+
+        // FINAL HARDENING ADDENDUM — deterministic SECTION_HEAD lock. The
+        // lock document id is the SHA-256 of the canonical
+        // [organizationId, productId, scope.type, scope.id] tuple (never a
+        // caller-supplied id, never raw delimiter concatenation, never
+        // sensitive to key order — see employee-assignment-lock-contract.js),
+        // so two concurrent create attempts for the exact same tuple always
+        // contend for the exact same Firestore document and are serialized
+        // by a single transaction, rather than relying on a separate
+        // query-then-write race window.
+        const lockTuple = { organizationId: validation.organizationId, productId: validation.productId, scope: validation.scope };
+        const lockId = validation.assignmentType === 'SECTION_HEAD' ? computeSectionHeadLockId(lockTuple) : null;
+
+        try {
+          const result = await db.runTransaction(async (tx) => {
+            let lockRef = null;
+            let lockSnap = null;
+
+            if (validation.assignmentType === 'SECTION_HEAD') {
+              // PART E — at most one ACTIVE SECTION_HEAD per
+              // (organizationId, productId, scope.type, scope.id). Only
+              // enforced when a SECTION_HEAD assignment is actually being
+              // created — no product/scope is assumed to require one.
+              lockRef = db.collection('employeeAssignmentLocks').doc(lockId);
+              lockSnap = await tx.get(lockRef);
+
+              if (lockSnap.exists) {
+                const lockData = lockSnap.data() || {};
+                if (lockData.status === LOCK_STATUS.ACTIVE) {
+                  // Fail-closed consistency check — an ACTIVE lock is only
+                  // trusted as proof "a section head already exists" once
+                  // its referenced assignment is independently confirmed to
+                  // agree with it. Never auto-repaired, overwritten, or
+                  // silently released on a mismatch.
+                  const referencedSnap = await tx.get(db.collection('employeeAssignments').doc(lockData.assignmentId || '__missing__'));
+                  const consistency = verifyLockConsistency(lockData, referencedSnap.exists ? referencedSnap.data() : null);
+                  if (!consistency.ok) {
+                    const err = new Error('section_head_lock_inconsistent');
+                    err.isLockInconsistent = true;
+                    throw err;
+                  }
+                  const err = new Error('section_head_already_active');
+                  err.isAssignmentConflict = true;
+                  throw err;
+                }
+              }
+            }
+
+            const ref = db.collection('employeeAssignments').doc();
+            const doc = {
+              assignmentId: ref.id,
+              employeeId: validation.employeeId,
+              organizationId: validation.organizationId,
+              productId: validation.productId,
+              scope: validation.scope,
+              assignmentType: validation.assignmentType,
+              status: ASSIGNMENT_STATUS.ACTIVE,
+              startAt: validation.startAt,
+              endAt: validation.endAt,
+              issuedBy: caller.uid,
+              reason: validation.reason,
+              createdAt: FieldValue.serverTimestamp(),
+            };
+            tx.set(ref, doc);
+
+            if (validation.assignmentType === 'SECTION_HEAD') {
+              if (lockSnap.exists) {
+                // RELEASED -> ACTIVE re-acquire. Only lifecycle fields are
+                // ever written on an existing lock document — identity
+                // fields (organizationId/productId/scopeType/scopeId/
+                // createdAt) are never touched, and never could be: the
+                // document id IS the hash of the tuple.
+                tx.set(lockRef, {
+                  status: LOCK_STATUS.ACTIVE,
+                  assignmentId: ref.id,
+                  updatedAt: FieldValue.serverTimestamp(),
+                  releasedBy: null,
+                  releasedAt: null,
+                }, { merge: true });
+              } else {
+                tx.set(lockRef, {
+                  organizationId: validation.organizationId,
+                  productId: validation.productId,
+                  scopeType: validation.scope.type,
+                  scopeId: validation.scope.id,
+                  assignmentId: ref.id,
+                  status: LOCK_STATUS.ACTIVE,
+                  createdAt: FieldValue.serverTimestamp(),
+                  updatedAt: FieldValue.serverTimestamp(),
+                  releasedBy: null,
+                  releasedAt: null,
+                });
+              }
+            }
+
+            return { ref, doc };
+          });
+
+          await recordAdminAudit(db, {
+            caller, organizationId: validation.organizationId, targetEmployeeId: validation.employeeId, action: 'employee_assignment_create',
+            detail: { assignmentId: result.ref.id, productId: validation.productId, scope: validation.scope, assignmentType: validation.assignmentType },
+          });
+          // Re-read after commit: createdAt was written as a
+          // FieldValue.serverTimestamp() sentinel, which only resolves to a
+          // real value once read back — result.doc still holds the
+          // unresolved sentinel.
+          const savedSnap = await result.ref.get();
+          return sendJson(res, 200, { assignment: safeAssignment(result.ref.id, savedSnap.data() || result.doc) });
+        } catch (txErr) {
+          if (txErr && txErr.isLockInconsistent) {
+            return sendJson(res, 409, { error: 'invalid_request', reason: 'section_head_lock_inconsistent' });
+          }
+          if (txErr && txErr.isAssignmentConflict) {
+            return sendJson(res, 409, { error: 'invalid_request', reason: 'section_head_already_active' });
+          }
+          throw txErr;
+        }
+      }
+
+      // ---- end an active institutional assignment (lifecycle field only —
+      // identity fields never change; no delete path exists). Ending a
+      // SECTION_HEAD assignment atomically releases its deterministic lock
+      // in the SAME transaction — never as a separate, non-atomic follow-up
+      // write. ----
+      case 'endAssignment': {
+        const { assignmentId, endReason } = body;
+        if (!isNonEmptyString(assignmentId)) return sendJson(res, 400, { error: 'invalid_request', reason: 'assignmentId_required' });
+        if (endReason !== undefined && endReason !== null && typeof endReason !== 'string') {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_endReason' });
+        }
+
+        const ref = db.collection('employeeAssignments').doc(assignmentId);
+
+        try {
+          await db.runTransaction(async (tx) => {
+            const snap = await tx.get(ref);
+            if (!snap.exists) { const err = new Error('assignment_not_found'); err.isNotFound = true; throw err; }
+            const current = snap.data() || {};
+
+            const decisionGate = assertCanManageAssignments(caller, current.organizationId);
+            if (!decisionGate.allowed) { const err = new Error(decisionGate.reason); err.isForbidden = true; err.reason = decisionGate.reason; throw err; }
+
+            if (!canEndAssignment(current.status)) {
+              const err = new Error('assignment_not_active'); err.isBadRequest = true; err.reason = 'assignment_not_active'; throw err;
+            }
+
+            let lockRef = null;
+            let lockSnap = null;
+            if (current.assignmentType === 'SECTION_HEAD') {
+              const lockId = computeSectionHeadLockId({ organizationId: current.organizationId, productId: current.productId, scope: current.scope || {} });
+              lockRef = db.collection('employeeAssignmentLocks').doc(lockId);
+              lockSnap = await tx.get(lockRef);
+              // Fail-closed: a SECTION_HEAD assignment being ended must have
+              // a lock that genuinely points back at it. Never silently
+              // release, overwrite, or repair a lock that disagrees.
+              const lockData = lockSnap.exists ? (lockSnap.data() || {}) : null;
+              if (!lockData || lockData.assignmentId !== assignmentId) {
+                const err = new Error('section_head_lock_inconsistent'); err.isLockInconsistent = true; throw err;
+              }
+            }
+
+            // Only lifecycle fields are ever written here — organizationId,
+            // employeeId, productId, assignmentType, issuedBy, createdAt are
+            // never touched (see IMMUTABLE_FIELDS in the contract module).
+            tx.set(ref, {
+              status: ASSIGNMENT_STATUS.ENDED,
+              endedBy: caller.uid,
+              endedAt: FieldValue.serverTimestamp(),
+              endReason: isNonEmptyString(endReason) ? endReason.trim() : null,
+            }, { merge: true });
+
+            if (lockRef) {
+              // Only lifecycle fields on the lock ever change — identity
+              // fields (organizationId/productId/scopeType/scopeId/
+              // createdAt) are left untouched.
+              tx.set(lockRef, {
+                status: LOCK_STATUS.RELEASED,
+                releasedBy: caller.uid,
+                releasedAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+              }, { merge: true });
+            }
+
+            return current;
+          });
+        } catch (txErr) {
+          if (txErr && txErr.isNotFound) return sendJson(res, 404, { error: 'assignment_not_found' });
+          if (txErr && txErr.isForbidden) return sendJson(res, 403, { error: 'forbidden', reason: txErr.reason });
+          if (txErr && txErr.isBadRequest) return sendJson(res, 400, { error: 'invalid_request', reason: txErr.reason });
+          if (txErr && txErr.isLockInconsistent) return sendJson(res, 409, { error: 'invalid_request', reason: 'section_head_lock_inconsistent' });
+          throw txErr;
+        }
+
+        const finalSnap = await ref.get();
+        const finalData = finalSnap.data() || {};
+        await recordAdminAudit(db, {
+          caller, organizationId: finalData.organizationId, targetEmployeeId: finalData.employeeId, action: 'employee_assignment_end',
+          detail: { assignmentId, productId: finalData.productId, scope: finalData.scope },
+        });
+        return sendJson(res, 200, { assignmentId, status: ASSIGNMENT_STATUS.ENDED });
+      }
+
+      // ---- list assignments for an organization (same-org manager only —
+      // per the addendum, the SaaS owner has no institutional assignment
+      // authority) — optionally scoped to one employee ----
+      case 'listAssignments': {
+        const { organizationId, employeeId: filterEmployeeId } = body;
+        if (!isNonEmptyString(organizationId)) return sendJson(res, 400, { error: 'organizationId_required' });
+
+        const decisionGate = assertCanManageAssignments(caller, organizationId);
+        if (!decisionGate.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decisionGate.reason });
+
+        let q = db.collection('employeeAssignments').where('organizationId', '==', organizationId);
+        if (isNonEmptyString(filterEmployeeId)) q = q.where('employeeId', '==', filterEmployeeId);
+        const snap = await q.get();
+        const out = snap.docs.map(d => safeAssignment(d.id, d.data() || {}));
+        return sendJson(res, 200, { assignments: out });
       }
 
       default:

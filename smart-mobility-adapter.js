@@ -335,11 +335,19 @@ function requireRole(...roles) {
   }
 }
 
-// Every mutation below writes one append-only auditEvents/{eventId} record
-// alongside its real write — inside the same transaction where one is
-// already used, so the audit trail and the state change are atomic.
-// firestore.rules enforces that an actor may only ever record an event as
-// themselves (see the auditEvents match block).
+// PHASE 06 CLOSURE — DEFECT 1 fix: every mutation below writes its
+// business-state change AND its required auditEvents/{eventId} record in
+// ONE atomic commit — a Firestore writeBatch() for a single-document
+// mutation, or the existing runTransaction() for the multi-document
+// (mission+vehicle) ones further down. Firestore guarantees a batch/
+// transaction commits all of its writes or none of them, so a forced audit
+// failure (e.g. a malformed/spoofed audit document firestore.rules
+// rejects) can never leave the business state changed with no audit trail,
+// and the whole operation correctly reports failure rather than a false
+// success. firestore.rules independently enforces that an actor may only
+// ever record an event as themselves, in their own organization (see the
+// auditEvents match block) — that guarantee holds exactly the same whether
+// the write arrives via batch, transaction, or a lone setDoc.
 function auditEventData(resourceType, resourceId, action, extra) {
   const ctx = activeContext;
   return Object.assign({
@@ -353,45 +361,67 @@ function rawRoleOf(ctx) {
   return reverse[ctx.designRole] || ctx.designRole;
 }
 
-async function recordAudit(resourceType, resourceId, action, extra) {
-  const api = activeFirestoreApi, db = activeDb;
-  await api.setDoc(api.doc(api.collection(db, 'auditEvents')), auditEventData(resourceType, resourceId, action, extra));
+// PHASE 10 RELEASE-INTEGRITY — mission and incident creation are trusted
+// server operations.  The browser sends business input plus an idempotency
+// key only; it never sends authoritative actor/role/tenant/department data
+// and never falls back to direct Firestore writes.  A failed browser retry
+// of the same payload reuses its request id until the server confirms
+// success, while a later intentional create gets a fresh id.
+const pendingTrustedCreateIds = new Map();
+
+function newTrustedCreateId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
 }
 
-async function createMissionRequest({ type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel }) {
-  requireRole('dept');
-  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  const ref = api.doc(api.collection(db, 'missions'));
-  await api.setDoc(ref, {
-    organizationId: ctx.organizationId, department: ctx.department,
-    createdByUid: ctx.uid, requesterName: ctx.sessionName || '',
-    status: 'DRAFT',
-    type: type || '', destination: destination || '', reason: reason || '',
-    scope: scope || 'داخل النطاق', requestedEmployeeName: requestedEmployeeName || '',
-    whenLabel: whenLabel || '', durationLabel: durationLabel || '',
-    createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
+async function trustedMobilityCreate(action, payload) {
+  if (!activeAuth || !activeAuth.currentUser) throw new Error('not_authorized');
+  const key = `${action}:${JSON.stringify(payload)}`;
+  const clientRequestId = payload.clientRequestId || pendingTrustedCreateIds.get(key) || newTrustedCreateId();
+  pendingTrustedCreateIds.set(key, clientRequestId);
+  const token = await activeAuth.currentUser.getIdToken();
+  const response = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ action, ...payload, clientRequestId })
   });
-  await recordAudit('mission', ref.id, 'create', { toStatus: 'DRAFT' });
-  return ref.id;
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.reason || 'trusted_create_failed');
+  pendingTrustedCreateIds.delete(key);
+  return body;
+}
+
+async function createMissionRequest({ type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel, clientRequestId }) {
+  requireRole('dept');
+  const result = await trustedMobilityCreate('createMissionRequest', {
+    type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel, clientRequestId
+  });
+  return result.missionId;
 }
 
 async function submitMissionForApproval(missionId) {
   requireRole('dept');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  await api.updateDoc(api.doc(db, 'missions', missionId), {
+  const batch = api.writeBatch(db);
+  batch.update(api.doc(db, 'missions', missionId), {
     status: 'PENDING_APPROVAL', updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('mission', missionId, 'submit_for_approval', { fromStatus: 'DRAFT', toStatus: 'PENDING_APPROVAL' });
+  batch.set(api.doc(api.collection(db, 'auditEvents')),
+    auditEventData('mission', missionId, 'submit_for_approval', { fromStatus: 'DRAFT', toStatus: 'PENDING_APPROVAL' }));
+  await batch.commit();
 }
 
 async function decideMission(missionId, toStatus) {
   requireRole('admin');
   if (!['APPROVED', 'REJECTED', 'DRAFT'].includes(toStatus)) throw new Error('invalid_decision');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  await api.updateDoc(api.doc(db, 'missions', missionId), {
+  const batch = api.writeBatch(db);
+  batch.update(api.doc(db, 'missions', missionId), {
     status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('mission', missionId, 'decide', { fromStatus: 'PENDING_APPROVAL', toStatus });
+  batch.set(api.doc(api.collection(db, 'auditEvents')),
+    auditEventData('mission', missionId, 'decide', { fromStatus: 'PENDING_APPROVAL', toStatus }));
+  await batch.commit();
 }
 
 // Allocates a vehicle to an approved mission. Performed as one Firestore
@@ -399,29 +429,36 @@ async function decideMission(missionId, toStatus) {
 // this is what actually makes two racing allocation attempts against the
 // same vehicle mutually exclusive (rules alone only guard one document at
 // a time; see platform/policies/vehicle-workflow-policy.js).
-async function allocateVehicle(missionId, vehicleId, assignedEmployeeUid, assignedEmployeeName) {
+// PHASE 06B — TRUSTED VEHICLE ALLOCATION CUTOVER. Vehicle allocation no
+// longer writes missions/vehicles directly from the client at all (see
+// firestore.rules — both the mission APPROVED->VEHICLE_ALLOCATED and the
+// vehicle AVAILABLE->RESERVED client transitions are now denied outright).
+// The prior Phase 06 closure proved that fully closing the direct-Firestore
+// allocation bypass with mirrored getAfter() Rules checks exceeds this
+// project's measured per-write expression-evaluation ceiling; moving the
+// mutation itself to a trusted, authenticated server-side Admin SDK
+// transaction (api/admin/users.js action:'allocateVehicle') sidesteps that
+// ceiling entirely rather than trying to extend it further. This function
+// now does nothing but ask that trusted endpoint to perform the allocation
+// and waits for its authoritative result — no optimistic local state, no
+// fallback to the old direct-Firestore transaction. The mission/vehicle
+// documents the UI displays are still driven exclusively by the live
+// Firestore subscriptions set up in start() (subscribeMissions/
+// subscribeVehicles), so a real success is only ever reflected once the
+// server's write is actually visible there.
+async function allocateVehicle(missionId, vehicleId, assignedEmployeeUid) {
   requireRole('mobility');
-  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  const missionRef = api.doc(db, 'missions', missionId);
-  const vehicleRef = api.doc(db, 'vehicles', vehicleId);
-  await api.runTransaction(db, async transaction => {
-    const [missionSnap, vehicleSnap] = await Promise.all([transaction.get(missionRef), transaction.get(vehicleRef)]);
-    if (!missionSnap.exists() || missionSnap.data().status !== 'APPROVED') throw new Error('mission_not_approved');
-    if (!vehicleSnap.exists() || vehicleSnap.data().status !== 'AVAILABLE') throw new Error('vehicle_not_available');
-    transaction.update(missionRef, {
-      status: 'VEHICLE_ALLOCATED', vehicleId, assignedEmployeeUid,
-      assignedEmployeeName: assignedEmployeeName || '',
-      updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
-    });
-    transaction.update(vehicleRef, {
-      status: 'RESERVED', assignedEmployeeUid, currentMissionId: missionId,
-      updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
-    });
-    transaction.set(api.doc(api.collection(db, 'auditEvents')),
-      auditEventData('mission', missionId, 'allocate_vehicle', { fromStatus: 'APPROVED', toStatus: 'VEHICLE_ALLOCATED', vehicleId }));
-    transaction.set(api.doc(api.collection(db, 'auditEvents')),
-      auditEventData('vehicle', vehicleId, 'allocate', { fromStatus: 'AVAILABLE', toStatus: 'RESERVED', missionId }));
+  if (!activeAuth || !activeAuth.currentUser) throw new Error('not_authorized');
+  const token = await activeAuth.currentUser.getIdToken();
+  const response = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ action: 'allocateVehicle', missionId, vehicleId, employeeUid: assignedEmployeeUid })
   });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.reason || 'allocation_failed');
+  }
 }
 
 async function handoverMission(missionId, vehicleId) {
@@ -470,10 +507,12 @@ async function confirmVehicleReturn(missionId, vehicleId) {
 async function employeeAdvanceMission(missionId, toStatus) {
   requireRole('employee');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  await api.updateDoc(api.doc(db, 'missions', missionId), {
+  const batch = api.writeBatch(db);
+  batch.update(api.doc(db, 'missions', missionId), {
     status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('mission', missionId, 'employee_advance', { toStatus });
+  batch.set(api.doc(api.collection(db, 'auditEvents')), auditEventData('mission', missionId, 'employee_advance', { toStatus }));
+  await batch.commit();
 }
 
 // The employee's own act of handing the vehicle back — COMPLETED ->
@@ -501,28 +540,24 @@ async function employeeReturnVehicle(missionId, vehicleId) {
   });
 }
 
-async function createIncident({ missionId, vehicleId, category, severity, note }) {
+async function createIncident({ missionId, vehicleId, category, severity, note, clientRequestId }) {
   requireRole('employee');
-  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  const ref = api.doc(api.collection(db, 'incidents'));
-  await api.setDoc(ref, {
-    organizationId: ctx.organizationId, missionId, vehicleId: vehicleId || '',
-    createdByUid: ctx.uid, employeeName: ctx.sessionName || '', department: ctx.department || '',
-    category: category || 'أخرى', severity: severity || 'MEDIUM', note: note || '',
-    status: 'NEW', createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
+  const result = await trustedMobilityCreate('createIncident', {
+    missionId, vehicleId, category, severity, note, clientRequestId
   });
-  await recordAudit('incident', ref.id, 'create', { toStatus: 'NEW', missionId });
-  return ref.id;
+  return result.incidentId;
 }
 
 async function mobilityProcessIncident(incidentId, toStatus) {
   requireRole('mobility');
   if (!['ACKNOWLEDGED', 'IN_PROGRESS', 'RESOLVED'].includes(toStatus)) throw new Error('invalid_decision');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  await api.updateDoc(api.doc(db, 'incidents', incidentId), {
+  const batch = api.writeBatch(db);
+  batch.update(api.doc(db, 'incidents', incidentId), {
     status: toStatus, updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  await recordAudit('incident', incidentId, 'process', { toStatus });
+  batch.set(api.doc(api.collection(db, 'auditEvents')), auditEventData('incident', incidentId, 'process', { toStatus }));
+  await batch.commit();
 }
 
 window.SmartHSRMobilityAdapter = {

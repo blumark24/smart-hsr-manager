@@ -1,4 +1,5 @@
 'use strict';
+const crypto = require('node:crypto');
 // ============================================================================
 // POST /api/admin/users  — secure server-side account & password management.
 //
@@ -25,9 +26,13 @@ const {
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,
+  getMobilityEmployeeCallerContext,
+  getContractorCallerContext,
+  isValidMobilityAllocationTarget,
   resolveMobilityRole,
   assertCanManage,
 } = require('../_lib/authz');
+const { buildContractorObservationUpdate } = require('../../platform/policies/contractor-observation-workflow');
 const { callLandsTrustedMutation } = require('../_lib/landsBridge');
 const { ensureManagerLandsBootstrap, runBootstrapTransaction } = require('../_lib/landsManagerBootstrap');
 const { resolveLandsSyncOutcome } = require('../_lib/landsSyncReconciliation');
@@ -96,6 +101,34 @@ async function readJsonBody(req) {
 }
 
 function isNonEmptyString(v) { return typeof v === 'string' && v.trim().length > 0; }
+
+function cleanString(value, fallback = '') {
+  return typeof value === 'string' ? value.trim() : fallback;
+}
+
+function validClientRequestId(value) {
+  return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/.test(value);
+}
+
+// Only business input and the retry key belong to the client. Reject all
+// other keys, including protected fields supplied with null/false values.
+const TRUSTED_CREATE_INPUT_FIELDS = {
+  createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
+  createIncident: ['action', 'clientRequestId', 'missionId', 'vehicleId', 'category', 'severity', 'note'],
+};
+
+function trustedCreateRequestRef(db, action, uid, clientRequestId) {
+  const key = crypto.createHash('sha256')
+    .update(`${action}\0${uid}\0${clientRequestId}`, 'utf8')
+    .digest('hex');
+  return db.collection('mobilityCreateRequests').doc(key);
+}
+
+function payloadHash(action, payload) {
+  return crypto.createHash('sha256')
+    .update(JSON.stringify([action, ...payload]), 'utf8')
+    .digest('hex');
+}
 
 const RECENT_AUTH_WINDOW_SECONDS = 10 * 60;
 
@@ -209,6 +242,358 @@ async function handler(req, res) {
         employees.push({ uid: doc.id, name: d.name || doc.id });
       }
       return sendJson(res, 200, { employees });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // PHASE 10 RELEASE-INTEGRITY — trusted mission creation.  This is the
+  // only create path: Firestore Rules deny browser CREATE outright.  The
+  // verified token identifies an active department head; tenant,
+  // department, actor and role are read server-side and cannot be supplied
+  // or overridden by the body.  Mission + canonical audit + idempotency
+  // receipt commit in one Admin SDK transaction.
+  if (action === 'createMissionRequest') {
+    if (Object.keys(body).some(key => !TRUSTED_CREATE_INPUT_FIELDS.createMissionRequest.includes(key))) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'protected_or_unknown_field' });
+    }
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isDepartmentHead || caller.role !== 'department_head') {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'department_head_required' });
+    }
+    const clientRequestId = body.clientRequestId;
+    const mission = {
+      type: cleanString(body.type),
+      destination: cleanString(body.destination),
+      reason: cleanString(body.reason),
+      scope: cleanString(body.scope, 'داخل النطاق') || 'داخل النطاق',
+      requestedEmployeeName: cleanString(body.requestedEmployeeName),
+      whenLabel: cleanString(body.whenLabel),
+      durationLabel: cleanString(body.durationLabel),
+    };
+    if (!validClientRequestId(clientRequestId) || !mission.type || !mission.destination || !mission.reason) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'clientRequestId_type_destination_reason_required' });
+    }
+    const hash = payloadHash(action, [mission.type, mission.destination, mission.reason, mission.scope,
+      mission.requestedEmployeeName, mission.whenLabel, mission.durationLabel]);
+    const requestRef = trustedCreateRequestRef(db, action, caller.uid, clientRequestId);
+    const missionRef = db.collection('missions').doc();
+    const auditRef = db.collection('auditEvents').doc();
+    try {
+      const outcome = await db.runTransaction(async (transaction) => {
+        const priorSnap = await transaction.get(requestRef);
+        if (priorSnap.exists) {
+          const prior = priorSnap.data() || {};
+          if (prior.payloadHash !== hash) return { ok: false, statusCode: 409, reason: 'idempotency_payload_mismatch' };
+          return { ok: true, missionId: prior.resourceId, idempotent: true };
+        }
+        const now = FieldValue.serverTimestamp();
+        transaction.set(missionRef, {
+          clientRequestId,
+          organizationId: caller.organizationId,
+          department: caller.department,
+          createdByUid: caller.uid,
+          requesterName: caller.name || '',
+          status: 'DRAFT',
+          ...mission,
+          createdAt: now,
+          updatedAt: now,
+          updatedByUid: caller.uid,
+        });
+        transaction.set(auditRef, {
+          organizationId: caller.organizationId,
+          department: caller.department,
+          actorId: caller.uid,
+          actorRole: 'department_head',
+          resourceType: 'mission',
+          resourceId: missionRef.id,
+          action: 'create',
+          toStatus: 'DRAFT',
+          clientRequestId,
+          timestamp: now,
+        });
+        transaction.set(requestRef, {
+          action,
+          callerUid: caller.uid,
+          organizationId: caller.organizationId,
+          clientRequestId,
+          payloadHash: hash,
+          resourceType: 'mission',
+          resourceId: missionRef.id,
+          createdAt: now,
+        });
+        return { ok: true, missionId: missionRef.id, idempotent: false };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { missionId: outcome.missionId, status: 'DRAFT', idempotent: outcome.idempotent });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // PHASE 10 RELEASE-INTEGRITY — trusted incident creation.  The employee
+  // identity and Mobility context come only from the verified token + live
+  // user record.  The referenced mission (and optional vehicle) is read and
+  // validated in the same transaction that creates the NEW incident, its
+  // canonical audit event, and the idempotency receipt.
+  if (action === 'createIncident') {
+    if (Object.keys(body).some(key => !TRUSTED_CREATE_INPUT_FIELDS.createIncident.includes(key))) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'protected_or_unknown_field' });
+    }
+    const caller = await getMobilityEmployeeCallerContext(decoded.uid);
+    if (!caller.isEmployee || caller.role !== 'employee') {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'active_employee_required' });
+    }
+    const clientRequestId = body.clientRequestId;
+    const incident = {
+      missionId: cleanString(body.missionId),
+      vehicleId: cleanString(body.vehicleId),
+      category: cleanString(body.category, 'أخرى') || 'أخرى',
+      severity: cleanString(body.severity, 'MEDIUM') || 'MEDIUM',
+      note: cleanString(body.note),
+    };
+    if (!validClientRequestId(clientRequestId) || !incident.missionId || !['LOW', 'MEDIUM', 'CRITICAL'].includes(incident.severity)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'valid_clientRequestId_missionId_severity_required' });
+    }
+    const hash = payloadHash(action, [incident.missionId, incident.vehicleId, incident.category, incident.severity, incident.note]);
+    const requestRef = trustedCreateRequestRef(db, action, caller.uid, clientRequestId);
+    const incidentRef = db.collection('incidents').doc();
+    const auditRef = db.collection('auditEvents').doc();
+    try {
+      const outcome = await db.runTransaction(async (transaction) => {
+        const missionRef = db.collection('missions').doc(incident.missionId);
+        const reads = [transaction.get(requestRef), transaction.get(missionRef)];
+        const vehicleRef = incident.vehicleId ? db.collection('vehicles').doc(incident.vehicleId) : null;
+        if (vehicleRef) reads.push(transaction.get(vehicleRef));
+        const snapshots = await Promise.all(reads);
+        const priorSnap = snapshots[0];
+        if (priorSnap.exists) {
+          const prior = priorSnap.data() || {};
+          if (prior.payloadHash !== hash) return { ok: false, statusCode: 409, reason: 'idempotency_payload_mismatch' };
+          return { ok: true, incidentId: prior.resourceId, idempotent: true };
+        }
+        const missionSnap = snapshots[1];
+        if (!missionSnap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        const missionData = missionSnap.data() || {};
+        if (missionData.organizationId !== caller.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        if (missionData.assignedEmployeeUid !== caller.uid) return { ok: false, statusCode: 403, reason: 'employee_not_assigned' };
+        if (missionData.status !== 'IN_PROGRESS') return { ok: false, statusCode: 409, reason: 'mission_not_in_progress' };
+        if (vehicleRef) {
+          const vehicleSnap = snapshots[2];
+          if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+          const vehicleData = vehicleSnap.data() || {};
+          const validRelationship = missionData.vehicleId === incident.vehicleId
+            && vehicleData.organizationId === caller.organizationId
+            && vehicleData.assignedEmployeeUid === caller.uid
+            && vehicleData.currentMissionId === incident.missionId
+            && vehicleData.status === 'IN_MISSION';
+          if (!validRelationship) return { ok: false, statusCode: 409, reason: 'vehicle_relationship_invalid' };
+        }
+        const now = FieldValue.serverTimestamp();
+        transaction.set(incidentRef, {
+          clientRequestId,
+          organizationId: caller.organizationId,
+          missionId: incident.missionId,
+          vehicleId: incident.vehicleId,
+          createdByUid: caller.uid,
+          employeeName: caller.name || '',
+          department: caller.department || missionData.department || '',
+          category: incident.category,
+          severity: incident.severity,
+          note: incident.note,
+          status: 'NEW',
+          createdAt: now,
+          updatedAt: now,
+          updatedByUid: caller.uid,
+        });
+        transaction.set(auditRef, {
+          organizationId: caller.organizationId,
+          department: caller.department || missionData.department || '',
+          actorId: caller.uid,
+          actorRole: 'employee',
+          resourceType: 'incident',
+          resourceId: incidentRef.id,
+          action: 'create',
+          toStatus: 'NEW',
+          missionId: incident.missionId,
+          clientRequestId,
+          timestamp: now,
+        });
+        transaction.set(requestRef, {
+          action,
+          callerUid: caller.uid,
+          organizationId: caller.organizationId,
+          clientRequestId,
+          payloadHash: hash,
+          resourceType: 'incident',
+          resourceId: incidentRef.id,
+          createdAt: now,
+        });
+        return { ok: true, incidentId: incidentRef.id, idempotent: false };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { incidentId: outcome.incidentId, status: 'NEW', idempotent: outcome.idempotent });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // PHASE 06B — TRUSTED VEHICLE ALLOCATION CUTOVER. Authorized exactly like
+  // listMobilityEmployees above (an ACTIVE mobility_head only — never an
+  // owner/manager by itself), completely separate from the owner/manager
+  // gate below. This is now the ONLY way a mission may move
+  // APPROVED->VEHICLE_ALLOCATED and a vehicle AVAILABLE->RESERVED — see
+  // firestore.rules, where both client-side transitions are now denied
+  // outright (Admin SDK writes below bypass Rules entirely, so Rules no
+  // longer need to, and structurally cannot safely, arbitrate this pair).
+  //
+  // organizationId/actorId/actorRole/audit identity are NEVER read from the
+  // request body — only missionId/vehicleId/employeeUid are. The caller's
+  // own organization is resolved exclusively from their verified server-side
+  // Mobility identity (mobilityCaller.organizationId), exactly like
+  // listMobilityEmployees. Mission, vehicle, and target-employee validation
+  // (existence, same-organization, status, target eligibility) all happen
+  // inside ONE Admin SDK transaction that also performs the writes, so a
+  // stale read can never be acted on and the mission update, the vehicle
+  // update, and the one canonical audit event either all commit or none do.
+  if (action === 'allocateVehicle') {
+    const mobilityCaller = await getMobilityHeadCallerContext(decoded.uid);
+    if (!mobilityCaller.isMobilityHead) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_head_required' });
+    }
+    const { missionId, vehicleId, employeeUid } = body;
+    if (!isNonEmptyString(missionId) || !isNonEmptyString(vehicleId) || !isNonEmptyString(employeeUid)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_vehicleId_employeeUid_required' });
+    }
+    const organizationId = mobilityCaller.organizationId;
+    try {
+      const outcome = await db.runTransaction(async (transaction) => {
+        const missionRef = db.collection('missions').doc(missionId);
+        const vehicleRef = db.collection('vehicles').doc(vehicleId);
+        const employeeRef = db.collection('users').doc(employeeUid);
+        const [missionSnap, vehicleSnap, employeeSnap] = await Promise.all([
+          transaction.get(missionRef), transaction.get(vehicleRef), transaction.get(employeeRef),
+        ]);
+
+        if (!missionSnap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        const mission = missionSnap.data() || {};
+        if (mission.organizationId !== organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        if (mission.status !== 'APPROVED') return { ok: false, statusCode: 409, reason: 'mission_not_approved' };
+
+        if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+        const vehicle = vehicleSnap.data() || {};
+        if (vehicle.organizationId !== organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        if (vehicle.status !== 'AVAILABLE') return { ok: false, statusCode: 409, reason: 'vehicle_not_available' };
+
+        if (!employeeSnap.exists) return { ok: false, statusCode: 404, reason: 'employee_not_found' };
+        const employee = employeeSnap.data() || {};
+        if (!isValidMobilityAllocationTarget(employee, organizationId)) {
+          return { ok: false, statusCode: 403, reason: 'invalid_allocation_target' };
+        }
+
+        const now = FieldValue.serverTimestamp();
+        const employeeName = isNonEmptyString(employee.name) ? employee.name.trim() : '';
+        transaction.update(missionRef, {
+          status: 'VEHICLE_ALLOCATED',
+          vehicleId,
+          assignedEmployeeUid: employeeUid,
+          assignedEmployeeName: employeeName,
+          updatedAt: now,
+          updatedByUid: decoded.uid,
+        });
+        transaction.update(vehicleRef, {
+          status: 'RESERVED',
+          assignedEmployeeUid: employeeUid,
+          currentMissionId: missionId,
+          updatedAt: now,
+          updatedByUid: decoded.uid,
+        });
+        // The one canonical audit event, inside this same transaction —
+        // actor/role/organization are always the trusted server-derived
+        // caller, never request-body values, so neither can ever be spoofed.
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId,
+          actorId: decoded.uid,
+          actorRole: 'mobility_head',
+          resourceType: 'mission',
+          resourceId: missionId,
+          action: 'allocate_vehicle',
+          fromStatus: 'APPROVED',
+          toStatus: 'VEHICLE_ALLOCATED',
+          vehicleId,
+          timestamp: now,
+        });
+        return { ok: true };
+      });
+
+      if (!outcome.ok) {
+        return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      }
+      return sendJson(res, 200, { missionId, vehicleId, employeeUid, status: 'VEHICLE_ALLOCATED' });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // PHASE 08.1 CLOSURE 2 — TRUSTED CONTRACTOR OBSERVATION STATUS TRANSITION.
+  // Authorized exactly like allocateVehicle above (an ACTIVE contractor
+  // only), completely separate from the owner/manager gate below. This is
+  // now the ONLY way an assigned observation may move
+  // PENDING->IN_PROGRESS or IN_PROGRESS->CONTRACTOR_SUBMITTED — see
+  // firestore.rules, where the client-side contractor transition is now
+  // denied outright (this Admin SDK write bypasses Rules entirely, so
+  // Rules no longer need to, and structurally cannot safely, arbitrate
+  // it). organizationId is NEVER read from the request body — only
+  // observationId/transitionKey/note/fix/afterImagePath are. The final
+  // resolutionNote/status/updatedByUid fields are constructed by
+  // platform/policies/contractor-observation-workflow.js — the server,
+  // not the client, is the authority for their exact content. Read +
+  // validate + write all happen inside one transaction so a stale read
+  // can never be acted on.
+  if (action === 'contractorObservationUpdate') {
+    const contractorCaller = await getContractorCallerContext(decoded.uid);
+    if (!contractorCaller.isContractor) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'contractor_required' });
+    }
+    const { observationId, transitionKey, note, fix, afterImagePath } = body;
+    if (!isNonEmptyString(observationId) || !isNonEmptyString(transitionKey)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'observationId_transitionKey_required' });
+    }
+    try {
+      const outcome = await db.runTransaction(async (transaction) => {
+        const obsRef = db.collection('observations').doc(observationId);
+        const obsSnap = await transaction.get(obsRef);
+        const observation = obsSnap.exists ? obsSnap.data() : null;
+        const { decision, update } = buildContractorObservationUpdate({
+          actor: { uid: contractorCaller.uid, organizationId: contractorCaller.organizationId },
+          observation, transitionKey, note, fix, afterImagePath,
+        });
+        if (!decision.allowed) return { ok: false, decision };
+        const now = FieldValue.serverTimestamp();
+        transaction.update(obsRef, { ...update, updatedAt: now });
+        // The one canonical audit event, inside this same transaction —
+        // actor/organization are always the trusted server-derived
+        // caller, never request-body values, so neither can ever be
+        // spoofed.
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: contractorCaller.organizationId,
+          actorId: contractorCaller.uid,
+          actorRole: 'contractor',
+          resourceType: 'observation',
+          resourceId: observationId,
+          action: 'contractor_transition',
+          toStatus: update.status,
+          timestamp: now,
+        });
+        return { ok: true, status: update.status };
+      });
+      if (!outcome.ok) {
+        const statusCode = outcome.decision.code === 'CONTRACTOR_OBSERVATION_NOT_FOUND' ? 404
+          : outcome.decision.code === 'CROSS_ORGANIZATION_DENIED' || outcome.decision.code === 'CONTRACTOR_NOT_ASSIGNED' ? 403
+          : 409;
+        return sendJson(res, statusCode, { error: 'request_failed', reason: outcome.decision.code });
+      }
+      return sendJson(res, 200, { observationId, status: outcome.status });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }

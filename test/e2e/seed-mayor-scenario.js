@@ -74,6 +74,13 @@ async function main() {
       organizationName: ORG_NAME, name: account.name, email: account.email,
     };
     if (account.role === 'department_head') doc.department = DEPARTMENT;
+    // PHASE 03B.1 fail-safe: a record with no vehicleEligible field at all
+    // is NOT allocatable (see api/_lib/authz.js isValidMobilityAllocationTarget).
+    // This seed's employee account is the vehicle-allocation target in the
+    // Mayor scenario, so it needs the same explicit opt-in a real Manager
+    // would set via the User Center before that employee could ever
+    // receive a vehicle in production.
+    if (account.role === 'employee') doc.vehicleEligible = true;
     await db.collection(account.collection).doc(uid).set(doc, { merge: true });
   }
 

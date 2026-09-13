@@ -10,11 +10,12 @@
 // Run: node test/run-mobility-mission-rules.js
 // ============================================================================
 const { before, after, beforeEach, test } = require('node:test');
+const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
 const { initializeTestEnvironment, assertSucceeds, assertFails } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc, writeBatch } = require('firebase/firestore');
 
 const PROJECT_ID = 'demo-smart-hsr-mobility-tests';
 const RULES_PATH = path.resolve(__dirname, '..', 'firestore.rules');
@@ -107,6 +108,13 @@ async function seed() {
     await setDoc(doc(db, 'missions', 'approvedA'), {
       organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'APPROVED',
     });
+    // A second, independent APPROVED mission — needed so a racing second
+    // allocation attempt (targeting the same now-RESERVED vehicle) is
+    // denied purely for vehicle unavailability, not confounded with its own
+    // mission not being APPROVED.
+    await setDoc(doc(db, 'missions', 'approvedA2'), {
+      organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'APPROVED',
+    });
     await setDoc(doc(db, 'missions', 'allocatedA'), {
       organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'VEHICLE_ALLOCATED',
       vehicleId: 'V101', assignedEmployeeUid: UID.employeeA,
@@ -144,6 +152,44 @@ beforeEach(async () => {
 
 function ctx(uid) {
   return testEnv.authenticatedContext(uid).firestore();
+}
+
+// PHASE 06B CLOSURE — TRUSTED VEHICLE ALLOCATION CUTOVER. Vehicle
+// allocation (missions/{id}: APPROVED->VEHICLE_ALLOCATED paired with
+// vehicles/{id}: AVAILABLE->RESERVED) is no longer performed by the client
+// SDK AT ALL — not mission-only, not vehicle-only, and not even a
+// correctly-paired atomic batch. Only the trusted server-side Admin SDK
+// transaction (api/admin/users.js action:'allocateVehicle', tested against
+// the real emulator in test/mobility-allocate-vehicle-endpoint.test.js) can
+// perform it now, since Admin SDK writes bypass these Rules entirely. This
+// closes the exact gap the prior Phase 06 closure accepted and documented
+// as its one remaining limitation: a privileged mobility_head could still
+// perform a direct client-side vehicle-only write (AVAILABLE->RESERVED)
+// while the referenced mission stayed APPROVED. `atomicAllocationBatch`
+// below is kept ONLY to prove that even a correctly-shaped, fully-paired
+// client batch (mirroring what smart-mobility-adapter.js's allocateVehicle
+// used to write directly, before the Phase 06B cutover moved it server-
+// side) is now denied — see T5b/V8/V8b below.
+// Verification-only read used after a denied write to confirm the
+// document's true, unchanged state — via the seeded same-org manager, who
+// already has an unconditional org-wide mission read (isActiveManager()).
+async function readMissionUnfiltered(missionId) {
+  const snap = await getDoc(doc(ctx(UID.mgrA), 'missions', missionId));
+  return snap.data();
+}
+
+function atomicAllocationBatch(actorUid, { missionId, vehicleId, employeeUid }) {
+  const db = ctx(actorUid);
+  const batch = writeBatch(db);
+  batch.update(doc(db, 'missions', missionId), {
+    status: 'VEHICLE_ALLOCATED', vehicleId, assignedEmployeeUid: employeeUid,
+    assignedEmployeeName: 'x', updatedByUid: actorUid, updatedAt: 1,
+  });
+  batch.update(doc(db, 'vehicles', vehicleId), {
+    status: 'RESERVED', assignedEmployeeUid: employeeUid, currentMissionId: missionId,
+    updatedByUid: actorUid, updatedAt: 1,
+  });
+  return batch.commit();
 }
 
 // ============================================================
@@ -185,8 +231,8 @@ test('R8 a deactivated mobility_head account is denied entirely', async () => {
 // ============================================================
 // Create
 // ============================================================
-test('C1 department head may create a DRAFT mission in their own department', async () => {
-  await assertSucceeds(setDoc(doc(ctx(UID.deptHeadA), 'missions', 'newDraftA'), {
+test('C1 direct browser mission CREATE is denied even for an otherwise-valid department head DRAFT', async () => {
+  await assertFails(setDoc(doc(ctx(UID.deptHeadA), 'missions', 'newDraftA'), {
     organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'DRAFT',
   }));
 });
@@ -236,11 +282,53 @@ test('T4 mobility_head cannot approve a pending request (not their authority)', 
   }));
 });
 
-test('T5 mobility_head allocates a vehicle with the required fields', async () => {
-  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
+// PHASE 06B CLOSURE — the APPROVED->VEHICLE_ALLOCATED transition is now
+// absent from canMobilityHeadAdvanceMission() entirely: a mission-only
+// write can never succeed, for any target, any vehicle, any reason.
+test('T5 mission-only vehicle allocation is denied outright — the client SDK can no longer perform this transition at all', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
     status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: UID.employeeA,
     updatedByUid: UID.mobilityHeadA, updatedAt: 1,
   }));
+  const missionData = await readMissionUnfiltered('approvedA');
+  assert.equal(missionData.status, 'APPROVED', 'the mission must remain unchanged after the denied write');
+});
+
+// PHASE 06B CLOSURE — this is the exact scenario the prior Phase 06 closure
+// accepted as its one remaining gap: a correctly-shaped, fully-paired
+// atomic client batch (mirroring smart-mobility-adapter.js's real,
+// pre-cutover allocateVehicle() shape) used to succeed. It must now be
+// denied unconditionally — allocation is only ever performed by the
+// trusted server-side Admin SDK transaction (see
+// test/mobility-allocate-vehicle-endpoint.test.js for the proof that path
+// still succeeds).
+test('T5b even a correctly-paired direct Firestore client batch (mission + vehicle together) is now denied — allocation is server-only', async () => {
+  await assertFails(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
+  const missionData = await readMissionUnfiltered('approvedA');
+  assert.equal(missionData.status, 'APPROVED', 'the mission must remain unchanged — the paired client batch must not partially or fully apply');
+  const vehicleSnap = await getDoc(doc(ctx(UID.mgrA), 'vehicles', 'V102'));
+  assert.equal(vehicleSnap.data().status, 'AVAILABLE', 'the vehicle must remain unchanged — the paired client batch must not partially or fully apply');
+});
+
+test('T5c cross-tenant paired allocation fails: an ORG_A mobility_head cannot pair an ORG_A mission with an ORG_B vehicle', async () => {
+  // V201 is the seeded ORG_B vehicle. Denied at the vehicle write's own
+  // organization check before the pairing check is even relevant — cross-
+  // tenant isolation holds regardless of the write's atomic shape.
+  await assertFails(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V201', employeeUid: UID.employeeA }));
+  const missionData = await readMissionUnfiltered('approvedA');
+  assert.equal(missionData.status, 'APPROVED');
+});
+
+test('T5d an employee cannot self-allocate a vehicle — only mobility_head may run the paired allocation', async () => {
+  await assertFails(atomicAllocationBatch(UID.employeeA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
+  const missionData = await readMissionUnfiltered('approvedA');
+  assert.equal(missionData.status, 'APPROVED');
+});
+
+test('T5e an unauthorized role (department_head) cannot run the paired allocation either', async () => {
+  await assertFails(atomicAllocationBatch(UID.deptHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
+  const missionData = await readMissionUnfiltered('approvedA');
+  assert.equal(missionData.status, 'APPROVED');
 });
 
 test('T6 mobility_head allocating without vehicleId/assignedEmployeeUid is denied', async () => {
@@ -347,11 +435,25 @@ test('V4 only mobility_head may add a vehicle to the roster, and only as AVAILAB
   }));
 });
 
-test('V5 mobility_head reserves an available vehicle for an APPROVED mission', async () => {
-  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+// PHASE 06B CLOSURE — this is the FINAL 4% gap the prior Phase 06 closure
+// named and accepted: a vehicle-only client write used to still succeed on
+// its own existing merits even with no paired mission change, leaving the
+// mission claiming APPROVED while the vehicle silently became RESERVED — a
+// real half-allocation a privileged mobility_head could trigger directly.
+// "V5 vehicle-only allocation still succeeds" MUST NO LONGER BE TRUE: the
+// AVAILABLE->RESERVED transition is now entirely absent from
+// canMobilityHeadManageVehicle(), so this write is denied outright,
+// regardless of how valid every other condition (vehicle availability,
+// mission approval, target eligibility) would otherwise be. See
+// test/mobility-allocate-vehicle-endpoint.test.js for the trusted
+// server-side path that performs this transition atomically instead.
+test('V5 vehicle-only allocation is now denied outright — the client SDK can no longer perform this transition at all', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
     status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
     updatedByUid: UID.mobilityHeadA, updatedAt: 1,
   }));
+  const vehicleSnap = await getDoc(doc(ctx(UID.mgrA), 'vehicles', 'V102'));
+  assert.equal(vehicleSnap.data().status, 'AVAILABLE', 'the vehicle must remain unchanged after the denied write');
 });
 
 test('V6 CONFLICT PREVENTION: an already-reserved vehicle cannot be reserved again', async () => {
@@ -371,31 +473,29 @@ test('V7 CONFLICT PREVENTION: reserving a vehicle for a mission that is not APPR
   }));
 });
 
-test('V8 CONFLICT PREVENTION (sequential race): once the first allocation commits, a second racing allocation of the same vehicle fails', async () => {
-  const first = updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
-    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
-    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
-  });
-  await assertSucceeds(first);
-  // V102 is now RESERVED. A second mobility_head trying to allocate the
-  // very same vehicle to a different mission is correctly refused because
-  // the rule requires the vehicle's CURRENT status to be AVAILABLE.
-  const second = updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
-    status: 'RESERVED', assignedEmployeeUid: UID.employeeA2, currentMissionId: 'pendingA',
-    updatedByUid: UID.mobilityHeadA, updatedAt: 2,
-  });
-  await assertFails(second);
+// PHASE 06B CLOSURE — concurrency/conflict-prevention for a REAL allocation
+// is no longer a Rules-level concern at all: since the client can never
+// perform this transition (paired or not), there is no racing client write
+// to arbitrate here. Both attempts below fail for that same fundamental
+// reason. The actual concurrency guarantee for the real allocation path
+// (two racing calls to the trusted server endpoint for the same vehicle) is
+// proven against the Admin SDK transaction in
+// test/mobility-allocate-vehicle-endpoint.test.js, not here.
+test('V8 a client-side "sequential race" is moot — every direct allocation attempt is denied outright, so nothing ever gets to race', async () => {
+  await assertFails(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
+  await assertFails(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA2', vehicleId: 'V102', employeeUid: UID.employeeA2 }));
+  const vehicleSnap = await getDoc(doc(ctx(UID.mgrA), 'vehicles', 'V102'));
+  assert.equal(vehicleSnap.data().status, 'AVAILABLE', 'neither denied attempt may have changed the vehicle');
 });
 
-// ---- PHASE 06A hotfix: a NEW vehicle allocation must independently verify
-// the TARGET employee — not just vehicleEligible on whatever doc happens
-// to sit at that uid — server/Rules-side, never merely UI-filtered. ----
+// ---- PHASE 06A hotfix (target-eligibility rules) is still enforced at the
+// TRUSTED SERVER layer — see test/mobility-allocate-vehicle-endpoint.test.js
+// for the equivalent proofs against api/admin/users.js action:
+// 'allocateVehicle'. At the client-Rules layer these now all deny for the
+// more fundamental reason that the transition itself does not exist. ----
 
-test('V8b PHASE 06A: allocating to an eligible employee in the SAME organization still succeeds', async () => {
-  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
-    status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
-    updatedByUid: UID.mobilityHeadA, updatedAt: 1,
-  }));
+test('V8b PHASE 06B: even a valid, correctly-paired allocation to an eligible SAME-organization employee is denied at the client-Rules layer', async () => {
+  await assertFails(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
 });
 
 test('V8c PHASE 06A: allocating to an employee from a DIFFERENT organization is denied, even though vehicleEligible is true', async () => {
@@ -426,13 +526,15 @@ test('V8f PHASE 06A: allocating to a NONEXISTENT employee uid is denied', async 
   }));
 });
 
-// ---- PHASE 06A.1 — Blocker 2 case G/H: allocation must honor an employee
-// discovered ONLY via the independent mobilityAccess field, and must never
-// resurrect a stale legacy role:'employee' once mobilityAccess explicitly
-// disables Mobility for that account. ----
+// ---- PHASE 06A.1 target-eligibility cases G/H (an employee discovered only
+// via the independent mobilityAccess field; a stale legacy role that must
+// never resurrect a disabled Mobility account) are still enforced — now at
+// the TRUSTED SERVER layer only (isValidMobilityAllocationTarget() in
+// api/_lib/authz.js). At the client-Rules layer both now deny for the more
+// fundamental reason that the transition does not exist at all. ----
 
-test('V8g PHASE 06A.1 case G: allocating to an employee whose role lives ONLY in the independent mobilityAccess field succeeds', async () => {
-  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
+test('V8g PHASE 06B: even a target whose role lives ONLY in the independent mobilityAccess field is denied at the client-Rules layer', async () => {
+  await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'vehicles', 'V102'), {
     status: 'RESERVED', assignedEmployeeUid: UID.mobilityAccessEmployeeA, currentMissionId: 'approvedA',
     updatedByUid: UID.mobilityHeadA, updatedAt: 1,
   }));
@@ -445,35 +547,16 @@ test('V8h PHASE 06A.1 case H: allocating to a user with a stale legacy role:empl
   }));
 });
 
-// ---- PHASE 06A.2 — every V8* test above writes only ONE of the two
-// documents a REAL allocation touches (see smart-mobility-adapter.js's
-// allocateVehicle(), which updates missions/{id} AND vehicles/{id} together
-// inside one runTransaction()). That gap in coverage hid a real defect,
-// found via real-browser QA: canMobilityHeadAdvanceMission()/
-// canMobilityHeadManageVehicle() each re-evaluated mobilityUserOrgId() up
-// to four times and read the cross-referenced document twice — for a
-// LEGACY role:'employee' target this stayed just under Firestore's
-// 1000-expression-per-request budget, but the independent mobilityAccess
-// dual-read's one extra property-access level tipped a real two-document
-// allocation transaction over that ceiling and failed closed with
-// PERMISSION_DENIED even though every actual authorization condition held.
-// Fixed by binding mobilityUserOrgId() and the cross-referenced document
-// once each via `let` (allocationTargetVehicleValid()/
-// allocationTargetMissionValid()).
-//
-// A real runTransaction() against this specific rules-unit-testing harness
-// (after dozens of prior tests' operations on shared emulator-backed
-// contexts) hits an unrelated SDK harness quirk ("Firestore has already
-// been started...") unrelated to Rules correctness — so the real
-// two-document transaction shape is instead verified with the genuine
-// production client SDK (exactly what smart-mobility-adapter.js itself
-// uses) in a standalone script against this same emulator + these same
-// rules, confirming BOTH a legacy role:'employee' target and an
-// independent-mobilityAccess target succeed after this fix, and
-// reproducing the pre-fix failure for the independent-field case before
-// it — plus end-to-end in a real browser (see the phase report).
-
-test('V8g PHASE 06A: the mission-side APPROVED -> VEHICLE_ALLOCATED write is independently gated the same way — a bad target denies even if the vehicle write is not attempted', async () => {
+// PHASE 06B CLOSURE — the mission-side APPROVED->VEHICLE_ALLOCATED
+// transition is now absent from canMobilityHeadAdvanceMission() entirely,
+// so a mission-only write denies for every target (invalid or otherwise),
+// and even a fully valid target paired with its matching vehicle write (the
+// exact atomic shape smart-mobility-adapter.js used to write directly,
+// before the Phase 06B cutover moved allocation server-side) is now denied
+// too — see test/mobility-allocate-vehicle-endpoint.test.js for the proof
+// that the trusted server-side transaction still succeeds for that same
+// valid target.
+test('V8i PHASE 06B: the mission-side write is denied for every target, invalid or valid, paired or not — allocation is server-only', async () => {
   await assertFails(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
     status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: UID.employeeB,
     assignedEmployeeName: 'x', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
@@ -482,13 +565,10 @@ test('V8g PHASE 06A: the mission-side APPROVED -> VEHICLE_ALLOCATED write is ind
     status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: 'no-such-user-uid',
     assignedEmployeeName: 'x', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
   }));
-  await assertSucceeds(updateDoc(doc(ctx(UID.mobilityHeadA), 'missions', 'approvedA'), {
-    status: 'VEHICLE_ALLOCATED', vehicleId: 'V102', assignedEmployeeUid: UID.employeeA,
-    assignedEmployeeName: 'x', updatedByUid: UID.mobilityHeadA, updatedAt: 1,
-  }));
+  await assertFails(atomicAllocationBatch(UID.mobilityHeadA, { missionId: 'approvedA', vehicleId: 'V102', employeeUid: UID.employeeA }));
 });
 
-test('V8h PHASE 06A: a direct Firestore bypass attempt (no mobility_head role at all) is denied regardless of target validity', async () => {
+test('V8j a direct Firestore bypass attempt (no mobility_head role at all) is denied regardless of target validity', async () => {
   await assertFails(updateDoc(doc(ctx(UID.employeeA2), 'vehicles', 'V102'), {
     status: 'RESERVED', assignedEmployeeUid: UID.employeeA, currentMissionId: 'approvedA',
     updatedByUid: UID.employeeA2, updatedAt: 1,

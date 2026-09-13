@@ -30,23 +30,62 @@ for (const status of INCIDENT_STATUSES) {
   assert.match(adapter, new RegExp(`${status}: '`), `incident status ${status} must be mapped`);
 }
 
-// Audit: every mutation function must record at least one auditEvents
-// write, and the transactional ones must record it inside the same
-// transaction (not as a separate, non-atomic follow-up write).
-const auditedFns = ['createMissionRequest', 'submitMissionForApproval', 'decideMission', 'employeeAdvanceMission', 'createIncident', 'mobilityProcessIncident'];
+// PHASE 06 CLOSURE — DEFECT 1 fix: a single-document mutation that
+// previously wrote its business state via setDoc/updateDoc and then
+// recorded its audit event as a SEPARATE, later write (recordAudit()) could
+// leave the business state changed with no audit trail if that second
+// write failed. Every one of these functions now commits its business
+// write AND its auditEvents/{eventId} write together in one atomic
+// writeBatch() — see test/mobility-audit-atomicity.test.js for the
+// executable (real-emulator) proof that a forced audit failure leaves
+// neither write applied.
+const auditedFns = ['submitMissionForApproval', 'decideMission', 'employeeAdvanceMission', 'mobilityProcessIncident'];
 for (const fn of auditedFns) {
   const start = adapter.indexOf(`async function ${fn}(`);
   assert.ok(start >= 0, `${fn} must exist`);
   const end = adapter.indexOf('\nasync function ', start + 1);
   const body = adapter.slice(start, end > 0 ? end : start + 2000);
-  assert.match(body, /recordAudit\(/, `${fn} must record an audit event`);
+  assert.match(body, /const batch = api\.writeBatch\(db\);/, `${fn} must open one atomic batch for its business write and its audit write`);
+  assert.match(body, /batch\.set\(api\.doc\(api\.collection\(db, 'auditEvents'\)\)/, `${fn} must record its audit event inside that same batch`);
+  assert.match(body, /await batch\.commit\(\);/, `${fn} must commit the batch atomically`);
+  assert.doesNotMatch(body, /recordAudit\(/, `${fn} must no longer use the removed non-atomic recordAudit() helper`);
 }
-const transactionalAuditedFns = ['allocateVehicle', 'handoverMission', 'confirmVehicleReturn', 'employeeReturnVehicle'];
+
+// PHASE 10 RELEASE-INTEGRITY — the two create functions are browser-to-
+// trusted-API delegates only.  They must never call the Firestore mutation
+// APIs and must carry clientRequestId for server-side idempotency.  The
+// endpoint's real-emulator suite proves resource+audit atomicity and spoof
+// denial.
+for (const [fn, action] of [['createMissionRequest', 'createMissionRequest'], ['createIncident', 'createIncident']]) {
+  const start = adapter.indexOf(`async function ${fn}(`);
+  assert.ok(start >= 0, `${fn} must exist`);
+  const end = adapter.indexOf('\nasync function ', start + 1);
+  const body = adapter.slice(start, end > 0 ? end : start + 2000);
+  assert.match(body, new RegExp(`trustedMobilityCreate\\('${action}'`), `${fn} must use the trusted create API`);
+  assert.match(body, /clientRequestId/, `${fn} must forward an idempotency key`);
+  assert.doesNotMatch(body, /setDoc|writeBatch|runTransaction/, `${fn} must have no browser direct-write path or fallback`);
+}
+const transactionalAuditedFns = ['handoverMission', 'confirmVehicleReturn', 'employeeReturnVehicle'];
 for (const fn of transactionalAuditedFns) {
   const start = adapter.indexOf(`async function ${fn}(`);
   const end = adapter.indexOf('\nasync function ', start + 1);
   const body = adapter.slice(start, end > 0 ? end : start + 2000);
   assert.match(body, /transaction\.set\(api\.doc\(api\.collection\(db, 'auditEvents'\)\)/, `${fn} must write its audit event inside the transaction`);
+}
+
+// PHASE 06B CLOSURE — allocateVehicle's audit event is no longer written by
+// the client at all: it is recorded by the trusted server-side Admin SDK
+// transaction (api/admin/users.js action:'allocateVehicle'), inside the
+// SAME transaction as the mission/vehicle writes, so a forced audit failure
+// still cannot leave either document changed — see
+// test/mobility-allocate-vehicle-endpoint.test.js for the executable proof
+// against the real emulator.
+{
+  const start = adapter.indexOf('async function allocateVehicle(');
+  const end = adapter.indexOf('\nasync function ', start + 1);
+  const body = adapter.slice(start, end > 0 ? end : start + 2000);
+  assert.doesNotMatch(body, /transaction\.set\(api\.doc\(api\.collection\(db, 'auditEvents'\)\)/, 'allocateVehicle must no longer write its own audit event client-side');
+  assert.match(body, /action:\s*'allocateVehicle'/, 'allocateVehicle must delegate to the trusted server-side allocation action');
 }
 
 // The audit payload must self-attribute the real actor — never let the

@@ -2,6 +2,9 @@
 const { getDb } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 const { callLandsSsoRegister, bridgeConfigured } = require('../_lib/landsBridge');
+const { evaluateReferenceLayerAccess } = require('../../platform/geo/geo-policy');
+const { createStaticReferenceExtractProvider, validateBbox, slugForOrganization } = require('../../platform/geo/geo-provider-contract');
+const { getAttribution } = require('../../platform/geo/geo-attribution-registry');
 
 const ALQUNFUDHAH_ORGANIZATION_ID = 'CnlVlKC7UcDMp2NZzjjT';
 const ALQUNFUDHAH_APPROXIMATE_CENTER = Object.freeze({ lat: 19.12639, lng: 41.07889 });
@@ -35,6 +38,71 @@ function requestedOrganizationId(req) {
   if (typeof direct === 'string') return direct.trim();
   try { return new URL(req.url || '/', 'http://localhost').searchParams.get('organizationId')?.trim() || ''; }
   catch (_) { return ''; }
+}
+
+// ============================================================================
+// PHASE 08 — SMART HSR Geo Core reference-layer query, dispatched from the
+// SAME GET request path (by an optional ?geoLayer= param) as the map-context
+// lookup above, rather than as a new /api file. This project's Vercel
+// Hobby-plan Serverless Function budget was already at exactly 12 files
+// (the maximum) before Phase 08 — see the existing api/ directory listing —
+// so a 13th top-level function is not available; this endpoint already
+// dispatches by HTTP method for an unrelated purpose (see
+// handleLandsSsoHandoff above), so extending that same dispatch to a third,
+// additive, backward-compatible GET mode is the proven-necessary, minimal
+// path rather than a new file or a new function. When ?geoLayer= is absent,
+// this endpoint's behavior is byte-for-byte unchanged from before Phase 08.
+//
+// commercial_places/buildings are OPEN, non-tenant reference data (Phase 08
+// brief's TENANT ISOLATION section: "Open/global basemap data may be
+// globally visible") — access still requires a verified, recognized Smart
+// HSR role (never anonymous) via evaluateReferenceLayerAccess(), but is not
+// restricted to the caller's own organizationId the way municipal records
+// are elsewhere in this file.
+// ============================================================================
+const GEO_LAYER_QUERY = Object.freeze({
+  commercial_places: (provider, args) => provider.queryPlaces(args),
+  buildings: (provider, args) => provider.queryBuildings(args),
+});
+
+function requestedGeoLayer(req) {
+  const direct = req.query && req.query.geoLayer;
+  if (typeof direct === 'string') return direct.trim();
+  try { return new URL(req.url || '/', 'http://localhost').searchParams.get('geoLayer')?.trim() || ''; }
+  catch (_) { return ''; }
+}
+
+function requestedBboxParam(req) {
+  const raw = (req.query && req.query.bbox) ||
+    (() => { try { return new URL(req.url || '/', 'http://localhost').searchParams.get('bbox'); } catch (_) { return null; } })();
+  if (typeof raw !== 'string' || !raw) return null;
+  const parts = raw.split(',').map((p) => Number(p.trim()));
+  return parts.length === 4 && parts.every(Number.isFinite) ? parts : null;
+}
+
+async function handleGeoLayerQuery(req, res, caller, organizationId) {
+  const geoLayer = requestedGeoLayer(req);
+  const queryFn = GEO_LAYER_QUERY[geoLayer];
+  if (!queryFn) return sendJson(res, 400, { error: 'geo_layer_unsupported', geoLayer });
+
+  const accessDecision = evaluateReferenceLayerAccess({ actor: { role: caller.role }, layerId: geoLayer });
+  if (!accessDecision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: accessDecision.code });
+
+  const bbox = requestedBboxParam(req);
+  if (!bbox) return sendJson(res, 400, { error: 'bbox_required' });
+  const bboxDecision = validateBbox(bbox);
+  if (!bboxDecision.allowed) return sendJson(res, 400, { error: 'bbox_invalid', reason: bboxDecision.code });
+
+  const municipality = slugForOrganization(organizationId);
+  const provider = createStaticReferenceExtractProvider();
+  const { entities, attributions } = queryFn(provider, { municipality, bbox, limit: 500 });
+  return sendJson(res, 200, {
+    geoLayer,
+    organizationId,
+    count: entities.length,
+    entities,
+    attributions: attributions.length ? attributions : [getAttribution('osm_basemap')].filter(Boolean),
+  });
 }
 
 // ============================================================================
@@ -165,6 +233,7 @@ async function handler(req, res) {
     return sendJson(res, 403, { error:'forbidden', reason:'cross_organization_denied' });
   }
   if (!organizationId) return sendJson(res, 403, { error:'forbidden', reason:'organization_required' });
+  if (requestedGeoLayer(req)) return handleGeoLayerQuery(req, res, caller, organizationId);
   const organization = await db.collection('organizations').doc(organizationId).get();
   if (caller.isOwner && !organization.exists) return sendJson(res, 404, { error:'organization_not_found' });
   const data = organization.exists ? (organization.data() || {}) : {};
@@ -172,4 +241,4 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
-module.exports._test = { resolveRoleContext, sanitizedMapContext, requestedOrganizationId, cleanCenter, cleanBounds, ALQUNFUDHAH_ORGANIZATION_ID, ALQUNFUDHAH_APPROXIMATE_CENTER, ALQUNFUDHAH_DEFAULT_ZOOM, isSsoEligible };
+module.exports._test = { resolveRoleContext, sanitizedMapContext, requestedOrganizationId, cleanCenter, cleanBounds, ALQUNFUDHAH_ORGANIZATION_ID, ALQUNFUDHAH_APPROXIMATE_CENTER, ALQUNFUDHAH_DEFAULT_ZOOM, isSsoEligible, requestedGeoLayer, requestedBboxParam, handleGeoLayerQuery, GEO_LAYER_QUERY };

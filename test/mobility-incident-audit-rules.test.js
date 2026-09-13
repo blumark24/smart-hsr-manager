@@ -120,8 +120,8 @@ test('I4 department head may read an incident in their own department', async ()
   await assertSucceeds(getDoc(doc(ctx(UID.deptHeadA), 'incidents', 'newA')));
 });
 
-test('C1 the assigned employee may create an incident on their own IN_PROGRESS mission', async () => {
-  await assertSucceeds(setDoc(doc(ctx(UID.employeeA), 'incidents', 'newC1'), {
+test('C1 direct browser incident CREATE is denied even for the assigned employee on an IN_PROGRESS mission', async () => {
+  await assertFails(setDoc(doc(ctx(UID.employeeA), 'incidents', 'newC1'), {
     organizationId: ORG_A, missionId: 'inProgressA', vehicleId: 'V101', createdByUid: UID.employeeA,
     department: DEPT_TRAFFIC, category: 'نقص وقود', severity: 'LOW', status: 'NEW',
   }));

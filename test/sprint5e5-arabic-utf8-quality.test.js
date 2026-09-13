@@ -47,8 +47,21 @@ test('preferred concise municipal summary is accepted unchanged', () => {
   assert.equal(result.summary, conciseSummary);
 });
 
-test('verbose and low-quality summaries fail closed', () => {
-  assert.equal(validateShortSummaryAr('تم رصد حفرة إسفلتية كبيرة في الطريق وتتطلب معالجة عاجلة لحماية مستخدمي الطريق.').code, 'AI_SUMMARY_NOT_CONCISE');
+// PHASE 09 GATE 4 — the first assertion here expected an
+// 'AI_SUMMARY_NOT_CONCISE' code that platform/ai/arabic-summary-policy.js
+// has never implemented: validateShortSummaryAr() only enforces a hard
+// MIN_WORDS/MAX_WORDS (5-15) range and exposes PREFERRED_MIN/MAX_WORDS
+// (7-12) as an informational `preferredLength` flag on an otherwise-valid
+// result, by explicit, documented design (see that file's own comment on
+// why it does not add a brittle word-count-based rejection beyond the hard
+// bounds). A 13-word summary within that hard range is, and was always
+// meant to be, AI_SUMMARY_VALID — this test's premise predates that
+// decision and is corrected to match it; the other two speculative/
+// duplicated-severity checks are real, implemented codes and unaffected.
+test('speculative and duplicated-severity summaries fail closed; a summary merely longer than the PREFERRED range (but within the hard MIN/MAX) remains valid by design', () => {
+  const longButWithinHardRange = validateShortSummaryAr('تم رصد حفرة إسفلتية كبيرة في الطريق وتتطلب معالجة عاجلة لحماية مستخدمي الطريق.');
+  assert.equal(longButWithinHardRange.code, 'AI_SUMMARY_VALID');
+  assert.equal(longButWithinHardRange.preferredLength, false);
   assert.equal(validateShortSummaryAr('تم رصد حفرة قد يكون وجودها خطرا وتتطلب معالجة عاجلة.', { confidence: 0.9 }).code, 'AI_SUMMARY_HIGH_CONFIDENCE_SPECULATION');
   assert.equal(validateShortSummaryAr('تم رصد حفرة خطرة خطرة تتطلب معالجة عاجلة.').code, 'AI_SUMMARY_DUPLICATED_SEVERITY');
 });

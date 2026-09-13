@@ -155,7 +155,8 @@ async function getCallerContext(uid) {
     // department head (role: null, mobilityAccess: {enabled:true,
     // role:'department_head'}) is correctly recognized.
     if (resolveMobilityRole(d) === 'department_head' && activeIsNotFalse(d) && orgId && dept) {
-      return { uid, isOwner: false, isManager: false, isDepartmentHead: true, role: 'department_head', organizationId: orgId, department: dept };
+      const name = typeof d.name === 'string' ? d.name.trim() : '';
+      return { uid, isOwner: false, isManager: false, isDepartmentHead: true, role: 'department_head', organizationId: orgId, department: dept, name };
     }
   }
   return { uid, isOwner: false, isManager: false, isDepartmentHead: false, role: null, organizationId: null, department: null };
@@ -229,6 +230,80 @@ async function getMobilityHeadCallerContext(uid) {
     }
   }
   return { uid, isMobilityHead: false, organizationId: null };
+}
+
+// Phase 10 release-integrity closure — narrow, fail-closed context for the
+// trusted incident-create action.  The browser supplies only business input;
+// identity, current Mobility role, tenant, department and display name are
+// always read from the caller's live users/{uid} record after ID-token
+// verification.  A disabled or malformed Mobility entitlement never falls
+// back to a stale legacy role (resolveMobilityRole is authoritative here).
+async function getMobilityEmployeeCallerContext(uid) {
+  const db = getDb();
+  const usrSnap = await db.collection('users').doc(uid).get();
+  if (usrSnap.exists) {
+    const d = usrSnap.data() || {};
+    const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+    const department = typeof d.department === 'string' ? d.department.trim() : '';
+    const name = typeof d.name === 'string' ? d.name.trim() : '';
+    if (resolveMobilityRole(d) === 'employee' && activeIsNotFalse(d) && orgId) {
+      return {
+        uid,
+        isEmployee: true,
+        role: 'employee',
+        organizationId: orgId,
+        department,
+        name,
+      };
+    }
+  }
+  return {
+    uid,
+    isEmployee: false,
+    role: null,
+    organizationId: null,
+    department: null,
+    name: '',
+  };
+}
+
+// PHASE 08.1 CLOSURE 2 — a narrow, fail-closed caller-context resolver for
+// exactly one action (api/admin/users.js's contractorObservationUpdate):
+// is this uid an ACTIVE contractor of a real organization, right now, per
+// Firestore? Deliberately separate from getCallerContext() above, same
+// reasoning as getMobilityHeadCallerContext just above.
+async function getContractorCallerContext(uid) {
+  const db = getDb();
+  const usrSnap = await db.collection('users').doc(uid).get();
+  if (usrSnap.exists) {
+    const d = usrSnap.data() || {};
+    const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+    if (d.role === 'contractor' && activeIsNotFalse(d) && orgId) {
+      return { uid, isContractor: true, organizationId: orgId };
+    }
+  }
+  return { uid, isContractor: false, organizationId: null };
+}
+
+// PHASE 06B — mirrors firestore.rules' validMobilityAllocationTarget()
+// exactly: the target of a vehicle allocation must be a real, same-
+// organization, active user whose CURRENT Mobility role (the same
+// mobilityAccess-first dual read resolveMobilityRole() already uses
+// everywhere else) is one of the four real Mobility operational roles, and
+// must carry an explicit vehicleEligible === true (missing or false denies
+// — the Phase 03B.1 fail-safe default). Pure/no I/O: the caller passes the
+// already-fetched target document data (read inside the same Admin SDK
+// transaction that performs the allocation), so this can be reused inside
+// a transaction without any extra reads. Kept in this file, next to
+// resolveMobilityRole(), so both stay in sync by construction rather than
+// by convention.
+function isValidMobilityAllocationTarget(targetData, organizationId) {
+  if (!targetData) return false;
+  const orgId = typeof targetData.organizationId === 'string' ? targetData.organizationId : '';
+  return orgId === organizationId
+    && activeIsNotFalse(targetData)
+    && MOBILITY_MANAGEABLE_ROLES.includes(resolveMobilityRole(targetData))
+    && targetData.vehicleEligible === true;
 }
 
 // Phase 03B — employee-registry authorization (api/admin/employees.js
@@ -324,6 +399,9 @@ module.exports = {
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,
+  getMobilityEmployeeCallerContext,
+  getContractorCallerContext,
+  isValidMobilityAllocationTarget,
   assertCanManage,
   assertCanManageEmployee,
   AUTH_CODES,

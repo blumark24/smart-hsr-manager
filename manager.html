@@ -1622,6 +1622,174 @@
             <button onClick="{{ activateSelectedEmployee }}" data-f="1" style="width:100%;height:38px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">إعادة محاولة التفعيل</button>
           </div>
         </sc-if>
+
+        <!-- USER CENTER SHADOW READ (micro-phase) — read-only institutional
+             assignment history/governance display. No edit/create/end
+             controls exist here by design: employeeAssignments is history/
+             governance data only in this phase, never an authorization
+             source, and this section never mutates it. -->
+        <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--tx,#e9f1fb)">التكليفات المؤسسية</div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:10px;color:var(--tx3,#7d8ea6)">الانتماء المؤسسي الأصلي</div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:10px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">
+              <div style="display:flex;align-items:center;gap:8px;font-size:10.5px">
+                <span style="flex:none;width:96px;color:var(--tx3,#7d8ea6)">الإدارة الأصلية</span>
+                <span style="flex:1;text-align:left;color:var(--tx,#dbe6f5);font-weight:500">{{ employeeHomeAdministration }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:10.5px">
+                <span style="flex:none;width:96px;color:var(--tx3,#7d8ea6)">القسم الأصلي</span>
+                <span style="flex:1;text-align:left;color:var(--tx,#dbe6f5);font-weight:500">{{ employeeHomeDepartment }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:10.5px">
+                <span style="flex:none;width:96px;color:var(--tx3,#7d8ea6)">المسمى الوظيفي</span>
+                <span style="flex:1;text-align:left;color:var(--tx,#dbe6f5);font-weight:500">{{ employeeHomeJobTitle }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ASSIGNMENT MANAGEMENT (micro-phase) — create-assignment
+               control. Read-only display above/below this is untouched;
+               this is the only mutation surface in the section, and it
+               never edits employeeId/organizationId/issuedBy/assignmentId/
+               lockId/status. -->
+          <sc-if value="{{ !caCreateOpen }}">
+            <button onClick="{{ openCreateAssignmentForm }}" data-f="1" disabled="{{ assignmentMutationBusy }}" style="width:100%;height:34px;border-radius:9px;font-size:11px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px dashed var(--ctlBd,rgba(122,164,224,0.3));cursor:pointer">+ إضافة تكليف</button>
+          </sc-if>
+
+          <sc-if value="{{ caCreateOpen }}">
+            <div style="padding:12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:9px">
+              <div style="font-size:11px;font-weight:700;color:var(--tx,#e9f1fb)">إضافة تكليف</div>
+
+              <div>
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-bottom:4px">المنتج</div>
+                <select value="{{ caProductId }}" onChange="{{ setCaProductId }}" style="width:100%;height:34px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11px;padding:0 10px;outline:none">
+                  <sc-for list="{{ caProductOptions }}" as="p" hint-placeholder-count="3">
+                    <option value="{{ p.id }}">{{ p.label }}</option>
+                  </sc-for>
+                </select>
+              </div>
+
+              <div>
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-bottom:4px">نوع التكليف</div>
+                <select value="{{ caAssignmentType }}" onChange="{{ setCaAssignmentType }}" style="width:100%;height:34px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11px;padding:0 10px;outline:none">
+                  <sc-for list="{{ caAssignmentTypeOptions }}" as="t" hint-placeholder-count="4">
+                    <option value="{{ t.id }}">{{ t.label }}</option>
+                  </sc-for>
+                </select>
+              </div>
+
+              <sc-if value="{{ caShowSectionHeadHelper }}">
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);line-height:1.7">يمكن أن يكون هناك رئيس قسم نشط واحد فقط لهذا النطاق.</div>
+              </sc-if>
+
+              <div>
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-bottom:4px">نوع النطاق</div>
+                <select value="{{ caScopeType }}" onChange="{{ setCaScopeType }}" style="width:100%;height:34px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11px;padding:0 10px;outline:none">
+                  <option value="PRODUCT">منتج</option>
+                  <option value="SECTION">قسم</option>
+                </select>
+              </div>
+
+              <sc-if value="{{ caShowSectionScopeInput }}">
+                <div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-bottom:4px">معرّف/اسم القسم</div>
+                  <input type="text" value="{{ caScopeId }}" onChange="{{ setCaScopeId }}" autocomplete="off" maxlength="120" style="width:100%;height:34px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11px;padding:0 10px;outline:none">
+                </div>
+              </sc-if>
+
+              <div>
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-bottom:4px">تاريخ البداية</div>
+                <input type="date" value="{{ caStartAt }}" onChange="{{ setCaStartAt }}" style="width:100%;height:34px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11px;padding:0 10px;outline:none">
+              </div>
+
+              <div>
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-bottom:4px">تاريخ النهاية (اختياري)</div>
+                <input type="date" value="{{ caEndAt }}" onChange="{{ setCaEndAt }}" style="width:100%;height:34px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11px;padding:0 10px;outline:none">
+              </div>
+
+              <div>
+                <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-bottom:4px">سبب التكليف (اختياري)</div>
+                <input type="text" value="{{ caReason }}" onChange="{{ setCaReason }}" autocomplete="off" maxlength="500" style="width:100%;height:34px;border-radius:9px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11px;padding:0 10px;outline:none">
+              </div>
+
+              <sc-if value="{{ caError }}">
+                <div style="font-size:10px;color:#f87171;padding:8px;border-radius:8px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">{{ caError }}</div>
+              </sc-if>
+
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ submitCreateAssignment }}" data-f="1" disabled="{{ caSubmitting }}" style="flex:1;height:36px;border-radius:9px;font-size:11px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer">{{ caSubmitLabel }}</button>
+                <button onClick="{{ closeCreateAssignmentForm }}" data-f="1" disabled="{{ caSubmitting }}" style="flex:1;height:36px;border-radius:9px;font-size:11px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">إلغاء</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ employeeAssignmentsLoading }}">
+            <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);padding:10px;text-align:center">جاري تحميل التكليفات المؤسسية...</div>
+          </sc-if>
+
+          <sc-if value="{{ employeeAssignmentsError }}">
+            <div style="font-size:10.5px;color:#f87171;padding:10px;border-radius:9px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">{{ employeeAssignmentsError }}</div>
+          </sc-if>
+
+          <sc-if value="{{ employeeAssignmentsEmpty }}">
+            <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);padding:10px;text-align:center">لا توجد تكليفات مؤسسية مسجلة لهذا الموظف.</div>
+          </sc-if>
+
+          <sc-if value="{{ employeeCurrentAssignmentRows.length }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:10px;color:var(--tx3,#7d8ea6)">التكليفات الحالية</div>
+              <sc-for list="{{ employeeCurrentAssignmentRows }}" as="a" hint-placeholder-count="2">
+                <div style="padding:10px;border-radius:10px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:flex;flex-direction:column;gap:5px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <span style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ a.productLabel }}</span>
+                    <span style="flex:none;font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:7px;color:{{ a.statusCol }};background:{{ a.statusBg }};border:1px solid {{ a.statusBd }}">{{ a.statusLabel }}</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--tx2,#a9bdd4)">{{ a.typeLabel }} · {{ a.scopeLabel }}</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6)">من {{ a.startLabel }} إلى {{ a.endLabel }}</div>
+
+                  <!-- ASSIGNMENT MANAGEMENT (micro-phase) — ACTIVE-only end
+                       action. History cards (ENDED/CANCELLED) never render
+                       any control at all — see the separate history
+                       sc-for below, which has no end/edit/delete markup. -->
+                  <sc-if value="{{ !a.isConfirmingEnd }}">
+                    <button onClick="{{ a.onStartEndConfirm }}" data-f="1" disabled="{{ assignmentMutationBusy }}" style="margin-top:4px;width:100%;height:30px;border-radius:8px;font-size:10px;font-weight:600;color:#f87171;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);cursor:pointer">إنهاء التكليف</button>
+                  </sc-if>
+                  <sc-if value="{{ a.isConfirmingEnd }}">
+                    <div style="margin-top:4px;padding-top:8px;border-top:1px dashed var(--ctlBd,rgba(122,164,224,0.2));display:flex;flex-direction:column;gap:6px">
+                      <div style="font-size:9.5px;color:var(--tx3,#7d8ea6)">سبب الإنهاء (اختياري)</div>
+                      <input type="text" value="{{ endReasonDraft }}" onChange="{{ setEndReasonDraft }}" autocomplete="off" maxlength="500" style="width:100%;height:30px;border-radius:8px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:10.5px;padding:0 10px;outline:none">
+                      <sc-if value="{{ endError }}">
+                        <div style="font-size:9.5px;color:#f87171">{{ endError }}</div>
+                      </sc-if>
+                      <div style="display:flex;gap:6px">
+                        <button onClick="{{ a.onConfirmEnd }}" data-f="1" disabled="{{ endSubmitting }}" style="flex:1;height:30px;border-radius:8px;font-size:10px;font-weight:600;color:#fff;background:#c0392b;border:1px solid rgba(192,57,43,0.6);cursor:pointer">{{ endSubmitLabel }}</button>
+                        <button onClick="{{ cancelEndConfirm }}" data-f="1" disabled="{{ endSubmitting }}" style="flex:1;height:30px;border-radius:8px;font-size:10px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">تراجع</button>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ employeeHistoryAssignmentRows.length }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:10px;color:var(--tx3,#7d8ea6)">السجل التاريخي للتكليفات</div>
+              <sc-for list="{{ employeeHistoryAssignmentRows }}" as="a" hint-placeholder-count="2">
+                <div style="padding:10px;border-radius:10px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:flex;flex-direction:column;gap:5px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <span style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb)">{{ a.productLabel }}</span>
+                    <span style="flex:none;font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:7px;color:{{ a.statusCol }};background:{{ a.statusBg }};border:1px solid {{ a.statusBd }}">{{ a.statusLabel }}</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--tx2,#a9bdd4)">{{ a.typeLabel }} · {{ a.scopeLabel }}</div>
+                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6)">من {{ a.startLabel }} إلى {{ a.endLabel }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
       </div>
     </div>
   </sc-if>
@@ -1827,6 +1995,123 @@ function resolveManagerProductEntitlements(u) {
     lands: { enabled: landsEnabled, role: landsEnabled ? landsAccess.role : null },
   };
 }
+// USER CENTER SHADOW READ + ASSIGNMENT MANAGEMENT (micro-phases) — pure,
+// non-fabricating display formatters/vocabulary for employeeAssignments
+// rows exchanged with the trusted Admin API (api/admin/employees.js
+// listAssignments/createAssignment/endAssignment). This module never reads
+// Firestore directly and these formatters never invent a label for a value
+// they don't recognize — an unrecognized productId/assignmentType/
+// scope.type is shown as its own raw value rather than a fabricated Arabic
+// string. Product and assignment-type labels are the LOCKED vocabulary for
+// this phase — exactly the 3 current products and 4 allowed assignment
+// types, never GENERAL_SUPERVISOR/department_head/administrative_affairs/
+// mobility_head/contractor or any other internal role name.
+const INSTITUTIONAL_PRODUCT_LABELS = { field: 'إدارة الحصر الميداني', lands: 'إدارة الأراضي والممتلكات', mobility: 'إدارة الحركة والسير' };
+const INSTITUTIONAL_ASSIGNMENT_TYPE_LABELS = { PRIMARY: 'تكليف أساسي', SECONDARY: 'تكليف إضافي', TEMPORARY: 'تكليف مؤقت', SECTION_HEAD: 'رئيس قسم' };
+const INSTITUTIONAL_ASSIGNMENT_STATUS_LABELS = { ACTIVE: 'نشط', ENDED: 'منتهٍ', CANCELLED: 'ملغى' };
+const INSTITUTIONAL_SCOPE_TYPE_LABELS = { PRODUCT: 'منتج', SECTION: 'قسم' };
+const INSTITUTIONAL_STATUS_COLORS = {
+  ACTIVE: { col: '#22c55e', bg: 'rgba(34,197,85,0.12)', bd: 'rgba(34,197,85,0.3)' },
+  ENDED: { col: '#7d8ea6', bg: 'rgba(122,164,224,0.08)', bd: 'rgba(122,164,224,0.2)' },
+  CANCELLED: { col: '#f87171', bg: 'rgba(248,113,113,0.12)', bd: 'rgba(248,113,113,0.3)' },
+};
+
+// ASSIGNMENT MANAGEMENT (micro-phase) — the exact, locked option lists for
+// the create-assignment form's dropdowns. Exactly 3 products, exactly 4
+// assignment types — never expanded on the frontend; the backend contract
+// (platform/contracts/employee-assignment-contract.js) is the sole source
+// of truth for what values are actually valid.
+const INSTITUTIONAL_PRODUCT_OPTIONS = [
+  { id: 'field', label: INSTITUTIONAL_PRODUCT_LABELS.field },
+  { id: 'lands', label: INSTITUTIONAL_PRODUCT_LABELS.lands },
+  { id: 'mobility', label: INSTITUTIONAL_PRODUCT_LABELS.mobility },
+];
+const INSTITUTIONAL_ASSIGNMENT_TYPE_OPTIONS = [
+  { id: 'PRIMARY', label: INSTITUTIONAL_ASSIGNMENT_TYPE_LABELS.PRIMARY },
+  { id: 'SECONDARY', label: INSTITUTIONAL_ASSIGNMENT_TYPE_LABELS.SECONDARY },
+  { id: 'TEMPORARY', label: INSTITUTIONAL_ASSIGNMENT_TYPE_LABELS.TEMPORARY },
+  { id: 'SECTION_HEAD', label: INSTITUTIONAL_ASSIGNMENT_TYPE_LABELS.SECTION_HEAD },
+];
+
+// Decodes only the `sub`/`user_id` claim from the REAL Firebase ID token
+// this session already holds (the same token sent as the Authorization
+// header on every Admin API call) — never a signature check, since the
+// backend's own verifyIdToken() is the actual security boundary and
+// independently re-verifies issuedBy against its own caller.uid. This
+// exists ONLY so issuedBy can be set to the authenticated manager's own
+// uid without ever asking them to type it or fabricating a value; if a uid
+// cannot be safely decoded this way, callers must fail visibly rather than
+// guess or fall back to trusting other user input.
+function decodeJwtUid(token) {
+  try {
+    const payload = String(token).split('.')[1];
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    const json = JSON.parse(atob(padded));
+    if (typeof json.user_id === 'string' && json.user_id) return json.user_id;
+    if (typeof json.sub === 'string' && json.sub) return json.sub;
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+// ASSIGNMENT MANAGEMENT (micro-phase) — client-side validation only; the
+// backend contract remains the sole authority. These exist to give the
+// manager immediate feedback and to keep obviously-malformed values (stray
+// markup characters, absurd lengths) from ever being submitted — never to
+// replace server-side validation.
+function isValidSectionIdentifier(s) {
+  if (typeof s !== 'string') return false;
+  const trimmed = s.trim();
+  if (!trimmed || trimmed.length > 120) return false;
+  if (/[<>`]/.test(trimmed)) return false;
+  return true;
+}
+function isValidFreeText(s, maxLen = 500) {
+  if (s === undefined || s === null || s === '') return true;
+  if (typeof s !== 'string') return false;
+  if (s.trim().length > maxLen) return false;
+  if (/[<>`]/.test(s)) return false;
+  return true;
+}
+function isValidDateString(s) {
+  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s).getTime());
+}
+
+// Assignment dates are written server-side as Firestore Timestamps; this
+// only FORMATS whatever shape comes back (Date, ISO string, or a Firestore
+// Timestamp-like {_seconds}/{seconds} object) — it never fabricates a date.
+function formatInstitutionalAssignmentDate(value) {
+  if (!value) return '—';
+  let d = null;
+  if (value instanceof Date) d = value;
+  else if (typeof value === 'string' || typeof value === 'number') d = new Date(value);
+  else if (typeof value === 'object') {
+    if (typeof value.toDate === 'function') d = value.toDate();
+    else if (typeof value._seconds === 'number') d = new Date(value._seconds * 1000);
+    else if (typeof value.seconds === 'number') d = new Date(value.seconds * 1000);
+  }
+  if (!d || Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
+}
+
+function formatInstitutionalAssignmentRow(a) {
+  const scope = a && a.scope;
+  const scopeTypeLabel = scope && INSTITUTIONAL_SCOPE_TYPE_LABELS[scope.type];
+  const statusColors = INSTITUTIONAL_STATUS_COLORS[a.status] || { col: '#7d8ea6', bg: 'rgba(122,164,224,0.08)', bd: 'rgba(122,164,224,0.2)' };
+  return {
+    id: a.assignmentId,
+    productLabel: INSTITUTIONAL_PRODUCT_LABELS[a.productId] || a.productId || '—',
+    typeLabel: INSTITUTIONAL_ASSIGNMENT_TYPE_LABELS[a.assignmentType] || a.assignmentType || '—',
+    scopeLabel: scope ? `${scopeTypeLabel || scope.type || ''}: ${scope.id || ''}`.trim() : '—',
+    startLabel: formatInstitutionalAssignmentDate(a.startAt),
+    endLabel: formatInstitutionalAssignmentDate(a.endAt),
+    statusLabel: INSTITUTIONAL_ASSIGNMENT_STATUS_LABELS[a.status] || a.status || '—',
+    statusCol: statusColors.col, statusBg: statusColors.bg, statusBd: statusColors.bd,
+  };
+}
 class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
@@ -1839,6 +2124,23 @@ class Component extends DCLogic {
     svcFieldEnabled: false, svcFieldRole: 'supervisor', svcMobilityEnabled: false, svcMobilityRole: 'employee', svcLandsEnabled: false, svcLandsRole: 'lands_employee', svcVehicleEligible: false,
     addEmployeeOpen: false, aeName: '', aeAdministration: '', aeDepartment: '', aeJobTitle: '',
     employeeDrawerOpen: false, selectedEmployee: null, actEmail: '',
+    // USER CENTER SHADOW READ (micro-phase) — read-only institutional
+    // assignment history/governance display. employeeAssignments never
+    // backs any authorization decision; this is display data only, fetched
+    // through the same trusted Admin API used everywhere else in this
+    // drawer (api/admin/employees.js, action listAssignments).
+    employeeAssignmentsLoading: false, employeeAssignmentsError: '',
+    employeeAssignmentsCurrent: [], employeeAssignmentsHistory: [],
+    // ASSIGNMENT MANAGEMENT (micro-phase) — create-assignment form state.
+    // employeeId/organizationId/issuedBy/assignmentId/status/lockId are
+    // NEVER part of this form's editable state — they are always derived
+    // server-side or from the trusted session, never typed by the manager.
+    caCreateOpen: false, caSubmitting: false, caError: '',
+    caProductId: 'field', caAssignmentType: 'PRIMARY', caScopeType: 'PRODUCT', caScopeId: '',
+    caStartAt: '', caEndAt: '', caReason: '',
+    // ASSIGNMENT MANAGEMENT (micro-phase) — end-assignment confirmation
+    // state. Only one card may be in the "confirming" state at a time.
+    endConfirmingId: null, endReasonDraft: '', endSubmitting: false, endError: '',
     evidenceDrawerOpen: false, selectedObservation: null,
     evidenceBeforeState: 'idle', evidenceBeforeUrl: null,
     evidenceAfterState: 'idle', evidenceAfterUrl: null,
@@ -2873,6 +3175,65 @@ class Component extends DCLogic {
       selectedEmployeeIsNoAccount: st.selectedEmployee?.accountStatus === 'NO_ACCOUNT',
       selectedEmployeeIsPending: st.selectedEmployee?.accountStatus === 'PENDING_ACTIVATION',
       selectedEmployeeActivationError: st.selectedEmployee?.activationError || '',
+      // USER CENTER SHADOW READ (micro-phase) — read-only institutional
+      // assignment display. Permanent organizational home always comes
+      // from the employee record itself (employees/{employeeId}), never
+      // inferred from assignment history. employeeAssignments feeds ONLY
+      // this display — no authorization decision anywhere reads it.
+      employeeHomeAdministration: st.selectedEmployee?.administration || '—',
+      employeeHomeDepartment: st.selectedEmployee?.department || '—',
+      employeeHomeJobTitle: st.selectedEmployee?.jobTitle || '—',
+      employeeAssignmentsLoading: st.employeeAssignmentsLoading,
+      employeeAssignmentsError: st.employeeAssignmentsError,
+      employeeAssignmentsEmpty: !st.employeeAssignmentsLoading && !st.employeeAssignmentsError
+        && (st.employeeAssignmentsCurrent || []).length === 0 && (st.employeeAssignmentsHistory || []).length === 0,
+      // ASSIGNMENT MANAGEMENT (micro-phase) — current (ACTIVE) rows also
+      // carry the end-confirmation controls; history rows never do (there
+      // is no end action for an already-ENDED/CANCELLED assignment).
+      employeeCurrentAssignmentRows: (st.employeeAssignmentsCurrent || []).map(a => {
+        const row = formatInstitutionalAssignmentRow(a);
+        return {
+          ...row,
+          isConfirmingEnd: st.endConfirmingId === row.id,
+          onStartEndConfirm: () => this.startEndConfirm(row.id),
+          onConfirmEnd: () => this.confirmEndAssignment(row.id),
+        };
+      }),
+      employeeHistoryAssignmentRows: (st.employeeAssignmentsHistory || []).map(formatInstitutionalAssignmentRow),
+      // HOTFIX (unified busy guard) — true while EITHER a create or an end
+      // mutation has a real async request in flight (including through its
+      // post-mutation refresh). Drives the disabled state of every
+      // mutation-entry control ("+ إضافة تكليف", the per-card "إنهاء
+      // التكليف" entry button) so the UI never hides the true precondition
+      // for starting a new mutation of either kind.
+      assignmentMutationBusy: this.isAssignmentMutationBusy(),
+      // ASSIGNMENT MANAGEMENT (micro-phase) — create-assignment form. The
+      // option lists are the LOCKED vocabulary (3 products, 4 assignment
+      // types); employeeId/organizationId/issuedBy/assignmentId/status/
+      // lockId never appear here — they are never editable form fields.
+      caCreateOpen: st.caCreateOpen, caSubmitting: st.caSubmitting, caError: st.caError,
+      caProductId: st.caProductId, caAssignmentType: st.caAssignmentType, caScopeType: st.caScopeType,
+      caScopeId: st.caScopeId, caStartAt: st.caStartAt, caEndAt: st.caEndAt, caReason: st.caReason,
+      caProductOptions: INSTITUTIONAL_PRODUCT_OPTIONS,
+      caAssignmentTypeOptions: INSTITUTIONAL_ASSIGNMENT_TYPE_OPTIONS,
+      caShowSectionHeadHelper: st.caAssignmentType === 'SECTION_HEAD',
+      caShowSectionScopeInput: st.caScopeType === 'SECTION',
+      caSubmitLabel: st.caSubmitting ? 'جاري الحفظ...' : 'حفظ التكليف',
+      openCreateAssignmentForm: () => this.openCreateAssignmentForm(),
+      closeCreateAssignmentForm: () => this.closeCreateAssignmentForm(),
+      setCaProductId: e => this.setCaProductId(e),
+      setCaAssignmentType: e => this.setCaAssignmentType(e),
+      setCaScopeType: e => this.setCaScopeType(e),
+      setCaScopeId: e => this.setCaScopeId(e),
+      setCaStartAt: e => this.setCaStartAt(e),
+      setCaEndAt: e => this.setCaEndAt(e),
+      setCaReason: e => this.setCaReason(e),
+      submitCreateAssignment: () => this.submitCreateAssignment(),
+      // ASSIGNMENT MANAGEMENT (micro-phase) — end-assignment confirmation.
+      endReasonDraft: st.endReasonDraft, endError: st.endError, endSubmitting: st.endSubmitting,
+      endSubmitLabel: st.endSubmitting ? 'جاري الإنهاء...' : 'تأكيد الإنهاء',
+      setEndReasonDraft: e => this.setEndReasonDraft(e),
+      cancelEndConfirm: () => this.cancelEndConfirm(),
       actEmail: st.actEmail, setActEmail: e => this.setState({ actEmail: e.target.value }),
       activateSelectedEmployee: () => this.activateSelectedEmployee(),
       addUserOpen: st.addUserOpen, submitAddUser: () => this.submitAddUser(),
@@ -3426,10 +3787,330 @@ class Component extends DCLogic {
 
   openEmployeeDetail(employee) {
     this.setState({ employeeDrawerOpen: true, selectedEmployee: employee, actEmail: (employee && employee.email) || '' });
+    this.loadEmployeeAssignments(employee);
   }
 
+  // HOTFIX — never close the drawer while a create/end mutation is still
+  // pending: closing would clear selectedEmployee (and thus the eventual
+  // response's same-employee guard) while the request's real server
+  // outcome is still unknown, and it must never race a caSubmitting/
+  // endSubmitting guard closed out from under an in-flight request. This
+  // also covers the backdrop click and the explicit "×" button, which both
+  // call this same method.
   closeEmployeeDrawer() {
-    this.setState({ employeeDrawerOpen: false, selectedEmployee: null, actEmail: '' });
+    if (this.isAssignmentMutationBusy()) return;
+    this.setState({
+      employeeDrawerOpen: false, selectedEmployee: null, actEmail: '',
+      employeeAssignmentsLoading: false, employeeAssignmentsError: '',
+      employeeAssignmentsCurrent: [], employeeAssignmentsHistory: [],
+      caCreateOpen: false, caError: '',
+      caProductId: 'field', caAssignmentType: 'PRIMARY', caScopeType: 'PRODUCT', caScopeId: '',
+      caStartAt: '', caEndAt: '', caReason: '',
+      endConfirmingId: null, endReasonDraft: '', endError: '',
+    });
+  }
+
+  // USER CENTER SHADOW READ (micro-phase) — read-only institutional
+  // assignment history/governance display for the employee currently open
+  // in the drawer. employeeAssignments has no direct client read (Firestore
+  // Rules deny it entirely); the ONLY path here is the same trusted
+  // Admin API this drawer already uses for every other action
+  // (api/admin/employees.js, action listAssignments — manager same-org
+  // only, per the locked Institutional Assignment Foundation). This never
+  // affects login, routing, roles, entitlements, or any employee/users
+  // field — it only feeds this one read-only display.
+  //
+  // A simple per-employeeId cache on the component instance avoids
+  // refetching the same employee's history repeatedly within one open
+  // session — no premature caching framework, just a Map that lives as
+  // long as the page does.
+  //
+  // HOTFIX — stale-read protection. The prior guard only compared the
+  // employee id (this.state.selectedEmployee.id === employee.id), which
+  // never caught an OLDER request for the SAME employee resolving after a
+  // NEWER request for that same employee (e.g. a pre-mutation load still
+  // in flight when invalidateAndReloadAssignments starts a fresh
+  // post-mutation load). this._employeeAssignmentsLoadSeq is a
+  // monotonically increasing counter bumped once at the very start of
+  // every call; each call captures its own value and re-checks it against
+  // the live counter immediately before every place it would otherwise
+  // write the cache or any employeeAssignments* state. A load whose
+  // captured value no longer matches the live counter has been superseded
+  // by a strictly newer load and is discarded completely — it must never
+  // overwrite cache, current rows, history rows, or error state.
+  //
+  // Returns true if this call's own outcome was applied (or it was
+  // harmlessly superseded by a newer load that will speak for the truth
+  // instead), and false only if THIS call's own fetch genuinely failed
+  // while still current — the signal invalidateAndReloadAssignments and
+  // its mutation callers use to distinguish "the mutation succeeded but
+  // the refresh failed" from "the refresh succeeded".
+  async loadEmployeeAssignments(employee) {
+    if (!employee || !employee.id) return true;
+    this._employeeAssignmentsCache = this._employeeAssignmentsCache || new Map();
+    this._employeeAssignmentsLoadSeq = (this._employeeAssignmentsLoadSeq || 0) + 1;
+    const seq = this._employeeAssignmentsLoadSeq;
+
+    const cached = this._employeeAssignmentsCache.get(employee.id);
+    if (cached) {
+      if (this._employeeAssignmentsLoadSeq !== seq) return true;
+      this.setState({
+        employeeAssignmentsLoading: false, employeeAssignmentsError: '',
+        employeeAssignmentsCurrent: cached.current, employeeAssignmentsHistory: cached.history,
+      });
+      return true;
+    }
+    this.setState({
+      employeeAssignmentsLoading: true, employeeAssignmentsError: '',
+      employeeAssignmentsCurrent: [], employeeAssignmentsHistory: [],
+    });
+    let body;
+    try {
+      body = await this.callAdminEmployeesApi('listAssignments', {
+        organizationId: employee.organizationId,
+        employeeId: employee.id,
+      });
+    } catch (e) {
+      // A strictly newer load already superseded this one — it, not this
+      // stale failure, speaks for the current truth.
+      if (this._employeeAssignmentsLoadSeq !== seq) return true;
+      // FAIL CLOSED — unauthenticated / forbidden / cross_organization_denied
+      // (or any other API failure) show an honest error and an empty list.
+      // Never fall back to a direct Firestore read of employeeAssignments.
+      if (this.state.selectedEmployee && this.state.selectedEmployee.id === employee.id) {
+        this.setState({ employeeAssignmentsLoading: false, employeeAssignmentsError: this.adminApiErrorMessage(e) });
+      }
+      return false;
+    }
+    // Stale response — a newer load has since started; discard completely,
+    // never write cache or state from this one.
+    if (this._employeeAssignmentsLoadSeq !== seq) return true;
+    const assignments = Array.isArray(body.assignments) ? body.assignments : [];
+    const current = assignments.filter(a => a.status === 'ACTIVE');
+    const history = assignments.filter(a => a.status === 'ENDED' || a.status === 'CANCELLED');
+    this._employeeAssignmentsCache.set(employee.id, { current, history });
+    // Guard against a fast close/reopen (different employee) race — only
+    // apply the result if the drawer is still open on this same employee.
+    if (this.state.selectedEmployee && this.state.selectedEmployee.id === employee.id) {
+      this.setState({ employeeAssignmentsLoading: false, employeeAssignmentsError: '', employeeAssignmentsCurrent: current, employeeAssignmentsHistory: history });
+    }
+    return true;
+  }
+
+  // ASSIGNMENT MANAGEMENT (micro-phase) — after any successful mutation
+  // (create or end), the server is the sole source of truth: this NEVER
+  // patches employeeAssignmentsCurrent/History locally to simulate the
+  // result. It drops the per-employee shadow-read cache entry, clears the
+  // displayed lists, and re-fetches through the same trusted
+  // listAssignments path loadEmployeeAssignments already uses.
+  //
+  // HOTFIX — now async and awaited by its mutation callers, so
+  // caSubmitting/endSubmitting stay locked through the fresh reload, not
+  // just through the mutation call itself. Because loadEmployeeAssignments
+  // always bumps the shared load-sequence counter first, this call's fetch
+  // is guaranteed to supersede any pre-mutation load already in flight for
+  // this employee. Returns loadEmployeeAssignments's own success signal.
+  async invalidateAndReloadAssignments(employee) {
+    if (!employee || !employee.id) return true;
+    if (this._employeeAssignmentsCache) this._employeeAssignmentsCache.delete(employee.id);
+    this.setState({ employeeAssignmentsCurrent: [], employeeAssignmentsHistory: [], employeeAssignmentsError: '' });
+    return this.loadEmployeeAssignments(employee);
+  }
+
+  // HOTFIX (unified busy guard) — CREATE and END are mutually exclusive
+  // while either has a real async mutation in flight (through its
+  // post-mutation refresh, not just the mutation call itself). No
+  // UI-opening/cancel/close entry point may ever clear caSubmitting or
+  // endSubmitting — only the owning async mutation flow may clear its own
+  // flag, and only after its trusted refresh has completed.
+  isAssignmentMutationBusy() {
+    return this.state.caSubmitting || this.state.endSubmitting;
+  }
+
+  // HOTFIX — previously reset caSubmitting:false unconditionally, which let
+  // reopening the create form (e.g. right after a successful create, while
+  // the post-mutation listAssignments refresh was still pending) clear the
+  // guard early and allow a second create to start. Opening a form must
+  // NEVER mutate either pending flag, and must not even open while a
+  // mutation (create OR end) is busy.
+  openCreateAssignmentForm() {
+    if (this.isAssignmentMutationBusy()) return;
+    this.setState({
+      caCreateOpen: true, caError: '',
+      caProductId: 'field', caAssignmentType: 'PRIMARY', caScopeType: 'PRODUCT', caScopeId: '',
+      caStartAt: '', caEndAt: '', caReason: '',
+    });
+  }
+
+  // HOTFIX — never clear a mutation guard here: caSubmitting/endSubmitting
+  // may only become false once their own owning async flow (createAssignment
+  // + refresh, or endAssignment + refresh) has actually finished. Cancelling
+  // while ANY mutation is pending must be a no-op, never a way to reset
+  // either guard early.
+  closeCreateAssignmentForm() {
+    if (this.isAssignmentMutationBusy()) return;
+    this.setState({ caCreateOpen: false, caError: '' });
+  }
+
+  setCaProductId(e) { this.setState({ caProductId: e.target.value }); }
+  setCaAssignmentType(e) { this.setState({ caAssignmentType: e.target.value }); }
+  setCaScopeType(e) { this.setState({ caScopeType: e.target.value }); }
+  setCaScopeId(e) { this.setState({ caScopeId: e.target.value }); }
+  setCaStartAt(e) { this.setState({ caStartAt: e.target.value }); }
+  setCaEndAt(e) { this.setState({ caEndAt: e.target.value }); }
+  setCaReason(e) { this.setState({ caReason: e.target.value }); }
+
+  // ASSIGNMENT MANAGEMENT (micro-phase) — creates an institutional
+  // assignment through the LOCKED backend exactly as-is (api/admin/
+  // employees.js createAssignment). employeeId/organizationId are always
+  // taken from the selected employee record (never editable text);
+  // scope.id for a PRODUCT scope is always derived from the selected
+  // product, never a separate field; issuedBy is always the authenticated
+  // manager's own uid, decoded from the real session ID token — never
+  // typed by the manager, never fabricated. SECTION_HEAD uses this exact
+  // same call; the backend's deterministic SHA-256 lock is the sole
+  // uniqueness authority — nothing here re-implements or second-guesses it.
+  async submitCreateAssignment() {
+    // PART F + HOTFIX (unified busy guard) — duplicate-submission guard,
+    // and CREATE may never start while an END mutation is busy.
+    if (this.isAssignmentMutationBusy()) return;
+    const employee = this.state.selectedEmployee;
+    if (!employee) return;
+    const { caProductId, caAssignmentType, caScopeType, caScopeId, caStartAt, caEndAt, caReason } = this.state;
+
+    if (!isValidDateString(caStartAt)) { this.setState({ caError: 'تاريخ البداية مطلوب.' }); return; }
+    if (caEndAt && !isValidDateString(caEndAt)) { this.setState({ caError: 'تاريخ النهاية غير صالح.' }); return; }
+    if (caEndAt && caEndAt < caStartAt) { this.setState({ caError: 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية أو يساويه.' }); return; }
+
+    // PRODUCT scope always derives scope.id from the selected product —
+    // never a manager-typed value. SECTION scope requires one validated
+    // identifier/name field.
+    let scopeId = caProductId;
+    if (caScopeType === 'SECTION') {
+      if (!isValidSectionIdentifier(caScopeId)) { this.setState({ caError: 'معرّف/اسم القسم غير صالح.' }); return; }
+      scopeId = caScopeId.trim();
+    }
+    if (!isValidFreeText(caReason)) { this.setState({ caError: 'سبب التكليف غير صالح.' }); return; }
+
+    // HOTFIX (pre-auth mutation claim) — caSubmitting must be claimed
+    // BEFORE the first await, never after it. All synchronous validation
+    // above has already passed at this point, so this is the earliest
+    // point the guard can honestly be claimed; claiming it any later (e.g.
+    // after awaiting getAuthToken, as before) leaves a race window where
+    // caSubmitting/endSubmitting are both false while a token fetch is in
+    // flight — during which a second create, or an end action, could
+    // slip past the unified busy guard entirely.
+    this.setState({ caSubmitting: true, caError: '' });
+    try {
+      // PART B — issuedBy is derived exclusively from the authenticated
+      // session's own real ID token, never typed by the manager and never
+      // fabricated. A rejected/throwing getAuthToken is normalized to "no
+      // token" here, exactly like a null/empty return — every token
+      // failure shows the same truthful session error, releases
+      // caSubmitting, and never calls createAssignment.
+      let token = null;
+      try {
+        token = await this.getAuthToken?.();
+      } catch (_) {
+        token = null;
+      }
+      if (!token) {
+        this.setState({ caSubmitting: false, caError: 'الجلسة غير موثقة، الرجاء تسجيل الدخول من جديد.' });
+        return;
+      }
+      const issuedBy = decodeJwtUid(token);
+      if (!issuedBy) {
+        this.setState({ caSubmitting: false, caError: 'تعذر التحقق من هوية المستخدم الموثقة. الرجاء إعادة تسجيل الدخول.' });
+        return;
+      }
+
+      await this.callAdminEmployeesApi('createAssignment', {
+        employeeId: employee.id,
+        organizationId: employee.organizationId,
+        productId: caProductId,
+        assignmentType: caAssignmentType,
+        scope: { type: caScopeType, id: scopeId },
+        startAt: caStartAt,
+        endAt: caEndAt || undefined,
+        issuedBy,
+        reason: (caReason || '').trim() || undefined,
+      });
+      this.flash('تمت إضافة التكليف بنجاح.');
+      this.setState({ caCreateOpen: false });
+      // HOTFIX (FIX 2) — the mutation is DONE, but caSubmitting stays true
+      // through this reload too: it may only become false once the fresh
+      // listAssignments read has actually finished. PART E — server
+      // remains the source of truth: never patch the displayed lists
+      // locally.
+      const refreshOk = await this.invalidateAndReloadAssignments(employee);
+      this.setState({ caSubmitting: false });
+      if (!refreshOk) {
+        // HOTFIX (FIX 4) — the mutation itself already succeeded; never
+        // tell the manager it failed, and never auto-retry it to "fix" a
+        // read failure.
+        this.flash('تم تنفيذ الإجراء، لكن تعذر تحديث سجل التكليفات. أعد المحاولة.');
+      }
+    } catch (e) {
+      // PART G/F — fail closed, restore controls, never fabricate success.
+      this.setState({ caSubmitting: false, caError: this.adminApiErrorMessage(e) });
+    }
+  }
+
+  // ASSIGNMENT MANAGEMENT (micro-phase) — end-assignment confirmation.
+  // Only one card may be "confirming" at a time; starting a new one always
+  // resets any previous draft/error.
+  // HOTFIX (unified busy guard) — must not even open an end-confirmation
+  // while a mutation (create OR end) is busy.
+  startEndConfirm(assignmentId) {
+    if (this.isAssignmentMutationBusy()) return;
+    this.setState({ endConfirmingId: assignmentId, endReasonDraft: '', endError: '' });
+  }
+
+  // HOTFIX — never clear a mutation guard here: caSubmitting/endSubmitting
+  // may only become false once their own owning async flow has actually
+  // finished.
+  cancelEndConfirm() {
+    if (this.isAssignmentMutationBusy()) return;
+    this.setState({ endConfirmingId: null, endReasonDraft: '', endError: '' });
+  }
+
+  setEndReasonDraft(e) { this.setState({ endReasonDraft: e.target.value }); }
+
+  // Ends an ACTIVE institutional assignment through the LOCKED backend
+  // exactly as-is (api/admin/employees.js endAssignment). No delete path,
+  // no reactivate path, no manual status change, no identity edit — the
+  // backend's own state machine and lock-release logic are the sole
+  // authority; this only ever sends assignmentId + an optional endReason.
+  async confirmEndAssignment(assignmentId) {
+    // PART F + HOTFIX (unified busy guard) — duplicate-submission guard,
+    // and END may never start while a CREATE mutation is busy.
+    if (this.isAssignmentMutationBusy()) return;
+    const employee = this.state.selectedEmployee;
+    const endReason = this.state.endReasonDraft;
+    if (!isValidFreeText(endReason)) { this.setState({ endError: 'سبب الإنهاء غير صالح.' }); return; }
+    this.setState({ endSubmitting: true, endError: '' });
+    try {
+      await this.callAdminEmployeesApi('endAssignment', {
+        assignmentId,
+        endReason: (endReason || '').trim() || undefined,
+      });
+      this.flash('تم إنهاء التكليف بنجاح.');
+      this.setState({ endConfirmingId: null, endReasonDraft: '' });
+      // HOTFIX (FIX 2) — the mutation is DONE, but endSubmitting stays
+      // true through this reload too: it may only become false once the
+      // fresh listAssignments read has actually finished. PART E — server
+      // remains the source of truth: never mark the card ended locally.
+      const refreshOk = await this.invalidateAndReloadAssignments(employee);
+      this.setState({ endSubmitting: false });
+      if (!refreshOk) {
+        // HOTFIX (FIX 4) — the mutation itself already succeeded; never
+        // tell the manager it failed, and never auto-retry it to "fix" a
+        // read failure.
+        this.flash('تم تنفيذ الإجراء، لكن تعذر تحديث سجل التكليفات. أعد المحاولة.');
+      }
+    } catch (e) {
+      this.setState({ endSubmitting: false, endError: this.adminApiErrorMessage(e) });
+    }
   }
 
   // Re-reads the employee doc from the live registry (this.liveEmployees,
@@ -3623,7 +4304,25 @@ class Component extends DCLogic {
       employeeId_and_email_required: 'البريد الإلكتروني مطلوب لتفعيل الحساب.',
       firestore_link_failed: 'تعذر إكمال الربط بعد إنشاء الحساب. حالة الحساب الآن قيد التفعيل، أعد المحاولة.',
       no_linked_account: 'لا يوجد حساب دخول مرتبط بهذا الموظف بعد.',
-      illegal_account_status_transition: 'تعذر تنفيذ هذا التغيير على حالة الحساب الحالية.'
+      illegal_account_status_transition: 'تعذر تنفيذ هذا التغيير على حالة الحساب الحالية.',
+      // USER CENTER SHADOW READ (micro-phase) — listAssignments denial.
+      manager_required_for_assignments: 'عرض التكليفات المؤسسية متاح لمدير المؤسسة فقط.',
+      // ASSIGNMENT MANAGEMENT (micro-phase) — required Arabic mappings for
+      // the create/end assignment reason codes (PART C/G exact wording for
+      // the two SECTION_HEAD lock outcomes).
+      section_head_already_active: 'يوجد رئيس قسم نشط بالفعل لهذا النطاق.',
+      section_head_lock_inconsistent: 'تعذر تنفيذ التعيين بسبب تعارض في سجل رئيس القسم. يلزم مراجعة إدارية.',
+      assignment_not_active: 'لا يمكن إنهاء تكليف غير نشط.',
+      assignment_not_found: 'تعذر العثور على سجل التكليف.',
+      assignmentId_required: 'تعذر تحديد التكليف المطلوب إنهاؤه.',
+      invalid_endReason: 'سبب الإنهاء غير صالح.',
+      invalid_request: 'بيانات التكليف غير صالحة.',
+      unauthenticated: 'الجلسة غير موثقة، الرجاء تسجيل الدخول من جديد.',
+      issuedBy_must_be_caller: 'تعذر التحقق من هوية المستخدم الموثقة. الرجاء إعادة تسجيل الدخول.',
+      invalid_scope: 'النطاق المحدد غير صالح.',
+      invalid_assignment_type: 'نوع التكليف غير صالح.',
+      end_before_start: 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية أو يساويه.',
+      startAt_required: 'تاريخ البداية مطلوب.',
     };
     return messages[e.reason] || messages[e.message] || 'حدث خطأ غير متوقع.';
   }

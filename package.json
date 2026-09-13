@@ -12,7 +12,10 @@
     "test:e2e:mayor-scenario": "node test/e2e/mayor-scenario.js",
     "test:e2e:negative-security": "node test/e2e/negative-security.js",
     "test:e2e:responsive-qa": "node test/e2e/responsive-qa.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:geo": "node test/run-geo-suite.js",
+    "test:security": "node test/run-security-suite.js",
+    "test:release": "node test/run-release-suite.js",
+    "test": "node test/run-release-suite.js"
   },
   "keywords": [],
   "author": "",
