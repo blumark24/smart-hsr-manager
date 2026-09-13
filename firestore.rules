@@ -737,7 +737,15 @@ service cloud.firestore {
       // A draft's own author may still edit its (pre-workflow) content
       // directly. Any status transition (transition/approve/reject) is a
       // consequential, trusted-audited operation and is server-only.
-      allow update: if validLandGrant(municipalityId) && resource.data.municipality_id == municipalityId && request.resource.data.created_by == resource.data.created_by && request.resource.data.municipality_id == resource.data.municipality_id && resource.data.created_by == request.auth.uid && resource.data.status == 'draft' && request.resource.data.status == 'draft' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['beneficiary', 'royal_order', 'allocation_decision', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'document_ids', 'updated_at']);
+      // PHASE 09 SECURITY MICRO-CLOSURE — this branch previously checked
+      // authorship/tenant/status/diff but never re-verified the caller's
+      // OWN current Lands membership is still enabled, unlike every other
+      // rule in this file. A user disabled/revoked after authoring a draft
+      // could still edit that old draft directly as long as they retained
+      // a valid Firebase Auth session and the document id — a fail-open
+      // revocation gap. enabledMember(municipalityId) closes it the same
+      // way read/create already require it.
+      allow update: if enabledMember(municipalityId) && validLandGrant(municipalityId) && resource.data.municipality_id == municipalityId && request.resource.data.created_by == resource.data.created_by && request.resource.data.municipality_id == resource.data.municipality_id && resource.data.created_by == request.auth.uid && resource.data.status == 'draft' && request.resource.data.status == 'draft' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['beneficiary', 'royal_order', 'allocation_decision', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'document_ids', 'updated_at']);
       // land_grant.delete is a consequential, trusted-audited operation.
       allow delete: if false;
     }
