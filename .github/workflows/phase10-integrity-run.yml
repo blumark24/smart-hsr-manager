@@ -1,0 +1,327 @@
+name: phase10-integrity-run
+
+on:
+  push:
+    branches: [phase10-integrity-run]
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_SHA: 2ee5b3a5aed26235dad3349a5a95e1d3dd9ea7d2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rebuild cleanly from locked Phase 10 base
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp api/_lib/mobilityCreate.js /tmp/mobilityCreate.js
+          cp test/mobility-create-security-integrity.test.js /tmp/mobility-create-security-integrity.test.js
+          git checkout --detach "$BASE_SHA"
+          mkdir -p api/_lib test
+          cp /tmp/mobilityCreate.js api/_lib/mobilityCreate.js
+          cp /tmp/mobility-create-security-integrity.test.js test/mobility-create-security-integrity.test.js
+
+      - name: Apply narrow trusted-create cutover
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              s = p.read_text()
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one replacement target, found {count}')
+              p.write_text(s.replace(old, new, 1))
+
+          replace_once('api/organization/context.js',
+              "const { getDb } = require('../_lib/firebaseAdmin');",
+              "const { getDb, FieldValue } = require('../_lib/firebaseAdmin');")
+          replace_once('api/organization/context.js',
+              "const { callLandsSsoRegister, bridgeConfigured } = require('../_lib/landsBridge');",
+              "const { callLandsSsoRegister, bridgeConfigured } = require('../_lib/landsBridge');\nconst { handleTrustedMobilityCreate, MOBILITY_CREATE_ACTIONS } = require('../_lib/mobilityCreate');")
+
+          post_helpers = r'''
+          async function readJsonBody(req) {
+            if (req.body && typeof req.body === 'object') return req.body;
+            if (typeof req.body === 'string' && req.body.length) {
+              try { return JSON.parse(req.body); } catch (_) { return {}; }
+            }
+            const chunks = [];
+            if (req && typeof req[Symbol.asyncIterator] === 'function') {
+              for await (const c of req) chunks.push(c);
+            }
+            if (!chunks.length) return {};
+            try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
+            catch (_) { return {}; }
+          }
+
+          async function handlePost(req, res) {
+            const body = await readJsonBody(req);
+            if (body && MOBILITY_CREATE_ACTIONS.has(body.action)) {
+              let decoded;
+              try {
+                decoded = await verifyRequestToken(req);
+              } catch (e) {
+                return sendJson(res, e.statusCode || 401, { error: 'unauthenticated' });
+              }
+              try {
+                const outcome = await handleTrustedMobilityCreate({
+                  action: body.action,
+                  db: getDb(),
+                  FieldValue,
+                  decoded,
+                  body,
+                });
+                if (!outcome.ok) {
+                  return sendJson(res, outcome.statusCode || 400, { error: 'request_failed', reason: outcome.reason });
+                }
+                return sendJson(res, 200, outcome);
+              } catch (_) {
+                return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+              }
+            }
+            return handleLandsSsoHandoff(req, res);
+          }
+
+          '''
+          replace_once('api/organization/context.js',
+              "const SSO_ALLOWED_LANDS_ROLES = ['lands_employee', 'lands_department_manager'];",
+              post_helpers + "const SSO_ALLOWED_LANDS_ROLES = ['lands_employee', 'lands_department_manager'];")
+          replace_once('api/organization/context.js',
+              "if (req.method === 'POST') return handleLandsSsoHandoff(req, res);",
+              "if (req.method === 'POST') return handlePost(req, res);")
+
+          replace_once('smart-mobility-adapter.js',
+              "let activeContext = null;",
+              "let activeContext = null;\nconst pendingTrustedCreates = new Map();")
+          p = Path('smart-mobility-adapter.js')
+          s = p.read_text()
+          first = s.index('// PHASE 10 UAT FIX — this and createIncident() below')
+          first_end = s.index('\nasync function submitMissionForApproval', first)
+          trusted_block = r'''// PHASE 10 RELEASE-INTEGRITY MICRO-CLOSURE — mission/incident creation is
+          // trusted-server-only. A stable clientRequestId is retained for an ambiguous
+          // retry (for example: the server committed but the HTTP response was lost),
+          // so the trusted Admin transaction returns the already-created canonical id
+          // instead of producing a duplicate. There is no direct-Firestore fallback.
+          function createPayloadFingerprint(action, payload) {
+            const raw = `${action}:${JSON.stringify(payload)}`;
+            let hash = 2166136261;
+            for (let i = 0; i < raw.length; i++) {
+              hash ^= raw.charCodeAt(i);
+              hash = Math.imul(hash, 16777619);
+            }
+            return `${action}:${(hash >>> 0).toString(16)}`;
+          }
+          function randomClientRequestId() {
+            if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
+              return globalThis.crypto.randomUUID();
+            }
+            const seed = `${Date.now()}_${Math.random()}_${Math.random()}`.replace(/[^A-Za-z0-9_-]/g, '_');
+            return `req_${seed}`.slice(0, 120);
+          }
+          function pendingCreateKey(action, payload) {
+            return `smart-hsr-mobility:${createPayloadFingerprint(action, payload)}`;
+          }
+          function getPendingCreate(action, payload) {
+            const key = pendingCreateKey(action, payload);
+            let id = pendingTrustedCreates.get(key) || '';
+            if (!id) {
+              try { id = sessionStorage.getItem(key) || ''; } catch (_) { /* storage unavailable */ }
+            }
+            if (!id) {
+              id = randomClientRequestId();
+              pendingTrustedCreates.set(key, id);
+              try { sessionStorage.setItem(key, id); } catch (_) { /* memory fallback */ }
+            } else {
+              pendingTrustedCreates.set(key, id);
+            }
+            return { key, id };
+          }
+          function clearPendingCreate(key) {
+            pendingTrustedCreates.delete(key);
+            try { sessionStorage.removeItem(key); } catch (_) { /* no-op */ }
+          }
+          async function trustedMobilityCreate(action, payload) {
+            if (!activeAuth || !activeAuth.currentUser) throw new Error('not_authorized');
+            const pending = getPendingCreate(action, payload);
+            const token = await activeAuth.currentUser.getIdToken();
+            const response = await fetch('/api/organization/context', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({ action, clientRequestId: pending.id, ...payload })
+            });
+            const body = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              if (body.reason === 'idempotency_conflict') clearPendingCreate(pending.key);
+              throw new Error(body.reason || 'trusted_create_failed');
+            }
+            clearPendingCreate(pending.key);
+            return body;
+          }
+
+          async function createMissionRequest({ type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel }) {
+            requireRole('dept');
+            const result = await trustedMobilityCreate('createMobilityMission', {
+              type: type || '', destination: destination || '', reason: reason || '',
+              scope: scope || 'داخل النطاق', requestedEmployeeName: requestedEmployeeName || '',
+              whenLabel: whenLabel || '', durationLabel: durationLabel || ''
+            });
+            if (!result.missionId) throw new Error('trusted_create_missing_mission_id');
+            return result.missionId;
+          }
+          '''
+          s = s[:first] + trusted_block + s[first_end:]
+          second = s.index('// PHASE 10 UAT FIX — see the identical')
+          second_end = s.index('\nasync function mobilityProcessIncident', second)
+          incident_block = r'''async function createIncident({ missionId, vehicleId, category, severity, note }) {
+            requireRole('employee');
+            const result = await trustedMobilityCreate('createMobilityIncident', {
+              missionId, vehicleId: vehicleId || '',
+              category: category || 'أخرى', severity: severity || 'MEDIUM', note: note || ''
+            });
+            if (!result.incidentId) throw new Error('trusted_create_missing_incident_id');
+            return result.incidentId;
+          }
+          '''
+          s = s[:second] + incident_block + s[second_end:]
+          p.write_text(s)
+
+          mission_old = """      // Only a department head may create a mission request, as a DRAFT, in
+                // their own organization and department, self-attributed.
+                allow create: if mobilityUserRole() == 'department_head'
+                  && request.resource.data.organizationId == mobilityUserOrgId()
+                  && request.resource.data.department == mobilityUserDept()
+                  && request.resource.data.createdByUid == request.auth.uid
+                  && request.resource.data.status == 'DRAFT';"""
+          mission_new = """      // PHASE 10 RELEASE-INTEGRITY MICRO-CLOSURE — mission creation is
+                // trusted-server-only so resource + canonical audit commit atomically.
+                allow create: if false;"""
+          replace_once('firestore.rules', mission_old, mission_new)
+
+          incident_old = """      // Only the employee assigned to the referenced (currently
+                // IN_PROGRESS) mission may open an incident against it.
+                allow create: if mobilityUserRole() == 'employee'
+                  && request.resource.data.organizationId == mobilityUserOrgId()
+                  && request.resource.data.createdByUid == request.auth.uid
+                  && request.resource.data.status == 'NEW'
+                  && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.organizationId == mobilityUserOrgId()
+                  && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.assignedEmployeeUid == request.auth.uid
+                  && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.status == 'IN_PROGRESS';"""
+          incident_new = """      // PHASE 10 RELEASE-INTEGRITY MICRO-CLOSURE — incident creation is
+                // trusted-server-only so live assignment/tenant checks and audit are atomic.
+                allow create: if false;"""
+          replace_once('firestore.rules', incident_old, incident_new)
+
+          replace_once('test/mobility-mission-rules.test.js',
+              "test('C1 department head may create a DRAFT mission in their own department', async () => {\n  await assertSucceeds(setDoc(doc(ctx(UID.deptHeadA), 'missions', 'newDraftA'), {",
+              "test('C1 direct client mission create is denied even for a valid department head — trusted API only', async () => {\n  await assertFails(setDoc(doc(ctx(UID.deptHeadA), 'missions', 'newDraftA'), {")
+          replace_once('test/mobility-incident-audit-rules.test.js',
+              "test('C1 the assigned employee may create an incident on their own IN_PROGRESS mission', async () => {\n  await assertSucceeds(setDoc(doc(ctx(UID.employeeA), 'incidents', 'newC1'), {",
+              "test('C1 direct client incident create is denied even for the assigned employee — trusted API only', async () => {\n  await assertFails(setDoc(doc(ctx(UID.employeeA), 'incidents', 'newC1'), {")
+
+          wp = Path('test/mobility-phase9-wiring.test.js')
+          ws = wp.read_text()
+          wstart = ws.index('// PHASE 10 UAT FIX — createMissionRequest and createIncident')
+          wend = ws.index('const transactionalAuditedFns', wstart)
+          trusted_expectations = r'''// PHASE 10 RELEASE-INTEGRITY MICRO-CLOSURE — mission and incident creation
+          // must use the authenticated trusted endpoint only. The browser may never
+          // setDoc/writeBatch/runTransaction the new resource directly.
+          const trustedCreates = [
+            ['createMissionRequest', 'createMobilityMission', 'missionId'],
+            ['createIncident', 'createMobilityIncident', 'incidentId'],
+          ];
+          for (const [fn, action, idField] of trustedCreates) {
+            const start = adapter.indexOf(`async function ${fn}(`);
+            assert.ok(start >= 0, `${fn} must exist`);
+            const end = adapter.indexOf('\nasync function ', start + 1);
+            const body = adapter.slice(start, end > 0 ? end : start + 2400);
+            assert.match(body, new RegExp(`trustedMobilityCreate\\('${action}'`), `${fn} must delegate to ${action}`);
+            assert.match(body, new RegExp(`result\\.${idField}`), `${fn} must return canonical ${idField}`);
+            assert.doesNotMatch(body, /api\.setDoc\(/, `${fn} must not write the resource directly`);
+            assert.doesNotMatch(body, /writeBatch\(|runTransaction\(/, `${fn} must not have a Firestore fallback`);
+          }
+          {
+            const start = adapter.indexOf('async function trustedMobilityCreate(');
+            const end = adapter.indexOf('\nasync function ', start + 1);
+            const body = adapter.slice(start, end > 0 ? end : start + 2600);
+            assert.match(body, /activeAuth\.currentUser\.getIdToken\(\)/);
+            assert.match(body, /fetch\('\/api\/organization\/context'/);
+            assert.match(body, /clientRequestId:\s*pending\.id/);
+          }
+          '''
+          ws = ws[:wstart] + trusted_expectations + ws[wend:]
+          wp.write_text(ws)
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Focused syntax and integrity tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check api/_lib/mobilityCreate.js
+          node --check api/organization/context.js
+          node --check smart-mobility-adapter.js
+          node --check test/mobility-create-security-integrity.test.js
+          node --check test/mobility-phase9-wiring.test.js
+          node --test test/mobility-create-security-integrity.test.js
+          node test/mobility-phase9-wiring.test.js
+
+      - name: Canonical release suite
+        run: npm run test:release
+
+      - name: Security suite
+        run: npm run test:security
+
+      - name: Geo suite
+        run: npm run test:geo
+
+      - name: Prepare Chromium for real-browser UAT
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium
+          CHROME="$(find "$HOME/.cache/ms-playwright" -type f -name chrome -perm -111 | head -n 1)"
+          test -n "$CHROME"
+          sudo mkdir -p /opt/pw-browsers/chromium-1194/chrome-linux
+          sudo ln -sf "$CHROME" /opt/pw-browsers/chromium-1194/chrome-linux/chrome
+
+      - name: Mayor real-browser lifecycle
+        run: node test/e2e/mayor-scenario.js
+
+      - name: Negative-security real-browser suite
+        run: node test/e2e/negative-security.js
+
+      - name: Verify narrow diff and publish tested candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          allowed='^(api/_lib/mobilityCreate\.js|api/organization/context\.js|smart-mobility-adapter\.js|firestore\.rules|test/mobility-create-security-integrity\.test\.js|test/mobility-phase9-wiring\.test\.js|test/mobility-mission-rules\.test\.js|test/mobility-incident-audit-rules\.test\.js)$'
+          git status --short
+          bad="$(git status --short | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+          if [ -n "$bad" ]; then
+            echo "Unexpected changed files:" >&2
+            echo "$bad" >&2
+            exit 1
+          fi
+          git diff --check
+          git diff --stat
+          git config user.name 'SMART HSR Release Bot'
+          git config user.email 'noreply@github.com'
+          git add api/_lib/mobilityCreate.js api/organization/context.js smart-mobility-adapter.js firestore.rules \
+            test/mobility-create-security-integrity.test.js test/mobility-phase9-wiring.test.js \
+            test/mobility-mission-rules.test.js test/mobility-incident-audit-rules.test.js
+          git commit -m 'Phase 10: make Mobility creates trusted, atomic, and idempotent'
+          git push --force-with-lease origin HEAD:refs/heads/phase10-integrity-run
