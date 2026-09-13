@@ -86,15 +86,20 @@ test('OpenAI selection routed end-to-end through createProviderRouter stays advi
   });
   const router = createProviderRouter({ selectedProvider: selection.providerId, providers: { [selection.providerId]: selection.providerRegistration } });
   const routed = await router.analyzeObservationImage(input(), authContext());
-  // No real transport configured (offline test): the provider itself denies
-  // with AI_PROVIDER_UNAVAILABLE, but provider-router.js's validateAIOutput
-  // flattens every non-ok provider result (not only malformed output) into
-  // AI_PROVIDER_OUTPUT_INVALID/AI_OUTPUT_NOT_SUCCESS -- pre-existing router
-  // behavior, identical for Gemini (see the next test). Never a fabricated
-  // success either way.
+  // PHASE 09 GATE 4 — no real transport configured (offline test): the
+  // provider denies with AI_PROVIDER_UNAVAILABLE. provider-router.js's
+  // validateAIOutput only flattens a MALFORMED/schema-invalid provider
+  // result into AI_PROVIDER_OUTPUT_INVALID — a well-shaped provider failure
+  // like this one passes shape validation and is returned as-is, preserving
+  // the real, specific, actionable error code rather than genericizing it.
+  // This test previously expected the older, blanket-flattening behavior;
+  // corrected to match the current, more precise pass-through design. The
+  // safety-critical guarantees this test exists to prove — never a
+  // fabricated success, always advisory-only, always requiring explicit
+  // human action — are unaffected and still verified below.
   assert.equal(routed.result.ok, false);
-  assert.equal(routed.result.errorCode, 'AI_PROVIDER_OUTPUT_INVALID');
-  assert.equal(routed.result.reason, 'AI_OUTPUT_NOT_SUCCESS');
+  assert.equal(routed.result.errorCode, 'AI_PROVIDER_UNAVAILABLE');
+  assert.equal(routed.result.reason, 'Provider evaluation request was denied.');
   assert.equal(routed.advisoryOnly, true);
   assert.equal(routed.requiresExplicitHumanAction, true);
 });
@@ -120,10 +125,14 @@ test('createActiveVisionProviderRegistration selects Gemini explicitly with SMAR
   assert.equal(selection.providerId, 'gemini');
   const router = createProviderRouter({ selectedProvider: selection.providerId, providers: { [selection.providerId]: selection.providerRegistration } });
   const routed = await router.analyzeObservationImage(input(), authContext());
-  // Same router flattening as the OpenAI case above -- confirms Gemini and
-  // OpenAI behave identically through the router, not just individually.
+  // PHASE 09 GATE 4 — same real, current pass-through behavior as the
+  // OpenAI case above (see that test's comment): Gemini's own well-shaped
+  // request-rejection passes through unflattened, with its own specific
+  // error code — confirming Gemini and OpenAI behave consistently through
+  // the router (both stay advisory-only, both preserve their real error),
+  // not that both get genericized identically.
   assert.equal(routed.result.ok, false);
-  assert.equal(routed.result.errorCode, 'AI_PROVIDER_OUTPUT_INVALID');
+  assert.equal(routed.result.errorCode, 'AI_PROVIDER_REQUEST_INVALID');
   assert.equal(routed.advisoryOnly, true);
 });
 

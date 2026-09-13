@@ -85,14 +85,24 @@ test('CLOSURE 2: contractor can no longer start their own assigned observation v
   }));
 });
 
-test('RULE GAP: contractor starts another contractor observation', async () => {
-  await assertSucceeds(updateDoc(doc(db(UID.contractorA), 'observations', 'pendingOther'), {
+// PHASE 09 GATE 4 — these two were long-standing "RULE GAP" tests
+// (assertSucceeds, documenting a real historical gap where a contractor
+// could write to another contractor's assigned observation). PHASE 08.1
+// CLOSURE 2 retired ALL direct-client contractor writes to observations
+// entirely (canContractorUpdateObservation() removed; the only path now is
+// the trusted server transaction in api/admin/users.js). Verified against
+// the current firestore.rules: no branch of the observations `allow update`
+// rule admits a contractor at all anymore. The gap these tests tracked is
+// closed; they are corrected here to assert the current, secure behavior
+// instead of continuing to report a fixed issue as a failing baseline test.
+test('CLOSED (Phase 08.1 Closure 2): contractor can no longer write another contractor\'s observation — no contractor has any direct client write path at all', async () => {
+  await assertFails(updateDoc(doc(db(UID.contractorA), 'observations', 'pendingOther'), {
     status: 'IN_PROGRESS', updatedByUid: UID.contractorA,
   }));
 });
 
-test('RULE GAP: contractor submits evidence for another assignment', async () => {
-  await assertSucceeds(updateDoc(doc(db(UID.contractorA), 'observations', 'progressOther'), {
+test('CLOSED (Phase 08.1 Closure 2): contractor can no longer submit evidence for another assignment — no contractor has any direct client write path at all', async () => {
+  await assertFails(updateDoc(doc(db(UID.contractorA), 'observations', 'progressOther'), {
     status: 'PENDING_REVIEW', afterImagePath: 'observations/orgA/after/example.webp',
     resolutionNote: 'done', updatedByUid: UID.contractorA,
   }));
@@ -104,8 +114,12 @@ test('PASS: inspector updates own unassigned observation', async () => {
   }));
 });
 
-test('RULE GAP: inspector updates another inspector observation', async () => {
-  await assertSucceeds(updateDoc(doc(db(UID.inspectorA), 'observations', 'otherInspector'), {
+// PHASE 09 GATE 4 — canInspectorUpdateObservation() requires
+// resource.data.createdByUid == request.auth.uid, so this has always been
+// denied by the current rules; the "RULE GAP" label and assertSucceeds
+// predate that creator-scoping and were never updated to match.
+test('CLOSED: inspector cannot update another inspector\'s observation — creator-scoped by the current rules', async () => {
+  await assertFails(updateDoc(doc(db(UID.inspectorA), 'observations', 'otherInspector'), {
     resolutionNote: 'not the creator',
   }));
 });
@@ -144,14 +158,21 @@ test('PASS: cross-organization write is denied', async () => {
   }));
 });
 
-test('RULE GAP: manager can reopen COMPLETED under current rules', async () => {
-  await assertSucceeds(updateDoc(doc(db(UID.managerA), 'observations', 'completed'), {
+// PHASE 09 GATE 4 — canManagerUpdateObservation() requires
+// resource.data.status != 'COMPLETED', making COMPLETED immutable via this
+// path; the "RULE GAP" label and assertSucceeds predate that immutability
+// guard and were never updated to match.
+test('CLOSED: manager cannot reopen a COMPLETED observation — COMPLETED is immutable under the current rules', async () => {
+  await assertFails(updateDoc(doc(db(UID.managerA), 'observations', 'completed'), {
     status: 'PENDING', updatedByUid: UID.managerA,
   }));
 });
 
-test('RULE GAP: assigned contractor can reopen COMPLETED under current rules', async () => {
-  await assertSucceeds(updateDoc(doc(db(UID.contractorA), 'observations', 'completed'), {
+// PHASE 09 GATE 4 — doubly denied: COMPLETED is immutable (above) AND, per
+// Phase 08.1 Closure 2, a contractor has no direct client write path to
+// observations at all anymore.
+test('CLOSED: contractor cannot reopen a COMPLETED observation — COMPLETED is immutable, and contractors have no direct write path at all', async () => {
+  await assertFails(updateDoc(doc(db(UID.contractorA), 'observations', 'completed'), {
     status: 'PENDING', updatedByUid: UID.contractorA,
   }));
 });

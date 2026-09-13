@@ -69,24 +69,38 @@ let stopDocuments = null;
 let stopAudit = null;
 let bootstrapAttempted = false;
 
-// ---- ported verbatim from smart-hsr-lands/client/lands-domain.js ----
-// (design/lands-vision2030-final-ui @ 536171a50f6d521a388e9bd8caafae588ef8b9b5)
-// The one canonical completeness calculation — five approved axes, 20% each.
+// PHASE 09 GATE 1 — re-ported from Lands' CURRENT authoritative source,
+// smart-hsr-lands/client/lands-core.js's computeCompleteness(). The
+// previous port (from an earlier lands-domain.js on the
+// design/lands-vision2030-final-ui branch) checked fields Lands' real,
+// Rules-enforced landGrant schema never populates — nested
+// beneficiary/royal_order/allocation_decision objects, denormalized
+// plan_reference_number/parcel_reference_number strings, and a
+// conveyance{letter_number,letter_date} object that does not exist
+// anywhere in Lands' schema, Rules, or trusted server code. Every grant
+// was silently scored far below its real completeness. The real schema
+// (confirmed against landsMunicipalities/{id}/landGrants' Rules
+// validLandGrant() allowlist) only ever carries the *_id foreign keys
+// and document_ids below. Lands' function also accepts a `related` map
+// (whether each referenced record still exists) that this read-only,
+// single-document adapter does not fetch; omitting it defaults every
+// related-record check to true, matching Lands' own default semantics
+// for "no evidence the referenced record was deleted."
 // Pure function, no I/O — safe to port for read-only rendering since a
 // direct ESM import is not possible from manager.html's non-module inline
 // Designer script (the same constraint manager-dashboard-adapter.js's own
 // header comment documents for window.SmartHSRFormat).
 function computeGrantCompleteness(grant) {
-  const axisOrder = ['beneficiary', 'royal_order', 'allocation_decision', 'plan_parcel', 'conveyance'];
-  const axisOk = {
-    beneficiary: Boolean(grant.beneficiary?.name && grant.beneficiary?.national_id),
-    royal_order: Boolean(grant.royal_order?.number && grant.royal_order?.date),
-    allocation_decision: Boolean(grant.allocation_decision?.number && grant.allocation_decision?.date),
-    plan_parcel: Boolean(grant.plan_reference_number && grant.parcel_reference_number),
-    conveyance: Boolean(grant.conveyance?.letter_number && grant.conveyance?.letter_date)
-  };
-  const missing = axisOrder.filter((axis) => !axisOk[axis]);
-  const percentage = (axisOrder.length - missing.length) * (100 / axisOrder.length);
+  const checks = [
+    ['beneficiary', Boolean(grant.beneficiary_id)],
+    ['royal_order', Boolean(grant.royal_order_id)],
+    ['allocation_decision', Boolean(grant.allocation_decision_id)],
+    ['plan', Boolean(grant.plan_id)],
+    ['parcel', Boolean(grant.parcel_id)],
+    ['documents', Array.isArray(grant.document_ids) && grant.document_ids.length > 0]
+  ];
+  const missing = checks.filter(([, ok]) => !ok).map(([name]) => name);
+  const percentage = Math.round(((checks.length - missing.length) / checks.length) * 100);
   return { status: missing.length ? 'incomplete' : 'complete', missing, percentage };
 }
 

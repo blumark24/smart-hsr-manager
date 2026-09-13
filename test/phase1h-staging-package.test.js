@@ -14,7 +14,23 @@ test('valid staging contract is allowed',()=>{assert.equal(validateStagingEnviro
 test('legacy path remains default in configuration and repository flag',()=>{const flags=require('../platform/config/feature-flags');assert.equal(example.assignmentV2Enabled,false);assert.equal(flags.DEFAULT_FLAGS[flags.PLATFORM_ASSIGNMENT_V2],false);});
 test('bundle hash matches Phase 1G and rollback records',()=>{assert.equal(sha('preview-only/assignment-v2-preview.bundle.js'),bundleHash);for(const file of ['PHASE-1G-PREVIEW-BROWSER-BUNDLE-REPORT.md','STAGING-ROLLBACK-RECORD.md'])assert.match(fs.readFileSync(path.resolve(root,file),'utf8'),new RegExp(bundleHash));});
 test('candidate rules packaged copy and manifest hashes match',()=>{assert.equal(sha('firestore.rules.phase-1c-candidate'),candidateHash);assert.equal(sha('staging/assignment-v2-rules/firestore.rules.phase-1c-candidate'),candidateHash);assert.match(fs.readFileSync(path.resolve(root,'staging/assignment-v2-rules/PACKAGE-MANIFEST.md'),'utf8'),new RegExp(candidateHash));});
-test('rollback target matches current legacy rules',()=>assert.equal(sha('firestore.rules'),legacyHash));
+// PHASE 09 GATE 4 — this asserted the LIVE, ever-evolving firestore.rules
+// hashes to a value frozen at the original Phase 1H staging snapshot
+// (branch eb111e7, recorded in STAGING-ROLLBACK-RECORD.md). No frozen copy
+// of that legacy file was ever committed (only the Phase 1C *candidate*
+// rules were, as firestore.rules.phase-1c-candidate) — the test compared
+// against the live file directly, which was always going to diverge the
+// moment firestore.rules was next legitimately changed (it has been, many
+// times since, correctly: Phase 08 Geo Core, Phase 08.1 security closures,
+// etc.). legacyHash remains meaningful as the STAGING-ROLLBACK-RECORD.md's
+// own historical point-in-time record of what "legacy" meant for that one
+// Assignment V2 staging rollout — it documents a past state, not a live
+// invariant, so it is retained in that doc and above (still used by the
+// bundle-hash cross-reference test) but no longer asserted against the
+// live rules file.
+test('STAGING-ROLLBACK-RECORD.md still records the legacy rules hash it was written against (documentation-consistency check, not a live-rules invariant)',()=>{
+  assert.match(fs.readFileSync(path.resolve(root,'STAGING-ROLLBACK-RECORD.md'),'utf8'),new RegExp(legacyHash));
+});
 test('staging package contains no credentials or Production allowlist value',()=>{const files=['config/staging/assignment-v2-staging.example.js','platform/staging/staging-environment-contract.js','staging/demo/assignment-v2-demo-seed.js','staging/assignment-v2-rules/PACKAGE-MANIFEST.md'];const text=files.map(f=>fs.readFileSync(path.resolve(root,f),'utf8')).join('\n');for(const pattern of [/FIREBASE_SERVICE_ACCOUNT/i,/GOOGLE_APPLICATION_CREDENTIALS/i,/private_key/i,/client_email/i,/apiKey/i,/smart-hsr-manager/i])assert.doesNotMatch(text,pattern);});
 test('demo fixtures contain required roles/statuses and fake identifiers only',()=>{assert.equal(seed.users.length,5);assert.deepEqual(new Set(seed.users.map(x=>x.role)),new Set(['manager','supervisor','inspector','contractor']));assert.equal(seed.users.filter(x=>x.role==='contractor').length,2);assert.deepEqual(new Set(seed.observations.map(x=>x.status)),new Set(['PENDING','IN_PROGRESS','PENDING_REVIEW','COMPLETED']));for(const value of [seed.organization,...seed.users,...seed.observations,...seed.assignments]){for(const[key,item]of Object.entries(value))if((key==='id'||key.endsWith('Id')||key.endsWith('Uid')||key==='assignmentId')&&item!=='')assert.ok(String(item).startsWith('demo-'),`${key} must be demo-only`);}const serialized=JSON.stringify(seed);for(const field of ['password','token','secret','private_key','client_email'])assert.doesNotMatch(serialized,new RegExp(field,'i'));});
 test('demo seed includes active, replaced, inactive, ambiguous, and invalid shapes',()=>{assert.ok(seed.assignments.some(x=>x.status==='ACTIVE'));assert.ok(seed.assignments.some(x=>x.status==='REPLACED'));assert.ok(seed.assignments.some(x=>x.status==='INACTIVE'));assert.ok(seed.observations.some(x=>x.id==='demo-obs-ambiguous'));assert.ok(seed.assignments.some(x=>x.assignmentId==='demo-assignment-invalid'));});
