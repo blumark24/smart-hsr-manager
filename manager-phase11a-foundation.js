@@ -9,7 +9,9 @@
 
   const assignStyles = (el, styles) => {
     if (!el) return;
-    Object.entries(styles).forEach(([key, value]) => { el.style[key] = value; });
+    Object.entries(styles).forEach(([key, value]) => {
+      if (el.style[key] !== value) el.style[key] = value;
+    });
   };
 
   const fixedOverlays = () => Array.from(document.querySelectorAll('div')).filter(el => {
@@ -18,8 +20,8 @@
     try { return window.getComputedStyle(el).position === 'fixed'; } catch (_) { return false; }
   });
 
-  const centerOverlayPanel = (overlay, width) => {
-    if (!overlay) return;
+  const centerOverlayPanel = (overlay, width, label) => {
+    if (!overlay || overlay.dataset.phase11aCentered === 'true') return;
     const panel = Array.from(overlay.children).find(child => child && child.nodeType === 1);
     if (!panel) return;
 
@@ -34,6 +36,7 @@
 
     panel.setAttribute('role', panel.getAttribute('role') || 'dialog');
     panel.setAttribute('aria-modal', panel.getAttribute('aria-modal') || 'true');
+    panel.setAttribute('aria-label', panel.getAttribute('aria-label') || label);
     assignStyles(panel, {
       width: `min(${width}px, 100%)`,
       maxHeight: 'calc(100vh - 32px)',
@@ -48,7 +51,7 @@
     const duplicate = document.querySelector('section[role="dialog"][aria-label="لوحة مدير إدارة الحركة والسير"]');
     if (!duplicate) return;
     const overlay = duplicate.parentElement;
-    if (!overlay) return;
+    if (!overlay || overlay.dataset.phase11aSuppressed === 'mobility-duplicate-modal') return;
     overlay.hidden = true;
     overlay.setAttribute('aria-hidden', 'true');
     overlay.dataset.phase11aSuppressed = 'mobility-duplicate-modal';
@@ -56,6 +59,7 @@
 
   const patchEvidenceDetails = () => {
     document.querySelectorAll('img[alt="صورة قبل المعالجة"], img[alt="صورة بعد المعالجة"]').forEach(img => {
+      if (img.dataset.phase11aEvidence === 'true') return;
       img.dataset.phase11aEvidence = 'true';
       assignStyles(img, {
         width: '100%',
@@ -68,9 +72,7 @@
     fixedOverlays().forEach(overlay => {
       const text = (overlay.textContent || '').replace(/\s+/g, ' ');
       if (text.includes('صورة قبل المعالجة') || text.includes('صورة بعد المعالجة')) {
-        centerOverlayPanel(overlay, 900);
-        const panel = overlay.firstElementChild;
-        if (panel) panel.setAttribute('aria-label', panel.getAttribute('aria-label') || 'تفاصيل البلاغ والأدلة');
+        centerOverlayPanel(overlay, 900, 'تفاصيل البلاغ والأدلة');
       }
     });
   };
@@ -79,9 +81,7 @@
     fixedOverlays().forEach(overlay => {
       const text = (overlay.textContent || '').replace(/\s+/g, ' ');
       if (!text.includes('عرض على الخريطة')) return;
-      centerOverlayPanel(overlay, 720);
-      const panel = overlay.firstElementChild;
-      if (panel) panel.setAttribute('aria-label', panel.getAttribute('aria-label') || 'تفاصيل الحادث');
+      centerOverlayPanel(overlay, 720, 'تفاصيل الحادث');
     });
   };
 
@@ -114,7 +114,7 @@
     document.documentElement.dataset.phase11aManagerFoundation = 'true';
     document.addEventListener('click', onServiceEntryClick, true);
     const observer = new MutationObserver(schedule);
-    observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['style', 'aria-label'] });
+    observer.observe(document.body, { subtree: true, childList: true });
     applyPhase11AFixes();
   };
 
