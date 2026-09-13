@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SMART HSR — مركز إدارة المستخدمين V3</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050914}iframe{display:block;width:100%;height:100%;border:0;background:#050914}</style>
+</head>
+<body>
+<iframe id="managerPreviewV3" title="SMART HSR Manager Preview V3" src="./manager.html"></iframe>
+<script>
+const frame=document.getElementById('managerPreviewV3');
+function activate(){
+  try{
+    const doc=frame.contentDocument;
+    if(!doc||!doc.head)return;
+    const files=[
+      ['./manager-phase11b-user-center-v2.js','ucV2Loader'],
+      ['./manager-phase11b-modal-layer-fix.js','ucModalLayerLoader']
+    ];
+    files.forEach(([src,key])=>{
+      if(doc.querySelector(`script[data-${key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}="true"]`))return;
+      const s=doc.createElement('script');
+      s.src=src;
+      s.defer=true;
+      s.dataset[key]='true';
+      doc.head.appendChild(s);
+    });
+  }catch(_){}
+}
+frame.addEventListener('load',activate);
+if(frame.contentDocument&&frame.contentDocument.readyState==='complete')activate();
+</script>
+</body>
+</html>
