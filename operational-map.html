@@ -276,7 +276,15 @@ function paintEntities(layerId, entities) {
   const srcId = `geo-${layerId}`;
   removeSourceLayer(layerId);
   const geojson = { type: 'FeatureCollection', features: entities.map((e) => ({ type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, category: e.category, name: (e.metadata && e.metadata.name) || '' } })) };
-  const isPoint = entities[0] && entities[0].geometry.type === 'Point';
+  // PHASE 10 UAT FIX — an empty layer (a real, normal state: a newly
+  // onboarded municipality with no reference geo data loaded yet for this
+  // layer/bbox) left isPoint as `undefined` (entities[0] && ... short-
+  // circuits to undefined, not false, when entities is empty), and MapLibre
+  // rejects `cluster: undefined` outright ("boolean expected, undefined
+  // found"), crashing this function before the layer's own (empty, correct)
+  // source/layer pair ever got added. Coerced to a real boolean so an empty
+  // layer renders as an empty layer instead of throwing.
+  const isPoint = entities.length > 0 && entities[0].geometry.type === 'Point';
   map.addSource(srcId, { type: 'geojson', data: geojson, cluster: isPoint, clusterRadius: 40, clusterMaxZoom: 15 });
   const color = styleTokens.LAYER_STYLE[layerRegistry.getLayer(layerId).styleToken] || '#0EA5E9';
   if (isPoint) {

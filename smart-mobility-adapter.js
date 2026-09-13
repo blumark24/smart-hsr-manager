@@ -361,12 +361,36 @@ function rawRoleOf(ctx) {
   return reverse[ctx.designRole] || ctx.designRole;
 }
 
+// PHASE 10 UAT FIX — this and createIncident() below are the only two
+// places in this file where a resource's OWN audit event references that
+// SAME resource being created in the SAME write. firestore.rules'
+// auditReferencedResourceOk() requires exists(<resource path>) to already
+// be true for the audit create to be allowed — but Security Rules resolve
+// get()/exists() against the database's committed state, never a sibling
+// document's still-in-flight data from the same batch/transaction, so a
+// mission (or incident) can never "already exist" from that check's point
+// of view while it is being created in the very same atomic write. Proven
+// by direct reproduction: batching these two writes together reliably hit
+// this rule graph's per-write expression-evaluation ceiling and the WHOLE
+// batch was denied — so no department head could ever create a mission
+// request at all, and no employee could ever report an incident. This is
+// the same class of ceiling Phase 06B's vehicle-allocation cutover already
+// hit and documented above; the difference here is the two writes are
+// sequenced instead of moved server-side, which is sufficient once the
+// audit event no longer needs to co-exist with its own referenced document
+// inside one atomic unit. The one accepted tradeoff: if the second write
+// (the audit event) fails after the first (the resource) already
+// succeeded, the resource exists without its 'create' audit entry — the
+// same "an audit-write failure must never block the mutation itself"
+// tradeoff this product already accepts elsewhere (Owner Console's
+// recordAuditEvent). Every other mutation in this file still uses ONE
+// atomic batch/transaction, because every other one references a resource
+// that already exists from a PRIOR write.
 async function createMissionRequest({ type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel }) {
   requireRole('dept');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
   const ref = api.doc(api.collection(db, 'missions'));
-  const batch = api.writeBatch(db);
-  batch.set(ref, {
+  await api.setDoc(ref, {
     organizationId: ctx.organizationId, department: ctx.department,
     createdByUid: ctx.uid, requesterName: ctx.sessionName || '',
     status: 'DRAFT',
@@ -375,8 +399,7 @@ async function createMissionRequest({ type, destination, reason, scope, requeste
     whenLabel: whenLabel || '', durationLabel: durationLabel || '',
     createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  batch.set(api.doc(api.collection(db, 'auditEvents')), auditEventData('mission', ref.id, 'create', { toStatus: 'DRAFT' }));
-  await batch.commit();
+  await api.setDoc(api.doc(api.collection(db, 'auditEvents')), auditEventData('mission', ref.id, 'create', { toStatus: 'DRAFT' }));
   return ref.id;
 }
 
@@ -521,19 +544,21 @@ async function employeeReturnVehicle(missionId, vehicleId) {
   });
 }
 
+// PHASE 10 UAT FIX — see the identical, fully explained fix on
+// createMissionRequest() above: this is the same self-referencing
+// create-plus-its-own-audit-event pattern, hitting the same rule-evaluation
+// ceiling, closed the same way (sequential writes instead of one batch).
 async function createIncident({ missionId, vehicleId, category, severity, note }) {
   requireRole('employee');
   const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
   const ref = api.doc(api.collection(db, 'incidents'));
-  const batch = api.writeBatch(db);
-  batch.set(ref, {
+  await api.setDoc(ref, {
     organizationId: ctx.organizationId, missionId, vehicleId: vehicleId || '',
     createdByUid: ctx.uid, employeeName: ctx.sessionName || '', department: ctx.department || '',
     category: category || 'أخرى', severity: severity || 'MEDIUM', note: note || '',
     status: 'NEW', createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
   });
-  batch.set(api.doc(api.collection(db, 'auditEvents')), auditEventData('incident', ref.id, 'create', { toStatus: 'NEW', missionId }));
-  await batch.commit();
+  await api.setDoc(api.doc(api.collection(db, 'auditEvents')), auditEventData('incident', ref.id, 'create', { toStatus: 'NEW', missionId }));
   return ref.id;
 }
 

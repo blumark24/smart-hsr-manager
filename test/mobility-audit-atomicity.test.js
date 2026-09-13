@@ -2,12 +2,18 @@
 // ============================================================================
 // PHASE 06 CLOSURE — DEFECT 1 (Mobility audit atomicity/integrity) executable
 // proof, run against the local Firestore Emulator. smart-mobility-adapter.js's
-// single-document mutations (submitMissionForApproval, decideMission,
-// employeeAdvanceMission, createIncident, mobilityProcessIncident,
-// createMissionRequest) now commit their business write and their required
+// single-document mutations that update an EXISTING resource
+// (submitMissionForApproval, decideMission, employeeAdvanceMission,
+// mobilityProcessIncident) commit their business write and their required
 // auditEvents/{eventId} write inside ONE Firestore writeBatch() — a batch is
 // atomic (all writes apply or none do), so this test proves, against the
 // REAL rules engine (not a reimplementation), that:
+//
+// (createMissionRequest and createIncident are PHASE 10 exceptions to this —
+// each creates a brand-new resource and that SAME resource's own audit event
+// together, which cannot be batched atomically: see the PHASE 10 UAT FIX
+// comment on both functions in smart-mobility-adapter.js and in
+// test/mobility-phase9-wiring.test.js for why.)
 //   1. a legitimate business write + a legitimate audit write commit together
 //   2. a batch whose audit write firestore.rules would reject (spoofed actor,
 //      wrong organization, forged role) fails ATOMICALLY — the business

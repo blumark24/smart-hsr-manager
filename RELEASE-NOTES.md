@@ -1,8 +1,56 @@
-# SMART HSR — Phase 09 Release Notes
+# SMART HSR — Release Notes (Phase 09 + Phase 10 UAT)
 
 Release candidate for formal municipality UAT. Preview/Staging only.
 
-## Manager changes
+## Phase 10 — Manager changes
+
+- **Fix (real-browser E2E defect, availability not security)**: `createMissionRequest()` and
+  `createIncident()` in `smart-mobility-adapter.js` batched a brand-new resource together with
+  that SAME resource's own new `auditEvents` document in one atomic `writeBatch()`.
+  `firestore.rules`' `auditReferencedResourceOk()` requires the audit event's referenced
+  resource to already exist — Security Rules resolve `get()`/`exists()` against the database's
+  committed state, never a sibling document's still-in-flight data from the same batch, so
+  that check could never be satisfied for a resource created in the very same write. Proven by
+  direct reproduction, both via the real Chromium E2E harness and via a minimal isolated Node
+  script, that this reliably hits the Rules engine's per-write expression-evaluation ceiling
+  ("Unable to evaluate the expression as the maximum of 1000 expressions to evaluate has been
+  reached") and denies the whole batch. Concretely: no department head could create a mission
+  request, and no employee could report an incident, through the real app — a complete outage
+  of Smart Mobility's two most basic actions that no prior emulator-only test suite could have
+  caught (the emulator enforces Rules correctness, and this is a Rules-correctness denial, just
+  one only reachable from a real multi-write session, not a single-assertion unit test).
+  Fixed by sequencing the two writes (the resource, then its audit event) instead of batching
+  them. Every other restriction on both functions is unchanged. Accepted tradeoff: if the
+  second write fails after the first succeeds, the resource exists without its 'create' audit
+  entry — the same tradeoff this product already accepts elsewhere (Owner Console's
+  `recordAuditEvent`). Updated `test/mobility-phase9-wiring.test.js` (which asserted the old,
+  now-incorrect atomic-batch shape for exactly these two functions) and
+  `test/mobility-audit-atomicity.test.js`'s header comment to match.
+- **Fix (real-browser E2E defect)**: `operational-map.html`'s `paintEntities()` crashed
+  (`sources.<id>.cluster: boolean expected, undefined found`) whenever a geo layer returned
+  zero entities — the normal state for a newly onboarded municipality with no reference geo
+  data loaded yet, which describes بلدية القنفذة's actual current state. Root cause:
+  `entities[0] && entities[0].geometry.type === 'Point'` yields `undefined`, not `false`, when
+  `entities` is empty. Fixed to `entities.length > 0 && ...`.
+- **Test-fixture fix**: `test/e2e/seed-mayor-scenario.js`'s employee account was missing
+  `vehicleEligible: true` — a real, deliberately-designed Phase 03B.1 safety field (fail-safe:
+  no field at all means NOT eligible for vehicle allocation) that a real Manager sets via the
+  User Center. The fixture simply predated or omitted it; the product's own enforcement
+  (`api/_lib/authz.js`'s `isValidMobilityAllocationTarget`) was already correct. Fixed the
+  fixture, not the product.
+- **New test-harness-only file**: `test/e2e/lib/api-mock.js` — bridges this sandbox's static
+  file server to the real `api/admin/users.js` and `api/organization/context.js` handler
+  functions in-process (transport-shape adaptation only; every authz check and Firestore/Auth
+  Admin SDK call inside the handlers runs for real against the local emulators). Zero product
+  code changed to enable this.
+- `test/e2e/mayor-scenario.js` updated to install this bridge alongside the existing Firebase-
+  CDN mock, so the full Mayor Demo scenario's vehicle-allocation step (which calls the real
+  trusted server endpoint) now runs end to end for real instead of stopping short.
+
+Full Manager canonical regression after these fixes: **1869/1869** (release suite),
+**378/378** (security suite), **82/82** (geo suite) — all green, zero unexplained failures.
+
+## Phase 09 — Manager changes
 
 - **Fix (Gate 1)**: `manager-lands-adapter.js`'s `computeGrantCompleteness()` was checking
   Lands grant fields (`beneficiary.name`, `royal_order.number`, `plan_reference_number`,
@@ -47,14 +95,20 @@ Release candidate for formal municipality UAT. Preview/Staging only.
   tests pass**, up from a persistent 1853/1864 baseline that had carried across Phases 08.1,
   08.2, and 08.3.
 
-## Lands changes
+## Phase 10 — Lands and Owner changes
+
+None. Both repos' full Phase 09 regression suites re-ran with zero regression: Lands 51/51
+(non-emulator) + 63/66 (emulator — the same 3 pre-existing, previously root-caused Storage-
+emulator-bridge flaky tests, unchanged in identity or count); Owner 81/81.
+
+## Lands changes (Phase 09)
 
 None. Gate 1 confirmed Manager's embedded copy of Lands' Firestore Rules is already
 byte-for-byte reconciled with Lands' own `firebase/firestore.rules`. Lands' own test suites
 (51/51 non-emulator, 58/61 emulator — see RELEASE-CANDIDATE.md for the 3-test emulator
 flakiness finding) pass against the pinned baseline with no code change.
 
-## Owner changes
+## Owner changes (Phase 09)
 
 None. Owner's own test suite (81/81) passes against the pinned baseline with no code change.
 Gate 6 (historical aggregation) does not apply — the locked Owner Console has no month/year
@@ -75,7 +129,8 @@ rollup feature to audit; it is a live current-state dashboard plus a live audit 
 
 ## Release candidate SHA
 
-See the commit that accompanies this file for Manager's final Phase 09 SHA on
-`claude/phase-09-release-candidate`. Lands and Owner remain at their pinned Phase 08/07B
-SHAs (`37b9af272c204a63b216723d14e765af5a5a1b56` and
-`51f7ed1f1767747dfee05b366e1be0cd93174feb` respectively) — unchanged.
+See the commit that accompanies this file for Manager's final Phase 10 SHA on
+`claude/phase-09-release-candidate` (same branch, new commit on top of the Phase 09 SHA
+`990749158854f4805971b6254c2b5e13df4edf31`). Lands remains at its Phase 09 SHA
+(`7470fc8b5871b8a66ae25f152115936c60ae1a53`) and Owner at its pinned Phase 07B SHA
+(`51f7ed1f1767747dfee05b366e1be0cd93174feb`) — both unchanged in Phase 10.

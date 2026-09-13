@@ -92,3 +92,105 @@ Current, real state of the codebase (not a target to build toward):
   each is whatever the hosting platform (Vercel/Cloud Functions) captures natively. This is
   adequate for the current scale (one real tenant, Al-Qunfudhah) and is not a release
   blocker; revisit if/when a second real municipality onboards.
+
+## 8. Controlled onboarding sequence (Phase 10, Al-Qunfudhah)
+
+Per the explicit Phase 10 instruction, do NOT bulk-create the municipality's full ~200-person
+staff roster at once. Onboard in three small, verifiable waves instead:
+
+1. **Wave 1 — institutional core (≤5 accounts).** One رئيس البلدية (President), one المشرف
+   العام (General Supervisor), one رئيس قسم (Section Head) per the first section going live,
+   one موظف (Employee) in that section, and — only if Lands or Mobility is in this first
+   wave — one مقاول (Contractor) or one Mobility role. Confirm every login, every role
+   boundary, and one full real workflow end to end (e.g. one real field observation, or one
+   real mission) before adding anyone else.
+2. **Wave 2 — first full section/department (≤20 accounts).** Add the remaining staff of the
+   ONE section/department exercised in Wave 1. Confirm normal daily use for a few real
+   working days before expanding further.
+3. **Wave 3 — controlled expansion.** Add additional sections/departments in similarly-sized
+   batches, only after the previous wave has run cleanly with no unresolved defect.
+
+Never create an account for a person who has not been confirmed as a real employee of
+بلدية القنفذة by the municipality's own institutional authority. Never fabricate or
+pre-guess a roster.
+
+## 9. Representative first-user list template
+
+For Wave 1, the municipality (not this engineering team) provides the real name, role, and
+section for each account. Do not invent names. Use this shape when requesting it:
+
+| Role | Section/Department | Full name (from municipality) | Email | Notes |
+|---|---|---|---|---|
+| رئيس البلدية | — | | | |
+| المشرف العام | — | | | Confirm whether they hold a standing delegation or only ad hoc ones |
+| رئيس القسم | (first section) | | | |
+| الموظف | (first section) | | | |
+| المقاول / Mobility role | (if in scope for Wave 1) | | | |
+
+## 10. Account activation procedure
+
+1. An authorized Manager (or, for the very first Manager account, whoever holds Owner Console
+   access for بلدية القنفذة) creates the account through the existing User Center flow
+   (`api/admin/users.js` / `api/admin/employees.js`) — never a direct Firestore write, so the
+   account is created with a correct role, organization, and (for Mobility) explicit
+   `vehicleEligible` setting from the start.
+2. The new user receives their temporary password through a channel the municipality
+   controls (never sent by this engineering team over an insecure channel); `mustChangePassword`
+   is set, so first sign-in forces a real password change.
+3. Confirm the account can sign in and lands on the correct product/dashboard for its role
+   before considering the account "activated."
+4. Record the activation in the municipality's own onboarding tracker (outside this repo) —
+   this repo's own audit trail (`adminAuditEvents`) already records the creation event
+   itself.
+
+## 11. Support / escalation procedure
+
+- **First line**: the municipality's own designated internal point of contact (typically the
+  رئيس البلدية's office or IT liaison) triages user-reported issues.
+- **Second line (engineering)**: escalate to this engineering team only for issues that look
+  like a genuine defect (wrong data, a denied action that should be allowed, an error page) —
+  not for password resets or role questions, which the Manager's own User Center already
+  handles.
+- **Security incident** (suspected account compromise, suspected cross-tenant data exposure,
+  suspected unauthorized access): escalate immediately, out of band from routine support,
+  to whoever holds rollback authority (below) — do not wait for a scheduled check-in.
+
+## 12. Backup/restore owner and incident contact path
+
+- **Backup/restore owner**: whoever holds the Firebase project's Owner IAM role (see Runbook
+  §3) — name this specific person/role before go-live; this document intentionally does not
+  hard-code an individual's name.
+- **Rollback authority**: the same person/role as backup/restore owner, OR an explicitly
+  named engineering lead with deploy access to all three repos' hosting platforms
+  (Vercel for Manager/Lands, Firebase Hosting/Cloud Functions for Owner). Name this before
+  go-live.
+- **Incident contact path**: municipality liaison → engineering on-call → (for a Firestore
+  Rules or data-integrity incident specifically) whoever holds rollback authority. Keep this
+  path short — three hops at most — since every hop adds latency during a live incident.
+
+## 13. Environment checklist (before any Production step)
+
+- [ ] Rollback authority and backup/restore owner are named, real people/roles (not blank)
+- [ ] Production Firebase project's env vars (Gate 8 table in `RELEASE-CANDIDATE.md`) are
+      set and confirmed present — never copied from Staging by assumption
+- [ ] Firestore indexes (`firestore.indexes.json`) are deployed and finished building on the
+      Production project before any traffic relies on them
+- [ ] Firestore Rules deployed match exactly the release-candidate SHA's `firestore.rules` —
+      diff them against the repo before deploying, never deploy from memory
+- [ ] Backup export is scheduled and has run at least once successfully before real data enters
+      the system
+- [ ] Wave 1's accounts (§9) are the ONLY accounts that exist at go-live — no bulk import
+
+## 14. Final Production deployment checklist
+
+- [ ] Every mandatory Phase 10 gate is PASS or has only ACCEPTED LIMITATION / MANUAL
+      FOLLOW-UP items, per `RELEASE-CANDIDATE.md`'s Go/No-Go review
+- [ ] §13's environment checklist is fully checked
+- [ ] A named person has given **explicit** Production deployment approval — this document,
+      Phase 10 passing, and every automated check passing are NOT themselves that approval
+- [ ] Deploy Manager, Lands, and Owner from the exact release-candidate SHAs recorded in
+      `RELEASE-CANDIDATE.md` — never from an uncommitted or locally-modified working tree
+- [ ] Immediately after deploy: sign in as one real Wave 1 account and confirm the correct
+      dashboard loads, before considering the deployment complete
+- [ ] Keep the rollback SHAs (`ROLLBACK.md`) and the rollback authority's contact on hand for
+      the first 24 hours after go-live

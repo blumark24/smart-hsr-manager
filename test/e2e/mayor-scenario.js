@@ -52,6 +52,9 @@ async function main() {
   const harness = await startHarness();
   process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080';
   process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
+  // Required after the emulator env vars above, not before: api-mock.js
+  // asserts they're set at require time.
+  const { installApiMock } = require('./lib/api-mock');
   const adminApp = admin.apps.length ? admin.app() : admin.initializeApp({ projectId: 'smart-hsr-manager' });
   const db = adminApp.firestore();
   const orgId = harness.seed.orgId;
@@ -66,6 +69,7 @@ async function main() {
   async function openAs(email) {
     const ctx = await browser.newContext({ viewport: { width: 1600, height: 990 } });
     await installFbMock(ctx);
+    await installApiMock(ctx);
     const page = await loginAs(ctx, harness.baseUrl, email);
     await waitForGateClear(page);
     return { ctx, page };

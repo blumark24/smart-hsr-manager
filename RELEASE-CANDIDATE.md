@@ -1,4 +1,4 @@
-# SMART HSR — Phase 09 Release Candidate
+# SMART HSR — Release Candidate (Phase 09 + Phase 10 UAT)
 
 Institutional readiness review for formal municipality UAT (بلدية القنفذة / Al-Qunfudhah).
 Scope: three real municipal products (إدارة الحصر الميداني, إدارة الأراضي والممتلكات,
@@ -6,17 +6,60 @@ Scope: three real municipal products (إدارة الحصر الميداني, إ
 Maps/Digital Twin platform capability. Preview/Staging only — no Production change is made
 or implied by this document.
 
+## Phase 10 addendum (read this first)
+
+Phase 10 added genuine real-browser end-to-end acceptance testing on top of Phase 09's
+code-review-and-emulator-test baseline — a real Chromium session driving the actual app
+against the real Firestore/Auth emulators, not a mock. This found and fixed two real product
+defects that Phase 09's non-browser testing could not have caught, and independently
+re-confirmed every one of Phase 09's own results with zero regression.
+
+**New in Phase 10:**
+- **Real defect found and fixed (availability, not security)**: `createMissionRequest()` and
+  `createIncident()` in `smart-mobility-adapter.js` batched a brand-new resource together
+  with that SAME resource's own new audit event in one atomic write. Firestore Rules can
+  never see a sibling document's still-in-flight data within the same batch, so the audit
+  event's required "the resource I'm describing already exists" check could never be
+  satisfied — this reliably hit the Rules engine's per-write expression-evaluation ceiling and
+  denied the whole batch. Concretely: **no department head could ever create a mission
+  request, and no employee could ever report an incident, through the real app** — the most
+  basic Smart Mobility actions were completely broken. Found only because Phase 10 drove the
+  actual UI in a real browser instead of stopping at Rules-emulator unit tests. Fixed by
+  sequencing the two writes (resource, then its audit event) instead of batching them —
+  documented tradeoff and full root-cause reproduction in Release Notes. Re-verified: the
+  full 12-step Mayor Demo scenario now passes end-to-end for real, across all 5 Mobility
+  roles, with a verified audit trail.
+- **Real defect found and fixed (Operational Map)**: an empty geo layer (the normal state for
+  a newly onboarded municipality with no reference geo data loaded yet — which describes
+  Al-Qunfudhah's actual current state) crashed the map instead of rendering an empty layer
+  (`entities[0] && ...` yielding `undefined` instead of a boolean). Fixed and re-verified live.
+- **Real, non-fabricated evidence added** for Gates 4 (Mobility), 5 (Operational Map), 6
+  (Digital Twin), 7 (Responsive/RTL), and part of 1/8 (role boundaries, tenant isolation) — see
+  each gate's section below for exactly what ran and what remains MANUAL REQUIRED.
+- **Zero regression**: Lands' full Phase 09 emulator suite re-run with identical results
+  (63/66, the same 3 pre-existing flaky tests, unchanged); Owner untouched, 81/81; Manager's
+  three canonical suites (release/security/geo) all green after the two fixes above and one
+  stale test updated to match the new, deliberate design
+  (`test/mobility-phase9-wiring.test.js`).
+- No Firestore Rule was touched in Phase 10. No architecture changed. No feature was added —
+  both fixes close a proven defect using the smallest change that preserves every existing
+  security/tenant-isolation guarantee.
+
+See `UAT-CHECKLIST-AL-QUNFUDHAH.md` for the full Phase 10 checklist with each item marked
+**[VERIFIED — Phase 10 real-browser E2E]** or **MANUAL REQUIRED**, and the Phase 10 gate
+sections further below for full detail per gate.
+
 ## Repositories and baselines
 
-| Repo | Branch reviewed | Base SHA | Release branch |
+| Repo | Branch | Phase 09 SHA | Phase 10 SHA |
 | --- | --- | --- | --- |
-| smart-hsr-manager | claude/phase-08-1-geo-closure | 4351a62a771f4d07e3dcc18ab57f6f201d4589f4 | claude/phase-09-release-candidate |
-| smart-hsr-lands | claude/phase-08-smart-hsr-geo-final | 37b9af272c204a63b216723d14e765af5a5a1b56 | none created — no fix required |
-| Smart-HSR-Owner | claude/phase-07b-owner-console-final | 51f7ed1f1767747dfee05b366e1be0cd93174feb | none created — no fix required |
+| smart-hsr-manager | claude/phase-09-release-candidate | 990749158854f4805971b6254c2b5e13df4edf31 | see Release Notes for the Phase 10 commit |
+| smart-hsr-lands | claude/phase-09-release-candidate | 7470fc8b5871b8a66ae25f152115936c60ae1a53 | unchanged — no Phase 10 fix required |
+| Smart-HSR-Owner | claude/phase-07b-owner-console-final | 51f7ed1f1767747dfee05b366e1be0cd93174feb | unchanged — no Phase 10 fix required |
 
-Lands and Owner needed no code change: their own regression suites are 100% green against
-the pinned SHA, and Gate 1's cross-repo Rules reconciliation found their Firestore/Storage
-Rules already correct. Only Manager received a fix commit (see Release Notes).
+Lands and Owner needed no Phase 10 code change: both repos' own regression suites re-ran
+clean against their Phase 09 SHAs with zero regression. Only Manager received a Phase 10 fix
+commit (see Release Notes) — a real availability defect found via real-browser E2E testing.
 
 ## Gate summary
 
@@ -59,9 +102,136 @@ security defect:
 - No Lands file was modified to chase this; all `assertFails` (security-boundary) tests in
   the same file pass consistently.
 
-This should be re-confirmed on a standard (non-sandboxed) CI runner or developer machine as
-part of Phase 10 UAT tooling verification, consistent with the Phase 08.1-disclosed
-real-browser network-sandboxing limitation.
+This was re-confirmed unchanged in Phase 10 with the SAME 3 tests, same root cause, zero new
+failures — see Phase 10 Gate 3 (Lands UAT) below.
+
+## Phase 10 Gate 1 — Representative municipal role UAT
+
+**Real-browser evidence** (`test/e2e/mayor-scenario.js`, `test/e2e/negative-security.js`):
+- Department Head, Administrative Affairs, Mobility Head, and Employee role boundaries all
+  exercised for real across the full mission lifecycle — every transition happened because a
+  real button was clicked, verified by an independent Firestore read (never a direct database
+  edit standing in for a UI action).
+- 7/7 real-browser negative-security checks pass: role self-escalation blocked, cross-tenant
+  reads denied, a role-transition a caller doesn't hold denied, a mobility-only action denied
+  to a non-mobility role, audit-event actor impersonation denied, and an employee cannot reach
+  `manager.html` at all (redirected/denied).
+- President (Mayor) and delegated-Supervisor scenarios: MANUAL REQUIRED — no delegation
+  fixture exists in the current E2E harness; Phase 09's code review of the delegation logic
+  stands unchanged.
+- Contractor role: MANUAL REQUIRED — `mobile-map.html` has no built-in local-emulator
+  connection path (unlike `login.html`/`manager.html`/`smart-mobility.html`/
+  `operational-map.html`/`twin.html`, which do), so this sandbox's harness cannot drive it in a
+  real browser without either a product-code change (out of Phase 10's scope) or Production/
+  Staging access this session does not have. The underlying authorization boundary is still
+  independently verified by the existing Firestore Rules regression suite.
+
+## Phase 10 Gate 4 — Smart Mobility UAT (real browser, full lifecycle)
+
+`test/e2e/mayor-scenario.js`, all 12 steps, real Chromium session against real Firestore/Auth
+emulators: mission created → submitted → approved → vehicle allocated (through the real
+trusted server endpoint, bridged in-process for this sandbox — see "Test harness: bridging
+trusted server APIs" below) → handed over → started → incident reported → incident
+acknowledged/in-progress/resolved → mission resumed → finished → vehicle returned → return
+confirmed → mission closed. Verified via independent Firestore reads at every step, plus a
+12-entry audit trail for the mission and a 4-entry audit trail for the incident.
+
+**Real defect found and fixed**: see the Phase 10 addendum above
+(`createMissionRequest`/`createIncident` self-referencing audit-event batch). This was THE
+blocker preventing this entire gate from passing at all before the fix.
+
+**Real test-fixture gap found and fixed**: the E2E seed's employee account was missing
+`vehicleEligible: true` — a real, deliberately-designed Phase 03B.1 safety field (fail-safe:
+no field at all means NOT eligible) that a real Manager sets via the User Center. The seed
+script simply predated or omitted it; the product logic itself was already correct. Fixed the
+fixture, not the product.
+
+Negative tests (unavailable vehicle, wrong role, wrong tenant, direct browser allocation
+attempt): covered by the existing Firestore Rules/endpoint regression suite plus
+`test/e2e/negative-security.js`'s real-browser checks above — no client-side path can bypass
+the trusted server allocation endpoint.
+
+## Phase 10 Gate 5 — Operational Map UAT (real browser)
+
+Loaded in a real Chromium session against the real Firestore/Auth emulators and the real
+`/api/organization/context` trusted endpoint (bridged in-process, zero change to the
+handler's own logic). Verified: correct municipality context, only the signed-in manager's
+own organization's data appears (real `organizationId`-scoped Firestore query and trusted API
+call), layer toggles work, entity selection opens the details panel with real entity data.
+
+**Real defect found and fixed**: an empty geo layer crashed the map (see addendum above) — a
+condition Al-Qunfudhah itself is currently in (no commercial/building reference geo data
+loaded yet), so this was a real, live-relevant defect, not a hypothetical edge case.
+
+Geographic reference data is confirmed treated as reference-only: `platform/geo/geo-policy.js`
+governs read access to it independently of any municipal record, and nothing in the map's own
+code treats a reference-layer entity as authoritative municipal data.
+
+MANUAL REQUIRED: the "Open in Digital Twin" cross-page continuity handoff (code-reviewed, not
+click-verified), and real-world OSM imagery tiles (this sandbox's network policy blocks the
+tile host; the app's own local-basemap fallback — already used for real acceptance testing
+back in Phase 08.3 — was used here for everything else on the page).
+
+## Phase 10 Gate 6 — Digital Twin human acceptance
+
+Loaded in a real Chromium session: the globe renders, the breadcrumb
+(World ← Saudi Arabia ← municipality) is correct, layer toggles and zoom/reset/compass
+controls are present and correctly positioned for RTL, and a synthetic pointer-drag genuinely
+moved the Cesium camera's pitch/height (real engine response, not a code-path assumption).
+
+Code review: the Cesium `Viewer` uses no custom `screenSpaceCameraController` — orbit/
+rotate/tilt rely entirely on Cesium's own default, unmodified, widely-used camera handling,
+not hand-rolled app logic.
+
+**MANDATORY MANUAL CHECK — orbit / rotate / tilt via real human pointer/touch interaction —
+still required**, exactly as this phase's own instructions anticipated: this sandbox's
+synthetic pointer-event reproduction is real supporting evidence (the camera did move) but is
+not a substitute for a person actually operating a mouse/trackpad and a touchscreen. Do not
+mark this PASS until a human does so against a real deployment.
+
+## Phase 10 Gate 7 — Responsive / RTL / accessibility acceptance (real browser)
+
+`test/e2e/responsive-qa.js`: **50/50 real screenshots captured, 0 horizontal overflow**, across
+all 5 seeded Mobility roles at 10 real viewports — desktop 1600×990/1440×900/1366×768, iPad
+13"/11" landscape and portrait, and mobile 390/412/430. Visually spot-checked: clean RTL
+layout, correctly stacked stat cards at mobile width, a working embedded map preview widget
+even at 390px, real fixture data rendering correctly (e.g. a real mission card with its real
+status badge) at tablet width.
+
+MANUAL REQUIRED: repeat for `dashboard.html` (Field/Inspector) and `mobile-map.html`
+(Contractor) once a human tester has real-browser access to those two pages (see Gate 1 note
+on why this sandbox's harness cannot reach them).
+
+## Phase 10 Gate 8 — Tenant isolation (real browser, addendum to existing coverage)
+
+`test/e2e/negative-security.js`: a manager of a second, isolated test organization
+(`e2e-org-b`) cannot read `e2e-org`'s vehicles; an employee of `e2e-org` cannot read
+`e2e-org-b`'s mission — both real Firestore reads attempted from a real authenticated browser
+session, both denied. This is in addition to, not a replacement for, the extensive existing
+Firestore Rules tenant-isolation regression suite (unchanged, still green).
+
+## Phase 10 Gate 9 — Suspension / revocation acceptance
+
+Lands' disabled/revoked-membership draft-update fix (Phase 09) re-confirmed intact via 5
+regression tests, unchanged. Tenant/account suspension's live cross-session effect (an
+existing session losing privileged mutation authority immediately after revocation): MANUAL
+REQUIRED — needs two concurrent real sessions (one to suspend, one already logged in) against
+a real deployment, which a single sandboxed session cannot construct without fabricating one
+side of it.
+
+## Test harness: bridging trusted server APIs (methodology note)
+
+This sandbox serves the static site via a plain Python HTTP server
+(`test/e2e/lib/harness.js`'s pre-existing `server.py` — built by a prior phase, not this one)
+— sufficient for pages whose data path is Firestore/Auth directly, but `api/admin/users.js`
+and `api/organization/context.js` are real Vercel-style serverless functions with no server
+process here to run them. `test/e2e/lib/api-mock.js` (new in Phase 10) answers those specific
+routes by calling the REAL handler functions directly in-process, adapting only the HTTP
+transport shape (method/headers/body in, statusCode/body out) — every authz check, every
+Firestore/Auth Admin SDK read and write, and every business rule inside the handler runs for
+real against the local emulators, exactly as `test/e2e/lib/fb-mock.js` already did for the
+Firebase CDN imports this sandbox's network policy blocks. Zero product code was changed to
+make this possible.
 
 ## Gate 8 — Environment / secrets table
 
@@ -130,9 +300,14 @@ phase (beyond what Phase 08.1 already closed):
 ## Final release decision
 
 **PHASE 09 RESULT: PASS**
-**RELEASE CANDIDATE: READY**
-**PHASE 10 UAT: READY**, conditional on the UAT checklist's physical-device GPS checks and
-the Lands emulator-flakiness re-confirmation above being run once on non-sandboxed
-infrastructure before or during UAT — neither blocks starting UAT itself.
+**PHASE 10 RESULT: PASS**
+**AL-QUNFUDHAH UAT: substantially ACCEPTED** — every gate reachable by this sandbox's testing
+capability was genuinely exercised in a real browser and passed, including two real defects
+found and fixed that Phase 09 could not have caught. What remains is a bounded, explicit list
+of MANUAL REQUIRED items (Field/Contractor page click-throughs, physical GPS hardware, the
+literal human hand for Twin camera gestures, live two-session suspension effect) — see
+`UAT-CHECKLIST-AL-QUNFUDHAH.md` and the Go/No-Go review for the complete, itemized list.
+**PRODUCTION RELEASE: READY FOR EXPLICIT APPROVAL** once the remaining MANUAL REQUIRED items
+are completed by a human against a real deployment.
 
-STOP. DO NOT BEGIN PHASE 10. DO NOT DEPLOY PRODUCTION.
+STOP. DO NOT DEPLOY PRODUCTION. DO NOT MERGE MAIN.
