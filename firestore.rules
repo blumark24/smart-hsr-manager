@@ -397,13 +397,12 @@ service cloud.firestore {
         || (mobilityUserRole() == 'employee' && resource.data.organizationId == mobilityUserOrgId()
             && resource.data.assignedEmployeeUid == request.auth.uid);
 
-      // Only a department head may create a mission request, as a DRAFT, in
-      // their own organization and department, self-attributed.
-      allow create: if mobilityUserRole() == 'department_head'
-        && request.resource.data.organizationId == mobilityUserOrgId()
-        && request.resource.data.department == mobilityUserDept()
-        && request.resource.data.createdByUid == request.auth.uid
-        && request.resource.data.status == 'DRAFT';
+      // PHASE 10 RELEASE-INTEGRITY — mission creation is server-only via
+      // api/admin/users.js action:createMissionRequest.  The Admin SDK
+      // transaction derives actor/role/tenant/department server-side and
+      // atomically commits the mission, canonical audit, and idempotency
+      // receipt.  No browser/client SDK create path or fallback remains.
+      allow create: if false;
 
       allow update: if request.resource.data.organizationId == resource.data.organizationId
         && (canDeptHeadSubmitMission() || canAdminAffairsDecideMission()
@@ -604,15 +603,12 @@ service cloud.firestore {
         || (mobilityUserRole() == 'employee' && resource.data.organizationId == mobilityUserOrgId()
             && resource.data.createdByUid == request.auth.uid);
 
-      // Only the employee assigned to the referenced (currently
-      // IN_PROGRESS) mission may open an incident against it.
-      allow create: if mobilityUserRole() == 'employee'
-        && request.resource.data.organizationId == mobilityUserOrgId()
-        && request.resource.data.createdByUid == request.auth.uid
-        && request.resource.data.status == 'NEW'
-        && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.organizationId == mobilityUserOrgId()
-        && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.assignedEmployeeUid == request.auth.uid
-        && get(/databases/$(database)/documents/missions/$(request.resource.data.missionId)).data.status == 'IN_PROGRESS';
+      // PHASE 10 RELEASE-INTEGRITY — incident creation is server-only via
+      // api/admin/users.js action:createIncident.  The trusted transaction
+      // re-checks the active employee, mission assignment/status/tenant,
+      // optional vehicle relationship, then atomically commits incident +
+      // canonical audit + idempotency receipt.
+      allow create: if false;
 
       // mobility_head processes: NEW -> ACKNOWLEDGED -> IN_PROGRESS -> RESOLVED.
       allow update: if request.resource.data.organizationId == resource.data.organizationId

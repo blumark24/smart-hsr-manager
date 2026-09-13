@@ -51,29 +51,19 @@ for (const fn of auditedFns) {
   assert.doesNotMatch(body, /recordAudit\(/, `${fn} must no longer use the removed non-atomic recordAudit() helper`);
 }
 
-// PHASE 10 UAT FIX — createMissionRequest and createIncident are the two
-// exceptions to the atomic-batch rule above: each writes a resource's OWN
-// 'create' audit event, self-referencing that SAME resource in the SAME
-// write. firestore.rules' auditReferencedResourceOk() requires the
-// referenced resource to already exist, which Security Rules can never see
-// for a sibling write still in flight in the same batch — proven by direct
-// reproduction to reliably hit this rule graph's per-write expression-
-// evaluation ceiling and deny the whole batch, so no department head could
-// ever create a mission and no employee could ever report an incident.
-// Closed by sequencing the two writes instead of batching them (the
-// resource first, then its audit event, both still real setDoc() calls,
-// never the removed recordAudit() helper) — the one accepted tradeoff is
-// documented at each function's own definition in smart-mobility-adapter.js.
-const sequentialAuditedFns = ['createMissionRequest', 'createIncident'];
-for (const fn of sequentialAuditedFns) {
+// PHASE 10 RELEASE-INTEGRITY — the two create functions are browser-to-
+// trusted-API delegates only.  They must never call the Firestore mutation
+// APIs and must carry clientRequestId for server-side idempotency.  The
+// endpoint's real-emulator suite proves resource+audit atomicity and spoof
+// denial.
+for (const [fn, action] of [['createMissionRequest', 'createMissionRequest'], ['createIncident', 'createIncident']]) {
   const start = adapter.indexOf(`async function ${fn}(`);
   assert.ok(start >= 0, `${fn} must exist`);
   const end = adapter.indexOf('\nasync function ', start + 1);
   const body = adapter.slice(start, end > 0 ? end : start + 2000);
-  assert.doesNotMatch(body, /const batch = api\.writeBatch\(db\);/, `${fn} must not batch its self-referencing audit event with its own create (see PHASE 10 UAT FIX comment)`);
-  assert.match(body, /await api\.setDoc\(ref,/, `${fn} must create its own resource first`);
-  assert.match(body, /await api\.setDoc\(api\.doc\(api\.collection\(db, 'auditEvents'\)\), auditEventData\(/, `${fn} must record its audit event as a second, sequential write`);
-  assert.doesNotMatch(body, /recordAudit\(/, `${fn} must no longer use the removed non-atomic recordAudit() helper`);
+  assert.match(body, new RegExp(`trustedMobilityCreate\\('${action}'`), `${fn} must use the trusted create API`);
+  assert.match(body, /clientRequestId/, `${fn} must forward an idempotency key`);
+  assert.doesNotMatch(body, /setDoc|writeBatch|runTransaction/, `${fn} must have no browser direct-write path or fallback`);
 }
 const transactionalAuditedFns = ['handoverMission', 'confirmVehicleReturn', 'employeeReturnVehicle'];
 for (const fn of transactionalAuditedFns) {

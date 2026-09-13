@@ -231,8 +231,8 @@ test('R8 a deactivated mobility_head account is denied entirely', async () => {
 // ============================================================
 // Create
 // ============================================================
-test('C1 department head may create a DRAFT mission in their own department', async () => {
-  await assertSucceeds(setDoc(doc(ctx(UID.deptHeadA), 'missions', 'newDraftA'), {
+test('C1 direct browser mission CREATE is denied even for an otherwise-valid department head DRAFT', async () => {
+  await assertFails(setDoc(doc(ctx(UID.deptHeadA), 'missions', 'newDraftA'), {
     organizationId: ORG_A, department: DEPT_TRAFFIC, createdByUid: UID.deptHeadA, status: 'DRAFT',
   }));
 });

@@ -20,7 +20,11 @@ const testFiles = fs.readdirSync(testDir)
   .filter((name) => name.endsWith('.test.js') && NAME_PATTERN.test(name))
   .sort()
   .map((name) => path.posix.join('test', name));
-testFiles.push('test/contractor-observation-update-endpoint.test.js', 'test/geo-organization-context-authorization.test.js');
+testFiles.push(
+  'test/contractor-observation-update-endpoint.test.js',
+  'test/geo-organization-context-authorization.test.js',
+  'test/mobility-trusted-create-endpoint.test.js',
+);
 
 if (testFiles.length === 0) {
   throw new Error('No matching security/Rules test files found — refusing to report a false pass.');

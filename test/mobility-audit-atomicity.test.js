@@ -9,11 +9,9 @@
 // atomic (all writes apply or none do), so this test proves, against the
 // REAL rules engine (not a reimplementation), that:
 //
-// (createMissionRequest and createIncident are PHASE 10 exceptions to this —
-// each creates a brand-new resource and that SAME resource's own audit event
-// together, which cannot be batched atomically: see the PHASE 10 UAT FIX
-// comment on both functions in smart-mobility-adapter.js and in
-// test/mobility-phase9-wiring.test.js for why.)
+// createMissionRequest and createIncident are now trusted Admin SDK
+// transactions, covered separately by mobility-trusted-create-endpoint.test.js;
+// no browser direct-write path remains for either create operation.
 //   1. a legitimate business write + a legitimate audit write commit together
 //   2. a batch whose audit write firestore.rules would reject (spoofed actor,
 //      wrong organization, forged role) fails ATOMICALLY — the business

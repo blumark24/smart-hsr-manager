@@ -361,46 +361,42 @@ function rawRoleOf(ctx) {
   return reverse[ctx.designRole] || ctx.designRole;
 }
 
-// PHASE 10 UAT FIX — this and createIncident() below are the only two
-// places in this file where a resource's OWN audit event references that
-// SAME resource being created in the SAME write. firestore.rules'
-// auditReferencedResourceOk() requires exists(<resource path>) to already
-// be true for the audit create to be allowed — but Security Rules resolve
-// get()/exists() against the database's committed state, never a sibling
-// document's still-in-flight data from the same batch/transaction, so a
-// mission (or incident) can never "already exist" from that check's point
-// of view while it is being created in the very same atomic write. Proven
-// by direct reproduction: batching these two writes together reliably hit
-// this rule graph's per-write expression-evaluation ceiling and the WHOLE
-// batch was denied — so no department head could ever create a mission
-// request at all, and no employee could ever report an incident. This is
-// the same class of ceiling Phase 06B's vehicle-allocation cutover already
-// hit and documented above; the difference here is the two writes are
-// sequenced instead of moved server-side, which is sufficient once the
-// audit event no longer needs to co-exist with its own referenced document
-// inside one atomic unit. The one accepted tradeoff: if the second write
-// (the audit event) fails after the first (the resource) already
-// succeeded, the resource exists without its 'create' audit entry — the
-// same "an audit-write failure must never block the mutation itself"
-// tradeoff this product already accepts elsewhere (Owner Console's
-// recordAuditEvent). Every other mutation in this file still uses ONE
-// atomic batch/transaction, because every other one references a resource
-// that already exists from a PRIOR write.
-async function createMissionRequest({ type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel }) {
-  requireRole('dept');
-  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  const ref = api.doc(api.collection(db, 'missions'));
-  await api.setDoc(ref, {
-    organizationId: ctx.organizationId, department: ctx.department,
-    createdByUid: ctx.uid, requesterName: ctx.sessionName || '',
-    status: 'DRAFT',
-    type: type || '', destination: destination || '', reason: reason || '',
-    scope: scope || 'داخل النطاق', requestedEmployeeName: requestedEmployeeName || '',
-    whenLabel: whenLabel || '', durationLabel: durationLabel || '',
-    createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
+// PHASE 10 RELEASE-INTEGRITY — mission and incident creation are trusted
+// server operations.  The browser sends business input plus an idempotency
+// key only; it never sends authoritative actor/role/tenant/department data
+// and never falls back to direct Firestore writes.  A failed browser retry
+// of the same payload reuses its request id until the server confirms
+// success, while a later intentional create gets a fresh id.
+const pendingTrustedCreateIds = new Map();
+
+function newTrustedCreateId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
+async function trustedMobilityCreate(action, payload) {
+  if (!activeAuth || !activeAuth.currentUser) throw new Error('not_authorized');
+  const key = `${action}:${JSON.stringify(payload)}`;
+  const clientRequestId = payload.clientRequestId || pendingTrustedCreateIds.get(key) || newTrustedCreateId();
+  pendingTrustedCreateIds.set(key, clientRequestId);
+  const token = await activeAuth.currentUser.getIdToken();
+  const response = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ action, ...payload, clientRequestId })
   });
-  await api.setDoc(api.doc(api.collection(db, 'auditEvents')), auditEventData('mission', ref.id, 'create', { toStatus: 'DRAFT' }));
-  return ref.id;
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.reason || 'trusted_create_failed');
+  pendingTrustedCreateIds.delete(key);
+  return body;
+}
+
+async function createMissionRequest({ type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel, clientRequestId }) {
+  requireRole('dept');
+  const result = await trustedMobilityCreate('createMissionRequest', {
+    type, destination, reason, scope, requestedEmployeeName, whenLabel, durationLabel, clientRequestId
+  });
+  return result.missionId;
 }
 
 async function submitMissionForApproval(missionId) {
@@ -544,22 +540,12 @@ async function employeeReturnVehicle(missionId, vehicleId) {
   });
 }
 
-// PHASE 10 UAT FIX — see the identical, fully explained fix on
-// createMissionRequest() above: this is the same self-referencing
-// create-plus-its-own-audit-event pattern, hitting the same rule-evaluation
-// ceiling, closed the same way (sequential writes instead of one batch).
-async function createIncident({ missionId, vehicleId, category, severity, note }) {
+async function createIncident({ missionId, vehicleId, category, severity, note, clientRequestId }) {
   requireRole('employee');
-  const api = activeFirestoreApi, db = activeDb, ctx = activeContext;
-  const ref = api.doc(api.collection(db, 'incidents'));
-  await api.setDoc(ref, {
-    organizationId: ctx.organizationId, missionId, vehicleId: vehicleId || '',
-    createdByUid: ctx.uid, employeeName: ctx.sessionName || '', department: ctx.department || '',
-    category: category || 'أخرى', severity: severity || 'MEDIUM', note: note || '',
-    status: 'NEW', createdAt: api.serverTimestamp(), updatedAt: api.serverTimestamp(), updatedByUid: ctx.uid
+  const result = await trustedMobilityCreate('createIncident', {
+    missionId, vehicleId, category, severity, note, clientRequestId
   });
-  await api.setDoc(api.doc(api.collection(db, 'auditEvents')), auditEventData('incident', ref.id, 'create', { toStatus: 'NEW', missionId }));
-  return ref.id;
+  return result.incidentId;
 }
 
 async function mobilityProcessIncident(incidentId, toStatus) {

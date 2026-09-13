@@ -86,6 +86,30 @@ async function main() {
     return res.denied ? 'PASS' : `FAIL: role write succeeded unexpectedly (${JSON.stringify(res)})`;
   });
 
+  test('department_head direct browser mission CREATE is denied (trusted API only)', async () => {
+    const { ctx, page } = await probePage(browser);
+    const res = await attemptFirestoreOp(page, 'depthead@e2e.test', PASSWORD,
+      `await helpers.setDoc(helpers.doc(helpers.collection(helpers.db, 'missions')), {
+         organizationId: args.orgId, department: args.department, createdByUid: helpers.myUid,
+         status: 'DRAFT', type: 'direct-browser-probe', destination: 'x', reason: 'x'
+       });`,
+      { orgId: 'e2e-org', department: 'إدارة الحركة' });
+    await ctx.close();
+    return res.denied ? 'PASS' : `FAIL: direct browser mission create succeeded (${JSON.stringify(res)})`;
+  });
+
+  test('employee direct browser incident CREATE is denied (trusted API only)', async () => {
+    const { ctx, page } = await probePage(browser);
+    const res = await attemptFirestoreOp(page, 'employee@e2e.test', PASSWORD,
+      `await helpers.setDoc(helpers.doc(helpers.collection(helpers.db, 'incidents')), {
+         organizationId: args.orgId, missionId: args.missionId, vehicleId: 'E2E-V1',
+         createdByUid: helpers.myUid, status: 'NEW', category: 'probe', severity: 'MEDIUM'
+       });`,
+      { orgId: 'e2e-org', missionId: 'E2E-FIXTURE-PENDING' });
+    await ctx.close();
+    return res.denied ? 'PASS' : `FAIL: direct browser incident create succeeded (${JSON.stringify(res)})`;
+  });
+
   test('employee cannot read another organization\'s mission (cross-tenant isolation)', async () => {
     const { ctx, page } = await probePage(browser);
     const res = await attemptFirestoreOp(page, 'employee@e2e.test', PASSWORD,

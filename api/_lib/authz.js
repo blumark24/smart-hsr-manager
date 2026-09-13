@@ -155,7 +155,8 @@ async function getCallerContext(uid) {
     // department head (role: null, mobilityAccess: {enabled:true,
     // role:'department_head'}) is correctly recognized.
     if (resolveMobilityRole(d) === 'department_head' && activeIsNotFalse(d) && orgId && dept) {
-      return { uid, isOwner: false, isManager: false, isDepartmentHead: true, role: 'department_head', organizationId: orgId, department: dept };
+      const name = typeof d.name === 'string' ? d.name.trim() : '';
+      return { uid, isOwner: false, isManager: false, isDepartmentHead: true, role: 'department_head', organizationId: orgId, department: dept, name };
     }
   }
   return { uid, isOwner: false, isManager: false, isDepartmentHead: false, role: null, organizationId: null, department: null };
@@ -229,6 +230,41 @@ async function getMobilityHeadCallerContext(uid) {
     }
   }
   return { uid, isMobilityHead: false, organizationId: null };
+}
+
+// Phase 10 release-integrity closure — narrow, fail-closed context for the
+// trusted incident-create action.  The browser supplies only business input;
+// identity, current Mobility role, tenant, department and display name are
+// always read from the caller's live users/{uid} record after ID-token
+// verification.  A disabled or malformed Mobility entitlement never falls
+// back to a stale legacy role (resolveMobilityRole is authoritative here).
+async function getMobilityEmployeeCallerContext(uid) {
+  const db = getDb();
+  const usrSnap = await db.collection('users').doc(uid).get();
+  if (usrSnap.exists) {
+    const d = usrSnap.data() || {};
+    const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+    const department = typeof d.department === 'string' ? d.department.trim() : '';
+    const name = typeof d.name === 'string' ? d.name.trim() : '';
+    if (resolveMobilityRole(d) === 'employee' && activeIsNotFalse(d) && orgId) {
+      return {
+        uid,
+        isEmployee: true,
+        role: 'employee',
+        organizationId: orgId,
+        department,
+        name,
+      };
+    }
+  }
+  return {
+    uid,
+    isEmployee: false,
+    role: null,
+    organizationId: null,
+    department: null,
+    name: '',
+  };
 }
 
 // PHASE 08.1 CLOSURE 2 — a narrow, fail-closed caller-context resolver for
@@ -363,6 +399,7 @@ module.exports = {
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,
+  getMobilityEmployeeCallerContext,
   getContractorCallerContext,
   isValidMobilityAllocationTarget,
   assertCanManage,
