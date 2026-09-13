@@ -17,7 +17,8 @@ function activate(){
     const files=[
       ['./manager-phase11b-user-center-v2.js','ucV2Loader'],
       ['./manager-phase11b-modal-layer-fix.js','ucModalLayerLoader'],
-      ['./manager-phase11b-controls-fix.js','ucControlsFixLoader']
+      ['./manager-phase11b-controls-fix.js','ucControlsFixLoader'],
+      ['./manager-phase11b-employee-profile.js','ucEmployeeProfileLoader']
     ];
     files.forEach(([src,key])=>{
       if(doc.querySelector(`script[data-${key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}="true"]`))return;
