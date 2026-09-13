@@ -7,6 +7,8 @@
     'إدارة الحركة والسير'
   ];
 
+  const HOME_LABELS = ['الرئيسية', 'لوحة المدير'];
+
   const assignStyles = (el, styles) => {
     if (!el) return;
     Object.entries(styles).forEach(([key, value]) => {
@@ -101,10 +103,22 @@
     });
   };
 
-  const onServiceEntryClick = event => {
+  const onPrimaryNavigationClick = event => {
     const target = event.target && event.target.closest ? event.target.closest('[data-f],a,button,[role="button"]') : null;
     if (!target) return;
+
     const label = (target.textContent || '').replace(/\s+/g, ' ').trim();
+
+    if (HOME_LABELS.some(home => label === home || label.includes(home))) {
+      event.preventDefault();
+      event.stopPropagation();
+      const current = new URL(window.location.href);
+      current.hash = '';
+      current.pathname = current.pathname.replace(/[^/]*$/, 'manager.html');
+      window.location.assign(current.toString());
+      return;
+    }
+
     if (!SERVICE_LABELS.some(service => label.includes(service))) return;
     window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0);
   };
@@ -112,7 +126,7 @@
   const start = () => {
     if (document.documentElement.dataset.phase11aManagerFoundation === 'true') return;
     document.documentElement.dataset.phase11aManagerFoundation = 'true';
-    document.addEventListener('click', onServiceEntryClick, true);
+    document.addEventListener('click', onPrimaryNavigationClick, true);
     const observer = new MutationObserver(schedule);
     observer.observe(document.body, { subtree: true, childList: true });
     applyPhase11AFixes();
