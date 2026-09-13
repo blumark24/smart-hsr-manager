@@ -42,4 +42,13 @@
   });
 
   window.SmartHSRFormat = format;
+
+  // Phase 11A is isolated on its own implementation branch. Load the
+  // non-destructive Manager foundation patch only when manager.html imports
+  // this formatter; Production/main remain untouched until UAT approval.
+  const phase11a = document.createElement('script');
+  phase11a.src = './manager-phase11a-foundation.js';
+  phase11a.defer = true;
+  phase11a.dataset.phase11a = 'manager-routing-foundation';
+  document.head.appendChild(phase11a);
 })();
