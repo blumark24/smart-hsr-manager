@@ -110,6 +110,13 @@ function validClientRequestId(value) {
   return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/.test(value);
 }
 
+// Only business input and the retry key belong to the client. Reject all
+// other keys, including protected fields supplied with null/false values.
+const TRUSTED_CREATE_INPUT_FIELDS = {
+  createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
+  createIncident: ['action', 'clientRequestId', 'missionId', 'vehicleId', 'category', 'severity', 'note'],
+};
+
 function trustedCreateRequestRef(db, action, uid, clientRequestId) {
   const key = crypto.createHash('sha256')
     .update(`${action}\0${uid}\0${clientRequestId}`, 'utf8')
@@ -247,6 +254,9 @@ async function handler(req, res) {
   // or overridden by the body.  Mission + canonical audit + idempotency
   // receipt commit in one Admin SDK transaction.
   if (action === 'createMissionRequest') {
+    if (Object.keys(body).some(key => !TRUSTED_CREATE_INPUT_FIELDS.createMissionRequest.includes(key))) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'protected_or_unknown_field' });
+    }
     const caller = await getCallerContext(decoded.uid);
     if (!caller.isDepartmentHead || caller.role !== 'department_head') {
       return sendJson(res, 403, { error: 'forbidden', reason: 'department_head_required' });
@@ -327,6 +337,9 @@ async function handler(req, res) {
   // validated in the same transaction that creates the NEW incident, its
   // canonical audit event, and the idempotency receipt.
   if (action === 'createIncident') {
+    if (Object.keys(body).some(key => !TRUSTED_CREATE_INPUT_FIELDS.createIncident.includes(key))) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'protected_or_unknown_field' });
+    }
     const caller = await getMobilityEmployeeCallerContext(decoded.uid);
     if (!caller.isEmployee || caller.role !== 'employee') {
       return sendJson(res, 403, { error: 'forbidden', reason: 'active_employee_required' });

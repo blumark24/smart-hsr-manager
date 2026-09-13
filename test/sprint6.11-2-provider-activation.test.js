@@ -18,6 +18,23 @@ const input = (overrides = {}) => ({
 });
 const authContext = () => ({ organizationId: 'org-a', actorId: 'actor-a' });
 
+// These activation/router tests use placeholder keys and models, not live AI
+// evaluation. Use the existing selector transport injection (also used by the
+// provider conformance tests) to supply deterministic upstream rejections.
+// Production transport and its timeouts remain unchanged. JSON transport and
+// destination validation are covered by inspector-live-ai-provider-transport.test.js.
+async function deniedProviderTransport(request) {
+  assert.equal(request.method, 'POST');
+  if (request.url === 'https://api.openai.com/v1/chat/completions') {
+    assert.equal(request.headers.Authorization, 'Bearer k');
+    assert.equal(request.body.model, 'gpt-4o-test');
+    return { ok: false, status: 401, body: { error: { code: 'invalid_api_key', type: 'invalid_request_error' } } };
+  }
+  assert.equal(request.url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-test:generateContent');
+  assert.equal(request.headers['x-goog-api-key'], 'k');
+  return { ok: false, status: 400, body: { error: { code: 400, status: 'INVALID_ARGUMENT', message: 'Invalid test key.' } } };
+}
+
 // --- provider selection (configuration driven, single source of truth) ---------
 
 test('DEFAULT_VISION_PROVIDER_ID is gemini so unset deployments keep current behavior', () => {
@@ -81,12 +98,13 @@ test('OpenAI selection fails closed for an organization not on the pilot allowli
 
 test('OpenAI selection routed end-to-end through createProviderRouter stays advisory-only', async () => {
   const selection = createActiveVisionProviderRegistration({
+    transport: deniedProviderTransport,
     environment: { SMART_HSR_AI_PROVIDER: 'openai', OPENAI_API_KEY: 'k', OPENAI_VISION_MODEL: 'gpt-4o-test', SMART_HSR_AI_APPLICATION_INTEGRATION: 'true' },
     applicationContext: { organizationAllowed: true, authenticatedRequest: true },
   });
   const router = createProviderRouter({ selectedProvider: selection.providerId, providers: { [selection.providerId]: selection.providerRegistration } });
   const routed = await router.analyzeObservationImage(input(), authContext());
-  // PHASE 09 GATE 4 — no real transport configured (offline test): the
+  // PHASE 09 GATE 4 — deterministic upstream rejection (offline test): the
   // provider denies with AI_PROVIDER_UNAVAILABLE. provider-router.js's
   // validateAIOutput only flattens a MALFORMED/schema-invalid provider
   // result into AI_PROVIDER_OUTPUT_INVALID — a well-shaped provider failure
@@ -118,6 +136,7 @@ test('createActiveVisionProviderRegistration defaults to Gemini when SMART_HSR_A
 
 test('createActiveVisionProviderRegistration selects Gemini explicitly with SMART_HSR_AI_PROVIDER=gemini', async () => {
   const selection = createActiveVisionProviderRegistration({
+    transport: deniedProviderTransport,
     environment: { SMART_HSR_AI_PROVIDER: 'gemini', GEMINI_API_KEY: 'k', GEMINI_VISION_MODEL: 'gemini-test', SMART_HSR_AI_APPLICATION_INTEGRATION: 'true' },
     applicationContext: { organizationAllowed: true, authenticatedRequest: true },
   });
@@ -167,7 +186,7 @@ test('both Gemini and OpenAI selections still route through the same mandatory-h
     const environment = providerId === 'openai'
       ? { SMART_HSR_AI_PROVIDER: 'openai', OPENAI_API_KEY: 'k', OPENAI_VISION_MODEL: 'gpt-4o-test', SMART_HSR_AI_APPLICATION_INTEGRATION: 'true' }
       : { SMART_HSR_AI_PROVIDER: 'gemini', GEMINI_API_KEY: 'k', GEMINI_VISION_MODEL: 'gemini-test', SMART_HSR_AI_APPLICATION_INTEGRATION: 'true' };
-    const selection = createActiveVisionProviderRegistration({ environment, applicationContext: { organizationAllowed: true, authenticatedRequest: true } });
+    const selection = createActiveVisionProviderRegistration({ environment, transport: deniedProviderTransport, applicationContext: { organizationAllowed: true, authenticatedRequest: true } });
     const router = createProviderRouter({ selectedProvider: selection.providerId, providers: { [selection.providerId]: selection.providerRegistration } });
     const routed = await router.analyzeObservationImage(input(), authContext());
     assert.equal(routed.advisoryOnly, true, `${providerId}: advisoryOnly must stay true`);

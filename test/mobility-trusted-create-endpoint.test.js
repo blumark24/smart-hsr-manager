@@ -104,7 +104,7 @@ async function docsFor(collection, field, value) {
 }
 
 test('TC-M1 mission trusted API derives actor/role/org/department and atomically writes one canonical audit', async () => {
-  const res = await call(UID.dept, missionBody({ organizationId: ORG_B, department: 'مزور', actorId: 'مزور', role: 'owner' }));
+  const res = await call(UID.dept, missionBody());
   assert.equal(res.statusCode, 200);
   const mission = (await db.collection('missions').doc(res.body.missionId).get()).data();
   assert.equal(mission.status, 'DRAFT');
@@ -140,7 +140,7 @@ test('TC-M3 unauthenticated, wrong-role and inactive department-head mission cre
 });
 
 test('TC-I1 incident trusted API validates mission+vehicle and atomically derives canonical NEW incident/audit', async () => {
-  const res = await call(UID.employee, incidentBody({ organizationId: ORG_B, department: 'مزور', actorId: 'مزور', role: 'owner', status: 'RESOLVED' }));
+  const res = await call(UID.employee, incidentBody());
   assert.equal(res.statusCode, 200);
   const incident = (await db.collection('incidents').doc(res.body.incidentId).get()).data();
   assert.equal(incident.status, 'NEW');
@@ -203,3 +203,77 @@ test('TC-A1 Firestore transaction rollback leaves neither resource nor audit aft
   assert.equal((await resource.get()).exists, false);
   assert.equal((await audit.get()).exists, false);
 });
+
+for (const kind of ['mission', 'incident']) {
+  test(`TC-S ${kind} rejects every protected field before resource/audit/receipt writes, including on retry`, async () => {
+    const uid = kind === 'mission' ? UID.dept : UID.employee;
+    const payload = kind === 'mission' ? missionBody() : incidentBody();
+    const collection = kind === 'mission' ? 'missions' : 'incidents';
+    const protectedFields = ['uid', 'actorId', 'actorUid', 'actorRole', 'role', 'mobilityAccess',
+      'organizationId', 'department', 'status', 'createdByUid', 'updatedByUid',
+      'requesterName', 'employeeName', 'createdAt', 'updatedAt', 'timestamp',
+      'resourceId', 'resourceType', 'toStatus', 'audit', 'auditEvents', 'payloadHash',
+      'assignedEmployeeUid', 'unknownField'];
+    for (const key of protectedFields) {
+      for (const value of ['spoofed', null, false, '']) {
+        const res = await call(uid, { ...payload, [key]: value });
+        assert.equal(res.statusCode, 400, `${kind}: ${key}=${JSON.stringify(value)}`);
+        assert.deepEqual(res.body, { error: 'invalid_request', reason: 'protected_or_unknown_field' });
+      }
+    }
+    for (const name of [collection, 'auditEvents', 'mobilityCreateRequests']) {
+      assert.equal((await docsFor(name, 'clientRequestId', payload.clientRequestId)).size, 0);
+    }
+    const first = await call(uid, payload);
+    assert.equal(first.statusCode, 200);
+    const spoofedRetry = await call(uid, { ...payload, organizationId: ORG_B });
+    assert.equal(spoofedRetry.statusCode, 400);
+    const retry = await call(uid, payload);
+    assert.equal(retry.statusCode, 200);
+    assert.equal(retry.body.idempotent, true);
+    assert.equal(retry.body[`${kind}Id`], first.body[`${kind}Id`]);
+    for (const name of [collection, 'auditEvents', 'mobilityCreateRequests']) {
+      assert.equal((await docsFor(name, 'clientRequestId', payload.clientRequestId)).size, 1);
+    }
+  });
+}
+
+test('SUP incident retry remains canonical after persisted mission/vehicle/incident lifecycle changes', async () => {
+  const first = await call(UID.employee, incidentBody());
+  assert.equal(first.statusCode, 200);
+  await db.collection('missions').doc('mission-progress-a').update({ status: 'CLOSED' });
+  await db.collection('vehicles').doc('vehicle-a').update({ status: 'AVAILABLE', assignedEmployeeUid: null, currentMissionId: null });
+  await db.collection('incidents').doc(first.body.incidentId).update({ status: 'RESOLVED' });
+  const retry = await call(UID.employee, incidentBody());
+  assert.equal(retry.statusCode, 200);
+  assert.equal(retry.body.incidentId, first.body.incidentId);
+  assert.equal(retry.body.idempotent, true);
+  assert.equal((await db.collection('incidents').doc(first.body.incidentId).get()).data().status, 'RESOLVED');
+  assert.equal((await call(UID.employee, incidentBody({ note: 'changed after lifecycle' }))).statusCode, 409);
+  assert.equal((await docsFor('incidents', 'clientRequestId', 'incident-request-0001')).size, 1);
+  assert.equal((await docsFor('auditEvents', 'clientRequestId', 'incident-request-0001')).size, 1);
+});
+
+for (const kind of ['mission', 'incident']) {
+  test(`SUP actual ${kind} endpoint rolls back resource and receipt when mandatory audit staging fails`, async () => {
+    const original = db.runTransaction;
+    db.runTransaction = (callback, ...args) => original.call(db, async transaction => {
+      const stage = transaction.set.bind(transaction);
+      transaction.set = (ref, ...values) => {
+        if (ref.parent.id === 'auditEvents') throw new Error('injected audit staging failure');
+        return stage(ref, ...values);
+      };
+      return callback(transaction);
+    }, ...args);
+    const payload = kind === 'mission' ? missionBody() : incidentBody();
+    try {
+      const response = await call(kind === 'mission' ? UID.dept : UID.employee, payload);
+      assert.equal(response.statusCode, 500);
+      for (const name of [kind === 'mission' ? 'missions' : 'incidents', 'auditEvents', 'mobilityCreateRequests']) {
+        assert.equal((await docsFor(name, 'clientRequestId', payload.clientRequestId)).size, 0);
+      }
+    } finally {
+      db.runTransaction = original;
+    }
+  });
+}
