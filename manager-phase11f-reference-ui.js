@@ -137,8 +137,10 @@ async function runExisting(button,msg){
 }
 
 function buildSinglePageProfile(panel,employee){
-  if(!panel||panel.dataset.ucv21SinglePage==='1')return;
-  panel.dataset.ucv21SinglePage='1';panel.dataset.dialogLabel='تعديل المستخدم';panel.classList.add('ucv21-single-page');panel.__ucv21Employee=employee||panel.__ucv21Employee||null;
+  if(!panel)return;
+  if(employee) panel.__ucv21Employee=employee;
+  if(panel.dataset.ucv21SinglePage==='1') return;
+  panel.dataset.ucv21SinglePage='1';panel.dataset.dialogLabel='تعديل المستخدم';panel.classList.add('ucv21-single-page');
   const title=panel.querySelector('.ih b'),sub=panel.querySelector('.ih p');if(title)title.textContent='تعديل المستخدم';if(sub)sub.textContent='تحديث بيانات المستخدم والصلاحيات';
   const tabs=panel.querySelector('.tabs');if(tabs)tabs.hidden=true;
   const basic=panel.querySelector('.pane[data-id="p"]'),org=panel.querySelector('.pane[data-id="o"]'),account=panel.querySelector('.pane[data-id="a"]'),roles=panel.querySelector('.pane[data-id="r"]'),history=panel.querySelector('.pane[data-id="h"]');
@@ -147,7 +149,7 @@ function buildSinglePageProfile(panel,employee){
   addSectionHead(basic,'البيانات الأساسية','بيانات الموظف والتنظيم');addSectionHead(roles,'الخدمات والصلاحيات','الدور + المنتج + القسم');addSectionHead(account,'حالة الحساب','إدارة الوصول والهوية');
   if(account){const oldPw=account.querySelector('.pwbtn');if(oldPw)oldPw.hidden=true;}
   if(panel.__ucv21Employee?.authUid&&!panel.querySelector('.ucv21-password-inline')){
-    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.innerHTML=`<div class="ucv21-section-head"><span>تعديل كلمة المرور</span><small>اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;roles?.after(wrap)||account?.after(wrap);if(typeof window.SmartHSRInstitutionalUC?.password==='function'){wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));}
+    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.innerHTML=`<div class="ucv21-section-head"><span>تعديل كلمة المرور</span><small>اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;roles?.after(wrap)||account?.after(wrap);wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
   }
   if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.innerHTML='<button type="button" class="ucv21-history-toggle">عرض سجل الموظف</button>';history.before(hw);hw.appendChild(history);history.hidden=true;hw.querySelector('button').onclick=()=>{history.hidden=!history.hidden;hw.querySelector('button').textContent=history.hidden?'عرض سجل الموظف':'إخفاء سجل الموظف';};}
   if(!panel.querySelector('.ucv21-profile-footer')){
@@ -161,7 +163,7 @@ function buildSinglePageProfile(panel,employee){
   }
 }
 
-function tuneDialog(modal){const panel=modal.matches('.iuc')?modal.querySelector(':scope > div'):modal;if(!panel)return;const text=clean(panel.textContent);if(/ملف الموظف|تعديل المستخدم/.test(text)){buildSinglePageProfile(panel,panel.__ucv21Employee);}}
+function tuneDialog(modal){const panel=modal.matches('.iuc')?modal.querySelector(':scope > div'):modal;if(!panel||!panel.__ucv21Employee)return;const text=clean(panel.textContent);if(/ملف الموظف|تعديل المستخدم/.test(text)){buildSinglePageProfile(panel,panel.__ucv21Employee);}}
 
 if(U&&typeof U.profile==='function'&&!U.__phase11fReferenceProfileWrapped){const baseProfile=U.profile;U.__phase11fReferenceProfileWrapped=true;U.profile=async employee=>{const out=await baseProfile.call(U,employee);const panel=document.querySelector('#iuc-profile > div');if(panel){panel.__ucv21Employee=employee;buildSinglePageProfile(panel,employee);}return out;};}
 
