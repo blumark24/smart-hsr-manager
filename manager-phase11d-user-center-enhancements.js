@@ -189,6 +189,7 @@ async function renderCenter(force=false) {
   try {
     const root = findCenterRoot();
     if (!root) return;
+    root.classList.add('ucv2-host');
     lastRoot = root;
     const directory = await getDirectory(force);
     const records = normalizeRecords(directory);

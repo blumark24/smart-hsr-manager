@@ -88,4 +88,6 @@ test('User Center renderer retries after authenticated center activation', () =>
   assert.match(enhancements, /attributeFilter:\['class','style','hidden','aria-hidden'\]/);
   assert.match(enhancements, /مركز إدارة المستخدمين\|مركز المستخدمين/);
   assert.match(enhancements, /directoryCache=null;renderCenter\(true\)/);
+  assert.match(enhancements, /root\.classList\.add\('ucv2-host'\)/);
+  assert.match(referenceUi, /\.ucv2-host\{position:fixed!important;inset:78px 74px 0 0!important/);
 });
