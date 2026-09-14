@@ -10,15 +10,12 @@
 <iframe id="managerPreviewV3" title="SMART HSR Manager Preview V3" src="./manager.html?preview=phase11f-ordered"></iframe>
 <script>
 const frame=document.getElementById('managerPreviewV3');
-const REV='phase11f-22-ordered';
+const REV='phase11f-23-single-owner';
 function activate(){
   try{
     const doc=frame.contentDocument;
     if(!doc||!doc.head)return;
     const files=[
-      ['./manager-phase11b-user-center-v2.js','ucV2Loader'],
-      ['./manager-phase11b-modal-layer-fix.js','ucModalLayerLoader'],
-      ['./manager-phase11b-controls-fix.js','ucControlsFixLoader'],
       ['./manager-phase11c-user-center-core.js','ucInstitutionCoreLoader'],
       ['./manager-phase11c-user-center-dialogs.js','ucInstitutionDialogsLoader'],
       ['./manager-phase11c-user-center-import.js','ucInstitutionImportLoader'],

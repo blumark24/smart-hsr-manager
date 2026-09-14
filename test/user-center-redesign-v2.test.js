@@ -32,6 +32,7 @@ test('preview shell loads core, redesign, reference UI, then interaction polish 
   assert.ok(core >= 0 && dialogsLoader > core && redesign > dialogsLoader && reference > redesign && interactions > reference);
   assert.match(preview, /s\.async\s*=\s*false/);
   assert.match(preview, /s\.onload\s*=\s*loadNext/);
+  assert.doesNotMatch(preview, /manager-phase11b-user-center-v2\.js|manager-phase11b-modal-layer-fix\.js|manager-phase11b-controls-fix\.js/);
 });
 
 test('password UX keeps final-password semantics and setPassword contract', () => {
