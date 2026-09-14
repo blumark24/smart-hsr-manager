@@ -76,6 +76,22 @@ test('reference UI carries the approved Arabic hierarchy and edit modal title', 
   assert.match(referenceUi, /تحديث بيانات المستخدم والصلاحيات/);
 });
 
+test('approved edit experience is a single-page manager modal with inline final-password editing', () => {
+  assert.match(referenceUi, /ucv21-single-page/);
+  assert.match(referenceUi, /البيانات الأساسية/);
+  assert.match(referenceUi, /الخدمات والصلاحيات/);
+  assert.match(referenceUi, /حالة الحساب/);
+  assert.match(referenceUi, /تعديل كلمة المرور/);
+  assert.match(referenceUi, /كلمة المرور الجديدة/);
+  assert.match(referenceUi, /تأكيد كلمة المرور/);
+  assert.match(referenceUi, /إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير/);
+  assert.match(referenceUi, /حفظ التعديلات/);
+  assert.match(referenceUi, /action:'setPassword'/);
+  assert.match(referenceUi, /panel\.__ucv21Employee/);
+  assert.match(referenceUi, /if\(!panel\|\|!panel\.__ucv21Employee\)return/);
+  assert.doesNotMatch(referenceUi, /setTempPassword|كلمة مرور مؤقتة|تغيير إجباري عند أول دخول/);
+});
+
 test('KPI/filter layer is derived from loaded employee records', () => {
   assert.match(enhancements, /function kpis\(records\)/);
   assert.match(enhancements, /employees\.filter\(e => enabled\(e,'field'\)\)/);
