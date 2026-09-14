@@ -190,6 +190,7 @@ async function renderCenter(force=false) {
     const root = findCenterRoot();
     if (!root) return;
     root.classList.add('ucv2-host');
+    root.parentElement?.classList.add('ucv2-shell-overlay');
     lastRoot = root;
     const directory = await getDirectory(force);
     const records = normalizeRecords(directory);
