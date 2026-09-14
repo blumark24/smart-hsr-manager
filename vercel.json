@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node --test test/user-center-redesign-v2.test.js"
+  "installCommand": "npm install && node --test test/user-center-redesign-v2.test.js"
 }
