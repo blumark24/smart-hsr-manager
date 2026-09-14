@@ -22,7 +22,8 @@ function activate(){
       ['./manager-phase11c-user-center-dialogs.js','ucInstitutionDialogsLoader'],
       ['./manager-phase11c-user-center-import.js','ucInstitutionImportLoader'],
       ['./manager-phase11c-legacy-account-bridge.js','ucLegacyAccountBridgeLoader'],
-      ['./manager-phase11d-user-center-enhancements.js','ucPhase11dEnhancementsLoader']
+      ['./manager-phase11d-user-center-enhancements.js','ucPhase11dEnhancementsLoader'],
+      ['./manager-phase11e-user-center-interactions.js','ucPhase11eInteractionsLoader']
     ];
     files.forEach(([src,key])=>{
       if(doc.querySelector(`script[data-${key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}="true"]`))return;
