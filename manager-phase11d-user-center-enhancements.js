@@ -317,6 +317,22 @@ html.dark,body.dark,body.dark-mode,[data-theme="dark"]{--uc-bg:#07111f;--uc-surf
   document.head.appendChild(style);
 }
 
-function boot(){ installTheme(); renderCenter(); const observer=new MutationObserver(mutations=>{ if(mutations.some(m=>Array.from(m.addedNodes).some(n=>n.nodeType===1&&/مركز إدارة المستخدمين|إدارة المستخدمين/.test(clean(n.textContent))))) setTimeout(()=>renderCenter(),0); }); observer.observe(document.body,{childList:true,subtree:true}); }
+function boot(){
+  installTheme();
+  renderCenter();
+  let retryTimer=0;
+  const requestRender=()=>{
+    clearTimeout(retryTimer);
+    retryTimer=setTimeout(()=>{
+      const root=findCenterRoot();
+      if(root&&!root.querySelector('.ucv2-app')){directoryCache=null;renderCenter(true);}
+    },60);
+  };
+  const observer=new MutationObserver(mutations=>{
+    if(mutations.some(m=>m.type==='attributes'||Array.from(m.addedNodes).some(n=>n.nodeType===1&&/مركز إدارة المستخدمين|إدارة المستخدمين/.test(clean(n.textContent)))))requestRender();
+  });
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden']});
+  document.addEventListener('click',event=>{if(/مركز إدارة المستخدمين|مركز المستخدمين/.test(clean(event.target?.closest?.('a,button,[role="button"]')?.textContent)))requestRender();},true);
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

@@ -83,3 +83,9 @@ test('KPI/filter layer is derived from loaded employee records', () => {
   assert.match(enhancements, /employees\.filter\(e => enabled\(e,'mobility'\)\)/);
   assert.match(enhancements, /function matches\(record\)/);
 });
+
+test('User Center renderer retries after authenticated center activation', () => {
+  assert.match(enhancements, /attributeFilter:\['class','style','hidden','aria-hidden'\]/);
+  assert.match(enhancements, /مركز إدارة المستخدمين\|مركز المستخدمين/);
+  assert.match(enhancements, /directoryCache=null;renderCenter\(true\)/);
+});
