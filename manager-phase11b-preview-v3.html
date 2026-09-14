@@ -10,7 +10,7 @@
 <iframe id="managerPreviewV3" title="SMART HSR Manager Preview V3" src="./manager.html?preview=phase11f-ordered"></iframe>
 <script>
 const frame=document.getElementById('managerPreviewV3');
-const REV='phase11f-24-executive-handoff';
+const REV='phase11g-user-center-approved-skin';
 function activate(){
   try{
     const doc=frame.contentDocument;
@@ -23,7 +23,8 @@ function activate(){
       ['./manager-phase11d-user-center-enhancements.js','ucPhase11dEnhancementsLoader'],
       ['./manager-phase11f-reference-ui.js','ucPhase11fReferenceUiLoader'],
       ['./manager-phase11e-user-center-interactions.js','ucPhase11eInteractionsLoader'],
-      ['./manager-phase11f-executive-polish.js','managerPhase11fExecutivePolishLoader']
+      ['./manager-phase11f-executive-polish.js','managerPhase11fExecutivePolishLoader'],
+      ['./manager-phase11g-user-center-approved-skin.js','ucPhase11gApprovedSkinLoader']
     ];
     let index=0;
     const loadNext=()=>{
