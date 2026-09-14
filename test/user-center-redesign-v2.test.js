@@ -12,30 +12,46 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const enhancements = read('manager-phase11d-user-center-enhancements.js');
 const referenceUi = read('manager-phase11f-reference-ui.js');
 const executivePolish = read('manager-phase11f-executive-polish.js');
+const approvedSkin = read('manager-phase11g-user-center-approved-skin.js');
 const legacyBridge = read('manager-phase11c-legacy-account-bridge.js');
 const dialogs = read('manager-phase11c-user-center-dialogs.js');
 const preview = read('manager-phase11b-preview-v3.html');
 const usersApi = read('api/admin/users.js');
 const employeesApi = read('api/admin/employees.js');
 
-test('Phase 11F presentation layers parse as JavaScript', () => {
+test('Phase 11F/11G presentation layers parse as JavaScript', () => {
   assert.doesNotThrow(() => new vm.Script(enhancements, { filename: 'manager-phase11d-user-center-enhancements.js' }));
   assert.doesNotThrow(() => new vm.Script(referenceUi, { filename: 'manager-phase11f-reference-ui.js' }));
   assert.doesNotThrow(() => new vm.Script(executivePolish, { filename: 'manager-phase11f-executive-polish.js' }));
+  assert.doesNotThrow(() => new vm.Script(approvedSkin, { filename: 'manager-phase11g-user-center-approved-skin.js' }));
   assert.doesNotThrow(() => new vm.Script(legacyBridge, { filename: 'manager-phase11c-legacy-account-bridge.js' }));
 });
 
-test('preview shell loads one deterministic Phase 11F presentation chain', () => {
+test('preview shell loads deterministic presentation chain with approved skin last', () => {
   const core = preview.indexOf('manager-phase11c-user-center-core.js');
   const dialogsLoader = preview.indexOf('manager-phase11c-user-center-dialogs.js');
   const redesign = preview.indexOf('manager-phase11d-user-center-enhancements.js');
   const reference = preview.indexOf('manager-phase11f-reference-ui.js');
   const interactions = preview.indexOf('manager-phase11e-user-center-interactions.js');
   const executive = preview.indexOf('manager-phase11f-executive-polish.js');
-  assert.ok(core >= 0 && dialogsLoader > core && redesign > dialogsLoader && reference > redesign && interactions > reference && executive > interactions);
+  const skin = preview.indexOf('manager-phase11g-user-center-approved-skin.js');
+  assert.ok(core >= 0 && dialogsLoader > core && redesign > dialogsLoader && reference > redesign && interactions > reference && executive > interactions && skin > executive);
   assert.match(preview, /s\.async\s*=\s*false/);
   assert.match(preview, /s\.onload\s*=\s*loadNext/);
   assert.doesNotMatch(preview, /manager-phase11b-user-center-v2\.js|manager-phase11b-modal-layer-fix\.js|manager-phase11b-controls-fix\.js/);
+});
+
+test('approved skin is CSS-only and preserves manager header/sidebar outside User Center', () => {
+  assert.match(approvedSkin, /FINAL VISUAL OWNER/);
+  assert.match(approvedSkin, /\.ucv2-host/);
+  assert.match(approvedSkin, /right:calc\(var\(--sbW,232px\) \+ 28px\)/);
+  assert.match(approvedSkin, /top:92px/);
+  assert.match(approvedSkin, /radial-gradient\(720px 300px/);
+  assert.match(approvedSkin, /#iuc-profile>div\.ucv21-single-page/);
+  assert.match(approvedSkin, /width:min\(620px,calc\(100vw - 42px\)\)/);
+  assert.match(approvedSkin, /@media\(max-width:820px\)/);
+  assert.match(approvedSkin, /@media\(max-width:640px\)/);
+  assert.doesNotMatch(approvedSkin, /\/api\/|firebase|firestore|setPassword|setTempPassword|fetch\s*\(/);
 });
 
 test('password UX keeps final-password semantics and setPassword contract', () => {
@@ -47,6 +63,7 @@ test('password UX keeps final-password semantics and setPassword contract', () =
   assert.doesNotMatch(enhancements, /كلمة مرور مؤقتة|تغيير عند أول دخول/);
   assert.doesNotMatch(referenceUi, /setTempPassword|كلمة مرور مؤقتة|تغيير إجباري عند أول دخول/);
   assert.doesNotMatch(executivePolish, /setTempPassword|كلمة مرور مؤقتة|تغيير إجباري عند أول دخول/);
+  assert.doesNotMatch(approvedSkin, /setTempPassword|كلمة مرور مؤقتة|تغيير إجباري عند أول دخول/);
 });
 
 test('Add Employee remains wired to existing employee APIs', () => {
@@ -64,7 +81,7 @@ test('redesign reuses secure email/history actions and does not create identitie
 });
 
 test('manager presentation contains no native alert confirm or prompt calls', () => {
-  for (const source of [legacyBridge, enhancements, referenceUi, executivePolish]) {
+  for (const source of [legacyBridge, enhancements, referenceUi, executivePolish, approvedSkin]) {
     assert.doesNotMatch(source, /\balert\s*\(/);
     assert.doesNotMatch(source, /\bconfirm\s*\(/);
     assert.doesNotMatch(source, /\bprompt\s*\(/);
@@ -112,7 +129,6 @@ test('User Center renderer retries after authenticated center activation', () =>
   assert.match(enhancements, /root\.classList\.add\('ucv2-host'\)/);
   assert.match(enhancements, /ucv2-shell-overlay/);
   assert.match(referenceUi, /\.ucv2-shell-overlay\{background:transparent!important;pointer-events:none!important/);
-  assert.match(referenceUi, /\.ucv2-host\{position:fixed!important;top:78px!important;right:74px!important/);
 });
 
 test('executive handoff polish covers observations, maps, brand and three products without replacing business logic', () => {
