@@ -6,11 +6,16 @@ const { evaluateReferenceLayerAccess } = require('../../platform/geo/geo-policy'
 const { createStaticReferenceExtractProvider, validateBbox, slugForOrganization } = require('../../platform/geo/geo-provider-contract');
 const { getAttribution } = require('../../platform/geo/geo-attribution-registry');
 const { validateEmployeeRecord } = require('../../platform/contracts/employee-registry-contract');
+const { handleExtendedUserCenterAction } = require('../_lib/userCenterActions');
 
 const ALQUNFUDHAH_ORGANIZATION_ID = 'CnlVlKC7UcDMp2NZzjjT';
 const ALQUNFUDHAH_APPROXIMATE_CENTER = Object.freeze({ lat: 19.12639, lng: 41.07889 });
 const ALQUNFUDHAH_DEFAULT_ZOOM = 13;
-const USER_CENTER_ACTIONS = new Set(['userCenter.updateProfile']);
+const USER_CENTER_ACTIONS = new Set([
+  'userCenter.updateProfile',
+  'userCenter.changeLoginEmail',
+  'userCenter.listHistory',
+]);
 const USER_CENTER_PROFILE_KEYS = new Set(['action', 'employeeId', 'name', 'employeeRef', 'email', 'phone', 'jobTitle', 'employmentStatus']);
 
 function sendJson(res, statusCode, payload) {
@@ -144,6 +149,22 @@ async function handleUserCenterAction(req, res, body) {
   if (!employeeSnap.exists) return sendJson(res, 404, { error:'employee_not_found' });
   const current = employeeSnap.data() || {};
   if (!isNonEmptyString(current.organizationId) || current.organizationId !== caller.organizationId) return sendJson(res, 403, { error:'forbidden', reason:'cross_organization_denied' });
+
+  if (body.action !== 'userCenter.updateProfile') {
+    return handleExtendedUserCenterAction({
+      req,
+      res,
+      body,
+      db,
+      auth,
+      caller,
+      employeeId,
+      employeeRef,
+      current,
+      sendJson,
+    });
+  }
+
   if (Object.keys(body).some(key => !USER_CENTER_PROFILE_KEYS.has(key))) return sendJson(res, 400, { error:'invalid_request', reason:'protected_or_unknown_field' });
 
   const patch = {};
