@@ -11,6 +11,7 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 const enhancements = read('manager-phase11d-user-center-enhancements.js');
 const referenceUi = read('manager-phase11f-reference-ui.js');
+const executivePolish = read('manager-phase11f-executive-polish.js');
 const legacyBridge = read('manager-phase11c-legacy-account-bridge.js');
 const dialogs = read('manager-phase11c-user-center-dialogs.js');
 const preview = read('manager-phase11b-preview-v3.html');
@@ -20,16 +21,18 @@ const employeesApi = read('api/admin/employees.js');
 test('Phase 11F presentation layers parse as JavaScript', () => {
   assert.doesNotThrow(() => new vm.Script(enhancements, { filename: 'manager-phase11d-user-center-enhancements.js' }));
   assert.doesNotThrow(() => new vm.Script(referenceUi, { filename: 'manager-phase11f-reference-ui.js' }));
+  assert.doesNotThrow(() => new vm.Script(executivePolish, { filename: 'manager-phase11f-executive-polish.js' }));
   assert.doesNotThrow(() => new vm.Script(legacyBridge, { filename: 'manager-phase11c-legacy-account-bridge.js' }));
 });
 
-test('preview shell loads core, redesign, reference UI, then interaction polish in deterministic order', () => {
+test('preview shell loads one deterministic Phase 11F presentation chain', () => {
   const core = preview.indexOf('manager-phase11c-user-center-core.js');
   const dialogsLoader = preview.indexOf('manager-phase11c-user-center-dialogs.js');
   const redesign = preview.indexOf('manager-phase11d-user-center-enhancements.js');
   const reference = preview.indexOf('manager-phase11f-reference-ui.js');
   const interactions = preview.indexOf('manager-phase11e-user-center-interactions.js');
-  assert.ok(core >= 0 && dialogsLoader > core && redesign > dialogsLoader && reference > redesign && interactions > reference);
+  const executive = preview.indexOf('manager-phase11f-executive-polish.js');
+  assert.ok(core >= 0 && dialogsLoader > core && redesign > dialogsLoader && reference > redesign && interactions > reference && executive > interactions);
   assert.match(preview, /s\.async\s*=\s*false/);
   assert.match(preview, /s\.onload\s*=\s*loadNext/);
   assert.doesNotMatch(preview, /manager-phase11b-user-center-v2\.js|manager-phase11b-modal-layer-fix\.js|manager-phase11b-controls-fix\.js/);
@@ -42,7 +45,8 @@ test('password UX keeps final-password semantics and setPassword contract', () =
   assert.match(usersApi, /['"]setPassword['"]/);
   assert.match(employeesApi, /mustChangePassword\s*:\s*false/);
   assert.doesNotMatch(enhancements, /كلمة مرور مؤقتة|تغيير عند أول دخول/);
-  assert.doesNotMatch(enhancements, /action\s*:\s*['"]setTempPassword['"]/);
+  assert.doesNotMatch(referenceUi, /setTempPassword|كلمة مرور مؤقتة|تغيير إجباري عند أول دخول/);
+  assert.doesNotMatch(executivePolish, /setTempPassword|كلمة مرور مؤقتة|تغيير إجباري عند أول دخول/);
 });
 
 test('Add Employee remains wired to existing employee APIs', () => {
@@ -59,10 +63,12 @@ test('redesign reuses secure email/history actions and does not create identitie
   assert.doesNotMatch(legacyBridge, /createUserWithEmailAndPassword|admin\.auth\(\)\.createUser|createUser\s*\(/);
 });
 
-test('User Center legacy flow contains no native alert confirm or prompt calls', () => {
-  assert.doesNotMatch(legacyBridge, /\balert\s*\(/);
-  assert.doesNotMatch(legacyBridge, /\bconfirm\s*\(/);
-  assert.doesNotMatch(legacyBridge, /\bprompt\s*\(/);
+test('manager presentation contains no native alert confirm or prompt calls', () => {
+  for (const source of [legacyBridge, enhancements, referenceUi, executivePolish]) {
+    assert.doesNotMatch(source, /\balert\s*\(/);
+    assert.doesNotMatch(source, /\bconfirm\s*\(/);
+    assert.doesNotMatch(source, /\bprompt\s*\(/);
+  }
 });
 
 test('reference UI carries the approved Arabic hierarchy and edit modal title', () => {
@@ -89,7 +95,6 @@ test('approved edit experience is a single-page manager modal with inline final-
   assert.match(referenceUi, /action:'setPassword'/);
   assert.match(referenceUi, /panel\.__ucv21Employee/);
   assert.match(referenceUi, /if\(!panel\|\|!panel\.__ucv21Employee\)return/);
-  assert.doesNotMatch(referenceUi, /setTempPassword|كلمة مرور مؤقتة|تغيير إجباري عند أول دخول/);
 });
 
 test('KPI/filter layer is derived from loaded employee records', () => {
@@ -108,4 +113,17 @@ test('User Center renderer retries after authenticated center activation', () =>
   assert.match(enhancements, /ucv2-shell-overlay/);
   assert.match(referenceUi, /\.ucv2-shell-overlay\{background:transparent!important;pointer-events:none!important/);
   assert.match(referenceUi, /\.ucv2-host\{position:fixed!important;top:78px!important;right:74px!important/);
+});
+
+test('executive handoff polish covers observations, maps, brand and three products without replacing business logic', () => {
+  assert.match(executivePolish, /data-hsr-obs-filter="status"/);
+  assert.match(executivePolish, /data-hsr-obs-filter="priority"/);
+  assert.match(executivePolish, /data-hsr-obs-filter="type"/);
+  assert.match(executivePolish, /الخريطة التشغيلية/);
+  assert.match(executivePolish, /leaflet-interactive/);
+  assert.match(executivePolish, /smart-hsr-mark/);
+  assert.match(executivePolish, /إدارة الحصر الميداني/);
+  assert.match(executivePolish, /إدارة الأراضي والممتلكات/);
+  assert.match(executivePolish, /إدارة الحركة والسير/);
+  assert.doesNotMatch(executivePolish, /L\.map\s*\(|new\s+L\.Map|\/api\/|firebase|firestore|setPassword/);
 });
