@@ -19,9 +19,13 @@ async function bridge(){
     const d=await U.dir(true),u=d.users.find(x=>U.clean(x.email).toLowerCase()===email.toLowerCase());
     const e=u&&d.employees.find(x=>x.authUid===u.uid);
     if(e)return await U.profile(e);
-    const body=`<div class="sec"><div class="st"><span>حساب قديم يحتاج استكمال</span><small>لم يتم ربطه بعد بسجل موظف مؤسسي</small></div><div class="note">البريد: ${U.esc(email)}<br>لن نعرض نافذة الحساب القديمة بعد الآن. أنشئ الحسابات الاختبارية الجديدة من «إضافة موظف» لتظهر البيانات والتنظيم والمنتجات في ملف واحد.</div></div>`;
-    U.shell('iuc-legacy-note','ملف المستخدم','الحساب الحالي غير مرتبط بسجل موظف.',body,true);
-  }catch(err){alert(U.why(err.reason||err.message))}finally{busy=false}
+    const body=`<div class="sec"><div class="st"><span>حساب قديم يحتاج استكمال</span><small>لم يتم ربطه بعد بسجل موظف مؤسسي</small></div><div class="note">البريد: ${U.esc(email)}<br>لن نعرض نافذة الحساب القديمة بعد الآن. الحساب القديم غير مرتبط بسجل موظف، ولن يتم إنشاء هوية بديلة أو تنفيذ ربط صامت.</div></div>`;
+    U.shell('iuc-legacy-note','ملف المستخدم','حساب قديم غير مرتبط بسجل موظف',body,true);
+  }catch(err){
+    const reason=U.why(err.reason||err.message);
+    const body=`<div class="sec"><div class="st"><span>تعذر التحقق من الحساب القديم</span><small>لم يتم تنفيذ أي تغيير على الهوية أو سجل الموظف</small></div><div class="msg er">${U.esc(reason)}</div></div>`;
+    U.shell('iuc-legacy-error','تعذر فتح ملف المستخدم','راجع البيانات ثم حاول مرة أخرى.',body,true);
+  }finally{busy=false}
 }
 function start(){bridge();let q=false;new MutationObserver(()=>{if(q)return;q=true;requestAnimationFrame(()=>{q=false;bridge()})}).observe(document.body,{childList:true,subtree:true})}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
