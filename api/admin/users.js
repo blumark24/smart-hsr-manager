@@ -11,7 +11,7 @@ const crypto = require('node:crypto');
 //         Supervisors are deliberately not authorized callers.
 // Body:   { action, ...params }
 //
-// Actions: list | create | setTempPassword | setActive | revokeSessions | getMetadata
+// Actions: list | create | setPassword | setTempPassword | setActive | revokeSessions | getMetadata
 //
 // SECURITY: passwords are never returned, never logged, never stored in
 // Firestore. A temporary password sets mustChangePassword:true on the record.
@@ -943,43 +943,79 @@ async function handler(req, res) {
         });
       }
 
-      // ---- set a temporary password (forces change on next login) ----
+      // ---- municipality manager password management ----
+      // setPassword is the normal User Center flow: a municipality manager
+      // selects the final password for a linked institutional employee.
+      // setTempPassword remains intact only for legacy temporary-password flows.
+      case 'setPassword':
       case 'setTempPassword': {
         const { uid, password } = body;
         if (!isNonEmptyString(uid) || !isNonEmptyString(password)) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'password_policy_failed' });
         }
-        // This sensitive action is deliberately manager-only. Owners and
-        // supervisors use their separate approved workflows and cannot inherit
-        // organization-manager password authority through this endpoint.
+
         if (!caller.isManager || caller.role !== 'manager' || !isNonEmptyString(caller.organizationId)) {
           return sendJson(res, 403, { error: 'forbidden', reason: 'password_management_denied' });
         }
         if (!hasRecentAuthentication(decoded)) {
           return sendJson(res, 401, { error: 'unauthenticated', reason: 'reauthentication_required' });
         }
+
         const record = await findRecord(db, uid);
-        if (!record || !isPasswordEligibleTarget(record.data)) {
-          return sendJson(res, 403, { error: 'forbidden', reason: 'password_target_denied' });
+        if (!record) {
+          return sendJson(res, 404, { error: 'record_not_found' });
         }
         if (!isNonEmptyString(record.data.organizationId) || record.data.organizationId !== caller.organizationId) {
           return sendJson(res, 403, { error: 'forbidden', reason: 'target_organization_mismatch' });
         }
-        const policyFailure = passwordPolicyReason(password, record.data);
-        if (policyFailure) return sendJson(res, 400, { error: 'invalid_request', reason: policyFailure });
 
-        await auth.updateUser(uid, { password }); // password set, never stored/logged
+        if (action === 'setPassword') {
+          // Direct edit is deliberately limited to a real linked employee
+          // account in users/{uid}. It never applies to managers/owners and
+          // never silently upgrades a legacy unlinked login.
+          if (record.collection !== 'users' || !isNonEmptyString(record.data.employeeId)) {
+            return sendJson(res, 403, { error: 'forbidden', reason: 'password_target_denied' });
+          }
+
+          const employeeSnap = await db.collection('employees').doc(record.data.employeeId).get();
+          const employee = employeeSnap.exists ? (employeeSnap.data() || {}) : null;
+          if (!employee ||
+              employee.organizationId !== caller.organizationId ||
+              employee.authUid !== uid) {
+            return sendJson(res, 409, { error: 'invalid_request', reason: 'employee_account_link_mismatch' });
+          }
+        } else if (!isPasswordEligibleTarget(record.data)) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'password_target_denied' });
+        }
+
+        const policyFailure = passwordPolicyReason(password, record.data);
+        if (policyFailure) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: policyFailure });
+        }
+
+        const forceChangeOnNextLogin = action === 'setTempPassword';
+
+        await auth.updateUser(uid, { password });
         await auth.revokeRefreshTokens(uid);
+
         await record.ref.set({
-          mustChangePassword: true,
+          mustChangePassword: forceChangeOnNextLogin,
           passwordUpdatedAt: FieldValue.serverTimestamp(),
           sessionsRevokedAt: FieldValue.serverTimestamp(),
         }, { merge: true });
 
-        // No password echoed back, and never audited — only the fact that
-        // a reset happened, never the value.
-        await recordAdminAudit(db, { caller, organizationId: record.data.organizationId, targetUid: uid, action: 'password_reset' });
-        return sendJson(res, 200, { uid, mustChangePassword: true, revoked: true });
+        await recordAdminAudit(db, {
+          caller,
+          organizationId: record.data.organizationId,
+          targetUid: uid,
+          action: forceChangeOnNextLogin ? 'password_reset' : 'password_change',
+        });
+
+        return sendJson(res, 200, {
+          uid,
+          mustChangePassword: forceChangeOnNextLogin,
+          revoked: true,
+        });
       }
 
       // ---- enable / disable an account ----

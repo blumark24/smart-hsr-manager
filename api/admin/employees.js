@@ -336,7 +336,7 @@ async function handler(req, res) {
               vehicleEligible: products.mobility.vehicleEligible,
               createdBy: caller.uid,
               createdAt: FieldValue.serverTimestamp(),
-              ...(isNonEmptyString(password) ? { mustChangePassword: true } : {}),
+              ...(isNonEmptyString(password) ? { mustChangePassword: false } : {}),
               ...(landsSel.enabled ? { landsAccess: { enabled: true, role: landsSel.role, requestedBy: caller.uid, requestedAt: FieldValue.serverTimestamp(), syncStatus: 'pending_trusted_sync' } } : {}),
               // PHASE 06A hotfix — Mobility's own independent entitlement
               // field on the newly-created account, structurally parallel
@@ -374,7 +374,7 @@ async function handler(req, res) {
 
         return sendJson(res, 200, {
           employeeId, authUid: userRecord.uid, accountStatus: ACCOUNT_STATUS.ACTIVE,
-          mustChangePassword: isNonEmptyString(password), products,
+          mustChangePassword: false, products,
         });
       }
 
