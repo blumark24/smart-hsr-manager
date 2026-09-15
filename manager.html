@@ -108,7 +108,7 @@
               </div>
               <div style="max-height:300px;overflow:auto">
                 <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
-                  <div style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-bottom:1px solid var(--popDiv,rgba(122,164,224,0.09));cursor:pointer" style-hover="background:var(--hdrCtl,rgba(20,32,54,0.6))">
+                  <div onClick="{{ n.on }}" data-f="1" style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-bottom:1px solid var(--popDiv,rgba(122,164,224,0.09));cursor:pointer" style-hover="background:var(--hdrCtl,rgba(20,32,54,0.6))">
                     <span style="width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none;background:{{ n.col }}"></span>
                     <div style="flex:1;min-width:0">
                       <div style="font-size:11.5px;font-weight:600;color:var(--popTx,#e9f1fb);line-height:1.5">{{ n.title }}</div>
@@ -1867,7 +1867,7 @@
               <div style="height:180px;border-radius:12px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--tx3,#7d8ea6)">جاري تحميل الصورة الموثّقة...</div>
             </sc-if>
             <sc-if value="{{ evidenceBeforeReady }}">
-              <img src="{{ evidenceBeforeUrl }}" alt="صورة قبل المعالجة" style="width:100%;border-radius:12px;border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:block">
+              <img ref="{{ evidenceBeforeImgRef }}" alt="صورة قبل المعالجة" style="width:100%;border-radius:12px;border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:block">
             </sc-if>
             <sc-if value="{{ evidenceBeforeUnavailable }}">
               <div style="height:120px;border-radius:12px;background:var(--ctl,rgba(20,32,54,0.5));border:1px dashed var(--ctlBd,rgba(122,164,224,0.2));display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--tx3,#7d8ea6)">تعذّر الوصول إلى الصورة الموثّقة لهذا البلاغ</div>
@@ -1882,7 +1882,7 @@
               <div style="height:180px;border-radius:12px;background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--tx3,#7d8ea6)">جاري تحميل الصورة الموثّقة...</div>
             </sc-if>
             <sc-if value="{{ evidenceAfterReady }}">
-              <img src="{{ evidenceAfterUrl }}" alt="صورة بعد المعالجة" style="width:100%;border-radius:12px;border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:block">
+              <img ref="{{ evidenceAfterImgRef }}" alt="صورة بعد المعالجة" style="width:100%;border-radius:12px;border:1px solid var(--ctlBd,rgba(122,164,224,0.14));display:block">
             </sc-if>
             <sc-if value="{{ evidenceAfterUnavailable }}">
               <div style="height:120px;border-radius:12px;background:var(--ctl,rgba(20,32,54,0.5));border:1px dashed var(--ctlBd,rgba(122,164,224,0.2));display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--tx3,#7d8ea6)">تعذّر الوصول إلى الصورة الموثّقة لهذا البلاغ</div>
@@ -1902,6 +1902,12 @@
               <sc-if value="{{ evidenceAiExplanation }}"><div style="font-size:11px;color:var(--tx2,#a9bdd4);line-height:1.7">{{ evidenceAiExplanation }}</div></sc-if>
               <sc-if value="{{ evidenceAiAction }}"><div style="font-size:10.5px;color:var(--tx2,#a9bdd4);line-height:1.7;padding-top:6px;border-top:1px solid var(--div,rgba(122,164,224,0.1))"><span style="color:var(--tx3,#7d8ea6)">الإجراء الموصى به: </span>{{ evidenceAiAction }}</div></sc-if>
             </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ evidenceHasLocation }}">
+          <div style="border-top:1px solid var(--div,rgba(122,164,224,0.13));padding-top:14px;display:flex;flex-direction:column;gap:9px">
+            <button onClick="{{ viewEvidenceOnMap }}" data-f="1" style="width:100%;height:36px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">عرض على الخريطة<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 6 4 12l6 6M4 12h16"></path></svg></button>
           </div>
         </sc-if>
       </div>
@@ -3347,15 +3353,26 @@ class Component extends DCLogic {
       })(),
       viewIncidentOnMap: () => this.viewIncidentOnMap(), stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
       evidenceDrawerOpen: st.evidenceDrawerOpen, closeEvidenceDrawer: () => this.closeEvidenceDrawer(),
+      evidenceHasLocation: !!st.selectedObservation?.coordinates, viewEvidenceOnMap: () => this.viewEvidenceOnMap(),
       evidenceTitle: st.selectedObservation?.title || '—', evidenceCode: st.selectedObservation?.displayId || '—',
       evidenceStatus: st.selectedObservation ? statusLabel(st.selectedObservation.status) : '—',
       evidenceInspector: st.selectedObservation?.inspector || 'غير متاح',
       evidenceHasBefore: st.evidenceBeforeState !== 'none',
       evidenceBeforeLoading: st.evidenceBeforeState === 'loading', evidenceBeforeReady: st.evidenceBeforeState === 'ready',
-      evidenceBeforeUnavailable: st.evidenceBeforeState === 'unavailable', evidenceBeforeUrl: st.evidenceBeforeUrl,
+      evidenceBeforeUnavailable: st.evidenceBeforeState === 'unavailable',
+      // PHASE 09 SECURITY/CORRECTNESS FIX — this <img> must never carry a
+      // literal src="{{ evidenceBeforeUrl }}" in the static markup: unknown
+      // custom elements (sc-if) do not stop the browser's native HTML
+      // parser from immediately fetching a real <img>'s src the moment it
+      // is parsed, regardless of the surrounding sc-if's real (JS-only)
+      // open/closed state. That produced a real, unconditional 404 on
+      // every page load, whether or not the drawer was ever opened. Assign
+      // .src imperatively via ref, only once a real signed URL is known.
+      evidenceBeforeImgRef: el => { if (el && st.evidenceBeforeUrl && el.src !== st.evidenceBeforeUrl) el.src = st.evidenceBeforeUrl; },
       evidenceHasAfter: st.evidenceAfterState !== 'none',
       evidenceAfterLoading: st.evidenceAfterState === 'loading', evidenceAfterReady: st.evidenceAfterState === 'ready',
-      evidenceAfterUnavailable: st.evidenceAfterState === 'unavailable', evidenceAfterUrl: st.evidenceAfterUrl,
+      evidenceAfterUnavailable: st.evidenceAfterState === 'unavailable',
+      evidenceAfterImgRef: el => { if (el && st.evidenceAfterUrl && el.src !== st.evidenceAfterUrl) el.src = st.evidenceAfterUrl; },
       evidenceHasAi: !!st.selectedObservation?.aiAnalysis,
       evidenceAiCategory: st.selectedObservation?.aiAnalysis?.categoryLabelAr || 'غير مصنف',
       evidenceAiSeverity: (() => {
@@ -3467,7 +3484,7 @@ class Component extends DCLogic {
       userCenterKpis, tProductFilters, tVehicleFilters, tDeptFilters,
       hasDeptFilters: tDeptFilters.length > 1,
 
-      notifs: this.liveNotifications,
+      notifs: this.liveNotifications.map(n => Object.assign({ on: () => this.openObservation(n.id) }, n)),
       scopes: [{ label: 'مدير البلدية' }, { label: 'رؤساء الأقسام' }, { label: 'إدارة الحركة' }, { label: 'الشؤون الإدارية' }, { label: 'الموظفون' }, { label: 'المراقبون' }, { label: 'لوحات مستقبلية' }],
       depts: this.liveDepartments,
       cats: this.liveCategories,
@@ -4403,6 +4420,29 @@ class Component extends DCLogic {
     setTimeout(() => {
       this.mapShell?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       this.syncOperationalMap();
+    }, 80);
+  }
+
+  // PHASE 09 — real Report/Observation -> Operational Map handoff.
+  // Same safe pattern as viewIncidentOnMap(): switch to the Home map,
+  // scroll it into view, and let syncOperationalMap() render the real
+  // org-scoped observation markers. It additionally preserves the exact
+  // entity's own coordinates by re-centering the already-fitted Leaflet
+  // view on that one point, since this observation is the same record
+  // (same id, same liveObservations source) syncOperationalMap() already
+  // plots — no new data model, no new map surface. There is no marker
+  // selection/highlight state on this map today (only the Home twin
+  // canvas has that, for its own separate object model); adding one is
+  // Operational Map work and out of scope for this stage.
+  viewEvidenceOnMap() {
+    const obs = this.state.selectedObservation;
+    if (!obs || !obs.coordinates) return;
+    this.closeEvidenceDrawer();
+    this.setState({ mapMode: 'map', view: 'home' });
+    setTimeout(() => {
+      this.mapShell?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      this.syncOperationalMap();
+      if (this._opMap && window.L) this._opMap.setView([obs.coordinates.lat, obs.coordinates.lng], 16, { animate: true });
     }, 80);
   }
 

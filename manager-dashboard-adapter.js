@@ -211,6 +211,7 @@ function buildViewData(observations, users, incidents = []) {
       { id: 'task', name: 'المهام', col: '#38bdf8', n: '—' }
     ],
     notifications: observations.slice(0, 4).map(item => ({
+      id: item.id,
       title: item.title,
       meta: `${statusFor(item.status).label} · ${item.displayId}`,
       col: statusFor(item.status).color
