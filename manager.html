@@ -48,7 +48,7 @@
 <div dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
 <div style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5;transition:background .3s ease,color .3s ease">
 
-  <header style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:var(--hdrWrap,nowrap);gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.22));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.09),inset 0 -1px 0 rgba(0,0,0,0.3),0 4px 12px -6px rgba(0,0,0,0.6),0 26px 54px -22px rgba(0,0,0,0.98));backdrop-filter:var(--blur,blur(22px))">
+  <header style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:var(--hdrWrap,nowrap);gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.22));border-bottom:2px solid var(--hdrAccentBd,rgba(34,197,94,0.4));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.09),inset 0 -1px 0 rgba(0,0,0,0.3),0 4px 12px -6px rgba(0,0,0,0.6),0 26px 54px -22px rgba(0,0,0,0.98));backdrop-filter:var(--blur,blur(22px))">
 
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
       <div style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
@@ -61,7 +61,7 @@
         </div>
       </div>
       <div style="position:relative;display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
-        <div onClick="{{ tProf }}" data-f="1" style="text-align:left;cursor:pointer">
+        <div onClick="{{ tProf }}" data-f="1" style="text-align:left;cursor:pointer;display:var(--profTxt,block)">
           <div style="font-size:13px;font-weight:600;color:var(--hdrTx,#e9f1fb)">{{ sessionName }}</div>
           <div style="font-size:10.5px;font-weight:550;color:var(--hdrTx3,#7d8ea6);margin-top:1px">{{ sessionRole }}</div>
         </div>
@@ -2246,6 +2246,7 @@ class Component extends DCLogic {
     '--sectBd': 'rgba(18,133,90,0.2)',
     '--hdrBg': 'linear-gradient(168deg,rgba(10,74,52,0.97),rgba(8,58,42,0.98) 52%,rgba(11,46,38,0.97)),radial-gradient(600px 200px at 88% -40%,rgba(90,200,150,0.16),transparent 70%)',
     '--hdrBd': 'rgba(120,200,165,0.26)',
+    '--hdrAccentBd': 'rgba(20,156,43,0.55)',
     '--hdrBlur': 'blur(20px) saturate(150%)',
     '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.14),inset 0 -1px 0 rgba(0,0,0,0.14),0 14px 32px -22px rgba(6,40,28,0.7)',
     '--hdrTx': '#f2faf5',
@@ -2324,6 +2325,7 @@ class Component extends DCLogic {
     '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.07),inset 0 0 0 1px rgba(90,190,150,0.05),0 20px 44px -26px rgba(0,0,0,0.95)',
     '--glassH': 'rgba(255,255,255,0.1)',
     '--hdrBd': 'rgba(122,164,224,0.22)',
+    '--hdrAccentBd': 'rgba(34,197,94,0.4)',
     '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.09),inset 0 -1px 0 rgba(0,0,0,0.3),0 4px 12px -6px rgba(0,0,0,0.6),0 26px 54px -22px rgba(0,0,0,0.98)',
     '--sbBd': 'rgba(122,164,224,0.2)',
     '--sbSh': 'inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96)',
@@ -2338,14 +2340,14 @@ class Component extends DCLogic {
 
   BP = {
     xl: { '--pgMaxW': '1600px', '--sbW': '232px', '--aiW': '292px', '--prioW': '272px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px' },
-    lg: { '--pgMaxW': '100%', '--sbW': '216px', '--aiW': '272px', '--prioW': '256px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px' },
+    lg: { '--pgMaxW': '100%', '--sbW': '216px', '--aiW': '272px', '--prioW': '256px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px', '--searchW': '150px', '--metaDisp': 'none' },
     md: { '--pgMaxW': '100%', '--sbW': '68px', '--sbLabel': 'none', '--subInd': '0px', '--aiW': '252px', '--prioW': '240px',
       '--twinH': '430px', '--midH': '430px', '--hdrNav': 'none', '--searchW': '150px', '--metaDisp': 'none', '--anaCols': 'repeat(3,1fr)', '--anaH': 'auto', '--kpiCell': '120px', '--scoreW': '210px', '--fsMapH': '380px' },
     tab: { '--pgMaxW': '100%', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchW': '160px',
       '--kpiWrap': 'wrap', '--kpiCell': '33%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '400px', '--midH': 'auto',
       '--aiW': 'calc(50% - 7px)', '--prioW': 'calc(50% - 7px)', '--anaCols': 'repeat(2,1fr)', '--anaH': 'auto',
-      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none',
+      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none', '--profTxt': 'none',
       '--fsWrap': 'wrap', '--fsMapH': '340px', '--fsSideW': '100%',
       '--lndWrap': 'wrap', '--lndMapH': '240px' },
     mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none', '--hdrWrap': 'wrap', '--hdrLabel': 'none',
