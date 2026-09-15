@@ -11,117 +11,196 @@
 <script src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="geo-core.bundle.js"></script>
 <style>
-  /* SMART HSR Geo Core design tokens — mirrors platform/geo/geo-style-tokens.js
-     verbatim (this repo has no CSS-from-JS build step, matching the existing
-     convention already used by dashboard.html/owner.html's own hardcoded
-     token blocks) — keep both in sync if either changes. */
+  /* SMART HSR Municipal Command Map — visual language ported from the
+     approved design reference ("Smart HSR Manager Dashboard.dc.html"'s
+     map/twin widget: glass panels over a dark command surface, restrained
+     cyan/green accents, no gamer-HUD neon). Status colors below still
+     mirror platform/geo/geo-style-tokens.js verbatim (Section 16) — only
+     the chrome (panels/toolbar/popup) is restyled this pass, per the
+     "visual presentation only" scope of this brief.
+     Night is the base palette (default token values); Day overrides. */
   :root{
-    --app-bg:#F8FAFC; --surface:#FFFFFF; --text:#0F172A; --text-2:#475569; --text-muted:#94A3B8;
-    --border:#E2E8F0; --border-subtle:#F1F5F9; --green:#059669; --green-hover:#047857; --green-soft:#ECFDF5;
-    --warning:#D97706; --warning-soft:#FFFBEB; --danger:#DC2626; --danger-soft:#FEF2F2;
-    --status-pending:#ef4444; --status-progress:#f59e0b; --status-done:#10b981; --status-neutral:#64748b;
+    --app-bg:#0B1220; --surface:#111827; --text:#e9f1fb; --text-2:#9db2cc; --text-muted:#7d8ea6;
+    --border:#334155; --border-subtle:#233047;
+    --glass:rgba(8,14,26,.72); --glass-border:rgba(122,164,224,.2); --glass-blur:blur(14px);
+    --panel:linear-gradient(160deg,rgba(17,26,44,.78),rgba(10,16,29,.84)); --panel-border:rgba(122,164,224,.14);
+    --pop:rgba(10,17,30,.97); --pop-border:rgba(122,164,224,.2);
+    --accent:#4cc9f0; --accent-2:#8ee6ff;
+    --green:#22c55e; --green-hover:#16a34a; --green-soft:rgba(34,197,94,.14);
+    --warning:#f5a524; --warning-soft:rgba(245,165,36,.12);
+    --danger:#ef4444; --danger-2:#fb7185; --danger-soft:rgba(239,68,68,.12);
+    --btn:linear-gradient(180deg,rgba(76,131,236,.5),rgba(40,72,150,.45)); --btn-border:rgba(120,170,255,.35);
+    --status-pending:#ef4444; --status-progress:#f5a524; --status-done:#22c55e; --status-neutral:#64748b;
+    --page-bg:radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,.28),transparent 70%),#03060d;
   }
-  html[data-theme="dark"]{
-    --app-bg:#0B1220; --surface:#111827; --text:#F8FAFC; --text-2:#CBD5E1; --text-muted:#94A3B8; --border:#334155;
+  html[data-theme="light"]{
+    --app-bg:#eef2ef; --surface:#ffffff; --text:#0b1a15; --text-2:#3f5249; --text-muted:#586b61;
+    --border:rgba(17,54,40,.16); --border-subtle:rgba(17,54,40,.09);
+    --glass:rgba(255,255,255,.92); --glass-border:rgba(17,54,40,.16); --glass-blur:blur(10px);
+    --panel:linear-gradient(160deg,rgba(255,255,255,.94),rgba(240,247,243,.96)); --panel-border:rgba(17,54,40,.14);
+    --pop:rgba(255,255,255,.98); --pop-border:rgba(17,54,40,.14);
+    --accent:#0e7a4f; --accent-2:#0a5c3b;
+    --green:#12855a; --green-hover:#0b6442; --green-soft:rgba(18,133,90,.1);
+    --warning:#b8730a; --warning-soft:rgba(184,115,10,.1);
+    --danger:#c2372c; --danger-2:#b33026; --danger-soft:rgba(194,55,44,.1);
+    --btn:linear-gradient(180deg,#12855a,#0b6442); --btn-border:rgba(9,80,52,.45);
+    --page-bg:radial-gradient(900px 520px at 78% -8%,rgba(18,133,90,.08),transparent 72%),#dfe7e1;
   }
   *{box-sizing:border-box} html,body{margin:0;padding:0;height:100%;background:var(--app-bg);color:var(--text);
     font-family:"IBM Plex Sans Arabic","Noto Sans Arabic",system-ui,sans-serif}
-  #authLoading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--app-bg);z-index:100}
+  #authLoading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--page-bg);color:var(--text);z-index:100}
   #appShell.hidden,#authLoading.hidden{display:none}
-  #appShell{display:flex;flex-direction:column;height:100vh}
-  header{display:flex;align-items:center;gap:.75rem;padding:.6rem .9rem;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap}
-  header h1{font-size:15px;font-weight:700;margin:0;white-space:nowrap}
+  #appShell{display:flex;flex-direction:column;height:100vh;background:var(--page-bg);padding:10px;gap:10px}
+  header{display:flex;align-items:center;gap:.6rem;padding:.5rem .8rem;border-radius:16px;flex-wrap:wrap;flex:none;
+    background:var(--panel);border:1px solid var(--panel-border);box-shadow:0 18px 40px -26px rgba(0,0,0,.85);backdrop-filter:blur(18px)}
+  header h1{font-size:14px;font-weight:700;margin:0;white-space:nowrap;color:var(--text)}
   header .spacer{flex:1;min-width:0}
-  #searchInput{min-width:0;width:100%;max-width:280px;padding:.5rem .7rem;border:1px solid var(--border);border-radius:10px;background:var(--app-bg);color:var(--text);font:inherit}
-  button.geo-btn{min-height:38px;padding:.45rem .8rem;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-weight:600;font-size:13px;cursor:pointer}
-  button.geo-btn.primary{background:var(--green);border-color:var(--green);color:#fff}
-  button.geo-btn.primary:hover{background:var(--green-hover)}
-  main{flex:1;min-height:0;position:relative;display:flex}
-  #map{flex:1;min-width:0}
-  /* Right-side panel (Section 05): layers + filters/legend, stacked in one
-     column so they never collide with the left toolbar's MapLibre controls
-     (zoom/fit/fullscreen/locate, added at 'top-left'). Collapsible on
-     narrow screens via #rightPanelToggle. */
-  #rightPanel{position:absolute;top:12px;right:12px;z-index:10;display:flex;flex-direction:column;gap:10px;max-width:240px}
+  #searchInput{min-width:0;width:100%;max-width:260px;height:36px;padding:0 .8rem;border:1px solid var(--border);border-radius:10px;background:var(--app-bg);color:var(--text);font:inherit;font-size:12.5px}
+  button.geo-btn{min-height:36px;padding:.45rem .8rem;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass);color:var(--text-2);font:inherit;font-weight:600;font-size:12.5px;cursor:pointer;backdrop-filter:var(--glass-blur)}
+  button.geo-btn:hover{color:var(--text)}
+  button.geo-btn.primary{background:var(--btn);border-color:var(--btn-border);color:#fff}
+  button.geo-btn.primary:hover{filter:brightness(1.08)}
+  /* Operational Map / Digital Twin segmented pair (matches the reference's
+     top-left tab pair) — Operational Map is always the active/current tab
+     here since this IS that product; Twin navigates to the real twin.html
+     product (Section 01/13: never merged into one page/mode). */
+  .mode-pill-group{display:flex;align-items:center;gap:3px;padding:3px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:var(--glass-blur)}
+  .mode-pill{height:32px;padding:0 13px;border-radius:9px;font-size:12px;font-weight:700;border:1px solid transparent;background:transparent;color:var(--text-muted);cursor:default;white-space:nowrap}
+  .mode-pill.active{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+  .mode-pill.link{cursor:pointer;color:var(--text-2)}
+  .mode-pill.link:hover{color:var(--text);background:var(--glass-border)}
+  main{flex:1;min-height:0;position:relative;display:flex;border-radius:16px;overflow:hidden;border:1px solid var(--panel-border);box-shadow:0 24px 60px -30px rgba(0,0,0,.9)}
+  /* Command-center vignette over the basemap — an inset box-shadow (never
+     a fake screenshot background) painted beneath #map's own content, so
+     it can never sit above MapLibre's real marker/popup/control DOM the
+     way a positioned sibling overlay would. */
+  #map{flex:1;min-width:0;background:#0B1220;box-shadow:inset 0 0 130px 30px rgba(3,6,13,.4)}
+  html[data-theme="light"] #map{box-shadow:inset 0 0 130px 30px rgba(20,40,30,.1)}
+  /* Left toolbar (Section 06/07): MapLibre's own controls, restyled to the
+     reference's stacked glass groups instead of default light chrome. */
+  .maplibregl-ctrl-top-left{top:56px !important;left:12px !important;display:flex;flex-direction:column;gap:8px}
+  .maplibregl-ctrl-group{background:var(--glass) !important;border:1px solid var(--glass-border) !important;backdrop-filter:var(--glass-blur);border-radius:10px !important;overflow:hidden;box-shadow:none !important}
+  .maplibregl-ctrl-group button{width:36px !important;height:34px !important;background:transparent !important}
+  .maplibregl-ctrl-group button + button{border-top:1px solid var(--glass-border) !important}
+  .maplibregl-ctrl-icon{filter:var(--ctrl-icon-filter,none)}
+  html[data-theme="dark"] .maplibregl-ctrl-icon{filter:invert(1) brightness(1.6)}
+  .maplibregl-ctrl button:not(:disabled):hover{background:rgba(255,255,255,.1) !important}
+  .maplibregl-ctrl-attrib{background:var(--glass) !important;color:var(--text-muted) !important;border-radius:8px !important;backdrop-filter:var(--glass-blur)}
+  .maplibregl-ctrl-attrib a{color:var(--text-2) !important}
+  .maplibregl-ctrl-fullscreen,.maplibregl-ctrl-geolocate{color:var(--text-2)}
+  /* Right-side panel (Section 05): layers + status/legend + filters, one
+     glass column so it never collides with the left toolbar. Collapsible
+     on narrow screens via #rightPanelToggle. */
+  #rightPanel{position:absolute;top:12px;right:12px;z-index:10;display:flex;flex-direction:column;gap:10px;width:236px;max-width:calc(100% - 24px)}
   #rightPanelToggle{display:none}
-  #layerPanel{background:var(--surface);border:1px solid var(--border);
-    border-radius:14px;padding:.6rem;box-shadow:0 8px 24px rgba(15,23,42,.12);max-height:45vh;overflow:auto}
-  #layerPanel h2{font-size:12px;margin:.2rem .2rem .5rem;color:var(--text-2);font-weight:700}
-  .layer-row{display:flex;align-items:center;gap:.5rem;padding:.35rem .2rem;font-size:13px}
-  .layer-row input{width:16px;height:16px}
-  #filterChips{display:flex;gap:.4rem;flex-wrap:wrap}
-  .chip{padding:.3rem .7rem;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer}
-  .chip.active{background:var(--green-soft);border-color:var(--green);color:var(--green-hover)}
+  #layerPanel{background:var(--pop);border:1px solid var(--pop-border);color:var(--text);
+    border-radius:14px;padding:.7rem;box-shadow:0 22px 48px -20px rgba(0,0,0,.6);max-height:60vh;overflow:auto;backdrop-filter:var(--glass-blur)}
+  #layerPanel h2{font-size:11.5px;margin:.1rem .2rem .6rem;color:var(--text);font-weight:700;padding-bottom:.5rem;border-bottom:1px solid var(--border-subtle)}
+  .layer-row{display:flex;align-items:center;gap:.55rem;padding:.4rem .3rem;border-radius:9px;font-size:12px;color:var(--text-2)}
+  .layer-row:hover{background:rgba(122,164,224,.08)}
+  .layer-row input{width:15px;height:15px;accent-color:var(--accent)}
+  .layer-row .swatch{width:10px;height:10px;border-radius:3px;flex:none}
+  .panel-section-title{font-size:11px;font-weight:700;color:var(--text);margin:.7rem .2rem .4rem;padding-top:.5rem;border-top:1px solid var(--border-subtle)}
+  #filterChips{display:flex;flex-direction:column;gap:.3rem}
+  .status-row{display:flex;align-items:center;gap:.5rem;padding:.4rem .3rem;border-radius:9px;font-size:12px;color:var(--text-2);cursor:pointer;border:1px solid transparent;background:transparent;width:100%;text-align:right;font:inherit}
+  .status-row:hover{background:rgba(122,164,224,.08)}
+  .status-row.active{background:var(--green-soft);border-color:var(--green);color:var(--text)}
+  .status-row .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .status-row .count{margin-inline-start:auto;font-size:11px;font-weight:600;color:var(--text-muted);font-variant-numeric:tabular-nums}
+  .geo-filter-select{width:100%;margin-top:.4rem;height:32px;padding:0 .5rem;border:1px solid var(--border);border-radius:8px;
+    background:var(--app-bg);color:var(--text);font:inherit;font-size:12px}
   @media(max-width:760px){
     #rightPanelToggle{display:inline-flex}
     /* Map stays primary on mobile (Section 19): layers/filters start
        collapsed and open as a sheet only when the manager asks for them. */
-    #rightPanel{max-width:calc(100vw - 24px)}
-    #rightPanel:not(.expanded) #layerPanel,#rightPanel:not(.expanded) #filterChips{display:none}
+    #rightPanel:not(.expanded) #layerPanel{display:none}
   }
-  #entityCard{position:absolute;bottom:0;right:0;left:0;z-index:20;background:var(--surface);border-top:1px solid var(--border);
-    border-radius:16px 16px 0 0;padding:1rem;transform:translateY(100%);transition:transform .2s ease;max-height:60vh;overflow:auto}
+  #entityCard{position:absolute;bottom:0;right:0;left:0;z-index:20;background:var(--pop);color:var(--text);border-top:1px solid var(--pop-border);
+    border-radius:16px 16px 0 0;padding:1rem;transform:translateY(100%);transition:transform .2s ease;max-height:60vh;overflow:auto;backdrop-filter:var(--glass-blur)}
   #entityCard.open{transform:translateY(0)}
   @media(min-width:1024px){
-    #entityCard{right:0;left:auto;bottom:0;top:0;width:380px;max-width:90vw;border-radius:0;border-top:0;border-right:1px solid var(--border);
+    #entityCard{right:0;left:auto;bottom:0;top:0;width:380px;max-width:90vw;border-radius:0;border-top:0;border-right:1px solid var(--pop-border);
       transform:translateX(100%);max-height:none}
     #entityCard.open{transform:translateX(0)}
   }
-  #entityCard h2{font-size:16px;margin:0 0 .3rem}
+  #entityCard h2{font-size:16px;margin:0 0 .3rem;color:var(--text)}
   #entityCard .meta{font-size:12px;color:var(--text-2);margin-bottom:.2rem}
   #entityCard .field{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border-subtle);font-size:13px}
   #entityCard .field .label{color:var(--text-2)}
   #entityCard .empty-state{color:var(--text-muted)}
-  #entityCardClose{position:absolute;top:.7rem;left:.7rem;min-width:36px;min-height:36px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}
-  #attributionNote{position:absolute;bottom:8px;left:8px;z-index:5;font-size:11px;color:var(--text-2);background:rgba(255,255,255,.85);
-    padding:.2rem .5rem;border-radius:8px}
-  html[data-theme="dark"] #attributionNote{background:rgba(17,24,39,.85)}
+  #entityCardClose{position:absolute;top:.7rem;left:.7rem;min-width:36px;min-height:36px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass);color:var(--text)}
+  #attributionNote{position:absolute;bottom:8px;left:56px;z-index:5;font-size:11px;color:var(--text-2);background:var(--glass);
+    padding:.2rem .5rem;border-radius:8px;backdrop-filter:var(--glass-blur)}
   .layer-count{margin-inline-start:auto;font-size:11px;color:var(--text-muted);font-variant-numeric:tabular-nums}
-  #filterChips .chip-row{display:flex;gap:.4rem;flex-wrap:wrap}
-  #filterChips .chip{display:flex;align-items:center;gap:.35rem}
-  #filterChips .chip .dot{width:8px;height:8px;border-radius:50%;flex:none}
-  #filterChips .geo-filter-select{width:100%;margin-top:.4rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:8px;
-    background:var(--app-bg);color:var(--text);font:inherit;font-size:12px}
-  /* Quick popup — a small, premium preview (never the full detail panel).
-     Overrides MapLibre's default popup chrome with SMART HSR tokens. */
-  .maplibregl-popup{max-width:260px !important}
-  .maplibregl-popup-content{background:var(--surface);color:var(--text);border:1px solid var(--border);
-    border-radius:12px;padding:.7rem;box-shadow:0 16px 40px rgba(15,23,42,.22);font-family:inherit}
-  .maplibregl-popup-tip{border-top-color:var(--surface) !important;border-bottom-color:var(--surface) !important}
-  .geo-popup h3{font-size:13px;font-weight:700;margin:0 0 .3rem}
-  .geo-popup .status-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:11px;font-weight:600;
-    padding:.15rem .5rem;border-radius:999px;margin-bottom:.4rem}
+  /* Quick popup — a small, premium light card floating over the dark map
+     (matches the reference exactly: the popup stays light/white even in
+     Night mode for maximum contrast against satellite imagery, only the
+     surrounding chrome switches theme). Never the full detail panel. */
+  .maplibregl-popup{max-width:280px !important;z-index:15}
+  .maplibregl-popup-content{background:#ffffff;color:#0b1a15;border:1px solid rgba(15,23,42,.08);
+    border-radius:14px;padding:0;box-shadow:0 26px 56px -20px rgba(0,0,0,.55);font-family:inherit;overflow:hidden}
+  .maplibregl-popup-tip{border-top-color:#ffffff !important;border-bottom-color:#ffffff !important}
+  .maplibregl-popup-close-button{font-size:16px;color:#586b61;top:6px;inset-inline-end:8px}
+  .geo-popup{display:flex;flex-direction:column}
+  .geo-popup .popup-body{display:flex;gap:.6rem;padding:.75rem .8rem .5rem}
+  .geo-popup .popup-thumb{width:52px;height:52px;flex:none;border-radius:10px;background:#eef2ef center/cover no-repeat;overflow:hidden}
+  .geo-popup .popup-main{flex:1;min-width:0}
+  .geo-popup h3{font-size:13px;font-weight:700;margin:0 0 .25rem;color:#0b1a15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .geo-popup .popup-sub{font-size:10.5px;color:#586b61;margin-bottom:.4rem}
+  .geo-popup .status-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:10.5px;font-weight:700;
+    padding:.15rem .5rem;border-radius:999px}
   .geo-popup .status-badge .dot{width:7px;height:7px;border-radius:50%}
-  .geo-popup .row{display:flex;justify-content:space-between;gap:.5rem;font-size:11.5px;padding:.15rem 0;color:var(--text-2)}
-  .geo-popup .row b{color:var(--text);font-weight:600}
-  .geo-popup .actions{display:flex;flex-direction:column;gap:.35rem;margin-top:.5rem}
-  .geo-popup .actions button{width:100%;min-height:30px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer}
+  .geo-popup .row{display:flex;justify-content:space-between;gap:.5rem;font-size:11px;padding:.12rem 0;color:#586b61}
+  .geo-popup .row b{color:#0b1a15;font-weight:600}
+  .geo-popup .rows{padding:0 .8rem .5rem}
+  .geo-popup .actions{display:flex;gap:.4rem;padding:0 .8rem .75rem}
+  .geo-popup .actions .btn-details{flex:1;min-height:32px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;
+    background:var(--green,#12855a);border:1px solid var(--green,#12855a);color:#fff;display:flex;align-items:center;justify-content:center;gap:.35rem}
+  .geo-popup .actions .btn-twin{flex:none;width:34px;min-height:32px;border-radius:9px;cursor:pointer;
+    background:#eef2ef;border:1px solid rgba(15,23,42,.1);color:#3f5249;display:flex;align-items:center;justify-content:center}
   #entityCard .evidence-thumb{width:100%;height:110px;border-radius:8px;background:var(--app-bg) center/cover no-repeat;
     display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:11px;margin:.3rem 0;overflow:hidden}
   #entityCard .ai-block{margin-top:.5rem;padding:.5rem;border-radius:10px;background:var(--green-soft);
     border:1px solid var(--border);font-size:12px;line-height:1.6}
+  /* Premium status-aware observation markers (DOM, not GL circles — see
+     Section-14 note in the script: real MapLibre clustering data still
+     drives every marker, only the RENDERING is DOM so a real numeric
+     cluster count and a teardrop pin shape are possible without adding an
+     external glyphs/font-server dependency). */
+  .geo-marker{width:30px;height:38px;cursor:pointer}
+  .geo-marker svg{display:block;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45))}
+  .geo-marker.selected{filter:drop-shadow(0 0 8px var(--marker-glow,#4cc9f0)) drop-shadow(0 0 2px var(--marker-glow,#4cc9f0))}
+  .geo-cluster{width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;border:2px solid rgba(255,255,255,.85);
+    box-shadow:0 0 0 4px var(--cluster-ring,rgba(76,201,240,.18)),0 6px 16px rgba(0,0,0,.4)}
+  .geo-legend{display:flex;flex-direction:column;gap:.35rem}
+  .geo-legend .row{display:flex;align-items:center;gap:.5rem;font-size:11px;color:var(--text-2)}
+  .geo-legend .dot{width:8px;height:8px;border-radius:50%;flex:none}
 </style>
 </head>
 <body>
   <div id="authLoading"><div>...جارٍ التحقق</div></div>
   <div id="appShell" class="hidden">
     <header>
-      <h1>الخريطة التشغيلية · SMART HSR</h1>
-      <input id="searchInput" type="text" placeholder="بحث عن منشأة أو مبنى…" aria-label="بحث">
+      <div class="mode-pill-group" role="group" aria-label="وضع العرض">
+        <span class="mode-pill active">الخريطة التشغيلية</span>
+        <button class="mode-pill link" id="openTwinBtn" hidden>التوأم الرقمي</button>
+      </div>
+      <input id="searchInput" type="text" placeholder="بحث عن بلاغ أو منشأة أو مبنى…" aria-label="بحث">
       <div class="spacer"></div>
       <button class="geo-btn" id="rightPanelToggle" aria-label="إظهار/إخفاء الطبقات والتصفية" aria-expanded="false">☰ الطبقات</button>
       <button class="geo-btn" id="themeToggleBtn" aria-label="تبديل المظهر">🌓</button>
-      <button class="geo-btn primary" id="openTwinBtn" hidden>فتح في التوأم الرقمي</button>
       <button class="geo-btn" id="logoutBtn">تسجيل الخروج</button>
     </header>
     <main>
       <div id="map" role="application" aria-label="الخريطة التشغيلية"></div>
       <div id="rightPanel">
         <div id="layerPanel">
-          <h2>الطبقات</h2>
+          <h2>طبقات الخريطة</h2>
           <div id="layerList"></div>
+          <div class="panel-section-title">حالة البلاغات</div>
+          <div id="filterChips"></div>
         </div>
-        <div id="filterChips"></div>
       </div>
       <div id="attributionNote"></div>
       <aside id="entityCard" aria-hidden="true">
@@ -169,6 +248,7 @@ applyTheme(localStorage.getItem(THEME_KEY) || (matchMedia('(prefers-color-scheme
 document.getElementById('themeToggleBtn').addEventListener('click', () => {
   const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   applyTheme(next); localStorage.setItem(THEME_KEY, next);
+  if (map) applyBasemapTheme();
 });
 
 // Same self-lookup role-resolution pattern already used independently by
@@ -338,13 +418,14 @@ async function loadVisibleLayers(organizationId, { includeObservations = true } 
     renderAttribution(res.body.attributions);
   }
   if (!activeLayers.has('field_observations')) {
-    removeSourceLayer('field_observations');
+    removeObservationSource();
     cachedObservationEntities = [];
   } else if (includeObservations) {
     cachedObservationEntities = await loadFieldObservations(organizationId);
     const filtered = applyObservationFilters(cachedObservationEntities);
     layerCounts.set('field_observations', filtered.length);
     paintObservations(filtered);
+    renderFilterChips();
   }
   loadedEntities.push(...applyObservationFilters(cachedObservationEntities));
   updateLayerCounts();
@@ -375,57 +456,163 @@ function bindClickOnce(layerId, handler) {
   map.on('click', layerId, handler);
 }
 
-function paintObservations(entities) {
-  removeSourceLayer('field_observations');
-  const geojson = { type: 'FeatureCollection', features: entities.map((e) => ({ type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, status: e.status || 'PENDING' } })) };
-  map.addSource(OBS_SRC, { type: 'geojson', data: geojson, cluster: entities.length > 0, clusterRadius: 45, clusterMaxZoom: 14 });
-  // Clustered count circle — a real observation is never hidden
-  // indefinitely: clicking a cluster expands/zooms to its real children
-  // (see the click handler below), it never swallows a critical marker.
-  // No cluster-count text label: a `symbol` layer's `text-field` requires
-  // the map style to declare a `glyphs` (font) server, which would add an
-  // external font-hosting dependency this phase does not need (same real
-  // constraint already documented on paintEntities() below) — cluster
-  // size is still communicated visually via the circle-radius step below.
-  map.addLayer({ id: `${OBS_SRC}-clusters`, type: 'circle', source: OBS_SRC, filter: ['has', 'point_count'],
-    paint: { 'circle-color': '#334155', 'circle-radius': ['step', ['get', 'point_count'], 15, 10, 19, 50, 25], 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' } });
-  map.addLayer({
-    id: `${OBS_SRC}-circles`, type: 'circle', source: OBS_SRC, filter: ['!', ['has', 'point_count']],
-    paint: {
-      'circle-color': ['match', ['get', 'status'], 'COMPLETED', STATUS_COLOR.COMPLETED, 'IN_PROGRESS', STATUS_COLOR.IN_PROGRESS, 'PENDING_REVIEW', STATUS_COLOR.PENDING_REVIEW, STATUS_COLOR.PENDING],
-      'circle-radius': 8, 'circle-stroke-width': 2, 'circle-stroke-color': '#fff',
-    },
-  });
-  applyObservationSelectionStyle();
-  bindClickOnce(`${OBS_SRC}-circles`, (e) => selectObservation(e.features[0].properties.id, e.lngLat));
-  bindClickOnce(`${OBS_SRC}-clusters`, (e) => {
-    const clusterId = e.features[0].properties.cluster_id;
-    // MapLibre's MapMouseEvent#features is only valid synchronously during
-    // dispatch — it must be read into a local before the async gap below,
-    // never re-read inside the .then() (it silently becomes undefined by
-    // then, throwing inside the resolved branch and landing in .catch()).
-    const center = e.features[0].geometry.coordinates;
+// Five-tier severity scale — same colors as the panel's legend rows below
+// (منخفض/متوسط/مرتفع/حرج/لا بيانات), driven by the real
+// riskAssessment.priority field (never fabricated). Individual pins stay
+// STATUS-colored (Section 16's existing, already-proven status semantics —
+// PENDING/IN_PROGRESS/COMPLETED, unchanged from prior stages); clusters use
+// the real aggregated max-severity of their real children, a genuinely
+// different, complementary signal a premium command map is expected to
+// show (Section 04's "severity/status-aware treatment" for clusters).
+const SEVERITY_COLOR = { '-1': '#64748b', 0: '#22c55e', 1: '#f5a524', 2: '#fb7185', 3: '#ef4444' };
+const SEVERITY_RANK = { LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 3 };
+function severityRankOf(data) {
+  const raw = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : null;
+  return raw && raw in SEVERITY_RANK ? SEVERITY_RANK[raw] : -1;
+}
+
+// Real MapLibre GL clustering (supercluster) still computes every grouping
+// and every count — this source carries NO style layers at all and is used
+// purely as the clustering/query engine (MapLibre's own documented "HTML
+// marker" clustering pattern: https://maplibre.org/maplibre-gl-js/docs/examples/cluster-html/).
+// A GL `circle`+`symbol` layer pair cannot show a real numeric cluster
+// count without an external glyphs/font server (see the removed
+// paintEntities() comment for the identical constraint) — rendering each
+// cluster/point as a real DOM element instead removes that constraint
+// entirely and is what makes the premium teardrop-pin/luminous-badge look
+// in Section 03/04 achievable. This is presentation-only: no clustering
+// math is reimplemented here, it is 100% MapLibre/supercluster's own.
+const observationMarkers = new Map();
+function clearObservationMarkers() {
+  observationMarkers.forEach((m) => m.remove());
+  observationMarkers.clear();
+}
+
+function buildObservationPinElement(feature) {
+  const status = feature.properties.status || 'PENDING';
+  const color = STATUS_COLOR[status] || STATUS_COLOR.NEUTRAL;
+  const el = document.createElement('div');
+  el.className = 'geo-marker';
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('aria-label', `بلاغ ميداني — ${STATUS_LABEL[status] || status}`);
+  el.style.setProperty('--marker-glow', color);
+  el.innerHTML = `<svg width="30" height="38" viewBox="0 0 30 38" aria-hidden="true">
+    <path d="M15 37C15 37 3 22.7 3 14.6C3 7.7 8.7 2 15 2C21.3 2 27 7.7 27 14.6C27 22.7 15 37 15 37Z" fill="${color}" stroke="#fff" stroke-width="2"/>
+    <circle cx="15" cy="14.6" r="5.4" fill="#fff"/>
+  </svg>`;
+  const activate = (evt) => { evt.stopPropagation(); selectObservation(feature.properties.id, feature.geometry.coordinates); };
+  el.addEventListener('click', activate);
+  el.addEventListener('keydown', (evt) => { if (evt.key === 'Enter' || evt.key === ' ') activate(evt); });
+  return el;
+}
+
+function buildObservationClusterElement(feature) {
+  const count = feature.properties.point_count_abbreviated || feature.properties.point_count;
+  const severity = typeof feature.properties.severityMax === 'number' ? feature.properties.severityMax : -1;
+  const color = SEVERITY_COLOR[String(severity)] || SEVERITY_COLOR['-1'];
+  const size = Math.min(52, 34 + Math.min(feature.properties.point_count, 50) / 3);
+  const el = document.createElement('div');
+  el.className = 'geo-cluster';
+  el.style.width = `${size}px`; el.style.height = `${size}px`;
+  el.style.background = color;
+  el.style.setProperty('--cluster-ring', `${color}30`);
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('aria-label', `تجميع ${count} بلاغ — عرض/تكبير`);
+  el.textContent = String(count);
+  const clusterId = feature.properties.cluster_id;
+  // MapLibre's queried feature object is only valid synchronously — capture
+  // the coordinates into a local now, never re-read `feature` inside the
+  // .then() below (the earlier GL-layer-click version of this code hit
+  // exactly that staleness bug; a DOM click handler's own closure is safe
+  // here, but the same discipline is kept for clarity and consistency).
+  const center = feature.geometry.coordinates;
+  const expand = (evt) => {
+    evt.stopPropagation();
     // MapLibre GL 4.x's GeoJSONSource#getClusterExpansionZoom returns a
     // Promise (the old Mapbox-GL-style (clusterId, callback) signature was
-    // removed) — a callback argument here is silently ignored.
+    // removed) — a callback argument here would be silently ignored.
     map.getSource(OBS_SRC).getClusterExpansionZoom(clusterId)
       .then((zoom) => map.easeTo({ center, zoom }))
       .catch(() => {});
-  });
+  };
+  el.addEventListener('click', expand);
+  el.addEventListener('keydown', (evt) => { if (evt.key === 'Enter' || evt.key === ' ') expand(evt); });
+  return el;
 }
 
-// Incremental paint-property update (Section 18 — never rebuilds the
-// source/layer just to move which marker looks selected).
-function applyObservationSelectionStyle() {
-  if (!map.getLayer(`${OBS_SRC}-circles`)) return;
-  const sel = selectedEntityId || '';
-  map.setPaintProperty(`${OBS_SRC}-circles`, 'circle-radius', ['case', ['==', ['get', 'id'], sel], 11, 8]);
-  map.setPaintProperty(`${OBS_SRC}-circles`, 'circle-stroke-width', ['case', ['==', ['get', 'id'], sel], 3, 2]);
+// Called on every camera stop and every real data/filter change — never on
+// every animation frame (Section 18): once created, a maplibregl.Marker
+// repositions itself on the map's own render loop, so existing markers only
+// need a coordinate refresh here, not a full DOM rebuild.
+function syncObservationMarkers() {
+  if (!map.getSource(OBS_SRC)) { clearObservationMarkers(); return; }
+  const features = map.querySourceFeatures(OBS_SRC);
+  const seen = new Set();
+  for (const feature of features) {
+    const isCluster = !!feature.properties.cluster;
+    const key = isCluster ? `c:${feature.properties.cluster_id}` : `p:${feature.properties.id}`;
+    if (seen.has(key)) continue; // supercluster can repeat a feature across internal tile boundaries
+    seen.add(key);
+    let marker = observationMarkers.get(key);
+    if (!marker) {
+      const el = isCluster ? buildObservationClusterElement(feature) : buildObservationPinElement(feature);
+      if (!isCluster && feature.properties.id === selectedEntityId) el.classList.add('selected');
+      marker = new maplibregl.Marker({ element: el, anchor: isCluster ? 'center' : 'bottom' })
+        .setLngLat(feature.geometry.coordinates)
+        .addTo(map);
+      observationMarkers.set(key, marker);
+    } else {
+      marker.setLngLat(feature.geometry.coordinates);
+    }
+  }
+  for (const [key, marker] of observationMarkers) {
+    if (!seen.has(key)) { marker.remove(); observationMarkers.delete(key); }
+  }
+}
+
+const OBS_DRIVER_LAYER = `${OBS_SRC}-driver`;
+function removeObservationSource() {
+  clearObservationMarkers();
+  if (map.getLayer(OBS_DRIVER_LAYER)) map.removeLayer(OBS_DRIVER_LAYER);
+  if (map.getSource(OBS_SRC)) map.removeSource(OBS_SRC);
+}
+function paintObservations(entities) {
+  removeObservationSource();
+  const geojson = {
+    type: 'FeatureCollection',
+    features: entities.map((e) => {
+      const data = rawObservationById.get(e.id) || {};
+      return { type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, status: e.status || 'PENDING', severityRank: severityRankOf(data) } };
+    }),
+  };
+  map.addSource(OBS_SRC, {
+    type: 'geojson', data: geojson, cluster: entities.length > 0, clusterRadius: 50, clusterMaxZoom: 14,
+    // Real aggregation over real children — never a fabricated/guessed
+    // cluster severity (Section 04).
+    clusterProperties: { severityMax: ['max', ['get', 'severityRank']] },
+  });
+  // A source with zero consuming style layers is never tiled/clustered by
+  // MapLibre at all (querySourceFeatures/getClusterExpansionZoom silently
+  // return nothing — confirmed empirically) — this fully invisible circle
+  // layer exists ONLY to keep the real supercluster engine engaged; every
+  // pixel actually seen is the DOM marker/cluster badge built below.
+  map.addLayer({ id: OBS_DRIVER_LAYER, type: 'circle', source: OBS_SRC, paint: { 'circle-opacity': 0, 'circle-radius': 0 } });
+  syncObservationMarkers();
+}
+
+// Incremental DOM class toggle (Section 18 — never rebuilds the
+// source/markers just to move which pin looks selected).
+function markObservationSelected(entityId) {
+  const previous = selectedEntityId;
+  selectedEntityId = entityId;
+  if (previous) observationMarkers.get(`p:${previous}`)?.getElement().classList.remove('selected');
+  if (entityId) observationMarkers.get(`p:${entityId}`)?.getElement().classList.add('selected');
 }
 
 function selectObservation(entityId, lngLat) {
-  selectedEntityId = entityId;
-  applyObservationSelectionStyle();
+  markObservationSelected(entityId);
   openObservationPopup(entityId, lngLat);
 }
 
@@ -590,8 +777,7 @@ function openEntityCard(entityId) {
     renderAiBlock(data);
     document.getElementById('entityViewOnMapBtn').onclick = () => {
       map.flyTo({ center: entity.geometry.coordinates, zoom: 17 });
-      selectedEntityId = entityId;
-      applyObservationSelectionStyle();
+      markObservationSelected(entityId);
     };
     if (!openTwinBtn.hidden) {
       openTwinBtn.onclick = () => {
@@ -646,37 +832,48 @@ function openObservationPopup(entityId, lngLat) {
   if (activePopup) activePopup.remove();
 
   const status = data.status || entity.status || 'PENDING';
-  // Same real riskAssessment.priority shape as fieldObservationCardHtml()
-  // above (matches manager-dashboard-adapter.js's normalizeObservations()).
-  const priorityRaw = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority : null;
-  const priority = priorityRaw ? (PRIORITY_LABEL[String(priorityRaw).toUpperCase()] || null) : null;
   const category = CATEGORY_LABEL[data.type] || data.type || 'غير مصنف';
-  const [lng, lat] = entity.geometry.coordinates;
   const color = STATUS_COLOR[status] || STATUS_COLOR.NEUTRAL;
 
   const root = document.createElement('div');
   root.className = 'geo-popup';
   root.innerHTML = `
-    <h3>${escapeHtml(data.title || 'بلاغ بلا عنوان')}</h3>
-    <span class="status-badge" style="background:${color}22;color:${color}"><span class="dot" style="background:${color}"></span>${escapeHtml(STATUS_LABEL[status] || status)}</span>
-    <div class="row"><span>المعرّف</span><b>${escapeHtml(data.displayId || '')}</b></div>
-    ${priority ? `<div class="row"><span>الأولوية</span><b>${escapeHtml(priority)}</b></div>` : ''}
-    <div class="row"><span>التصنيف</span><b>${escapeHtml(category)}</b></div>
-    ${data.inspector ? `<div class="row"><span>المراقب</span><b>${escapeHtml(data.inspector)}</b></div>` : ''}
-    <div class="row"><span>التوقيت</span><b>${formatTimestamp(data.createdAt)}</b></div>
-    <div class="row"><span>الإحداثيات</span><b>${lat.toFixed(5)}, ${lng.toFixed(5)}</b></div>
+    <div class="popup-body">
+      <div class="popup-thumb" id="popupThumb"></div>
+      <div class="popup-main">
+        <h3>${escapeHtml(data.title || 'بلاغ بلا عنوان')}</h3>
+        <div class="popup-sub">${escapeHtml(category)}${data.displayId ? ' · ' + escapeHtml(data.displayId) : ''}</div>
+        <span class="status-badge" style="background:${color}22;color:${color}"><span class="dot" style="background:${color}"></span>${escapeHtml(STATUS_LABEL[status] || status)}</span>
+      </div>
+    </div>
+    <div class="rows">
+      <div class="row"><span>التوقيت</span><b>${formatTimestamp(data.createdAt)}</b></div>
+    </div>
     <div class="actions"></div>
   `;
+  // A real evidence thumbnail only if one is actually stored and
+  // accessible (never a fabricated/generic image) — same authenticated
+  // resolveObservationImage() path the detail panel already uses.
+  const thumbEl = root.querySelector('#popupThumb');
+  if (data.imagePath) {
+    resolveObservationImage({ reference: data.imagePath, context: { organizationId: mapContext.organizationId, uid: currentUser.uid, role: caller.role, authUser: currentUser } })
+      .then((result) => { if (result.available && result.url && thumbEl.isConnected) thumbEl.style.backgroundImage = `url("${result.url}")`; })
+      .catch(() => {});
+  } else {
+    thumbEl.remove();
+  }
   const actions = root.querySelector('.actions');
   const detailsBtn = document.createElement('button');
-  detailsBtn.className = 'geo-btn primary';
+  detailsBtn.className = 'btn-details';
   detailsBtn.textContent = 'عرض التفاصيل';
   detailsBtn.onclick = () => { if (activePopup) activePopup.remove(); openEntityCard(entityId); };
   actions.appendChild(detailsBtn);
   if (!document.getElementById('openTwinBtn').hidden) {
     const twinBtn = document.createElement('button');
-    twinBtn.className = 'geo-btn';
-    twinBtn.textContent = 'فتح في التوأم الرقمي';
+    twinBtn.className = 'btn-twin';
+    twinBtn.setAttribute('aria-label', 'فتح في التوأم الرقمي');
+    twinBtn.title = 'فتح في التوأم الرقمي';
+    twinBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>';
     twinBtn.onclick = () => {
       const { url } = openTwinContinuityUrl(entityId, entity.geometry.coordinates);
       if (url) location.href = url;
@@ -684,12 +881,12 @@ function openObservationPopup(entityId, lngLat) {
     actions.appendChild(twinBtn);
   }
 
-  activePopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, maxWidth: '260px' })
+  activePopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, maxWidth: '280px' })
     .setLngLat(lngLat)
     .setDOMContent(root)
     .addTo(map);
   activePopup.on('close', () => {
-    if (selectedEntityId === entityId) { selectedEntityId = null; applyObservationSelectionStyle(); }
+    if (selectedEntityId === entityId) markObservationSelected(null);
     activePopup = null;
   });
 }
@@ -756,28 +953,127 @@ function fitToLoadedData() {
   }
 }
 
+// Real basemap (Section 01): Esri World Imagery satellite/aerial raster
+// tiles, no API key required, the same public tile service widely used for
+// evaluation/demo GIS deployments. Production/Preview always request this;
+// only this sandbox (useLocalBasemap) ever falls back — see below.
+const REAL_BASEMAP_LAYER_ID = 'satellite';
+function realBasemapStyle() {
+  return {
+    version: 8,
+    sources: { satellite: {
+      type: 'raster',
+      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+      tileSize: 256,
+      attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+    } },
+    layers: [{ id: REAL_BASEMAP_LAYER_ID, type: 'raster', source: 'satellite' }],
+  };
+}
+
+// PHASE 08.3-style local acceptance-only fallback (see the useLocalBasemap
+// comment above): this sandbox's egress proxy blocks every tile host, not
+// just OpenStreetMap's (confirmed against Esri/CARTO too), by organization
+// policy — not something a different provider choice can work around. This
+// generates a small, honestly-labeled procedural texture (never claimed to
+// be real imagery) purely so UI/interaction acceptance can proceed here;
+// Production/Preview never take this path.
+const SANDBOX_BASEMAP_LAYER_ID = 'sandbox-basemap';
+function sandboxTerrainDataUrl() {
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#3d4a3f';
+  ctx.fillRect(0, 0, size, size);
+  let seed = 42;
+  const rand = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  for (let i = 0; i < 46; i++) {
+    const w = 8 + rand() * 28, h = 8 + rand() * 28, x = rand() * size, y = rand() * size;
+    const shade = 44 + Math.floor(rand() * 34);
+    ctx.fillStyle = `rgb(${shade + 22},${shade + 30},${shade + 20})`;
+    ctx.fillRect(x, y, w, h);
+  }
+  return canvas.toDataURL('image/png');
+}
+function sandboxBasemapStyle() {
+  return {
+    version: 8,
+    sources: { sandbox: { type: 'raster', tiles: [sandboxTerrainDataUrl()], tileSize: 256 } },
+    layers: [{ id: SANDBOX_BASEMAP_LAYER_ID, type: 'raster', source: 'sandbox' }],
+  };
+}
+
+// Real MapLibre raster paint tuning (never a screenshot filter) driving the
+// Night/Day basemap treatment Section 11/16 asks for — muted, desaturated,
+// slightly cool for Night; natural for Day. Re-applied live on theme
+// toggle, not only at map creation.
+function applyBasemapTheme() {
+  const layerId = useLocalBasemap ? SANDBOX_BASEMAP_LAYER_ID : REAL_BASEMAP_LAYER_ID;
+  if (!map.getLayer(layerId)) return;
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  map.setPaintProperty(layerId, 'raster-brightness-max', dark ? 0.55 : 1);
+  map.setPaintProperty(layerId, 'raster-brightness-min', dark ? 0.04 : 0);
+  map.setPaintProperty(layerId, 'raster-contrast', dark ? 0.12 : 0);
+  map.setPaintProperty(layerId, 'raster-saturation', dark ? -0.3 : -0.05);
+  map.setPaintProperty(layerId, 'raster-hue-rotate', dark ? 195 : 0);
+}
+
+// Real, non-fabricated municipal operational extent (Section 02): only
+// rendered when the organization has a real admin-configured mapBounds
+// rectangle (api/organization/context.js's own cleanBounds()) — no
+// boundary is drawn when one hasn't been configured, ever.
+function renderMunicipalBoundary(bounds) {
+  if (!Array.isArray(bounds) || bounds.length !== 2) return;
+  const [[swLat, swLng], [neLat, neLng]] = bounds;
+  const ring = [[swLng, swLat], [neLng, swLat], [neLng, neLat], [swLng, neLat], [swLng, swLat]];
+  const geojson = { type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: {} };
+  if (map.getSource('geo-municipal-boundary')) { map.getSource('geo-municipal-boundary').setData(geojson); return; }
+  map.addSource('geo-municipal-boundary', { type: 'geojson', data: geojson });
+  // A wide, low-opacity, blurred line beneath a crisp one approximates a
+  // glow (GL has no native box-shadow on line layers) — restrained SMART
+  // HSR green, matching the reference's boundary treatment.
+  map.addLayer({ id: 'geo-municipal-boundary-glow', type: 'line', source: 'geo-municipal-boundary',
+    paint: { 'line-color': '#22c55e', 'line-width': 10, 'line-opacity': 0.16, 'line-blur': 6 } });
+  map.addLayer({ id: 'geo-municipal-boundary-line', type: 'line', source: 'geo-municipal-boundary',
+    paint: { 'line-color': '#4ade80', 'line-width': 2, 'line-opacity': 0.85 } });
+}
+
 const STATUS_FILTER_OPTIONS = [
   ['ALL', 'كل الحالات', null],
   ['PENDING', 'قيد الانتظار', STATUS_COLOR.PENDING],
   ['IN_PROGRESS', 'قيد المعالجة', STATUS_COLOR.IN_PROGRESS],
   ['COMPLETED', 'مكتمل', STATUS_COLOR.COMPLETED],
 ];
+// Real per-status tally over the full cached (unfiltered) observation set —
+// doubles as the panel's status legend (Section 09) and the filter control,
+// never a decorative/random chip scattered on the map.
+function statusTally() {
+  const tally = { ALL: cachedObservationEntities.length, PENDING: 0, IN_PROGRESS: 0, COMPLETED: 0 };
+  for (const e of cachedObservationEntities) {
+    const data = rawObservationById.get(e.id);
+    const status = (data && data.status) || 'PENDING';
+    if (status in tally) tally[status] += 1;
+  }
+  return tally;
+}
 function renderFilterChips() {
   const container = document.getElementById('filterChips');
   container.innerHTML = '';
-  const chipRow = document.createElement('div');
-  chipRow.className = 'chip-row';
+  const tally = statusTally();
+  const list = document.createElement('div');
+  list.className = 'geo-legend';
   for (const [value, label, color] of STATUS_FILTER_OPTIONS) {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'chip' + (observationStatusFilter === value ? ' active' : '');
-    chip.setAttribute('aria-pressed', String(observationStatusFilter === value));
-    chip.setAttribute('aria-label', `تصفية البلاغات حسب الحالة: ${label}`);
-    chip.innerHTML = color ? `<span class="dot" style="background:${color}"></span>${escapeHtml(label)}` : escapeHtml(label);
-    chip.addEventListener('click', () => { observationStatusFilter = value; renderFilterChips(); reapplyObservationFilters(); });
-    chipRow.appendChild(chip);
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'status-row' + (observationStatusFilter === value ? ' active' : '');
+    row.setAttribute('aria-pressed', String(observationStatusFilter === value));
+    row.setAttribute('aria-label', `تصفية البلاغات حسب الحالة: ${label}`);
+    row.innerHTML = `${color ? `<span class="dot" style="background:${color}"></span>` : '<span style="width:8px"></span>'}<span>${escapeHtml(label)}</span><span class="count">${tally[value]}</span>`;
+    row.addEventListener('click', () => { observationStatusFilter = value; renderFilterChips(); reapplyObservationFilters(); });
+    list.appendChild(row);
   }
-  container.appendChild(chipRow);
+  container.appendChild(list);
 
   // Category and priority are real fields on field_observations documents
   // (data.type, data.riskAssessment.priority — the same shapes the popup
@@ -846,9 +1142,7 @@ onAuthStateChanged(auth, async (user) => {
 
   map = new maplibregl.Map({
     container: 'map',
-    style: useLocalBasemap
-      ? { version: 8, sources: {}, layers: [{ id: 'neutral-bg', type: 'background', paint: { 'background-color': '#dbe4ee' } }] }
-      : { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
+    style: useLocalBasemap ? sandboxBasemapStyle() : realBasemapStyle(),
     center: mapContext.mapCenter ? [mapContext.mapCenter.lng, mapContext.mapCenter.lat] : [45, 24],
     zoom: mapContext.mapDefaultZoom || 6,
   });
@@ -858,6 +1152,7 @@ onAuthStateChanged(auth, async (user) => {
   map.addControl(new FitDataControl(), 'top-left');
   map.addControl(new maplibregl.FullscreenControl(), 'top-left');
   map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false }), 'top-left');
+  map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
   map.addControl(new maplibregl.AttributionControl({ compact: true }));
 
   const continuityEncoded = new URL(location.href).searchParams.get(continuity.CONTINUITY_PARAM);
@@ -867,11 +1162,19 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   map.on('load', () => {
+    applyBasemapTheme();
+    renderMunicipalBoundary(mapContext.mapBounds);
     renderLayerToggles(mapContext.organizationId);
     renderFilterChips();
     loadVisibleLayers(mapContext.organizationId);
   });
-  map.on('moveend', () => loadVisibleLayers(mapContext.organizationId, { includeObservations: false }));
+  map.on('moveend', () => { loadVisibleLayers(mapContext.organizationId, { includeObservations: false }); syncObservationMarkers(); });
+  // A GeoJSON source's clustered tiles for a NEWLY-reached zoom level are
+  // computed asynchronously — querySourceFeatures() called synchronously on
+  // 'moveend' alone can still see the previous zoom's (stale/empty) tile
+  // data. MapLibre's own documented HTML-marker-clustering pattern re-syncs
+  // on 'sourcedata' for exactly this reason.
+  map.on('sourcedata', (e) => { if (e.sourceId === OBS_SRC && e.isSourceLoaded) syncObservationMarkers(); });
 });
 </script>
 </body>
