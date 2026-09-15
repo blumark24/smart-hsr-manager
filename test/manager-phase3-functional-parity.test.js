@@ -137,7 +137,7 @@ test('No user-mutation handler manually refetches the user list — the adapter\
 
 // ---- Observations / evidence viewer ----
 test('the adapter maps real evidence fields with the same precedence the tested evidence-authorization path uses', () => {
-  const fn = adapter.slice(adapter.indexOf('function normalizeObservations'), adapter.indexOf('function toTwinObjects'));
+  const fn = adapter.slice(adapter.indexOf('function normalizeObservations'), adapter.indexOf('function normalizeIncidents'));
   assert.match(fn, /imagePath: data\.imageObjectKey \|\| data\.imagePath \|\| data\.imageUrl \|\| data\.beforeImagePath \|\| null/);
   assert.match(fn, /afterImagePath: data\.afterImagePath \|\| data\.afterImageUrl \|\| null/);
   assert.match(fn, /aiAnalysis: data\.aiAnalysis && typeof data\.aiAnalysis === 'object' \? data\.aiAnalysis : null/);

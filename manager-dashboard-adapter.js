@@ -80,41 +80,6 @@ function normalizeObservations(snapshot) {
   }).sort((a, b) => b.createdAt - a.createdAt);
 }
 
-function toTwinObjects(observations) {
-  const located = observations.filter(item => item.coordinates);
-  if (!located.length) return [];
-  const lats = located.map(item => item.coordinates.lat);
-  const lngs = located.map(item => item.coordinates.lng);
-  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-  const latRange = Math.max(maxLat - minLat, 0.0001);
-  const lngRange = Math.max(maxLng - minLng, 0.0001);
-
-  return located.map((item, index) => {
-    const status = statusFor(item.status);
-    const x = ((item.coordinates.lng - minLng) / lngRange - 0.5) * 1.15;
-    const y = (0.5 - (item.coordinates.lat - minLat) / latRange) * 1.05;
-    return {
-      id: item.id,
-      layer: 'report',
-      x: Number.isFinite(x) ? x : (index % 2 ? 0.22 : -0.22),
-      y: Number.isFinite(y) ? y : (index % 2 ? -0.18 : 0.18),
-      col: status.color,
-      title: item.title,
-      kind: 'بلاغ موثّق الموقع',
-      rows: [
-        ['الحالة', status.label],
-        ['المعرّف', item.displayId],
-        ['المراقب', item.inspector],
-        ['المقاول', item.contractor],
-        ['الإحداثيات', `${item.coordinates.lat.toFixed(5)}, ${item.coordinates.lng.toFixed(5)}`]
-      ],
-      action: 'فتح البلاغ',
-      route: 'report'
-    };
-  });
-}
-
 function normalizeIncidents(snapshot) {
   return snapshot.docs.map(entry => {
     const data = entry.data() || {};
@@ -203,20 +168,12 @@ function buildViewData(observations, users, incidents = []) {
       email: item.email || 'غير متاح'
     })),
     incidents: incidents,
-    objects: toTwinObjects(observations),
-    layers: [
-      { id: 'survey', name: 'الحصر الميداني', col: '#22c55e', n: 'رابط' },
-      { id: 'land', name: 'الأراضي', col: '#a78bfa', n: 'بانتظار الربط' },
-      { id: 'report', name: 'البلاغات', col: '#ef4444', n: number(total) },
-      { id: 'task', name: 'المهام', col: '#38bdf8', n: '—' }
-    ],
     notifications: observations.slice(0, 4).map(item => ({
       id: item.id,
       title: item.title,
       meta: `${statusFor(item.status).label} · ${item.displayId}`,
       col: statusFor(item.status).color
     })),
-    zones: [{ id: 'reports', name: 'بلاغات موثّقة الموقع', count: number(toTwinObjects(observations).length), col: '#ef4444', x: 0.03, y: -0.05 }],
     priorities: [...pending, ...inProgress].slice(0, 4).map(item => ({
       id: item.id,
       n: item.displayId,
@@ -241,10 +198,7 @@ function buildViewData(observations, users, incidents = []) {
 function publish(component, payload) {
   if (!component || component !== activeComponent) return;
   component.liveMetrics = payload.metrics;
-  component.liveObjects = payload.objects;
-  component.liveLayers = payload.layers;
   component.liveNotifications = payload.notifications;
-  component.liveZones = payload.zones;
   component.livePriorities = payload.priorities;
   component.liveCategories = payload.categories;
   component.liveDepartments = payload.departments;

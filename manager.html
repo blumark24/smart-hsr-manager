@@ -6,8 +6,13 @@
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
 <script src="./support.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet is served locally (vendor/leaflet/1.9.4/, the exact
+     previously-unpkg-loaded build) so browser acceptance and
+     Preview/Production never depend on an external CDN — the same fix
+     already applied to MapLibre GL in operational-map.html. -->
+<link rel="stylesheet" href="vendor/leaflet/1.9.4/leaflet.css">
+<script src="vendor/leaflet/1.9.4/leaflet.js"></script>
+<script src="geo-core.bundle.js"></script>
 <script src="./manager-dashboard-format.js"></script>
 <style id="manager-observations-reference-ui">
 .manager-view-overlay{background:rgba(2,7,16,.78)!important;backdrop-filter:blur(12px)!important}.manager-view-panel{width:min(1120px,100%)!important;border-radius:20px!important;background:linear-gradient(155deg,rgba(10,25,47,.99),rgba(6,16,31,.99))!important;border:1px solid rgba(76,139,224,.26)!important;box-shadow:0 34px 100px rgba(0,0,0,.58),0 0 40px rgba(34,116,255,.08)!important}.manager-observations-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.manager-observation-card{transition:border-color .16s ease,background .16s ease,transform .16s ease!important}.manager-observation-card:hover{transform:translateY(-1px);border-color:rgba(76,139,224,.45)!important;background:rgba(18,38,68,.82)!important}.manager-observation-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px}.manager-observation-meta span{padding:5px 7px;border-radius:7px;background:rgba(7,17,32,.7);border:1px solid rgba(93,146,214,.11);color:#8fa3bd;font-size:8.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:760px){.manager-observations-grid{grid-template-columns:1fr!important}.manager-view-panel{max-height:calc(100vh - 12px)!important;border-radius:14px!important}}
@@ -409,54 +414,15 @@
         </div>
 
         <div ref="{{ mapShellRef }}" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);order:var(--twinOrd,0);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,auto);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
-          <canvas ref="{{ cvRef }}" aria-label="التوأم الرقمي — سطح تحكم جغرافي للنطاق البلدي" style="position:absolute;inset:0;width:100%;height:100%;display:{{ twinDisplay }};cursor:var(--twinCur,grab)"></canvas>
-          <div ref="{{ mapRef }}" aria-label="الخريطة التشغيلية للبلاغات الموثّقة" style="position:absolute;inset:0;display:{{ mapDisplay }};background:var(--twinBg,#03060d)"></div>
+          <div ref="{{ mapRef }}" aria-label="الخريطة التشغيلية للبلاغات الموثّقة" style="position:absolute;inset:0;background:var(--twinBg,#03060d)"></div>
 
           <div dir="ltr" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
             <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
-            {{ mapSurfaceLabel }}
+            الخريطة التشغيلية · SMART HSR MAP · بلاغات موثّقة
           </div>
 
           <div style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
-            <div role="group" aria-label="نوع السطح الجغرافي" style="display:flex;align-items:center;height:32px;padding:3px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));gap:3px">
-              <button onClick="{{ showTwin }}" data-f="1" aria-pressed="{{ isTwin }}" style="height:24px;padding:0 8px;border:0;border-radius:6px;background:{{ twinModeBg }};color:{{ twinModeTx }};font-size:9.5px;cursor:pointer">التوأم</button>
-              <button onClick="{{ showMap }}" data-f="1" aria-pressed="{{ isMap }}" style="height:24px;padding:0 8px;border:0;border-radius:6px;background:{{ mapModeBg }};color:{{ mapModeTx }};font-size:9.5px;cursor:pointer">الخريطة</button>
-            </div>
-            <div style="position:relative">
-              <button onClick="{{ tLayers }}" data-f="1" aria-label="الطبقات" style="display:flex;align-items:center;gap:7px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);font-size:11px;cursor:pointer">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>
-                الطبقات
-                <span style="font-size:9.5px;font-weight:600;color:var(--acc,#8ee6ff)">{{ layerCount }}</span>
-              </button>
-              <sc-if value="{{ layersOpen }}">
-                <div style="position:absolute;top:40px;right:0;width:216px;z-index:30;padding:8px;border-radius:12px;background:var(--pop,rgba(10,17,30,0.97));border:1px solid var(--glassBd,rgba(122,164,224,0.2));box-shadow:0 22px 48px -20px rgba(0,0,0,0.8);animation:hsrRise .16s ease-out">
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 6px 9px;margin-bottom:5px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
-                    <span style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb)">طبقات الخريطة</span>
-                    <span onClick="{{ allLayers }}" data-f="1" style="font-size:10px;font-weight:550;color:var(--acc,#4cc9f0);cursor:pointer">الكل</span>
-                  </div>
-                  <sc-for list="{{ layerList }}" as="l" hint-placeholder-count="4">
-                    <div onClick="{{ l.on }}" data-f="1" aria-disabled="{{ l.enabledText }}" style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;cursor:{{ l.cursor }}" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
-                      <span style="width:15px;height:15px;flex:none;border-radius:5px;border:1.5px solid {{ l.bd }};background:{{ l.bg }};display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px">{{ l.mark }}</span>
-                      <span style="flex:1;font-size:11px;font-weight:520;color:var(--tx2,#a9bdd4)">{{ l.name }}</span>
-                      <span style="font-size:9.5px;font-weight:550;color:var(--tx3,#7d8ea6);font-variant-numeric:tabular-nums">{{ l.n }}</span>
-                    </div>
-                  </sc-for>
-                  <div onClick="{{ goMobility }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 7px;border-radius:9px;margin-top:3px;border-top:1px solid var(--div,rgba(122,164,224,0.1));cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
-                    <span style="width:15px;height:15px;flex:none;border-radius:5px;border:1.5px solid var(--ok,#22c55e);background:var(--ok,#22c55e)"></span>
-                    <span style="flex:1;font-size:11px;color:var(--tx2,#a9bdd4)">إدارة الحركة والسير</span>
-                  </div>
-                </div>
-              </sc-if>
-            </div>
-
-            <div onClick="{{ t3D }}" data-f="1" role="switch" aria-checked="{{ twin3D }}" style="display:{{ twinControlDisplay }};align-items:center;gap:9px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));cursor:pointer;user-select:none">
-              <span style="font-size:10.5px;color:var(--glassTx,#a9c0d8)">ثلاثي الأبعاد</span>
-              <span style="position:relative;width:30px;height:16px;border-radius:8px;display:block;background:{{ swBg }};border:1px solid {{ swBd }}">
-                <span style="position:absolute;top:1.5px;width:11px;height:11px;border-radius:50%;background:{{ swKnobBg }};right:{{ swR }};left:{{ swL }}"></span>
-              </span>
-            </div>
-
-            <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" title="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز — احتواء كل البلاغات الموثّقة" title="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
             </button>
             <button onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" title="ملء الشاشة" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
@@ -469,17 +435,14 @@
               <input aria-label="ابحث في البلاغات الموثّقة" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
             </div>
-            <sc-if value="{{ isMap }}">
-              <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}" style="width:196px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#dbe6f5);font-size:10.5px;padding:0 8px;outline:none">
-                <option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option>
-              </select>
-            </sc-if>
+            <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}" style="width:196px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#dbe6f5);font-size:10.5px;padding:0 8px;outline:none">
+              <option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option>
+            </select>
             <div style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:34px">
               <button onClick="{{ zIn }}" data-f="1" aria-label="تكبير" style="width:34px;height:32px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer">+</button>
               <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
               <button onClick="{{ zOut }}" data-f="1" aria-label="تصغير" style="width:34px;height:32px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer">−</button>
             </div>
-            <div style="font-size:9px;color:var(--glassTx,#7d8ea6);text-align:center;width:34px;font-variant-numeric:tabular-nums">{{ zoomLbl }}</div>
           </div>
 
           <sc-if value="{{ mapEmpty }}">
@@ -488,59 +451,11 @@
             </div>
           </sc-if>
 
-          <sc-for list="{{ zoneLabels }}" as="z" hint-placeholder-count="5">
-            <div onClick="{{ z.on }}" data-f="1" style="position:absolute;transform:translate(-50%,-100%);cursor:pointer;left:{{ z.left }};top:{{ z.top }}">
-              <div style="padding:6px 12px 7px;border-radius:11px;background:var(--lblBg,rgba(6,11,22,0.78));backdrop-filter:var(--blur,blur(12px));text-align:center;border:1px solid {{ z.border }}">
-                <div style="font-size:10.5px;font-weight:500;color:var(--lblTx,#c8d9ec);white-space:nowrap">{{ z.name }}</div>
-                <div style="font-size:20px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums;color:{{ z.col }}">{{ z.count }}</div>
-                <div style="font-size:9px;color:var(--tx3,#7d8ea6);margin-top:-1px">بلاغ</div>
-              </div>
-            </div>
-          </sc-for>
-
-          <sc-for list="{{ markers }}" as="m" hint-placeholder-count="8">
-            <div onClick="{{ m.on }}" data-f="1" role="button" aria-label="{{ m.title }}" style="position:absolute;width:{{ m.size }};height:{{ m.size }};margin:{{ m.off }};cursor:pointer;left:{{ m.left }};top:{{ m.top }}">
-              <span style="position:absolute;inset:0;border-radius:50%;background:{{ m.col }};border:{{ m.ring }}"></span>
-              <span style="position:absolute;inset:0;border-radius:50%;border:1.5px solid {{ m.col }};animation:hsrPulse 2.8s ease-out infinite"></span>
-            </div>
-          </sc-for>
-
-          <sc-if value="{{ hasSel }}">
-            <div style="position:absolute;bottom:14px;right:14px;width:266px;z-index:20;border-radius:14px;overflow:hidden;background:var(--pop,rgba(10,17,30,0.97));border:1px solid var(--glassBd,rgba(122,164,224,0.22));box-shadow:0 26px 56px -22px rgba(0,0,0,0.85);animation:hsrRise .18s ease-out">
-              <div style="display:flex;align-items:center;gap:9px;padding:11px 12px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
-                <span style="width:9px;height:9px;flex:none;border-radius:50%;background:{{ selCol }}"></span>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:11.5px;font-weight:600;color:var(--tx,#e9f1fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ selTitle }}</div>
-                  <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">{{ selKind }}</div>
-                </div>
-                <button onClick="{{ clearSel }}" data-f="1" aria-label="إغلاق" style="width:20px;height:20px;flex:none;border:none;background:none;color:var(--tx3,#6f8299);cursor:pointer;display:flex;align-items:center;justify-content:center">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
-                </button>
-              </div>
-              <div style="padding:11px 12px;display:flex;flex-direction:column;gap:8px">
-                <sc-for list="{{ selRows }}" as="r" hint-placeholder-count="4">
-                  <div style="display:flex;align-items:center;gap:8px;font-size:10.5px">
-                    <span style="flex:none;width:74px;color:var(--tx3,#7d8ea6)">{{ r.k }}</span>
-                    <span style="flex:1;text-align:left;color:var(--tx,#dbe6f5);font-weight:500">{{ r.v }}</span>
-                  </div>
-                </sc-for>
-              </div>
-              <div style="padding:0 12px 12px">
-                <button onClick="{{ selGo }}" data-f="1" style="width:100%;height:34px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35));cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
-                  {{ selAction }}
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
-                </button>
-              </div>
-            </div>
-          </sc-if>
-
           <div style="position:absolute;bottom:12px;left:14px;display:flex;align-items:center;gap:8px">
             <div style="display:flex;align-items:center;gap:13px;padding:7px 14px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.18));backdrop-filter:var(--blur,blur(16px))">
-              <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:var(--ok,#22c55e)"></span>منخفض</span>
-              <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:var(--warn,#f5a524)"></span>متوسط</span>
-              <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:var(--bad,#fb7185)"></span>مرتفع</span>
-              <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:var(--bad,#ef4444)"></span>حرج</span>
-              <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--tx3,#8b9db5)"><span style="width:8px;height:8px;border-radius:50%;background:#64748b"></span>لا بيانات</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444"></span>قيد الانتظار</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#f5a524"></span>قيد المعالجة</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#22c55e"></span>مكتمل</span>
             </div>
           </div>
         </div>
@@ -2166,27 +2081,15 @@ class Component extends DCLogic {
     evidenceDrawerOpen: false, selectedObservation: null,
     evidenceBeforeState: 'idle', evidenceBeforeUrl: null,
     evidenceAfterState: 'idle', evidenceAfterUrl: null,
-    twin3D: this.props.twin3D !== false, fs: false, mapMode: 'twin', mapFilter: 'ALL',
-    zoom: 1, panX: 0, panY: 0,
-    sel: null, layers: { survey: true, land: true, report: true, task: true },
-    quick: true, toast: '', bp: 'xl', tw: 734, th: 450,
+    fs: false, mapMode: 'map', mapFilter: 'ALL',
+    sel: null,
+    quick: true, toast: '', bp: 'xl',
     view: 'home', search: '', dataState: 'loading', dataError: '',
     sessionName: 'الحساب الموثّق', sessionRole: 'جارٍ التحقق من الصلاحيات', sessionRoleCode: 'unknown', clock: Date.now()
   };
 
-  // Filled only by the Firebase adapter after organization-scoped access is verified.
-  // Keeping it empty by default prevents Claude fixture data from being presented as
-  // municipal operational data.
-  liveObjects = [];
-  liveLayers = [
-    { id: 'survey', name: 'الحصر الميداني', col: '#22c55e', n: '—' },
-    { id: 'land', name: 'الأراضي', col: '#a78bfa', n: 'بانتظار الربط' },
-    { id: 'report', name: 'البلاغات', col: '#ef4444', n: '—' },
-    { id: 'task', name: 'المهام', col: '#38bdf8', n: '—' }
-  ];
   liveMetrics = { totalReports: '—', pending: '—', inProgress: '—', completed: '—', completionRate: '—', completionArcSmall: '0 232.5', completionArcLarge: '0 264', avgOpenDays: '—', activeTeams: '—' };
   liveNotifications = [];
-  liveZones = [];
   livePriorities = [];
   liveCategories = [];
   liveDepartments = [];
@@ -2210,15 +2113,6 @@ class Component extends DCLogic {
   liveLandsGeoreferencedCount = 0;
   liveLandsDataState = 'idle';
   liveLandsDataError = '';
-
-  ZONES = [
-    { id: 'south', a0: -75, a1: -5, col: '#a855f7', seed: 1.2 },
-    { id: 'east', a0: -5, a1: 50, col: '#38bdf8', seed: 2.7 },
-    { id: 'north', a0: 50, a1: 95, col: '#22c55e', seed: 4.1 },
-    { id: 'west', a0: 95, a1: 150, col: '#f5a524', seed: 5.6 },
-    { id: 'none', a0: 150, a1: 285, col: '#64748b', seed: 0.4 },
-    { id: 'center', center: true, col: '#ef4444', seed: 3.3 }
-  ];
 
   DAY = {
     '--pgMaxW': '1600px',
@@ -2368,11 +2262,6 @@ class Component extends DCLogic {
     this.onWin = () => { this.measure(); };
     window.addEventListener('resize', this.onWin);
     this.measure();
-    if (typeof ResizeObserver !== 'undefined' && this.cv) {
-      this._ro = new ResizeObserver(() => this.sync());
-      this._ro.observe(this.cv);
-    }
-    this.bindCanvas();
     this.onDoc = e => {
       if (this.root && !this.root.contains(e.target)) return;
       const t = e.target;
@@ -2401,7 +2290,7 @@ class Component extends DCLogic {
     clearInterval(this._clock);
     this._opMap?.remove();
   }
-  componentDidUpdate() { this.bindCanvas(); this.draw(); this.syncOperationalMap(); }
+  componentDidUpdate() { this.syncOperationalMap(); }
 
   operationalObservations() {
     const query = (this.state.search || '').trim().toLocaleLowerCase('ar');
@@ -2444,29 +2333,55 @@ class Component extends DCLogic {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this._opMap);
     this._opMarkers = L.layerGroup().addTo(this._opMap);
+    this._opMarkerById = new Map();
   }
 
+  static OBSERVATION_MARKER_COLORS = { PENDING: '#ef4444', IN_PROGRESS: '#f5a524', COMPLETED: '#22c55e' };
+
   syncOperationalMap(forceFit = false) {
-    if (this.state.mapMode !== 'map') return;
     this.initOperationalMap();
     if (!this._opMap || !this._opMarkers || !window.L) return;
     const L = window.L;
     const points = this.operationalObservations();
     const signature = points.map(item => `${item.id}:${item.status}:${item.coordinates.lat}:${item.coordinates.lng}`).join('|');
-    this._opMarkers.clearLayers();
-    const colors = { PENDING: '#ef4444', IN_PROGRESS: '#f5a524', COMPLETED: '#22c55e' };
-    const bounds = [];
-    points.forEach(item => {
-      const marker = L.circleMarker([item.coordinates.lat, item.coordinates.lng], {
-        radius: 8, color: colors[item.status] || '#64748b', weight: 2, fillColor: colors[item.status] || '#64748b', fillOpacity: 0.78
+    if (forceFit || this._mapSignature !== signature) {
+      this._opMarkers.clearLayers();
+      this._opMarkerById = new Map();
+      const colors = this.constructor.OBSERVATION_MARKER_COLORS;
+      const bounds = [];
+      points.forEach(item => {
+        const marker = L.circleMarker([item.coordinates.lat, item.coordinates.lng], {
+          radius: 8, color: colors[item.status] || '#64748b', weight: 2, fillColor: colors[item.status] || '#64748b', fillOpacity: 0.78
+        });
+        marker.bindPopup(() => this.buildObservationPopup(item), { maxWidth: 264, className: 'hsr-map-popup' });
+        // Selection is tracked OUTSIDE React state (a plain instance field)
+        // and applied imperatively via applyMapSelectionStyle() — this
+        // component's setState() causes the map's DOM container itself to
+        // be torn down and a brand-new Leaflet map created on every render
+        // (a pre-existing framework characteristic, reproducible even via
+        // completely unrelated setState calls like search-typing or theme
+        // toggling). Routing marker selection through setState would
+        // destroy the very popup the click just opened before it ever
+        // painted.
+        marker.on('click', () => { this._selectedMapId = item.id; this.applyMapSelectionStyle(); });
+        marker.on('popupclose', () => { if (this._selectedMapId === item.id) { this._selectedMapId = null; this.applyMapSelectionStyle(); } });
+        marker.addTo(this._opMarkers);
+        this._opMarkerById.set(item.id, marker);
+        bounds.push([item.coordinates.lat, item.coordinates.lng]);
       });
-      marker.on('click', () => this.selectOperationalObservation(item.id));
-      marker.addTo(this._opMarkers);
-      bounds.push([item.coordinates.lat, item.coordinates.lng]);
+      if (bounds.length) this._opMap.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
+      this._mapSignature = signature;
+      setTimeout(() => this._opMap?.invalidateSize(), 60);
+    }
+    this.applyMapSelectionStyle();
+  }
+
+  applyMapSelectionStyle() {
+    if (!this._opMarkerById) return;
+    this._opMarkerById.forEach((marker, id) => {
+      const isSel = this._selectedMapId === id;
+      marker.setStyle({ radius: isSel ? 11 : 8, weight: isSel ? 3 : 2 });
     });
-    if (bounds.length && (forceFit || this._mapSignature !== signature)) this._opMap.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
-    this._mapSignature = signature;
-    setTimeout(() => this._opMap?.invalidateSize(), 60);
   }
 
   resetOperationalMap() {
@@ -2474,219 +2389,117 @@ class Component extends DCLogic {
     this.syncOperationalMap(true);
   }
 
-  objects() { return Array.isArray(this.liveObjects) ? this.liveObjects : []; }
+  // Real, client-side-only UX gating (the server independently re-enforces
+  // Twin admission — see platform/geo/geo-policy.js's own header comment).
+  // Mirrors the exact caller shape operational-map.html/twin.html already
+  // resolve from their own auth flow: { role, organizationId }.
+  isTwinAdmitted() {
+    const geo = window.SmartHSRGeoCore;
+    if (!geo) return false;
+    return geo.policy.evaluateTwinAdmission({ actor: { role: this.state.sessionRoleCode, organizationId: this.state.orgId } }).allowed;
+  }
 
-  bindCanvas() {
-    const el = this.cv;
-    if (!el || el._hsr) return;
-    el._hsr = true;
-    el.addEventListener('wheel', e => {
-      e.preventDefault();
-      const d = e.deltaY > 0 ? -0.12 : 0.12;
-      this.setState(s => ({ zoom: Math.max(0.6, Math.min(2.6, s.zoom + d)) }));
-    }, { passive: false });
-    let drag = null;
-    el.addEventListener('mousedown', e => { drag = { x: e.clientX, y: e.clientY, px: this.state.panX, py: this.state.panY, moved: false }; });
-    window.addEventListener('mousemove', e => {
-      if (!drag) return;
-      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
-      this.setState({ panX: drag.px + dx, panY: drag.py + dy });
-    });
-    window.addEventListener('mouseup', () => {
-      if (drag && !drag.moved && this.state.sel) this.setState({ sel: null });
-      drag = null;
-    });
+  // Real continuity handoff — reuses the SAME platform/geo/geo-continuity.js
+  // contract operational-map.html and twin.html already use for their own
+  // "فتح في التوأم الرقمي" button, never a second/invented mechanism.
+  buildGeoContinuityContext(item) {
+    const context = { organizationId: this.state.orgId };
+    if (item) {
+      context.entityId = item.id;
+      if (item.coordinates) context.camera = { center: [item.coordinates.lng, item.coordinates.lat], zoom: 17 };
+    }
+    return context;
+  }
+
+  openTwinForObservation(item) {
+    const geo = window.SmartHSRGeoCore;
+    if (!geo || !this.isTwinAdmitted()) return;
+    const { url } = geo.continuity.buildContinuityUrl('/twin.html' + location.search, this.buildGeoContinuityContext(item));
+    if (url) location.href = url;
+  }
+
+  openOperationalMapForObservation(item) {
+    const geo = window.SmartHSRGeoCore;
+    if (!geo) return;
+    const { url } = geo.continuity.buildContinuityUrl('/operational-map.html' + location.search, this.buildGeoContinuityContext(item));
+    if (url) location.href = url;
+  }
+
+  // The Leaflet popup content is built imperatively (a real DOM node with
+  // real addEventListener-bound actions), the same technique already
+  // proven in manager-operations.html — never an HTML string with inline
+  // handlers, and never a second declarative rendering path duplicating
+  // the sc-for template engine.
+  buildObservationPopup(item) {
+    const statusLabel = ({ PENDING: 'قيد الانتظار', IN_PROGRESS: 'قيد المعالجة', COMPLETED: 'تمت المعالجة' })[item.status] || 'غير محدد';
+    const categoryLabel = ({ MAINTENANCE: 'صيانة', QUALITY: 'جودة', SAFETY: 'سلامة', ENVIRONMENT: 'بيئة', ROAD: 'طرق' })[item.type] || item.type || 'غير مصنف';
+    const format = window.SmartHSRFormat || {};
+    const timeLabel = item.createdAt && format.dateTime ? format.dateTime(item.createdAt) : 'غير متاح';
+    const priorityLabel = item.priority ? ({ LOW: 'منخفضة', MEDIUM: 'متوسطة', HIGH: 'عالية', CRITICAL: 'حرجة' })[String(item.priority).toUpperCase()] || null : null;
+
+    const root = document.createElement('div');
+    root.className = 'hsr-map-popup-body';
+    root.style.cssText = 'display:flex;flex-direction:column;gap:7px;min-width:220px;font-family:inherit;direction:rtl';
+
+    const row = (k, v) => {
+      const r = document.createElement('div');
+      r.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:10.5px';
+      r.innerHTML = `<span style="flex:none;width:66px;color:#7d8ea6">${k}</span><span style="flex:1;text-align:left;color:#1a2333;font-weight:500">${v}</span>`;
+      return r;
+    };
+
+    const thumb = document.createElement('div');
+    thumb.style.cssText = 'width:100%;height:96px;border-radius:8px;background:#0b1220 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#7d8ea6;font-size:9.5px;overflow:hidden';
+    thumb.textContent = 'جارٍ التحقق من الصورة...';
+    if (item.imagePath && this.resolveEvidenceImage) {
+      this.resolveEvidenceImage(item.imagePath).then(result => {
+        if (result.available && result.url) { thumb.style.backgroundImage = `url("${result.url}")`; thumb.textContent = ''; }
+        else { thumb.textContent = 'لا تتوفر صورة موثّقة'; }
+      }).catch(() => { thumb.textContent = 'لا تتوفر صورة موثّقة'; });
+    } else {
+      thumb.textContent = 'لا تتوفر صورة موثّقة';
+    }
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:12px;font-weight:700;color:#0f172a';
+    title.textContent = item.title || 'بلاغ بلا عنوان';
+
+    root.appendChild(title);
+    root.appendChild(thumb);
+    root.appendChild(row('الحالة', statusLabel));
+    root.appendChild(row('المعرّف', item.displayId || item.id));
+    if (priorityLabel) root.appendChild(row('الأولوية', priorityLabel));
+    root.appendChild(row('التصنيف', categoryLabel));
+    root.appendChild(row('المراقب', item.inspector || 'غير متاح'));
+    root.appendChild(row('التوقيت', timeLabel));
+    root.appendChild(row('الإحداثيات', `${item.coordinates.lat.toFixed(5)}, ${item.coordinates.lng.toFixed(5)}`));
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:2px';
+    const btn = (label, onClick) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.style.cssText = 'width:100%;height:30px;border-radius:8px;font-size:11px;font-weight:600;color:#eaf4ff;background:#28489b;border:1px solid rgba(120,170,255,0.4);cursor:pointer';
+      b.addEventListener('click', onClick);
+      return b;
+    };
+    actions.appendChild(btn('عرض التفاصيل', () => this.openEvidenceDrawer(item)));
+    actions.appendChild(btn('فتح الخريطة التشغيلية', () => this.openOperationalMapForObservation(item)));
+    if (this.isTwinAdmitted()) actions.appendChild(btn('فتح في التوأم الرقمي', () => this.openTwinForObservation(item)));
+    root.appendChild(actions);
+
+    return root;
   }
 
   measure() {
     const w = window.innerWidth;
     const bp = w >= 1560 ? 'xl' : w >= 1400 ? 'lg' : w >= 1180 ? 'md' : w >= 760 ? 'tab' : 'mob';
     if (bp !== this.state.bp) this.setState({ bp: bp });
-    this.sync();
-  }
-
-  sync() {
-    const el = this.cv; if (!el) return;
-    const w = Math.round(el.clientWidth) || 734, h = Math.round(el.clientHeight) || 450;
-    if (w !== this.state.tw || h !== this.state.th) this.setState({ tw: w, th: h });
-    else this.draw();
-  }
-
-  geo(w, h) {
-    const t = this.state.twin3D, z = this.state.zoom;
-    return { c: Math.cos(-0.5), s: Math.sin(-0.5), f: 2.2, k: t ? 0.9 : 0,
-      cx: w * 0.5 + this.state.panX, cy: h * (t ? 0.63 : 0.5) + this.state.panY,
-      S: w * 0.585 * z, sq: t ? 0.42 : 0.78, zh: t ? 0.72 : 0 };
-  }
-  proj(x, y, z, G) {
-    const X = x * G.c - y * G.s, Y = x * G.s + y * G.c;
-    const sc = G.f / (G.f + G.k * Y);
-    return { x: G.cx + X * G.S * sc, y: G.cy + Y * G.S * G.sq * sc - (z || 0) * G.S * G.zh * sc, s: sc };
-  }
-
-  polys() {
-    if (this._polys) return this._polys;
-    const arc = (a0, a1, seed) => {
-      const pts = [];
-      const R = t => 0.87 + 0.08 * Math.sin(3 * t + seed) - 0.05 * Math.cos(5 * t + seed * 1.7);
-      for (let a = a0; a <= a1 + 0.001; a += 2) { const t = a * Math.PI / 180, r = R(t); pts.push([r * Math.cos(t), -r * Math.sin(t)]); }
-      for (let a = a1; a >= a0 - 0.001; a -= 4) { const t = a * Math.PI / 180, r = 0.255 + 0.012 * Math.sin(4 * t); pts.push([r * Math.cos(t), -r * Math.sin(t)]); }
-      return pts;
-    };
-    const cen = [];
-    for (let a = 0; a < 360; a += 6) { const t = a * Math.PI / 180, r = 0.248 + 0.014 * Math.sin(4 * t + 1); cen.push([r * Math.cos(t), -r * Math.sin(t)]); }
-    this._polys = this.ZONES.map(z => Object.assign({}, z, { pts: z.center ? cen : arc(z.a0, z.a1, z.seed) }));
-    return this._polys;
   }
 
   rgb(hex) { return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)]; }
   tint(hex, a) { const c = this.rgb(hex); return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
-  mix(hex, a, base) { const c = this.rgb(hex), b = base;
-    return 'rgb(' + Math.round(b[0] + (c[0] - b[0]) * a) + ',' + Math.round(b[1] + (c[1] - b[1]) * a) + ',' + Math.round(b[2] + (c[2] - b[2]) * a) + ')'; }
-
-  inside(pts, x, y) {
-    let ins = false;
-    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-      const xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
-      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) ins = !ins;
-    }
-    return ins;
-  }
-
-  city() {
-    const dens = Math.round(this.props.cityDensity || 1100);
-    if (this._city && this._cityN === dens) return this._city;
-    let seed = 20240527;
-    const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-    const out = [];
-    const S = Math.sin(-0.5), C = Math.cos(-0.5);
-    this.polys().forEach(z => {
-      const share = z.id === 'none' ? 0.06 : z.id === 'center' ? 0.24 : 0.20;
-      const target = Math.round(dens * share);
-      let n = 0, tries = 0;
-      while (n < target && tries < target * 25) {
-        tries++;
-        const x = (rnd() * 2 - 1), y = (rnd() * 2 - 1);
-        if (!this.inside(z.pts, x, y)) continue;
-        n++;
-        const d = Math.sqrt(x * x + y * y);
-        let h = 0.022 + Math.pow(rnd(), 2.4) * 0.16;
-        h *= 1 + 2.0 * Math.max(0, 1 - d / 0.62);
-        if (z.id === 'none') h *= 0.35;
-        if (rnd() > 0.99 && d < 0.45) h = 0.34 + rnd() * 0.26;
-        out.push({ x: x, y: y, h: h, b: 0.0052 + rnd() * 0.0068,
-          lum: 0.2 + rnd() * 0.34, dim: z.id === 'none',
-          lit: rnd() > 0.55 && z.id !== 'none', warm: rnd() > 0.5,
-          zc: z.col, k: x * S + y * C });
-      }
-    });
-    out.sort((a, b) => a.k - b.k);
-    this._city = out; this._cityN = dens;
-    return out;
-  }
-
-  pal() {
-    const day = this.state.theme === 'day';
-    return day ? {
-      bg: '#e9ede9', r1: 'rgba(255,255,255,0.95)', r2: 'rgba(226,234,228,0.6)',
-      zoneFill: 'rgba(244,247,244,0.92)', noneFill: 'rgba(228,232,229,0.9)', zoneTint: 0.07,
-      road: 'rgba(255,255,255,0.95)', roadW: 1.2,
-      base: [214, 222, 216], side1: 'rgba(181,193,185,0.96)', side2: 'rgba(199,209,202,0.96)',
-      lit: 'rgba(126,146,136,0.45)', litWarm: 'rgba(126,146,136,0.45)',
-      strokeA: 0.7, blur: 0, noneStroke: 'rgba(122,142,132,0.5)',
-      lumK: 0.24, strokeMix: [22, 58, 42], strokeK: 0.5
-    } : {
-      bg: '#03060d', r1: 'rgba(24,68,126,0.42)', r2: 'rgba(12,34,72,0.22)',
-      zoneFill: 'rgba(5,10,20,0.92)', noneFill: 'rgba(9,14,25,0.92)', zoneTint: 0.085,
-      road: 'rgba(255,196,130,0.11)', roadW: 1,
-      base: [18, 30, 52], side1: 'rgba(6,11,22,0.96)', side2: 'rgba(12,21,38,0.96)',
-      lit: 'rgba(255,214,150,0.75)', litWarm: 'rgba(140,215,255,0.7)',
-      strokeA: 1, blur: 14, noneStroke: 'rgba(120,140,168,0.35)',
-      lumK: 1, strokeMix: null, strokeK: 0
-    };
-  }
-
-  draw() {
-    const cv = this.cv; if (!cv) return;
-    const w = Math.round(cv.clientWidth) || 734, h = Math.round(cv.clientHeight) || 450;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
-    const g = cv.getContext('2d'); if (!g) return;
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.clearRect(0, 0, w, h);
-    const G = this.geo(w, h), P = (x, y, z) => this.proj(x, y, z, G);
-    const gi = this.props.glowIntensity == null ? 1 : this.props.glowIntensity;
-    const p = this.pal();
-    const L = this.state.layers;
-
-    g.fillStyle = p.bg; g.fillRect(0, 0, w, h);
-    const rg = g.createRadialGradient(G.cx, G.cy - h * 0.06, 0, G.cx, G.cy - h * 0.06, w * 0.62);
-    rg.addColorStop(0, p.r1); rg.addColorStop(0.45, p.r2); rg.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = rg; g.fillRect(0, 0, w, h);
-
-    const polys = this.polys();
-    const path = pts => { g.beginPath(); for (let i = 0; i < pts.length; i++) { const q = P(pts[i][0], pts[i][1], 0); if (i) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); } g.closePath(); };
-
-    polys.forEach(z => {
-      path(z.pts); g.fillStyle = z.id === 'none' ? p.noneFill : p.zoneFill; g.fill();
-      g.fillStyle = this.tint(z.col, z.id === 'none' ? 0.02 : p.zoneTint); g.fill();
-    });
-
-    g.lineWidth = p.roadW; g.strokeStyle = p.road;
-    for (let a = -80; a < 300; a += 7.5) {
-      const t = a * Math.PI / 180;
-      const p1 = P(0.27 * Math.cos(t), -0.27 * Math.sin(t), 0), p2 = P(0.88 * Math.cos(t), -0.88 * Math.sin(t), 0);
-      g.beginPath(); g.moveTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.stroke();
-    }
-    [0.40, 0.58, 0.75].forEach(r => { g.beginPath(); for (let a = 0; a <= 360; a += 5) { const t = a * Math.PI / 180, q = P(r * Math.cos(t), -r * Math.sin(t), 0); if (a) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); } g.stroke(); });
-
-    const city = this.city();
-    for (let i = 0; i < city.length; i++) {
-      const b = city[i];
-      const s0 = P(b.x - b.b, b.y + b.b, 0), s1 = P(b.x + b.b, b.y + b.b, 0), s2 = P(b.x + b.b, b.y - b.b, 0), s3 = P(b.x - b.b, b.y - b.b, 0);
-      const dz = b.h * G.S * G.zh * s0.s;
-      if (dz > 0.6) {
-        g.fillStyle = p.side1;
-        g.beginPath(); g.moveTo(s0.x, s0.y); g.lineTo(s1.x, s1.y); g.lineTo(s1.x, s1.y - dz); g.lineTo(s0.x, s0.y - dz); g.closePath(); g.fill();
-        g.fillStyle = p.side2;
-        g.beginPath(); g.moveTo(s0.x, s0.y); g.lineTo(s3.x, s3.y); g.lineTo(s3.x, s3.y - dz); g.lineTo(s0.x, s0.y - dz); g.closePath(); g.fill();
-      }
-      g.fillStyle = this.mix(b.zc, (b.dim ? 0.05 : b.lum) * p.lumK, p.base);
-      g.beginPath(); g.moveTo(s0.x, s0.y - dz); g.lineTo(s1.x, s1.y - dz); g.lineTo(s2.x, s2.y - dz); g.lineTo(s3.x, s3.y - dz); g.closePath(); g.fill();
-      if (b.lit && dz > 5) {
-        g.fillStyle = b.warm ? p.lit : p.litWarm;
-        const bw = Math.max(1, (s1.x - s0.x) * 0.3);
-        g.fillRect(s0.x + (s1.x - s0.x) * 0.24, s0.y - dz * 0.7, bw, 1.2);
-        if (dz > 12) g.fillRect(s0.x + (s1.x - s0.x) * 0.54, s0.y - dz * 0.42, bw, 1.2);
-      }
-    }
-
-    g.save();
-    polys.forEach(z => {
-      if (z.id === 'none') { g.shadowBlur = 0; g.strokeStyle = p.noneStroke; g.lineWidth = 1; g.setLineDash([4, 5]); path(z.pts); g.stroke(); g.setLineDash([]); return; }
-      g.shadowColor = z.col; g.shadowBlur = p.blur * gi;
-      const sc = p.strokeMix ? this.mix(z.col, p.strokeK, p.strokeMix) : z.col;
-      g.strokeStyle = p.strokeMix ? sc : this.tint(z.col, p.strokeA);
-      g.lineWidth = p.strokeMix ? 1.6 : 1.8;
-      path(z.pts); g.stroke(); if (!p.strokeMix) g.stroke();
-    });
-    g.restore();
-
-    if (this.state.sel) {
-      const o = this.objects().filter(x => x.id === this.state.sel)[0];
-      if (o && L[o.layer]) {
-        const q = P(o.x, o.y, 0);
-        g.save();
-        g.strokeStyle = this.tint(o.col, 0.9); g.lineWidth = 1.6;
-        g.beginPath(); g.ellipse(q.x, q.y, 26 * q.s, 26 * q.s * G.sq, 0, 0, Math.PI * 2); g.stroke();
-        g.setLineDash([3, 4]);
-        g.beginPath(); g.ellipse(q.x, q.y, 40 * q.s, 40 * q.s * G.sq, 0, 0, Math.PI * 2); g.stroke();
-        g.restore();
-      }
-    }
-  }
-
   flash(msg) {
     this.setState({ toast: msg, notifOpen: false, profOpen: false, layersOpen: false, mobNavOpen: false });
     clearTimeout(this._tt);
@@ -2699,11 +2512,6 @@ class Component extends DCLogic {
     if (st.sb && st.bp !== 'tab' && st.bp !== 'mob') { vars['--sbW'] = '68px'; vars['--sbLabel'] = 'none'; vars['--subInd'] = '0px'; }
     if (st.fs) { vars['--twinPos'] = 'fixed'; vars['--twinInset'] = '14px'; vars['--twinZ'] = '75'; vars['--twinH'] = 'auto'; }
 
-    const G = this.geo(st.tw, st.th);
-    const objects = this.objects();
-    const sel = st.sel ? objects.filter(o => o.id === st.sel)[0] : null;
-    const L = st.layers;
-    const on = Object.keys(L).filter(k => L[k]).length;
     const metrics = this.liveMetrics || {};
     const format = window.SmartHSRFormat || {};
     const query = (st.search || '').trim().toLocaleLowerCase('ar');
@@ -3157,7 +2965,6 @@ class Component extends DCLogic {
 
     return {
       rootRef: el => { this.root = el; },
-      cvRef: el => { this.cv = el; },
       mapShellRef: el => { this.mapShell = el; },
       mapRef: el => this.bindMapContainer(el),
       themeVars: vars,
@@ -3393,27 +3200,9 @@ class Component extends DCLogic {
       admCaret: st.expAdmin ? 'rotate(180deg)' : 'rotate(0deg)',
       showQuick: st.quick && this.props.showQuickActions !== false,
       hasToast: !!st.toast, toast: st.toast,
-      zoomLbl: Math.round(st.zoom * 100) + '%',
-      layerCount: on + '/4',
-      swBg: st.twin3D ? (day ? '#12855a' : 'rgba(76,201,240,0.55)') : (day ? 'rgba(17,54,40,0.14)' : 'rgba(122,164,224,0.18)'),
-      swBd: st.twin3D ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(76,201,240,0.6)') : (day ? 'rgba(17,54,40,0.2)' : 'rgba(122,164,224,0.28)'),
-      swKnobBg: st.twin3D ? '#ffffff' : (day ? '#8d9c94' : '#8b9db5'),
-      swR: st.twin3D ? '1.5px' : 'auto', swL: st.twin3D ? 'auto' : '1.5px',
-      twin3D: st.twin3D,
-      isTwin: st.mapMode === 'twin', isMap: st.mapMode === 'map',
-      twinDisplay: st.mapMode === 'twin' ? 'block' : 'none', mapDisplay: st.mapMode === 'map' ? 'block' : 'none',
-      twinControlDisplay: st.mapMode === 'twin' ? 'flex' : 'none',
-      // SMART HSR MAP and SMART HSR TWIN are two distinct product surfaces
-      // (real operational/GIS map vs. a separate municipal digital-twin
-      // visualization) and must never be labeled as one another.
-      mapSurfaceLabel: st.mapMode === 'twin' ? 'التوأم البلدي الذكي · SMART HSR TWIN' : 'الخريطة التشغيلية · SMART HSR MAP · بلاغات موثّقة',
-      twinModeBg: st.mapMode === 'twin' ? (day ? '#ffffff' : 'rgba(76,201,240,0.24)') : 'transparent',
-      twinModeTx: st.mapMode === 'twin' ? (day ? '#0b5c3b' : '#eaf4ff') : 'var(--glassTx,#a9c0d8)',
-      mapModeBg: st.mapMode === 'map' ? (day ? '#ffffff' : 'rgba(76,201,240,0.24)') : 'transparent',
-      mapModeTx: st.mapMode === 'map' ? (day ? '#0b5c3b' : '#eaf4ff') : 'var(--glassTx,#a9c0d8)',
       mapFilter: st.mapFilter,
-      mapEmpty: st.mapMode === 'map' && !mapPoints.length,
-      mapEmptyDisplay: st.mapMode === 'map' && !mapPoints.length ? 'flex' : 'none',
+      mapEmpty: !mapPoints.length,
+      mapEmptyDisplay: !mapPoints.length ? 'flex' : 'none',
       mapEmptyText,
       search: st.search,
       // The Field Survey Manager Dashboard is a full-page product view
@@ -3519,44 +3308,6 @@ class Component extends DCLogic {
         { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', disabled: true }
       ].map(item => Object.assign({ cursor: item.disabled ? 'not-allowed' : 'pointer', disabledText: item.disabled ? 'true' : 'false' }, item)),
 
-      layerList: this.liveLayers.map(l => ({
-        name: l.name, n: l.n,
-        mark: L[l.id] ? '✓' : '',
-        bd: L[l.id] ? l.col : (day ? 'rgba(17,54,40,0.25)' : 'rgba(122,164,224,0.3)'),
-        bg: L[l.id] ? l.col : 'transparent',
-        on: () => this.setState(s => { const n = Object.assign({}, s.layers); n[l.id] = !n[l.id]; return { layers: n, sel: n[l.id] ? s.sel : null }; })
-      })),
-      allLayers: () => this.setState({ layers: { survey: true, land: true, report: true, task: true } }),
-
-      zoneLabels: this.liveZones.map(l => {
-        const q = this.proj(l.x, l.y, 0.05, G);
-        const lx = Math.min(Math.max(q.x, 112), Math.max(140, st.tw - 128));
-        const ly = Math.min(Math.max(q.y, 168), Math.max(190, st.th - 92));
-        return { name: l.name, count: l.count, col: day ? this.mix(l.col, 0.75, [20, 40, 30]) : l.col,
-          left: Math.round(lx) + 'px', top: Math.round(ly) + 'px',
-          border: this.tint(l.col, day ? 0.4 : 0.45),
-          on: () => this.flash(l.name + ' — ' + l.count + ' بلاغ') };
-      }),
-
-      markers: objects.filter(o => L[o.layer]).map(o => {
-        const q = this.proj(o.x, o.y, 0.055, G);
-        const s = st.sel === o.id;
-        return { col: day ? this.mix(o.col, 0.8, [16, 46, 32]) : o.col, title: o.title,
-          size: s ? '13px' : '9px', off: s ? '-6.5px 0 0 -6.5px' : '-4.5px 0 0 -4.5px',
-          ring: s ? '2px solid ' + (day ? '#ffffff' : '#eaf9ff') : 'none',
-          left: Math.round(q.x) + 'px', top: Math.round(q.y) + 'px',
-          on: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ sel: o.id, layersOpen: false }); } };
-      }),
-
-      hasSel: !!sel,
-      selTitle: sel ? sel.title : '',
-      selKind: sel ? sel.kind : '',
-      selCol: sel ? sel.col : '#38bdf8',
-      selRows: sel ? sel.rows.map(r => ({ k: r[0], v: r[1] })) : [],
-      selAction: sel ? sel.action : '',
-      selGo: () => { if (sel) this.openObservation(sel.id); },
-      clearSel: () => this.setState({ sel: null }),
-
       setDay: () => this.setState({ theme: 'day' }),
       setNight: () => this.setState({ theme: 'night' }),
       tSb: () => this.setState(s => ({ sb: !s.sb })),
@@ -3564,12 +3315,10 @@ class Component extends DCLogic {
       tAdmin: () => this.setState(s => ({ expAdmin: !s.expAdmin })),
       tNotif: () => this.setState(s => ({ notifOpen: !s.notifOpen, profOpen: false })),
       tProf: () => this.setState(s => ({ profOpen: !s.profOpen, notifOpen: false })),
-      tLayers: () => this.setState(s => ({ layersOpen: !s.layersOpen })),
       tMobNav: () => this.setState(s => ({ mobNavOpen: !s.mobNavOpen })),
       openSettings: e => { this.prevent(e); this.setState({ settingsOpen: true, profOpen: false, mobNavOpen: false }); },
       closeSettings: () => this.setState({ settingsOpen: false }),
       stop: e => { if (e && e.stopPropagation) e.stopPropagation(); },
-      t3D: () => this.setState(s => ({ twin3D: !s.twin3D })),
       tFs: () => this.toggleFullscreen(),
       zIn: () => this.zoomMap(1),
       zOut: () => this.zoomMap(-1),
@@ -3583,8 +3332,6 @@ class Component extends DCLogic {
       goReports: e => this.openView('reports', e),
       goObservations: e => this.openView('observations', e),
       goUsers: e => this.openView('users', e),
-      showTwin: () => this.setState({ mapMode: 'twin', sel: null }),
-      showMap: () => this.openMap(),
       setMapFilter: e => this.setState({ mapFilter: e.target.value }),
       setSearch: e => this.setSearch(e),
       closeView: () => this.setState({ view: 'home' }),
@@ -3607,22 +3354,6 @@ class Component extends DCLogic {
 
   openObservation(id) {
     this.setState({ view: 'observations', sel: id, mobNavOpen: false, notifOpen: false, profOpen: false });
-  }
-
-  // The real operational map's marker click handler is shared between the
-  // general Manager map and the Field Survey map screens. Clicking a
-  // marker must never silently exit whichever product the Manager is
-  // currently inside — while in Field Survey it opens the same real,
-  // already-secured evidence drawer Field Survey's own table/priorities
-  // already use; everywhere else it keeps the existing general-dashboard
-  // behavior unchanged.
-  selectOperationalObservation(id) {
-    if (this.state.view === 'fieldSurvey') {
-      const obs = (Array.isArray(this.liveObservations) ? this.liveObservations : []).find(o => o.id === id);
-      if (obs) this.openEvidenceDrawer(obs);
-      return;
-    }
-    this.openObservation(id);
   }
 
   openMap(e) {
@@ -3650,19 +3381,11 @@ class Component extends DCLogic {
   }
 
   zoomMap(delta) {
-    if (this.state.mapMode === 'map' && this._opMap) {
-      this._opMap.setZoom(this._opMap.getZoom() + delta);
-      return;
-    }
-    this.setState(s => ({ zoom: Math.max(0.6, Math.min(2.6, s.zoom + delta * 0.2)) }));
+    if (this._opMap) this._opMap.setZoom(this._opMap.getZoom() + delta);
   }
 
   resetMapView() {
-    if (this.state.mapMode === 'map') {
-      this.resetOperationalMap();
-      return;
-    }
-    this.setState({ zoom: 1, panX: 0, panY: 0, sel: null });
+    this.resetOperationalMap();
   }
 
   async toggleFullscreen() {
@@ -4433,19 +4156,19 @@ class Component extends DCLogic {
   // entity's own coordinates by re-centering the already-fitted Leaflet
   // view on that one point, since this observation is the same record
   // (same id, same liveObservations source) syncOperationalMap() already
-  // plots — no new data model, no new map surface. There is no marker
-  // selection/highlight state on this map today (only the Home twin
-  // canvas has that, for its own separate object model); adding one is
-  // Operational Map work and out of scope for this stage.
+  // plots. Also sets the real marker-selection state (see
+  // applyMapSelectionStyle()) and opens that marker's own quick popup.
   viewEvidenceOnMap() {
     const obs = this.state.selectedObservation;
     if (!obs || !obs.coordinates) return;
     this.closeEvidenceDrawer();
+    this._selectedMapId = obs.id;
     this.setState({ mapMode: 'map', view: 'home' });
     setTimeout(() => {
       this.mapShell?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       this.syncOperationalMap();
       if (this._opMap && window.L) this._opMap.setView([obs.coordinates.lat, obs.coordinates.lng], 16, { animate: true });
+      this._opMarkerById?.get(obs.id)?.openPopup();
     }, 80);
   }
 

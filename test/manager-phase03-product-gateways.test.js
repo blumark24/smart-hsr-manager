@@ -124,17 +124,24 @@ test('5. the new Lands gateway and Field Survey gateway introduce no fabricated 
 });
 
 // ---- 6. MAP and TWIN labels are never conflated ----
-test('6. the Map and Twin surfaces carry distinct labels — Twin is never labeled GIS, and the two are never merged into one label', () => {
+// PHASE 09 STAGE 4 — the Manager dashboard's map card no longer contains a
+// decorative in-card "Digital Twin" surface merged with the real map behind
+// a mode switch (that toggle rendered a purely procedural canvas city with
+// no real entity binding — never the actual Digital Twin product). The Map
+// and Twin are now genuinely separate products: the card always shows the
+// one real, honestly-labeled operational map, and "فتح في التوأم الرقمي"
+// is a real navigation to the separate twin.html product, gated by the
+// same shared platform/geo/geo-policy.js admission check twin.html and
+// operational-map.html already use — never a label switch on one surface.
+test('6. the Map card never claims to be the Twin, and Twin access is a real, separately-gated navigation to twin.html', () => {
   const manager = read('manager.html');
   assert.doesNotMatch(manager, /Digital Twin\s*·\s*GIS/i, 'the Twin surface must never be labeled as GIS');
-  const labelLine = manager.slice(manager.indexOf('mapSurfaceLabel:'), manager.indexOf('mapSurfaceLabel:') + 300);
-  assert.match(labelLine, /التوأم/);
-  assert.match(labelLine, /الخريطة/);
-  assert.notEqual(
-    labelLine.match(/'([^']*)'/g)?.[0],
-    labelLine.match(/'([^']*)'/g)?.[1],
-    'the Map and Twin labels must be distinct strings'
-  );
+  assert.match(manager, /الخريطة التشغيلية\s*·\s*SMART HSR MAP/, 'the map card must carry its own honest, static map label');
+  assert.doesNotMatch(manager, /التوأم البلدي الذكي\s*·\s*SMART HSR TWIN/, 'the map card must never relabel itself as the Twin surface');
+  const isTwinAdmitted = manager.slice(manager.indexOf('isTwinAdmitted() {'), manager.indexOf('isTwinAdmitted() {') + 400);
+  assert.match(isTwinAdmitted, /geo\.policy\.evaluateTwinAdmission/, 'Twin access must be gated by the shared geo-policy admission check, not a hand-rolled rule');
+  const openTwin = manager.slice(manager.indexOf('openTwinForObservation(item) {'), manager.indexOf('openTwinForObservation(item) {') + 400);
+  assert.match(openTwin, /geo\.continuity\.buildContinuityUrl\('\/twin\.html'/, '"فتح في التوأم الرقمي" must navigate to the real, separate twin.html product via the shared continuity contract');
 });
 
 console.log('manager Phase 03 product gateways OK');

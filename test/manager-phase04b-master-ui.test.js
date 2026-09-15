@@ -117,13 +117,18 @@ test('G2. exactly one initOperationalMap() call site guards against re-initializ
   assert.match(unmount, /this\._opMap\?\.remove\(\);/);
 });
 
-test('G3. marker clicks stay inside whichever product is active — Field Survey opens the evidence drawer, everywhere else keeps the prior general-dashboard behavior', () => {
-  const sync = methodBody(manager, 'syncOperationalMap(forceFit = false) {', 1400);
-  assert.match(sync, /marker\.on\('click', \(\) => this\.selectOperationalObservation\(item\.id\)\);/);
-  const fn = methodBody(manager, 'selectOperationalObservation(id) {', 500);
-  assert.match(fn, /if \(this\.state\.view === 'fieldSurvey'\)/);
-  assert.match(fn, /this\.openEvidenceDrawer\(obs\);/);
-  assert.match(fn, /this\.openObservation\(id\);/);
+// PHASE 09 STAGE 4 — marker clicks now behave identically in every product
+// context (Home dashboard and Field Survey share the same map engine and
+// the same real quick popup): a click selects the marker and opens its
+// popup, never navigating away or opening the evidence drawer directly.
+// "عرض التفاصيل" inside that popup is what reuses the real, already-secured
+// openEvidenceDrawer() — for the SAME observation, in every context.
+test('G3. marker clicks open the same real quick popup in every product context, and its "عرض التفاصيل" action reuses openEvidenceDrawer', () => {
+  const sync = methodBody(manager, 'syncOperationalMap(forceFit = false) {', 2200);
+  assert.match(sync, /marker\.bindPopup\(\(\) => this\.buildObservationPopup\(item\)/, 'every marker must bind the real quick popup');
+  assert.match(sync, /marker\.on\('click', \(\) => \{ this\._selectedMapId = item\.id; this\.applyMapSelectionStyle\(\); \}\);/, 'a marker click must only select the marker, never navigate away or open a drawer directly');
+  const popup = methodBody(manager, 'buildObservationPopup(item) {', 4000);
+  assert.match(popup, /this\.openEvidenceDrawer\(item\)/, '"عرض التفاصيل" must reuse the real, already-secured evidence drawer');
 });
 
 test('G4. entering Field Survey forces real map mode (never the Twin canvas) without ever setting view to home', () => {
@@ -177,11 +182,14 @@ test('L. Manager/Inspector authorization is untouched by this rebuild — verify
   const fn = methodBody(adapter, 'async function verifyManagerAccess(api, db, user) {', 1000);
   assert.match(fn, /data\.role === 'manager'/);
   assert.doesNotMatch(fn, /'inspector'|'contractor'/);
-  // The new marker-click routing must never call verifyManagerAccess or any
-  // auth primitive directly — it only ever branches on already-authorized
-  // component state (this.state.view).
-  const sel = methodBody(manager, 'selectOperationalObservation(id) {', 500);
-  assert.doesNotMatch(sel, /verifyManagerAccess|signOut|getIdToken/);
+  // The new marker-click/popup/Twin-handoff code must never call
+  // verifyManagerAccess or any auth primitive directly — Twin admission is
+  // real client-side UX gating only (the server independently re-enforces
+  // it, see platform/geo/geo-policy.js), never a second auth mechanism.
+  const popup = methodBody(manager, 'buildObservationPopup(item) {', 3000);
+  assert.doesNotMatch(popup, /verifyManagerAccess|signOut|getIdToken/);
+  const twinGate = methodBody(manager, 'isTwinAdmitted() {', 400);
+  assert.doesNotMatch(twinGate, /verifyManagerAccess|signOut|getIdToken/);
 });
 
 console.log('manager Phase 04B master-UI rebuild OK');
