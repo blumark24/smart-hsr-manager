@@ -38,14 +38,27 @@
   button.geo-btn.primary:hover{background:var(--green-hover)}
   main{flex:1;min-height:0;position:relative;display:flex}
   #map{flex:1;min-width:0}
-  #layerPanel{position:absolute;top:12px;left:12px;z-index:10;background:var(--surface);border:1px solid var(--border);
-    border-radius:14px;padding:.6rem;max-width:240px;box-shadow:0 8px 24px rgba(15,23,42,.12);max-height:70vh;overflow:auto}
+  /* Right-side panel (Section 05): layers + filters/legend, stacked in one
+     column so they never collide with the left toolbar's MapLibre controls
+     (zoom/fit/fullscreen/locate, added at 'top-left'). Collapsible on
+     narrow screens via #rightPanelToggle. */
+  #rightPanel{position:absolute;top:12px;right:12px;z-index:10;display:flex;flex-direction:column;gap:10px;max-width:240px}
+  #rightPanelToggle{display:none}
+  #layerPanel{background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:.6rem;box-shadow:0 8px 24px rgba(15,23,42,.12);max-height:45vh;overflow:auto}
   #layerPanel h2{font-size:12px;margin:.2rem .2rem .5rem;color:var(--text-2);font-weight:700}
   .layer-row{display:flex;align-items:center;gap:.5rem;padding:.35rem .2rem;font-size:13px}
   .layer-row input{width:16px;height:16px}
-  #filterChips{position:absolute;top:12px;right:12px;z-index:10;display:flex;gap:.4rem;flex-wrap:wrap;max-width:60%}
+  #filterChips{display:flex;gap:.4rem;flex-wrap:wrap}
   .chip{padding:.3rem .7rem;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer}
   .chip.active{background:var(--green-soft);border-color:var(--green);color:var(--green-hover)}
+  @media(max-width:760px){
+    #rightPanelToggle{display:inline-flex}
+    /* Map stays primary on mobile (Section 19): layers/filters start
+       collapsed and open as a sheet only when the manager asks for them. */
+    #rightPanel{max-width:calc(100vw - 24px)}
+    #rightPanel:not(.expanded) #layerPanel,#rightPanel:not(.expanded) #filterChips{display:none}
+  }
   #entityCard{position:absolute;bottom:0;right:0;left:0;z-index:20;background:var(--surface);border-top:1px solid var(--border);
     border-radius:16px 16px 0 0;padding:1rem;transform:translateY(100%);transition:transform .2s ease;max-height:60vh;overflow:auto}
   #entityCard.open{transform:translateY(0)}
@@ -63,7 +76,30 @@
   #attributionNote{position:absolute;bottom:8px;left:8px;z-index:5;font-size:11px;color:var(--text-2);background:rgba(255,255,255,.85);
     padding:.2rem .5rem;border-radius:8px}
   html[data-theme="dark"] #attributionNote{background:rgba(17,24,39,.85)}
-  .maplibregl-popup{display:none !important} /* selection uses the entity card, never a popup */
+  .layer-count{margin-inline-start:auto;font-size:11px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+  #filterChips .chip-row{display:flex;gap:.4rem;flex-wrap:wrap}
+  #filterChips .chip{display:flex;align-items:center;gap:.35rem}
+  #filterChips .chip .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  #filterChips .geo-filter-select{width:100%;margin-top:.4rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:8px;
+    background:var(--app-bg);color:var(--text);font:inherit;font-size:12px}
+  /* Quick popup — a small, premium preview (never the full detail panel).
+     Overrides MapLibre's default popup chrome with SMART HSR tokens. */
+  .maplibregl-popup{max-width:260px !important}
+  .maplibregl-popup-content{background:var(--surface);color:var(--text);border:1px solid var(--border);
+    border-radius:12px;padding:.7rem;box-shadow:0 16px 40px rgba(15,23,42,.22);font-family:inherit}
+  .maplibregl-popup-tip{border-top-color:var(--surface) !important;border-bottom-color:var(--surface) !important}
+  .geo-popup h3{font-size:13px;font-weight:700;margin:0 0 .3rem}
+  .geo-popup .status-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:11px;font-weight:600;
+    padding:.15rem .5rem;border-radius:999px;margin-bottom:.4rem}
+  .geo-popup .status-badge .dot{width:7px;height:7px;border-radius:50%}
+  .geo-popup .row{display:flex;justify-content:space-between;gap:.5rem;font-size:11.5px;padding:.15rem 0;color:var(--text-2)}
+  .geo-popup .row b{color:var(--text);font-weight:600}
+  .geo-popup .actions{display:flex;flex-direction:column;gap:.35rem;margin-top:.5rem}
+  .geo-popup .actions button{width:100%;min-height:30px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer}
+  #entityCard .evidence-thumb{width:100%;height:110px;border-radius:8px;background:var(--app-bg) center/cover no-repeat;
+    display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:11px;margin:.3rem 0;overflow:hidden}
+  #entityCard .ai-block{margin-top:.5rem;padding:.5rem;border-radius:10px;background:var(--green-soft);
+    border:1px solid var(--border);font-size:12px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -73,17 +109,20 @@
       <h1>الخريطة التشغيلية · SMART HSR</h1>
       <input id="searchInput" type="text" placeholder="بحث عن منشأة أو مبنى…" aria-label="بحث">
       <div class="spacer"></div>
+      <button class="geo-btn" id="rightPanelToggle" aria-label="إظهار/إخفاء الطبقات والتصفية" aria-expanded="false">☰ الطبقات</button>
       <button class="geo-btn" id="themeToggleBtn" aria-label="تبديل المظهر">🌓</button>
       <button class="geo-btn primary" id="openTwinBtn" hidden>فتح في التوأم الرقمي</button>
       <button class="geo-btn" id="logoutBtn">تسجيل الخروج</button>
     </header>
     <main>
       <div id="map" role="application" aria-label="الخريطة التشغيلية"></div>
-      <div id="layerPanel">
-        <h2>الطبقات</h2>
-        <div id="layerList"></div>
+      <div id="rightPanel">
+        <div id="layerPanel">
+          <h2>الطبقات</h2>
+          <div id="layerList"></div>
+        </div>
+        <div id="filterChips"></div>
       </div>
-      <div id="filterChips"></div>
       <div id="attributionNote"></div>
       <aside id="entityCard" aria-hidden="true">
         <button id="entityCardClose" aria-label="إغلاق">✕</button>
@@ -98,6 +137,7 @@ import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator } from "./ven
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, connectFirestoreEmulator } from "./vendor/firebase/11.0.0/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 import { observationCoordinates } from './spatial-map.js';
+import { resolveObservationImage } from './storage-adapter.js';
 
 const { layerRegistry, styleTokens, continuity, search: searchModule, attribution: attributionModule, policy } = window.SmartHSRGeoCore;
 
@@ -161,11 +201,24 @@ async function apiGet(params) {
   return { ok: res.ok, status: res.status, body: await res.json().catch(() => ({})) };
 }
 
-let map, caller, mapContext, loadedEntities = [];
-// UAT/dev-only introspection hook — read-only, exposes no PII beyond a
-// count, and performs no write of any kind.
+let map, caller, mapContext, loadedEntities = [], currentUser = null;
+// UAT/dev-only introspection hooks — read-only, expose no PII beyond
+// counts/coordinates already visible on the rendered map, and perform no
+// write of any kind.
 window.__geoDebugEntityCount = () => loadedEntities.length;
+window.__geoDebugMap = () => map;
 const activeLayers = new Set();
+// Field observations are SMART HSR's own trusted municipal records — the
+// GeoEntity produced by fromFieldObservation() (shared with twin.html)
+// deliberately stays a generic geometry+status shape; this page-local map
+// keeps the FULL real observation document alongside it, purely for
+// presentation (popup/detail-panel fields), the same way manager.html's
+// own map card reads directly from its real observation objects. Never a
+// second continuity/entity contract — just real data for real UI text.
+const rawObservationById = new Map();
+let observationStatusFilter = 'ALL';
+let observationCategoryFilter = 'ALL';
+let observationPriorityFilter = 'ALL';
 
 function labelFor(layerId) { return (layerRegistry.getLayer(layerId) || {}).labelAr || layerId; }
 
@@ -180,6 +233,7 @@ function labelFor(layerId) { return (layerRegistry.getLayer(layerId) || {}).labe
 // claim to load what it can't.
 const IMPLEMENTED_LAYER_IDS = ['commercial_places', 'buildings', 'field_observations'];
 
+const layerCounts = new Map();
 function renderLayerToggles(organizationId) {
   const list = document.getElementById('layerList');
   list.innerHTML = '';
@@ -189,7 +243,7 @@ function renderLayerToggles(organizationId) {
     if (!visible) continue;
     const row = document.createElement('label');
     row.className = 'layer-row';
-    row.innerHTML = `<input type="checkbox" data-layer="${layer.id}" ${layer.defaultVisible ? 'checked' : ''}><span>${layer.labelAr}</span>`;
+    row.innerHTML = `<input type="checkbox" data-layer="${layer.id}" ${layer.defaultVisible ? 'checked' : ''}><span>${layer.labelAr}</span><span class="layer-count" data-count="${layer.id}"></span>`;
     list.appendChild(row);
     if (layer.defaultVisible) activeLayers.add(layer.id);
   }
@@ -198,6 +252,14 @@ function renderLayerToggles(organizationId) {
       if (cb.checked) activeLayers.add(cb.dataset.layer); else activeLayers.delete(cb.dataset.layer);
       loadVisibleLayers(organizationId);
     });
+  });
+  updateLayerCounts();
+}
+
+function updateLayerCounts() {
+  document.querySelectorAll('.layer-count').forEach((el) => {
+    const layerId = el.dataset.count;
+    el.textContent = activeLayers.has(layerId) ? String(layerCounts.get(layerId) || 0) : '';
   });
 }
 
@@ -215,52 +277,156 @@ function currentBboxParam() {
 // implementation. This is a snapshot fetch, not a live onSnapshot listener
 // — never described as "live"/"مباشر" anywhere in this UI (see the Phase 08
 // brief's REALTIME DEFINITION rule).
+// Fetches ALL admissible observations for the org (unfiltered by
+// status/category/priority) — those filters are applied client-side by
+// applyObservationFilters() below over this same cached set, so toggling a
+// filter never re-runs this Firestore read (Section 18).
 async function loadFieldObservations(organizationId) {
   const snap = await getDocs(query(collection(db, 'observations'), where('organizationId', '==', organizationId)));
   const { entity: entityModule } = window.SmartHSRGeoCore;
   const entities = [];
+  rawObservationById.clear();
   snap.forEach((docSnap) => {
     const data = { id: docSnap.id, ...docSnap.data() };
     const coords = observationCoordinates(data, organizationId);
     if (!coords) return;
     const { decision, entity } = entityModule.fromFieldObservation(data, coords);
-    if (decision.allowed) entities.push(entity);
+    if (!decision.allowed) return;
+    rawObservationById.set(entity.id, data);
+    entities.push(entity);
   });
   return entities;
 }
 
-async function loadVisibleLayers(organizationId) {
+// Status/category/priority filters all apply here, over the already-cached
+// full observation set — never a second Firestore read per filter change.
+// Category/priority use the same real field shapes as the entity-card/popup
+// (data.type, data.riskAssessment.priority) — never a second, drifting
+// notion of what these fields mean.
+function applyObservationFilters(entities) {
+  return entities.filter((e) => {
+    const data = rawObservationById.get(e.id);
+    if (!data) return false;
+    if (observationStatusFilter !== 'ALL' && (data.status || 'PENDING') !== observationStatusFilter) return false;
+    if (observationCategoryFilter !== 'ALL' && data.type !== observationCategoryFilter) return false;
+    if (observationPriorityFilter !== 'ALL') {
+      const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : null;
+      if (priority !== observationPriorityFilter) return false;
+    }
+    return true;
+  });
+}
+
+// Field observations are read straight from Firestore (org-scoped, not
+// bbox-scoped — there is no server-side geo query for them), so re-running
+// that read on every map pan/zoom would be a real, needless Firestore-read
+// cost with no corresponding visual change. `includeObservations:false`
+// (used by the moveend handler below) re-fetches only the bbox-scoped
+// commercial_places/buildings layers and repaints the already-loaded
+// observation entities from cache — never a stale layer, never a wasted
+// re-fetch (Section 18).
+let cachedObservationEntities = [];
+async function loadVisibleLayers(organizationId, { includeObservations = true } = {}) {
   loadedEntities = [];
   for (const layerId of ['commercial_places', 'buildings']) {
     if (!activeLayers.has(layerId)) { removeSourceLayer(layerId); continue; }
     const res = await apiGet({ organizationId, geoLayer: layerId, bbox: currentBboxParam() });
     if (!res.ok) continue;
     loadedEntities.push(...res.body.entities);
+    layerCounts.set(layerId, res.body.entities.length);
     paintEntities(layerId, res.body.entities);
     renderAttribution(res.body.attributions);
   }
-  if (!activeLayers.has('field_observations')) { removeSourceLayer('field_observations'); }
-  else {
-    const entities = await loadFieldObservations(organizationId);
-    loadedEntities.push(...entities);
-    paintObservations(entities);
+  if (!activeLayers.has('field_observations')) {
+    removeSourceLayer('field_observations');
+    cachedObservationEntities = [];
+  } else if (includeObservations) {
+    cachedObservationEntities = await loadFieldObservations(organizationId);
+    const filtered = applyObservationFilters(cachedObservationEntities);
+    layerCounts.set('field_observations', filtered.length);
+    paintObservations(filtered);
   }
+  loadedEntities.push(...applyObservationFilters(cachedObservationEntities));
+  updateLayerCounts();
 }
 
-const STATUS_COLOR = { PENDING: '#ef4444', IN_PROGRESS: '#f59e0b', PENDING_REVIEW: '#f59e0b', COMPLETED: '#10b981' };
+// Reused verbatim from platform/geo/geo-style-tokens.js — never a second,
+// drifting copy of what a status color means (Section 16).
+const STATUS_COLOR = styleTokens.DATA_STATUS;
+const STATUS_LABEL = { PENDING: 'قيد الانتظار', IN_PROGRESS: 'قيد المعالجة', PENDING_REVIEW: 'قيد المراجعة', COMPLETED: 'مكتمل' };
+const PRIORITY_LABEL = { LOW: 'منخفضة', MEDIUM: 'متوسطة', HIGH: 'عالية', CRITICAL: 'حرجة' };
+const CATEGORY_LABEL = { MAINTENANCE: 'صيانة', QUALITY: 'جودة', SAFETY: 'سلامة', ENVIRONMENT: 'بيئة', ROAD: 'طرق' };
+
+let selectedEntityId = null;
+let activePopup = null;
+const OBS_SRC = 'geo-field_observations';
+
+// removeSourceLayer()+addSource() runs on every repaint (every filter
+// change, every bbox-scoped moveend for commercial_places/buildings), but
+// a MapLibre layer-id string is stable across those repaints — binding a
+// NEW map.on('click', layerId, ...) listener each time silently
+// accumulated one stale listener per repaint (Section 18). Each layer id
+// is bound exactly once; MapLibre still resolves clicks against whichever
+// features are currently rendered under that id.
+const boundClickLayers = new Set();
+function bindClickOnce(layerId, handler) {
+  if (boundClickLayers.has(layerId)) return;
+  boundClickLayers.add(layerId);
+  map.on('click', layerId, handler);
+}
+
 function paintObservations(entities) {
-  const srcId = 'geo-field_observations';
   removeSourceLayer('field_observations');
   const geojson = { type: 'FeatureCollection', features: entities.map((e) => ({ type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, status: e.status || 'PENDING' } })) };
-  map.addSource(srcId, { type: 'geojson', data: geojson });
+  map.addSource(OBS_SRC, { type: 'geojson', data: geojson, cluster: entities.length > 0, clusterRadius: 45, clusterMaxZoom: 14 });
+  // Clustered count circle — a real observation is never hidden
+  // indefinitely: clicking a cluster expands/zooms to its real children
+  // (see the click handler below), it never swallows a critical marker.
+  // No cluster-count text label: a `symbol` layer's `text-field` requires
+  // the map style to declare a `glyphs` (font) server, which would add an
+  // external font-hosting dependency this phase does not need (same real
+  // constraint already documented on paintEntities() below) — cluster
+  // size is still communicated visually via the circle-radius step below.
+  map.addLayer({ id: `${OBS_SRC}-clusters`, type: 'circle', source: OBS_SRC, filter: ['has', 'point_count'],
+    paint: { 'circle-color': '#334155', 'circle-radius': ['step', ['get', 'point_count'], 15, 10, 19, 50, 25], 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' } });
   map.addLayer({
-    id: `${srcId}-circles`, type: 'circle', source: srcId,
+    id: `${OBS_SRC}-circles`, type: 'circle', source: OBS_SRC, filter: ['!', ['has', 'point_count']],
     paint: {
       'circle-color': ['match', ['get', 'status'], 'COMPLETED', STATUS_COLOR.COMPLETED, 'IN_PROGRESS', STATUS_COLOR.IN_PROGRESS, 'PENDING_REVIEW', STATUS_COLOR.PENDING_REVIEW, STATUS_COLOR.PENDING],
       'circle-radius': 8, 'circle-stroke-width': 2, 'circle-stroke-color': '#fff',
     },
   });
-  map.on('click', `${srcId}-circles`, (e) => openEntityCard(e.features[0].properties.id));
+  applyObservationSelectionStyle();
+  bindClickOnce(`${OBS_SRC}-circles`, (e) => selectObservation(e.features[0].properties.id, e.lngLat));
+  bindClickOnce(`${OBS_SRC}-clusters`, (e) => {
+    const clusterId = e.features[0].properties.cluster_id;
+    // MapLibre's MapMouseEvent#features is only valid synchronously during
+    // dispatch — it must be read into a local before the async gap below,
+    // never re-read inside the .then() (it silently becomes undefined by
+    // then, throwing inside the resolved branch and landing in .catch()).
+    const center = e.features[0].geometry.coordinates;
+    // MapLibre GL 4.x's GeoJSONSource#getClusterExpansionZoom returns a
+    // Promise (the old Mapbox-GL-style (clusterId, callback) signature was
+    // removed) — a callback argument here is silently ignored.
+    map.getSource(OBS_SRC).getClusterExpansionZoom(clusterId)
+      .then((zoom) => map.easeTo({ center, zoom }))
+      .catch(() => {});
+  });
+}
+
+// Incremental paint-property update (Section 18 — never rebuilds the
+// source/layer just to move which marker looks selected).
+function applyObservationSelectionStyle() {
+  if (!map.getLayer(`${OBS_SRC}-circles`)) return;
+  const sel = selectedEntityId || '';
+  map.setPaintProperty(`${OBS_SRC}-circles`, 'circle-radius', ['case', ['==', ['get', 'id'], sel], 11, 8]);
+  map.setPaintProperty(`${OBS_SRC}-circles`, 'circle-stroke-width', ['case', ['==', ['get', 'id'], sel], 3, 2]);
+}
+
+function selectObservation(entityId, lngLat) {
+  selectedEntityId = entityId;
+  applyObservationSelectionStyle();
+  openObservationPopup(entityId, lngLat);
 }
 
 function removeSourceLayer(layerId) {
@@ -296,16 +462,26 @@ function paintEntities(layerId, entities) {
       paint: { 'circle-color': color, 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 18, 50, 24] } });
     map.addLayer({ id: `${srcId}-circles`, type: 'circle', source: srcId, filter: ['!', ['has', 'point_count']],
       paint: { 'circle-color': color, 'circle-radius': 7, 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' } });
-    map.on('click', `${srcId}-circles`, (e) => openEntityCard(e.features[0].properties.id));
-    map.on('click', `${srcId}-clusters`, (e) => {
+    bindClickOnce(`${srcId}-circles`, (e) => openEntityCard(e.features[0].properties.id));
+    bindClickOnce(`${srcId}-clusters`, (e) => {
       const clusterId = e.features[0].properties.cluster_id;
-      map.getSource(srcId).getClusterExpansionZoom(clusterId, (err, zoom) => {
-        if (err) return; map.easeTo({ center: e.features[0].geometry.coordinates, zoom });
-      });
+      // MapLibre's MapMouseEvent#features is only valid synchronously
+      // during dispatch — read into a local before the async gap below
+      // (see the identical note on the field_observations cluster handler
+      // above); re-reading e.features inside .then() silently throws.
+      const center = e.features[0].geometry.coordinates;
+      // MapLibre GL 4.x's GeoJSONSource#getClusterExpansionZoom returns a
+      // Promise (the old Mapbox-GL-style (clusterId, callback) signature
+      // was removed) — this was a genuine, silent no-op defect (a callback
+      // argument here is simply ignored) predating this stage; fixed here
+      // as the same real cluster-expand behavior Section 10 requires.
+      map.getSource(srcId).getClusterExpansionZoom(clusterId)
+        .then((zoom) => map.easeTo({ center, zoom }))
+        .catch(() => {});
     });
   } else {
     map.addLayer({ id: `${srcId}-fill`, type: 'fill', source: srcId, paint: { 'fill-color': color, 'fill-opacity': 0.35, 'fill-outline-color': color } });
-    map.on('click', `${srcId}-fill`, (e) => openEntityCard(e.features[0].properties.id));
+    bindClickOnce(`${srcId}-fill`, (e) => openEntityCard(e.features[0].properties.id));
   }
 }
 
@@ -320,11 +496,112 @@ function fieldRow(label, value) {
 }
 const NOT_LINKED = 'غير مربوط ببيانات البلدية';
 
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+// Firestore Timestamp | {seconds} | millis-number — never a second date
+// library, just the one real shape this codebase's own documents use.
+function formatTimestamp(value) {
+  const millis = value && typeof value.toMillis === 'function' ? value.toMillis()
+    : (value && typeof value.seconds === 'number' ? value.seconds * 1000
+    : (typeof value === 'number' ? value : null));
+  if (!millis) return 'غير متاح';
+  return new Date(millis).toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function openTwinContinuityUrl(entityId, coordinates) {
+  return continuity.buildContinuityUrl('/twin.html' + location.search, {
+    organizationId: mapContext.organizationId, entityId, camera: { center: coordinates, zoom: 17 },
+  });
+}
+
+// Real, on-demand evidence resolution — reuses storage-adapter.js's
+// resolveObservationImage unchanged, the exact same authenticated
+// private-object-key path manager.html's own evidence viewer already uses.
+// Never eager, never a fabricated placeholder image.
+function resolveEntityEvidenceThumb(reference) {
+  const el = document.getElementById('entityEvidenceThumb');
+  if (!el) return;
+  if (!reference) { el.textContent = 'لا تتوفر صورة موثّقة'; return; }
+  resolveObservationImage({ reference, context: { organizationId: mapContext.organizationId, uid: currentUser.uid, role: caller.role, authUser: currentUser } })
+    .then((result) => {
+      const target = document.getElementById('entityEvidenceThumb');
+      if (!target) return;
+      if (result.available && result.url) { target.style.backgroundImage = `url("${result.url}")`; target.textContent = ''; }
+      else target.textContent = 'لا تتوفر صورة موثّقة';
+    })
+    .catch(() => { const target = document.getElementById('entityEvidenceThumb'); if (target) target.textContent = 'لا تتوفر صورة موثّقة'; });
+}
+
+// AI analysis is shown ONLY when a real stored analysis exists on the
+// observation document — never a fabricated summary.
+function renderAiBlock(data) {
+  const el = document.getElementById('entityAiBlock');
+  if (!el) return;
+  const ai = data.aiAnalysis;
+  if (ai && typeof ai === 'object' && (ai.explanation || ai.recommendedActionAr)) {
+    el.innerHTML = `<div class="ai-block">${ai.explanation ? escapeHtml(ai.explanation) : ''}${ai.recommendedActionAr ? `<br><b>${escapeHtml(ai.recommendedActionAr)}</b>` : ''}</div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function fieldObservationCardHtml(entity, data) {
+  const status = data.status || entity.status || 'PENDING';
+  // The real production field is riskAssessment.priority (AI-derived) —
+  // manager-dashboard-adapter.js's normalizeObservations() reads the exact
+  // same shape (never a top-level data.priority/severity, which raw
+  // observation documents never carry).
+  const priorityRaw = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority : null;
+  const priority = priorityRaw ? (PRIORITY_LABEL[String(priorityRaw).toUpperCase()] || null) : null;
+  const category = CATEGORY_LABEL[data.type] || data.type || 'غير مصنف';
+  const [lng, lat] = entity.geometry.coordinates;
+  return `
+    <h2>${escapeHtml(data.title || 'بلاغ بلا عنوان')}</h2>
+    <div class="meta">${escapeHtml(data.displayId || entity.municipalRecordId || '')}</div>
+    ${fieldRow('الحالة', escapeHtml(STATUS_LABEL[status] || status))}
+    ${fieldRow('التصنيف', escapeHtml(category))}
+    ${priority ? fieldRow('الأولوية', escapeHtml(priority)) : ''}
+    ${data.description ? fieldRow('الوصف', escapeHtml(data.description)) : ''}
+    ${fieldRow('المراقب', escapeHtml(data.inspector || 'غير متاح'))}
+    ${data.contractor ? fieldRow('المقاول', escapeHtml(data.contractor)) : ''}
+    ${fieldRow('تاريخ الإنشاء', formatTimestamp(data.createdAt))}
+    ${fieldRow('آخر تحديث', formatTimestamp(data.updatedAt))}
+    ${fieldRow('الإحداثيات', `${lat.toFixed(5)}, ${lng.toFixed(5)}`)}
+    <div class="evidence-thumb" id="entityEvidenceThumb">جارٍ التحقق من الصورة...</div>
+    <div id="entityAiBlock"></div>
+    <div style="margin-top:1rem"><button class="geo-btn" id="entityViewOnMapBtn">عرض على الخريطة</button></div>
+  `;
+}
+
 function openEntityCard(entityId) {
   const entity = loadedEntities.find((e) => e.id === entityId);
   if (!entity) return;
   const card = document.getElementById('entityCard');
   const body = document.getElementById('entityCardBody');
+  const openTwinBtn = document.getElementById('openTwinBtn');
+
+  if (entity.entityType === 'field_observation') {
+    const data = rawObservationById.get(entityId);
+    if (!data) return;
+    body.innerHTML = fieldObservationCardHtml(entity, data);
+    card.classList.add('open');
+    card.setAttribute('aria-hidden', 'false');
+    resolveEntityEvidenceThumb(data.imagePath);
+    renderAiBlock(data);
+    document.getElementById('entityViewOnMapBtn').onclick = () => {
+      map.flyTo({ center: entity.geometry.coordinates, zoom: 17 });
+      selectedEntityId = entityId;
+      applyObservationSelectionStyle();
+    };
+    if (!openTwinBtn.hidden) {
+      openTwinBtn.onclick = () => {
+        const { url } = openTwinContinuityUrl(entity.id, entity.geometry.coordinates);
+        if (url) location.href = url;
+      };
+    }
+    return;
+  }
+
   const name = (entity.metadata && entity.metadata.name) || entity.category || 'عنصر جغرافي';
   const attribution = attributionModule.getAttribution(entity.source);
   body.innerHTML = `
@@ -345,7 +622,6 @@ function openEntityCard(entityId) {
     // is a no-op placeholder for entities with no municipalRecordId.
     if (!entity.municipalRecordId) return;
   };
-  const openTwinBtn = document.getElementById('openTwinBtn');
   if (!openTwinBtn.hidden) {
     openTwinBtn.onclick = () => {
       const { url } = continuity.buildContinuityUrl('/twin.html' + location.search, {
@@ -360,9 +636,83 @@ document.getElementById('entityCardClose').addEventListener('click', () => {
   document.getElementById('entityCard').setAttribute('aria-hidden', 'true');
 });
 
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+// Small, premium quick popup for a field-observation marker — the FIRST
+// thing a click shows, never the full detail panel (Section 11). "عرض
+// التفاصيل" is what opens the real entity-card detail panel above.
+function openObservationPopup(entityId, lngLat) {
+  const entity = loadedEntities.find((e) => e.id === entityId);
+  const data = rawObservationById.get(entityId);
+  if (!entity || !data) return;
+  if (activePopup) activePopup.remove();
+
+  const status = data.status || entity.status || 'PENDING';
+  // Same real riskAssessment.priority shape as fieldObservationCardHtml()
+  // above (matches manager-dashboard-adapter.js's normalizeObservations()).
+  const priorityRaw = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority : null;
+  const priority = priorityRaw ? (PRIORITY_LABEL[String(priorityRaw).toUpperCase()] || null) : null;
+  const category = CATEGORY_LABEL[data.type] || data.type || 'غير مصنف';
+  const [lng, lat] = entity.geometry.coordinates;
+  const color = STATUS_COLOR[status] || STATUS_COLOR.NEUTRAL;
+
+  const root = document.createElement('div');
+  root.className = 'geo-popup';
+  root.innerHTML = `
+    <h3>${escapeHtml(data.title || 'بلاغ بلا عنوان')}</h3>
+    <span class="status-badge" style="background:${color}22;color:${color}"><span class="dot" style="background:${color}"></span>${escapeHtml(STATUS_LABEL[status] || status)}</span>
+    <div class="row"><span>المعرّف</span><b>${escapeHtml(data.displayId || '')}</b></div>
+    ${priority ? `<div class="row"><span>الأولوية</span><b>${escapeHtml(priority)}</b></div>` : ''}
+    <div class="row"><span>التصنيف</span><b>${escapeHtml(category)}</b></div>
+    ${data.inspector ? `<div class="row"><span>المراقب</span><b>${escapeHtml(data.inspector)}</b></div>` : ''}
+    <div class="row"><span>التوقيت</span><b>${formatTimestamp(data.createdAt)}</b></div>
+    <div class="row"><span>الإحداثيات</span><b>${lat.toFixed(5)}, ${lng.toFixed(5)}</b></div>
+    <div class="actions"></div>
+  `;
+  const actions = root.querySelector('.actions');
+  const detailsBtn = document.createElement('button');
+  detailsBtn.className = 'geo-btn primary';
+  detailsBtn.textContent = 'عرض التفاصيل';
+  detailsBtn.onclick = () => { if (activePopup) activePopup.remove(); openEntityCard(entityId); };
+  actions.appendChild(detailsBtn);
+  if (!document.getElementById('openTwinBtn').hidden) {
+    const twinBtn = document.createElement('button');
+    twinBtn.className = 'geo-btn';
+    twinBtn.textContent = 'فتح في التوأم الرقمي';
+    twinBtn.onclick = () => {
+      const { url } = openTwinContinuityUrl(entityId, entity.geometry.coordinates);
+      if (url) location.href = url;
+    };
+    actions.appendChild(twinBtn);
+  }
+
+  activePopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, maxWidth: '260px' })
+    .setLngLat(lngLat)
+    .setDOMContent(root)
+    .addTo(map);
+  activePopup.on('close', () => {
+    if (selectedEntityId === entityId) { selectedEntityId = null; applyObservationSelectionStyle(); }
+    activePopup = null;
+  });
+}
+
+// Real reference-ID/title/inspector match against the raw observation
+// documents this page already holds (rawObservationById) — the shared
+// geo-search-contract.js provider stays generic (name/category/id only,
+// shared with twin.html); this is page-local presentation search, exactly
+// like manager.html's own local observation search, never a second
+// continuity/entity contract.
+function localObservationMatch(query) {
+  const needle = query.trim().toLocaleLowerCase('ar');
+  if (!needle) return null;
+  for (const [entityId, data] of rawObservationById) {
+    const haystack = [data.displayId, data.title, data.inspector, data.type].filter(Boolean).join(' ').toLocaleLowerCase('ar');
+    if (haystack.includes(needle)) return entityId;
+  }
+  return null;
+}
 
 document.getElementById('searchInput').addEventListener('input', (e) => {
+  const localMatch = localObservationMatch(e.target.value);
+  if (localMatch) { openEntityCard(localMatch); return; }
   const provider = searchModule.createLocalEntitySearchProvider();
   const { results } = provider.search(e.target.value, { entities: loadedEntities, organization: mapContext });
   if (results[0] && results[0].target.entityId) openEntityCard(results[0].target.entityId);
@@ -370,8 +720,103 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 
 document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 
+document.getElementById('rightPanelToggle').addEventListener('click', () => {
+  const panel = document.getElementById('rightPanel');
+  const expanded = panel.classList.toggle('expanded');
+  document.getElementById('rightPanelToggle').setAttribute('aria-expanded', String(expanded));
+});
+
+// Real "fit to data" / reset-extent toolbar control (Section 06) — MapLibre
+// has no built-in one, so this is a small, standard custom control, never a
+// decorative button.
+class FitDataControl {
+  onAdd(mapInstance) {
+    this._map = mapInstance;
+    this._container = document.createElement('div');
+    this._container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'احتواء كل البيانات المعروضة');
+    btn.title = 'احتواء كل البيانات المعروضة';
+    btn.textContent = '⤢';
+    btn.addEventListener('click', () => fitToLoadedData());
+    this._container.appendChild(btn);
+    return this._container;
+  }
+  onRemove() { this._container.parentNode && this._container.parentNode.removeChild(this._container); this._map = undefined; }
+}
+
+function fitToLoadedData() {
+  const coords = loadedEntities.map((e) => (e.geometry && e.geometry.type === 'Point' ? e.geometry.coordinates : (e.centroid || null))).filter(Boolean);
+  if (coords.length) {
+    const lons = coords.map((c) => c[0]), lats = coords.map((c) => c[1]);
+    map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], { padding: 60, maxZoom: 16 });
+  } else if (mapContext.mapCenter) {
+    map.flyTo({ center: [mapContext.mapCenter.lng, mapContext.mapCenter.lat], zoom: mapContext.mapDefaultZoom || 13 });
+  }
+}
+
+const STATUS_FILTER_OPTIONS = [
+  ['ALL', 'كل الحالات', null],
+  ['PENDING', 'قيد الانتظار', STATUS_COLOR.PENDING],
+  ['IN_PROGRESS', 'قيد المعالجة', STATUS_COLOR.IN_PROGRESS],
+  ['COMPLETED', 'مكتمل', STATUS_COLOR.COMPLETED],
+];
+function renderFilterChips() {
+  const container = document.getElementById('filterChips');
+  container.innerHTML = '';
+  const chipRow = document.createElement('div');
+  chipRow.className = 'chip-row';
+  for (const [value, label, color] of STATUS_FILTER_OPTIONS) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip' + (observationStatusFilter === value ? ' active' : '');
+    chip.setAttribute('aria-pressed', String(observationStatusFilter === value));
+    chip.setAttribute('aria-label', `تصفية البلاغات حسب الحالة: ${label}`);
+    chip.innerHTML = color ? `<span class="dot" style="background:${color}"></span>${escapeHtml(label)}` : escapeHtml(label);
+    chip.addEventListener('click', () => { observationStatusFilter = value; renderFilterChips(); reapplyObservationFilters(); });
+    chipRow.appendChild(chip);
+  }
+  container.appendChild(chipRow);
+
+  // Category and priority are real fields on field_observations documents
+  // (data.type, data.riskAssessment.priority — the same shapes the popup
+  // and detail panel already read) — filtered here purely client-side over
+  // the already-cached full observation set, never a second Firestore read.
+  const categorySelect = document.createElement('select');
+  categorySelect.className = 'geo-filter-select';
+  categorySelect.setAttribute('aria-label', 'تصفية البلاغات حسب التصنيف');
+  categorySelect.innerHTML = ['<option value="ALL">كل التصنيفات</option>']
+    .concat(Object.entries(CATEGORY_LABEL).map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`)).join('');
+  categorySelect.value = observationCategoryFilter;
+  categorySelect.addEventListener('change', (e) => { observationCategoryFilter = e.target.value; reapplyObservationFilters(); });
+  container.appendChild(categorySelect);
+
+  const prioritySelect = document.createElement('select');
+  prioritySelect.className = 'geo-filter-select';
+  prioritySelect.setAttribute('aria-label', 'تصفية البلاغات حسب الأولوية');
+  prioritySelect.innerHTML = ['<option value="ALL">كل الأولويات</option>']
+    .concat(Object.entries(PRIORITY_LABEL).map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`)).join('');
+  prioritySelect.value = observationPriorityFilter;
+  prioritySelect.addEventListener('change', (e) => { observationPriorityFilter = e.target.value; reapplyObservationFilters(); });
+  container.appendChild(prioritySelect);
+}
+
+// Every filter (status/category/priority) applies client-side over the
+// already-fetched full observation set — no filter change ever re-reads
+// Firestore, and commercial_places/buildings are never touched (Section 18).
+function reapplyObservationFilters() {
+  if (!activeLayers.has('field_observations')) return;
+  const filtered = applyObservationFilters(cachedObservationEntities);
+  loadedEntities = loadedEntities.filter((e) => e.entityType !== 'field_observation').concat(filtered);
+  layerCounts.set('field_observations', filtered.length);
+  paintObservations(filtered);
+  updateLayerCounts();
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) { location.href = 'manager-login.html'; return; }
+  currentUser = user;
   caller = await resolveCallerRole(user.uid);
   if (!caller) { await signOut(auth); location.href = 'manager-login.html'; return; }
 
@@ -407,7 +852,12 @@ onAuthStateChanged(auth, async (user) => {
     center: mapContext.mapCenter ? [mapContext.mapCenter.lng, mapContext.mapCenter.lat] : [45, 24],
     zoom: mapContext.mapDefaultZoom || 6,
   });
+  // Compact left toolbar (Section 05/06) — zoom, fit/reset, fullscreen,
+  // locate (real browser Geolocation API, never a fabricated position).
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-left');
+  map.addControl(new FitDataControl(), 'top-left');
+  map.addControl(new maplibregl.FullscreenControl(), 'top-left');
+  map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false }), 'top-left');
   map.addControl(new maplibregl.AttributionControl({ compact: true }));
 
   const continuityEncoded = new URL(location.href).searchParams.get(continuity.CONTINUITY_PARAM);
@@ -418,9 +868,10 @@ onAuthStateChanged(auth, async (user) => {
 
   map.on('load', () => {
     renderLayerToggles(mapContext.organizationId);
+    renderFilterChips();
     loadVisibleLayers(mapContext.organizationId);
   });
-  map.on('moveend', () => loadVisibleLayers(mapContext.organizationId));
+  map.on('moveend', () => loadVisibleLayers(mapContext.organizationId, { includeObservations: false }));
 });
 </script>
 </body>
