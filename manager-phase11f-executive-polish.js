@@ -44,6 +44,11 @@ function injectStyles(){
 
   .hsr-service-link{position:relative!important}.hsr-service-link:after{content:"";position:absolute;inset-inline-start:9px;top:50%;width:4px;height:4px;border-radius:999px;background:currentColor;opacity:0;transform:translateY(-50%);transition:opacity .16s ease}.hsr-service-link:hover:after{opacity:.5}
 
+  /* Keep the full executive header at the lg tier without producing the
+     measured ~33px horizontal overflow. md already uses 150px; xl has
+     enough room for the approved 212px control, so only 1400-1559 needs
+     this compact search token. */
+  @media(min-width:1400px) and (max-width:1559px){[dir="rtl"][lang="ar"]{--searchW:180px}}
   @media(max-width:760px){.hsr-observation-filterbar{grid-template-columns:1fr 1fr}.hsr-observation-filterbar .hsr-observation-count{grid-column:1/-1}.manager-view-panel.hsr-observations-panel{padding:12px!important}.hsr-observation-card{min-height:108px!important}}
   @media(prefers-reduced-motion:reduce){.hsr-brand-mark,.hsr-observation-card,.hsr-service-link:after{transition:none!important}}
   `;
