@@ -25,6 +25,20 @@ function injectStyles(){
   .hsr-observation-filterbar .hsr-observation-count{font-size:10px;color:#8195b1;white-space:nowrap;padding-inline:4px}
   .hsr-observation-filterbar select{height:34px;min-width:0;border-radius:9px;border:1px solid rgba(96,145,211,.16);background:rgba(13,30,54,.78);color:#d9e6f7;padding:0 9px;font:inherit;font-size:9.5px;outline:0}
   .hsr-observation-filterbar select:focus{border-color:rgba(74,140,255,.56);box-shadow:0 0 0 3px rgba(74,140,255,.08)}
+
+  /* STAGE 1 FOLLOW-UP — Day-mode presentation for the search input, filter
+     bar and its selects above. These four rules were hardcoded dark with no
+     theme awareness at all (unlike the map button, which already reads its
+     colors from the theme-reactive --btn/--btnBd/--btnTx variables). Night
+     is untouched — every rule here is additive and scoped to
+     [data-theme="light"], overriding only via higher selector specificity. */
+  [data-theme="light"] .hsr-observations-panel input[aria-label="تصفية البلاغات"]{background:#ffffff!important;border-color:rgba(18,133,90,.28)!important;color:#083f2c!important;box-shadow:none!important}
+  [data-theme="light"] .hsr-observations-panel input[aria-label="تصفية البلاغات"]::placeholder{color:#5c7268!important}
+  [data-theme="light"] .hsr-observations-panel input[aria-label="تصفية البلاغات"]:focus{border-color:#149c2b!important;box-shadow:0 0 0 3px rgba(20,156,43,.14)!important}
+  [data-theme="light"] .hsr-observation-filterbar{background:#f3f8f5!important;border-color:rgba(18,133,90,.18)!important}
+  [data-theme="light"] .hsr-observation-filterbar .hsr-observation-count{color:#5c7268!important}
+  [data-theme="light"] .hsr-observation-filterbar select{background:#ffffff!important;border-color:rgba(18,133,90,.24)!important;color:#083f2c!important}
+  [data-theme="light"] .hsr-observation-filterbar select:focus{border-color:#149c2b!important;box-shadow:0 0 0 3px rgba(20,156,43,.12)!important}
   .manager-observations-grid.hsr-observations-grid{gap:9px!important}
   .hsr-observation-card{position:relative!important;overflow:hidden!important;min-height:118px!important;background:linear-gradient(145deg,rgba(13,30,54,.78),rgba(9,22,40,.70))!important;border-color:rgba(96,145,211,.13)!important;box-shadow:inset 0 1px rgba(255,255,255,.018)!important}
   .hsr-observation-card:before{content:"";position:absolute;inset:0 auto 0 0;width:2px;background:var(--hsr-priority,#4a8cff);opacity:.85}
