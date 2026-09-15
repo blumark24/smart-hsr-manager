@@ -104,7 +104,6 @@
             <div style="position:absolute;top:44px;left:0;width:308px;z-index:40;border-radius:14px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
               <div style="display:flex;align-items:center;gap:8px;padding:12px 13px;border-bottom:1px solid var(--popDiv,rgba(122,164,224,0.13))">
                 <span style="flex:1;font-size:12px;font-weight:600;color:var(--popTx,#e9f1fb)">الإشعارات</span>
-                <span style="font-size:10px;font-weight:550;color:var(--popAcc,#4cc9f0);cursor:pointer">تعليم الكل كمقروء</span>
               </div>
               <div style="max-height:300px;overflow:auto">
                 <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
@@ -117,7 +116,7 @@
                   </div>
                 </sc-for>
               </div>
-              <div onClick="{{ goObservations }}" data-f="1" style="padding:10px;text-align:center;font-size:11px;font-weight:550;color:var(--popAcc,#4cc9f0);cursor:pointer">عرض كل الإشعارات</div>
+              <div onClick="{{ goObservations }}" data-f="1" style="padding:10px;text-align:center;font-size:11px;font-weight:550;color:var(--popAcc,#4cc9f0);cursor:pointer">عرض كل البلاغات</div>
             </div>
           </sc-if>
         </div>
@@ -3179,7 +3178,11 @@ class Component extends DCLogic {
       activeTeams: metrics.activeTeams || '—',
       orgMono: (st.orgName || '').trim().split(/\s+/).slice(0, 2).map(s => s.charAt(0)).join('') || 'ب',
       notifCount: this.liveNotifications.length,
-      notifAria: `الإشعارات، ${format.integer ? format.integer(this.liveNotifications.length) : this.liveNotifications.length} بلاغات حديثة`,
+      // PHASE 09 HONESTY FIX — no unread/read state exists anywhere in the
+      // data model (see the removed "تعليم الكل كمقروء" control above), so
+      // this must never read as an unread count. "عناصر" (items) names the
+      // real current feed size only, with no read/new/unread claim.
+      notifAria: `الإشعارات — ${format.integer ? format.integer(this.liveNotifications.length) : this.liveNotifications.length} عناصر`,
       profOpen: st.profOpen, notifOpen: st.notifOpen, layersOpen: st.layersOpen,
       settingsOpen: st.settingsOpen, mobNavOpen: st.mobNavOpen,
       userDrawerOpen: st.userDrawerOpen, incidentDrawerOpen: st.incidentDrawerOpen,
