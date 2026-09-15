@@ -60,6 +60,18 @@
       style.id = STYLE_ID;
       style.textContent = `
         .ucv2-route-guard-host{position:fixed!important;top:92px!important;right:calc(var(--sbW,232px) + 28px)!important;bottom:14px!important;left:14px!important;width:auto!important;max-width:none!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;box-sizing:border-box!important;transform:none!important;z-index:51!important;overflow:auto!important;border-radius:18px!important;background:#050b15!important;border:1px solid rgba(86,132,196,.12)!important;box-shadow:0 24px 72px -42px rgba(0,0,0,.95)!important}
+        /* manager.html's own #manager-observations-reference-ui block sets an
+           unscoped ".manager-view-panel{width:min(1120px,100%)!important}"
+           for the البلاغات modal. Every User Center host also carries the
+           shared .manager-view-panel class, so that rule collides with ours
+           at equal specificity and wins on source order. With width fixed
+           and right also fixed under dir="rtl", the CSS2.1 over-constrained
+           rule discards our "left" and recomputes it from width, landing far
+           short of the true left edge and exposing the dashboard behind it.
+           A compound-class selector (higher specificity, order-independent)
+           restores width:auto for just these two host classes without
+           touching the observations panel's own sizing. */
+        .manager-view-panel.ucv2-route-guard-host,.manager-view-panel.ucv2-host{width:auto!important;max-width:none!important}
         .ucv2-route-guard-host>.ucv2-app{min-height:100%;box-sizing:border-box;direction:rtl;color:#f7fbff;background:radial-gradient(720px 300px at 10% -2%,rgba(74,96,255,.12),transparent 66%),linear-gradient(145deg,#07101e,#081629 48%,#07101d);padding:22px 24px}
         .ucv2-route-loading{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;color:#7e91ad}
         .ucv2-route-loading b{font-size:15px;color:#f7fbff}.ucv2-route-loading span{font-size:11px}
@@ -94,6 +106,13 @@
       root.dataset.smartHsrApprovedOwner = 'true';
       root.classList.add('ucv2-route-guard-host');
       root.parentElement?.classList.add('ucv2-shell-overlay');
+      // The host is fixed-position, reserving top:92px on the assumption the
+      // real header sits there. That only holds if the page itself is
+      // scrolled to top; the manager route is a long single-page layout, and
+      // this dialog can be opened from a link far down that page, leaving
+      // the header scrolled out of view and exposing whatever content was
+      // at the top of the viewport through the gap instead.
+      window.scrollTo(0, 0);
 
       Array.from(root.children).forEach(child => {
         if (child.classList?.contains('ucv2-app')) return;

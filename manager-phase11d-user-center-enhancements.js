@@ -205,6 +205,8 @@ async function renderCenter(force=false) {
     hideLegacyPresentation(root);
     let app=root.querySelector('.ucv2-app');
     if (!app) { app=document.createElement('section'); app.className='ucv2-app'; root.appendChild(app); }
+    delete app.dataset.routeGuardLoading;
+    app.removeAttribute('aria-busy');
     app.innerHTML=`
       <header class="ucv2-header">
         <div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div>
@@ -236,7 +238,7 @@ async function renderCenter(force=false) {
     bindCenter(app,directory);
   } catch (error) {
     const root=lastRoot||findCenterRoot();
-    if(root){ let app=root.querySelector('.ucv2-app'); if(!app){app=document.createElement('section');app.className='ucv2-app';root.appendChild(app);} app.innerHTML=`<div class="ucv2-state error"><b>تعذر تحميل مركز المستخدمين</b><span>${esc(U.why?U.why(error.reason||error.message):error.message)}</span><button class="ucv2-btn ghost" data-retry>إعادة المحاولة</button></div>`; app.querySelector('[data-retry]')?.addEventListener('click',()=>{directoryCache=null;renderCenter(true);}); }
+    if(root){ let app=root.querySelector('.ucv2-app'); if(!app){app=document.createElement('section');app.className='ucv2-app';root.appendChild(app);} delete app.dataset.routeGuardLoading; app.removeAttribute('aria-busy'); app.innerHTML=`<div class="ucv2-state error"><b>تعذر تحميل مركز المستخدمين</b><span>${esc(U.why?U.why(error.reason||error.message):error.message)}</span><button class="ucv2-btn ghost" data-retry>إعادة المحاولة</button></div>`; app.querySelector('[data-retry]')?.addEventListener('click',()=>{directoryCache=null;renderCenter(true);}); }
   } finally { renderQueued=false; }
 }
 function kpiCard(key,label,value,accent,quick){ const active=quick&&state.quick===quick; return `<button class="ucv2-kpi ${accent}${active?' active':''}" type="button" ${quick?`data-quick="${quick}"`:'aria-disabled="true"'}><span class="ucv2-kpi-icon" aria-hidden="true"></span><span><b>${value}</b><small>${label}</small></span></button>`; }
@@ -329,7 +331,16 @@ function boot(){
     clearTimeout(retryTimer);
     retryTimer=setTimeout(()=>{
       const root=findCenterRoot();
-      if(root&&!root.querySelector('.ucv2-app')){directoryCache=null;renderCenter(true);}
+      const existingApp=root&&root.querySelector('.ucv2-app');
+      // manager-dashboard-format.js's route guard claims the route and paints
+      // a temporary loading placeholder (marked data-route-guard-loading)
+      // before this script even finishes loading, to avoid a flash of the
+      // legacy dashboard. That placeholder satisfies the old "already has an
+      // .ucv2-app" check below, which was written assuming any .ucv2-app
+      // present meant THIS renderer had already run — so real data never
+      // took over and the loading screen never resolved. Treat the
+      // placeholder the same as no app yet.
+      if(root&&(!existingApp||existingApp.dataset.routeGuardLoading==='true')){directoryCache=null;renderCenter(true);}
     },60);
   };
   const observer=new MutationObserver(mutations=>{
