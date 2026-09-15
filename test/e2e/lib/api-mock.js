@@ -27,6 +27,7 @@ if (!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_AUTH_EMULATOR_
 const ROOT = path.resolve(__dirname, '..', '..', '..');
 const ROUTES = {
   '/api/admin/users': path.join(ROOT, 'api', 'admin', 'users.js'),
+  '/api/admin/employees': path.join(ROOT, 'api', 'admin', 'employees.js'),
   '/api/organization/context': path.join(ROOT, 'api', 'organization', 'context.js'),
 };
 

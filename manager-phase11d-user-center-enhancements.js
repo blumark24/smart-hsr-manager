@@ -191,6 +191,7 @@ async function renderCenter(force=false) {
     if (!root) return;
     root.classList.add('ucv2-host');
     root.parentElement?.classList.add('ucv2-shell-overlay');
+    if (!root.dataset.ucv2Scrolled) { root.dataset.ucv2Scrolled='1'; window.scrollTo(0,0); }
     lastRoot = root;
     const directory = await getDirectory(force);
     const records = normalizeRecords(directory);
@@ -207,7 +208,7 @@ async function renderCenter(force=false) {
     app.innerHTML=`
       <header class="ucv2-header">
         <div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div>
-        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button></div>
+        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button><button class="ucv2-btn ghost" type="button" data-close-center aria-label="إغلاق مركز إدارة المستخدمين">✕ إغلاق</button></div>
       </header>
       <div class="ucv2-kpis" aria-label="ملخص القوى العاملة">
         ${kpiCard('total','إجمالي الموظفين',stats.total,'total',null)}
@@ -245,6 +246,7 @@ function pagination(max){ return `<nav class="ucv2-pagination" aria-label="ال�
 function resetFilters(){ Object.assign(state,{search:'',status:'all',role:'all',product:'all',department:'all',vehicle:'all',quick:null,page:1,sort:'name'}); }
 function bindCenter(app,directory){
   app.querySelector('[data-add-employee]')?.addEventListener('click',async()=>{ await U.add(); decorateAddDialog(); });
+  app.querySelector('[data-close-center]')?.addEventListener('click',()=>{ document.querySelector('[data-ucv2-original] button[aria-label="إغلاق"]')?.click(); });
   app.querySelector('[data-reset-filters]')?.addEventListener('click',()=>{ resetFilters(); renderCenter(); });
   app.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{ const q=btn.dataset.quick; state.quick=state.quick===q?null:q; state.page=1; renderCenter(); }));
   app.querySelectorAll('[data-filter]').forEach(control=>{ const key=control.dataset.filter; const event=key==='search'?'input':'change'; control.addEventListener(event,()=>{ state[key]=control.value; state.page=1; renderCenter(); }); });

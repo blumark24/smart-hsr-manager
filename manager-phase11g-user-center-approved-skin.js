@@ -99,6 +99,16 @@ function injectApprovedSkin() {
   @media(max-width:820px){.ucv2-shell-overlay{z-index:80!important}.ucv2-host{top:76px!important;right:10px!important;left:10px!important;bottom:10px!important;border-radius:16px!important}.ucv2-app{padding:14px!important;border-radius:16px!important}.ucv2-header{align-items:flex-start!important;flex-direction:column!important}.ucv2-header-actions{width:100%!important}.ucv2-header-actions .ucv2-btn{flex:1!important}.ucv2-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.ucv2-toolbar{grid-template-columns:1fr 1fr!important;margin-bottom:-14px!important}.ucv2-search{grid-column:1/-1!important}.ucv2-table-wrap{display:none!important}.ucv2-mobile-list{display:grid!important}}
   @media(max-width:640px){.ucv2-kpis{grid-template-columns:1fr 1fr!important}.ucv2-kpi{min-height:88px!important}.ucv21-single-page{width:calc(100vw - 18px)!important;max-height:calc(100vh - 18px)!important;border-radius:16px!important}.ucv21-single-page .grid,.ucv21-single-page .prod{grid-template-columns:1fr!important}.ucv21-single-page .pane,.ucv21-password-inline,.ucv21-history-wrap{padding-inline:12px!important}.ucv21-profile-footer{padding-inline:12px!important;flex-wrap:wrap!important}.ucv21-profile-msg{order:3;flex-basis:100%}}
   @media(prefers-reduced-motion:reduce){.ucv2-app,.ucv2-app *,.iuc,.iuc *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+  /* The base dashboard hides its sidebar entirely (aside{display:none}) for
+     its whole "tab" breakpoint, 760-1179px — wider than this panel's own
+     760-1100px sidebar-gap rules above knew about. Below 1180px the panel
+     must always sit flush right; the narrower rules above still refine top/
+     left/bottom/columns for their own ranges and are unaffected. */
+  @media(max-width:1179px){.ucv2-host{right:10px!important}}
+  /* Below 760px the base dashboard's own header wraps onto two lines
+     (--hdrWrap:wrap), growing well past the ~76px this panel otherwise
+     reserves at top, which clipped the header behind the fixed panel. */
+  @media(max-width:759px){.ucv2-host{top:180px!important}}
   `;
   document.head.appendChild(style);
 }
