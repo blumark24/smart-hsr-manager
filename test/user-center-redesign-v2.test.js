@@ -15,7 +15,9 @@ const executivePolish = read('manager-phase11f-executive-polish.js');
 const approvedSkin = read('manager-phase11g-user-center-approved-skin.js');
 const legacyBridge = read('manager-phase11c-legacy-account-bridge.js');
 const dialogs = read('manager-phase11c-user-center-dialogs.js');
+const importer = read('manager-phase11c-user-center-import.js');
 const preview = read('manager-phase11b-preview-v3.html');
+const managerFormat = read('manager-dashboard-format.js');
 const usersApi = read('api/admin/users.js');
 const employeesApi = read('api/admin/employees.js');
 
@@ -25,20 +27,32 @@ test('Phase 11F/11G presentation layers parse as JavaScript', () => {
   assert.doesNotThrow(() => new vm.Script(executivePolish, { filename: 'manager-phase11f-executive-polish.js' }));
   assert.doesNotThrow(() => new vm.Script(approvedSkin, { filename: 'manager-phase11g-user-center-approved-skin.js' }));
   assert.doesNotThrow(() => new vm.Script(legacyBridge, { filename: 'manager-phase11c-legacy-account-bridge.js' }));
+  assert.doesNotThrow(() => new vm.Script(importer, { filename: 'manager-phase11c-user-center-import.js' }));
+  assert.doesNotThrow(() => new vm.Script(managerFormat, { filename: 'manager-dashboard-format.js' }));
 });
 
-test('preview shell loads deterministic presentation chain with approved skin last', () => {
-  const core = preview.indexOf('manager-phase11c-user-center-core.js');
-  const dialogsLoader = preview.indexOf('manager-phase11c-user-center-dialogs.js');
-  const redesign = preview.indexOf('manager-phase11d-user-center-enhancements.js');
-  const reference = preview.indexOf('manager-phase11f-reference-ui.js');
-  const interactions = preview.indexOf('manager-phase11e-user-center-interactions.js');
-  const executive = preview.indexOf('manager-phase11f-executive-polish.js');
-  const skin = preview.indexOf('manager-phase11g-user-center-approved-skin.js');
+test('manager route owns the deterministic approved User Center chain', () => {
+  const core = managerFormat.indexOf('manager-phase11c-user-center-core.js');
+  const dialogsLoader = managerFormat.indexOf('manager-phase11c-user-center-dialogs.js');
+  const redesign = managerFormat.indexOf('manager-phase11d-user-center-enhancements.js');
+  const reference = managerFormat.indexOf('manager-phase11f-reference-ui.js');
+  const interactions = managerFormat.indexOf('manager-phase11e-user-center-interactions.js');
+  const executive = managerFormat.indexOf('manager-phase11f-executive-polish.js');
+  const skin = managerFormat.indexOf('manager-phase11g-user-center-approved-skin.js');
   assert.ok(core >= 0 && dialogsLoader > core && redesign > dialogsLoader && reference > redesign && interactions > reference && executive > interactions && skin > executive);
-  assert.match(preview, /s\.async\s*=\s*false/);
-  assert.match(preview, /s\.onload\s*=\s*loadNext/);
-  assert.doesNotMatch(preview, /manager-phase11b-user-center-v2\.js|manager-phase11b-modal-layer-fix\.js|manager-phase11b-controls-fix\.js/);
+  assert.match(managerFormat, /script\.async\s*=\s*false/);
+  assert.match(managerFormat, /script\.onload\s*=/);
+  assert.match(managerFormat, /smartHsrUserCenterReady/);
+  assert.doesNotMatch(managerFormat, /manager-phase11b-user-center-v2\.js|manager-phase11b-modal-layer-fix\.js|manager-phase11b-controls-fix\.js/);
+});
+
+test('preview is a passive harness and does not inject a second User Center chain', () => {
+  assert.match(preview, /manager\.html\?preview=phase11f-ordered/);
+  assert.doesNotMatch(preview, /manager-phase11c-user-center-core\.js/);
+  assert.doesNotMatch(preview, /manager-phase11d-user-center-enhancements\.js/);
+  assert.doesNotMatch(preview, /manager-phase11f-reference-ui\.js/);
+  assert.doesNotMatch(preview, /manager-phase11g-user-center-approved-skin\.js/);
+  assert.doesNotMatch(preview, /loadNext|createElement\(['"]script['"]\)/);
 });
 
 test('approved skin is CSS-only and preserves manager header/sidebar outside User Center', () => {
@@ -81,7 +95,7 @@ test('redesign reuses secure email/history actions and does not create identitie
 });
 
 test('manager presentation contains no native alert confirm or prompt calls', () => {
-  for (const source of [legacyBridge, enhancements, referenceUi, executivePolish, approvedSkin]) {
+  for (const source of [legacyBridge, importer, enhancements, referenceUi, executivePolish, approvedSkin]) {
     assert.doesNotMatch(source, /\balert\s*\(/);
     assert.doesNotMatch(source, /\bconfirm\s*\(/);
     assert.doesNotMatch(source, /\bprompt\s*\(/);
