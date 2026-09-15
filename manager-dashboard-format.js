@@ -43,12 +43,56 @@
 
   window.SmartHSRFormat = format;
 
-  // Phase 11A is isolated on its own implementation branch. Load the
-  // non-destructive Manager foundation patch only when manager.html imports
-  // this formatter; Production/main remain untouched until UAT approval.
-  const phase11a = document.createElement('script');
-  phase11a.src = './manager-phase11a-foundation.js';
-  phase11a.defer = true;
-  phase11a.dataset.phase11a = 'manager-routing-foundation';
-  document.head.appendChild(phase11a);
+  // The real manager route is the single presentation owner for the approved
+  // User Center. Load the exact approved Phase 11 chain here, in order, so
+  // manager.html and its preview use the same implementation and cannot race.
+  const REV = 'phase11g-user-center-approved-skin';
+  const files = [
+    ['./manager-phase11a-foundation.js', 'phase11aManagerRoutingFoundation'],
+    ['./manager-phase11c-user-center-core.js', 'ucInstitutionCoreLoader'],
+    ['./manager-phase11c-user-center-dialogs.js', 'ucInstitutionDialogsLoader'],
+    ['./manager-phase11c-user-center-import.js', 'ucInstitutionImportLoader'],
+    ['./manager-phase11c-legacy-account-bridge.js', 'ucLegacyAccountBridgeLoader'],
+    ['./manager-phase11d-user-center-enhancements.js', 'ucPhase11dEnhancementsLoader'],
+    ['./manager-phase11f-reference-ui.js', 'ucPhase11fReferenceUiLoader'],
+    ['./manager-phase11e-user-center-interactions.js', 'ucPhase11eInteractionsLoader'],
+    ['./manager-phase11f-executive-polish.js', 'managerPhase11fExecutivePolishLoader'],
+    ['./manager-phase11g-user-center-approved-skin.js', 'ucPhase11gApprovedSkinLoader']
+  ];
+
+  let index = 0;
+  const loadNext = () => {
+    if (index >= files.length) {
+      document.documentElement.dataset.smartHsrUserCenterReady = 'true';
+      window.dispatchEvent(new CustomEvent('smart-hsr:user-center-ready'));
+      return;
+    }
+    const [src, key] = files[index++];
+    const attr = `data-${key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`;
+    const existing = document.querySelector(`script[${attr}="true"]`);
+    if (existing) {
+      if (existing.dataset.loaded === 'true') loadNext();
+      else {
+        existing.addEventListener('load', loadNext, { once: true });
+        existing.addEventListener('error', loadNext, { once: true });
+      }
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `${src}?rev=${REV}`;
+    script.async = false;
+    script.setAttribute(attr, 'true');
+    script.onload = () => {
+      script.dataset.loaded = 'true';
+      loadNext();
+    };
+    script.onerror = () => {
+      console.error('SMART HSR manager failed to load', src);
+      loadNext();
+    };
+    document.head.appendChild(script);
+  };
+
+  loadNext();
 })();
