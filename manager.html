@@ -68,7 +68,7 @@
           <div onClick="{{ tProf }}" data-f="1" role="button" aria-label="قائمة الحساب" style="width:38px;height:38px;border-radius:12px;background:var(--avBg,linear-gradient(160deg,#1d3a5c,#0e1c30));border:1px solid var(--accBd,rgba(122,164,224,0.28));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--acc,#9fc7e8);cursor:pointer">{{ accountMono }}</div>
 
         <sc-if value="{{ profOpen }}">
-          <div style="position:absolute;top:52px;left:0;width:214px;z-index:40;padding:7px;border-radius:13px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.18));box-shadow:0 24px 50px -20px rgba(0,0,0,0.8);animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
+          <div style="position:absolute;top:52px;left:auto;right:0;width:min(214px,calc(100vw - 24px));max-width:214px;z-index:40;padding:7px;border-radius:13px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.18));box-shadow:0 24px 50px -20px rgba(0,0,0,0.8);animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
             <div style="padding:8px 9px 10px;border-bottom:1px solid var(--hdrDiv,rgba(122,164,224,0.13));margin-bottom:6px">
               <div style="font-size:11.5px;font-weight:600;color:var(--hdrTx,#e9f1fb)">{{ sessionName }}</div>
               <div style="font-size:10px;color:var(--hdrTx3,#7d8ea6);margin-top:2px">{{ orgName }}</div>
@@ -101,7 +101,7 @@
           </button>
 
           <sc-if value="{{ notifOpen }}">
-            <div style="position:absolute;top:44px;left:0;width:308px;z-index:40;border-radius:14px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
+            <div style="position:absolute;top:44px;left:auto;right:0;width:min(308px,calc(100vw - 24px));max-width:308px;z-index:40;border-radius:14px;background:var(--pop,rgba(12,20,36,0.97));border:1px solid var(--l2Bd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:hsrRise .16s ease-out;backdrop-filter:var(--gl2,none)">
               <div style="display:flex;align-items:center;gap:8px;padding:12px 13px;border-bottom:1px solid var(--popDiv,rgba(122,164,224,0.13))">
                 <span style="flex:1;font-size:12px;font-weight:600;color:var(--popTx,#e9f1fb)">الإشعارات</span>
               </div>
