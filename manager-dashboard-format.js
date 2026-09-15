@@ -59,14 +59,14 @@
       const style = document.createElement('style');
       style.id = STYLE_ID;
       style.textContent = `
-        .ucv2-route-guard-host{position:fixed;top:92px;right:calc(var(--sbW,232px) + 28px);bottom:14px;left:14px;z-index:51;overflow:auto;border-radius:18px;background:#050b15;border:1px solid rgba(86,132,196,.12);box-shadow:0 24px 72px -42px rgba(0,0,0,.95)}
+        .ucv2-route-guard-host{position:fixed!important;top:92px!important;right:calc(var(--sbW,232px) + 28px)!important;bottom:14px!important;left:14px!important;width:auto!important;max-width:none!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;box-sizing:border-box!important;transform:none!important;z-index:51!important;overflow:auto!important;border-radius:18px!important;background:#050b15!important;border:1px solid rgba(86,132,196,.12)!important;box-shadow:0 24px 72px -42px rgba(0,0,0,.95)!important}
         .ucv2-route-guard-host>.ucv2-app{min-height:100%;box-sizing:border-box;direction:rtl;color:#f7fbff;background:radial-gradient(720px 300px at 10% -2%,rgba(74,96,255,.12),transparent 66%),linear-gradient(145deg,#07101e,#081629 48%,#07101d);padding:22px 24px}
         .ucv2-route-loading{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;color:#7e91ad}
         .ucv2-route-loading b{font-size:15px;color:#f7fbff}.ucv2-route-loading span{font-size:11px}
         .ucv2-route-loading:before{content:"";width:26px;height:26px;border-radius:50%;border:2px solid rgba(96,145,211,.18);border-top-color:#4a84ff;animation:ucv2-route-spin .8s linear infinite}
         @keyframes ucv2-route-spin{to{transform:rotate(360deg)}}
-        @media(max-width:1179px){.ucv2-route-guard-host{right:14px}}
-        @media(max-width:759px){.ucv2-route-guard-host{top:104px;right:10px;left:10px;bottom:10px;border-radius:14px}.ucv2-route-guard-host>.ucv2-app{padding:14px}}
+        @media(max-width:1179px){.ucv2-route-guard-host{right:14px!important}}
+        @media(max-width:759px){.ucv2-route-guard-host{top:104px!important;right:10px!important;left:10px!important;bottom:10px!important;border-radius:14px!important}.ucv2-route-guard-host>.ucv2-app{padding:14px}}
         @media(prefers-reduced-motion:reduce){.ucv2-route-loading:before{animation:none}}
       `;
       document.head.appendChild(style);
