@@ -43,6 +43,92 @@
 
   window.SmartHSRFormat = format;
 
+  // Approved User Center route ownership guard.
+  // The legacy manager presentation remains in the DOM only as the operational
+  // route shell (close/navigation contracts). It must never become the visible
+  // presentation while the approved User Center waits for backend data.
+  // MutationObserver callbacks run before paint, so claiming the route here
+  // removes the legacy flash at its lifecycle source instead of masking it
+  // later with a delayed visual patch.
+  const installUserCenterRouteGuard = () => {
+    if (window.__smartHsrUserCenterRouteGuard) return;
+    window.__smartHsrUserCenterRouteGuard = true;
+
+    const STYLE_ID = 'smart-hsr-user-center-route-guard';
+    if (!document.getElementById(STYLE_ID)) {
+      const style = document.createElement('style');
+      style.id = STYLE_ID;
+      style.textContent = `
+        .ucv2-route-guard-host{position:fixed;top:92px;right:calc(var(--sbW,232px) + 28px);bottom:14px;left:14px;z-index:51;overflow:auto;border-radius:18px;background:#050b15;border:1px solid rgba(86,132,196,.12);box-shadow:0 24px 72px -42px rgba(0,0,0,.95)}
+        .ucv2-route-guard-host>.ucv2-app{min-height:100%;box-sizing:border-box;direction:rtl;color:#f7fbff;background:radial-gradient(720px 300px at 10% -2%,rgba(74,96,255,.12),transparent 66%),linear-gradient(145deg,#07101e,#081629 48%,#07101d);padding:22px 24px}
+        .ucv2-route-loading{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;color:#7e91ad}
+        .ucv2-route-loading b{font-size:15px;color:#f7fbff}.ucv2-route-loading span{font-size:11px}
+        .ucv2-route-loading:before{content:"";width:26px;height:26px;border-radius:50%;border:2px solid rgba(96,145,211,.18);border-top-color:#4a84ff;animation:ucv2-route-spin .8s linear infinite}
+        @keyframes ucv2-route-spin{to{transform:rotate(360deg)}}
+        @media(max-width:1179px){.ucv2-route-guard-host{right:14px}}
+        @media(max-width:759px){.ucv2-route-guard-host{top:104px;right:10px;left:10px;bottom:10px;border-radius:14px}.ucv2-route-guard-host>.ucv2-app{padding:14px}}
+        @media(prefers-reduced-motion:reduce){.ucv2-route-loading:before{animation:none}}
+      `;
+      document.head.appendChild(style);
+    }
+
+    const clean = value => String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+    const findRoot = () => {
+      const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,[role="heading"]'));
+      const heading = headings.find(el => /مركز إدارة المستخدمين|إدارة المستخدمين|المستخدمون والصلاحيات/.test(clean(el.textContent)));
+      if (!heading) return null;
+      let node = heading;
+      for (let depth = 0; depth < 8 && node?.parentElement; depth += 1) {
+        node = node.parentElement;
+        const text = clean(node.textContent);
+        if ((node.querySelector('table') || /إضافة موظف/.test(text)) && text.length < 80000) return node;
+      }
+      return heading.parentElement;
+    };
+
+    const claim = () => {
+      const root = findRoot();
+      if (!root) return false;
+      if (root.dataset.smartHsrApprovedOwner === 'true') return true;
+
+      root.dataset.smartHsrApprovedOwner = 'true';
+      root.classList.add('ucv2-route-guard-host');
+      root.parentElement?.classList.add('ucv2-shell-overlay');
+
+      Array.from(root.children).forEach(child => {
+        if (child.classList?.contains('ucv2-app')) return;
+        child.dataset.ucv2Original = 'true';
+        child.style.display = 'none';
+      });
+
+      let app = root.querySelector('.ucv2-app');
+      if (!app) {
+        app = document.createElement('section');
+        app.className = 'ucv2-app';
+        app.dataset.routeGuardLoading = 'true';
+        app.setAttribute('aria-busy', 'true');
+        app.innerHTML = '<div class="ucv2-route-loading"><b>مركز إدارة المستخدمين</b><span>جاري تحميل بيانات الجهة بأمان…</span></div>';
+        root.appendChild(app);
+      }
+      return true;
+    };
+
+    const startObserver = () => {
+      claim();
+      const observer = new MutationObserver(() => { claim(); });
+      observer.observe(document.body, { childList: true, subtree: true });
+      document.addEventListener('click', event => {
+        const trigger = event.target?.closest?.('a,button,[role="button"]');
+        if (/مركز إدارة المستخدمين|مركز المستخدمين|الصلاحيات والسجل/.test(clean(trigger?.textContent))) queueMicrotask(claim);
+      }, true);
+    };
+
+    if (document.body) startObserver();
+    else document.addEventListener('DOMContentLoaded', startObserver, { once: true });
+  };
+
+  installUserCenterRouteGuard();
+
   // The real manager route is the single presentation owner for the approved
   // User Center. Load the exact approved Phase 11 chain here, in order, so
   // manager.html and its preview use the same implementation and cannot race.
