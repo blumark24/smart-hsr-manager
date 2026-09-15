@@ -109,6 +109,131 @@ function injectApprovedSkin() {
      (--hdrWrap:wrap), growing well past the ~76px this panel otherwise
      reserves at top, which clipped the header behind the fixed panel. */
   @media(max-width:759px){.ucv2-host{top:180px!important}}
+
+  /* ============================================================
+     DAY MODE — approved SMART HSR government light presentation.
+     Every rule above is Night-only and stays completely untouched so the
+     approved Night look carries zero regression risk. This block is
+     additive: [data-theme="light"] (set by manager-dashboard-format.js's
+     route guard from manager.html's own --pgBg signal) gives every selector
+     higher specificity than the unscoped dark rules above, regardless of
+     source order. Colors are the same tokens manager.html's own approved
+     DAY palette already uses (--l1/--l1Bd/--sbBg/--thTx/--logoGreenH/
+     --rowH families) — white/light surfaces plus SMART HSR government
+     green, not a new palette.
+     ============================================================ */
+  [data-theme="light"] .ucv2-host{background:#eef1ee!important;border-color:rgba(18,133,90,.2)!important;box-shadow:0 24px 72px -42px rgba(16,60,42,.28)!important}
+  [data-theme="light"] .ucv2-app{
+    --r-bg:#eef1ee;--r-surface:#ffffff;--r-surface2:#f3f8f5;
+    --r-border:rgba(18,133,90,.18);--r-border2:rgba(18,133,90,.3);
+    --r-text:#083f2c;--r-muted:#4c6357;--r-blue:#1f5fd6;--r-cyan:#0f7a8c;
+    --r-purple:#6d3fc7;--r-green:#128a3e;--r-amber:#9a5b12;--r-rose:#b0304a;
+    color:var(--r-text)!important;
+    background:radial-gradient(720px 300px at 10% -2%,rgba(18,133,90,.06),transparent 66%),radial-gradient(620px 340px at 92% 105%,rgba(109,63,199,.05),transparent 70%),linear-gradient(145deg,#f6faf8 0%,#eef1ee 48%,#f6faf8 100%)!important;
+  }
+  [data-theme="light"] .ucv2-app:before{background:#149c2b!important;opacity:.07!important}
+  [data-theme="light"] .ucv2-app:after{background:#6d3fc7!important;opacity:.05!important}
+  [data-theme="light"] .ucv2-header>div:first-child:before{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23128a3e' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E") center/22px 22px no-repeat,linear-gradient(145deg,rgba(18,133,90,.14),rgba(18,133,90,.06))!important;border-color:rgba(18,133,90,.22)!important;box-shadow:inset 0 1px rgba(255,255,255,.6),0 10px 30px -20px rgba(18,133,90,.3)!important}
+  [data-theme="light"] .ucv2-header h1{color:#083f2c!important}[data-theme="light"] .ucv2-header p{color:#4c6357!important}
+  [data-theme="light"] .ucv2-btn{color:#0b3324!important;border-color:rgba(18,133,90,.24)!important;background:#ffffff!important;box-shadow:inset 0 1px rgba(255,255,255,.6)!important}
+  [data-theme="light"] .ucv2-btn:hover:not(:disabled){border-color:rgba(18,133,90,.5)!important;background:#f3f8f5!important}
+  [data-theme="light"] .ucv2-btn.primary{color:#fff!important;background:linear-gradient(135deg,#149c2b 0%,#0f7a37 100%)!important;border-color:rgba(18,133,90,.6)!important;box-shadow:0 10px 26px -16px rgba(18,133,90,.5),inset 0 1px rgba(255,255,255,.14)!important}
+  [data-theme="light"] .ucv2-ref-import{background:#f3f8f5!important}
+  [data-theme="light"] .ucv2-kpi{border-color:rgba(18,133,90,.15)!important;background:linear-gradient(155deg,rgba(234,247,240,.9),rgba(253,255,254,.95))!important;box-shadow:inset 0 1px rgba(255,255,255,.7),0 14px 30px -28px rgba(16,60,42,.3)!important}
+  [data-theme="light"] .ucv2-kpi:hover{border-color:color-mix(in srgb,currentColor 40%,rgba(18,133,90,.15))!important}
+  [data-theme="light"] .ucv2-kpi-icon{background:color-mix(in srgb,currentColor 14%,#ffffff)!important;border-color:color-mix(in srgb,currentColor 30%,transparent)!important;box-shadow:inset 0 1px rgba(255,255,255,.6)!important}
+  [data-theme="light"] .ucv2-kpi b{color:#0b2e1d!important}[data-theme="light"] .ucv2-kpi small{color:#4c6357!important}
+  [data-theme="light"] .ucv2-kpi:nth-child(1){color:#6d3fc7!important}[data-theme="light"] .ucv2-kpi:nth-child(2){color:#0f7a8c!important}[data-theme="light"] .ucv2-kpi:nth-child(3){color:#b0304a!important}[data-theme="light"] .ucv2-kpi:nth-child(4){color:#9a5b12!important}[data-theme="light"] .ucv2-kpi:nth-child(5){color:#128a3e!important}[data-theme="light"] .ucv2-kpi:nth-child(6){color:#1f5fd6!important}
+  [data-theme="light"] .ucv2-toolbar{border-color:rgba(18,133,90,.15)!important;background:linear-gradient(180deg,#ffffff,#f3f8f5)!important;box-shadow:inset 0 1px rgba(255,255,255,.6)!important}
+  [data-theme="light"] .ucv2-toolbar input,[data-theme="light"] .ucv2-toolbar select,[data-theme="light"] .ucv2-grid-head select{background:#ffffff!important;color:#0b3324!important;border-color:rgba(18,133,90,.2)!important}
+  [data-theme="light"] .ucv2-toolbar input::placeholder{color:#7c9088!important}
+  [data-theme="light"] .ucv2-toolbar input:focus,[data-theme="light"] .ucv2-toolbar select:focus,[data-theme="light"] .ucv2-grid-head select:focus{border-color:rgba(18,133,90,.55)!important;box-shadow:0 0 0 3px rgba(18,133,90,.12)!important}
+  [data-theme="light"] .ucv2-quick{background:#f3f8f5!important;border-inline-color:rgba(18,133,90,.15)!important}
+  [data-theme="light"] .ucv2-chip-button{color:#4c6357!important;background:#ffffff!important;border-color:rgba(18,133,90,.15)!important}
+  [data-theme="light"] .ucv2-chip-button.active{color:#0b3324!important;background:rgba(18,133,90,.12)!important;border-color:rgba(18,133,90,.4)!important}
+  [data-theme="light"] .ucv2-grid-head{background:#f3f8f5!important;border-inline-color:rgba(18,133,90,.15)!important;color:#4c6357!important}
+  [data-theme="light"] .ucv2-table-wrap{border-color:rgba(18,133,90,.15)!important;background:#ffffff!important;box-shadow:inset 0 1px rgba(255,255,255,.6)!important}
+  [data-theme="light"] .ucv2-table thead th{background:#f3f8f5!important;color:#4c6357!important;border-color:rgba(18,133,90,.13)!important}
+  [data-theme="light"] .ucv2-table td{border-color:rgba(18,133,90,.09)!important;color:#123326!important}
+  [data-theme="light"] .ucv2-table tbody tr:hover,[data-theme="light"] .ucv2-table tbody tr:focus{background:rgba(18,133,90,.06)!important}
+  [data-theme="light"] .ucv2-person b{color:#0b2e1d!important}[data-theme="light"] .ucv2-person small{color:#5c7268!important}
+  [data-theme="light"] .ucv2-avatar{background:linear-gradient(145deg,#dcefe3,#c7e3d2)!important;border-color:rgba(18,133,90,.24)!important;color:#0f7a37!important;box-shadow:inset 0 1px rgba(255,255,255,.7)!important}
+  [data-theme="light"] .ucv2-chip.product{background:#f3f8f5!important}
+  [data-theme="light"] .ucv21-service-dot{background:#f3f8f5!important}
+  [data-theme="light"] .ucv21-more{background:#ffffff!important;border-color:rgba(18,133,90,.15)!important;color:#4c6357!important}
+  [data-theme="light"] .ucv21-more:hover{color:#0b3324!important;border-color:rgba(18,133,90,.4)!important;background:#f3f8f5!important}
+  [data-theme="light"] .ucv2-pagination{border-color:rgba(18,133,90,.15)!important;background:#f3f8f5!important;color:#4c6357!important}
+  [data-theme="light"] .iuc{background:rgba(16,40,30,.42)!important}
+  [data-theme="light"] #iuc-profile>div.ucv21-single-page,[data-theme="light"] .ucv21-single-page{background:radial-gradient(340px 190px at 72% -8%,rgba(18,133,90,.05),transparent 68%),linear-gradient(155deg,#ffffff,#f6faf8)!important;border-color:rgba(18,133,90,.2)!important;box-shadow:0 42px 120px rgba(16,60,42,.22),0 0 44px rgba(18,133,90,.06)!important}
+  [data-theme="light"] .ucv21-single-page .ih{background:linear-gradient(180deg,#ffffff,#f6faf8)!important;border-bottom-color:rgba(18,133,90,.15)!important}
+  [data-theme="light"] .ucv21-single-page .ih b{color:#083f2c!important}[data-theme="light"] .ucv21-single-page .ih p{color:#4c6357!important}
+  [data-theme="light"] .ucv21-single-page .ih .ix{background:#f3f8f5!important;border-color:rgba(18,133,90,.15)!important;color:#4c6357!important}
+  [data-theme="light"] .ucv21-section-head{color:#083f2c!important}[data-theme="light"] .ucv21-section-head:before{background:#149c2b!important;box-shadow:0 0 14px rgba(20,156,43,.4)!important}[data-theme="light"] .ucv21-section-head small{color:#5c7268!important}
+  [data-theme="light"] .ucv21-single-page .sec{background:linear-gradient(155deg,#ffffff,#f3f8f5)!important;border-color:rgba(18,133,90,.14)!important;box-shadow:inset 0 1px rgba(255,255,255,.6)!important}
+  [data-theme="light"] .ucv21-single-page .f label,[data-theme="light"] .ucv21-single-page label{color:#4c6357!important}
+  [data-theme="light"] .ucv21-single-page .in,[data-theme="light"] .ucv21-single-page .sel,[data-theme="light"] .ucv21-single-page input,[data-theme="light"] .ucv21-single-page select{background:#ffffff!important;color:#0b3324!important;border-color:rgba(18,133,90,.2)!important}
+  [data-theme="light"] .ucv21-single-page .in:focus,[data-theme="light"] .ucv21-single-page .sel:focus,[data-theme="light"] .ucv21-single-page input:focus,[data-theme="light"] .ucv21-single-page select:focus{border-color:rgba(18,133,90,.55)!important;box-shadow:0 0 0 3px rgba(18,133,90,.12)!important}
+  [data-theme="light"] .ucv21-single-page .pc{background:#f6faf8!important;border-color:rgba(18,133,90,.14)!important}
+  [data-theme="light"] .ucv21-single-page .pc.on{border-color:rgba(18,133,90,.45)!important;background:linear-gradient(145deg,rgba(18,133,90,.1),#ffffff)!important;box-shadow:0 0 0 1px rgba(18,133,90,.08)!important}
+  [data-theme="light"] .ucv21-single-page .pc .dest,[data-theme="light"] .ucv21-single-page .pc .note{color:#5c7268!important}
+  [data-theme="light"] .ucv21-password-note{color:#4c6357!important}
+  [data-theme="light"] .ucv21-history-toggle{color:#0f7a37!important;background:#f3f8f5!important;border-color:rgba(18,133,90,.16)!important}
+  [data-theme="light"] .ucv21-profile-footer{background:linear-gradient(180deg,rgba(255,255,255,.5),#ffffff 36%)!important;border-top-color:rgba(18,133,90,.14)!important}
+  [data-theme="light"] .ucv21-profile-msg{color:#4c6357!important}[data-theme="light"] .ucv21-profile-msg.ok{color:#128a3e!important}[data-theme="light"] .ucv21-profile-msg.er{color:#b0304a!important}
+  [data-theme="light"] .ucv2-add-dialog{background:linear-gradient(155deg,#ffffff,#f6faf8)!important;border-color:rgba(18,133,90,.18)!important;box-shadow:0 42px 120px rgba(16,60,42,.2),0 0 40px rgba(18,133,90,.05)!important}
+  /* manager-phase11f-reference-ui.js hardcodes these same selectors with
+     literal dark colors, unconditionally, and loads before this file — its
+     rules would otherwise win in Day mode too since nothing else overrides
+     them. Same compound-selector approach: higher specificity wins
+     regardless of load order, phase11f's Night declarations untouched. */
+  [data-theme="light"] .ucv2-chip.product.field{color:#9a5b12!important;border-color:rgba(154,91,18,.24)!important}
+  [data-theme="light"] .ucv2-chip.product.lands{color:#128a3e!important;border-color:rgba(18,138,62,.24)!important}
+  [data-theme="light"] .ucv2-chip.product.mobility{color:#1f5fd6!important;border-color:rgba(31,95,214,.24)!important}
+  [data-theme="light"] .ucv2-chip.ok{color:#128a3e!important;background:rgba(18,138,62,.08)!important;border-color:rgba(18,138,62,.22)!important}
+  [data-theme="light"] .ucv2-chip.warn{color:#9a5b12!important;background:rgba(154,91,18,.08)!important;border-color:rgba(154,91,18,.24)!important}
+  [data-theme="light"] .ucv2-chip.danger{color:#b0304a!important;background:rgba(176,48,74,.08)!important;border-color:rgba(176,48,74,.22)!important}
+  [data-theme="light"] .ucv2-role{color:#4c6357!important}
+  [data-theme="light"] .ucv2-muted{color:#5c7268!important}
+  [data-theme="light"] .ucv2-legacy-note{color:#9a5b12!important}
+  [data-theme="light"] .ucv2-dialog{background:linear-gradient(155deg,#ffffff,#f6faf8)!important;color:#083f2c!important;border-color:rgba(18,133,90,.2)!important;box-shadow:0 34px 110px rgba(16,60,42,.18),inset 0 1px rgba(255,255,255,.6)!important}
+  [data-theme="light"] .ucv2-current-value{border-color:rgba(18,133,90,.14)!important;background:#f3f8f5!important}
+  [data-theme="light"] .ucv2-password-toggle{color:#0f7a37!important}
+  /* manager-phase11c-user-center-core.js injects its own dark-only style
+     block (#iuc-c-style) for the raw dialog chrome (.iuc backdrop/panel,
+     hierarchy cards, product cards, sections, inputs, buttons, tabs, the
+     import preview table) that Add Employee and the password/legacy
+     dialogs still use directly — phase11f's single-page rebuild only
+     replaces this markup inside the profile/edit dialog, not Add Employee
+     or the others. Loads first in the chain; same override approach. */
+  [data-theme="light"] .iuc{background:rgba(16,40,30,.42)!important;backdrop-filter:blur(7px)!important}
+  [data-theme="light"] .iuc>div{background:linear-gradient(155deg,#ffffff,#f6faf8)!important;color:#083f2c!important}
+  [data-theme="light"] .iuc .ih{background:linear-gradient(180deg,#ffffff,#f6faf8)!important;border-bottom-color:rgba(18,133,90,.15)!important}
+  [data-theme="light"] .iuc .ih b{color:#083f2c!important}
+  [data-theme="light"] .ih p{color:#4c6357!important}
+  [data-theme="light"] .ix{background:#f3f8f5!important;color:#4c6357!important}
+  [data-theme="light"] .hc,[data-theme="light"] .pc,[data-theme="light"] .sec{border-color:rgba(18,133,90,.16)!important;background:#f6faf8!important}
+  [data-theme="light"] .hc span{color:#5c7268!important}
+  [data-theme="light"] .st span{color:#083f2c!important}
+  [data-theme="light"] .st small{color:#5c7268!important}
+  [data-theme="light"] .f label{color:#4c6357!important}
+  [data-theme="light"] .in,[data-theme="light"] .sel{background:#ffffff!important;color:#0b3324!important;border-color:rgba(18,133,90,.2)!important}
+  [data-theme="light"] .pc.on{border-color:rgba(18,133,90,.42)!important}
+  [data-theme="light"] .pt span{color:#5c7268!important}
+  [data-theme="light"] .dest{border-color:rgba(18,133,90,.28)!important;color:#0f7a37!important;background:#f0f8f3!important}
+  [data-theme="light"] .note{border-color:rgba(154,91,18,.24)!important;color:#8a5610!important;background:rgba(154,91,18,.08)!important}
+  [data-theme="light"] .btn{border-color:rgba(18,133,90,.22)!important;background:#ffffff!important;color:#0b3324!important}
+  [data-theme="light"] .btn.pr{background:linear-gradient(#149c2b,#0f7a37)!important;border-color:#0f7a37!important;color:#fff!important}
+  [data-theme="light"] .btn.bad{background:#fbe9ec!important;border-color:rgba(176,48,74,.4)!important;color:#8a2038!important}
+  [data-theme="light"] .msg{color:#5c7268!important}
+  [data-theme="light"] .msg.ok{color:#128a3e!important}[data-theme="light"] .msg.er{color:#b0304a!important}[data-theme="light"] .msg.wa{color:#8a5610!important}
+  [data-theme="light"] .tab{border-color:rgba(18,133,90,.18)!important;background:#f6faf8!important;color:#4c6357!important}
+  [data-theme="light"] .tab.on{border-color:rgba(18,133,90,.4)!important;color:#0b3324!important;background:#eaf5ee!important}
+  [data-theme="light"] .tw{border-color:rgba(18,133,90,.18)!important}
+  [data-theme="light"] .tb th,[data-theme="light"] .tb td{border-bottom-color:rgba(18,133,90,.12)!important}
+  [data-theme="light"] .tb th{background:#f3f8f5!important;color:#4c6357!important}
+  [data-theme="light"] .drop{border-color:rgba(18,133,90,.4)!important}
+  [data-theme="light"] .drop span{color:#5c7268!important}
+  [data-theme="light"] .badrow td{color:#8a2038!important}
   `;
   document.head.appendChild(style);
 }

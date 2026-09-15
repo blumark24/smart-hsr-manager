@@ -80,11 +80,44 @@
         @media(max-width:1179px){.ucv2-route-guard-host{right:14px!important}}
         @media(max-width:759px){.ucv2-route-guard-host{top:104px!important;right:10px!important;left:10px!important;bottom:10px!important;border-radius:14px!important}.ucv2-route-guard-host>.ucv2-app{padding:14px}}
         @media(prefers-reduced-motion:reduce){.ucv2-route-loading:before{animation:none}}
+        /* Day-mode equivalent of the loading placeholder above, so a manager
+           in Day mode never sees a flash of the Night-only dark loader
+           before the real (also theme-aware) panel takes over. Colors are
+           drawn from manager.html's own approved DAY palette (--l1/--l1Bd/
+           --thTx/--logoGreenH), not invented. */
+        [data-theme="light"] .ucv2-route-guard-host{background:#eef1ee!important;border-color:rgba(18,133,90,.2)!important;box-shadow:0 24px 72px -42px rgba(16,60,42,.28)!important}
+        [data-theme="light"] .ucv2-route-guard-host>.ucv2-app{color:#083f2c;background:radial-gradient(720px 300px at 10% -2%,rgba(18,133,90,.07),transparent 66%),linear-gradient(155deg,rgba(234,247,240,.9),rgba(253,255,254,.95) 52%,rgba(238,249,243,.9))}
+        [data-theme="light"] .ucv2-route-loading{color:#4c6357}
+        [data-theme="light"] .ucv2-route-loading b{color:#083f2c}
+        [data-theme="light"] .ucv2-route-loading:before{border-color:rgba(18,133,90,.22);border-top-color:#149c2b}
       `;
       document.head.appendChild(style);
     }
 
     const clean = value => String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+
+    // manager.html drives its own Day/Night switch by computing a large
+    // object of CSS custom properties per render and writing them as the
+    // inline style of its single root wrapper (<div dir="rtl" lang="ar"
+    // style="{{ themeVars }}">) — there is no .dark/[data-theme] class on
+    // <html> or <body> to hook into. Its NIGHT palette never defines
+    // --pgBg at all (Night relies on that property's CSS fallback), while
+    // DAY always sets it explicitly, so presence of --pgBg is a reliable,
+    // read-only signal for which mode is active. We mirror it onto
+    // documentElement's data-theme, the exact selector the User Center
+    // enhancements layer's installTheme() already defines a dark palette
+    // for — this activates that existing light/dark variable system
+    // instead of adding a second one.
+    const themeRoot = () => document.querySelector('div[dir="rtl"][lang="ar"]') || document.documentElement;
+    const isDayMode = () => getComputedStyle(themeRoot()).getPropertyValue('--pgBg').trim() !== '';
+    const syncTheme = () => {
+      document.documentElement.setAttribute('data-theme', isDayMode() ? 'light' : 'dark');
+    };
+    syncTheme();
+
+    let preOpenScrollY = null;
+    let closedRoot = null;
+
     const findRoot = () => {
       const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,[role="heading"]'));
       const heading = headings.find(el => /مركز إدارة المستخدمين|إدارة المستخدمين|المستخدمون والصلاحيات/.test(clean(el.textContent)));
@@ -112,7 +145,10 @@
       // this dialog can be opened from a link far down that page, leaving
       // the header scrolled out of view and exposing whatever content was
       // at the top of the viewport through the gap instead.
+      preOpenScrollY = window.scrollY;
+      closedRoot = root;
       window.scrollTo(0, 0);
+      syncTheme();
 
       Array.from(root.children).forEach(child => {
         if (child.classList?.contains('ucv2-app')) return;
@@ -134,8 +170,22 @@
 
     const startObserver = () => {
       claim();
-      const observer = new MutationObserver(() => { claim(); });
-      observer.observe(document.body, { childList: true, subtree: true });
+      const observer = new MutationObserver(() => {
+        syncTheme();
+        // The panel is removed wholesale from the DOM on close (it lives
+        // inside the same sc-if block as the rest of the legacy view), so
+        // there is no dedicated "closed" event to hook — detect it here by
+        // noticing the node we claimed is no longer attached, and restore
+        // the scroll position it had before we forced it to the top on open.
+        if (closedRoot && !document.body.contains(closedRoot)) {
+          const restoreY = preOpenScrollY;
+          closedRoot = null;
+          preOpenScrollY = null;
+          if (restoreY != null) window.scrollTo(0, restoreY);
+        }
+        claim();
+      });
+      observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
       document.addEventListener('click', event => {
         const trigger = event.target?.closest?.('a,button,[role="button"]');
         if (/مركز إدارة المستخدمين|مركز المستخدمين|الصلاحيات والسجل/.test(clean(trigger?.textContent))) queueMicrotask(claim);
