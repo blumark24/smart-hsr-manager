@@ -31,11 +31,37 @@ async function injectPhaseScripts(page, baseUrl) {
   }
 }
 
+async function firstVisible(locator) {
+  const count = await locator.count();
+  for (let i = 0; i < count; i += 1) {
+    const candidate = locator.nth(i);
+    if (await candidate.isVisible().catch(() => false)) return candidate;
+  }
+  return null;
+}
+
 async function openUserCenter(page) {
-  const links = page.getByText('مركز المستخدمين', { exact: true });
-  const count = await links.count();
-  assert(count > 0, 'User Center navigation entry was not found.');
-  await links.first().click();
+  await page.waitForFunction(
+    () => document.body && document.body.innerText.includes('إدارة البلدية'),
+    { timeout: 15000 },
+  );
+
+  let target = await firstVisible(page.getByText('مركز المستخدمين', { exact: true }));
+
+  if (!target) {
+    const adminToggle = await firstVisible(page.getByRole('button', { name: 'إدارة البلدية', exact: true }));
+    assert(adminToggle, 'Municipality administration navigation group was not found.');
+    await adminToggle.click();
+    await page.waitForTimeout(150);
+    target = await firstVisible(page.getByText('مركز المستخدمين', { exact: true }));
+  }
+
+  if (!target) {
+    target = await firstVisible(page.getByText('فتح مركز المستخدمين', { exact: true }));
+  }
+
+  assert(target, 'User Center navigation entry was not found after expanding Municipality Administration.');
+  await target.click();
   await page.locator('[data-uc-v2="true"]').waitFor({ timeout: 15000 });
 }
 
