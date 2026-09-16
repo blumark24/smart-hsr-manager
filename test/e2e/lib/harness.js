@@ -32,6 +32,41 @@ async function waitForPort(port, { timeoutMs = 60000, intervalMs = 500 } = {}) {
   throw new Error(`Timed out waiting for port ${port} to open`);
 }
 
+function captureChild(child) {
+  let output = '';
+  const append = (chunk) => {
+    output += String(chunk || '');
+    if (output.length > 12000) output = output.slice(-12000);
+  };
+  if (child.stdout) child.stdout.on('data', append);
+  if (child.stderr) child.stderr.on('data', append);
+  return () => output.trim();
+}
+
+async function waitForPortOrExit(port, child, getOutput, label) {
+  let exited = false;
+  let exitCode = null;
+  let exitSignal = null;
+  child.once('exit', (code, signal) => {
+    exited = true;
+    exitCode = code;
+    exitSignal = signal;
+  });
+
+  const deadline = Date.now() + 60000;
+  while (Date.now() < deadline) {
+    if (await isPortOpen(port)) return true;
+    if (exited) {
+      const logs = getOutput();
+      throw new Error(`${label} exited before port ${port} opened (code=${exitCode}, signal=${exitSignal || 'none'}).${logs ? `\n--- ${label} output ---\n${logs}` : ''}`);
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+
+  const logs = getOutput();
+  throw new Error(`Timed out waiting for port ${port} to open.${logs ? `\n--- ${label} output ---\n${logs}` : ''}`);
+}
+
 async function startHarness() {
   const started = { emulators: false, server: false };
   const children = [];
@@ -40,22 +75,24 @@ async function startHarness() {
     const emu = spawn(process.execPath, [
       path.join(ROOT, 'node_modules', 'firebase-tools', 'lib', 'bin', 'firebase.js'),
       'emulators:start', '--project', 'smart-hsr-manager', '--only', 'auth,firestore',
-    ], { cwd: ROOT, stdio: 'ignore' });
+    ], { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
+    const getEmulatorOutput = captureChild(emu);
     children.push(emu);
     started.emulators = true;
-    await waitForPort(AUTH_PORT);
-    await waitForPort(FIRESTORE_PORT);
+    await waitForPortOrExit(AUTH_PORT, emu, getEmulatorOutput, 'Firebase emulators');
+    await waitForPortOrExit(FIRESTORE_PORT, emu, getEmulatorOutput, 'Firebase emulators');
   }
 
   if (!(await isPortOpen(SERVER_PORT))) {
     const srv = spawn(process.execPath, [path.join(__dirname, 'static-server.js')], {
       cwd: ROOT,
-      stdio: 'ignore',
+      stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, SMART_HSR_STATIC_PORT: String(SERVER_PORT) },
     });
+    const getServerOutput = captureChild(srv);
     children.push(srv);
     started.server = true;
-    await waitForPort(SERVER_PORT);
+    await waitForPortOrExit(SERVER_PORT, srv, getServerOutput, 'SMART HSR static test server');
   }
 
   const seedEnv = {
