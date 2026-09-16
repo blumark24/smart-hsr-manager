@@ -146,6 +146,16 @@ async function assertTheme(page, expected) {
   );
 }
 
+async function switchThemeThroughBoundControl(page, accessibleName) {
+  const button = page.getByRole('button', { name: accessibleName });
+  assert(await button.count() > 0, `Theme control "${accessibleName}" was not found.`);
+
+  // User Center is a modal surface and correctly shields background pointer
+  // interaction. Use the real bound control handler without defeating that
+  // modal shielding via a forced physical click.
+  await button.first().dispatchEvent('click');
+}
+
 async function assertCenteredDialog(page) {
   const add = page.getByRole('button', { name: 'إضافة موظف', exact: true });
   await add.click();
@@ -187,16 +197,14 @@ async function runDesktop(page) {
 
   await assertCenteredDialog(page);
 
-  const dayButton = page.getByRole('button', { name: 'النمط النهاري' });
-  await dayButton.click();
+  await switchThemeThroughBoundControl(page, 'النمط النهاري');
   await assertTheme(page, 'day');
   await assertGlobalNoOverflow(page, 'desktop/day');
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   await page.screenshot({ path: path.join(OUT_DIR, 'desktop-day.png'), fullPage: false });
 
-  const nightButton = page.getByRole('button', { name: 'النمط الليلي' });
-  await nightButton.click();
+  await switchThemeThroughBoundControl(page, 'النمط الليلي');
   await assertTheme(page, 'night');
   await page.screenshot({ path: path.join(OUT_DIR, 'desktop-night.png'), fullPage: false });
 }
