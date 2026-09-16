@@ -32,7 +32,10 @@
     const section = document.querySelector('[data-uc-v2="true"]');
     if (section) {
       const search = section.querySelector('input[type="search"]');
-      if (search && !search.getAttribute('aria-label')) {
+      if (search) {
+        // Normalize the public accessible name instead of preserving a stale
+        // legacy label. This keeps screen-reader output and automated QA in
+        // sync with the current institutional User Center wording.
         search.setAttribute('aria-label', 'بحث في سجل الموظفين');
       }
     }
