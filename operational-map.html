@@ -173,45 +173,107 @@
     #rightPanel.expanded ~ #mapSummary{display:none}
     #attributionNote{display:none}
   }
+
+  /* Geo Intelligence & Operations Center — calm government-grade shell. */
+  #appShell{--header-h:64px;--kpi-h:58px}
+  header.command-header{top:0;left:0;right:0;height:var(--header-h);padding:0 18px;display:grid;grid-template-columns:minmax(340px,1fr) minmax(240px,430px) minmax(340px,1fr);gap:14px;
+    border-bottom:1px solid var(--border-subtle);background:linear-gradient(180deg,rgba(4,20,34,.98),rgba(4,20,34,.9));box-shadow:0 12px 30px rgba(0,8,18,.28);backdrop-filter:blur(18px)}
+  .brand-nav{display:flex;align-items:center;gap:14px;direction:rtl;min-width:0}.brand-lockup{display:flex;align-items:center;gap:9px;min-width:150px;text-decoration:none;color:var(--text)}
+  .brand-lockup img{width:102px;height:38px;object-fit:contain}.header-nav{display:flex;align-items:center;gap:3px;overflow:auto;scrollbar-width:none}.header-nav::-webkit-scrollbar{display:none}
+  .nav-link{height:38px;display:inline-flex;align-items:center;padding:0 12px;border-radius:10px;color:var(--text-muted);font-size:11.5px;font-weight:700;text-decoration:none;white-space:nowrap;border:1px solid transparent;background:transparent;cursor:pointer;font-family:inherit}
+  .nav-link:hover{color:var(--text);background:var(--green-soft)}.nav-link.active{color:#fff;background:rgba(15,184,89,.18);border-color:rgba(48,230,132,.38);box-shadow:inset 0 -2px 0 var(--green)}
+  .header-identity{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}.identity-copy{min-width:0;text-align:right;line-height:1.25}.identity-copy strong,.identity-copy span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.identity-copy strong{font-size:11px}.identity-copy span{font-size:9.5px;color:var(--text-muted)}
+  .tool-icon{width:38px;height:38px;padding:0!important;display:grid;place-items:center}.command-header .search-shell{width:100%}.command-header #searchInput{height:40px;background:rgba(6,31,50,.78)}
+  #kpiStrip{position:absolute;top:var(--header-h);left:0;right:0;height:var(--kpi-h);z-index:18;display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));padding:8px 18px;gap:1px;background:rgba(5,24,39,.93);border-bottom:1px solid var(--border-subtle);backdrop-filter:blur(16px)}
+  .kpi-cell{padding:3px 13px;border-inline-start:1px solid var(--border-subtle);min-width:0}.kpi-cell:first-child{border-inline-start:0}.kpi-label{display:block;font-size:9.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kpi-value{display:flex;align-items:baseline;gap:5px;margin-top:2px;font-size:19px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}.kpi-value small{font-size:9px;color:var(--text-muted);font-weight:600}.kpi-cell.alert .kpi-value{color:#ff7b83}.kpi-cell.progress .kpi-value{color:#ffc15c}.kpi-cell.complete .kpi-value{color:#45e88d}
+  main.command-main{top:calc(var(--header-h) + var(--kpi-h));inset-inline:0;bottom:0}
+  #intelligencePanel{position:absolute;z-index:10;top:14px;left:14px;width:286px;max-height:calc(100% - 96px);overflow:auto;background:linear-gradient(160deg,rgba(5,27,46,.95),rgba(5,20,35,.92));border:1px solid var(--pop-border);border-radius:16px;padding:13px;box-shadow:0 18px 46px rgba(0,8,18,.42);backdrop-filter:blur(17px)}
+  .intel-eyebrow{font-size:9px;color:var(--green);font-weight:800;letter-spacing:.08em}.intel-title{font-size:14px;margin:3px 0 2px}.intel-sub{font-size:9.5px;color:var(--text-muted);line-height:1.5}.intel-block{margin-top:10px;padding:10px;border:1px solid var(--border-subtle);border-radius:11px;background:rgba(255,255,255,.025)}
+  .intel-block-head{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800;margin-bottom:5px}.intel-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(24,232,118,.5)}.intel-block p{margin:0;font-size:10.5px;color:var(--text-2);line-height:1.65}
+  .confidence-row{display:flex;justify-content:space-between;gap:8px;margin-top:7px;font-size:9.5px;color:var(--text-muted)}.confidence-row strong{color:var(--text)}.twin-teaser{margin-top:10px;padding:11px;border-radius:12px;background:linear-gradient(135deg,rgba(27,153,104,.2),rgba(15,78,112,.18));border:1px solid rgba(48,230,132,.28)}.twin-teaser h3{font-size:11px;margin:0 0 4px}.twin-teaser p{font-size:9.5px;color:var(--text-muted);margin:0 0 8px;line-height:1.5}
+  #rightPanel{top:14px;right:14px;width:286px;max-height:calc(100% - 96px)}#layerPanel{max-height:100%;border-radius:16px}.panel-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:9px 0 5px;padding:3px;border-radius:10px;background:rgba(0,0,0,.16)}.panel-tab{height:30px;border:0;border-radius:8px;background:transparent;color:var(--text-muted);font:inherit;font-size:10.5px;font-weight:800;cursor:pointer}.panel-tab.active{background:rgba(32,218,118,.14);color:var(--text);box-shadow:inset 0 0 0 1px rgba(48,230,132,.25)}.panel-tab-content[hidden]{display:none}.availability-note{padding:8px;margin-top:8px;border-radius:9px;border:1px dashed var(--border);font-size:9.5px;line-height:1.55;color:var(--text-muted)}
+  .layer-row.disabled{opacity:.58}.layer-row.disabled input{cursor:not-allowed}.map-tool-row{display:flex;gap:6px;margin-top:9px}.map-tool-row .geo-btn{flex:1;min-height:34px;font-size:10px;padding:.35rem}.tool-state{margin-top:6px;color:var(--text-muted);font-size:9px;line-height:1.5}
+  #timelinePanel{position:absolute;left:314px;right:314px;bottom:12px;z-index:10;min-height:68px;padding:9px 12px;border:1px solid var(--pop-border);border-radius:14px;background:rgba(5,25,43,.93);box-shadow:var(--control-shadow);backdrop-filter:blur(16px)}
+  .timeline-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}.timeline-title{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800}.timeline-meta{font-size:9.5px;color:var(--text-muted)}.timeline-controls{display:grid;grid-template-columns:32px 1fr auto;gap:9px;align-items:center}.timeline-play{width:32px;height:32px;border:1px solid rgba(48,230,132,.38);border-radius:9px;background:var(--green-soft);color:var(--green);cursor:pointer}.timeline-range{width:100%;accent-color:var(--green)}.timeline-reset{border:0;background:transparent;color:var(--green);font:inherit;font-size:9.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+  #mapSummary{bottom:88px;right:314px}#attributionNote{bottom:90px;left:314px}.maplibregl-ctrl-top-left{top:14px!important;left:314px!important}.maplibregl-ctrl-bottom-left{left:302px!important;bottom:78px!important}
+  .map-legend{position:absolute;z-index:8;left:314px;bottom:126px;padding:7px 9px;border:1px solid var(--border);border-radius:10px;background:var(--surface);box-shadow:var(--control-shadow);display:flex;gap:10px;align-items:center;font-size:9px;color:var(--text-muted)}.legend-item{display:flex;align-items:center;gap:4px}.legend-swatch{width:7px;height:7px;border-radius:50%}
+  .geo-marker{position:relative;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#0a2638;border:3px solid var(--marker-status,#64748b);box-shadow:0 0 0 3px rgba(255,255,255,.72),0 4px 12px rgba(0,0,0,.46);filter:none}.geo-marker svg{filter:none}.geo-marker .priority-badge{position:absolute;top:-8px;right:-8px;min-width:16px;height:16px;padding:0 3px;border-radius:8px;display:grid;place-items:center;background:#ef4444;color:#fff;border:2px solid #fff;font-size:8px;font-weight:900}.geo-marker.selected{outline:5px solid rgba(32,255,134,.24);outline-offset:4px}.geo-cluster{border-width:3px}
+  #sketchStatus.active{color:var(--warning)}
+  @media(max-width:1180px){#intelligencePanel{transform:translateX(calc(-100% - 20px));transition:.2s}#intelligencePanel.expanded{transform:none}.maplibregl-ctrl-top-left{left:14px!important}.maplibregl-ctrl-bottom-left{left:0!important}.map-legend{left:14px}#timelinePanel{left:14px}.command-header{grid-template-columns:minmax(300px,1fr) minmax(220px,360px) auto!important}.identity-copy{display:none}}
+  @media(max-width:900px){#appShell{--header-h:104px;--kpi-h:52px}.command-header{height:var(--header-h)!important;grid-template-columns:1fr auto!important;padding:7px 10px!important}.command-header .search-shell{grid-column:1/-1;grid-row:2}.header-nav .nav-link:not(.active){display:none}#kpiStrip{overflow-x:auto;grid-template-columns:repeat(6,130px);padding:6px 10px}.kpi-value{font-size:16px}#rightPanel{top:auto;right:8px;left:8px;bottom:8px;width:auto}.maplibregl-ctrl-top-left{top:10px!important;left:8px!important}#timelinePanel{left:8px;right:8px;bottom:8px}#mapSummary,.map-legend,#attributionNote{display:none}.brand-lockup img{width:82px}.header-identity .segmented,.header-identity #logoutBtn{display:none}}
 </style>
 </head>
 <body>
   <div id="authLoading"><div>...جارٍ التحقق</div></div>
   <div id="appShell" class="hidden">
-    <header>
-      <div class="product-switch" role="navigation" aria-label="المنتجات المكانية">
-        <button class="product-tab active" type="button" aria-current="page">الخريطة التشغيلية</button>
-        <button class="product-tab" id="openTwinBtn" type="button" hidden>التوأم الرقمي</button>
+    <header class="command-header">
+      <div class="brand-nav">
+        <a class="brand-lockup" href="manager.html" aria-label="SMART HSR — الرئيسية"><img src="Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR"></a>
+        <nav class="header-nav" aria-label="أقسام المنصة">
+          <a class="nav-link" href="manager.html">الرئيسية</a>
+          <span class="nav-link active" aria-current="page">الخريطة التشغيلية</span>
+          <button class="nav-link" id="openTwinBtn" type="button" hidden>التوأم الرقمي</button>
+        </nav>
       </div>
       <div class="search-shell">
         <input id="searchInput" type="search" autocomplete="off" placeholder="ابحث برقم البلاغ أو المنشأة أو المبنى…" aria-label="بحث" aria-controls="searchResults" aria-expanded="false">
         <div id="searchResults" role="listbox" aria-label="نتائج البحث"></div>
       </div>
-      <div class="header-tools">
+      <div class="header-identity">
         <div class="segmented" id="basemapControl" role="group" aria-label="نوع الخريطة">
           <button class="segment" type="button" data-basemap="street" aria-pressed="false">شوارع</button>
           <button class="segment active" type="button" data-basemap="satellite" aria-pressed="true">أقمار</button>
         </div>
-        <button class="geo-btn" id="rightPanelToggle" aria-label="إظهار أو إخفاء طبقات الخريطة" aria-expanded="true" title="طبقات الخريطة">▱ الطبقات</button>
-        <button class="geo-btn" id="themeToggleBtn" aria-label="تفعيل الوضع النهاري" title="الوضع النهاري">☀</button>
+        <button class="geo-btn tool-icon" id="intelligenceToggle" aria-label="إظهار لوحة الذكاء الجغرافي" title="الذكاء الجغرافي">◈</button>
+        <button class="geo-btn tool-icon" id="rightPanelToggle" aria-label="إظهار أو إخفاء طبقات الخريطة" aria-expanded="true" title="الطبقات والمرشحات">▱</button>
+        <button class="geo-btn tool-icon" id="themeToggleBtn" aria-label="تفعيل الوضع النهاري" title="الوضع النهاري">☀</button>
+        <div class="identity-copy"><strong id="orgIdentity">SMART HSR</strong><span id="userIdentity">مستخدم موثّق</span></div>
         <button class="geo-btn hide-mobile" id="logoutBtn" title="تسجيل الخروج">خروج</button>
       </div>
     </header>
-    <main>
+    <section id="kpiStrip" aria-label="مؤشرات العمليات الجغرافية">
+      <div class="kpi-cell"><span class="kpi-label">إجمالي البلاغات المكانية</span><div class="kpi-value" id="kpiTotal">—</div></div>
+      <div class="kpi-cell alert"><span class="kpi-label">عالية / حرجة</span><div class="kpi-value" id="kpiHigh">—</div></div>
+      <div class="kpi-cell progress"><span class="kpi-label">قيد المعالجة</span><div class="kpi-value" id="kpiProgress">—</div></div>
+      <div class="kpi-cell complete"><span class="kpi-label">مكتملة</span><div class="kpi-value" id="kpiCompleted">—</div></div>
+      <div class="kpi-cell"><span class="kpi-label">الطبقات الفعّالة</span><div class="kpi-value" id="kpiLayers">—</div></div>
+      <div class="kpi-cell"><span class="kpi-label">حالة اللقطة</span><div class="kpi-value" id="kpiSnapshot"><small>عند الطلب</small></div></div>
+    </section>
+    <main class="command-main">
       <div id="map" role="application" aria-label="الخريطة التشغيلية"></div>
+      <aside id="intelligencePanel" aria-label="لوحة الذكاء الجغرافي">
+        <div class="intel-eyebrow">GEO INTELLIGENCE</div><h1 class="intel-title">مركز العمليات الجغرافية الذكية</h1>
+        <div class="intel-sub">قراءة تشغيلية مشتقة من البيانات المكانية الموثوقة المتاحة حاليًا.</div>
+        <section class="intel-block"><div class="intel-block-head"><span class="intel-dot"></span>الملخص التنفيذي</div><p id="intelligenceSummary">جارٍ تحليل اللقطة الحالية…</p></section>
+        <section class="intel-block"><div class="intel-block-head"><span class="intel-dot" style="background:#ff9f1c"></span>تركيز مكاني</div><p id="hotspotInsight">يتطلب توفر بيانات مكانية في اللقطة.</p></section>
+        <section class="intel-block"><div class="intel-block-head"><span class="intel-dot" style="background:#38bdf8"></span>إجراء مقترح</div><p id="recommendationInsight">لا توجد توصية مؤكدة قبل اكتمال التحميل.</p></section>
+        <div class="confidence-row"><span>تغطية الإحداثيات</span><strong id="dataConfidence">—</strong></div>
+        <div class="twin-teaser" id="twinTeaser" hidden><h3>التوأم الرقمي</h3><p>انقل السياق المكاني إلى المنتج ثلاثي الأبعاد المنفصل عند الحاجة.</p><button class="geo-btn primary" id="intelligenceTwinBtn" type="button">فتح التوأم الرقمي</button></div>
+      </aside>
       <div id="rightPanel">
         <div id="layerPanel">
           <div class="panel-head">
             <button class="panel-close" id="panelCloseBtn" type="button" aria-label="إغلاق لوحة الطبقات">×</button>
-            <h2>طبقات الخريطة</h2>
+            <h2>الطبقات والمرشحات</h2>
             <button class="clear-filters" id="clearFiltersBtn" type="button">مسح</button>
           </div>
-          <div class="panel-section-title">البيانات التشغيلية</div>
-          <div id="layerList"></div>
-          <div class="panel-section-title">حالة البلاغات</div>
-          <div id="filterChips"></div>
+          <div class="panel-tabs" role="tablist"><button class="panel-tab active" id="layersTabBtn" role="tab" aria-selected="true">الطبقات</button><button class="panel-tab" id="filtersTabBtn" role="tab" aria-selected="false">المرشحات</button></div>
+          <div class="panel-tab-content" id="layersTab" role="tabpanel">
+            <div class="panel-section-title">البيانات التشغيلية</div><div id="layerList"></div>
+            <label class="layer-row"><input id="heatmapToggle" type="checkbox" checked><span class="swatch" style="background:#ff8a32"></span><span>خريطة كثافة البلاغات</span></label>
+            <label class="layer-row disabled"><input id="boundaryToggle" type="checkbox" disabled><span class="swatch" style="background:#38ff95"></span><span id="boundaryLabel">النطاق التشغيلي غير متاح</span></label>
+            <div class="map-tool-row"><button class="geo-btn" id="perspectiveToggleBtn" type="button">منظور 2.5D</button><button class="geo-btn" id="sketchBtn" type="button">رسم نطاق</button><button class="geo-btn" id="clearSketchBtn" type="button" hidden>مسح</button></div>
+            <div class="tool-state" id="sketchStatus">النطاق المرسوم مؤقت ومحلي وغير محفوظ.</div>
+            <div class="availability-note">الأحياء والقطع والمشروعات المستقبلية لا تظهر إلا عند توفر هندسة مكانية موثوقة. لا يتم إنشاء حدود أو مواقع افتراضية.</div>
+          </div>
+          <div class="panel-tab-content" id="filtersTab" role="tabpanel" hidden><div class="panel-section-title">حالة البلاغات وتصنيفها</div><div id="filterChips"></div></div>
         </div>
       </div>
+      <div class="map-legend" aria-label="مفتاح الحالات"><span class="legend-item"><i class="legend-swatch" style="background:#ef4444"></i>انتظار</span><span class="legend-item"><i class="legend-swatch" style="background:#f5a524"></i>معالجة</span><span class="legend-item"><i class="legend-swatch" style="background:#22c55e"></i>مكتمل</span></div>
+      <section id="timelinePanel" aria-label="التسلسل الزمني للعمليات">
+        <div class="timeline-head"><div class="timeline-title">◷ الاستعراض الزمني</div><div class="timeline-meta"><span id="timelineDate">كل الفترات</span> · <span id="timelineState">يعرض كامل اللقطة</span></div></div>
+        <div class="timeline-controls"><button class="timeline-play" id="timelinePlayBtn" type="button" aria-label="تشغيل الاستعراض الزمني">▶</button><input class="timeline-range" id="timelineRange" type="range" min="0" max="1000" value="1000" disabled aria-label="نطاق الزمن"><button class="timeline-reset" id="timelineResetBtn" type="button">عرض الكل</button></div>
+      </section>
       <div id="mapSummary" aria-live="polite">
         <span>المعروض <strong id="visibleEntityCount">0</strong></span>
         <span>·</span>
@@ -324,6 +386,11 @@ const rawObservationById = new Map();
 let observationStatusFilter = 'ALL';
 let observationCategoryFilter = 'ALL';
 let observationPriorityFilter = 'ALL';
+let timelineCutoffMs = null;
+let timelineMinMs = null;
+let timelineMaxMs = null;
+let timelineTimer = null;
+let heatmapEnabled = true;
 
 function labelFor(layerId) { return (layerRegistry.getLayer(layerId) || {}).labelAr || layerId; }
 
@@ -375,6 +442,52 @@ function updateMapSummary() {
   document.getElementById('snapshotState').textContent = lastSnapshotAt
     ? `آخر تحميل ${lastSnapshotAt.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}`
     : 'بيانات عند الطلب';
+  updateCommandCenter();
+}
+
+function timestampMillis(value) {
+  if (!value) return null;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (typeof value.seconds === 'number') return value.seconds * 1000;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function updateCommandCenter() {
+  const records = cachedObservationEntities.map((entity) => ({ entity, data: rawObservationById.get(entity.id) || {} }));
+  let high = 0, progress = 0, completed = 0, dated = 0;
+  for (const { data } of records) {
+    const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : '';
+    if (priority === 'HIGH' || priority === 'CRITICAL') high += 1;
+    if (data.status === 'IN_PROGRESS') progress += 1;
+    if (data.status === 'COMPLETED') completed += 1;
+    if (timestampMillis(data.createdAt)) dated += 1;
+  }
+  document.getElementById('kpiTotal').textContent = String(records.length);
+  document.getElementById('kpiHigh').textContent = String(high);
+  document.getElementById('kpiProgress').textContent = String(progress);
+  document.getElementById('kpiCompleted').textContent = String(completed);
+  document.getElementById('kpiLayers').textContent = String(activeLayers.size);
+  document.getElementById('kpiSnapshot').innerHTML = lastSnapshotAt ? `<small>${lastSnapshotAt.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</small>` : '<small>عند الطلب</small>';
+  document.getElementById('intelligenceSummary').textContent = records.length
+    ? `تتضمن اللقطة ${records.length} بلاغًا مكانيًا موثوق الإحداثيات؛ ${progress} قيد المعالجة و${completed} مكتمل.`
+    : 'لا توجد بلاغات مكانية قابلة للعرض ضمن اللقطة الحالية.';
+  document.getElementById('recommendationInsight').textContent = high
+    ? `توجد ${high} حالات عالية أو حرجة؛ الأولوية التشغيلية هي مراجعتها قبل الحالات الأقل أثرًا.`
+    : 'لا تظهر حالات عالية أو حرجة في البيانات المكانية المتاحة حاليًا.';
+  document.getElementById('dataConfidence').textContent = records.length ? `${Math.round((dated / records.length) * 100)}٪ مؤرخة` : 'لا بيانات';
+  const buckets = new Map();
+  for (const { entity } of records) {
+    if (!entity.geometry || entity.geometry.type !== 'Point') continue;
+    const [lng, lat] = entity.geometry.coordinates;
+    const key = `${lng.toFixed(2)}:${lat.toFixed(2)}`;
+    buckets.set(key, (buckets.get(key) || 0) + 1);
+  }
+  const peak = buckets.size ? Math.max(...buckets.values()) : 0;
+  document.getElementById('hotspotInsight').textContent = peak > 1
+    ? `أعلى تركّز ظاهر يضم ${peak} بلاغات ضمن نطاق مكاني متقارب؛ يمكن تكبير التجمع للتحقق من التفاصيل.`
+    : (records.length ? 'البلاغات المتاحة موزعة دون تركّز مكاني متكرر واضح في هذا المقياس.' : 'يتطلب توفر بيانات مكانية في اللقطة.');
 }
 
 // STABILIZATION — bbox-scoped layers (commercial_places/buildings) used to
@@ -454,8 +567,33 @@ function applyObservationFilters(entities) {
       const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : null;
       if (priority !== observationPriorityFilter) return false;
     }
+    const createdAt = timestampMillis(data.createdAt);
+    if (timelineCutoffMs !== null && createdAt !== null && createdAt > timelineCutoffMs) return false;
     return true;
   });
+}
+
+function configureTimeline() {
+  const times = cachedObservationEntities.map((entity) => timestampMillis((rawObservationById.get(entity.id) || {}).createdAt)).filter(Number.isFinite).sort((a, b) => a - b);
+  const range = document.getElementById('timelineRange');
+  timelineMinMs = times.length ? times[0] : null;
+  timelineMaxMs = times.length ? times[times.length - 1] : null;
+  range.disabled = times.length < 2 || timelineMinMs === timelineMaxMs;
+  if (timelineCutoffMs === null || (timelineMaxMs && timelineCutoffMs > timelineMaxMs)) {
+    range.value = '1000';
+    timelineCutoffMs = null;
+    document.getElementById('timelineDate').textContent = 'كل الفترات';
+    document.getElementById('timelineState').textContent = times.length ? `${times.length} سجلات مؤرخة` : 'لا توجد تواريخ قابلة للاستعراض';
+  }
+}
+
+function setTimelineFromSlider(value) {
+  if (!timelineMinMs || !timelineMaxMs) return;
+  const ratio = Number(value) / 1000;
+  timelineCutoffMs = timelineMinMs + (timelineMaxMs - timelineMinMs) * ratio;
+  document.getElementById('timelineDate').textContent = new Date(timelineCutoffMs).toLocaleDateString('ar-SA', { dateStyle: 'medium' });
+  document.getElementById('timelineState').textContent = 'لقطة زمنية تراكمية';
+  reapplyObservationFilters();
 }
 
 // Field observations are read straight from Firestore (org-scoped, not
@@ -504,6 +642,7 @@ async function loadVisibleLayers(organizationId, { includeObservations = true } 
     layerCounts.set('field_observations', filtered.length);
     paintObservations(filtered);
     renderFilterChips();
+    configureTimeline();
   }
   loadedEntities.push(...applyObservationFilters(cachedObservationEntities));
   updateLayerCounts();
@@ -568,15 +707,22 @@ function clearObservationMarkers() {
 function buildObservationPinElement(feature) {
   const status = feature.properties.status || 'PENDING';
   const color = STATUS_COLOR[status] || STATUS_COLOR.NEUTRAL;
+  const category = feature.properties.category || 'UNKNOWN';
+  const priority = feature.properties.priority || '';
+  const iconPaths = {
+    ROAD: '<path d="M9 22 14 8h4l5 14M14 17h5M15 12h3"/>',
+    SAFETY: '<path d="M16 7 9 10v5c0 4 3 7 7 9 4-2 7-5 7-9v-5z"/><path d="m13 15 2 2 4-5"/>',
+    ENVIRONMENT: '<path d="M22 8c-7 0-12 3-12 9 0 3 2 5 5 5 6 0 7-7 7-14z"/><path d="M9 24c2-5 5-8 10-11"/>',
+    MAINTENANCE: '<path d="m10 21 9-9M18 8l4 4M8 23l3-1-2-2z"/><circle cx="19" cy="11" r="4"/>',
+    QUALITY: '<path d="M16 7 19 13l6 1-4 5 1 6-6-3-6 3 1-6-4-5 6-1z"/>',
+  };
   const el = document.createElement('div');
   el.className = 'geo-marker';
+  el.style.setProperty('--marker-status', color);
   el.setAttribute('role', 'button');
   el.setAttribute('tabindex', '0');
   el.setAttribute('aria-label', `بلاغ ميداني — ${STATUS_LABEL[status] || status}`);
-  el.innerHTML = `<svg width="30" height="38" viewBox="0 0 30 38" aria-hidden="true">
-    <path d="M15 37C15 37 3 22.7 3 14.6C3 7.7 8.7 2 15 2C21.3 2 27 7.7 27 14.6C27 22.7 15 37 15 37Z" fill="${color}" stroke="#fff" stroke-width="2"/>
-    <circle cx="15" cy="14.6" r="5.4" fill="#fff"/>
-  </svg>`;
+  el.innerHTML = `<svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[category] || '<circle cx="16" cy="16" r="7"/><path d="M16 12v5M16 21h.01"/>'}</svg>${priority === 'CRITICAL' || priority === 'HIGH' ? `<span class="priority-badge">${priority === 'CRITICAL' ? '!' : 'H'}</span>` : ''}`;
   const activate = (evt) => { evt.stopPropagation(); selectObservation(feature.properties.id, feature.geometry.coordinates); };
   el.addEventListener('click', activate);
   el.addEventListener('keydown', (evt) => { if (evt.key === 'Enter' || evt.key === ' ') activate(evt); });
@@ -649,10 +795,14 @@ function syncObservationMarkers() {
 }
 
 const OBS_DRIVER_LAYER = `${OBS_SRC}-driver`;
+const OBS_HEAT_LAYER = `${OBS_SRC}-heat`;
+const OBS_HEAT_SRC = `${OBS_SRC}-heat-source`;
 function removeObservationSource() {
   clearObservationMarkers();
+  if (map.getLayer(OBS_HEAT_LAYER)) map.removeLayer(OBS_HEAT_LAYER);
   if (map.getLayer(OBS_DRIVER_LAYER)) map.removeLayer(OBS_DRIVER_LAYER);
   if (map.getSource(OBS_SRC)) map.removeSource(OBS_SRC);
+  if (map.getSource(OBS_HEAT_SRC)) map.removeSource(OBS_HEAT_SRC);
 }
 function paintObservations(entities) {
   removeObservationSource();
@@ -660,7 +810,8 @@ function paintObservations(entities) {
     type: 'FeatureCollection',
     features: entities.map((e) => {
       const data = rawObservationById.get(e.id) || {};
-      return { type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, status: e.status || 'PENDING', severityRank: severityRankOf(data) } };
+      const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : '';
+      return { type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, status: e.status || 'PENDING', severityRank: severityRankOf(data), category: data.type || 'UNKNOWN', priority } };
     }),
   };
   map.addSource(OBS_SRC, {
@@ -668,6 +819,17 @@ function paintObservations(entities) {
     // Real aggregation over real children — never a fabricated/guessed
     // cluster severity (Section 04).
     clusterProperties: { severityMax: ['max', ['get', 'severityRank']] },
+  });
+  map.addSource(OBS_HEAT_SRC, { type: 'geojson', data: geojson });
+  map.addLayer({ id: OBS_HEAT_LAYER, type: 'heatmap', source: OBS_HEAT_SRC, maxzoom: 16,
+    layout: { visibility: heatmapEnabled ? 'visible' : 'none' },
+    paint: {
+      'heatmap-weight': ['interpolate', ['linear'], ['get', 'severityRank'], -1, .25, 0, .4, 1, .65, 2, .85, 3, 1],
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 8, .55, 15, 1.2],
+      'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', .22, 'rgba(35,204,126,.3)', .48, 'rgba(255,193,72,.55)', .72, 'rgba(255,111,48,.72)', 1, 'rgba(239,68,68,.88)'],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 8, 18, 15, 40],
+      'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 8, .72, 16, .18],
+    },
   });
   // A source with zero consuming style layers is never tiled/clustered by
   // MapLibre at all (querySourceFeatures/getClusterExpansionZoom silently
@@ -1082,6 +1244,77 @@ function syncLayerPanelForViewport() {
 addEventListener('resize', syncLayerPanelForViewport);
 syncLayerPanelForViewport();
 
+function selectPanelTab(name) {
+  const layers = name === 'layers';
+  document.getElementById('layersTab').hidden = !layers;
+  document.getElementById('filtersTab').hidden = layers;
+  document.getElementById('layersTabBtn').classList.toggle('active', layers);
+  document.getElementById('filtersTabBtn').classList.toggle('active', !layers);
+  document.getElementById('layersTabBtn').setAttribute('aria-selected', String(layers));
+  document.getElementById('filtersTabBtn').setAttribute('aria-selected', String(!layers));
+}
+document.getElementById('layersTabBtn').addEventListener('click', () => selectPanelTab('layers'));
+document.getElementById('filtersTabBtn').addEventListener('click', () => selectPanelTab('filters'));
+document.getElementById('intelligenceToggle').addEventListener('click', () => document.getElementById('intelligencePanel').classList.toggle('expanded'));
+document.getElementById('heatmapToggle').addEventListener('change', (event) => {
+  heatmapEnabled = event.target.checked;
+  if (map && map.getLayer(OBS_HEAT_LAYER)) map.setLayoutProperty(OBS_HEAT_LAYER, 'visibility', heatmapEnabled ? 'visible' : 'none');
+});
+document.getElementById('perspectiveToggleBtn').addEventListener('click', (event) => {
+  if (!map) return;
+  const tilted = map.getPitch() > 10;
+  map.easeTo({ pitch: tilted ? 0 : 45, bearing: tilted ? 0 : -12, duration: 650 });
+  event.currentTarget.textContent = tilted ? 'منظور 2.5D' : 'إلغاء المنظور';
+});
+document.getElementById('timelineRange').addEventListener('input', (event) => setTimelineFromSlider(event.target.value));
+document.getElementById('timelineResetBtn').addEventListener('click', () => {
+  timelineCutoffMs = null;
+  document.getElementById('timelineRange').value = '1000';
+  document.getElementById('timelineDate').textContent = 'كل الفترات';
+  document.getElementById('timelineState').textContent = timelineMaxMs ? 'يعرض كامل اللقطة' : 'لا توجد تواريخ قابلة للاستعراض';
+  if (timelineTimer) clearInterval(timelineTimer), timelineTimer = null;
+  document.getElementById('timelinePlayBtn').textContent = '▶';
+  reapplyObservationFilters();
+});
+document.getElementById('timelinePlayBtn').addEventListener('click', () => {
+  const button = document.getElementById('timelinePlayBtn');
+  const range = document.getElementById('timelineRange');
+  if (range.disabled) return;
+  if (timelineTimer) { clearInterval(timelineTimer); timelineTimer = null; button.textContent = '▶'; return; }
+  if (Number(range.value) >= 1000) range.value = '0';
+  button.textContent = 'Ⅱ';
+  setTimelineFromSlider(range.value);
+  timelineTimer = setInterval(() => {
+    const next = Math.min(1000, Number(range.value) + 20);
+    range.value = String(next); setTimelineFromSlider(next);
+    if (next >= 1000) { clearInterval(timelineTimer); timelineTimer = null; button.textContent = '▶'; }
+  }, 220);
+});
+
+const SKETCH_SRC = 'geo-temporary-sketch';
+let sketchMode = false;
+let sketchPoints = [];
+function sketchGeoJson() {
+  const features = [];
+  if (sketchPoints.length) features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: sketchPoints }, properties: {} });
+  if (sketchPoints.length >= 3) features.push({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[...sketchPoints, sketchPoints[0]]] }, properties: {} });
+  return { type: 'FeatureCollection', features };
+}
+function updateSketch() {
+  const source = map && map.getSource(SKETCH_SRC);
+  if (source) source.setData(sketchGeoJson());
+  document.getElementById('clearSketchBtn').hidden = sketchPoints.length === 0;
+}
+function setSketchMode(enabled) {
+  sketchMode = enabled;
+  document.getElementById('sketchBtn').textContent = enabled ? 'إنهاء الرسم' : 'رسم نطاق';
+  document.getElementById('sketchStatus').classList.toggle('active', enabled);
+  document.getElementById('sketchStatus').textContent = enabled ? 'انقر على الخريطة لإضافة رؤوس النطاق المؤقت، ثم أنهِ الرسم.' : 'النطاق المرسوم مؤقت ومحلي وغير محفوظ.';
+  if (map) map.getCanvas().style.cursor = enabled ? 'crosshair' : '';
+}
+document.getElementById('sketchBtn').addEventListener('click', () => setSketchMode(!sketchMode));
+document.getElementById('clearSketchBtn').addEventListener('click', () => { sketchPoints = []; updateSketch(); setSketchMode(false); });
+
 // Real "fit to data" / reset-extent toolbar control (Section 06) — MapLibre
 // has no built-in one, so this is a small, standard custom control, never a
 // decorative button.
@@ -1238,6 +1471,13 @@ function renderMunicipalBoundary(bounds) {
     paint: { 'line-color': '#38ff95', 'line-width': 2.5, 'line-opacity': 0.96 } });
 }
 
+function setBoundaryVisibility(visible) {
+  for (const id of ['geo-municipal-boundary-glow-wide', 'geo-municipal-boundary-glow', 'geo-municipal-boundary-line']) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+  }
+}
+document.getElementById('boundaryToggle').addEventListener('change', (event) => setBoundaryVisibility(event.target.checked));
+
 const STATUS_FILTER_OPTIONS = [
   ['ALL', 'كل الحالات', null],
   ['PENDING', 'قيد الانتظار', STATUS_COLOR.PENDING],
@@ -1337,6 +1577,13 @@ onAuthStateChanged(auth, async (user) => {
   if (!contextRes.ok) return;
   mapContext = contextRes.body;
 
+  document.getElementById('orgIdentity').textContent = mapContext.organizationName || 'SMART HSR';
+  document.getElementById('userIdentity').textContent = user.displayName || user.email || 'مستخدم موثّق';
+  const hasBoundary = Array.isArray(mapContext.mapBounds) && mapContext.mapBounds.length === 2;
+  document.getElementById('boundaryToggle').disabled = !hasBoundary;
+  document.getElementById('boundaryToggle').checked = hasBoundary;
+  document.getElementById('boundaryLabel').textContent = hasBoundary ? 'النطاق التشغيلي المهيأ' : 'النطاق التشغيلي غير متاح';
+
   document.getElementById('authLoading').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
   // PHASE 08.1 CLOSURE 4: derive button visibility from the real, shared
@@ -1351,10 +1598,15 @@ onAuthStateChanged(auth, async (user) => {
   // openEntityCard() still overrides this with entity-specific continuity
   // context once an entity is selected, unchanged.
   if (!document.getElementById('openTwinBtn').hidden) {
-    document.getElementById('openTwinBtn').onclick = () => {
+    const openTwinHome = () => {
       const { url } = continuity.buildContinuityUrl('/twin.html' + location.search, { organizationId: mapContext.organizationId });
       if (url) location.href = url;
     };
+    document.getElementById('openTwinBtn').onclick = openTwinHome;
+    const twinTeaser = document.getElementById('twinTeaser');
+    const intelligenceTwinBtn = document.getElementById('intelligenceTwinBtn');
+    if (twinTeaser) twinTeaser.hidden = false;
+    if (intelligenceTwinBtn) intelligenceTwinBtn.onclick = openTwinHome;
   }
 
   map = new maplibregl.Map({
@@ -1383,7 +1635,15 @@ onAuthStateChanged(auth, async (user) => {
     renderMunicipalBoundary(mapContext.mapBounds);
     renderLayerToggles(mapContext.organizationId);
     renderFilterChips();
+    map.addSource(SKETCH_SRC, { type: 'geojson', data: sketchGeoJson() });
+    map.addLayer({ id: `${SKETCH_SRC}-fill`, type: 'fill', source: SKETCH_SRC, filter: ['==', '$type', 'Polygon'], paint: { 'fill-color': '#38bdf8', 'fill-opacity': .16 } });
+    map.addLayer({ id: `${SKETCH_SRC}-line`, type: 'line', source: SKETCH_SRC, paint: { 'line-color': '#7dd3fc', 'line-width': 2.5, 'line-dasharray': [2, 1] } });
     loadVisibleLayers(mapContext.organizationId);
+  });
+  map.on('click', (event) => {
+    if (!sketchMode) return;
+    sketchPoints.push([event.lngLat.lng, event.lngLat.lat]);
+    updateSketch();
   });
   // STABILIZATION — sync markers immediately (cheap: repositions existing
   // DOM markers, only creates/removes when clustering itself changed), but

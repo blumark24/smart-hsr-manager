@@ -25,10 +25,10 @@ test('Street and Satellite are real independent basemaps; Satellite is the appro
   assert.match(source, /map\.setLayoutProperty\(SATELLITE_BASEMAP_LAYER_ID/);
 });
 
-test('reference-matched command chrome exposes product navigation, search, layers and honest snapshot state', () => {
-  assert.match(source, /class="product-switch"/);
-  assert.match(source, /class="product-tab active"[^>]*>الخريطة التشغيلية<\/button>/);
-  assert.match(source, /class="product-tab" id="openTwinBtn"[^>]*>التوأم الرقمي<\/button>/);
+test('government command chrome exposes branded product navigation, search, layers and honest snapshot state', () => {
+  assert.match(source, /class="brand-lockup"[^>]*><img src="Smart_HSR_Dashboard_Logo\.svg"/);
+  assert.match(source, /class="nav-link active"[^>]*>الخريطة التشغيلية<\/span>/);
+  assert.match(source, /class="nav-link" id="openTwinBtn"[^>]*>التوأم الرقمي<\/button>/);
   assert.match(source, /id="searchResults" role="listbox"/);
   assert.match(source, /function renderSearchResults\(query\)/);
   assert.match(source, /id="clearFiltersBtn"/);
@@ -36,6 +36,25 @@ test('reference-matched command chrome exposes product navigation, search, layer
   assert.match(source, /id="visibleEntityCount"/);
   assert.match(source, /آخر تحميل/);
   assert.doesNotMatch(source, />[^<]*(مباشر|لحظي)[^<]*</);
+});
+
+test('Geo Command Center contains compact KPIs, intelligence, tabbed controls, heatmap and truthful timeline', () => {
+  for (const id of ['kpiStrip', 'kpiTotal', 'kpiHigh', 'intelligencePanel', 'layersTab', 'filtersTab', 'heatmapToggle', 'timelinePanel', 'timelineRange']) {
+    assert.match(source, new RegExp(`id="${id}"`));
+  }
+  assert.match(source, /type: 'heatmap', source: OBS_HEAT_SRC/);
+  assert.match(source, /function configureTimeline\(\)/);
+  assert.match(source, /timestampMillis\(data\.createdAt\)/);
+  assert.match(source, /النطاق المرسوم مؤقت ومحلي وغير محفوظ/);
+  assert.doesNotMatch(source, /الفرق الميدانية النشطة/);
+  assert.doesNotMatch(source, /متوسط زمن الاستجابة/);
+});
+
+test('smart observation symbols encode category, status and real priority without generic-only pins', () => {
+  assert.match(source, /iconPaths = \{/);
+  assert.match(source, /--marker-status/);
+  assert.match(source, /priority-badge/);
+  assert.match(source, /category: data\.type \|\| 'UNKNOWN', priority/);
 });
 
 test('command cartography keeps MapLibre and the Twin boundary while glowing only real configured municipal bounds', () => {
