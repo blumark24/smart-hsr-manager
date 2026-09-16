@@ -46,6 +46,24 @@
   @keyframes hsrRise{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
   @keyframes hsrIn{0%{opacity:0}100%{opacity:1}}
   [data-f]:focus-visible{outline:2px solid #4cc9f0;outline-offset:2px;border-radius:8px}
+  /* Executive Map Card — a separate, lightweight municipal overview. The
+     canonical MapLibre Operational Map remains its own product. Leaflet's
+     internal panes reach z-index 400+, so every real card control must sit
+     above them explicitly instead of disappearing behind the basemap. */
+  .hsr-manager-map-shell{isolation:isolate;background:#dfe7e2}
+  .hsr-manager-map-canvas{z-index:1}
+  .hsr-manager-map-overlay{z-index:800!important}
+  .hsr-manager-map-shell .leaflet-control-attribution{font-size:8px;background:rgba(255,255,255,.88)!important;color:#52645b!important}
+  .hsr-manager-map-shell .leaflet-control-attribution a{color:#0f6e49!important}
+  .hsr-exec-marker{background:none!important;border:0!important}
+  .hsr-exec-pin{width:30px;height:38px;filter:drop-shadow(0 3px 5px rgba(9,30,20,.34));transition:transform .16s ease,filter .16s ease}
+  .hsr-exec-pin svg{display:block;width:30px;height:38px;overflow:visible}
+  .hsr-exec-marker.is-selected .hsr-exec-pin{transform:translateY(-3px) scale(1.14);filter:drop-shadow(0 5px 8px rgba(9,30,20,.42))}
+  .hsr-map-segment{height:28px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--glassTx,#a9bdd4);font-size:10px;font-weight:700;cursor:pointer}
+  .hsr-map-segment.is-active{background:var(--btn,#12855a);color:#fff;box-shadow:0 2px 8px rgba(7,72,46,.28)}
+  [data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightness(.7) saturate(.72) contrast(1.08)}
+  [data-theme="light"] .hsr-manager-map-shell .leaflet-tile-pane{filter:saturate(.82) contrast(.96)}
+  @media(max-width:760px){.hsr-exec-map-legend{display:none!important}.hsr-open-map-cta{right:8px!important;bottom:8px!important}.hsr-manager-map-shell .hsr-map-segment{padding:0 7px}}
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -413,15 +431,22 @@
           </div>
         </div>
 
-        <div ref="{{ mapShellRef }}" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);order:var(--twinOrd,0);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,auto);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
-          <div ref="{{ mapRef }}" aria-label="الخريطة التشغيلية للبلاغات الموثّقة" style="position:absolute;inset:0;background:var(--twinBg,#03060d)"></div>
+        <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);order:var(--twinOrd,0);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,auto);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+          <div ref="{{ mapRef }}" class="hsr-manager-map-canvas" aria-label="الخريطة التنفيذية للبلاغات الموثّقة" style="position:absolute;inset:0;background:var(--twinBg,#03060d)"></div>
 
-          <div dir="ltr" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
+          <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8)">
             <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
-            الخريطة التشغيلية · SMART HSR MAP · بلاغات موثّقة
+            <div style="display:flex;flex-direction:column;line-height:1.35">
+              <strong style="font-size:11px;color:var(--tx,#e9f1fb)">المشهد المكاني التنفيذي</strong>
+              <span style="font-size:9px;color:var(--glassTx,#a9c0d8)">المعروض مكانيًا: {{ mapPointCount }} بلاغ موثّق</span>
+            </div>
           </div>
 
-          <div style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+          <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+            <div role="group" aria-label="نوع الخريطة" style="display:flex;gap:2px;padding:3px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px))">
+              <button onClick="{{ setMapStreet }}" data-f="1" class="{{ mapStreetClass }}" aria-label="خريطة الشوارع">شوارع</button>
+              <button onClick="{{ setMapSatellite }}" data-f="1" class="{{ mapSatelliteClass }}" aria-label="صور الأقمار الصناعية">أقمار</button>
+            </div>
             <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز — احتواء كل البلاغات الموثّقة" title="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
             </button>
@@ -430,7 +455,7 @@
             </button>
           </div>
 
-          <div style="position:absolute;top:56px;left:12px;display:flex;flex-direction:column;gap:8px">
+          <div class="hsr-manager-map-overlay" style="position:absolute;top:68px;left:12px;display:flex;flex-direction:column;gap:8px">
             <div style="width:196px;position:relative">
               <input aria-label="ابحث في البلاغات الموثّقة" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -446,18 +471,23 @@
           </div>
 
           <sc-if value="{{ mapEmpty }}">
-            <div style="position:absolute;inset:0;z-index:4;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
+            <div class="hsr-manager-map-overlay" style="position:absolute;inset:0;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
               <div style="max-width:300px;padding:13px 16px;border-radius:12px;background:var(--glass,rgba(8,14,26,0.84));border:1px solid var(--glassBd,rgba(122,164,224,0.2));color:var(--glassTx,#c3d6ea);font-size:11px;line-height:1.7">{{ mapEmptyText }}</div>
             </div>
           </sc-if>
 
-          <div style="position:absolute;bottom:12px;left:14px;display:flex;align-items:center;gap:8px">
+          <div class="hsr-manager-map-overlay hsr-exec-map-legend" style="position:absolute;bottom:12px;left:14px;display:flex;align-items:center;gap:8px">
             <div style="display:flex;align-items:center;gap:13px;padding:7px 14px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.18));backdrop-filter:var(--blur,blur(16px))">
               <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444"></span>قيد الانتظار</span>
               <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#f5a524"></span>قيد المعالجة</span>
               <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#22c55e"></span>مكتمل</span>
             </div>
           </div>
+
+          <button onClick="{{ openCanonicalMap }}" data-f="1" class="hsr-manager-map-overlay hsr-open-map-cta" aria-label="فتح الخريطة التشغيلية الكاملة" style="position:absolute;bottom:12px;right:12px;height:34px;padding:0 13px;border-radius:9px;background:var(--btn,#12855a);border:1px solid var(--btnBd,rgba(9,80,52,.45));color:var(--btnTx,#fff);display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;cursor:pointer;box-shadow:0 5px 16px rgba(8,65,43,.25)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3h7v7M21 3l-9 9"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
+            فتح الخريطة التشغيلية
+          </button>
         </div>
 
         <div style="width:var(--prioW,272px);flex:none;order:var(--prioOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
@@ -641,13 +671,13 @@
               </div>
 
               <div style="display:flex;gap:14px;flex-wrap:var(--fsWrap,nowrap)">
-                <div ref="{{ mapShellRef }}" style="flex:1;min-width:280px;min-height:var(--fsMapH,420px);position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
-                  <div ref="{{ mapRef }}" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0"></div>
-                  <div dir="ltr" style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
+                <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1;min-width:280px;min-height:var(--fsMapH,420px);position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+                  <div ref="{{ mapRef }}" class="hsr-manager-map-canvas" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0"></div>
+                  <div dir="ltr" class="hsr-manager-map-overlay" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
                     <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
                     الخريطة التشغيلية · SMART HSR MAP
                   </div>
-                  <div style="position:absolute;top:12px;right:12px;z-index:5;display:flex;align-items:center;gap:7px">
+                  <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px">
                     <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}" style="height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#dbe6f5);font-size:10.5px;padding:0 8px;outline:none">
                       <option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option>
                     </select>
@@ -656,7 +686,7 @@
                     </button>
                   </div>
                   <sc-if value="{{ mapEmpty }}">
-                    <div style="position:absolute;inset:0;z-index:4;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
+                    <div class="hsr-manager-map-overlay" style="position:absolute;inset:0;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
                       <div style="max-width:300px;padding:13px 16px;border-radius:12px;background:var(--glass,rgba(8,14,26,0.84));border:1px solid var(--glassBd,rgba(122,164,224,0.2));color:var(--glassTx,#c3d6ea);font-size:11px;line-height:1.7">{{ mapEmptyText }}</div>
                     </div>
                   </sc-if>
@@ -822,15 +852,15 @@
             </sc-if>
 
             <sc-if value="{{ fsScreenIsMap }}">
-              <div ref="{{ mapShellRef }}" style="flex:1;min-height:var(--fsMapH,420px);position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
-                <div ref="{{ mapRef }}" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0"></div>
+              <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1;min-height:var(--fsMapH,420px);position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+                <div ref="{{ mapRef }}" class="hsr-manager-map-canvas" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0"></div>
 
-                <div dir="ltr" style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
+                <div dir="ltr" class="hsr-manager-map-overlay" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
                   <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
                   الخريطة التشغيلية · SMART HSR MAP
                 </div>
 
-                <div style="position:absolute;top:12px;right:12px;z-index:5;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 160px)">
+                <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 160px)">
                   <div style="width:190px;position:relative">
                     <input value="{{ search }}" onChange="{{ setSearch }}" aria-label="ابحث في أعمال الحصر على الخريطة" placeholder="الرقم، العنوان، المراقب..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -849,12 +879,12 @@
                 </div>
 
                 <sc-if value="{{ mapEmpty }}">
-                  <div style="position:absolute;inset:0;z-index:4;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
+                  <div class="hsr-manager-map-overlay" style="position:absolute;inset:0;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
                     <div style="max-width:300px;padding:13px 16px;border-radius:12px;background:var(--glass,rgba(8,14,26,0.84));border:1px solid var(--glassBd,rgba(122,164,224,0.2));color:var(--glassTx,#c3d6ea);font-size:11px;line-height:1.7">{{ mapEmptyText }}</div>
                   </div>
                 </sc-if>
 
-                <div style="position:absolute;bottom:12px;left:14px;display:flex;align-items:center;gap:8px">
+                <div class="hsr-manager-map-overlay" style="position:absolute;bottom:12px;left:14px;display:flex;align-items:center;gap:8px">
                   <div style="display:flex;align-items:center;gap:13px;padding:7px 14px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.18));backdrop-filter:var(--blur,blur(16px))">
                     <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444"></span>قيد الانتظار</span>
                     <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#f5a524"></span>قيد المعالجة</span>
@@ -2081,7 +2111,7 @@ class Component extends DCLogic {
     evidenceDrawerOpen: false, selectedObservation: null,
     evidenceBeforeState: 'idle', evidenceBeforeUrl: null,
     evidenceAfterState: 'idle', evidenceAfterUrl: null,
-    fs: false, mapMode: 'map', mapFilter: 'ALL',
+    fs: false, mapMode: 'map', mapFilter: 'ALL', mapBasemap: 'street',
     sel: null,
     quick: true, toast: '', bp: 'xl',
     view: 'home', search: '', dataState: 'loading', dataError: '',
@@ -2324,7 +2354,7 @@ class Component extends DCLogic {
   // removed node.
   bindMapContainer(el) {
     if (el === this.mapEl) return;
-    if (this._opMap) { this._opMap.remove(); this._opMap = null; this._opMarkers = null; this._mapSignature = ''; }
+    if (this._opMap) { this._opMap.remove(); this._opMap = null; this._opMarkers = null; this._opBasemaps = null; this._activeOpBasemap = null; this._mapSignature = ''; }
     this.mapEl = el;
     if (el) this.syncOperationalMap(true);
   }
@@ -2352,10 +2382,18 @@ class Component extends DCLogic {
     if (!this.mapEl || this._opMap || !window.L) return;
     const L = window.L;
     this._opMap = L.map(this.mapEl, { zoomControl: false, attributionControl: true, preferCanvas: true }).setView([0, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(this._opMap);
+    this._opBasemaps = {
+      street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }),
+      satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Esri, Maxar, Earthstar Geographics, GIS User Community'
+      })
+    };
+    this._opBasemaps[this.state.mapBasemap || 'street'].addTo(this._opMap);
+    this._activeOpBasemap = this.state.mapBasemap || 'street';
     this._opMarkers = L.layerGroup().addTo(this._opMap);
     this._opMarkerById = new Map();
   }
@@ -2366,6 +2404,7 @@ class Component extends DCLogic {
     this.initOperationalMap();
     if (!this._opMap || !this._opMarkers || !window.L) return;
     const L = window.L;
+    this.syncExecutiveBasemap();
     const points = this.operationalObservations();
     const signature = points.map(item => `${item.id}:${item.status}:${item.coordinates.lat}:${item.coordinates.lng}`).join('|');
     if (forceFit || this._mapSignature !== signature) {
@@ -2374,8 +2413,15 @@ class Component extends DCLogic {
       const colors = this.constructor.OBSERVATION_MARKER_COLORS;
       const bounds = [];
       points.forEach(item => {
-        const marker = L.circleMarker([item.coordinates.lat, item.coordinates.lng], {
-          radius: 8, color: colors[item.status] || '#64748b', weight: 2, fillColor: colors[item.status] || '#64748b', fillOpacity: 0.78
+        const color = colors[item.status] || '#64748b';
+        const marker = L.marker([item.coordinates.lat, item.coordinates.lng], {
+          title: item.title || item.displayId || 'بلاغ ميداني',
+          keyboard: true,
+          icon: L.divIcon({
+            className: 'hsr-exec-marker',
+            iconSize: [30, 38], iconAnchor: [15, 36], popupAnchor: [0, -33],
+            html: `<div class="hsr-exec-pin" aria-hidden="true"><svg viewBox="0 0 30 38"><path d="M15 37C15 37 3 22.7 3 14.6C3 7.7 8.7 2 15 2C21.3 2 27 7.7 27 14.6C27 22.7 15 37 15 37Z" fill="${color}" stroke="#fff" stroke-width="2.2"/><circle cx="15" cy="14.6" r="5.2" fill="#fff"/><circle cx="15" cy="14.6" r="2.2" fill="${color}"/></svg></div>`
+          })
         });
         marker.bindPopup(() => this.buildObservationPopup(item), { maxWidth: 264, className: 'hsr-map-popup' });
         // Selection is tracked OUTSIDE React state (a plain instance field)
@@ -2393,7 +2439,11 @@ class Component extends DCLogic {
         this._opMarkerById.set(item.id, marker);
         bounds.push([item.coordinates.lat, item.coordinates.lng]);
       });
-      if (bounds.length) this._opMap.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
+      // A single verified point is an operational location, not a regional
+      // overview. Leaflet's degenerate fitBounds result previously left the
+      // Mayor looking at half a province with one meaningless red dot.
+      if (bounds.length === 1) this._opMap.setView(bounds[0], 15, { animate: false });
+      else if (bounds.length > 1) this._opMap.fitBounds(bounds, { padding: [56, 56], maxZoom: 15 });
       this._mapSignature = signature;
       setTimeout(() => this._opMap?.invalidateSize(), 60);
     }
@@ -2404,13 +2454,31 @@ class Component extends DCLogic {
     if (!this._opMarkerById) return;
     this._opMarkerById.forEach((marker, id) => {
       const isSel = this._selectedMapId === id;
-      marker.setStyle({ radius: isSel ? 11 : 8, weight: isSel ? 3 : 2 });
+      const element = marker.getElement && marker.getElement();
+      if (element) element.classList.toggle('is-selected', isSel);
+      if (marker.setZIndexOffset) marker.setZIndexOffset(isSel ? 1000 : 0);
     });
+  }
+
+  syncExecutiveBasemap() {
+    if (!this._opMap || !this._opBasemaps) return;
+    const next = this.state.mapBasemap === 'satellite' ? 'satellite' : 'street';
+    if (this._activeOpBasemap === next && this._opMap.hasLayer(this._opBasemaps[next])) return;
+    Object.entries(this._opBasemaps).forEach(([key, layer]) => {
+      if (key !== next && this._opMap.hasLayer(layer)) this._opMap.removeLayer(layer);
+    });
+    if (!this._opMap.hasLayer(this._opBasemaps[next])) this._opBasemaps[next].addTo(this._opMap);
+    this._activeOpBasemap = next;
   }
 
   resetOperationalMap() {
     this._mapSignature = '';
     this.syncOperationalMap(true);
+  }
+
+  setExecutiveBasemap(next) {
+    if (!['street', 'satellite'].includes(next) || next === this.state.mapBasemap) return;
+    this.setState({ mapBasemap: next });
   }
 
   // Real, client-side-only UX gating (the server independently re-enforces
@@ -2447,6 +2515,10 @@ class Component extends DCLogic {
     if (!geo) return;
     const { url } = geo.continuity.buildContinuityUrl('/operational-map.html' + location.search, this.buildGeoContinuityContext(item));
     if (url) location.href = url;
+  }
+
+  openCanonicalOperationalMap() {
+    this.openOperationalMapForObservation(null);
   }
 
   // The Leaflet popup content is built imperatively (a real DOM node with
@@ -3225,6 +3297,9 @@ class Component extends DCLogic {
       showQuick: st.quick && this.props.showQuickActions !== false,
       hasToast: !!st.toast, toast: st.toast,
       mapFilter: st.mapFilter,
+      mapPointCount: String(mapPoints.length),
+      mapStreetClass: 'hsr-map-segment' + (st.mapBasemap === 'street' ? ' is-active' : ''),
+      mapSatelliteClass: 'hsr-map-segment' + (st.mapBasemap === 'satellite' ? ' is-active' : ''),
       mapEmpty: !mapPoints.length,
       mapEmptyDisplay: !mapPoints.length ? 'flex' : 'none',
       mapEmptyText,
@@ -3347,6 +3422,9 @@ class Component extends DCLogic {
       zIn: () => this.zoomMap(1),
       zOut: () => this.zoomMap(-1),
       resetView: () => this.resetMapView(),
+      setMapStreet: () => this.setExecutiveBasemap('street'),
+      setMapSatellite: () => this.setExecutiveBasemap('satellite'),
+      openCanonicalMap: () => this.openCanonicalOperationalMap(),
       hideQuick: () => this.setState({ quick: false }),
       goSurvey: () => this.goRoute('survey'),
       goMobility: () => this.goRoute('mobility'),

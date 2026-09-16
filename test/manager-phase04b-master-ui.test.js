@@ -82,11 +82,12 @@ test('D. the dedicated "الخريطة التشغيلية" screen renders inside
 });
 
 // ---- E. Map sources exclusively from operationalObservations()/real coordinates ----
-test('E. the map marker pipeline is unchanged: operationalObservations() filters to items with real coordinates, syncOperationalMap() draws real L.circleMarker from them', () => {
+test('E. the map marker pipeline uses only real coordinates and accessible municipal pins', () => {
   const fn = methodBody(manager, 'operationalObservations() {', 500);
   assert.match(fn, /if \(!item\.coordinates\) return false;/);
-  const sync = methodBody(manager, 'syncOperationalMap(forceFit = false) {', 1400);
-  assert.match(sync, /L\.circleMarker\(\[item\.coordinates\.lat, item\.coordinates\.lng\]/);
+  const sync = methodBody(manager, 'syncOperationalMap(forceFit = false) {', 3200);
+  assert.match(sync, /L\.marker\(\[item\.coordinates\.lat, item\.coordinates\.lng\]/);
+  assert.match(sync, /L\.divIcon\(/);
   assert.match(sync, /this\.operationalObservations\(\)/);
 });
 

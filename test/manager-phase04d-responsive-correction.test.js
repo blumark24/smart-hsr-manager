@@ -47,7 +47,7 @@ test('A. the Field Survey executive screen map shell carries min-height:var(--fs
   // the already-correct dedicated map screen must be untouched and keep the same pattern
   const mapScreenStart = block.indexOf('sc-if value="{{ fsScreenIsMap }}"');
   const mapScreenShell = block.slice(mapScreenStart, mapScreenStart + 2500);
-  assert.match(mapScreenShell, /ref="\{\{ mapShellRef \}\}" style="flex:1;min-height:var\(--fsMapH,420px\)/);
+  assert.match(mapScreenShell, /ref="\{\{ mapShellRef \}\}" class="hsr-manager-map-shell" style="flex:1;min-height:var\(--fsMapH,420px\)/);
 });
 
 // ---- B. HIGH-02: mobile header responsive contract ----
@@ -128,8 +128,9 @@ test('F. bindMapContainer/initOperationalMap/syncOperationalMap/operationalObser
   assert.match(init, /if \(!this\.mapEl \|\| this\._opMap \|\| !window\.L\) return;/);
   assert.equal((manager.match(/L\.map\(this\.mapEl/g) || []).length, 1);
 
-  const sync = methodBody(manager, 'syncOperationalMap(forceFit = false) {', 1400);
-  assert.match(sync, /L\.circleMarker\(\[item\.coordinates\.lat, item\.coordinates\.lng\]/);
+  const sync = methodBody(manager, 'syncOperationalMap(forceFit = false) {', 3200);
+  assert.match(sync, /L\.marker\(\[item\.coordinates\.lat, item\.coordinates\.lng\]/);
+  assert.match(sync, /L\.divIcon\(/);
   assert.match(sync, /this\.operationalObservations\(\)/);
 
   const obs = methodBody(manager, 'operationalObservations() {', 500);
