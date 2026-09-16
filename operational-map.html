@@ -11,96 +11,93 @@
 <script src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="geo-core.bundle.js"></script>
 <style>
-  /* SMART HSR Hybrid Municipal GIS — calm, light-first operational chrome.
-     The map remains a real MapLibre GIS surface; branding is intentionally
-     restrained so streets, labels, municipal geometry and status data stay
-     visually dominant. Night remains available for control-room use. */
+  /* SMART HSR Operational Command Map — reference-matched spatial HUD.
+     This is still the canonical 2D MapLibre product. The Twin control is a
+     continuity link to the separate Cesium product, never a fake in-map 3D
+     mode. Every visible entity and boundary remains backed by real data. */
   :root{
-    color-scheme:light;
-    --app-bg:#f3f6f4; --surface:#ffffff; --text:#13231c; --text-2:#40554b; --text-muted:#64766d;
-    --border:#cfdad4; --border-subtle:#e5ebe7;
-    --panel:#ffffff; --panel-border:#d7e1db; --pop:#ffffff; --pop-border:#d7e1db;
-    --accent:#0f7a50; --accent-2:#095f3d;
-    --green:#0f7a50; --green-hover:#095f3d; --green-soft:#e7f4ed;
-    --warning:#a86406; --warning-soft:#fff4dc;
-    --danger:#bd342d; --danger-2:#a82e28; --danger-soft:#fdecea;
-    --btn:#0f7a50; --btn-border:#0f7a50;
-    --status-pending:#ef4444; --status-progress:#f5a524; --status-done:#22c55e; --status-neutral:#64748b;
-    --page-bg:#f3f6f4; --control-shadow:0 2px 10px rgba(23,45,34,.12);
-  }
-  html[data-theme="dark"]{
     color-scheme:dark;
-    --app-bg:#0f1824; --surface:#172231; --text:#edf3f0; --text-2:#b4c2ba; --text-muted:#8fa097;
-    --border:#344456; --border-subtle:#263545;
-    --panel:#172231; --panel-border:#334356; --pop:#172231; --pop-border:#334356;
-    --accent:#5fd09a; --accent-2:#8ce3b6;
-    --green:#39b77b; --green-hover:#62c995; --green-soft:#193e31;
-    --warning:#e5a43d; --warning-soft:#3b3021;
-    --danger:#f1746d; --danger-2:#fa918b; --danger-soft:#432825;
-    --btn:#16865a; --btn-border:#25976b;
-    --page-bg:#0f1824; --control-shadow:0 3px 14px rgba(0,0,0,.3);
+    --app-bg:#061827; --surface:rgba(7,28,47,.88); --text:#f4fbff; --text-2:#c2d5df; --text-muted:#83a1b1;
+    --border:rgba(134,192,222,.32); --border-subtle:rgba(134,192,222,.14);
+    --panel:rgba(5,25,43,.9); --panel-border:rgba(97,184,222,.42); --pop:rgba(5,25,43,.94); --pop-border:rgba(97,184,222,.4);
+    --accent:#18e876; --accent-2:#00b95a;
+    --green:#0bd568; --green-hover:#18ec79; --green-soft:rgba(12,211,102,.14);
+    --warning:#ff9f1c; --warning-soft:rgba(255,159,28,.15);
+    --danger:#ff3f4c; --danger-2:#ff6771; --danger-soft:rgba(255,63,76,.14);
+    --btn:#05ba5b; --btn-border:#20ed80;
+    --status-pending:#ef4444; --status-progress:#f5a524; --status-done:#22c55e; --status-neutral:#64748b;
+    --page-bg:#061827; --control-shadow:0 10px 28px rgba(0,9,20,.45),inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  html[data-theme="light"]{
+    color-scheme:light;--app-bg:#dce8e4;--surface:rgba(250,255,253,.92);--text:#10271d;--text-2:#365347;--text-muted:#667d72;
+    --border:rgba(31,111,77,.25);--border-subtle:rgba(31,111,77,.12);--panel:rgba(248,253,251,.94);--panel-border:rgba(31,111,77,.28);
+    --pop:rgba(248,253,251,.96);--pop-border:rgba(31,111,77,.25);--green-soft:rgba(15,122,80,.1);--page-bg:#dce8e4;
+    --control-shadow:0 10px 28px rgba(20,54,39,.2),inset 0 1px 0 rgba(255,255,255,.7)
   }
   *{box-sizing:border-box} html,body{margin:0;padding:0;height:100%;background:var(--app-bg);color:var(--text);
     font-family:"IBM Plex Sans Arabic","Noto Sans Arabic",system-ui,sans-serif}
   #authLoading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--page-bg);color:var(--text);z-index:100}
   #appShell.hidden,#authLoading.hidden{display:none}
-  #appShell{display:flex;flex-direction:column;height:100vh;background:var(--page-bg)}
-  header{display:flex;align-items:center;gap:.65rem;padding:.65rem .9rem;flex-wrap:wrap;flex:none;
-    background:var(--panel);border-bottom:1px solid var(--panel-border);box-shadow:0 1px 4px rgba(23,45,34,.08);z-index:30}
-  .product-title{display:flex;flex-direction:column;min-width:150px;line-height:1.25}
-  .product-title strong{font-size:14px;color:var(--text)}
-  .product-title span{font-size:10.5px;color:var(--text-muted)}
-  header .spacer{flex:1;min-width:0}
-  .search-shell{position:relative;flex:1;max-width:420px;min-width:220px}
-  #searchInput{width:100%;height:38px;padding:0 .85rem;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;outline:none}
-  #searchInput:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+  #appShell{height:100vh;background:var(--page-bg);overflow:hidden}
+  header{position:absolute;top:18px;left:18px;right:18px;z-index:30;display:grid;grid-template-columns:auto minmax(220px,420px) auto;align-items:center;gap:12px;direction:ltr;pointer-events:none}
+  header>*{pointer-events:auto;direction:rtl}
+  .product-switch{display:flex;align-items:center;gap:3px;padding:5px;border:1px solid rgba(157,218,245,.58);border-radius:26px;background:rgba(8,28,48,.76);box-shadow:0 0 18px rgba(65,182,238,.28),inset 0 0 14px rgba(72,173,222,.12);backdrop-filter:blur(16px)}
+  .product-tab{height:42px;min-width:148px;padding:0 20px;border:0;border-radius:21px;background:transparent;color:#e6f4fb;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+  .product-tab.active{background:linear-gradient(180deg,#25d967,#06ad53);border:1px solid #54f394;color:#fff;box-shadow:0 0 18px rgba(13,231,111,.64),inset 0 1px 0 rgba(255,255,255,.34)}
+  .search-shell{position:relative;justify-self:center;width:min(100%,420px)}
+  #searchInput{width:100%;height:44px;padding:0 42px 0 15px;border:1px solid var(--border);border-radius:22px;background:rgba(5,25,43,.82);color:var(--text);font:inherit;font-size:12.5px;outline:none;box-shadow:var(--control-shadow);backdrop-filter:blur(14px)}
+  .search-shell:before{content:'⌕';position:absolute;right:17px;top:7px;z-index:1;color:#a7c3d1;font-size:21px}
+  #searchInput:focus{border-color:rgba(42,230,131,.72);box-shadow:0 0 0 3px rgba(19,224,115,.13),var(--control-shadow)}
   #searchResults{position:absolute;top:calc(100% + 6px);right:0;left:0;display:none;max-height:280px;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--control-shadow);padding:5px;z-index:60}
   #searchResults.open{display:block}
   .search-result{display:block;width:100%;border:0;background:transparent;color:var(--text);padding:.6rem .7rem;border-radius:7px;text-align:right;font:inherit;font-size:12px;cursor:pointer}
   .search-result:hover,.search-result:focus{background:var(--green-soft);outline:none}
   .search-empty{padding:.65rem;color:var(--text-muted);font-size:12px}
-  button.geo-btn{min-height:36px;padding:.45rem .75rem;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);font:inherit;font-weight:600;font-size:12px;cursor:pointer}
+  .header-tools{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+  button.geo-btn{min-height:42px;padding:.45rem .8rem;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);font:inherit;font-weight:700;font-size:12px;cursor:pointer;box-shadow:var(--control-shadow);backdrop-filter:blur(14px)}
   button.geo-btn:hover{color:var(--text);border-color:var(--green)}
   button.geo-btn.primary{background:var(--btn);border-color:var(--btn-border);color:#fff}
-  .segmented{display:flex;gap:2px;padding:3px;border:1px solid var(--border);border-radius:9px;background:var(--app-bg)}
-  .segment{height:30px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--text-muted);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer}
-  .segment.active{background:var(--surface);color:var(--green);box-shadow:0 1px 4px rgba(23,45,34,.12)}
-  main{flex:1;min-height:0;position:relative;display:flex;overflow:hidden;background:var(--app-bg)}
-  #map{flex:1;min-width:0;background:#dfe7e2}
-  .maplibregl-ctrl-top-left{top:12px !important;left:12px !important;display:flex;flex-direction:column;gap:7px}
-  .maplibregl-ctrl-group{background:var(--surface) !important;border:1px solid var(--border) !important;border-radius:9px !important;overflow:hidden;box-shadow:var(--control-shadow) !important}
-  .maplibregl-ctrl-group button{width:36px !important;height:34px !important;background:transparent !important}
+  .segmented{display:flex;gap:2px;padding:4px;border:1px solid var(--border);border-radius:13px;background:rgba(5,25,43,.82);box-shadow:var(--control-shadow)}
+  .segment{height:34px;padding:0 11px;border:0;border-radius:9px;background:transparent;color:var(--text-muted);font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+  .segment.active{background:linear-gradient(180deg,#16c966,#07934a);color:#fff;box-shadow:0 0 11px rgba(15,220,105,.32)}
+  main{position:absolute;inset:0;overflow:hidden;background:var(--app-bg)}
+  #map{position:absolute;inset:0;background:#071b27}
+  main:after{content:'';position:absolute;inset:0;pointer-events:none;z-index:4;box-shadow:inset 0 0 85px rgba(0,20,35,.56);border:1px solid rgba(72,184,230,.25)}
+  .maplibregl-ctrl-top-left{top:88px !important;left:16px !important;display:flex;flex-direction:column;gap:8px}
+  .maplibregl-ctrl-group{background:rgba(7,29,49,.88) !important;border:1px solid rgba(129,194,224,.4) !important;border-radius:12px !important;overflow:hidden;box-shadow:var(--control-shadow) !important;backdrop-filter:blur(12px)}
+  .maplibregl-ctrl-group button{width:42px !important;height:42px !important;background:transparent !important}
   .maplibregl-ctrl-group button + button{border-top:1px solid var(--border-subtle) !important}
   .maplibregl-ctrl-icon{filter:var(--ctrl-icon-filter,none)}
-  html[data-theme="dark"] .maplibregl-ctrl-icon{filter:invert(1) brightness(1.6)}
+  .maplibregl-ctrl-icon{filter:invert(1) brightness(1.8) !important}
   .maplibregl-ctrl button:not(:disabled):hover{background:var(--green-soft) !important}
   .maplibregl-ctrl-attrib{background:var(--surface) !important;color:var(--text-muted) !important;border-radius:7px !important}
   .maplibregl-ctrl-attrib a{color:var(--text-2) !important}
   .maplibregl-ctrl-fullscreen,.maplibregl-ctrl-geolocate{color:var(--text-2)}
-  #rightPanel{position:absolute;top:12px;right:12px;z-index:10;width:252px;max-width:calc(100% - 24px)}
+  #rightPanel{position:absolute;top:86px;right:16px;z-index:10;width:270px;max-width:calc(100% - 32px)}
   #rightPanelToggle{display:inline-flex}
   #rightPanel.collapsed #layerPanel{display:none}
-  #layerPanel{background:var(--pop);border:1px solid var(--pop-border);color:var(--text);
-    border-radius:10px;padding:.75rem;box-shadow:var(--control-shadow);max-height:calc(100vh - 112px);overflow:auto}
+  #layerPanel{background:linear-gradient(160deg,rgba(5,27,46,.94),rgba(5,20,35,.91));border:1px solid var(--pop-border);color:var(--text);
+    border-radius:18px;padding:.85rem;box-shadow:0 18px 46px rgba(0,8,18,.48),inset 0 1px 0 rgba(255,255,255,.06);max-height:calc(100vh - 110px);overflow:auto;backdrop-filter:blur(17px)}
   .panel-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding-bottom:.6rem;border-bottom:1px solid var(--border-subtle)}
   #layerPanel h2{font-size:12.5px;margin:0;color:var(--text);font-weight:800}
   .clear-filters{border:0;background:transparent;color:var(--green);font:inherit;font-size:10.5px;font-weight:700;cursor:pointer}
   .layer-row{display:flex;align-items:center;gap:.55rem;padding:.4rem .3rem;border-radius:9px;font-size:12px;color:var(--text-2)}
   .layer-row:hover{background:var(--green-soft)}
-  .layer-row input{width:15px;height:15px;accent-color:var(--accent)}
+  .layer-row input{appearance:none;width:34px;height:19px;border-radius:10px;background:#324756;border:1px solid rgba(255,255,255,.12);position:relative;cursor:pointer;flex:none;transition:.18s ease}
+  .layer-row input:after{content:'';position:absolute;width:13px;height:13px;top:2px;left:3px;border-radius:50%;background:#dce8ee;transition:.18s ease}
+  .layer-row input:checked{background:linear-gradient(90deg,#08ac52,#28e677);box-shadow:0 0 10px rgba(22,222,111,.34)}
+  .layer-row input:checked:after{left:16px;background:#fff}
   .layer-row .swatch{width:10px;height:10px;border-radius:3px;flex:none}
   .panel-section-title{font-size:11px;font-weight:700;color:var(--text);margin:.7rem .2rem .4rem;padding-top:.5rem;border-top:1px solid var(--border-subtle)}
   #filterChips{display:flex;flex-direction:column;gap:.3rem}
   .status-row{display:flex;align-items:center;gap:.5rem;padding:.4rem .3rem;border-radius:9px;font-size:12px;color:var(--text-2);cursor:pointer;border:1px solid transparent;background:transparent;width:100%;text-align:right;font:inherit}
   .status-row:hover{background:var(--green-soft)}
-  .status-row.active{background:var(--green-soft);border-color:#a7ceb8;color:var(--text)}
+  .status-row.active{background:var(--green-soft);border-color:rgba(40,231,127,.35);color:var(--text)}
   .status-row .dot{width:8px;height:8px;border-radius:50%;flex:none}
   .status-row .count{margin-inline-start:auto;font-size:11px;font-weight:600;color:var(--text-muted);font-variant-numeric:tabular-nums}
   .geo-filter-select{width:100%;margin-top:.4rem;height:32px;padding:0 .5rem;border:1px solid var(--border);border-radius:8px;
     background:var(--app-bg);color:var(--text);font:inherit;font-size:12px}
-  @media(max-width:900px){
-    #rightPanel:not(.expanded) #layerPanel{display:none}
-  }
+  @media(max-width:900px){#rightPanel:not(.expanded) #layerPanel{display:none}}
   #entityCard{position:absolute;bottom:0;right:0;left:0;z-index:20;background:var(--pop);color:var(--text);border-top:1px solid var(--pop-border);
     border-radius:12px 12px 0 0;padding:1rem;transform:translateY(100%);transition:transform .2s ease;max-height:60vh;overflow:auto;box-shadow:0 -8px 24px rgba(23,45,34,.14)}
   #entityCard.open{transform:translateY(0)}
@@ -124,14 +121,14 @@
      (matches the reference exactly: the popup stays light/white even in
      Night mode for maximum contrast against satellite imagery, only the
      surrounding chrome switches theme). Never the full detail panel. */
-  .maplibregl-popup{max-width:280px !important;z-index:15}
+  .maplibregl-popup{max-width:320px !important;z-index:15}
   .maplibregl-popup-content{background:#ffffff;color:#0b1a15;border:1px solid rgba(15,23,42,.08);
-    border-radius:10px;padding:0;box-shadow:0 12px 30px rgba(15,35,25,.24);font-family:inherit;overflow:hidden}
+    border-radius:14px;padding:0;box-shadow:0 18px 42px rgba(0,12,22,.42),0 0 0 1px rgba(255,255,255,.42);font-family:inherit;overflow:hidden}
   .maplibregl-popup-tip{border-top-color:#ffffff !important;border-bottom-color:#ffffff !important}
   .maplibregl-popup-close-button{font-size:16px;color:#586b61;top:6px;inset-inline-end:8px}
   .geo-popup{display:flex;flex-direction:column}
   .geo-popup .popup-body{display:flex;gap:.6rem;padding:.75rem .8rem .5rem}
-  .geo-popup .popup-thumb{width:52px;height:52px;flex:none;border-radius:10px;background:#eef2ef center/cover no-repeat;overflow:hidden}
+  .geo-popup .popup-thumb{width:88px;height:76px;flex:none;border-radius:10px;background:#eef2ef center/cover no-repeat;overflow:hidden}
   .geo-popup .popup-main{flex:1;min-width:0}
   .geo-popup h3{font-size:13px;font-weight:700;margin:0 0 .25rem;color:#0b1a15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .geo-popup .popup-sub{font-size:10.5px;color:#586b61;margin-bottom:.4rem}
@@ -155,27 +152,26 @@
      drives every marker, only the RENDERING is DOM so a real numeric
      cluster count and a teardrop pin shape are possible without adding an
      external glyphs/font-server dependency). */
-  .geo-marker{width:30px;height:38px;cursor:pointer}
-  .geo-marker svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+  .geo-marker{width:30px;height:38px;cursor:pointer;filter:drop-shadow(0 0 7px rgba(255,255,255,.24))}
+  .geo-marker svg{display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.48))}
   .geo-marker.selected{outline:3px solid #fff;outline-offset:2px;border-radius:50%}
   .geo-cluster{width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
     color:#fff;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;border:2px solid #fff;
-    box-shadow:0 3px 9px rgba(0,0,0,.28)}
+    box-shadow:0 0 0 7px var(--cluster-ring),0 0 19px var(--cluster-ring),0 4px 12px rgba(0,0,0,.42)}
   .geo-legend{display:flex;flex-direction:column;gap:.35rem}
   .geo-legend .row{display:flex;align-items:center;gap:.5rem;font-size:11px;color:var(--text-2)}
   .geo-legend .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .panel-close{width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:var(--text-muted);font-size:19px;cursor:pointer}
   @media(max-width:760px){
-    header{padding:.55rem .65rem;gap:.5rem}
-    .product-title{min-width:auto}
-    .product-title span{display:none}
-    .search-shell{order:3;min-width:100%;max-width:none}
-    .segmented{margin-inline-start:auto}
+    header{top:8px;left:8px;right:8px;grid-template-columns:1fr auto;gap:7px}
+    .product-switch{padding:3px}.product-tab{height:36px;min-width:112px;padding:0 12px;font-size:11.5px}
+    .search-shell{grid-column:1/-1;grid-row:2;width:100%}.header-tools{gap:5px}.hide-mobile{display:none!important}
+    .segmented .segment{padding:0 7px}.maplibregl-ctrl-top-left{top:112px!important;left:8px!important}
     #rightPanel{top:auto;right:8px;left:8px;bottom:8px;width:auto;max-width:none}
     #layerPanel{max-height:58vh;border-radius:12px}
     #mapSummary{right:8px;bottom:8px}
     #rightPanel.expanded ~ #mapSummary{display:none}
     #attributionNote{display:none}
-    .hide-mobile{display:none}
   }
 </style>
 </head>
@@ -183,33 +179,34 @@
   <div id="authLoading"><div>...جارٍ التحقق</div></div>
   <div id="appShell" class="hidden">
     <header>
-      <div class="product-title">
-        <strong>الخريطة التشغيلية</strong>
-        <span>SMART HSR · مركز العمليات البلدية</span>
+      <div class="product-switch" role="navigation" aria-label="المنتجات المكانية">
+        <button class="product-tab active" type="button" aria-current="page">الخريطة التشغيلية</button>
+        <button class="product-tab" id="openTwinBtn" type="button" hidden>التوأم الرقمي</button>
       </div>
       <div class="search-shell">
         <input id="searchInput" type="search" autocomplete="off" placeholder="ابحث برقم البلاغ أو المنشأة أو المبنى…" aria-label="بحث" aria-controls="searchResults" aria-expanded="false">
         <div id="searchResults" role="listbox" aria-label="نتائج البحث"></div>
       </div>
-      <div class="spacer"></div>
-      <div class="segmented" id="basemapControl" role="group" aria-label="نوع الخريطة">
-        <button class="segment active" type="button" data-basemap="street" aria-pressed="true">الشوارع</button>
-        <button class="segment" type="button" data-basemap="satellite" aria-pressed="false">الأقمار</button>
+      <div class="header-tools">
+        <div class="segmented" id="basemapControl" role="group" aria-label="نوع الخريطة">
+          <button class="segment" type="button" data-basemap="street" aria-pressed="false">شوارع</button>
+          <button class="segment active" type="button" data-basemap="satellite" aria-pressed="true">أقمار</button>
+        </div>
+        <button class="geo-btn" id="rightPanelToggle" aria-label="إظهار أو إخفاء طبقات الخريطة" aria-expanded="true" title="طبقات الخريطة">▱ الطبقات</button>
+        <button class="geo-btn" id="themeToggleBtn" aria-label="تفعيل الوضع النهاري" title="الوضع النهاري">☀</button>
+        <button class="geo-btn hide-mobile" id="logoutBtn" title="تسجيل الخروج">خروج</button>
       </div>
-      <button class="geo-btn" id="rightPanelToggle" aria-label="إظهار أو إخفاء الطبقات والتصفية" aria-expanded="false">الطبقات والفلاتر</button>
-      <button class="geo-btn" id="themeToggleBtn" aria-label="تفعيل الوضع الليلي">الوضع الليلي</button>
-      <button class="geo-btn" id="openTwinBtn" hidden>التوأم الرقمي</button>
-      <button class="geo-btn hide-mobile" id="logoutBtn">تسجيل الخروج</button>
     </header>
     <main>
       <div id="map" role="application" aria-label="الخريطة التشغيلية"></div>
       <div id="rightPanel">
         <div id="layerPanel">
           <div class="panel-head">
-            <h2>الطبقات والفلاتر</h2>
-            <button class="clear-filters" id="clearFiltersBtn" type="button">مسح الفلاتر</button>
+            <button class="panel-close" id="panelCloseBtn" type="button" aria-label="إغلاق لوحة الطبقات">×</button>
+            <h2>طبقات الخريطة</h2>
+            <button class="clear-filters" id="clearFiltersBtn" type="button">مسح</button>
           </div>
-          <div class="panel-section-title">البيانات المعروضة</div>
+          <div class="panel-section-title">البيانات التشغيلية</div>
           <div id="layerList"></div>
           <div class="panel-section-title">حالة البلاغات</div>
           <div id="filterChips"></div>
@@ -259,17 +256,17 @@ if (isLocalHost && new URLSearchParams(location.search).get('useEmulators') === 
 // geographic imagery — so UI/interaction acceptance can proceed.
 const useLocalBasemap = isLocalHost && new URLSearchParams(location.search).get('localBasemap') === '1';
 
-// Light-first for daily municipal work; Night is an explicit, persisted
-// control-room choice rather than an operating-system side effect.
+// The approved operational-command reference is satellite + Night first.
+// Day remains an explicit persisted choice for field/daylight use.
 const THEME_KEY = 'smartHsrGeoTheme';
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const btn = document.getElementById('themeToggleBtn');
   const dark = theme === 'dark';
-  btn.textContent = dark ? 'الوضع النهاري' : 'الوضع الليلي';
+  btn.textContent = dark ? '☀' : '☾';
   btn.setAttribute('aria-label', dark ? 'تفعيل الوضع النهاري' : 'تفعيل الوضع الليلي');
 }
-applyTheme(localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light');
+applyTheme(localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark');
 document.getElementById('themeToggleBtn').addEventListener('click', () => {
   const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   applyTheme(next); localStorage.setItem(THEME_KEY, next);
@@ -277,7 +274,7 @@ document.getElementById('themeToggleBtn').addEventListener('click', () => {
 });
 
 const BASEMAP_KEY = 'smartHsrOperationalBasemap';
-let activeBasemap = localStorage.getItem(BASEMAP_KEY) === 'satellite' ? 'satellite' : 'street';
+let activeBasemap = localStorage.getItem(BASEMAP_KEY) === 'street' ? 'street' : 'satellite';
 
 // Same self-lookup role-resolution pattern already used independently by
 // manager-operations.html/dashboard.html/mobile-map.html (each page reads
@@ -1063,6 +1060,13 @@ document.getElementById('rightPanelToggle').addEventListener('click', () => {
   document.getElementById('rightPanelToggle').setAttribute('aria-expanded', String(expanded));
 });
 
+document.getElementById('panelCloseBtn').addEventListener('click', () => {
+  const panel = document.getElementById('rightPanel');
+  if (matchMedia('(max-width: 900px)').matches) panel.classList.remove('expanded');
+  else panel.classList.add('collapsed');
+  document.getElementById('rightPanelToggle').setAttribute('aria-expanded', 'false');
+});
+
 function syncLayerPanelForViewport() {
   const panel = document.getElementById('rightPanel');
   const toggle = document.getElementById('rightPanelToggle');
@@ -1196,18 +1200,19 @@ document.querySelectorAll('[data-basemap]').forEach((button) => {
 syncBasemapControl();
 if (useLocalBasemap) document.getElementById('basemapControl').hidden = true;
 
-// Mild, legibility-first Night treatment. There is deliberately no hue
-// rotation or cinematic vignette: status colors and map labels remain stable.
+// Reference-matched Night treatment: dark enough for luminous operational
+// geometry, but without hue rotation so real imagery and status colors stay
+// semantically trustworthy.
 function applyBasemapTheme() {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
   const layerIds = useLocalBasemap ? [SANDBOX_BASEMAP_LAYER_ID] : [STREET_BASEMAP_LAYER_ID, SATELLITE_BASEMAP_LAYER_ID];
   for (const layerId of layerIds) {
     if (!map.getLayer(layerId)) continue;
     const satellite = layerId === SATELLITE_BASEMAP_LAYER_ID;
-    map.setPaintProperty(layerId, 'raster-brightness-max', dark ? (satellite ? 0.64 : 0.72) : 1);
-    map.setPaintProperty(layerId, 'raster-brightness-min', dark ? 0.08 : 0);
-    map.setPaintProperty(layerId, 'raster-contrast', dark ? 0.05 : 0);
-    map.setPaintProperty(layerId, 'raster-saturation', dark ? -0.18 : 0);
+    map.setPaintProperty(layerId, 'raster-brightness-max', dark ? (satellite ? 0.58 : 0.68) : 1);
+    map.setPaintProperty(layerId, 'raster-brightness-min', dark ? 0.04 : 0);
+    map.setPaintProperty(layerId, 'raster-contrast', dark ? (satellite ? 0.16 : 0.08) : 0);
+    map.setPaintProperty(layerId, 'raster-saturation', dark ? (satellite ? 0.12 : -0.1) : 0);
     map.setPaintProperty(layerId, 'raster-hue-rotate', 0);
   }
 }
@@ -1223,22 +1228,28 @@ function renderMunicipalBoundary(bounds) {
   const geojson = { type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: {} };
   if (map.getSource('geo-municipal-boundary')) { map.getSource('geo-municipal-boundary').setData(geojson); return; }
   map.addSource('geo-municipal-boundary', { type: 'geojson', data: geojson });
-  // Calm cartographic boundary: one crisp line, no glow or decorative halo.
+  // Reference-matched operational emphasis, but only around the REAL
+  // configured municipal bounds. No bounds means no line and no glow.
+  map.addLayer({ id: 'geo-municipal-boundary-glow-wide', type: 'line', source: 'geo-municipal-boundary',
+    paint: { 'line-color': '#20ff86', 'line-width': 12, 'line-opacity': 0.12, 'line-blur': 8 } });
+  map.addLayer({ id: 'geo-municipal-boundary-glow', type: 'line', source: 'geo-municipal-boundary',
+    paint: { 'line-color': '#20ff86', 'line-width': 6, 'line-opacity': 0.28, 'line-blur': 3 } });
   map.addLayer({ id: 'geo-municipal-boundary-line', type: 'line', source: 'geo-municipal-boundary',
-    paint: { 'line-color': '#0f7a50', 'line-width': 2, 'line-opacity': 0.9, 'line-dasharray': [3, 2] } });
+    paint: { 'line-color': '#38ff95', 'line-width': 2.5, 'line-opacity': 0.96 } });
 }
 
 const STATUS_FILTER_OPTIONS = [
   ['ALL', 'كل الحالات', null],
   ['PENDING', 'قيد الانتظار', STATUS_COLOR.PENDING],
   ['IN_PROGRESS', 'قيد المعالجة', STATUS_COLOR.IN_PROGRESS],
+  ['PENDING_REVIEW', 'قيد المراجعة', STATUS_COLOR.PENDING_REVIEW],
   ['COMPLETED', 'مكتمل', STATUS_COLOR.COMPLETED],
 ];
 // Real per-status tally over the full cached (unfiltered) observation set —
 // doubles as the panel's status legend (Section 09) and the filter control,
 // never a decorative/random chip scattered on the map.
 function statusTally() {
-  const tally = { ALL: cachedObservationEntities.length, PENDING: 0, IN_PROGRESS: 0, COMPLETED: 0 };
+  const tally = { ALL: cachedObservationEntities.length, PENDING: 0, IN_PROGRESS: 0, PENDING_REVIEW: 0, COMPLETED: 0 };
   for (const e of cachedObservationEntities) {
     const data = rawObservationById.get(e.id);
     const status = (data && data.status) || 'PENDING';
