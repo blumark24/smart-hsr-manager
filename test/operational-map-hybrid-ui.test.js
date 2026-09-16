@@ -61,11 +61,36 @@ test('command cartography keeps MapLibre and the Twin boundary while glowing onl
   assert.match(source, /new maplibregl\.Map\(/);
   assert.match(source, /IMPLEMENTED_LAYER_IDS = \['commercial_places', 'buildings', 'field_observations'\]/);
   assert.match(source, /continuity\.buildContinuityUrl\('\/twin\.html'/);
-  assert.match(source, /if \(!Array\.isArray\(bounds\) \|\| bounds\.length !== 2\) return;/);
+  assert.match(source, /const normalizedBounds = normalizeRealMapBounds\(bounds\);\s*if \(!normalizedBounds\) return;/);
   assert.match(source, /geo-municipal-boundary-glow-wide/);
   assert.match(source, /geo-municipal-boundary-glow/);
   assert.doesNotMatch(source, /raster-hue-rotate', dark \? 195/);
   assert.doesNotMatch(source, /employee_tracking|vehicle_gps|mobility_incidents.*coordinates|lands_parcels.*geometry/i);
+});
+
+test('initial camera follows trusted extent priority and never fabricates a municipality fallback', () => {
+  const planner = source.slice(source.indexOf('function planTrustedInitialExtent'), source.indexOf('// UAT/dev-only'));
+  assert.ok(planner.indexOf('normalizeRealMapBounds') < planner.indexOf('normalizeConfiguredMapCenter'));
+  assert.match(source, /context\.configured !== true/);
+  assert.match(source, /mode: 'observations-or-neutral'/);
+  assert.match(source, /const NEUTRAL_SAFE_CAMERA = Object\.freeze\(\{ center: \[0, 20\], zoom: 1\.5 \}\)/);
+  assert.match(source, /center: initialExtentPlan\.center,\s*zoom: initialExtentPlan\.zoom/);
+  assert.match(source, /resolveInitialExtentFromObservations\(cachedObservationEntities\)/);
+  assert.match(source, /if \(!explicitContinuityCamera && initialExtentPlan\.mode === 'bounds'\)[\s\S]*map\.fitBounds\(initialExtentPlan\.bounds/);
+  assert.doesNotMatch(source, /center:\s*mapContext\.mapCenter\s*\?/);
+  assert.doesNotMatch(source, /\[45,\s*24\]/);
+});
+
+test('Phase 12A presentation hardening preserves usability across themes and smaller screens', () => {
+  assert.match(source, /html\[data-theme="dark"\] \.maplibregl-ctrl-icon\{filter:invert/);
+  assert.match(source, /html\[data-theme="light"\] \.maplibregl-ctrl-icon\{filter:none/);
+  assert.match(source, /:focus-visible\{outline:3px solid/);
+  assert.match(source, /@media\(pointer:coarse\)[\s\S]*min-height:44px/);
+  assert.match(source, /@media\(max-width:900px\)[\s\S]*#searchInput\{font-size:16px\}/);
+  assert.match(source, /@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(source, /function cameraDuration\(milliseconds\)/);
+  assert.match(source, /@media\(max-width:1180px\)[\s\S]*backdrop-filter:none!important/);
+  assert.match(source, /matchMedia\('\(max-width: 900px\)'\)\.matches\) rightPanel\.classList\.remove\('expanded'\);\s*else rightPanel\.classList\.add\('collapsed'\)/);
 });
 
 test('reference language is implemented with switch toggles, luminous clusters and a light quick popup', () => {

@@ -67,8 +67,8 @@
   .maplibregl-ctrl-group{background:rgba(7,29,49,.88) !important;border:1px solid rgba(129,194,224,.4) !important;border-radius:12px !important;overflow:hidden;box-shadow:var(--control-shadow) !important;backdrop-filter:blur(12px)}
   .maplibregl-ctrl-group button{width:42px !important;height:42px !important;background:transparent !important}
   .maplibregl-ctrl-group button + button{border-top:1px solid var(--border-subtle) !important}
-  .maplibregl-ctrl-icon{filter:var(--ctrl-icon-filter,none)}
-  .maplibregl-ctrl-icon{filter:invert(1) brightness(1.8) !important}
+  html[data-theme="dark"] .maplibregl-ctrl-icon{filter:invert(1) brightness(1.8) !important}
+  html[data-theme="light"] .maplibregl-ctrl-icon{filter:none !important}
   .maplibregl-ctrl button:not(:disabled):hover{background:var(--green-soft) !important}
   .maplibregl-ctrl-attrib{background:var(--surface) !important;color:var(--text-muted) !important;border-radius:7px !important}
   .maplibregl-ctrl-attrib a{color:var(--text-2) !important}
@@ -201,6 +201,38 @@
   #sketchStatus.active{color:var(--warning)}
   @media(max-width:1180px){#intelligencePanel{transform:translateX(calc(-100% - 20px));transition:.2s}#intelligencePanel.expanded{transform:none}.maplibregl-ctrl-top-left{left:14px!important}.maplibregl-ctrl-bottom-left{left:0!important}.map-legend{left:14px}#timelinePanel{left:14px}.command-header{grid-template-columns:minmax(300px,1fr) minmax(220px,360px) auto!important}.identity-copy{display:none}}
   @media(max-width:900px){#appShell{--header-h:104px;--kpi-h:52px}.command-header{height:var(--header-h)!important;grid-template-columns:1fr auto!important;padding:7px 10px!important}.command-header .search-shell{grid-column:1/-1;grid-row:2}.header-nav .nav-link:not(.active){display:none}#kpiStrip{overflow-x:auto;grid-template-columns:repeat(6,130px);padding:6px 10px}.kpi-value{font-size:16px}#rightPanel{top:auto;right:8px;left:8px;bottom:8px;width:auto}.maplibregl-ctrl-top-left{top:10px!important;left:8px!important}#timelinePanel{left:8px;right:8px;bottom:8px}#mapSummary,.map-legend,#attributionNote{display:none}.brand-lockup img{width:82px}.header-identity .segmented,.header-identity #logoutBtn{display:none}}
+
+  /* Phase 12A presentation hardening — no composition or data changes. */
+  html[data-theme="light"] .command-header{background:linear-gradient(180deg,rgba(250,255,253,.98),rgba(244,250,247,.94));box-shadow:0 10px 26px rgba(23,67,47,.13)}
+  html[data-theme="light"] #kpiStrip{background:rgba(248,253,251,.96)}
+  html[data-theme="light"] .command-header #searchInput,
+  html[data-theme="light"] .segmented{background:rgba(255,255,255,.94)}
+  html[data-theme="light"] #intelligencePanel,
+  html[data-theme="light"] #layerPanel{background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(242,249,245,.96));box-shadow:0 16px 36px rgba(23,67,47,.14)}
+  html[data-theme="light"] #timelinePanel{background:rgba(250,255,253,.97)}
+  html[data-theme="light"] .maplibregl-ctrl-group{background:rgba(255,255,255,.94)!important;border-color:rgba(31,111,77,.25)!important}
+  html[data-theme="light"] main:after{box-shadow:inset 0 0 70px rgba(35,79,58,.14);border-color:rgba(31,111,77,.16)}
+  :where(a,button,input,select,[tabindex]):focus-visible{outline:3px solid #5cf0a0;outline-offset:3px;box-shadow:0 0 0 2px rgba(4,25,40,.82)}
+  html[data-theme="light"] :where(a,button,input,select,[tabindex]):focus-visible{outline-color:#087849;box-shadow:0 0 0 2px rgba(255,255,255,.92)}
+  .maplibregl-ctrl button:focus-visible{outline:3px solid #5cf0a0!important;outline-offset:-3px!important}
+  @media(pointer:coarse){
+    .nav-link,button.geo-btn,.panel-tab,.timeline-play,.timeline-reset,.panel-close,.clear-filters,.status-row{min-height:44px}
+    .tool-icon,.panel-close{min-width:44px;width:44px}.segment{min-height:40px}.layer-row{min-height:44px}
+    .layer-row input{width:40px;height:24px;border-radius:13px}.layer-row input:after{width:16px;height:16px;top:3px}.layer-row input:checked:after{left:19px}
+  }
+  @media(max-width:1180px){
+    .command-header,#kpiStrip,#intelligencePanel,#layerPanel,#timelinePanel,.maplibregl-ctrl-group{backdrop-filter:none!important}
+  }
+  @media(max-width:900px){
+    .command-header #searchInput{font-size:16px}
+    #rightPanel{top:8px;bottom:auto;z-index:12}
+    #layerPanel{max-height:calc(100vh - var(--header-h) - var(--kpi-h) - 104px)}
+    #intelligencePanel{top:8px;max-height:calc(100% - 96px)}
+    #timelinePanel{z-index:11}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  }
 </style>
 </head>
 <body>
@@ -224,7 +256,7 @@
           <button class="segment" type="button" data-basemap="street" aria-pressed="false">شوارع</button>
           <button class="segment active" type="button" data-basemap="satellite" aria-pressed="true">أقمار</button>
         </div>
-        <button class="geo-btn tool-icon" id="intelligenceToggle" aria-label="إظهار لوحة الذكاء الجغرافي" title="الذكاء الجغرافي">◈</button>
+        <button class="geo-btn tool-icon" id="intelligenceToggle" aria-label="إظهار لوحة الذكاء الجغرافي" aria-expanded="false" title="الذكاء الجغرافي">◈</button>
         <button class="geo-btn tool-icon" id="rightPanelToggle" aria-label="إظهار أو إخفاء طبقات الخريطة" aria-expanded="true" title="الطبقات والمرشحات">▱</button>
         <button class="geo-btn tool-icon" id="themeToggleBtn" aria-label="تفعيل الوضع النهاري" title="الوضع النهاري">☀</button>
         <div class="identity-copy"><strong id="orgIdentity">SMART HSR</strong><span id="userIdentity">مستخدم موثّق</span></div>
@@ -369,6 +401,49 @@ async function apiGet(params) {
 }
 
 let map, caller, mapContext, loadedEntities = [], currentUser = null;
+const NEUTRAL_SAFE_CAMERA = Object.freeze({ center: [0, 20], zoom: 1.5 });
+const reducedMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+let initialExtentPlan = null;
+let explicitContinuityCamera = false;
+let automaticInitialExtentResolved = false;
+
+function cameraDuration(milliseconds) {
+  return reducedMotionQuery.matches ? 0 : milliseconds;
+}
+
+// Organization bounds are stored as [[southLat, westLng], [northLat,
+// eastLng]]. Validate both the coordinate domain and the rectangle before
+// converting to MapLibre's [[westLng, southLat], [eastLng, northLat]].
+// Invalid or absent bounds are never treated as a municipal boundary.
+function normalizeRealMapBounds(value) {
+  if (!Array.isArray(value) || value.length !== 2 || !value.every((corner) => Array.isArray(corner) && corner.length === 2)) return null;
+  const [[south, west], [north, east]] = value.map((corner) => corner.map(Number));
+  if (![south, west, north, east].every(Number.isFinite)) return null;
+  if (south < -90 || north > 90 || west < -180 || east > 180 || south >= north || west >= east) return null;
+  return [[west, south], [east, north]];
+}
+
+function normalizeConfiguredMapCenter(context) {
+  // context.js can return an explicitly-labelled approximate center with
+  // configured:false. It is useful metadata, but it must not outrank real
+  // field-observation coordinates for the initial operational extent.
+  if (!context || context.configured !== true || !context.mapCenter) return null;
+  const lat = Number(context.mapCenter.lat), lng = Number(context.mapCenter.lng), zoom = Number(context.mapDefaultZoom);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180 || zoom < 0 || zoom > 22) return null;
+  return { center: [lng, lat], zoom };
+}
+
+function planTrustedInitialExtent(context) {
+  const bounds = normalizeRealMapBounds(context && context.mapBounds);
+  if (bounds) {
+    const [[west, south], [east, north]] = bounds;
+    return { mode: 'bounds', bounds, center: [(west + east) / 2, (south + north) / 2], zoom: 8 };
+  }
+  const configuredCenter = normalizeConfiguredMapCenter(context);
+  if (configuredCenter) return { mode: 'center', ...configuredCenter };
+  return { mode: 'observations-or-neutral', ...NEUTRAL_SAFE_CAMERA };
+}
 // UAT/dev-only introspection hooks — read-only, expose no PII beyond
 // counts/coordinates already visible on the rendered map, and perform no
 // write of any kind.
@@ -611,9 +686,51 @@ let cachedObservationEntities = [];
 // function is async and was never guarded against overlapping in-flight
 // calls). Every await below re-checks this before touching shared state.
 let viewportRequestGeneration = 0;
+function resolveInitialExtentFromObservations(entities) {
+  if (automaticInitialExtentResolved || explicitContinuityCamera || !initialExtentPlan || initialExtentPlan.mode !== 'observations-or-neutral') return;
+  const coordinates = entities
+    .map((entity) => entity.geometry && entity.geometry.type === 'Point' ? entity.geometry.coordinates : null)
+    .filter((coordinate) => Array.isArray(coordinate) && coordinate.length >= 2 && coordinate.every(Number.isFinite));
+  if (coordinates.length === 1) {
+    map.jumpTo({ center: coordinates[0], zoom: 15 });
+  } else if (coordinates.length > 1) {
+    const longitudes = coordinates.map((coordinate) => coordinate[0]);
+    const latitudes = coordinates.map((coordinate) => coordinate[1]);
+    map.fitBounds(
+      [[Math.min(...longitudes), Math.min(...latitudes)], [Math.max(...longitudes), Math.max(...latitudes)]],
+      { padding: matchMedia('(max-width: 900px)').matches ? 34 : 72, maxZoom: 16, duration: 0 },
+    );
+  }
+  // With no real points, the neutral world-level camera remains in place.
+  automaticInitialExtentResolved = true;
+}
+
 async function loadVisibleLayers(organizationId, { includeObservations = true } = {}) {
   const generation = ++viewportRequestGeneration;
   loadedEntities = [];
+  const observationsVisible = activeLayers.has('field_observations');
+  const mustResolveInitialExtent = !automaticInitialExtentResolved && !explicitContinuityCamera
+    && initialExtentPlan && initialExtentPlan.mode === 'observations-or-neutral';
+  if ((observationsVisible && includeObservations) || mustResolveInitialExtent) {
+    cachedObservationEntities = await loadFieldObservations(organizationId);
+    if (generation !== viewportRequestGeneration) return; // superseded — discard
+    resolveInitialExtentFromObservations(cachedObservationEntities);
+    if (observationsVisible) {
+      const filtered = applyObservationFilters(cachedObservationEntities);
+      layerCounts.set('field_observations', filtered.length);
+      paintObservations(filtered);
+      renderFilterChips();
+      configureTimeline();
+    }
+  } else if (!observationsVisible) {
+    removeObservationSource();
+    cachedObservationEntities = [];
+    layerCounts.set('field_observations', 0);
+  }
+
+  // Resolve the observation-driven initial camera before bbox-scoped layers
+  // query the current viewport; reference data is therefore requested for
+  // the trusted municipal working area rather than a generic fallback.
   for (const layerId of ['commercial_places', 'buildings']) {
     const cache = bboxLayerCache[layerId];
     if (!activeLayers.has(layerId)) { removeSourceLayer(layerId); cache.bounds = null; cache.entities = []; continue; }
@@ -632,19 +749,7 @@ async function loadVisibleLayers(organizationId, { includeObservations = true } 
     loadedEntities.push(...cache.entities);
     layerCounts.set(layerId, cache.entities.length);
   }
-  if (!activeLayers.has('field_observations')) {
-    removeObservationSource();
-    cachedObservationEntities = [];
-  } else if (includeObservations) {
-    cachedObservationEntities = await loadFieldObservations(organizationId);
-    if (generation !== viewportRequestGeneration) return; // superseded — discard
-    const filtered = applyObservationFilters(cachedObservationEntities);
-    layerCounts.set('field_observations', filtered.length);
-    paintObservations(filtered);
-    renderFilterChips();
-    configureTimeline();
-  }
-  loadedEntities.push(...applyObservationFilters(cachedObservationEntities));
+  if (observationsVisible) loadedEntities.push(...applyObservationFilters(cachedObservationEntities));
   updateLayerCounts();
 }
 
@@ -756,7 +861,7 @@ function buildObservationClusterElement(feature) {
     // Promise (the old Mapbox-GL-style (clusterId, callback) signature was
     // removed) — a callback argument here would be silently ignored.
     map.getSource(OBS_SRC).getClusterExpansionZoom(clusterId)
-      .then((zoom) => map.easeTo({ center, zoom }))
+      .then((zoom) => map.easeTo({ center, zoom, duration: cameraDuration(500) }))
       .catch(() => {});
   };
   el.addEventListener('click', expand);
@@ -919,7 +1024,7 @@ function paintEntities(layerId, entities) {
       // argument here is simply ignored) predating this stage; fixed here
       // as the same real cluster-expand behavior Section 10 requires.
       map.getSource(srcId).getClusterExpansionZoom(clusterId)
-        .then((zoom) => map.easeTo({ center, zoom }))
+        .then((zoom) => map.easeTo({ center, zoom, duration: cameraDuration(500) }))
         .catch(() => {});
     });
   } else {
@@ -1032,7 +1137,7 @@ function openEntityCard(entityId) {
     resolveEntityEvidenceThumb(data.imagePath);
     renderAiBlock(data);
     document.getElementById('entityViewOnMapBtn').onclick = () => {
-      map.flyTo({ center: entity.geometry.coordinates, zoom: 17 });
+      map.flyTo({ center: entity.geometry.coordinates, zoom: 17, duration: cameraDuration(650) });
       markObservationSelected(entityId);
     };
     if (!openTwinBtn.hidden) {
@@ -1169,7 +1274,7 @@ function localObservationMatches(query) {
 function focusSearchEntity(entityId) {
   const entity = loadedEntities.find((item) => item.id === entityId);
   const coordinates = entity && entity.geometry && entity.geometry.type === 'Point' ? entity.geometry.coordinates : entity && entity.centroid;
-  if (coordinates) map.easeTo({ center: coordinates, zoom: Math.max(map.getZoom(), 15) });
+  if (coordinates) map.easeTo({ center: coordinates, zoom: Math.max(map.getZoom(), 15), duration: cameraDuration(500) });
   if (rawObservationById.has(entityId)) markObservationSelected(entityId);
   openEntityCard(entityId);
 }
@@ -1219,6 +1324,10 @@ document.getElementById('rightPanelToggle').addEventListener('click', () => {
   const panel = document.getElementById('rightPanel');
   const narrow = matchMedia('(max-width: 900px)').matches;
   const expanded = narrow ? panel.classList.toggle('expanded') : !panel.classList.toggle('collapsed');
+  if (expanded && matchMedia('(max-width: 1180px)').matches) {
+    document.getElementById('intelligencePanel').classList.remove('expanded');
+    document.getElementById('intelligenceToggle').setAttribute('aria-expanded', 'false');
+  }
   document.getElementById('rightPanelToggle').setAttribute('aria-expanded', String(expanded));
 });
 
@@ -1255,7 +1364,17 @@ function selectPanelTab(name) {
 }
 document.getElementById('layersTabBtn').addEventListener('click', () => selectPanelTab('layers'));
 document.getElementById('filtersTabBtn').addEventListener('click', () => selectPanelTab('filters'));
-document.getElementById('intelligenceToggle').addEventListener('click', () => document.getElementById('intelligencePanel').classList.toggle('expanded'));
+document.getElementById('intelligenceToggle').addEventListener('click', () => {
+  const panel = document.getElementById('intelligencePanel');
+  const expanded = panel.classList.toggle('expanded');
+  if (expanded && matchMedia('(max-width: 1180px)').matches) {
+    const rightPanel = document.getElementById('rightPanel');
+    if (matchMedia('(max-width: 900px)').matches) rightPanel.classList.remove('expanded');
+    else rightPanel.classList.add('collapsed');
+    document.getElementById('rightPanelToggle').setAttribute('aria-expanded', 'false');
+  }
+  document.getElementById('intelligenceToggle').setAttribute('aria-expanded', String(expanded));
+});
 document.getElementById('heatmapToggle').addEventListener('change', (event) => {
   heatmapEnabled = event.target.checked;
   if (map && map.getLayer(OBS_HEAT_LAYER)) map.setLayoutProperty(OBS_HEAT_LAYER, 'visibility', heatmapEnabled ? 'visible' : 'none');
@@ -1263,7 +1382,7 @@ document.getElementById('heatmapToggle').addEventListener('change', (event) => {
 document.getElementById('perspectiveToggleBtn').addEventListener('click', (event) => {
   if (!map) return;
   const tilted = map.getPitch() > 10;
-  map.easeTo({ pitch: tilted ? 0 : 45, bearing: tilted ? 0 : -12, duration: 650 });
+  map.easeTo({ pitch: tilted ? 0 : 45, bearing: tilted ? 0 : -12, duration: cameraDuration(650) });
   event.currentTarget.textContent = tilted ? 'منظور 2.5D' : 'إلغاء المنظور';
 });
 document.getElementById('timelineRange').addEventListener('input', (event) => setTimelineFromSlider(event.target.value));
@@ -1339,9 +1458,13 @@ function fitToLoadedData() {
   const coords = loadedEntities.map((e) => (e.geometry && e.geometry.type === 'Point' ? e.geometry.coordinates : (e.centroid || null))).filter(Boolean);
   if (coords.length) {
     const lons = coords.map((c) => c[0]), lats = coords.map((c) => c[1]);
-    map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], { padding: 60, maxZoom: 16 });
-  } else if (mapContext.mapCenter) {
-    map.flyTo({ center: [mapContext.mapCenter.lng, mapContext.mapCenter.lat], zoom: mapContext.mapDefaultZoom || 13 });
+    map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], { padding: 60, maxZoom: 16, duration: cameraDuration(600) });
+  } else if (normalizeRealMapBounds(mapContext.mapBounds)) {
+    map.fitBounds(normalizeRealMapBounds(mapContext.mapBounds), { padding: 60, maxZoom: 16, duration: cameraDuration(600) });
+  } else if (normalizeConfiguredMapCenter(mapContext)) {
+    map.flyTo({ ...normalizeConfiguredMapCenter(mapContext), duration: cameraDuration(600) });
+  } else {
+    map.flyTo({ ...NEUTRAL_SAFE_CAMERA, duration: cameraDuration(600) });
   }
 }
 
@@ -1455,9 +1578,10 @@ function applyBasemapTheme() {
 // rectangle (api/organization/context.js's own cleanBounds()) — no
 // boundary is drawn when one hasn't been configured, ever.
 function renderMunicipalBoundary(bounds) {
-  if (!Array.isArray(bounds) || bounds.length !== 2) return;
-  const [[swLat, swLng], [neLat, neLng]] = bounds;
-  const ring = [[swLng, swLat], [neLng, swLat], [neLng, neLat], [swLng, neLat], [swLng, swLat]];
+  const normalizedBounds = normalizeRealMapBounds(bounds);
+  if (!normalizedBounds) return;
+  const [[west, south], [east, north]] = normalizedBounds;
+  const ring = [[west, south], [east, south], [east, north], [west, north], [west, south]];
   const geojson = { type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: {} };
   if (map.getSource('geo-municipal-boundary')) { map.getSource('geo-municipal-boundary').setData(geojson); return; }
   map.addSource('geo-municipal-boundary', { type: 'geojson', data: geojson });
@@ -1579,7 +1703,7 @@ onAuthStateChanged(auth, async (user) => {
 
   document.getElementById('orgIdentity').textContent = mapContext.organizationName || 'SMART HSR';
   document.getElementById('userIdentity').textContent = user.displayName || user.email || 'مستخدم موثّق';
-  const hasBoundary = Array.isArray(mapContext.mapBounds) && mapContext.mapBounds.length === 2;
+  const hasBoundary = Boolean(normalizeRealMapBounds(mapContext.mapBounds));
   document.getElementById('boundaryToggle').disabled = !hasBoundary;
   document.getElementById('boundaryToggle').checked = hasBoundary;
   document.getElementById('boundaryLabel').textContent = hasBoundary ? 'النطاق التشغيلي المهيأ' : 'النطاق التشغيلي غير متاح';
@@ -1609,11 +1733,13 @@ onAuthStateChanged(auth, async (user) => {
     if (intelligenceTwinBtn) intelligenceTwinBtn.onclick = openTwinHome;
   }
 
+  initialExtentPlan = planTrustedInitialExtent(mapContext);
+  automaticInitialExtentResolved = initialExtentPlan.mode === 'center';
   map = new maplibregl.Map({
     container: 'map',
     style: useLocalBasemap ? sandboxBasemapStyle() : realBasemapStyle(),
-    center: mapContext.mapCenter ? [mapContext.mapCenter.lng, mapContext.mapCenter.lat] : [45, 24],
-    zoom: mapContext.mapDefaultZoom || 6,
+    center: initialExtentPlan.center,
+    zoom: initialExtentPlan.zoom,
   });
   // Compact left toolbar (Section 05/06) — zoom, fit/reset, fullscreen,
   // locate (real browser Geolocation API, never a fabricated position).
@@ -1627,11 +1753,23 @@ onAuthStateChanged(auth, async (user) => {
   const continuityEncoded = new URL(location.href).searchParams.get(continuity.CONTINUITY_PARAM);
   if (continuityEncoded) {
     const { context } = continuity.decodeContinuityContext(continuityEncoded);
-    if (context && context.camera) map.setCenter(context.camera.center), map.setZoom(context.camera.zoom);
+    const continuityCenter = context && context.camera && context.camera.center;
+    const continuityZoom = Number(context && context.camera && context.camera.zoom);
+    if (Array.isArray(continuityCenter) && continuityCenter.length === 2 && continuityCenter.every(Number.isFinite)
+      && Number.isFinite(continuityZoom)) {
+      map.setCenter(continuityCenter);
+      map.setZoom(continuityZoom);
+      explicitContinuityCamera = true;
+      automaticInitialExtentResolved = true;
+    }
   }
 
   map.on('load', () => {
     applyBasemapTheme();
+    if (!explicitContinuityCamera && initialExtentPlan.mode === 'bounds') {
+      map.fitBounds(initialExtentPlan.bounds, { padding: 54, maxZoom: 16, duration: 0 });
+      automaticInitialExtentResolved = true;
+    }
     renderMunicipalBoundary(mapContext.mapBounds);
     renderLayerToggles(mapContext.organizationId);
     renderFilterChips();
