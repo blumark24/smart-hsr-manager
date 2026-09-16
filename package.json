@@ -5,6 +5,8 @@
   "scripts": {
     "build:css": "npx tailwindcss -i ./input.css -o ./output.css --minify",
     "watch:css": "npx tailwindcss -i ./input.css -o ./output.css --watch",
+    "ai:design:setup": "powershell -ExecutionPolicy Bypass -File .\\tools\\setup-ai-design-stack.ps1",
+    "ai:design:setup:apply": "powershell -ExecutionPolicy Bypass -File .\\tools\\setup-ai-design-stack.ps1 -Apply",
     "test:rules": "node test/run-firestore-rules.js",
     "test:mobility-rules": "node test/run-mobility-mission-rules.js",
     "test:mobility-incident-rules": "node test/run-mobility-incident-audit-rules.js",
@@ -12,6 +14,7 @@
     "test:e2e:mayor-scenario": "node test/e2e/mayor-scenario.js",
     "test:e2e:negative-security": "node test/e2e/negative-security.js",
     "test:e2e:responsive-qa": "node test/e2e/responsive-qa.js",
+    "test:e2e:user-center-design": "node test/e2e/user-center-design-qa.js",
     "test:geo": "node test/run-geo-suite.js",
     "test:security": "node test/run-security-suite.js",
     "test:release": "node test/run-release-suite.js",
