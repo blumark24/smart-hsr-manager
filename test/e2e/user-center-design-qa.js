@@ -5,7 +5,7 @@ const fs = require('fs');
 const { chromium } = require('playwright');
 const { installFbMock } = require('./lib/fb-mock');
 const { startHarness, AUTH_PORT, FIRESTORE_PORT } = require('./lib/harness');
-const { loginAs, waitForGateClear } = require('./lib/login');
+const { loginAs } = require('./lib/login');
 
 const OUT_DIR = path.join(__dirname, '.generated', 'user-center-design');
 const PHASE_SCRIPTS = [
@@ -38,6 +38,26 @@ async function firstVisible(locator) {
     if (await candidate.isVisible().catch(() => false)) return candidate;
   }
   return null;
+}
+
+async function waitForManagerReady(page, { timeoutMs = 20000 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const managerRole = await firstVisible(page.getByText('مدير البلدية', { exact: true }));
+    const accountButton = await firstVisible(page.getByRole('button', { name: 'قائمة الحساب', exact: true }));
+    if (managerRole && accountButton) return;
+    await page.waitForTimeout(200);
+  }
+
+  const snapshot = await page.evaluate(() => ({
+    title: document.title,
+    path: location.pathname,
+    href: location.href,
+    hasAccountButton: !!document.querySelector('[aria-label="قائمة الحساب"]'),
+    text: (document.body?.innerText || '').slice(0, 3000),
+  })).catch(() => ({ href: page.url(), text: 'Unable to read page diagnostics.' }));
+
+  throw new Error(`Authenticated manager shell did not become ready. Diagnostics: ${JSON.stringify(snapshot)}`);
 }
 
 async function waitForUserCenterSurface(page) {
@@ -85,9 +105,11 @@ async function tryMunicipalityNavPath(page) {
 }
 
 async function openUserCenter(page) {
-  // The manager shell is authenticated asynchronously. Do not start probing
-  // navigation until the authenticated surface is actually visible.
-  await waitForGateClear(page, { timeoutMs: 20000 });
+  // manager.html keeps "تسجيل الخروج" inside the closed account popover, so
+  // the generic mobility gate helper is not a valid readiness signal here.
+  // The exact authenticated role label is populated only after the manager
+  // Firestore record has been verified by manager-dashboard-adapter.js.
+  await waitForManagerReady(page, { timeoutMs: 20000 });
 
   let direct = await firstVisible(page.getByText('مركز المستخدمين', { exact: true }));
   if (direct) {
@@ -214,9 +236,9 @@ async function main() {
     await installApiMock(context);
     const page = await loginAs(context, harness.baseUrl, 'manager@e2e.test');
 
-    // Confirm the authenticated manager shell before layering the isolated
-    // Phase 11B-G scripts on top. This avoids racing the adapter/gate render.
-    await waitForGateClear(page, { timeoutMs: 20000 });
+    // Confirm the manager-specific authenticated shell before layering the
+    // isolated Phase 11B-G scripts on top.
+    await waitForManagerReady(page, { timeoutMs: 20000 });
     await injectPhaseScripts(page, harness.baseUrl);
     await openUserCenter(page);
     await runDesktop(page);
