@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { chromium } = require('playwright');
 const { installFbMock } = require('./lib/fb-mock');
-const { startHarness } = require('./lib/harness');
+const { startHarness, AUTH_PORT, FIRESTORE_PORT } = require('./lib/harness');
 const { loginAs, waitForGateClear } = require('./lib/login');
 
 const OUT_DIR = path.join(__dirname, '.generated', 'user-center-design');
@@ -198,11 +198,20 @@ async function runMobile(page) {
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const harness = await startHarness();
+
+  // manager.html depends on trusted /api/organization/context calls in
+  // addition to browser Firebase. Point the server-side bridge at the same
+  // local emulators before loading api-mock (it validates these at require time).
+  process.env.FIRESTORE_EMULATOR_HOST = `127.0.0.1:${FIRESTORE_PORT}`;
+  process.env.FIREBASE_AUTH_EMULATOR_HOST = `127.0.0.1:${AUTH_PORT}`;
+  const { installApiMock } = require('./lib/api-mock');
+
   const browser = await chromium.launch({ headless: true });
 
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await installFbMock(context);
+    await installApiMock(context);
     const page = await loginAs(context, harness.baseUrl, 'manager@e2e.test');
 
     // Confirm the authenticated manager shell before layering the isolated
