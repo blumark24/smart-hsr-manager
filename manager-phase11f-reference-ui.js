@@ -136,6 +136,17 @@ async function runExisting(button,msg){
   for(let i=0;i<120;i+=1){if(!button.disabled)return !msg?.classList.contains('er');await sleep(50);}return false;
 }
 
+function profileSnapshot(panel,employee){
+  const value=id=>clean(panel.querySelector(`#${id}`)?.value);
+  let products=null;
+  if(panel.querySelector('.saver')) products=U.readProducts(panel,panel.querySelector('#inst-role')?.value||U.inst(employee));
+  return {
+    basic:JSON.stringify({name:value('edit-name'),employeeRef:value('edit-ref'),phone:value('edit-phone'),email:value('edit-email'),jobTitle:value('edit-title'),employmentStatus:value('edit-emp')}),
+    organization:JSON.stringify({administration:value('edit-admin'),department:value('edit-dept'),directManagerEmployeeId:value('edit-manager')}),
+    products:products?JSON.stringify(products):null,
+  };
+}
+
 function buildSinglePageProfile(panel,employee){
   if(!panel)return;
   if(employee) panel.__ucv21Employee=employee;
@@ -148,17 +159,24 @@ function buildSinglePageProfile(panel,employee){
   const basicGrid=basic?.querySelector('.sec .grid'),orgGrid=org?.querySelector('.sec .grid');if(basicGrid&&orgGrid){Array.from(orgGrid.children).forEach(node=>basicGrid.appendChild(node));}
   addSectionHead(basic,'البيانات الأساسية','بيانات الموظف والتنظيم');addSectionHead(roles,'الخدمات والصلاحيات','الدور + المنتج + القسم');addSectionHead(account,'حالة الحساب','إدارة الوصول والهوية');
   if(account){const oldPw=account.querySelector('.pwbtn');if(oldPw)oldPw.hidden=true;}
+  const accountToggle=account?.querySelector('.tog');
+  if(accountToggle&&!accountToggle.dataset.ucv21Confirm){accountToggle.dataset.ucv21Confirm='1';let armed=false,timer=0;accountToggle.addEventListener('click',event=>{if(!/إيقاف/.test(accountToggle.textContent)||armed){armed=false;return;}event.preventDefault();event.stopImmediatePropagation();armed=true;accountToggle.textContent='تأكيد إيقاف الحساب';accountToggle.setAttribute('aria-label','اضغط مرة أخرى لتأكيد إيقاف الحساب');clearTimeout(timer);timer=setTimeout(()=>{if(!accountToggle.isConnected||accountToggle.disabled)return;armed=false;accountToggle.textContent='إيقاف الحساب';accountToggle.setAttribute('aria-label','إيقاف الحساب');},6000);},true);}
   if(panel.__ucv21Employee?.authUid&&!panel.querySelector('.ucv21-password-inline')){
     const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.innerHTML=`<div class="ucv21-section-head"><span>تعديل كلمة المرور</span><small>اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;roles?.after(wrap)||account?.after(wrap);wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
   }
   if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.innerHTML='<button type="button" class="ucv21-history-toggle">عرض سجل الموظف</button>';history.before(hw);hw.appendChild(history);history.hidden=true;hw.querySelector('button').onclick=()=>{history.hidden=!history.hidden;hw.querySelector('button').textContent=history.hidden?'عرض سجل الموظف':'إخفاء سجل الموظف';};}
+  try{panel.__ucv21Snapshot=profileSnapshot(panel,panel.__ucv21Employee);}catch(_){panel.__ucv21Snapshot=null;}
   if(!panel.querySelector('.ucv21-profile-footer')){
     const footer=document.createElement('footer');footer.className='ucv21-profile-footer';footer.innerHTML='<div class="ucv21-profile-msg" aria-live="polite"></div><button type="button" class="btn ucv21-cancel">إلغاء</button><button type="button" class="btn pr ucv21-save">حفظ التعديلات</button>';panel.appendChild(footer);
     footer.querySelector('.ucv21-cancel').onclick=()=>panel.querySelector('.ix')?.click();
-    footer.querySelector('.ucv21-save').onclick=async ev=>{const b=ev.currentTarget,msg=footer.querySelector('.ucv21-profile-msg'),employeeRef=panel.__ucv21Employee;b.disabled=true;msg.className='ucv21-profile-msg';msg.textContent='جاري حفظ التعديلات...';try{
-      const steps=[[panel.querySelector('.savep'),panel.querySelector('.mp')],[panel.querySelector('.saveo'),panel.querySelector('.mo')],[panel.querySelector('.saver'),panel.querySelector('.mr')]];for(const [button,m] of steps){if(button&&!(await runExisting(button,m)))throw Error(clean(m?.textContent)||'تعذر حفظ أحد الأقسام.');}
-      const p1=panel.querySelector('#ucv21-npw')?.value||'',p2=panel.querySelector('#ucv21-npw2')?.value||'';if(p1||p2){if(p1!==p2)throw Error('كلمتا المرور غير متطابقتين.');if(!U?.strongPw?.(p1))throw Error('كلمة المرور لا تطابق سياسة الأمان.');if(!employeeRef?.authUid)throw Error('لا يوجد حساب دخول مرتبط.');await U.post('/api/admin/users',{action:'setPassword',uid:employeeRef.authUid,password:p1});panel.querySelector('#ucv21-npw').value='';panel.querySelector('#ucv21-npw2').value='';}
-      msg.className='ucv21-profile-msg ok';msg.textContent='تم حفظ التعديلات بنجاح.';U?.stale?.();
+    footer.querySelector('.ucv21-save').onclick=async ev=>{const b=ev.currentTarget,msg=footer.querySelector('.ucv21-profile-msg'),employeeRef=panel.__ucv21Employee;msg.className='ucv21-profile-msg';try{
+      const p1=panel.querySelector('#ucv21-npw')?.value||'',p2=panel.querySelector('#ucv21-npw2')?.value||'';if(p1||p2){if(p1!==p2)throw Error('كلمتا المرور غير متطابقتين.');if(!U?.strongPw?.(p1))throw Error('كلمة المرور لا تطابق سياسة الأمان.');if(!employeeRef?.authUid)throw Error('لا يوجد حساب دخول مرتبط.');}
+      if(!clean(panel.querySelector('#edit-name')?.value))throw Error('اسم الموظف مطلوب.');
+      const current=profileSnapshot(panel,employeeRef),initial=panel.__ucv21Snapshot||{},steps=[];if(current.basic!==initial.basic)steps.push([panel.querySelector('.savep'),panel.querySelector('.mp')]);if(current.organization!==initial.organization)steps.push([panel.querySelector('.saveo'),panel.querySelector('.mo')]);if(current.products!==initial.products)steps.push([panel.querySelector('.saver'),panel.querySelector('.mr')]);
+      if(!steps.length&&!p1&&!p2){msg.textContent='لا توجد تغييرات جديدة للحفظ.';return;}
+      b.disabled=true;msg.textContent='جاري حفظ التعديلات...';for(const [button,m] of steps){if(button&&!(await runExisting(button,m)))throw Error(clean(m?.textContent)||'تعذر حفظ أحد الأقسام.');}
+      if(p1||p2){await U.post('/api/admin/users',{action:'setPassword',uid:employeeRef.authUid,password:p1});panel.querySelector('#ucv21-npw').value='';panel.querySelector('#ucv21-npw2').value='';}
+      panel.__ucv21Snapshot=profileSnapshot(panel,employeeRef);msg.className='ucv21-profile-msg ok';msg.textContent='تم حفظ التعديلات بنجاح.';
     }catch(error){msg.className='ucv21-profile-msg er';msg.textContent=error?.message||'تعذر حفظ التعديلات.';}finally{b.disabled=false;}};
   }
 }

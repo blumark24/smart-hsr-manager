@@ -221,10 +221,10 @@ async function renderCenter(force=false) {
         ${kpiCard('mobility','الحركة',stats.mobility,'mobility','mobility')}
       </div>
       <div class="ucv2-toolbar">
-        <label class="ucv2-search"><span class="sr-only">بحث</span><input type="search" data-filter="search" value="${esc(state.search)}" placeholder="بحث بالاسم أو البريد أو الرقم الوظيفي" autocomplete="off"></label>
+        <label class="ucv2-search"><span class="sr-only">بحث في سجل الموظفين</span><input type="search" data-filter="search" value="${esc(state.search)}" aria-label="بحث في سجل الموظفين" placeholder="بحث بالاسم أو البريد أو الرقم الوظيفي" autocomplete="off"></label>
         <select data-filter="status" aria-label="الحالة">${selectOptions([['ACTIVE','نشط'],['SUSPENDED','موقوف'],['NO_ACCOUNT','بدون حساب'],['PENDING_ACTIVATION','يحتاج تفعيل']],state.status,'كل الحالات')}</select>
         <select data-filter="role" aria-label="الدور">${selectOptions(roleValues.map(r=>[r,roleLabel(r)]),state.role,'كل الأدوار')}</select>
-        <select data-filter="product" aria-label="المنتج">${selectOptions([['field','الحصر'],['lands','الأراضي'],['mobility','الحركة']],state.product,'كل الخدمات')}</select>
+        <select data-filter="product" aria-label="الخدمة البلدية">${selectOptions([['field','الحصر الميداني الذكي'],['lands','الأراضي الذكية'],['mobility','الحركة الذكية']],state.product,'كل الخدمات')}</select>
         <select data-filter="department" aria-label="القسم">${selectOptions(departments.map(d=>[d,d]),state.department,'كل الأقسام')}</select>
         <select data-filter="vehicle" aria-label="أهلية المركبة">${selectOptions([['eligible','مؤهل للمركبة'],['ineligible','غير مؤهل']],state.vehicle,'كل حالات المركبة')}</select>
         <button class="ucv2-btn ghost" data-reset-filters>إعادة تعيين الفلاتر</button>
@@ -232,7 +232,7 @@ async function renderCenter(force=false) {
       <div class="ucv2-quick" aria-label="فلاتر سريعة">
         ${quickChip('active','الحسابات المفعلة')}${quickChip('no-account','بدون حساب')}${quickChip('field','الحصر')}${quickChip('lands','الأراضي')}${quickChip('mobility','الحركة')}
       </div>
-      <div class="ucv2-grid-head"><span>عرض ${filtered.length} من ${records.length} سجل</span><label>ترتيب <select data-filter="sort"><option value="name"${state.sort==='name'?' selected':''}>الاسم</option><option value="status"${state.sort==='status'?' selected':''}>الحالة</option><option value="department"${state.sort==='department'?' selected':''}>القسم</option><option value="updated"${state.sort==='updated'?' selected':''}>آخر تعديل</option></select></label></div>
+      <div class="ucv2-grid-head"><span aria-live="polite">عرض ${filtered.length} من ${records.length} سجل</span><label>ترتيب <select data-filter="sort" aria-label="ترتيب سجل المستخدمين"><option value="name"${state.sort==='name'?' selected':''}>الاسم</option><option value="status"${state.sort==='status'?' selected':''}>الحالة</option><option value="department"${state.sort==='department'?' selected':''}>القسم</option><option value="updated"${state.sort==='updated'?' selected':''}>آخر تعديل</option></select></label></div>
       ${pageRecords.length ? `<div class="ucv2-table-wrap"><table class="ucv2-table"><thead><tr><th>الموظف</th><th>الحساب</th><th>البريد</th><th>الإدارة</th><th>القسم</th><th>المسمى</th><th>الخدمات</th><th>الدور التشغيلي</th><th>المركبة</th><th>آخر تعديل</th><th>الإجراءات</th></tr></thead><tbody>${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r):employeeRow(r)).join('')}</tbody></table></div><div class="ucv2-mobile-list">${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r,true):employeeRow(r,true)).join('')}</div>` : emptyState(records.length)}
       ${maxPage>1?pagination(maxPage):''}`;
     bindCenter(app,directory);
@@ -241,18 +241,19 @@ async function renderCenter(force=false) {
     if(root){ let app=root.querySelector('.ucv2-app'); if(!app){app=document.createElement('section');app.className='ucv2-app';root.appendChild(app);} delete app.dataset.routeGuardLoading; app.removeAttribute('aria-busy'); app.innerHTML=`<div class="ucv2-state error"><b>تعذر تحميل مركز المستخدمين</b><span>${esc(U.why?U.why(error.reason||error.message):error.message)}</span><button class="ucv2-btn ghost" data-retry>إعادة المحاولة</button></div>`; app.querySelector('[data-retry]')?.addEventListener('click',()=>{directoryCache=null;renderCenter(true);}); }
   } finally { renderQueued=false; }
 }
-function kpiCard(key,label,value,accent,quick){ const active=quick&&state.quick===quick; return `<button class="ucv2-kpi ${accent}${active?' active':''}" type="button" ${quick?`data-quick="${quick}"`:'aria-disabled="true"'}><span class="ucv2-kpi-icon" aria-hidden="true"></span><span><b>${value}</b><small>${label}</small></span></button>`; }
-function quickChip(value,label){ return `<button type="button" class="ucv2-chip-button${state.quick===value?' active':''}" data-quick="${value}">${label}</button>`; }
+function kpiCard(key,label,value,accent,quick){ const active=quick&&state.quick===quick,content=`<span class="ucv2-kpi-icon" aria-hidden="true"></span><span><b>${value}</b><small>${label}</small></span>`;return quick?`<button class="ucv2-kpi ${accent}${active?' active':''}" type="button" data-quick="${quick}" aria-pressed="${active?'true':'false'}">${content}</button>`:`<div class="ucv2-kpi ${accent}" aria-label="${esc(label)}: ${value}">${content}</div>`; }
+function quickChip(value,label){ const active=state.quick===value;return `<button type="button" class="ucv2-chip-button${active?' active':''}" data-quick="${value}" aria-pressed="${active?'true':'false'}">${label}</button>`; }
 function emptyState(total){ return `<div class="ucv2-state"><b>${total?'لا توجد نتائج مطابقة':'لا توجد سجلات موظفين بعد'}</b><span>${total?'غيّر معايير البحث أو أعد تعيين الفلاتر.':'استخدم «إضافة موظف» لإنشاء أول سجل.'}</span></div>`; }
 function pagination(max){ return `<nav class="ucv2-pagination" aria-label="التنقل بين صفحات الموظفين"><button class="ucv2-btn ghost" data-page="prev" ${state.page<=1?'disabled':''}>السابق</button><span>صفحة ${state.page} من ${max}</span><button class="ucv2-btn ghost" data-page="next" ${state.page>=max?'disabled':''}>التالي</button></nav>`; }
 function resetFilters(){ Object.assign(state,{search:'',status:'all',role:'all',product:'all',department:'all',vehicle:'all',quick:null,page:1,sort:'name'}); }
+function showCenterActionError(app,error){let node=app.querySelector('.ucv2-action-error');if(!node){node=document.createElement('div');node.className='ucv2-action-error';node.setAttribute('role','alert');app.querySelector('.ucv2-header')?.after(node);}node.textContent=U.why?U.why(error?.reason||error?.message):'تعذر تنفيذ الإجراء.';}
 function bindCenter(app,directory){
-  app.querySelector('[data-add-employee]')?.addEventListener('click',async()=>{ await U.add(); decorateAddDialog(); });
+  app.querySelector('[data-add-employee]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;app.setAttribute('aria-busy','true');try{await U.add();decorateAddDialog();}catch(error){showCenterActionError(app,error);}finally{button.disabled=false;app.removeAttribute('aria-busy');}});
   app.querySelector('[data-close-center]')?.addEventListener('click',()=>{ document.querySelector('[data-ucv2-original] button[aria-label="إغلاق"]')?.click(); });
   app.querySelector('[data-reset-filters]')?.addEventListener('click',()=>{ resetFilters(); renderCenter(); });
   app.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{ const q=btn.dataset.quick; state.quick=state.quick===q?null:q; state.page=1; renderCenter(); }));
-  app.querySelectorAll('[data-filter]').forEach(control=>{ const key=control.dataset.filter; const event=key==='search'?'input':'change'; control.addEventListener(event,()=>{ state[key]=control.value; state.page=1; renderCenter(); }); });
-  app.querySelectorAll('[data-open-employee]').forEach(btn=>btn.addEventListener('click',async()=>{ const id=btn.dataset.openEmployee; const employee=(directory.employees||[]).find(e=>String(e.employeeId)===id); if(employee){ await U.profile(employee); decorateProfileDialog(employee); } }));
+  app.querySelectorAll('[data-filter]').forEach(control=>{ const key=control.dataset.filter; const event=key==='search'?'input':'change'; control.addEventListener(event,()=>{ state[key]=control.value; state.page=1; const caret=key==='search'?control.selectionStart:null;renderCenter().then(()=>{if(key!=='search')return;const next=lastRoot?.querySelector('[data-filter="search"]');if(!next)return;next.focus();if(Number.isInteger(caret))next.setSelectionRange(caret,caret);}); }); });
+  app.querySelectorAll('[data-open-employee]').forEach(btn=>btn.addEventListener('click',async()=>{ const id=btn.dataset.openEmployee; const employee=(directory.employees||[]).find(e=>String(e.employeeId)===id); if(!employee)return;btn.disabled=true;app.setAttribute('aria-busy','true');try{await U.profile(employee);decorateProfileDialog(employee);}catch(error){showCenterActionError(app,error);}finally{btn.disabled=false;app.removeAttribute('aria-busy');} }));
   app.querySelectorAll('tr[data-employee-id]').forEach(row=>row.addEventListener('keydown',event=>{ if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){ event.preventDefault(); row.querySelector('[data-open-employee]')?.click(); } }));
   app.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{ state.page += btn.dataset.page==='next'?1:-1; renderCenter(); }));
 }
@@ -307,7 +308,8 @@ function historyDetail(event){ const d=event?.detail;if(!d||typeof d!=='object')
 U.loadHist=async(c,employee)=>{const h=c.querySelector('.hist');if(!h)return;h.innerHTML='<div class="msg">جاري تحميل سجل الموظف...</div>';try{const r=await U.post('/api/organization/context',{action:'userCenter.listHistory',employeeId:employee.employeeId}),events=r.events||[];h.innerHTML=events.length?`<div class="ucv2-timeline">${events.map((event,index)=>`<article class="ucv2-event${index===0?' latest':''}"><span class="ucv2-event-dot"></span><div><div class="ucv2-event-head"><b>${esc(AUDIT_LABELS[event.action]||event.action||'حدث')}</b><time>${esc(safeDate(event.createdAt))}</time></div><small>بواسطة: ${esc(event.actorRole==='manager'?'مدير البلدية':event.actorRole||'النظام')}</small>${historyDetail(event)?`<p>${esc(historyDetail(event))}</p>`:''}</div></article>`).join('')}</div>`:'<div class="msg">لا توجد أحداث مسجلة لهذا الموظف حتى الآن.</div>';}catch(error){h.innerHTML=`<div class="msg er">${esc(U.why(error.reason||error.message))}</div>`;}};
 
 const baseStale=U.stale;
-if(typeof baseStale==='function') U.stale=(...args)=>{const out=baseStale.apply(U,args);directoryCache=null;setTimeout(()=>renderCenter(true),0);return out;};
+let staleRefreshTimer=0;
+if(typeof baseStale==='function') U.stale=(...args)=>{const out=baseStale.apply(U,args);directoryCache=null;clearTimeout(staleRefreshTimer);staleRefreshTimer=setTimeout(()=>renderCenter(true),80);return out;};
 
 function installTheme(){
   if(document.getElementById('ucv2-style'))return;

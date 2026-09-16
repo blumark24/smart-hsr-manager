@@ -54,6 +54,15 @@ const {
 
 function isNonEmptyString(v) { return typeof v === 'string' && v.trim().length > 0; }
 
+function timestampToIso(value) {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+  if (typeof value.toDate === 'function') return value.toDate().toISOString();
+  const seconds = Number.isFinite(value.seconds) ? value.seconds : value._seconds;
+  return Number.isFinite(seconds) ? new Date(seconds * 1000).toISOString() : null;
+}
+
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -119,8 +128,8 @@ function safeEmployee(id, data) {
       // Phase 03B.1 hotfix: fail-safe default — not eligible until explicit.
       mobility: { enabled: false, role: null, vehicleEligible: false },
     },
-    createdAt: data.createdAt || null,
-    updatedAt: data.updatedAt || null,
+    createdAt: timestampToIso(data.createdAt),
+    updatedAt: timestampToIso(data.updatedAt),
   };
 }
 
@@ -839,4 +848,4 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
-module.exports._test = { safeEmployee, resolveProductEntitlements };
+module.exports._test = { safeEmployee, timestampToIso, resolveProductEntitlements };
