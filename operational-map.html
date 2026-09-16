@@ -343,9 +343,35 @@ function updateLayerCounts() {
   });
 }
 
-function currentBboxParam() {
+// STABILIZATION — bbox-scoped layers (commercial_places/buildings) used to
+// re-fetch AND fully tear down/rebuild their GL source+layers on every
+// single 'moveend', even a few-pixel pan: confirmed empirically (8 small
+// pan nudges -> 8 network requests + 8 removeLayer/addLayer/removeSource/
+// addSource cycles, with the layer visibly absent from the map for over a
+// second between removal and re-add on each one). Root cause of the
+// reported flashing/pulsing and request-storm symptoms.
+//
+// Fix: fetch a BUFFERED bbox (viewport expanded by VIEWPORT_PREFETCH_BUFFER
+// in every direction) and cache which bounds were last fetched per layer.
+// A pan/zoom that stays within the already-fetched buffered area never
+// re-fetches or repaints at all; one that doesn't is fetched with the same
+// buffer, so a few more small pans afterward again need nothing.
+const VIEWPORT_PREFETCH_BUFFER = 0.5;
+const bboxLayerCache = {
+  commercial_places: { bounds: null, entities: [], attributions: [] },
+  buildings: { bounds: null, entities: [], attributions: [] },
+};
+function bufferedBoundsAndParam() {
   const b = map.getBounds();
-  return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',');
+  const w = b.getEast() - b.getWest(), h = b.getNorth() - b.getSouth();
+  const bufX = w * VIEWPORT_PREFETCH_BUFFER, bufY = h * VIEWPORT_PREFETCH_BUFFER;
+  const bounds = { west: b.getWest() - bufX, south: b.getSouth() - bufY, east: b.getEast() + bufX, north: b.getNorth() + bufY };
+  return { bounds, param: [bounds.west, bounds.south, bounds.east, bounds.north].join(',') };
+}
+function viewportCoveredBy(bounds) {
+  if (!bounds) return false;
+  const b = map.getBounds();
+  return b.getWest() >= bounds.west && b.getEast() <= bounds.east && b.getSouth() >= bounds.south && b.getNorth() <= bounds.north;
 }
 
 // Field observations are SMART HSR's own trusted municipal data (already
@@ -406,22 +432,39 @@ function applyObservationFilters(entities) {
 // observation entities from cache — never a stale layer, never a wasted
 // re-fetch (Section 18).
 let cachedObservationEntities = [];
+// STABILIZATION — monotonic generation counter so a slow API response from
+// an OLDER viewport/call can never overwrite state painted by a NEWER one
+// (a real race under rapid panning/zooming/layer-toggling, since this
+// function is async and was never guarded against overlapping in-flight
+// calls). Every await below re-checks this before touching shared state.
+let viewportRequestGeneration = 0;
 async function loadVisibleLayers(organizationId, { includeObservations = true } = {}) {
+  const generation = ++viewportRequestGeneration;
   loadedEntities = [];
   for (const layerId of ['commercial_places', 'buildings']) {
-    if (!activeLayers.has(layerId)) { removeSourceLayer(layerId); continue; }
-    const res = await apiGet({ organizationId, geoLayer: layerId, bbox: currentBboxParam() });
-    if (!res.ok) continue;
-    loadedEntities.push(...res.body.entities);
-    layerCounts.set(layerId, res.body.entities.length);
-    paintEntities(layerId, res.body.entities);
-    renderAttribution(res.body.attributions);
+    const cache = bboxLayerCache[layerId];
+    if (!activeLayers.has(layerId)) { removeSourceLayer(layerId); cache.bounds = null; cache.entities = []; continue; }
+    if (!viewportCoveredBy(cache.bounds)) {
+      const { bounds, param } = bufferedBoundsAndParam();
+      const res = await apiGet({ organizationId, geoLayer: layerId, bbox: param });
+      if (generation !== viewportRequestGeneration) return; // superseded by a newer call — discard this stale response
+      if (res.ok) {
+        cache.bounds = bounds;
+        cache.entities = res.body.entities;
+        cache.attributions = res.body.attributions;
+        paintEntities(layerId, cache.entities);
+        renderAttribution(cache.attributions);
+      }
+    }
+    loadedEntities.push(...cache.entities);
+    layerCounts.set(layerId, cache.entities.length);
   }
   if (!activeLayers.has('field_observations')) {
     removeObservationSource();
     cachedObservationEntities = [];
   } else if (includeObservations) {
     cachedObservationEntities = await loadFieldObservations(organizationId);
+    if (generation !== viewportRequestGeneration) return; // superseded — discard
     const filtered = applyObservationFilters(cachedObservationEntities);
     layerCounts.set('field_observations', filtered.length);
     paintObservations(filtered);
@@ -625,9 +668,17 @@ function removeSourceLayer(layerId) {
   if (map.getSource(srcId)) map.removeSource(srcId);
 }
 
+// STABILIZATION — tracks whether the currently-painted source for a given
+// layer id is in its "point/clustered" shape or its "polygon/fill" shape,
+// so paintEntities() below can tell whether the existing source can just be
+// updated with setData() (same shape, only the data changed — the common
+// case on every pan/zoom) or genuinely needs a rebuild (shape changed, or
+// painted for the first time). Removing and re-adding a GL source/layer
+// pair on every single repaint was the confirmed root cause of the
+// buildings/commercial_places layer visibly flashing on every pan.
+const paintedLayerShape = new Map();
 function paintEntities(layerId, entities) {
   const srcId = `geo-${layerId}`;
-  removeSourceLayer(layerId);
   const geojson = { type: 'FeatureCollection', features: entities.map((e) => ({ type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, category: e.category, name: (e.metadata && e.metadata.name) || '' } })) };
   // PHASE 10 UAT FIX — an empty layer (a real, normal state: a newly
   // onboarded municipality with no reference geo data loaded yet for this
@@ -638,6 +689,16 @@ function paintEntities(layerId, entities) {
   // source/layer pair ever got added. Coerced to a real boolean so an empty
   // layer renders as an empty layer instead of throwing.
   const isPoint = entities.length > 0 && entities[0].geometry.type === 'Point';
+  const existingSource = map.getSource(srcId);
+  if (existingSource && paintedLayerShape.get(srcId) === isPoint) {
+    // Same shape already painted — update the real data in place. Click
+    // handlers stay bound (bindClickOnce below never re-registers them
+    // anyway), no layer is ever absent from the map even momentarily.
+    existingSource.setData(geojson);
+    return;
+  }
+  removeSourceLayer(layerId);
+  paintedLayerShape.set(srcId, isPoint);
   map.addSource(srcId, { type: 'geojson', data: geojson, cluster: isPoint, clusterRadius: 40, clusterMaxZoom: 15 });
   const color = styleTokens.LAYER_STYLE[layerRegistry.getLayer(layerId).styleToken] || '#0EA5E9';
   if (isPoint) {
@@ -1112,6 +1173,15 @@ function reapplyObservationFilters() {
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { location.href = 'manager-login.html'; return; }
+  // STABILIZATION — Firebase's onAuthStateChanged can legitimately re-fire
+  // for an already-signed-in user (e.g. an ID token refresh), and nothing
+  // here previously guarded against that: a second firing would construct
+  // a SECOND maplibregl.Map on the same container, doubling every event
+  // listener/render loop from then on. Sign-out already does a full
+  // location.href navigation (see below), so the only way back into this
+  // branch with `map` already set is a redundant re-fire for the same
+  // session — never a legitimate user switch.
+  if (map) return;
   currentUser = user;
   caller = await resolveCallerRole(user.uid);
   if (!caller) { await signOut(auth); location.href = 'manager-login.html'; return; }
@@ -1168,7 +1238,21 @@ onAuthStateChanged(auth, async (user) => {
     renderFilterChips();
     loadVisibleLayers(mapContext.organizationId);
   });
-  map.on('moveend', () => { loadVisibleLayers(mapContext.organizationId, { includeObservations: false }); syncObservationMarkers(); });
+  // STABILIZATION — sync markers immediately (cheap: repositions existing
+  // DOM markers, only creates/removes when clustering itself changed), but
+  // debounce the bbox-layer reload: a real user rarely pans/zooms exactly
+  // once and stops, and the buffer above already makes most individual
+  // moveends free, but a burst of several moveends in a row (fast repeated
+  // small drags, or a scroll-wheel zoom flurry) should still settle into
+  // ONE reload, not one per event.
+  let moveendReloadTimer = null;
+  map.on('moveend', () => {
+    syncObservationMarkers();
+    clearTimeout(moveendReloadTimer);
+    moveendReloadTimer = setTimeout(() => {
+      loadVisibleLayers(mapContext.organizationId, { includeObservations: false });
+    }, 200);
+  });
   // A GeoJSON source's clustered tiles for a NEWLY-reached zoom level are
   // computed asynchronously — querySourceFeatures() called synchronously on
   // 'moveend' alone can still see the previous zoom's (stale/empty) tile
