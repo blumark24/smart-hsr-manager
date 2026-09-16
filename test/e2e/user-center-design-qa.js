@@ -40,29 +40,73 @@ async function firstVisible(locator) {
   return null;
 }
 
+async function waitForUserCenterSurface(page) {
+  await page.locator('[data-uc-v2="true"]').waitFor({ timeout: 15000 });
+}
+
+async function tryAccountMenuPath(page) {
+  const account = await firstVisible(page.getByRole('button', { name: 'قائمة الحساب', exact: true }));
+  if (!account) return false;
+
+  await account.click();
+  const permissions = await firstVisible(page.getByText('الصلاحيات والسجل', { exact: true }));
+  if (!permissions) return false;
+
+  await permissions.click();
+  await waitForUserCenterSurface(page);
+  return true;
+}
+
+async function tryMunicipalityNavPath(page) {
+  const adminToggle = await firstVisible(page.getByRole('button', { name: 'إدارة البلدية', exact: true }));
+  if (adminToggle) {
+    await adminToggle.click();
+    await page.waitForTimeout(200);
+  }
+
+  const anchors = page.locator('a').filter({ hasText: 'مركز المستخدمين' });
+  if (await anchors.count()) {
+    // The manager can intentionally collapse sidebar labels at some widths.
+    // dispatchEvent exercises the real bound navigation handler even if the
+    // text span itself is visually hidden by the responsive sidebar token.
+    await anchors.first().dispatchEvent('click');
+    await waitForUserCenterSurface(page);
+    return true;
+  }
+
+  const quick = page.locator('a').filter({ hasText: 'فتح مركز المستخدمين' });
+  if (await quick.count()) {
+    await quick.first().dispatchEvent('click');
+    await waitForUserCenterSurface(page);
+    return true;
+  }
+
+  return false;
+}
+
 async function openUserCenter(page) {
   await page.waitForFunction(
-    () => document.body && document.body.innerText.includes('إدارة البلدية'),
+    () => document.body && document.body.innerText.includes('تسجيل الخروج'),
     { timeout: 15000 },
   );
 
-  let target = await firstVisible(page.getByText('مركز المستخدمين', { exact: true }));
-
-  if (!target) {
-    const adminToggle = await firstVisible(page.getByRole('button', { name: 'إدارة البلدية', exact: true }));
-    assert(adminToggle, 'Municipality administration navigation group was not found.');
-    await adminToggle.click();
-    await page.waitForTimeout(150);
-    target = await firstVisible(page.getByText('مركز المستخدمين', { exact: true }));
+  let direct = await firstVisible(page.getByText('مركز المستخدمين', { exact: true }));
+  if (direct) {
+    await direct.click();
+    await waitForUserCenterSurface(page);
+    return;
   }
 
-  if (!target) {
-    target = await firstVisible(page.getByText('فتح مركز المستخدمين', { exact: true }));
-  }
+  if (await tryAccountMenuPath(page)) return;
+  if (await tryMunicipalityNavPath(page)) return;
 
-  assert(target, 'User Center navigation entry was not found after expanding Municipality Administration.');
-  await target.click();
-  await page.locator('[data-uc-v2="true"]').waitFor({ timeout: 15000 });
+  const snapshot = await page.evaluate(() => ({
+    title: document.title,
+    path: location.pathname,
+    hasAccountButton: !!document.querySelector('[aria-label="قائمة الحساب"]'),
+    text: (document.body?.innerText || '').slice(0, 3000),
+  }));
+  throw new Error(`User Center navigation could not be activated. Diagnostics: ${JSON.stringify(snapshot)}`);
 }
 
 async function assertGlobalNoOverflow(page, label) {
