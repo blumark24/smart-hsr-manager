@@ -33,13 +33,18 @@ if ($nodeMajor -lt 18) {
   throw "Node.js 18+ is required. Detected $nodeVersion."
 }
 
+# Graft 0.13+ currently has a Windows/Node 24 native tree-sitter startup issue.
+# 0.12.1 is pinned for this POC because its dry-run is verified on the target machine.
+$graftPackage = '@nanonets/graft@0.12.1'
+
 Write-Host 'SMART HSR — AI Design Stack bootstrap' -ForegroundColor Green
 Write-Host "Repository: $repoRoot"
 Write-Host "Node: $nodeVersion"
+Write-Host "Graft: $graftPackage (Windows-safe POC pin)"
 Write-Host 'Safety mode: project-local only; no Production deployment; Graft global Codex writes disabled.'
 
 Write-Step 'Previewing Graft changes (dry-run)'
-& npx -y @nanonets/graft init . --dry-run --agents agents --no-global
+& npx -y $graftPackage init . --dry-run --agents agents --no-global
 if ($LASTEXITCODE -ne 0) { throw 'Graft dry-run failed.' }
 
 if (-not $Apply) {
@@ -50,7 +55,7 @@ if (-not $Apply) {
 }
 
 Write-Step 'Wiring Graft into project instructions only'
-& npx -y @nanonets/graft init . --agents agents --no-global
+& npx -y $graftPackage init . --agents agents --no-global
 if ($LASTEXITCODE -ne 0) { throw 'Graft project wiring failed.' }
 
 Write-Step 'Installing Impeccable for Codex at project scope'
