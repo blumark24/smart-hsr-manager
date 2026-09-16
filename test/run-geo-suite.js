@@ -16,6 +16,7 @@ const testFiles = fs.readdirSync(testDir)
   .sort()
   .map((name) => path.posix.join('test', name));
 testFiles.push('test/operational-map-open-twin-button.test.js');
+testFiles.push('test/operational-map-hybrid-ui.test.js');
 
 if (testFiles.length === 0) {
   throw new Error('No test/geo-*.test.js files found — refusing to report a false pass.');
