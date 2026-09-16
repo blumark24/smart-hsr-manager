@@ -10,3 +10,4 @@ ui-debug.log
 !.env.example
 test/e2e/.generated/
 test-results/
+graft/
