@@ -2259,6 +2259,11 @@ class Component extends DCLogic {
   };
 
   componentDidMount() {
+    // UAT/dev-only introspection hook — read-only, exposes no PII beyond
+    // what's already visibly rendered on the map, performs no write of any
+    // kind. Matches the exact convention already established by
+    // operational-map.html's window.__geoDebugMap.
+    window.__mgrDebugMap = () => this._opMap;
     this.onWin = () => { this.measure(); };
     window.addEventListener('resize', this.onWin);
     this.measure();
@@ -2323,6 +2328,25 @@ class Component extends DCLogic {
     this.mapEl = el;
     if (el) this.syncOperationalMap(true);
   }
+
+  // STABILITY GATE — the render-time value object below used to hand React
+  // a BRAND NEW `el => this.bindMapContainer(el)` arrow function every
+  // single render (theme toggle, KPI/observation refresh, any unrelated
+  // setState — this component's render runs on all of them). React treats
+  // a changed ref-callback identity as a real ref change even when the
+  // underlying DOM node hasn't moved at all: it calls the OLD callback with
+  // null, then the NEW callback with the (often identical) element. Fed
+  // straight into bindMapContainer(), that null-then-element pair read as
+  // "container was replaced" every time, tearing down and rebuilding the
+  // whole Leaflet map (killing any open popup) on every unrelated render.
+  // Confirmed directly: 5 real L.map() constructions during a single
+  // passive initial load, +1 more per keystroke/theme toggle after.
+  // A stable, once-bound instance method fixes this at the source — React
+  // only re-invokes a ref callback when ITS identity changes, so keeping
+  // the same function reference across renders means bindMapContainer()
+  // only ever runs for a genuine container swap (the cross-screen-navigation
+  // case already documented above), never for an unrelated re-render.
+  mapRefCallback = (el) => this.bindMapContainer(el);
 
   initOperationalMap() {
     if (!this.mapEl || this._opMap || !window.L) return;
@@ -2966,7 +2990,7 @@ class Component extends DCLogic {
     return {
       rootRef: el => { this.root = el; },
       mapShellRef: el => { this.mapShell = el; },
-      mapRef: el => this.bindMapContainer(el),
+      mapRef: this.mapRefCallback,
       themeVars: vars,
       orgName: st.orgName,
       sessionName: st.sessionName,

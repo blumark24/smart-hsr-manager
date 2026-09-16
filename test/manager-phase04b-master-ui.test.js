@@ -105,7 +105,24 @@ test('G. bindMapContainer() safely tears down any existing map before binding a 
   assert.match(fn, /this\.mapEl = el;/);
   assert.match(fn, /if \(el\) this\.syncOperationalMap\(true\);/);
   // mapRef must route through this safe binder, not assign this.mapEl directly.
-  assert.match(manager, /mapRef: el => this\.bindMapContainer\(el\)/);
+  //
+  // STABILITY GATE follow-up — mapRef used to be a fresh inline arrow
+  // function (`el => this.bindMapContainer(el)`) built every render. Real
+  // browser testing proved this was the actual root cause of the map
+  // popup disappearing unexpectedly: React re-invokes a ref callback with
+  // null-then-element whenever the CALLBACK'S OWN identity changes, even if
+  // the underlying DOM node did not — so any unrelated setState anywhere in
+  // this component (a theme toggle, a KPI/observation refresh, even a
+  // search keystroke) fed bindMapContainer() a "different" container and
+  // tore the whole Leaflet map down. Confirmed empirically: 5 real L.map()
+  // constructions during a single passive page load, +1 more per keystroke
+  // afterward. mapRef is now a stable, once-bound instance field
+  // (mapRefCallback) referenced by identity every render, so it still
+  // routes through the exact same safe bindMapContainer() logic asserted
+  // above, but React only re-invokes it for a genuine container swap.
+  assert.match(manager, /mapRefCallback = \(el\) => this\.bindMapContainer\(el\);/, 'mapRef must be a stable, once-bound instance field, never a fresh inline arrow function per render');
+  assert.match(manager, /mapRef: this\.mapRefCallback,/);
+  assert.doesNotMatch(manager, /mapRef: el => this\.bindMapContainer\(el\)/, 'a fresh inline ref callback per render is the confirmed root cause of the map popup disappearing unexpectedly — never reintroduce it');
   assert.doesNotMatch(manager, /mapRef: el => \{ this\.mapEl = el; \}/);
 });
 
