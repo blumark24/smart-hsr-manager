@@ -11,7 +11,6 @@ const { installFbMock } = require('./lib/fb-mock');
 const { startHarness } = require('./lib/harness');
 const { loginAs } = require('./lib/login');
 
-const CHROMIUM_PATH = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const OUT_DIR = path.join(__dirname, '.generated', 'screenshots');
 
 const VIEWPORTS = [
@@ -38,7 +37,11 @@ const ROLES = [
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const harness = await startHarness();
-  const browser = await chromium.launch({ executablePath: CHROMIUM_PATH });
+  const browser = await chromium.launch(
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+      : { headless: true },
+  );
   const results = [];
 
   try {
