@@ -24,7 +24,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
-const source = fs.readFileSync(path.join(root, 'operational-map.html'), 'utf8');
+const source = fs.readFileSync(path.join(root, 'operational-map.html'), 'utf8').replace(/\r\n/g, '\n');
 
 function makeButton() {
   return { hidden: false, onclick: null };
