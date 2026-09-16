@@ -5,7 +5,7 @@ const fs = require('fs');
 const { chromium } = require('playwright');
 const { installFbMock } = require('./lib/fb-mock');
 const { startHarness } = require('./lib/harness');
-const { loginAs } = require('./lib/login');
+const { loginAs, waitForGateClear } = require('./lib/login');
 
 const OUT_DIR = path.join(__dirname, '.generated', 'user-center-design');
 const PHASE_SCRIPTS = [
@@ -85,10 +85,9 @@ async function tryMunicipalityNavPath(page) {
 }
 
 async function openUserCenter(page) {
-  await page.waitForFunction(
-    () => document.body && document.body.innerText.includes('تسجيل الخروج'),
-    { timeout: 15000 },
-  );
+  // The manager shell is authenticated asynchronously. Do not start probing
+  // navigation until the authenticated surface is actually visible.
+  await waitForGateClear(page, { timeoutMs: 20000 });
 
   let direct = await firstVisible(page.getByText('مركز المستخدمين', { exact: true }));
   if (direct) {
@@ -206,6 +205,9 @@ async function main() {
     await installFbMock(context);
     const page = await loginAs(context, harness.baseUrl, 'manager@e2e.test');
 
+    // Confirm the authenticated manager shell before layering the isolated
+    // Phase 11B-G scripts on top. This avoids racing the adapter/gate render.
+    await waitForGateClear(page, { timeoutMs: 20000 });
     await injectPhaseScripts(page, harness.baseUrl);
     await openUserCenter(page);
     await runDesktop(page);
