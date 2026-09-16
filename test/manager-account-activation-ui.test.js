@@ -28,7 +28,7 @@ test('manager-dashboard-adapter.js: employees/ is a real, independently-scoped l
 test('manager-dashboard-adapter.js: the employees listener is torn down alongside users/observations/incidents, never leaked across auth-state changes', () => {
   const authHandlerStart = adapter.indexOf('onAuthStateChanged(auth, async user =>');
   assert.notEqual(authHandlerStart, -1);
-  const fn = adapter.slice(authHandlerStart, authHandlerStart + 900);
+  const fn = adapter.slice(authHandlerStart, authHandlerStart + 1200);
   assert.match(fn, /stopObservations\?\.\(\); stopUsers\?\.\(\); stopIncidents\?\.\(\); stopEmployees\?\.\(\);/);
   const disconnectFn = methodBody(adapter, 'function disconnect(component) {', 400);
   assert.match(disconnectFn, /stopEmployees\?\.\(\);/);

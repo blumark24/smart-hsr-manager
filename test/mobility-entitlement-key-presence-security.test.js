@@ -165,7 +165,7 @@ test('users-list-view.js belongsOnUsersList: Field independence — a malformed 
 // is extracted. ----
 
 function extractLiveUsersRowMapper() {
-  const source = read('manager-dashboard-adapter.js');
+  const source = read('manager-dashboard-adapter.js').replace(/\r\n/g, '\n');
   const mapCallStart = source.indexOf('users.filter(belongsOnUsersList).map(');
   assert.ok(mapCallStart >= 0, 'expected users.filter(belongsOnUsersList).map( marker not found — has the shape moved?');
   const arrowStart = source.indexOf('item => ({', mapCallStart);

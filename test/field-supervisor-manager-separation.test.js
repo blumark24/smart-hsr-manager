@@ -42,7 +42,7 @@ const vm = require('node:vm');
 const { installFakes, fakeRequest, fakeResponse } = require('./helpers/fakeFirebaseAdmin');
 
 const root = path.join(__dirname, '..');
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 
 const USERS_HANDLER_PATH = require.resolve('../api/admin/users.js');
 const EMPLOYEES_HANDLER_PATH = require.resolve('../api/admin/employees.js');

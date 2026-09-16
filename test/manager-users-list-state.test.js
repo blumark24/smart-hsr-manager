@@ -168,7 +168,7 @@ test('13. the users/incidents placeholder only appears when there is genuinely n
 
 test("13b. the live users subscription's error callback never clears the in-memory `users` array — only the adapter's own `users` variable is touched, and it is never reset to []", () => {
   const source = read('manager-dashboard-adapter.js');
-  const fn = source.slice(source.indexOf('stopUsers = firestoreApi.onSnapshot(userFilter'), source.indexOf('stopUsers = firestoreApi.onSnapshot(userFilter') + 500);
+  const fn = source.slice(source.indexOf('stopUsers = firestoreApi.onSnapshot(userFilter'), source.indexOf('stopUsers = firestoreApi.onSnapshot(userFilter') + 700);
   assert.doesNotMatch(fn, /users\s*=\s*\[\]/, 'the error callback must never clear the users array — it only surfaces dataState/dataError and flashes a toast');
   assert.match(fn, /component\.flash\(component\.liveDataError\)/);
 });
@@ -214,7 +214,7 @@ test("16. any previous users/observations/incidents/employees listeners are torn
     ? source.indexOf('onAuthStateChanged(auth, async user =>')
     : source.indexOf('onAuthStateChanged(auth,');
   assert.notEqual(authHandlerStart, -1, 'onAuthStateChanged wiring not found');
-  const fn = source.slice(authHandlerStart, authHandlerStart + 900);
+  const fn = source.slice(authHandlerStart, authHandlerStart + 1200);
   assert.match(fn, /stopObservations\?\.\(\); stopUsers\?\.\(\); stopIncidents\?\.\(\); stopEmployees\?\.\(\);/);
   // and the subscription setup itself never happens anywhere except inside
   // this one auth-state handler.
