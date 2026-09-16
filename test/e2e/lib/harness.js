@@ -37,7 +37,7 @@ async function startHarness() {
   const children = [];
 
   if (!(await isPortOpen(AUTH_PORT)) || !(await isPortOpen(FIRESTORE_PORT))) {
-    const emu = spawn('node', [
+    const emu = spawn(process.execPath, [
       path.join(ROOT, 'node_modules', 'firebase-tools', 'lib', 'bin', 'firebase.js'),
       'emulators:start', '--project', 'smart-hsr-manager', '--only', 'auth,firestore',
     ], { cwd: ROOT, stdio: 'ignore' });
@@ -48,7 +48,11 @@ async function startHarness() {
   }
 
   if (!(await isPortOpen(SERVER_PORT))) {
-    const srv = spawn('python3', ['server.py'], { cwd: ROOT, stdio: 'ignore' });
+    const srv = spawn(process.execPath, [path.join(__dirname, 'static-server.js')], {
+      cwd: ROOT,
+      stdio: 'ignore',
+      env: { ...process.env, SMART_HSR_STATIC_PORT: String(SERVER_PORT) },
+    });
     children.push(srv);
     started.server = true;
     await waitForPort(SERVER_PORT);
@@ -67,6 +71,7 @@ async function startHarness() {
   return {
     baseUrl: BASE_URL,
     seed,
+    started,
     async stop() {
       for (const child of children) {
         try { child.kill('SIGTERM'); } catch (_e) { /* already gone */ }
