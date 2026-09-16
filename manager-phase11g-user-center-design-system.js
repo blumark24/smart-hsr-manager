@@ -46,6 +46,30 @@
     });
   }
 
+  function installInstitutionalAddBridge() {
+    if (window.__smartHsrInstitutionalAddBridge) return;
+    window.__smartHsrInstitutionalAddBridge = true;
+
+    // The visible V2 header reuses the legacy Designer "إضافة موظف بلا حساب"
+    // button, whose original handler opens the old drawer. Intercept that one
+    // promoted action at the window capture phase so it consistently opens the
+    // institutional U.add() modal instead. Window capture runs before the
+    // Designer/document/target handlers, preventing both surfaces from opening.
+    window.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target.closest('[data-uc2-primary="true"]') : null;
+      if (!target || !target.closest('[data-uc-v2="true"]')) return;
+
+      const U = window.SmartHSRInstitutionalUC;
+      if (!U || typeof U.add !== 'function') return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      Promise.resolve(U.add()).catch((error) => {
+        console.error('[SMART HSR User Center] Add Employee modal failed to open.', error);
+      });
+    }, true);
+  }
+
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
@@ -168,6 +192,7 @@
 
   function boot() {
     installStyle();
+    installInstitutionalAddBridge();
     syncTheme();
     improveSemantics();
 
