@@ -171,8 +171,10 @@
 
     const findRoot = () => {
       if (!activeView()) return null;
+      const panel = document.querySelector('.manager-view-overlay > .manager-view-panel');
+      if (panel) return panel;
       const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,[role="heading"]'));
-      const heading = headings.find(el => !el.closest('.ucv2-app') && /مركز إدارة المستخدمين|إدارة المستخدمين|المستخدمون والصلاحيات/.test(clean(el.textContent)));
+      const heading = headings.find(el => !el.closest('.ucv2-app') && /مركز إدارة المستخدمين|مركز المستخدمين|إدارة المستخدمين|المستخدمون والصلاحيات/.test(clean(el.textContent)));
       if (!heading) return null;
       let node = heading;
       for (let depth = 0; depth < 8 && node?.parentElement; depth += 1) {

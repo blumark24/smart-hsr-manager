@@ -40,6 +40,17 @@ test('User Center lifecycle is owned by the real Manager view and tears down on 
   assert.match(center, /!el\.closest\('\.ucv2-app'\)/);
 });
 
+test('route guard and directory renderer recognize the Manager users heading', () => {
+  const title = manager.match(/st\.view === 'users' \? '(مركز المستخدمين)'/)?.[1];
+  assert.equal(title, 'مركز المستخدمين');
+  for (const source of [managerFormat, center]) {
+    assert.match(source, /document\.querySelector\('\.manager-view-overlay > \.manager-view-panel'\)/);
+    const headingPattern = source.match(/const heading = headings\.find\([^\n]*?&& \/([^/]+)\/\.test\(clean\(el\.textContent\)\)/)?.[1];
+    assert.ok(headingPattern, 'User Center heading selector exists');
+    assert.match(title, new RegExp(headingPattern));
+  }
+});
+
 test('User Center reuses the server-verified Manager organization context before directory reads', () => {
   assert.match(manager, /organizationId: this\.state\.orgId \|\| ''/);
   assert.match(core, /event\.detail\?\.view==='users'&&org/);
