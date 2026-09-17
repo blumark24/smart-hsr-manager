@@ -36,6 +36,8 @@ const state = {
 };
 let directoryCache = null;
 let renderQueued = false;
+let renderRequested = false;
+let renderGeneration = 0;
 let lastRoot = null;
 
 const clean = value => String(value == null ? '' : value).trim();
@@ -123,8 +125,9 @@ function kpis(records) {
 }
 
 function findCenterRoot() {
+  if (document.documentElement.dataset.smartHsrManagerView !== 'users') return null;
   const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,[role="heading"]'));
-  const heading = headings.find(el => /مركز إدارة المستخدمين|إدارة المستخدمين|المستخدمون والصلاحيات/.test(clean(el.textContent)));
+  const heading = headings.find(el => !el.closest('.ucv2-app') && /مركز إدارة المستخدمين|إدارة المستخدمين|المستخدمون والصلاحيات/.test(clean(el.textContent)));
   if (!heading) return null;
   let node = heading;
   for (let depth=0; depth<8 && node?.parentElement; depth+=1) {
@@ -184,8 +187,10 @@ async function getDirectory(force=false) {
   return directoryCache;
 }
 async function renderCenter(force=false) {
-  if (renderQueued) return;
+  if (document.documentElement.dataset.smartHsrManagerView !== 'users') return;
+  if (renderQueued) { renderRequested = true; return; }
   renderQueued = true;
+  const generation = renderGeneration;
   try {
     const root = findCenterRoot();
     if (!root) return;
@@ -194,6 +199,7 @@ async function renderCenter(force=false) {
     if (!root.dataset.ucv2Scrolled) { root.dataset.ucv2Scrolled='1'; window.scrollTo(0,0); }
     lastRoot = root;
     const directory = await getDirectory(force);
+    if (generation !== renderGeneration || document.documentElement.dataset.smartHsrManagerView !== 'users' || !root.isConnected) return;
     const records = normalizeRecords(directory);
     const stats = kpis(records);
     const departments = [...new Set(records.filter(r=>r.kind==='employee').map(r=>clean(r.employee.department)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
@@ -239,7 +245,13 @@ async function renderCenter(force=false) {
   } catch (error) {
     const root=lastRoot||findCenterRoot();
     if(root){ let app=root.querySelector('.ucv2-app'); if(!app){app=document.createElement('section');app.className='ucv2-app';root.appendChild(app);} delete app.dataset.routeGuardLoading; app.removeAttribute('aria-busy'); app.innerHTML=`<div class="ucv2-state error"><b>تعذر تحميل مركز المستخدمين</b><span>${esc(U.why?U.why(error.reason||error.message):error.message)}</span><button class="ucv2-btn ghost" data-retry>إعادة المحاولة</button></div>`; app.querySelector('[data-retry]')?.addEventListener('click',()=>{directoryCache=null;renderCenter(true);}); }
-  } finally { renderQueued=false; }
+  } finally {
+    renderQueued=false;
+    if (renderRequested && document.documentElement.dataset.smartHsrManagerView === 'users') {
+      renderRequested=false;
+      queueMicrotask(() => renderCenter());
+    }
+  }
 }
 function kpiCard(key,label,value,accent,quick){ const active=quick&&state.quick===quick,content=`<span class="ucv2-kpi-icon" aria-hidden="true"></span><span><b>${value}</b><small>${label}</small></span>`;return quick?`<button class="ucv2-kpi ${accent}${active?' active':''}" type="button" data-quick="${quick}" aria-pressed="${active?'true':'false'}">${content}</button>`:`<div class="ucv2-kpi ${accent}" aria-label="${esc(label)}: ${value}">${content}</div>`; }
 function quickChip(value,label){ const active=state.quick===value;return `<button type="button" class="ucv2-chip-button${active?' active':''}" data-quick="${value}" aria-pressed="${active?'true':'false'}">${label}</button>`; }
@@ -342,7 +354,7 @@ function boot(){
       // present meant THIS renderer had already run — so real data never
       // took over and the loading screen never resolved. Treat the
       // placeholder the same as no app yet.
-      if(root&&(!existingApp||existingApp.dataset.routeGuardLoading==='true')){directoryCache=null;renderCenter(true);}
+      if(root&&(!existingApp||existingApp.dataset.routeGuardLoading==='true'))renderCenter();
     },60);
   };
   const observer=new MutationObserver(mutations=>{
@@ -350,6 +362,12 @@ function boot(){
   });
   observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','hidden','aria-hidden']});
   document.addEventListener('click',event=>{if(/مركز إدارة المستخدمين|مركز المستخدمين/.test(clean(event.target?.closest?.('a,button,[role="button"]')?.textContent)))requestRender();},true);
+  window.addEventListener('smart-hsr:user-center-lifecycle',event=>{
+    renderGeneration+=1;
+    renderRequested=false;
+    if(event.detail?.active)requestRender();
+    else lastRoot=null;
+  });
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

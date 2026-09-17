@@ -13,6 +13,8 @@ const center = read('manager-phase11d-user-center-enhancements.js');
 const profile = read('manager-phase11f-reference-ui.js');
 const skin = read('manager-phase11g-user-center-approved-skin.js');
 const dialogs = read('manager-phase11c-user-center-dialogs.js');
+const manager = read('manager.html');
+const managerFormat = read('manager-dashboard-format.js');
 const employeeApi = require('../api/admin/employees');
 
 test('Phase 12B User Center layers remain valid JavaScript', () => {
@@ -22,6 +24,26 @@ test('Phase 12B User Center layers remain valid JavaScript', () => {
     ['manager-phase11f-reference-ui.js', profile],
     ['manager-phase11g-user-center-approved-skin.js', skin],
   ]) assert.doesNotThrow(() => new vm.Script(source, { filename:file }));
+});
+
+test('User Center lifecycle is owned by the real Manager view and tears down on navigation', () => {
+  assert.match(manager, /smart-hsr:manager-view-change/);
+  assert.match(manager, /prevState\.view !== this\.state\.view/);
+  assert.match(managerFormat, /dataset\.smartHsrManagerView === 'users'/);
+  assert.match(managerFormat, /const release = \(\) =>/);
+  assert.match(managerFormat, /root\.querySelector\(':scope > \.ucv2-app'\)\?\.remove\(\)/);
+  assert.match(managerFormat, /root\.classList\.remove\('ucv2-route-guard-host', 'ucv2-host'\)/);
+  assert.match(managerFormat, /node\.inert = true/);
+  assert.match(core, /smart-hsr:user-center-lifecycle/);
+  assert.match(core, /delete modal\.dataset\.busy/);
+  assert.match(center, /renderGeneration/);
+  assert.match(center, /!el\.closest\('\.ucv2-app'\)/);
+});
+
+test('User Center reuses the server-verified Manager organization context before directory reads', () => {
+  assert.match(manager, /organizationId: this\.state\.orgId \|\| ''/);
+  assert.match(core, /event\.detail\?\.view==='users'&&org/);
+  assert.match(core, /if\(U\.cache\.org\)return U\.cache\.org/);
 });
 
 test('dialogs expose labels, focus containment, focus restoration, and pending-close protection', () => {

@@ -2314,6 +2314,7 @@ class Component extends DCLogic {
       setTimeout(() => this._opMap?.invalidateSize(), 80);
     };
     document.addEventListener('fullscreenchange', this.onFullscreen);
+    this.publishManagerView();
   }
   componentWillUnmount() {
     window.removeEventListener('resize', this.onWin);
@@ -2324,8 +2325,21 @@ class Component extends DCLogic {
     if (this._ro) this._ro.disconnect();
     clearInterval(this._clock);
     this._opMap?.remove();
+    document.documentElement.removeAttribute('data-smart-hsr-manager-view');
+    window.dispatchEvent(new CustomEvent('smart-hsr:manager-view-change', { detail: { view: 'unmounted', organizationId: '' } }));
   }
-  componentDidUpdate() { this.syncOperationalMap(); }
+  componentDidUpdate(_prevProps, prevState) {
+    this.syncOperationalMap();
+    if (prevState.view !== this.state.view || prevState.orgId !== this.state.orgId) this.publishManagerView();
+  }
+
+  publishManagerView() {
+    const view = this.state.view || 'home';
+    document.documentElement.setAttribute('data-smart-hsr-manager-view', view);
+    window.dispatchEvent(new CustomEvent('smart-hsr:manager-view-change', {
+      detail: { view, organizationId: this.state.orgId || '' }
+    }));
+  }
 
   operationalObservations() {
     const query = (this.state.search || '').trim().toLocaleLowerCase('ar');

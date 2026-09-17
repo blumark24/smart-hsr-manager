@@ -73,6 +73,7 @@
            touching the observations panel's own sizing. */
         .manager-view-panel.ucv2-route-guard-host,.manager-view-panel.ucv2-host{width:auto!important;max-width:none!important}
         .ucv2-route-guard-host>.ucv2-app{min-height:100%;box-sizing:border-box;direction:rtl;color:#f7fbff;background:radial-gradient(720px 300px at 10% -2%,rgba(74,96,255,.12),transparent 66%),linear-gradient(145deg,#07101e,#081629 48%,#07101d);padding:22px 24px}
+        .ucv2-route-guard-host .ucv2-header{display:flex;align-items:center;justify-content:space-between;gap:18px}.ucv2-route-guard-host .ucv2-header h1{margin:2px 0 4px;font-size:22px;line-height:1.25}.ucv2-route-guard-host .ucv2-header p{margin:0;color:#7e91ad;font-size:12px}.ucv2-route-guard-host .ucv2-eyebrow{color:#4a84ff;font-size:9px;font-weight:800;letter-spacing:.12em}.ucv2-route-guard-host .ucv2-btn{min-height:38px;padding:0 13px;border:1px solid rgba(96,145,211,.24);border-radius:10px;background:#101f31;color:#f7fbff;font:inherit;font-weight:700;cursor:pointer}
         .ucv2-route-loading{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;color:#7e91ad}
         .ucv2-route-loading b{font-size:15px;color:#f7fbff}.ucv2-route-loading span{font-size:11px}
         .ucv2-route-loading:before{content:"";width:26px;height:26px;border-radius:50%;border:2px solid rgba(96,145,211,.18);border-top-color:#4a84ff;animation:ucv2-route-spin .8s linear infinite}
@@ -90,6 +91,7 @@
         [data-theme="light"] .ucv2-route-loading{color:#4c6357}
         [data-theme="light"] .ucv2-route-loading b{color:#083f2c}
         [data-theme="light"] .ucv2-route-loading:before{border-color:rgba(18,133,90,.22);border-top-color:#149c2b}
+        [data-theme="light"] .ucv2-route-guard-host .ucv2-header p{color:#4c6357}[data-theme="light"] .ucv2-route-guard-host .ucv2-eyebrow{color:#0e7a4f}[data-theme="light"] .ucv2-route-guard-host .ucv2-btn{background:#fff;color:#0b5c3b;border-color:rgba(14,122,79,.25)}
       `;
       document.head.appendChild(style);
     }
@@ -117,10 +119,60 @@
 
     let preOpenScrollY = null;
     let closedRoot = null;
+    let isolatedNodes = [];
+
+    const activeView = () => document.documentElement.dataset.smartHsrManagerView === 'users';
+
+    const isolateBackground = overlay => {
+      const pageRoot = overlay?.parentElement;
+      if (!pageRoot || isolatedNodes.length) return;
+      isolatedNodes = Array.from(pageRoot.children).filter(node => node !== overlay).map(node => ({
+        node,
+        inert: node.inert,
+        ariaHidden: node.getAttribute('aria-hidden'),
+      }));
+      isolatedNodes.forEach(({ node }) => {
+        node.inert = true;
+        node.setAttribute('aria-hidden', 'true');
+      });
+    };
+
+    const restoreBackground = () => {
+      isolatedNodes.forEach(({ node, inert, ariaHidden }) => {
+        if (!node?.isConnected) return;
+        node.inert = inert;
+        if (ariaHidden == null) node.removeAttribute('aria-hidden');
+        else node.setAttribute('aria-hidden', ariaHidden);
+      });
+      isolatedNodes = [];
+    };
+
+    const release = () => {
+      const root = closedRoot;
+      closedRoot = null;
+      window.dispatchEvent(new CustomEvent('smart-hsr:user-center-lifecycle', { detail: { active: false } }));
+      if (root) {
+        root.querySelector(':scope > .ucv2-app')?.remove();
+        Array.from(root.children).forEach(child => {
+          if (child.dataset.ucv2Original !== 'true') return;
+          child.style.removeProperty('display');
+          delete child.dataset.ucv2Original;
+        });
+        root.classList.remove('ucv2-route-guard-host', 'ucv2-host');
+        delete root.dataset.smartHsrApprovedOwner;
+        delete root.dataset.ucv2Scrolled;
+        root.parentElement?.classList.remove('ucv2-shell-overlay');
+      }
+      restoreBackground();
+      const restoreY = preOpenScrollY;
+      preOpenScrollY = null;
+      if (restoreY != null) window.scrollTo(0, restoreY);
+    };
 
     const findRoot = () => {
+      if (!activeView()) return null;
       const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,[role="heading"]'));
-      const heading = headings.find(el => /مركز إدارة المستخدمين|إدارة المستخدمين|المستخدمون والصلاحيات/.test(clean(el.textContent)));
+      const heading = headings.find(el => !el.closest('.ucv2-app') && /مركز إدارة المستخدمين|إدارة المستخدمين|المستخدمون والصلاحيات/.test(clean(el.textContent)));
       if (!heading) return null;
       let node = heading;
       for (let depth = 0; depth < 8 && node?.parentElement; depth += 1) {
@@ -132,6 +184,7 @@
     };
 
     const claim = () => {
+      if (!activeView()) return false;
       const root = findRoot();
       if (!root) return false;
       if (root.dataset.smartHsrApprovedOwner === 'true') return true;
@@ -149,6 +202,7 @@
       closedRoot = root;
       window.scrollTo(0, 0);
       syncTheme();
+      isolateBackground(root.parentElement);
 
       Array.from(root.children).forEach(child => {
         if (child.classList?.contains('ucv2-app')) return;
@@ -162,9 +216,13 @@
         app.className = 'ucv2-app';
         app.dataset.routeGuardLoading = 'true';
         app.setAttribute('aria-busy', 'true');
-        app.innerHTML = '<div class="ucv2-route-loading"><b>مركز إدارة المستخدمين</b><span>جاري تحميل بيانات الجهة بأمان…</span></div>';
+        app.innerHTML = '<header class="ucv2-header"><div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div><button class="ucv2-btn ghost" type="button" data-route-close aria-label="إغلاق مركز إدارة المستخدمين">✕ إغلاق</button></header><div class="ucv2-route-loading" role="status" aria-live="polite"><b>جاري تجهيز السجل المؤسسي</b><span>يمكنك متابعة العمل فور اكتمال بيانات الجهة الموثقة.</span></div>';
         root.appendChild(app);
+        app.querySelector('[data-route-close]')?.addEventListener('click', () => {
+          root.querySelector('[data-ucv2-original="true"] button[aria-label="إغلاق"]')?.click();
+        });
       }
+      window.dispatchEvent(new CustomEvent('smart-hsr:user-center-lifecycle', { detail: { active: true } }));
       return true;
     };
 
@@ -177,19 +235,18 @@
         // there is no dedicated "closed" event to hook — detect it here by
         // noticing the node we claimed is no longer attached, and restore
         // the scroll position it had before we forced it to the top on open.
-        if (closedRoot && !document.body.contains(closedRoot)) {
-          const restoreY = preOpenScrollY;
-          closedRoot = null;
-          preOpenScrollY = null;
-          if (restoreY != null) window.scrollTo(0, restoreY);
-        }
+        if (!activeView() || (closedRoot && !document.body.contains(closedRoot))) release();
         claim();
       });
       observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
       document.addEventListener('click', event => {
         const trigger = event.target?.closest?.('a,button,[role="button"]');
-        if (/مركز إدارة المستخدمين|مركز المستخدمين|الصلاحيات والسجل/.test(clean(trigger?.textContent))) queueMicrotask(claim);
+        if (activeView() && /مركز إدارة المستخدمين|مركز المستخدمين|الصلاحيات والسجل/.test(clean(trigger?.textContent))) queueMicrotask(claim);
       }, true);
+      window.addEventListener('smart-hsr:manager-view-change', event => {
+        if (event.detail?.view === 'users') queueMicrotask(claim);
+        else release();
+      });
     };
 
     if (document.body) startObserver();
