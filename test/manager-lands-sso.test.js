@@ -73,7 +73,12 @@ test('isSsoEligible: denies a disabled account, a pending (not yet synced) entit
 // ---- 2/3. Lands employee / Lands department manager direct login wiring ----
 test('2/3. login.html calls POST /api/organization/context with the employee\'s own bearer token before redirecting to Lands', () => {
   const source = read('login.html');
-  const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole)'), source.indexOf('showMsg(\'✅ تم التحقق بنجاح... جارٍ التوجيه\', \'success\');'));
+  // The condition also excludes an active Smart Mobility role (a later,
+  // independently-merged feature — see login.html) so that role takes the
+  // same priority over a stale Lands declaration that hasFieldRole already
+  // did; matched with a prefix rather than the full literal so this test
+  // doesn't re-couple to one exact clause list.
+  const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole'), source.indexOf('showMsg(\'✅ تم التحقق بنجاح... جارٍ التوجيه\', \'success\');'));
   assert.match(landsBranch, /fetch\('\/api\/organization\/context'/);
   assert.match(landsBranch, /method: 'POST'/);
   assert.match(landsBranch, /'Authorization': 'Bearer ' \+ idToken/);
@@ -133,13 +138,24 @@ test('login.html never logs the handoff code, the employee password, or any toke
 });
 
 // ---- P1: users-search autofill hardening ----
-test('13/14. #userSearch is hardened against browser autofill with readonly-until-focus, type=search, and autocomplete=off (not merely cleared after the fact)', () => {
+// manager.html's search box moved from a raw DOM #userSearch input to the
+// Designer component's own template-bound input (value="{{ tQ }}"), but the
+// same real hardening this test protects still applies to it — see
+// test/manager-users-list-state.test.js: "manager.html: the users/incidents
+// search inputs are hardened against autofill (readonly-until-focus,
+// type=search, autocomplete=off)", which checks both the users-list and
+// incidents-list search inputs by their current markup.
+test('13/14. the users-list search input is still hardened against browser autofill (see manager-users-list-state.test.js for the full assertion)', () => {
   const source = read('manager.html');
-  const inputTag = source.slice(source.indexOf('<input id="userSearch"'), source.indexOf('/>', source.indexOf('<input id="userSearch"')) + 2);
-  assert.match(inputTag, /type="search"/);
-  assert.match(inputTag, /autocomplete="off"/);
-  assert.match(inputTag, /readonly/);
-  assert.match(inputTag, /onfocus="this\.removeAttribute\('readonly'\)"/);
+  const inputs = [...source.matchAll(/<input type="search"[^>]*value="\{\{ tQ \}\}"[^>]*>/g)];
+  // Phase 04 adds a third such input for the new Field Survey Manager
+  // Dashboard's table search — it reuses this exact same hardened markup
+  // pattern, so the count grows from 2 to 3 rather than a new one appearing.
+  assert.equal(inputs.length, 3);
+  for (const [inputTag] of inputs) {
+    assert.match(inputTag, /autocomplete="off"/);
+    assert.match(inputTag, /readonly/);
+  }
 });
 
 test('15. users list stability is unaffected by the search hardening: users-list-view.js and the render pipeline are unchanged', () => {
@@ -147,6 +163,6 @@ test('15. users list stability is unaffected by the search hardening: users-list
   assert.match(viewSource, /export function belongsOnUsersList/);
   assert.match(viewSource, /export function deriveVisibleUsers/);
   const managerSource = read('manager.html');
-  assert.match(managerSource, /usersViewState\.search = document\.getElementById\('userSearch'\)\.value/);
-  assert.match(managerSource, /deriveVisibleUsers\(users, usersViewState\)/);
+  assert.match(managerSource, /const tq = \(st\.tq \|\| ''\)\.trim\(\)\.toLocaleLowerCase\('ar'\)/);
+  assert.match(managerSource, /usersListView\.deriveVisibleUsers\(deptScoped, \{ search: tq \}\)/);
 });

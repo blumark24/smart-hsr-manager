@@ -286,8 +286,11 @@ test('13. reconciliation never creates any additional audit-shaped document — 
     const before = fakes.store.docs.size;
     const req = fakeRequest({ uid, body: { action: 'create', organizationId, email: 'audit@example.com', name: 'Audit Check', field: { enabled: false }, lands: { enabled: true, role: 'lands_department_manager' } } });
     await usersHandler(req, fakeResponse());
-    // Exactly one new document (the created users/{uid} record itself) —
-    // reconciliation performed a read, not a write, so nothing else appears.
-    assert.equal(fakes.store.docs.size, before + 1);
+    // Exactly two new documents: the created users/{uid} record, and the
+    // adminAuditEvents entry the create handler itself always records
+    // (see recordAdminAudit in api/admin/users.js) — reconciliation itself
+    // performed only a read, contributing neither, so nothing beyond
+    // those two intentional writes appears.
+    assert.equal(fakes.store.docs.size, before + 2);
   } finally { fakes.restore(); }
 });

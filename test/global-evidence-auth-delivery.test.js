@@ -99,12 +99,24 @@ test('repeated render deduplicates one private evidence request', async () => {
 });
 
 test('Inspector, Manager, and Contractor viewers use the same authUser path', () => {
-  for (const file of ['dashboard.html', 'manager.html', 'mobile-map.html']) {
+  for (const file of ['dashboard.html', 'mobile-map.html']) {
     const source = read(file);
     assert.match(source, /resolveObservationImage\(\{/);
     assert.match(source, /authUser:auth(?:\?)?\.currentUser/);
     assert.doesNotMatch(source, /getIdToken:\(\)=>auth(?:\?)?\.currentUser(?:\?)?\.getIdToken\(\)/);
   }
+  // manager.html itself never talks to Firebase Auth/Firestore directly —
+  // that wiring lives in manager-dashboard-adapter.js (the real ES module
+  // manager.html loads), same precedent as manager-login-preview-config.
+  // test.js for Firebase config resolution. The Manager viewer's evidence
+  // resolution goes through the same real resolveObservationImage() with
+  // the actual signed-in Firebase user object (captured from
+  // onAuthStateChanged's own `user` parameter, equivalent to reading
+  // auth.currentUser at call time), never a second/invented auth path.
+  const adapter = read('manager-dashboard-adapter.js');
+  assert.match(adapter, /resolveObservationImage\(\{/);
+  assert.match(adapter, /authUser: user \}/);
+  assert.doesNotMatch(adapter, /getIdToken:\(\)=>auth(?:\?)?\.currentUser(?:\?)?\.getIdToken\(\)/);
 });
 
 test('storage reader exposes only approved safe evidence error codes', () => {

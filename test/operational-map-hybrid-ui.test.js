@@ -1,0 +1,102 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const source = fs.readFileSync(path.join(__dirname, '..', 'operational-map.html'), 'utf8');
+
+test('Operational Command Map is satellite-and-Night first while preserving an explicit Day choice', () => {
+  assert.match(source, /applyTheme\(localStorage\.getItem\(THEME_KEY\) === 'light' \? 'light' : 'dark'\)/);
+  assert.match(source, /id="themeToggleBtn"[^>]*aria-label="تفعيل الوضع النهاري"/);
+  assert.doesNotMatch(source, /prefers-color-scheme:\s*dark/);
+  assert.match(source, /main:after\{content:'';position:absolute;inset:0;pointer-events:none/);
+});
+
+test('Street and Satellite are real independent basemaps; Satellite is the approved default', () => {
+  assert.match(source, /data-basemap="street"[^>]*aria-pressed="false"/);
+  assert.match(source, /data-basemap="satellite"[^>]*aria-pressed="true"/);
+  assert.match(source, /tile\.openstreetmap\.org\/\{z\}\/\{x\}\/\{y\}\.png/);
+  assert.doesNotMatch(source, /https:\/\/\{s\}\.tile\.openstreetmap\.org/);
+  assert.match(source, /World_Imagery\/MapServer\/tile\/\{z\}\/\{y\}\/\{x\}/);
+  assert.match(source, /let activeBasemap = localStorage\.getItem\(BASEMAP_KEY\) === 'street' \? 'street' : 'satellite'/);
+  assert.match(source, /map\.setLayoutProperty\(STREET_BASEMAP_LAYER_ID/);
+  assert.match(source, /map\.setLayoutProperty\(SATELLITE_BASEMAP_LAYER_ID/);
+});
+
+test('government command chrome exposes branded product navigation, search, layers and honest snapshot state', () => {
+  assert.match(source, /class="brand-lockup"[^>]*><img src="Smart_HSR_Dashboard_Logo\.svg"/);
+  assert.match(source, /class="nav-link active"[^>]*>الخريطة التشغيلية<\/span>/);
+  assert.match(source, /class="nav-link" id="openTwinBtn"[^>]*>التوأم الرقمي<\/button>/);
+  assert.match(source, /id="searchResults" role="listbox"/);
+  assert.match(source, /function renderSearchResults\(query\)/);
+  assert.match(source, /id="clearFiltersBtn"/);
+  assert.match(source, /observationStatusFilter = 'ALL';[\s\S]*observationCategoryFilter = 'ALL';[\s\S]*observationPriorityFilter = 'ALL';/);
+  assert.match(source, /id="visibleEntityCount"/);
+  assert.match(source, /آخر تحميل/);
+  assert.doesNotMatch(source, />[^<]*(مباشر|لحظي)[^<]*</);
+});
+
+test('Geo Command Center contains compact KPIs, intelligence, tabbed controls, heatmap and truthful timeline', () => {
+  for (const id of ['kpiStrip', 'kpiTotal', 'kpiHigh', 'intelligencePanel', 'layersTab', 'filtersTab', 'heatmapToggle', 'timelinePanel', 'timelineRange']) {
+    assert.match(source, new RegExp(`id="${id}"`));
+  }
+  assert.match(source, /type: 'heatmap', source: OBS_HEAT_SRC/);
+  assert.match(source, /function configureTimeline\(\)/);
+  assert.match(source, /timestampMillis\(data\.createdAt\)/);
+  assert.match(source, /النطاق المرسوم مؤقت ومحلي وغير محفوظ/);
+  assert.doesNotMatch(source, /الفرق الميدانية النشطة/);
+  assert.doesNotMatch(source, /متوسط زمن الاستجابة/);
+});
+
+test('smart observation symbols encode category, status and real priority without generic-only pins', () => {
+  assert.match(source, /iconPaths = \{/);
+  assert.match(source, /--marker-status/);
+  assert.match(source, /priority-badge/);
+  assert.match(source, /category: data\.type \|\| 'UNKNOWN', priority/);
+});
+
+test('command cartography keeps MapLibre and the Twin boundary while glowing only real configured municipal bounds', () => {
+  assert.match(source, /new maplibregl\.Map\(/);
+  assert.match(source, /IMPLEMENTED_LAYER_IDS = \['commercial_places', 'buildings', 'field_observations'\]/);
+  assert.match(source, /continuity\.buildContinuityUrl\('\/twin\.html'/);
+  assert.match(source, /const normalizedBounds = normalizeRealMapBounds\(bounds\);\s*if \(!normalizedBounds\) return;/);
+  assert.match(source, /geo-municipal-boundary-glow-wide/);
+  assert.match(source, /geo-municipal-boundary-glow/);
+  assert.doesNotMatch(source, /raster-hue-rotate', dark \? 195/);
+  assert.doesNotMatch(source, /employee_tracking|vehicle_gps|mobility_incidents.*coordinates|lands_parcels.*geometry/i);
+});
+
+test('initial camera follows trusted extent priority and never fabricates a municipality fallback', () => {
+  const planner = source.slice(source.indexOf('function planTrustedInitialExtent'), source.indexOf('// UAT/dev-only'));
+  assert.ok(planner.indexOf('normalizeRealMapBounds') < planner.indexOf('normalizeConfiguredMapCenter'));
+  assert.match(source, /context\.configured !== true/);
+  assert.match(source, /mode: 'observations-or-neutral'/);
+  assert.match(source, /const NEUTRAL_SAFE_CAMERA = Object\.freeze\(\{ center: \[0, 20\], zoom: 1\.5 \}\)/);
+  assert.match(source, /center: initialExtentPlan\.center,\s*zoom: initialExtentPlan\.zoom/);
+  assert.match(source, /resolveInitialExtentFromObservations\(cachedObservationEntities\)/);
+  assert.match(source, /if \(!explicitContinuityCamera && initialExtentPlan\.mode === 'bounds'\)[\s\S]*map\.fitBounds\(initialExtentPlan\.bounds/);
+  assert.doesNotMatch(source, /center:\s*mapContext\.mapCenter\s*\?/);
+  assert.doesNotMatch(source, /\[45,\s*24\]/);
+});
+
+test('Phase 12A presentation hardening preserves usability across themes and smaller screens', () => {
+  assert.match(source, /html\[data-theme="dark"\] \.maplibregl-ctrl-icon\{filter:invert/);
+  assert.match(source, /html\[data-theme="light"\] \.maplibregl-ctrl-icon\{filter:none/);
+  assert.match(source, /:focus-visible\{outline:3px solid/);
+  assert.match(source, /@media\(pointer:coarse\)[\s\S]*min-height:44px/);
+  assert.match(source, /@media\(max-width:900px\)[\s\S]*#searchInput\{font-size:16px\}/);
+  assert.match(source, /@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(source, /function cameraDuration\(milliseconds\)/);
+  assert.match(source, /@media\(max-width:1180px\)[\s\S]*backdrop-filter:none!important/);
+  assert.match(source, /matchMedia\('\(max-width: 900px\)'\)\.matches\) rightPanel\.classList\.remove\('expanded'\);\s*else rightPanel\.classList\.add\('collapsed'\)/);
+});
+
+test('reference language is implemented with switch toggles, luminous clusters and a light quick popup', () => {
+  assert.match(source, /\.layer-row input\{appearance:none/);
+  assert.match(source, /\.geo-cluster[\s\S]*var\(--cluster-ring\)/);
+  assert.match(source, /\.maplibregl-popup-content\{background:#ffffff/);
+  assert.match(source, /class="panel-close" id="panelCloseBtn"/);
+  assert.match(source, /new maplibregl\.Popup\(/);
+});

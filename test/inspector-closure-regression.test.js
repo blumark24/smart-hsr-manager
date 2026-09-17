@@ -19,10 +19,19 @@ test('GPS capture distinguishes denied permission and performs one bounded trans
   assert.match(dashboard, /runToken!==locationRunToken/);
 });
 
-test('Inspector remains GPS-only and cannot satisfy save requirements with a weak or manual source', () => {
-  assert.match(dashboard, /locationConfirmed === true && locationVerified === true && locationSource === 'gps'/);
-  assert.match(dashboard, /#manualAddressBtn,#inspectorManualLocationPanel,#manualLocationBtn,#useWeakLocationBtn,#editLocationBtn,#confirmLocationBtn,#locationCorrectionDialog\{display:none!important\}/);
+// PHASE 04 FINAL ACCEPTANCE GATE — Section H (GPS truthfulness) audit note:
+// see the matching note in test/dashboard-modal-evidence-regression.test.js.
+// The manual map-entry path can still never satisfy the save gate. A weak
+// GPS fix may satisfy it, but only through the explicit, freshness-checked,
+// truthfully-labeled override at useWeakLocationBtn — never silently.
+test('Inspector cannot satisfy save requirements with a manual-map source; a weak GPS source may only satisfy it via an explicit, truthfully-labeled override', () => {
+  assert.match(dashboard, /const acceptedGpsSource =\s*\(locationVerified === true && locationSource === 'gps'\)\s*\|\|\s*\(locationSource === 'gps_weak' && locationWarningOverride === true\);/);
+  assert.match(dashboard, /#manualAddressBtn,#inspectorManualLocationPanel,#manualLocationBtn,#editLocationBtn,#locationCorrectionDialog\{display:none!important\}/);
   assert.doesNotMatch(dashboard, /locationSource === 'manual_map'[^\n]*hasLocation/);
+  // The weak-override path is never automatic: locationWarningOverride is
+  // only ever set to true inside the useWeakLocationBtn click handler.
+  const trueAssignments = dashboard.match(/locationWarningOverride\s*=\s*true;/g) || [];
+  assert.equal(trueAssignments.length, 1, 'locationWarningOverride must only ever be set true from exactly one place — the explicit user-click handler');
 });
 
 test('every supported Firestore evidence field is authorized through the same tenant-scoped reader', () => {
