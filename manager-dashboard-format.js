@@ -189,30 +189,39 @@
       if (!activeView()) return false;
       const root = findRoot();
       if (!root) return false;
-      if (root.dataset.smartHsrApprovedOwner === 'true') return true;
 
-      root.dataset.smartHsrApprovedOwner = 'true';
-      root.classList.add('ucv2-route-guard-host');
-      root.parentElement?.classList.add('ucv2-shell-overlay');
-      // The host is fixed-position, reserving top:92px on the assumption the
-      // real header sits there. That only holds if the page itself is
-      // scrolled to top; the manager route is a long single-page layout, and
-      // this dialog can be opened from a link far down that page, leaving
-      // the header scrolled out of view and exposing whatever content was
-      // at the top of the viewport through the gap instead.
-      preOpenScrollY = window.scrollY;
-      closedRoot = root;
-      window.scrollTo(0, 0);
-      syncTheme();
-      isolateBackground(root.parentElement);
+      const firstClaim = root.dataset.smartHsrApprovedOwner !== 'true';
+      if (firstClaim) {
+        root.dataset.smartHsrApprovedOwner = 'true';
+        root.classList.add('ucv2-route-guard-host');
+        root.parentElement?.classList.add('ucv2-shell-overlay');
+        // The host is fixed-position, reserving top:92px on the assumption the
+        // real header sits there. That only holds if the page itself is
+        // scrolled to top; the manager route is a long single-page layout, and
+        // this dialog can be opened from a link far down that page, leaving
+        // the header scrolled out of view and exposing whatever content was
+        // at the top of the viewport through the gap instead.
+        preOpenScrollY = window.scrollY;
+        closedRoot = root;
+        window.scrollTo(0, 0);
+        syncTheme();
+        isolateBackground(root.parentElement);
+      }
 
+      // root is the SPA's own live view panel, and the SPA keeps re-rendering
+      // it while the center is open (search input, header clock, data
+      // refreshes...). .ucv2-app lives outside that component's own render
+      // output, so a re-render can silently drop it back to the legacy
+      // markup underneath with no "closed" signal to detect — re-assert the
+      // hide/mount on every pass instead of trusting the one-time claim flag
+      // above to mean the DOM still looks the way it did when we set it.
       Array.from(root.children).forEach(child => {
         if (child.classList?.contains('ucv2-app')) return;
         child.dataset.ucv2Original = 'true';
         child.style.display = 'none';
       });
 
-      let app = root.querySelector('.ucv2-app');
+      let app = root.querySelector(':scope > .ucv2-app');
       if (!app) {
         app = document.createElement('section');
         app.className = 'ucv2-app';
@@ -223,8 +232,8 @@
         app.querySelector('[data-route-close]')?.addEventListener('click', () => {
           root.querySelector('[data-ucv2-original="true"] button[aria-label="إغلاق"]')?.click();
         });
+        window.dispatchEvent(new CustomEvent('smart-hsr:user-center-lifecycle', { detail: { active: true } }));
       }
-      window.dispatchEvent(new CustomEvent('smart-hsr:user-center-lifecycle', { detail: { active: true } }));
       return true;
     };
 
