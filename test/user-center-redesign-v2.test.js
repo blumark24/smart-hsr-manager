@@ -60,9 +60,15 @@ test('approved skin is CSS-only and preserves manager header/sidebar outside Use
   assert.match(approvedSkin, /\.ucv2-host/);
   assert.match(approvedSkin, /right:calc\(var\(--sbW,232px\) \+ 28px\)/);
   assert.match(approvedSkin, /top:92px/);
-  assert.match(approvedSkin, /radial-gradient\(720px 300px/);
+  // Phase12c-user-center-refero-v1 — institutional-restraint pass: decorative
+  // radial blooms on .ucv2-app are removed in favor of a flat surface
+  // (Refero/Apple "geometry over atmosphere" restraint), and the single-page
+  // profile/Add-User dialogs move from the old ad hoc 620/720px widths into
+  // the approved "Complex" 680-760px sizing tier.
+  assert.doesNotMatch(approvedSkin, /\.ucv2-app:before,\.ucv2-app:after\{content:""!important;position:absolute!important;pointer-events:none!important;border-radius:999px!important;filter:blur\(90px\)/);
+  assert.match(approvedSkin, /\.ucv2-app:before,\.ucv2-app:after\{display:none!important\}/);
   assert.match(approvedSkin, /#iuc-profile>div\.ucv21-single-page/);
-  assert.match(approvedSkin, /width:min\(620px,calc\(100vw - 42px\)\)/);
+  assert.match(approvedSkin, /width:min\(760px,calc\(100vw - 42px\)\)/);
   assert.match(approvedSkin, /@media\(max-width:820px\)/);
   assert.match(approvedSkin, /@media\(max-width:640px\)/);
   assert.doesNotMatch(approvedSkin, /\/api\/|firebase|firestore|setPassword|setTempPassword|fetch\s*\(/);
@@ -115,8 +121,11 @@ test('reference UI carries the approved Arabic hierarchy and edit modal title', 
 
 test('approved edit experience is a single-page manager modal with inline final-password editing', () => {
   assert.match(referenceUi, /ucv21-single-page/);
-  assert.match(referenceUi, /البيانات الأساسية/);
-  assert.match(referenceUi, /الخدمات والصلاحيات/);
+  // Phase12c-user-center-refero-v1 — approved section renames: بيانات الحساب /
+  // الدور والصلاحيات (was البيانات الأساسية / الخدمات والصلاحيات), same panes,
+  // same fields, same save behavior.
+  assert.match(referenceUi, /بيانات الحساب/);
+  assert.match(referenceUi, /الدور والصلاحيات/);
   assert.match(referenceUi, /حالة الحساب/);
   assert.match(referenceUi, /تعديل كلمة المرور/);
   assert.match(referenceUi, /كلمة المرور الجديدة/);

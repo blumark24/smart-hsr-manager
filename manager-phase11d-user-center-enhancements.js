@@ -246,7 +246,13 @@ async function renderCenter(force=false) {
     bindCenter(app,directory);
   } catch (error) {
     const root=lastRoot||findCenterRoot();
-    if(root){ let app=root.querySelector('.ucv2-app'); if(!app){app=document.createElement('section');app.className='ucv2-app';root.appendChild(app);} delete app.dataset.routeGuardLoading; app.removeAttribute('aria-busy'); app.innerHTML=`<div class="ucv2-state error"><b>تعذر تحميل مركز المستخدمين</b><span>${esc(U.why?U.why(error.reason||error.message):error.message)}</span><button class="ucv2-btn ghost" data-retry>إعادة المحاولة</button></div>`; app.querySelector('[data-retry]')?.addEventListener('click',()=>{directoryCache=null;renderCenter(true);}); }
+    if(root){ let app=root.querySelector('.ucv2-app'); if(!app){app=document.createElement('section');app.className='ucv2-app';root.appendChild(app);} delete app.dataset.routeGuardLoading; app.removeAttribute('aria-busy');
+      const deniedReasons=['owner_or_manager_required','forbidden','cross_organization_denied','manager_required'];
+      const isPermissionDenied=error.status===403||deniedReasons.includes(error.reason);
+      const stateClass=isPermissionDenied?'ucv2-state error ucv2-state-denied':'ucv2-state error ucv2-state-transient';
+      const title=isPermissionDenied?'لا تملك صلاحية الوصول لمركز المستخدمين':'تعذر تحميل مركز المستخدمين';
+      const retryButton=isPermissionDenied?'':'<button class="ucv2-btn ghost" data-retry>إعادة المحاولة</button>';
+      app.innerHTML=`<div class="${stateClass}"><b>${title}</b><span>${esc(U.why?U.why(error.reason||error.message):error.message)}</span>${retryButton}</div>`; app.querySelector('[data-retry]')?.addEventListener('click',()=>{directoryCache=null;renderCenter(true);}); }
   } finally {
     renderQueued=false;
     if (renderRequested && document.documentElement.dataset.smartHsrManagerView === 'users') {
@@ -257,14 +263,14 @@ async function renderCenter(force=false) {
 }
 function kpiCard(key,label,value,accent,quick){ const active=quick&&state.quick===quick,content=`<span class="ucv2-kpi-icon" aria-hidden="true"></span><span><b>${value}</b><small>${label}</small></span>`;return quick?`<button class="ucv2-kpi ${accent}${active?' active':''}" type="button" data-quick="${quick}" aria-pressed="${active?'true':'false'}">${content}</button>`:`<div class="ucv2-kpi ${accent}" aria-label="${esc(label)}: ${value}">${content}</div>`; }
 function quickChip(value,label){ const active=state.quick===value;return `<button type="button" class="ucv2-chip-button${active?' active':''}" data-quick="${value}" aria-pressed="${active?'true':'false'}">${label}</button>`; }
-function emptyState(total){ return `<div class="ucv2-state"><b>${total?'لا توجد نتائج مطابقة':'لا توجد سجلات موظفين بعد'}</b><span>${total?'غيّر معايير البحث أو أعد تعيين الفلاتر.':'استخدم «إضافة موظف» لإنشاء أول سجل.'}</span></div>`; }
+function emptyState(total){ return total ? `<div class="ucv2-state ucv2-state-no-results"><b>لا توجد نتائج مطابقة</b><span>غيّر معايير البحث أو أعد تعيين الفلاتر.</span><button type="button" class="ucv2-btn ghost" data-reset-filters>إعادة تعيين الفلاتر</button></div>` : `<div class="ucv2-state ucv2-state-no-records"><b>لا توجد سجلات موظفين بعد</b><span>استخدم «إضافة موظف» لإنشاء أول سجل.</span></div>`; }
 function pagination(max){ return `<nav class="ucv2-pagination" aria-label="التنقل بين صفحات الموظفين"><button class="ucv2-btn ghost" data-page="prev" ${state.page<=1?'disabled':''}>السابق</button><span>صفحة ${state.page} من ${max}</span><button class="ucv2-btn ghost" data-page="next" ${state.page>=max?'disabled':''}>التالي</button></nav>`; }
 function resetFilters(){ Object.assign(state,{search:'',status:'all',role:'all',product:'all',department:'all',vehicle:'all',quick:null,page:1,sort:'name'}); }
 function showCenterActionError(app,error){let node=app.querySelector('.ucv2-action-error');if(!node){node=document.createElement('div');node.className='ucv2-action-error';node.setAttribute('role','alert');app.querySelector('.ucv2-header')?.after(node);}node.textContent=U.why?U.why(error?.reason||error?.message):'تعذر تنفيذ الإجراء.';}
 function bindCenter(app,directory){
   app.querySelector('[data-add-employee]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;app.setAttribute('aria-busy','true');try{await U.add();decorateAddDialog();}catch(error){showCenterActionError(app,error);}finally{button.disabled=false;app.removeAttribute('aria-busy');}});
   app.querySelector('[data-close-center]')?.addEventListener('click',()=>{ document.querySelector('[data-ucv2-original] button[aria-label="إغلاق"]')?.click(); });
-  app.querySelector('[data-reset-filters]')?.addEventListener('click',()=>{ resetFilters(); renderCenter(); });
+  app.querySelectorAll('[data-reset-filters]').forEach(btn=>btn.addEventListener('click',()=>{ resetFilters(); renderCenter(); }));
   app.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{ const q=btn.dataset.quick; state.quick=state.quick===q?null:q; state.page=1; renderCenter(); }));
   app.querySelectorAll('[data-filter]').forEach(control=>{ const key=control.dataset.filter; const event=key==='search'?'input':'change'; control.addEventListener(event,()=>{ state[key]=control.value; state.page=1; const caret=key==='search'?control.selectionStart:null;renderCenter().then(()=>{if(key!=='search')return;const next=lastRoot?.querySelector('[data-filter="search"]');if(!next)return;next.focus();if(Number.isInteger(caret))next.setSelectionRange(caret,caret);}); }); });
   app.querySelectorAll('[data-open-employee]').forEach(btn=>btn.addEventListener('click',async()=>{ const id=btn.dataset.openEmployee; const employee=(directory.employees||[]).find(e=>String(e.employeeId)===id); if(!employee)return;btn.disabled=true;app.setAttribute('aria-busy','true');try{await U.profile(employee);decorateProfileDialog(employee);}catch(error){showCenterActionError(app,error);}finally{btn.disabled=false;app.removeAttribute('aria-busy');} }));
