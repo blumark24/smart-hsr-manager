@@ -2330,7 +2330,8 @@ class Component extends DCLogic {
   }
   componentDidUpdate(_prevProps, prevState) {
     this.syncOperationalMap();
-    if (prevState.view !== this.state.view || prevState.orgId !== this.state.orgId) this.publishManagerView();
+    const previous = prevState || {};
+    if (previous.view !== this.state.view || previous.orgId !== this.state.orgId) this.publishManagerView();
   }
 
   publishManagerView() {

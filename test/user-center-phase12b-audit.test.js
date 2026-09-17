@@ -28,7 +28,11 @@ test('Phase 12B User Center layers remain valid JavaScript', () => {
 
 test('User Center lifecycle is owned by the real Manager view and tears down on navigation', () => {
   assert.match(manager, /smart-hsr:manager-view-change/);
-  assert.match(manager, /prevState\.view !== this\.state\.view/);
+  // componentDidUpdate defends against a missing prevState (the host
+  // framework can call it with only one argument) rather than dereferencing
+  // it directly — see test/manager-component-did-update-regression.test.js.
+  assert.match(manager, /const previous = prevState \|\| \{\};/);
+  assert.match(manager, /previous\.view !== this\.state\.view/);
   assert.match(managerFormat, /dataset\.smartHsrManagerView === 'users'/);
   assert.match(managerFormat, /const release = \(\) =>/);
   assert.match(managerFormat, /root\.querySelector\(':scope > \.ucv2-app'\)\?\.remove\(\)/);
