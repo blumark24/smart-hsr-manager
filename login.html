@@ -214,7 +214,24 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       && ['lands_employee','lands_department_manager'].includes(landsAccess.role));
     if (!userDoc.exists() || data.active === false || !organizationId || (!hasFieldRole && !hasLandsRole)) {
       await signOut(probeAuth);
-      showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
+      // PHASE13B — messaging-only distinction, no routing/authorization change:
+      // a real, active account can hold a recognized Mobility entitlement
+      // (mobility_head / department_head / administrative_affairs / employee,
+      // via mobilityAccess or the same legacy-role fallback api/_lib/authz.js's
+      // resolveMobilityRole() honors server-side) for which no dashboard has
+      // been built yet. Telling that user "no permission" is false and
+      // unhelpful; this only picks a truthful message — it grants no route,
+      // fabricates no page, and does not touch hasFieldRole/hasLandsRole above.
+      const MOBILITY_ROLE_VALUES = ['mobility_head', 'department_head', 'administrative_affairs', 'employee'];
+      const hasRecognizedMobilityRole = Object.prototype.hasOwnProperty.call(data, 'mobilityAccess')
+        ? Boolean(data.mobilityAccess && typeof data.mobilityAccess === 'object' && data.mobilityAccess.enabled === true
+            && MOBILITY_ROLE_VALUES.includes(data.mobilityAccess.role))
+        : MOBILITY_ROLE_VALUES.includes(role);
+      if (userDoc.exists() && data.active !== false && organizationId && hasRecognizedMobilityRole) {
+        showMsg('🚧 صلاحيتك مسجّلة ضمن إدارة الحركة والسير، لكن لوحة هذا الدور لم تُفعَّل بعد لهذا الحساب. يرجى مراجعة إدارة المنصة.', 'error');
+      } else {
+        showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
+      }
       loginButton.disabled = false;
       loginButton.textContent = 'تسجيل الدخول';
       return;

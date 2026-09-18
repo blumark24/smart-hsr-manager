@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الخريطة التشغيلية · SMART HSR</title>
+<!-- PHASE 08.3 — MapLibre GL is served locally (vendor/maplibre-gl/4.7.1/,
+     the exact npm-pinned build previously loaded from unpkg.com) so browser
+     acceptance and Preview/Production never depend on an external CDN. -->
+<link rel="stylesheet" href="vendor/maplibre-gl/4.7.1/maplibre-gl.css">
+<script src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
+<script src="geo-core.bundle.js"></script>
+<style>
+  /* SMART HSR Operational Command Map — reference-matched spatial HUD.
+     This is still the canonical 2D MapLibre product. The Twin control is a
+     continuity link to the separate Cesium product, never a fake in-map 3D
+     mode. Every visible entity and boundary remains backed by real data. */
+  :root{
+    color-scheme:dark;
+    --app-bg:#061827; --surface:rgba(7,28,47,.88); --text:#f4fbff; --text-2:#c2d5df; --text-muted:#83a1b1;
+    --border:rgba(134,192,222,.32); --border-subtle:rgba(134,192,222,.14);
+    --panel:rgba(5,25,43,.9); --panel-border:rgba(97,184,222,.42); --pop:rgba(5,25,43,.94); --pop-border:rgba(97,184,222,.4);
+    --accent:#18e876; --accent-2:#00b95a;
+    --green:#0bd568; --green-hover:#18ec79; --green-soft:rgba(12,211,102,.14);
+    --warning:#ff9f1c; --warning-soft:rgba(255,159,28,.15);
+    --danger:#ff3f4c; --danger-2:#ff6771; --danger-soft:rgba(255,63,76,.14);
+    --btn:#05ba5b; --btn-border:#20ed80;
+    --status-pending:#ef4444; --status-progress:#f5a524; --status-done:#22c55e; --status-neutral:#64748b;
+    --page-bg:#061827; --control-shadow:0 10px 28px rgba(0,9,20,.45),inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  html[data-theme="light"]{
+    color-scheme:light;--app-bg:#dce8e4;--surface:rgba(250,255,253,.92);--text:#10271d;--text-2:#365347;--text-muted:#667d72;
+    --border:rgba(31,111,77,.25);--border-subtle:rgba(31,111,77,.12);--panel:rgba(248,253,251,.94);--panel-border:rgba(31,111,77,.28);
+    --pop:rgba(248,253,251,.96);--pop-border:rgba(31,111,77,.25);--green-soft:rgba(15,122,80,.1);--page-bg:#dce8e4;
+    --control-shadow:0 10px 28px rgba(20,54,39,.2),inset 0 1px 0 rgba(255,255,255,.7)
+  }
+  *{box-sizing:border-box} html,body{margin:0;padding:0;height:100%;background:var(--app-bg);color:var(--text);
+    font-family:"IBM Plex Sans Arabic","Noto Sans Arabic",system-ui,sans-serif}
+  #authLoading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--page-bg);color:var(--text);z-index:100}
+  #appShell.hidden,#authLoading.hidden{display:none}
+  #appShell{height:100vh;background:var(--page-bg);overflow:hidden}
+  header{position:absolute;top:18px;left:18px;right:18px;z-index:30;display:grid;grid-template-columns:auto minmax(220px,420px) auto;align-items:center;gap:12px;direction:ltr;pointer-events:none}
+  header>*{pointer-events:auto;direction:rtl}
+  .product-switch{display:flex;align-items:center;gap:3px;padding:5px;border:1px solid rgba(157,218,245,.58);border-radius:26px;background:rgba(8,28,48,.76);box-shadow:0 0 18px rgba(65,182,238,.28),inset 0 0 14px rgba(72,173,222,.12);backdrop-filter:blur(16px)}
+  .product-tab{height:42px;min-width:148px;padding:0 20px;border:0;border-radius:21px;background:transparent;color:#e6f4fb;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+  .product-tab.active{background:linear-gradient(180deg,#25d967,#06ad53);border:1px solid #54f394;color:#fff;box-shadow:0 0 18px rgba(13,231,111,.64),inset 0 1px 0 rgba(255,255,255,.34)}
+  .search-shell{position:relative;justify-self:center;width:min(100%,420px)}
+  #searchInput{width:100%;height:44px;padding:0 42px 0 15px;border:1px solid var(--border);border-radius:22px;background:rgba(5,25,43,.82);color:var(--text);font:inherit;font-size:12.5px;outline:none;box-shadow:var(--control-shadow);backdrop-filter:blur(14px)}
+  .search-shell:before{content:'⌕';position:absolute;right:17px;top:7px;z-index:1;color:#a7c3d1;font-size:21px}
+  #searchInput:focus{border-color:rgba(42,230,131,.72);box-shadow:0 0 0 3px rgba(19,224,115,.13),var(--control-shadow)}
+  #searchResults{position:absolute;top:calc(100% + 6px);right:0;left:0;display:none;max-height:280px;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--control-shadow);padding:5px;z-index:60}
+  #searchResults.open{display:block}
+  .search-result{display:block;width:100%;border:0;background:transparent;color:var(--text);padding:.6rem .7rem;border-radius:7px;text-align:right;font:inherit;font-size:12px;cursor:pointer}
+  .search-result:hover,.search-result:focus{background:var(--green-soft);outline:none}
+  .search-empty{padding:.65rem;color:var(--text-muted);font-size:12px}
+  .header-tools{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+  button.geo-btn{min-height:42px;padding:.45rem .8rem;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);font:inherit;font-weight:700;font-size:12px;cursor:pointer;box-shadow:var(--control-shadow);backdrop-filter:blur(14px)}
+  button.geo-btn:hover{color:var(--text);border-color:var(--green)}
+  button.geo-btn.primary{background:var(--btn);border-color:var(--btn-border);color:#fff}
+  .segmented{display:flex;gap:2px;padding:4px;border:1px solid var(--border);border-radius:13px;background:rgba(5,25,43,.82);box-shadow:var(--control-shadow)}
+  .segment{height:34px;padding:0 11px;border:0;border-radius:9px;background:transparent;color:var(--text-muted);font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+  .segment.active{background:linear-gradient(180deg,#16c966,#07934a);color:#fff;box-shadow:0 0 11px rgba(15,220,105,.32)}
+  main{position:absolute;inset:0;overflow:hidden;background:var(--app-bg)}
+  #map{position:absolute;inset:0;background:#071b27}
+  main:after{content:'';position:absolute;inset:0;pointer-events:none;z-index:4;box-shadow:inset 0 0 85px rgba(0,20,35,.56);border:1px solid rgba(72,184,230,.25)}
+  .maplibregl-ctrl-top-left{top:88px !important;left:16px !important;display:flex;flex-direction:column;gap:8px}
+  .maplibregl-ctrl-group{background:rgba(7,29,49,.88) !important;border:1px solid rgba(129,194,224,.4) !important;border-radius:12px !important;overflow:hidden;box-shadow:var(--control-shadow) !important;backdrop-filter:blur(12px)}
+  .maplibregl-ctrl-group button{width:42px !important;height:42px !important;background:transparent !important}
+  .maplibregl-ctrl-group button + button{border-top:1px solid var(--border-subtle) !important}
+  html[data-theme="dark"] .maplibregl-ctrl-icon{filter:invert(1) brightness(1.8) !important}
+  html[data-theme="light"] .maplibregl-ctrl-icon{filter:none !important}
+  .maplibregl-ctrl button:not(:disabled):hover{background:var(--green-soft) !important}
+  .maplibregl-ctrl-attrib{background:var(--surface) !important;color:var(--text-muted) !important;border-radius:7px !important}
+  .maplibregl-ctrl-attrib a{color:var(--text-2) !important}
+  .maplibregl-ctrl-fullscreen,.maplibregl-ctrl-geolocate{color:var(--text-2)}
+  #rightPanel{position:absolute;top:86px;right:16px;z-index:10;width:270px;max-width:calc(100% - 32px)}
+  #rightPanelToggle{display:inline-flex}
+  #rightPanel.collapsed #layerPanel{display:none}
+  #layerPanel{background:linear-gradient(160deg,rgba(5,27,46,.94),rgba(5,20,35,.91));border:1px solid var(--pop-border);color:var(--text);
+    border-radius:18px;padding:.85rem;box-shadow:0 18px 46px rgba(0,8,18,.48),inset 0 1px 0 rgba(255,255,255,.06);max-height:calc(100vh - 110px);overflow:auto;backdrop-filter:blur(17px)}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding-bottom:.6rem;border-bottom:1px solid var(--border-subtle)}
+  #layerPanel h2{font-size:12.5px;margin:0;color:var(--text);font-weight:800}
+  .clear-filters{border:0;background:transparent;color:var(--green);font:inherit;font-size:10.5px;font-weight:700;cursor:pointer}
+  .layer-row{display:flex;align-items:center;gap:.55rem;padding:.4rem .3rem;border-radius:9px;font-size:12px;color:var(--text-2)}
+  .layer-row:hover{background:var(--green-soft)}
+  .layer-row input{appearance:none;width:34px;height:19px;border-radius:10px;background:#324756;border:1px solid rgba(255,255,255,.12);position:relative;cursor:pointer;flex:none;transition:.18s ease}
+  .layer-row input:after{content:'';position:absolute;width:13px;height:13px;top:2px;left:3px;border-radius:50%;background:#dce8ee;transition:.18s ease}
+  .layer-row input:checked{background:linear-gradient(90deg,#08ac52,#28e677);box-shadow:0 0 10px rgba(22,222,111,.34)}
+  .layer-row input:checked:after{left:16px;background:#fff}
+  .layer-row .swatch{width:10px;height:10px;border-radius:3px;flex:none}
+  .panel-section-title{font-size:11px;font-weight:700;color:var(--text);margin:.7rem .2rem .4rem;padding-top:.5rem;border-top:1px solid var(--border-subtle)}
+  #filterChips{display:flex;flex-direction:column;gap:.3rem}
+  .status-row{display:flex;align-items:center;gap:.5rem;padding:.4rem .3rem;border-radius:9px;font-size:12px;color:var(--text-2);cursor:pointer;border:1px solid transparent;background:transparent;width:100%;text-align:right;font:inherit}
+  .status-row:hover{background:var(--green-soft)}
+  .status-row.active{background:var(--green-soft);border-color:rgba(40,231,127,.35);color:var(--text)}
+  .status-row .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .status-row .count{margin-inline-start:auto;font-size:11px;font-weight:600;color:var(--text-muted);font-variant-numeric:tabular-nums}
+  .geo-filter-select{width:100%;margin-top:.4rem;height:32px;padding:0 .5rem;border:1px solid var(--border);border-radius:8px;
+    background:var(--app-bg);color:var(--text);font:inherit;font-size:12px}
+  @media(max-width:900px){#rightPanel:not(.expanded) #layerPanel{display:none}}
+  #entityCard{position:absolute;bottom:0;right:0;left:0;z-index:20;background:var(--pop);color:var(--text);border-top:1px solid var(--pop-border);
+    border-radius:12px 12px 0 0;padding:1rem;transform:translateY(100%);transition:transform .2s ease;max-height:60vh;overflow:auto;box-shadow:0 -8px 24px rgba(23,45,34,.14)}
+  #entityCard.open{transform:translateY(0)}
+  @media(min-width:1024px){
+    #entityCard{right:0;left:auto;bottom:0;top:0;width:360px;max-width:90vw;border-radius:0;border-top:0;border-right:1px solid var(--pop-border);
+      transform:translateX(100%);max-height:none}
+    #entityCard.open{transform:translateX(0)}
+  }
+  #entityCard h2{font-size:16px;margin:0 0 .3rem;color:var(--text)}
+  #entityCard .meta{font-size:12px;color:var(--text-2);margin-bottom:.2rem}
+  #entityCard .field{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border-subtle);font-size:13px}
+  #entityCard .field .label{color:var(--text-2)}
+  #entityCard .empty-state{color:var(--text-muted)}
+  #entityCardClose{position:absolute;top:.7rem;left:.7rem;min-width:34px;min-height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+  #mapSummary{position:absolute;bottom:12px;right:12px;z-index:8;display:flex;align-items:center;gap:8px;padding:.4rem .65rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);box-shadow:var(--control-shadow);font-size:10.5px;color:var(--text-muted)}
+  #mapSummary strong{color:var(--text);font-variant-numeric:tabular-nums}
+  #attributionNote{position:absolute;bottom:12px;left:56px;z-index:5;font-size:10px;color:var(--text-2);background:var(--surface);border:1px solid var(--border);
+    padding:.2rem .45rem;border-radius:6px}
+  .layer-count{margin-inline-start:auto;font-size:11px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+  /* Quick popup — a small, premium light card floating over the dark map
+     (matches the reference exactly: the popup stays light/white even in
+     Night mode for maximum contrast against satellite imagery, only the
+     surrounding chrome switches theme). Never the full detail panel. */
+  .maplibregl-popup{max-width:320px !important;z-index:15}
+  .maplibregl-popup-content{background:#ffffff;color:#0b1a15;border:1px solid rgba(15,23,42,.08);
+    border-radius:14px;padding:0;box-shadow:0 18px 42px rgba(0,12,22,.42),0 0 0 1px rgba(255,255,255,.42);font-family:inherit;overflow:hidden}
+  .maplibregl-popup-tip{border-top-color:#ffffff !important;border-bottom-color:#ffffff !important}
+  .maplibregl-popup-close-button{font-size:16px;color:#586b61;top:6px;inset-inline-end:8px}
+  .geo-popup{display:flex;flex-direction:column}
+  .geo-popup .popup-body{display:flex;gap:.6rem;padding:.75rem .8rem .5rem}
+  .geo-popup .popup-thumb{width:88px;height:76px;flex:none;border-radius:10px;background:#eef2ef center/cover no-repeat;overflow:hidden}
+  .geo-popup .popup-main{flex:1;min-width:0}
+  .geo-popup h3{font-size:13px;font-weight:700;margin:0 0 .25rem;color:#0b1a15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .geo-popup .popup-sub{font-size:10.5px;color:#586b61;margin-bottom:.4rem}
+  .geo-popup .status-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:10.5px;font-weight:700;
+    padding:.15rem .5rem;border-radius:999px}
+  .geo-popup .status-badge .dot{width:7px;height:7px;border-radius:50%}
+  .geo-popup .row{display:flex;justify-content:space-between;gap:.5rem;font-size:11px;padding:.12rem 0;color:#586b61}
+  .geo-popup .row b{color:#0b1a15;font-weight:600}
+  .geo-popup .rows{padding:0 .8rem .5rem}
+  .geo-popup .actions{display:flex;gap:.4rem;padding:0 .8rem .75rem}
+  .geo-popup .actions .btn-details{flex:1;min-height:32px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;
+    background:var(--green,#12855a);border:1px solid var(--green,#12855a);color:#fff;display:flex;align-items:center;justify-content:center;gap:.35rem}
+  .geo-popup .actions .btn-twin{flex:none;width:34px;min-height:32px;border-radius:9px;cursor:pointer;
+    background:#eef2ef;border:1px solid rgba(15,23,42,.1);color:#3f5249;display:flex;align-items:center;justify-content:center}
+  #entityCard .evidence-thumb{width:100%;height:110px;border-radius:8px;background:var(--app-bg) center/cover no-repeat;
+    display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:11px;margin:.3rem 0;overflow:hidden}
+  #entityCard .ai-block{margin-top:.5rem;padding:.5rem;border-radius:10px;background:var(--green-soft);
+    border:1px solid var(--border);font-size:12px;line-height:1.6}
+  /* Premium status-aware observation markers (DOM, not GL circles — see
+     Section-14 note in the script: real MapLibre clustering data still
+     drives every marker, only the RENDERING is DOM so a real numeric
+     cluster count and a teardrop pin shape are possible without adding an
+     external glyphs/font-server dependency). */
+  .geo-marker{width:30px;height:38px;cursor:pointer;filter:drop-shadow(0 0 7px rgba(255,255,255,.24))}
+  .geo-marker svg{display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.48))}
+  .geo-marker.selected{outline:3px solid #fff;outline-offset:2px;border-radius:50%}
+  .geo-cluster{width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;border:2px solid #fff;
+    box-shadow:0 0 0 7px var(--cluster-ring),0 0 19px var(--cluster-ring),0 4px 12px rgba(0,0,0,.42)}
+  .geo-legend{display:flex;flex-direction:column;gap:.35rem}
+  .geo-legend .row{display:flex;align-items:center;gap:.5rem;font-size:11px;color:var(--text-2)}
+  .geo-legend .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .panel-close{width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:var(--text-muted);font-size:19px;cursor:pointer}
+  @media(max-width:760px){
+    header{top:8px;left:8px;right:8px;grid-template-columns:1fr auto;gap:7px}
+    .product-switch{padding:3px}.product-tab{height:36px;min-width:112px;padding:0 12px;font-size:11.5px}
+    .search-shell{grid-column:1/-1;grid-row:2;width:100%}.header-tools{gap:5px}.hide-mobile{display:none!important}
+    .segmented .segment{padding:0 7px}.maplibregl-ctrl-top-left{top:112px!important;left:8px!important}
+    #rightPanel{top:auto;right:8px;left:8px;bottom:8px;width:auto;max-width:none}
+    #layerPanel{max-height:58vh;border-radius:12px}
+    #mapSummary{right:8px;bottom:8px}
+    #rightPanel.expanded ~ #mapSummary{display:none}
+    #attributionNote{display:none}
+  }
+
+  /* Geo Intelligence & Operations Center — calm government-grade shell. */
+  #appShell{--header-h:64px;--kpi-h:58px}
+  header.command-header{top:0;left:0;right:0;height:var(--header-h);padding:0 18px;display:grid;grid-template-columns:minmax(340px,1fr) minmax(240px,430px) minmax(340px,1fr);gap:14px;
+    border-bottom:1px solid var(--border-subtle);background:linear-gradient(180deg,rgba(4,20,34,.98),rgba(4,20,34,.9));box-shadow:0 12px 30px rgba(0,8,18,.28);backdrop-filter:blur(18px)}
+  .brand-nav{display:flex;align-items:center;gap:14px;direction:rtl;min-width:0}.brand-lockup{display:flex;align-items:center;gap:9px;min-width:150px;text-decoration:none;color:var(--text)}
+  .brand-lockup img{width:102px;height:38px;object-fit:contain}.header-nav{display:flex;align-items:center;gap:3px;overflow:auto;scrollbar-width:none}.header-nav::-webkit-scrollbar{display:none}
+  .nav-link{height:38px;display:inline-flex;align-items:center;padding:0 12px;border-radius:10px;color:var(--text-muted);font-size:11.5px;font-weight:700;text-decoration:none;white-space:nowrap;border:1px solid transparent;background:transparent;cursor:pointer;font-family:inherit}
+  .nav-link:hover{color:var(--text);background:var(--green-soft)}.nav-link.active{color:#fff;background:rgba(15,184,89,.18);border-color:rgba(48,230,132,.38);box-shadow:inset 0 -2px 0 var(--green)}
+  .header-identity{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}.identity-copy{min-width:0;text-align:right;line-height:1.25}.identity-copy strong,.identity-copy span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.identity-copy strong{font-size:11px}.identity-copy span{font-size:9.5px;color:var(--text-muted)}
+  .tool-icon{width:38px;height:38px;padding:0!important;display:grid;place-items:center}.command-header .search-shell{width:100%}.command-header #searchInput{height:40px;background:rgba(6,31,50,.78)}
+  #kpiStrip{position:absolute;top:var(--header-h);left:0;right:0;height:var(--kpi-h);z-index:18;display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));padding:8px 18px;gap:1px;background:rgba(5,24,39,.93);border-bottom:1px solid var(--border-subtle);backdrop-filter:blur(16px)}
+  .kpi-cell{padding:3px 13px;border-inline-start:1px solid var(--border-subtle);min-width:0}.kpi-cell:first-child{border-inline-start:0}.kpi-label{display:block;font-size:9.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kpi-value{display:flex;align-items:baseline;gap:5px;margin-top:2px;font-size:19px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}.kpi-value small{font-size:9px;color:var(--text-muted);font-weight:600}.kpi-cell.alert .kpi-value{color:#ff7b83}.kpi-cell.progress .kpi-value{color:#ffc15c}.kpi-cell.complete .kpi-value{color:#45e88d}
+  main.command-main{top:calc(var(--header-h) + var(--kpi-h));inset-inline:0;bottom:0}
+  #intelligencePanel{position:absolute;z-index:10;top:14px;left:14px;width:286px;max-height:calc(100% - 96px);overflow:auto;background:linear-gradient(160deg,rgba(5,27,46,.95),rgba(5,20,35,.92));border:1px solid var(--pop-border);border-radius:16px;padding:13px;box-shadow:0 18px 46px rgba(0,8,18,.42);backdrop-filter:blur(17px)}
+  .intel-eyebrow{font-size:9px;color:var(--green);font-weight:800;letter-spacing:.08em}.intel-title{font-size:14px;margin:3px 0 2px}.intel-sub{font-size:9.5px;color:var(--text-muted);line-height:1.5}.intel-block{margin-top:10px;padding:10px;border:1px solid var(--border-subtle);border-radius:11px;background:rgba(255,255,255,.025)}
+  .intel-block-head{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800;margin-bottom:5px}.intel-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(24,232,118,.5)}.intel-block p{margin:0;font-size:10.5px;color:var(--text-2);line-height:1.65}
+  .confidence-row{display:flex;justify-content:space-between;gap:8px;margin-top:7px;font-size:9.5px;color:var(--text-muted)}.confidence-row strong{color:var(--text)}.twin-teaser{margin-top:10px;padding:11px;border-radius:12px;background:linear-gradient(135deg,rgba(27,153,104,.2),rgba(15,78,112,.18));border:1px solid rgba(48,230,132,.28)}.twin-teaser h3{font-size:11px;margin:0 0 4px}.twin-teaser p{font-size:9.5px;color:var(--text-muted);margin:0 0 8px;line-height:1.5}
+  #rightPanel{top:14px;right:14px;width:286px;max-height:calc(100% - 96px)}#layerPanel{max-height:100%;border-radius:16px}.panel-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:9px 0 5px;padding:3px;border-radius:10px;background:rgba(0,0,0,.16)}.panel-tab{height:30px;border:0;border-radius:8px;background:transparent;color:var(--text-muted);font:inherit;font-size:10.5px;font-weight:800;cursor:pointer}.panel-tab.active{background:rgba(32,218,118,.14);color:var(--text);box-shadow:inset 0 0 0 1px rgba(48,230,132,.25)}.panel-tab-content[hidden]{display:none}.availability-note{padding:8px;margin-top:8px;border-radius:9px;border:1px dashed var(--border);font-size:9.5px;line-height:1.55;color:var(--text-muted)}
+  .layer-row.disabled{opacity:.58}.layer-row.disabled input{cursor:not-allowed}.map-tool-row{display:flex;gap:6px;margin-top:9px}.map-tool-row .geo-btn{flex:1;min-height:34px;font-size:10px;padding:.35rem}.tool-state{margin-top:6px;color:var(--text-muted);font-size:9px;line-height:1.5}
+  #timelinePanel{position:absolute;left:314px;right:314px;bottom:12px;z-index:10;min-height:68px;padding:9px 12px;border:1px solid var(--pop-border);border-radius:14px;background:rgba(5,25,43,.93);box-shadow:var(--control-shadow);backdrop-filter:blur(16px)}
+  .timeline-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}.timeline-title{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800}.timeline-meta{font-size:9.5px;color:var(--text-muted)}.timeline-controls{display:grid;grid-template-columns:32px 1fr auto;gap:9px;align-items:center}.timeline-play{width:32px;height:32px;border:1px solid rgba(48,230,132,.38);border-radius:9px;background:var(--green-soft);color:var(--green);cursor:pointer}.timeline-range{width:100%;accent-color:var(--green)}.timeline-reset{border:0;background:transparent;color:var(--green);font:inherit;font-size:9.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+  #mapSummary{bottom:88px;right:314px}#attributionNote{bottom:90px;left:314px}.maplibregl-ctrl-top-left{top:14px!important;left:314px!important}.maplibregl-ctrl-bottom-left{left:302px!important;bottom:78px!important}
+  .map-legend{position:absolute;z-index:8;left:314px;bottom:126px;padding:7px 9px;border:1px solid var(--border);border-radius:10px;background:var(--surface);box-shadow:var(--control-shadow);display:flex;gap:10px;align-items:center;font-size:9px;color:var(--text-muted)}.legend-item{display:flex;align-items:center;gap:4px}.legend-swatch{width:7px;height:7px;border-radius:50%}
+  .geo-marker{position:relative;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#0a2638;border:3px solid var(--marker-status,#64748b);box-shadow:0 0 0 3px rgba(255,255,255,.72),0 4px 12px rgba(0,0,0,.46);filter:none}.geo-marker svg{filter:none}.geo-marker .priority-badge{position:absolute;top:-8px;right:-8px;min-width:16px;height:16px;padding:0 3px;border-radius:8px;display:grid;place-items:center;background:#ef4444;color:#fff;border:2px solid #fff;font-size:8px;font-weight:900}.geo-marker.selected{outline:5px solid rgba(32,255,134,.24);outline-offset:4px}.geo-cluster{border-width:3px}
+  #sketchStatus.active{color:var(--warning)}
+  @media(max-width:1180px){#intelligencePanel{transform:translateX(calc(-100% - 20px));transition:.2s}#intelligencePanel.expanded{transform:none}.maplibregl-ctrl-top-left{left:14px!important}.maplibregl-ctrl-bottom-left{left:0!important}.map-legend{left:14px}#timelinePanel{left:14px}.command-header{grid-template-columns:minmax(300px,1fr) minmax(220px,360px) auto!important}.identity-copy{display:none}}
+  @media(max-width:900px){#appShell{--header-h:104px;--kpi-h:52px}.command-header{height:var(--header-h)!important;grid-template-columns:1fr auto!important;padding:7px 10px!important}.command-header .search-shell{grid-column:1/-1;grid-row:2}.header-nav .nav-link:not(.active){display:none}#kpiStrip{overflow-x:auto;grid-template-columns:repeat(6,130px);padding:6px 10px}.kpi-value{font-size:16px}#rightPanel{top:auto;right:8px;left:8px;bottom:8px;width:auto}.maplibregl-ctrl-top-left{top:10px!important;left:8px!important}#timelinePanel{left:8px;right:8px;bottom:8px}#mapSummary,.map-legend,#attributionNote{display:none}.brand-lockup img{width:82px}.header-identity .segmented,.header-identity #logoutBtn{display:none}}
+
+  /* Phase 12A presentation hardening — no composition or data changes. */
+  html[data-theme="light"] .command-header{background:linear-gradient(180deg,rgba(250,255,253,.98),rgba(244,250,247,.94));box-shadow:0 10px 26px rgba(23,67,47,.13)}
+  html[data-theme="light"] #kpiStrip{background:rgba(248,253,251,.96)}
+  html[data-theme="light"] .command-header #searchInput,
+  html[data-theme="light"] .segmented{background:rgba(255,255,255,.94)}
+  html[data-theme="light"] #intelligencePanel,
+  html[data-theme="light"] #layerPanel{background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(242,249,245,.96));box-shadow:0 16px 36px rgba(23,67,47,.14)}
+  html[data-theme="light"] #timelinePanel{background:rgba(250,255,253,.97)}
+  html[data-theme="light"] .maplibregl-ctrl-group{background:rgba(255,255,255,.94)!important;border-color:rgba(31,111,77,.25)!important}
+  html[data-theme="light"] main:after{box-shadow:inset 0 0 70px rgba(35,79,58,.14);border-color:rgba(31,111,77,.16)}
+  :where(a,button,input,select,[tabindex]):focus-visible{outline:3px solid #5cf0a0;outline-offset:3px;box-shadow:0 0 0 2px rgba(4,25,40,.82)}
+  html[data-theme="light"] :where(a,button,input,select,[tabindex]):focus-visible{outline-color:#087849;box-shadow:0 0 0 2px rgba(255,255,255,.92)}
+  .maplibregl-ctrl button:focus-visible{outline:3px solid #5cf0a0!important;outline-offset:-3px!important}
+  @media(pointer:coarse){
+    .nav-link,button.geo-btn,.panel-tab,.timeline-play,.timeline-reset,.panel-close,.clear-filters,.status-row{min-height:44px}
+    .tool-icon,.panel-close{min-width:44px;width:44px}.segment{min-height:40px}.layer-row{min-height:44px}
+    .layer-row input{width:40px;height:24px;border-radius:13px}.layer-row input:after{width:16px;height:16px;top:3px}.layer-row input:checked:after{left:19px}
+  }
+  @media(max-width:1180px){
+    .command-header,#kpiStrip,#intelligencePanel,#layerPanel,#timelinePanel,.maplibregl-ctrl-group{backdrop-filter:none!important}
+  }
+  @media(max-width:900px){
+    .command-header #searchInput{font-size:16px}
+    #rightPanel{top:8px;bottom:auto;z-index:12}
+    #layerPanel{max-height:calc(100vh - var(--header-h) - var(--kpi-h) - 104px)}
+    #intelligencePanel{top:8px;max-height:calc(100% - 96px)}
+    #timelinePanel{z-index:11}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  }
+</style>
+</head>
+<body>
+  <div id="authLoading"><div>...جارٍ التحقق</div></div>
+  <div id="appShell" class="hidden">
+    <header class="command-header">
+      <div class="brand-nav">
+        <a class="brand-lockup" href="manager.html" aria-label="SMART HSR — الرئيسية"><img src="Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR"></a>
+        <nav class="header-nav" aria-label="أقسام المنصة">
+          <a class="nav-link" href="manager.html">الرئيسية</a>
+          <span class="nav-link active" aria-current="page">الخريطة التشغيلية</span>
+          <button class="nav-link" id="openTwinBtn" type="button" hidden>التوأم الرقمي</button>
+        </nav>
+      </div>
+      <div class="search-shell">
+        <input id="searchInput" type="search" autocomplete="off" placeholder="ابحث برقم البلاغ أو المنشأة أو المبنى…" aria-label="بحث" aria-controls="searchResults" aria-expanded="false">
+        <div id="searchResults" role="listbox" aria-label="نتائج البحث"></div>
+      </div>
+      <div class="header-identity">
+        <div class="segmented" id="basemapControl" role="group" aria-label="نوع الخريطة">
+          <button class="segment" type="button" data-basemap="street" aria-pressed="false">شوارع</button>
+          <button class="segment active" type="button" data-basemap="satellite" aria-pressed="true">أقمار</button>
+        </div>
+        <button class="geo-btn tool-icon" id="intelligenceToggle" aria-label="إظهار لوحة الذكاء الجغرافي" aria-expanded="false" title="الذكاء الجغرافي">◈</button>
+        <button class="geo-btn tool-icon" id="rightPanelToggle" aria-label="إظهار أو إخفاء طبقات الخريطة" aria-expanded="true" title="الطبقات والمرشحات">▱</button>
+        <button class="geo-btn tool-icon" id="themeToggleBtn" aria-label="تفعيل الوضع النهاري" title="الوضع النهاري">☀</button>
+        <div class="identity-copy"><strong id="orgIdentity">SMART HSR</strong><span id="userIdentity">مستخدم موثّق</span></div>
+        <button class="geo-btn hide-mobile" id="logoutBtn" title="تسجيل الخروج">خروج</button>
+      </div>
+    </header>
+    <section id="kpiStrip" aria-label="مؤشرات العمليات الجغرافية">
+      <div class="kpi-cell"><span class="kpi-label">إجمالي البلاغات المكانية</span><div class="kpi-value" id="kpiTotal">—</div></div>
+      <div class="kpi-cell alert"><span class="kpi-label">عالية / حرجة</span><div class="kpi-value" id="kpiHigh">—</div></div>
+      <div class="kpi-cell progress"><span class="kpi-label">قيد المعالجة</span><div class="kpi-value" id="kpiProgress">—</div></div>
+      <div class="kpi-cell complete"><span class="kpi-label">مكتملة</span><div class="kpi-value" id="kpiCompleted">—</div></div>
+      <div class="kpi-cell"><span class="kpi-label">الطبقات الفعّالة</span><div class="kpi-value" id="kpiLayers">—</div></div>
+      <div class="kpi-cell"><span class="kpi-label">حالة اللقطة</span><div class="kpi-value" id="kpiSnapshot"><small>عند الطلب</small></div></div>
+    </section>
+    <main class="command-main">
+      <div id="map" role="application" aria-label="الخريطة التشغيلية"></div>
+      <aside id="intelligencePanel" aria-label="لوحة الذكاء الجغرافي">
+        <div class="intel-eyebrow">GEO INTELLIGENCE</div><h1 class="intel-title">مركز العمليات الجغرافية الذكية</h1>
+        <div class="intel-sub">قراءة تشغيلية مشتقة من البيانات المكانية الموثوقة المتاحة حاليًا.</div>
+        <section class="intel-block"><div class="intel-block-head"><span class="intel-dot"></span>الملخص التنفيذي</div><p id="intelligenceSummary">جارٍ تحليل اللقطة الحالية…</p></section>
+        <section class="intel-block"><div class="intel-block-head"><span class="intel-dot" style="background:#ff9f1c"></span>تركيز مكاني</div><p id="hotspotInsight">يتطلب توفر بيانات مكانية في اللقطة.</p></section>
+        <section class="intel-block"><div class="intel-block-head"><span class="intel-dot" style="background:#38bdf8"></span>إجراء مقترح</div><p id="recommendationInsight">لا توجد توصية مؤكدة قبل اكتمال التحميل.</p></section>
+        <div class="confidence-row"><span>تغطية الإحداثيات</span><strong id="dataConfidence">—</strong></div>
+        <div class="twin-teaser" id="twinTeaser" hidden><h3>التوأم الرقمي</h3><p>انقل السياق المكاني إلى المنتج ثلاثي الأبعاد المنفصل عند الحاجة.</p><button class="geo-btn primary" id="intelligenceTwinBtn" type="button">فتح التوأم الرقمي</button></div>
+      </aside>
+      <div id="rightPanel">
+        <div id="layerPanel">
+          <div class="panel-head">
+            <button class="panel-close" id="panelCloseBtn" type="button" aria-label="إغلاق لوحة الطبقات">×</button>
+            <h2>الطبقات والمرشحات</h2>
+            <button class="clear-filters" id="clearFiltersBtn" type="button">مسح</button>
+          </div>
+          <div class="panel-tabs" role="tablist"><button class="panel-tab active" id="layersTabBtn" role="tab" aria-selected="true">الطبقات</button><button class="panel-tab" id="filtersTabBtn" role="tab" aria-selected="false">المرشحات</button></div>
+          <div class="panel-tab-content" id="layersTab" role="tabpanel">
+            <div class="panel-section-title">البيانات التشغيلية</div><div id="layerList"></div>
+            <label class="layer-row"><input id="heatmapToggle" type="checkbox" checked><span class="swatch" style="background:#ff8a32"></span><span>خريطة كثافة البلاغات</span></label>
+            <label class="layer-row disabled"><input id="boundaryToggle" type="checkbox" disabled><span class="swatch" style="background:#38ff95"></span><span id="boundaryLabel">النطاق التشغيلي غير متاح</span></label>
+            <div class="map-tool-row"><button class="geo-btn" id="perspectiveToggleBtn" type="button">منظور 2.5D</button><button class="geo-btn" id="sketchBtn" type="button">رسم نطاق</button><button class="geo-btn" id="clearSketchBtn" type="button" hidden>مسح</button></div>
+            <div class="tool-state" id="sketchStatus">النطاق المرسوم مؤقت ومحلي وغير محفوظ.</div>
+            <div class="availability-note">الأحياء والقطع والمشروعات المستقبلية لا تظهر إلا عند توفر هندسة مكانية موثوقة. لا يتم إنشاء حدود أو مواقع افتراضية.</div>
+          </div>
+          <div class="panel-tab-content" id="filtersTab" role="tabpanel" hidden><div class="panel-section-title">حالة البلاغات وتصنيفها</div><div id="filterChips"></div></div>
+        </div>
+      </div>
+      <div class="map-legend" aria-label="مفتاح الحالات"><span class="legend-item"><i class="legend-swatch" style="background:#ef4444"></i>انتظار</span><span class="legend-item"><i class="legend-swatch" style="background:#f5a524"></i>معالجة</span><span class="legend-item"><i class="legend-swatch" style="background:#22c55e"></i>مكتمل</span></div>
+      <section id="timelinePanel" aria-label="التسلسل الزمني للعمليات">
+        <div class="timeline-head"><div class="timeline-title">◷ الاستعراض الزمني</div><div class="timeline-meta"><span id="timelineDate">كل الفترات</span> · <span id="timelineState">يعرض كامل اللقطة</span></div></div>
+        <div class="timeline-controls"><button class="timeline-play" id="timelinePlayBtn" type="button" aria-label="تشغيل الاستعراض الزمني">▶</button><input class="timeline-range" id="timelineRange" type="range" min="0" max="1000" value="1000" disabled aria-label="نطاق الزمن"><button class="timeline-reset" id="timelineResetBtn" type="button">عرض الكل</button></div>
+      </section>
+      <div id="mapSummary" aria-live="polite">
+        <span>المعروض <strong id="visibleEntityCount">0</strong></span>
+        <span>·</span>
+        <span id="snapshotState">بيانات عند الطلب</span>
+      </div>
+      <div id="attributionNote"></div>
+      <aside id="entityCard" aria-hidden="true">
+        <button id="entityCardClose" aria-label="إغلاق">✕</button>
+        <div id="entityCardBody"></div>
+      </aside>
+    </main>
+  </div>
+
+<script type="module">
+import { initializeApp } from "./vendor/firebase/11.0.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator } from "./vendor/firebase/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, connectFirestoreEmulator } from "./vendor/firebase/11.0.0/firebase-firestore.js";
+import { resolveFirebaseConfig } from './firebase-runtime-config.js';
+import { observationCoordinates } from './spatial-map.js';
+import { resolveObservationImage } from './storage-adapter.js';
+
+const { layerRegistry, styleTokens, continuity, search: searchModule, attribution: attributionModule, policy } = window.SmartHSRGeoCore;
+
+const firebaseConfig = await resolveFirebaseConfig();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+// Local-only, explicitly opt-in Firebase Emulator connection — mirrors the
+// pattern already proven safe in the Owner Console (Phase 07B). Never
+// reachable in production: both the hostname check and the explicit query
+// flag must hold.
+const isLocalHost = ['localhost', '127.0.0.1'].includes(location.hostname);
+if (isLocalHost && new URLSearchParams(location.search).get('useEmulators') === '1') {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+}
+// PHASE 08.3 — local acceptance-only basemap fallback (see twin.html's
+// identical comment). Production/Preview always render the configured real
+// Street or Satellite raster tiles; this can only ever be true on localhost
+// with an explicit extra query param, for a sandbox with no outbound tile
+// access. Renders a neutral procedural background — never fabricated
+// geographic imagery — so UI/interaction acceptance can proceed.
+const useLocalBasemap = isLocalHost && new URLSearchParams(location.search).get('localBasemap') === '1';
+
+// The approved operational-command reference is satellite + Night first.
+// Day remains an explicit persisted choice for field/daylight use.
+const THEME_KEY = 'smartHsrGeoTheme';
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeToggleBtn');
+  const dark = theme === 'dark';
+  btn.textContent = dark ? '☀' : '☾';
+  btn.setAttribute('aria-label', dark ? 'تفعيل الوضع النهاري' : 'تفعيل الوضع الليلي');
+}
+applyTheme(localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark');
+document.getElementById('themeToggleBtn').addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next); localStorage.setItem(THEME_KEY, next);
+  if (map) applyBasemapTheme();
+});
+
+const BASEMAP_KEY = 'smartHsrOperationalBasemap';
+let activeBasemap = localStorage.getItem(BASEMAP_KEY) === 'street' ? 'street' : 'satellite';
+
+// Same self-lookup role-resolution pattern already used independently by
+// manager-operations.html/dashboard.html/mobile-map.html (each page reads
+// its own record; the server independently re-derives the real
+// authorization for every API call — this is UI branching only).
+async function resolveCallerRole(uid) {
+  const ownerSnap = await getDoc(doc(db, 'owners', uid));
+  if (ownerSnap.exists() && ownerSnap.data().active !== false) return { role: 'owner', organizationId: null };
+  const managerSnap = await getDoc(doc(db, 'managers', uid));
+  if (managerSnap.exists()) {
+    const d = managerSnap.data();
+    if (d.role === 'manager' && d.active !== false && d.organizationId) return { role: 'manager', organizationId: d.organizationId };
+  }
+  const userSnap = await getDoc(doc(db, 'users', uid));
+  if (userSnap.exists()) {
+    const d = userSnap.data();
+    if (['supervisor', 'inspector', 'contractor'].includes(d.role) && d.active !== false && d.organizationId) {
+      return { role: d.role, organizationId: d.organizationId };
+    }
+  }
+  return null;
+}
+
+async function apiGet(params) {
+  const token = await auth.currentUser.getIdToken();
+  const url = new URL('/api/organization/context', location.origin);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
+  return { ok: res.ok, status: res.status, body: await res.json().catch(() => ({})) };
+}
+
+let map, caller, mapContext, loadedEntities = [], currentUser = null;
+const NEUTRAL_SAFE_CAMERA = Object.freeze({ center: [0, 20], zoom: 1.5 });
+const reducedMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+let initialExtentPlan = null;
+let explicitContinuityCamera = false;
+let automaticInitialExtentResolved = false;
+
+function cameraDuration(milliseconds) {
+  return reducedMotionQuery.matches ? 0 : milliseconds;
+}
+
+// Organization bounds are stored as [[southLat, westLng], [northLat,
+// eastLng]]. Validate both the coordinate domain and the rectangle before
+// converting to MapLibre's [[westLng, southLat], [eastLng, northLat]].
+// Invalid or absent bounds are never treated as a municipal boundary.
+function normalizeRealMapBounds(value) {
+  if (!Array.isArray(value) || value.length !== 2 || !value.every((corner) => Array.isArray(corner) && corner.length === 2)) return null;
+  const [[south, west], [north, east]] = value.map((corner) => corner.map(Number));
+  if (![south, west, north, east].every(Number.isFinite)) return null;
+  if (south < -90 || north > 90 || west < -180 || east > 180 || south >= north || west >= east) return null;
+  return [[west, south], [east, north]];
+}
+
+function normalizeConfiguredMapCenter(context) {
+  // context.js can return an explicitly-labelled approximate center with
+  // configured:false. It is useful metadata, but it must not outrank real
+  // field-observation coordinates for the initial operational extent.
+  if (!context || context.configured !== true || !context.mapCenter) return null;
+  const lat = Number(context.mapCenter.lat), lng = Number(context.mapCenter.lng), zoom = Number(context.mapDefaultZoom);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180 || zoom < 0 || zoom > 22) return null;
+  return { center: [lng, lat], zoom };
+}
+
+function planTrustedInitialExtent(context) {
+  const bounds = normalizeRealMapBounds(context && context.mapBounds);
+  if (bounds) {
+    const [[west, south], [east, north]] = bounds;
+    return { mode: 'bounds', bounds, center: [(west + east) / 2, (south + north) / 2], zoom: 8 };
+  }
+  const configuredCenter = normalizeConfiguredMapCenter(context);
+  if (configuredCenter) return { mode: 'center', ...configuredCenter };
+  return { mode: 'observations-or-neutral', ...NEUTRAL_SAFE_CAMERA };
+}
+// UAT/dev-only introspection hooks — read-only, expose no PII beyond
+// counts/coordinates already visible on the rendered map, and perform no
+// write of any kind.
+window.__geoDebugEntityCount = () => loadedEntities.length;
+window.__geoDebugMap = () => map;
+const activeLayers = new Set();
+// Field observations are SMART HSR's own trusted municipal records — the
+// GeoEntity produced by fromFieldObservation() (shared with twin.html)
+// deliberately stays a generic geometry+status shape; this page-local map
+// keeps the FULL real observation document alongside it, purely for
+// presentation (popup/detail-panel fields), the same way manager.html's
+// own map card reads directly from its real observation objects. Never a
+// second continuity/entity contract — just real data for real UI text.
+const rawObservationById = new Map();
+let observationStatusFilter = 'ALL';
+let observationCategoryFilter = 'ALL';
+let observationPriorityFilter = 'ALL';
+let timelineCutoffMs = null;
+let timelineMinMs = null;
+let timelineMaxMs = null;
+let timelineTimer = null;
+let heatmapEnabled = true;
+
+function labelFor(layerId) { return (layerRegistry.getLayer(layerId) || {}).labelAr || layerId; }
+
+// Layers this specific page actually implements loading for. The registry
+// also declares lands_parcels/mobility_missions/mobility_incidents (real
+// future layers), but Lands parcels currently carry no geometry field at
+// all and Mobility missions/incidents carry no coordinate field either
+// (both confirmed in the Phase 08 map inventory) — there is nothing real
+// to load for them yet. Showing a toggle for a layer with no real data to
+// honestly show would be a dead control; the registry stays the source of
+// truth for what a FUTURE loader should implement, this page just doesn't
+// claim to load what it can't.
+const IMPLEMENTED_LAYER_IDS = ['commercial_places', 'buildings', 'field_observations'];
+
+const layerCounts = new Map();
+let lastSnapshotAt = null;
+function renderLayerToggles(organizationId) {
+  const list = document.getElementById('layerList');
+  list.innerHTML = '';
+  for (const layer of layerRegistry.layersForExperience('operational')) {
+    if (!IMPLEMENTED_LAYER_IDS.includes(layer.id)) continue;
+    const visible = layerRegistry.isLayerVisibleToRole(layer.id, caller.role).allowed;
+    if (!visible) continue;
+    const row = document.createElement('label');
+    row.className = 'layer-row';
+    row.innerHTML = `<input type="checkbox" data-layer="${layer.id}" ${layer.defaultVisible ? 'checked' : ''}><span>${layer.labelAr}</span><span class="layer-count" data-count="${layer.id}"></span>`;
+    list.appendChild(row);
+    if (layer.defaultVisible) activeLayers.add(layer.id);
+  }
+  list.querySelectorAll('input[type=checkbox]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) activeLayers.add(cb.dataset.layer); else activeLayers.delete(cb.dataset.layer);
+      loadVisibleLayers(organizationId);
+    });
+  });
+  updateLayerCounts();
+}
+
+function updateLayerCounts() {
+  document.querySelectorAll('.layer-count').forEach((el) => {
+    const layerId = el.dataset.count;
+    el.textContent = activeLayers.has(layerId) ? String(layerCounts.get(layerId) || 0) : '';
+  });
+  updateMapSummary();
+}
+
+function updateMapSummary() {
+  document.getElementById('visibleEntityCount').textContent = String(loadedEntities.length);
+  document.getElementById('snapshotState').textContent = lastSnapshotAt
+    ? `آخر تحميل ${lastSnapshotAt.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}`
+    : 'بيانات عند الطلب';
+  updateCommandCenter();
+}
+
+function timestampMillis(value) {
+  if (!value) return null;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (typeof value.seconds === 'number') return value.seconds * 1000;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function updateCommandCenter() {
+  const records = cachedObservationEntities.map((entity) => ({ entity, data: rawObservationById.get(entity.id) || {} }));
+  let high = 0, progress = 0, completed = 0, dated = 0;
+  for (const { data } of records) {
+    const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : '';
+    if (priority === 'HIGH' || priority === 'CRITICAL') high += 1;
+    if (data.status === 'IN_PROGRESS') progress += 1;
+    if (data.status === 'COMPLETED') completed += 1;
+    if (timestampMillis(data.createdAt)) dated += 1;
+  }
+  document.getElementById('kpiTotal').textContent = String(records.length);
+  document.getElementById('kpiHigh').textContent = String(high);
+  document.getElementById('kpiProgress').textContent = String(progress);
+  document.getElementById('kpiCompleted').textContent = String(completed);
+  document.getElementById('kpiLayers').textContent = String(activeLayers.size);
+  document.getElementById('kpiSnapshot').innerHTML = lastSnapshotAt ? `<small>${lastSnapshotAt.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</small>` : '<small>عند الطلب</small>';
+  document.getElementById('intelligenceSummary').textContent = records.length
+    ? `تتضمن اللقطة ${records.length} بلاغًا مكانيًا موثوق الإحداثيات؛ ${progress} قيد المعالجة و${completed} مكتمل.`
+    : 'لا توجد بلاغات مكانية قابلة للعرض ضمن اللقطة الحالية.';
+  document.getElementById('recommendationInsight').textContent = high
+    ? `توجد ${high} حالات عالية أو حرجة؛ الأولوية التشغيلية هي مراجعتها قبل الحالات الأقل أثرًا.`
+    : 'لا تظهر حالات عالية أو حرجة في البيانات المكانية المتاحة حاليًا.';
+  document.getElementById('dataConfidence').textContent = records.length ? `${Math.round((dated / records.length) * 100)}٪ مؤرخة` : 'لا بيانات';
+  const buckets = new Map();
+  for (const { entity } of records) {
+    if (!entity.geometry || entity.geometry.type !== 'Point') continue;
+    const [lng, lat] = entity.geometry.coordinates;
+    const key = `${lng.toFixed(2)}:${lat.toFixed(2)}`;
+    buckets.set(key, (buckets.get(key) || 0) + 1);
+  }
+  const peak = buckets.size ? Math.max(...buckets.values()) : 0;
+  document.getElementById('hotspotInsight').textContent = peak > 1
+    ? `أعلى تركّز ظاهر يضم ${peak} بلاغات ضمن نطاق مكاني متقارب؛ يمكن تكبير التجمع للتحقق من التفاصيل.`
+    : (records.length ? 'البلاغات المتاحة موزعة دون تركّز مكاني متكرر واضح في هذا المقياس.' : 'يتطلب توفر بيانات مكانية في اللقطة.');
+}
+
+// STABILIZATION — bbox-scoped layers (commercial_places/buildings) used to
+// re-fetch AND fully tear down/rebuild their GL source+layers on every
+// single 'moveend', even a few-pixel pan: confirmed empirically (8 small
+// pan nudges -> 8 network requests + 8 removeLayer/addLayer/removeSource/
+// addSource cycles, with the layer visibly absent from the map for over a
+// second between removal and re-add on each one). Root cause of the
+// reported flashing/pulsing and request-storm symptoms.
+//
+// Fix: fetch a BUFFERED bbox (viewport expanded by VIEWPORT_PREFETCH_BUFFER
+// in every direction) and cache which bounds were last fetched per layer.
+// A pan/zoom that stays within the already-fetched buffered area never
+// re-fetches or repaints at all; one that doesn't is fetched with the same
+// buffer, so a few more small pans afterward again need nothing.
+const VIEWPORT_PREFETCH_BUFFER = 0.5;
+const bboxLayerCache = {
+  commercial_places: { bounds: null, entities: [], attributions: [] },
+  buildings: { bounds: null, entities: [], attributions: [] },
+};
+function bufferedBoundsAndParam() {
+  const b = map.getBounds();
+  const w = b.getEast() - b.getWest(), h = b.getNorth() - b.getSouth();
+  const bufX = w * VIEWPORT_PREFETCH_BUFFER, bufY = h * VIEWPORT_PREFETCH_BUFFER;
+  const bounds = { west: b.getWest() - bufX, south: b.getSouth() - bufY, east: b.getEast() + bufX, north: b.getNorth() + bufY };
+  return { bounds, param: [bounds.west, bounds.south, bounds.east, bounds.north].join(',') };
+}
+function viewportCoveredBy(bounds) {
+  if (!bounds) return false;
+  const b = map.getBounds();
+  return b.getWest() >= bounds.west && b.getEast() <= bounds.east && b.getSouth() >= bounds.south && b.getNorth() <= bounds.north;
+}
+
+// Field observations are SMART HSR's own trusted municipal data (already
+// real, tenant-scoped Firestore documents) — unlike commercial_places and
+// buildings, they are read directly from Firestore here (a one-shot query,
+// re-run whenever layers/viewport change) using the SAME tenant-safe
+// observationCoordinates() helper spatial-map.js's existing Leaflet map
+// surfaces already rely on, never a second, drifting coordinate-resolution
+// implementation. This is a snapshot fetch, not a live onSnapshot listener
+// — never described as "live"/"مباشر" anywhere in this UI (see the Phase 08
+// brief's REALTIME DEFINITION rule).
+// Fetches ALL admissible observations for the org (unfiltered by
+// status/category/priority) — those filters are applied client-side by
+// applyObservationFilters() below over this same cached set, so toggling a
+// filter never re-runs this Firestore read (Section 18).
+async function loadFieldObservations(organizationId) {
+  const snap = await getDocs(query(collection(db, 'observations'), where('organizationId', '==', organizationId)));
+  lastSnapshotAt = new Date();
+  const { entity: entityModule } = window.SmartHSRGeoCore;
+  const entities = [];
+  rawObservationById.clear();
+  snap.forEach((docSnap) => {
+    const data = { id: docSnap.id, ...docSnap.data() };
+    const coords = observationCoordinates(data, organizationId);
+    if (!coords) return;
+    const { decision, entity } = entityModule.fromFieldObservation(data, coords);
+    if (!decision.allowed) return;
+    rawObservationById.set(entity.id, data);
+    entities.push(entity);
+  });
+  return entities;
+}
+
+// Status/category/priority filters all apply here, over the already-cached
+// full observation set — never a second Firestore read per filter change.
+// Category/priority use the same real field shapes as the entity-card/popup
+// (data.type, data.riskAssessment.priority) — never a second, drifting
+// notion of what these fields mean.
+function applyObservationFilters(entities) {
+  return entities.filter((e) => {
+    const data = rawObservationById.get(e.id);
+    if (!data) return false;
+    if (observationStatusFilter !== 'ALL' && (data.status || 'PENDING') !== observationStatusFilter) return false;
+    if (observationCategoryFilter !== 'ALL' && data.type !== observationCategoryFilter) return false;
+    if (observationPriorityFilter !== 'ALL') {
+      const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : null;
+      if (priority !== observationPriorityFilter) return false;
+    }
+    const createdAt = timestampMillis(data.createdAt);
+    if (timelineCutoffMs !== null && createdAt !== null && createdAt > timelineCutoffMs) return false;
+    return true;
+  });
+}
+
+function configureTimeline() {
+  const times = cachedObservationEntities.map((entity) => timestampMillis((rawObservationById.get(entity.id) || {}).createdAt)).filter(Number.isFinite).sort((a, b) => a - b);
+  const range = document.getElementById('timelineRange');
+  timelineMinMs = times.length ? times[0] : null;
+  timelineMaxMs = times.length ? times[times.length - 1] : null;
+  range.disabled = times.length < 2 || timelineMinMs === timelineMaxMs;
+  if (timelineCutoffMs === null || (timelineMaxMs && timelineCutoffMs > timelineMaxMs)) {
+    range.value = '1000';
+    timelineCutoffMs = null;
+    document.getElementById('timelineDate').textContent = 'كل الفترات';
+    document.getElementById('timelineState').textContent = times.length ? `${times.length} سجلات مؤرخة` : 'لا توجد تواريخ قابلة للاستعراض';
+  }
+}
+
+function setTimelineFromSlider(value) {
+  if (!timelineMinMs || !timelineMaxMs) return;
+  const ratio = Number(value) / 1000;
+  timelineCutoffMs = timelineMinMs + (timelineMaxMs - timelineMinMs) * ratio;
+  document.getElementById('timelineDate').textContent = new Date(timelineCutoffMs).toLocaleDateString('ar-SA', { dateStyle: 'medium' });
+  document.getElementById('timelineState').textContent = 'لقطة زمنية تراكمية';
+  reapplyObservationFilters();
+}
+
+// Field observations are read straight from Firestore (org-scoped, not
+// bbox-scoped — there is no server-side geo query for them), so re-running
+// that read on every map pan/zoom would be a real, needless Firestore-read
+// cost with no corresponding visual change. `includeObservations:false`
+// (used by the moveend handler below) re-fetches only the bbox-scoped
+// commercial_places/buildings layers and repaints the already-loaded
+// observation entities from cache — never a stale layer, never a wasted
+// re-fetch (Section 18).
+let cachedObservationEntities = [];
+// STABILIZATION — monotonic generation counter so a slow API response from
+// an OLDER viewport/call can never overwrite state painted by a NEWER one
+// (a real race under rapid panning/zooming/layer-toggling, since this
+// function is async and was never guarded against overlapping in-flight
+// calls). Every await below re-checks this before touching shared state.
+let viewportRequestGeneration = 0;
+function resolveInitialExtentFromObservations(entities) {
+  if (automaticInitialExtentResolved || explicitContinuityCamera || !initialExtentPlan || initialExtentPlan.mode !== 'observations-or-neutral') return;
+  const coordinates = entities
+    .map((entity) => entity.geometry && entity.geometry.type === 'Point' ? entity.geometry.coordinates : null)
+    .filter((coordinate) => Array.isArray(coordinate) && coordinate.length >= 2 && coordinate.every(Number.isFinite));
+  if (coordinates.length === 1) {
+    map.jumpTo({ center: coordinates[0], zoom: 15 });
+  } else if (coordinates.length > 1) {
+    const longitudes = coordinates.map((coordinate) => coordinate[0]);
+    const latitudes = coordinates.map((coordinate) => coordinate[1]);
+    map.fitBounds(
+      [[Math.min(...longitudes), Math.min(...latitudes)], [Math.max(...longitudes), Math.max(...latitudes)]],
+      { padding: matchMedia('(max-width: 900px)').matches ? 34 : 72, maxZoom: 16, duration: 0 },
+    );
+  }
+  // With no real points, the neutral world-level camera remains in place.
+  automaticInitialExtentResolved = true;
+}
+
+async function loadVisibleLayers(organizationId, { includeObservations = true } = {}) {
+  const generation = ++viewportRequestGeneration;
+  loadedEntities = [];
+  const observationsVisible = activeLayers.has('field_observations');
+  const mustResolveInitialExtent = !automaticInitialExtentResolved && !explicitContinuityCamera
+    && initialExtentPlan && initialExtentPlan.mode === 'observations-or-neutral';
+  if ((observationsVisible && includeObservations) || mustResolveInitialExtent) {
+    cachedObservationEntities = await loadFieldObservations(organizationId);
+    if (generation !== viewportRequestGeneration) return; // superseded — discard
+    resolveInitialExtentFromObservations(cachedObservationEntities);
+    if (observationsVisible) {
+      const filtered = applyObservationFilters(cachedObservationEntities);
+      layerCounts.set('field_observations', filtered.length);
+      paintObservations(filtered);
+      renderFilterChips();
+      configureTimeline();
+    }
+  } else if (!observationsVisible) {
+    removeObservationSource();
+    cachedObservationEntities = [];
+    layerCounts.set('field_observations', 0);
+  }
+
+  // Resolve the observation-driven initial camera before bbox-scoped layers
+  // query the current viewport; reference data is therefore requested for
+  // the trusted municipal working area rather than a generic fallback.
+  for (const layerId of ['commercial_places', 'buildings']) {
+    const cache = bboxLayerCache[layerId];
+    if (!activeLayers.has(layerId)) { removeSourceLayer(layerId); cache.bounds = null; cache.entities = []; continue; }
+    if (!viewportCoveredBy(cache.bounds)) {
+      const { bounds, param } = bufferedBoundsAndParam();
+      const res = await apiGet({ organizationId, geoLayer: layerId, bbox: param });
+      if (generation !== viewportRequestGeneration) return; // superseded by a newer call — discard this stale response
+      if (res.ok) {
+        cache.bounds = bounds;
+        cache.entities = res.body.entities;
+        cache.attributions = res.body.attributions;
+        paintEntities(layerId, cache.entities);
+        renderAttribution(cache.attributions);
+      }
+    }
+    loadedEntities.push(...cache.entities);
+    layerCounts.set(layerId, cache.entities.length);
+  }
+  if (observationsVisible) loadedEntities.push(...applyObservationFilters(cachedObservationEntities));
+  updateLayerCounts();
+}
+
+// Reused verbatim from platform/geo/geo-style-tokens.js — never a second,
+// drifting copy of what a status color means (Section 16).
+const STATUS_COLOR = styleTokens.DATA_STATUS;
+const STATUS_LABEL = { PENDING: 'قيد الانتظار', IN_PROGRESS: 'قيد المعالجة', PENDING_REVIEW: 'قيد المراجعة', COMPLETED: 'مكتمل' };
+const PRIORITY_LABEL = { LOW: 'منخفضة', MEDIUM: 'متوسطة', HIGH: 'عالية', CRITICAL: 'حرجة' };
+const CATEGORY_LABEL = { MAINTENANCE: 'صيانة', QUALITY: 'جودة', SAFETY: 'سلامة', ENVIRONMENT: 'بيئة', ROAD: 'طرق' };
+
+let selectedEntityId = null;
+let activePopup = null;
+const OBS_SRC = 'geo-field_observations';
+
+// removeSourceLayer()+addSource() runs on every repaint (every filter
+// change, every bbox-scoped moveend for commercial_places/buildings), but
+// a MapLibre layer-id string is stable across those repaints — binding a
+// NEW map.on('click', layerId, ...) listener each time silently
+// accumulated one stale listener per repaint (Section 18). Each layer id
+// is bound exactly once; MapLibre still resolves clicks against whichever
+// features are currently rendered under that id.
+const boundClickLayers = new Set();
+function bindClickOnce(layerId, handler) {
+  if (boundClickLayers.has(layerId)) return;
+  boundClickLayers.add(layerId);
+  map.on('click', layerId, handler);
+}
+
+// Five-tier severity scale — same colors as the panel's legend rows below
+// (منخفض/متوسط/مرتفع/حرج/لا بيانات), driven by the real
+// riskAssessment.priority field (never fabricated). Individual pins stay
+// STATUS-colored (Section 16's existing, already-proven status semantics —
+// PENDING/IN_PROGRESS/COMPLETED, unchanged from prior stages); clusters use
+// the real aggregated max-severity of their real children, a genuinely
+// different, complementary signal a premium command map is expected to
+// show (Section 04's "severity/status-aware treatment" for clusters).
+const SEVERITY_COLOR = { '-1': '#64748b', 0: '#22c55e', 1: '#f5a524', 2: '#fb7185', 3: '#ef4444' };
+const SEVERITY_RANK = { LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 3 };
+function severityRankOf(data) {
+  const raw = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : null;
+  return raw && raw in SEVERITY_RANK ? SEVERITY_RANK[raw] : -1;
+}
+
+// Real MapLibre GL clustering (supercluster) still computes every grouping
+// and every count — this source carries NO style layers at all and is used
+// purely as the clustering/query engine (MapLibre's own documented "HTML
+// marker" clustering pattern: https://maplibre.org/maplibre-gl-js/docs/examples/cluster-html/).
+// A GL `circle`+`symbol` layer pair cannot show a real numeric cluster
+// count without an external glyphs/font server (see the removed
+// paintEntities() comment for the identical constraint) — rendering each
+// cluster/point as a real DOM element instead removes that constraint while
+// preserving accessible, clearly labelled pins. This is presentation-only:
+// no clustering math is reimplemented here; it remains MapLibre/supercluster.
+const observationMarkers = new Map();
+function clearObservationMarkers() {
+  observationMarkers.forEach((m) => m.remove());
+  observationMarkers.clear();
+}
+
+function buildObservationPinElement(feature) {
+  const status = feature.properties.status || 'PENDING';
+  const color = STATUS_COLOR[status] || STATUS_COLOR.NEUTRAL;
+  const category = feature.properties.category || 'UNKNOWN';
+  const priority = feature.properties.priority || '';
+  const iconPaths = {
+    ROAD: '<path d="M9 22 14 8h4l5 14M14 17h5M15 12h3"/>',
+    SAFETY: '<path d="M16 7 9 10v5c0 4 3 7 7 9 4-2 7-5 7-9v-5z"/><path d="m13 15 2 2 4-5"/>',
+    ENVIRONMENT: '<path d="M22 8c-7 0-12 3-12 9 0 3 2 5 5 5 6 0 7-7 7-14z"/><path d="M9 24c2-5 5-8 10-11"/>',
+    MAINTENANCE: '<path d="m10 21 9-9M18 8l4 4M8 23l3-1-2-2z"/><circle cx="19" cy="11" r="4"/>',
+    QUALITY: '<path d="M16 7 19 13l6 1-4 5 1 6-6-3-6 3 1-6-4-5 6-1z"/>',
+  };
+  const el = document.createElement('div');
+  el.className = 'geo-marker';
+  el.style.setProperty('--marker-status', color);
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('aria-label', `بلاغ ميداني — ${STATUS_LABEL[status] || status}`);
+  el.innerHTML = `<svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[category] || '<circle cx="16" cy="16" r="7"/><path d="M16 12v5M16 21h.01"/>'}</svg>${priority === 'CRITICAL' || priority === 'HIGH' ? `<span class="priority-badge">${priority === 'CRITICAL' ? '!' : 'H'}</span>` : ''}`;
+  const activate = (evt) => { evt.stopPropagation(); selectObservation(feature.properties.id, feature.geometry.coordinates); };
+  el.addEventListener('click', activate);
+  el.addEventListener('keydown', (evt) => { if (evt.key === 'Enter' || evt.key === ' ') activate(evt); });
+  return el;
+}
+
+function buildObservationClusterElement(feature) {
+  const count = feature.properties.point_count_abbreviated || feature.properties.point_count;
+  const severity = typeof feature.properties.severityMax === 'number' ? feature.properties.severityMax : -1;
+  const color = SEVERITY_COLOR[String(severity)] || SEVERITY_COLOR['-1'];
+  const size = Math.min(52, 34 + Math.min(feature.properties.point_count, 50) / 3);
+  const el = document.createElement('div');
+  el.className = 'geo-cluster';
+  el.style.width = `${size}px`; el.style.height = `${size}px`;
+  el.style.background = color;
+  el.style.setProperty('--cluster-ring', `${color}30`);
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('aria-label', `تجميع ${count} بلاغ — عرض/تكبير`);
+  el.textContent = String(count);
+  const clusterId = feature.properties.cluster_id;
+  // MapLibre's queried feature object is only valid synchronously — capture
+  // the coordinates into a local now, never re-read `feature` inside the
+  // .then() below (the earlier GL-layer-click version of this code hit
+  // exactly that staleness bug; a DOM click handler's own closure is safe
+  // here, but the same discipline is kept for clarity and consistency).
+  const center = feature.geometry.coordinates;
+  const expand = (evt) => {
+    evt.stopPropagation();
+    // MapLibre GL 4.x's GeoJSONSource#getClusterExpansionZoom returns a
+    // Promise (the old Mapbox-GL-style (clusterId, callback) signature was
+    // removed) — a callback argument here would be silently ignored.
+    map.getSource(OBS_SRC).getClusterExpansionZoom(clusterId)
+      .then((zoom) => map.easeTo({ center, zoom, duration: cameraDuration(500) }))
+      .catch(() => {});
+  };
+  el.addEventListener('click', expand);
+  el.addEventListener('keydown', (evt) => { if (evt.key === 'Enter' || evt.key === ' ') expand(evt); });
+  return el;
+}
+
+// Called on every camera stop and every real data/filter change — never on
+// every animation frame (Section 18): once created, a maplibregl.Marker
+// repositions itself on the map's own render loop, so existing markers only
+// need a coordinate refresh here, not a full DOM rebuild.
+function syncObservationMarkers() {
+  if (!map.getSource(OBS_SRC)) { clearObservationMarkers(); return; }
+  const features = map.querySourceFeatures(OBS_SRC);
+  const seen = new Set();
+  for (const feature of features) {
+    const isCluster = !!feature.properties.cluster;
+    const key = isCluster ? `c:${feature.properties.cluster_id}` : `p:${feature.properties.id}`;
+    if (seen.has(key)) continue; // supercluster can repeat a feature across internal tile boundaries
+    seen.add(key);
+    let marker = observationMarkers.get(key);
+    if (!marker) {
+      const el = isCluster ? buildObservationClusterElement(feature) : buildObservationPinElement(feature);
+      if (!isCluster && feature.properties.id === selectedEntityId) el.classList.add('selected');
+      marker = new maplibregl.Marker({ element: el, anchor: isCluster ? 'center' : 'bottom' })
+        .setLngLat(feature.geometry.coordinates)
+        .addTo(map);
+      observationMarkers.set(key, marker);
+    } else {
+      marker.setLngLat(feature.geometry.coordinates);
+    }
+  }
+  for (const [key, marker] of observationMarkers) {
+    if (!seen.has(key)) { marker.remove(); observationMarkers.delete(key); }
+  }
+}
+
+const OBS_DRIVER_LAYER = `${OBS_SRC}-driver`;
+const OBS_HEAT_LAYER = `${OBS_SRC}-heat`;
+const OBS_HEAT_SRC = `${OBS_SRC}-heat-source`;
+function removeObservationSource() {
+  clearObservationMarkers();
+  if (map.getLayer(OBS_HEAT_LAYER)) map.removeLayer(OBS_HEAT_LAYER);
+  if (map.getLayer(OBS_DRIVER_LAYER)) map.removeLayer(OBS_DRIVER_LAYER);
+  if (map.getSource(OBS_SRC)) map.removeSource(OBS_SRC);
+  if (map.getSource(OBS_HEAT_SRC)) map.removeSource(OBS_HEAT_SRC);
+}
+function paintObservations(entities) {
+  removeObservationSource();
+  const geojson = {
+    type: 'FeatureCollection',
+    features: entities.map((e) => {
+      const data = rawObservationById.get(e.id) || {};
+      const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : '';
+      return { type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, status: e.status || 'PENDING', severityRank: severityRankOf(data), category: data.type || 'UNKNOWN', priority } };
+    }),
+  };
+  map.addSource(OBS_SRC, {
+    type: 'geojson', data: geojson, cluster: entities.length > 0, clusterRadius: 50, clusterMaxZoom: 14,
+    // Real aggregation over real children — never a fabricated/guessed
+    // cluster severity (Section 04).
+    clusterProperties: { severityMax: ['max', ['get', 'severityRank']] },
+  });
+  map.addSource(OBS_HEAT_SRC, { type: 'geojson', data: geojson });
+  map.addLayer({ id: OBS_HEAT_LAYER, type: 'heatmap', source: OBS_HEAT_SRC, maxzoom: 16,
+    layout: { visibility: heatmapEnabled ? 'visible' : 'none' },
+    paint: {
+      'heatmap-weight': ['interpolate', ['linear'], ['get', 'severityRank'], -1, .25, 0, .4, 1, .65, 2, .85, 3, 1],
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 8, .55, 15, 1.2],
+      'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', .22, 'rgba(35,204,126,.3)', .48, 'rgba(255,193,72,.55)', .72, 'rgba(255,111,48,.72)', 1, 'rgba(239,68,68,.88)'],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 8, 18, 15, 40],
+      'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 8, .72, 16, .18],
+    },
+  });
+  // A source with zero consuming style layers is never tiled/clustered by
+  // MapLibre at all (querySourceFeatures/getClusterExpansionZoom silently
+  // return nothing — confirmed empirically) — this fully invisible circle
+  // layer exists ONLY to keep the real supercluster engine engaged; every
+  // pixel actually seen is the DOM marker/cluster badge built below.
+  map.addLayer({ id: OBS_DRIVER_LAYER, type: 'circle', source: OBS_SRC, paint: { 'circle-opacity': 0, 'circle-radius': 0 } });
+  syncObservationMarkers();
+}
+
+// Incremental DOM class toggle (Section 18 — never rebuilds the
+// source/markers just to move which pin looks selected).
+function markObservationSelected(entityId) {
+  const previous = selectedEntityId;
+  selectedEntityId = entityId;
+  if (previous) observationMarkers.get(`p:${previous}`)?.getElement().classList.remove('selected');
+  if (entityId) observationMarkers.get(`p:${entityId}`)?.getElement().classList.add('selected');
+}
+
+function selectObservation(entityId, lngLat) {
+  markObservationSelected(entityId);
+  openObservationPopup(entityId, lngLat);
+}
+
+function removeSourceLayer(layerId) {
+  const srcId = `geo-${layerId}`;
+  if (map.getLayer(`${srcId}-fill`)) map.removeLayer(`${srcId}-fill`);
+  if (map.getLayer(`${srcId}-circles`)) map.removeLayer(`${srcId}-circles`);
+  if (map.getLayer(`${srcId}-clusters`)) map.removeLayer(`${srcId}-clusters`);
+  if (map.getLayer(`${srcId}-count`)) map.removeLayer(`${srcId}-count`);
+  if (map.getSource(srcId)) map.removeSource(srcId);
+}
+
+// STABILIZATION — tracks whether the currently-painted source for a given
+// layer id is in its "point/clustered" shape or its "polygon/fill" shape,
+// so paintEntities() below can tell whether the existing source can just be
+// updated with setData() (same shape, only the data changed — the common
+// case on every pan/zoom) or genuinely needs a rebuild (shape changed, or
+// painted for the first time). Removing and re-adding a GL source/layer
+// pair on every single repaint was the confirmed root cause of the
+// buildings/commercial_places layer visibly flashing on every pan.
+const paintedLayerShape = new Map();
+function paintEntities(layerId, entities) {
+  const srcId = `geo-${layerId}`;
+  const geojson = { type: 'FeatureCollection', features: entities.map((e) => ({ type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, category: e.category, name: (e.metadata && e.metadata.name) || '' } })) };
+  // PHASE 10 UAT FIX — an empty layer (a real, normal state: a newly
+  // onboarded municipality with no reference geo data loaded yet for this
+  // layer/bbox) left isPoint as `undefined` (entities[0] && ... short-
+  // circuits to undefined, not false, when entities is empty), and MapLibre
+  // rejects `cluster: undefined` outright ("boolean expected, undefined
+  // found"), crashing this function before the layer's own (empty, correct)
+  // source/layer pair ever got added. Coerced to a real boolean so an empty
+  // layer renders as an empty layer instead of throwing.
+  const isPoint = entities.length > 0 && entities[0].geometry.type === 'Point';
+  const existingSource = map.getSource(srcId);
+  if (existingSource && paintedLayerShape.get(srcId) === isPoint) {
+    // Same shape already painted — update the real data in place. Click
+    // handlers stay bound (bindClickOnce below never re-registers them
+    // anyway), no layer is ever absent from the map even momentarily.
+    existingSource.setData(geojson);
+    return;
+  }
+  removeSourceLayer(layerId);
+  paintedLayerShape.set(srcId, isPoint);
+  map.addSource(srcId, { type: 'geojson', data: geojson, cluster: isPoint, clusterRadius: 40, clusterMaxZoom: 15 });
+  const color = styleTokens.LAYER_STYLE[layerRegistry.getLayer(layerId).styleToken] || '#0EA5E9';
+  if (isPoint) {
+    // No cluster-count text label: a `symbol` layer's `text-field` requires
+    // the map style to declare a `glyphs` (font) server, which would add an
+    // external font-hosting dependency this phase does not need — cluster
+    // size is still communicated visually via the circle-radius step below.
+    map.addLayer({ id: `${srcId}-clusters`, type: 'circle', source: srcId, filter: ['has', 'point_count'],
+      paint: { 'circle-color': color, 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 18, 50, 24] } });
+    map.addLayer({ id: `${srcId}-circles`, type: 'circle', source: srcId, filter: ['!', ['has', 'point_count']],
+      paint: { 'circle-color': color, 'circle-radius': 7, 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' } });
+    bindClickOnce(`${srcId}-circles`, (e) => openEntityCard(e.features[0].properties.id));
+    bindClickOnce(`${srcId}-clusters`, (e) => {
+      const clusterId = e.features[0].properties.cluster_id;
+      // MapLibre's MapMouseEvent#features is only valid synchronously
+      // during dispatch — read into a local before the async gap below
+      // (see the identical note on the field_observations cluster handler
+      // above); re-reading e.features inside .then() silently throws.
+      const center = e.features[0].geometry.coordinates;
+      // MapLibre GL 4.x's GeoJSONSource#getClusterExpansionZoom returns a
+      // Promise (the old Mapbox-GL-style (clusterId, callback) signature
+      // was removed) — this was a genuine, silent no-op defect (a callback
+      // argument here is simply ignored) predating this stage; fixed here
+      // as the same real cluster-expand behavior Section 10 requires.
+      map.getSource(srcId).getClusterExpansionZoom(clusterId)
+        .then((zoom) => map.easeTo({ center, zoom, duration: cameraDuration(500) }))
+        .catch(() => {});
+    });
+  } else {
+    map.addLayer({ id: `${srcId}-fill`, type: 'fill', source: srcId, paint: { 'fill-color': color, 'fill-opacity': 0.35, 'fill-outline-color': color } });
+    bindClickOnce(`${srcId}-fill`, (e) => openEntityCard(e.features[0].properties.id));
+  }
+}
+
+function renderAttribution(attributions) {
+  const el = document.getElementById('attributionNote');
+  if (!attributions || !attributions.length) { el.textContent = ''; return; }
+  el.textContent = attributions.map((a) => `${a.labelAr} · ${a.license}`).join(' — ');
+}
+
+function fieldRow(label, value) {
+  return `<div class="field"><span class="label">${label}</span><span>${value}</span></div>`;
+}
+const NOT_LINKED = 'غير مربوط ببيانات البلدية';
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+// Firestore Timestamp | {seconds} | millis-number — never a second date
+// library, just the one real shape this codebase's own documents use.
+function formatTimestamp(value) {
+  const millis = value && typeof value.toMillis === 'function' ? value.toMillis()
+    : (value && typeof value.seconds === 'number' ? value.seconds * 1000
+    : (typeof value === 'number' ? value : null));
+  if (!millis) return 'غير متاح';
+  return new Date(millis).toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function openTwinContinuityUrl(entityId, coordinates) {
+  return continuity.buildContinuityUrl('/twin.html' + location.search, {
+    organizationId: mapContext.organizationId, entityId, camera: { center: coordinates, zoom: 17 },
+  });
+}
+
+// Real, on-demand evidence resolution — reuses storage-adapter.js's
+// resolveObservationImage unchanged, the exact same authenticated
+// private-object-key path manager.html's own evidence viewer already uses.
+// Never eager, never a fabricated placeholder image.
+function resolveEntityEvidenceThumb(reference) {
+  const el = document.getElementById('entityEvidenceThumb');
+  if (!el) return;
+  if (!reference) { el.textContent = 'لا تتوفر صورة موثّقة'; return; }
+  resolveObservationImage({ reference, context: { organizationId: mapContext.organizationId, uid: currentUser.uid, role: caller.role, authUser: currentUser } })
+    .then((result) => {
+      const target = document.getElementById('entityEvidenceThumb');
+      if (!target) return;
+      if (result.available && result.url) { target.style.backgroundImage = `url("${result.url}")`; target.textContent = ''; }
+      else target.textContent = 'لا تتوفر صورة موثّقة';
+    })
+    .catch(() => { const target = document.getElementById('entityEvidenceThumb'); if (target) target.textContent = 'لا تتوفر صورة موثّقة'; });
+}
+
+// AI analysis is shown ONLY when a real stored analysis exists on the
+// observation document — never a fabricated summary.
+function renderAiBlock(data) {
+  const el = document.getElementById('entityAiBlock');
+  if (!el) return;
+  const ai = data.aiAnalysis;
+  if (ai && typeof ai === 'object' && (ai.explanation || ai.recommendedActionAr)) {
+    el.innerHTML = `<div class="ai-block">${ai.explanation ? escapeHtml(ai.explanation) : ''}${ai.recommendedActionAr ? `<br><b>${escapeHtml(ai.recommendedActionAr)}</b>` : ''}</div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function fieldObservationCardHtml(entity, data) {
+  const status = data.status || entity.status || 'PENDING';
+  // The real production field is riskAssessment.priority (AI-derived) —
+  // manager-dashboard-adapter.js's normalizeObservations() reads the exact
+  // same shape (never a top-level data.priority/severity, which raw
+  // observation documents never carry).
+  const priorityRaw = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority : null;
+  const priority = priorityRaw ? (PRIORITY_LABEL[String(priorityRaw).toUpperCase()] || null) : null;
+  const category = CATEGORY_LABEL[data.type] || data.type || 'غير مصنف';
+  const [lng, lat] = entity.geometry.coordinates;
+  return `
+    <h2>${escapeHtml(data.title || 'بلاغ بلا عنوان')}</h2>
+    <div class="meta">${escapeHtml(data.displayId || entity.municipalRecordId || '')}</div>
+    ${fieldRow('الحالة', escapeHtml(STATUS_LABEL[status] || status))}
+    ${fieldRow('التصنيف', escapeHtml(category))}
+    ${priority ? fieldRow('الأولوية', escapeHtml(priority)) : ''}
+    ${data.description ? fieldRow('الوصف', escapeHtml(data.description)) : ''}
+    ${fieldRow('المراقب', escapeHtml(data.inspector || 'غير متاح'))}
+    ${data.contractor ? fieldRow('المقاول', escapeHtml(data.contractor)) : ''}
+    ${fieldRow('تاريخ الإنشاء', formatTimestamp(data.createdAt))}
+    ${fieldRow('آخر تحديث', formatTimestamp(data.updatedAt))}
+    ${fieldRow('الإحداثيات', `${lat.toFixed(5)}, ${lng.toFixed(5)}`)}
+    <div class="evidence-thumb" id="entityEvidenceThumb">جارٍ التحقق من الصورة...</div>
+    <div id="entityAiBlock"></div>
+    <div style="margin-top:1rem"><button class="geo-btn" id="entityViewOnMapBtn">عرض على الخريطة</button></div>
+  `;
+}
+
+function openEntityCard(entityId) {
+  const entity = loadedEntities.find((e) => e.id === entityId);
+  if (!entity) return;
+  const card = document.getElementById('entityCard');
+  const body = document.getElementById('entityCardBody');
+  const openTwinBtn = document.getElementById('openTwinBtn');
+
+  if (entity.entityType === 'field_observation') {
+    const data = rawObservationById.get(entityId);
+    if (!data) return;
+    body.innerHTML = fieldObservationCardHtml(entity, data);
+    card.classList.add('open');
+    card.setAttribute('aria-hidden', 'false');
+    resolveEntityEvidenceThumb(data.imagePath);
+    renderAiBlock(data);
+    document.getElementById('entityViewOnMapBtn').onclick = () => {
+      map.flyTo({ center: entity.geometry.coordinates, zoom: 17, duration: cameraDuration(650) });
+      markObservationSelected(entityId);
+    };
+    if (!openTwinBtn.hidden) {
+      openTwinBtn.onclick = () => {
+        const { url } = openTwinContinuityUrl(entity.id, entity.geometry.coordinates);
+        if (url) location.href = url;
+      };
+    }
+    return;
+  }
+
+  const name = (entity.metadata && entity.metadata.name) || entity.category || 'عنصر جغرافي';
+  const attribution = attributionModule.getAttribution(entity.source);
+  body.innerHTML = `
+    <h2>${escapeHtml(name)}</h2>
+    <div class="meta">${escapeHtml(entity.category || '')}</div>
+    ${fieldRow('المصدر الجغرافي', attribution ? escapeHtml(attribution.labelAr) : NOT_LINKED)}
+    ${fieldRow('القسم/الجهة المرتبطة', entity.productId ? escapeHtml(entity.productId) : NOT_LINKED)}
+    ${fieldRow('الرخصة البلدية', NOT_LINKED)}
+    ${fieldRow('آخر تحديث موثوق', entity.sourceUpdatedAt ? escapeHtml(entity.sourceUpdatedAt.slice(0, 10)) : NOT_LINKED)}
+    <div style="margin-top:1rem"><button class="geo-btn primary" id="entityDetailsBtn">عرض التفاصيل</button></div>
+  `;
+  card.classList.add('open');
+  card.setAttribute('aria-hidden', 'false');
+  document.getElementById('entityDetailsBtn').onclick = () => {
+    // Navigation-only — never an inline map-triggered write (see
+    // platform/geo/geo-write-guard.js). There is no existing product
+    // detail screen for a raw open-reference place/building yet, so this
+    // is a no-op placeholder for entities with no municipalRecordId.
+    if (!entity.municipalRecordId) return;
+  };
+  if (!openTwinBtn.hidden) {
+    openTwinBtn.onclick = () => {
+      const { url } = continuity.buildContinuityUrl('/twin.html' + location.search, {
+        organizationId: mapContext.organizationId, entityId: entity.id, camera: { center: entity.centroid, zoom: 17 },
+      });
+      if (url) location.href = url;
+    };
+  }
+}
+document.getElementById('entityCardClose').addEventListener('click', () => {
+  document.getElementById('entityCard').classList.remove('open');
+  document.getElementById('entityCard').setAttribute('aria-hidden', 'true');
+});
+
+// Small, premium quick popup for a field-observation marker — the FIRST
+// thing a click shows, never the full detail panel (Section 11). "عرض
+// التفاصيل" is what opens the real entity-card detail panel above.
+function openObservationPopup(entityId, lngLat) {
+  const entity = loadedEntities.find((e) => e.id === entityId);
+  const data = rawObservationById.get(entityId);
+  if (!entity || !data) return;
+  if (activePopup) activePopup.remove();
+
+  const status = data.status || entity.status || 'PENDING';
+  const category = CATEGORY_LABEL[data.type] || data.type || 'غير مصنف';
+  const color = STATUS_COLOR[status] || STATUS_COLOR.NEUTRAL;
+
+  const root = document.createElement('div');
+  root.className = 'geo-popup';
+  root.innerHTML = `
+    <div class="popup-body">
+      <div class="popup-thumb" id="popupThumb"></div>
+      <div class="popup-main">
+        <h3>${escapeHtml(data.title || 'بلاغ بلا عنوان')}</h3>
+        <div class="popup-sub">${escapeHtml(category)}${data.displayId ? ' · ' + escapeHtml(data.displayId) : ''}</div>
+        <span class="status-badge" style="background:${color}22;color:${color}"><span class="dot" style="background:${color}"></span>${escapeHtml(STATUS_LABEL[status] || status)}</span>
+      </div>
+    </div>
+    <div class="rows">
+      <div class="row"><span>التوقيت</span><b>${formatTimestamp(data.createdAt)}</b></div>
+    </div>
+    <div class="actions"></div>
+  `;
+  // A real evidence thumbnail only if one is actually stored and
+  // accessible (never a fabricated/generic image) — same authenticated
+  // resolveObservationImage() path the detail panel already uses.
+  const thumbEl = root.querySelector('#popupThumb');
+  if (data.imagePath) {
+    resolveObservationImage({ reference: data.imagePath, context: { organizationId: mapContext.organizationId, uid: currentUser.uid, role: caller.role, authUser: currentUser } })
+      .then((result) => { if (result.available && result.url && thumbEl.isConnected) thumbEl.style.backgroundImage = `url("${result.url}")`; })
+      .catch(() => {});
+  } else {
+    thumbEl.remove();
+  }
+  const actions = root.querySelector('.actions');
+  const detailsBtn = document.createElement('button');
+  detailsBtn.className = 'btn-details';
+  detailsBtn.textContent = 'عرض التفاصيل';
+  detailsBtn.onclick = () => { if (activePopup) activePopup.remove(); openEntityCard(entityId); };
+  actions.appendChild(detailsBtn);
+  if (!document.getElementById('openTwinBtn').hidden) {
+    const twinBtn = document.createElement('button');
+    twinBtn.className = 'btn-twin';
+    twinBtn.setAttribute('aria-label', 'فتح في التوأم الرقمي');
+    twinBtn.title = 'فتح في التوأم الرقمي';
+    twinBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>';
+    twinBtn.onclick = () => {
+      const { url } = openTwinContinuityUrl(entityId, entity.geometry.coordinates);
+      if (url) location.href = url;
+    };
+    actions.appendChild(twinBtn);
+  }
+
+  activePopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, maxWidth: '280px' })
+    .setLngLat(lngLat)
+    .setDOMContent(root)
+    .addTo(map);
+  activePopup.on('close', () => {
+    if (selectedEntityId === entityId) markObservationSelected(null);
+    activePopup = null;
+  });
+}
+
+// Real reference-ID/title/inspector match against the raw observation
+// documents this page already holds (rawObservationById) — the shared
+// geo-search-contract.js provider stays generic (name/category/id only,
+// shared with twin.html); this is page-local presentation search, exactly
+// like manager.html's own local observation search, never a second
+// continuity/entity contract.
+function localObservationMatches(query) {
+  const needle = query.trim().toLocaleLowerCase('ar');
+  if (!needle) return [];
+  const matches = [];
+  for (const [entityId, data] of rawObservationById) {
+    const haystack = [data.displayId, data.title, data.inspector, data.type].filter(Boolean).join(' ').toLocaleLowerCase('ar');
+    if (haystack.includes(needle)) {
+      matches.push({ entityId, label: data.title || data.displayId || 'بلاغ ميداني', kind: 'بلاغ ميداني' });
+    }
+  }
+  return matches;
+}
+
+function focusSearchEntity(entityId) {
+  const entity = loadedEntities.find((item) => item.id === entityId);
+  const coordinates = entity && entity.geometry && entity.geometry.type === 'Point' ? entity.geometry.coordinates : entity && entity.centroid;
+  if (coordinates) map.easeTo({ center: coordinates, zoom: Math.max(map.getZoom(), 15), duration: cameraDuration(500) });
+  if (rawObservationById.has(entityId)) markObservationSelected(entityId);
+  openEntityCard(entityId);
+}
+
+function closeSearchResults() {
+  const box = document.getElementById('searchResults');
+  box.classList.remove('open');
+  document.getElementById('searchInput').setAttribute('aria-expanded', 'false');
+}
+
+function renderSearchResults(query) {
+  const box = document.getElementById('searchResults');
+  const needle = query.trim();
+  if (needle.length < 2) { closeSearchResults(); box.innerHTML = ''; return; }
+  const provider = searchModule.createLocalEntitySearchProvider();
+  const { results } = provider.search(needle, { entities: loadedEntities, organization: mapContext });
+  const combined = localObservationMatches(needle).concat(
+    results.filter((result) => result.target && result.target.entityId)
+      .map((result) => ({ entityId: result.target.entityId, label: result.label, kind: 'عنصر مكاني' }))
+  );
+  const unique = Array.from(new Map(combined.map((result) => [result.entityId, result])).values()).slice(0, 8);
+  box.innerHTML = '';
+  if (!unique.length) {
+    box.innerHTML = '<div class="search-empty">لا توجد نتائج ضمن البيانات المعروضة حاليًا</div>';
+  } else {
+    for (const result of unique) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'search-result';
+      button.setAttribute('role', 'option');
+      button.innerHTML = `<strong>${escapeHtml(result.label)}</strong><br><span style="color:var(--text-muted);font-size:10.5px">${escapeHtml(result.kind)}</span>`;
+      button.addEventListener('click', () => { closeSearchResults(); focusSearchEntity(result.entityId); });
+      box.appendChild(button);
+    }
+  }
+  box.classList.add('open');
+  document.getElementById('searchInput').setAttribute('aria-expanded', 'true');
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => renderSearchResults(e.target.value));
+document.getElementById('searchInput').addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSearchResults(); });
+document.addEventListener('click', (e) => { if (!e.target.closest('.search-shell')) closeSearchResults(); });
+
+document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+document.getElementById('rightPanelToggle').addEventListener('click', () => {
+  const panel = document.getElementById('rightPanel');
+  const narrow = matchMedia('(max-width: 900px)').matches;
+  const expanded = narrow ? panel.classList.toggle('expanded') : !panel.classList.toggle('collapsed');
+  if (expanded && matchMedia('(max-width: 1180px)').matches) {
+    document.getElementById('intelligencePanel').classList.remove('expanded');
+    document.getElementById('intelligenceToggle').setAttribute('aria-expanded', 'false');
+  }
+  document.getElementById('rightPanelToggle').setAttribute('aria-expanded', String(expanded));
+});
+
+document.getElementById('panelCloseBtn').addEventListener('click', () => {
+  const panel = document.getElementById('rightPanel');
+  if (matchMedia('(max-width: 900px)').matches) panel.classList.remove('expanded');
+  else panel.classList.add('collapsed');
+  document.getElementById('rightPanelToggle').setAttribute('aria-expanded', 'false');
+});
+
+function syncLayerPanelForViewport() {
+  const panel = document.getElementById('rightPanel');
+  const toggle = document.getElementById('rightPanelToggle');
+  const narrow = matchMedia('(max-width: 900px)').matches;
+  if (narrow) {
+    panel.classList.remove('collapsed');
+    toggle.setAttribute('aria-expanded', String(panel.classList.contains('expanded')));
+  } else {
+    panel.classList.remove('expanded');
+    toggle.setAttribute('aria-expanded', String(!panel.classList.contains('collapsed')));
+  }
+}
+addEventListener('resize', syncLayerPanelForViewport);
+syncLayerPanelForViewport();
+
+function selectPanelTab(name) {
+  const layers = name === 'layers';
+  document.getElementById('layersTab').hidden = !layers;
+  document.getElementById('filtersTab').hidden = layers;
+  document.getElementById('layersTabBtn').classList.toggle('active', layers);
+  document.getElementById('filtersTabBtn').classList.toggle('active', !layers);
+  document.getElementById('layersTabBtn').setAttribute('aria-selected', String(layers));
+  document.getElementById('filtersTabBtn').setAttribute('aria-selected', String(!layers));
+}
+document.getElementById('layersTabBtn').addEventListener('click', () => selectPanelTab('layers'));
+document.getElementById('filtersTabBtn').addEventListener('click', () => selectPanelTab('filters'));
+document.getElementById('intelligenceToggle').addEventListener('click', () => {
+  const panel = document.getElementById('intelligencePanel');
+  const expanded = panel.classList.toggle('expanded');
+  if (expanded && matchMedia('(max-width: 1180px)').matches) {
+    const rightPanel = document.getElementById('rightPanel');
+    if (matchMedia('(max-width: 900px)').matches) rightPanel.classList.remove('expanded');
+    else rightPanel.classList.add('collapsed');
+    document.getElementById('rightPanelToggle').setAttribute('aria-expanded', 'false');
+  }
+  document.getElementById('intelligenceToggle').setAttribute('aria-expanded', String(expanded));
+});
+document.getElementById('heatmapToggle').addEventListener('change', (event) => {
+  heatmapEnabled = event.target.checked;
+  if (map && map.getLayer(OBS_HEAT_LAYER)) map.setLayoutProperty(OBS_HEAT_LAYER, 'visibility', heatmapEnabled ? 'visible' : 'none');
+});
+document.getElementById('perspectiveToggleBtn').addEventListener('click', (event) => {
+  if (!map) return;
+  const tilted = map.getPitch() > 10;
+  map.easeTo({ pitch: tilted ? 0 : 45, bearing: tilted ? 0 : -12, duration: cameraDuration(650) });
+  event.currentTarget.textContent = tilted ? 'منظور 2.5D' : 'إلغاء المنظور';
+});
+document.getElementById('timelineRange').addEventListener('input', (event) => setTimelineFromSlider(event.target.value));
+document.getElementById('timelineResetBtn').addEventListener('click', () => {
+  timelineCutoffMs = null;
+  document.getElementById('timelineRange').value = '1000';
+  document.getElementById('timelineDate').textContent = 'كل الفترات';
+  document.getElementById('timelineState').textContent = timelineMaxMs ? 'يعرض كامل اللقطة' : 'لا توجد تواريخ قابلة للاستعراض';
+  if (timelineTimer) clearInterval(timelineTimer), timelineTimer = null;
+  document.getElementById('timelinePlayBtn').textContent = '▶';
+  reapplyObservationFilters();
+});
+document.getElementById('timelinePlayBtn').addEventListener('click', () => {
+  const button = document.getElementById('timelinePlayBtn');
+  const range = document.getElementById('timelineRange');
+  if (range.disabled) return;
+  if (timelineTimer) { clearInterval(timelineTimer); timelineTimer = null; button.textContent = '▶'; return; }
+  if (Number(range.value) >= 1000) range.value = '0';
+  button.textContent = 'Ⅱ';
+  setTimelineFromSlider(range.value);
+  timelineTimer = setInterval(() => {
+    const next = Math.min(1000, Number(range.value) + 20);
+    range.value = String(next); setTimelineFromSlider(next);
+    if (next >= 1000) { clearInterval(timelineTimer); timelineTimer = null; button.textContent = '▶'; }
+  }, 220);
+});
+
+const SKETCH_SRC = 'geo-temporary-sketch';
+let sketchMode = false;
+let sketchPoints = [];
+function sketchGeoJson() {
+  const features = [];
+  if (sketchPoints.length) features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: sketchPoints }, properties: {} });
+  if (sketchPoints.length >= 3) features.push({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[...sketchPoints, sketchPoints[0]]] }, properties: {} });
+  return { type: 'FeatureCollection', features };
+}
+function updateSketch() {
+  const source = map && map.getSource(SKETCH_SRC);
+  if (source) source.setData(sketchGeoJson());
+  document.getElementById('clearSketchBtn').hidden = sketchPoints.length === 0;
+}
+function setSketchMode(enabled) {
+  sketchMode = enabled;
+  document.getElementById('sketchBtn').textContent = enabled ? 'إنهاء الرسم' : 'رسم نطاق';
+  document.getElementById('sketchStatus').classList.toggle('active', enabled);
+  document.getElementById('sketchStatus').textContent = enabled ? 'انقر على الخريطة لإضافة رؤوس النطاق المؤقت، ثم أنهِ الرسم.' : 'النطاق المرسوم مؤقت ومحلي وغير محفوظ.';
+  if (map) map.getCanvas().style.cursor = enabled ? 'crosshair' : '';
+}
+document.getElementById('sketchBtn').addEventListener('click', () => setSketchMode(!sketchMode));
+document.getElementById('clearSketchBtn').addEventListener('click', () => { sketchPoints = []; updateSketch(); setSketchMode(false); });
+
+// Real "fit to data" / reset-extent toolbar control (Section 06) — MapLibre
+// has no built-in one, so this is a small, standard custom control, never a
+// decorative button.
+class FitDataControl {
+  onAdd(mapInstance) {
+    this._map = mapInstance;
+    this._container = document.createElement('div');
+    this._container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'احتواء كل البيانات المعروضة');
+    btn.title = 'احتواء كل البيانات المعروضة';
+    btn.textContent = '⤢';
+    btn.addEventListener('click', () => fitToLoadedData());
+    this._container.appendChild(btn);
+    return this._container;
+  }
+  onRemove() { this._container.parentNode && this._container.parentNode.removeChild(this._container); this._map = undefined; }
+}
+
+function fitToLoadedData() {
+  const coords = loadedEntities.map((e) => (e.geometry && e.geometry.type === 'Point' ? e.geometry.coordinates : (e.centroid || null))).filter(Boolean);
+  if (coords.length) {
+    const lons = coords.map((c) => c[0]), lats = coords.map((c) => c[1]);
+    map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], { padding: 60, maxZoom: 16, duration: cameraDuration(600) });
+  } else if (normalizeRealMapBounds(mapContext.mapBounds)) {
+    map.fitBounds(normalizeRealMapBounds(mapContext.mapBounds), { padding: 60, maxZoom: 16, duration: cameraDuration(600) });
+  } else if (normalizeConfiguredMapCenter(mapContext)) {
+    map.flyTo({ ...normalizeConfiguredMapCenter(mapContext), duration: cameraDuration(600) });
+  } else {
+    map.flyTo({ ...NEUTRAL_SAFE_CAMERA, duration: cameraDuration(600) });
+  }
+}
+
+// Two honest 2D basemaps: a labeled street map for daily municipal work and
+// satellite imagery for visual verification. Day/Night remains an independent
+// presentation choice; switching basemap never recreates the MapLibre map or
+// any operational source/layer.
+const STREET_BASEMAP_LAYER_ID = 'street-basemap';
+const SATELLITE_BASEMAP_LAYER_ID = 'satellite-basemap';
+function realBasemapStyle() {
+  return {
+    version: 8,
+    sources: {
+      street: {
+        type: 'raster',
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        attribution: '© OpenStreetMap contributors',
+      },
+      satellite: {
+        type: 'raster',
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+      },
+    },
+    layers: [
+      { id: STREET_BASEMAP_LAYER_ID, type: 'raster', source: 'street', layout: { visibility: activeBasemap === 'street' ? 'visible' : 'none' } },
+      { id: SATELLITE_BASEMAP_LAYER_ID, type: 'raster', source: 'satellite', layout: { visibility: activeBasemap === 'satellite' ? 'visible' : 'none' } },
+    ],
+  };
+}
+
+// PHASE 08.3-style local acceptance-only fallback (see the useLocalBasemap
+// comment above): this sandbox's egress proxy blocks every tile host, not
+// just OpenStreetMap's (confirmed against Esri/CARTO too), by organization
+// policy — not something a different provider choice can work around. This
+// generates a small, honestly-labeled procedural texture (never claimed to
+// be real imagery) purely so UI/interaction acceptance can proceed here;
+// Production/Preview never take this path.
+const SANDBOX_BASEMAP_LAYER_ID = 'sandbox-basemap';
+function sandboxTerrainDataUrl() {
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#3d4a3f';
+  ctx.fillRect(0, 0, size, size);
+  let seed = 42;
+  const rand = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  for (let i = 0; i < 46; i++) {
+    const w = 8 + rand() * 28, h = 8 + rand() * 28, x = rand() * size, y = rand() * size;
+    const shade = 44 + Math.floor(rand() * 34);
+    ctx.fillStyle = `rgb(${shade + 22},${shade + 30},${shade + 20})`;
+    ctx.fillRect(x, y, w, h);
+  }
+  return canvas.toDataURL('image/png');
+}
+function sandboxBasemapStyle() {
+  return {
+    version: 8,
+    sources: { sandbox: { type: 'raster', tiles: [sandboxTerrainDataUrl()], tileSize: 256 } },
+    layers: [{ id: SANDBOX_BASEMAP_LAYER_ID, type: 'raster', source: 'sandbox' }],
+  };
+}
+
+function syncBasemapControl() {
+  document.querySelectorAll('[data-basemap]').forEach((button) => {
+    const selected = button.dataset.basemap === activeBasemap;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+}
+
+function selectBasemap(next) {
+  if (!['street', 'satellite'].includes(next)) return;
+  activeBasemap = next;
+  localStorage.setItem(BASEMAP_KEY, next);
+  syncBasemapControl();
+  if (!map || useLocalBasemap) return;
+  map.setLayoutProperty(STREET_BASEMAP_LAYER_ID, 'visibility', next === 'street' ? 'visible' : 'none');
+  map.setLayoutProperty(SATELLITE_BASEMAP_LAYER_ID, 'visibility', next === 'satellite' ? 'visible' : 'none');
+  applyBasemapTheme();
+}
+
+document.querySelectorAll('[data-basemap]').forEach((button) => {
+  button.addEventListener('click', () => selectBasemap(button.dataset.basemap));
+});
+syncBasemapControl();
+if (useLocalBasemap) document.getElementById('basemapControl').hidden = true;
+
+// Reference-matched Night treatment: dark enough for luminous operational
+// geometry, but without hue rotation so real imagery and status colors stay
+// semantically trustworthy.
+function applyBasemapTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const layerIds = useLocalBasemap ? [SANDBOX_BASEMAP_LAYER_ID] : [STREET_BASEMAP_LAYER_ID, SATELLITE_BASEMAP_LAYER_ID];
+  for (const layerId of layerIds) {
+    if (!map.getLayer(layerId)) continue;
+    const satellite = layerId === SATELLITE_BASEMAP_LAYER_ID;
+    map.setPaintProperty(layerId, 'raster-brightness-max', dark ? (satellite ? 0.58 : 0.68) : 1);
+    map.setPaintProperty(layerId, 'raster-brightness-min', dark ? 0.04 : 0);
+    map.setPaintProperty(layerId, 'raster-contrast', dark ? (satellite ? 0.16 : 0.08) : 0);
+    map.setPaintProperty(layerId, 'raster-saturation', dark ? (satellite ? 0.12 : -0.1) : 0);
+    map.setPaintProperty(layerId, 'raster-hue-rotate', 0);
+  }
+}
+
+// Real, non-fabricated municipal operational extent (Section 02): only
+// rendered when the organization has a real admin-configured mapBounds
+// rectangle (api/organization/context.js's own cleanBounds()) — no
+// boundary is drawn when one hasn't been configured, ever.
+function renderMunicipalBoundary(bounds) {
+  const normalizedBounds = normalizeRealMapBounds(bounds);
+  if (!normalizedBounds) return;
+  const [[west, south], [east, north]] = normalizedBounds;
+  const ring = [[west, south], [east, south], [east, north], [west, north], [west, south]];
+  const geojson = { type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: {} };
+  if (map.getSource('geo-municipal-boundary')) { map.getSource('geo-municipal-boundary').setData(geojson); return; }
+  map.addSource('geo-municipal-boundary', { type: 'geojson', data: geojson });
+  // Reference-matched operational emphasis, but only around the REAL
+  // configured municipal bounds. No bounds means no line and no glow.
+  map.addLayer({ id: 'geo-municipal-boundary-glow-wide', type: 'line', source: 'geo-municipal-boundary',
+    paint: { 'line-color': '#20ff86', 'line-width': 12, 'line-opacity': 0.12, 'line-blur': 8 } });
+  map.addLayer({ id: 'geo-municipal-boundary-glow', type: 'line', source: 'geo-municipal-boundary',
+    paint: { 'line-color': '#20ff86', 'line-width': 6, 'line-opacity': 0.28, 'line-blur': 3 } });
+  map.addLayer({ id: 'geo-municipal-boundary-line', type: 'line', source: 'geo-municipal-boundary',
+    paint: { 'line-color': '#38ff95', 'line-width': 2.5, 'line-opacity': 0.96 } });
+}
+
+function setBoundaryVisibility(visible) {
+  for (const id of ['geo-municipal-boundary-glow-wide', 'geo-municipal-boundary-glow', 'geo-municipal-boundary-line']) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+  }
+}
+document.getElementById('boundaryToggle').addEventListener('change', (event) => setBoundaryVisibility(event.target.checked));
+
+const STATUS_FILTER_OPTIONS = [
+  ['ALL', 'كل الحالات', null],
+  ['PENDING', 'قيد الانتظار', STATUS_COLOR.PENDING],
+  ['IN_PROGRESS', 'قيد المعالجة', STATUS_COLOR.IN_PROGRESS],
+  ['PENDING_REVIEW', 'قيد المراجعة', STATUS_COLOR.PENDING_REVIEW],
+  ['COMPLETED', 'مكتمل', STATUS_COLOR.COMPLETED],
+];
+// Real per-status tally over the full cached (unfiltered) observation set —
+// doubles as the panel's status legend (Section 09) and the filter control,
+// never a decorative/random chip scattered on the map.
+function statusTally() {
+  const tally = { ALL: cachedObservationEntities.length, PENDING: 0, IN_PROGRESS: 0, PENDING_REVIEW: 0, COMPLETED: 0 };
+  for (const e of cachedObservationEntities) {
+    const data = rawObservationById.get(e.id);
+    const status = (data && data.status) || 'PENDING';
+    if (status in tally) tally[status] += 1;
+  }
+  return tally;
+}
+function renderFilterChips() {
+  const container = document.getElementById('filterChips');
+  container.innerHTML = '';
+  const tally = statusTally();
+  const list = document.createElement('div');
+  list.className = 'geo-legend';
+  for (const [value, label, color] of STATUS_FILTER_OPTIONS) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'status-row' + (observationStatusFilter === value ? ' active' : '');
+    row.setAttribute('aria-pressed', String(observationStatusFilter === value));
+    row.setAttribute('aria-label', `تصفية البلاغات حسب الحالة: ${label}`);
+    row.innerHTML = `${color ? `<span class="dot" style="background:${color}"></span>` : '<span style="width:8px"></span>'}<span>${escapeHtml(label)}</span><span class="count">${tally[value]}</span>`;
+    row.addEventListener('click', () => { observationStatusFilter = value; renderFilterChips(); reapplyObservationFilters(); });
+    list.appendChild(row);
+  }
+  container.appendChild(list);
+
+  // Category and priority are real fields on field_observations documents
+  // (data.type, data.riskAssessment.priority — the same shapes the popup
+  // and detail panel already read) — filtered here purely client-side over
+  // the already-cached full observation set, never a second Firestore read.
+  const categorySelect = document.createElement('select');
+  categorySelect.className = 'geo-filter-select';
+  categorySelect.setAttribute('aria-label', 'تصفية البلاغات حسب التصنيف');
+  categorySelect.innerHTML = ['<option value="ALL">كل التصنيفات</option>']
+    .concat(Object.entries(CATEGORY_LABEL).map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`)).join('');
+  categorySelect.value = observationCategoryFilter;
+  categorySelect.addEventListener('change', (e) => { observationCategoryFilter = e.target.value; reapplyObservationFilters(); });
+  container.appendChild(categorySelect);
+
+  const prioritySelect = document.createElement('select');
+  prioritySelect.className = 'geo-filter-select';
+  prioritySelect.setAttribute('aria-label', 'تصفية البلاغات حسب الأولوية');
+  prioritySelect.innerHTML = ['<option value="ALL">كل الأولويات</option>']
+    .concat(Object.entries(PRIORITY_LABEL).map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`)).join('');
+  prioritySelect.value = observationPriorityFilter;
+  prioritySelect.addEventListener('change', (e) => { observationPriorityFilter = e.target.value; reapplyObservationFilters(); });
+  container.appendChild(prioritySelect);
+}
+
+// Every filter (status/category/priority) applies client-side over the
+// already-fetched full observation set — no filter change ever re-reads
+// Firestore, and commercial_places/buildings are never touched (Section 18).
+function reapplyObservationFilters() {
+  if (!activeLayers.has('field_observations')) return;
+  const filtered = applyObservationFilters(cachedObservationEntities);
+  loadedEntities = loadedEntities.filter((e) => e.entityType !== 'field_observation').concat(filtered);
+  layerCounts.set('field_observations', filtered.length);
+  paintObservations(filtered);
+  updateLayerCounts();
+}
+
+document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+  observationStatusFilter = 'ALL';
+  observationCategoryFilter = 'ALL';
+  observationPriorityFilter = 'ALL';
+  renderFilterChips();
+  reapplyObservationFilters();
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { location.href = 'manager-login.html'; return; }
+  // STABILIZATION — Firebase's onAuthStateChanged can legitimately re-fire
+  // for an already-signed-in user (e.g. an ID token refresh), and nothing
+  // here previously guarded against that: a second firing would construct
+  // a SECOND maplibregl.Map on the same container, doubling every event
+  // listener/render loop from then on. Sign-out already does a full
+  // location.href navigation (see below), so the only way back into this
+  // branch with `map` already set is a redundant re-fire for the same
+  // session — never a legitimate user switch.
+  if (map) return;
+  currentUser = user;
+  caller = await resolveCallerRole(user.uid);
+  if (!caller) { await signOut(auth); location.href = 'manager-login.html'; return; }
+
+  const contextRes = await apiGet(caller.organizationId ? { organizationId: caller.organizationId } : {});
+  if (!contextRes.ok) return;
+  mapContext = contextRes.body;
+
+  document.getElementById('orgIdentity').textContent = mapContext.organizationName || 'SMART HSR';
+  document.getElementById('userIdentity').textContent = user.displayName || user.email || 'مستخدم موثّق';
+  const hasBoundary = Boolean(normalizeRealMapBounds(mapContext.mapBounds));
+  document.getElementById('boundaryToggle').disabled = !hasBoundary;
+  document.getElementById('boundaryToggle').checked = hasBoundary;
+  document.getElementById('boundaryLabel').textContent = hasBoundary ? 'النطاق التشغيلي المهيأ' : 'النطاق التشغيلي غير متاح';
+
+  document.getElementById('authLoading').classList.add('hidden');
+  document.getElementById('appShell').classList.remove('hidden');
+  // PHASE 08.1 CLOSURE 4: derive button visibility from the real, shared
+  // Twin-admission policy (not a hand-maintained role list) so this can
+  // never silently drift from geo-policy.js's fail-closed authority again.
+  document.getElementById('openTwinBtn').hidden = !policy.evaluateTwinAdmission({ actor: caller }).allowed;
+  // PHASE 08.3 — real-browser acceptance surfaced a genuine defect: the only
+  // place this button's onclick was ever assigned was inside
+  // openEntityCard() (below), gated on the button already being visible —
+  // so clicking "Open in Twin" before selecting any entity did nothing at
+  // all. Give it a real default destination (no entity context yet) here;
+  // openEntityCard() still overrides this with entity-specific continuity
+  // context once an entity is selected, unchanged.
+  if (!document.getElementById('openTwinBtn').hidden) {
+    const openTwinHome = () => {
+      const { url } = continuity.buildContinuityUrl('/twin.html' + location.search, { organizationId: mapContext.organizationId });
+      if (url) location.href = url;
+    };
+    document.getElementById('openTwinBtn').onclick = openTwinHome;
+    const twinTeaser = document.getElementById('twinTeaser');
+    const intelligenceTwinBtn = document.getElementById('intelligenceTwinBtn');
+    if (twinTeaser) twinTeaser.hidden = false;
+    if (intelligenceTwinBtn) intelligenceTwinBtn.onclick = openTwinHome;
+  }
+
+  initialExtentPlan = planTrustedInitialExtent(mapContext);
+  automaticInitialExtentResolved = initialExtentPlan.mode === 'center';
+  map = new maplibregl.Map({
+    container: 'map',
+    style: useLocalBasemap ? sandboxBasemapStyle() : realBasemapStyle(),
+    center: initialExtentPlan.center,
+    zoom: initialExtentPlan.zoom,
+  });
+  // Compact left toolbar (Section 05/06) — zoom, fit/reset, fullscreen,
+  // locate (real browser Geolocation API, never a fabricated position).
+  map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-left');
+  map.addControl(new FitDataControl(), 'top-left');
+  map.addControl(new maplibregl.FullscreenControl(), 'top-left');
+  map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false }), 'top-left');
+  map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
+  map.addControl(new maplibregl.AttributionControl({ compact: true }));
+
+  const continuityEncoded = new URL(location.href).searchParams.get(continuity.CONTINUITY_PARAM);
+  if (continuityEncoded) {
+    const { context } = continuity.decodeContinuityContext(continuityEncoded);
+    const continuityCenter = context && context.camera && context.camera.center;
+    const continuityZoom = Number(context && context.camera && context.camera.zoom);
+    if (Array.isArray(continuityCenter) && continuityCenter.length === 2 && continuityCenter.every(Number.isFinite)
+      && Number.isFinite(continuityZoom)) {
+      map.setCenter(continuityCenter);
+      map.setZoom(continuityZoom);
+      explicitContinuityCamera = true;
+      automaticInitialExtentResolved = true;
+    }
+  }
+
+  map.on('load', () => {
+    applyBasemapTheme();
+    if (!explicitContinuityCamera && initialExtentPlan.mode === 'bounds') {
+      map.fitBounds(initialExtentPlan.bounds, { padding: 54, maxZoom: 16, duration: 0 });
+      automaticInitialExtentResolved = true;
+    }
+    renderMunicipalBoundary(mapContext.mapBounds);
+    renderLayerToggles(mapContext.organizationId);
+    renderFilterChips();
+    map.addSource(SKETCH_SRC, { type: 'geojson', data: sketchGeoJson() });
+    map.addLayer({ id: `${SKETCH_SRC}-fill`, type: 'fill', source: SKETCH_SRC, filter: ['==', '$type', 'Polygon'], paint: { 'fill-color': '#38bdf8', 'fill-opacity': .16 } });
+    map.addLayer({ id: `${SKETCH_SRC}-line`, type: 'line', source: SKETCH_SRC, paint: { 'line-color': '#7dd3fc', 'line-width': 2.5, 'line-dasharray': [2, 1] } });
+    loadVisibleLayers(mapContext.organizationId);
+  });
+  map.on('click', (event) => {
+    if (!sketchMode) return;
+    sketchPoints.push([event.lngLat.lng, event.lngLat.lat]);
+    updateSketch();
+  });
+  // STABILIZATION — sync markers immediately (cheap: repositions existing
+  // DOM markers, only creates/removes when clustering itself changed), but
+  // debounce the bbox-layer reload: a real user rarely pans/zooms exactly
+  // once and stops, and the buffer above already makes most individual
+  // moveends free, but a burst of several moveends in a row (fast repeated
+  // small drags, or a scroll-wheel zoom flurry) should still settle into
+  // ONE reload, not one per event.
+  let moveendReloadTimer = null;
+  map.on('moveend', () => {
+    syncObservationMarkers();
+    clearTimeout(moveendReloadTimer);
+    moveendReloadTimer = setTimeout(() => {
+      loadVisibleLayers(mapContext.organizationId, { includeObservations: false });
+    }, 200);
+  });
+  // A GeoJSON source's clustered tiles for a NEWLY-reached zoom level are
+  // computed asynchronously — querySourceFeatures() called synchronously on
+  // 'moveend' alone can still see the previous zoom's (stale/empty) tile
+  // data. MapLibre's own documented HTML-marker-clustering pattern re-syncs
+  // on 'sourcedata' for exactly this reason.
+  map.on('sourcedata', (e) => { if (e.sourceId === OBS_SRC && e.isSourceLoaded) syncObservationMarkers(); });
+});
+</script>
+</body>
+</html>

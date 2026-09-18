@@ -2525,11 +2525,24 @@ class Component extends DCLogic {
     if (url) location.href = url;
   }
 
-  openOperationalMapForObservation(item) {
+  // PHASE13 MISSION 1 FIX — live audit proved this used to fail silently
+  // (no console error, no user feedback) on ~50-75% of clicks that
+  // immediately follow a view switch back to Home, because
+  // buildContinuityUrl's own validation transiently rejects the context
+  // (GEO_CONTINUITY_ORGANIZATION_REQUIRED) before this.state.orgId has
+  // settled, and the old code just `return`ed. Neither Geo Core nor the
+  // organizationId source is touched — this only makes the existing
+  // failure path visible instead of a dead button, with one deferred
+  // retry (a fresh paint tick is usually enough for state to settle)
+  // before surfacing the existing flash() toast pattern already used
+  // elsewhere in this file for guarded/unavailable routes.
+  openOperationalMapForObservation(item, _retried) {
     const geo = window.SmartHSRGeoCore;
-    if (!geo) return;
+    if (!geo) { this.flash('تعذر تحميل الخريطة التشغيلية. أعد المحاولة.'); return; }
     const { url } = geo.continuity.buildContinuityUrl('/operational-map.html' + location.search, this.buildGeoContinuityContext(item));
-    if (url) location.href = url;
+    if (url) { location.href = url; return; }
+    if (!_retried) { requestAnimationFrame(() => requestAnimationFrame(() => this.openOperationalMapForObservation(item, true))); return; }
+    this.flash('تعذر تجهيز رابط الخريطة التشغيلية. أعد المحاولة.');
   }
 
   openCanonicalOperationalMap() {

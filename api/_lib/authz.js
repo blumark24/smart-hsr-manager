@@ -146,6 +146,23 @@ async function getCallerContext(uid) {
   if (usrSnap.exists) {
     const d = usrSnap.data() || {};
     const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
+    // PHASE13C — approved product decision: an active supervisor is the
+    // Municipality Manager's operational deputy and receives the SAME
+    // same-organization isManager authority a manager already has below
+    // (never isOwner, never cross-organization) — this reuses every
+    // existing manager-scoped check (assertCanManage,
+    // assertCanManageEmployee, both api/admin/*.js top-level gates)
+    // verbatim rather than adding a new privilege class. Checked before
+    // the department_head branch just below since `role` is a single
+    // scalar field: a plain supervisor record never also resolves as
+    // department_head (resolveMobilityRole only reads the independent
+    // mobilityAccess field or its own legacy-role fallback, never the
+    // literal string 'supervisor'). Fails closed exactly like the
+    // manager check above: inactive or missing organizationId is never
+    // treated as an authorized supervisor.
+    if (d.role === 'supervisor' && activeIsNotFalse(d) && orgId) {
+      return { uid, isOwner: false, isManager: true, isDepartmentHead: false, role: 'supervisor', organizationId: orgId, department: null };
+    }
     const dept = typeof d.department === 'string' ? d.department.trim() : '';
     // Fail closed exactly like the manager check above: a department_head
     // record missing organizationId or department is never treated as an
