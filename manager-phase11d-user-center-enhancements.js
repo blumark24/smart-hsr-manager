@@ -245,12 +245,13 @@ async function renderCenter(force=false) {
       ${maxPage>1?pagination(maxPage):''}`;
     bindCenter(app,directory);
   } catch (error) {
+    console.error('[UC:init:error]', error);
     const root=lastRoot||findCenterRoot();
     if(root){ let app=root.querySelector('.ucv2-app'); if(!app){app=document.createElement('section');app.className='ucv2-app';root.appendChild(app);} delete app.dataset.routeGuardLoading; app.removeAttribute('aria-busy');
       const deniedReasons=['owner_or_manager_required','forbidden','cross_organization_denied','manager_required'];
       const isPermissionDenied=error.status===403||deniedReasons.includes(error.reason);
       const stateClass=isPermissionDenied?'ucv2-state error ucv2-state-denied':'ucv2-state error ucv2-state-transient';
-      const title=isPermissionDenied?'لا تملك صلاحية الوصول لمركز المستخدمين':'تعذر تحميل مركز المستخدمين';
+      const title=isPermissionDenied?'لا تملك صلاحية الوصول لمركز المستخدمين':'تعذر تحميل سجل المستخدمين';
       const retryButton=isPermissionDenied?'':'<button class="ucv2-btn ghost" data-retry>إعادة المحاولة</button>';
       app.innerHTML=`<div class="${stateClass}"><b>${title}</b><span>${esc(U.why?U.why(error.reason||error.message):error.message)}</span>${retryButton}</div>`; app.querySelector('[data-retry]')?.addEventListener('click',()=>{directoryCache=null;renderCenter(true);}); }
   } finally {
