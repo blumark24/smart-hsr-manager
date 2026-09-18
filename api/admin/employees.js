@@ -19,7 +19,8 @@
 // Body:   { action, ...params }
 //
 // Actions: list | create | activateAccount | setAccountStatus |
-//          assignProducts | setVehicleEligible | transfer
+//          assignProducts | setVehicleEligible | transfer |
+//          updateProfile | changeLoginEmail
 //
 // SECURITY: passwords are never returned, never logged, never stored in
 // Firestore. Contractors are never represented in this registry — this
@@ -53,6 +54,19 @@ const {
 } = require('../../platform/contracts/employee-assignment-lock-contract');
 
 function isNonEmptyString(v) { return typeof v === 'string' && v.trim().length > 0; }
+
+// PHASE12C.5 — identical re-authentication window to api/admin/users.js's
+// setPassword gate (same file duplicates recordAdminAudit below for the
+// same reason: each admin endpoint stays self-contained rather than
+// sharing a cross-file import for a few lines). Required before
+// changeLoginEmail, the one action in this file that mutates a login
+// credential rather than HR/registry data.
+const RECENT_AUTH_WINDOW_SECONDS = 10 * 60;
+function hasRecentAuthentication(decoded, nowSeconds = Math.floor(Date.now() / 1000)) {
+  const authTime = Number(decoded && decoded.auth_time);
+  return Number.isFinite(authTime) && authTime > 0 && authTime <= nowSeconds + 60
+    && nowSeconds - authTime <= RECENT_AUTH_WINDOW_SECONDS;
+}
 
 function timestampToIso(value) {
   if (!value) return null;
@@ -574,6 +588,94 @@ async function handler(req, res) {
 
         await recordAdminAudit(db, { caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_transfer', detail: { before, after: update } });
         return sendJson(res, 200, { employeeId, administration: update.administration, department: update.department, directManagerEmployeeId: update.directManagerEmployeeId });
+      }
+
+      // ---- PHASE12C.5: update HR/registry fields — manager/owner only,
+      // same as transfer. Never touches email for an already-linked
+      // account (that identity mutation is changeLoginEmail's job below,
+      // which additionally requires manager role + recent re-auth). ----
+      case 'updateProfile': {
+        const { employeeId, name, employeeRef, phone, jobTitle, employmentStatus, email } = body;
+        if (!isNonEmptyString(employeeId)) return sendJson(res, 400, { error: 'invalid_request', reason: 'employeeId_required' });
+        if (!isNonEmptyString(name)) return sendJson(res, 400, { error: 'invalid_request', reason: 'name_required' });
+        if (employmentStatus !== undefined && employmentStatus !== 'active' && employmentStatus !== 'inactive') {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_employment_status' });
+        }
+        const employee = await findEmployee(db, employeeId);
+        if (!employee) return sendJson(res, 404, { error: 'employee_not_found' });
+
+        if (!caller.isOwner && !caller.isManager) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'update_profile_requires_manager_or_owner' });
+        }
+        const decision = assertCanManageEmployee(caller, { targetOrganizationId: employee.data.organizationId, targetDepartment: employee.data.department });
+        if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+
+        const linked = isNonEmptyString(employee.data.authUid);
+        if (email !== undefined && linked) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'linked_account_email_change_requires_account_flow' });
+        }
+
+        const update = { name: name.trim(), updatedAt: FieldValue.serverTimestamp() };
+        if (employeeRef !== undefined) update.employeeRef = isNonEmptyString(employeeRef) ? employeeRef.trim() : null;
+        if (phone !== undefined) update.phone = isNonEmptyString(phone) ? phone.trim() : null;
+        if (jobTitle !== undefined) update.jobTitle = isNonEmptyString(jobTitle) ? jobTitle.trim() : null;
+        if (employmentStatus !== undefined) update.employmentStatus = employmentStatus;
+        if (email !== undefined && !linked) update.email = isNonEmptyString(email) ? email.trim() : null;
+
+        await employee.ref.set(update, { merge: true });
+
+        const changedFields = Object.keys(update).filter(k => k !== 'updatedAt');
+        await recordAdminAudit(db, { caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_profile_update', detail: { changedFields } });
+
+        const savedSnap = await employee.ref.get();
+        return sendJson(res, 200, { employee: safeEmployee(employeeId, savedSnap.data() || {}) });
+      }
+
+      // ---- PHASE12C.5: change a linked employee's login email — the same
+      // security posture as api/admin/users.js's setPassword (manager role
+      // only, not owner/department_head; recent re-authentication
+      // required), because this mutates a login credential, not HR data. ----
+      case 'changeLoginEmail': {
+        const { employeeId, email, confirmEmail } = body;
+        if (!isNonEmptyString(employeeId) || !isNonEmptyString(email) || !isNonEmptyString(confirmEmail)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'employeeId_and_email_required' });
+        }
+        if (email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'email_confirmation_mismatch' });
+        }
+
+        if (!caller.isManager || caller.role !== 'manager' || !isNonEmptyString(caller.organizationId)) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'email_management_denied' });
+        }
+        if (!hasRecentAuthentication(decoded)) {
+          return sendJson(res, 401, { error: 'unauthenticated', reason: 'reauthentication_required' });
+        }
+
+        const employee = await findEmployee(db, employeeId);
+        if (!employee) return sendJson(res, 404, { error: 'employee_not_found' });
+        if (employee.data.organizationId !== caller.organizationId) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
+        }
+        if (!isNonEmptyString(employee.data.authUid)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'no_linked_account' });
+        }
+
+        const newEmail = email.trim().toLowerCase();
+        const oldEmail = employee.data.email || null;
+        await auth.updateUser(employee.data.authUid, { email: newEmail });
+        await auth.revokeRefreshTokens(employee.data.authUid);
+
+        await db.collection('users').doc(employee.data.authUid).set({
+          email: newEmail, updatedAt: FieldValue.serverTimestamp(), sessionsRevokedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await employee.ref.set({ email: newEmail, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+
+        await recordAdminAudit(db, {
+          caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_login_email_change',
+          detail: { oldEmail, newEmail },
+        });
+
+        return sendJson(res, 200, { employeeId, email: newEmail });
       }
 
       // ====================================================================

@@ -93,8 +93,21 @@ test('Add Employee remains wired to existing employee APIs', () => {
 });
 
 test('redesign reuses secure email/history actions and does not create identities', () => {
-  assert.match(enhancements, /userCenter\.changeLoginEmail/);
-  assert.match(enhancements, /userCenter\.listHistory/);
+  // Phase12C.5 — Phase12C.4 found /api/organization/context's POST path is
+  // exclusively the Lands SSO handoff (ignores req.body.action entirely), so
+  // the userCenter.changeLoginEmail/userCenter.listHistory contract this
+  // test used to assert as "the feature exists" never actually worked.
+  // changeLoginEmail now targets the real, already-multi-action
+  // /api/admin/employees endpoint; history is restored to
+  // manager-phase11c-user-center-dialogs.js's original, working
+  // listAssignments-backed U.loadHist (11d no longer overrides it).
+  assert.match(enhancements, /U\.post\('\/api\/admin\/employees',\{action:'changeLoginEmail'/);
+  assert.doesNotMatch(enhancements, /userCenter\./);
+  assert.doesNotMatch(enhancements, /U\.loadHist=/);
+  assert.match(dialogs, /U\.loadHist=async\(c,e\)=>/);
+  assert.match(dialogs, /U\.post\('\/api\/admin\/employees',\{action:'listAssignments'/);
+  assert.match(employeesApi, /case 'changeLoginEmail': \{/);
+  assert.doesNotMatch(employeesApi, /userCenter\./);
   assert.match(enhancements, /حساب قديم غير مرتبط بسجل موظف/);
   assert.doesNotMatch(enhancements, /createUserWithEmailAndPassword|admin\.auth\(\)\.createUser|createUser\s*\(/);
   assert.doesNotMatch(legacyBridge, /createUserWithEmailAndPassword|admin\.auth\(\)\.createUser|createUser\s*\(/);
