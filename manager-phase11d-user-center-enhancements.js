@@ -278,7 +278,25 @@ function bindCenter(app,directory){
   app.querySelectorAll('[data-reset-filters]').forEach(btn=>btn.addEventListener('click',()=>{ resetFilters(); renderCenter(); }));
   app.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{ const q=btn.dataset.quick; state.quick=state.quick===q?null:q; state.page=1; renderCenter(); }));
   app.querySelectorAll('[data-filter]').forEach(control=>{ const key=control.dataset.filter; const event=key==='search'?'input':'change'; control.addEventListener(event,()=>{ state[key]=control.value; state.page=1; const caret=key==='search'?control.selectionStart:null;renderCenter().then(()=>{if(key!=='search')return;const next=lastRoot?.querySelector('[data-filter="search"]');if(!next)return;next.focus();if(Number.isInteger(caret))next.setSelectionRange(caret,caret);}); }); });
-  app.querySelectorAll('[data-open-employee]').forEach(btn=>btn.addEventListener('click',async()=>{ const id=btn.dataset.openEmployee; const employee=(directory.employees||[]).find(e=>String(e.employeeId)===id); if(!employee)return;btn.disabled=true;app.setAttribute('aria-busy','true');try{await U.profile(employee);decorateProfileDialog(employee);}catch(error){showCenterActionError(app,error);}finally{btn.disabled=false;app.removeAttribute('aria-busy');} }));
+  app.querySelectorAll('[data-open-employee]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const id=btn.dataset.openEmployee;
+    btn.disabled=true;app.setAttribute('aria-busy','true');
+    try{
+      let employee=(directory.employees||[]).find(e=>String(e.employeeId)===id);
+      // PHASE13D.2 — a held `directory` reference can miss a row that is
+      // genuinely on screen (e.g. it was resolved from an earlier snapshot).
+      // Rather than silently doing nothing, re-resolve against ONE fresh,
+      // authoritative fetch before giving up — never loop or retry beyond
+      // this single refresh.
+      if(!employee){
+        const refreshed=await getDirectory(true);
+        employee=(refreshed.employees||[]).find(e=>String(e.employeeId)===id);
+      }
+      if(!employee){ showCenterActionError(app,{reason:'employee_not_found_after_refresh'}); return; }
+      await U.profile(employee);decorateProfileDialog(employee);
+    }catch(error){showCenterActionError(app,error);}
+    finally{btn.disabled=false;app.removeAttribute('aria-busy');}
+  }));
   app.querySelectorAll('tr[data-employee-id]').forEach(row=>row.addEventListener('keydown',event=>{ if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){ event.preventDefault(); row.querySelector('[data-open-employee]')?.click(); } }));
   app.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{ state.page += btn.dataset.page==='next'?1:-1; renderCenter(); }));
 }
