@@ -374,7 +374,24 @@ function boot(){
   window.addEventListener('smart-hsr:user-center-lifecycle',event=>{
     renderGeneration+=1;
     renderRequested=false;
-    if(event.detail?.active)requestRender();
+    // PHASE12C.3: the route guard's active:true is the one authoritative
+    // "a fresh shell now exists, render it" signal — call renderCenter()
+    // directly instead of through the debounced requestRender() below.
+    // Proved via live trace (Phase12C.2/12C.3): every reopen fires a burst
+    // of 15-25+ MutationObserver callbacks (this file's own observer, the
+    // route guard's, and others reacting to the same DOM churn), each one
+    // resetting requestRender()'s 60ms retryTimer — so routing the
+    // authoritative signal through that same resettable timer let an
+    // unrelated, unbounded mutation cascade starve the only render attempt
+    // for that open, leaving routeGuardLoading=true forever. renderCenter()
+    // already coalesces re-entrant/concurrent calls on its own
+    // (renderQueued/renderRequested/renderGeneration), so calling it here
+    // directly is safe and doesn't reintroduce duplicate renders or API
+    // calls. requestRender()'s debounce remains exactly as before for the
+    // click listener and the generic MutationObserver fallback (e.g. the
+    // legacy dashboard wiping .ucv2-app without a lifecycle event) — a
+    // secondary reconciliation path, never the only one.
+    if(event.detail?.active)renderCenter();
     else lastRoot=null;
   });
 }
