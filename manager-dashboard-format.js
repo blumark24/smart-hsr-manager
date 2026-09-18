@@ -119,33 +119,8 @@
 
     let preOpenScrollY = null;
     let closedRoot = null;
-    let isolatedNodes = [];
 
     const activeView = () => document.documentElement.dataset.smartHsrManagerView === 'users';
-
-    const isolateBackground = overlay => {
-      const pageRoot = overlay?.parentElement;
-      if (!pageRoot || isolatedNodes.length) return;
-      isolatedNodes = Array.from(pageRoot.children).filter(node => node !== overlay).map(node => ({
-        node,
-        inert: node.inert,
-        ariaHidden: node.getAttribute('aria-hidden'),
-      }));
-      isolatedNodes.forEach(({ node }) => {
-        node.inert = true;
-        node.setAttribute('aria-hidden', 'true');
-      });
-    };
-
-    const restoreBackground = () => {
-      isolatedNodes.forEach(({ node, inert, ariaHidden }) => {
-        if (!node?.isConnected) return;
-        node.inert = inert;
-        if (ariaHidden == null) node.removeAttribute('aria-hidden');
-        else node.setAttribute('aria-hidden', ariaHidden);
-      });
-      isolatedNodes = [];
-    };
 
     const release = () => {
       const root = closedRoot;
@@ -162,7 +137,6 @@
         delete root.dataset.smartHsrApprovedOwner;
         delete root.dataset.ucv2Scrolled;
       }
-      restoreBackground();
       const restoreY = preOpenScrollY;
       preOpenScrollY = null;
       if (restoreY != null) window.scrollTo(0, restoreY);
@@ -204,11 +178,24 @@
         // background/pointer-events overrides do not belong on <main>.
         // root is scrolled to the top on open below, same as before —
         // still correct for a normal single-page-scroll Manager view.
+        //
+        // PHASE13D.3 — this used to also call isolateBackground here, passing
+        // root's parent element, a leftover from when User Center was a
+        // position:fixed modal
+        // and hiding the rest of the page from assistive tech/pointer input
+        // was correct. root.parentElement is <main>, so overlay.parentElement
+        // is the row container holding BOTH <aside> and <main> — isolating
+        // "everything except the overlay" therefore set inert=true on the
+        // entire sidebar for as long as Users was open, silently swallowing
+        // every click on it (e.g. مركز القيادة) until an unrelated DOM
+        // mutation elsewhere happened to trigger release()'s cleanup. User
+        // Center is a normal sibling view now, exactly like Field
+        // Survey/Lands/Mobility, none of which isolate the sidebar either —
+        // so this call must not exist any more.
         preOpenScrollY = window.scrollY;
         closedRoot = root;
         window.scrollTo(0, 0);
         syncTheme();
-        isolateBackground(root.parentElement);
       }
 
       // root is the SPA's own live view panel, and the SPA keeps re-rendering

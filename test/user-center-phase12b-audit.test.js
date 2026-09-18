@@ -37,7 +37,14 @@ test('User Center lifecycle is owned by the real Manager view and tears down on 
   assert.match(managerFormat, /const release = \(\) =>/);
   assert.match(managerFormat, /root\.querySelector\(':scope > \.ucv2-app'\)\?\.remove\(\)/);
   assert.match(managerFormat, /root\.classList\.remove\('ucv2-route-guard-host', 'ucv2-host'\)/);
-  assert.match(managerFormat, /node\.inert = true/);
+  // PHASE13D.3 — the sidebar/background isolation this used to assert
+  // (node.inert = true) was a P0 defect: User Center is a normal sibling
+  // view now, not a position:fixed modal, so isolating "the rest of the
+  // page" behind it isolated the persistent sidebar instead, silently
+  // swallowing every click on it (e.g. مركز القيادة) until an unrelated
+  // DOM mutation happened to clear it. See
+  // test/phase13d3-command-center-dead-click-regression.test.js.
+  assert.doesNotMatch(managerFormat, /node\.inert = true/);
   assert.match(core, /smart-hsr:user-center-lifecycle/);
   assert.match(core, /delete modal\.dataset\.busy/);
   assert.match(center, /renderGeneration/);
