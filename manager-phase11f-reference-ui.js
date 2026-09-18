@@ -62,11 +62,16 @@ function injectStyle() {
   .iuc>div,.ucv2-dialog{background:linear-gradient(155deg,rgba(11,27,49,.985),rgba(7,18,34,.985))!important;color:#edf5ff!important;border:1px solid rgba(96,145,211,.20)!important;box-shadow:0 34px 110px rgba(0,0,0,.62),inset 0 1px rgba(255,255,255,.025)!important;border-radius:22px!important;max-width:min(940px,calc(100vw - 32px))!important;max-height:calc(100vh - 34px)!important;padding:20px!important}
   .iuc .ih{background:linear-gradient(180deg,rgba(10,25,46,.99),rgba(10,25,46,.94))!important;border-bottom-color:rgba(96,145,211,.14)!important;border-radius:22px 22px 0 0!important}.iuc .ih b{font-size:17px!important;color:#fff!important}.iuc .ih p{font-size:10px!important;color:#7f92ad!important}
   .iuc .sec{border:1px solid rgba(96,145,211,.11)!important;background:rgba(11,26,47,.45)!important;border-radius:15px!important;padding:14px!important;margin-bottom:12px!important}.iuc .st span,.iuc label{color:#dbe7f7!important}.iuc .st small,.iuc .note{color:#7f91ab!important}
-  .iuc .in,.iuc .sel,.iuc input,.iuc select,.iuc textarea{background:rgba(13,30,54,.80)!important;color:#eaf2ff!important;border:1px solid rgba(96,145,211,.18)!important;border-radius:10px!important}.iuc .in:focus,.iuc .sel:focus,.iuc input:focus,.iuc select:focus,.iuc textarea:focus{outline:0!important;border-color:rgba(74,140,255,.62)!important;box-shadow:0 0 0 3px rgba(74,140,255,.09)!important}
-  .iuc .btn{border-radius:10px!important;background:rgba(15,32,57,.80)!important;color:#dbe7f7!important;border-color:rgba(96,145,211,.20)!important}.iuc .btn.pr{background:linear-gradient(135deg,#2f76ff,#5367ff)!important;color:#fff!important;border-color:rgba(103,148,255,.60)!important;box-shadow:0 8px 24px rgba(41,94,255,.18)!important}
+  .iuc .in,.iuc .sel,.iuc input,.iuc select,.iuc textarea{background:rgba(13,30,54,.80)!important;color:#eaf2ff!important;border:1px solid rgba(96,145,211,.18)!important;border-radius:10px!important}.iuc .in:focus,.iuc .sel:focus,.iuc input:focus,.iuc select:focus,.iuc textarea:focus{outline:0!important;border-color:#3ed39a!important;box-shadow:0 0 0 3px rgba(62,211,154,.16)!important}
+  .iuc .btn{border-radius:8px!important;background:rgba(15,32,57,.80)!important;color:#dbe7f7!important;border-color:rgba(96,145,211,.20)!important}.iuc .btn.pr{background:#3ed39a!important;color:#04150e!important;font-weight:700!important;border-color:#3ed39a!important;box-shadow:none!important}.iuc .btn.pr:hover:not(:disabled){background:#33bd8a!important}
   .ucv2-current-value{border-color:rgba(96,145,211,.14)!important;background:rgba(14,31,55,.66)!important}.ucv2-password-toggle{color:#6ba1ff!important}
 
-  .ucv21-single-page{width:min(880px,calc(100vw - 34px))!important;padding:0!important;overflow:auto!important}
+  .ucv21-single-page{width:min(760px,calc(100vw - 34px))!important;padding:0!important;overflow:auto!important}
+  .ucv2-add-dialog{width:min(760px,calc(100vw - 34px))!important}
+  .ucv2-password-dialog,#iuc-email>div,#iuc-suspend-confirm>div,#iuc-legacy-note>div,#iuc-legacy-error>div{width:min(480px,calc(100vw - 32px))!important}
+  #iuc-import>div{width:min(640px,calc(100vw - 34px))!important}
+  .ucv21-subsection-head{font-size:10.5px!important;color:#8ea1bc!important;margin:2px 0 8px!important}.ucv21-subsection-head:before{width:5px!important;height:5px!important;background:#3ed39a!important;box-shadow:none!important}
+  .ucv21-mobile-services{display:flex!important;gap:6px!important;flex-wrap:wrap!important}
   .ucv21-single-page .ih{position:sticky;top:0;z-index:7;padding:18px 22px!important}
   .ucv21-single-page .hier,.ucv21-single-page .tabs,.ucv21-single-page .ucv2-employee360{display:none!important}
   .ucv21-single-page .pane{display:block!important;padding:0 22px!important;margin:0!important}
@@ -110,14 +115,42 @@ function tuneHeader(app) {
 }
 
 function tuneKpis(app) {
+  // Icon rendering itself already lives in manager-phase11g-user-center-approved-skin.js
+  // as a restrained monochrome SVG mask-image per card position (.ucv2-kpi-icon:before) —
+  // .ucv2-kpi-icon is font-size:0 there, so this layer only ever needs to set the label text.
   const cards = Array.from(app.querySelectorAll('.ucv2-kpi'));
   const labels = ['إجمالي الموظفين','الحسابات النشطة','بدون حساب / موقوف','الحصر الميداني','الأراضي والممتلكات','الحركة والسير'];
-  const icons = ['👥','⌁','◉','▤','◫','▰'];
-  cards.forEach((card, i) => {const small=card.querySelector('small');if(small&&labels[i])small.textContent=labels[i];const icon=card.querySelector('.ucv2-kpi-icon');if(icon&&icons[i])icon.textContent=icons[i];});
+  cards.forEach((card, i) => {const small=card.querySelector('small');if(small&&labels[i])small.textContent=labels[i];});
 }
 
+const SERVICE_DOT_LABELS = { field:'الحصر الميداني', lands:'الأراضي والممتلكات', mobility:'الحركة والسير' };
+function serviceDot(enabled, type) {
+  const span=document.createElement('span');span.className=`ucv21-service-dot${enabled?` on ${type}`:''}`;span.textContent=enabled?'●':'—';
+  const label=`${SERVICE_DOT_LABELS[type]||type}: ${enabled?'مفعّلة':'غير مفعّلة'}`;span.setAttribute('aria-label',label);span.title=label;
+  return span;
+}
 function serviceCell(enabled, type) {
-  const td=document.createElement('td');td.className='ucv21-service-cell';const span=document.createElement('span');span.className=`ucv21-service-dot${enabled?` on ${type}`:''}`;span.textContent=enabled?'●':'—';td.appendChild(span);return td;
+  const td=document.createElement('td');td.className='ucv21-service-cell';td.appendChild(serviceDot(enabled,type));return td;
+}
+// Mobile cards previously kept the older chip-based product representation
+// while the desktop table already used compact dot indicators (transformTable
+// below) — same underlying data, two different visual languages. Unify on
+// the desktop's dot indicator for both, matching it against the same product
+// label text the chips already render.
+function transformMobileCards(app) {
+  app.querySelectorAll('.ucv2-mobile-card').forEach(card => {
+    if (card.classList.contains('legacy')) return;
+    const products = card.querySelector('.ucv2-products');
+    if (!products || products.dataset.ucv21Reference === '1') return;
+    const text = clean(products.textContent);
+    const hasField = /الحصر/.test(text), hasLands = /الأراضي/.test(text), hasMobility = /الحركة/.test(text);
+    products.innerHTML = '';
+    products.classList.add('ucv21-mobile-services');
+    products.appendChild(serviceDot(hasField, 'field'));
+    products.appendChild(serviceDot(hasLands, 'lands'));
+    products.appendChild(serviceDot(hasMobility, 'mobility'));
+    products.dataset.ucv21Reference = '1';
+  });
 }
 
 function transformTable(app) {
@@ -157,14 +190,34 @@ function buildSinglePageProfile(panel,employee){
   const basic=panel.querySelector('.pane[data-id="p"]'),org=panel.querySelector('.pane[data-id="o"]'),account=panel.querySelector('.pane[data-id="a"]'),roles=panel.querySelector('.pane[data-id="r"]'),history=panel.querySelector('.pane[data-id="h"]');
   [basic,account,roles].forEach(p=>{if(p)p.hidden=false;});
   const basicGrid=basic?.querySelector('.sec .grid'),orgGrid=org?.querySelector('.sec .grid');if(basicGrid&&orgGrid){Array.from(orgGrid.children).forEach(node=>basicGrid.appendChild(node));}
-  addSectionHead(basic,'البيانات الأساسية','بيانات الموظف والتنظيم');addSectionHead(roles,'الخدمات والصلاحيات','الدور + المنتج + القسم');addSectionHead(account,'حالة الحساب','إدارة الوصول والهوية');
+  addSectionHead(basic,'بيانات الحساب','بيانات الموظف والتنظيم');addSectionHead(roles,'الدور والصلاحيات','الدور + المنتج + القسم');addSectionHead(account,'حالة الحساب','إدارة الوصول والهوية');
+  const prodBlock=roles?.querySelector('.prod');
+  if(prodBlock&&!prodBlock.previousElementSibling?.classList?.contains('ucv21-subsection-head')){const sub=document.createElement('div');sub.className='ucv21-section-head ucv21-subsection-head';sub.innerHTML='<span>الخدمات البلدية</span>';prodBlock.before(sub);}
   if(account){const oldPw=account.querySelector('.pwbtn');if(oldPw)oldPw.hidden=true;}
+  // APPROVED UX CHANGE: replace the previous two-click label-swap confirmation
+  // with a real confirmation dialog. Uses the EXACT existing .tog click handler
+  // (manager-phase11c-user-center-dialogs.js) for the actual setAccountStatus
+  // call — this only intercepts the first click to show identity + current/
+  // resulting state, then re-dispatches the real click unchanged on confirm.
   const accountToggle=account?.querySelector('.tog');
-  if(accountToggle&&!accountToggle.dataset.ucv21Confirm){accountToggle.dataset.ucv21Confirm='1';let armed=false,timer=0;accountToggle.addEventListener('click',event=>{if(!/إيقاف/.test(accountToggle.textContent)||armed){armed=false;return;}event.preventDefault();event.stopImmediatePropagation();armed=true;accountToggle.textContent='تأكيد إيقاف الحساب';accountToggle.setAttribute('aria-label','اضغط مرة أخرى لتأكيد إيقاف الحساب');clearTimeout(timer);timer=setTimeout(()=>{if(!accountToggle.isConnected||accountToggle.disabled)return;armed=false;accountToggle.textContent='إيقاف الحساب';accountToggle.setAttribute('aria-label','إيقاف الحساب');},6000);},true);}
-  if(panel.__ucv21Employee?.authUid&&!panel.querySelector('.ucv21-password-inline')){
-    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.innerHTML=`<div class="ucv21-section-head"><span>تعديل كلمة المرور</span><small>اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;roles?.after(wrap)||account?.after(wrap);wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
+  if(accountToggle&&!accountToggle.dataset.ucv21Confirm){
+    accountToggle.dataset.ucv21Confirm='1';
+    accountToggle.addEventListener('click',event=>{
+      if(accountToggle.dataset.ucv21Confirmed==='1'){delete accountToggle.dataset.ucv21Confirmed;return;}
+      event.preventDefault();event.stopImmediatePropagation();
+      const suspending=/إيقاف/.test(accountToggle.textContent);
+      const employee=panel.__ucv21Employee;
+      const title=suspending?'تأكيد إيقاف الحساب':'تأكيد تفعيل الحساب';
+      const body=`<div class="sec ucv2-security-box"><div class="st"><span>${title}</span><small>${U.esc(employee?.name||'')}</small></div><div class="ucv2-current-value"><span>الحالة الحالية</span><b>${suspending?'نشط':'موقوف'}</b></div><div class="ucv2-current-value"><span>الحالة بعد التأكيد</span><b>${suspending?'موقوف':'نشط'}</b></div></div><div class="act"><button type="button" class="btn ${suspending?'bad':'pr'} ucv21-confirm-toggle">${suspending?'تأكيد الإيقاف':'تأكيد التفعيل'}</button><button type="button" class="btn ucv21-cancel-toggle">إلغاء</button></div>`;
+      const {c:confirmPanel,close:closeConfirm}=U.shell('iuc-suspend-confirm',title,employee?.email||'',body,true);
+      confirmPanel.querySelector('.ucv21-cancel-toggle').onclick=closeConfirm;
+      confirmPanel.querySelector('.ucv21-confirm-toggle').onclick=()=>{closeConfirm();accountToggle.dataset.ucv21Confirmed='1';accountToggle.click();};
+    },true);
   }
-  if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.innerHTML='<button type="button" class="ucv21-history-toggle">عرض سجل الموظف</button>';history.before(hw);hw.appendChild(history);history.hidden=true;hw.querySelector('button').onclick=()=>{history.hidden=!history.hidden;hw.querySelector('button').textContent=history.hidden?'عرض سجل الموظف':'إخفاء سجل الموظف';};}
+  if(panel.__ucv21Employee?.authUid&&!panel.querySelector('.ucv21-password-inline')){
+    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.innerHTML=`<div class="ucv21-section-head"><span>الأمان</span><small>تعديل كلمة المرور — اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;roles?.after(wrap)||account?.after(wrap);wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
+  }
+  if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.innerHTML='<div class="ucv21-section-head"><span>السجل</span></div><button type="button" class="ucv21-history-toggle">عرض سجل الموظف</button>';history.before(hw);hw.appendChild(history);history.hidden=true;hw.querySelector('button').onclick=()=>{history.hidden=!history.hidden;hw.querySelector('button').textContent=history.hidden?'عرض سجل الموظف':'إخفاء سجل الموظف';};}
   try{panel.__ucv21Snapshot=profileSnapshot(panel,panel.__ucv21Employee);}catch(_){panel.__ucv21Snapshot=null;}
   if(!panel.querySelector('.ucv21-profile-footer')){
     const footer=document.createElement('footer');footer.className='ucv21-profile-footer';footer.innerHTML='<div class="ucv21-profile-msg" aria-live="polite"></div><button type="button" class="btn ucv21-cancel">إلغاء</button><button type="button" class="btn pr ucv21-save">حفظ التعديلات</button>';panel.appendChild(footer);
@@ -185,7 +238,7 @@ function tuneDialog(modal){const panel=modal.matches('.iuc')?modal.querySelector
 
 if(U&&typeof U.profile==='function'&&!U.__phase11fReferenceProfileWrapped){const baseProfile=U.profile;U.__phase11fReferenceProfileWrapped=true;U.profile=async employee=>{const out=await baseProfile.call(U,employee);const panel=document.querySelector('#iuc-profile > div');if(panel){panel.__ucv21Employee=employee;buildSinglePageProfile(panel,employee);}return out;};}
 
-function apply(){injectStyle();document.querySelectorAll('.ucv2-app').forEach(app=>{tuneHeader(app);tuneKpis(app);tuneGridHead(app);transformTable(app);});document.querySelectorAll('.iuc').forEach(tuneDialog);}
+function apply(){injectStyle();document.querySelectorAll('.ucv2-app').forEach(app=>{tuneHeader(app);tuneKpis(app);tuneGridHead(app);transformTable(app);transformMobileCards(app);});document.querySelectorAll('.iuc').forEach(tuneDialog);}
 let scheduled=false;function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;apply();});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
 new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});

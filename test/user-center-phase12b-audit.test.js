@@ -108,9 +108,15 @@ test('partial add-user failure is honest and cannot create a duplicate on retry'
 });
 
 test('account suspension requires an explicit second confirmation', () => {
+  // Phase12c-user-center-refero-v1 — approved UX change: the previous
+  // two-click label-swap confirmation is replaced with a real confirmation
+  // dialog (same setAccountStatus workflow, no new endpoint/permission).
   assert.match(profile, /تأكيد إيقاف الحساب/);
   assert.match(profile, /stopImmediatePropagation/);
-  assert.match(profile, /aria-label','اضغط مرة أخرى لتأكيد إيقاف الحساب'/);
+  assert.match(profile, /iuc-suspend-confirm/);
+  assert.match(profile, /ucv21-confirm-toggle/);
+  assert.match(profile, /الحالة الحالية/);
+  assert.match(profile, /الحالة بعد التأكيد/);
 });
 
 test('employee registry serializes real audit timestamps for the Last Updated column', () => {

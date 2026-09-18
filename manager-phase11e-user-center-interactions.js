@@ -44,11 +44,9 @@
       ${ROOT_SELECTOR} .uc2-secondary:active,
       .iuc .btn:active:not(:disabled){transform:translateY(0) scale(.985)}
 
-      ${ROOT_SELECTOR} .uc2-kpi{will-change:transform}
-      ${ROOT_SELECTOR} .uc2-kpi:hover{
-        transform:translateY(-3px);
-        box-shadow:0 24px 52px -36px rgba(0,0,0,.9),inset 0 1px rgba(255,255,255,.05)!important;
-      }
+      /* Institutional restraint: KPI hover signals via border/background tone
+         only (set in manager-phase11g-user-center-approved-skin.js) — no
+         lift/shadow motion on a static metric card. */
 
       ${ROOT_SELECTOR} .uc2-row{isolation:isolate}
       ${ROOT_SELECTOR} .uc2-row:hover{transform:translateX(-2px)}
