@@ -100,7 +100,7 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"></path></svg>
               الإعدادات والهوية
             </div>
-            <div onClick="{{ goUsers }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--tx2,#a9bdd4);cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6));color:var(--tx,#e9f1fb)">
+            <div data-manager-view="users" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11.5px;color:var(--tx2,#a9bdd4);cursor:pointer" style-hover="background:var(--ctl,rgba(20,32,54,0.6));color:var(--tx,#e9f1fb)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v6c0 4.4-3 8.2-7 9-4-.8-7-4.6-7-9V6z"></path></svg>
               الصلاحيات والسجل
             </div>
@@ -139,7 +139,7 @@
                   </div>
                 </sc-for>
               </div>
-              <div onClick="{{ goObservations }}" data-f="1" style="padding:10px;text-align:center;font-size:11px;font-weight:550;color:var(--popAcc,#4cc9f0);cursor:pointer">عرض كل البلاغات</div>
+              <div data-manager-view="observations" data-f="1" style="padding:10px;text-align:center;font-size:11px;font-weight:550;color:var(--popAcc,#4cc9f0);cursor:pointer">عرض كل البلاغات</div>
             </div>
           </sc-if>
         </div>
@@ -207,7 +207,7 @@
           </button>
         </div>
 
-        <a href="#" data-f="1" aria-current="page" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:600;color:var(--sbNavTx,#eaf4ff);background:var(--sbNavBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)));border:1px solid var(--sbNavBd,rgba(76,201,240,0.4))">
+        <a href="#" data-manager-view="home" data-f="1" aria-current="page" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:600;color:var(--sbNavTx,#eaf4ff);background:var(--sbNavBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)));border:1px solid var(--sbNavBd,rgba(76,201,240,0.4))">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex:none"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
           <span style="flex:1;display:var(--sbLabel,block)">الرئيسية</span>
         </a>
@@ -222,35 +222,35 @@
 
         <sc-if value="{{ expSvc }}" hint-placeholder-val="{{ true }}">
           <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
-            <a href="#" onClick="{{ goSurvey }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" data-manager-view="survey" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">إدارة الحصر الميداني</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
             </a>
-            <a href="#" onClick="{{ goLands }}" data-f="1" title="لوحة مدير إدارة الأراضي والممتلكات" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" data-manager-view="lands" data-f="1" title="لوحة مدير إدارة الأراضي والممتلكات" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--vio,#a78bfa)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">إدارة الأراضي والممتلكات</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
             </a>
-            <a href="#" onClick="{{ goMobility }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" data-manager-view="mobility" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
-              <span style="flex:1;display:var(--sbLabel,block)">إدارة الحركة والسير</span>
+              <span style="flex:1;display:var(--sbLabel,block)">إدارة حركة السير</span>
             </a>
           </div>
         </sc-if>
 
-        <a href="#" onClick="{{ goObservations }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+        <a href="#" data-manager-view="observations" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M4 5h16v11a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"></path><path d="M8 10h8M8 14h5"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">البلاغات</span>
           <span style="display:var(--sbLabel,block);font-size:9.5px;font-weight:600;color:var(--badTx,#f87171);padding:2px 7px;border-radius:6px;background:var(--badBg,rgba(239,68,68,0.12))">{{ inProgress }}</span>
         </a>
 
-        <a href="#" onClick="{{ goMap }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+        <a href="#" data-manager-view="map" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z"></path><path d="M9 4v14M15 6v14"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">الخريطة التشغيلية</span>
         </a>
 
-        <a href="#" onClick="{{ goReports }}" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+        <a href="#" data-manager-view="reports" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h4"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">التقارير</span>
         </a>
@@ -266,7 +266,7 @@
         <sc-if value="{{ expAdmin }}">
           <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
             <div aria-disabled="true" title="الهيكل الإداري قريباً" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx3,#7d8ea6);cursor:not-allowed"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span><span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--sbTx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--sbChip,rgba(122,164,224,0.1));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14))">قريباً</span></div>
-            <a href="#" onClick="{{ goUsers }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">مركز المستخدمين</span></a>
+            <a href="#" data-manager-view="users" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">مركز المستخدمين</span></a>
             <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهوية والشعار</span></a>
           </div>
         </sc-if>
@@ -286,12 +286,12 @@
       <div style="display:var(--sbLabel,block);padding:12px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.2));box-shadow:var(--sbSh,inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96))">
         <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2);text-align:center;margin-bottom:10px">الخدمات النشطة</div>
         <div style="display:flex;flex-direction:column;gap:7px">
-          <div onClick="{{ goSurvey }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--okBg,rgba(34,197,94,0.07));border:1px solid var(--okBd,rgba(34,197,94,0.24));cursor:pointer">
+          <div data-manager-view="survey" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--okBg,rgba(34,197,94,0.07));border:1px solid var(--okBd,rgba(34,197,94,0.24));cursor:pointer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ok,#22c55e)" stroke-width="1.6" style="flex:none"><path d="M12 21s-7-5.4-7-11a7 7 0 1 1 14 0c0 5.6-7 11-7 11z"></path><circle cx="12" cy="10" r="2.4"></circle></svg>
             <span style="flex:1;font-size:11px;font-weight:550;color:var(--tx,#dcefe2)">إدارة الحصر الميداني</span>
             <span style="display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:550;color:var(--okTx,#7ee2a8)"><span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.4s ease-in-out infinite"></span>نشط</span>
           </div>
-          <div onClick="{{ goLands }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--vioBg,rgba(139,92,246,0.06));border:1px solid var(--vioBd,rgba(139,92,246,0.22));cursor:pointer">
+          <div data-manager-view="lands" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;background:var(--vioBg,rgba(139,92,246,0.06));border:1px solid var(--vioBd,rgba(139,92,246,0.22));cursor:pointer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--vio,#a78bfa)" stroke-width="1.6" style="flex:none"><path d="M4 6h7v6H4zM13 8h7v10h-7zM4 14h7v6H4z"></path></svg>
             <span style="flex:1;font-size:11px;color:var(--tx,#e0dcf5)">إدارة الأراضي والممتلكات</span>
             <span style="display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:550;color:var(--vioTx,#c4b5fd)"><span style="width:6px;height:6px;border-radius:50%;background:var(--vio,#a78bfa);animation:hsrBreathe 2.4s ease-in-out infinite"></span>نشط</span>
@@ -1106,7 +1106,7 @@
 
           <div style="flex:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
             <div style="flex:1;min-width:220px">
-              <div style="font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--acc,#4cc9f0);margin-bottom:4px">الخدمات البلدية الرقمية · إدارة الحركة والسير</div>
+              <div style="font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--acc,#4cc9f0);margin-bottom:4px">الخدمات البلدية الرقمية · إدارة حركة السير</div>
               <h2 style="font-size:17px;margin:0;color:var(--tx,#f0f6ff)">{{ viewTitle }}</h2>
               <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0;line-height:1.7">{{ viewIntro }}</p>
             </div>
@@ -1190,6 +1190,18 @@
         </div>
       </sc-if>
 
+      <!-- PHASE13D.1 — User Center now mounts here, as a normal sibling
+           Manager view inside <main>, exactly like Field Survey/Lands/
+           Mobility above — never as a separate fixed-position overlay
+           outside <main>. This div is only a mount point: its real content
+           is built entirely by manager-phase11c/11d/11g (unchanged), which
+           still finds it via manager-dashboard-format.js's route guard
+           (also updated) and appends .ucv2-app into it exactly as before.
+           No User Center business logic lives in this template. -->
+      <sc-if value="{{ viewIsUsers }}">
+        <div class="manager-users-mount" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
+      </sc-if>
+
     </main>
   </div>
 
@@ -1231,84 +1243,6 @@
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
             <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">حسب الحالة</div><sc-for list="{{ cats }}" as="c" hint-placeholder-count="3"><div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="width:7px;height:7px;border-radius:50%;margin-top:4px;background:{{ c.col }}"></span><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ c.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ c.n }} {{ c.p }}</span></div></sc-for></div>
             <div style="padding:12px;border-radius:12px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12))"><div style="font-size:11px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:8px">فرق ومستخدمون نشطون</div><sc-for list="{{ depts }}" as="d" hint-placeholder-count="3"><div style="display:flex;gap:7px;font-size:10.5px;margin:6px 0"><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ d.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--tx,#e9f1fb)">{{ d.v }}</span></div></sc-for></div>
-          </div>
-        </sc-if>
-
-        <sc-if value="{{ viewIsUsers }}">
-          <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;flex:1;min-height:0">
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <sc-for list="{{ userCenterKpis }}" as="k" hint-placeholder-count="5">
-                <div style="flex:1;min-width:150px;padding:12px 14px;border-radius:14px;background:var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:5px">
-                  <span style="font-size:10px;color:var(--tx3,#7d8ea6);white-space:nowrap">{{ k.label }}</span>
-                  <span style="font-size:15px;font-weight:700;color:var(--tx,#e9f1fb);white-space:nowrap">{{ k.value }}</span>
-                </div>
-              </sc-for>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">
-              <div style="position:relative;width:var(--tSearch,232px)">
-                <input type="search" autocomplete="off" readonly onfocus="this.removeAttribute(&#39;readonly&#39;)" value="{{ tQ }}" onChange="{{ setTQ }}" aria-label="بحث" placeholder="{{ tPlaceholder }}" style="width:100%;height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px 0 32px;outline:none">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:10px;top:10px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-              </div>
-              <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-                <sc-for list="{{ tFilters }}" as="f" hint-placeholder-count="6">
-                  <button onClick="{{ f.on }}" data-f="1" style="height:30px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
-                </sc-for>
-                <button onClick="{{ openAddUser }}" data-f="1" style="height:30px;padding:0 14px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--btnTx,#eaf4ff);background:var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)));border:1px solid var(--btnBd,rgba(120,170,255,0.35))">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
-                  إضافة مستخدم
-                </button>
-                <button onClick="{{ openAddEmployee }}" data-f="1" style="height:30px;padding:0 14px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
-                  إضافة موظف بلا حساب
-                </button>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                <span style="font-size:10px;color:var(--tx3,#7d8ea6)">المنتج</span>
-                <sc-for list="{{ tProductFilters }}" as="f" hint-placeholder-count="4">
-                  <button onClick="{{ f.on }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
-                </sc-for>
-              </div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                <span style="font-size:10px;color:var(--tx3,#7d8ea6)">أهلية المركبة</span>
-                <sc-for list="{{ tVehicleFilters }}" as="f" hint-placeholder-count="3">
-                  <button onClick="{{ f.on }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
-                </sc-for>
-              </div>
-              <sc-if value="{{ hasDeptFilters }}">
-                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                  <span style="font-size:10px;color:var(--tx3,#7d8ea6)">القسم</span>
-                  <sc-for list="{{ tDeptFilters }}" as="f" hint-placeholder-count="4">
-                    <button onClick="{{ f.on }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ f.tx }};background:{{ f.bg }};border:1px solid {{ f.bd }}">{{ f.label }}</button>
-                  </sc-for>
-                </div>
-              </sc-if>
-            </div>
-
-            <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
-              <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
-                <sc-for list="{{ tCols }}" as="c" hint-placeholder-count="6">
-                  <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:{{ c.align }}">{{ c.label }}</span>
-                </sc-for>
-              </div>
-              <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
-                <sc-for list="{{ tRows }}" as="r" hint-placeholder-count="8">
-                  <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--ctl,rgba(20,32,54,0.5))">
-                    <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
-                      <span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span>
-                    </sc-for>
-                    <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;white-space:nowrap;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span>
-                  </div>
-                </sc-for>
-                <sc-if value="{{ tEmpty }}">
-                  <div style="padding:44px 20px;text-align:center;color:var(--thTx,#7d8ea6);font-size:12px">لا توجد نتائج مطابقة للتصفية الحالية</div>
-                </sc-if>
-              </div>
-              <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:center;gap:10px">
-                <span style="flex:1;font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ tCount }}</span>
-              </div>
-            </div>
           </div>
         </sc-if>
 
@@ -1973,7 +1907,7 @@ function resolveManagerProductEntitlements(u) {
 // this phase — exactly the 3 current products and 4 allowed assignment
 // types, never GENERAL_SUPERVISOR/department_head/administrative_affairs/
 // mobility_head/contractor or any other internal role name.
-const INSTITUTIONAL_PRODUCT_LABELS = { field: 'إدارة الحصر الميداني', lands: 'إدارة الأراضي والممتلكات', mobility: 'إدارة الحركة والسير' };
+const INSTITUTIONAL_PRODUCT_LABELS = { field: 'إدارة الحصر الميداني', lands: 'إدارة الأراضي والممتلكات', mobility: 'إدارة حركة السير' };
 const INSTITUTIONAL_ASSIGNMENT_TYPE_LABELS = { PRIMARY: 'تكليف أساسي', SECONDARY: 'تكليف إضافي', TEMPORARY: 'تكليف مؤقت', SECTION_HEAD: 'رئيس قسم' };
 const INSTITUTIONAL_ASSIGNMENT_STATUS_LABELS = { ACTIVE: 'نشط', ENDED: 'منتهٍ', CANCELLED: 'ملغى' };
 const INSTITUTIONAL_SCOPE_TYPE_LABELS = { PRODUCT: 'منتج', SECTION: 'قسم' };
@@ -2314,6 +2248,26 @@ class Component extends DCLogic {
       setTimeout(() => this._opMap?.invalidateSize(), 80);
     };
     document.addEventListener('fullscreenchange', this.onFullscreen);
+    // PHASE13D.1 — bridge for the persistent, outside-React sidebar
+    // navigation guard installed once in manager-dashboard-format.js (see
+    // its own comment for the proven root cause). That listener never
+    // calls business logic directly; it only dispatches this event, kept
+    // completely decoupled from any particular render/DOM state.
+    this.onNavigateRequest = e => {
+      const route = e.detail?.view;
+      const routes = {
+        home: () => this.goHome(),
+        survey: () => this.goRoute('survey'),
+        lands: () => this.goLandsGateway(),
+        mobility: () => this.goRoute('mobility'),
+        map: () => this.openMap(),
+        reports: () => this.openView('reports'),
+        observations: () => this.openView('observations'),
+        users: () => this.openView('users'),
+      };
+      routes[route]?.();
+    };
+    window.addEventListener('smart-hsr:navigate-request', this.onNavigateRequest);
     this.publishManagerView();
   }
   componentWillUnmount() {
@@ -2321,6 +2275,7 @@ class Component extends DCLogic {
     document.removeEventListener('mousedown', this.onDoc);
     window.removeEventListener('smart-hsr-manager-adapter-ready', this.onAdapterReady);
     document.removeEventListener('fullscreenchange', this.onFullscreen);
+    window.removeEventListener('smart-hsr:navigate-request', this.onNavigateRequest);
     window.SmartHSRManagerAdapter?.disconnect(this);
     if (this._ro) this._ro.disconnect();
     clearInterval(this._clock);
@@ -2792,7 +2747,7 @@ class Component extends DCLogic {
 
     const landsKpi = this.liveLandsKpi || { total: '—', review: '—', needsWork: '—', approved: '—', complete: '—', avgPercent: '—', missingDocs: '—', noLocation: '—' };
 
-    // إدارة الحركة والسير Manager executive view (Phase 06) — real data only,
+    // إدارة حركة السير Manager executive view (Phase 06) — real data only,
     // published by manager-mobility-adapter.js onto this.liveMobilityXxx,
     // exactly the way manager-lands-adapter.js publishes onto
     // this.liveLandsXxx above. Municipality Manager is never one of the
@@ -3206,11 +3161,11 @@ class Component extends DCLogic {
       // Lands); Phase 03B's combined access is added afterwards via the
       // service-editing drawer (submitServiceChange), which can grant the
       // second service without removing the first.
-      // PHASE 06A hotfix — إدارة الحركة والسير (Mobility) is now its own
+      // PHASE 06A hotfix — إدارة حركة السير (Mobility) is now its own
       // independent creation kind, never mixed into "حصر ميداني" (Field)
       // any more — see auRoleOptions below and submitAddUser().
       auKindOptions: [
-        { label: 'حصر ميداني', kind: 'field' }, { label: 'إدارة الحركة والسير', kind: 'mobility' }, { label: 'حصر أراضي', kind: 'lands' }
+        { label: 'حصر ميداني', kind: 'field' }, { label: 'إدارة حركة السير', kind: 'mobility' }, { label: 'حصر أراضي', kind: 'lands' }
       ].map(o => pill(o.label, st.auKind === o.kind, () => this.setState({ auKind: o.kind, auRole: o.kind === 'lands' ? 'lands_employee' : o.kind === 'mobility' ? 'employee' : 'employee' }))),
       auRoleOptions: (st.auKind === 'lands' ? [
         { label: 'موظف أراضي', role: 'lands_employee' }, { label: 'رئيس قسم أراضي', role: 'lands_department_manager' }
@@ -3244,7 +3199,7 @@ class Component extends DCLogic {
       ].map(o => pill(o.label, st.svcFieldRole === o.role, () => this.setState({ svcFieldRole: o.role }))),
       svcMobilityEnabled: st.svcMobilityEnabled,
       toggleSvcMobility: () => this.setState({ svcMobilityEnabled: !st.svcMobilityEnabled }),
-      ...toggleBtnProps('svcMobilityToggle', st.svcMobilityEnabled, '✓ الحركة والسير مفعّل', 'تفعيل الحركة والسير'),
+      ...toggleBtnProps('svcMobilityToggle', st.svcMobilityEnabled, '✓ حركة السير مفعّل', 'تفعيل حركة السير'),
       svcMobilityRoleOptions: [
         { label: 'مدير حركة', role: 'mobility_head' }, { label: 'رئيس قسم', role: 'department_head' },
         { label: 'شؤون إدارية', role: 'administrative_affairs' }, { label: 'موظف', role: 'employee' }
@@ -3336,7 +3291,11 @@ class Component extends DCLogic {
       // rendered inside <main> itself (see viewIsFieldSurvey below) — it
       // must never also open the shared quick-view modal/backdrop used by
       // the lighter Observations/Reports/Users/Incidents panels.
-      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility',
+      // PHASE13D.1 — 'users' removed from the shared modal-overlay condition:
+      // User Center is no longer presented through manager-view-overlay's
+      // fixed-position dialog (see the new viewIsUsers block inside <main>
+      // instead). Reports/incidents/observations are unaffected.
+      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'users',
       // This template engine's {{ }} expressions resolve only a single
       // property/equality/negation — it has no && / || operator support
       // (see support.js's resolve()/resolvePath()). A compound
@@ -3346,10 +3305,15 @@ class Component extends DCLogic {
       // Lands instead of hiding it — so the combined check is computed once
       // here as its own plain boolean and referenced as a single identifier,
       // exactly like every other sc-if in this file already does.
-      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility',
+      // PHASE13D.1 — 'users' added: Home content must actually unmount while
+      // User Center is open now that both live inside the same <main>,
+      // exactly like fieldSurvey/lands/mobility already do — this is what
+      // stops the previous dashboard from still being visible/mounted
+      // underneath the open User Center view.
+      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'users',
       viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands', viewIsMobility: st.view === 'mobility',
-      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : st.view === 'mobility' ? 'لوحة مدير إدارة الحركة والسير' : 'البلاغات',
-      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة الحركة والسير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : st.view === 'mobility' ? 'إشراف تنفيذي للقراءة فقط على إدارة الحركة والسير — بيانات حية من نظام الحركة الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
+      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : st.view === 'mobility' ? 'لوحة مدير إدارة حركة السير' : 'البلاغات',
+      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة حركة السير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : st.view === 'mobility' ? 'إشراف تنفيذي للقراءة فقط على إدارة حركة السير — بيانات حية من نظام الحركة الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
       viewEmpty: ((st.view === 'users' || st.view === 'incidents' || st.view === 'fieldSurvey') ? !tRows.length : !viewObservations.length),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
@@ -3424,7 +3388,7 @@ class Component extends DCLogic {
         { label: 'الرئيسية', tag: '', on: () => this.goHome() },
         { label: 'إدارة الحصر الميداني', tag: '', on: () => this.goRoute('survey') },
         { label: 'إدارة الأراضي والممتلكات', tag: '', on: () => this.goLandsGateway() },
-        { label: 'إدارة الحركة والسير', tag: '', on: () => this.goRoute('mobility') },
+        { label: 'إدارة حركة السير', tag: '', on: () => this.goRoute('mobility') },
         { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.openView('observations') },
         { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap() },
         { label: 'التقارير', tag: '', on: () => this.openView('reports') },
@@ -3546,7 +3510,7 @@ class Component extends DCLogic {
     this.flash('هذا المسار غير متاح حتى يتم التحقق من ربطه التشغيلي.');
   }
 
-  // PHASE 06 — real إدارة الحركة والسير Manager executive gateway: opens the
+  // PHASE 06 — real إدارة حركة السير Manager executive gateway: opens the
   // dedicated, native, full-page Mobility executive view inside this same
   // authenticated session (view:'mobility'), exactly the way
   // goLandsGateway() opens Lands'. Municipality Manager is never treated as

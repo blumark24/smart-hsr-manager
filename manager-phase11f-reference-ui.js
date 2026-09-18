@@ -119,11 +119,11 @@ function tuneKpis(app) {
   // as a restrained monochrome SVG mask-image per card position (.ucv2-kpi-icon:before) —
   // .ucv2-kpi-icon is font-size:0 there, so this layer only ever needs to set the label text.
   const cards = Array.from(app.querySelectorAll('.ucv2-kpi'));
-  const labels = ['إجمالي الموظفين','الحسابات النشطة','بدون حساب / موقوف','الحصر الميداني','الأراضي والممتلكات','الحركة والسير'];
+  const labels = ['إجمالي الموظفين','الحسابات النشطة','بدون حساب / موقوف','الحصر الميداني','الأراضي والممتلكات','حركة السير'];
   cards.forEach((card, i) => {const small=card.querySelector('small');if(small&&labels[i])small.textContent=labels[i];});
 }
 
-const SERVICE_DOT_LABELS = { field:'الحصر الميداني', lands:'الأراضي والممتلكات', mobility:'الحركة والسير' };
+const SERVICE_DOT_LABELS = { field:'الحصر الميداني', lands:'الأراضي والممتلكات', mobility:'حركة السير' };
 function serviceDot(enabled, type) {
   const span=document.createElement('span');span.className=`ucv21-service-dot${enabled?` on ${type}`:''}`;span.textContent=enabled?'●':'—';
   const label=`${SERVICE_DOT_LABELS[type]||type}: ${enabled?'مفعّلة':'غير مفعّلة'}`;span.setAttribute('aria-label',label);span.title=label;

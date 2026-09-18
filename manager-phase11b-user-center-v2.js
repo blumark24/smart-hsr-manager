@@ -148,7 +148,7 @@
     const mobility = parseProductCount(productText, ['حركة','الحركة']);
     const data = [
       ['إجمالي الموظفين', total, ''],['الحسابات النشطة', active, ''],['بدون حساب / موقوف', inactive, ''],
-      ['الحصر الميداني', field, 'service'],['الأراضي والممتلكات', lands, 'service'],['الحركة والسير', mobility, 'service']
+      ['الحصر الميداني', field, 'service'],['الأراضي والممتلكات', lands, 'service'],['حركة السير', mobility, 'service']
     ];
     const grid = document.createElement('div');
     grid.className = 'uc2-kpis';

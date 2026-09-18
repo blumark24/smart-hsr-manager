@@ -48,7 +48,9 @@ test('route guard and directory renderer recognize the Manager users heading', (
   const title = manager.match(/st\.view === 'users' \? '(مركز المستخدمين)'/)?.[1];
   assert.equal(title, 'مركز المستخدمين');
   for (const source of [managerFormat, center]) {
-    assert.match(source, /document\.querySelector\('\.manager-view-overlay > \.manager-view-panel'\)/);
+    // PHASE13D.1 — both root-finders now target the normal in-<main>
+    // Manager view mount point, not the shared modal-overlay panel.
+    assert.match(source, /document\.querySelector\('\.manager-users-mount'\)/);
     const headingPattern = source.match(/const heading = headings\.find\([^\n]*?&& \/([^/]+)\/\.test\(clean\(el\.textContent\)\)/)?.[1];
     assert.ok(headingPattern, 'User Center heading selector exists');
     assert.match(title, new RegExp(headingPattern));

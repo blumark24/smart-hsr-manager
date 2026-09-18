@@ -32,7 +32,10 @@ test('the Manager shell (header/sidebar markup, locked product names, sidebar or
   // Locked names must survive byte-for-byte.
   assert.match(manager, /إدارة الحصر الميداني/);
   assert.match(manager, /إدارة الأراضي والممتلكات/);
-  assert.match(manager, /إدارة الحركة والسير/);
+  // PHASE13D-CLOSEOUT — approved product decision: normalized "إدارة الحركة
+  // والسير" to "إدارة حركة السير" (label-only, no technical/role-key change).
+  assert.match(manager, /إدارة حركة السير/);
+  assert.doesNotMatch(manager, /إدارة الحركة والسير/);
   assert.match(manager, /خدمات البلدية الرقمية/);
   // The sidebar's مركز المستخدمين entry still sits at the same onClick
   // target (goUsers) it always did — only its label text changed.

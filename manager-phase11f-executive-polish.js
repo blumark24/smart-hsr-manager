@@ -148,7 +148,7 @@ function polishMaps(){
 }
 
 function polishProducts(){
-  [['إدارة الحصر الميداني','field'],['إدارة الأراضي والممتلكات','lands'],['إدارة الحركة والسير','mobility']].forEach(([label,key])=>{
+  [['إدارة الحصر الميداني','field'],['إدارة الأراضي والممتلكات','lands'],['إدارة حركة السير','mobility']].forEach(([label,key])=>{
     document.querySelectorAll('a,[role="button"],button').forEach(node=>{if(clean(node.textContent)===label){node.classList.add('hsr-service-link');node.dataset.hsrProduct=key;node.setAttribute('aria-label',`فتح ${label}`);}});
   });
 }

@@ -161,7 +161,6 @@
         root.classList.remove('ucv2-route-guard-host', 'ucv2-host');
         delete root.dataset.smartHsrApprovedOwner;
         delete root.dataset.ucv2Scrolled;
-        root.parentElement?.classList.remove('ucv2-shell-overlay');
       }
       restoreBackground();
       const restoreY = preOpenScrollY;
@@ -171,7 +170,12 @@
 
     const findRoot = () => {
       if (!activeView()) return null;
-      const panel = document.querySelector('.manager-view-overlay > .manager-view-panel');
+      // PHASE13D.1 — User Center's mount point is now a normal sibling view
+      // inside <main> (see manager.html's viewIsUsers block), not the
+      // shared manager-view-overlay modal reports/incidents/observations
+      // still use. The heading-search fallback below is unaffected and
+      // stays as a defensive backup.
+      const panel = document.querySelector('.manager-users-mount');
       if (panel) return panel;
       const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,[role="heading"]'));
       const heading = headings.find(el => !el.closest('.ucv2-app') && /مركز إدارة المستخدمين|مركز المستخدمين|إدارة المستخدمين|المستخدمون والصلاحيات/.test(clean(el.textContent)));
@@ -194,13 +198,12 @@
       if (firstClaim) {
         root.dataset.smartHsrApprovedOwner = 'true';
         root.classList.add('ucv2-route-guard-host');
-        root.parentElement?.classList.add('ucv2-shell-overlay');
-        // The host is fixed-position, reserving top:92px on the assumption the
-        // real header sits there. That only holds if the page itself is
-        // scrolled to top; the manager route is a long single-page layout, and
-        // this dialog can be opened from a link far down that page, leaving
-        // the header scrolled out of view and exposing whatever content was
-        // at the top of the viewport through the gap instead.
+        // PHASE13D.1 — root.parentElement is now <main> itself (shared by
+        // every Manager view), not a dedicated modal backdrop, so it must
+        // never be classed/styled as one any more; ucv2-shell-overlay's
+        // background/pointer-events overrides do not belong on <main>.
+        // root is scrolled to the top on open below, same as before —
+        // still correct for a normal single-page-scroll Manager view.
         preOpenScrollY = window.scrollY;
         closedRoot = root;
         window.scrollTo(0, 0);
@@ -265,6 +268,51 @@
   };
 
   installUserCenterRouteGuard();
+
+  // PHASE13D.1 — persistent, outside-React primary sidebar navigation guard.
+  //
+  // Root cause (proven via live instrumentation, not assumed): under rapid
+  // repeated navigation, the primary sidebar's compiled template nodes can
+  // intermittently render with their RAW, unprocessed onClick="{{ goX }}"
+  // template text landing on the live DOM as a literal native `onclick`
+  // HTML attribute — never patched into a real React onClick prop. The
+  // browser then executes that literal string as inline JS, which is a
+  // bare `{ goX }` block statement referencing an undeclared identifier,
+  // throwing `ReferenceError: goX is not defined` instead of navigating
+  // (confirmed live: captured outerHTML showed `onclick="{{ goUsers }}"`
+  // as an actual attribute at the exact moment of failure). Because the
+  // link's href="#" was never prevented in that broken state, the browser
+  // falls through to its default action, which can itself destabilize the
+  // page further.
+  //
+  // This does not patch that compiler race directly (unproven exact
+  // mechanism, and support.js is shared by the entire app — too large a
+  // blast radius to touch blindly). Instead it removes the failure mode
+  // entirely for primary sidebar navigation: a single delegated listener,
+  // registered once, in the capture phase, directly on document — so it
+  // always runs and always wins BEFORE the click can ever reach a
+  // template-compiled element's own (possibly-broken) handler, regardless
+  // of that element's render state. `data-manager-view` is a static HTML
+  // attribute with no executable behavior of its own, so there is nothing
+  // in this path left for a render race to corrupt.
+  //
+  // Decoupled from React on purpose: this listener only dispatches a plain
+  // CustomEvent; the real navigation calls (goHome/goRoute/openView/...)
+  // still live entirely inside the ManagerApp component (see its
+  // componentDidMount bridge listener) — no business logic duplicated
+  // here, no new authorization surface, no backend contract touched.
+  const installManagerNavigationGuard = () => {
+    if (window.__smartHsrManagerNavGuard) return;
+    window.__smartHsrManagerNavGuard = true;
+    document.addEventListener('click', event => {
+      const target = event.target && event.target.closest ? event.target.closest('[data-manager-view]') : null;
+      if (!target) return;
+      event.preventDefault();
+      event.stopPropagation();
+      window.dispatchEvent(new CustomEvent('smart-hsr:navigate-request', { detail: { view: target.dataset.managerView } }));
+    }, true);
+  };
+  installManagerNavigationGuard();
 
   // The real manager route is the single presentation owner for the approved
   // User Center. Load the exact approved Phase 11 chain here, in order, so

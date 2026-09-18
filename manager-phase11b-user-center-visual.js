@@ -206,7 +206,7 @@
     const serviceCards = [
       makeServiceCard('الحصر الميداني', counts.field, 'field'),
       makeServiceCard('الأراضي والممتلكات', counts.lands, 'lands'),
-      makeServiceCard('الحركة والسير', counts.mobility, 'mobility')
+      makeServiceCard('حركة السير', counts.mobility, 'mobility')
     ];
     serviceCards.forEach(card => {
       card.addEventListener('click', () => {

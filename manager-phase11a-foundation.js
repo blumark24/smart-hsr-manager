@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const SERVICE_LABELS = ['إدارة الحصر الميداني','إدارة الأراضي والممتلكات','إدارة الحركة والسير'];
+  const SERVICE_LABELS = ['إدارة الحصر الميداني','إدارة الأراضي والممتلكات','إدارة حركة السير'];
   const HOME_LABELS = ['الرئيسية', 'لوحة المدير'];
   const USER_CENTER_LABELS = ['مركز المستخدمين','مركز إدارة المستخدمين','الصلاحيات والسجل','فتح مركز المستخدمين','فتح مركز إدارة المستخدمين'];
   const SHEETJS_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
@@ -30,7 +30,7 @@
   };
 
   const patchMobilityModalCollision = () => {
-    const duplicate = document.querySelector('section[role="dialog"][aria-label="لوحة مدير إدارة الحركة والسير"]');
+    const duplicate = document.querySelector('section[role="dialog"][aria-label="لوحة مدير إدارة حركة السير"]');
     if (!duplicate) return;
     const overlay = duplicate.parentElement;
     if (!overlay || overlay.dataset.phase11aSuppressed === 'mobility-duplicate-modal') return;

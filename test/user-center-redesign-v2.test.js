@@ -58,8 +58,17 @@ test('preview is a passive harness and does not inject a second User Center chai
 test('approved skin is CSS-only and preserves manager header/sidebar outside User Center', () => {
   assert.match(approvedSkin, /FINAL VISUAL OWNER/);
   assert.match(approvedSkin, /\.ucv2-host/);
-  assert.match(approvedSkin, /right:calc\(var\(--sbW,232px\) \+ 28px\)/);
-  assert.match(approvedSkin, /top:92px/);
+  // PHASE13D.1 — User Center now mounts as a normal sibling Manager view
+  // inside <main> (manager.html's viewIsUsers block, alongside Field
+  // Survey/Lands/Mobility), not a fixed-position panel with hand-tuned
+  // sidebar/header gap offsets. .ucv2-host is position:static; header and
+  // sidebar are preserved simply because they live outside <main>
+  // entirely and are never touched by User Center's own markup or CSS —
+  // not because a floating panel was positioned to leave a gap for them.
+  assert.match(approvedSkin, /\.ucv2-host\{\s*position:static!important;/);
+  assert.doesNotMatch(approvedSkin, /right:calc\(var\(--sbW,232px\) \+ 28px\)/);
+  assert.doesNotMatch(approvedSkin, /\.ucv2-host\{\s*position:fixed!important;/);
+  assert.doesNotMatch(approvedSkin, /top:92px/);
   // Phase12c-user-center-refero-v1 — institutional-restraint pass: decorative
   // radial blooms on .ucv2-app are removed in favor of a flat surface
   // (Refero/Apple "geometry over atmosphere" restraint), and the single-page
@@ -127,7 +136,9 @@ test('reference UI carries the approved Arabic hierarchy and edit modal title', 
   assert.match(referenceUi, /إجمالي الموظفين/);
   assert.match(referenceUi, /الحسابات النشطة/);
   assert.match(referenceUi, /الأراضي والممتلكات/);
-  assert.match(referenceUi, /الحركة والسير/);
+  // PHASE13D-CLOSEOUT — normalized service label (see manager-user-center-ui.test.js).
+  assert.match(referenceUi, /حركة السير/);
+  assert.doesNotMatch(referenceUi, /الحركة والسير/);
   assert.match(referenceUi, /تعديل المستخدم/);
   assert.match(referenceUi, /تحديث بيانات المستخدم والصلاحيات/);
 });
@@ -176,6 +187,8 @@ test('executive handoff polish covers observations, maps, brand and three produc
   assert.match(executivePolish, /smart-hsr-mark/);
   assert.match(executivePolish, /إدارة الحصر الميداني/);
   assert.match(executivePolish, /إدارة الأراضي والممتلكات/);
-  assert.match(executivePolish, /إدارة الحركة والسير/);
+  // PHASE13D-CLOSEOUT — normalized service label (see manager-user-center-ui.test.js).
+  assert.match(executivePolish, /إدارة حركة السير/);
+  assert.doesNotMatch(executivePolish, /إدارة الحركة والسير/);
   assert.doesNotMatch(executivePolish, /L\.map\s*\(|new\s+L\.Map|\/api\/|firebase|firestore|setPassword/);
 });
