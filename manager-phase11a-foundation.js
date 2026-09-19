@@ -207,6 +207,23 @@
     if (!target) return;
     const label = (target.textContent || '').replace(/\s+/g, ' ').trim();
     if (HOME_LABELS.some(home => label === home || label.includes(home))) {
+      // PHASE13D.3 STEP 1B — this used to unconditionally force a full
+      // window.location.assign() reload for any Home-labeled click, a
+      // pre-Phase13D.1 fallback from before manager.html's primary sidebar
+      // routes had a real SPA navigation path. installManagerNavigationGuard()
+      // (manager-dashboard-format.js) now owns every [data-manager-view]
+      // route via a proper capture-phase listener + smart-hsr:navigate-request
+      // + the React bridge's goHome(). Both listeners are registered on
+      // document in the capture phase, so this handler still runs right
+      // after that one on the same click (stopPropagation() only stops
+      // propagation to other nodes, not a second listener on the same
+      // node) — without this guard, every already-successful SPA
+      // navigation home was immediately followed by a redundant full page
+      // reload that raced it, corrupting first-click reliability. Any
+      // Home-labeled element NOT yet covered by the delegated system (no
+      // data-manager-view ancestor) keeps the exact original fallback
+      // behavior unchanged.
+      if (target.closest('[data-manager-view]')) return;
       event.preventDefault(); event.stopPropagation(); const current = new URL(window.location.href); current.hash=''; current.pathname=current.pathname.replace(/[^/]*$/,'manager.html'); window.location.assign(current.toString()); return;
     }
     if (SERVICE_LABELS.some(service => label.includes(service))) setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),0);
