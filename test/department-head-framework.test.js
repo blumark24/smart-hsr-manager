@@ -53,3 +53,13 @@ test('no fabricated operational observation counts are rendered', () => {
   assert.match(page, /مؤشرات البلاغات\/الملاحظات الميدانية لن تُعرض كأرقام/);
   assert.doesNotMatch(page, /fake|demo data|بيانات تجريبية/i);
 });
+
+
+test('department head framework includes a real basemap map surface without fabricated operational markers', () => {
+  assert.match(page, /id="departmentMapMini"/);
+  assert.match(page, /id="departmentMapFull"/);
+  assert.match(page, /tile\.openstreetmap\.org/);
+  assert.match(page, /server\.arcgisonline\.com/);
+  assert.match(page, /لا توجد نقاط أو مواقع تجريبية/);
+  assert.doesNotMatch(page, /new maplibregl\.Marker/);
+});
