@@ -224,6 +224,14 @@
       // data-manager-view ancestor) keeps the exact original fallback
       // behavior unchanged.
       if (target.closest('[data-manager-view]')) return;
+      // WAVE 2B.1 -- the mobile drawer's Home row (manager.html mobNav) has
+      // its own working onClick=goHome() SPA handler but is plain markup,
+      // not a [data-manager-view] link, so it hit this same reload path.
+      // data-mnav-home="1" is a second, equally narrow opt-out scoped to
+      // that one covered element only -- every other Home-labeled element
+      // (including any genuinely external one) is unaffected, and the
+      // original data-manager-view guard above is untouched.
+      if (target.closest('[data-mnav-home="1"]')) return;
       event.preventDefault(); event.stopPropagation(); const current = new URL(window.location.href); current.hash=''; current.pathname=current.pathname.replace(/[^/]*$/,'manager.html'); window.location.assign(current.toString()); return;
     }
     if (SERVICE_LABELS.some(service => label.includes(service))) setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),0);

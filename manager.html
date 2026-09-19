@@ -207,7 +207,7 @@
           </button>
         </div>
 
-        <a href="#" data-manager-view="home" data-f="1" aria-current="page" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:600;color:var(--sbNavTx,#eaf4ff);background:var(--sbNavBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)));border:1px solid var(--sbNavBd,rgba(76,201,240,0.4))">
+        <a href="#" data-manager-view="home" data-f="1" aria-current="{{ navHomeCurrent }}" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;font-weight:600;color:{{ navHomeTx }};background:{{ navHomeBg }};border:1px solid {{ navHomeBd }}">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex:none"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
           <span style="flex:1;display:var(--sbLabel,block)">الرئيسية</span>
         </a>
@@ -222,35 +222,35 @@
 
         <sc-if value="{{ expSvc }}" hint-placeholder-val="{{ true }}">
           <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
-            <a href="#" data-manager-view="survey" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" data-manager-view="survey" data-f="1" aria-current="{{ navSurveyCurrent }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:{{ navSurveyTx }};background:{{ navSurveyBg }};border:1px solid {{ navSurveyBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">إدارة الحصر الميداني</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
             </a>
-            <a href="#" data-manager-view="lands" data-f="1" title="لوحة مدير إدارة الأراضي والممتلكات" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" data-manager-view="lands" data-f="1" title="لوحة مدير إدارة الأراضي والممتلكات" aria-current="{{ navLandsCurrent }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:{{ navLandsTx }};background:{{ navLandsBg }};border:1px solid {{ navLandsBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--vio,#a78bfa)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">إدارة الأراضي والممتلكات</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:var(--sbLabel,block);opacity:.5"><path d="M10 6 4 12l6 6M4 12h16"></path></svg>
             </a>
-            <a href="#" data-manager-view="mobility" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" data-manager-view="mobility" data-f="1" aria-current="{{ navMobilityCurrent }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:{{ navMobilityTx }};background:{{ navMobilityBg }};border:1px solid {{ navMobilityBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">إدارة حركة السير</span>
             </a>
           </div>
         </sc-if>
 
-        <a href="#" data-manager-view="observations" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+        <a href="#" data-manager-view="observations" data-f="1" aria-current="{{ navObsCurrent }}" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:{{ navObsTx }};background:{{ navObsBg }};border:1px solid {{ navObsBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M4 5h16v11a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"></path><path d="M8 10h8M8 14h5"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">البلاغات</span>
           <span style="display:var(--sbLabel,block);font-size:9.5px;font-weight:600;color:var(--badTx,#f87171);padding:2px 7px;border-radius:6px;background:var(--badBg,rgba(239,68,68,0.12))">{{ inProgress }}</span>
         </a>
 
-        <a href="#" data-manager-view="map" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+        <a href="#" data-manager-view="map" data-f="1" aria-current="{{ navMapCurrent }}" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:{{ navMapTx }};background:{{ navMapBg }};border:1px solid {{ navMapBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z"></path><path d="M9 4v14M15 6v14"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">الخريطة التشغيلية</span>
         </a>
 
-        <a href="#" data-manager-view="reports" data-f="1" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+        <a href="#" data-manager-view="reports" data-f="1" aria-current="{{ navReportsCurrent }}" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:{{ navReportsTx }};background:{{ navReportsBg }};border:1px solid {{ navReportsBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h4"></path></svg>
           <span style="flex:1;display:var(--sbLabel,block)">التقارير</span>
         </a>
@@ -266,7 +266,7 @@
         <sc-if value="{{ expAdmin }}">
           <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
             <div aria-disabled="true" title="الهيكل الإداري قريباً" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx3,#7d8ea6);cursor:not-allowed"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span><span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--sbTx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--sbChip,rgba(122,164,224,0.1));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14))">قريباً</span></div>
-            <a href="#" data-manager-view="users" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">مركز المستخدمين</span></a>
+            <a href="#" data-manager-view="users" data-f="1" aria-current="{{ navUsersCurrent }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:{{ navUsersTx }};background:{{ navUsersBg }};border:1px solid {{ navUsersBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">مركز المستخدمين</span></a>
             <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهوية والشعار</span></a>
           </div>
         </sc-if>
@@ -607,6 +607,95 @@
         </section>
       </sc-if>
 
+      </sc-if>
+
+      <!-- WAVE 2B — NAV-01: dedicated Manager Map route (view:'map'). Reuses
+           the exact map-shell card (canvas, basemap toggle, search/filter,
+           zoom, fullscreen, empty state, legend, and the already-approved
+           "فتح الخريطة التشغيلية الكاملة" CTA) verbatim from Home's own
+           embedded map — same ref callbacks (mapShellRef/mapRef), same
+           precomputed props (mapPointCount/mapFilter/mapEmpty/etc.), same
+           continuity CTA (openCanonicalMap → openCanonicalOperationalMap()
+           → /operational-map.html). Home's version and this version are
+           mutually exclusive (viewIsHomeContent now excludes 'map'), so the
+           shared ref is never bound to two mounted containers at once —
+           the same safe pattern fieldSurvey/lands/mobility already use. -->
+      <sc-if value="{{ viewIsMap }}">
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+
+          <div style="flex:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
+            <div style="flex:1;min-width:220px">
+              <div style="font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--acc,#4cc9f0);margin-bottom:4px">مركز القيادة · الخريطة التشغيلية</div>
+              <h2 style="font-size:17px;margin:0;color:var(--tx,#f0f6ff)">{{ viewTitle }}</h2>
+              <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0;line-height:1.7">{{ viewIntro }}</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button onClick="{{ closeView }}" data-f="1" style="height:34px;padding:0 14px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.14))">
+                <span>العودة إلى لوحة مدير البلدية</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1;min-height:420px;position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+            <div ref="{{ mapRef }}" class="hsr-manager-map-canvas" aria-label="الخريطة التنفيذية للبلاغات الموثّقة" style="position:absolute;inset:0;background:var(--twinBg,#03060d)"></div>
+
+            <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8)">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
+              <div style="display:flex;flex-direction:column;line-height:1.35">
+                <strong style="font-size:11px;color:var(--tx,#e9f1fb)">المشهد المكاني التنفيذي</strong>
+                <span style="font-size:9px;color:var(--glassTx,#a9c0d8)">المعروض مكانيًا: {{ mapPointCount }} بلاغ موثّق</span>
+              </div>
+            </div>
+
+            <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+              <div role="group" aria-label="نوع الخريطة" style="display:flex;gap:2px;padding:3px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px))">
+                <button onClick="{{ setMapStreet }}" data-f="1" class="{{ mapStreetClass }}" aria-label="خريطة الشوارع">شوارع</button>
+                <button onClick="{{ setMapSatellite }}" data-f="1" class="{{ mapSatelliteClass }}" aria-label="صور الأقمار الصناعية">أقمار</button>
+              </div>
+              <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز — احتواء كل البلاغات الموثّقة" title="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+              </button>
+              <button onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" title="ملء الشاشة" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
+              </button>
+            </div>
+
+            <div class="hsr-manager-map-overlay" style="position:absolute;top:68px;left:12px;display:flex;flex-direction:column;gap:8px">
+              <div style="width:196px;position:relative">
+                <input aria-label="ابحث في البلاغات الموثّقة" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              </div>
+              <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}" style="width:196px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#dbe6f5);font-size:10.5px;padding:0 8px;outline:none">
+                <option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option>
+              </select>
+              <div style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:34px">
+                <button onClick="{{ zIn }}" data-f="1" aria-label="تكبير" style="width:34px;height:32px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer">+</button>
+                <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
+                <button onClick="{{ zOut }}" data-f="1" aria-label="تصغير" style="width:34px;height:32px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer">−</button>
+              </div>
+            </div>
+
+            <sc-if value="{{ mapEmpty }}">
+              <div class="hsr-manager-map-overlay" style="position:absolute;inset:0;display:{{ mapEmptyDisplay }};align-items:center;justify-content:center;pointer-events:none;padding:60px 24px;text-align:center">
+                <div style="max-width:300px;padding:13px 16px;border-radius:12px;background:var(--glass,rgba(8,14,26,0.84));border:1px solid var(--glassBd,rgba(122,164,224,0.2));color:var(--glassTx,#c3d6ea);font-size:11px;line-height:1.7">{{ mapEmptyText }}</div>
+              </div>
+            </sc-if>
+
+            <div class="hsr-manager-map-overlay hsr-exec-map-legend" style="position:absolute;bottom:12px;left:14px;display:flex;align-items:center;gap:8px">
+              <div style="display:flex;align-items:center;gap:13px;padding:7px 14px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.18));backdrop-filter:var(--blur,blur(16px))">
+                <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444"></span>قيد الانتظار</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#f5a524"></span>قيد المعالجة</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd)"><span style="width:8px;height:8px;border-radius:50%;background:#22c55e"></span>مكتمل</span>
+              </div>
+            </div>
+
+            <button onClick="{{ openCanonicalMap }}" data-f="1" class="hsr-manager-map-overlay hsr-open-map-cta" aria-label="فتح الخريطة التشغيلية الكاملة" style="position:absolute;bottom:12px;right:12px;height:34px;padding:0 13px;border-radius:9px;background:var(--btn,#12855a);border:1px solid var(--btnBd,rgba(9,80,52,.45));color:var(--btnTx,#fff);display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;cursor:pointer;box-shadow:0 5px 16px rgba(8,65,43,.25)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3h7v7M21 3l-9 9"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
+              فتح الخريطة التشغيلية
+            </button>
+          </div>
+        </div>
       </sc-if>
 
       <sc-if value="{{ viewIsFieldSurvey }}">
@@ -1299,7 +1388,7 @@
           <span style="font-size:9px;color:var(--tx3,#7d8ea6)">سمارت حصر</span>
         </div>
         <sc-for list="{{ mobNav }}" as="i" hint-placeholder-count="8">
-          <div onClick="{{ i.on }}" data-f="1" aria-disabled="{{ i.disabledText }}" style="display:flex;align-items:center;gap:9px;padding:11px 10px;border-radius:10px;font-size:12px;color:var(--tx2,#a9bdd4);cursor:{{ i.cursor }}" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+          <div onClick="{{ i.on }}" data-f="1" data-mnav-home="{{ i.mnavHome }}" aria-current="{{ i.current }}" aria-disabled="{{ i.disabledText }}" style="display:flex;align-items:center;gap:9px;padding:11px 10px;border-radius:10px;font-size:12px;font-weight:600;color:{{ i.tx }};background:{{ i.bg }};border:1px solid {{ i.bd }};cursor:{{ i.cursor }}" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
             <span style="flex:1">{{ i.label }}</span>
             <span style="font-size:8.5px;color:var(--tx3,#7d8ea6)">{{ i.tag }}</span>
           </div>
@@ -2713,6 +2802,23 @@ class Component extends DCLogic {
       [`${prefix}Bg`]: enabled ? 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))' : 'var(--ctl,rgba(20,32,54,0.5))',
       [`${prefix}Bd`]: enabled ? 'var(--btnBd,rgba(120,170,255,0.35))' : 'var(--ctlBd,rgba(122,164,224,0.14))',
     });
+    // WAVE 2B — WF-01: st.view is the single authoritative source of truth
+    // for sidebar active state (replacing the old hardcoded aria-current
+    // on the Home link only). Same "precompute in JS, reference as a
+    // single {{ }} identifier" convention as pill()/toggleBtnProps() above
+    // — this template engine's {{ }} resolver has no ternary support, so
+    // the active/inactive look for every one of the 8 primary routes is
+    // computed once here rather than inline in the markup.
+    const navLook = active => ({
+      current: active ? 'page' : 'false',
+      tx: active ? 'var(--sbNavTx,#eaf4ff)' : 'var(--sbTx2,#9db2cc)',
+      bg: active ? 'var(--sbNavBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)))' : 'transparent',
+      bd: active ? 'var(--sbNavBd,rgba(76,201,240,0.4))' : 'transparent',
+    });
+    const navPrefixed = (prefix, active) => {
+      const l = navLook(active);
+      return { [`${prefix}Current`]: l.current, [`${prefix}Tx`]: l.tx, [`${prefix}Bg`]: l.bg, [`${prefix}Bd`]: l.bd };
+    };
     const cell = (v, flex, opt) => ({ v: v, flex: String(flex), align: (opt && opt.align) || 'right',
       size: (opt && opt.size) || '11.5px', weight: (opt && opt.weight) || '400', col: (opt && opt.col) || 'var(--tx2,#a9bdd4)' });
 
@@ -3277,6 +3383,20 @@ class Component extends DCLogic {
       expSvc: st.expSvc, expAdmin: st.expAdmin,
       svcCaret: st.expSvc ? 'rotate(180deg)' : 'rotate(0deg)',
       admCaret: st.expAdmin ? 'rotate(180deg)' : 'rotate(0deg)',
+      // WAVE 2B — WF-01: exactly one of these is ever active, driven solely
+      // by st.view (see navLook/navPrefixed above). Required mapping:
+      // home→مركز القيادة, fieldSurvey→إدارة الحصر الميداني,
+      // lands→إدارة الأراضي والممتلكات, mobility→إدارة حركة السير,
+      // users→مركز المستخدمين, map→الخريطة التشغيلية,
+      // observations→البلاغات, reports→التقارير.
+      ...navPrefixed('navHome', st.view === 'home'),
+      ...navPrefixed('navSurvey', st.view === 'fieldSurvey'),
+      ...navPrefixed('navLands', st.view === 'lands'),
+      ...navPrefixed('navMobility', st.view === 'mobility'),
+      ...navPrefixed('navUsers', st.view === 'users'),
+      ...navPrefixed('navMap', st.view === 'map'),
+      ...navPrefixed('navObs', st.view === 'observations'),
+      ...navPrefixed('navReports', st.view === 'reports'),
       showQuick: st.quick && this.props.showQuickActions !== false,
       hasToast: !!st.toast, toast: st.toast,
       mapFilter: st.mapFilter,
@@ -3295,7 +3415,11 @@ class Component extends DCLogic {
       // User Center is no longer presented through manager-view-overlay's
       // fixed-position dialog (see the new viewIsUsers block inside <main>
       // instead). Reports/incidents/observations are unaffected.
-      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'users',
+      // WAVE 2B — NAV-01: 'map' added to the exclusion list. The Operational
+      // Map is now a first-class <main>-mounted view (viewIsMap below),
+      // exactly like fieldSurvey/lands/mobility/users — it must not also
+      // open the shared manager-view-overlay modal.
+      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'users' && st.view !== 'map',
       // This template engine's {{ }} expressions resolve only a single
       // property/equality/negation — it has no && / || operator support
       // (see support.js's resolve()/resolvePath()). A compound
@@ -3310,10 +3434,13 @@ class Component extends DCLogic {
       // exactly like fieldSurvey/lands/mobility already do — this is what
       // stops the previous dashboard from still being visible/mounted
       // underneath the open User Center view.
-      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'users',
-      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands', viewIsMobility: st.view === 'mobility',
-      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : st.view === 'mobility' ? 'لوحة مدير إدارة حركة السير' : 'البلاغات',
-      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة حركة السير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : st.view === 'mobility' ? 'إشراف تنفيذي للقراءة فقط على إدارة حركة السير — بيانات حية من نظام الحركة الحقيقي لهذه المنظمة فقط.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
+      // WAVE 2B — NAV-01: 'map' added — Home's own dashboard (KPIs, priority
+      // list, etc.) must unmount while the dedicated Map view is open,
+      // exactly like fieldSurvey/lands/mobility/users already do.
+      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'users' && st.view !== 'map',
+      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands', viewIsMobility: st.view === 'mobility', viewIsMap: st.view === 'map',
+      viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : st.view === 'mobility' ? 'لوحة مدير إدارة حركة السير' : st.view === 'map' ? 'الخريطة التشغيلية' : 'البلاغات',
+      viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة حركة السير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : st.view === 'mobility' ? 'إشراف تنفيذي للقراءة فقط على إدارة حركة السير — بيانات حية من نظام الحركة الحقيقي لهذه المنظمة فقط.' : st.view === 'map' ? 'المشهد المكاني التنفيذي للبلاغات الموثّقة — نفس بيانات مركز القيادة، بعرض مخصص لإدارة الخريطة.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
       viewEmpty: ((st.view === 'users' || st.view === 'incidents' || st.view === 'fieldSurvey') ? !tRows.length : !viewObservations.length),
       viewEmptyText: st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البيانات.') : query ? 'لا توجد نتائج مطابقة للبحث.' : 'لا توجد بيانات تشغيلية متاحة في النطاق الحالي.',
@@ -3384,20 +3511,33 @@ class Component extends DCLogic {
         { label: 'مركز المستخدمين', on: () => this.openView('users') },
         { label: 'الحوادث والطوارئ', on: () => this.openView('incidents') }
       ],
+      // WAVE 2B — WF-01: mobile drawer parity. Each real destination gets
+      // the exact same navLook() active/inactive look as its desktop
+      // sidebar counterpart, computed from the same st.view — the two
+      // never disagree because they share one source of truth.
       mobNav: [
-        { label: 'الرئيسية', tag: '', on: () => this.goHome() },
-        { label: 'إدارة الحصر الميداني', tag: '', on: () => this.goRoute('survey') },
-        { label: 'إدارة الأراضي والممتلكات', tag: '', on: () => this.goLandsGateway() },
-        { label: 'إدارة حركة السير', tag: '', on: () => this.goRoute('mobility') },
-        { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.openView('observations') },
-        { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap() },
-        { label: 'التقارير', tag: '', on: () => this.openView('reports') },
-        { label: 'الهيكل الإداري', tag: 'قريباً', disabled: true },
-        { label: 'مركز المستخدمين', tag: '', on: () => this.openView('users') },
-        { label: 'الحوادث والطوارئ', tag: '', on: () => this.openView('incidents') },
-        { label: 'الإعدادات والهوية', tag: '', on: () => this.setState({ settingsOpen: true, mobNavOpen: false }) },
-        { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', disabled: true }
-      ].map(item => Object.assign({ cursor: item.disabled ? 'not-allowed' : 'pointer', disabledText: item.disabled ? 'true' : 'false' }, item)),
+        // WAVE 2B.1 -- mnavHome marks the mobile drawer's Home row for the
+        // Step1B legacy fallback (manager-phase11a-foundation.js) so it
+        // backs off exactly the way it already does for the desktop Home
+        // link (which is covered by [data-manager-view]). The mobile drawer
+        // uses plain onClick divs, not that attribute, so without this
+        // marker the fallback couldn't tell "already SPA-owned" apart from
+        // a genuinely uncovered Home-labeled element and forced a full
+        // reload. Every other row gets '' (see the .map default below),
+        // which the fallback's exact-value selector never matches.
+        { label: 'الرئيسية', tag: '', on: () => this.goHome(), mnavHome: '1', ...navLook(st.view === 'home') },
+        { label: 'إدارة الحصر الميداني', tag: '', on: () => this.goRoute('survey'), ...navLook(st.view === 'fieldSurvey') },
+        { label: 'إدارة الأراضي والممتلكات', tag: '', on: () => this.goLandsGateway(), ...navLook(st.view === 'lands') },
+        { label: 'إدارة حركة السير', tag: '', on: () => this.goRoute('mobility'), ...navLook(st.view === 'mobility') },
+        { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.openView('observations'), ...navLook(st.view === 'observations') },
+        { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap(), ...navLook(st.view === 'map') },
+        { label: 'التقارير', tag: '', on: () => this.openView('reports'), ...navLook(st.view === 'reports') },
+        { label: 'الهيكل الإداري', tag: 'قريباً', disabled: true, ...navLook(false) },
+        { label: 'مركز المستخدمين', tag: '', on: () => this.openView('users'), ...navLook(st.view === 'users') },
+        { label: 'الحوادث والطوارئ', tag: '', on: () => this.openView('incidents'), ...navLook(st.view === 'incidents') },
+        { label: 'الإعدادات والهوية', tag: '', on: () => this.setState({ settingsOpen: true, mobNavOpen: false }), ...navLook(false) },
+        { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', disabled: true, ...navLook(false) }
+      ].map(item => Object.assign({ cursor: item.disabled ? 'not-allowed' : 'pointer', disabledText: item.disabled ? 'true' : 'false', mnavHome: '' }, item)),
 
       setDay: () => this.setState({ theme: 'day' }),
       setNight: () => this.setState({ theme: 'night' }),
@@ -3450,13 +3590,17 @@ class Component extends DCLogic {
     this.setState({ view: 'observations', sel: id, mobNavOpen: false, notifOpen: false, profOpen: false });
   }
 
+  // WAVE 2B — NAV-01: the Operational Map is now a first-class Manager SPA
+  // route (view:'map'), not an anchor-scroll back into Home. mapMode stays
+  // 'map' (already the default — see setSearch()'s own mapMode==='map'
+  // check, which lets the map view's search box keep the user on whatever
+  // view they're on instead of forcing 'observations'). No scrollIntoView
+  // needed any more: the map view is its own <main>-mounted section, not a
+  // card embedded partway down Home.
   openMap(e) {
     this.prevent(e);
-    this.setState({ mapMode: 'map', view: 'home', mobNavOpen: false, notifOpen: false, profOpen: false });
-    setTimeout(() => {
-      this.mapShell?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      this.syncOperationalMap();
-    }, 80);
+    this.setState({ mapMode: 'map', view: 'map', mobNavOpen: false, notifOpen: false, profOpen: false });
+    setTimeout(() => this.syncOperationalMap(), 80);
   }
 
   // Field Survey never uses the Twin canvas — it always shows the real
