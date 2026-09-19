@@ -186,6 +186,30 @@ function buildSinglePageProfile(panel,employee){
   if(panel.dataset.ucv21SinglePage==='1') return;
   panel.dataset.ucv21SinglePage='1';panel.dataset.dialogLabel='تعديل المستخدم';panel.classList.add('ucv21-single-page');
   const title=panel.querySelector('.ih b'),sub=panel.querySelector('.ih p');if(title)title.textContent='تعديل المستخدم';if(sub)sub.textContent='تحديث بيانات المستخدم والصلاحيات';
+  // PHASE13D.3 — WINDOW SYSTEM V1 pixel-close pass (second approved
+  // reference): a leading header icon badge, matching Add Employee's
+  // treatment (same CSS class, a person-check glyph via manager-phase11g).
+  const header=panel.querySelector('.ih');
+  if(header&&!header.querySelector('.ucv2-dialog-icon-badge')) header.insertAdjacentHTML('afterbegin','<span class="ucv2-dialog-icon-badge" aria-hidden="true"></span>');
+  // A decorative, non-interactive progress row matching the reference's
+  // stepper look (circles + connecting lines). This does NOT paginate or
+  // hide anything — all five real sections below it stay exactly as they
+  // are; see the CSS comment in manager-phase11g for why the row's own
+  // four labels differ from the five section headers.
+  if(header&&!panel.querySelector('.ucv21-progress')){
+    const steps=['البيانات الأساسية','الأدوار والخدمات','حساب الدخول','السجل'];
+    const html=steps.map((t,i)=>`${i>0?'<span class="ucv21-progress-line" aria-hidden="true"></span>':''}<span class="ucv21-progress-dot${i===0?' on':''}"><b>${i+1}</b>${U.esc(t)}</span>`).join('');
+    header.insertAdjacentHTML('afterend',`<div class="ucv21-progress" role="presentation">${html}</div>`);
+    // U.shell's own queueMicrotask focuses the first field, and the
+    // browser's native scrollIntoView for that focus lands past this
+    // non-sticky row (only .ih itself is sticky). If the page has smooth
+    // scrolling on, that scroll animates over several frames, so a single
+    // scrollTop reset can land mid-animation and get overridden by its
+    // tail end -- force instant scrolling on this panel BEFORE the
+    // microtask runs (still synchronous here), then reset once after.
+    panel.style.scrollBehavior='auto';
+    setTimeout(()=>{ panel.scrollTop=0; },0);
+  }
   const tabs=panel.querySelector('.tabs');if(tabs)tabs.hidden=true;
   const basic=panel.querySelector('.pane[data-id="p"]'),org=panel.querySelector('.pane[data-id="o"]'),account=panel.querySelector('.pane[data-id="a"]'),roles=panel.querySelector('.pane[data-id="r"]'),history=panel.querySelector('.pane[data-id="h"]');
   [basic,account,roles].forEach(p=>{if(p)p.hidden=false;});

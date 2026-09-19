@@ -309,9 +309,20 @@ function accessibleDialog(container,label){
   container.classList.add('ucv2-dialog');
 }
 function decorateAddDialog(){
+  // PHASE13D.3 — WINDOW SYSTEM V1: the static "NEW EMPLOYEE · 4 STEPS"
+  // kicker is gone. manager-phase11c-user-center-dialogs.js's U.add now
+  // renders a real, live step indicator (.wiz-steps) inside the dialog
+  // body, so a second, static, non-updating label in the header would be
+  // redundant chrome (and the reference window's header contract is
+  // intentionally compact — title + subtitle + close only).
   const c=shellRoot('iuc-add'); if(!c)return; accessibleDialog(c,'إضافة موظف');c.classList.add('ucv2-add-dialog');
-  const header=c.querySelector('.ih'); if(header&&!header.querySelector('.ucv2-dialog-kicker')) header.insertAdjacentHTML('afterbegin','<span class="ucv2-dialog-kicker">NEW EMPLOYEE · 4 STEPS</span>');
   const mk=c.querySelector('#mk-account'); if(mk){ const note=mk.closest('.sec')?.querySelector('.note'); if(note)note.textContent='كلمة المرور التي يحددها مدير البلدية هي كلمة الدخول المعتمدة، ولا يفرض النظام تغييرها عند أول دخول.'; }
+  // PHASE13D.3 — WINDOW SYSTEM V1 pixel-close pass: the approved reference
+  // shows a leading circular icon badge next to the header title. Purely
+  // decorative (aria-hidden); inserted as the FIRST .ih child so it renders
+  // furthest-right in the RTL header row, matching the reference exactly.
+  const header=c.querySelector('.ih');
+  if(header&&!header.querySelector('.ucv2-dialog-icon-badge')) header.insertAdjacentHTML('afterbegin','<span class="ucv2-dialog-icon-badge" aria-hidden="true"></span>');
   installPasswordToggles(c);
 }
 function decorateProfileDialog(employee){
