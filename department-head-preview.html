@@ -950,7 +950,7 @@ class Component extends DCLogic {
     role: 'dept', screen: 'deptops', authPending: false, orgName: 'معاينة تصميم', sessionName: 'رئيس قسم الحصر الميداني', department: 'إدارة الحصر الميداني',
     liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [],
     sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
-    twin3D: true, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
+    twin3D: false, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
     layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true },
     sel: null, drawer: null, drawerId: null,
     stat: {}, form: {}, chip: {},
@@ -1002,6 +1002,7 @@ class Component extends DCLogic {
     this.measure();
     if (typeof ResizeObserver !== 'undefined' && this.cv) { this._ro = new ResizeObserver(() => this.sync()); this._ro.observe(this.cv); }
     this.bindCanvas();
+    this.bindRealMap();
     this._iv = setInterval(() => {
       const hasActiveMission = this.missions().some(m => this.missionStatus(m.id) === 'قيد التنفيذ');
       this.setState(s => ({ tick: s.tick + 1, elapsed: hasActiveMission ? s.elapsed + 1 : s.elapsed }));
@@ -1023,8 +1024,45 @@ class Component extends DCLogic {
     window.removeEventListener('smart-hsr-mobility-adapter-ready', this.onAdapterReady);
     window.SmartHSRMobilityAdapter?.disconnect(this);
     clearInterval(this._iv); if (this._ro) this._ro.disconnect();
+    try { if (this._realMap) this._realMap.remove(); } catch (_) {}
   }
-  componentDidUpdate() { this.bindCanvas(); this.draw(); this.drawMini(); }
+  componentDidUpdate() { this.bindCanvas(); this.bindRealMap(); this.draw(); this.drawMini(); }
+
+
+  bindRealMap() {
+    if (typeof maplibregl === 'undefined') return;
+    const el = document.getElementById('deptRealMap');
+    if (!el) return;
+    if (this._realMap && this._realMapEl === el) {
+      try { this._realMap.resize(); } catch (_) {}
+      return;
+    }
+    try { if (this._realMap) this._realMap.remove(); } catch (_) {}
+    this._realMapEl = el;
+    const style = {
+      version: 8,
+      sources: {
+        satellite: {
+          type: 'raster',
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+          tileSize: 256,
+          attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+        }
+      },
+      layers: [{ id: 'satellite', type: 'raster', source: 'satellite' }]
+    };
+    this._realMap = new maplibregl.Map({
+      container: el,
+      style,
+      center: [41.07889, 19.12639],
+      zoom: 13,
+      attributionControl: false
+    });
+    this._realMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-left');
+    this._realMap.addControl(new maplibregl.FullscreenControl(), 'top-left');
+    this._realMap.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
+    this._realMap.addControl(new maplibregl.AttributionControl({ compact: true }));
+  }
 
   bindCanvas() {
     const el = this.cv;
@@ -2262,31 +2300,5 @@ class Component extends DCLogic {
 }
 </script>
 
-<script>
-(function initDepartmentHeadPreviewMap(){
-  let tries=0;
-  const timer=setInterval(function(){
-    const el=document.getElementById('deptRealMap');
-    if(!el || typeof maplibregl==='undefined'){ if(++tries>80) clearInterval(timer); return; }
-    if(el.dataset.ready==='1'){ clearInterval(timer); return; }
-    el.dataset.ready='1';
-    clearInterval(timer);
-    const map=new maplibregl.Map({
-      container:'deptRealMap',
-      attributionControl:false,
-      center:[41.07889,19.12639],
-      zoom:13,
-      style:{
-        version:8,
-        sources:{satellite:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,attribution:'Esri, Maxar, Earthstar Geographics, and the GIS User Community'}},
-        layers:[{id:'satellite',type:'raster',source:'satellite'}]
-      }
-    });
-    map.addControl(new maplibregl.NavigationControl({showCompass:true}),'top-left');
-    map.addControl(new maplibregl.FullscreenControl(),'top-left');
-    map.addControl(new maplibregl.ScaleControl({maxWidth:90,unit:'metric'}),'bottom-left');
-    map.addControl(new maplibregl.AttributionControl({compact:true}));
-  },100);
-})();
-</script>\n</body>
+\n</body>
 </html>
