@@ -270,6 +270,123 @@ function injectApprovedSkin() {
   @media(max-width:1024px){.ucv2-btn,.btn,.ix,.tab,.ucv21-more,.ucv21-history-toggle,.ucv2-chip-button{min-height:44px!important}.ucv2-toolbar input,.ucv2-toolbar select,.ucv2-grid-head select,.iuc .in,.iuc .sel{min-height:44px!important}.ucv2-app:before,.ucv2-app:after{filter:blur(42px)!important}.iuc,.ucv21-profile-footer{backdrop-filter:blur(5px)!important}}
   @media(max-width:820px){.ucv2-toolbar input,.ucv2-toolbar select,.ucv2-grid-head select,.iuc .in,.iuc .sel,.ucv21-single-page input,.ucv21-single-page select{font-size:16px!important}.ucv2-toolbar{margin-bottom:0!important}.ucv2-quick{padding-block:12px!important}.ucv2-kpi small{font-size:11px!important}.ucv2-app:before,.ucv2-app:after{display:none!important}.iuc{padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))!important;backdrop-filter:none!important}.iuc>div,.iuc.sm>div,.ucv21-single-page{max-height:calc(100dvh - 16px)!important}.ucv21-single-page .ih{backdrop-filter:none!important}.ucv21-profile-footer{backdrop-filter:none!important}}
   @media(max-width:480px){.ucv2-app{padding:11px!important;gap:12px!important}.ucv2-header h1{font-size:21px!important}.ucv2-header-actions{display:grid!important;grid-template-columns:1fr!important}.ucv2-kpis{gap:8px!important}.ucv2-kpi{min-height:82px!important;padding:11px!important}.ucv2-toolbar{grid-template-columns:1fr!important}.ucv2-search{grid-column:1!important}.ucv2-toolbar .ucv2-btn{grid-column:1!important}.ucv2-grid-head{align-items:flex-start!important;flex-direction:column!important}.ucv2-grid-head label,.ucv2-grid-head select{width:100%!important}.ucv21-profile-footer .ucv21-save,.ucv21-profile-footer .ucv21-cancel{width:100%!important;margin:0!important}.hier,.sum{grid-template-columns:1fr!important}}
+
+  /* ============================================================
+     PHASE13D.3 STEP 2 — MANAGER UI POLISH.
+     Windows/dialogs, Day-mode hierarchy, Night-mode refinement,
+     spacing/typography discipline. Additive only: every rule below either
+     (a) defines a small, documented, reusable token layer other windows can
+     read from later instead of one-off values, or (b) fixes a real,
+     live-verified defect (a 20-40px sticky-header overflow that produced a
+     horizontal scrollbar inside the compact profile dialog — .ih's flex
+     children did not shrink below their content width). Nothing here
+     changes dialog widths (already min(760px,...), already within the
+     approved 620-840px range), backend contracts, or routing.
+     ============================================================ */
+
+  /* --- Design tokens (Night = default, Day = [data-theme="light"] below).
+     These alias the EXACT colors this file already uses elsewhere (--r-*,
+     the approved DAY palette) rather than inventing a second palette — a
+     documented, centralized name for values already in production. */
+  .ucv2-app,.iuc{
+    --surface-page:var(--r-bg,#050b15);
+    --surface-card:var(--r-surface,#0a1729);
+    --surface-elevated:var(--r-surface2,#0d1d34);
+    --surface-glass:rgba(12,26,47,.62);
+    --surface-dialog:linear-gradient(155deg,rgba(11,27,49,.995),rgba(7,18,34,.995));
+    --border-subtle:var(--r-border,rgba(96,145,211,.14));
+    --border-strong:var(--r-border2,rgba(96,145,211,.28));
+    --shadow-card:0 1px 0 rgba(255,255,255,.02) inset;
+    --shadow-dialog:0 32px 90px rgba(0,0,0,.55);
+    --radius-card:12px;--radius-dialog:16px;--radius-control:8px;
+    --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;
+    --motion-fast:160ms ease;--motion-normal:220ms ease;
+  }
+  [data-theme="light"] .ucv2-app,[data-theme="light"] .iuc{
+    --surface-page:#eef1ee;--surface-card:#ffffff;--surface-elevated:#f3f8f5;
+    --surface-glass:rgba(255,255,255,.7);
+    --surface-dialog:linear-gradient(155deg,#ffffff,#f6faf8);
+    --border-subtle:rgba(18,133,90,.16);--border-strong:rgba(18,133,90,.32);
+    --shadow-card:inset 0 1px rgba(255,255,255,.6);
+    --shadow-dialog:0 24px 64px rgba(16,60,42,.16);
+  }
+
+  /* --- Compact window/dialog structure: header/body/footer discipline,
+     tighter max-height, and the fix for the live-verified overflow bug
+     (flex children of a sticky header need min-width:0 to shrink instead
+     of forcing the header — and therefore the whole dialog's scrollWidth —
+     wider than its own box). */
+  #iuc-profile>div.ucv21-single-page,.ucv21-single-page{max-height:min(82vh,calc(100vh - 34px))!important;overflow-x:hidden!important}
+  .ucv21-single-page .ih{width:100%!important;box-sizing:border-box!important;gap:var(--space-3)!important}
+  .ucv21-single-page .ih>main{min-width:0!important;flex:1 1 auto!important}
+  .ucv21-single-page .ih b,.ucv21-single-page .ih p{overflow-wrap:anywhere!important}
+  .ucv21-single-page .ih .ix{flex:0 0 auto!important}
+  .ucv2-add-dialog,.iuc>div{overflow-x:hidden!important}
+
+  /* --- Section rhythm: firmer divider between grouped sections, tighter
+     internal spacing (16-24px band per spec) so related fields read as one
+     group instead of loosely-scattered rows. */
+  .ucv21-single-page .sec+.sec,.ucv21-single-page .ucv21-section-head+.sec{margin-top:var(--space-2)!important}
+  .ucv21-section-head{padding-bottom:var(--space-2)!important;border-bottom:1px solid var(--border-subtle)!important}
+  .ucv21-single-page .pane{padding:0 var(--space-5)!important}
+  .ucv21-single-page .sec{padding:var(--space-4)!important;margin-bottom:var(--space-3)!important}
+
+  /* --- Motion discipline: every existing transition in this file already
+     sits in the 140-220ms band; this just gives it a documented name and
+     applies it to the two interactive surfaces (row hover, dialog
+     open) that didn't reference a token before. No new animation added. */
+  .ucv2-table tbody tr{transition:background-color var(--motion-fast)!important}
+  .iuc>div{transition:none!important}
+
+  @media(prefers-reduced-motion:reduce){.ucv2-table tbody tr{transition:none!important}}
+
+  /* ============================================================
+     PHASE13D.3 STEP 2B — VISUAL QUALITY PASS (Day Mode + sidebar depth).
+     Explicit product feedback: Day Mode still read as flat and the
+     Manager Home cards/KPIs needed stronger separation and hierarchy — the
+     Step 2 pass only reached the User Center dialog layer, not the Home
+     dashboard's own cards.
+
+     manager.html's Home cards have NO class hooks at all — every color is
+     an inline var(--name, fallback) read from custom properties the root
+     theme wrapper sets. Rather than editing manager.html (out of scope,
+     higher risk) or overriding those variables globally (would touch
+     Field Survey/Lands/Mobility/sidebar/header too — an unbounded blast
+     radius), this redefines the SAME variable names scoped to
+     main:has(section[aria-label="المؤشرات التنفيذية"]) — that aria-label
+     is unique to the Home KPI row, so :has() matches ONLY the Home
+     layout's own main element, and the new values cascade normally (no
+     !important needed or used) to every descendant reading var(--tx,...)
+     etc., without touching Field Survey/Lands/Mobility/sidebar/header/User
+     Center, which don't share this container.
+
+     Values reuse the EXACT already-approved User Center Day palette
+     (#083f2c text, #4c6357 secondary, rgba(18,133,90,...) green-tinted
+     borders/dividers) instead of inventing new colors — the "shared
+     tokens" principle applied to Home, not a second design system. Status
+     colors (--ok/--info/--warn/--bad) are deliberately left untouched so
+     KPI icon semantics and priority severity color-coding are unaffected.
+     Priority-list ITEM backgrounds ({{ p.bg }}/{{ p.bd }}) are computed
+     inline per-severity by manager.html's own JS, not read from these
+     variables, and are intentionally left alone here — that is
+     signal-coding, not part of this restraint pass. */
+  [data-theme="light"] main:has(section[aria-label="المؤشرات التنفيذية"]){
+    --tx:#083f2c;--tx2:#0b3324;--tx3:#4c6357;
+    --l1:#ffffff;--l1Bd:rgba(18,133,90,.14);
+    --l2:#ffffff;--l2Bd:rgba(18,133,90,.14);--l2Sh:0 1px 2px rgba(15,23,42,.04),0 10px 28px -16px rgba(15,23,42,.12);
+    --card:#ffffff;--cardBd:rgba(18,133,90,.14);--cardSh:0 1px 2px rgba(15,23,42,.04),0 10px 28px -16px rgba(15,23,42,.12);
+    --div:rgba(18,133,90,.13);--track:rgba(18,133,90,.13);
+    --ctl:#f6faf8;--ctlBd:rgba(18,133,90,.16);--chipBg:#f3f8f5;
+  }
+
+  /* --- Sidebar selected-state depth (Day and Night both benefit from a
+     soft glow under the active item instead of a flat color block — this
+     is purely additive box-shadow on the existing, unchanged aria-current
+     element; no navigation/routing logic touched). aria-current="page" is
+     the same semantic marker the app already sets, so this never drifts
+     out of sync with whichever route is actually active. */
+  aside a[aria-current="page"]{box-shadow:0 6px 18px -9px rgba(74,132,255,.4)!important}
+  [data-theme="light"] aside a[aria-current="page"]{box-shadow:0 6px 18px -9px rgba(18,133,90,.38)!important}
   `;
   document.head.appendChild(style);
 }

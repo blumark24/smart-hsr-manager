@@ -145,12 +145,19 @@ test('reference UI carries the approved Arabic hierarchy and edit modal title', 
 
 test('approved edit experience is a single-page manager modal with inline final-password editing', () => {
   assert.match(referenceUi, /ucv21-single-page/);
-  // Phase12c-user-center-refero-v1 — approved section renames: بيانات الحساب /
-  // الدور والصلاحيات (was البيانات الأساسية / الخدمات والصلاحيات), same panes,
-  // same fields, same save behavior.
-  assert.match(referenceUi, /بيانات الحساب/);
-  assert.match(referenceUi, /الدور والصلاحيات/);
-  assert.match(referenceUi, /حالة الحساب/);
+  // PHASE13D.3 STEP 2 — approved section renames: البيانات الأساسية /
+  // الدور الإداري / الخدمات والصلاحيات / بيانات الدخول / السجل والتكليفات
+  // (was بيانات الحساب / الدور والصلاحيات / حالة الحساب, the
+  // Phase12c-user-center-refero-v1 labels). Same panes, same fields, same
+  // save behavior — a pure visual reorganization into 5 clearer sections.
+  assert.match(referenceUi, /البيانات الأساسية/);
+  assert.match(referenceUi, /الدور الإداري/);
+  assert.match(referenceUi, /الخدمات والصلاحيات/);
+  assert.match(referenceUi, /بيانات الدخول/);
+  assert.match(referenceUi, /السجل والتكليفات/);
+  assert.doesNotMatch(referenceUi, /'بيانات الحساب'/);
+  assert.doesNotMatch(referenceUi, /'الدور والصلاحيات'/);
+  assert.doesNotMatch(referenceUi, /'حالة الحساب'/);
   assert.match(referenceUi, /تعديل كلمة المرور/);
   assert.match(referenceUi, /كلمة المرور الجديدة/);
   assert.match(referenceUi, /تأكيد كلمة المرور/);

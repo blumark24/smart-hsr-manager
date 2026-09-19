@@ -190,9 +190,15 @@ function buildSinglePageProfile(panel,employee){
   const basic=panel.querySelector('.pane[data-id="p"]'),org=panel.querySelector('.pane[data-id="o"]'),account=panel.querySelector('.pane[data-id="a"]'),roles=panel.querySelector('.pane[data-id="r"]'),history=panel.querySelector('.pane[data-id="h"]');
   [basic,account,roles].forEach(p=>{if(p)p.hidden=false;});
   const basicGrid=basic?.querySelector('.sec .grid'),orgGrid=org?.querySelector('.sec .grid');if(basicGrid&&orgGrid){Array.from(orgGrid.children).forEach(node=>basicGrid.appendChild(node));}
-  addSectionHead(basic,'بيانات الحساب','بيانات الموظف والتنظيم');addSectionHead(roles,'الدور والصلاحيات','الدور + المنتج + القسم');addSectionHead(account,'حالة الحساب','إدارة الوصول والهوية');
+  // PHASE13D.3 STEP 2 — visual-only reorganization into the 5 requested
+  // sections (البيانات الأساسية / بيانات الدخول / الدور الإداري / الخدمات
+  // والصلاحيات / السجل والتكليفات). Same panes, same fields, same save/
+  // fetch logic — only the section labels and (below) the DOM position of
+  // the optional password block change, so related "بيانات الدخول" content
+  // reads as one group instead of being separated by the roles pane.
+  addSectionHead(basic,'البيانات الأساسية','بيانات الموظف والتنظيم');addSectionHead(roles,'الدور الإداري','الدور المؤسسي والصلاحيات');addSectionHead(account,'بيانات الدخول','إدارة الوصول والهوية');
   const prodBlock=roles?.querySelector('.prod');
-  if(prodBlock&&!prodBlock.previousElementSibling?.classList?.contains('ucv21-subsection-head')){const sub=document.createElement('div');sub.className='ucv21-section-head ucv21-subsection-head';sub.innerHTML='<span>الخدمات البلدية</span>';prodBlock.before(sub);}
+  if(prodBlock&&!prodBlock.previousElementSibling?.classList?.contains('ucv21-subsection-head')){const sub=document.createElement('div');sub.className='ucv21-section-head ucv21-subsection-head';sub.innerHTML='<span>الخدمات والصلاحيات</span>';prodBlock.before(sub);}
   if(account){const oldPw=account.querySelector('.pwbtn');if(oldPw)oldPw.hidden=true;}
   // APPROVED UX CHANGE: replace the previous two-click label-swap confirmation
   // with a real confirmation dialog. Uses the EXACT existing .tog click handler
@@ -215,9 +221,16 @@ function buildSinglePageProfile(panel,employee){
     },true);
   }
   if(panel.__ucv21Employee?.authUid&&!panel.querySelector('.ucv21-password-inline')){
-    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.innerHTML=`<div class="ucv21-section-head"><span>الأمان</span><small>تعديل كلمة المرور — اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;roles?.after(wrap)||account?.after(wrap);wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
+    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.innerHTML=`<div class="ucv21-section-head"><span>الأمان</span><small>تعديل كلمة المرور — اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;
+    // PHASE13D.3 STEP 2 — moved from after `roles` to directly after
+    // `account` so it visually groups with بيانات الدخول (both are
+    // login/credential concerns) instead of sitting on the far side of the
+    // الدور الإداري/الخدمات والصلاحيات section. Position only; the field
+    // ids, save handler and validation this wires into are untouched.
+    account?.after(wrap)||roles?.after(wrap);
+    wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
   }
-  if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.innerHTML='<div class="ucv21-section-head"><span>السجل</span></div><button type="button" class="ucv21-history-toggle">عرض سجل الموظف</button>';history.before(hw);hw.appendChild(history);history.hidden=true;hw.querySelector('button').onclick=()=>{history.hidden=!history.hidden;hw.querySelector('button').textContent=history.hidden?'عرض سجل الموظف':'إخفاء سجل الموظف';};}
+  if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.innerHTML='<div class="ucv21-section-head"><span>السجل والتكليفات</span></div><button type="button" class="ucv21-history-toggle">عرض سجل الموظف</button>';history.before(hw);hw.appendChild(history);history.hidden=true;hw.querySelector('button').onclick=()=>{history.hidden=!history.hidden;hw.querySelector('button').textContent=history.hidden?'عرض سجل الموظف':'إخفاء سجل الموظف';};}
   try{panel.__ucv21Snapshot=profileSnapshot(panel,panel.__ucv21Employee);}catch(_){panel.__ucv21Snapshot=null;}
   if(!panel.querySelector('.ucv21-profile-footer')){
     const footer=document.createElement('footer');footer.className='ucv21-profile-footer';footer.innerHTML='<div class="ucv21-profile-msg" aria-live="polite"></div><button type="button" class="btn ucv21-cancel">إلغاء</button><button type="button" class="btn pr ucv21-save">حفظ التعديلات</button>';panel.appendChild(footer);
