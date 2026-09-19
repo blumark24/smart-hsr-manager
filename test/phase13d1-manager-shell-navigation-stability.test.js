@@ -79,7 +79,9 @@ test('5. the guard is registered in the capture phase', () => {
 test('6. the guard dispatches exactly one deterministic smart-hsr:navigate-request event carrying the route', () => {
   const idx = format.indexOf('installManagerNavigationGuard');
   const fnSource = format.slice(idx, format.indexOf('installManagerNavigationGuard();', idx));
-  assert.match(fnSource, /new CustomEvent\('smart-hsr:navigate-request', \{ detail: \{ view: target\.dataset\.managerView \} \}\)/);
+  assert.match(fnSource, /const view = target\?\.dataset\.managerView;/);
+  assert.match(fnSource, /if \(!view\) return;/);
+  assert.match(fnSource, /new CustomEvent\('smart-hsr:navigate-request', \{ detail: \{ view \} \}\)/);
   assert.match(fnSource, /window\.dispatchEvent/);
 });
 
@@ -96,6 +98,7 @@ test('7. the React bridge maps every approved route to the existing, unmodified 
     reports: /reports:\s*\(\) => this\.openView\('reports'\)/,
     observations: /observations:\s*\(\) => this\.openView\('observations'\)/,
     users: /users:\s*\(\) => this\.openView\('users'\)/,
+    incidents: /incidents:\s*\(\) => this\.openView\('incidents'\)/,
   };
   for (const [route, re] of Object.entries(expectations)) {
     assert.match(bridgeSource, re, `route "${route}" not correctly bridged to its existing method`);
@@ -125,9 +128,8 @@ test('9. User Center mounts as a normal sibling Manager view inside <main>, not 
 
   // The old modal-overlay presentation must no longer carry Users at all.
   const overlayStart = manager.indexOf('class="manager-view-overlay"');
-  const overlayEnd = manager.indexOf('</sc-if>\n\n  <sc-if', overlayStart) > -1
-    ? manager.indexOf('</sc-if>\n\n  <sc-if', overlayStart)
-    : manager.length;
+  const overlayEnd = manager.indexOf('<sc-if value="{{ mobNavOpen }}">', overlayStart);
+  assert.ok(overlayEnd > overlayStart, 'could not locate the end of the shared route overlay');
   const overlaySource = manager.slice(overlayStart, overlayEnd);
   assert.doesNotMatch(overlaySource, /viewIsUsers/, 'the legacy overlay-hosted Users block must be removed, not just unreachable');
 

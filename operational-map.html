@@ -330,7 +330,10 @@ import { resolveObservationImage } from './storage-adapter.js';
 const { layerRegistry, styleTokens, continuity, search: searchModule, attribution: attributionModule, policy } = window.SmartHSRGeoCore;
 
 const firebaseConfig = await resolveFirebaseConfig();
-const app = initializeApp(firebaseConfig);
+// Reuse the Manager Auth namespace so this standalone first-class map keeps
+// the authenticated Manager session while preserving its existing role and
+// organization authorization checks below.
+const app = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
 const auth = getAuth(app);
 const db = getFirestore(app);
 // Local-only, explicitly opt-in Firebase Emulator connection — mirrors the

@@ -84,7 +84,9 @@ test('6. every primary Manager sidebar route still carries exactly one data-mana
     assert.match(manager, new RegExp(`data-manager-view="${route}"`));
   }
   // The delegated guard dispatches exactly one navigate-request per matched click.
-  assert.match(format, /new CustomEvent\('smart-hsr:navigate-request', \{ detail: \{ view: target\.dataset\.managerView \} \}\)/);
+  assert.match(format, /const view = target\?\.dataset\.managerView;/);
+  assert.match(format, /if \(!view\) return;/);
+  assert.match(format, /new CustomEvent\('smart-hsr:navigate-request', \{ detail: \{ view \} \}\)/);
 });
 
 test('7. no window.location.assign call exists anywhere else in the legacy foundation file (the one guarded occurrence is the only reload path)', () => {

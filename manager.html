@@ -601,7 +601,7 @@
           </div>
           <div style="flex:1;display:flex;align-items:center;gap:9px;flex-wrap:var(--qaWrap,nowrap)">
             <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="4">
-              <button onClick="{{ q.on }}" data-f="1" style="flex:1 1 var(--qaBasis,0);min-width:var(--qaMin,0);height:36px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-size:11.5px;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));cursor:pointer;white-space:nowrap" style-hover="background:var(--ctlH,rgba(32,50,84,0.8));color:var(--tx,#eaf4ff)">{{ q.label }}</button>
+              <button data-manager-view="{{ q.view }}" data-f="1" style="flex:1 1 var(--qaBasis,0);min-width:var(--qaMin,0);height:36px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-size:11.5px;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));cursor:pointer;white-space:nowrap" style-hover="background:var(--ctlH,rgba(32,50,84,0.8));color:var(--tx,#eaf4ff)">{{ q.label }}</button>
             </sc-for>
           </div>
         </section>
@@ -1295,7 +1295,7 @@
   </div>
 
   <sc-if value="{{ viewOpen }}">
-    <div class="manager-view-overlay" onClick="{{ closeView }}" style="position:fixed;inset:0;z-index:74;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);padding:clamp(10px,3vw,34px);display:flex;align-items:center;justify-content:center;animation:hsrIn .18s ease-out">
+    <div class="manager-view-overlay" onClick="{{ closeView }}" style="position:fixed;inset:0;z-index:54;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);padding:clamp(10px,3vw,34px);display:flex;align-items:center;justify-content:center;animation:hsrIn .18s ease-out">
       <section class="manager-view-panel" onClick="{{ stop }}" aria-label="{{ viewTitle }}" role="dialog" aria-modal="true" style="width:min(940px,100%);max-height:min(820px,calc(100vh - 20px));overflow:auto;padding:18px;border-radius:16px;background:var(--drawer,#0a1120);border:1px solid var(--drawerBd,rgba(122,164,224,0.16));box-shadow:var(--dwSh,0 28px 70px -28px rgba(0,0,0,.85))">
         <div style="display:flex;align-items:flex-start;gap:12px;padding-bottom:13px;border-bottom:1px solid var(--div,rgba(122,164,224,0.13))">
           <div style="flex:1;min-width:0">
@@ -1388,7 +1388,7 @@
           <span style="font-size:9px;color:var(--tx3,#7d8ea6)">سمارت حصر</span>
         </div>
         <sc-for list="{{ mobNav }}" as="i" hint-placeholder-count="8">
-          <div onClick="{{ i.on }}" data-f="1" data-mnav-home="{{ i.mnavHome }}" aria-current="{{ i.current }}" aria-disabled="{{ i.disabledText }}" style="display:flex;align-items:center;gap:9px;padding:11px 10px;border-radius:10px;font-size:12px;font-weight:600;color:{{ i.tx }};background:{{ i.bg }};border:1px solid {{ i.bd }};cursor:{{ i.cursor }}" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
+          <div onClick="{{ i.on }}" data-manager-view="{{ i.view }}" data-f="1" data-mnav-home="{{ i.mnavHome }}" aria-current="{{ i.current }}" aria-disabled="{{ i.disabledText }}" style="display:flex;align-items:center;gap:9px;padding:11px 10px;border-radius:10px;font-size:12px;font-weight:600;color:{{ i.tx }};background:{{ i.bg }};border:1px solid {{ i.bd }};cursor:{{ i.cursor }}" style-hover="background:var(--ctl,rgba(20,32,54,0.6))">
             <span style="flex:1">{{ i.label }}</span>
             <span style="font-size:8.5px;color:var(--tx3,#7d8ea6)">{{ i.tag }}</span>
           </div>
@@ -2353,6 +2353,7 @@ class Component extends DCLogic {
         reports: () => this.openView('reports'),
         observations: () => this.openView('observations'),
         users: () => this.openView('users'),
+        incidents: () => this.openView('incidents'),
       };
       routes[route]?.();
     };
@@ -2819,6 +2820,11 @@ class Component extends DCLogic {
       const l = navLook(active);
       return { [`${prefix}Current`]: l.current, [`${prefix}Tx`]: l.tx, [`${prefix}Bg`]: l.bg, [`${prefix}Bd`]: l.bd };
     };
+    // At responsive breakpoints the closed drawer is not mounted, so the
+    // hidden desktop navigation retains the sole programmatic current route.
+    // Opening the drawer atomically transfers that ownership to its visible
+    // route list, keeping exactly one aria-current="page" in the DOM.
+    const mobileNavigationAuthoritative = (st.bp === 'tab' || st.bp === 'mob') && st.mobNavOpen;
     const cell = (v, flex, opt) => ({ v: v, flex: String(flex), align: (opt && opt.align) || 'right',
       size: (opt && opt.size) || '11.5px', weight: (opt && opt.weight) || '400', col: (opt && opt.col) || 'var(--tx2,#a9bdd4)' });
 
@@ -3389,14 +3395,14 @@ class Component extends DCLogic {
       // lands→إدارة الأراضي والممتلكات, mobility→إدارة حركة السير,
       // users→مركز المستخدمين, map→الخريطة التشغيلية,
       // observations→البلاغات, reports→التقارير.
-      ...navPrefixed('navHome', st.view === 'home'),
-      ...navPrefixed('navSurvey', st.view === 'fieldSurvey'),
-      ...navPrefixed('navLands', st.view === 'lands'),
-      ...navPrefixed('navMobility', st.view === 'mobility'),
-      ...navPrefixed('navUsers', st.view === 'users'),
-      ...navPrefixed('navMap', st.view === 'map'),
-      ...navPrefixed('navObs', st.view === 'observations'),
-      ...navPrefixed('navReports', st.view === 'reports'),
+      ...navPrefixed('navHome', !mobileNavigationAuthoritative && st.view === 'home'),
+      ...navPrefixed('navSurvey', !mobileNavigationAuthoritative && st.view === 'fieldSurvey'),
+      ...navPrefixed('navLands', !mobileNavigationAuthoritative && st.view === 'lands'),
+      ...navPrefixed('navMobility', !mobileNavigationAuthoritative && st.view === 'mobility'),
+      ...navPrefixed('navUsers', !mobileNavigationAuthoritative && st.view === 'users'),
+      ...navPrefixed('navMap', !mobileNavigationAuthoritative && st.view === 'map'),
+      ...navPrefixed('navObs', !mobileNavigationAuthoritative && st.view === 'observations'),
+      ...navPrefixed('navReports', !mobileNavigationAuthoritative && st.view === 'reports'),
       showQuick: st.quick && this.props.showQuickActions !== false,
       hasToast: !!st.toast, toast: st.toast,
       mapFilter: st.mapFilter,
@@ -3506,10 +3512,10 @@ class Component extends DCLogic {
         on: () => this.openObservation(p.id)
       })),
       quickActions: [
-        { label: 'عرض البلاغات', on: () => this.openView('observations') },
-        { label: 'الخريطة التشغيلية', on: () => this.openMap() },
-        { label: 'مركز المستخدمين', on: () => this.openView('users') },
-        { label: 'الحوادث والطوارئ', on: () => this.openView('incidents') }
+        { label: 'عرض البلاغات', view: 'observations' },
+        { label: 'الخريطة التشغيلية', view: 'map' },
+        { label: 'مركز إدارة المستخدمين', view: 'users' },
+        { label: 'الحوادث والطوارئ', view: 'incidents' }
       ],
       // WAVE 2B — WF-01: mobile drawer parity. Each real destination gets
       // the exact same navLook() active/inactive look as its desktop
@@ -3519,25 +3525,22 @@ class Component extends DCLogic {
         // WAVE 2B.1 -- mnavHome marks the mobile drawer's Home row for the
         // Step1B legacy fallback (manager-phase11a-foundation.js) so it
         // backs off exactly the way it already does for the desktop Home
-        // link (which is covered by [data-manager-view]). The mobile drawer
-        // uses plain onClick divs, not that attribute, so without this
-        // marker the fallback couldn't tell "already SPA-owned" apart from
-        // a genuinely uncovered Home-labeled element and forced a full
-        // reload. Every other row gets '' (see the .map default below),
-        // which the fallback's exact-value selector never matches.
-        { label: 'الرئيسية', tag: '', on: () => this.goHome(), mnavHome: '1', ...navLook(st.view === 'home') },
-        { label: 'إدارة الحصر الميداني', tag: '', on: () => this.goRoute('survey'), ...navLook(st.view === 'fieldSurvey') },
-        { label: 'إدارة الأراضي والممتلكات', tag: '', on: () => this.goLandsGateway(), ...navLook(st.view === 'lands') },
-        { label: 'إدارة حركة السير', tag: '', on: () => this.goRoute('mobility'), ...navLook(st.view === 'mobility') },
-        { label: 'البلاغات', tag: metrics.inProgress || '—', on: () => this.openView('observations'), ...navLook(st.view === 'observations') },
-        { label: 'الخريطة التشغيلية', tag: '', on: () => this.openMap(), ...navLook(st.view === 'map') },
-        { label: 'التقارير', tag: '', on: () => this.openView('reports'), ...navLook(st.view === 'reports') },
+        // link (which is covered by [data-manager-view]). Wave 2B.2 now puts
+        // every real drawer route on that same delegated contract; the Home
+        // marker remains as a harmless compatibility guard for Step1B.
+        { label: 'الرئيسية', tag: '', view: 'home', mnavHome: '1', ...navLook(mobileNavigationAuthoritative && st.view === 'home') },
+        { label: 'إدارة الحصر الميداني', tag: '', view: 'survey', ...navLook(mobileNavigationAuthoritative && st.view === 'fieldSurvey') },
+        { label: 'إدارة الأراضي والممتلكات', tag: '', view: 'lands', ...navLook(mobileNavigationAuthoritative && st.view === 'lands') },
+        { label: 'إدارة حركة السير', tag: '', view: 'mobility', ...navLook(mobileNavigationAuthoritative && st.view === 'mobility') },
+        { label: 'البلاغات', tag: metrics.inProgress || '—', view: 'observations', ...navLook(mobileNavigationAuthoritative && st.view === 'observations') },
+        { label: 'الخريطة التشغيلية', tag: '', view: 'map', ...navLook(mobileNavigationAuthoritative && st.view === 'map') },
+        { label: 'التقارير', tag: '', view: 'reports', ...navLook(mobileNavigationAuthoritative && st.view === 'reports') },
         { label: 'الهيكل الإداري', tag: 'قريباً', disabled: true, ...navLook(false) },
-        { label: 'مركز المستخدمين', tag: '', on: () => this.openView('users'), ...navLook(st.view === 'users') },
-        { label: 'الحوادث والطوارئ', tag: '', on: () => this.openView('incidents'), ...navLook(st.view === 'incidents') },
+        { label: 'مركز إدارة المستخدمين', tag: '', view: 'users', ...navLook(mobileNavigationAuthoritative && st.view === 'users') },
+        { label: 'الحوادث والطوارئ', tag: '', view: 'incidents', ...navLook(mobileNavigationAuthoritative && st.view === 'incidents') },
         { label: 'الإعدادات والهوية', tag: '', on: () => this.setState({ settingsOpen: true, mobNavOpen: false }), ...navLook(false) },
         { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', disabled: true, ...navLook(false) }
-      ].map(item => Object.assign({ cursor: item.disabled ? 'not-allowed' : 'pointer', disabledText: item.disabled ? 'true' : 'false', mnavHome: '' }, item)),
+      ].map(item => Object.assign({ cursor: item.disabled ? 'not-allowed' : 'pointer', disabledText: item.disabled ? 'true' : 'false', mnavHome: '', view: '' }, item)),
 
       setDay: () => this.setState({ theme: 'day' }),
       setNight: () => this.setState({ theme: 'night' }),

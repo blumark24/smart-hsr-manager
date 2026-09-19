@@ -33,22 +33,23 @@ test('WF-01: navLook/navPrefixed compute active state from st.view alone, no ter
   assert.match(manager, /const navPrefixed = \(prefix, active\) => \{/);
 });
 
-test('WF-01 items 1-8: each of the 8 primary routes is active only for its own st.view value, computed via navPrefixed', () => {
-  assert.match(manager, /\.\.\.navPrefixed\('navHome', st\.view === 'home'\)/);
-  assert.match(manager, /\.\.\.navPrefixed\('navSurvey', st\.view === 'fieldSurvey'\)/);
-  assert.match(manager, /\.\.\.navPrefixed\('navLands', st\.view === 'lands'\)/);
-  assert.match(manager, /\.\.\.navPrefixed\('navMobility', st\.view === 'mobility'\)/);
-  assert.match(manager, /\.\.\.navPrefixed\('navUsers', st\.view === 'users'\)/);
-  assert.match(manager, /\.\.\.navPrefixed\('navMap', st\.view === 'map'\)/);
-  assert.match(manager, /\.\.\.navPrefixed\('navObs', st\.view === 'observations'\)/);
-  assert.match(manager, /\.\.\.navPrefixed\('navReports', st\.view === 'reports'\)/);
+test('WF-01 items 1-8: each desktop route is active only for its own st.view while the mobile drawer is not authoritative', () => {
+  assert.match(manager, /\.\.\.navPrefixed\('navHome', !mobileNavigationAuthoritative && st\.view === 'home'\)/);
+  assert.match(manager, /\.\.\.navPrefixed\('navSurvey', !mobileNavigationAuthoritative && st\.view === 'fieldSurvey'\)/);
+  assert.match(manager, /\.\.\.navPrefixed\('navLands', !mobileNavigationAuthoritative && st\.view === 'lands'\)/);
+  assert.match(manager, /\.\.\.navPrefixed\('navMobility', !mobileNavigationAuthoritative && st\.view === 'mobility'\)/);
+  assert.match(manager, /\.\.\.navPrefixed\('navUsers', !mobileNavigationAuthoritative && st\.view === 'users'\)/);
+  assert.match(manager, /\.\.\.navPrefixed\('navMap', !mobileNavigationAuthoritative && st\.view === 'map'\)/);
+  assert.match(manager, /\.\.\.navPrefixed\('navObs', !mobileNavigationAuthoritative && st\.view === 'observations'\)/);
+  assert.match(manager, /\.\.\.navPrefixed\('navReports', !mobileNavigationAuthoritative && st\.view === 'reports'\)/);
 });
 
-test('WF-01 item 9: exactly one route can ever read aria-current="page" -- the 8 navPrefixed calls compare the SAME single st.view string against 8 mutually-exclusive literal values, and every one of the 8 sidebar links binds aria-current to its own dynamic *Current prop (no second, independently-computed active flag exists anywhere)', () => {
-  const activeCalls = [...manager.matchAll(/navPrefixed\('nav(\w+)', st\.view === '(\w+)'\)/g)];
+test('WF-01 item 9: desktop active state remains mutually exclusive and is suppressed while the responsive drawer owns aria-current', () => {
+  const activeCalls = [...manager.matchAll(/navPrefixed\('nav(\w+)', !mobileNavigationAuthoritative && st\.view === '(\w+)'\)/g)];
   assert.equal(activeCalls.length, 8, 'expected exactly 8 navPrefixed(...) calls driving sidebar active state');
   const compared = activeCalls.map(m => m[2]);
   assert.equal(new Set(compared).size, 8, 'the 8 compared route values must be distinct -- otherwise two links could read active for the same st.view');
+  assert.match(manager, /const mobileNavigationAuthoritative = \(st\.bp === 'tab' \|\| st\.bp === 'mob'\) && st\.mobNavOpen;/);
 });
 
 test('WF-01 item 10: the old static aria-current="page" hardcoded on Home only is gone -- no stale always-on active state survives', () => {
@@ -69,19 +70,11 @@ test('WF-01 item 11: desktop sidebar parity -- all 8 data-manager-view links (in
 
 test('WF-01 item 12: mobile drawer parity -- every real mobNav destination gets the same navLook(...) active/inactive look as its desktop counterpart, and the sc-for template renders it (aria-current + color + background + border)', () => {
   const mobNavBlock = methodBody(manager, 'mobNav: [', 2100);
-  // WAVE 2B.1 inserted mnavHome: '1' on this row (see phase13d3-wave2b1-*
-  // tests) -- tolerate that between on: and ...navLook without requiring it.
-  assert.match(mobNavBlock, /on: \(\) => this\.goHome\(\),(?: mnavHome: '1',)? \.\.\.navLook\(st\.view === 'home'\)/);
-  assert.match(mobNavBlock, /on: \(\) => this\.goRoute\('survey'\), \.\.\.navLook\(st\.view === 'fieldSurvey'\)/);
-  assert.match(mobNavBlock, /on: \(\) => this\.goLandsGateway\(\), \.\.\.navLook\(st\.view === 'lands'\)/);
-  assert.match(mobNavBlock, /on: \(\) => this\.goRoute\('mobility'\), \.\.\.navLook\(st\.view === 'mobility'\)/);
-  assert.match(mobNavBlock, /on: \(\) => this\.openView\('observations'\), \.\.\.navLook\(st\.view === 'observations'\)/);
-  assert.match(mobNavBlock, /on: \(\) => this\.openMap\(\), \.\.\.navLook\(st\.view === 'map'\)/);
-  assert.match(mobNavBlock, /on: \(\) => this\.openView\('reports'\), \.\.\.navLook\(st\.view === 'reports'\)/);
-  assert.match(mobNavBlock, /on: \(\) => this\.openView\('users'\), \.\.\.navLook\(st\.view === 'users'\)/);
-  // WAVE 2B.1 inserted data-mnav-home="{{ i.mnavHome }}" between data-f and
-  // aria-current on this same element (see phase13d3-wave2b1-* tests).
-  assert.match(manager, /<sc-for list="\{\{ mobNav \}\}" as="i"[^>]*>\s*<div onClick="\{\{ i\.on \}\}" data-f="1"(?: data-mnav-home="\{\{ i\.mnavHome \}\}")? aria-current="\{\{ i\.current \}\}"/);
+  const routePairs = [['home', 'home'], ['survey', 'fieldSurvey'], ['lands', 'lands'], ['mobility', 'mobility'], ['observations', 'observations'], ['map', 'map'], ['reports', 'reports'], ['users', 'users']];
+  for (const [route, stateView] of routePairs) {
+    assert.match(mobNavBlock, new RegExp(`view: '${route}'[^\\n]*navLook\\(mobileNavigationAuthoritative && st\\.view === '${stateView}'\\)`));
+  }
+  assert.match(manager, /<sc-for list="\{\{ mobNav \}\}" as="i"[^>]*>\s*<div onClick="\{\{ i\.on \}\}" data-manager-view="\{\{ i\.view \}\}" data-f="1" data-mnav-home="\{\{ i\.mnavHome \}\}" aria-current="\{\{ i\.current \}\}"/);
 });
 
 test('WF-01: settings stays a dialog, not a route -- unaffected by the active-state change', () => {

@@ -293,10 +293,11 @@
     window.__smartHsrManagerNavGuard = true;
     document.addEventListener('click', event => {
       const target = event.target && event.target.closest ? event.target.closest('[data-manager-view]') : null;
-      if (!target) return;
+      const view = target?.dataset.managerView;
+      if (!view) return;
       event.preventDefault();
       event.stopPropagation();
-      window.dispatchEvent(new CustomEvent('smart-hsr:navigate-request', { detail: { view: target.dataset.managerView } }));
+      window.dispatchEvent(new CustomEvent('smart-hsr:navigate-request', { detail: { view } }));
     }, true);
   };
   installManagerNavigationGuard();

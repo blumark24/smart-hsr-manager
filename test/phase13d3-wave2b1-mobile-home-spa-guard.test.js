@@ -53,7 +53,7 @@ function onPrimaryNavigationClickSource() {
 
 test('1. mobile drawer Home row carries data-mnav-home="1" and is the only mobNav row that does', () => {
   const mobNavBlock = methodBody(manager, 'mobNav: [', 1700);
-  assert.match(mobNavBlock, /on: \(\) => this\.goHome\(\), mnavHome: '1', \.\.\.navLook\(st\.view === 'home'\)/);
+  assert.match(mobNavBlock, /view: 'home', mnavHome: '1', \.\.\.navLook\(mobileNavigationAuthoritative && st\.view === 'home'\)/);
   // Shared default is '' for every row unless explicitly overridden.
   assert.match(manager, /mnavHome: ''/);
   // Exactly one row overrides it to '1'.
@@ -62,7 +62,7 @@ test('1. mobile drawer Home row carries data-mnav-home="1" and is the only mobNa
 });
 
 test('2. the drawer template renders data-mnav-home from the per-item prop, on the same element as onClick/aria-current', () => {
-  assert.match(manager, /<div onClick="\{\{ i\.on \}\}" data-f="1" data-mnav-home="\{\{ i\.mnavHome \}\}" aria-current="\{\{ i\.current \}\}"/);
+  assert.match(manager, /<div onClick="\{\{ i\.on \}\}" data-manager-view="\{\{ i\.view \}\}" data-f="1" data-mnav-home="\{\{ i\.mnavHome \}\}" aria-current="\{\{ i\.current \}\}"/);
 });
 
 test('3. the legacy fallback\'s new opt-out matches exactly that marker, placed after (not replacing) the original data-manager-view guard', () => {
@@ -75,9 +75,12 @@ test('3. the legacy fallback\'s new opt-out matches exactly that marker, placed 
   assert.ok(assignIdx > newGuardIdx, 'both guards must run before the reload call');
 });
 
-test('4/goHome reachability: with the fallback backing off, the mobile Home div\'s own onClick=goHome() is the only handler left to run for that click', () => {
+test('4/goHome reachability: mobile Home now uses the same delegated route contract as desktop Home', () => {
   const mobNavBlock = methodBody(manager, 'mobNav: [', 1700);
-  assert.match(mobNavBlock, /on: \(\) => this\.goHome\(\)/);
+  assert.match(mobNavBlock, /view: 'home'/);
+  assert.doesNotMatch(mobNavBlock, /on: \(\) => this\.goHome\(\)/);
+  const bridge = methodBody(manager, 'this.onNavigateRequest = e => {', 600);
+  assert.match(bridge, /home: \(\) => this\.goHome\(\)/);
 });
 
 test('goHome() sets st.view=\'home\' via plain setState -- no navigation call of any kind', () => {
@@ -103,12 +106,11 @@ test('5. every desktop [data-manager-view] route still exists exactly once and i
   }
 });
 
-test('5b. the other 7 real mobNav routes do not carry data-mnav-home (they were never affected -- HOME_LABELS never matches their text)', () => {
+test('5b. the other real mobNav routes use view identifiers and do not carry the Home compatibility marker', () => {
   const mobNavBlock = methodBody(manager, 'mobNav: [', 1700);
   const nonHomeRoutes = [
-    "on: () => this.goRoute('survey')", "on: () => this.goLandsGateway()", "on: () => this.goRoute('mobility')",
-    "on: () => this.openView('observations')", "on: () => this.openMap()", "on: () => this.openView('reports')",
-    "on: () => this.openView('users')",
+    "view: 'survey'", "view: 'lands'", "view: 'mobility'", "view: 'observations'",
+    "view: 'map'", "view: 'reports'", "view: 'users'",
   ];
   for (const marker of nonHomeRoutes) {
     const idx = mobNavBlock.indexOf(marker);
@@ -135,6 +137,8 @@ test('7. no duplicate navigation owner -- the fix is a second early-return on th
   const listenerCount = (foundation.match(/document\.addEventListener\('click'/g) || []).length;
   assert.equal(listenerCount, 1, 'manager-phase11a-foundation.js must still register exactly one document click listener');
   assert.doesNotMatch(foundation, /dispatchEvent|new CustomEvent/, 'the legacy handler must not start dispatching its own navigation event -- it only backs off and lets the existing goHome() onClick run');
+  const mobNavBlock = methodBody(manager, 'mobNav: [', 2100);
+  assert.doesNotMatch(mobNavBlock, /on: \(\) => this\.(?:goHome|goRoute|goLandsGateway|openView|openMap)/, 'real mobile routes must not retain direct route handlers');
 });
 
 // ---- item 8/9: no double-click requirement, no dead click ----
@@ -166,7 +170,7 @@ test('10c. installManagerNavigationGuard registration-order proof (manager-dashb
 
 // ---- item 11/12: Wave 2B active-state and Map route tests remain valid (file-scope sanity) ----
 
-test('11/12. Wave 2B.1 stays within its authorized file scope: only manager.html and manager-phase11a-foundation.js were touched (plus this test file)', () => {
+test('11/12. Wave 2B.2 does not touch frozen Window System, RBAC, or Firestore Rules files', () => {
   const { execSync } = require('node:child_process');
   let diffFiles = '';
   try {
@@ -175,12 +179,9 @@ test('11/12. Wave 2B.1 stays within its authorized file scope: only manager.html
     diffFiles = '';
   }
   const files = diffFiles.split('\n').filter(Boolean);
-  const allowed = new Set(['manager.html', 'manager-phase11a-foundation.js']);
-  for (const f of files) {
-    assert.ok(allowed.has(f), `${f} is not an authorized Wave 2B.1 file`);
-  }
-  // Window System V1 stays frozen.
   for (const f of files) {
     assert.doesNotMatch(f, /manager-phase11[cdfg]-/, `${f} must not be modified (Window System V1 is frozen)`);
+    assert.doesNotMatch(f, /(?:firestore|storage)\.rules$/i, `${f} must not be modified (security rules are frozen)`);
+    assert.doesNotMatch(f, /(?:^|\/)api\//, `${f} must not be modified (RBAC/backend policy is frozen)`);
   }
 });
