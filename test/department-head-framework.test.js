@@ -63,3 +63,10 @@ test('department head framework includes a real basemap map surface without fabr
   assert.match(page, /لا توجد نقاط أو مواقع تجريبية/);
   assert.doesNotMatch(page, /new maplibregl\.Marker/);
 });
+
+
+test('preview runtime does not contain escaped-newline parse bug', () => {
+  const preview = fs.readFileSync(path.join(root, 'department-head-preview.html'), 'utf8');
+  assert.doesNotMatch(preview, /\\ninitializePreviewMaps\(\);/);
+  assert.match(preview, /initializePreviewMaps\(\);/);
+});
