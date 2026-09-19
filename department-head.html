@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SMART HSR | مركز قيادة القسم</title>
+<meta name="description" content="لوحة رئيس القسم الديناميكية لمنصة SMART HSR">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#e9f1ef;--bg2:#dce9e5;--surface:rgba(251,253,252,.80);--surface2:rgba(244,250,248,.68);
+  --surfaceStrong:rgba(255,255,255,.94);--line:rgba(13,83,78,.14);--lineStrong:rgba(12,145,139,.26);
+  --tx:#12353a;--tx2:#536d71;--tx3:#789094;--navy:#0a2f3d;--green:#0c918b;--green2:#08746f;
+  --greenSoft:rgba(12,145,139,.11);--good:#087a56;--warn:#a0600b;--bad:#b4233b;
+  --shadow:0 20px 58px rgba(14,54,58,.10),inset 0 1px 0 rgba(255,255,255,.76);
+  --shadow2:0 10px 28px rgba(14,54,58,.08),inset 0 1px 0 rgba(255,255,255,.62);
+  --blur:blur(22px) saturate(135%);
+}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#061820;--bg2:#0a252f;--surface:rgba(12,31,40,.78);--surface2:rgba(14,38,48,.68);
+  --surfaceStrong:rgba(14,36,46,.94);--line:rgba(156,215,208,.12);--lineStrong:rgba(64,211,192,.24);
+  --tx:#eefcf8;--tx2:#b2cbc7;--tx3:#789692;--navy:#061820;--green:#3bd2bd;--green2:#22aa99;
+  --greenSoft:rgba(59,210,189,.10);--good:#62d6a3;--warn:#f0b85b;--bad:#ff8290;
+  --shadow:0 24px 70px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.05);
+  --shadow2:0 12px 32px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.04);
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;font-family:"Tajawal",system-ui,sans-serif;background:
+ radial-gradient(circle at 82% 2%,rgba(12,145,139,.11),transparent 27rem),
+ radial-gradient(circle at 14% 82%,rgba(20,100,132,.07),transparent 28rem),
+ linear-gradient(145deg,var(--bg),var(--bg2));color:var(--tx);min-height:100vh}
+button,input{font:inherit}
+button{color:inherit}
+.shell{min-height:100vh;display:grid;grid-template-columns:260px minmax(0,1fr)}
+.sidebar{position:sticky;top:0;height:100vh;padding:18px 14px;border-left:1px solid var(--line);
+ background:linear-gradient(180deg,rgba(6,36,43,.96),rgba(7,49,54,.93));color:#edfdfa;z-index:20}
+.brand{display:flex;align-items:center;gap:11px;padding:7px 8px 17px;border-bottom:1px solid rgba(255,255,255,.10)}
+.brand img{width:42px;height:42px;object-fit:contain}
+.brand strong{display:block;font-size:14px;letter-spacing:.2px}.brand small{color:#9fcac5;font-size:10.5px}
+.identity{margin:14px 2px;padding:13px;border:1px solid rgba(255,255,255,.10);border-radius:16px;background:rgba(255,255,255,.055)}
+.identity strong{display:block;font-size:12.5px}.identity small{display:block;color:#a6c7c4;margin-top:4px;font-size:10.5px;line-height:1.5}
+.nav{display:grid;gap:6px;margin-top:12px}
+.nav button{width:100%;border:1px solid transparent;background:transparent;color:#b8d6d2;text-align:right;padding:11px 12px;border-radius:12px;cursor:pointer;font-weight:650}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav button[aria-current="page"]{color:#fff;background:linear-gradient(135deg,rgba(59,210,189,.19),rgba(59,210,189,.07));border-color:rgba(85,224,204,.22)}
+.side-foot{position:absolute;right:14px;left:14px;bottom:16px;display:grid;gap:8px}
+.side-foot button{border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.055);color:#cce3df;padding:9px 10px;border-radius:11px;cursor:pointer}
+.main{min-width:0}
+.topbar{position:sticky;top:0;z-index:15;height:70px;display:flex;align-items:center;gap:10px;padding:0 22px;
+ background:color-mix(in srgb,var(--surfaceStrong) 83%,transparent);border-bottom:1px solid var(--line);backdrop-filter:var(--blur)}
+.top-title{min-width:0;flex:1}.top-title strong{display:block;font-size:14px}.top-title span{display:block;color:var(--tx3);font-size:10.5px;margin-top:2px}
+.top-user{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:13px;background:var(--surface2);border:1px solid var(--line)}
+.avatar{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,var(--green),var(--navy));color:#fff;display:grid;place-items:center;font-weight:800;font-size:11px}
+.top-user b{display:block;font-size:11.5px}.top-user small{display:block;font-size:9.5px;color:var(--tx3);margin-top:2px}
+.icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);cursor:pointer}
+.mobile-menu{display:none}
+.content{padding:24px;max-width:1600px;margin:0 auto}
+.view{display:none}.view.is-active{display:block}
+.hero{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(280px,.55fr);gap:16px;margin-bottom:16px}
+.panel,.card{position:relative;overflow:hidden;border:1px solid var(--line);background:linear-gradient(145deg,var(--surfaceStrong),var(--surface));box-shadow:var(--shadow);backdrop-filter:var(--blur)}
+.panel{border-radius:22px;padding:22px}.card{border-radius:18px;padding:17px;box-shadow:var(--shadow2)}
+.panel:before,.card:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.18),transparent 34%,transparent 72%,rgba(12,145,139,.04))}
+.eyebrow{font-size:10px;font-weight:800;color:var(--green);letter-spacing:.3px;margin-bottom:8px}
+h1,h2,h3,p{margin:0}h1{font-size:clamp(23px,3vw,36px);line-height:1.25}h2{font-size:18px}h3{font-size:14px}
+.hero p{margin-top:8px;color:var(--tx2);font-size:12.5px;line-height:1.7;max-width:760px}
+.badges{display:flex;flex-wrap:wrap;gap:7px;margin-top:15px}
+.badge{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:4px 10px;border-radius:999px;border:1px solid var(--lineStrong);background:var(--greenSoft);color:var(--green2);font-size:10.5px;font-weight:750}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.product-hero{display:flex;flex-direction:column;justify-content:space-between;min-height:172px}
+.product-hero .product-name{font-size:20px;font-weight:850}.product-hero p{font-size:11.5px}
+.product-chip{align-self:flex-start;padding:4px 9px;border-radius:999px;background:rgba(12,145,139,.11);border:1px solid var(--lineStrong);color:var(--green2);font-size:10px;font-weight:800}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{min-height:108px}.kpi span{font-size:10.5px;color:var(--tx3);font-weight:650}.kpi strong{display:block;font-size:28px;margin-top:10px;font-variant-numeric:tabular-nums}.kpi small{display:block;color:var(--tx2);font-size:9.5px;margin-top:5px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(290px,.75fr);gap:16px}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}.section-head h2{flex:1}.section-head span{font-size:10.5px;color:var(--tx3)}
+.product-card{display:flex;align-items:center;gap:15px;cursor:pointer}
+.product-icon{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(145deg,rgba(12,145,139,.18),rgba(12,145,139,.07));border:1px solid var(--lineStrong);font-size:22px}
+.product-card .meta{flex:1}.product-card .meta p{font-size:11px;color:var(--tx2);margin-top:4px}
+.arrow{font-size:20px;color:var(--green)}
+.list{display:grid;gap:8px}.row{display:flex;align-items:center;gap:10px;padding:11px;border-radius:13px;border:1px solid var(--line);background:var(--surface2)}
+.row .mini{width:34px;height:34px;border-radius:11px;background:var(--greenSoft);display:grid;place-items:center;color:var(--green2);font-size:11px;font-weight:800}
+.row .grow{flex:1;min-width:0}.row b{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.row small{display:block;font-size:9.5px;color:var(--tx3);margin-top:3px}
+.state{font-size:9.5px;font-weight:750;padding:4px 8px;border-radius:999px;background:var(--greenSoft);color:var(--green2);border:1px solid var(--line)}
+.empty{padding:32px 14px;text-align:center;color:var(--tx3);font-size:11.5px;border:1px dashed var(--lineStrong);border-radius:15px;background:var(--surface2)}
+.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}
+.step{padding:14px;border-radius:14px;background:var(--surface2);border:1px solid var(--line)}.step b{display:block;font-size:11.5px}.step small{font-size:9.5px;color:var(--tx3);line-height:1.5}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:17px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right;padding:12px 13px;border-bottom:1px solid var(--line);font-size:11px}th{font-size:10px;color:var(--tx3);background:var(--surface2)}tbody tr:hover{background:var(--greenSoft)}
+.notice{margin-top:14px;padding:12px 13px;border-radius:13px;border:1px solid var(--line);background:var(--surface2);font-size:10.5px;color:var(--tx2);line-height:1.7}
+.error{border-color:rgba(180,35,59,.3);background:rgba(180,35,59,.07);color:var(--bad)}
+.loader{display:inline-flex;align-items:center;gap:7px}.spin{width:13px;height:13px;border:2px solid var(--lineStrong);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:1180px){.shell{grid-template-columns:1fr}.sidebar{position:fixed;right:0;top:0;width:min(290px,86vw);transform:translateX(105%);transition:.2s ease;box-shadow:-20px 0 50px rgba(0,0,0,.25)}body.nav-open .sidebar{transform:none}.mobile-menu{display:inline-grid;place-items:center}.hero,.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.content{padding:14px}.topbar{padding:0 12px}.top-user>div:last-child{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.kpi{min-height:96px}.workflow{grid-template-columns:repeat(2,1fr)}.panel{padding:17px;border-radius:18px}.hero{gap:10px}}
+@media(max-width:420px){.kpis{grid-template-columns:1fr 1fr}.workflow{grid-template-columns:1fr}.top-title span{display:none}}
+</style>
+<script>
+(function(){
+  try{
+    var saved=localStorage.getItem('smartTheme')||localStorage.getItem('smartx_theme');
+    var mode=saved||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+    document.documentElement.setAttribute('data-theme',mode);
+  }catch(_){}
+})();
+</script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img src="Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR">
+      <div><strong>SMART HSR</strong><small>منصة بلدية ذكية</small></div>
+    </div>
+    <div class="identity">
+      <strong id="sideDepartment">جارٍ التحقق من القسم…</strong>
+      <small id="sideProduct">مركز قيادة رئيس القسم</small>
+    </div>
+    <nav class="nav" aria-label="تنقل رئيس القسم">
+      <button data-view="overview" aria-current="page">مركز قيادة القسم</button>
+      <button data-view="product">منتج القسم</button>
+      <button data-view="employees">موظفو القسم</button>
+      <button data-view="record">سجل القسم</button>
+    </nav>
+    <div class="side-foot">
+      <button id="themeBtn">تبديل الوضع</button>
+      <button id="logoutBtn">تسجيل الخروج</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn mobile-menu" id="menuBtn" aria-label="فتح القائمة">☰</button>
+      <div class="top-title"><strong id="topDepartment">مركز قيادة القسم</strong><span>صلاحيات القسم فقط · هوية واحدة · وصول حسب الدور</span></div>
+      <button class="icon-btn" id="refreshBtn" aria-label="تحديث البيانات">↻</button>
+      <div class="top-user">
+        <div class="avatar" id="avatar">ر</div>
+        <div><b id="userName">رئيس القسم</b><small id="orgName">الجهة البلدية</small></div>
+      </div>
+    </header>
+
+    <div class="content">
+      <section class="view is-active" data-view-panel="overview">
+        <div class="hero">
+          <div class="panel">
+            <div class="eyebrow">DEPARTMENT COMMAND CENTER</div>
+            <h1 id="heroTitle">مركز قيادة القسم</h1>
+            <p id="heroSub">لوحة تشغيلية ديناميكية لرئيس القسم. يتم تحديد محتواها من هوية المستخدم والقسم المسجل، دون منح صلاحيات خارج نطاقه.</p>
+            <div class="badges">
+              <span class="badge"><span class="status-dot"></span> وصول القسم فقط</span>
+              <span class="badge" id="roleBadge">رئيس قسم</span>
+              <span class="badge" id="productBadge">تحميل المنتج…</span>
+            </div>
+          </div>
+          <div class="panel product-hero">
+            <div>
+              <div class="eyebrow">ACTIVE PRODUCT</div>
+              <div class="product-name" id="activeProductName">—</div>
+              <p id="activeProductDesc">يتم تحديد المنتج التشغيلي حسب القسم.</p>
+            </div>
+            <span class="product-chip" id="activeProductStatus">مفعّل</span>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="card kpi"><span>إجمالي موظفي القسم</span><strong data-kpi="total">—</strong><small>من سجل الموظفين المركزي</small></div>
+          <div class="card kpi"><span>حسابات نشطة</span><strong data-kpi="active">—</strong><small>حسابات دخول مفعّلة</small></div>
+          <div class="card kpi"><span>مراقبو الحصر</span><strong data-kpi="inspectors">—</strong><small>خدمة الحصر مفعّلة</small></div>
+          <div class="card kpi"><span>بدون حساب دخول</span><strong data-kpi="noAccount">—</strong><small>سجل موظف فقط</small></div>
+          <div class="card kpi"><span>جاهزية بيانات القسم</span><strong data-kpi="readiness">—</strong><small>استنادًا إلى السجل الحالي</small></div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="section-head"><h2>منتجات القسم</h2><span>نفس القالب · محتوى مختلف حسب الخدمة</span></div>
+            <div class="product-card" id="primaryProductCard" role="button" tabindex="0">
+              <div class="product-icon">◎</div>
+              <div class="meta"><h3 id="productCardName">—</h3><p id="productCardDesc">—</p></div>
+              <span class="state">مفعّل</span><span class="arrow">‹</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-head"><h2>حالة الفريق</h2><span id="teamStateText">جارٍ التحميل</span></div>
+            <div class="list" id="teamPreview"><div class="empty"><span class="loader"><span class="spin"></span> تحميل سجل موظفي القسم…</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="product">
+        <div class="panel">
+          <div class="eyebrow">SERVICE MODULE</div>
+          <h1 id="productTitle">منتج القسم</h1>
+          <p id="productIntro">وحدة تشغيلية داخل لوحة رئيس القسم. هذه المرحلة تستخدم البيانات الموثوقة المتاحة فقط ولا تُنشئ أرقامًا افتراضية.</p>
+          <div class="workflow" id="productWorkflow"></div>
+        </div>
+        <div class="grid2" style="margin-top:16px">
+          <div class="card">
+            <div class="section-head"><h2>فريق المنتج</h2><span>من مركز المستخدمين</span></div>
+            <div class="list" id="productTeam"></div>
+          </div>
+          <div class="card">
+            <div class="section-head"><h2>حدود التشغيل</h2><span>Fail-closed</span></div>
+            <div class="notice">تعرض هذه الصفحة بيانات موظفي القسم التي يسمح بها المسار الحالي فقط. مؤشرات البلاغات/الملاحظات الميدانية لن تُعرض كأرقام حتى يتوفر مصدر Department-scoped موثوق ومصرّح به.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="employees">
+        <div class="panel">
+          <div class="eyebrow">EMPLOYEE MASTER REGISTRY</div>
+          <h1>موظفو القسم</h1>
+          <p>قراءة مباشرة من سجل الموظفين المركزي، ومقيّدة في الخادم بقسم رئيس القسم نفسه.</p>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="section-head"><h2>السجل</h2><span id="employeeCount">—</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>الموظف</th><th>المسمى</th><th>الحساب</th><th>الحصر الميداني</th><th>القسم</th></tr></thead>
+              <tbody id="employeeRows"><tr><td colspan="5">جارٍ التحميل…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="record">
+        <div class="panel">
+          <div class="eyebrow">DEPARTMENT GOVERNANCE</div>
+          <h1>سجل القسم</h1>
+          <p>ملخص حدود الهوية والوصول المستخدمة في هذه الجلسة. لا تُعرض بيانات من أقسام أخرى.</p>
+        </div>
+        <div class="grid2" style="margin-top:16px">
+          <div class="card">
+            <div class="section-head"><h2>سياق الجلسة</h2><span>موثّق من Firestore</span></div>
+            <div class="list" id="contextList"></div>
+          </div>
+          <div class="card">
+            <div class="section-head"><h2>سياسة العرض</h2><span>قراءة فقط</span></div>
+            <div class="notice">القالب لا يغيّر Firestore Rules أو RBAC أو صلاحيات الحساب. أي عملية إدارة موظفين أو تغيير دور تبقى عبر مركز إدارة المستخدمين والمسارات الموثوقة الحالية.</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="notice error" id="fatal" hidden></div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
+
+const state = { context:null, profile:null, employees:[], loading:true, error:"" };
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+function clean(value, fallback){
+  const v = typeof value === "string" ? value.replace(/[\u0000-\u001F\u007F-\u009F]/g," ").replace(/\s+/g," ").trim().slice(0,100) : "";
+  return v || fallback || "";
+}
+function resolveMobilityRole(data){
+  const allowed=["mobility_head","department_head","administrative_affairs","employee"];
+  if(data && Object.prototype.hasOwnProperty.call(data,"mobilityAccess")){
+    const a=data.mobilityAccess;
+    return a && typeof a==="object" && a.enabled===true && allowed.includes(a.role) ? a.role : null;
+  }
+  return data && allowed.includes(data.role) ? data.role : null;
+}
+function departmentProfile(department){
+  const d=clean(department,"القسم");
+  if(/الحصر|ميداني|field/i.test(d)){
+    return {
+      id:"field-survey",
+      department:"إدارة الحصر الميداني",
+      product:"التشوه البصري",
+      description:"أول منتج تشغيلي داخل الحصر الميداني لرصد وتوثيق ومتابعة حالات التشوه البصري.",
+      workflow:[
+        ["الرصد","استقبال الملاحظات الميدانية الموثقة"],
+        ["التوثيق","ربط الحالة بالموقع والأدلة"],
+        ["المعالجة","متابعة الإجراء التشغيلي"],
+        ["التحقق","إقفال الحالة بعد التحقق"]
+      ]
+    };
+  }
+  if(/حركة|السير|traffic|mobility/i.test(d)){
+    return {
+      id:"traffic",
+      department:"إدارة حركة السير",
+      product:"التشغيل والحركة",
+      description:"إدارة مهام القسم وموظفيه ضمن نطاق حركة السير.",
+      workflow:[
+        ["الطلب","إنشاء المهمة من القسم"],
+        ["الاعتماد","تمرير المسار المعتمد"],
+        ["التنفيذ","متابعة الموظف والمهمة"],
+        ["الإغلاق","إقفال السجل التشغيلي"]
+      ]
+    };
+  }
+  return {
+    id:"generic",
+    department:d,
+    product:"عمليات القسم",
+    description:"وحدة تشغيلية ديناميكية للقسم الحالي.",
+    workflow:[
+      ["الطلب","بدء الإجراء التشغيلي"],
+      ["التكليف","إسناد العمل للمختص"],
+      ["المتابعة","متابعة حالة التنفيذ"],
+      ["الإغلاق","توثيق اكتمال الإجراء"]
+    ]
+  };
+}
+function initials(name){return clean(name,"ر").split(/\s+/).slice(0,2).map(x=>x[0]||"").join("")||"ر";}
+function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
+function accountLabel(v){
+  const m={ACTIVE:"نشط",NO_ACCOUNT:"بدون حساب",PENDING_ACTIVATION:"بانتظار التفعيل",SUSPENDED:"موقوف"};
+  return m[v]||"غير محدد";
+}
+function productFieldRole(emp){
+  const f=emp && emp.products && emp.products.field;
+  return f && f.enabled===true ? (f.role||"مفعّل") : "غير مفعّل";
+}
+function switchView(view){
+  $$(".view").forEach(el=>el.classList.toggle("is-active",el.dataset.viewPanel===view));
+  $$(".nav [data-view]").forEach(el=>el.setAttribute("aria-current",el.dataset.view===view?"page":"false"));
+  document.body.classList.remove("nav-open");
+}
+function render(){
+  if(!state.context)return;
+  const p=state.profile;
+  const e=state.employees;
+  setText("sideDepartment",p.department);
+  setText("sideProduct",p.product);
+  setText("topDepartment","مركز قيادة القسم · "+p.department);
+  setText("heroTitle","مركز قيادة القسم — "+p.department);
+  setText("productBadge",p.product);
+  setText("activeProductName",p.product);
+  setText("activeProductDesc",p.description);
+  setText("productCardName",p.product);
+  setText("productCardDesc",p.description);
+  setText("productTitle",p.product);
+  setText("userName",state.context.name||"رئيس القسم");
+  setText("orgName",state.context.organizationName||"المؤسسة المسجلة");
+  setText("avatar",initials(state.context.name));
+  setText("employeeCount",e.length+" موظف");
+
+  const active=e.filter(x=>x.accountStatus==="ACTIVE").length;
+  const noAccount=e.filter(x=>x.accountStatus==="NO_ACCOUNT").length;
+  const inspectors=e.filter(x=>x.products&&x.products.field&&x.products.field.enabled===true&&x.products.field.role==="inspector").length;
+  const ready=e.length ? Math.round((active/e.length)*100)+"%" : "—";
+  const values={total:String(e.length),active:String(active),inspectors:String(inspectors),noAccount:String(noAccount),readiness:ready};
+  Object.entries(values).forEach(([k,v])=>{const el=document.querySelector('[data-kpi="'+k+'"]');if(el)el.textContent=v;});
+  setText("teamStateText",state.loading?"جارٍ التحميل":(state.error?"تعذر التحميل":e.length+" موظف"));
+
+  const preview=$("#teamPreview");
+  if(state.loading){preview.innerHTML='<div class="empty"><span class="loader"><span class="spin"></span> تحميل سجل موظفي القسم…</span></div>';}
+  else if(state.error){preview.innerHTML='<div class="empty">تعذر تحميل سجل القسم حاليًا.</div>';}
+  else if(!e.length){preview.innerHTML='<div class="empty">لا توجد سجلات موظفين في هذا القسم حتى الآن.</div>';}
+  else preview.innerHTML=e.slice(0,5).map(emp=>'<div class="row"><div class="mini">'+initials(emp.name)+'</div><div class="grow"><b>'+escapeHtml(emp.name||"موظف")+'</b><small>'+escapeHtml(emp.jobTitle||"بدون مسمى")+'</small></div><span class="state">'+escapeHtml(accountLabel(emp.accountStatus))+'</span></div>').join("");
+
+  const productTeam=$("#productTeam");
+  const fieldTeam=p.id==="field-survey" ? e.filter(x=>x.products&&x.products.field&&x.products.field.enabled===true) : e;
+  productTeam.innerHTML=fieldTeam.length?fieldTeam.slice(0,10).map(emp=>'<div class="row"><div class="mini">'+initials(emp.name)+'</div><div class="grow"><b>'+escapeHtml(emp.name||"موظف")+'</b><small>'+escapeHtml(emp.jobTitle||"بدون مسمى")+'</small></div><span class="state">'+escapeHtml(p.id==="field-survey"?productFieldRole(emp):accountLabel(emp.accountStatus))+'</span></div>').join(""):'<div class="empty">لا يوجد موظفون مرتبطون بهذا المنتج في السجل الحالي.</div>';
+
+  $("#productWorkflow").innerHTML=p.workflow.map((x,i)=>'<div class="step"><div class="eyebrow">0'+(i+1)+'</div><b>'+escapeHtml(x[0])+'</b><small>'+escapeHtml(x[1])+'</small></div>').join("");
+
+  const rows=$("#employeeRows");
+  rows.innerHTML=e.length?e.map(emp=>'<tr><td><b>'+escapeHtml(emp.name||"—")+'</b><br><small>'+escapeHtml(emp.email||"")+'</small></td><td>'+escapeHtml(emp.jobTitle||"—")+'</td><td>'+escapeHtml(accountLabel(emp.accountStatus))+'</td><td>'+escapeHtml(productFieldRole(emp))+'</td><td>'+escapeHtml(emp.department||"—")+'</td></tr>').join(""):'<tr><td colspan="5">لا توجد سجلات موظفين في القسم.</td></tr>';
+
+  $("#contextList").innerHTML=[
+    ["الدور","رئيس قسم"],
+    ["القسم",state.context.department],
+    ["المؤسسة",state.context.organizationName||state.context.organizationId],
+    ["المنتج النشط",p.product],
+    ["نطاق البيانات","القسم الحالي فقط"]
+  ].map(x=>'<div class="row"><div class="grow"><b>'+escapeHtml(x[0])+'</b><small>'+escapeHtml(x[1]||"—")+'</small></div></div>').join("");
+}
+function escapeHtml(value){
+  return String(value==null?"":value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+async function loadEmployees(user){
+  state.loading=true;state.error="";render();
+  try{
+    const token=await user.getIdToken();
+    const res=await fetch("/api/admin/employees",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+      body:JSON.stringify({action:"list",organizationId:state.context.organizationId})
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||!Array.isArray(data.employees))throw new Error(data.reason||data.error||"employee_list_failed");
+    state.employees=data.employees;
+  }catch(err){
+    console.error("department-head: employee list failed",err);
+    state.error="تعذر تحميل سجل موظفي القسم من المصدر الموثوق.";
+  }finally{
+    state.loading=false;render();
+  }
+}
+
+$$(".nav [data-view]").forEach(btn=>btn.addEventListener("click",()=>switchView(btn.dataset.view)));
+$("#primaryProductCard").addEventListener("click",()=>switchView("product"));
+$("#primaryProductCard").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();switchView("product");}});
+$("#menuBtn").addEventListener("click",()=>document.body.classList.toggle("nav-open"));
+$("#themeBtn").addEventListener("click",()=>{
+  const next=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",next);
+  try{localStorage.setItem("smartTheme",next);}catch(_){}
+});
+$("#refreshBtn").addEventListener("click",()=>{if(window.__departmentHeadUser)loadEmployees(window.__departmentHeadUser);});
+
+let firebaseConfig;
+try{
+  firebaseConfig=await resolveFirebaseConfig();
+}catch(err){
+  $("#fatal").hidden=false;$("#fatal").textContent="تعذر تحميل إعدادات النظام.";
+  throw err;
+}
+const app=getApps().find(a=>a.name==="[DEFAULT]")||initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+$("#logoutBtn").addEventListener("click",async()=>{await signOut(auth).catch(()=>{});location.replace("login.html");});
+
+onAuthStateChanged(auth,async user=>{
+  if(!user){location.replace("login.html");return;}
+  try{
+    const snap=await getDoc(doc(db,"users",user.uid));
+    if(!snap.exists()){await signOut(auth);location.replace("login.html");return;}
+    const data=snap.data()||{};
+    const org=clean(data.organizationId);
+    const department=clean(data.department);
+    const mobilityRole=resolveMobilityRole(data);
+    if(data.active===false||mobilityRole!=="department_head"||!org||!department){
+      await signOut(auth);location.replace("login.html");return;
+    }
+    state.context={
+      uid:user.uid,
+      organizationId:org,
+      organizationName:clean(data.organizationName,"المؤسسة المسجلة"),
+      department:department,
+      name:clean(data.name,user.email||"رئيس القسم")
+    };
+    state.profile=departmentProfile(department);
+    window.__departmentHeadUser=user;
+    render();
+    await loadEmployees(user);
+  }catch(err){
+    console.error("department-head: authorization lookup failed",err);
+    await signOut(auth).catch(()=>{});
+    location.replace("login.html");
+  }
+});
+</script>
+</body>
+</html>

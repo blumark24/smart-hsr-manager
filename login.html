@@ -212,23 +212,26 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const landsAccess = data.landsAccess;
     const hasLandsRole = Boolean(landsAccess && landsAccess.enabled
       && ['lands_employee','lands_department_manager'].includes(landsAccess.role));
-    if (!userDoc.exists() || data.active === false || !organizationId || (!hasFieldRole && !hasLandsRole)) {
+
+    // PHASE13D.4 — Department Head Framework.
+    // Keep the existing Mobility compatibility vocabulary as the ONLY current
+    // live authorization source. No Firestore Rules/RBAC policy change here.
+    // Presence of mobilityAccess is authoritative, matching api/_lib/authz.js:
+    // a disabled/malformed entitlement must never fall back to a stale role.
+    const MOBILITY_ROLE_VALUES = ['mobility_head', 'department_head', 'administrative_affairs', 'employee'];
+    const mobilityRole = Object.prototype.hasOwnProperty.call(data, 'mobilityAccess')
+      ? (data.mobilityAccess && typeof data.mobilityAccess === 'object'
+          && data.mobilityAccess.enabled === true
+          && MOBILITY_ROLE_VALUES.includes(data.mobilityAccess.role)
+            ? data.mobilityAccess.role : null)
+      : (MOBILITY_ROLE_VALUES.includes(role) ? role : null);
+    const hasDepartmentHeadRole = mobilityRole === 'department_head';
+
+    if (!userDoc.exists() || data.active === false || !organizationId
+        || (!hasFieldRole && !hasLandsRole && !hasDepartmentHeadRole)) {
       await signOut(probeAuth);
-      // PHASE13B — messaging-only distinction, no routing/authorization change:
-      // a real, active account can hold a recognized Mobility entitlement
-      // (mobility_head / department_head / administrative_affairs / employee,
-      // via mobilityAccess or the same legacy-role fallback api/_lib/authz.js's
-      // resolveMobilityRole() honors server-side) for which no dashboard has
-      // been built yet. Telling that user "no permission" is false and
-      // unhelpful; this only picks a truthful message — it grants no route,
-      // fabricates no page, and does not touch hasFieldRole/hasLandsRole above.
-      const MOBILITY_ROLE_VALUES = ['mobility_head', 'department_head', 'administrative_affairs', 'employee'];
-      const hasRecognizedMobilityRole = Object.prototype.hasOwnProperty.call(data, 'mobilityAccess')
-        ? Boolean(data.mobilityAccess && typeof data.mobilityAccess === 'object' && data.mobilityAccess.enabled === true
-            && MOBILITY_ROLE_VALUES.includes(data.mobilityAccess.role))
-        : MOBILITY_ROLE_VALUES.includes(role);
-      if (userDoc.exists() && data.active !== false && organizationId && hasRecognizedMobilityRole) {
-        showMsg('🚧 صلاحيتك مسجّلة ضمن إدارة الحركة والسير، لكن لوحة هذا الدور لم تُفعَّل بعد لهذا الحساب. يرجى مراجعة إدارة المنصة.', 'error');
+      if (userDoc.exists() && data.active !== false && organizationId && mobilityRole) {
+        showMsg('🚧 صلاحيتك التشغيلية مسجّلة، لكن لوحة هذا الدور لم تُفعَّل بعد لهذا الحساب. يرجى مراجعة إدارة المنصة.', 'error');
       } else {
         showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
       }
@@ -239,12 +242,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     // One operational employee = one operational service (server-enforced).
     // A Lands employee/department-manager is routed to the Lands trusted
-    // runtime via a one-time server-side SSO handoff (POST /api/organization/context
-    // -> Lands' /api/lands-sso-register), so they land on the Lands dashboard
-    // directly instead of seeing a second login screen. Only an opaque,
-    // single-use, short-lived handoff code crosses the redirect URL — never
-    // a password, ID token, or custom token. Lands independently re-verifies
-    // the entitlement at consumption time before minting any session.
+    // runtime via a one-time server-side SSO handoff.
     if (hasLandsRole && !hasFieldRole) {
       let handoffCode = null;
       try {
@@ -275,6 +273,19 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         landsUrl.searchParams.set('code', handoffCode);
         window.location.href = landsUrl.toString();
       }, 600);
+      return;
+    }
+
+    // Generic department-head landing. The page re-verifies the same live
+    // users/{uid} role, organizationId and department before rendering and
+    // calls only the existing department-scoped employee registry LIST action.
+    if (hasDepartmentHeadRole && !hasFieldRole && !hasLandsRole) {
+      await signInWithEmailAndPassword(auth, email, password);
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى مركز قيادة القسم', 'success');
+      setTimeout(() => {
+        window.location.href = 'department-head.html';
+      }, 450);
       return;
     }
 
