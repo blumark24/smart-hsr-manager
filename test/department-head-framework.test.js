@@ -58,19 +58,23 @@ test('department head command center is field-survey specific and does not imper
   assert.match(page, /action:"submitMissionForApproval"/);
 });
 
-test('no fabricated operational observation counts are rendered', () => {
-  assert.match(page, /مؤشرات البلاغات\/الملاحظات الميدانية لن تُعرض كأرقام/);
+test('operational observation counts come only from the trusted visual-distortion command', () => {
+  assert.match(page, /action:"getFieldVisualDistortionCommand"/);
+  assert.match(page, /const visualCounts=/);
+  assert.match(page, /observations\.filter\(x=>x\.status==="PENDING"\)/);
   assert.doesNotMatch(page, /fake|demo data|بيانات تجريبية/i);
 });
 
 
-test('department head framework includes a real basemap map surface without fabricated operational markers', () => {
+test('department head framework includes a real basemap and observation-backed operational markers only', () => {
   assert.match(page, /id="departmentMapMini"/);
   assert.match(page, /id="departmentMapFull"/);
   assert.match(page, /tile\.openstreetmap\.org/);
   assert.match(page, /server\.arcgisonline\.com/);
-  assert.match(page, /لا توجد نقاط أو مواقع تجريبية/);
-  assert.doesNotMatch(page, /new maplibregl\.Marker/);
+  assert.match(page, /لا توجد نقاط تجريبية أو بيانات مكانية مصطنعة/);
+  assert.match(page, /trustedOperationalObservations\(\)/);
+  assert.match(page, /new maplibregl\.Marker/);
+  assert.match(page, /showOperationalObservation\(obs\.observationId\)/);
 });
 
 
