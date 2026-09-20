@@ -242,9 +242,28 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
             <div class="list" id="productTeam"></div>
           </div>
           <div class="card">
-            <div class="section-head"><h2>المقاولون</h2><span id="visualContractorCount">—</span></div>
+            <div class="section-head"><h2>سجل المقاولين</h2><span id="visualContractorCount">—</span></div>
             <div class="list" id="contractorList"><div class="empty">جارٍ تحميل المقاولين…</div></div>
-            <div class="notice">المقاول طرف تنفيذي خارجي وليس موظفًا في سجل موظفي القسم. تظهر هنا حسابات المقاولين النشطة التابعة لنفس المؤسسة فقط.</div>
+            <div class="notice">المقاول طرف تنفيذي خارجي وليس موظفًا في سجل موظفي القسم. الإسناد التشغيلي يتطلب عقدًا نشطًا ومسجلًا في SMART HSR.</div>
+          </div>
+        </div>
+
+        <div class="card" id="contractorProfileCard" style="margin-top:16px">
+          <div class="section-head"><h2>الملف التعاقدي للمقاول</h2><span id="contractorProfileState">اختر مقاولًا</span></div>
+          <div class="form-grid">
+            <div class="field"><label for="contractorProfileSelect">المقاول</label><select id="contractorProfileSelect"><option value="">اختر المقاول</option></select></div>
+            <div class="field"><label for="contractCompanyName">اسم الشركة / المؤسسة</label><input id="contractCompanyName" maxlength="160" placeholder="الاسم التعاقدي"></div>
+            <div class="field"><label for="contractNumber">رقم العقد</label><input id="contractNumber" maxlength="120" placeholder="رقم العقد أو الاتفاقية"></div>
+            <div class="field"><label for="contractStatus">حالة العقد</label><select id="contractStatus"><option value="ACTIVE">نشط</option><option value="SUSPENDED">موقوف</option><option value="ENDED">منتهٍ</option></select></div>
+            <div class="field"><label for="contractStartDate">بداية العقد</label><input id="contractStartDate" type="date"></div>
+            <div class="field"><label for="contractEndDate">نهاية العقد</label><input id="contractEndDate" type="date"></div>
+            <div class="field"><label for="contractContactName">مسؤول التواصل</label><input id="contractContactName" maxlength="140" placeholder="الاسم"></div>
+            <div class="field"><label for="contractContactPhone">رقم التواصل</label><input id="contractContactPhone" maxlength="40" inputmode="tel" placeholder="رقم التواصل"></div>
+            <div class="field full"><label for="contractScope">نطاق العقد</label><textarea id="contractScope" maxlength="600" placeholder="وصف نطاق الأعمال التي يحق للمقاول تنفيذها"></textarea></div>
+          </div>
+          <div class="form-actions">
+            <button class="primary-btn" id="saveContractorProfileBtn" type="button">حفظ الملف التعاقدي</button>
+            <span class="form-msg" id="contractorProfileMsg">يُحفظ الملف عبر المسار الموثوق، ولا يُتاح الإسناد إذا كان العقد غير نشط أو منتهيًا.</span>
           </div>
         </div>
 
@@ -387,7 +406,7 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
 
-const state = { context:null, profile:null, employees:[], missions:[], observations:[], contractors:[], loading:true, error:"", missionLoading:true, missionError:"", visualLoading:true, visualError:"", pendingMissionClientRequestId:null };
+const state = { context:null, profile:null, employees:[], missions:[], observations:[], contractors:[], selectedContractorUid:null, loading:true, error:"", missionLoading:true, missionError:"", visualLoading:true, visualError:"", pendingMissionClientRequestId:null };
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
@@ -428,6 +447,11 @@ function accountLabel(v){
   const m={ACTIVE:"نشط",NO_ACCOUNT:"بدون حساب",PENDING_ACTIVATION:"بانتظار التفعيل",SUSPENDED:"موقوف"};
   return m[v]||"غير محدد";
 }
+function contractStateLabel(v){
+  const m={ACTIVE:"عقد نشط",SUSPENDED:"عقد موقوف",ENDED:"عقد منتهٍ",EXPIRED:"عقد منتهي الصلاحية",NOT_STARTED:"لم يبدأ",UNREGISTERED:"غير مسجل"};
+  return m[v]||"غير محدد";
+}
+
 function productFieldRole(emp){
   const f=emp && emp.products && emp.products.field;
   return f && f.enabled===true ? (f.role||"مفعّل") : "غير مفعّل";
@@ -483,8 +507,25 @@ function render(){
   if(contractorList){
     if(state.visualLoading) contractorList.innerHTML='<div class="empty">جارٍ تحميل المقاولين…</div>';
     else if(state.visualError) contractorList.innerHTML='<div class="empty">تعذر تحميل المقاولين حاليًا.</div>';
-    else contractorList.innerHTML=contractors.length?contractors.map(x=>'<div class="row"><div class="mini">'+initials(x.name)+'</div><div class="grow"><b>'+escapeHtml(x.name||"مقاول")+'</b><small>جهة تنفيذ خارجية</small></div><span class="state">نشط</span></div>').join(""):'<div class="empty">لا توجد حسابات مقاولين نشطة في المؤسسة.</div>';
+    else contractorList.innerHTML=contractors.length?contractors.map(x=>{
+      const profile=x.profile||{};
+      const stateLabel=contractStateLabel(x.contractState);
+      const company=profile.companyName||"ملف تعاقدي غير مكتمل";
+      const contractNo=profile.contractNumber?("عقد "+profile.contractNumber):"لا يوجد رقم عقد";
+      return '<div class="row"><div class="mini">'+initials(x.name)+'</div><div class="grow"><b>'+escapeHtml(x.name||"مقاول")+'</b><small>'+escapeHtml(company)+' · '+escapeHtml(contractNo)+'</small></div><span class="state">'+escapeHtml(stateLabel)+'</span><button class="primary-btn" type="button" data-edit-contractor="'+escapeHtml(x.uid)+'">إدارة العقد</button></div>';
+    }).join(""):'<div class="empty">لا توجد حسابات مقاولين نشطة في المؤسسة.</div>';
   }
+
+  const contractorProfileSelect=$("#contractorProfileSelect");
+  if(contractorProfileSelect){
+    const current=state.selectedContractorUid||contractorProfileSelect.value;
+    contractorProfileSelect.innerHTML='<option value="">اختر المقاول</option>'+contractors.map(x=>'<option value="'+escapeHtml(x.uid)+'">'+escapeHtml(x.name||"مقاول")+' — '+escapeHtml(contractStateLabel(x.contractState))+'</option>').join("");
+    if(contractors.some(x=>x.uid===current)){
+      contractorProfileSelect.value=current;
+      state.selectedContractorUid=current;
+    }
+  }
+  renderSelectedContractorProfile();
 
   const visualCounts={
     total:observations.length,
@@ -504,7 +545,8 @@ function render(){
     else visualRows.innerHTML=observations.length?observations.map(obs=>{
       const canAssign=obs.status==="PENDING";
       const assigned=obs.assignedContractorUid||"";
-      const contractorOptions=contractors.map(x=>'<option value="'+escapeHtml(x.uid)+'" '+(x.uid===assigned?'selected':'')+'>'+escapeHtml(x.name||"مقاول")+'</option>').join("");
+      const assignmentContractors=contractors.filter(x=>x.contractState==="ACTIVE"||x.uid===assigned);
+      const contractorOptions=assignmentContractors.map(x=>'<option value="'+escapeHtml(x.uid)+'" '+(x.uid===assigned?'selected':'')+'>'+escapeHtml(x.name||"مقاول")+' — '+escapeHtml(contractStateLabel(x.contractState))+'</option>').join("");
       const select='<select data-contractor-for="'+escapeHtml(obs.observationId)+'" '+(canAssign?'':'disabled')+'><option value="">اختر المقاول</option>'+contractorOptions+'</select>';
       const action=canAssign?'<button class="primary-btn" type="button" data-assign-observation="'+escapeHtml(obs.observationId)+'">إسناد</button>':'<span class="state">'+escapeHtml(obs.statusLabel||obs.status||"—")+'</span>';
       return '<tr><td><b>'+escapeHtml(obs.title||("حالة #"+(obs.displayId||"—")))+'</b><br><small>'+escapeHtml(obs.type||"تشوه بصري")+'</small></td><td>'+escapeHtml(obs.location||"—")+'</td><td><span class="state">'+escapeHtml(obs.statusLabel||obs.status||"—")+'</span></td><td>'+escapeHtml(inspectorNameByUid.get(obs.createdByUid)||"—")+'</td><td>'+select+'</td><td>'+action+'</td></tr>';
@@ -660,6 +702,74 @@ async function loadMissions(user){
     state.missionLoading=false;render();
   }
 }
+function renderSelectedContractorProfile(){
+  const selected=state.contractors.find(x=>x.uid===state.selectedContractorUid);
+  const fields=["contractCompanyName","contractNumber","contractStartDate","contractEndDate","contractContactName","contractContactPhone","contractScope"];
+  if(!selected){
+    fields.forEach(id=>{const el=$("#"+id);if(el)el.value="";});
+    if($("#contractStatus"))$("#contractStatus").value="ACTIVE";
+    setText("contractorProfileState","اختر مقاولًا");
+    return;
+  }
+  const p=selected.profile||{};
+  $("#contractCompanyName").value=p.companyName||"";
+  $("#contractNumber").value=p.contractNumber||"";
+  $("#contractStartDate").value=p.startDate||"";
+  $("#contractEndDate").value=p.endDate||"";
+  $("#contractContactName").value=p.contactName||"";
+  $("#contractContactPhone").value=p.contactPhone||"";
+  $("#contractScope").value=p.contractScope||"";
+  $("#contractStatus").value=p.status||"ACTIVE";
+  setText("contractorProfileState",contractStateLabel(selected.contractState));
+}
+function selectContractorProfile(uid){
+  if(!state.contractors.some(x=>x.uid===uid))return;
+  state.selectedContractorUid=uid;
+  const select=$("#contractorProfileSelect");
+  if(select)select.value=uid;
+  renderSelectedContractorProfile();
+  document.getElementById("contractorProfileCard")?.scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function saveContractorProfile(){
+  const user=window.__departmentHeadUser;
+  const contractorUid=$("#contractorProfileSelect").value;
+  const msg=$("#contractorProfileMsg");
+  const btn=$("#saveContractorProfileBtn");
+  if(!user||!contractorUid){msg.textContent="اختر المقاول أولًا.";return;}
+  const payload={
+    action:"upsertFieldContractorProfile",
+    contractorUid,
+    companyName:$("#contractCompanyName").value.trim(),
+    contractNumber:$("#contractNumber").value.trim(),
+    contractScope:$("#contractScope").value.trim(),
+    contactName:$("#contractContactName").value.trim(),
+    contactPhone:$("#contractContactPhone").value.trim(),
+    startDate:$("#contractStartDate").value,
+    endDate:$("#contractEndDate").value,
+    status:$("#contractStatus").value
+  };
+  if(!payload.companyName||!payload.contractNumber||!payload.contractScope||!payload.startDate||!payload.endDate){
+    msg.textContent="أكمل اسم الجهة ورقم العقد ونطاقه وتاريخ البداية والنهاية.";
+    return;
+  }
+  btn.disabled=true;msg.textContent="جارٍ حفظ الملف التعاقدي…";
+  try{
+    await mobilityRequest(user,payload);
+    msg.textContent="تم حفظ الملف التعاقدي وتحديث أهلية الإسناد.";
+    state.selectedContractorUid=contractorUid;
+    await loadVisualDistortion(user);
+  }catch(err){
+    const labels={
+      contractor_not_found:"تعذر العثور على حساب المقاول.",
+      cross_organization_denied:"لا يمكن إدارة مقاول خارج المؤسسة.",
+      active_contractor_required:"حساب المقاول غير نشط.",
+      complete_contractor_profile_required:"أكمل جميع بيانات العقد المطلوبة.",
+      contract_date_range_invalid:"تاريخ نهاية العقد يجب أن يكون بعد تاريخ البداية."
+    };
+    msg.textContent=labels[err.code]||"تعذر حفظ الملف التعاقدي حاليًا.";
+  }finally{btn.disabled=false;}
+}
+
 async function loadVisualDistortion(user){
   state.visualLoading=true;state.visualError="";render();
   try{
@@ -691,6 +801,8 @@ async function assignObservationToContractor(observationId){
       contractor_not_found:"تعذر العثور على حساب المقاول.",
       cross_organization_denied:"لا يمكن الإسناد خارج المؤسسة.",
       active_contractor_required:"حساب المقاول غير نشط.",
+      contractor_profile_required:"يجب إكمال الملف التعاقدي للمقاول قبل الإسناد.",
+      active_contract_required:"لا يمكن الإسناد لأن عقد المقاول غير نشط أو منتهي.",
       observation_not_assignable:"هذه الحالة ليست في مرحلة تسمح بالإسناد."
     };
     msg.textContent=labels[err.code]||"تعذر إسناد الحالة حاليًا.";
@@ -778,9 +890,16 @@ $("#themeBtn").addEventListener("click",()=>{
 $("#refreshBtn").addEventListener("click",()=>{if(window.__departmentHeadUser){loadEmployees(window.__departmentHeadUser);loadMissions(window.__departmentHeadUser);loadVisualDistortion(window.__departmentHeadUser);}});
 $("#submitMissionBtn").addEventListener("click",submitMobilityMission);
 document.addEventListener("click",e=>{
-  const btn=e.target.closest("[data-assign-observation]");
-  if(btn)assignObservationToContractor(btn.dataset.assignObservation);
+  const assignBtn=e.target.closest("[data-assign-observation]");
+  if(assignBtn)assignObservationToContractor(assignBtn.dataset.assignObservation);
+  const contractorBtn=e.target.closest("[data-edit-contractor]");
+  if(contractorBtn)selectContractorProfile(contractorBtn.dataset.editContractor);
 });
+$("#contractorProfileSelect").addEventListener("change",e=>{
+  state.selectedContractorUid=e.target.value||null;
+  renderSelectedContractorProfile();
+});
+$("#saveContractorProfileBtn").addEventListener("click",saveContractorProfile);
 
 let firebaseConfig;
 try{
