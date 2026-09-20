@@ -18,16 +18,16 @@ test('02C approved map renders only supported visual-distortion lifecycle states
 
 test('02C map requires verified GPS and valid corrected coordinates', () => {
   assert.match(runtime, /o\.locationVerified === true/);
-  assert.match(runtime, /Number\(o && o\.correctedLat\)/);
-  assert.match(runtime, /Number\(o && o\.correctedLng\)/);
+  assert.match(runtime, /Number\(o\.correctedLat\)/);
+  assert.match(runtime, /Number\(o\.correctedLng\)/);
   assert.match(runtime, /Math\.abs\(lat\) > 90/);
   assert.match(runtime, /Math\.abs\(lng\) > 180/);
   assert.match(usersApi, /locationVerified: data\.locationVerified === true/);
 });
 
 test('02C map uses the canonical observationId and never invents observation markers', () => {
-  assert.match(runtime, /this\.state\.liveObservations \|\| \[\]/);
-  assert.match(runtime, /this\.openObservation\(o\.observationId\)/);
+  assert.match(runtime, /instance\.state\.liveObservations \|\| \[\]/);
+  assert.match(runtime, /openFieldObservation\(o\.observationId\)/);
   assert.match(runtime, /liveObservations:/);
   assert.doesNotMatch(page + runtime, /demoObservation|fakeObservation|mockObservation/i);
 });
