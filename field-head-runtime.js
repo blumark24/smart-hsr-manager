@@ -356,7 +356,8 @@
               {label:'النوع',flex:'1.1',align:'right'},
               {label:'الموظف',flex:'1',align:'right'},
               {label:'الوجهة',flex:'1.3',align:'right'},
-              {label:'السيارة',flex:'0 0 100px',align:'left'}
+              {label:'السيارة',flex:'0 0 100px',align:'left'},
+              {label:'التفويض',flex:'0 0 130px',align:'left'}
             ],
             tRows:missions.map(m=>{
               const label=m.statusLabel||m.status||'—',col='#38bdf8';
@@ -366,7 +367,9 @@
                 cells:[
                   cell(m.missionId||m.id,'0 0 90px',{weight:'650',col:'var(--tx,#e9f1fb)'}),
                   cell(m.type,'1.1'),cell(m.requestedEmployeeName||m.assignedEmployeeName,'1'),
-                  cell(m.destination,'1.3'),cell(m.vehicleId||'بانتظار الحركة','0 0 100px',{align:'left',size:'10.5px'})
+                  cell(m.destination,'1.3'),
+                  cell(m.vehicleId||'بانتظار الحركة','0 0 100px',{align:'left',size:'10.5px'}),
+                  cell(({PENDING_AUTHORIZATION:'بانتظار الاعتماد',AUTHORIZED:'معتمد',ACTIVE:'ساري',EXPIRED:'منتهي',REJECTED:'مرفوض',REVOKED:'ملغي'}[m.vehicleAuthorizationStatus])||'لم يصدر','0 0 130px',{align:'left',size:'10.5px'})
                 ]
               };
             }),
@@ -407,6 +410,13 @@
             verify_contractor_work:'اعتماد معالجة المقاول',
             return_to_contractor:'إعادة للمقاول',
             close_visual_distortion_case:'إغلاق حالة التشوه',
+            create_vehicle_authorization_request:'إنشاء طلب تفويض مركبة',
+            authorize_vehicle_use:'اعتماد تفويض المركبة',
+            reject_vehicle_authorization:'رفض تفويض المركبة',
+            revoke_vehicle_authorization:'إلغاء تفويض المركبة',
+            activate_vehicle_authorization:'تفعيل التفويض عند التسليم',
+            expire_vehicle_authorization:'انتهاء التفويض عند الاستلام',
+            authorization_release:'تحرير المركبة بعد رفض/إلغاء التفويض',
             create:'إنشاء مهمة',
             submit_for_approval:'إرسال المهمة للاعتماد'
           }[a]||a||'حدث تشغيلي');
@@ -506,6 +516,8 @@
               {k:'السبب',v:m.reason||'—'},
               {k:'النطاق',v:m.scope||'—'},
               {k:'المركبة',v:m.vehicleId||'بانتظار إدارة الحركة'},
+              {k:'رقم التفويض',v:m.vehicleAuthorizationNumber||'—'},
+              {k:'حالة التفويض',v:({PENDING_AUTHORIZATION:'بانتظار الاعتماد',AUTHORIZED:'معتمد',ACTIVE:'ساري',EXPIRED:'منتهي',REJECTED:'مرفوض',REVOKED:'ملغي'}[m.vehicleAuthorizationStatus])||'لم يصدر'},
               {k:'الحالة',v:label}
             ],
             actions:[]
@@ -556,7 +568,7 @@
               {label:'بداية العقد YYYY-MM-DD',value:value('startDate'),on:e=>set('startDate',e)},
               {label:'نهاية العقد YYYY-MM-DD',value:value('endDate'),on:e=>set('endDate',e)},
               {label:'حالة العقد',type:'select',value:value('contractStatus','ACTIVE'),options:[
-                {value:'ACTIVE',label:'نشط'},{value:'SUSPENDED',label:'موقوف'},{value:'EXPIRED',label:'منتهي'}
+                {value:'ACTIVE',label:'نشط'},{value:'SUSPENDED',label:'موقوف'},{value:'ENDED',label:'منتهي'}
               ],on:e=>set('contractStatus',e)}
             ],
             actions:[{
