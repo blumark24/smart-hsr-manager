@@ -50,3 +50,24 @@ test('department-head UI uses trusted API for visual command and assignment', ()
   assert.match(page, /data-assign-observation/);
   assert.match(page, /سيظهر البلاغ في لوحة المقاول الخاصة/);
 });
+
+test('contractor registry is separate from employee registry and gates assignment by active contract', () => {
+  assert.match(page, /سجل المقاولين/);
+  assert.match(page, /الملف التعاقدي للمقاول/);
+  assert.match(page, /action:"upsertFieldContractorProfile"/);
+  assert.match(usersApi, /collection\('contractorProfiles'\)/);
+  assert.match(usersApi, /CONTRACTOR_PROFILE_STATUSES/);
+  assert.match(usersApi, /contractor_profile_required/);
+  assert.match(usersApi, /active_contract_required/);
+  assert.match(usersApi, /contractorProfileState\(profile\) !== 'ACTIVE'/);
+  assert.match(page, /contractors\.filter\(x=>x\.contractState==="ACTIVE"/);
+});
+
+test('contractor profile mutation is field-head and tenant scoped', () => {
+  assert.match(usersApi, /action === 'upsertFieldContractorProfile'/);
+  assert.match(usersApi, /requireFieldDepartmentHead\(decoded\.uid\)/);
+  assert.match(usersApi, /contractor\.organizationId !== caller\.organizationId/);
+  assert.match(usersApi, /resourceType: 'contractorProfile'/);
+  assert.match(usersApi, /action: 'upsert_contractor_profile'/);
+  assert.match(usersApi, /contract_date_range_invalid/);
+});
