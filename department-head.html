@@ -364,7 +364,7 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
 
-const state = { context:null, profile:null, employees:[], loading:true, error:"" };
+const state = { context:null, profile:null, employees:[], missions:[], loading:true, error:"", missionLoading:true, missionError:"" };
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
@@ -418,6 +418,7 @@ function render(){
   if(!state.context)return;
   const p=state.profile;
   const e=state.employees;
+  const missions=state.missions;
   setText("sideDepartment",p.department);
   setText("sideProduct",p.product);
   setText("topDepartment","مركز قيادة القسم · "+p.department);
@@ -456,13 +457,39 @@ function render(){
   const rows=$("#employeeRows");
   rows.innerHTML=e.length?e.map(emp=>'<tr><td><b>'+escapeHtml(emp.name||"—")+'</b><br><small>'+escapeHtml(emp.email||"")+'</small></td><td>'+escapeHtml(emp.jobTitle||"—")+'</td><td>'+escapeHtml(accountLabel(emp.accountStatus))+'</td><td>'+escapeHtml(productFieldRole(emp))+'</td><td>'+escapeHtml(emp.department||"—")+'</td></tr>').join(""):'<tr><td colspan="5">لا توجد سجلات موظفين في القسم.</td></tr>';
 
+  const latestMissionForEmployee=emp=>missions.find(m=>
+    (m.requestedEmployeeId&&m.requestedEmployeeId===emp.employeeId)
+    ||(m.requestedEmployeeUid&&emp.authUid&&m.requestedEmployeeUid===emp.authUid)
+    ||(m.assignedEmployeeUid&&emp.authUid&&m.assignedEmployeeUid===emp.authUid));
+  const eligibleEmployees=e.filter(emp=>{
+    const mobility=emp&&emp.products&&emp.products.mobility;
+    return emp.accountStatus==="ACTIVE"&&emp.authUid&&mobility&&mobility.enabled===true&&mobility.role==="employee"&&mobility.vehicleEligible===true;
+  });
+
+  const employeeSelect=$("#missionEmployee");
+  if(employeeSelect){
+    const currentValue=employeeSelect.value;
+    employeeSelect.innerHTML='<option value="">اختر الموظف المؤهل للمركبة</option>'+eligibleEmployees.map(emp=>'<option value="'+escapeHtml(emp.employeeId)+'">'+escapeHtml(emp.name||"موظف")+' — '+escapeHtml(emp.jobTitle||"بدون مسمى")+'</option>').join("");
+    if(eligibleEmployees.some(emp=>emp.employeeId===currentValue))employeeSelect.value=currentValue;
+  }
+
+  const missionRows=$("#missionRows");
+  if(missionRows){
+    if(state.missionLoading) missionRows.innerHTML='<tr><td colspan="5">جارٍ تحميل طلبات الحركة…</td></tr>';
+    else if(state.missionError) missionRows.innerHTML='<tr><td colspan="5">تعذر تحميل طلبات الحركة حاليًا.</td></tr>';
+    else missionRows.innerHTML=missions.length?missions.map(m=>'<tr><td><b>'+escapeHtml(m.assignedEmployeeName||m.requestedEmployeeName||"—")+'</b></td><td>'+escapeHtml(m.type||"مهمة ميدانية")+'</td><td>'+escapeHtml(m.destination||"—")+'</td><td><span class="state">'+escapeHtml(m.statusLabel||m.status||"—")+'</span></td><td>'+escapeHtml(m.vehicleId||"لم تُخصّص بعد")+'</td></tr>').join(""):'<tr><td colspan="5">لا توجد طلبات حركة للقسم حتى الآن.</td></tr>';
+  }
+  setText("missionCount",state.missionLoading?"جارٍ التحميل":(missions.length+" طلب"));
+
   const mobilityRows=$("#mobilityRows");
   if(mobilityRows){
     mobilityRows.innerHTML=e.length?e.map(emp=>{
       const fieldRole=productFieldRole(emp);
       const mobility=emp&&emp.products&&emp.products.mobility;
-      const eligible=Boolean(mobility&&mobility.enabled===true&&mobility.vehicleEligible===true);
-      return '<tr><td><b>'+escapeHtml(emp.name||"—")+'</b><br><small>'+escapeHtml(emp.jobTitle||"")+'</small></td><td>'+escapeHtml(fieldRole)+'</td><td>'+(eligible?'مؤهل':'غير مفعّل')+'</td><td>—</td></tr>';
+      const eligible=Boolean(emp.accountStatus==="ACTIVE"&&emp.authUid&&mobility&&mobility.enabled===true&&mobility.role==="employee"&&mobility.vehicleEligible===true);
+      const currentMission=latestMissionForEmployee(emp);
+      const currentLabel=currentMission?(currentMission.statusLabel||currentMission.status||"—"):"لا يوجد";
+      return '<tr><td><b>'+escapeHtml(emp.name||"—")+'</b><br><small>'+escapeHtml(emp.jobTitle||"")+'</small></td><td>'+escapeHtml(fieldRole)+'</td><td>'+(eligible?'مؤهل':'غير مفعّل')+'</td><td>'+escapeHtml(currentLabel)+'</td></tr>';
     }).join(""):'<tr><td colspan="4">لا توجد سجلات موظفين في القسم.</td></tr>';
   }
 
