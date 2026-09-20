@@ -80,3 +80,36 @@ test('inspector still cannot close visual distortion directly', () => {
   assert.match(inspectorPage, /الإغلاق النهائي يتم من رئيس قسم الحصر الميداني/);
   assert.doesNotMatch(inspectorPage, /currentSelectedObservation\.status = 'COMPLETED'/);
 });
+
+
+test('department head navigation separates visual distortion, contractors, mobility, employees and audit', () => {
+  assert.match(runtime, /id:'visual', label:'التشوه البصري'/);
+  assert.match(runtime, /id:'contractors', label:'المقاولون والعقود'/);
+  assert.match(runtime, /id:'fieldmobility', label:'الحركة الميدانية'/);
+  assert.match(runtime, /id:'employees', label:'موظفو القسم'/);
+  assert.match(runtime, /id:'audit', label:'سجل القسم'/);
+});
+
+test('visual distortion table is backed only by canonical observations', () => {
+  assert.match(runtime, /screen === 'visual'/);
+  assert.match(runtime, /instance\.state\.liveObservations/);
+  assert.match(runtime, /instance\.openFieldObservation\(o\.observationId\)/);
+  assert.match(runtime, /tCount:observations\.length\+' بلاغ معروض'/);
+});
+
+test('contractor registry is visible as a separate operational surface', () => {
+  assert.match(runtime, /screen === 'contractors'/);
+  assert.match(runtime, /instance\.state\.liveContractors/);
+  assert.match(runtime, /contractState==='ACTIVE'/);
+  assert.match(runtime, /drawer:'contractorProfile'/);
+});
+
+test('department audit timeline is tenant and department scoped through trusted API', () => {
+  assert.match(usersApi, /action === 'listFieldDepartmentAudit'/);
+  assert.match(usersApi, /requireFieldDepartmentHead\(decoded\.uid\)/);
+  assert.match(usersApi, /collection\('auditEvents'\)/);
+  assert.match(usersApi, /where\('organizationId', '==', caller\.organizationId\)/);
+  assert.match(usersApi, /eventDepartment && eventDepartment !== cleanString\(caller\.department\)/);
+  assert.match(runtime, /api\('listFieldDepartmentAudit'\)/);
+  assert.match(runtime, /liveDepartmentAudit/);
+});
