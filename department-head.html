@@ -681,7 +681,11 @@ function observationCoordinates(obs){
   return {lat,lng};
 }
 function trustedOperationalObservations(){
-  return state.observations.filter(obs=>OPERATIONAL_STATUSES.has(obs.status)&&observationCoordinates(obs));
+  return state.observations.filter(obs=>
+    OPERATIONAL_STATUSES.has(obs.status)
+    && obs.locationVerified===true
+    && observationCoordinates(obs)
+  );
 }
 function clearOperationalMarkers(){
   while(operationalMarkerRefs.length){
