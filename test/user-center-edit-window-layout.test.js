@@ -17,7 +17,7 @@ test('edit-user window uses four focused sections instead of one crowded page', 
   assert.match(reference, /dataset\.ucv21Step='3'/);
   assert.match(reference, /dataset\.ucv21Step='4'/);
   assert.match(reference, /ucv21-profile-stage/);
-  assert.match(reference, /data-profile-panel/);
+  assert.match(reference, /dataset\.profilePanel/);
   assert.match(reference, /ucv21-step-hidden/);
 });
 
