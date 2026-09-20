@@ -527,9 +527,54 @@
               {k:'جهة الاتصال',v:p.contactName||'—'},
               {k:'الجوال',v:p.contactPhone||'—'}
             ],
-            actions:[]
+            actions:[{
+              label:'تعديل الملف التعاقدي',
+              on:()=>instance.setState({drawer:'contractorEdit',drawerId:x.uid,chip:Object.assign({},instance.state.chip,{
+                companyName:p.companyName||'',contractNumber:p.contractNumber||'',contractScope:p.contractScope||'',
+                contactName:p.contactName||'',contactPhone:p.contactPhone||'',startDate:p.startDate||'',endDate:p.endDate||'',
+                contractStatus:p.status||'ACTIVE'
+              })}),
+              tx:'var(--btnTx,#eaf4ff)',bg:'var(--btn,rgba(76,131,236,.45))',bd:'var(--btnBd,rgba(120,170,255,.35))'
+            }]
           };
         }
+        if (kind === 'contractorEdit') {
+          const x=(instance.state.liveContractors||[]).find(v=>v.uid===id);
+          if(!x) return {title:'تعذر تحديد المقاول',sub:'',chip:'',chipCol:'',chipBg:'',chipBd:''};
+          const value=(key,fallback='')=>instance.state.chip?.[key]??fallback;
+          const set=(key,e)=>instance.setState({chip:Object.assign({},instance.state.chip,{[key]:e.target.value})});
+          return {
+            title:'تعديل الملف التعاقدي',sub:x.name||'مقاول',
+            chip:'بيانات العقد',chipCol:'#38bdf8',chipBg:'rgba(56,189,248,.10)',chipBd:'rgba(56,189,248,.30)',
+            form:true,formTitle:'بيانات العقد',
+            fields:[
+              {label:'اسم الشركة',value:value('companyName'),on:e=>set('companyName',e)},
+              {label:'رقم العقد',value:value('contractNumber'),on:e=>set('contractNumber',e)},
+              {label:'نطاق العقد',value:value('contractScope'),on:e=>set('contractScope',e)},
+              {label:'جهة الاتصال',value:value('contactName'),on:e=>set('contactName',e)},
+              {label:'رقم التواصل',value:value('contactPhone'),on:e=>set('contactPhone',e)},
+              {label:'بداية العقد YYYY-MM-DD',value:value('startDate'),on:e=>set('startDate',e)},
+              {label:'نهاية العقد YYYY-MM-DD',value:value('endDate'),on:e=>set('endDate',e)},
+              {label:'حالة العقد',type:'select',value:value('contractStatus','ACTIVE'),options:[
+                {value:'ACTIVE',label:'نشط'},{value:'SUSPENDED',label:'موقوف'},{value:'EXPIRED',label:'منتهي'}
+              ],on:e=>set('contractStatus',e)}
+            ],
+            actions:[{
+              label:'حفظ الملف التعاقدي',
+              on:()=>{
+                const ch=instance.state.chip||{};
+                window.SmartHSRMobilityAdapter.upsertFieldContractorProfile({
+                  contractorUid:x.uid,companyName:ch.companyName||'',contractNumber:ch.contractNumber||'',
+                  contractScope:ch.contractScope||'',contactName:ch.contactName||'',contactPhone:ch.contactPhone||'',
+                  startDate:ch.startDate||'',endDate:ch.endDate||'',status:ch.contractStatus||'ACTIVE'
+                }).then(()=>{instance.setState({drawer:'contractorProfile',drawerId:x.uid});instance.flash?.('تم حفظ الملف التعاقدي');})
+                  .catch(()=>instance.flash?.('تعذر حفظ الملف التعاقدي — تحقق من البيانات والتواريخ'));
+              },
+              tx:'var(--btnTx,#eaf4ff)',bg:'var(--btn,rgba(76,131,236,.45))',bd:'var(--btnBd,rgba(120,170,255,.35))'
+            }]
+          };
+        }
+
         if (kind === 'observationAssign') {
           const o = (instance.state.liveObservations || []).find(x => x.observationId === id);
           const contractors = (instance.state.liveContractors || []).filter(x => x.contractState === 'ACTIVE');
