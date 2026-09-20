@@ -13,9 +13,9 @@ const contractorPage = fs.readFileSync(path.join(root, 'mobile-map.html'), 'utf8
 
 test('approved command board separates inspectors from external contractors', () => {
   assert.match(page, /مراقبو القسم/);
-  assert.match(page, /liveContractors/);
-  assert.match(page, /contractState === 'ACTIVE'/);
-  assert.match(page, /إسناد للمقاول/);
+  assert.match(runtime, /liveContractors/);
+  assert.match(runtime, /contractState === 'ACTIVE'/);
+  assert.match(runtime, /إسناد للمقاول/);
 });
 
 test('field department head receives tenant-scoped observations and contractor identities', () => {
@@ -29,8 +29,8 @@ test('field department head receives tenant-scoped observations and contractor i
 
 test('department head contractor assignment remains same-organization and PENDING-only', () => {
   assert.match(runtime, /assignFieldObservation/);
-  assert.match(page, /observationAssign/);
-  assert.match(page, /contractState === 'ACTIVE'/);
+  assert.match(runtime, /observationAssign/);
+  assert.match(runtime, /contractState === 'ACTIVE'/);
   assert.match(usersApi, /action === 'assignFieldObservation'/);
   assert.match(usersApi, /observation\.organizationId !== caller\.organizationId/);
   assert.match(usersApi, /contractor\.organizationId !== caller\.organizationId/);
@@ -63,7 +63,7 @@ test('inspector verification is required before department-head closure', () => 
   assert.match(usersApi, /inspector_verification_required/);
   assert.match(inspectorPage, /id="inspectorVerificationPanel"/);
   assert.match(inspectorPage, /action:'verifyFieldObservation'/);
-  assert.match(page, /o\.inspectorVerification\?\.status === 'VERIFIED'/);
+  assert.match(runtime, /o\.inspectorVerification\?\.status === 'VERIFIED'/);
   assert.match(runtime, /closeFieldObservation/);
 });
 
