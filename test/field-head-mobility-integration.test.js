@@ -7,24 +7,26 @@ const test = require('node:test');
 
 const root = path.join(__dirname, '..');
 const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+const runtime = fs.readFileSync(path.join(root, 'field-head-runtime.js'), 'utf8');
+const fieldHead = page + '\n' + runtime;
 const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
 const policy = fs.readFileSync(path.join(root, 'platform', 'policies', 'mission-workflow-policy.js'), 'utf8');
 
 test('field head uses the existing trusted admin API instead of adding a serverless function', () => {
-  assert.match(page, /fetch\("\/api\/admin\/users"/);
-  assert.match(page, /action:"createMissionRequest"/);
-  assert.match(page, /action:"submitMissionForApproval"/);
-  assert.match(page, /action:"listDepartmentMissions"/);
+  assert.match(fieldHead, /fetch\("\/api\/admin\/users"/);
+  assert.match(fieldHead, /action:"createMissionRequest"/);
+  assert.match(fieldHead, /action:"submitMissionForApproval"/);
+  assert.match(fieldHead, /action:"listDepartmentMissions"/);
   assert.equal(fs.existsSync(path.join(root, 'api', 'department-head', 'mobility.js')), false);
   assert.equal(fs.existsSync(path.join(root, 'api', 'mobility', 'workflow.js')), false);
 });
 
 test('field head exposes one institutional mobility workflow without fleet ownership', () => {
-  assert.match(page, /الحركة الميدانية لموظفي القسم/);
-  assert.match(page, /اعتماد وإرسال للشؤون الإدارية/);
-  assert.match(page, /إدارة حركة السير/);
-  assert.match(page, /لا يدير الأسطول/);
-  assert.doesNotMatch(page, /addVehicle|createVehicle|deleteVehicle|setMaintenance/);
+  assert.match(fieldHead, /الحركة الميدانية لموظفي القسم/);
+  assert.match(fieldHead, /اعتماد وإرسال للشؤون الإدارية/);
+  assert.match(fieldHead, /إدارة حركة السير/);
+  assert.match(fieldHead, /لا يدير الأسطول/);
+  assert.doesNotMatch(fieldHead, /addVehicle|createVehicle|deleteVehicle|setMaintenance/);
 });
 
 test('mission request binds the approved employee server-side', () => {
