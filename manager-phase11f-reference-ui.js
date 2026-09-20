@@ -197,7 +197,7 @@ function buildSinglePageProfile(panel,employee){
   // are; see the CSS comment in manager-phase11g for why the row's own
   // four labels differ from the five section headers.
   if(header&&!panel.querySelector('.ucv21-progress')){
-    const steps=['البيانات','الدور والخدمات','الدخول','السجل'];
+    const steps=['البيانات','التنظيم','الدور والخدمات','الدخول','السجل'];
     const html=steps.map((t,i)=>`${i>0?'<span class="ucv21-progress-line" aria-hidden="true"></span>':''}<button type="button" class="ucv21-progress-dot${i===0?' on':''}" data-profile-step="${i+1}" aria-current="${i===0?'step':'false'}"><b>${i+1}</b><span>${U.esc(t)}</span></button>`).join('');
     header.insertAdjacentHTML('afterend',`<nav class="ucv21-progress" aria-label="أقسام تعديل المستخدم">${html}</nav>`);
     // U.shell's own queueMicrotask focuses the first field, and the
@@ -212,18 +212,18 @@ function buildSinglePageProfile(panel,employee){
   }
   const tabs=panel.querySelector('.tabs');if(tabs)tabs.hidden=true;
   const basic=panel.querySelector('.pane[data-id="p"]'),org=panel.querySelector('.pane[data-id="o"]'),account=panel.querySelector('.pane[data-id="a"]'),roles=panel.querySelector('.pane[data-id="r"]'),history=panel.querySelector('.pane[data-id="h"]');
-  [basic,account,roles].forEach(p=>{if(p)p.hidden=false;});
+  [basic,org,account,roles].forEach(p=>{if(p)p.hidden=false;});
   if(basic)basic.dataset.ucv21Step='1';
-  if(roles)roles.dataset.ucv21Step='2';
-  if(account)account.dataset.ucv21Step='3';
-  const basicGrid=basic?.querySelector('.sec .grid'),orgGrid=org?.querySelector('.sec .grid');if(basicGrid&&orgGrid){Array.from(orgGrid.children).forEach(node=>basicGrid.appendChild(node));}
+  if(org)org.dataset.ucv21Step='2';
+  if(roles)roles.dataset.ucv21Step='3';
+  if(account)account.dataset.ucv21Step='4';
   // PHASE13D.3 STEP 2 — visual-only reorganization into the 5 requested
   // sections (البيانات الأساسية / بيانات الدخول / الدور الإداري / الخدمات
   // والصلاحيات / السجل والتكليفات). Same panes, same fields, same save/
   // fetch logic — only the section labels and (below) the DOM position of
   // the optional password block change, so related "بيانات الدخول" content
   // reads as one group instead of being separated by the roles pane.
-  addSectionHead(basic,'البيانات الأساسية','بيانات الموظف والتنظيم');addSectionHead(roles,'الدور الإداري','الدور المؤسسي والصلاحيات');addSectionHead(account,'بيانات الدخول','إدارة الوصول والهوية');
+  addSectionHead(basic,'البيانات الأساسية','بيانات الموظف');addSectionHead(org,'التنظيم الإداري','الإدارة والقسم والمدير المباشر');addSectionHead(roles,'الدور والخدمات','الدور المؤسسي والتسكين التشغيلي');addSectionHead(account,'بيانات الدخول','إدارة الوصول والهوية');
 
   // Make the institutional role explicit in Edit User. The underlying
   // #inst-role select remains the source of truth; this segmented control
@@ -295,7 +295,7 @@ function buildSinglePageProfile(panel,employee){
     },true);
   }
   if(panel.__ucv21Employee?.authUid&&!panel.querySelector('.ucv21-password-inline')){
-    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.dataset.ucv21Step='3';wrap.innerHTML=`<div class="ucv21-section-head"><span>الأمان</span><small>تعديل كلمة المرور — اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;
+    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.dataset.ucv21Step='4';wrap.innerHTML=`<div class="ucv21-section-head"><span>الأمان</span><small>تعديل كلمة المرور — اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;
     // PHASE13D.3 STEP 2 — moved from after `roles` to directly after
     // `account` so it visually groups with بيانات الدخول (both are
     // login/credential concerns) instead of sitting on the far side of the
@@ -304,7 +304,7 @@ function buildSinglePageProfile(panel,employee){
     account?.after(wrap)||roles?.after(wrap);
     wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
   }
-  if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.dataset.ucv21Step='4';hw.innerHTML='<div class="ucv21-section-head"><span>السجل والتكليفات</span><small>آخر التكليفات والحركة المؤسسية</small></div>';history.before(hw);hw.appendChild(history);history.hidden=false;}
+  if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.dataset.ucv21Step='5';hw.innerHTML='<div class="ucv21-section-head"><span>السجل والتكليفات</span><small>آخر التكليفات والحركة المؤسسية</small></div>';history.before(hw);hw.appendChild(history);history.hidden=false;}
 
   // Window body: only this middle stage scrolls. Header, step navigation
   // and footer remain fixed in the dialog, eliminating the long left-side
@@ -314,7 +314,7 @@ function buildSinglePageProfile(panel,employee){
     const stage=document.createElement('div');
     stage.className='ucv21-profile-stage';
     progress?.after(stage);
-    for(let step=1;step<=4;step+=1){
+    for(let step=1;step<=5;step+=1){
       const stepPanel=document.createElement('section');
       stepPanel.className='ucv21-step-panel';
       stepPanel.dataset.profilePanel=String(step);
@@ -327,17 +327,21 @@ function buildSinglePageProfile(panel,employee){
     const footer=document.createElement('footer');footer.className='ucv21-profile-footer';footer.innerHTML='<div class="ucv21-profile-msg" aria-live="polite"></div><div class="ucv21-profile-nav"><button type="button" class="btn ucv21-prev">السابق</button><button type="button" class="btn ucv21-next">التالي</button></div><button type="button" class="btn ucv21-cancel">إلغاء</button><button type="button" class="btn pr ucv21-save">حفظ التعديلات</button>';panel.appendChild(footer);
     footer.querySelector('.ucv21-cancel').onclick=()=>panel.querySelector('.ix')?.click();
     footer.querySelector('.ucv21-save').onclick=async ev=>{const b=ev.currentTarget,msg=footer.querySelector('.ucv21-profile-msg'),employeeRef=panel.__ucv21Employee;msg.className='ucv21-profile-msg';try{
-      const p1=panel.querySelector('#ucv21-npw')?.value||'',p2=panel.querySelector('#ucv21-npw2')?.value||'';if(p1||p2){if(p1!==p2)throw Error('كلمتا المرور غير متطابقتين.');if(!U?.strongPw?.(p1))throw Error('كلمة المرور لا تطابق سياسة الأمان.');if(!employeeRef?.authUid)throw Error('لا يوجد حساب دخول مرتبط.');}
-      if(!clean(panel.querySelector('#edit-name')?.value))throw Error('اسم الموظف مطلوب.');
-      const current=profileSnapshot(panel,employeeRef),initial=panel.__ucv21Snapshot||{},steps=[];if(current.basic!==initial.basic)steps.push([panel.querySelector('.savep'),panel.querySelector('.mp')]);if(current.organization!==initial.organization)steps.push([panel.querySelector('.saveo'),panel.querySelector('.mo')]);if(current.products!==initial.products)steps.push([panel.querySelector('.saver'),panel.querySelector('.mr')]);
+      const p1=panel.querySelector('#ucv21-npw')?.value||'',p2=panel.querySelector('#ucv21-npw2')?.value||'';if(p1||p2){if(p1!==p2){setProfileStep(4);throw Error('كلمتا المرور غير متطابقتين.');}if(!U?.strongPw?.(p1)){setProfileStep(4);throw Error('كلمة المرور لا تطابق سياسة الأمان.');}if(!employeeRef?.authUid){setProfileStep(4);throw Error('لا يوجد حساب دخول مرتبط.');}}
+      if(!clean(panel.querySelector('#edit-name')?.value)){setProfileStep(1);throw Error('اسم الموظف مطلوب.');}
+      const selectedRole=panel.querySelector('#inst-role')?.value||U.inst(employeeRef);
+      if(selectedRole==='department_head'&&!clean(panel.querySelector('#edit-dept')?.value)){setProfileStep(2);throw Error('حدد القسم أولًا قبل اعتماد دور رئيس قسم.');}
+      let current;
+      try{current=profileSnapshot(panel,employeeRef);}catch(error){setProfileStep(3);throw error;}
+      const initial=panel.__ucv21Snapshot||{},steps=[];if(current.basic!==initial.basic)steps.push([panel.querySelector('.savep'),panel.querySelector('.mp')]);if(current.organization!==initial.organization)steps.push([panel.querySelector('.saveo'),panel.querySelector('.mo')]);if(current.products!==initial.products)steps.push([panel.querySelector('.saver'),panel.querySelector('.mr')]);
       if(!steps.length&&!p1&&!p2){msg.textContent='لا توجد تغييرات جديدة للحفظ.';return;}
       b.disabled=true;msg.textContent='جاري حفظ التعديلات...';for(const [button,m] of steps){if(button&&!(await runExisting(button,m)))throw Error(clean(m?.textContent)||'تعذر حفظ أحد الأقسام.');}
       if(p1||p2){await U.post('/api/admin/users',{action:'setPassword',uid:employeeRef.authUid,password:p1});panel.querySelector('#ucv21-npw').value='';panel.querySelector('#ucv21-npw2').value='';}
       panel.__ucv21Snapshot=profileSnapshot(panel,employeeRef);msg.className='ucv21-profile-msg ok';msg.textContent='تم حفظ التعديلات بنجاح.';
     }catch(error){msg.className='ucv21-profile-msg er';msg.textContent=error?.message||'تعذر حفظ التعديلات.';}finally{b.disabled=false;}};
   }
-  const setProfileStep=step=>{
-    const next=Math.min(4,Math.max(1,Number(step)||1));
+  function setProfileStep(step){
+    const next=Math.min(5,Math.max(1,Number(step)||1));
     panel.dataset.profileStep=String(next);
     panel.querySelectorAll('.ucv21-step-panel').forEach(el=>el.classList.toggle('ucv21-step-hidden',Number(el.dataset.profilePanel)!==next));
     panel.querySelectorAll('.ucv21-progress-dot[data-profile-step]').forEach(btn=>{
@@ -348,9 +352,9 @@ function buildSinglePageProfile(panel,employee){
     const footer=panel.querySelector('.ucv21-profile-footer');
     const prev=footer?.querySelector('.ucv21-prev'),nxt=footer?.querySelector('.ucv21-next');
     if(prev)prev.hidden=next===1;
-    if(nxt)nxt.hidden=next===4;
-    panel.scrollTop=0;
-  };
+    if(nxt)nxt.hidden=next===5;
+    const stage=panel.querySelector('.ucv21-profile-stage');if(stage)stage.scrollTop=0;
+  }
   panel.querySelectorAll('.ucv21-progress-dot[data-profile-step]').forEach(btn=>btn.onclick=()=>setProfileStep(btn.dataset.profileStep));
   panel.querySelector('.ucv21-prev')?.addEventListener('click',()=>setProfileStep((Number(panel.dataset.profileStep)||1)-1));
   panel.querySelector('.ucv21-next')?.addEventListener('click',()=>setProfileStep((Number(panel.dataset.profileStep)||1)+1));
