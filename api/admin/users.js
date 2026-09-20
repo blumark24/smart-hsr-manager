@@ -258,6 +258,41 @@ function safeFieldObservation(id, data) {
   };
 }
 
+const CONTRACTOR_PROFILE_STATUSES = Object.freeze(['ACTIVE', 'SUSPENDED', 'ENDED']);
+
+function cleanDateOnly(value) {
+  const v = cleanString(value);
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '';
+}
+
+function contractorProfileState(profile, today = new Date().toISOString().slice(0, 10)) {
+  if (!profile) return 'UNREGISTERED';
+  if (profile.status === 'SUSPENDED') return 'SUSPENDED';
+  if (profile.status === 'ENDED') return 'ENDED';
+  if (profile.startDate && profile.startDate > today) return 'NOT_STARTED';
+  if (profile.endDate && profile.endDate < today) return 'EXPIRED';
+  return profile.status === 'ACTIVE' ? 'ACTIVE' : 'UNREGISTERED';
+}
+
+function safeContractorProfile(data) {
+  if (!data) return null;
+  const profile = {
+    companyName: cleanString(data.companyName),
+    contractNumber: cleanString(data.contractNumber),
+    contractScope: cleanString(data.contractScope),
+    contactName: cleanString(data.contactName),
+    contactPhone: cleanString(data.contactPhone),
+    startDate: cleanDateOnly(data.startDate),
+    endDate: cleanDateOnly(data.endDate),
+    status: CONTRACTOR_PROFILE_STATUSES.includes(data.status) ? data.status : 'ENDED',
+    updatedAt: timestampToIso(data.updatedAt),
+  };
+  return {
+    ...profile,
+    operationalState: contractorProfileState(profile),
+  };
+}
+
 async function requireFieldDepartmentHead(decodedUid) {
   const caller = await getCallerContext(decodedUid);
   if (!caller.isDepartmentHead || caller.role !== 'department_head'
@@ -369,23 +404,28 @@ async function handler(req, res) {
       return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
     }
     try {
-      const [obsSnap, contractorSnap] = await Promise.all([
+      const [obsSnap, contractorSnap, profileSnap] = await Promise.all([
         db.collection('observations').where('organizationId', '==', caller.organizationId).get(),
         db.collection('users').where('organizationId', '==', caller.organizationId).get(),
+        db.collection('contractorProfiles').where('organizationId', '==', caller.organizationId).get(),
       ]);
 
       const observations = obsSnap.docs.map(doc => safeFieldObservation(doc.id, doc.data() || {}));
       observations.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
 
+      const profileByUid = new Map(profileSnap.docs.map(doc => [doc.id, safeContractorProfile(doc.data() || {})]));
       const contractors = [];
       for (const doc of contractorSnap.docs) {
         const data = doc.data() || {};
         if (data.active === false || data.role !== 'contractor') continue;
+        const profile = profileByUid.get(doc.id) || null;
         contractors.push({
           uid: doc.id,
           name: cleanString(data.name, 'مقاول'),
           organizationId: caller.organizationId,
           active: true,
+          profile,
+          contractState: contractorProfileState(profile),
         });
       }
       contractors.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
@@ -394,6 +434,85 @@ async function handler(req, res) {
         product: 'visual_distortion',
         observations: observations.slice(0, 250),
         contractors,
+      });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'upsertFieldContractorProfile') {
+    const caller = await requireFieldDepartmentHead(decoded.uid);
+    if (!caller) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+    }
+
+    const contractorUid = cleanString(body.contractorUid);
+    const profileInput = {
+      companyName: cleanString(body.companyName),
+      contractNumber: cleanString(body.contractNumber),
+      contractScope: cleanString(body.contractScope),
+      contactName: cleanString(body.contactName),
+      contactPhone: cleanString(body.contactPhone),
+      startDate: cleanDateOnly(body.startDate),
+      endDate: cleanDateOnly(body.endDate),
+      status: cleanString(body.status),
+    };
+
+    if (!contractorUid || !profileInput.companyName || !profileInput.contractNumber
+        || !profileInput.contractScope || !profileInput.startDate || !profileInput.endDate
+        || !CONTRACTOR_PROFILE_STATUSES.includes(profileInput.status)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'complete_contractor_profile_required' });
+    }
+    if (profileInput.endDate < profileInput.startDate) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'contract_date_range_invalid' });
+    }
+
+    try {
+      const contractorRef = db.collection('users').doc(contractorUid);
+      const profileRef = db.collection('contractorProfiles').doc(contractorUid);
+      const outcome = await db.runTransaction(async transaction => {
+        const contractorSnap = await transaction.get(contractorRef);
+        if (!contractorSnap.exists) return { ok: false, statusCode: 404, reason: 'contractor_not_found' };
+        const contractor = contractorSnap.data() || {};
+        if (contractor.organizationId !== caller.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        if (contractor.active === false || contractor.role !== 'contractor') {
+          return { ok: false, statusCode: 409, reason: 'active_contractor_required' };
+        }
+
+        const now = FieldValue.serverTimestamp();
+        transaction.set(profileRef, {
+          contractorUid,
+          organizationId: caller.organizationId,
+          department: caller.department,
+          ...profileInput,
+          updatedByUid: caller.uid,
+          updatedAt: now,
+        }, { merge: true });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: caller.organizationId,
+          department: caller.department,
+          actorId: caller.uid,
+          actorRole: 'department_head',
+          resourceType: 'contractorProfile',
+          resourceId: contractorUid,
+          action: 'upsert_contractor_profile',
+          contractNumber: profileInput.contractNumber,
+          contractStatus: profileInput.status,
+          timestamp: now,
+        });
+        return { ok: true };
+      });
+
+      if (!outcome.ok) {
+        return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      }
+      const safeProfile = safeContractorProfile(profileInput);
+      return sendJson(res, 200, {
+        contractorUid,
+        profile: safeProfile,
+        contractState: contractorProfileState(safeProfile),
       });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
@@ -417,9 +536,11 @@ async function handler(req, res) {
       const outcome = await db.runTransaction(async transaction => {
         const observationRef = db.collection('observations').doc(observationId);
         const contractorRef = db.collection('users').doc(contractorUid);
-        const [observationSnap, contractorSnap] = await Promise.all([
+        const profileRef = db.collection('contractorProfiles').doc(contractorUid);
+        const [observationSnap, contractorSnap, profileSnap] = await Promise.all([
           transaction.get(observationRef),
           transaction.get(contractorRef),
+          transaction.get(profileRef),
         ]);
         if (!observationSnap.exists) return { ok: false, statusCode: 404, reason: 'observation_not_found' };
         if (!contractorSnap.exists) return { ok: false, statusCode: 404, reason: 'contractor_not_found' };
@@ -433,6 +554,13 @@ async function handler(req, res) {
         }
         if (contractor.active === false || contractor.role !== 'contractor') {
           return { ok: false, statusCode: 409, reason: 'active_contractor_required' };
+        }
+        if (!profileSnap.exists) {
+          return { ok: false, statusCode: 409, reason: 'contractor_profile_required' };
+        }
+        const profile = safeContractorProfile(profileSnap.data() || {});
+        if (contractorProfileState(profile) !== 'ACTIVE') {
+          return { ok: false, statusCode: 409, reason: 'active_contract_required' };
         }
         if (observation.status !== 'PENDING') {
           return { ok: false, statusCode: 409, reason: 'observation_not_assignable' };
