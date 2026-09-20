@@ -7,51 +7,40 @@ const test = require('node:test');
 
 const root = path.join(__dirname, '..');
 const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
-const api = fs.readFileSync(path.join(root, 'api', 'department-head', 'mobility.js'), 'utf8');
+const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
 const policy = fs.readFileSync(path.join(root, 'platform', 'policies', 'mission-workflow-policy.js'), 'utf8');
 
-test('field head exposes one institutional mobility request workflow without fleet ownership', () => {
+test('field head uses the existing trusted admin API instead of adding a serverless function', () => {
+  assert.match(page, /fetch\("\/api\/admin\/users"/);
+  assert.match(page, /action:"createMissionRequest"/);
+  assert.match(page, /action:"submitMissionForApproval"/);
+  assert.match(page, /action:"listDepartmentMissions"/);
+  assert.equal(fs.existsSync(path.join(root, 'api', 'department-head', 'mobility.js')), false);
+  assert.equal(fs.existsSync(path.join(root, 'api', 'mobility', 'workflow.js')), false);
+});
+
+test('field head exposes one institutional mobility workflow without fleet ownership', () => {
   assert.match(page, /الحركة الميدانية لموظفي القسم/);
   assert.match(page, /اعتماد وإرسال للشؤون الإدارية/);
   assert.match(page, /إدارة حركة السير/);
   assert.match(page, /لا يدير الأسطول/);
-  assert.match(page, /\/api\/department-head\/mobility/);
   assert.doesNotMatch(page, /addVehicle|createVehicle|deleteVehicle|setMaintenance/);
 });
 
-test('field head mobility API derives tenant and department from authenticated caller', () => {
-  assert.match(api, /verifyRequestToken\(req\)/);
-  assert.match(api, /getCallerContext\(decoded\.uid\)/);
-  assert.match(api, /caller\.isDepartmentHead/);
-  assert.match(api, /isFieldSurveyDepartment\(caller\.department\)/);
-  assert.doesNotMatch(api, /body\.organizationId/);
-  assert.doesNotMatch(api, /body\.department/);
+test('mission request binds the approved employee server-side', () => {
+  assert.match(usersApi, /requestedEmployeeId/);
+  assert.match(usersApi, /employee\.organizationId !== caller\.organizationId/);
+  assert.match(usersApi, /cleanString\(employee\.department\) !== cleanString\(caller\.department\)/);
+  assert.match(usersApi, /employee\.accountStatus !== 'ACTIVE'/);
+  assert.match(usersApi, /mobility\.role !== 'employee'/);
+  assert.match(usersApi, /mobility\.vehicleEligible !== true/);
+  assert.match(usersApi, /requestedEmployeeUid: requestedEmployee\.uid/);
 });
 
-test('vehicle request target must be a same-department active eligible mobility employee', () => {
-  assert.match(api, /employee\.organizationId !== caller\.organizationId/);
-  assert.match(api, /employee\.department/);
-  assert.match(api, /employee\.accountStatus !== 'ACTIVE'/);
-  assert.match(api, /mobility\.role !== 'employee'/);
-  assert.match(api, /mobility\.vehicleEligible !== true/);
-});
-
-test('field head creates one shared mission and submits it to administrative affairs', () => {
-  assert.match(api, /status: 'PENDING_APPROVAL'/);
-  assert.match(api, /evaluateMissionTransition/);
-  assert.match(api, /role: 'department_head'/);
-  assert.match(api, /action: 'create_and_submit'/);
-  assert.match(api, /toStatus: 'PENDING_APPROVAL'/);
-  assert.match(api, /db\.batch\(\)/);
-});
-
-test('shared mission state machine preserves approved cross-department handoff', () => {
-  assert.match(policy, /DRAFT/);
-  assert.match(policy, /PENDING_APPROVAL/);
+test('field head submits its own draft to administrative affairs using the shared mission state machine', () => {
+  assert.match(usersApi, /action === 'submitMissionForApproval'/);
+  assert.match(usersApi, /toStatus: 'PENDING_APPROVAL'/);
+  assert.match(usersApi, /evaluateMissionTransition/);
+  assert.match(policy, /department_head_is_creator/);
   assert.match(policy, /administrative_affairs/);
-  assert.match(policy, /APPROVED/);
-  assert.match(policy, /mobility_head/);
-  assert.match(policy, /VEHICLE_ALLOCATED/);
-  assert.match(policy, /AWAITING_RETURN/);
-  assert.match(policy, /CLOSED/);
 });
