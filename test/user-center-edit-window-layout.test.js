@@ -82,3 +82,8 @@ test('department-head selection normalizes a single enabled product to head scop
   assert.match(reference, /level\.value='head'/);
   assert.match(reference, /إدارة الحصر الميداني/);
 });
+
+
+test('inactive edit stages are actually hidden after the base panel display rule', () => {
+  assert.match(skin, /\.ucv21-step-panel\.ucv21-step-hidden\{display:none!important\}/);
+});
