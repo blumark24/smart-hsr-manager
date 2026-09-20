@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SMART HSR | مركز قيادة القسم</title>
-<meta name="description" content="لوحة رئيس القسم الديناميكية لمنصة SMART HSR">
+<title>SMART HSR | رئيس قسم الحصر الميداني</title>
+<meta name="description" content="مركز قيادة رئيس قسم الحصر الميداني والتكامل الذكي مع الشؤون الإدارية وإدارة حركة السير">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">\n<link rel="stylesheet" href="vendor/maplibre-gl/4.7.1/maplibre-gl.css">\n<script src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -142,7 +142,9 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
     </div>
     <nav class="nav" aria-label="تنقل رئيس القسم">
       <button data-view="overview" aria-current="page">مركز قيادة القسم</button>
-      <button data-view="product">منتج القسم</button>\n      <button data-view="map">الخريطة التشغيلية</button>
+      <button data-view="product">التشوه البصري</button>
+      <button data-view="mobility">الحركة الميدانية</button>
+      <button data-view="map">الخريطة التشغيلية</button>
       <button data-view="employees">موظفو القسم</button>
       <button data-view="record">سجل القسم</button>
     </nav>
@@ -169,7 +171,7 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
           <div class="panel">
             <div class="eyebrow">DEPARTMENT COMMAND CENTER</div>
             <h1 id="heroTitle">مركز قيادة القسم</h1>
-            <p id="heroSub">لوحة تشغيلية ديناميكية لرئيس القسم. يتم تحديد محتواها من هوية المستخدم والقسم المسجل، دون منح صلاحيات خارج نطاقه.</p>
+            <p id="heroSub">لوحة تشغيلية لرئيس قسم الحصر الميداني تجمع موظفي القسم والتشوه البصري والحركة الميدانية، مع بقاء إدارة الأسطول والصلاحيات التنفيذية لدى الجهات المختصة.</p>
             <div class="badges">
               <span class="badge"><span class="status-dot"></span> وصول القسم فقط</span>
               <span class="badge" id="roleBadge">رئيس قسم</span>
@@ -225,6 +227,41 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
           <div class="card">
             <div class="section-head"><h2>حدود التشغيل</h2><span>Fail-closed</span></div>
             <div class="notice">تعرض هذه الصفحة بيانات موظفي القسم التي يسمح بها المسار الحالي فقط. مؤشرات البلاغات/الملاحظات الميدانية لن تُعرض كأرقام حتى يتوفر مصدر Department-scoped موثوق ومصرّح به.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="mobility">
+        <div class="panel">
+          <div class="eyebrow">CROSS-DEPARTMENT WORKFLOW</div>
+          <h1>الحركة الميدانية لموظفي القسم</h1>
+          <p>رئيس القسم يعتمد الحاجة للخروج الميداني ومركبة للمهمة، ثم ينتقل نفس الطلب عبر المسار المؤسسي المعتمد دون أن تتحول لوحة الحصر إلى نظام إدارة أسطول.</p>
+          <div class="workflow" style="margin-top:18px">
+            <div class="step"><div class="eyebrow">01</div><b>رئيس القسم</b><small>اعتماد المهمة والحاجة إلى مركبة.</small></div>
+            <div class="step"><div class="eyebrow">02</div><b>الشؤون الإدارية</b><small>الاعتماد الإداري للطلب وفق السياسة المعتمدة.</small></div>
+            <div class="step"><div class="eyebrow">03</div><b>إدارة حركة السير</b><small>اختيار المركبة وتخصيصها للموظف والمهمة.</small></div>
+            <div class="step"><div class="eyebrow">04</div><b>الموظف الميداني</b><small>استلام المركبة وتنفيذ المهمة ثم الإعادة والإغلاق.</small></div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:16px">
+          <div class="card">
+            <div class="section-head"><h2>جاهزية موظفي القسم للحركة</h2><span>من سجل الموظفين المركزي</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>الموظف</th><th>دوره في الحصر</th><th>أهلية المركبة</th><th>طلب الحركة الحالي</th></tr></thead>
+                <tbody id="mobilityRows"><tr><td colspan="4">جارٍ تحميل سجل الموظفين…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-head"><h2>حدود الصلاحية</h2><span>Institutional Boundary</span></div>
+            <div class="list">
+              <div class="row"><div class="grow"><b>رئيس قسم الحصر</b><small>يعتمد خروج الموظف والحاجة إلى مركبة ويتابع حالة الطلب.</small></div><span class="state">اعتماد ومتابعة</span></div>
+              <div class="row"><div class="grow"><b>الشؤون الإدارية</b><small>تنفذ الاعتماد الإداري وفق مسار حركة السير القائم.</small></div><span class="state">اعتماد إداري</span></div>
+              <div class="row"><div class="grow"><b>إدارة حركة السير</b><small>تملك الأسطول والتخصيص والتسليم والاستلام وحالة المركبة.</small></div><span class="state">مالك العملية</span></div>
+            </div>
+            <div class="notice">لا تعرض هذه المرحلة طلبات حركة أو مركبات وهمية. حالة الطلب والمركبة ستظهر هنا فقط بعد استعادة مصدر missions/vehicles المعتمد من فرع حركة السير واجتياز Integration Gate.</div>
           </div>
         </div>
       </section>
@@ -309,46 +346,22 @@ function resolveMobilityRole(data){
   }
   return data && allowed.includes(data.role) ? data.role : null;
 }
+function isFieldSurveyDepartment(department){
+  const d=clean(department,"");
+  return /الحصر|ميداني|field/i.test(d);
+}
 function departmentProfile(department){
-  const d=clean(department,"القسم");
-  if(/الحصر|ميداني|field/i.test(d)){
-    return {
-      id:"field-survey",
-      department:"إدارة الحصر الميداني",
-      product:"التشوه البصري",
-      description:"أول منتج تشغيلي داخل الحصر الميداني لرصد وتوثيق ومتابعة حالات التشوه البصري.",
-      workflow:[
-        ["الرصد","استقبال الملاحظات الميدانية الموثقة"],
-        ["التوثيق","ربط الحالة بالموقع والأدلة"],
-        ["المعالجة","متابعة الإجراء التشغيلي"],
-        ["التحقق","إقفال الحالة بعد التحقق"]
-      ]
-    };
-  }
-  if(/حركة|السير|traffic|mobility/i.test(d)){
-    return {
-      id:"traffic",
-      department:"إدارة حركة السير",
-      product:"التشغيل والحركة",
-      description:"إدارة مهام القسم وموظفيه ضمن نطاق حركة السير.",
-      workflow:[
-        ["الطلب","إنشاء المهمة من القسم"],
-        ["الاعتماد","تمرير المسار المعتمد"],
-        ["التنفيذ","متابعة الموظف والمهمة"],
-        ["الإغلاق","إقفال السجل التشغيلي"]
-      ]
-    };
-  }
+  if(!isFieldSurveyDepartment(department)) return null;
   return {
-    id:"generic",
-    department:d,
-    product:"عمليات القسم",
-    description:"وحدة تشغيلية ديناميكية للقسم الحالي.",
+    id:"field-survey",
+    department:"إدارة الحصر الميداني",
+    product:"التشوه البصري",
+    description:"أول منتج تشغيلي داخل الحصر الميداني لرصد وتوثيق ومتابعة حالات التشوه البصري.",
     workflow:[
-      ["الطلب","بدء الإجراء التشغيلي"],
-      ["التكليف","إسناد العمل للمختص"],
-      ["المتابعة","متابعة حالة التنفيذ"],
-      ["الإغلاق","توثيق اكتمال الإجراء"]
+      ["الرصد","استقبال الملاحظات الميدانية الموثقة"],
+      ["التوثيق","ربط الحالة بالموقع والأدلة"],
+      ["المعالجة","متابعة الإجراء التشغيلي"],
+      ["التحقق","إقفال الحالة بعد التحقق"]
     ]
   };
 }
@@ -409,11 +422,22 @@ function render(){
   const rows=$("#employeeRows");
   rows.innerHTML=e.length?e.map(emp=>'<tr><td><b>'+escapeHtml(emp.name||"—")+'</b><br><small>'+escapeHtml(emp.email||"")+'</small></td><td>'+escapeHtml(emp.jobTitle||"—")+'</td><td>'+escapeHtml(accountLabel(emp.accountStatus))+'</td><td>'+escapeHtml(productFieldRole(emp))+'</td><td>'+escapeHtml(emp.department||"—")+'</td></tr>').join(""):'<tr><td colspan="5">لا توجد سجلات موظفين في القسم.</td></tr>';
 
+  const mobilityRows=$("#mobilityRows");
+  if(mobilityRows){
+    mobilityRows.innerHTML=e.length?e.map(emp=>{
+      const fieldRole=productFieldRole(emp);
+      const mobility=emp&&emp.products&&emp.products.mobility;
+      const eligible=Boolean(mobility&&mobility.enabled===true&&mobility.vehicleEligible===true);
+      return '<tr><td><b>'+escapeHtml(emp.name||"—")+'</b><br><small>'+escapeHtml(emp.jobTitle||"")+'</small></td><td>'+escapeHtml(fieldRole)+'</td><td>'+(eligible?'مؤهل':'غير مفعّل')+'</td><td>—</td></tr>';
+    }).join(""):'<tr><td colspan="4">لا توجد سجلات موظفين في القسم.</td></tr>';
+  }
+
   $("#contextList").innerHTML=[
     ["الدور","رئيس قسم"],
     ["القسم",state.context.department],
     ["المؤسسة",state.context.organizationName||state.context.organizationId],
     ["المنتج النشط",p.product],
+    ["تكامل الحركة","اعتماد ومتابعة فقط — إدارة الأسطول خارج صلاحية رئيس القسم"],
     ["نطاق البيانات","القسم الحالي فقط"]
   ].map(x=>'<div class="row"><div class="grow"><b>'+escapeHtml(x[0])+'</b><small>'+escapeHtml(x[1]||"—")+'</small></div></div>').join("");
 }
@@ -532,6 +556,11 @@ onAuthStateChanged(auth,async user=>{
       name:clean(data.name,user.email||"رئيس القسم")
     };
     state.profile=departmentProfile(department);
+    if(!state.profile){
+      await signOut(auth).catch(()=>{});
+      location.replace("login.html");
+      return;
+    }
     window.__departmentHeadUser=user;
     render();
     await loadEmployees(user);
