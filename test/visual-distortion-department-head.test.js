@@ -12,7 +12,7 @@ const contractorPage = fs.readFileSync(path.join(root, 'mobile-map.html'), 'utf8
 
 test('visual distortion command separates inspectors from external contractors', () => {
   assert.match(page, /مراقبو القسم/);
-  assert.match(page, /المقاولون/);
+  assert.match(page, /سجل المقاولين/);
   assert.match(page, /المقاول طرف تنفيذي خارجي وليس موظفًا/);
   assert.match(page, /data-visual-kpi="pending"/);
   assert.match(page, /data-visual-kpi="progress"/);
