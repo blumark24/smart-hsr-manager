@@ -7,8 +7,8 @@
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
 <script src="./support.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="vendor/maplibre-gl/4.7.1/maplibre-gl.css">
+<script src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 </head>
 <body>
 <x-dc>
@@ -17,20 +17,203 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  html,body{margin:0;padding:0;background:#03060d}
-  body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  html,body{margin:0;padding:0;background:#06111f}
+  body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
   *{box-sizing:border-box}
   a{color:#4cc9f0;text-decoration:none}
   a:hover{opacity:.85}
   input,button,select,textarea{font-family:inherit}
+  button{font:inherit}
   @keyframes mPulse{0%{transform:scale(1);opacity:.8}70%{transform:scale(2.4);opacity:0}100%{transform:scale(2.4);opacity:0}}
   @keyframes mBreathe{0%,100%{opacity:.5}50%{opacity:1}}
   @keyframes mRise{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
   @keyframes mIn{0%{opacity:0}100%{opacity:1}}
   @keyframes mSlide{0%{opacity:0;transform:translateX(-24px)}100%{opacity:1;transform:translateX(0)}}
-  [data-f]:focus-visible{outline:2px solid #4cc9f0;outline-offset:2px;border-radius:8px}
+  [data-f]:focus-visible{outline:2px solid var(--focus-ring,#53d99a);outline-offset:3px;border-radius:10px}
   .sm-xscroll{scrollbar-width:none;-ms-overflow-style:none}
   .sm-xscroll::-webkit-scrollbar{display:none;width:0;height:0}
+  .dh-app{
+    min-height:100vh;
+    position:relative;
+    isolation:isolate;
+    background:var(--app-background,#06111f);
+    color:var(--text-primary,#edf6ff);
+    overflow-x:hidden;
+  }
+  .dh-app::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    opacity:.72;
+    background:
+      radial-gradient(70% 54% at 82% -8%,var(--ambient-green,rgba(28,143,93,.13)),transparent 68%),
+      radial-gradient(62% 48% at 8% 18%,var(--ambient-cyan,rgba(38,133,180,.11)),transparent 72%),
+      linear-gradient(135deg,transparent 0 48%,var(--grid-line,rgba(120,195,179,.018)) 48% 49%,transparent 49% 100%);
+    background-size:auto,auto,34px 34px;
+  }
+  .dh-shell{min-height:100vh!important;background:transparent!important}
+  .dh-command-bar,.dh-glass,.dh-kpi-card,.dh-side-card,.dh-map-frame{
+    position:relative;
+    isolation:isolate;
+  }
+  .dh-command-bar::before,.dh-glass::before,.dh-kpi-card::before,.dh-side-card::before,.dh-map-frame::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    border-radius:inherit;
+    box-shadow:inset 0 1px 0 var(--glass-highlight,rgba(255,255,255,.08));
+  }
+  .dh-command-bar{
+    background:var(--command-bg)!important;
+    border-color:var(--command-border)!important;
+    box-shadow:var(--command-shadow)!important;
+    backdrop-filter:var(--glass-blur,blur(22px) saturate(145%))!important;
+  }
+  .dh-command-bar button,.dh-map-control,.dh-glass-control{
+    transition:background-color 160ms ease,border-color 160ms ease,box-shadow 160ms ease,color 160ms ease;
+  }
+  .dh-sidebar-panel,.dh-product-panel,.dh-side-card{
+    background:var(--glass-bg-2)!important;
+    border-color:var(--glass-border)!important;
+    box-shadow:var(--glass-shadow)!important;
+    backdrop-filter:var(--surface-blur,blur(18px) saturate(135%))!important;
+  }
+  .dh-sidebar-panel{overflow:hidden}
+  .dh-nav-item{
+    width:100%;
+    appearance:none;
+    text-align:start;
+    font:inherit;
+    transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease;
+  }
+  .dh-nav-item[aria-current="page"]{
+    box-shadow:inset -3px 0 0 var(--accent-green),0 8px 24px -18px var(--accent-green);
+  }
+  .dh-product-card{
+    background:var(--surface-deep)!important;
+    border-color:var(--glass-border)!important;
+    box-shadow:inset 0 1px 0 var(--glass-highlight);
+  }
+  .dh-page-heading>div:first-child{text-wrap:balance;line-height:1.25}
+  .dh-page-heading>div:last-child{text-wrap:pretty}
+  .dh-kpi-card{
+    width:100%;
+    appearance:none;
+    min-height:74px;
+    text-align:inherit;
+    color:inherit;
+    background:var(--glass-bg-1)!important;
+    border-color:var(--glass-border)!important;
+    box-shadow:var(--glass-shadow)!important;
+    backdrop-filter:var(--surface-blur,blur(18px) saturate(135%))!important;
+  }
+  .dh-kpi-card>span:first-child{box-shadow:0 0 16px currentColor}
+  .dh-kpi-card [style*="font-variant-numeric"]{font-variant-numeric:tabular-nums}
+  .dh-map-frame{
+    border-color:var(--map-border)!important;
+    box-shadow:var(--map-shadow)!important;
+    background:var(--surface-deep)!important;
+  }
+  .dh-map-frame::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:4;
+    border-radius:inherit;
+    pointer-events:none;
+    box-shadow:inset 0 0 0 1px var(--map-inner-ring),inset 0 34px 70px -68px var(--glass-highlight);
+  }
+  .dh-map-mode,.dh-map-toolbar,.dh-map-legend,.dh-map-search,.dh-map-zoom,.dh-map-empty{
+    z-index:8!important;
+  }
+  .dh-map-mode,.dh-map-legend,.dh-map-search,.dh-map-zoom,.dh-map-hud,.dh-glass-control,.dh-map-empty{
+    background:var(--map-glass)!important;
+    border-color:var(--map-glass-border)!important;
+    box-shadow:var(--map-control-shadow);
+    backdrop-filter:blur(18px) saturate(145%)!important;
+  }
+  .dh-map-empty{
+    position:absolute;
+    left:50%;
+    bottom:58px;
+    transform:translateX(-50%);
+    max-width:min(360px,calc(100% - 28px));
+    padding:9px 13px;
+    border:1px solid var(--map-glass-border);
+    border-radius:12px;
+    color:var(--text-secondary);
+    font-size:10.5px;
+    line-height:1.5;
+    text-align:center;
+    pointer-events:none;
+  }
+  .dh-empty-state{
+    min-height:92px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    border-radius:12px;
+    border:1px dashed var(--empty-border);
+    background:var(--surface-deep);
+    color:var(--text-muted);
+    font-size:10.5px;
+    line-height:1.6;
+    text-align:center;
+    text-wrap:pretty;
+  }
+  .dh-side-card{overflow:hidden}
+  .dh-side-card>div:first-child{padding-bottom:9px;border-bottom:1px solid var(--divider)}
+  .dh-app ::selection{background:var(--selection-bg);color:var(--selection-text)}
+  .dh-app input::placeholder{color:var(--text-muted);opacity:1}
+  .dh-app .maplibregl-ctrl-group,.dh-app .maplibregl-ctrl-attrib{
+    background:var(--map-glass);
+    color:var(--text-secondary);
+    border:1px solid var(--map-glass-border);
+    box-shadow:var(--map-control-shadow);
+    backdrop-filter:blur(16px) saturate(140%);
+  }
+  .dh-app .maplibregl-ctrl-group button{min-width:36px;min-height:36px}
+  .dh-app .maplibregl-ctrl-attrib a{color:var(--accent-cyan)}
+  .dh-map-frame .maplibregl-ctrl-top-left{top:54px;left:auto;right:10px}
+  .dh-map-frame .maplibregl-ctrl-bottom-left{bottom:48px;left:auto;right:10px}
+  .dh-mobile-scrim{background:var(--scrim)!important;backdrop-filter:blur(6px) saturate(110%)!important}
+  .dh-mobile-drawer{
+    background:var(--command-bg)!important;
+    border-color:var(--glass-border)!important;
+    box-shadow:-24px 0 70px -34px rgba(0,0,0,.82),inset 0 1px 0 var(--glass-highlight);
+    backdrop-filter:var(--glass-blur)!important;
+  }
+  @media(hover:hover){
+    .dh-command-bar button:hover,.dh-map-control:hover,.dh-glass-control:hover{background:var(--surface-elevated)!important;border-color:var(--glass-border-hover)!important;box-shadow:var(--glass-shadow-hover)}
+    .dh-nav-item:hover,.dh-kpi-card:hover{border-color:var(--glass-border-hover)!important;box-shadow:var(--glass-shadow-hover)!important}
+  }
+  @media(max-width:759px){
+    .dh-command-bar{align-items:flex-start!important;flex-wrap:wrap;padding:10px!important}
+    .dh-command-bar>div{width:100%;justify-content:space-between}
+    .dh-command-bar button,.dh-map-control,.dh-glass-control{min-width:44px;min-height:44px}
+    .dh-command-bar [style*="height:27px"]{min-height:44px}
+    .dh-kpi-card{min-height:78px}
+    .dh-map-toolbar{top:64px!important;right:10px!important;left:10px!important;max-width:none!important;justify-content:flex-start!important}
+    .dh-map-search-stack{top:112px!important;left:10px!important}
+    .dh-map-search{height:40px!important;font-size:16px!important}
+    .dh-map-mode{top:10px!important;left:10px!important}
+    .dh-map-mode button{min-height:44px}
+    .dh-map-zoom,.dh-map-search-stack>div:last-child{display:none!important}
+    .dh-map-frame .maplibregl-ctrl-top-left{top:116px;right:10px}
+    .dh-map-frame .maplibregl-ctrl-bottom-left{bottom:84px;right:10px}
+    .dh-map-legend{gap:8px!important;padding:7px 9px!important}
+    .dh-map-legend>span:last-child{width:100%;border-right:0!important;padding-right:0!important}
+    .dh-map-empty{bottom:86px;font-size:10px}
+  }
+  @media(forced-colors:active){
+    .dh-command-bar,.dh-glass,.dh-kpi-card,.dh-side-card,.dh-map-frame,.dh-map-empty{border:1px solid CanvasText!important}
+    [data-f]:focus-visible{outline:2px solid Highlight!important}
+  }
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -42,12 +225,12 @@
   </div>
 </sc-if>
 
-<div dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
-<div style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5">
+<div class="dh-app" data-theme="{{ themeName }}" dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
+<div class="dh-shell" style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5">
 
-  <header style="min-height:62px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--hdrBlur,blur(22px))">
+  <header class="dh-command-bar" style="min-height:62px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--hdrBlur,blur(22px))">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
-      <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" style="display:var(--mobNav,none);width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
+      <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" aria-expanded="{{ mobileNavExpanded }}" style="display:var(--mobNav,none);width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
 
@@ -61,18 +244,18 @@
 
     <div style="display:flex;align-items:center;gap:8px">
       <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--hdrSunk,rgba(12,20,36,0.6));border:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
-        <button onClick="{{ setDay }}" data-f="1" aria-label="النمط النهاري" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--dayBtnBdH,transparent);background:var(--dayBtnBgH,transparent);color:var(--dayBtnTxH,#7d8ea6);font-size:10.5px;font-weight:600;cursor:pointer">
+        <button onClick="{{ setDay }}" data-f="1" aria-label="النمط النهاري" aria-pressed="{{ dayActive }}" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--dayBtnBd,transparent);background:var(--dayBtnBg,transparent);color:var(--dayBtnTx,#7d8ea6);font-size:10.5px;font-weight:600;cursor:pointer">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"></path></svg>
           نهاري
         </button>
-        <button onClick="{{ setNight }}" data-f="1" aria-label="النمط الليلي" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--nightBtnBdH,rgba(76,201,240,0.4));background:var(--nightBtnBgH,rgba(56,132,220,0.28));color:var(--nightBtnTxH,#eaf4ff);font-size:10.5px;font-weight:600;cursor:pointer">
+        <button onClick="{{ setNight }}" data-f="1" aria-label="النمط الليلي" aria-pressed="{{ nightActive }}" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--nightBtnBd,rgba(76,201,240,0.4));background:var(--nightBtnBg,rgba(56,132,220,0.28));color:var(--nightBtnTx,#eaf4ff);font-size:10.5px;font-weight:600;cursor:pointer">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"></path></svg>
           ليلي
         </button>
       </div>
 
       <div style="position:relative">
-        <button onClick="{{ tNotif }}" data-f="1" aria-label="التنبيهات" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <button onClick="{{ tNotif }}" data-f="1" aria-label="التنبيهات" aria-expanded="{{ notificationsExpanded }}" style="position:relative;width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"></path><path d="M10.5 20a2 2 0 0 0 3 0"></path></svg>
           <span style="position:absolute;top:-5px;left:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--bad,#ef4444);color:#fff;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--badge,#0b1220)">{{ notifCount }}</span>
         </button>
@@ -124,29 +307,29 @@
 
   <div style="display:flex;gap:14px;align-items:stretch;flex:1;min-height:0">
 
-    <aside style="display:var(--sbDisp,flex);width:var(--sbW,224px);flex:none;flex-direction:column;gap:12px">
-      <div style="padding:12px 10px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--sbSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:3px">
+    <aside class="dh-sidebar" style="display:var(--sbDisp,flex);width:var(--sbW,224px);flex:none;flex-direction:column;gap:12px">
+      <div class="dh-glass dh-sidebar-panel" style="padding:12px 10px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--sbSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:3px">
         <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12))">
           <div style="flex:1;text-align:right;display:var(--sbLabel,block);min-width:0">
             <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleTitle }}</div>
             <div style="font-size:9.5px;color:var(--sbTx3,#6f8299);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleSub }}</div>
           </div>
-          <button onClick="{{ tSb }}" data-f="1" aria-label="طي القائمة" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--sbCtl,rgba(20,32,54,0.6));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14));color:var(--sbTx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <button onClick="{{ tSb }}" data-f="1" aria-label="طي القائمة" aria-expanded="{{ sidebarExpanded }}" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--sbCtl,rgba(20,32,54,0.6));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14));color:var(--sbTx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
         </div>
         <sc-for list="{{ nav }}" as="n" hint-placeholder-count="9">
-          <div onClick="{{ n.on }}" data-f="1" role="button" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;font-size:12px;cursor:pointer;color:{{ n.tx }};background:{{ n.bg }};border:1px solid {{ n.bd }}">
+          <button type="button" class="dh-nav-item" onClick="{{ n.on }}" data-f="1" aria-label="{{ n.label }}" aria-current="{{ n.current }}" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;font-size:12px;cursor:pointer;color:{{ n.tx }};background:{{ n.bg }};border:1px solid {{ n.bd }}">
             <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ n.dot }}"></span>
             <span style="flex:1;display:var(--sbLabel,block);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.label }}</span>
             <span style="display:var(--sbLabel,block);font-size:9px;font-weight:600;color:{{ n.tagTx }};background:{{ n.tagBg }};padding:2px 6px;border-radius:5px">{{ n.tag }}</span>
-          </div>
+          </button>
         </sc-for>
       </div>
 
-      <div style="display:var(--sbLabel,block);padding:11px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13))">
+      <div class="dh-glass dh-product-panel" style="display:var(--sbLabel,block);padding:11px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13))">
         <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);text-align:center;margin-bottom:9px">المنتج النشط</div>
-        <div  data-f="1" style="padding:10px;border-radius:11px;background:var(--sbSunk,rgba(11,18,32,0.55));border:1px solid var(--sbDiv,rgba(122,164,224,0.13));cursor:pointer">
+        <div class="dh-product-card" style="padding:10px;border-radius:11px;background:var(--sbSunk,rgba(11,18,32,0.55));border:1px solid var(--sbDiv,rgba(122,164,224,0.13))">
           <div style="display:flex;align-items:center;gap:7px">
             <span style="flex:1;font-size:11.5px;font-weight:600;color:var(--sbTx,#e9f1fb)">التشوه البصري</span>
             <span style="font-size:9px;padding:2px 7px;border-radius:6px;color:{{ demoCol }};background:{{ demoBg }}">مفعّل</span>
@@ -164,7 +347,7 @@
     <main style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
 
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:200px">
+          <div class="dh-page-heading" style="flex:1;min-width:200px">
           <div style="font-size:17px;font-weight:700;color:var(--tx,#f0f6ff);letter-spacing:-.2px">{{ screenTitle }}</div>
           <div style="font-size:11px;color:var(--thTx,#7d8ea6);margin-top:3px">{{ screenSub }}</div>
         </div>
@@ -179,9 +362,9 @@
         <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
 
           <sc-if value="{{ hasKpis }}" hint-placeholder-val="{{ true }}">
-            <section aria-label="المؤشرات" style="flex:none;display:grid;grid-template-columns:var(--kpiCols,repeat(5,1fr));gap:10px">
+            <section class="dh-kpi-grid" aria-label="المؤشرات" style="flex:none;display:grid;grid-template-columns:var(--kpiCols,repeat(5,1fr));gap:10px">
               <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="10">
-                <div onClick="{{ k.on }}" data-f="1" style="padding:11px 12px;border-radius:13px;cursor:pointer;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;align-items:center;gap:10px;transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease">
+                <button type="button" onClick="{{ k.on }}" data-f="1" class="dh-kpi-card" style="padding:11px 12px;border-radius:13px;cursor:pointer;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;align-items:center;gap:10px;transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease">
                   <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:{{ k.col }}"></span>
                   <div style="flex:1;min-width:0;text-align:right">
                     <div style="font-size:10.5px;color:var(--tx3,#8b9db5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.label }}</div>
@@ -190,24 +373,24 @@
                       <span style="font-size:10px;color:{{ k.col }};font-weight:600">{{ k.delta }}</span>
                     </div>
                   </div>
-                </div>
+                </button>
               </sc-for>
             </section>
           </sc-if>
 
-          <section style="flex:1;min-height:var(--midH,430px);display:flex;gap:14px;flex-wrap:var(--midWrap,nowrap)">
+          <section class="dh-operational-grid" style="flex:1;min-height:var(--midH,430px);display:flex;gap:14px;flex-wrap:var(--midWrap,nowrap)">
 
-            <div style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,430px);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+            <div class="dh-map-frame" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,430px);border-radius:18px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
               <div id="deptRealMap" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0;width:100%;height:100%;display:block"></div>
 
-              <div style="position:absolute;top:11px;left:11px;display:flex;align-items:center;gap:3px;padding:3px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));z-index:6">
+              <div class="dh-map-mode" style="position:absolute;top:11px;left:11px;display:flex;align-items:center;gap:3px;padding:3px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));z-index:6">
                 <button onClick="{{ setOps }}" data-f="1" style="height:32px;padding:0 14px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ opsTx }};background:{{ opsBg }};border:1px solid {{ opsBd }}">الخريطة التشغيلية</button>
                 <button onClick="{{ setTwin }}" data-f="1" style="height:32px;padding:0 14px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ twinTx }};background:{{ twinBg }};border:1px solid {{ twinBd }}">التوأم الرقمي</button>
               </div>
 
-              <div style="position:absolute;top:11px;right:11px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 150px)">
+              <div class="dh-map-toolbar" style="position:absolute;top:11px;right:11px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 150px)">
                 <div style="position:relative">
-                  <button onClick="{{ tLayers }}" data-f="1" style="display:flex;align-items:center;gap:7px;height:31px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);font-size:11px;cursor:pointer">
+                  <button class="dh-glass-control" onClick="{{ tLayers }}" data-f="1" aria-expanded="{{ layersExpanded }}" style="display:flex;align-items:center;gap:7px;height:31px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);font-size:11px;cursor:pointer">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>
                     الطبقات <span style="font-size:9.5px;font-weight:600;color:var(--acc,#8ee6ff)">{{ layerCount }}</span>
                   </button>
@@ -228,25 +411,25 @@
                   </sc-if>
                 </div>
 
-                <div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px))">
+                <div class="dh-map-hud" style="display:flex;align-items:center;gap:8px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px))">
                   <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:mBreathe 2.6s ease-in-out infinite"></span>
                   <span style="font-size:10.5px;color:var(--glassTx,#a9c0d8);font-variant-numeric:tabular-nums">{{ liveCount }} مراقب في الميدان</span>
                 </div>
 
-                <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <button class="dh-map-control" onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
                 </button>
-                <button onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <button class="dh-map-control" onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
                 </button>
               </div>
 
-              <div style="position:absolute;top:55px;left:11px;display:flex;flex-direction:column;gap:8px;z-index:5">
+              <div class="dh-map-search-stack" style="position:absolute;top:55px;left:11px;display:flex;flex-direction:column;gap:8px;z-index:5">
                 <div style="width:186px;position:relative">
-                  <input value="{{ mapQ }}" onChange="{{ setMapQ }}" aria-label="بحث في الخريطة" placeholder="بلاغ، ملاحظة، موقع..." style="width:100%;height:31px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 28px;outline:none">
+                  <input class="dh-map-search" value="{{ mapQ }}" onChange="{{ setMapQ }}" aria-label="بحث في الخريطة" placeholder="بلاغ، ملاحظة، موقع..." style="width:100%;height:31px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 28px;outline:none">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
                 </div>
-                <div style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:33px">
+                <div class="dh-map-zoom" style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:33px">
                   <button onClick="{{ zIn }}" data-f="1" aria-label="تكبير" style="width:33px;height:30px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer">+</button>
                   <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
                   <button onClick="{{ zOut }}" data-f="1" aria-label="تصغير" style="width:33px;height:30px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer">−</button>
@@ -258,7 +441,11 @@
 
               
 
-              <div style="position:absolute;bottom:11px;left:11px;display:flex;align-items:center;gap:11px;padding:7px 13px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.18));backdrop-filter:var(--blur,blur(16px));flex-wrap:wrap;max-width:calc(100% - 22px)">
+              <sc-if value="{{ showMapEmpty }}">
+                <div class="dh-map-empty" role="status">لا توجد نقاط تشغيلية موثوقة للعرض حالياً. تظهر الخريطة الأساسية دون بيانات مصطنعة.</div>
+              </sc-if>
+
+              <div class="dh-map-legend" style="position:absolute;bottom:11px;left:11px;display:flex;align-items:center;gap:11px;padding:7px 13px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.74));border:1px solid var(--glassBd,rgba(122,164,224,0.18));backdrop-filter:var(--blur,blur(16px));flex-wrap:wrap;max-width:calc(100% - 22px)">
                 <sc-for list="{{ legend }}" as="g" hint-placeholder-count="6">
                   <span style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--glassTx,#b7c9dd);white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:{{ g.col }}"></span>{{ g.label }}</span>
                 </sc-for>
@@ -295,13 +482,14 @@
             </div>
 
             <sc-if value="{{ hasSide }}" hint-placeholder-val="{{ true }}">
-              <div style="width:var(--sideW,282px);flex:none;display:flex;flex-direction:column;gap:12px">
-                <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
+              <div class="dh-side-column" style="width:var(--sideW,282px);flex:none;display:flex;flex-direction:column;gap:12px">
+                <div class="dh-side-card" style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                     <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#e4eefb)">{{ sideATitle }}</span>
                     <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ sideACount }}</span>
                   </div>
                   <div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:auto">
+                    <sc-if value="{{ sideAEmpty }}"><div class="dh-empty-state" role="status">لا توجد حالات تشوه تشغيلية موثوقة للعرض حالياً.</div></sc-if>
                     <sc-for list="{{ sideA }}" as="i" hint-placeholder-count="4">
                       <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
                         <span style="width:30px;height:30px;flex:none;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;color:{{ i.col }};background:{{ i.chipBg }}">{{ i.badge }}</span>
@@ -315,12 +503,13 @@
                   </div>
                 </div>
 
-                <div style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
+                <div class="dh-side-card" style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                     <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#e4eefb)">{{ sideBTitle }}</span>
                     <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ sideBCount }}</span>
                   </div>
                   <div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:auto">
+                    <sc-if value="{{ sideBEmpty }}"><div class="dh-empty-state" role="status">لا توجد بيانات مراقبين ميدانية موثوقة للعرض حالياً.</div></sc-if>
                     <sc-for list="{{ sideB }}" as="i" hint-placeholder-count="3">
                       <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
                         <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ i.col }}"></span>
@@ -785,18 +974,18 @@
 </div>
 
 <sc-if value="{{ mobNavOpen }}">
-  <div onClick="{{ tMobNav }}" style="position:fixed;inset:0;z-index:70;background:rgba(3,6,13,0.6);backdrop-filter:blur(3px);animation:mIn .18s ease-out">
-    <div onClick="{{ stop }}" style="position:absolute;top:0;right:0;bottom:0;width:264px;padding:16px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));display:flex;flex-direction:column;gap:4px;overflow:auto">
+  <div class="dh-mobile-scrim" onClick="{{ tMobNav }}" style="position:fixed;inset:0;z-index:70;background:rgba(3,6,13,0.6);backdrop-filter:blur(3px);animation:mIn .18s ease-out">
+    <div class="dh-mobile-drawer" role="dialog" aria-modal="true" aria-label="قائمة مركز قيادة القسم" onClick="{{ stop }}" style="position:absolute;top:0;right:0;bottom:0;width:min(286px,86vw);padding:16px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));display:flex;flex-direction:column;gap:4px;overflow:auto">
       <div style="display:flex;align-items:center;gap:9px;padding-bottom:11px;margin-bottom:5px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
         <span style="flex:1;font-size:12.5px;font-weight:700;color:var(--tx,#f0f6ff)">{{ roleTitle }}</span>
-        <span style="font-size:9px;color:var(--tx3,#7d8ea6)">حركة السير</span>
+        <span style="font-size:9px;color:var(--tx3,#7d8ea6)">إدارة الحصر الميداني</span>
       </div>
       <sc-for list="{{ nav }}" as="n" hint-placeholder-count="9">
-        <div onClick="{{ n.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:12px 10px;border-radius:10px;font-size:12.5px;cursor:pointer;color:{{ n.tx }};background:{{ n.bg }}">
+        <button type="button" class="dh-nav-item" onClick="{{ n.on }}" data-f="1" aria-current="{{ n.current }}" style="display:flex;align-items:center;gap:9px;padding:12px 10px;border-radius:10px;font-size:12.5px;cursor:pointer;color:{{ n.tx }};background:{{ n.bg }};border:1px solid {{ n.bd }}">
           <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ n.dot }}"></span>
           <span style="flex:1">{{ n.label }}</span>
           <span style="font-size:9px;color:{{ n.tagTx }}">{{ n.tag }}</span>
-        </div>
+        </button>
       </sc-for>
     </div>
   </div>
@@ -1300,37 +1489,86 @@ class Component extends DCLogic {
   parkPos(v) { const i = this.vehicles().indexOf(v); const a = (i * 37) * Math.PI / 180; const r = 0.13; return { x: r * Math.cos(a) + 0.02, y: r * Math.sin(a) - 0.04 }; }
 
   DAY = {
-    '--pgBg': 'radial-gradient(1100px 620px at 50% -12%,#ffffff,transparent 70%),#eef1ee',
-    '--card': '#ffffff', '--card2': '#ffffff', '--cardBd': 'rgba(17,54,40,0.11)',
-    '--cardSh': '0 1px 2px rgba(16,42,32,0.05),0 14px 30px -22px rgba(16,42,32,0.3)',
-    '--sunk': '#f4f7f4', '--sunk2': '#f7f9f7', '--ctl': '#f2f5f2', '--ctlBd': 'rgba(17,54,40,0.12)', '--ctlH': '#e7ece8',
-    '--field': '#ffffff', '--pop': '#ffffff', '--drawer': '#ffffff',
-    '--tx': '#0d1f19', '--tx2': '#4a5c53', '--tx3': '#7b8a82',
-    '--div': 'rgba(17,54,40,0.10)', '--track': 'rgba(17,54,40,0.10)',
-    '--acc': '#0e7a4f', '--accBd': 'rgba(14,122,79,0.3)',
-    '--navBg': 'linear-gradient(90deg,rgba(14,122,79,0.14),rgba(14,122,79,0.03))', '--navTx': '#0b5c3b',
-    '--btn': 'linear-gradient(180deg,#12855a,#0b6442)', '--btnTx': '#ffffff', '--btnBd': 'rgba(9,80,52,0.45)',
-    '--chipBg': '#f0f3f0', '--blur': 'none',
+    '--app-background': 'linear-gradient(145deg,#edf4ef 0%,#f7faf8 44%,#e8f1ed 100%)',
+    '--ambient-green': 'rgba(26,139,91,0.12)', '--ambient-cyan': 'rgba(34,120,152,0.07)', '--grid-line': 'rgba(30,100,73,0.025)',
+    '--glass-bg-1': 'linear-gradient(180deg,rgba(255,255,255,0.96),rgba(245,250,247,0.92))',
+    '--glass-bg-2': 'linear-gradient(180deg,rgba(252,255,253,0.95),rgba(237,246,241,0.91))',
+    '--glass-border': 'rgba(27,96,67,0.14)', '--glass-border-hover': 'rgba(18,132,86,0.3)', '--glass-highlight': 'rgba(255,255,255,0.92)',
+    '--glass-shadow': '0 0 0 1px rgba(18,64,47,0.035),0 2px 5px rgba(17,56,41,0.05),0 20px 44px -32px rgba(17,68,47,0.34)',
+    '--glass-shadow-hover': '0 0 0 1px rgba(18,132,86,0.14),0 5px 12px rgba(17,56,41,0.07),0 24px 48px -32px rgba(17,68,47,0.4)',
+    '--surface-elevated': 'rgba(244,251,247,0.98)', '--surface-deep': 'rgba(231,241,235,0.78)',
+    '--surface-blur': 'blur(18px) saturate(125%)', '--glass-blur': 'blur(22px) saturate(135%)',
+    '--accent-green': '#0e7a4f', '--accent-cyan': '#12688f',
+    '--text-primary': '#10241c', '--text-secondary': '#40574d', '--text-muted': '#62746c',
+    '--focus-ring': '#087a4b', '--selection-bg': '#c8ead8', '--selection-text': '#092c20',
+    '--divider': 'rgba(17,74,52,0.1)', '--empty-border': 'rgba(17,104,69,0.2)', '--scrim': 'rgba(16,38,29,0.34)',
+    '--command-bg': 'linear-gradient(180deg,rgba(253,255,254,0.96),rgba(237,247,241,0.92))',
+    '--command-border': 'rgba(18,122,79,0.18)', '--command-shadow': 'inset 0 1px 0 rgba(255,255,255,0.96),0 16px 38px -30px rgba(11,76,48,0.44)',
+    '--map-border': 'rgba(18,122,79,0.24)', '--map-inner-ring': 'rgba(255,255,255,0.35)', '--map-shadow': '0 0 0 1px rgba(18,92,62,0.06),0 30px 72px -38px rgba(13,56,40,0.52)',
+    '--map-glass': 'rgba(248,252,249,0.91)', '--map-glass-border': 'rgba(20,94,66,0.18)', '--map-control-shadow': '0 8px 24px -18px rgba(8,42,29,0.42)',
+    '--pgBg': 'transparent',
+    '--card': 'rgba(255,255,255,0.96)', '--card2': 'rgba(246,251,248,0.95)', '--cardBd': 'rgba(17,54,40,0.11)',
+    '--cardSh': 'var(--glass-shadow)', '--l1': 'var(--glass-bg-1)', '--l2': 'var(--glass-bg-2)', '--l1Bd': 'var(--glass-border)', '--l2Bd': 'var(--glass-border)', '--l1Sh': 'var(--glass-shadow)', '--l2Sh': 'var(--glass-shadow)',
+    '--sunk': '#edf4f0', '--sunk2': '#f4f8f5', '--ctl': 'rgba(237,246,241,0.92)', '--ctlBd': 'rgba(17,80,57,0.14)', '--ctlH': '#e3eee8',
+    '--field': '#fbfdfc', '--pop': 'rgba(251,254,252,0.98)', '--drawer': '#f7fbf8',
+    '--tx': 'var(--text-primary)', '--tx2': 'var(--text-secondary)', '--tx3': 'var(--text-muted)', '--thTx': 'var(--text-muted)',
+    '--div': 'var(--divider)', '--track': 'rgba(17,54,40,0.10)',
+    '--acc': 'var(--accent-green)', '--accBd': 'rgba(14,122,79,0.3)',
+    '--navBg': 'linear-gradient(90deg,rgba(14,122,79,0.16),rgba(14,122,79,0.045))', '--navTx': '#0a5839',
+    '--btn': 'linear-gradient(180deg,#168a5e,#0b6543)', '--btnTx': '#ffffff', '--btnBd': 'rgba(9,80,52,0.45)',
+    '--chipBg': 'rgba(20,96,66,0.075)', '--blur': 'blur(18px) saturate(135%)', '--srfBlur': 'var(--surface-blur)',
     '--ok': '#12855a', '--warn': '#b8730a', '--bad': '#c2372c', '--info': '#12688f', '--vio': '#5f43a8',
     '--barFill': 'linear-gradient(90deg,#12855a,#3fa87c)',
-    '--twinBd': 'rgba(17,54,40,0.14)', '--twinBg': '#eaeeea',
-    '--glass': 'rgba(255,255,255,0.92)', '--glassBd': 'rgba(17,54,40,0.14)', '--glassTx': '#3d5148',
+    '--twinBd': 'var(--map-border)', '--twinBg': '#e7eee9',
+    '--glass': 'var(--map-glass)', '--glassBd': 'var(--map-glass-border)', '--glassTx': 'var(--text-secondary)',
     '--lblBg': 'rgba(255,255,255,0.95)', '--lblTx': '#35463e',
-    '--orgBg': '#f2f5f2', '--orgBd': 'rgba(17,54,40,0.16)', '--badge': '#ffffff',
+    '--orgBg': '#edf4f0', '--orgBd': 'rgba(17,54,40,0.16)', '--badge': '#ffffff',
+    '--sbBg': 'var(--glass-bg-2)', '--sbBd': 'var(--glass-border)', '--sbSh': 'var(--glass-shadow)', '--sbSunk': 'var(--surface-deep)', '--sbDiv': 'var(--divider)', '--sbCtl': 'var(--surface-deep)', '--sbCtlBd': 'var(--glass-border)', '--sbTx': 'var(--text-primary)', '--sbTx2': 'var(--text-secondary)', '--sbTx3': 'var(--text-muted)',
+    '--hdrSunk': 'rgba(222,237,229,0.74)', '--hdrCtl': 'rgba(242,249,245,0.95)', '--hdrCtlBd': 'rgba(17,80,57,0.13)', '--hdrDiv': 'var(--divider)', '--hdrTx': 'var(--text-primary)', '--hdrTx2': 'var(--text-secondary)', '--hdrTx3': 'var(--text-muted)',
     '--dayBtnBg': '#ffffff', '--dayBtnBd': 'rgba(14,122,79,0.35)', '--dayBtnTx': '#0b5c3b',
-    '--nightBtnBg': 'transparent', '--nightBtnBd': 'transparent', '--nightBtnTx': '#7b8a82',
-    '--logoNavy': '#152a4a', '--logoGreen': '#2aa84a',
-    '--hdrBg': 'linear-gradient(180deg,rgba(232,243,236,0.9),rgba(248,251,249,0.94))',
-    '--hdrBd': 'rgba(18,133,90,0.2)', '--hdrBlur': 'blur(18px) saturate(140%)',
-    '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.85),0 10px 26px -20px rgba(12,60,40,0.5)'
+    '--nightBtnBg': 'transparent', '--nightBtnBd': 'transparent', '--nightBtnTx': '#62746c',
+    '--logoNavy': '#152a4a', '--logoGreen': '#2aa84a', '--logoNavyH': '#152a4a', '--logoGreenH': '#23893f',
+    '--hdrBg': 'var(--command-bg)', '--hdrBd': 'var(--command-border)', '--hdrBlur': 'var(--glass-blur)', '--hdrSh': 'var(--command-shadow)'
   };
   NIGHT = {
-    '--dayBtnBg': 'transparent', '--dayBtnBd': 'transparent', '--dayBtnTx': '#7d8ea6',
-    '--nightBtnBg': 'rgba(56,132,220,0.28)', '--nightBtnBd': 'rgba(76,201,240,0.4)', '--nightBtnTx': '#eaf4ff',
-    '--logoNavy': '#dbe6f5', '--logoGreen': '#37c05b',
-    '--hdrBg': 'linear-gradient(180deg,rgba(17,26,44,0.85),rgba(9,15,28,0.88))',
-    '--hdrBd': 'rgba(122,164,224,0.16)', '--hdrBlur': 'blur(22px) saturate(140%)',
-    '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95)'
+    '--app-background': 'linear-gradient(145deg,#06111f 0%,#071827 45%,#071d24 100%)',
+    '--ambient-green': 'rgba(31,164,101,0.15)', '--ambient-cyan': 'rgba(31,119,165,0.12)', '--grid-line': 'rgba(102,186,171,0.026)',
+    '--glass-bg-1': 'linear-gradient(180deg,rgba(16,39,61,0.93),rgba(9,27,45,0.9))',
+    '--glass-bg-2': 'linear-gradient(180deg,rgba(13,34,55,0.93),rgba(8,25,42,0.92))',
+    '--glass-border': 'rgba(138,192,215,0.14)', '--glass-border-hover': 'rgba(65,211,140,0.35)', '--glass-highlight': 'rgba(224,247,255,0.08)',
+    '--glass-shadow': '0 0 0 1px rgba(255,255,255,0.025),0 18px 46px -30px rgba(0,5,14,0.95)',
+    '--glass-shadow-hover': '0 0 0 1px rgba(74,218,145,0.2),0 22px 52px -30px rgba(0,5,14,1)',
+    '--surface-elevated': 'rgba(24,55,78,0.96)', '--surface-deep': 'rgba(6,21,36,0.82)',
+    '--surface-blur': 'blur(20px) saturate(135%)', '--glass-blur': 'blur(24px) saturate(145%)',
+    '--accent-green': '#43d98b', '--accent-cyan': '#66c9e8',
+    '--text-primary': '#edf6ff', '--text-secondary': '#b8cadb', '--text-muted': '#8499ad',
+    '--focus-ring': '#65e0a2', '--selection-bg': '#176345', '--selection-text': '#f4fff9',
+    '--divider': 'rgba(139,188,211,0.11)', '--empty-border': 'rgba(88,193,146,0.22)', '--scrim': 'rgba(2,9,17,0.68)',
+    '--command-bg': 'linear-gradient(180deg,rgba(15,38,60,0.95),rgba(8,25,43,0.93))',
+    '--command-border': 'rgba(125,190,213,0.16)', '--command-shadow': 'inset 0 1px 0 rgba(235,250,255,0.085),0 24px 54px -34px rgba(0,4,14,0.98)',
+    '--map-border': 'rgba(76,200,151,0.24)', '--map-inner-ring': 'rgba(216,248,237,0.08)', '--map-shadow': '0 0 0 1px rgba(62,205,141,0.06),0 34px 82px -38px rgba(0,3,12,1)',
+    '--map-glass': 'rgba(7,24,40,0.88)', '--map-glass-border': 'rgba(135,199,221,0.18)', '--map-control-shadow': '0 14px 34px -22px rgba(0,3,12,0.95)',
+    '--pgBg': 'transparent',
+    '--card': 'rgba(13,34,55,0.95)', '--card2': 'rgba(9,27,45,0.94)', '--cardBd': 'var(--glass-border)', '--cardSh': 'var(--glass-shadow)',
+    '--l1': 'var(--glass-bg-1)', '--l2': 'var(--glass-bg-2)', '--l1Bd': 'var(--glass-border)', '--l2Bd': 'var(--glass-border)', '--l1Sh': 'var(--glass-shadow)', '--l2Sh': 'var(--glass-shadow)',
+    '--sunk': 'rgba(5,19,33,0.84)', '--sunk2': 'rgba(7,23,39,0.84)', '--ctl': 'rgba(18,43,65,0.88)', '--ctlBd': 'rgba(132,188,211,0.15)', '--ctlH': 'rgba(26,57,80,0.96)',
+    '--field': 'rgba(7,24,40,0.92)', '--pop': 'rgba(8,25,42,0.985)', '--drawer': '#08192a',
+    '--tx': 'var(--text-primary)', '--tx2': 'var(--text-secondary)', '--tx3': 'var(--text-muted)', '--thTx': 'var(--text-muted)',
+    '--div': 'var(--divider)', '--track': 'rgba(135,190,212,0.11)',
+    '--acc': 'var(--accent-green)', '--accBd': 'rgba(67,217,139,0.32)',
+    '--navBg': 'linear-gradient(90deg,rgba(47,190,119,0.24),rgba(26,104,92,0.08))', '--navTx': '#ecfff5',
+    '--btn': 'linear-gradient(180deg,rgba(39,173,105,0.94),rgba(20,113,75,0.96))', '--btnTx': '#f5fff9', '--btnBd': 'rgba(80,224,151,0.35)',
+    '--chipBg': 'rgba(133,188,211,0.09)', '--blur': 'blur(18px) saturate(145%)', '--srfBlur': 'var(--surface-blur)',
+    '--ok': '#43d98b', '--warn': '#f2b84b', '--bad': '#f06b69', '--info': '#66c9e8', '--vio': '#b298f2',
+    '--barFill': 'linear-gradient(90deg,#239d67,#5ad99b)',
+    '--twinBd': 'var(--map-border)', '--twinBg': '#06111f', '--glass': 'var(--map-glass)', '--glassBd': 'var(--map-glass-border)', '--glassTx': 'var(--text-secondary)',
+    '--lblBg': 'rgba(8,25,42,0.95)', '--lblTx': 'var(--text-secondary)', '--orgBg': 'rgba(8,25,42,0.88)', '--orgBd': 'var(--glass-border)', '--badge': '#071727',
+    '--sbBg': 'var(--glass-bg-2)', '--sbBd': 'var(--glass-border)', '--sbSh': 'var(--glass-shadow)', '--sbSunk': 'var(--surface-deep)', '--sbDiv': 'var(--divider)', '--sbCtl': 'var(--surface-deep)', '--sbCtlBd': 'var(--glass-border)', '--sbTx': 'var(--text-primary)', '--sbTx2': 'var(--text-secondary)', '--sbTx3': 'var(--text-muted)',
+    '--hdrSunk': 'rgba(5,20,35,0.66)', '--hdrCtl': 'rgba(18,43,65,0.78)', '--hdrCtlBd': 'rgba(135,190,212,0.14)', '--hdrDiv': 'var(--divider)', '--hdrTx': 'var(--text-primary)', '--hdrTx2': 'var(--text-secondary)', '--hdrTx3': 'var(--text-muted)',
+    '--dayBtnBg': 'transparent', '--dayBtnBd': 'transparent', '--dayBtnTx': '#8499ad',
+    '--nightBtnBg': 'rgba(42,153,102,0.24)', '--nightBtnBd': 'rgba(78,220,149,0.33)', '--nightBtnTx': '#ecfff5',
+    '--logoNavy': '#e1edf8', '--logoGreen': '#43d98b', '--logoNavyH': '#edf6ff', '--logoGreenH': '#43d98b',
+    '--hdrBg': 'var(--command-bg)', '--hdrBd': 'var(--command-border)', '--hdrBlur': 'var(--glass-blur)', '--hdrSh': 'var(--command-shadow)'
   };
   BP = {
     xl: { '--pgMaxW': '1600px', '--kpiCols': 'repeat(5,1fr)' },
@@ -1341,7 +1579,7 @@ class Component extends DCLogic {
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinH': '380px', '--midH': 'auto', '--sideW': '100%', '--botCols': 'repeat(2,1fr)', '--brandTxt': 'none',
       '--repCols': 'repeat(2,1fr)', '--repCols2': 'repeat(2,1fr)', '--hoCols': '1fr', '--setCols': '1fr', '--tSearch': '100%', '--thead': 'none', '--rowWrap': 'wrap' },
     mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--metaDisp': 'none', '--kpiCols': 'repeat(2,1fr)',
-      '--midWrap': 'wrap', '--twinBasis': '100%', '--twinH': '300px', '--twinMin': '220px', '--midH': 'auto', '--sideW': '100%', '--botCols': '1fr', '--brandTxt': 'none',
+      '--midWrap': 'wrap', '--twinBasis': '100%', '--twinH': '360px', '--twinMin': '220px', '--midH': 'auto', '--sideW': '100%', '--botCols': '1fr', '--brandTxt': 'none',
       '--repCols': '1fr', '--repCols2': '1fr', '--hoCols': '1fr', '--setCols': '1fr', '--tSearch': '100%', '--thead': 'none', '--rowWrap': 'wrap', '--empPad': '0 0 12px', '--roleDisp': 'none', '--roleDrawer': 'flex' }
   };
 
@@ -1714,7 +1952,7 @@ class Component extends DCLogic {
     const navDefs = this.navFor(st.role);
     const nav = navDefs.map(n => {
       const a = st.screen === n.id;
-      return { label: n.label, tag: n.tag || '', dot: a ? (day ? '#12855a' : '#4cc9f0') : (day ? 'rgba(17,54,40,0.2)' : 'rgba(122,164,224,0.25)'),
+      return { label: n.label, tag: n.tag || '', current: a ? 'page' : '', dot: a ? (day ? '#12855a' : '#43d98b') : (day ? 'rgba(17,54,40,0.2)' : 'rgba(122,164,224,0.25)'),
         tx: a ? 'var(--navTx,#eaf4ff)' : 'var(--tx2,#9db2cc)',
         bg: a ? 'var(--navBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)))' : 'transparent',
         bd: a ? 'var(--accBd,rgba(76,201,240,0.4))' : 'transparent',
@@ -1805,11 +2043,15 @@ class Component extends DCLogic {
     const base = {
       rootRef: el => { this.root = el; }, cvRef: el => { this.cv = el; },
       gateShow, gateMsg,
-      themeVars: vars, orgName: st.orgName || 'اسم البلدية', orgMono: (st.orgName || 'ب').trim().charAt(0) || 'ب',
+      themeVars: vars, themeName: st.theme, dayActive: day, nightActive: !day,
+      mobileNavExpanded: !!st.mobNavOpen, notificationsExpanded: !!st.notifOpen, layersExpanded: !!st.layersOpen, sidebarExpanded: !st.sb,
+      orgName: st.orgName || 'اسم البلدية', orgMono: (st.orgName || 'ب').trim().charAt(0) || 'ب',
       nav: nav, roleTitle: this.roleTitle(), roleSub: this.roleSub(),
       screenTitle: sd.title, screenSub: sd.sub, screenActions: sd.actions || [],
       isOpsLayout: sd.ops === true, hasKpis: !!(sd.kpis && sd.kpis.length), kpis: sd.kpis || [],
       hasSide: !!sd.sideA, hasBottom: sd.bottom === true,
+      sideAEmpty: !!sd.sideA && sd.sideA.length === 0, sideBEmpty: !!sd.sideB && sd.sideB.length === 0,
+      showMapEmpty: V.length === 0 && M.length === 0 && I.length === 0,
       sideATitle: sd.sideATitle || '', sideACount: sd.sideACount || '', sideA: sd.sideA || [],
       sideBTitle: sd.sideBTitle || '', sideBCount: sd.sideBCount || '', sideB: sd.sideB || [],
 
@@ -2300,5 +2542,5 @@ class Component extends DCLogic {
 }
 </script>
 
-\n</body>
+</body>
 </html>
