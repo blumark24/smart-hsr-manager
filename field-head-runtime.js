@@ -36,16 +36,18 @@
 
   const refresh = async () => {
     if (!component || !currentUser) return;
-    const [employees, visual, missions] = await Promise.all([
+    const [employees, visual, missions, audit] = await Promise.all([
       employeeApi().catch(() => []),
       api('getFieldVisualDistortionCommand').catch(() => ({observations:[],contractors:[]})),
-      api('listDepartmentMissions').catch(() => ({missions:[]}))
+      api('listDepartmentMissions').catch(() => ({missions:[]})),
+      api('listFieldDepartmentAudit').catch(() => ({events:[]}))
     ]);
     component.setState({
       liveEmployees: employees,
       liveObservations: Array.isArray(visual.observations) ? visual.observations : [],
       liveContractors: Array.isArray(visual.contractors) ? visual.contractors : [],
-      liveMissions: Array.isArray(missions.missions) ? missions.missions : []
+      liveMissions: Array.isArray(missions.missions) ? missions.missions : [],
+      liveDepartmentAudit: Array.isArray(audit.events) ? audit.events : []
     });
   };
 
@@ -101,9 +103,13 @@
     const allowed = new Set(['PENDING','IN_PROGRESS','PENDING_REVIEW','COMPLETED']);
     return (instance.state.liveObservations || []).filter(o => {
       const lat = Number(o.correctedLat), lng = Number(o.correctedLng);
-      return allowed.has(o.status) && o.locationVerified === true &&
-        Number.isFinite(lat) && Number.isFinite(lng) &&
+      const globallyValid = Number.isFinite(lat) && Number.isFinite(lng) &&
         Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+      // SMART HSR is a Saudi municipal platform. Keep the map operationally
+      // honest by refusing coordinates outside the Saudi service envelope;
+      // this also catches common swapped lat/lng records without mutating them.
+      const inSaudiEnvelope = globallyValid && lat >= 16 && lat <= 33.5 && lng >= 34 && lng <= 56.5;
+      return allowed.has(o.status) && o.locationVerified === true && inSaudiEnvelope;
     });
   }
   function clearObservationMarkers(instance) {
@@ -150,9 +156,11 @@
         if (role !== 'dept') return originalNavFor(role);
         return [
           { id:'deptops', label:'مركز قيادة القسم' },
-          { id:'missions', label:'التشوه البصري' },
+          { id:'visual', label:'التشوه البصري' },
+          { id:'contractors', label:'المقاولون والعقود' },
+          { id:'fieldmobility', label:'الحركة الميدانية' },
           { id:'map', label:'الخريطة التشغيلية' },
-          { id:'incidents', label:'البلاغات والملاحظات' },
+          { id:'employees', label:'موظفو القسم' },
           { id:'audit', label:'سجل القسم' }
         ];
       };
@@ -161,8 +169,23 @@
     const originalScreenDef = instance.screenDef?.bind(instance);
     if (originalScreenDef) {
       instance.screenDef = () => {
+        const screen = instance.state.screen;
+        if (instance.state.role === 'dept' && screen === 'visual') {
+          return {ops:false,title:'التشوه البصري',sub:'إدارة دورة البلاغ من الرصد حتى الإغلاق',actions:[]};
+        }
+        if (instance.state.role === 'dept' && screen === 'contractors') {
+          return {ops:false,title:'المقاولون والعقود',sub:'سجل جهات التنفيذ والعقود النشطة للتشوه البصري',actions:[]};
+        }
+        if (instance.state.role === 'dept' && screen === 'fieldmobility') {
+          return {ops:false,title:'الحركة الميدانية',sub:'مهام موظفي القسم ومسار الاعتماد وتخصيص المركبة',actions:[
+            {label:'+ طلب مهمة',on:()=>instance.openDrawer('create',null),tx:'var(--btnTx,#eaf4ff)',bg:'var(--btn,rgba(76,131,236,.45))',bd:'var(--btnBd,rgba(120,170,255,.35))'}
+          ]};
+        }
+        if (instance.state.role === 'dept' && screen === 'employees') {
+          return {ops:false,title:'موظفو القسم',sub:'المراقبون والموظفون النشطون في إدارة الحصر الميداني',actions:[]};
+        }
         const base = originalScreenDef();
-        if (instance.state.role !== 'dept' || instance.state.screen !== 'deptops') return base;
+        if (instance.state.role !== 'dept' || screen !== 'deptops') return base;
         const observations = instance.state.liveObservations || [];
         const active = observations.filter(o => ['PENDING','IN_PROGRESS','PENDING_REVIEW'].includes(o.status));
         const team = (instance.state.liveEmployees || []).filter(e => e?.products?.field?.enabled === true && e?.products?.field?.role === 'inspector');
@@ -238,6 +261,194 @@
       }
     };
 
+
+    const originalExt = instance.ext?.bind(instance);
+    if (originalExt) {
+      instance.ext = (day, st) => {
+        const screen = st.screen;
+        const cell = (v, flex, opt={}) => ({
+          v:v == null || v === '' ? '—' : String(v),
+          flex:String(flex),
+          align:opt.align || 'right',
+          size:opt.size || '11.5px',
+          weight:opt.weight || '400',
+          col:opt.col || 'var(--tx2,#a9bdd4)'
+        });
+        const chip = status => {
+          const col=statusColor(status);
+          return {chip:statusLabel(status),chipCol:col,chipBg:'rgba(122,164,224,.10)',chipBd:col};
+        };
+        if (st.role === 'dept' && screen === 'visual') {
+          const q=(st.tq||'').trim().toLowerCase();
+          const f=st.tfilter||'الكل';
+          const observations=(instance.state.liveObservations||[])
+            .filter(o=>f==='الكل'||statusLabel(o.status)===f)
+            .filter(o=>!q||[o.displayId,o.observationId,o.title,o.type,o.location,o.createdByName,o.assignedContractorName].join(' ').toLowerCase().includes(q));
+          const filters=['الكل','جديدة','تحت المعالجة','بانتظار التحقق','مغلقة'].map(label=>({
+            label,on:()=>instance.setState({tfilter:label}),
+            tx:f===label?'var(--tx,#e9f1fb)':'var(--tx3,#7d8ea6)',
+            bg:f===label?'rgba(56,132,220,.22)':'var(--ctl,rgba(20,32,54,.5))',
+            bd:f===label?'rgba(76,201,240,.4)':'var(--ctlBd,rgba(122,164,224,.14))'
+          }));
+          return {
+            isTable:true,isHandover:false,isReports:false,isSettings:false,isEmp:false,
+            tQ:st.tq||'',setTQ:e=>instance.setState({tq:e.target.value}),
+            tPlaceholder:'رقم البلاغ، النوع، الموقع، المراقب، المقاول...',
+            tFilters:filters,
+            tCols:[
+              {label:'البلاغ',flex:'0 0 88px',align:'right'},
+              {label:'النوع',flex:'1.1',align:'right'},
+              {label:'الموقع',flex:'1.4',align:'right'},
+              {label:'المراقب',flex:'1',align:'right'},
+              {label:'المقاول',flex:'1',align:'right'},
+              {label:'التحقق',flex:'0 0 100px',align:'left'}
+            ],
+            tRows:observations.map(o=>Object.assign({
+              on:()=>instance.openFieldObservation(o.observationId),
+              cells:[
+                cell(o.displayId||o.observationId,'0 0 88px',{weight:'650',col:'var(--tx,#e9f1fb)'}),
+                cell(o.type||o.title||'تشوه بصري','1.1'),
+                cell(o.location||'إحداثيات موثقة','1.4',{size:'11px'}),
+                cell(o.createdByName||o.inspectorName,'1',{size:'11px'}),
+                cell(o.assignedContractorName||'غير مسند','1',{size:'11px'}),
+                cell(o.inspectorVerification?.status==='VERIFIED'?'متحقق':o.inspectorVerification?.status==='RETURNED'?'معاد للمقاول':'—','0 0 100px',{align:'left',size:'10.5px'})
+              ]
+            },chip(o.status))),
+            tEmpty:observations.length===0,tCount:observations.length+' بلاغ معروض'
+          };
+        }
+        if (st.role === 'dept' && screen === 'contractors') {
+          const contractors=instance.state.liveContractors||[];
+          return {
+            isTable:true,isHandover:false,isReports:false,isSettings:false,isEmp:false,
+            tQ:'',setTQ:()=>{},tPlaceholder:'',tFilters:[],
+            tCols:[
+              {label:'المقاول',flex:'1.1',align:'right'},
+              {label:'الشركة',flex:'1.2',align:'right'},
+              {label:'رقم العقد',flex:'1',align:'right'},
+              {label:'نطاق العقد',flex:'1.3',align:'right'},
+              {label:'انتهاء العقد',flex:'0 0 100px',align:'left'}
+            ],
+            tRows:contractors.map(x=>{
+              const active=x.contractState==='ACTIVE',col=active?'#22c55e':'#f5a524';
+              return {
+                chip:active?'عقد نشط':(x.contractState||'غير مكتمل'),chipCol:col,chipBg:'rgba(122,164,224,.10)',chipBd:col,
+                on:()=>instance.setState({drawer:'contractorProfile',drawerId:x.uid}),
+                cells:[
+                  cell(x.name,'1.1',{weight:'650',col:'var(--tx,#e9f1fb)'}),
+                  cell(x.profile?.companyName,'1.2'),
+                  cell(x.profile?.contractNumber,'1'),
+                  cell(x.profile?.contractScope,'1.3'),
+                  cell(x.profile?.endDate,'0 0 100px',{align:'left'})
+                ]
+              };
+            }),
+            tEmpty:contractors.length===0,tCount:contractors.length+' مقاول'
+          };
+        }
+        if (st.role === 'dept' && screen === 'fieldmobility') {
+          const missions=instance.state.liveMissions||[];
+          return {
+            isTable:true,isHandover:false,isReports:false,isSettings:false,isEmp:false,
+            tQ:'',setTQ:()=>{},tPlaceholder:'',tFilters:[],
+            tCols:[
+              {label:'المهمة',flex:'0 0 90px',align:'right'},
+              {label:'النوع',flex:'1.1',align:'right'},
+              {label:'الموظف',flex:'1',align:'right'},
+              {label:'الوجهة',flex:'1.3',align:'right'},
+              {label:'السيارة',flex:'0 0 100px',align:'left'}
+            ],
+            tRows:missions.map(m=>{
+              const label=m.statusLabel||m.status||'—',col='#38bdf8';
+              return {
+                chip:label,chipCol:col,chipBg:'rgba(56,189,248,.10)',chipBd:'rgba(56,189,248,.35)',
+                on:()=>instance.openDrawer('mission',m.missionId||m.id),
+                cells:[
+                  cell(m.missionId||m.id,'0 0 90px',{weight:'650',col:'var(--tx,#e9f1fb)'}),
+                  cell(m.type,'1.1'),cell(m.requestedEmployeeName||m.assignedEmployeeName,'1'),
+                  cell(m.destination,'1.3'),cell(m.vehicleId||'بانتظار الحركة','0 0 100px',{align:'left',size:'10.5px'})
+                ]
+              };
+            }),
+            tEmpty:missions.length===0,tCount:missions.length+' مهمة'
+          };
+        }
+        if (st.role === 'dept' && screen === 'employees') {
+          const employees=(instance.state.liveEmployees||[]).filter(e=>String(e.department||'')===String(instance.state.department||'')||e?.products?.field?.enabled===true);
+          return {
+            isTable:true,isHandover:false,isReports:false,isSettings:false,isEmp:false,
+            tQ:'',setTQ:()=>{},tPlaceholder:'',tFilters:[],
+            tCols:[
+              {label:'الموظف',flex:'1.2',align:'right'},
+              {label:'المسمى',flex:'1',align:'right'},
+              {label:'الحساب',flex:'0 0 100px',align:'left'},
+              {label:'التشغيل الميداني',flex:'0 0 120px',align:'left'}
+            ],
+            tRows:employees.map(e=>{
+              const active=e.accountStatus==='ACTIVE'||e.active===true,col=active?'#22c55e':'#7d8ea6';
+              return {
+                chip:active?'نشط':'غير نشط',chipCol:col,chipBg:'rgba(122,164,224,.10)',chipBd:col,on:()=>{},
+                cells:[
+                  cell(e.name||e.employeeId||e.uid,'1.2',{weight:'650',col:'var(--tx,#e9f1fb)'}),
+                  cell(e.jobTitle||'موظف ميداني','1'),
+                  cell(e.accountStatus||'—','0 0 100px',{align:'left'}),
+                  cell(e?.products?.mobility?.vehicleEligible===true?'مؤهل للمركبة':'—','0 0 120px',{align:'left'})
+                ]
+              };
+            }),
+            tEmpty:employees.length===0,tCount:employees.length+' موظف'
+          };
+        }
+        if (st.role === 'dept' && screen === 'audit') {
+          const events=instance.state.liveDepartmentAudit||[];
+          const actionLabel=a=>({
+            assign_contractor:'إسناد للمقاول',
+            upsert_contractor_profile:'تحديث ملف المقاول',
+            verify_contractor_work:'اعتماد معالجة المقاول',
+            return_to_contractor:'إعادة للمقاول',
+            close_visual_distortion_case:'إغلاق حالة التشوه',
+            create:'إنشاء مهمة',
+            submit_for_approval:'إرسال المهمة للاعتماد'
+          }[a]||a||'حدث تشغيلي');
+          return {
+            isTable:true,isHandover:false,isReports:false,isSettings:false,isEmp:false,
+            tQ:'',setTQ:()=>{},tPlaceholder:'',tFilters:[],
+            tCols:[
+              {label:'الوقت',flex:'0 0 150px',align:'right'},
+              {label:'الحدث',flex:'1.3',align:'right'},
+              {label:'المورد',flex:'1',align:'right'},
+              {label:'الحالة السابقة',flex:'0 0 100px',align:'left'},
+              {label:'الحالة الجديدة',flex:'0 0 100px',align:'left'}
+            ],
+            tRows:events.map(e=>({
+              chip:'مسجّل',chipCol:'#7d8ea6',chipBg:'rgba(122,164,224,.10)',chipBd:'rgba(122,164,224,.25)',on:()=>{},
+              cells:[
+                cell(e.timestamp||'—','0 0 150px',{size:'10.5px'}),
+                cell(actionLabel(e.action),'1.3',{weight:'600',col:'var(--tx,#e9f1fb)'}),
+                cell((e.resourceType||'')+' · '+(e.resourceId||''),'1',{size:'10.5px'}),
+                cell(e.fromStatus,'0 0 100px',{align:'left'}),
+                cell(e.toStatus,'0 0 100px',{align:'left'})
+              ]
+            })),
+            tEmpty:events.length===0,tCount:events.length+' حدث'
+          };
+        }
+        const out=originalExt(day,st);
+        if (st.role === 'dept' && screen === 'map') {
+          const trusted=trustedObservations(instance);
+          out.showMapEmpty=trusted.length===0;
+          out.liveCount=String((instance.state.liveEmployees||[]).filter(e=>e.accountStatus==='ACTIVE'||e.active===true).length);
+          out.legend=[
+            {label:'جديدة',col:'#ef4444'},
+            {label:'تحت المعالجة',col:'#22c55e'},
+            {label:'بانتظار التحقق',col:'#f5a524'},
+            {label:'مغلقة',col:'#7d8ea6'}
+          ];
+        }
+        return out;
+      };
+    }
+
     const originalDrawerData = instance.drawerData?.bind(instance);
     if (originalDrawerData) {
       instance.drawerData = () => {
@@ -278,6 +489,24 @@
             ],
             evidenceImages:instance.state.observationEvidence || [],
             actions
+          };
+        }
+        if (kind === 'contractorProfile') {
+          const x=(instance.state.liveContractors||[]).find(v=>v.uid===id);
+          if(!x) return {title:'تعذر تحديد المقاول',sub:'',chip:'',chipCol:'',chipBg:'',chipBd:''};
+          const p=x.profile||{},active=x.contractState==='ACTIVE',col=active?'#22c55e':'#f5a524';
+          return {
+            title:x.name||'مقاول',sub:p.companyName||'الملف التعاقدي',
+            chip:active?'عقد نشط':(x.contractState||'غير مكتمل'),chipCol:col,chipBg:'rgba(122,164,224,.10)',chipBd:col,
+            rows:[
+              {k:'رقم العقد',v:p.contractNumber||'—'},
+              {k:'نطاق العقد',v:p.contractScope||'—'},
+              {k:'بداية العقد',v:p.startDate||'—'},
+              {k:'نهاية العقد',v:p.endDate||'—'},
+              {k:'جهة الاتصال',v:p.contactName||'—'},
+              {k:'الجوال',v:p.contactPhone||'—'}
+            ],
+            actions:[]
           };
         }
         if (kind === 'observationAssign') {
