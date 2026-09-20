@@ -646,6 +646,10 @@ async function handler(req, res) {
         if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
         const vehicle = vehicleSnap.data() || {};
         if (vehicle.organizationId !== actor.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        if (vehicle.currentMissionId !== missionId
+            || vehicle.assignedEmployeeUid !== mission.assignedEmployeeUid) {
+          return { ok: false, statusCode: 409, reason: 'mission_vehicle_relationship_invalid' };
+        }
 
         const missionDecision = evaluateMissionTransition({ actor, mission, toStatus: 'HANDED_OVER' });
         const vehicleDecision = evaluateVehicleTransition({ actor, vehicle, toStatus: 'IN_MISSION' });
@@ -731,6 +735,12 @@ async function handler(req, res) {
         const vehicleSnap = await transaction.get(vehicleRef);
         if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
         const vehicle = vehicleSnap.data() || {};
+        if (vehicle.organizationId !== actor.organizationId
+            || vehicle.currentMissionId !== missionId
+            || vehicle.assignedEmployeeUid !== actor.uid
+            || mission.assignedEmployeeUid !== actor.uid) {
+          return { ok: false, statusCode: 409, reason: 'mission_vehicle_relationship_invalid' };
+        }
 
         const missionDecision = evaluateMissionTransition({ actor, mission, toStatus: 'AWAITING_RETURN' });
         const vehicleDecision = evaluateVehicleTransition({ actor, vehicle, toStatus: 'RETURN_PENDING' });
@@ -778,6 +788,11 @@ async function handler(req, res) {
         const vehicleSnap = await transaction.get(vehicleRef);
         if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
         const vehicle = vehicleSnap.data() || {};
+        if (vehicle.organizationId !== actor.organizationId
+            || vehicle.currentMissionId !== missionId
+            || vehicle.assignedEmployeeUid !== mission.assignedEmployeeUid) {
+          return { ok: false, statusCode: 409, reason: 'mission_vehicle_relationship_invalid' };
+        }
 
         const missionDecision = evaluateMissionTransition({ actor, mission, toStatus: 'CLOSED' });
         const vehicleDecision = evaluateVehicleTransition({ actor, vehicle, toStatus: 'AVAILABLE' });
