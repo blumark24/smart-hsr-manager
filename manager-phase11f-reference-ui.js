@@ -214,7 +214,7 @@ function buildSinglePageProfile(panel,employee){
   const basic=panel.querySelector('.pane[data-id="p"]'),org=panel.querySelector('.pane[data-id="o"]'),account=panel.querySelector('.pane[data-id="a"]'),roles=panel.querySelector('.pane[data-id="r"]'),history=panel.querySelector('.pane[data-id="h"]');
   [basic,org,account,roles].forEach(p=>{if(p)p.hidden=false;});
   if(basic)basic.dataset.ucv21Step='1';
-  if(org)org.dataset.ucv21Step='1';
+  if(org)org.dataset.ucv21Step='2';
   if(roles)roles.dataset.ucv21Step='2';
   if(account)account.dataset.ucv21Step='3';
   // PHASE13D.3 STEP 2 — visual-only reorganization into the 5 requested
@@ -279,6 +279,23 @@ function buildSinglePageProfile(panel,employee){
       }
     });
   }
+
+
+  const normalizeDepartmentHeadSelection=()=>{
+    if(!editRoleSelect||editRoleSelect.value!=='department_head'||!roles)return;
+    const cards=[...roles.querySelectorAll('.pc')];
+    const enabled=cards.filter(card=>card.querySelector('.pe')?.checked===true);
+    if(enabled.length!==1)return;
+    const card=enabled[0],product=card.dataset.p,level=card.querySelector(`#lv-${product}`);
+    if(level&&level.value!=='head'){level.value='head';level.dispatchEvent(new Event('change',{bubbles:true}));}
+    const deptInput=panel.querySelector('#edit-dept');
+    const inferred={field:'إدارة الحصر الميداني',lands:'إدارة الأراضي والممتلكات',mobility:'إدارة حركة السير'}[product];
+    if(deptInput&&!clean(deptInput.value)&&inferred){deptInput.value=inferred;deptInput.dispatchEvent(new Event('input',{bubbles:true}));}
+  };
+  roles?.addEventListener('change',event=>{
+    if(event.target.classList?.contains('pe')||event.target.id?.startsWith('lv-'))normalizeDepartmentHeadSelection();
+  });
+  normalizeDepartmentHeadSelection();
 
   const prodBlock=roles?.querySelector('.prod');
   if(prodBlock&&!prodBlock.previousElementSibling?.classList?.contains('ucv21-subsection-head')){const sub=document.createElement('div');sub.className='ucv21-section-head ucv21-subsection-head';sub.innerHTML='<span>الخدمات والصلاحيات</span>';prodBlock.before(sub);}
