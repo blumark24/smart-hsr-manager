@@ -364,7 +364,7 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
 
-const state = { context:null, profile:null, employees:[], missions:[], loading:true, error:"", missionLoading:true, missionError:"" };
+const state = { context:null, profile:null, employees:[], missions:[], loading:true, error:"", missionLoading:true, missionError:"", pendingMissionClientRequestId:null };
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
@@ -576,7 +576,7 @@ async function loadEmployees(user){
 
 async function mobilityRequest(user,payload){
   const token=await user.getIdToken();
-  const res=await fetch("/api/department-head/mobility",{
+  const res=await fetch("/api/admin/users",{
     method:"POST",
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
     body:JSON.stringify(payload)
@@ -592,7 +592,7 @@ async function mobilityRequest(user,payload){
 async function loadMissions(user){
   state.missionLoading=true;state.missionError="";render();
   try{
-    const data=await mobilityRequest(user,{action:"list"});
+    const data=await mobilityRequest(user,{action:"listDepartmentMissions"});
     state.missions=Array.isArray(data.missions)?data.missions:[];
   }catch(err){
     console.error("department-head: mission list failed",err);
@@ -610,7 +610,11 @@ function mobilityErrorLabel(code){
     employee_account_not_active:"حساب الموظف غير مفعّل.",
     employee_mobility_role_required:"الموظف غير مفعّل في مسار حركة السير.",
     employee_vehicle_not_eligible:"الموظف غير مؤهل لاستلام مركبة.",
-    destination_and_reason_required:"أدخل الوجهة ومبرر المهمة."
+    destination_and_reason_required:"أدخل الوجهة ومبرر المهمة.",
+    approved_employee_required:"يجب ربط الطلب بموظف معتمد.",
+    mission_not_found:"تعذر العثور على طلب الحركة.",
+    INVALID_TRANSITION:"حالة الطلب لا تسمح بهذه العملية الآن.",
+    OWNERSHIP_MISMATCH:"لا يمكن اعتماد طلب أنشأه مستخدم آخر."
   };
   return labels[code]||"تعذر إرسال الطلب. تحقق من البيانات وحاول مرة أخرى.";
 }
@@ -619,20 +623,41 @@ async function submitMobilityMission(){
   if(!user)return;
   const btn=$("#submitMissionBtn");
   const msg=$("#mobilityFormMsg");
-  const payload={
-    action:"createAndSubmit",
-    employeeId:$("#missionEmployee").value,
-    type:$("#missionType").value,
-    destination:$("#missionDestination").value,
-    whenLabel:$("#missionWhen").value,
-    durationLabel:$("#missionDuration").value,
-    scope:$("#missionScope").value,
-    reason:$("#missionReason").value
-  };
+  const employeeId=$("#missionEmployee").value;
+  const destination=$("#missionDestination").value.trim();
+  const reason=$("#missionReason").value.trim();
+  if(!employeeId){msg.textContent="اختر الموظف المؤهل للمركبة.";return;}
+  if(!destination||!reason){msg.textContent="أدخل الوجهة ومبرر المهمة.";return;}
+
+  if(!state.pendingMissionClientRequestId){
+    const raw=(window.crypto&&typeof window.crypto.randomUUID==="function")
+      ? window.crypto.randomUUID()
+      : ("field-"+Date.now()+"-"+Math.random().toString(36).slice(2));
+    state.pendingMissionClientRequestId="field-mission:"+raw;
+  }
+
   btn.disabled=true;
-  msg.textContent="جارٍ اعتماد الطلب وإرساله للشؤون الإدارية…";
+  msg.textContent="جارٍ إنشاء الطلب واعتماده وإرساله للشؤون الإدارية…";
   try{
-    await mobilityRequest(user,payload);
+    const created=await mobilityRequest(user,{
+      action:"createMissionRequest",
+      clientRequestId:state.pendingMissionClientRequestId,
+      requestedEmployeeId:employeeId,
+      type:$("#missionType").value,
+      destination,
+      whenLabel:$("#missionWhen").value,
+      durationLabel:$("#missionDuration").value,
+      scope:$("#missionScope").value,
+      reason
+    });
+    if(!created||!created.missionId)throw Object.assign(new Error("mission_create_failed"),{code:"mission_create_failed"});
+
+    await mobilityRequest(user,{
+      action:"submitMissionForApproval",
+      missionId:created.missionId
+    });
+
+    state.pendingMissionClientRequestId=null;
     msg.textContent="تم اعتماد طلب الخروج وإرساله للشؤون الإدارية.";
     $("#missionDestination").value="";
     $("#missionWhen").value="";
