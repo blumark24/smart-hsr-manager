@@ -262,6 +262,7 @@ async function mobilityTransition(db, actor, missionId, action) {
         tx.update(missionRef, { status: 'HANDED_OVER', updatedAt: FieldValue.serverTimestamp(), updatedByUid: actor.uid });
         tx.update(vehicleRef, { status: 'IN_MISSION', updatedAt: FieldValue.serverTimestamp(), updatedByUid: actor.uid });
         tx.set(db.collection('auditEvents').doc(), auditData(actor, 'mission', missionId, 'handover', { fromStatus: m.status, toStatus: 'HANDED_OVER', vehicleId }));
+        tx.set(db.collection('auditEvents').doc(), auditData(actor, 'vehicle', vehicleId, 'handover', { fromStatus: v.status, toStatus: 'IN_MISSION', missionId }));
       });
       return { ok: true };
     } catch (error) {
@@ -289,6 +290,7 @@ async function mobilityTransition(db, actor, missionId, action) {
           updatedByUid: actor.uid,
         });
         tx.set(db.collection('auditEvents').doc(), auditData(actor, 'mission', missionId, 'confirm_return', { fromStatus: m.status, toStatus: 'CLOSED', vehicleId }));
+        tx.set(db.collection('auditEvents').doc(), auditData(actor, 'vehicle', vehicleId, 'confirm_return', { fromStatus: v.status, toStatus: 'AVAILABLE', missionId }));
       });
       return { ok: true };
     } catch (error) {
@@ -351,6 +353,11 @@ async function employeeReturn(db, actor, missionId) {
         fromStatus: mission.status,
         toStatus: 'AWAITING_RETURN',
         vehicleId,
+      }));
+      tx.set(db.collection('auditEvents').doc(), auditData(actor, 'vehicle', vehicleId, 'employee_return_vehicle', {
+        fromStatus: vehicle.status,
+        toStatus: 'RETURN_PENDING',
+        missionId: missionRef.id,
       }));
     });
     return { ok: true };
