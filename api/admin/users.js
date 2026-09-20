@@ -453,6 +453,362 @@ async function handler(req, res) {
     }
   }
 
+  // PHASE13D.5 — Field Department Head + Smart Mobility shared workflow.
+  // These actions stay inside the existing /api/admin/users serverless
+  // function so the deployment does not create another function. Identity,
+  // organization and department always come from the verified live account.
+  if (action === 'listDepartmentMissions') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isDepartmentHead || caller.role !== 'department_head'
+        || !isFieldSurveyDepartment(caller.department)) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+    }
+    try {
+      const snap = await db.collection('missions').where('organizationId', '==', caller.organizationId).get();
+      const missions = [];
+      for (const doc of snap.docs) {
+        const data = doc.data() || {};
+        if (cleanString(data.department) !== cleanString(caller.department)) continue;
+        missions.push(safeMission(doc.id, data));
+      }
+      missions.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      return sendJson(res, 200, { missions: missions.slice(0, 100) });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'submitMissionForApproval') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isDepartmentHead || caller.role !== 'department_head'
+        || !isFieldSurveyDepartment(caller.department)) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+    }
+    const missionId = cleanString(body.missionId);
+    if (!missionId) return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_required' });
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const missionRef = db.collection('missions').doc(missionId);
+        const snap = await transaction.get(missionRef);
+        if (!snap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        const mission = snap.data() || {};
+        if (mission.organizationId !== caller.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        if (cleanString(mission.department) !== cleanString(caller.department)) {
+          return { ok: false, statusCode: 403, reason: 'cross_department_denied' };
+        }
+        if (!isNonEmptyString(mission.requestedEmployeeUid)) {
+          return { ok: false, statusCode: 409, reason: 'approved_employee_required' };
+        }
+
+        const actor = { uid: caller.uid, role: 'department_head', organizationId: caller.organizationId };
+        const decision = evaluateMissionTransition({ actor, mission, toStatus: 'PENDING_APPROVAL' });
+        if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
+
+        const now = FieldValue.serverTimestamp();
+        transaction.update(missionRef, {
+          status: 'PENDING_APPROVAL',
+          updatedAt: now,
+          updatedByUid: caller.uid,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: caller.organizationId,
+          department: caller.department,
+          actorId: caller.uid,
+          actorRole: 'department_head',
+          resourceType: 'mission',
+          resourceId: missionId,
+          action: 'submit_for_approval',
+          fromStatus: mission.status,
+          toStatus: 'PENDING_APPROVAL',
+          requestedEmployeeUid: mission.requestedEmployeeUid,
+          timestamp: now,
+        });
+        return { ok: true };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { missionId, status: 'PENDING_APPROVAL' });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'decideMobilityMission') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['administrative_affairs']);
+    if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'administrative_affairs_required' });
+
+    const missionId = cleanString(body.missionId);
+    const toStatus = cleanString(body.toStatus);
+    if (!missionId || !['APPROVED', 'REJECTED', 'DRAFT'].includes(toStatus)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_and_valid_decision_required' });
+    }
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const missionRef = db.collection('missions').doc(missionId);
+        const snap = await transaction.get(missionRef);
+        if (!snap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        const mission = snap.data() || {};
+        if (mission.organizationId !== actor.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+
+        const decision = evaluateMissionTransition({ actor, mission, toStatus });
+        if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
+
+        const now = FieldValue.serverTimestamp();
+        transaction.update(missionRef, { status: toStatus, updatedAt: now, updatedByUid: actor.uid });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId,
+          department: mission.department || '',
+          actorId: actor.uid,
+          actorRole: actor.role,
+          resourceType: 'mission',
+          resourceId: missionId,
+          action: decision.code === 'TRANSITION_ALLOWED' ? 'administrative_decision' : 'administrative_decision',
+          fromStatus: mission.status,
+          toStatus,
+          timestamp: now,
+        });
+        return { ok: true };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { missionId, status: toStatus });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'listMobilityMissions') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['administrative_affairs', 'mobility_head', 'employee']);
+    if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
+    try {
+      const snap = await db.collection('missions').where('organizationId', '==', actor.organizationId).get();
+      const missions = [];
+      for (const doc of snap.docs) {
+        const data = doc.data() || {};
+        if (actor.role === 'employee' && data.assignedEmployeeUid !== actor.uid) continue;
+        missions.push(safeMission(doc.id, data));
+      }
+      missions.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      return sendJson(res, 200, { role: actor.role, missions: missions.slice(0, 150) });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'listAvailableVehicles') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_head_required' });
+    try {
+      const snap = await db.collection('vehicles').where('organizationId', '==', actor.organizationId).get();
+      const vehicles = [];
+      for (const doc of snap.docs) {
+        const data = doc.data() || {};
+        if (data.status !== 'AVAILABLE') continue;
+        vehicles.push({
+          vehicleId: doc.id,
+          plate: data.plate || null,
+          type: data.type || null,
+          make: data.make || null,
+          model: data.model || null,
+          status: data.status,
+        });
+      }
+      return sendJson(res, 200, { vehicles });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'handoverVehicle') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_head_required' });
+    const missionId = cleanString(body.missionId);
+    if (!missionId) return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_required' });
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const missionRef = db.collection('missions').doc(missionId);
+        const missionSnap = await transaction.get(missionRef);
+        if (!missionSnap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        const mission = missionSnap.data() || {};
+        if (mission.organizationId !== actor.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        if (!isNonEmptyString(mission.vehicleId)) return { ok: false, statusCode: 409, reason: 'mission_vehicle_required' };
+
+        const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
+        const vehicleSnap = await transaction.get(vehicleRef);
+        if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+        const vehicle = vehicleSnap.data() || {};
+        if (vehicle.organizationId !== actor.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+
+        const missionDecision = evaluateMissionTransition({ actor, mission, toStatus: 'HANDED_OVER' });
+        const vehicleDecision = evaluateVehicleTransition({ actor, vehicle, toStatus: 'IN_MISSION' });
+        if (!missionDecision.allowed) return { ok: false, statusCode: 409, reason: missionDecision.code };
+        if (!vehicleDecision.allowed) return { ok: false, statusCode: 409, reason: vehicleDecision.code };
+
+        const now = FieldValue.serverTimestamp();
+        transaction.update(missionRef, { status: 'HANDED_OVER', updatedAt: now, updatedByUid: actor.uid });
+        transaction.update(vehicleRef, { status: 'IN_MISSION', updatedAt: now, updatedByUid: actor.uid });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
+          resourceType: 'mission', resourceId: missionId, action: 'handover',
+          fromStatus: mission.status, toStatus: 'HANDED_OVER', vehicleId: mission.vehicleId, timestamp: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
+          resourceType: 'vehicle', resourceId: mission.vehicleId, action: 'handover',
+          fromStatus: vehicle.status, toStatus: 'IN_MISSION', missionId, timestamp: now,
+        });
+        return { ok: true, vehicleId: mission.vehicleId };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { missionId, vehicleId: outcome.vehicleId, status: 'HANDED_OVER' });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'employeeAdvanceMission') {
+    const actor = await getMobilityEmployeeCallerContext(decoded.uid);
+    if (!actor.isEmployee || actor.role !== 'employee') {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'active_employee_required' });
+    }
+    const missionId = cleanString(body.missionId);
+    const toStatus = cleanString(body.toStatus);
+    if (!missionId || !['READY', 'IN_PROGRESS', 'INCIDENT_HOLD', 'COMPLETED'].includes(toStatus)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_employee_transition' });
+    }
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const missionRef = db.collection('missions').doc(missionId);
+        const snap = await transaction.get(missionRef);
+        if (!snap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        const mission = snap.data() || {};
+        const decision = evaluateMissionTransition({ actor, mission, toStatus });
+        if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
+
+        const now = FieldValue.serverTimestamp();
+        transaction.update(missionRef, { status: toStatus, updatedAt: now, updatedByUid: actor.uid });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId, department: actor.department || mission.department || '',
+          actorId: actor.uid, actorRole: actor.role, resourceType: 'mission', resourceId: missionId,
+          action: 'employee_advance', fromStatus: mission.status, toStatus, timestamp: now,
+        });
+        return { ok: true };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { missionId, status: toStatus });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'employeeReturnVehicle') {
+    const actor = await getMobilityEmployeeCallerContext(decoded.uid);
+    if (!actor.isEmployee || actor.role !== 'employee') {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'active_employee_required' });
+    }
+    const missionId = cleanString(body.missionId);
+    if (!missionId) return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_required' });
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const missionRef = db.collection('missions').doc(missionId);
+        const missionSnap = await transaction.get(missionRef);
+        if (!missionSnap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        const mission = missionSnap.data() || {};
+        if (mission.organizationId !== actor.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        if (!isNonEmptyString(mission.vehicleId)) return { ok: false, statusCode: 409, reason: 'mission_vehicle_required' };
+
+        const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
+        const vehicleSnap = await transaction.get(vehicleRef);
+        if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+        const vehicle = vehicleSnap.data() || {};
+
+        const missionDecision = evaluateMissionTransition({ actor, mission, toStatus: 'AWAITING_RETURN' });
+        const vehicleDecision = evaluateVehicleTransition({ actor, vehicle, toStatus: 'RETURN_PENDING' });
+        if (!missionDecision.allowed) return { ok: false, statusCode: 409, reason: missionDecision.code };
+        if (!vehicleDecision.allowed) return { ok: false, statusCode: 409, reason: vehicleDecision.code };
+
+        const now = FieldValue.serverTimestamp();
+        transaction.update(missionRef, { status: 'AWAITING_RETURN', updatedAt: now, updatedByUid: actor.uid });
+        transaction.update(vehicleRef, { status: 'RETURN_PENDING', updatedAt: now, updatedByUid: actor.uid });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
+          resourceType: 'mission', resourceId: missionId, action: 'employee_return_vehicle',
+          fromStatus: mission.status, toStatus: 'AWAITING_RETURN', vehicleId: mission.vehicleId, timestamp: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
+          resourceType: 'vehicle', resourceId: mission.vehicleId, action: 'employee_return_vehicle',
+          fromStatus: vehicle.status, toStatus: 'RETURN_PENDING', missionId, timestamp: now,
+        });
+        return { ok: true, vehicleId: mission.vehicleId };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { missionId, vehicleId: outcome.vehicleId, status: 'AWAITING_RETURN' });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'confirmVehicleReturn') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_head_required' });
+    const missionId = cleanString(body.missionId);
+    if (!missionId) return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_required' });
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const missionRef = db.collection('missions').doc(missionId);
+        const missionSnap = await transaction.get(missionRef);
+        if (!missionSnap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        const mission = missionSnap.data() || {};
+        if (mission.organizationId !== actor.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        if (!isNonEmptyString(mission.vehicleId)) return { ok: false, statusCode: 409, reason: 'mission_vehicle_required' };
+
+        const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
+        const vehicleSnap = await transaction.get(vehicleRef);
+        if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+        const vehicle = vehicleSnap.data() || {};
+
+        const missionDecision = evaluateMissionTransition({ actor, mission, toStatus: 'CLOSED' });
+        const vehicleDecision = evaluateVehicleTransition({ actor, vehicle, toStatus: 'AVAILABLE' });
+        if (!missionDecision.allowed) return { ok: false, statusCode: 409, reason: missionDecision.code };
+        if (!vehicleDecision.allowed) return { ok: false, statusCode: 409, reason: vehicleDecision.code };
+
+        const now = FieldValue.serverTimestamp();
+        transaction.update(missionRef, { status: 'CLOSED', updatedAt: now, updatedByUid: actor.uid });
+        transaction.update(vehicleRef, {
+          status: 'AVAILABLE',
+          assignedEmployeeUid: FieldValue.delete(),
+          currentMissionId: FieldValue.delete(),
+          updatedAt: now,
+          updatedByUid: actor.uid,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
+          resourceType: 'mission', resourceId: missionId, action: 'confirm_return',
+          fromStatus: mission.status, toStatus: 'CLOSED', vehicleId: mission.vehicleId, timestamp: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
+          resourceType: 'vehicle', resourceId: mission.vehicleId, action: 'confirm_return',
+          fromStatus: vehicle.status, toStatus: 'AVAILABLE', missionId, timestamp: now,
+        });
+        return { ok: true, vehicleId: mission.vehicleId };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { missionId, vehicleId: outcome.vehicleId, status: 'CLOSED' });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   // PHASE 10 RELEASE-INTEGRITY — trusted incident creation.  The employee
   // identity and Mobility context come only from the verified token + live
   // user record.  The referenced mission (and optional vehicle) is read and
