@@ -1,0 +1,39 @@
+name: PHASE13D.5 Acceptance Gate
+
+on:
+  push:
+    branches:
+      - phase13d5-field-head-smart-mobility-integration
+  workflow_dispatch:
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check trusted API
+        run: node --check api/admin/users.js
+
+      - name: Department Head framework tests
+        run: node --test test/department-head-framework.test.js
+
+      - name: Field Head mobility integration tests
+        run: node --test test/field-head-mobility-integration.test.js
+
+      - name: Shared mobility workflow tests
+        run: node --test test/mobility-workflow-server-bridge.test.js
+
+      - name: Firestore security rules regression
+        run: npm run test:rules
