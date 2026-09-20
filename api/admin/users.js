@@ -115,7 +115,7 @@ function validClientRequestId(value) {
 // Only business input and the retry key belong to the client. Reject all
 // other keys, including protected fields supplied with null/false values.
 const TRUSTED_CREATE_INPUT_FIELDS = {
-  createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
+  createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
   createIncident: ['action', 'clientRequestId', 'missionId', 'vehicleId', 'category', 'severity', 'note'],
 };
 
@@ -331,8 +331,10 @@ async function handler(req, res) {
     if (!caller.isDepartmentHead || caller.role !== 'department_head') {
       return sendJson(res, 403, { error: 'forbidden', reason: 'department_head_required' });
     }
+
     const clientRequestId = body.clientRequestId;
-    const mission = {
+    const requestedEmployeeId = cleanString(body.requestedEmployeeId);
+    const missionInput = {
       type: cleanString(body.type),
       destination: cleanString(body.destination),
       reason: cleanString(body.reason),
@@ -341,35 +343,83 @@ async function handler(req, res) {
       whenLabel: cleanString(body.whenLabel),
       durationLabel: cleanString(body.durationLabel),
     };
-    if (!validClientRequestId(clientRequestId) || !mission.type || !mission.destination || !mission.reason) {
+    if (!validClientRequestId(clientRequestId) || !missionInput.type || !missionInput.destination || !missionInput.reason) {
       return sendJson(res, 400, { error: 'invalid_request', reason: 'clientRequestId_type_destination_reason_required' });
     }
-    const hash = payloadHash(action, [mission.type, mission.destination, mission.reason, mission.scope,
-      mission.requestedEmployeeName, mission.whenLabel, mission.durationLabel]);
+
+    const hash = payloadHash(action, [
+      missionInput.type, missionInput.destination, missionInput.reason, missionInput.scope,
+      requestedEmployeeId, missionInput.requestedEmployeeName, missionInput.whenLabel, missionInput.durationLabel,
+    ]);
     const requestRef = trustedCreateRequestRef(db, action, caller.uid, clientRequestId);
     const missionRef = db.collection('missions').doc();
     const auditRef = db.collection('auditEvents').doc();
+
     try {
       const outcome = await db.runTransaction(async (transaction) => {
-        const priorSnap = await transaction.get(requestRef);
+        const employeeRef = requestedEmployeeId ? db.collection('employees').doc(requestedEmployeeId) : null;
+        const reads = [transaction.get(requestRef)];
+        if (employeeRef) reads.push(transaction.get(employeeRef));
+        const snapshots = await Promise.all(reads);
+        const priorSnap = snapshots[0];
+
         if (priorSnap.exists) {
           const prior = priorSnap.data() || {};
           if (prior.payloadHash !== hash) return { ok: false, statusCode: 409, reason: 'idempotency_payload_mismatch' };
           return { ok: true, missionId: prior.resourceId, idempotent: true };
         }
+
+        let requestedEmployee = null;
+        if (employeeRef) {
+          const employeeSnap = snapshots[1];
+          if (!employeeSnap.exists) return { ok: false, statusCode: 404, reason: 'employee_not_found' };
+          const employee = employeeSnap.data() || {};
+          const mobility = employee.products && employee.products.mobility;
+          if (employee.organizationId !== caller.organizationId) {
+            return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+          }
+          if (cleanString(employee.department) !== cleanString(caller.department)) {
+            return { ok: false, statusCode: 403, reason: 'cross_department_denied' };
+          }
+          if (employee.employmentStatus === 'inactive') {
+            return { ok: false, statusCode: 409, reason: 'employee_inactive' };
+          }
+          if (employee.accountStatus !== 'ACTIVE' || !isNonEmptyString(employee.authUid)) {
+            return { ok: false, statusCode: 409, reason: 'employee_account_not_active' };
+          }
+          if (!mobility || mobility.enabled !== true || mobility.role !== 'employee') {
+            return { ok: false, statusCode: 409, reason: 'employee_mobility_role_required' };
+          }
+          if (mobility.vehicleEligible !== true) {
+            return { ok: false, statusCode: 409, reason: 'employee_vehicle_not_eligible' };
+          }
+          requestedEmployee = {
+            employeeId: employeeSnap.id,
+            uid: employee.authUid,
+            name: cleanString(employee.name, employeeSnap.id),
+          };
+        }
+
         const now = FieldValue.serverTimestamp();
-        transaction.set(missionRef, {
+        const mission = {
           clientRequestId,
           organizationId: caller.organizationId,
           department: caller.department,
           createdByUid: caller.uid,
           requesterName: caller.name || '',
           status: 'DRAFT',
-          ...mission,
+          ...missionInput,
+          ...(requestedEmployee ? {
+            requestedEmployeeId: requestedEmployee.employeeId,
+            requestedEmployeeUid: requestedEmployee.uid,
+            requestedEmployeeName: requestedEmployee.name,
+          } : {}),
           createdAt: now,
           updatedAt: now,
           updatedByUid: caller.uid,
-        });
+        };
+
+        transaction.set(missionRef, mission);
         transaction.set(auditRef, {
           organizationId: caller.organizationId,
           department: caller.department,
@@ -380,6 +430,7 @@ async function handler(req, res) {
           action: 'create',
           toStatus: 'DRAFT',
           clientRequestId,
+          ...(requestedEmployee ? { requestedEmployeeUid: requestedEmployee.uid } : {}),
           timestamp: now,
         });
         transaction.set(requestRef, {
@@ -394,6 +445,7 @@ async function handler(req, res) {
         });
         return { ok: true, missionId: missionRef.id, idempotent: false };
       });
+
       if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
       return sendJson(res, 200, { missionId: outcome.missionId, status: 'DRAFT', idempotent: outcome.idempotent });
     } catch (_) {
