@@ -9,8 +9,10 @@ const root = path.join(__dirname, '..');
 const login = fs.readFileSync(path.join(root, 'login.html'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
 
-test('department head is a first-class login destination without changing manager/lands/field routes', () => {
+test('field survey department head is a first-class login destination without changing manager/lands/field routes', () => {
   assert.match(login, /const hasDepartmentHeadRole = mobilityRole === 'department_head';/);
+  assert.match(login, /const hasFieldDepartmentHeadRole = hasDepartmentHeadRole/);
+  assert.match(login, /\/الحصر\|ميداني\|field\/i\.test\(department\)/);
   assert.match(login, /window\.location\.href = 'department-head\.html'/);
   assert.match(login, /window\.location\.href = 'mobile-map\.html'/);
   assert.match(login, /window\.location\.href = 'manager\.html'/);
@@ -42,11 +44,16 @@ test('field survey starts with visual distortion as the first dynamic product', 
   assert.match(page, /["']التحقق["']/);
 });
 
-test('framework stays generic for future departments while preserving traffic compatibility', () => {
-  assert.match(page, /id:"traffic"/);
-  assert.match(page, /department:"إدارة حركة السير"/);
-  assert.match(page, /id:"generic"/);
-  assert.match(page, /product:"عمليات القسم"/);
+test('department head command center is field-survey specific and does not impersonate Mobility ownership', () => {
+  assert.match(page, /function isFieldSurveyDepartment\(department\)/);
+  assert.match(page, /if\(!state\.profile\)/);
+  assert.doesNotMatch(page, /id:"traffic"/);
+  assert.doesNotMatch(page, /product:"عمليات القسم"/);
+  assert.match(page, /الحركة الميدانية لموظفي القسم/);
+  assert.match(page, /إدارة الأسطول والصلاحيات التنفيذية لدى الجهات المختصة/);
+  assert.match(page, /إدارة حركة السير/);
+  assert.match(page, /اختيار المركبة وتخصيصها للموظف والمهمة/);
+  assert.match(page, /لا تعرض هذه المرحلة طلبات حركة أو مركبات وهمية/);
 });
 
 test('no fabricated operational observation counts are rendered', () => {
