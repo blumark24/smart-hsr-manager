@@ -484,7 +484,7 @@ async function handler(req, res) {
       const snap = await db.collection('auditEvents')
         .where('organizationId', '==', caller.organizationId)
         .get();
-      const allowedResourceTypes = new Set(['observation', 'contractorProfile', 'mission']);
+      const allowedResourceTypes = new Set(['observation', 'contractorProfile', 'mission', 'vehicle', 'vehicleAuthorization']);
       const events = [];
       for (const doc of snap.docs) {
         const data = doc.data() || {};
