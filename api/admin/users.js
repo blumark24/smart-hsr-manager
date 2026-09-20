@@ -252,6 +252,19 @@ function safeFieldObservation(id, data) {
     assignedContractorName: data.assignedContractorName || null,
     assignedByUid: data.assignedByUid || null,
     supervisorNote: data.supervisorNote || null,
+    inspectorVerification: data.inspectorVerification && typeof data.inspectorVerification === 'object'
+      ? {
+          status: data.inspectorVerification.status || null,
+          verifiedByUid: data.inspectorVerification.verifiedByUid || null,
+          verifiedByName: data.inspectorVerification.verifiedByName || null,
+          note: data.inspectorVerification.note || null,
+          verifiedAt: timestampToIso(data.inspectorVerification.verifiedAt),
+        }
+      : null,
+    closedByUid: data.closedByUid || null,
+    closedByName: data.closedByName || null,
+    closureNote: data.closureNote || null,
+    closedAt: timestampToIso(data.closedAt),
     createdAt: timestampToIso(data.createdAt),
     assignedAt: timestampToIso(data.assignedAt),
     updatedAt: timestampToIso(data.updatedAt),
@@ -300,6 +313,22 @@ async function requireFieldDepartmentHead(decodedUid) {
     return null;
   }
   return caller;
+}
+
+async function requireFieldInspector(db, decodedUid) {
+  const snap = await db.collection('users').doc(decodedUid).get();
+  if (!snap.exists) return null;
+  const data = snap.data() || {};
+  const organizationId = cleanString(data.organizationId);
+  const department = cleanString(data.department);
+  if (data.active === false || data.role !== 'inspector' || !organizationId) return null;
+  return {
+    uid: decodedUid,
+    role: 'inspector',
+    organizationId,
+    department,
+    name: cleanString(data.name, 'مراقب ميداني'),
+  };
 }
 
 // Only ever expose safe, non-sensitive account metadata.
@@ -601,6 +630,182 @@ async function handler(req, res) {
         contractorName: outcome.contractorName,
         status: 'PENDING',
       });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'verifyFieldObservation') {
+    const caller = await requireFieldInspector(db, decoded.uid);
+    if (!caller) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'field_inspector_required' });
+    }
+
+    const observationId = cleanString(body.observationId);
+    const decision = cleanString(body.decision);
+    const note = cleanString(body.note);
+    if (!observationId || !['ACCEPT', 'RETURN'].includes(decision)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'observationId_and_valid_decision_required' });
+    }
+    if (decision === 'RETURN' && !note) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'return_note_required' });
+    }
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const observationRef = db.collection('observations').doc(observationId);
+        const snap = await transaction.get(observationRef);
+        if (!snap.exists) return { ok: false, statusCode: 404, reason: 'observation_not_found' };
+        const observation = snap.data() || {};
+
+        if (observation.organizationId !== caller.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        if (observation.createdByUid !== caller.uid) {
+          return { ok: false, statusCode: 403, reason: 'reporting_inspector_required' };
+        }
+        if (observation.status !== 'PENDING_REVIEW') {
+          return { ok: false, statusCode: 409, reason: 'observation_not_pending_verification' };
+        }
+        if (!isNonEmptyString(observation.assignedContractorUid)) {
+          return { ok: false, statusCode: 409, reason: 'assigned_contractor_required' };
+        }
+        if (!isNonEmptyString(observation.afterImagePath) || !isNonEmptyString(observation.resolutionNote)) {
+          return { ok: false, statusCode: 409, reason: 'contractor_evidence_required' };
+        }
+
+        const now = FieldValue.serverTimestamp();
+        if (decision === 'RETURN') {
+          transaction.update(observationRef, {
+            status: 'IN_PROGRESS',
+            inspectorVerification: {
+              status: 'RETURNED',
+              verifiedByUid: caller.uid,
+              verifiedByName: caller.name,
+              note,
+              verifiedAt: now,
+            },
+            updatedByUid: caller.uid,
+            updatedAt: now,
+          });
+          transaction.set(db.collection('auditEvents').doc(), {
+            organizationId: caller.organizationId,
+            department: caller.department || '',
+            actorId: caller.uid,
+            actorRole: 'inspector',
+            resourceType: 'observation',
+            resourceId: observationId,
+            action: 'return_to_contractor',
+            fromStatus: 'PENDING_REVIEW',
+            toStatus: 'IN_PROGRESS',
+            contractorUid: observation.assignedContractorUid,
+            timestamp: now,
+          });
+          return { ok: true, status: 'IN_PROGRESS', verificationStatus: 'RETURNED' };
+        }
+
+        transaction.update(observationRef, {
+          inspectorVerification: {
+            status: 'VERIFIED',
+            verifiedByUid: caller.uid,
+            verifiedByName: caller.name,
+            note: note || '',
+            verifiedAt: now,
+          },
+          updatedByUid: caller.uid,
+          updatedAt: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: caller.organizationId,
+          department: caller.department || '',
+          actorId: caller.uid,
+          actorRole: 'inspector',
+          resourceType: 'observation',
+          resourceId: observationId,
+          action: 'verify_contractor_work',
+          status: 'PENDING_REVIEW',
+          contractorUid: observation.assignedContractorUid,
+          timestamp: now,
+        });
+        return { ok: true, status: 'PENDING_REVIEW', verificationStatus: 'VERIFIED' };
+      });
+
+      if (!outcome.ok) {
+        return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      }
+      return sendJson(res, 200, {
+        observationId,
+        status: outcome.status,
+        verificationStatus: outcome.verificationStatus,
+      });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'closeFieldObservation') {
+    const caller = await requireFieldDepartmentHead(decoded.uid);
+    if (!caller) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+    }
+
+    const observationId = cleanString(body.observationId);
+    const closureNote = cleanString(body.closureNote);
+    if (!observationId) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'observationId_required' });
+    }
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const observationRef = db.collection('observations').doc(observationId);
+        const snap = await transaction.get(observationRef);
+        if (!snap.exists) return { ok: false, statusCode: 404, reason: 'observation_not_found' };
+        const observation = snap.data() || {};
+
+        if (observation.organizationId !== caller.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        if (observation.status !== 'PENDING_REVIEW') {
+          return { ok: false, statusCode: 409, reason: 'observation_not_pending_closure' };
+        }
+        const verification = observation.inspectorVerification;
+        if (!verification || verification.status !== 'VERIFIED'
+            || !isNonEmptyString(verification.verifiedByUid)) {
+          return { ok: false, statusCode: 409, reason: 'inspector_verification_required' };
+        }
+
+        const now = FieldValue.serverTimestamp();
+        transaction.update(observationRef, {
+          status: 'COMPLETED',
+          closedByUid: caller.uid,
+          closedByName: caller.name || 'رئيس قسم الحصر الميداني',
+          closureNote: closureNote || '',
+          closedAt: now,
+          completedAt: now,
+          updatedByUid: caller.uid,
+          updatedAt: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: caller.organizationId,
+          department: caller.department,
+          actorId: caller.uid,
+          actorRole: 'department_head',
+          resourceType: 'observation',
+          resourceId: observationId,
+          action: 'close_visual_distortion_case',
+          fromStatus: 'PENDING_REVIEW',
+          toStatus: 'COMPLETED',
+          verifiedByUid: verification.verifiedByUid,
+          contractorUid: observation.assignedContractorUid || null,
+          timestamp: now,
+        });
+        return { ok: true };
+      });
+
+      if (!outcome.ok) {
+        return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      }
+      return sendJson(res, 200, { observationId, status: 'COMPLETED' });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
