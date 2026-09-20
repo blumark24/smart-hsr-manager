@@ -49,21 +49,21 @@ test('approved command board is now the canonical department-head UI', () => {
 });
 
 test('field command center derives KPIs from live canonical observations', () => {
-  assert.match(page, /liveObservations/);
-  assert.match(page, /observations\.filter\(o=>o\.status==='IN_PROGRESS'\)/);
-  assert.match(page, /observations\.filter\(o=>o\.status==='PENDING_REVIEW'\)/);
-  assert.match(page, /observations\.filter\(o=>o\.status==='COMPLETED'\)/);
+  assert.match(runtime, /liveObservations/);
+  assert.match(runtime, /observations\.filter\(o=>o\.status==='IN_PROGRESS'\)/);
+  assert.match(runtime, /observations\.filter\(o=>o\.status==='PENDING_REVIEW'\)/);
+  assert.match(runtime, /observations\.filter\(o=>o\.status==='COMPLETED'\)/);
   assert.match(runtime, /getFieldVisualDistortionCommand/);
   assert.doesNotMatch(fieldHead, /fakeObservation|mockObservation|demoObservation/i);
 });
 
 test('canonical board keeps a real satellite basemap and trusted observation markers', () => {
   assert.match(page, /server\.arcgisonline\.com/);
-  assert.match(page, /trustedObservations\(\)/);
-  assert.match(page, /o\.locationVerified === true/);
-  assert.match(page, /new maplibregl\.Marker/);
-  assert.match(page, /this\.openObservation\(o\.observationId\)/);
-  assert.match(page, /liveObservations \|\| \[\]/);
+  assert.match(runtime, /trustedObservations\(instance\)/);
+  assert.match(runtime, /o\.locationVerified === true/);
+  assert.match(runtime, /new maplibregl\.Marker/);
+  assert.match(runtime, /openFieldObservation\(o\.observationId\)/);
+  assert.match(runtime, /liveObservations \|\| \[\]/);
 });
 
 test('preview reference remains available as the approved visual baseline', () => {
