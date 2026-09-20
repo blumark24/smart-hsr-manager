@@ -7,17 +7,19 @@ const test = require('node:test');
 
 const root = path.join(__dirname, '..');
 const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+const runtime = fs.readFileSync(path.join(root, 'field-head-runtime.js'), 'utf8');
+const fieldHead = page + '\n' + runtime;
 const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
 const contractorPage = fs.readFileSync(path.join(root, 'mobile-map.html'), 'utf8');
 
 test('visual distortion command separates inspectors from external contractors', () => {
-  assert.match(page, /مراقبو القسم/);
-  assert.match(page, /سجل المقاولين/);
-  assert.match(page, /المقاول طرف تنفيذي خارجي وليس موظفًا/);
-  assert.match(page, /data-visual-kpi="pending"/);
-  assert.match(page, /data-visual-kpi="progress"/);
-  assert.match(page, /data-visual-kpi="review"/);
-  assert.match(page, /data-visual-kpi="closed"/);
+  assert.match(fieldHead, /مراقبو القسم/);
+  assert.match(fieldHead, /سجل المقاولين/);
+  assert.match(fieldHead, /المقاول طرف تنفيذي خارجي وليس موظفًا/);
+  assert.match(fieldHead, /data-visual-kpi="pending"/);
+  assert.match(fieldHead, /data-visual-kpi="progress"/);
+  assert.match(fieldHead, /data-visual-kpi="review"/);
+  assert.match(fieldHead, /data-visual-kpi="closed"/);
 });
 
 test('field department head receives tenant-scoped observations and active contractor identities', () => {
@@ -45,22 +47,22 @@ test('contractor keeps its own restricted board and reads only assigned observat
 });
 
 test('department-head UI uses trusted API for visual command and assignment', () => {
-  assert.match(page, /action:"getFieldVisualDistortionCommand"/);
-  assert.match(page, /action:"assignFieldObservation"/);
-  assert.match(page, /data-assign-observation/);
-  assert.match(page, /سيظهر البلاغ في لوحة المقاول الخاصة/);
+  assert.match(fieldHead, /action:"getFieldVisualDistortionCommand"/);
+  assert.match(fieldHead, /action:"assignFieldObservation"/);
+  assert.match(fieldHead, /data-assign-observation/);
+  assert.match(fieldHead, /سيظهر البلاغ في لوحة المقاول الخاصة/);
 });
 
 test('contractor registry is separate from employee registry and gates assignment by active contract', () => {
-  assert.match(page, /سجل المقاولين/);
-  assert.match(page, /الملف التعاقدي للمقاول/);
-  assert.match(page, /action:"upsertFieldContractorProfile"/);
+  assert.match(fieldHead, /سجل المقاولين/);
+  assert.match(fieldHead, /الملف التعاقدي للمقاول/);
+  assert.match(fieldHead, /action:"upsertFieldContractorProfile"/);
   assert.match(usersApi, /collection\('contractorProfiles'\)/);
   assert.match(usersApi, /CONTRACTOR_PROFILE_STATUSES/);
   assert.match(usersApi, /contractor_profile_required/);
   assert.match(usersApi, /active_contract_required/);
   assert.match(usersApi, /contractorProfileState\(profile\) !== 'ACTIVE'/);
-  assert.match(page, /contractors\.filter\(x=>x\.contractState==="ACTIVE"/);
+  assert.match(fieldHead, /contractors\.filter\(x=>x\.contractState==="ACTIVE"/);
 });
 
 test('contractor profile mutation is field-head and tenant scoped', () => {
@@ -85,8 +87,8 @@ test('inspector verification is required before department-head closure', () => 
   assert.match(usersApi, /action: 'close_visual_distortion_case'/);
   assert.match(inspectorPage, /id="inspectorVerificationPanel"/);
   assert.match(inspectorPage, /action:'verifyFieldObservation'/);
-  assert.match(page, /data-close-observation/);
-  assert.match(page, /action:"closeFieldObservation"/);
+  assert.match(fieldHead, /data-close-observation/);
+  assert.match(fieldHead, /action:"closeFieldObservation"/);
 });
 
 test('contractor workflow remains the execution owner until PENDING_REVIEW', () => {
