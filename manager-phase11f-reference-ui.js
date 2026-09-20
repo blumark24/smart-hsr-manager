@@ -169,10 +169,63 @@ async function runExisting(button,msg){
   for(let i=0;i<120;i+=1){if(!button.disabled)return !msg?.classList.contains('er');await sleep(50);}return false;
 }
 
+function normalizeDepartmentHeadProducts(panel,employee){
+  const role=panel.querySelector('#inst-role')?.value||U.inst(employee);
+  if(role!=='department_head')return null;
+  const roles=panel.querySelector('.pane[data-id="r"]')||panel;
+  const cards=[...roles.querySelectorAll('.pc')];
+  let enabled=cards.filter(card=>card.querySelector('.pe')?.checked===true);
+
+  // Existing Field Survey staff may have no product checkbox selected yet.
+  // If the department already identifies Field Survey, make Field the one
+  // explicit product before validating. No fake or extra entitlements.
+  const deptInput=panel.querySelector('#edit-dept');
+  const currentDept=clean(deptInput?.value);
+  if(enabled.length===0&&/الحصر|ميداني|field/i.test(currentDept)){
+    const fieldCard=roles.querySelector('.pc[data-p="field"]');
+    const fieldEnabled=fieldCard?.querySelector('.pe');
+    if(fieldEnabled){
+      fieldEnabled.checked=true;
+      fieldEnabled.dispatchEvent(new Event('change',{bubbles:true}));
+      enabled=[fieldCard];
+    }
+  }
+
+  if(enabled.length===0){
+    const error=Error('department_head_product_required');
+    error.reason='department_head_product_required';
+    throw error;
+  }
+  if(enabled.length>1){
+    const error=Error('department_head_single_product_required');
+    error.reason='department_head_single_product_required';
+    throw error;
+  }
+
+  const card=enabled[0],product=card.dataset.p,level=card.querySelector(`#lv-${product}`);
+  if(level&&level.value!=='head'){
+    level.value='head';
+    level.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+
+  // Keep organization scope and product scope coherent. When the department
+  // field is empty, infer only the canonical department for the one selected
+  // product; the normal organization-save runs before product sync.
+  const inferred={field:'إدارة الحصر الميداني',lands:'إدارة الأراضي والممتلكات',mobility:'إدارة حركة السير'}[product];
+  if(deptInput&&!clean(deptInput.value)&&inferred){
+    deptInput.value=inferred;
+    deptInput.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  return product;
+}
+
 function profileSnapshot(panel,employee){
   const value=id=>clean(panel.querySelector(`#${id}`)?.value);
   let products=null;
-  if(panel.querySelector('.saver')) products=U.readProducts(panel,panel.querySelector('#inst-role')?.value||U.inst(employee));
+  if(panel.querySelector('.saver')){
+    normalizeDepartmentHeadProducts(panel,employee);
+    products=U.readProducts(panel,panel.querySelector('#inst-role')?.value||U.inst(employee));
+  }
   return {
     basic:JSON.stringify({name:value('edit-name'),employeeRef:value('edit-ref'),phone:value('edit-phone'),email:value('edit-email'),jobTitle:value('edit-title'),employmentStatus:value('edit-emp')}),
     organization:JSON.stringify({administration:value('edit-admin'),department:value('edit-dept'),directManagerEmployeeId:value('edit-manager')}),
@@ -254,43 +307,16 @@ function buildSinglePageProfile(panel,employee){
       editRoleSelect.dispatchEvent(new Event('change',{bubbles:true}));
       syncRoleButtons();
 
-      // Field Survey convenience: when a user in the Field Survey
-      // department is promoted to department_head, configure the existing
-      // canonical compatibility entitlement automatically. No new RBAC.
       if(btn.dataset.role==='department_head'){
-        const cards=[...roles.querySelectorAll('.pc')];
-        let enabled=cards.filter(card=>card.querySelector('.pe')?.checked===true);
-        // Existing Field Survey employees normally already have Field enabled.
-        // If none is enabled, default only Field Survey when the employee is
-        // already in that department; otherwise wait for the manager's choice.
-        const deptInput=panel.querySelector('#edit-dept');
-        const currentDept=clean(deptInput?.value);
-        if(!enabled.length&&/الحصر|ميداني|field/i.test(currentDept)){
-          const fieldCard=roles.querySelector('.pc[data-p="field"]');
-          const fieldEnabled=fieldCard?.querySelector('.pe');
-          if(fieldEnabled){fieldEnabled.checked=true;fieldEnabled.dispatchEvent(new Event('change',{bubbles:true}));enabled=[fieldCard];}
-        }
-        if(enabled.length===1){
-          const card=enabled[0],product=card.dataset.p,level=card.querySelector(`#lv-${product}`);
-          if(level){level.value='head';level.dispatchEvent(new Event('change',{bubbles:true}));}
-          const inferred={field:'إدارة الحصر الميداني',lands:'إدارة الأراضي والممتلكات',mobility:'إدارة حركة السير'}[product];
-          if(deptInput&&!clean(deptInput.value)&&inferred){deptInput.value=inferred;deptInput.dispatchEvent(new Event('input',{bubbles:true}));}
-        }
+        try{normalizeDepartmentHeadProducts(panel,panel.__ucv21Employee);}catch(_){/* stage 2 will show a clear validation message if needed */} 
       }
     });
   }
 
 
   const normalizeDepartmentHeadSelection=()=>{
-    if(!editRoleSelect||editRoleSelect.value!=='department_head'||!roles)return;
-    const cards=[...roles.querySelectorAll('.pc')];
-    const enabled=cards.filter(card=>card.querySelector('.pe')?.checked===true);
-    if(enabled.length!==1)return;
-    const card=enabled[0],product=card.dataset.p,level=card.querySelector(`#lv-${product}`);
-    if(level&&level.value!=='head'){level.value='head';level.dispatchEvent(new Event('change',{bubbles:true}));}
-    const deptInput=panel.querySelector('#edit-dept');
-    const inferred={field:'إدارة الحصر الميداني',lands:'إدارة الأراضي والممتلكات',mobility:'إدارة حركة السير'}[product];
-    if(deptInput&&!clean(deptInput.value)&&inferred){deptInput.value=inferred;deptInput.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(!editRoleSelect||editRoleSelect.value!=='department_head')return;
+    try{normalizeDepartmentHeadProducts(panel,panel.__ucv21Employee);}catch(_){/* wait for the manager to finish selecting one product */} 
   };
   roles?.addEventListener('change',event=>{
     if(event.target.classList?.contains('pe')||event.target.id?.startsWith('lv-'))normalizeDepartmentHeadSelection();
@@ -363,7 +389,7 @@ function buildSinglePageProfile(panel,employee){
       b.disabled=true;msg.textContent='جاري حفظ التعديلات...';for(const [button,m] of steps){if(button&&!(await runExisting(button,m)))throw Error(clean(m?.textContent)||'تعذر حفظ أحد الأقسام.');}
       if(p1||p2){await U.post('/api/admin/users',{action:'setPassword',uid:employeeRef.authUid,password:p1});panel.querySelector('#ucv21-npw').value='';panel.querySelector('#ucv21-npw2').value='';}
       panel.__ucv21Snapshot=profileSnapshot(panel,employeeRef);msg.className='ucv21-profile-msg ok';msg.textContent='تم حفظ التعديلات بنجاح.';
-    }catch(error){msg.className='ucv21-profile-msg er';msg.textContent=error?.message||'تعذر حفظ التعديلات.';}finally{b.disabled=false;}};
+    }catch(error){msg.className='ucv21-profile-msg er';msg.textContent=U?.why?.(error?.reason||error?.message)||(error?.message||'تعذر حفظ التعديلات.');}finally{b.disabled=false;}};
   }
   function setProfileStep(step){
     const next=Math.min(4,Math.max(1,Number(step)||1));
