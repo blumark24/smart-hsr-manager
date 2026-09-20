@@ -55,3 +55,17 @@ test('dashboard capture and AI baseline remains untouched by canonical map work'
   assert.match(dashboard, /id="fileUploadInput"/);
   assert.match(dashboard, /processSmartInput\(\)/);
 });
+
+
+test('02C map rejects coordinates outside the Saudi municipal service envelope', () => {
+  assert.match(runtime, /lat >= 16 && lat <= 33\.5/);
+  assert.match(runtime, /lng >= 34 && lng <= 56\.5/);
+  assert.match(runtime, /inSaudiEnvelope/);
+});
+
+test('map empty state and legend derive from the same trusted observation set', () => {
+  assert.match(runtime, /out\.showMapEmpty=trusted\.length===0/);
+  assert.match(runtime, /const trusted=trustedObservations\(instance\)/);
+  assert.match(runtime, /\{label:'جديدة',col:'#ef4444'\}/);
+  assert.match(runtime, /\{label:'مغلقة',col:'#7d8ea6'\}/);
+});
