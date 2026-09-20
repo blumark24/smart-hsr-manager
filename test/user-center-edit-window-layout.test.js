@@ -11,10 +11,10 @@ const reference = fs.readFileSync(path.join(root, 'manager-phase11f-reference-ui
 test('edit-user window uses four focused sections instead of one crowded page', () => {
   assert.match(reference, /const steps=\['البيانات الأساسية','الأدوار والخدمات','حساب الدخول','السجل'\]/);
   assert.match(reference, /data-profile-step=/);
-  assert.match(reference, /data\.ucv21Step='1'/);
-  assert.match(reference, /data\.ucv21Step='2'/);
-  assert.match(reference, /data\.ucv21Step='3'/);
-  assert.match(reference, /data\.ucv21Step='4'/);
+  assert.match(reference, /dataset\.ucv21Step='1'/);
+  assert.match(reference, /dataset\.ucv21Step='2'/);
+  assert.match(reference, /dataset\.ucv21Step='3'/);
+  assert.match(reference, /dataset\.ucv21Step='4'/);
   assert.match(reference, /ucv21-step-hidden/);
 });
 
