@@ -46,5 +46,8 @@ jobs:
       - name: Field Head operational map tests
         run: node --test test/field-head-operational-map.test.js
 
+      - name: Field Head user-center provisioning tests
+        run: node --test test/field-head-user-center-provisioning.test.js
+
       - name: Firestore security rules regression
         run: npm run test:rules
