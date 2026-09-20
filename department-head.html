@@ -522,7 +522,7 @@ function departmentBasemapStyle(){
   ]};
 }
 function syncDepartmentBasemapButtons(){
-  $("[data-basemap]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset.basemap===activeDepartmentBasemap)));
+  $$("[data-basemap]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset.basemap===activeDepartmentBasemap)));
 }
 function setDepartmentBasemap(next){
   if(!["satellite","street"].includes(next))return;
@@ -547,7 +547,7 @@ function initializeDepartmentMaps(){
     map.addControl(new maplibregl.AttributionControl({compact:true}));
     mapInstances.push(map);
   });
-  $("[data-basemap]").forEach(btn=>btn.addEventListener("click",()=>setDepartmentBasemap(btn.dataset.basemap)));
+  $$("[data-basemap]").forEach(btn=>btn.addEventListener("click",()=>setDepartmentBasemap(btn.dataset.basemap)));
   syncDepartmentBasemapButtons();
 }
 
@@ -574,6 +574,78 @@ async function loadEmployees(user){
   }
 }
 
+async function mobilityRequest(user,payload){
+  const token=await user.getIdToken();
+  const res=await fetch("/api/department-head/mobility",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body:JSON.stringify(payload)
+  });
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok){
+    const error=new Error(data.reason||data.error||"mobility_request_failed");
+    error.code=data.reason||data.error||"mobility_request_failed";
+    throw error;
+  }
+  return data;
+}
+async function loadMissions(user){
+  state.missionLoading=true;state.missionError="";render();
+  try{
+    const data=await mobilityRequest(user,{action:"list"});
+    state.missions=Array.isArray(data.missions)?data.missions:[];
+  }catch(err){
+    console.error("department-head: mission list failed",err);
+    state.missionError="تعذر تحميل طلبات الحركة.";
+  }finally{
+    state.missionLoading=false;render();
+  }
+}
+function mobilityErrorLabel(code){
+  const labels={
+    employee_required:"اختر الموظف.",
+    employee_not_found:"تعذر العثور على الموظف.",
+    cross_department_denied:"الموظف خارج نطاق القسم.",
+    employee_inactive:"الموظف غير نشط.",
+    employee_account_not_active:"حساب الموظف غير مفعّل.",
+    employee_mobility_role_required:"الموظف غير مفعّل في مسار حركة السير.",
+    employee_vehicle_not_eligible:"الموظف غير مؤهل لاستلام مركبة.",
+    destination_and_reason_required:"أدخل الوجهة ومبرر المهمة."
+  };
+  return labels[code]||"تعذر إرسال الطلب. تحقق من البيانات وحاول مرة أخرى.";
+}
+async function submitMobilityMission(){
+  const user=window.__departmentHeadUser;
+  if(!user)return;
+  const btn=$("#submitMissionBtn");
+  const msg=$("#mobilityFormMsg");
+  const payload={
+    action:"createAndSubmit",
+    employeeId:$("#missionEmployee").value,
+    type:$("#missionType").value,
+    destination:$("#missionDestination").value,
+    whenLabel:$("#missionWhen").value,
+    durationLabel:$("#missionDuration").value,
+    scope:$("#missionScope").value,
+    reason:$("#missionReason").value
+  };
+  btn.disabled=true;
+  msg.textContent="جارٍ اعتماد الطلب وإرساله للشؤون الإدارية…";
+  try{
+    await mobilityRequest(user,payload);
+    msg.textContent="تم اعتماد طلب الخروج وإرساله للشؤون الإدارية.";
+    $("#missionDestination").value="";
+    $("#missionWhen").value="";
+    $("#missionDuration").value="";
+    $("#missionReason").value="";
+    await loadMissions(user);
+  }catch(err){
+    msg.textContent=mobilityErrorLabel(err.code);
+  }finally{
+    btn.disabled=false;
+  }
+}
+
 $$(".nav [data-view]").forEach(btn=>btn.addEventListener("click",()=>switchView(btn.dataset.view)));
 $("#primaryProductCard").addEventListener("click",()=>switchView("product"));
 $("#primaryProductCard").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();switchView("product");}});
@@ -583,7 +655,8 @@ $("#themeBtn").addEventListener("click",()=>{
   document.documentElement.setAttribute("data-theme",next);
   try{localStorage.setItem("smartTheme",next);}catch(_){}
 });
-$("#refreshBtn").addEventListener("click",()=>{if(window.__departmentHeadUser)loadEmployees(window.__departmentHeadUser);});
+$("#refreshBtn").addEventListener("click",()=>{if(window.__departmentHeadUser){loadEmployees(window.__departmentHeadUser);loadMissions(window.__departmentHeadUser);}});
+$("#submitMissionBtn").addEventListener("click",submitMobilityMission);
 
 let firebaseConfig;
 try{
@@ -625,7 +698,7 @@ onAuthStateChanged(auth,async user=>{
     }
     window.__departmentHeadUser=user;
     render();
-    await loadEmployees(user);
+    await Promise.all([loadEmployees(user),loadMissions(user)]);
   }catch(err){
     console.error("department-head: authorization lookup failed",err);
     await signOut(auth).catch(()=>{});
