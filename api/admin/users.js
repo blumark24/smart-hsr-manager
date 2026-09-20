@@ -244,6 +244,8 @@ function safeFieldObservation(id, data) {
     location: data.location || null,
     correctedLat: Number.isFinite(data.correctedLat) ? data.correctedLat : null,
     correctedLng: Number.isFinite(data.correctedLng) ? data.correctedLng : null,
+    locationVerified: data.locationVerified === true,
+    locationAccuracyMeters: Number.isFinite(data.locationAccuracyMeters) ? data.locationAccuracyMeters : null,
     imagePath: data.imagePath || null,
     afterImagePath: data.afterImagePath || null,
     resolutionNote: data.resolutionNote || null,
