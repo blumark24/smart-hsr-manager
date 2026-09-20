@@ -548,7 +548,14 @@ function render(){
       const assignmentContractors=contractors.filter(x=>x.contractState==="ACTIVE"||x.uid===assigned);
       const contractorOptions=assignmentContractors.map(x=>'<option value="'+escapeHtml(x.uid)+'" '+(x.uid===assigned?'selected':'')+'>'+escapeHtml(x.name||"مقاول")+' — '+escapeHtml(contractStateLabel(x.contractState))+'</option>').join("");
       const select='<select data-contractor-for="'+escapeHtml(obs.observationId)+'" '+(canAssign?'':'disabled')+'><option value="">اختر المقاول</option>'+contractorOptions+'</select>';
-      const action=canAssign?'<button class="primary-btn" type="button" data-assign-observation="'+escapeHtml(obs.observationId)+'">إسناد</button>':'<span class="state">'+escapeHtml(obs.statusLabel||obs.status||"—")+'</span>';
+      let action='<span class="state">'+escapeHtml(obs.statusLabel||obs.status||"—")+'</span>';
+      if(canAssign){
+        action='<button class="primary-btn" type="button" data-assign-observation="'+escapeHtml(obs.observationId)+'">إسناد</button>';
+      }else if(obs.status==="PENDING_REVIEW"&&obs.inspectorVerification&&obs.inspectorVerification.status==="VERIFIED"){
+        action='<button class="primary-btn" type="button" data-close-observation="'+escapeHtml(obs.observationId)+'">إغلاق الحالة</button>';
+      }else if(obs.status==="PENDING_REVIEW"){
+        action='<span class="state">بانتظار تحقق المراقب</span>';
+      }
       return '<tr><td><b>'+escapeHtml(obs.title||("حالة #"+(obs.displayId||"—")))+'</b><br><small>'+escapeHtml(obs.type||"تشوه بصري")+'</small></td><td>'+escapeHtml(obs.location||"—")+'</td><td><span class="state">'+escapeHtml(obs.statusLabel||obs.status||"—")+'</span></td><td>'+escapeHtml(inspectorNameByUid.get(obs.createdByUid)||"—")+'</td><td>'+select+'</td><td>'+action+'</td></tr>';
     }).join(""):'<tr><td colspan="6">لا توجد حالات تشوه بصري موثقة حاليًا.</td></tr>';
   }
@@ -808,6 +815,35 @@ async function assignObservationToContractor(observationId){
     msg.textContent=labels[err.code]||"تعذر إسناد الحالة حاليًا.";
   }
 }
+async function closeVerifiedObservation(observationId){
+  const user=window.__departmentHeadUser;
+  if(!user)return;
+  const obs=state.observations.find(x=>x.observationId===observationId);
+  const msg=$("#visualCommandMsg");
+  if(!obs||obs.status!=="PENDING_REVIEW"||obs.inspectorVerification?.status!=="VERIFIED"){
+    msg.textContent="لا يمكن الإغلاق قبل تحقق المراقب واعتماد المعالجة.";
+    return;
+  }
+  if(!window.confirm("اعتماد التحقق وإغلاق حالة التشوه البصري نهائيًا؟"))return;
+  msg.textContent="جارٍ إغلاق الحالة وتثبيت سجل التدقيق…";
+  try{
+    await mobilityRequest(user,{
+      action:"closeFieldObservation",
+      observationId,
+      closureNote:"تم الإغلاق بعد تحقق المراقب واعتماد رئيس قسم الحصر الميداني."
+    });
+    msg.textContent="تم إغلاق الحالة بنجاح بعد تحقق المراقب.";
+    await loadVisualDistortion(user);
+  }catch(err){
+    const labels={
+      observation_not_found:"تعذر العثور على الحالة.",
+      cross_organization_denied:"لا يمكن إغلاق حالة خارج المؤسسة.",
+      observation_not_pending_closure:"حالة البلاغ تغيرت ولم تعد جاهزة للإغلاق.",
+      inspector_verification_required:"يلزم اعتماد المراقب قبل الإغلاق."
+    };
+    msg.textContent=labels[err.code]||"تعذر إغلاق الحالة حاليًا.";
+  }
+}
 function mobilityErrorLabel(code){
   const labels={
     employee_required:"اختر الموظف.",
@@ -892,6 +928,8 @@ $("#submitMissionBtn").addEventListener("click",submitMobilityMission);
 document.addEventListener("click",e=>{
   const assignBtn=e.target.closest("[data-assign-observation]");
   if(assignBtn)assignObservationToContractor(assignBtn.dataset.assignObservation);
+  const closeBtn=e.target.closest("[data-close-observation]");
+  if(closeBtn)closeVerifiedObservation(closeBtn.dataset.closeObservation);
   const contractorBtn=e.target.closest("[data-edit-contractor]");
   if(contractorBtn)selectContractorProfile(contractorBtn.dataset.editContractor);
 });
