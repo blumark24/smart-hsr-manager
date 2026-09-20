@@ -689,6 +689,7 @@ function injectApprovedSkin() {
 
   .ucv21-profile-stage{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;overflow-x:hidden!important;padding:14px var(--space-5) 18px!important;scrollbar-gutter:stable!important}
   .ucv21-step-panel{display:block!important}
+  .ucv21-step-panel.ucv21-step-hidden{display:none!important}
   .ucv21-step-panel>.pane,.ucv21-step-panel>.ucv21-password-inline,.ucv21-step-panel>.ucv21-history-wrap{padding:0!important}
   .ucv21-step-panel .ucv21-section-head:first-child{margin-top:0!important}
   .ucv21-role-native{display:none!important}
