@@ -208,6 +208,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = userDoc.exists() ? (userDoc.data() || {}) : {};
     const role = data.role;
     const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
+    const department = typeof data.department === 'string' ? data.department.trim() : '';
     const hasFieldRole = ['supervisor','inspector','contractor'].includes(role);
     const landsAccess = data.landsAccess;
     const hasLandsRole = Boolean(landsAccess && landsAccess.enabled
@@ -226,9 +227,15 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             ? data.mobilityAccess.role : null)
       : (MOBILITY_ROLE_VALUES.includes(role) ? role : null);
     const hasDepartmentHeadRole = mobilityRole === 'department_head';
+    // PHASE13D.5 — the dedicated department-head command center is currently
+    // scoped to Field Survey only. Mobility keeps its own operational product
+    // and workflow; do not route a Traffic/Mobility department head into the
+    // Field Survey command center.
+    const hasFieldDepartmentHeadRole = hasDepartmentHeadRole
+      && /الحصر|ميداني|field/i.test(department);
 
     if (!userDoc.exists() || data.active === false || !organizationId
-        || (!hasFieldRole && !hasLandsRole && !hasDepartmentHeadRole)) {
+        || (!hasFieldRole && !hasLandsRole && !hasFieldDepartmentHeadRole)) {
       await signOut(probeAuth);
       if (userDoc.exists() && data.active !== false && organizationId && mobilityRole) {
         showMsg('🚧 صلاحيتك التشغيلية مسجّلة، لكن لوحة هذا الدور لم تُفعَّل بعد لهذا الحساب. يرجى مراجعة إدارة المنصة.', 'error');
@@ -279,7 +286,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // Generic department-head landing. The page re-verifies the same live
     // users/{uid} role, organizationId and department before rendering and
     // calls only the existing department-scoped employee registry LIST action.
-    if (hasDepartmentHeadRole && !hasFieldRole && !hasLandsRole) {
+    if (hasFieldDepartmentHeadRole && !hasFieldRole && !hasLandsRole) {
       await signInWithEmailAndPassword(auth, email, password);
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى مركز قيادة القسم', 'success');
