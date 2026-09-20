@@ -27,6 +27,7 @@ jobs:
         run: |
           node --check api/admin/users.js
           node --check api/storage/read.js
+          node --check field-head-runtime.js
 
       - name: Department Head framework tests
         run: node --test test/department-head-framework.test.js
