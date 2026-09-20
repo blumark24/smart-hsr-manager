@@ -28,6 +28,7 @@ jobs:
           node --check api/admin/users.js
           node --check api/storage/read.js
           node --check field-head-runtime.js
+          node --check platform/policies/vehicle-authorization-policy.js
 
       - name: Department Head framework tests
         run: node --test test/department-head-framework.test.js
@@ -37,6 +38,9 @@ jobs:
 
       - name: Shared mobility workflow tests
         run: node --test test/mobility-workflow-server-bridge.test.js
+
+      - name: Vehicle authorization workflow tests
+        run: node --test test/vehicle-authorization-workflow.test.js
 
       - name: Visual distortion inspector-contractor tests
         run: node --test test/visual-distortion-department-head.test.js
