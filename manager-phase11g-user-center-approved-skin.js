@@ -675,7 +675,10 @@ function injectApprovedSkin() {
      the five real sections below it are unchanged. */
   .ucv21-progress{display:flex!important;align-items:center!important;gap:0!important;padding:var(--space-3) var(--space-5)!important;border-bottom:1px solid var(--border-hairline)!important;overflow-x:auto!important}
   .ucv21-progress-line{flex:1 1 auto!important;min-width:20px!important;height:1px!important;background:var(--border-strong)!important;margin:0 var(--space-2)!important}
-  .ucv21-progress-dot{display:flex!important;align-items:center!important;gap:8px!important;font-size:12px!important;color:var(--r-muted)!important;white-space:nowrap!important;opacity:.62!important;flex:0 0 auto!important}
+  .ucv21-progress-dot{display:flex!important;align-items:center!important;gap:8px!important;font-size:12px!important;color:var(--r-muted)!important;white-space:nowrap!important;opacity:.62!important;flex:0 0 auto!important;border:0!important;background:transparent!important;padding:0!important;font:inherit!important;cursor:pointer!important}
+  .ucv21-progress-dot:hover{opacity:.88!important}
+  .ucv21-progress-dot:focus-visible{outline:2px solid rgba(62,211,154,.55)!important;outline-offset:5px!important;border-radius:10px!important}
+  .ucv21-step-hidden{display:none!important}
   .ucv21-progress-dot b{display:grid!important;place-items:center!important;width:28px!important;height:28px!important;min-width:28px!important;border-radius:50%!important;font-size:12px!important;font-weight:700!important;border:1px solid var(--border-strong)!important;background:var(--surface-elevated)!important;color:var(--r-muted)!important}
   .ucv21-progress-dot.on{opacity:1!important;color:var(--r-text)!important;font-weight:700!important}
   .ucv21-progress-dot.on b{background:#3ed39a!important;border-color:#3ed39a!important;color:#04150e!important;box-shadow:0 0 0 4px rgba(62,211,154,.16)!important}
@@ -697,6 +700,8 @@ function injectApprovedSkin() {
   .ucv21-profile-footer{background:var(--surface-glass)!important;backdrop-filter:blur(24px) saturate(140%)!important}
   .ucv21-profile-footer .btn{border-radius:11px!important;height:44px!important}
   .ucv21-profile-footer .ucv21-save{min-width:150px!important}
+  .ucv21-profile-nav{display:flex!important;gap:8px!important;margin-inline-end:auto!important}
+  .ucv21-profile-nav .btn{min-width:82px!important}
 
   /* --- Field icons (same technique/icon set as Add Employee), scoped to
      the edit-* field ids unique to this dialog. */
@@ -717,7 +722,10 @@ function injectApprovedSkin() {
   .ucv21-single-page .f:has(> #edit-title){--field-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='7' width='20' height='14' rx='2'/%3E%3Cpath d='M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16'/%3E%3C/svg%3E")}
 
   @media(max-width:640px){
-    #iuc-profile>div.ucv21-single-page,.ucv21-single-page{border-radius:16px!important}
+    #iuc-profile>div.ucv21-single-page,.ucv21-single-page{border-radius:16px!important;width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important}
+    .ucv21-profile-nav{order:1;width:100%!important;margin:0!important}
+    .ucv21-profile-nav .btn{flex:1!important}
+    .ucv21-profile-footer .ucv21-cancel,.ucv21-profile-footer .ucv21-save{flex:1!important;min-width:0!important}
     .ucv2-add-dialog .ucv2-dialog-icon-badge,.ucv21-single-page .ucv2-dialog-icon-badge{width:40px!important;height:40px!important;min-width:40px!important;border-radius:12px!important}
     .ucv2-add-dialog .ucv2-dialog-icon-badge:before,.ucv21-single-page .ucv2-dialog-icon-badge:before{width:20px!important;height:20px!important}
   }
