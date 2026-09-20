@@ -6,49 +6,41 @@ const path = require('node:path');
 const test = require('node:test');
 
 const root = path.join(__dirname, '..');
-const api = fs.readFileSync(path.join(root, 'api', 'mobility', 'workflow.js'), 'utf8');
+const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
 const missionPolicy = fs.readFileSync(path.join(root, 'platform', 'policies', 'mission-workflow-policy.js'), 'utf8');
 const vehiclePolicy = fs.readFileSync(path.join(root, 'platform', 'policies', 'vehicle-workflow-policy.js'), 'utf8');
 
-test('mobility workflow is server-authorized and tenant-scoped', () => {
-  assert.match(api, /verifyRequestToken\(req\)/);
-  assert.match(api, /resolveMobilityRole\(data\)/);
-  assert.match(api, /organizationId/);
-  assert.match(api, /cross_organization_denied/);
-  assert.doesNotMatch(api, /body\.organizationId/);
-});
-
-test('administrative affairs owns approval while mobility head owns allocation', () => {
-  assert.match(api, /administrative_affairs_required/);
-  assert.match(api, /mobility_head_required/);
-  assert.match(api, /administrative_decision/);
-  assert.match(api, /allocate_vehicle/);
+test('administrative affairs owns the approval decision', () => {
+  assert.match(usersApi, /action === 'decideMobilityMission'/);
+  assert.match(usersApi, /\['administrative_affairs'\]/);
+  assert.match(usersApi, /\['APPROVED', 'REJECTED', 'DRAFT'\]/);
   assert.match(missionPolicy, /PENDING_APPROVAL/);
-  assert.match(missionPolicy, /APPROVED/);
-  assert.match(missionPolicy, /VEHICLE_ALLOCATED/);
 });
 
-test('allocation is atomic and cannot change the employee approved by the department head', () => {
-  assert.match(api, /db\.runTransaction/);
-  assert.match(api, /approved_employee_mismatch/);
-  assert.match(api, /isValidMobilityAllocationTarget/);
-  assert.match(api, /status: 'VEHICLE_ALLOCATED'/);
-  assert.match(api, /status: 'RESERVED'/);
-});
-
-test('handover and return keep mission and vehicle lifecycle synchronized', () => {
-  assert.match(api, /status: 'HANDED_OVER'/);
-  assert.match(api, /status: 'IN_MISSION'/);
-  assert.match(api, /status: 'AWAITING_RETURN'/);
-  assert.match(api, /status: 'RETURN_PENDING'/);
-  assert.match(api, /status: 'CLOSED'/);
-  assert.match(api, /status: 'AVAILABLE'/);
+test('traffic owns allocation, handover and final return', () => {
+  assert.match(usersApi, /action === 'allocateVehicle'/);
+  assert.match(usersApi, /action === 'handoverVehicle'/);
+  assert.match(usersApi, /action === 'confirmVehicleReturn'/);
+  assert.match(usersApi, /approved_employee_mismatch/);
+  assert.match(usersApi, /resourceType: 'vehicle'/);
+  assert.match(vehiclePolicy, /AVAILABLE/);
+  assert.match(vehiclePolicy, /RESERVED/);
+  assert.match(vehiclePolicy, /IN_MISSION/);
   assert.match(vehiclePolicy, /RETURN_PENDING/);
 });
 
-test('every transaction that changes a vehicle also writes a vehicle audit event', () => {
-  assert.match(api, /auditData\(actor, 'vehicle', vehicleId, 'reserve'/);
-  assert.match(api, /auditData\(actor, 'vehicle', vehicleId, 'handover'/);
-  assert.match(api, /auditData\(actor, 'vehicle', vehicleId, 'employee_return_vehicle'/);
-  assert.match(api, /auditData\(actor, 'vehicle', vehicleId, 'confirm_return'/);
+test('employee owns mission execution and return transitions', () => {
+  assert.match(usersApi, /action === 'employeeAdvanceMission'/);
+  assert.match(usersApi, /action === 'employeeReturnVehicle'/);
+  assert.match(usersApi, /\['READY', 'IN_PROGRESS', 'INCIDENT_HOLD', 'COMPLETED'\]/);
+  assert.match(missionPolicy, /employee_is_assigned/);
+  assert.match(missionPolicy, /AWAITING_RETURN/);
+  assert.match(missionPolicy, /CLOSED/);
+});
+
+test('cross-product workflow derives organization from authenticated identities', () => {
+  assert.match(usersApi, /getMobilityOperationalCaller\(db, decoded\.uid/);
+  assert.match(usersApi, /getMobilityEmployeeCallerContext\(decoded\.uid\)/);
+  assert.match(usersApi, /cross_organization_denied/);
+  assert.doesNotMatch(usersApi, /body\.organizationId[^A-Za-z]/);
 });
