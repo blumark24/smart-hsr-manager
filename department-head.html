@@ -1085,7 +1085,7 @@
                 </span>
                 <div style="flex:1;min-width:0">
                   <div style="font-size:11px;color:var(--tx,#e9f1fb)">إرفاق دليل مصور</div>
-                  <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:3px">عرض الأدلة التشغيلية يتم عبر المسار الموثوق</div>
+                  <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:3px">نموذج أولي — لا يتم رفع ملفات فعلية</div>
                 </div>
                 <button onClick="{{ proto }}" data-f="1" style="flex:none;height:30px;padding:0 12px;border-radius:9px;font-size:10.5px;font-weight:600;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));cursor:pointer">إرفاق</button>
               </div>
@@ -1147,9 +1147,8 @@
 class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
-    role: 'dept', screen: 'deptops', authPending: true, orgName: 'المؤسسة المسجلة', sessionName: 'رئيس قسم الحصر الميداني', department: 'إدارة الحصر الميداني',
-    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [], liveObservations: [], liveContractors: [],
-    observationEvidence: [], observationMarkerRefs: [],
+    role: 'dept', screen: 'deptops', authPending: false, orgName: 'معاينة تصميم', sessionName: 'رئيس قسم الحصر الميداني', department: 'إدارة الحصر الميداني',
+    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [],
     sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
     twin3D: false, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
     layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true },
@@ -1227,7 +1226,7 @@ class Component extends DCLogic {
     clearInterval(this._iv); if (this._ro) this._ro.disconnect();
     try { if (this._realMap) this._realMap.remove(); } catch (_) {}
   }
-  componentDidUpdate() { this.bindCanvas(); this.bindRealMap(); this.renderObservationMarkers(); this.draw(); this.drawMini(); }
+  componentDidUpdate() { this.bindCanvas(); this.bindRealMap(); this.draw(); this.drawMini(); }
 
 
   bindRealMap() {
@@ -1263,58 +1262,6 @@ class Component extends DCLogic {
     this._realMap.addControl(new maplibregl.FullscreenControl(), 'top-left');
     this._realMap.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
     this._realMap.addControl(new maplibregl.AttributionControl({ compact: true }));
-    this._realMap.on('load', () => this.renderObservationMarkers());
-  }
-
-  observationCoordinates(o) {
-    const lat = Number(o && o.correctedLat), lng = Number(o && o.correctedLng);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
-    return { lat, lng };
-  }
-  trustedObservations() {
-    const allowed = new Set(['PENDING','IN_PROGRESS','PENDING_REVIEW','COMPLETED']);
-    return (this.state.liveObservations || []).filter(o => allowed.has(o.status) && o.locationVerified === true && this.observationCoordinates(o));
-  }
-  clearObservationMarkers() {
-    const refs = this.state.observationMarkerRefs || [];
-    refs.splice(0).forEach(m => { try { m.remove(); } catch (_) {} });
-  }
-  renderObservationMarkers() {
-    if (!this._realMap || typeof maplibregl === 'undefined' || this.state.role !== 'dept') return;
-    if (!this._realMap.loaded()) return;
-    this.clearObservationMarkers();
-    const observations = this.trustedObservations();
-    const refs = this.state.observationMarkerRefs || [];
-    const statusColor = s => s === 'PENDING' ? '#ef4444' : s === 'IN_PROGRESS' ? '#22c55e' : s === 'PENDING_REVIEW' ? '#f5a524' : '#7d8ea6';
-    const bounds = new maplibregl.LngLatBounds();
-    observations.forEach(o => {
-      const p = this.observationCoordinates(o); if (!p) return;
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.title = 'فتح البلاغ ' + (o.displayId || o.observationId || '');
-      el.setAttribute('aria-label', el.title);
-      el.style.cssText = 'width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.9);background:'+statusColor(o.status)+';box-shadow:0 0 0 4px rgba(5,14,28,.28),0 6px 18px rgba(0,0,0,.45);cursor:pointer';
-      el.onclick = e => { e.stopPropagation(); this.openObservation(o.observationId); };
-      refs.push(new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([p.lng,p.lat]).addTo(this._realMap));
-      bounds.extend([p.lng,p.lat]);
-    });
-    if (observations.length && !bounds.isEmpty()) {
-      try { this._realMap.fitBounds(bounds,{padding:70,maxZoom:16,duration:0}); } catch (_) {}
-    }
-  }
-  async openObservation(id) {
-    const o = (this.state.liveObservations || []).find(x => x.observationId === id);
-    if (!o) return;
-    this.setState({drawer:'observation',drawerId:id,observationEvidence:[],notifOpen:false,layersOpen:false,mobNavOpen:false});
-    const resolver = window.SmartHSRMobilityAdapter?.resolveObservationEvidence;
-    if (!resolver) return;
-    const [before, after] = await Promise.all([resolver(o.imagePath), resolver(o.afterImagePath)]);
-    if (this.state.drawer === 'observation' && this.state.drawerId === id) {
-      this.setState({observationEvidence:[
-        ...(before ? [{label:'قبل المعالجة',url:before}] : []),
-        ...(after ? [{label:'بعد المعالجة',url:after}] : [])
-      ]});
-    }
   }
 
   bindCanvas() {
@@ -2115,7 +2062,7 @@ class Component extends DCLogic {
       isOpsLayout: sd.ops === true, hasKpis: !!(sd.kpis && sd.kpis.length), kpis: sd.kpis || [],
       hasSide: !!sd.sideA, hasBottom: sd.bottom === true,
       sideAEmpty: !!sd.sideA && sd.sideA.length === 0, sideBEmpty: !!sd.sideB && sd.sideB.length === 0,
-      showMapEmpty: st.role === 'dept' ? this.trustedObservations().length === 0 : (V.length === 0 && M.length === 0 && I.length === 0),
+      showMapEmpty: V.length === 0 && M.length === 0 && I.length === 0,
       sideATitle: sd.sideATitle || '', sideACount: sd.sideACount || '', sideA: sd.sideA || [],
       sideBTitle: sd.sideBTitle || '', sideBCount: sd.sideBCount || '', sideB: sd.sideB || [],
 
@@ -2126,10 +2073,8 @@ class Component extends DCLogic {
       mapPins: pins, zoneLabels: zoneLabels, mapQ: st.mapQ,
       setMapQ: e => { const v = e.target.value; this.setState({ mapQ: v }); },
       zoomLbl: Math.round(st.zoom * 100) + '%',
-      liveCount: st.role === 'dept' ? String((this.state.liveEmployees || []).filter(e=>e?.products?.field?.enabled===true&&e?.products?.field?.role==='inspector'&&e.accountStatus==='ACTIVE').length) : String(V.filter(v => v.status === 'في مهمة').length),
-      legend: st.role === 'dept'
-        ? [{label:'جديدة',col:'#ef4444'},{label:'تحت المعالجة',col:'#22c55e'},{label:'بانتظار التحقق',col:'#f5a524'},{label:'مغلقة',col:'#7d8ea6'}]
-        : ['متاحة', 'محجوزة', 'في مهمة', 'عائدة', 'صيانة', 'خارج الخدمة'].map(s => ({ label: s, col: this.sc(s) })),
+      liveCount: String(V.filter(v => v.status === 'في مهمة').length),
+      legend: ['متاحة', 'محجوزة', 'في مهمة', 'عائدة', 'صيانة', 'خارج الخدمة'].map(s => ({ label: s, col: this.sc(s) })),
       opsTx: !st.twin3D ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
       opsBg: !st.twin3D ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
       opsBd: !st.twin3D ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)') : 'transparent',
@@ -2191,7 +2136,6 @@ class Component extends DCLogic {
       dFields: (dr.fields || []).map(f => Object.assign({ isSelect: false, isText: true, options: [] }, f, f.type === 'select' ? { isSelect: true, isText: false } : {})),
       dHasChips: !!(dr.chips && dr.chips.length), dChipsLabel: dr.chipsLabel || '', dChips: dr.chips || [],
       dHasEvidence: !!dr.evidence,
-      dHasEvidenceImages: !!(dr.evidenceImages && dr.evidenceImages.length), dEvidenceImages: dr.evidenceImages || [],
       dHasList: !!(dr.list && dr.list.length), dListTitle: dr.listTitle || '', dList: dr.list || [],
       dHasActions: !!(dr.actions && dr.actions.length), dActions: dr.actions || []
     };
@@ -2214,7 +2158,7 @@ class Component extends DCLogic {
       { id: 'handover', label: 'التسليم والاستلام' }, { id: 'map', label: 'الخريطة التشغيلية' }, { id: 'incidents', label: 'الحوادث والطوارئ' },
       { id: 'reports', label: 'التقارير' }, { id: 'audit', label: 'السجل التشغيلي' }, { id: 'settings', label: 'الإعدادات والسياسات' },
       { id: 'committees', label: 'اللجان', tag: 'قريباً', soon: true }];
-    if (r === 'dept') return [{ id: 'deptops', label: 'مركز قيادة القسم' }, { id: 'missions', label: 'التشوه البصري' }, { id: 'map', label: 'الخريطة التشغيلية' }, { id: 'incidents', label: 'البلاغات والملاحظات' }, { id: 'audit', label: 'سجل القسم' }];
+    if (r === 'dept') return [{ id: 'deptops', label: 'مركز قيادة القسم' }, { id: 'missions', label: 'التشوه البصري' }, { id: 'incidents', label: 'البلاغات والملاحظات' }, { id: 'audit', label: 'سجل القسم' }];
     if (r === 'admin') return [{ id: 'approvals', label: 'طلبات الاعتماد' }, { id: 'audit', label: 'سجل الاعتمادات' }, { id: 'settings', label: 'سياسة الاعتماد' }];
     return [{ id: 'emp', label: 'عملياتي' }];
   }
@@ -2282,26 +2226,20 @@ class Component extends DCLogic {
 
     if (st.role === 'dept' && st.screen === 'deptops') {
       const team = this.state.liveEmployees || [];
-      const observations = this.state.liveObservations || [];
-      const active = observations.filter(o => ['PENDING','IN_PROGRESS','PENDING_REVIEW'].includes(o.status));
-      const statusLabel = s => ({PENDING:'جديدة',IN_PROGRESS:'تحت المعالجة',PENDING_REVIEW:'بانتظار التحقق',COMPLETED:'مغلقة'}[s] || s || '—');
-      const statusColor = s => s === 'PENDING' ? '#ef4444' : s === 'IN_PROGRESS' ? '#22c55e' : s === 'PENDING_REVIEW' ? '#f5a524' : '#7d8ea6';
+      const observations = [];
       return { ops: true, bottom: false, title: 'مركز قيادة القسم — ' + (this.state.department || '—'), sub: 'إدارة الحصر الميداني · المنتج النشط: التشوه البصري',
         actions: [],
         kpis: [
           K('حالات التشوه', observations.length, 'جديد'),
-          K('تحت المعالجة', observations.filter(o=>o.status==='IN_PROGRESS').length, 'قيد التنفيذ'),
-          K('بانتظار التحقق', observations.filter(o=>o.status==='PENDING_REVIEW').length, 'بانتظار الاعتماد'),
-          K('مغلقة', observations.filter(o=>o.status==='COMPLETED').length, 'مغلقة'),
-          K('مراقبو القسم', team.filter(e=>e?.products?.field?.enabled===true&&e?.products?.field?.role==='inspector').length, 'متاحة')
+          K('تحت المعالجة', 0, 'قيد التنفيذ'),
+          K('بانتظار التحقق', 0, 'بانتظار الاعتماد'),
+          K('مغلقة', 0, 'مغلقة'),
+          K('مراقبو القسم', team.length, 'متاحة')
         ],
-        sideATitle: 'حالات التشوه الجارية', sideACount: active.length + ' حالة',
-        sideA: active.slice(0,8).map(o => {
-          const col=statusColor(o.status);
-          return {badge:String(o.displayId || o.observationId || '—').slice(-4),title:o.title || o.type || 'تشوه بصري',meta:o.location || 'موقع موثق',tag:statusLabel(o.status),col,chipBg:this.tint(col,.14),bg:'var(--ctl,rgba(20,32,54,0.6))',bd:'var(--ctlBd,rgba(122,164,224,0.12))',on:()=>this.openObservation(o.observationId)};
-        }),
-        sideBTitle: 'مراقبو القسم', sideBCount: String(team.length),
-        sideB: team.filter(e=>e?.products?.field?.enabled===true&&e?.products?.field?.role==='inspector').slice(0,8).map(e=>({title:e.name||'مراقب',meta:e.jobTitle||'مراقب ميداني',tag:e.accountStatus==='ACTIVE'?'نشط':'غير نشط',col:e.accountStatus==='ACTIVE'?'#22c55e':'#7d8ea6',chipBg:this.tint(e.accountStatus==='ACTIVE'?'#22c55e':'#7d8ea6',.14),bg:'var(--ctl,rgba(20,32,54,0.6))',bd:'var(--ctlBd,rgba(122,164,224,0.12))',on:()=>{}})
+        sideATitle: 'حالات التشوه الجارية', sideACount: '0 حالة',
+        sideA: [],
+        sideBTitle: 'المراقبون في الميدان', sideBCount: '',
+        sideB: []
       };
     }
 
@@ -2406,50 +2344,6 @@ class Component extends DCLogic {
     const btn = { tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' };
     const ghost = { tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' };
     const danger = { tx: 'var(--bad,#ef4444)', bg: this.tint('#ef4444', 0.1), bd: this.tint('#ef4444', 0.3) };
-
-    if (k === 'observation') {
-      const o = (this.state.liveObservations || []).find(x => x.observationId === id);
-      if (!o) return Object.assign({}, none, { title: 'تعذر تحديد البلاغ' });
-      const statusLabel = ({PENDING:'جديدة',IN_PROGRESS:'تحت المعالجة',PENDING_REVIEW:'بانتظار التحقق',COMPLETED:'مغلقة'}[o.status] || o.status || '—');
-      const col = o.status === 'PENDING' ? '#ef4444' : o.status === 'IN_PROGRESS' ? '#22c55e' : o.status === 'PENDING_REVIEW' ? '#f5a524' : '#7d8ea6';
-      const evidence = this.state.observationEvidence || [];
-      const acts = [];
-      if (o.status === 'PENDING' && (this.state.liveContractors || []).some(x => x.contractState === 'ACTIVE')) {
-        const activeContractors = (this.state.liveContractors || []).filter(x => x.contractState === 'ACTIVE');
-        acts.push({ label:'إسناد للمقاول', on:()=>this.setState({drawer:'observationAssign',drawerId:o.observationId,chip:{...this.state.chip,contractorUid:activeContractors[0]?.uid||''}}), tx:btn.tx,bg:btn.bg,bd:btn.bd });
-      }
-      if (o.status === 'PENDING_REVIEW' && o.inspectorVerification?.status === 'VERIFIED') {
-        acts.push({ label:'إغلاق الحالة', on:()=>window.SmartHSRMobilityAdapter.closeFieldObservation(o.observationId).then(()=>{this.setState({drawer:null});this.flash('تم إغلاق الحالة بعد تحقق المراقب');}).catch(()=>this.flash('تعذر إغلاق الحالة')), tx:btn.tx,bg:btn.bg,bd:btn.bd });
-      }
-      return {
-        title:'بلاغ التشوه · ' + (o.displayId || o.observationId || '—'),
-        sub:o.type || o.title || 'تشوه بصري',
-        chip:statusLabel,chipCol:col,chipBg:this.tint(col,.14),chipBd:this.tint(col,.30),
-        rows:[
-          {k:'رقم الحالة',v:String(o.displayId || o.observationId || '—')},
-          {k:'الموقع',v:o.location || 'إحداثيات موثوقة'},
-          {k:'الحالة',v:statusLabel},
-          {k:'المراقب',v:o.createdByName || o.inspectorName || '—'},
-          {k:'المقاول',v:o.assignedContractorName || 'غير مسند'},
-          {k:'التحقق',v:o.inspectorVerification?.status || '—'}
-        ],
-        evidenceImages:evidence,
-        actions:acts
-      };
-    }
-
-    if (k === 'observationAssign') {
-      const o = (this.state.liveObservations || []).find(x => x.observationId === id);
-      if (!o) return Object.assign({}, none, { title:'تعذر تحديد البلاغ' });
-      const contractors = (this.state.liveContractors || []).filter(x => x.contractState === 'ACTIVE');
-      return {
-        title:'إسناد البلاغ للمقاول',sub:String(o.displayId || o.observationId || ''),
-        chip:'جديدة',chipCol:'#ef4444',chipBg:this.tint('#ef4444',.12),chipBd:this.tint('#ef4444',.3),
-        form:true,formTitle:'المقاول ذو العقد النشط',
-        fields:[{label:'المقاول',type:'select',value:this.state.chip.contractorUid||'',ph:'اختر المقاول',options:contractors.map(x=>({value:x.uid,label:x.name||x.profile?.companyName||'مقاول'})),on:e=>this.setChip('contractorUid',e.target.value)}],
-        actions:[{label:'تأكيد الإسناد',on:()=>{const uid=this.state.chip.contractorUid;if(!uid){this.flash('اختر المقاول');return;}window.SmartHSRMobilityAdapter.assignFieldObservation(o.observationId,uid).then(()=>{this.setState({drawer:null});this.flash('تم إسناد الحالة للمقاول');}).catch(()=>this.flash('تعذر الإسناد — تحقق من العقد النشط'));},tx:btn.tx,bg:btn.bg,bd:btn.bd}]
-      };
-    }
 
     if (k === 'mission' || k === 'alloc' || k === 'handover' || k === 'ret' || k === 'approve') {
       const m = M.filter(x => x.id === id)[0] || M[0];
