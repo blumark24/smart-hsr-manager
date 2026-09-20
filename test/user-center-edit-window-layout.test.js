@@ -9,15 +9,15 @@ const root = path.join(__dirname, '..');
 const reference = fs.readFileSync(path.join(root, 'manager-phase11f-reference-ui.js'), 'utf8');
 const skin = fs.readFileSync(path.join(root, 'manager-phase11g-user-center-approved-skin.js'), 'utf8');
 
-test('edit-user window uses five true stages instead of one crowded page', () => {
-  assert.match(reference, /const steps=\['البيانات','التنظيم','الدور والخدمات','الدخول','السجل'\]/);
+test('edit-user window uses four true stages like Add Employee', () => {
+  assert.match(reference, /const steps=\['البيانات الأساسية','الدور والخدمات','حساب الدخول','السجل'\]/);
   assert.match(reference, /data-profile-step=/);
   assert.match(reference, /if\(basic\)basic\.dataset\.ucv21Step='1'/);
   assert.match(reference, /if\(org\)org\.dataset\.ucv21Step='2'/);
-  assert.match(reference, /if\(roles\)roles\.dataset\.ucv21Step='3'/);
-  assert.match(reference, /if\(account\)account\.dataset\.ucv21Step='4'/);
-  assert.match(reference, /hw\.dataset\.ucv21Step='5'/);
-  assert.match(reference, /step<=5/);
+  assert.match(reference, /if\(roles\)roles\.dataset\.ucv21Step='2'/);
+  assert.match(reference, /if\(account\)account\.dataset\.ucv21Step='3'/);
+  assert.match(reference, /hw\.dataset\.ucv21Step='4'/);
+  assert.match(reference, /step<=4/);
   assert.match(reference, /ucv21-profile-stage/);
   assert.match(reference, /dataset\.profilePanel/);
   assert.match(reference, /ucv21-step-hidden/);
@@ -52,13 +52,13 @@ test('only the modal body scrolls while header, step navigation and footer remai
   assert.match(skin, /ucv21-role-seg/);
 });
 
-test('login and password controls stay grouped in access step four', () => {
-  assert.match(reference, /if\(account\)account\.dataset\.ucv21Step='4'/);
-  assert.match(reference, /wrap\.dataset\.ucv21Step='4'/);
+test('login and password controls stay grouped in step three', () => {
+  assert.match(reference, /if\(account\)account\.dataset\.ucv21Step='3'/);
+  assert.match(reference, /wrap\.dataset\.ucv21Step='3'/);
 });
 
-test('employee history is a dedicated fifth section', () => {
-  assert.match(reference, /hw\.dataset\.ucv21Step='5'/);
+test('employee history is a dedicated fourth section', () => {
+  assert.match(reference, /hw\.dataset\.ucv21Step='4'/);
   assert.match(reference, /السجل والتكليفات/);
   assert.match(reference, /history\.hidden=false/);
 });
@@ -70,10 +70,15 @@ test('existing save orchestration remains intact', () => {
 });
 
 
-test('role save validation moves the user to the correct stage and requires department for department heads', () => {
-  assert.match(reference, /selectedRole==='department_head'/);
-  assert.match(reference, /setProfileStep\(2\)/);
-  assert.match(reference, /حدد القسم أولًا قبل اعتماد دور رئيس قسم/);
+test('role save validation keeps product errors on role/services step', () => {
   assert.match(reference, /try\{current=profileSnapshot/);
-  assert.match(reference, /setProfileStep\(3\)/);
+  assert.match(reference, /setProfileStep\(2\)/);
+});
+
+
+test('department-head selection normalizes a single enabled product to head scope', () => {
+  assert.match(reference, /normalizeDepartmentHeadSelection/);
+  assert.match(reference, /enabled\.length!==1/);
+  assert.match(reference, /level\.value='head'/);
+  assert.match(reference, /إدارة الحصر الميداني/);
 });
