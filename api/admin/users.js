@@ -48,6 +48,7 @@ const {
 } = require('../_lib/serviceEntitlements');
 const { evaluateMissionTransition } = require('../../platform/policies/mission-workflow-policy');
 const { evaluateVehicleTransition } = require('../../platform/policies/vehicle-workflow-policy');
+const { evaluateVehicleAuthorizationTransition } = require('../../platform/policies/vehicle-authorization-policy');
 
 // The manager's own already-verified bearer token, forwarded as-is to Lands'
 // trusted mutation endpoint (see api/_lib/landsBridge.js). Extracted
@@ -216,6 +217,9 @@ function safeMission(id, data) {
     requestedEmployeeUid: data.requestedEmployeeUid || null,
     requestedEmployeeName: data.requestedEmployeeName || null,
     vehicleId: data.vehicleId || null,
+    vehicleAuthorizationId: data.vehicleAuthorizationId || null,
+    vehicleAuthorizationNumber: data.vehicleAuthorizationNumber || null,
+    vehicleAuthorizationStatus: data.vehicleAuthorizationStatus || null,
     assignedEmployeeUid: data.assignedEmployeeUid || null,
     assignedEmployeeName: data.assignedEmployeeName || null,
     whenLabel: data.whenLabel || null,
@@ -1115,6 +1119,136 @@ async function handler(req, res) {
     }
   }
 
+  if (action === 'decideVehicleAuthorization') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['administrative_affairs']);
+    if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'administrative_affairs_required' });
+
+    const missionId = cleanString(body.missionId);
+    const toStatus = cleanString(body.toStatus);
+    if (!missionId || !['AUTHORIZED', 'REJECTED', 'REVOKED'].includes(toStatus)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_and_valid_authorization_decision_required' });
+    }
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const missionRef = db.collection('missions').doc(missionId);
+        const authRef = db.collection('vehicleAuthorizations').doc(missionId);
+        const [missionSnap, authSnap] = await Promise.all([
+          transaction.get(missionRef), transaction.get(authRef),
+        ]);
+        if (!missionSnap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+        if (!authSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_authorization_not_found' };
+
+        const mission = missionSnap.data() || {};
+        const authorization = authSnap.data() || {};
+        if (mission.organizationId !== actor.organizationId || authorization.organizationId !== actor.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        if (authorization.missionId !== missionId || authorization.vehicleId !== mission.vehicleId
+            || authorization.employeeUid !== mission.assignedEmployeeUid) {
+          return { ok: false, statusCode: 409, reason: 'vehicle_authorization_relationship_invalid' };
+        }
+
+        const decision = evaluateVehicleAuthorizationTransition({ actor, authorization, toStatus });
+        if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
+
+        const now = FieldValue.serverTimestamp();
+        if (toStatus === 'AUTHORIZED') {
+          transaction.update(authRef, {
+            status: 'AUTHORIZED',
+            authorizedByUid: actor.uid,
+            authorizedByName: actor.name || '',
+            authorizedAt: now,
+            updatedAt: now,
+          });
+          transaction.update(missionRef, {
+            vehicleAuthorizationStatus: 'AUTHORIZED',
+            updatedAt: now,
+            updatedByUid: actor.uid,
+          });
+        } else {
+          // Reject/revoke before handover releases the reservation as one
+          // system side-effect. Administrative Affairs never selects another
+          // vehicle; the mission simply returns to the approved queue for
+          // Mobility to allocate again.
+          if (mission.status !== 'VEHICLE_ALLOCATED' || !isNonEmptyString(mission.vehicleId)) {
+            return { ok: false, statusCode: 409, reason: 'vehicle_authorization_not_releasable' };
+          }
+          const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
+          const vehicleSnap = await transaction.get(vehicleRef);
+          if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+          const vehicle = vehicleSnap.data() || {};
+          if (vehicle.organizationId !== actor.organizationId
+              || vehicle.currentMissionId !== missionId
+              || vehicle.assignedEmployeeUid !== mission.assignedEmployeeUid
+              || vehicle.status !== 'RESERVED') {
+            return { ok: false, statusCode: 409, reason: 'mission_vehicle_relationship_invalid' };
+          }
+
+          transaction.update(authRef, {
+            status: toStatus,
+            decidedByUid: actor.uid,
+            decidedByName: actor.name || '',
+            decidedAt: now,
+            updatedAt: now,
+          });
+          transaction.update(missionRef, {
+            status: 'APPROVED',
+            vehicleId: FieldValue.delete(),
+            assignedEmployeeUid: FieldValue.delete(),
+            assignedEmployeeName: FieldValue.delete(),
+            vehicleAuthorizationId: missionId,
+            vehicleAuthorizationStatus: toStatus,
+            updatedAt: now,
+            updatedByUid: actor.uid,
+          });
+          transaction.update(vehicleRef, {
+            status: 'AVAILABLE',
+            assignedEmployeeUid: FieldValue.delete(),
+            currentMissionId: FieldValue.delete(),
+            updatedAt: now,
+            updatedByUid: actor.uid,
+          });
+          transaction.set(db.collection('auditEvents').doc(), {
+            organizationId: actor.organizationId,
+            department: mission.department || '',
+            actorId: actor.uid,
+            actorRole: actor.role,
+            resourceType: 'vehicle',
+            resourceId: mission.vehicleId,
+            action: 'authorization_release',
+            fromStatus: 'RESERVED',
+            toStatus: 'AVAILABLE',
+            missionId,
+            timestamp: now,
+          });
+        }
+
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId,
+          department: mission.department || '',
+          actorId: actor.uid,
+          actorRole: actor.role,
+          resourceType: 'vehicleAuthorization',
+          resourceId: missionId,
+          action: toStatus === 'AUTHORIZED' ? 'authorize_vehicle_use' : (toStatus === 'REVOKED' ? 'revoke_vehicle_authorization' : 'reject_vehicle_authorization'),
+          fromStatus: authorization.status,
+          toStatus,
+          missionId,
+          vehicleId: authorization.vehicleId,
+          assignedEmployeeUid: authorization.employeeUid,
+          timestamp: now,
+        });
+
+        return { ok: true, vehicleId: authorization.vehicleId, status: toStatus };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { missionId, vehicleId: outcome.vehicleId, authorizationStatus: outcome.status });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   if (action === 'listMobilityMissions') {
     const actor = await getMobilityOperationalCaller(db, decoded.uid, ['administrative_affairs', 'mobility_head', 'employee']);
     if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
@@ -1173,32 +1307,61 @@ async function handler(req, res) {
         if (!isNonEmptyString(mission.vehicleId)) return { ok: false, statusCode: 409, reason: 'mission_vehicle_required' };
 
         const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
-        const vehicleSnap = await transaction.get(vehicleRef);
+        const authorizationRef = db.collection('vehicleAuthorizations').doc(missionId);
+        const [vehicleSnap, authorizationSnap] = await Promise.all([
+          transaction.get(vehicleRef), transaction.get(authorizationRef),
+        ]);
         if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+        if (!authorizationSnap.exists) return { ok: false, statusCode: 409, reason: 'vehicle_authorization_required' };
         const vehicle = vehicleSnap.data() || {};
+        const authorization = authorizationSnap.data() || {};
         if (vehicle.organizationId !== actor.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
         if (vehicle.currentMissionId !== missionId
             || vehicle.assignedEmployeeUid !== mission.assignedEmployeeUid) {
           return { ok: false, statusCode: 409, reason: 'mission_vehicle_relationship_invalid' };
         }
 
+        if (authorization.missionId !== missionId || authorization.vehicleId !== mission.vehicleId
+            || authorization.employeeUid !== mission.assignedEmployeeUid) {
+          return { ok: false, statusCode: 409, reason: 'vehicle_authorization_relationship_invalid' };
+        }
         const missionDecision = evaluateMissionTransition({ actor, mission, toStatus: 'HANDED_OVER' });
         const vehicleDecision = evaluateVehicleTransition({ actor, vehicle, toStatus: 'IN_MISSION' });
+        const authorizationDecision = evaluateVehicleAuthorizationTransition({ actor, authorization, toStatus: 'ACTIVE' });
         if (!missionDecision.allowed) return { ok: false, statusCode: 409, reason: missionDecision.code };
         if (!vehicleDecision.allowed) return { ok: false, statusCode: 409, reason: vehicleDecision.code };
+        if (!authorizationDecision.allowed) return { ok: false, statusCode: 409, reason: authorizationDecision.code };
 
         const now = FieldValue.serverTimestamp();
-        transaction.update(missionRef, { status: 'HANDED_OVER', updatedAt: now, updatedByUid: actor.uid });
+        transaction.update(missionRef, {
+          status: 'HANDED_OVER',
+          vehicleAuthorizationStatus: 'ACTIVE',
+          updatedAt: now,
+          updatedByUid: actor.uid,
+        });
         transaction.update(vehicleRef, { status: 'IN_MISSION', updatedAt: now, updatedByUid: actor.uid });
+        transaction.update(authorizationRef, {
+          status: 'ACTIVE',
+          activatedByUid: actor.uid,
+          activatedAt: now,
+          updatedAt: now,
+        });
         transaction.set(db.collection('auditEvents').doc(), {
           organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
           resourceType: 'mission', resourceId: missionId, action: 'handover',
           fromStatus: mission.status, toStatus: 'HANDED_OVER', vehicleId: mission.vehicleId, timestamp: now,
         });
         transaction.set(db.collection('auditEvents').doc(), {
-          organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
+          organizationId: actor.organizationId, department: mission.department || '',
+          actorId: actor.uid, actorRole: actor.role,
           resourceType: 'vehicle', resourceId: mission.vehicleId, action: 'handover',
           fromStatus: vehicle.status, toStatus: 'IN_MISSION', missionId, timestamp: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId, department: mission.department || '',
+          actorId: actor.uid, actorRole: actor.role,
+          resourceType: 'vehicleAuthorization', resourceId: missionId, action: 'activate_vehicle_authorization',
+          fromStatus: authorization.status, toStatus: 'ACTIVE', missionId, vehicleId: mission.vehicleId, timestamp: now,
         });
         return { ok: true, vehicleId: mission.vehicleId };
       });
@@ -1316,22 +1479,38 @@ async function handler(req, res) {
         if (!isNonEmptyString(mission.vehicleId)) return { ok: false, statusCode: 409, reason: 'mission_vehicle_required' };
 
         const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
-        const vehicleSnap = await transaction.get(vehicleRef);
+        const authorizationRef = db.collection('vehicleAuthorizations').doc(missionId);
+        const [vehicleSnap, authorizationSnap] = await Promise.all([
+          transaction.get(vehicleRef), transaction.get(authorizationRef),
+        ]);
         if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+        if (!authorizationSnap.exists) return { ok: false, statusCode: 409, reason: 'vehicle_authorization_required' };
         const vehicle = vehicleSnap.data() || {};
+        const authorization = authorizationSnap.data() || {};
         if (vehicle.organizationId !== actor.organizationId
             || vehicle.currentMissionId !== missionId
             || vehicle.assignedEmployeeUid !== mission.assignedEmployeeUid) {
           return { ok: false, statusCode: 409, reason: 'mission_vehicle_relationship_invalid' };
         }
+        if (authorization.missionId !== missionId || authorization.vehicleId !== mission.vehicleId
+            || authorization.employeeUid !== mission.assignedEmployeeUid) {
+          return { ok: false, statusCode: 409, reason: 'vehicle_authorization_relationship_invalid' };
+        }
 
         const missionDecision = evaluateMissionTransition({ actor, mission, toStatus: 'CLOSED' });
         const vehicleDecision = evaluateVehicleTransition({ actor, vehicle, toStatus: 'AVAILABLE' });
+        const authorizationDecision = evaluateVehicleAuthorizationTransition({ actor, authorization, toStatus: 'EXPIRED' });
         if (!missionDecision.allowed) return { ok: false, statusCode: 409, reason: missionDecision.code };
         if (!vehicleDecision.allowed) return { ok: false, statusCode: 409, reason: vehicleDecision.code };
+        if (!authorizationDecision.allowed) return { ok: false, statusCode: 409, reason: authorizationDecision.code };
 
         const now = FieldValue.serverTimestamp();
-        transaction.update(missionRef, { status: 'CLOSED', updatedAt: now, updatedByUid: actor.uid });
+        transaction.update(missionRef, {
+          status: 'CLOSED',
+          vehicleAuthorizationStatus: 'EXPIRED',
+          updatedAt: now,
+          updatedByUid: actor.uid,
+        });
         transaction.update(vehicleRef, {
           status: 'AVAILABLE',
           assignedEmployeeUid: FieldValue.delete(),
@@ -1339,15 +1518,29 @@ async function handler(req, res) {
           updatedAt: now,
           updatedByUid: actor.uid,
         });
+        transaction.update(authorizationRef, {
+          status: 'EXPIRED',
+          expiredByUid: actor.uid,
+          expiredAt: now,
+          updatedAt: now,
+        });
         transaction.set(db.collection('auditEvents').doc(), {
-          organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
+          organizationId: actor.organizationId, department: mission.department || '',
+          actorId: actor.uid, actorRole: actor.role,
           resourceType: 'mission', resourceId: missionId, action: 'confirm_return',
           fromStatus: mission.status, toStatus: 'CLOSED', vehicleId: mission.vehicleId, timestamp: now,
         });
         transaction.set(db.collection('auditEvents').doc(), {
-          organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
+          organizationId: actor.organizationId, department: mission.department || '',
+          actorId: actor.uid, actorRole: actor.role,
           resourceType: 'vehicle', resourceId: mission.vehicleId, action: 'confirm_return',
           fromStatus: vehicle.status, toStatus: 'AVAILABLE', missionId, timestamp: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId, department: mission.department || '',
+          actorId: actor.uid, actorRole: actor.role,
+          resourceType: 'vehicleAuthorization', resourceId: missionId, action: 'expire_vehicle_authorization',
+          fromStatus: authorization.status, toStatus: 'EXPIRED', missionId, vehicleId: mission.vehicleId, timestamp: now,
         });
         return { ok: true, vehicleId: mission.vehicleId };
       });
@@ -1549,13 +1742,34 @@ async function handler(req, res) {
 
         const now = FieldValue.serverTimestamp();
         const employeeName = isNonEmptyString(employee.name) ? employee.name.trim() : '';
+        const authorizationRef = db.collection('vehicleAuthorizations').doc(missionId);
+        const authorizationNumber = 'VA-' + String(missionId).slice(-8).toUpperCase();
         transaction.update(missionRef, {
           status: 'VEHICLE_ALLOCATED',
           vehicleId,
           assignedEmployeeUid: employeeUid,
           assignedEmployeeName: employeeName,
+          vehicleAuthorizationId: missionId,
+          vehicleAuthorizationNumber: authorizationNumber,
+          vehicleAuthorizationStatus: 'PENDING_AUTHORIZATION',
           updatedAt: now,
           updatedByUid: decoded.uid,
+        });
+        transaction.set(authorizationRef, {
+          authorizationId: missionId,
+          authorizationNumber,
+          organizationId,
+          department: mission.department || '',
+          missionId,
+          vehicleId,
+          employeeUid,
+          employeeName,
+          status: 'PENDING_AUTHORIZATION',
+          requestedByUid: decoded.uid,
+          requestedByRole: 'mobility_head',
+          requestedAt: now,
+          createdAt: now,
+          updatedAt: now,
         });
         transaction.update(vehicleRef, {
           status: 'RESERVED',
@@ -1581,6 +1795,7 @@ async function handler(req, res) {
         });
         transaction.set(db.collection('auditEvents').doc(), {
           organizationId,
+          department: mission.department || '',
           actorId: decoded.uid,
           actorRole: 'mobility_head',
           resourceType: 'vehicle',
@@ -1592,13 +1807,32 @@ async function handler(req, res) {
           assignedEmployeeUid: employeeUid,
           timestamp: now,
         });
-        return { ok: true };
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId,
+          department: mission.department || '',
+          actorId: decoded.uid,
+          actorRole: 'mobility_head',
+          resourceType: 'vehicleAuthorization',
+          resourceId: missionId,
+          action: 'create_vehicle_authorization_request',
+          toStatus: 'PENDING_AUTHORIZATION',
+          missionId,
+          vehicleId,
+          assignedEmployeeUid: employeeUid,
+          timestamp: now,
+        });
+        return { ok: true, authorizationNumber };
       });
 
       if (!outcome.ok) {
         return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
       }
-      return sendJson(res, 200, { missionId, vehicleId, employeeUid, status: 'VEHICLE_ALLOCATED' });
+      return sendJson(res, 200, {
+        missionId, vehicleId, employeeUid, status: 'VEHICLE_ALLOCATED',
+        vehicleAuthorizationId: missionId,
+        vehicleAuthorizationNumber: outcome.authorizationNumber,
+        vehicleAuthorizationStatus: 'PENDING_AUTHORIZATION',
+      });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
