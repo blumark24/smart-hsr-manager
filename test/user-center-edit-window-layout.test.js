@@ -98,3 +98,13 @@ test('department-head role is normalized before staged snapshot validation and r
   assert.match(reference, /U\?\.why\?\.\(error\?\.reason\|\|error\?\.message\)/);
   assert.match(reference, /level\.value='head'/);
 });
+
+
+test('role change materializes the missing head option before save', () => {
+  const core = fs.readFileSync(path.join(root, 'manager-phase11c-user-center-core.js'), 'utf8');
+  assert.match(core, /if\(role==='department_head'&&!head\)/);
+  assert.match(core, /head\.textContent='رئيس قسم داخل المنتج'/);
+  assert.match(core, /l\.appendChild\(head\)/);
+  assert.match(core, /if\(role==='department_head'\)\{let enabled=/);
+  assert.match(core, /l\.value='head'/);
+});
