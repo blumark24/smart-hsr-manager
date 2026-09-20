@@ -113,3 +113,12 @@ test('department audit timeline is tenant and department scoped through trusted 
   assert.match(runtime, /api\('listFieldDepartmentAudit'\)/);
   assert.match(runtime, /liveDepartmentAudit/);
 });
+
+
+test('department head can maintain contractor contract profile from the approved board', () => {
+  assert.match(runtime, /drawer:'contractorEdit'/);
+  assert.match(runtime, /تعديل الملف التعاقدي/);
+  assert.match(runtime, /upsertFieldContractorProfile/);
+  assert.match(runtime, /contractorUid:x\.uid/);
+  assert.match(runtime, /حفظ الملف التعاقدي/);
+});
