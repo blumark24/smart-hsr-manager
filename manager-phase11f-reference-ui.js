@@ -197,7 +197,7 @@ function buildSinglePageProfile(panel,employee){
   // are; see the CSS comment in manager-phase11g for why the row's own
   // four labels differ from the five section headers.
   if(header&&!panel.querySelector('.ucv21-progress')){
-    const steps=['البيانات الأساسية','الأدوار والخدمات','حساب الدخول','السجل'];
+    const steps=['البيانات','الدور والخدمات','الدخول','السجل'];
     const html=steps.map((t,i)=>`${i>0?'<span class="ucv21-progress-line" aria-hidden="true"></span>':''}<button type="button" class="ucv21-progress-dot${i===0?' on':''}" data-profile-step="${i+1}" aria-current="${i===0?'step':'false'}"><b>${i+1}</b><span>${U.esc(t)}</span></button>`).join('');
     header.insertAdjacentHTML('afterend',`<nav class="ucv21-progress" aria-label="أقسام تعديل المستخدم">${html}</nav>`);
     // U.shell's own queueMicrotask focuses the first field, and the
@@ -224,6 +224,53 @@ function buildSinglePageProfile(panel,employee){
   // the optional password block change, so related "بيانات الدخول" content
   // reads as one group instead of being separated by the roles pane.
   addSectionHead(basic,'البيانات الأساسية','بيانات الموظف والتنظيم');addSectionHead(roles,'الدور الإداري','الدور المؤسسي والصلاحيات');addSectionHead(account,'بيانات الدخول','إدارة الوصول والهوية');
+
+  // Make the institutional role explicit in Edit User. The underlying
+  // #inst-role select remains the source of truth; this segmented control
+  // only makes the action obvious and dispatches the existing change event.
+  const editRoleSelect=roles?.querySelector('#inst-role');
+  if(editRoleSelect&&!roles.querySelector('.ucv21-role-seg')){
+    const roleField=editRoleSelect.closest('.f');
+    const seg=document.createElement('div');
+    seg.className='ucv21-role-seg';
+    seg.setAttribute('role','group');
+    seg.setAttribute('aria-label','الدور المؤسسي');
+    const choices=[
+      ['employee','موظف'],
+      ['department_head','رئيس قسم'],
+      ['general_supervisor','مشرف عام']
+    ];
+    seg.innerHTML=choices.map(([value,label])=>`<button type="button" class="ucv21-role-opt${editRoleSelect.value===value?' on':''}" data-role="${value}">${label}</button>`).join('');
+    const helper=document.createElement('div');
+    helper.className='ucv21-role-helper';
+    helper.textContent='يمكن تغيير الدور ثم تحديد المنتج والتسكين المناسب قبل الحفظ.';
+    if(roleField){roleField.classList.add('ucv21-role-native');roleField.after(seg);seg.after(helper);}
+    const syncRoleButtons=()=>seg.querySelectorAll('.ucv21-role-opt').forEach(btn=>btn.classList.toggle('on',btn.dataset.role===editRoleSelect.value));
+    editRoleSelect.addEventListener('change',syncRoleButtons);
+    seg.addEventListener('click',event=>{
+      const btn=event.target.closest('.ucv21-role-opt');
+      if(!btn)return;
+      editRoleSelect.value=btn.dataset.role;
+      editRoleSelect.dispatchEvent(new Event('change',{bubbles:true}));
+      syncRoleButtons();
+
+      // Field Survey convenience: when a user in the Field Survey
+      // department is promoted to department_head, configure the existing
+      // canonical compatibility entitlement automatically. No new RBAC.
+      const dept=clean(panel.querySelector('#edit-dept')?.value);
+      if(btn.dataset.role==='department_head'&&/الحصر|ميداني|field/i.test(dept)){
+        const fieldCard=roles.querySelector('.pc[data-p="field"]');
+        const mobilityCard=roles.querySelector('.pc[data-p="mobility"]');
+        const fieldEnabled=fieldCard?.querySelector('.pe');
+        const fieldLevel=fieldCard?.querySelector('#lv-field');
+        const mobilityEnabled=mobilityCard?.querySelector('.pe');
+        if(fieldEnabled&&!fieldEnabled.checked){fieldEnabled.checked=true;fieldEnabled.dispatchEvent(new Event('change',{bubbles:true}));}
+        if(fieldLevel){fieldLevel.value='head';fieldLevel.dispatchEvent(new Event('change',{bubbles:true}));}
+        if(mobilityEnabled&&mobilityEnabled.checked){mobilityEnabled.checked=false;mobilityEnabled.dispatchEvent(new Event('change',{bubbles:true}));}
+      }
+    });
+  }
+
   const prodBlock=roles?.querySelector('.prod');
   if(prodBlock&&!prodBlock.previousElementSibling?.classList?.contains('ucv21-subsection-head')){const sub=document.createElement('div');sub.className='ucv21-section-head ucv21-subsection-head';sub.innerHTML='<span>الخدمات والصلاحيات</span>';prodBlock.before(sub);}
   if(account){const oldPw=account.querySelector('.pwbtn');if(oldPw)oldPw.hidden=true;}
@@ -258,6 +305,23 @@ function buildSinglePageProfile(panel,employee){
     wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
   }
   if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.dataset.ucv21Step='4';hw.innerHTML='<div class="ucv21-section-head"><span>السجل والتكليفات</span><small>آخر التكليفات والحركة المؤسسية</small></div>';history.before(hw);hw.appendChild(history);history.hidden=false;}
+
+  // Window body: only this middle stage scrolls. Header, step navigation
+  // and footer remain fixed in the dialog, eliminating the long left-side
+  // scrollbar and "page inside a modal" feeling.
+  if(!panel.querySelector('.ucv21-profile-stage')){
+    const progress=panel.querySelector('.ucv21-progress');
+    const stage=document.createElement('div');
+    stage.className='ucv21-profile-stage';
+    progress?.after(stage);
+    for(let step=1;step<=4;step+=1){
+      const stepPanel=document.createElement('section');
+      stepPanel.className='ucv21-step-panel';
+      stepPanel.dataset.profilePanel=String(step);
+      stage.appendChild(stepPanel);
+      [...panel.querySelectorAll(`[data-ucv21-step="${step}"]`)].forEach(node=>stepPanel.appendChild(node));
+    }
+  }
   try{panel.__ucv21Snapshot=profileSnapshot(panel,panel.__ucv21Employee);}catch(_){panel.__ucv21Snapshot=null;}
   if(!panel.querySelector('.ucv21-profile-footer')){
     const footer=document.createElement('footer');footer.className='ucv21-profile-footer';footer.innerHTML='<div class="ucv21-profile-msg" aria-live="polite"></div><div class="ucv21-profile-nav"><button type="button" class="btn ucv21-prev">السابق</button><button type="button" class="btn ucv21-next">التالي</button></div><button type="button" class="btn ucv21-cancel">إلغاء</button><button type="button" class="btn pr ucv21-save">حفظ التعديلات</button>';panel.appendChild(footer);
@@ -275,7 +339,7 @@ function buildSinglePageProfile(panel,employee){
   const setProfileStep=step=>{
     const next=Math.min(4,Math.max(1,Number(step)||1));
     panel.dataset.profileStep=String(next);
-    panel.querySelectorAll('[data-ucv21-step]').forEach(el=>el.classList.toggle('ucv21-step-hidden',Number(el.dataset.ucv21Step)!==next));
+    panel.querySelectorAll('.ucv21-step-panel').forEach(el=>el.classList.toggle('ucv21-step-hidden',Number(el.dataset.profilePanel)!==next));
     panel.querySelectorAll('.ucv21-progress-dot[data-profile-step]').forEach(btn=>{
       const active=Number(btn.dataset.profileStep)===next;
       btn.classList.toggle('on',active);
