@@ -502,6 +502,9 @@ async function handler(req, res) {
         if (!isNonEmptyString(mission.requestedEmployeeUid)) {
           return { ok: false, statusCode: 409, reason: 'approved_employee_required' };
         }
+        if (mission.status === 'PENDING_APPROVAL' && mission.createdByUid === caller.uid) {
+          return { ok: true, idempotent: true };
+        }
 
         const actor = { uid: caller.uid, role: 'department_head', organizationId: caller.organizationId };
         const decision = evaluateMissionTransition({ actor, mission, toStatus: 'PENDING_APPROVAL' });
@@ -529,7 +532,7 @@ async function handler(req, res) {
         return { ok: true };
       });
       if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
-      return sendJson(res, 200, { missionId, status: 'PENDING_APPROVAL' });
+      return sendJson(res, 200, { missionId, status: 'PENDING_APPROVAL', idempotent: outcome.idempotent === true });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
@@ -567,7 +570,7 @@ async function handler(req, res) {
           actorRole: actor.role,
           resourceType: 'mission',
           resourceId: missionId,
-          action: decision.code === 'TRANSITION_ALLOWED' ? 'administrative_decision' : 'administrative_decision',
+          action: 'administrative_decision',
           fromStatus: mission.status,
           toStatus,
           timestamp: now,
