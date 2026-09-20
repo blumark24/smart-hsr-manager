@@ -284,7 +284,8 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
           </div>
         </div>
       </section>
-\n      <section class="view" data-view-panel="employees">
+
+      <section class="view" data-view-panel="employees">
         <div class="panel">
           <div class="eyebrow">EMPLOYEE MASTER REGISTRY</div>
           <h1>موظفو القسم</h1>
@@ -489,7 +490,8 @@ function initializeDepartmentMaps(){
   $("[data-basemap]").forEach(btn=>btn.addEventListener("click",()=>setDepartmentBasemap(btn.dataset.basemap)));
   syncDepartmentBasemapButtons();
 }
-\nfunction escapeHtml(value){
+
+function escapeHtml(value){
   return String(value==null?"":value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 async function loadEmployees(user){
