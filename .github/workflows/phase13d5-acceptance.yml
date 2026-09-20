@@ -49,5 +49,8 @@ jobs:
       - name: Field Head user-center provisioning tests
         run: node --test test/field-head-user-center-provisioning.test.js
 
+      - name: User Center edit-window layout tests
+        run: node --test test/user-center-edit-window-layout.test.js
+
       - name: Firestore security rules regression
         run: npm run test:rules
