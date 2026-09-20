@@ -241,7 +241,7 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
         <div class="panel">
           <div class="eyebrow">CROSS-DEPARTMENT WORKFLOW</div>
           <h1>الحركة الميدانية لموظفي القسم</h1>
-          <p>رئيس القسم يعتمد الحاجة للخروج الميداني ومركبة للمهمة، ثم ينتقل نفس الطلب عبر المسار المؤسسي المعتمد دون أن تتحول لوحة الحصر إلى نظام إدارة أسطول.</p>
+          <p>رئيس القسم يعتمد الحاجة للخروج الميداني ومركبة للمهمة، ثم ينتقل نفس الطلب إلى الشؤون الإدارية وبعد اعتمادها إلى إدارة حركة السير للتخصيص والتسليم. رئيس القسم يتابع الحالة ولا يدير الأسطول.</p>
           <div class="workflow" style="margin-top:18px">
             <div class="step"><div class="eyebrow">01</div><b>رئيس القسم</b><small>اعتماد المهمة والحاجة إلى مركبة.</small></div>
             <div class="step"><div class="eyebrow">02</div><b>الشؤون الإدارية</b><small>الاعتماد الإداري للطلب وفق السياسة المعتمدة.</small></div>
@@ -252,26 +252,53 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
 
         <div class="grid2" style="margin-top:16px">
           <div class="card">
-            <div class="section-head"><h2>جاهزية موظفي القسم للحركة</h2><span>من سجل الموظفين المركزي</span></div>
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>الموظف</th><th>دوره في الحصر</th><th>أهلية المركبة</th><th>طلب الحركة الحالي</th></tr></thead>
-                <tbody id="mobilityRows"><tr><td colspan="4">جارٍ تحميل سجل الموظفين…</td></tr></tbody>
-              </table>
+            <div class="section-head"><h2>اعتماد خروج ميداني</h2><span>طلب واحد · مسار مؤسسي واحد</span></div>
+            <div class="form-grid">
+              <div class="field"><label for="missionEmployee">الموظف</label><select id="missionEmployee"><option value="">اختر الموظف المؤهل للمركبة</option></select></div>
+              <div class="field"><label for="missionType">نوع المهمة</label><select id="missionType"><option>حصر ميداني</option><option>متابعة بلاغ</option><option>تحقق ميداني</option><option>معالجة تشوه بصري</option></select></div>
+              <div class="field"><label for="missionDestination">الوجهة / الموقع</label><input id="missionDestination" maxlength="180" placeholder="الموقع المستهدف"></div>
+              <div class="field"><label for="missionWhen">وقت الخروج</label><input id="missionWhen" maxlength="120" placeholder="مثال: 09:30 — اليوم"></div>
+              <div class="field"><label for="missionDuration">المدة المتوقعة</label><input id="missionDuration" maxlength="120" placeholder="مثال: 3 ساعات"></div>
+              <div class="field"><label for="missionScope">النطاق</label><select id="missionScope"><option>داخل النطاق</option><option>خارج النطاق</option></select></div>
+              <div class="field full"><label for="missionReason">مبرر المهمة</label><textarea id="missionReason" maxlength="500" placeholder="سبب الخروج الميداني والحاجة إلى المركبة"></textarea></div>
+            </div>
+            <div class="form-actions">
+              <button class="primary-btn" id="submitMissionBtn" type="button">اعتماد وإرسال للشؤون الإدارية</button>
+              <span class="form-msg" id="mobilityFormMsg">لن تُخصّص مركبة من هذه اللوحة؛ التخصيص يبقى لدى إدارة حركة السير.</span>
             </div>
           </div>
+
           <div class="card">
             <div class="section-head"><h2>حدود الصلاحية</h2><span>Institutional Boundary</span></div>
             <div class="list">
               <div class="row"><div class="grow"><b>رئيس قسم الحصر</b><small>يعتمد خروج الموظف والحاجة إلى مركبة ويتابع حالة الطلب.</small></div><span class="state">اعتماد ومتابعة</span></div>
-              <div class="row"><div class="grow"><b>الشؤون الإدارية</b><small>تنفذ الاعتماد الإداري وفق مسار حركة السير القائم.</small></div><span class="state">اعتماد إداري</span></div>
+              <div class="row"><div class="grow"><b>الشؤون الإدارية</b><small>تنفذ الاعتماد الإداري على نفس الطلب.</small></div><span class="state">اعتماد إداري</span></div>
               <div class="row"><div class="grow"><b>إدارة حركة السير</b><small>تملك الأسطول والتخصيص والتسليم والاستلام وحالة المركبة.</small></div><span class="state">مالك العملية</span></div>
             </div>
-            <div class="notice">لا تعرض هذه المرحلة طلبات حركة أو مركبات وهمية. حالة الطلب والمركبة ستظهر هنا فقط بعد استعادة مصدر missions/vehicles المعتمد من فرع حركة السير واجتياز Integration Gate.</div>
+            <div class="notice">المسار يستخدم سجل missions نفسه وحالات حركة السير المعتمدة. لا توجد مركبات أو طلبات وهمية، ولا توجد صلاحية لرئيس الحصر لإضافة أو تخصيص أو تعديل مركبة.</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="section-head"><h2>طلبات الحركة للقسم</h2><span id="missionCount">—</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>الموظف</th><th>المهمة</th><th>الوجهة</th><th>حالة الطلب</th><th>المركبة</th></tr></thead>
+              <tbody id="missionRows"><tr><td colspan="5">جارٍ تحميل الطلبات…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="section-head"><h2>جاهزية موظفي القسم للحركة</h2><span>من سجل الموظفين المركزي</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>الموظف</th><th>دوره في الحصر</th><th>أهلية المركبة</th><th>طلب الحركة الحالي</th></tr></thead>
+              <tbody id="mobilityRows"><tr><td colspan="4">جارٍ تحميل سجل الموظفين…</td></tr></tbody>
+            </table>
           </div>
         </div>
       </section>
-
 
       <section class="view" data-view-panel="map">
         <div class="panel" style="margin-bottom:16px">
