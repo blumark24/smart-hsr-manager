@@ -35,5 +35,8 @@ jobs:
       - name: Shared mobility workflow tests
         run: node --test test/mobility-workflow-server-bridge.test.js
 
+      - name: Visual distortion inspector-contractor tests
+        run: node --test test/visual-distortion-department-head.test.js
+
       - name: Firestore security rules regression
         run: npm run test:rules
