@@ -222,20 +222,41 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
 
       <section class="view" data-view-panel="product">
         <div class="panel">
-          <div class="eyebrow">SERVICE MODULE</div>
-          <h1 id="productTitle">منتج القسم</h1>
-          <p id="productIntro">وحدة تشغيلية داخل لوحة رئيس القسم. هذه المرحلة تستخدم البيانات الموثوقة المتاحة فقط ولا تُنشئ أرقامًا افتراضية.</p>
+          <div class="eyebrow">VISUAL DISTORTION COMMAND</div>
+          <h1 id="productTitle">التشوه البصري</h1>
+          <p id="productIntro">مركز تشغيل رئيس قسم الحصر الميداني لمتابعة حالات التشوه البصري، مراقبي القسم، والمقاولين الخارجيين المكلفين بالمعالجة. البيانات أدناه تأتي من السجلات الحقيقية فقط.</p>
           <div class="workflow" id="productWorkflow"></div>
         </div>
+
+        <div class="kpis" style="margin-top:16px">
+          <div class="card kpi"><span>إجمالي الحالات</span><strong data-visual-kpi="total">—</strong><small>الحالات الموثقة في المؤسسة</small></div>
+          <div class="card kpi"><span>جديدة</span><strong data-visual-kpi="pending">—</strong><small>بانتظار الإسناد أو بدء المعالجة</small></div>
+          <div class="card kpi"><span>قيد المعالجة</span><strong data-visual-kpi="progress">—</strong><small>لدى المقاول</small></div>
+          <div class="card kpi"><span>بانتظار التحقق</span><strong data-visual-kpi="review">—</strong><small>أعادها المقاول للمراجعة</small></div>
+          <div class="card kpi"><span>مغلقة</span><strong data-visual-kpi="closed">—</strong><small>تم التحقق والإغلاق</small></div>
+        </div>
+
         <div class="grid2" style="margin-top:16px">
           <div class="card">
-            <div class="section-head"><h2>فريق المنتج</h2><span>من مركز المستخدمين</span></div>
+            <div class="section-head"><h2>مراقبو القسم</h2><span id="visualInspectorCount">—</span></div>
             <div class="list" id="productTeam"></div>
           </div>
           <div class="card">
-            <div class="section-head"><h2>حدود التشغيل</h2><span>Fail-closed</span></div>
-            <div class="notice">تعرض هذه الصفحة بيانات موظفي القسم التي يسمح بها المسار الحالي فقط. مؤشرات البلاغات/الملاحظات الميدانية لن تُعرض كأرقام حتى يتوفر مصدر Department-scoped موثوق ومصرّح به.</div>
+            <div class="section-head"><h2>المقاولون</h2><span id="visualContractorCount">—</span></div>
+            <div class="list" id="contractorList"><div class="empty">جارٍ تحميل المقاولين…</div></div>
+            <div class="notice">المقاول طرف تنفيذي خارجي وليس موظفًا في سجل موظفي القسم. تظهر هنا حسابات المقاولين النشطة التابعة لنفس المؤسسة فقط.</div>
           </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="section-head"><h2>حالات التشوه البصري</h2><span id="visualObservationCount">—</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>الحالة</th><th>الموقع</th><th>المرحلة</th><th>المراقب</th><th>المقاول</th><th>الإجراء</th></tr></thead>
+              <tbody id="visualObservationRows"><tr><td colspan="6">جارٍ تحميل الحالات…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="notice" id="visualCommandMsg">رئيس القسم يراجع الحالة ويُسندها لمقاول. المقاول يعالجها من لوحته الخاصة، ثم يعيدها للتحقق قبل الإغلاق.</div>
         </div>
       </section>
 
@@ -366,7 +387,7 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
 
-const state = { context:null, profile:null, employees:[], missions:[], loading:true, error:"", missionLoading:true, missionError:"", pendingMissionClientRequestId:null };
+const state = { context:null, profile:null, employees:[], missions:[], observations:[], contractors:[], loading:true, error:"", missionLoading:true, missionError:"", visualLoading:true, visualError:"", pendingMissionClientRequestId:null };
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
@@ -421,6 +442,8 @@ function render(){
   const p=state.profile;
   const e=state.employees;
   const missions=state.missions;
+  const observations=state.observations;
+  const contractors=state.contractors;
   setText("sideDepartment",p.department);
   setText("sideProduct",p.product);
   setText("topDepartment","مركز قيادة القسم · "+p.department);
@@ -451,8 +474,42 @@ function render(){
   else preview.innerHTML=e.slice(0,5).map(emp=>'<div class="row"><div class="mini">'+initials(emp.name)+'</div><div class="grow"><b>'+escapeHtml(emp.name||"موظف")+'</b><small>'+escapeHtml(emp.jobTitle||"بدون مسمى")+'</small></div><span class="state">'+escapeHtml(accountLabel(emp.accountStatus))+'</span></div>').join("");
 
   const productTeam=$("#productTeam");
-  const fieldTeam=p.id==="field-survey" ? e.filter(x=>x.products&&x.products.field&&x.products.field.enabled===true) : e;
-  productTeam.innerHTML=fieldTeam.length?fieldTeam.slice(0,10).map(emp=>'<div class="row"><div class="mini">'+initials(emp.name)+'</div><div class="grow"><b>'+escapeHtml(emp.name||"موظف")+'</b><small>'+escapeHtml(emp.jobTitle||"بدون مسمى")+'</small></div><span class="state">'+escapeHtml(p.id==="field-survey"?productFieldRole(emp):accountLabel(emp.accountStatus))+'</span></div>').join(""):'<div class="empty">لا يوجد موظفون مرتبطون بهذا المنتج في السجل الحالي.</div>';
+  const fieldTeam=e.filter(x=>x.products&&x.products.field&&x.products.field.enabled===true&&x.products.field.role==="inspector");
+  setText("visualInspectorCount",fieldTeam.length+" مراقب");
+  productTeam.innerHTML=fieldTeam.length?fieldTeam.slice(0,12).map(emp=>'<div class="row"><div class="mini">'+initials(emp.name)+'</div><div class="grow"><b>'+escapeHtml(emp.name||"مراقب")+'</b><small>'+escapeHtml(emp.jobTitle||"مراقب ميداني")+'</small></div><span class="state">مراقب</span></div>').join(""):'<div class="empty">لا يوجد مراقبون مفعّلون في هذا القسم.</div>';
+
+  const contractorList=$("#contractorList");
+  setText("visualContractorCount",state.visualLoading?"جارٍ التحميل":(contractors.length+" مقاول"));
+  if(contractorList){
+    if(state.visualLoading) contractorList.innerHTML='<div class="empty">جارٍ تحميل المقاولين…</div>';
+    else if(state.visualError) contractorList.innerHTML='<div class="empty">تعذر تحميل المقاولين حاليًا.</div>';
+    else contractorList.innerHTML=contractors.length?contractors.map(x=>'<div class="row"><div class="mini">'+initials(x.name)+'</div><div class="grow"><b>'+escapeHtml(x.name||"مقاول")+'</b><small>جهة تنفيذ خارجية</small></div><span class="state">نشط</span></div>').join(""):'<div class="empty">لا توجد حسابات مقاولين نشطة في المؤسسة.</div>';
+  }
+
+  const visualCounts={
+    total:observations.length,
+    pending:observations.filter(x=>x.status==="PENDING").length,
+    progress:observations.filter(x=>x.status==="IN_PROGRESS").length,
+    review:observations.filter(x=>x.status==="PENDING_REVIEW").length,
+    closed:observations.filter(x=>x.status==="COMPLETED").length
+  };
+  Object.entries(visualCounts).forEach(([k,v])=>{const el=document.querySelector('[data-visual-kpi="'+k+'"]');if(el)el.textContent=state.visualLoading?"—":String(v);});
+  setText("visualObservationCount",state.visualLoading?"جارٍ التحميل":(observations.length+" حالة"));
+
+  const inspectorNameByUid=new Map(e.filter(x=>x.authUid).map(x=>[x.authUid,x.name||"مراقب"]));
+  const visualRows=$("#visualObservationRows");
+  if(visualRows){
+    if(state.visualLoading) visualRows.innerHTML='<tr><td colspan="6">جارٍ تحميل حالات التشوه البصري…</td></tr>';
+    else if(state.visualError) visualRows.innerHTML='<tr><td colspan="6">تعذر تحميل الحالات حاليًا.</td></tr>';
+    else visualRows.innerHTML=observations.length?observations.map(obs=>{
+      const canAssign=obs.status==="PENDING";
+      const assigned=obs.assignedContractorUid||"";
+      const contractorOptions=contractors.map(x=>'<option value="'+escapeHtml(x.uid)+'" '+(x.uid===assigned?'selected':'')+'>'+escapeHtml(x.name||"مقاول")+'</option>').join("");
+      const select='<select data-contractor-for="'+escapeHtml(obs.observationId)+'" '+(canAssign?'':'disabled')+'><option value="">اختر المقاول</option>'+contractorOptions+'</select>';
+      const action=canAssign?'<button class="primary-btn" type="button" data-assign-observation="'+escapeHtml(obs.observationId)+'">إسناد</button>':'<span class="state">'+escapeHtml(obs.statusLabel||obs.status||"—")+'</span>';
+      return '<tr><td><b>'+escapeHtml(obs.title||("حالة #"+(obs.displayId||"—")))+'</b><br><small>'+escapeHtml(obs.type||"تشوه بصري")+'</small></td><td>'+escapeHtml(obs.location||"—")+'</td><td><span class="state">'+escapeHtml(obs.statusLabel||obs.status||"—")+'</span></td><td>'+escapeHtml(inspectorNameByUid.get(obs.createdByUid)||"—")+'</td><td>'+select+'</td><td>'+action+'</td></tr>';
+    }).join(""):'<tr><td colspan="6">لا توجد حالات تشوه بصري موثقة حاليًا.</td></tr>';
+  }
 
   $("#productWorkflow").innerHTML=p.workflow.map((x,i)=>'<div class="step"><div class="eyebrow">0'+(i+1)+'</div><b>'+escapeHtml(x[0])+'</b><small>'+escapeHtml(x[1])+'</small></div>').join("");
 
@@ -603,6 +660,42 @@ async function loadMissions(user){
     state.missionLoading=false;render();
   }
 }
+async function loadVisualDistortion(user){
+  state.visualLoading=true;state.visualError="";render();
+  try{
+    const data=await mobilityRequest(user,{action:"getFieldVisualDistortionCommand"});
+    state.observations=Array.isArray(data.observations)?data.observations:[];
+    state.contractors=Array.isArray(data.contractors)?data.contractors:[];
+  }catch(err){
+    console.error("department-head: visual distortion command failed",err);
+    state.visualError="تعذر تحميل بيانات التشوه البصري.";
+  }finally{
+    state.visualLoading=false;render();
+  }
+}
+async function assignObservationToContractor(observationId){
+  const user=window.__departmentHeadUser;
+  if(!user)return;
+  const select=document.querySelector('[data-contractor-for="'+CSS.escape(observationId)+'"]');
+  const contractorUid=select&&select.value;
+  const msg=$("#visualCommandMsg");
+  if(!contractorUid){msg.textContent="اختر المقاول قبل الإسناد.";return;}
+  msg.textContent="جارٍ إسناد الحالة للمقاول…";
+  try{
+    await mobilityRequest(user,{action:"assignFieldObservation",observationId,contractorUid});
+    msg.textContent="تم إسناد الحالة للمقاول بنجاح. سيظهر البلاغ في لوحة المقاول الخاصة.";
+    await loadVisualDistortion(user);
+  }catch(err){
+    const labels={
+      observation_not_found:"تعذر العثور على الحالة.",
+      contractor_not_found:"تعذر العثور على حساب المقاول.",
+      cross_organization_denied:"لا يمكن الإسناد خارج المؤسسة.",
+      active_contractor_required:"حساب المقاول غير نشط.",
+      observation_not_assignable:"هذه الحالة ليست في مرحلة تسمح بالإسناد."
+    };
+    msg.textContent=labels[err.code]||"تعذر إسناد الحالة حاليًا.";
+  }
+}
 function mobilityErrorLabel(code){
   const labels={
     employee_required:"اختر الموظف.",
@@ -682,8 +775,12 @@ $("#themeBtn").addEventListener("click",()=>{
   document.documentElement.setAttribute("data-theme",next);
   try{localStorage.setItem("smartTheme",next);}catch(_){}
 });
-$("#refreshBtn").addEventListener("click",()=>{if(window.__departmentHeadUser){loadEmployees(window.__departmentHeadUser);loadMissions(window.__departmentHeadUser);}});
+$("#refreshBtn").addEventListener("click",()=>{if(window.__departmentHeadUser){loadEmployees(window.__departmentHeadUser);loadMissions(window.__departmentHeadUser);loadVisualDistortion(window.__departmentHeadUser);}});
 $("#submitMissionBtn").addEventListener("click",submitMobilityMission);
+document.addEventListener("click",e=>{
+  const btn=e.target.closest("[data-assign-observation]");
+  if(btn)assignObservationToContractor(btn.dataset.assignObservation);
+});
 
 let firebaseConfig;
 try{
@@ -725,7 +822,7 @@ onAuthStateChanged(auth,async user=>{
     }
     window.__departmentHeadUser=user;
     render();
-    await Promise.all([loadEmployees(user),loadMissions(user)]);
+    await Promise.all([loadEmployees(user),loadMissions(user),loadVisualDistortion(user)]);
   }catch(err){
     console.error("department-head: authorization lookup failed",err);
     await signOut(auth).catch(()=>{});
