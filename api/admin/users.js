@@ -471,6 +471,41 @@ async function handler(req, res) {
     }
   }
 
+  if (action === 'listFieldDepartmentAudit') {
+    const caller = await requireFieldDepartmentHead(decoded.uid);
+    if (!caller) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+    }
+    try {
+      const snap = await db.collection('auditEvents')
+        .where('organizationId', '==', caller.organizationId)
+        .get();
+      const allowedResourceTypes = new Set(['observation', 'contractorProfile', 'mission']);
+      const events = [];
+      for (const doc of snap.docs) {
+        const data = doc.data() || {};
+        const eventDepartment = cleanString(data.department);
+        if (eventDepartment && eventDepartment !== cleanString(caller.department)) continue;
+        if (!allowedResourceTypes.has(cleanString(data.resourceType))) continue;
+        events.push({
+          auditId: doc.id,
+          resourceType: cleanString(data.resourceType),
+          resourceId: cleanString(data.resourceId),
+          action: cleanString(data.action),
+          actorRole: cleanString(data.actorRole),
+          fromStatus: cleanString(data.fromStatus) || null,
+          toStatus: cleanString(data.toStatus) || null,
+          contractorUid: cleanString(data.contractorUid) || null,
+          timestamp: timestampToIso(data.timestamp || data.createdAt),
+        });
+      }
+      events.sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')));
+      return sendJson(res, 200, { events: events.slice(0, 250) });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   if (action === 'upsertFieldContractorProfile') {
     const caller = await requireFieldDepartmentHead(decoded.uid);
     if (!caller) {
