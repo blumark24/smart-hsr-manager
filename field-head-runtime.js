@@ -362,7 +362,7 @@
               const label=m.statusLabel||m.status||'—',col='#38bdf8';
               return {
                 chip:label,chipCol:col,chipBg:'rgba(56,189,248,.10)',chipBd:'rgba(56,189,248,.35)',
-                on:()=>instance.openDrawer('mission',m.missionId||m.id),
+                on:()=>instance.setState({drawer:'fieldMission',drawerId:m.missionId||m.id}),
                 cells:[
                   cell(m.missionId||m.id,'0 0 90px',{weight:'650',col:'var(--tx,#e9f1fb)'}),
                   cell(m.type,'1.1'),cell(m.requestedEmployeeName||m.assignedEmployeeName,'1'),
@@ -491,6 +491,27 @@
             actions
           };
         }
+        if (kind === 'fieldMission') {
+          const m=(instance.state.liveMissions||[]).find(x=>(x.missionId||x.id)===id);
+          if(!m) return {title:'تعذر تحديد المهمة',sub:'',chip:'',chipCol:'',chipBg:'',chipBd:''};
+          const label=m.statusLabel||m.status||'—';
+          const col='#38bdf8';
+          return {
+            title:'مهمة ميدانية · '+String(m.missionId||m.id||''),
+            sub:m.type||'مهمة ميدانية',
+            chip:label,chipCol:col,chipBg:'rgba(56,189,248,.10)',chipBd:'rgba(56,189,248,.35)',
+            rows:[
+              {k:'الموظف',v:m.requestedEmployeeName||m.assignedEmployeeName||'—'},
+              {k:'الوجهة',v:m.destination||'—'},
+              {k:'السبب',v:m.reason||'—'},
+              {k:'النطاق',v:m.scope||'—'},
+              {k:'المركبة',v:m.vehicleId||'بانتظار إدارة الحركة'},
+              {k:'الحالة',v:label}
+            ],
+            actions:[]
+          };
+        }
+
         if (kind === 'contractorProfile') {
           const x=(instance.state.liveContractors||[]).find(v=>v.uid===id);
           if(!x) return {title:'تعذر تحديد المقاول',sub:'',chip:'',chipCol:'',chipBg:'',chipBd:''};
