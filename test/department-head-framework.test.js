@@ -53,7 +53,9 @@ test('department head command center is field-survey specific and does not imper
   assert.match(page, /إدارة الأسطول والصلاحيات التنفيذية لدى الجهات المختصة/);
   assert.match(page, /إدارة حركة السير/);
   assert.match(page, /اختيار المركبة وتخصيصها للموظف والمهمة/);
-  assert.match(page, /لا تعرض هذه المرحلة طلبات حركة أو مركبات وهمية/);
+  assert.match(page, /لا توجد مركبات أو طلبات وهمية/);
+  assert.match(page, /اعتماد وإرسال للشؤون الإدارية/);
+  assert.match(page, /action:"submitMissionForApproval"/);
 });
 
 test('no fabricated operational observation counts are rendered', () => {
