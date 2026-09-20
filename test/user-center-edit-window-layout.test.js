@@ -87,3 +87,12 @@ test('department-head selection normalizes a single enabled product to head scop
 test('inactive edit stages are actually hidden after the base panel display rule', () => {
   assert.match(skin, /\.ucv21-step-panel\.ucv21-step-hidden\{display:none!important\}/);
 });
+
+
+test('department-head role is normalized before staged snapshot validation and raw reason codes are localized', () => {
+  assert.match(reference, /function normalizeDepartmentHeadProducts\(/);
+  assert.match(reference, /normalizeDepartmentHeadProducts\(panel,employee\)/);
+  assert.match(reference, /products=U\.readProducts/);
+  assert.match(reference, /U\?\.why\?\.\(error\?\.reason\|\|error\?\.message\)/);
+  assert.match(reference, /level\.value='head'/);
+});
