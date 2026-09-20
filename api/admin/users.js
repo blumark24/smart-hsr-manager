@@ -968,6 +968,35 @@ async function handler(req, res) {
         if (!isValidMobilityAllocationTarget(employee, organizationId)) {
           return { ok: false, statusCode: 403, reason: 'invalid_allocation_target' };
         }
+        if (isNonEmptyString(mission.requestedEmployeeUid) && mission.requestedEmployeeUid !== employeeUid) {
+          return { ok: false, statusCode: 409, reason: 'approved_employee_mismatch' };
+        }
+
+        const actor = { uid: decoded.uid, role: 'mobility_head', organizationId };
+        const missionDecision = evaluateMissionTransition({
+          actor,
+          mission,
+          toStatus: 'VEHICLE_ALLOCATED',
+          requestedFields: { vehicleId, assignedEmployeeUid: employeeUid },
+        });
+        if (!missionDecision.allowed) {
+          return { ok: false, statusCode: 409, reason: missionDecision.code };
+        }
+        const vehicleDecision = evaluateVehicleTransition({
+          actor,
+          vehicle,
+          toStatus: 'RESERVED',
+          requestedFields: { assignedEmployeeUid: employeeUid, currentMissionId: missionId },
+          assignedEmployee: {
+            organizationId: employee.organizationId,
+            active: employee.active,
+            role: resolveMobilityRole(employee),
+            vehicleEligible: employee.vehicleEligible,
+          },
+        });
+        if (!vehicleDecision.allowed) {
+          return { ok: false, statusCode: 409, reason: vehicleDecision.code };
+        }
 
         const now = FieldValue.serverTimestamp();
         const employeeName = isNonEmptyString(employee.name) ? employee.name.trim() : '';
@@ -986,9 +1015,8 @@ async function handler(req, res) {
           updatedAt: now,
           updatedByUid: decoded.uid,
         });
-        // The one canonical audit event, inside this same transaction —
-        // actor/role/organization are always the trusted server-derived
-        // caller, never request-body values, so neither can ever be spoofed.
+        // Mission and vehicle audit records are committed atomically with
+        // the allocation so the cross-product workflow has one truthful trail.
         transaction.set(db.collection('auditEvents').doc(), {
           organizationId,
           actorId: decoded.uid,
@@ -996,9 +1024,23 @@ async function handler(req, res) {
           resourceType: 'mission',
           resourceId: missionId,
           action: 'allocate_vehicle',
-          fromStatus: 'APPROVED',
+          fromStatus: mission.status,
           toStatus: 'VEHICLE_ALLOCATED',
           vehicleId,
+          assignedEmployeeUid: employeeUid,
+          timestamp: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId,
+          actorId: decoded.uid,
+          actorRole: 'mobility_head',
+          resourceType: 'vehicle',
+          resourceId: vehicleId,
+          action: 'reserve',
+          fromStatus: vehicle.status,
+          toStatus: 'RESERVED',
+          missionId,
+          assignedEmployeeUid: employeeUid,
           timestamp: now,
         });
         return { ok: true };
