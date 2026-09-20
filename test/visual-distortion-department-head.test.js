@@ -96,3 +96,11 @@ test('contractor workflow remains the execution owner until PENDING_REVIEW', () 
   assert.match(contractorPage, /NOTE_REQUIRED/);
   assert.match(contractorPage, /assignedContractorUid !== auth\.currentUser\.uid/);
 });
+
+
+test('inspector cannot close visual distortion directly after contractor execution', () => {
+  const inspectorPage = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+  assert.match(inspectorPage, /toggleHidden\('completeObservationBtn', true\)/);
+  assert.match(inspectorPage, /الإغلاق النهائي يتم من رئيس قسم الحصر الميداني/);
+  assert.doesNotMatch(inspectorPage, /currentSelectedObservation\.status = 'COMPLETED'/);
+});
