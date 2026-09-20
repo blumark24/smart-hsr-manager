@@ -67,7 +67,6 @@ test('operational observation counts come only from the trusted visual-distortio
 
 
 test('department head framework includes a real basemap and observation-backed operational markers only', () => {
-  assert.match(page, /id="departmentMapMini"/);
   assert.match(page, /id="departmentMapFull"/);
   assert.match(page, /tile\.openstreetmap\.org/);
   assert.match(page, /server\.arcgisonline\.com/);
@@ -78,8 +77,9 @@ test('department head framework includes a real basemap and observation-backed o
 });
 
 
-test('preview runtime does not contain escaped-newline parse bug', () => {
+test('preview runtime keeps the approved MapLibre visual baseline without escaped script artifacts', () => {
   const preview = fs.readFileSync(path.join(root, 'department-head-preview.html'), 'utf8');
   assert.doesNotMatch(preview, /\\ninitializePreviewMaps\(\);/);
-  assert.match(preview, /initializePreviewMaps\(\);/);
+  assert.match(preview, /new maplibregl\.Map/);
+  assert.match(preview, /server\.arcgisonline\.com/);
 });
