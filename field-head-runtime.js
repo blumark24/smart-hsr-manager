@@ -114,7 +114,25 @@
       observationId,
       closureNote:'تم الإغلاق بعد تحقق المراقب واعتماد رئيس قسم الحصر الميداني.'
     }).then(refresh),
-    upsertFieldContractorProfile: payload => api('upsertFieldContractorProfile',payload).then(refresh)
+    upsertFieldContractorProfile: payload => api('upsertFieldContractorProfile',payload).then(refresh),
+    resolveObservationEvidence: async reference => {
+      if (!reference || !currentUser) return null;
+      try {
+        const { resolveObservationImage } = await import('./storage-adapter.js');
+        const result = await resolveObservationImage({
+          reference,
+          context:{
+            organizationId:state.organizationId,
+            uid:currentUser.uid,
+            role:'department_head',
+            authUser:currentUser
+          }
+        });
+        return result && result.available && result.url ? result.url : null;
+      } catch (_) {
+        return null;
+      }
+    }
   };
   window.dispatchEvent(new Event('smart-hsr-mobility-adapter-ready'));
 })();
