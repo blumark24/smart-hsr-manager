@@ -71,3 +71,28 @@ test('contractor profile mutation is field-head and tenant scoped', () => {
   assert.match(usersApi, /action: 'upsert_contractor_profile'/);
   assert.match(usersApi, /contract_date_range_invalid/);
 });
+
+
+test('inspector verification is required before department-head closure', () => {
+  const inspectorPage = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+  assert.match(usersApi, /action === 'verifyFieldObservation'/);
+  assert.match(usersApi, /reporting_inspector_required/);
+  assert.match(usersApi, /observation\.status !== 'PENDING_REVIEW'/);
+  assert.match(usersApi, /action: 'verify_contractor_work'/);
+  assert.match(usersApi, /action: 'return_to_contractor'/);
+  assert.match(usersApi, /action === 'closeFieldObservation'/);
+  assert.match(usersApi, /inspector_verification_required/);
+  assert.match(usersApi, /action: 'close_visual_distortion_case'/);
+  assert.match(inspectorPage, /id="inspectorVerificationPanel"/);
+  assert.match(inspectorPage, /action:'verifyFieldObservation'/);
+  assert.match(page, /data-close-observation/);
+  assert.match(page, /action:"closeFieldObservation"/);
+});
+
+test('contractor workflow remains the execution owner until PENDING_REVIEW', () => {
+  assert.match(contractorPage, /if \(currentStatus === 'PENDING'\) return 'IN_PROGRESS'/);
+  assert.match(contractorPage, /if \(currentStatus === 'IN_PROGRESS'\) return 'PENDING_REVIEW'/);
+  assert.match(contractorPage, /AFTER_IMAGE_REQUIRED/);
+  assert.match(contractorPage, /NOTE_REQUIRED/);
+  assert.match(contractorPage, /assignedContractorUid !== auth\.currentUser\.uid/);
+});
