@@ -35,7 +35,8 @@ test('promoting to department head normalizes a single enabled product into head
   assert.match(reference, /btn\.dataset\.role==='department_head'/);
   assert.match(reference, /normalizeDepartmentHeadSelection/);
   assert.match(reference, /level\.value='head'/);
-  assert.match(reference, /enabled\.length===1|enabled\.length!==1/);
+  assert.match(reference, /enabled\.length===0/);
+  assert.match(reference, /enabled\.length>1/);
 });
 
 test('edit-user window has explicit previous and next navigation while preserving save', () => {
@@ -78,7 +79,8 @@ test('role save validation keeps product errors on role/services step', () => {
 
 test('department-head selection normalizes a single enabled product to head scope', () => {
   assert.match(reference, /normalizeDepartmentHeadSelection/);
-  assert.match(reference, /enabled\.length!==1/);
+  assert.match(reference, /enabled\.length===0/);
+  assert.match(reference, /enabled\.length>1/);
   assert.match(reference, /level\.value='head'/);
   assert.match(reference, /إدارة الحصر الميداني/);
 });
