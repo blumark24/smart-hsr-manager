@@ -225,6 +225,48 @@ function safeMission(id, data) {
   };
 }
 
+const FIELD_OBSERVATION_STATUS_LABELS = Object.freeze({
+  PENDING: 'جديدة',
+  IN_PROGRESS: 'قيد المعالجة',
+  PENDING_REVIEW: 'بانتظار التحقق',
+  COMPLETED: 'مغلقة',
+});
+
+function safeFieldObservation(id, data) {
+  return {
+    observationId: id,
+    displayId: Number.isFinite(data.displayId) ? data.displayId : null,
+    title: data.title || null,
+    details: data.details || null,
+    type: data.type || null,
+    status: data.status || 'PENDING',
+    statusLabel: FIELD_OBSERVATION_STATUS_LABELS[data.status] || data.status || 'غير محدد',
+    location: data.location || null,
+    correctedLat: Number.isFinite(data.correctedLat) ? data.correctedLat : null,
+    correctedLng: Number.isFinite(data.correctedLng) ? data.correctedLng : null,
+    imagePath: data.imagePath || null,
+    afterImagePath: data.afterImagePath || null,
+    resolutionNote: data.resolutionNote || null,
+    createdByUid: data.createdByUid || null,
+    assignedContractorUid: data.assignedContractorUid || null,
+    assignedContractorName: data.assignedContractorName || null,
+    assignedByUid: data.assignedByUid || null,
+    supervisorNote: data.supervisorNote || null,
+    createdAt: timestampToIso(data.createdAt),
+    assignedAt: timestampToIso(data.assignedAt),
+    updatedAt: timestampToIso(data.updatedAt),
+  };
+}
+
+async function requireFieldDepartmentHead(decodedUid) {
+  const caller = await getCallerContext(decodedUid);
+  if (!caller.isDepartmentHead || caller.role !== 'department_head'
+      || !caller.organizationId || !isFieldSurveyDepartment(caller.department)) {
+    return null;
+  }
+  return caller;
+}
+
 // Only ever expose safe, non-sensitive account metadata.
 async function safeMetadata(auth, uid, record) {
   let lastSignInTime = null;
@@ -312,6 +354,125 @@ async function handler(req, res) {
         employees.push({ uid: doc.id, name: d.name || doc.id });
       }
       return sendJson(res, 200, { employees });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // PHASE 02B — Visual Distortion command surface for the Field Survey
+  // Department Head. Contractors are external operational identities, not
+  // employee-registry records. All tenant scope comes from the verified
+  // department-head identity; the client cannot choose another organization.
+  if (action === 'getFieldVisualDistortionCommand') {
+    const caller = await requireFieldDepartmentHead(decoded.uid);
+    if (!caller) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+    }
+    try {
+      const [obsSnap, contractorSnap] = await Promise.all([
+        db.collection('observations').where('organizationId', '==', caller.organizationId).get(),
+        db.collection('users').where('organizationId', '==', caller.organizationId).get(),
+      ]);
+
+      const observations = obsSnap.docs.map(doc => safeFieldObservation(doc.id, doc.data() || {}));
+      observations.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+
+      const contractors = [];
+      for (const doc of contractorSnap.docs) {
+        const data = doc.data() || {};
+        if (data.active === false || data.role !== 'contractor') continue;
+        contractors.push({
+          uid: doc.id,
+          name: cleanString(data.name, 'مقاول'),
+          organizationId: caller.organizationId,
+          active: true,
+        });
+      }
+      contractors.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+      return sendJson(res, 200, {
+        product: 'visual_distortion',
+        observations: observations.slice(0, 250),
+        contractors,
+      });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'assignFieldObservation') {
+    const caller = await requireFieldDepartmentHead(decoded.uid);
+    if (!caller) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+    }
+
+    const observationId = cleanString(body.observationId);
+    const contractorUid = cleanString(body.contractorUid);
+    const supervisorNote = cleanString(body.supervisorNote);
+    if (!observationId || !contractorUid) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'observationId_and_contractorUid_required' });
+    }
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const observationRef = db.collection('observations').doc(observationId);
+        const contractorRef = db.collection('users').doc(contractorUid);
+        const [observationSnap, contractorSnap] = await Promise.all([
+          transaction.get(observationRef),
+          transaction.get(contractorRef),
+        ]);
+        if (!observationSnap.exists) return { ok: false, statusCode: 404, reason: 'observation_not_found' };
+        if (!contractorSnap.exists) return { ok: false, statusCode: 404, reason: 'contractor_not_found' };
+
+        const observation = observationSnap.data() || {};
+        const contractor = contractorSnap.data() || {};
+
+        if (observation.organizationId !== caller.organizationId
+            || contractor.organizationId !== caller.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        if (contractor.active === false || contractor.role !== 'contractor') {
+          return { ok: false, statusCode: 409, reason: 'active_contractor_required' };
+        }
+        if (observation.status !== 'PENDING') {
+          return { ok: false, statusCode: 409, reason: 'observation_not_assignable' };
+        }
+
+        const now = FieldValue.serverTimestamp();
+        const contractorName = cleanString(contractor.name, contractorUid);
+        transaction.update(observationRef, {
+          assignedContractorUid: contractorUid,
+          assignedContractorName: contractorName,
+          assignedByUid: caller.uid,
+          assignedByName: caller.name || 'رئيس قسم الحصر الميداني',
+          assignedAt: now,
+          supervisorNote: supervisorNote || '',
+          updatedByUid: caller.uid,
+          updatedAt: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: caller.organizationId,
+          department: caller.department,
+          actorId: caller.uid,
+          actorRole: 'department_head',
+          resourceType: 'observation',
+          resourceId: observationId,
+          action: 'assign_contractor',
+          contractorUid,
+          timestamp: now,
+        });
+        return { ok: true, contractorName };
+      });
+
+      if (!outcome.ok) {
+        return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      }
+      return sendJson(res, 200, {
+        observationId,
+        contractorUid,
+        contractorName: outcome.contractorName,
+        status: 'PENDING',
+      });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
