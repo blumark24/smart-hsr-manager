@@ -641,15 +641,18 @@ function injectApprovedSkin() {
      stepper look); it does not paginate or hide any existing section. */
   #iuc-profile>div.ucv21-single-page,.ucv21-single-page{
     width:min(960px,calc(100vw - 32px))!important;max-width:960px!important;
+    height:min(720px,calc(100dvh - 36px))!important;max-height:min(720px,calc(100dvh - 36px))!important;
     border-radius:24px!important;border:1px solid var(--glow-edge)!important;
     box-shadow:var(--shadow-dialog),inset 0 1px rgba(255,255,255,.07),0 0 46px -18px var(--glow-outer)!important;
     background:var(--surface-dialog-body)!important;backdrop-filter:blur(6px)!important;
+    overflow:hidden!important;display:flex!important;flex-direction:column!important;
   }
   [data-theme="light"] #iuc-profile>div.ucv21-single-page,[data-theme="light"] .ucv21-single-page{box-shadow:var(--shadow-dialog),inset 0 1px rgba(255,255,255,.85),0 0 46px -18px var(--glow-outer)!important}
   .ucv21-single-page .ih{
     padding:var(--space-4) var(--space-5)!important;
     background:var(--surface-glass)!important;backdrop-filter:blur(28px) saturate(160%)!important;
     display:flex!important;align-items:flex-start!important;border-bottom-color:var(--border-hairline)!important;
+    position:relative!important;top:auto!important;flex:0 0 auto!important;
   }
   .ucv21-single-page .ih b{font-size:19px!important}
 
@@ -673,7 +676,7 @@ function injectApprovedSkin() {
      .ucv21-progress) — same circle+connecting-line language as Add
      Employee's stepper, but non-interactive and never hides content;
      the five real sections below it are unchanged. */
-  .ucv21-progress{display:flex!important;align-items:center!important;gap:0!important;padding:var(--space-3) var(--space-5)!important;border-bottom:1px solid var(--border-hairline)!important;overflow-x:auto!important}
+  .ucv21-progress{display:flex!important;align-items:center!important;gap:0!important;padding:var(--space-3) var(--space-5)!important;border-bottom:1px solid var(--border-hairline)!important;overflow-x:auto!important;flex:0 0 auto!important}
   .ucv21-progress-line{flex:1 1 auto!important;min-width:20px!important;height:1px!important;background:var(--border-strong)!important;margin:0 var(--space-2)!important}
   .ucv21-progress-dot{display:flex!important;align-items:center!important;gap:8px!important;font-size:12px!important;color:var(--r-muted)!important;white-space:nowrap!important;opacity:.62!important;flex:0 0 auto!important;border:0!important;background:transparent!important;padding:0!important;font:inherit!important;cursor:pointer!important}
   .ucv21-progress-dot:hover{opacity:.88!important}
@@ -684,6 +687,16 @@ function injectApprovedSkin() {
   .ucv21-progress-dot.on b{background:#3ed39a!important;border-color:#3ed39a!important;color:#04150e!important;box-shadow:0 0 0 4px rgba(62,211,154,.16)!important}
   [data-theme="light"] .ucv21-progress-dot.on b{background:#149c2b!important;border-color:#149c2b!important;color:#fff!important;box-shadow:0 0 0 4px rgba(18,133,90,.14)!important}
 
+  .ucv21-profile-stage{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;overflow-x:hidden!important;padding:14px var(--space-5) 18px!important;scrollbar-gutter:stable!important}
+  .ucv21-step-panel{display:block!important}
+  .ucv21-step-panel>.pane,.ucv21-step-panel>.ucv21-password-inline,.ucv21-step-panel>.ucv21-history-wrap{padding:0!important}
+  .ucv21-step-panel .ucv21-section-head:first-child{margin-top:0!important}
+  .ucv21-role-native{display:none!important}
+  .ucv21-role-seg{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:4px 0 8px!important}
+  .ucv21-role-opt{height:42px!important;border-radius:11px!important;border:1px solid var(--border-subtle)!important;background:var(--surface-elevated)!important;color:var(--r-muted)!important;font-size:12px!important;font-weight:700!important;cursor:pointer!important}
+  .ucv21-role-opt.on{border-color:#3ed39a!important;background:rgba(62,211,154,.10)!important;color:var(--r-text)!important;box-shadow:0 0 0 3px rgba(62,211,154,.10)!important}
+  .ucv21-role-helper{font-size:10.5px!important;line-height:1.65!important;color:var(--r-muted)!important;margin-bottom:10px!important}
+  [data-theme="light"] .ucv21-role-opt.on{border-color:#149c2b!important;background:rgba(18,133,90,.08)!important;box-shadow:0 0 0 3px rgba(18,133,90,.08)!important}
   .ucv21-single-page .pane{background:var(--surface-dialog-body)!important}
   .ucv21-single-page .sec{
     border-radius:var(--radius-card)!important;background:var(--surface-card)!important;
@@ -697,7 +710,7 @@ function injectApprovedSkin() {
   }
   .ucv21-single-page .in:focus,.ucv21-single-page .sel:focus{border-color:#3ed39a!important;box-shadow:0 0 0 4px rgba(62,211,154,.14)!important}
   [data-theme="light"] .ucv21-single-page .in:focus,[data-theme="light"] .ucv21-single-page .sel:focus{border-color:#149c2b!important;box-shadow:0 0 0 4px rgba(18,133,90,.12)!important}
-  .ucv21-profile-footer{background:var(--surface-glass)!important;backdrop-filter:blur(24px) saturate(140%)!important}
+  .ucv21-profile-footer{background:var(--surface-glass)!important;backdrop-filter:blur(24px) saturate(140%)!important;position:relative!important;bottom:auto!important;flex:0 0 auto!important}
   .ucv21-profile-footer .btn{border-radius:11px!important;height:44px!important}
   .ucv21-profile-footer .ucv21-save{min-width:150px!important}
   .ucv21-profile-nav{display:flex!important;gap:8px!important;margin-inline-end:auto!important}
@@ -722,7 +735,9 @@ function injectApprovedSkin() {
   .ucv21-single-page .f:has(> #edit-title){--field-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='7' width='20' height='14' rx='2'/%3E%3Cpath d='M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16'/%3E%3C/svg%3E")}
 
   @media(max-width:640px){
-    #iuc-profile>div.ucv21-single-page,.ucv21-single-page{border-radius:16px!important;width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important}
+    #iuc-profile>div.ucv21-single-page,.ucv21-single-page{border-radius:16px!important;width:calc(100vw - 16px)!important;height:calc(100dvh - 16px)!important;max-height:calc(100dvh - 16px)!important}
+    .ucv21-profile-stage{padding:12px!important}
+    .ucv21-role-seg{grid-template-columns:1fr!important}
     .ucv21-profile-nav{order:1;width:100%!important;margin:0!important}
     .ucv21-profile-nav .btn{flex:1!important}
     .ucv21-profile-footer .ucv21-cancel,.ucv21-profile-footer .ucv21-save{flex:1!important;min-width:0!important}
