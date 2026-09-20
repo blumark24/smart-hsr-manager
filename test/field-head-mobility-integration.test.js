@@ -41,3 +41,12 @@ test('department head draft submission still uses the shared mission state machi
   assert.match(policy, /department_head_is_creator/);
   assert.match(policy, /administrative_affairs/);
 });
+
+
+test('field mobility is a separate department-head surface and never owns fleet allocation', () => {
+  assert.match(runtime, /id:'fieldmobility', label:'الحركة الميدانية'/);
+  assert.match(runtime, /screen === 'fieldmobility'/);
+  assert.match(runtime, /بانتظار إدارة الحركة/);
+  assert.match(runtime, /drawer:'fieldMission'/);
+  assert.doesNotMatch(runtime, /allocateVehicle|handoverVehicle|confirmVehicleReturn/);
+});
