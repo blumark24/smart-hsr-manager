@@ -24,7 +24,9 @@ jobs:
         run: npm ci
 
       - name: Syntax check trusted API
-        run: node --check api/admin/users.js
+        run: |
+          node --check api/admin/users.js
+          node --check api/storage/read.js
 
       - name: Department Head framework tests
         run: node --test test/department-head-framework.test.js
@@ -37,6 +39,12 @@ jobs:
 
       - name: Visual distortion inspector-contractor tests
         run: node --test test/visual-distortion-department-head.test.js
+
+      - name: Field Head evidence access tests
+        run: node --test test/field-head-evidence-access.test.js
+
+      - name: Field Head operational map tests
+        run: node --test test/field-head-operational-map.test.js
 
       - name: Firestore security rules regression
         run: npm run test:rules
