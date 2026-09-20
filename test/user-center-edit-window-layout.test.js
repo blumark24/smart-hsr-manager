@@ -31,11 +31,11 @@ test('edit-user window exposes an explicit institutional role selector', () => {
   assert.match(reference, /editRoleSelect\.dispatchEvent\(new Event\('change'/);
 });
 
-test('promoting a Field Survey user to department head configures the existing compatibility entitlement', () => {
+test('promoting to department head normalizes a single enabled product into head scope', () => {
   assert.match(reference, /btn\.dataset\.role==='department_head'/);
-  assert.match(reference, /\/الحصر\|ميداني\|field\/i\.test\(dept\)/);
-  assert.match(reference, /fieldLevel\.value='head'/);
-  assert.match(reference, /mobilityEnabled\.checked=false/);
+  assert.match(reference, /normalizeDepartmentHeadSelection/);
+  assert.match(reference, /level\.value='head'/);
+  assert.match(reference, /enabled\.length===1|enabled\.length!==1/);
 });
 
 test('edit-user window has explicit previous and next navigation while preserving save', () => {
