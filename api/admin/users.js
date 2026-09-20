@@ -46,6 +46,8 @@ const {
   passwordPolicyReason,
   isPasswordEligibleTarget,
 } = require('../_lib/serviceEntitlements');
+const { evaluateMissionTransition } = require('../../platform/policies/mission-workflow-policy');
+const { evaluateVehicleTransition } = require('../../platform/policies/vehicle-workflow-policy');
 
 // The manager's own already-verified bearer token, forwarded as-is to Lands'
 // trusted mutation endpoint (see api/_lib/landsBridge.js). Extracted
@@ -153,6 +155,74 @@ async function findRecord(db, uid) {
   const usr = await db.collection('users').doc(uid).get();
   if (usr.exists) return { ref: usr.ref, data: usr.data() || {}, collection: 'users' };
   return null;
+}
+
+async function getMobilityOperationalCaller(db, uid, allowedRoles) {
+  const snap = await db.collection('users').doc(uid).get();
+  if (!snap.exists) return null;
+  const data = snap.data() || {};
+  const role = resolveMobilityRole(data);
+  const organizationId = cleanString(data.organizationId);
+  if (!Array.isArray(allowedRoles) || !allowedRoles.includes(role)
+      || data.active === false || !organizationId) return null;
+  return {
+    uid,
+    role,
+    organizationId,
+    department: cleanString(data.department),
+    name: cleanString(data.name),
+  };
+}
+
+function isFieldSurveyDepartment(value) {
+  return /الحصر|ميداني|field/i.test(cleanString(value));
+}
+
+function timestampToIso(value) {
+  if (!value) return null;
+  if (typeof value.toDate === 'function') return value.toDate().toISOString();
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+  if (typeof value === 'string') return value;
+  const seconds = Number.isFinite(value.seconds) ? value.seconds : value._seconds;
+  return Number.isFinite(seconds) ? new Date(seconds * 1000).toISOString() : null;
+}
+
+const MISSION_STATUS_LABELS = Object.freeze({
+  DRAFT: 'مسودة',
+  PENDING_APPROVAL: 'بانتظار اعتماد الشؤون الإدارية',
+  APPROVED: 'معتمد — بانتظار تخصيص المركبة',
+  REJECTED: 'مرفوض',
+  VEHICLE_ALLOCATED: 'تم تخصيص المركبة',
+  HANDED_OVER: 'تم تسليم المركبة',
+  READY: 'جاهزة للبدء',
+  IN_PROGRESS: 'في الميدان',
+  INCIDENT_HOLD: 'متوقفة بسبب حالة طارئة',
+  COMPLETED: 'المهمة مكتملة',
+  AWAITING_RETURN: 'بانتظار إعادة المركبة',
+  CLOSED: 'مغلقة',
+});
+
+function safeMission(id, data) {
+  return {
+    missionId: id,
+    status: data.status || 'DRAFT',
+    statusLabel: MISSION_STATUS_LABELS[data.status] || data.status || 'غير محدد',
+    department: data.department || null,
+    type: data.type || null,
+    destination: data.destination || null,
+    reason: data.reason || null,
+    scope: data.scope || null,
+    requestedEmployeeId: data.requestedEmployeeId || null,
+    requestedEmployeeUid: data.requestedEmployeeUid || null,
+    requestedEmployeeName: data.requestedEmployeeName || null,
+    vehicleId: data.vehicleId || null,
+    assignedEmployeeUid: data.assignedEmployeeUid || null,
+    assignedEmployeeName: data.assignedEmployeeName || null,
+    whenLabel: data.whenLabel || null,
+    durationLabel: data.durationLabel || null,
+    createdAt: timestampToIso(data.createdAt),
+    updatedAt: timestampToIso(data.updatedAt),
+  };
 }
 
 // Only ever expose safe, non-sensitive account metadata.
