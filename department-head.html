@@ -118,6 +118,20 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
 .map-stat .dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px var(--greenSoft)}
 .map-stat b{display:block;font-size:11.5px}.map-stat small{display:block;font-size:9.5px;color:var(--tx3);margin-top:3px}
 .map-note{font-size:10.5px;color:var(--tx2);line-height:1.7}
+.map-observation-marker{width:18px;height:18px;border:2px solid rgba(255,255,255,.94);border-radius:50%;box-shadow:0 4px 14px rgba(0,0,0,.36);cursor:pointer}
+.map-observation-marker[data-status="PENDING"]{background:#d92d20}
+.map-observation-marker[data-status="IN_PROGRESS"]{background:#f79009}
+.map-observation-marker[data-status="PENDING_REVIEW"]{background:#1570ef}
+.map-observation-marker[data-status="COMPLETED"]{background:#039855}
+.map-observation-detail{display:grid;gap:9px}
+.map-observation-detail .detail-row{padding:9px 10px;border:1px solid var(--line);border-radius:11px;background:var(--surface2)}
+.map-observation-detail .detail-row b{display:block;font-size:10px;color:var(--tx3);margin-bottom:3px}
+.map-observation-detail .detail-row span{display:block;font-size:11.5px;line-height:1.55}
+.map-evidence-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.map-evidence-card{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface2)}
+.map-evidence-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#0a1d24}
+.map-evidence-card small{display:block;padding:7px 8px;color:var(--tx3)}
+@media(max-width:640px){.map-evidence-grid{grid-template-columns:1fr}}
 .maplibregl-ctrl-group{border-radius:11px!important;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.2)!important}
 .maplibregl-ctrl button{background-color:rgba(255,255,255,.92)!important}
 .maplibregl-ctrl-attrib{font-size:9px!important}
@@ -345,18 +359,30 @@ table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:right
       <section class="view" data-view-panel="map">
         <div class="panel" style="margin-bottom:16px">
           <div class="eyebrow">OPERATIONAL MAP</div>
-          <h1>الخريطة التشغيلية للقسم</h1>
-          <p>مرجع جغرافي حقيقي لنطاق العمل. لا تُنشأ نقاط تشغيلية أو مؤشرات مكانية إلا من مصادر موثوقة ومصرّح بها.</p>
+          <h1>الخريطة التشغيلية للتشوه البصري</h1>
+          <p>تظهر فقط الحالات الحقيقية ذات إحداثيات موثوقة من سجلات observations. لا توجد نقاط تجريبية أو بيانات مكانية مصطنعة.</p>
         </div>
-        <div class="map-card full">
-          <div id="departmentMapFull" class="department-map" aria-label="الخريطة التشغيلية الكاملة للقسم"></div>
-          <div class="map-hud top-start">
-            <button type="button" data-basemap="satellite" aria-pressed="true">قمر صناعي</button>
-            <button type="button" data-basemap="street" aria-pressed="false">شوارع</button>
+        <div class="map-command">
+          <div class="map-card full">
+            <div id="departmentMapFull" class="department-map" aria-label="الخريطة التشغيلية الكاملة للتشوه البصري"></div>
+            <div class="map-hud top-start">
+              <button type="button" data-basemap="satellite" aria-pressed="true">قمر صناعي</button>
+              <button type="button" data-basemap="street" aria-pressed="false">شوارع</button>
+            </div>
+            <div class="map-hud top-end">
+              <span class="map-label"><strong>SMART HSR</strong> · <span id="mapTrustedCount">0</span> نقطة موثوقة</span>
+            </div>
           </div>
-          <div class="map-hud top-end">
-            <span class="map-label"><strong>SMART HSR</strong> · Department Scope</span>
-          </div>
+          <aside class="map-side">
+            <div class="card">
+              <div class="section-head"><h2>تفاصيل الحالة</h2><span id="mapDetailStatus">اختر نقطة</span></div>
+              <div id="mapObservationDetail" class="empty">اضغط على نقطة تشوه بصري لعرض بيانات البلاغ والأدلة.</div>
+            </div>
+            <div class="card">
+              <div class="section-head"><h2>نطاق العرض</h2><span>Trusted GPS only</span></div>
+              <div class="map-note">PENDING · IN_PROGRESS · PENDING_REVIEW · COMPLETED فقط. أي سجل بلا إحداثيات صالحة لا يتحول إلى Marker.</div>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -405,8 +431,9 @@ import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
+import { resolveObservationImage, revokeObservationImageUrl } from "./storage-adapter.js";
 
-const state = { context:null, profile:null, employees:[], missions:[], observations:[], contractors:[], selectedContractorUid:null, loading:true, error:"", missionLoading:true, missionError:"", visualLoading:true, visualError:"", pendingMissionClientRequestId:null };
+const state = { context:null, profile:null, employees:[], missions:[], observations:[], contractors:[], selectedContractorUid:null, selectedObservationId:null, evidenceUrls:[], loading:true, error:"", missionLoading:true, missionError:"", visualLoading:true, visualError:"", pendingMissionClientRequestId:null };
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
@@ -457,9 +484,15 @@ function productFieldRole(emp){
   return f && f.enabled===true ? (f.role||"مفعّل") : "غير مفعّل";
 }
 function switchView(view){
-  $$(".view").forEach(el=>el.classList.toggle("is-active",el.dataset.viewPanel===view));
-  $$(".nav [data-view]").forEach(el=>el.setAttribute("aria-current",el.dataset.view===view?"page":"false"));
+  $(".view").forEach(el=>el.classList.toggle("is-active",el.dataset.viewPanel===view));
+  $(".nav [data-view]").forEach(el=>el.setAttribute("aria-current",el.dataset.view===view?"page":"false"));
   document.body.classList.remove("nav-open");
+  if(view==="map"){
+    requestAnimationFrame(()=>{
+      mapInstances.forEach(({map})=>{try{map.resize();}catch(_){}});
+      renderOperationalMarkers();
+    });
+  }
 }
 function render(){
   if(!state.context)return;
@@ -612,11 +645,11 @@ function render(){
 }
 
 const mapInstances=[];
+const operationalMarkerRefs=[];
+const OPERATIONAL_STATUSES=new Set(["PENDING","IN_PROGRESS","PENDING_REVIEW","COMPLETED"]);
 let activeDepartmentBasemap="satellite";
+
 function departmentMapCamera(){
-  // Current municipal fallback already used by SMART HSR organization context.
-  // Future municipalities should use configured organization map context before
-  // operational layers are enabled; unknown tenants fail to a neutral world view.
   if(state.context && state.context.organizationId==="CnlVlKC7UcDMp2NZzjjT") return {center:[41.07889,19.12639],zoom:13};
   return {center:[0,20],zoom:1.5};
 }
@@ -635,10 +668,120 @@ function syncDepartmentBasemapButtons(){
 function setDepartmentBasemap(next){
   if(!["satellite","street"].includes(next))return;
   activeDepartmentBasemap=next;syncDepartmentBasemapButtons();
-  mapInstances.forEach(map=>{
+  mapInstances.forEach(({map})=>{
     if(!map||!map.getLayer("dept-street"))return;
     map.setLayoutProperty("dept-street","visibility",next==="street"?"visible":"none");
     map.setLayoutProperty("dept-satellite","visibility",next==="satellite"?"visible":"none");
+  });
+}
+function observationCoordinates(obs){
+  const lat=Number(obs&&obs.correctedLat);
+  const lng=Number(obs&&obs.correctedLng);
+  if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return null;
+  return {lat,lng};
+}
+function trustedOperationalObservations(){
+  return state.observations.filter(obs=>OPERATIONAL_STATUSES.has(obs.status)&&observationCoordinates(obs));
+}
+function clearOperationalMarkers(){
+  while(operationalMarkerRefs.length){
+    const marker=operationalMarkerRefs.pop();
+    try{marker.remove();}catch(_){}
+  }
+}
+function fitOperationalObservations(map,items){
+  if(!map||!items.length)return;
+  const bounds=new maplibregl.LngLatBounds();
+  items.forEach(obs=>{
+    const point=observationCoordinates(obs);
+    if(point)bounds.extend([point.lng,point.lat]);
+  });
+  if(!bounds.isEmpty())map.fitBounds(bounds,{padding:58,maxZoom:16,duration:0});
+}
+function inspectorNameForObservation(obs){
+  const employee=state.employees.find(x=>x.authUid&&x.authUid===obs.createdByUid);
+  return employee&&employee.name?employee.name:"—";
+}
+async function resolveMapEvidence(reference){
+  if(!reference||!window.__departmentHeadUser)return null;
+  try{
+    const result=await resolveObservationImage({
+      reference,
+      context:{
+        organizationId:state.context.organizationId,
+        uid:window.__departmentHeadUser.uid,
+        role:"department_head",
+        authUser:window.__departmentHeadUser
+      }
+    });
+    if(result&&result.available&&result.url){
+      state.evidenceUrls.push(result.url);
+      return result.url;
+    }
+  }catch(err){
+    console.warn("department-head: evidence unavailable",err);
+  }
+  return null;
+}
+function releaseMapEvidence(){
+  state.evidenceUrls.splice(0).forEach(url=>{try{revokeObservationImageUrl(url);}catch(_){}});
+}
+async function showOperationalObservation(observationId){
+  const obs=state.observations.find(x=>x.observationId===observationId);
+  if(!obs)return;
+  state.selectedObservationId=observationId;
+  releaseMapEvidence();
+  setText("mapDetailStatus",obs.statusLabel||obs.status||"—");
+  const target=$("#mapObservationDetail");
+  if(!target)return;
+  target.className="map-observation-detail";
+  target.innerHTML=
+    '<div class="detail-row"><b>رقم الحالة</b><span>'+escapeHtml(obs.displayId!=null?String(obs.displayId):obs.observationId)+'</span></div>'+
+    '<div class="detail-row"><b>النوع</b><span>'+escapeHtml(obs.type||obs.title||"تشوه بصري")+'</span></div>'+
+    '<div class="detail-row"><b>الموقع</b><span>'+escapeHtml(obs.location||"إحداثيات موثوقة")+'</span></div>'+
+    '<div class="detail-row"><b>المراقب</b><span>'+escapeHtml(inspectorNameForObservation(obs))+'</span></div>'+
+    '<div class="detail-row"><b>المقاول</b><span>'+escapeHtml(obs.assignedContractorName||"غير مسند")+'</span></div>'+
+    '<div class="detail-row"><b>التحقق</b><span>'+escapeHtml(obs.inspectorVerification?.status||"—")+'</span></div>'+
+    '<div class="detail-row"><b>الأدلة</b><span>جارٍ تحميل الأدلة المتاحة…</span></div>';
+  const [beforeUrl,afterUrl]=await Promise.all([
+    resolveMapEvidence(obs.imagePath),
+    resolveMapEvidence(obs.afterImagePath)
+  ]);
+  const evidence=[
+    beforeUrl?'<div class="map-evidence-card"><img src="'+escapeHtml(beforeUrl)+'" alt="صورة قبل المعالجة"><small>قبل المعالجة</small></div>':"",
+    afterUrl?'<div class="map-evidence-card"><img src="'+escapeHtml(afterUrl)+'" alt="صورة بعد المعالجة"><small>بعد المعالجة</small></div>':""
+  ].filter(Boolean).join("");
+  const evidenceHtml=evidence?'<div class="map-evidence-grid">'+evidence+'</div>':'<div class="detail-row"><b>الأدلة</b><span>لا توجد صورة قابلة للعرض لهذه الحالة.</span></div>';
+  target.innerHTML=
+    '<div class="detail-row"><b>رقم الحالة</b><span>'+escapeHtml(obs.displayId!=null?String(obs.displayId):obs.observationId)+'</span></div>'+
+    '<div class="detail-row"><b>النوع</b><span>'+escapeHtml(obs.type||obs.title||"تشوه بصري")+'</span></div>'+
+    '<div class="detail-row"><b>الموقع</b><span>'+escapeHtml(obs.location||"إحداثيات موثوقة")+'</span></div>'+
+    '<div class="detail-row"><b>الحالة</b><span>'+escapeHtml(obs.statusLabel||obs.status||"—")+'</span></div>'+
+    '<div class="detail-row"><b>المراقب</b><span>'+escapeHtml(inspectorNameForObservation(obs))+'</span></div>'+
+    '<div class="detail-row"><b>المقاول</b><span>'+escapeHtml(obs.assignedContractorName||"غير مسند")+'</span></div>'+
+    '<div class="detail-row"><b>التحقق</b><span>'+escapeHtml(obs.inspectorVerification?.status||"—")+'</span></div>'+
+    evidenceHtml;
+}
+function renderOperationalMarkers(){
+  if(typeof maplibregl==="undefined")return;
+  clearOperationalMarkers();
+  const items=trustedOperationalObservations();
+  setText("mapTrustedCount",String(items.length));
+  mapInstances.forEach(({map,id})=>{
+    if(!map||id!=="departmentMapFull")return;
+    items.forEach(obs=>{
+      const point=observationCoordinates(obs);
+      if(!point)return;
+      const el=document.createElement("button");
+      el.type="button";
+      el.className="map-observation-marker";
+      el.dataset.status=obs.status;
+      el.setAttribute("aria-label","فتح حالة "+(obs.displayId!=null?obs.displayId:obs.observationId));
+      el.addEventListener("click",()=>showOperationalObservation(obs.observationId));
+      const marker=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat([point.lng,point.lat]).addTo(map);
+      operationalMarkerRefs.push(marker);
+    });
+    fitOperationalObservations(map,items);
   });
 }
 function initializeDepartmentMaps(){
@@ -653,7 +796,8 @@ function initializeDepartmentMaps(){
     map.addControl(new maplibregl.FullscreenControl(),"top-left");
     map.addControl(new maplibregl.ScaleControl({maxWidth:90,unit:"metric"}),"bottom-left");
     map.addControl(new maplibregl.AttributionControl({compact:true}));
-    mapInstances.push(map);
+    map.on("load",()=>renderOperationalMarkers());
+    mapInstances.push({id,map});
   });
   $$("[data-basemap]").forEach(btn=>btn.addEventListener("click",()=>setDepartmentBasemap(btn.dataset.basemap)));
   syncDepartmentBasemapButtons();
@@ -787,7 +931,7 @@ async function loadVisualDistortion(user){
     console.error("department-head: visual distortion command failed",err);
     state.visualError="تعذر تحميل بيانات التشوه البصري.";
   }finally{
-    state.visualLoading=false;render();
+    state.visualLoading=false;render();renderOperationalMarkers();
   }
 }
 async function assignObservationToContractor(observationId){
