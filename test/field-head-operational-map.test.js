@@ -20,8 +20,8 @@ test('02C map requires verified GPS and valid corrected coordinates', () => {
   assert.match(runtime, /o\.locationVerified === true/);
   assert.match(runtime, /Number\(o\.correctedLat\)/);
   assert.match(runtime, /Number\(o\.correctedLng\)/);
-  assert.match(runtime, /Math\.abs\(lat\) > 90/);
-  assert.match(runtime, /Math\.abs\(lng\) > 180/);
+  assert.match(runtime, /Math\.abs\(lat\) <= 90/);
+  assert.match(runtime, /Math\.abs\(lng\) <= 180/);
   assert.match(usersApi, /locationVerified: data\.locationVerified === true/);
 });
 
