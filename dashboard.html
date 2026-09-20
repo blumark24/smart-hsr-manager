@@ -2526,6 +2526,21 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
             </div>
           </div>
 
+          <div id="inspectorVerificationPanel" class="hidden mt-6 p-4 rounded-2xl border border-blue-200 bg-blue-50 no-print">
+            <div class="flex flex-col gap-3">
+              <div>
+                <h5 class="text-lg font-extrabold text-blue-900">التحقق من معالجة المقاول</h5>
+                <p class="text-sm text-blue-800 mt-1">راجع صورة ما بعد المعالجة ومذكرة المقاول. يمكنك اعتماد المعالجة أو إعادتها للمقاول مع ملاحظة واضحة.</p>
+              </div>
+              <textarea id="inspectorVerificationNote" rows="3" class="w-full rounded-xl border border-blue-200 p-3 bg-white" placeholder="ملاحظة التحقق أو سبب الإعادة للمقاول"></textarea>
+              <div class="flex flex-wrap gap-2">
+                <button id="acceptContractorWorkBtn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl">اعتماد المعالجة</button>
+                <button id="returnContractorWorkBtn" type="button" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-xl">إعادة للمقاول</button>
+                <span id="inspectorVerificationMsg" class="text-sm text-blue-900 self-center"></span>
+              </div>
+            </div>
+          </div>
+
           <div id="actionButtons" class="mt-6 pt-4 border-t border-gray-300 flex justify-end gap-3 no-print">
             <button id="updateStatusBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-150" onclick="alert('تم تحويل الحالة إلى قيد التنفيذ (تجريبي)')">
               تحديث الحالة إلى "قيد التنفيذ"
@@ -3358,7 +3373,8 @@ function timestampValue(value){
 const statusMap = {
   "PENDING": { color:'bg-red-600', text:'قيد الانتظار' },
   "IN_PROGRESS": { color:'bg-yellow-600', text:'قيد المعالجة' },
-  "COMPLETED": { color:'bg-green-600', text:'تمت المعالجة' }
+  "PENDING_REVIEW": { color:'bg-blue-600', text:'بانتظار تحقق المراقب' },
+  "COMPLETED": { color:'bg-green-600', text:'مغلقة' }
 };
 // Display-only Arabic labels for the observation category/type enum. Same
 // small-lookup-table pattern as statusMap above -- the stored/API value is
@@ -3665,6 +3681,11 @@ function observationFromDocument(d, organizationId, uid) {
     riskAssessment:data.riskAssessment||{priority:'Medium',timeframe:'72 hours'},
     resolutionNote:data.resolutionNote||null, afterImagePath:evidence.after,
     organizationId:data.organizationId||null, createdByUid:data.createdByUid||null,
+    assignedContractorUid:data.assignedContractorUid||null,
+    assignedContractorName:data.assignedContractorName||null,
+    inspectorVerification:data.inspectorVerification&&typeof data.inspectorVerification==='object'?data.inspectorVerification:null,
+    closedByUid:data.closedByUid||null, closedByName:data.closedByName||null,
+    closureNote:data.closureNote||null, closedAt:timestampValue(data.closedAt),
     originalLat:data.originalLat, originalLng:data.originalLng, correctedLat:data.correctedLat,
     correctedLng:data.correctedLng, locationAccuracyMeters:data.locationAccuracyMeters,
     locationSource:data.locationSource, locationVerified:data.locationVerified===true,
@@ -3839,7 +3860,7 @@ window.showObservationDetail = async function(docId) {
   revokeAllObservationImageUrls();
   const beforeResolved=await resolveEvidenceReference(obs.imagePath);
   const afterResolved=await resolveEvidenceReference(obs.afterImagePath);
-  if (obs.status==='COMPLETED' && afterResolved) {
+  if (['PENDING_REVIEW','COMPLETED'].includes(obs.status) && afterResolved) {
     unhide('imageComparisonWrapper');
     if(beforeResolved)document.getElementById('beforeImage').src=beforeResolved;
     document.getElementById('afterImage').src=afterResolved;
@@ -3863,15 +3884,101 @@ window.showObservationDetail = async function(docId) {
   }
 
   const isCompleted = obs.status==='COMPLETED';
-  toggleHidden('updateStatusBtn', isCompleted);
-  toggleHidden('completeObservationBtn', isCompleted);
+  const contractorWorkflow = Boolean(obs.assignedContractorUid);
+  const pendingVerification = obs.status==='PENDING_REVIEW' && contractorWorkflow;
+  toggleHidden('inspectorVerificationPanel', !pendingVerification);
+  toggleHidden('updateStatusBtn', isCompleted || contractorWorkflow);
+  toggleHidden('completeObservationBtn', isCompleted || contractorWorkflow);
   toggleHidden('alreadyCompletedBtn', !isCompleted);
+  const verificationMsg=document.getElementById('inspectorVerificationMsg');
+  if(verificationMsg){
+    verificationMsg.textContent=obs.inspectorVerification?.status==='VERIFIED'
+      ? 'تم اعتماد المعالجة — بانتظار إغلاق رئيس القسم.'
+      : obs.inspectorVerification?.status==='RETURNED'
+        ? 'أعيدت الحالة سابقًا للمقاول.'
+        : '';
+  }
+  const verificationNote=document.getElementById('inspectorVerificationNote');
+  if(verificationNote)verificationNote.value='';
 
   hide('detailPlaceholder');
   unhide('observationDetail');
   hide('aiResultContainer');
   lucide.createIcons();
 };
+
+async function fieldWorkflowRequest(payload){
+  const user=auth.currentUser;
+  if(!user)throw Object.assign(new Error('unauthenticated'),{code:'unauthenticated'});
+  const response=await fetchWithFirebaseAuth({
+    getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+    input:'/api/admin/users',
+    init:{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    }
+  });
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok){
+    const error=new Error(data.reason||data.error||'request_failed');
+    error.code=data.reason||data.error||'request_failed';
+    throw error;
+  }
+  return data;
+}
+
+async function verifyContractorWork(decision){
+  const observation=currentSelectedObservation;
+  if(!observation||observation.status!=='PENDING_REVIEW')return;
+  const note=(document.getElementById('inspectorVerificationNote')?.value||'').trim();
+  const msg=document.getElementById('inspectorVerificationMsg');
+  if(decision==='RETURN'&&!note){
+    msg.textContent='اكتب سبب الإعادة للمقاول.';
+    document.getElementById('inspectorVerificationNote')?.focus();
+    return;
+  }
+  const acceptBtn=document.getElementById('acceptContractorWorkBtn');
+  const returnBtn=document.getElementById('returnContractorWorkBtn');
+  acceptBtn.disabled=true;returnBtn.disabled=true;
+  msg.textContent=decision==='ACCEPT'?'جارٍ اعتماد المعالجة…':'جارٍ إعادة الحالة للمقاول…';
+  try{
+    const data=await fieldWorkflowRequest({
+      action:'verifyFieldObservation',
+      observationId:observation.docId,
+      decision,
+      note
+    });
+    msg.textContent=decision==='ACCEPT'
+      ? 'تم اعتماد المعالجة. بانتظار إغلاق رئيس القسم.'
+      : 'تمت إعادة الحالة للمقاول لاستكمال المعالجة.';
+    observation.status=data.status||observation.status;
+    observation.inspectorVerification={
+      status:data.verificationStatus||null,
+      note,
+      verifiedByUid:inspectorContext.uid
+    };
+    renderObservationsList(observationsData);
+    renderKPIs();
+    renderInspectorCounts();
+    renderPersonalMap();
+    renderPersonalLifecycle();
+    await showObservationDetail(observation.docId);
+  }catch(error){
+    const labels={
+      reporting_inspector_required:'التحقق متاح للمراقب الذي أنشأ الحالة فقط.',
+      observation_not_pending_verification:'الحالة لم تعد بانتظار التحقق.',
+      contractor_evidence_required:'لا يمكن الاعتماد قبل اكتمال صورة ومذكرة المقاول.',
+      return_note_required:'اكتب سبب الإعادة للمقاول.',
+      cross_organization_denied:'لا يمكن التحقق من حالة خارج المؤسسة.'
+    };
+    msg.textContent=labels[error.code]||'تعذر تنفيذ قرار التحقق حاليًا.';
+  }finally{
+    acceptBtn.disabled=false;returnBtn.disabled=false;
+  }
+}
+document.getElementById('acceptContractorWorkBtn')?.addEventListener('click',()=>verifyContractorWork('ACCEPT'));
+document.getElementById('returnContractorWorkBtn')?.addEventListener('click',()=>verifyContractorWork('RETURN'));
 
 // ========= FILTER =========
 window.handleFilterChange = function() {
@@ -3882,6 +3989,7 @@ window.handleFilterChange = function() {
     const map = {
       "جديد":"PENDING",
       "قيد التنفيذ":"IN_PROGRESS",
+      "بانتظار التحقق":"PENDING_REVIEW",
       "تمت المعالجة":"COMPLETED",
       "جودة":"QUALITY",
       "صيانة":"MAINTENANCE",
@@ -5041,6 +5149,10 @@ window.handleAfterFileUpload = function(e){
 
 window.completeObservation = async function(){
   if (!currentSelectedObservation) return;
+  if (currentSelectedObservation.assignedContractorUid) {
+    alert('إغلاق الحالات المسندة لمقاول يتم بعد تحقق المراقب ثم اعتماد رئيس القسم.');
+    return;
+  }
   if (!currentAfterFile) {
     alert('الرجاء رفع صورة "بعد الإصلاح".');
     return;
