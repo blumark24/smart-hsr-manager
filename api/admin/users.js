@@ -489,7 +489,7 @@ async function handler(req, res) {
       for (const doc of snap.docs) {
         const data = doc.data() || {};
         const eventDepartment = cleanString(data.department);
-        if (eventDepartment && eventDepartment !== cleanString(caller.department)) continue;
+        if (eventDepartment !== cleanString(caller.department)) continue;
         if (!allowedResourceTypes.has(cleanString(data.resourceType))) continue;
         events.push({
           auditId: doc.id,
