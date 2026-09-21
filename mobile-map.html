@@ -495,6 +495,38 @@
     @media(min-width:420px) and (max-width:760px){.ops-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-card{height:100%}}
     @media(max-width:419px){.ops-rail{grid-template-columns:1fr}.workspace-intro h1{font-size:20px}.workspace-nav{margin-bottom:10px}.task-assignment-grid{grid-template-columns:1fr}#mapPanel .map-wrap{height:54dvh;min-height:420px}}
     @media(min-width:761px){.ops-rail{grid-template-columns:1fr}.sheet-body{grid-template-columns:1fr 1fr}.sheet-panel{width:min(520px,72vw);max-height:78dvh}#mapPanel .map-wrap{height:min(68dvh,720px)}}
+    /* Contractor Command UI — presentation only; workflow/GPS/camera untouched */
+    .contractor-command-card{
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+      margin:2px 0 14px;padding:18px 20px;border-radius:18px;
+      color:#fff;background:linear-gradient(135deg,#0b243a 0%,#0d3b4a 56%,#0b5a59 100%);
+      border:1px solid rgba(139,214,209,.2);box-shadow:0 16px 38px rgba(4,24,38,.18);
+      position:relative;overflow:hidden;
+    }
+    .contractor-command-card:after{content:"";position:absolute;inset:auto -70px -90px auto;width:220px;height:220px;border-radius:50%;background:rgba(91,145,255,.1);pointer-events:none}
+    .contractor-command-main{min-width:0;position:relative;z-index:1}.contractor-command-kicker{display:block;color:#9fdad7;font-size:10px;font-weight:800;letter-spacing:.02em;margin-bottom:4px}.contractor-command-card h1{margin:0;color:#fff;font-size:clamp(20px,4.6vw,30px);line-height:1.25}
+    .contractor-command-meta{display:flex;flex-wrap:wrap;gap:7px 14px;margin-top:11px}.contractor-command-meta span{display:inline-flex;align-items:center;gap:5px;color:#c7dbe5;font-size:10.5px;font-weight:700}.contractor-command-meta i{width:14px;height:14px;color:#7dd3c7}.contractor-command-meta b{color:#fff;font-weight:800}
+    .contract-state-badge{flex:0 0 auto;position:relative;z-index:1;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);font-size:10.5px;font-weight:900;white-space:nowrap}
+    .contract-state-badge[data-state="ACTIVE"]{color:#c8ffe9;background:rgba(16,185,129,.14);border-color:rgba(52,211,153,.28)}
+    .contract-state-badge[data-state="SUSPENDED"],.contract-state-badge[data-state="ENDED"],.contract-state-badge[data-state="EXPIRED"]{color:#ffd3d3;background:rgba(239,68,68,.12);border-color:rgba(248,113,113,.25)}
+    .contractor-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:0 0 14px}.contractor-kpi{min-width:0;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:0 5px 16px rgba(10,25,49,.05)}.contractor-kpi span{display:block;color:var(--muted);font-size:9px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.contractor-kpi b{display:block;margin-top:4px;font-size:22px;line-height:1;color:var(--text)}.contractor-kpi.accent{background:linear-gradient(145deg,rgba(24,165,162,.12),rgba(91,145,255,.08));border-color:rgba(24,165,162,.24)}.contractor-kpi.accent b{color:var(--teal)}
+    .workspace-intro{align-items:center;margin-top:2px}.workspace-intro h1{font-size:20px}.workspace-intro p{font-size:11px}
+    .empty-workspace{min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:30px 22px;border-radius:18px;background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--card) 94%,var(--teal) 6%));border:1px dashed color-mix(in srgb,var(--line) 68%,var(--teal) 32%)}.empty-workspace i{width:26px;height:26px;color:var(--teal)}.empty-workspace b{color:var(--text);font-size:14px}.empty-workspace span{max-width:360px;color:var(--muted);font-size:11px;line-height:1.75;text-align:center}.empty-workspace.loading i{animation:spinContractor 1.2s linear infinite}@keyframes spinContractor{to{transform:rotate(360deg)}}
+    .task-card[data-status="PENDING"]{border-inline-start-color:#5b91ff}.task-card[data-status="IN_PROGRESS"]{border-inline-start-color:#18a5a2}.task-card[data-status="PENDING_REVIEW"]{border-inline-start-color:#f59e0b}.task-card[data-status="COMPLETED"]{border-inline-start-color:#10b981;opacity:.88}
+    .task-card[data-status="PENDING"] .status-tag{background:#eaf1ff;color:#315ca8}.task-card[data-status="IN_PROGRESS"] .status-tag{background:#e4f7f5;color:#087f7b}.task-card[data-status="PENDING_REVIEW"] .status-tag{background:#fff5df;color:#9a6500}.task-card[data-status="COMPLETED"] .status-tag{background:#e5f8ef;color:#087044}
+    .task-card{border-radius:18px}.task-topline{gap:7px}.task-id{padding:3px 7px;border-radius:999px;background:var(--bg)}.priority-tag{border:1px solid rgba(245,158,11,.18)}.task-action{background:linear-gradient(180deg,#18a5a2,#128d8a);box-shadow:0 8px 18px rgba(24,165,162,.18)}.task-action-secondary{background:transparent}
+    [data-theme="dark"] .contractor-kpi{background:#102036}[data-theme="dark"] .empty-workspace{background:linear-gradient(180deg,#102036,#0d1b2d)}
+    @media(max-width:760px){
+      .app-header{position:relative}.contractor-header{border-radius:0 0 18px 18px;border-inline:0;border-top:0;padding:.62rem .72rem}
+      .app-header .brand{font-size:.92rem}.app-header .brand .accent{font-size:.62rem}.user-info{padding-inline-end:50px}.contractor-profile-avatar{width:40px;height:40px;flex-basis:40px;border-radius:12px}#contractorName{font-size:.9rem}.role-badge{font-size:.68rem;padding:3px 7px}#orgBadge{font-size:.68rem}
+      .identity-metrics{grid-template-columns:1fr 1fr}.identity-metric{min-height:40px;border-radius:11px}.identity-logout{width:42px;height:42px;min-height:42px}
+      .workspace-shell{padding:10px}.contractor-command-card{padding:15px;border-radius:16px;align-items:flex-start}.contractor-command-card h1{font-size:19px}.contractor-command-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px}.contract-state-badge{font-size:9.5px;padding:6px 8px}
+      .contractor-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.contractor-kpi{padding:9px 10px;border-radius:12px}.contractor-kpi b{font-size:20px}.operations-grid{gap:10px}.ops-rail{grid-template-columns:1fr 1fr}.ops-card{border-radius:15px}.task-list{gap:8px}
+    }
+    @media(max-width:430px){
+      .contractor-command-card{display:grid;grid-template-columns:1fr auto;gap:10px}.contractor-command-main{grid-column:1/-1}.contract-state-badge{grid-column:2;grid-row:2}.contractor-command-meta{grid-column:1/-1}
+      .contractor-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-rail{grid-template-columns:1fr}.workspace-nav{position:sticky;top:8px;z-index:50;margin-top:0;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(14px)}
+    }
     @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
 </head>
@@ -506,14 +538,14 @@
     <div class="brand">
       <span class="dot" aria-hidden="true"></span>
       <strong>Smart HSR</strong>
-      <span class="accent">منصة العمل الميداني الذكية</span>
+      <span class="accent">بوابة الشركات المتعاقدة</span>
     </div>
     <div class="user-info">
       <div id="contractorAvatar" class="contractor-profile-avatar" aria-hidden="true">م</div>
       <div class="user-text">
         <span id="contractorName">مقاول Smart HSR</span>
         <span class="identity-meta-row">
-          <span class="role-badge">مقاول ميداني</span>
+          <span class="role-badge">ممثل شركة متعاقدة</span>
           <span id="orgBadge">شركة المقاول</span>
         </span>
       </div>
@@ -1398,7 +1430,7 @@
     list.innerHTML=filteredObservations.map(o=>{
       const stage=PRESENTATION_STAGE[o.status]||{label:STATUS_LABELS[o.status]||'حالة غير متاحة',action:'عرض التفاصيل'};
       const priority=priorityLabel(o.priority),location=o.locationName||o.location||'موقع بلدي موثق';
-      return `<article class="task-card"><div class="task-card-main"><div class="task-topline"><span class="task-id">بلاغ #${escapeHTML(o.id||'—')}</span><span class="status-tag">${escapeHTML(stage.label)}</span><span class="priority-tag">${escapeHTML(priority)}</span></div><h2>${escapeHTML(o.title||o.category||'مهمة ميدانية')}</h2><div class="task-meta"><span><i data-lucide="map-pin"></i>${escapeHTML(location)}</span><span><i data-lucide="route"></i>${escapeHTML(formatTaskDistance(o))}</span></div><div class="task-assignment-grid"><span><i data-lucide="calendar-check"></i>أُسندت: ${escapeHTML(formatMissionDate(o.assignedAtMs,'وقت الإسناد غير متاح'))}</span><span><i data-lucide="alarm-clock"></i>الموعد النهائي: ${escapeHTML(formatMissionDate(o.deadlineAtMs,'غير محدد'))}</span></div><div class="task-sla"><div class="task-sla-head"><span>حالة SLA</span><strong>${escapeHTML(formatSla(o))}</strong></div><div class="task-sla-track"><span></span></div></div></div><div class="task-actions"><button class="task-action-secondary" type="button" data-task-action="location" data-task-id="${escapeHTML(o.docId)}"><i data-lucide="navigation"></i>فتح الموقع</button><button class="task-action" type="button" data-task-action="start" data-task-id="${escapeHTML(o.docId)}">${escapeHTML(stage.action)}</button></div></article>`;
+      return `<article class="task-card" data-status="${escapeHTML(o.status)}"><div class="task-card-main"><div class="task-topline"><span class="task-id">بلاغ #${escapeHTML(o.id||'—')}</span><span class="status-tag">${escapeHTML(stage.label)}</span><span class="priority-tag">${escapeHTML(priority)}</span></div><h2>${escapeHTML(o.title||o.category||'مهمة ميدانية')}</h2><div class="task-meta"><span><i data-lucide="map-pin"></i>${escapeHTML(location)}</span><span><i data-lucide="route"></i>${escapeHTML(formatTaskDistance(o))}</span></div><div class="task-assignment-grid"><span><i data-lucide="calendar-check"></i>أُسندت: ${escapeHTML(formatMissionDate(o.assignedAtMs,'وقت الإسناد غير متاح'))}</span><span><i data-lucide="alarm-clock"></i>الموعد النهائي: ${escapeHTML(formatMissionDate(o.deadlineAtMs,'غير محدد'))}</span></div><div class="task-sla"><div class="task-sla-head"><span>حالة SLA</span><strong>${escapeHTML(formatSla(o))}</strong></div><div class="task-sla-track"><span></span></div></div></div><div class="task-actions"><button class="task-action-secondary" type="button" data-task-action="location" data-task-id="${escapeHTML(o.docId)}"><i data-lucide="navigation"></i>فتح الموقع</button><button class="task-action" type="button" data-task-action="start" data-task-id="${escapeHTML(o.docId)}">${escapeHTML(stage.action)}</button></div></article>`;
     }).join('');
     renderOperationalTwin(active.find(o=>o.status==='IN_PROGRESS')||active[0]||filteredObservations[0]);
     lucide.createIcons();
