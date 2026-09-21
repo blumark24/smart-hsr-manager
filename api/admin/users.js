@@ -679,7 +679,7 @@ async function handler(req, res) {
       const snap = await db.collection('auditEvents')
         .where('organizationId', '==', caller.organizationId)
         .get();
-      const allowedResourceTypes = new Set(['observation', 'contractorProfile', 'mission', 'vehicle', 'vehicleAuthorization']);
+      const allowedResourceTypes = new Set(['observation', 'contractorProfile', 'auditNote', 'mission', 'vehicle', 'vehicleAuthorization']);
       const events = [];
       for (const doc of snap.docs) {
         const data = doc.data() || {};
@@ -695,11 +695,69 @@ async function handler(req, res) {
           fromStatus: cleanString(data.fromStatus) || null,
           toStatus: cleanString(data.toStatus) || null,
           contractorUid: cleanString(data.contractorUid) || null,
+          parentAuditId: cleanString(data.parentAuditId) || null,
+          note: cleanString(data.note) || null,
           timestamp: timestampToIso(data.timestamp || data.createdAt),
         });
       }
       events.sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')));
       return sendJson(res, 200, { events: events.slice(0, 250) });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // Audit history is immutable. Department heads may append a correction or
+  // administrative note, which creates a new linked audit event rather than
+  // rewriting or deleting the original record.
+  if (action === 'appendFieldDepartmentAuditNote') {
+    const caller = await requireFieldDepartmentHead(decoded.uid);
+    if (!caller) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+    }
+
+    const parentAuditId = cleanString(body.parentAuditId);
+    const note = cleanString(body.note);
+    if (!parentAuditId || !note) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'parentAuditId_and_note_required' });
+    }
+    if (note.length > 600) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'audit_note_too_long' });
+    }
+
+    try {
+      const parentRef = db.collection('auditEvents').doc(parentAuditId);
+      const parentSnap = await parentRef.get();
+      if (!parentSnap.exists) {
+        return sendJson(res, 404, { error: 'request_failed', reason: 'audit_event_not_found' });
+      }
+      const parent = parentSnap.data() || {};
+      if (cleanString(parent.organizationId) !== cleanString(caller.organizationId)
+          || cleanString(parent.department) !== cleanString(caller.department)) {
+        return sendJson(res, 403, { error: 'forbidden', reason: 'cross_scope_audit_denied' });
+      }
+
+      const ref = db.collection('auditEvents').doc();
+      const now = FieldValue.serverTimestamp();
+      await ref.set({
+        organizationId: caller.organizationId,
+        department: caller.department,
+        actorId: caller.uid,
+        actorRole: 'department_head',
+        resourceType: 'auditNote',
+        resourceId: cleanString(parent.resourceId) || parentAuditId,
+        parentAuditId,
+        action: 'append_audit_note',
+        note,
+        timestamp: now,
+      });
+
+      return sendJson(res, 200, {
+        auditId: ref.id,
+        parentAuditId,
+        action: 'append_audit_note',
+        note,
+      });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
