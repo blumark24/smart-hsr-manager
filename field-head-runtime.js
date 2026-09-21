@@ -156,11 +156,11 @@
         if (role !== 'dept') return originalNavFor(role);
         return [
           { id:'deptops', label:'مركز قيادة القسم' },
-          { id:'visual', label:'التشوه البصري' },
-          { id:'contractors', label:'المقاولون والعقود' },
+          { id:'missions', label:'التشوه البصري' },
           { id:'fieldmobility', label:'الحركة الميدانية' },
           { id:'map', label:'الخريطة التشغيلية' },
           { id:'employees', label:'موظفو القسم' },
+          { id:'incidents', label:'البلاغات والملاحظات' },
           { id:'audit', label:'سجل القسم' }
         ];
       };
@@ -170,11 +170,11 @@
     if (originalScreenDef) {
       instance.screenDef = () => {
         const screen = instance.state.screen;
-        if (instance.state.role === 'dept' && screen === 'visual') {
+        if (instance.state.role === 'dept' && screen === 'missions') {
           return {ops:false,title:'التشوه البصري',sub:'إدارة دورة البلاغ من الرصد حتى الإغلاق',actions:[]};
         }
-        if (instance.state.role === 'dept' && screen === 'contractors') {
-          return {ops:false,title:'المقاولون والعقود',sub:'سجل جهات التنفيذ والعقود النشطة للتشوه البصري',actions:[]};
+        if (instance.state.role === 'dept' && screen === 'incidents') {
+          return {ops:false,title:'البلاغات والملاحظات',sub:'وحدة تشغيلية مستقلة عن التشوه البصري — البلاغات والحوادث السابقة كما هي',actions:[]};
         }
         if (instance.state.role === 'dept' && screen === 'fieldmobility') {
           return {ops:false,title:'الحركة الميدانية',sub:'مهام موظفي القسم ومسار الاعتماد وتخصيص المركبة',actions:[
@@ -278,7 +278,7 @@
           const col=statusColor(status);
           return {chip:statusLabel(status),chipCol:col,chipBg:'rgba(122,164,224,.10)',chipBd:col};
         };
-        if (st.role === 'dept' && screen === 'visual') {
+        if (st.role === 'dept' && screen === 'missions') {
           const q=(st.tq||'').trim().toLowerCase();
           const f=st.tfilter||'الكل';
           const observations=(instance.state.liveObservations||[])
@@ -315,35 +315,6 @@
               ]
             },chip(o.status))),
             tEmpty:observations.length===0,tCount:observations.length+' بلاغ معروض'
-          };
-        }
-        if (st.role === 'dept' && screen === 'contractors') {
-          const contractors=instance.state.liveContractors||[];
-          return {
-            isTable:true,isHandover:false,isReports:false,isSettings:false,isEmp:false,
-            tQ:'',setTQ:()=>{},tPlaceholder:'',tFilters:[],
-            tCols:[
-              {label:'المقاول',flex:'1.1',align:'right'},
-              {label:'الشركة',flex:'1.2',align:'right'},
-              {label:'رقم العقد',flex:'1',align:'right'},
-              {label:'نطاق العقد',flex:'1.3',align:'right'},
-              {label:'انتهاء العقد',flex:'0 0 100px',align:'left'}
-            ],
-            tRows:contractors.map(x=>{
-              const active=x.contractState==='ACTIVE',col=active?'#22c55e':'#f5a524';
-              return {
-                chip:active?'عقد نشط':(x.contractState||'غير مكتمل'),chipCol:col,chipBg:'rgba(122,164,224,.10)',chipBd:col,
-                on:()=>instance.setState({drawer:'contractorProfile',drawerId:x.uid}),
-                cells:[
-                  cell(x.name,'1.1',{weight:'650',col:'var(--tx,#e9f1fb)'}),
-                  cell(x.profile?.companyName,'1.2'),
-                  cell(x.profile?.contractNumber,'1'),
-                  cell(x.profile?.contractScope,'1.3'),
-                  cell(x.profile?.endDate,'0 0 100px',{align:'left'})
-                ]
-              };
-            }),
-            tEmpty:contractors.length===0,tCount:contractors.length+' مقاول'
           };
         }
         if (st.role === 'dept' && screen === 'fieldmobility') {
@@ -403,7 +374,7 @@
           };
         }
         if (st.role === 'dept' && screen === 'audit') {
-          const events=instance.state.liveDepartmentAudit||[];
+          const events=(instance.state.liveDepartmentAudit||[]).filter(e=>e.resourceType==='observation'||e.resourceType==='contractorProfile');
           const actionLabel=a=>({
             assign_contractor:'إسناد للمقاول',
             upsert_contractor_profile:'تحديث ملف المقاول',
@@ -447,7 +418,7 @@
         if (st.role === 'dept' && screen === 'map') {
           const trusted=trustedObservations(instance);
           out.showMapEmpty=trusted.length===0;
-          out.liveCount=String((instance.state.liveEmployees||[]).filter(e=>e.accountStatus==='ACTIVE'||e.active===true).length);
+          out.liveCount=String(trusted.length);
           out.legend=[
             {label:'جديدة',col:'#ef4444'},
             {label:'تحت المعالجة',col:'#22c55e'},
@@ -471,7 +442,7 @@
           const activeContractors = (instance.state.liveContractors || []).filter(x => x.contractState === 'ACTIVE');
           if (o.status === 'PENDING' && activeContractors.length) {
             actions.push({
-              label:'إسناد للمقاول',
+              label:'إسناد لشركة مقاول',
               on:()=>instance.setState({drawer:'observationAssign',drawerId:o.observationId,chip:Object.assign({},instance.state.chip,{contractorUid:activeContractors[0]?.uid||''})}),
               tx:'var(--btnTx,#eaf4ff)',bg:'var(--btn,rgba(76,131,236,.45))',bd:'var(--btnBd,rgba(120,170,255,.35))'
             });
@@ -494,7 +465,7 @@
               {k:'الموقع',v:o.location || 'إحداثيات موثقة'},
               {k:'الحالة',v:statusLabel(o.status)},
               {k:'المراقب',v:o.createdByName || o.inspectorName || '—'},
-              {k:'المقاول',v:o.assignedContractorName || 'غير مسند'},
+              {k:'شركة المقاول',v:o.assignedContractorName || 'غير مسند'},
               {k:'التحقق',v:o.inspectorVerification?.status || '—'}
             ],
             evidenceImages:instance.state.observationEvidence || [],
@@ -592,12 +563,20 @@
           const contractors = (instance.state.liveContractors || []).filter(x => x.contractState === 'ACTIVE');
           if (!o) return {title:'تعذر تحديد البلاغ',sub:'',chip:'',chipCol:'',chipBg:'',chipBd:''};
           return {
-            title:'إسناد البلاغ للمقاول',sub:String(o.displayId || o.observationId || ''),
+            title:'إسناد البلاغ لشركة مقاول',sub:String(o.displayId || o.observationId || ''),
             chip:'جديدة',chipCol:'#ef4444',chipBg:'rgba(239,68,68,.12)',chipBd:'rgba(239,68,68,.3)',
-            form:true,formTitle:'المقاول ذو العقد النشط',
+            form:true,formTitle:'شركة التنفيذ المتعاقدة — العقود النشطة فقط',
             fields:[{
-              label:'المقاول',type:'select',value:instance.state.chip?.contractorUid||'',ph:'اختر المقاول',
-              options:contractors.map(x=>({value:x.uid,label:x.name||x.profile?.companyName||'مقاول'})),
+              label:'شركة المقاول (عقد نشط)',type:'select',value:instance.state.chip?.contractorUid||'',ph:'اختر الشركة المتعاقدة',
+              options:contractors.map(x=>({
+                value:x.uid,
+                label:[
+                  x.profile?.companyName||x.name||'شركة مقاول',
+                  'عقد نشط',
+                  x.profile?.contractNumber ? 'عقد '+x.profile.contractNumber : '',
+                  x.profile?.endDate ? 'حتى '+x.profile.endDate : ''
+                ].filter(Boolean).join(' · ')
+              })),
               on:e=>instance.setState({chip:Object.assign({},instance.state.chip,{contractorUid:e.target.value})})
             }],
             actions:[{
@@ -624,6 +603,31 @@
         const dr = instance.drawerData?.() || {};
         vals.dHasEvidenceImages = !!(dr.evidenceImages && dr.evidenceImages.length);
         vals.dEvidenceImages = dr.evidenceImages || [];
+        if (instance.state.role === 'dept' && instance.state.screen === 'map') {
+          const trusted=trustedObservations(instance);
+          vals.mapPins=[];
+          vals.zoneLabels=[];
+          vals.layerList=[{
+            name:'بلاغات التشوه البصري الموثقة',
+            n:String(trusted.length),
+            mark:'✓',
+            bd:'#38bdf8',
+            bg:'#38bdf8',
+            on:()=>{}
+          }];
+          vals.layerCount='1/1';
+          vals.liveCount=String(trusted.length);
+          vals.legend=[
+            {label:'جديدة',col:'#ef4444'},
+            {label:'تحت المعالجة',col:'#22c55e'},
+            {label:'بانتظار التحقق',col:'#f5a524'},
+            {label:'مغلقة',col:'#7d8ea6'}
+          ];
+          requestAnimationFrame(()=>{
+            const hud=document.querySelector('.dh-map-hud span:last-child');
+            if(hud) hud.textContent=trusted.length+' بلاغ موثق على الخريطة';
+          });
+        }
         return vals;
       };
     }
