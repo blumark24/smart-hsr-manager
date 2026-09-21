@@ -527,6 +527,27 @@
       .contractor-command-card{display:grid;grid-template-columns:1fr auto;gap:10px}.contractor-command-main{grid-column:1/-1}.contract-state-badge{grid-column:2;grid-row:2}.contractor-command-meta{grid-column:1/-1}
       .contractor-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-rail{grid-template-columns:1fr}.workspace-nav{position:sticky;top:8px;z-index:50;margin-top:0;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(14px)}
     }
+    /* Contractor Portal V3 — compact mobile command surface */
+    .map-contract-strip{display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 0 9px;padding:8px 9px;border:1px solid var(--line);border-radius:13px;background:color-mix(in srgb,var(--card) 94%,var(--teal) 6%);box-shadow:0 4px 14px rgba(10,25,49,.04)}.map-contract-strip::-webkit-scrollbar{display:none}.map-contract-strip span{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;color:var(--muted);font-size:9.5px;font-weight:800;white-space:nowrap}.map-contract-strip i{width:13px;height:13px;color:var(--teal)}.map-contract-strip b{color:var(--text);font-weight:900}.map-contract-state{margin-inline-start:auto!important;padding:4px 7px!important;border-radius:999px!important;background:rgba(16,185,129,.11)!important;color:#0f8a60!important;border:1px solid rgba(16,185,129,.2)!important}.map-contract-state[data-state="SUSPENDED"],.map-contract-state[data-state="ENDED"],.map-contract-state[data-state="EXPIRED"]{background:rgba(239,68,68,.1)!important;color:#c34b4b!important;border-color:rgba(239,68,68,.18)!important}
+    .map-workspace-head{margin-bottom:8px}.map-workspace-head h1{font-size:18px}.map-workspace-head p{font-size:10px}.map-workspace-head .btn{min-height:40px;border-radius:11px;padding-inline:12px}
+    .map-status{top:62px;transform:none;width:auto;max-width:calc(100% - 84px);padding:9px 13px;border-radius:999px;font-size:11px;line-height:1.45;background:rgba(10,25,49,.9);color:#fff;border-color:rgba(255,255,255,.12);box-shadow:0 8px 24px rgba(10,25,49,.18);backdrop-filter:blur(10px)}.map-status.is-error,.map-status.is-denied{border-radius:14px;color:#fff;background:rgba(127,29,29,.92)}
+    .field-status-capsule{top:10px;max-width:calc(100% - 110px);padding:6px 9px;font-size:9.5px;background:rgba(10,25,49,.82);color:#e9f5f7;border-color:rgba(255,255,255,.12);backdrop-filter:blur(10px)}.field-status-capsule b{color:#fff}
+    .filter-sheet{transform:translateY(calc(100% - 64px));border-radius:16px 16px 0 0;box-shadow:0 -10px 24px rgba(4,24,38,.14)}.filter-grip{margin:7px auto 5px;width:34px;height:4px}.filter-head{min-height:45px;padding:0 12px 7px}.filter-title{font-size:11px}.near-badge{font-size:10px;padding:4px 7px}.filter-body{padding:10px 12px 12px}.legend-inline{font-size:10px;padding:8px}
+    .legend-toggle{width:42px;height:42px;bottom:72px;right:12px}.legend-count{width:16px;height:16px;font-size:10px}.legend-glass{bottom:120px;right:12px;font-size:11px;min-width:118px}
+    #mapPanel .map-wrap{border-width:2px}
+    @media(max-width:760px){
+      .app-header{padding:0;background:linear-gradient(135deg,#083746,#0a4b50);box-shadow:0 8px 26px rgba(4,24,38,.16)}
+      .contractor-header{min-height:auto;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;gap:.45rem .55rem;padding:.62rem .75rem .7rem;border-radius:0 0 16px 16px}
+      .app-header .brand{display:none}.user-info{grid-column:1;grid-row:1;padding:0}.identity-logout{grid-column:2;grid-row:1;width:42px;min-width:42px;height:42px;padding:0}.identity-logout span{position:absolute;width:1px;height:1px;clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden}
+      .identity-metrics{grid-column:1/-1;grid-row:2;grid-template-columns:1fr 1fr;gap:.4rem}.identity-metric{min-height:38px;padding:.32rem .5rem;border-radius:10px}.identity-metric small{font-size:.6rem}.identity-metric strong{font-size:.72rem}.contractor-profile-avatar{width:38px;height:38px;flex-basis:38px;border-radius:11px}.user-text{gap:2px}#contractorName{font-size:.88rem}.role-badge{font-size:.63rem;padding:2px 6px}#orgBadge{font-size:.65rem;max-width:140px}
+      .workspace-shell{padding:8px 9px calc(22px + env(safe-area-inset-bottom))}.workspace-nav{min-height:50px;margin-bottom:9px;padding:4px;border-radius:13px;position:sticky;top:6px;z-index:60}.workspace-tab{min-height:40px;font-size:12px}
+      .map-contract-strip{margin-bottom:7px;padding:7px 8px;border-radius:11px}.map-workspace-head{margin-bottom:6px}.map-workspace-head h1{font-size:17px}.map-workspace-head p{font-size:9.5px}
+      #mapPanel .map-wrap{height:clamp(500px,66dvh,690px);min-height:500px;border-radius:15px;margin-bottom:0}.map-status{top:58px;max-width:calc(100% - 70px);font-size:10.5px}.field-status-capsule{top:8px}
+      .filter-sheet{max-width:none;width:100%}.filter-body{display:grid;grid-template-columns:1fr;gap:7px}.legend-inline{flex-direction:row;overflow-x:auto;justify-content:flex-start;gap:12px;text-align:start;white-space:nowrap}
+    }
+    @media(max-width:430px){
+      #mapPanel .map-wrap{height:62dvh;min-height:520px}.map-contract-strip span{font-size:9px}.map-contract-state{margin-inline-start:0!important}.field-status-capsule{max-width:calc(100% - 92px)}
+    }
     @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
 </head>
@@ -598,7 +619,13 @@
     </aside></div>
   </section>
   <section id="mapPanel" class="workspace-panel" hidden aria-labelledby="mapTab">
-    <div class="map-workspace-head"><div><h1>الخريطة الميدانية</h1><p>المهام القريبة والمواقع المسندة</p></div><button id="centerBtn" class="btn btn-dark" title="إعادة التمركز"><i data-lucide="navigation"></i><span>تمركز</span></button></div>
+    <div class="map-contract-strip" aria-label="سياق الشركة والعقد">
+      <span><i data-lucide="building-2"></i><b id="mapCompanyName">شركة متعاقدة</b></span>
+      <span><i data-lucide="file-badge-2"></i>عقد <b id="mapContractNumber">—</b></span>
+      <span><i data-lucide="layers-3"></i><b id="mapSection">التشوه البصري</b></span>
+      <span id="mapContractState" class="map-contract-state">جاري التحقق</span>
+    </div>
+    <div class="map-workspace-head"><div><h1>الخريطة الميدانية</h1><p>المهام القريبة والمواقع المسندة للشركة</p></div><button id="centerBtn" class="btn btn-dark" title="إعادة التمركز"><i data-lucide="navigation"></i><span>تمركز</span></button></div>
 
 <!-- Map frame -->
 <div class="map-wrap">
@@ -865,7 +892,11 @@
   };
 
   function setMapState(state){
-    const sync=document.getElementById('fieldSyncState');if(sync)sync.textContent=`المزامنة: ${state==='ready'?'موثّقة':state==='loading'?'جارية':'غير متاحة'}`;
+    const sync=document.getElementById('fieldSyncState');
+    if(sync){
+      const labels={ready:'المزامنة: موثّقة',loading:'المزامنة: جارية',empty:'الحالة: لا توجد مهام',error:'المزامنة: خطأ',offline:'المزامنة: غير متصلة',unauthorized:'الحالة: غير مصرح'};
+      sync.textContent=labels[state]||'الحالة: غير متاحة';
+    }
     const el = document.getElementById('mapStatus');
     if (!el) return;
     el.classList.remove('is-error','is-denied');
@@ -901,12 +932,17 @@
     const contractEl=document.getElementById('portalContractNumber');if(contractEl)contractEl.textContent=contractorContext.contractNumber||'—';
     const adminEl=document.getElementById('portalAdministration');if(adminEl)adminEl.textContent=contractorContext.administration||'إدارة الحصر الميداني';
     const sectionEl=document.getElementById('portalSection');if(sectionEl)sectionEl.textContent=contractorContext.section||'التشوه البصري';
+    const labels={ACTIVE:'عقد نشط',SUSPENDED:'عقد موقوف',ENDED:'عقد منتهي',EXPIRED:'عقد منتهي',NOT_STARTED:'لم يبدأ',UNREGISTERED:'ملف غير مكتمل'};
+    const stateText=labels[contractorContext.contractState]||'جاري التحقق';
     const stateEl=document.getElementById('portalContractState');
     if(stateEl){
-      const labels={ACTIVE:'عقد نشط',SUSPENDED:'عقد موقوف',ENDED:'عقد منتهي',EXPIRED:'عقد منتهي',NOT_STARTED:'لم يبدأ',UNREGISTERED:'ملف غير مكتمل'};
-      stateEl.textContent=labels[contractorContext.contractState]||'جاري التحقق';
+      stateEl.textContent=stateText;
       stateEl.dataset.state=contractorContext.contractState||'UNKNOWN';
     }
+    const mapCompany=document.getElementById('mapCompanyName');if(mapCompany)mapCompany.textContent=company;
+    const mapContract=document.getElementById('mapContractNumber');if(mapContract)mapContract.textContent=contractorContext.contractNumber||'—';
+    const mapSection=document.getElementById('mapSection');if(mapSection)mapSection.textContent=contractorContext.section||'التشوه البصري';
+    const mapState=document.getElementById('mapContractState');if(mapState){mapState.textContent=stateText;mapState.dataset.state=contractorContext.contractState||'UNKNOWN';}
   }
 
   async function loadContractorPortalContext(user){
