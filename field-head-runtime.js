@@ -782,6 +782,7 @@
         vals.dAssignment = dr.assignmentCard || {};
         vals.dAssignmentAssigned = dr.assignmentCard?.state === 'assigned';
         vals.dAssignmentPending = !!dr.assignmentCard && dr.assignmentCard.state !== 'assigned';
+        vals.dAssignmentStateLabel = vals.dAssignmentAssigned ? 'مسند' : 'بانتظار الإسناد';
 
         vals.dHasEvidenceImages = !!(dr.evidenceImages && dr.evidenceImages.length);
         vals.dEvidenceImages = dr.evidenceImages || [];
@@ -797,6 +798,7 @@
           : vals.dEvidenceBefore ? 'قبل فقط' : 'غير مكتملة';
         vals.dEvidenceBoth = !!(vals.dEvidenceBefore && vals.dEvidenceAfter);
         vals.dEvidenceSplit = Number(instance.state.evidenceSplit || 50);
+        vals.dEvidenceClip = (100 - vals.dEvidenceSplit) + '%';
         vals.setEvidenceSplit = e => instance.setState({evidenceSplit:Number(e.target.value||50)});
         vals.openBeforeEvidence = () => {
           if (vals.dEvidenceBefore?.url) instance.setState({evidenceLightbox:{url:vals.dEvidenceBefore.url,label:'قبل المعالجة'}});
