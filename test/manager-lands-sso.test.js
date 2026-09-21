@@ -73,7 +73,7 @@ test('isSsoEligible: denies a disabled account, a pending (not yet synced) entit
 // ---- 2/3. Lands employee / Lands department manager direct login wiring ----
 test('2/3. login.html calls POST /api/organization/context with the employee\'s own bearer token before redirecting to Lands', () => {
   const source = read('login.html');
-  const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole)'), source.indexOf('showMsg(\'✅ تم التحقق بنجاح... جارٍ التوجيه\', \'success\');'));
+  const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole && !mobilityRole)'), source.indexOf('// Generic department-head landing.'));
   assert.match(landsBranch, /fetch\('\/api\/organization\/context'/);
   assert.match(landsBranch, /method: 'POST'/);
   assert.match(landsBranch, /'Authorization': 'Bearer ' \+ idToken/);
