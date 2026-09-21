@@ -482,6 +482,10 @@
     .dh-evidence-grid{grid-template-columns:1fr}
     .dh-evidence-image-button img,.dh-evidence-empty{height:190px}
   }
+  /* Day header text contrast */
+  .dh-app[data-theme="day"] .dh-command-bar{color:var(--hdrTx,#fff)!important}
+  .dh-app[data-theme="day"] .dh-command-bar [style*="color:var(--tx,"]{color:var(--hdrTx,#fff)!important}
+  .dh-app[data-theme="day"] .dh-command-bar [style*="color:var(--thTx,"]{color:var(--hdrTx3,#c7e0d4)!important}
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -551,15 +555,15 @@
 
       <div style="display:flex;align-items:center;gap:11px">
         <div style="text-align:right;display:var(--brandTxt,block);padding-right:11px;border-right:1px solid var(--div,rgba(122,164,224,0.14))">
-          <div style="font-size:13px;font-weight:700;color:var(--tx,#f0f6ff)">إدارة الحصر الميداني</div>
-          <div style="font-size:9.5px;color:var(--thTx,#7d8ea6);margin-top:2px">{{ orgName }}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--hdrTx,#ffffff)">إدارة الحصر الميداني</div>
+          <div style="font-size:9.5px;color:var(--hdrTx3,#c7e0d4);margin-top:2px">{{ orgName }}</div>
         </div>
         <div style="display:flex;align-items:center;gap:9px">
           <div style="text-align:left;display:var(--brandTxt,block)">
             <div dir="ltr" style="display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:700;letter-spacing:2.5px;line-height:1">
               <span style="color:var(--logoNavyH,#e9f1fb)">SMART</span><span style="color:var(--logoGreenH,#149c2b)">HSR</span>
             </div>
-            <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--thTx,#7d8ea6);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
+            <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--hdrTx3,#c7e0d4);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
           </div>
           <svg width="38" height="42" viewBox="0 0 76 84" fill="none" style="flex:none">
             <path d="M38 4a30 30 0 1 0 0 60 30 30 0 0 0 0-60z" fill="none" stroke="var(--logoNavy,#dbe6f5)" stroke-width="7"></path>
