@@ -147,7 +147,7 @@
       liveMissions:(workspace.missions || []).map(missionView),
       liveVehicles:(workspace.vehicles || []).map(vehicleView),
       liveIncidents:(workspace.incidents || []).map(incidentView),
-      liveEmployees:(workspace.employees || []).map(e => ({
+      liveEmployees:(workspace.employees || []).filter(e => e.vehicleEligible === true).map(e => ({
         employeeId:e.employeeId,
         uid:e.uid,
         name:e.name,
