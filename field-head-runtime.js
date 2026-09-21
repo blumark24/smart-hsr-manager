@@ -104,6 +104,28 @@
   function statusColor(status) {
     return status === 'PENDING' ? '#ef4444' : status === 'IN_PROGRESS' ? '#22c55e' : status === 'PENDING_REVIEW' ? '#f5a524' : '#7d8ea6';
   }
+  function workflowPhase(o) {
+    if (!o) return {key:'new',label:'جديدة',color:'#ef4444',step:1};
+    if (o.status === 'COMPLETED') return {key:'completed',label:'تمت المعالجة',color:'#22a06b',step:5};
+    if (o.status === 'PENDING_REVIEW') return {key:'review',label:'بانتظار التحقق',color:'#38bdf8',step:4};
+    if (o.status === 'IN_PROGRESS') return {key:'progress',label:'قيد التنفيذ',color:'#f59e0b',step:3};
+    if (o.status === 'PENDING' && o.assignedContractorUid) return {key:'assigned',label:'تم الإسناد',color:'#7c6cf2',step:2};
+    return {key:'new',label:'جديدة',color:'#ef4444',step:1};
+  }
+  function workflowSteps(o) {
+    const current=workflowPhase(o).step;
+    return [
+      {key:'capture',label:'الرصد',state:current>1?'done':current===1?'current':'next'},
+      {key:'assign',label:'الإسناد',state:current>2?'done':current===2?'current':'next'},
+      {key:'execute',label:'التنفيذ',state:current>3?'done':current===3?'current':'next'},
+      {key:'verify',label:'التحقق',state:current>4?'done':current===4?'current':'next'},
+      {key:'close',label:'الإغلاق',state:current===5?'done':'next'}
+    ];
+  }
+  function workflowProgressLabel(o) {
+    const p=workflowPhase(o);
+    return p.label + ' · ' + Math.round((p.step/5)*100) + '%';
+  }
   function typeLabel(type) {
     const key=String(type||'').toUpperCase();
     return ({MAINTENANCE:'صيانة',LIGHTING:'إنارة',WASTE:'مخلفات',EXCAVATION:'حفريات',VISUAL_DISTORTION:'تشوه بصري'}[key] || type || 'تشوه بصري');
@@ -162,9 +184,13 @@
     observations.forEach(o => {
       const el = document.createElement('button');
       el.type = 'button';
-      el.title = 'فتح البلاغ ' + (o.displayId || o.observationId || '');
+      const phase=workflowPhase(o);
+      el.title = 'فتح البلاغ ' + (o.displayId || o.observationId || '') + ' · ' + phase.label;
       el.setAttribute('aria-label', el.title);
-      el.style.cssText = 'width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.9);background:'+statusColor(o.status)+';box-shadow:0 0 0 4px rgba(5,14,28,.28),0 6px 18px rgba(0,0,0,.45);cursor:pointer';
+      el.className='hsr-observation-marker phase-'+phase.key;
+      el.dataset.phase=phase.key;
+      el.style.setProperty('--phase-color',phase.color);
+      el.style.cssText += ';width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.94);background:'+phase.color+';box-shadow:0 0 0 4px rgba(5,14,28,.24),0 6px 18px rgba(0,0,0,.38);cursor:pointer';
       el.addEventListener('click', e => {
         e.stopPropagation();
         instance.openFieldObservation(o.observationId);
@@ -209,7 +235,7 @@
           { id:'fieldmobility', label:'الحركة الميدانية' },
           { id:'map', label:'الخريطة التشغيلية' },
           { id:'employees', label:'موظفو القسم' },
-          { id:'incidents', label:'البلاغات والملاحظات' },
+          { id:'incidents', label:'البلاغات العامة' },
           { id:'audit', label:'سجل القسم' }
         ];
       };
@@ -223,7 +249,7 @@
           return {ops:false,title:'التشوه البصري',sub:'إدارة دورة البلاغ من الرصد حتى الإغلاق',actions:[]};
         }
         if (instance.state.role === 'dept' && screen === 'incidents') {
-          return {ops:false,title:'البلاغات والملاحظات',sub:'وحدة تشغيلية مستقلة عن التشوه البصري — البلاغات والحوادث السابقة كما هي',actions:[]};
+          return {ops:false,title:'البلاغات العامة',sub:'بلاغات تشغيلية مستقلة لا تشمل حالات التشوه البصري، لمنع ازدواجية السجل والمسار',actions:[]};
         }
         if (instance.state.role === 'dept' && screen === 'fieldmobility') {
           return {ops:false,title:'الحركة الميدانية',sub:'مهام موظفي القسم ومسار الاعتماد وتخصيص المركبة',actions:[
@@ -236,9 +262,11 @@
         const base = originalScreenDef();
         if (instance.state.role !== 'dept' || screen !== 'deptops') return base;
         const observations = instance.state.liveObservations || [];
-        const active = observations.filter(o => ['PENDING','IN_PROGRESS','PENDING_REVIEW'].includes(o.status));
+        const active = observations.filter(o => workflowPhase(o).key !== 'completed');
         const team = (instance.state.liveEmployees || []).filter(e => e?.products?.field?.enabled === true && e?.products?.field?.role === 'inspector');
-        const K = (label,value,colorName) => ({label,value:String(value),delta:'',col:instance.sc ? instance.sc(colorName) : '#53d99a',on:()=>{}});
+        const countPhase = key => observations.filter(o=>workflowPhase(o).key===key).length;
+        const K = (label,value,color,on) => ({label,value:String(value),delta:'',col:color,on:on||(()=>{})});
+        const openPhase = label => instance.setState({screen:'missions',tfilter:label});
         return Object.assign({}, base, {
           ops:true,
           bottom:false,
@@ -246,25 +274,29 @@
           sub:'إدارة الحصر الميداني · المنتج النشط: التشوه البصري',
           actions:[],
           kpis:[
-            K('حالات التشوه', observations.length, 'جديد'),
-            K('تحت المعالجة', observations.filter(o=>o.status==='IN_PROGRESS').length, 'قيد التنفيذ'),
-            K('بانتظار التحقق', observations.filter(o=>o.status==='PENDING_REVIEW').length, 'بانتظار الاعتماد'),
-            K('مغلقة', observations.filter(o=>o.status==='COMPLETED').length, 'مغلقة'),
-            K('مراقبو القسم', team.length, 'متاحة')
+            K('إجمالي الحالات', observations.length, '#0f766e', ()=>openPhase('الكل')),
+            K('جديدة', countPhase('new'), '#ef4444', ()=>openPhase('جديدة')),
+            K('تم الإسناد', countPhase('assigned'), '#7c6cf2', ()=>openPhase('تم الإسناد')),
+            K('قيد التنفيذ', countPhase('progress'), '#f59e0b', ()=>openPhase('قيد التنفيذ')),
+            K('بانتظار التحقق', countPhase('review'), '#38bdf8', ()=>openPhase('بانتظار التحقق')),
+            K('تمت المعالجة', countPhase('completed'), '#22a06b', ()=>openPhase('تمت المعالجة'))
           ],
-          sideATitle:'حالات التشوه الجارية',
+          sideATitle:'الحالات التشغيلية الجارية',
           sideACount:active.length + ' حالة',
-          sideA:active.slice(0,8).map(o => ({
+          sideA:active.slice(0,8).map(o => {
+            const phase=workflowPhase(o);
+            const company=(instance.state.liveContractors||[]).find(x=>x.uid===o.assignedContractorUid)?.profile?.companyName;
+            return {
             badge:String(o.displayId || o.observationId || '—').slice(-4),
-            title:o.title || o.type || 'تشوه بصري',
-            meta:o.location || 'موقع موثق',
-            tag:statusLabel(o.status),
-            col:statusColor(o.status),
-            chipBg:instance.tint ? instance.tint(statusColor(o.status),.14) : 'transparent',
+            title:typeLabel(o.title || o.type || 'تشوه بصري'),
+            meta:company ? (company+' · '+locationLabel(o)) : locationLabel(o),
+            tag:phase.label,
+            col:phase.color,
+            chipBg:instance.tint ? instance.tint(phase.color,.14) : 'transparent',
             bg:'var(--ctl,rgba(20,32,54,0.6))',
             bd:'var(--ctlBd,rgba(122,164,224,0.12))',
             on:()=>instance.openFieldObservation(o.observationId)
-          })),
+          }}),
           sideBTitle:'مراقبو القسم',
           sideBCount:String(team.length),
           sideB:team.slice(0,8).map(e => ({
@@ -333,9 +365,9 @@
           const q=(st.tq||'').trim().toLowerCase();
           const f=st.tfilter||'الكل';
           const observations=(instance.state.liveObservations||[])
-            .filter(o=>f==='الكل'||statusLabel(o.status)===f)
+            .filter(o=>f==='الكل'||workflowPhase(o).label===f)
             .filter(o=>!q||[o.displayId,o.observationId,o.title,o.type,o.location,o.createdByName,o.assignedContractorName].join(' ').toLowerCase().includes(q));
-          const filters=['الكل','جديدة','تحت المعالجة','بانتظار التحقق','مغلقة'].map(label=>({
+          const filters=['الكل','جديدة','تم الإسناد','قيد التنفيذ','بانتظار التحقق','تمت المعالجة'].map(label=>({
             label,on:()=>instance.setState({tfilter:label}),
             tx:f===label?'var(--tx,#e9f1fb)':'var(--tx3,#7d8ea6)',
             bg:f===label?'rgba(56,132,220,.22)':'var(--ctl,rgba(20,32,54,.5))',
@@ -351,7 +383,8 @@
               {label:'النوع',flex:'1.1',align:'right'},
               {label:'الموقع',flex:'1.4',align:'right'},
               {label:'المراقب',flex:'1',align:'right'},
-              {label:'المقاول',flex:'1',align:'right'},
+              {label:'الشركة',flex:'1',align:'right'},
+              {label:'المرحلة',flex:'1.25',align:'right'},
               {label:'التحقق',flex:'0 0 100px',align:'left'}
             ],
             tRows:observations.map(o=>Object.assign({
@@ -361,10 +394,11 @@
                 cell(typeLabel(o.type||o.title),'1.1'),
                 cell(locationLabel(o),'1.4',{size:'11px'}),
                 cell(o.createdByName||o.inspectorName,'1',{size:'11px'}),
-                cell(o.assignedContractorName||'غير مسند','1',{size:'11px'}),
+                cell(((instance.state.liveContractors||[]).find(x=>x.uid===o.assignedContractorUid)?.profile?.companyName)||'غير مسند','1',{size:'11px'}),
+                cell(workflowProgressLabel(o),'1.25',{size:'10.5px',weight:'600',col:workflowPhase(o).color}),
                 cell(o.inspectorVerification?.status==='VERIFIED'?'متحقق':o.inspectorVerification?.status==='RETURNED'?'معاد للمقاول':'—','0 0 100px',{align:'left',size:'10.5px'})
               ]
-            },chip(o.status))),
+            },{chip:workflowPhase(o).label,chipCol:workflowPhase(o).color,chipBg:'rgba(122,164,224,.10)',chipBd:workflowPhase(o).color}))),
             tEmpty:observations.length===0,tCount:observations.length+' بلاغ معروض'
           };
         }
@@ -476,9 +510,10 @@
           out.liveCount=String(trusted.length);
           out.legend=[
             {label:'جديدة',col:'#ef4444'},
-            {label:'تحت المعالجة',col:'#22c55e'},
-            {label:'بانتظار التحقق',col:'#f5a524'},
-            {label:'مغلقة',col:'#7d8ea6'}
+            {label:'تم الإسناد',col:'#7c6cf2'},
+            {label:'قيد التنفيذ',col:'#f59e0b'},
+            {label:'بانتظار التحقق',col:'#38bdf8'},
+            {label:'تمت المعالجة',col:'#22a06b'}
           ];
         }
         return out;
@@ -568,12 +603,29 @@
               tx:'var(--btnTx,#eaf4ff)',bg:'var(--btn,rgba(76,131,236,.45))',bd:'var(--btnBd,rgba(120,170,255,.35))'
             });
           }
+          const phase=workflowPhase(o);
+          const assignmentCard=o.assignedContractorUid ? {
+            state:'assigned',
+            title:'الإسناد التنفيذي',
+            company:assignedProfile.companyName || 'شركة متعاقدة',
+            contact:assignedProfile.contactName || o.assignedContractorName || 'ممثل الشركة',
+            contract:assignedProfile.contractNumber ? ('#'+assignedProfile.contractNumber) : 'بدون رقم عقد',
+            status:assignedContractor?.contractState==='ACTIVE'?'عقد نشط':'راجع حالة العقد',
+            assignedAt:formatAuditTime(o.assignedAt)
+          } : {
+            state:'unassigned',
+            title:'الإسناد التنفيذي',
+            company:'لم يتم الإسناد بعد',
+            contact:'—',contract:'—',status:'بانتظار اختيار شركة متعاقدة',assignedAt:'—'
+          };
           return {
             title:'بلاغ التشوه · ' + (o.displayId || o.observationId || '—'),
             sub:typeLabel(o.type || o.title),
-            chip:statusLabel(o.status),chipCol:col,
-            chipBg:instance.tint ? instance.tint(col,.14) : 'transparent',
-            chipBd:instance.tint ? instance.tint(col,.30) : 'transparent',
+            chip:phase.label,chipCol:phase.color,
+            chipBg:instance.tint ? instance.tint(phase.color,.14) : 'transparent',
+            chipBd:instance.tint ? instance.tint(phase.color,.30) : 'transparent',
+            caseSteps:workflowSteps(o),
+            assignmentCard,
             rows:[
               {k:'رقم الحالة',v:String(o.displayId || o.observationId || '—')},
               {k:'التصنيف',v:typeLabel(o.type || o.title)},
@@ -755,9 +807,10 @@
           vals.liveCount=String(trusted.length);
           vals.legend=[
             {label:'جديدة',col:'#ef4444'},
-            {label:'تحت المعالجة',col:'#22c55e'},
-            {label:'بانتظار التحقق',col:'#f5a524'},
-            {label:'مغلقة',col:'#7d8ea6'}
+            {label:'تم الإسناد',col:'#7c6cf2'},
+            {label:'قيد التنفيذ',col:'#f59e0b'},
+            {label:'بانتظار التحقق',col:'#38bdf8'},
+            {label:'تمت المعالجة',col:'#22a06b'}
           ];
           requestAnimationFrame(()=>{
             const hud=document.querySelector('.dh-map-hud span:last-child');
