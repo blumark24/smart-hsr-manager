@@ -132,21 +132,8 @@ test('login.html never logs the handoff code, the employee password, or any toke
   assert.doesNotMatch(source, /console\.log\([^)]*idToken/i);
 });
 
-// ---- P1: users-search autofill hardening ----
-test('13/14. #userSearch is hardened against browser autofill with readonly-until-focus, type=search, and autocomplete=off (not merely cleared after the fact)', () => {
-  const source = read('manager.html');
-  const inputTag = source.slice(source.indexOf('<input id="userSearch"'), source.indexOf('/>', source.indexOf('<input id="userSearch"')) + 2);
-  assert.match(inputTag, /type="search"/);
-  assert.match(inputTag, /autocomplete="off"/);
-  assert.match(inputTag, /readonly/);
-  assert.match(inputTag, /onfocus="this\.removeAttribute\('readonly'\)"/);
-});
-
-test('15. users list stability is unaffected by the search hardening: users-list-view.js and the render pipeline are unchanged', () => {
-  const viewSource = read('users-list-view.js');
-  assert.match(viewSource, /export function belongsOnUsersList/);
-  assert.match(viewSource, /export function deriveVisibleUsers/);
-  const managerSource = read('manager.html');
-  assert.match(managerSource, /usersViewState\.search = document\.getElementById\('userSearch'\)\.value/);
-  assert.match(managerSource, /deriveVisibleUsers\(users, usersViewState\)/);
-});
+// User Center search/autofill regressions are intentionally covered by
+// test/manager-users-list-state.test.js and the Phase11 User Center suites.
+// They no longer belong in the Lands SSO contract because the User Center
+// UI was modularized out of manager.html. Keeping those assertions here
+// would couple Lands authentication to unrelated presentation structure.
