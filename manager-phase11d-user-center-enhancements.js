@@ -222,7 +222,7 @@ async function renderCenter(force=false) {
     app.innerHTML=`
       <header class="ucv2-header">
         <div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div>
-        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button><button class="ucv2-btn ghost" type="button" data-close-center aria-label="إغلاق مركز إدارة المستخدمين">✕ إغلاق</button></div>
+        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button><button class="ucv2-btn contractor" type="button" data-add-contractor>+ إضافة شركة متعاقدة</button><button class="ucv2-btn icon-close" type="button" data-close-center aria-label="إغلاق مركز إدارة المستخدمين">×</button></div>
       </header>
       <div class="ucv2-kpis" aria-label="ملخص القوى العاملة">
         ${kpiCard('total','إجمالي الموظفين',stats.total,'total',null)}
@@ -272,8 +272,99 @@ function emptyState(total){ return total ? `<div class="ucv2-state ucv2-state-no
 function pagination(max){ return `<nav class="ucv2-pagination" aria-label="التنقل بين صفحات الموظفين"><button class="ucv2-btn ghost" data-page="prev" ${state.page<=1?'disabled':''}>السابق</button><span>صفحة ${state.page} من ${max}</span><button class="ucv2-btn ghost" data-page="next" ${state.page>=max?'disabled':''}>التالي</button></nav>`; }
 function resetFilters(){ Object.assign(state,{search:'',status:'all',role:'all',product:'all',department:'all',vehicle:'all',quick:null,page:1,sort:'name'}); }
 function showCenterActionError(app,error){let node=app.querySelector('.ucv2-action-error');if(!node){node=document.createElement('div');node.className='ucv2-action-error';node.setAttribute('role','alert');app.querySelector('.ucv2-header')?.after(node);}node.textContent=U.why?U.why(error?.reason||error?.message):'تعذر تنفيذ الإجراء.';}
+async function openContractorCompanyDialog(app){
+  const body=`
+    <div class="contractor-company-form">
+      <div class="sec">
+        <div class="st"><span>بيانات الشركة والعقد</span><small>جهة خارجية متعاقدة — ليست موظف بلدية</small></div>
+        <div class="grid">
+          ${U.input('اسم الشركة','cc-company','',{w:true})}
+          ${U.input('رقم العقد','cc-contract')}
+          ${U.sel('حالة العقد','cc-status','ACTIVE',[['ACTIVE','عقد نشط'],['SUSPENDED','موقوف'],['ENDED','منتهي']])}
+          ${U.input('نطاق العقد','cc-scope','',{w:true})}
+          ${U.input('تاريخ البداية','cc-start','',{type:'date'})}
+          ${U.input('تاريخ النهاية','cc-end','',{type:'date'})}
+        </div>
+      </div>
+      <div class="sec">
+        <div class="st"><span>ممثل الشركة وحساب الدخول</span><small>الحساب يدخل بوابة المقاول فقط</small></div>
+        <div class="grid">
+          ${U.input('اسم ممثل الشركة','cc-contact','',{w:true})}
+          ${U.input('جوال الممثل','cc-phone','',{type:'tel'})}
+          ${U.input('بريد الدخول','cc-email','',{type:'email'})}
+          ${U.input('كلمة المرور','cc-password','',{type:'password',ac:'new-password'})}
+          ${U.input('تأكيد كلمة المرور','cc-password2','',{type:'password',ac:'new-password'})}
+        </div>
+        <div class="note">سيتم إنشاء حساب ممثل الشركة بصلاحية مقاول وربطه بالشركة والعقد مباشرة. لا يظهر كسجل موظف بلدية.</div>
+      </div>
+      <div class="act contractor-company-actions">
+        <button type="button" class="btn pr save">إنشاء الشركة والحساب</button>
+        <button type="button" class="btn cancel">إلغاء</button>
+      </div>
+      <div class="msg contractor-company-msg"></div>
+    </div>`;
+  const {c,close}=U.shell('iuc-contractor-company','إضافة شركة متعاقدة','إنشاء الجهة الخارجية وربط ممثلها بالعقد النشط',body);
+  accessibleDialog(c,'إضافة شركة متعاقدة');
+  c.classList.add('ucv2-add-dialog','ucv2-contractor-dialog');
+  const header=c.querySelector('.ih');
+  if(header&&!header.querySelector('.ucv2-dialog-icon-badge')) header.insertAdjacentHTML('afterbegin','<span class="ucv2-dialog-icon-badge contractor" aria-hidden="true"></span>');
+  installPasswordToggles(c);
+  c.querySelector('.cancel')?.addEventListener('click',close);
+
+  const save=c.querySelector('.save');
+  const msg=c.querySelector('.contractor-company-msg');
+  save?.addEventListener('click',async()=>{
+    const val=id=>clean(c.querySelector(id)?.value);
+    const password=c.querySelector('#cc-password')?.value||'';
+    const password2=c.querySelector('#cc-password2')?.value||'';
+    const payload={
+      action:'createFieldContractorCompany',
+      companyName:val('#cc-company'),
+      contractNumber:val('#cc-contract'),
+      contractScope:val('#cc-scope'),
+      contactName:val('#cc-contact'),
+      contactPhone:val('#cc-phone'),
+      email:val('#cc-email'),
+      password,
+      startDate:val('#cc-start'),
+      endDate:val('#cc-end'),
+      status:val('#cc-status')||'ACTIVE',
+      department:'إدارة الحصر الميداني'
+    };
+    if(!payload.companyName||!payload.contractNumber||!payload.contractScope||!payload.contactName||!payload.email||!payload.startDate||!payload.endDate){
+      msg.className='msg er contractor-company-msg';msg.textContent='أكمل بيانات الشركة والعقد وممثل الشركة.';return;
+    }
+    if(password!==password2){
+      msg.className='msg er contractor-company-msg';msg.textContent='كلمتا المرور غير متطابقتين.';return;
+    }
+    if(!U.strongPw(password)){
+      msg.className='msg er contractor-company-msg';msg.textContent='كلمة المرور: 8 أحرف مع كبير وصغير ورقم ورمز.';return;
+    }
+    if(payload.endDate<payload.startDate){
+      msg.className='msg er contractor-company-msg';msg.textContent='تاريخ نهاية العقد يجب أن يكون بعد تاريخ البداية.';return;
+    }
+    save.disabled=true;c.setAttribute('aria-busy','true');
+    msg.className='msg contractor-company-msg';msg.textContent='جاري إنشاء الشركة وحساب ممثلها...';
+    try{
+      const result=await U.post('/api/admin/users',payload);
+      directoryCache=null;
+      msg.className='msg ok contractor-company-msg';
+      msg.textContent=result.contractState==='ACTIVE'
+        ?'تم إنشاء الشركة والحساب، والعقد نشط وجاهز للإسناد.'
+        :'تم إنشاء الشركة والحساب. راجع حالة العقد قبل الإسناد.';
+      setTimeout(()=>{close();renderCenter(true);},1100);
+    }catch(error){
+      msg.className='msg er contractor-company-msg';
+      msg.textContent=error.reason==='email_already_exists'?'بريد الدخول مستخدم في حساب آخر.':error.reason==='password_policy_failed'?'كلمة المرور لا تطابق سياسة الأمان.':(U.why?U.why(error.reason||error.message):'تعذر إنشاء الشركة.');
+    }finally{
+      save.disabled=false;c.removeAttribute('aria-busy');
+    }
+  });
+}
+
 function bindCenter(app,directory){
   app.querySelector('[data-add-employee]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;app.setAttribute('aria-busy','true');try{await U.add();decorateAddDialog();}catch(error){showCenterActionError(app,error);}finally{button.disabled=false;app.removeAttribute('aria-busy');}});
+  app.querySelector('[data-add-contractor]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;try{await openContractorCompanyDialog(app);}catch(error){showCenterActionError(app,error);}finally{button.disabled=false;}});
   app.querySelector('[data-close-center]')?.addEventListener('click',()=>{ document.querySelector('[data-ucv2-original] button[aria-label="إغلاق"]')?.click(); });
   app.querySelectorAll('[data-reset-filters]').forEach(btn=>btn.addEventListener('click',()=>{ resetFilters(); renderCenter(); }));
   app.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{ const q=btn.dataset.quick; state.quick=state.quick===q?null:q; state.page=1; renderCenter(); }));
