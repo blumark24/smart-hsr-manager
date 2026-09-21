@@ -97,7 +97,7 @@ test('3. Service transfer: Field employee -> Lands removes Field and grants real
   } finally { fakes.restore(); }
 });
 
-test('dual-service request is denied: enabling Lands on an active Field employee without disabling Field', async () => {
+test('dual-service request is allowed: enabling Lands on an active Field employee preserves Field', async () => {
   const fakes = installFakes();
   try {
     const { uid: managerUid, organizationId } = seedManager(fakes);
@@ -108,16 +108,18 @@ test('dual-service request is denied: enabling Lands on an active Field employee
     const res = fakeResponse();
     await usersHandler(req, res);
 
-    assert.equal(res.statusCode, 400);
-    assert.equal(res.body.reason, 'dual_service_denied');
-    assert.equal(fakes.bridgeCalls.length, 0, 'no Lands call attempted for a denied dual-service request');
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.lands.enabled, true);
+    assert.equal(res.body.lands.role, 'lands_employee');
+    assert.equal(fakes.bridgeCalls.length, 1, 'Lands entitlement uses the trusted bridge');
     const stored = fakes.store.docs.get('users/emp-field-2');
-    assert.equal(stored.role, 'inspector', 'Field record untouched by the denied request');
-    assert.equal(stored.landsAccess, undefined);
+    assert.equal(stored.role, 'inspector', 'Field role remains intact');
+    assert.equal(stored.landsAccess.enabled, true);
+    assert.equal(stored.landsAccess.role, 'lands_employee');
   } finally { fakes.restore(); }
 });
 
-test('dual-service request is denied at creation: Field and Lands both enabled in one create call', async () => {
+test('dual-service request is allowed at creation: Field and Lands share one identity', async () => {
   const fakes = installFakes();
   try {
     const { uid, organizationId } = seedManager(fakes);
@@ -126,9 +128,15 @@ test('dual-service request is denied at creation: Field and Lands both enabled i
     const res = fakeResponse();
     await usersHandler(req, res);
 
-    assert.equal(res.statusCode, 400);
-    assert.equal(res.body.reason, 'dual_service_denied');
-    assert.equal(fakes.bridgeCalls.length, 0);
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.field.enabled, true);
+    assert.equal(res.body.field.role, 'inspector');
+    assert.equal(res.body.lands.enabled, true);
+    assert.equal(res.body.lands.role, 'lands_employee');
+    assert.equal(fakes.bridgeCalls.length, 1);
+    const stored = fakes.store.docs.get(`users/${res.body.uid}`);
+    assert.equal(stored.role, 'inspector');
+    assert.equal(stored.landsAccess.enabled, true);
   } finally { fakes.restore(); }
 });
 
@@ -328,7 +336,7 @@ test('employee cannot call bootstrap', async () => {
     const res = fakeResponse();
     await usersHandler(fakeRequest({ uid: 'plain-employee', body: { action: 'landsBootstrap' } }), res);
     assert.equal(res.statusCode, 403);
-    assert.equal(res.body.reason, 'manager_required');
+    assert.equal(res.body.reason, 'owner_or_manager_required');
     const access = [...fakes.store.docs.keys()].some((p) => p.includes('userAccess'));
     assert.equal(access, false, 'no membership document created for a denied caller');
   } finally { fakes.restore(); }
