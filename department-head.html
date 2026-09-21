@@ -363,6 +363,105 @@
   .dh-empty-table-icon{width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--chipBg);color:var(--acc);font-size:18px;font-weight:800}
   .dh-empty-table b{font-size:12.5px;color:var(--tx);font-weight:700}.dh-empty-table span:last-child{font-size:10.5px;line-height:1.7}
   .dh-app[data-theme="day"] input,.dh-app[data-theme="day"] select,.dh-app[data-theme="day"] textarea{box-shadow:inset 0 0 0 1px rgba(255,255,255,.75)}
+  /* SMART HSR Intelligent Glass Windows — Apple-inspired modal system */
+  .dh-smart-modal-scrim{
+    position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
+    padding:clamp(14px,3vw,38px);
+    background:color-mix(in srgb,var(--scrim,rgba(2,9,17,.68)) 76%,transparent);
+    backdrop-filter:blur(18px) saturate(115%);
+    -webkit-backdrop-filter:blur(18px) saturate(115%);
+    animation:mIn .18s ease-out
+  }
+  .dh-smart-modal{
+    position:relative;width:min(560px,calc(100vw - 28px));max-height:min(84dvh,820px);
+    overflow:hidden;display:flex;flex-direction:column;border-radius:24px;
+    background:linear-gradient(145deg,
+      color-mix(in srgb,var(--drawer,#0a1120) 82%,transparent),
+      color-mix(in srgb,var(--drawer,#0a1120) 94%,transparent));
+    border:1px solid color-mix(in srgb,var(--drawerBd,var(--cardBd)) 82%,rgba(255,255,255,.22));
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.18),
+      inset 0 -1px 0 rgba(255,255,255,.035),
+      0 26px 90px -34px rgba(0,0,0,.64),
+      0 8px 24px -14px rgba(0,0,0,.35);
+    backdrop-filter:blur(34px) saturate(145%);
+    -webkit-backdrop-filter:blur(34px) saturate(145%);
+    animation:dhGlassModalIn .24s cubic-bezier(.2,.85,.25,1)
+  }
+  .dh-smart-modal::before{
+    content:"";position:absolute;inset:0 0 auto 0;height:1px;z-index:4;pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.42),transparent)
+  }
+  .dh-smart-modal-head{
+    padding:18px 20px 15px;border-bottom:1px solid var(--div);
+    display:flex;align-items:flex-start;gap:11px;position:sticky;top:0;z-index:3;
+    background:linear-gradient(180deg,
+      color-mix(in srgb,var(--drawer,#0a1120) 82%,transparent),
+      color-mix(in srgb,var(--drawer,#0a1120) 68%,transparent));
+    backdrop-filter:blur(28px) saturate(140%);
+    -webkit-backdrop-filter:blur(28px) saturate(140%)
+  }
+  .dh-smart-modal-body{
+    padding:18px 20px 20px;display:flex;flex-direction:column;gap:16px;overflow:auto;
+    overscroll-behavior:contain;scrollbar-gutter:stable
+  }
+  .dh-smart-modal-close{
+    width:32px;height:32px;flex:none;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    background:color-mix(in srgb,var(--ctl) 82%,transparent);
+    border:1px solid color-mix(in srgb,var(--ctlBd) 78%,rgba(255,255,255,.14));
+    color:var(--tx2);box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
+    transition:transform .16s ease,background-color .16s ease,border-color .16s ease
+  }
+  .dh-smart-modal-close:hover{transform:scale(1.045);background:var(--ctlH)}
+  .dh-smart-modal-close:active{transform:scale(.96)}
+  .dh-smart-modal input,.dh-smart-modal select,.dh-smart-modal textarea{
+    border-radius:12px!important;min-height:40px!important;
+    background:color-mix(in srgb,var(--field) 90%,transparent)!important;
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease
+  }
+  .dh-smart-modal input:focus,.dh-smart-modal select:focus,.dh-smart-modal textarea:focus{
+    border-color:var(--focus-ring)!important;
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--focus-ring) 16%,transparent)!important;
+    outline:none
+  }
+  .dh-app[data-theme="day"] .dh-smart-modal-scrim{
+    background:rgba(17,52,39,.24);backdrop-filter:blur(20px) saturate(120%);
+    -webkit-backdrop-filter:blur(20px) saturate(120%)
+  }
+  .dh-app[data-theme="day"] .dh-smart-modal{
+    background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(246,252,248,.74));
+    border-color:rgba(255,255,255,.78);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.98),
+      0 0 0 1px rgba(11,104,73,.10),
+      0 30px 100px -38px rgba(4,72,48,.38),
+      0 10px 30px -20px rgba(4,72,48,.22);
+    backdrop-filter:blur(36px) saturate(150%);
+    -webkit-backdrop-filter:blur(36px) saturate(150%)
+  }
+  .dh-app[data-theme="day"] .dh-smart-modal-head{
+    background:linear-gradient(180deg,rgba(255,255,255,.80),rgba(246,252,248,.62));
+    border-bottom-color:rgba(18,91,65,.10)
+  }
+  .dh-app[data-theme="day"] .dh-smart-modal::before{
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent)
+  }
+  @keyframes dhGlassModalIn{
+    from{opacity:0;transform:translateY(14px) scale(.975);filter:blur(3px)}
+    to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+  }
+  @media(max-width:760px){
+    .dh-smart-modal-scrim{padding:12px}
+    .dh-smart-modal{width:calc(100vw - 24px);max-height:86dvh;border-radius:22px}
+    .dh-smart-modal-head{padding:15px 16px 13px}
+    .dh-smart-modal-body{padding:15px 16px 17px;gap:14px}
+  }
+  @media(max-width:390px){
+    .dh-smart-modal-scrim{padding:8px}
+    .dh-smart-modal{width:calc(100vw - 16px);max-height:88dvh;border-radius:20px}
+  }
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -1166,9 +1265,9 @@
 </sc-if>
 
 <sc-if value="{{ drawerOpen }}">
-  <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;z-index:80;background:rgba(3,6,13,0.62);backdrop-filter:blur(3px);display:flex;justify-content:flex-start;animation:mIn .18s ease-out">
-    <div onClick="{{ stop }}" style="width:min(440px,94vw);background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));overflow:auto;display:flex;flex-direction:column;animation:mSlide .2s ease-out">
-      <div style="padding:18px 18px 14px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12));display:flex;align-items:flex-start;gap:11px;position:sticky;top:0;background:var(--drawer,#0a1120);z-index:2">
+  <div class="dh-smart-modal-scrim" onClick="{{ closeDrawer }}" role="presentation">
+    <div class="dh-smart-modal" role="dialog" aria-modal="true" aria-label="{{ dTitle }}" onClick="{{ stop }}">
+      <div class="dh-smart-modal-head">
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-size:15px;font-weight:700;color:var(--tx,#f0f6ff)">{{ dTitle }}</span>
@@ -1176,12 +1275,12 @@
           </div>
           <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);margin-top:4px">{{ dSub }}</div>
         </div>
-        <button onClick="{{ closeDrawer }}" data-f="1" aria-label="إغلاق" style="width:30px;height:30px;flex:none;border-radius:9px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <button class="dh-smart-modal-close" onClick="{{ closeDrawer }}" data-f="1" aria-label="إغلاق">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5 5 19"></path></svg>
         </button>
       </div>
 
-      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:16px">
+      <div class="dh-smart-modal-body">
         <sc-if value="{{ dHasBanner }}">
           <div style="padding:11px 12px;border-radius:12px;display:flex;align-items:center;gap:9px;background:{{ dBannerBg }};border:1px solid {{ dBannerBd }}">
             <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ dBannerCol }}"></span>
