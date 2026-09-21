@@ -429,6 +429,48 @@ async function handler(req, res) {
     }
   }
 
+  if (action === 'listFieldContractorCompanies') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+    }
+    try {
+      const [usersSnap, profilesSnap] = await Promise.all([
+        db.collection('users').where('organizationId', '==', caller.organizationId).get(),
+        db.collection('contractorProfiles').where('organizationId', '==', caller.organizationId).get(),
+      ]);
+      const profileByUid = new Map(profilesSnap.docs.map(doc => [doc.id, doc.data() || {}]));
+      const contractors = [];
+      for (const doc of usersSnap.docs) {
+        const data = doc.data() || {};
+        if (data.role !== 'contractor') continue;
+        const rawProfile = profileByUid.get(doc.id) || {};
+        const profile = safeContractorProfile(rawProfile);
+        contractors.push({
+          uid: doc.id,
+          email: cleanString(data.email),
+          active: data.active !== false,
+          companyName: cleanString(rawProfile.companyName),
+          contractNumber: cleanString(rawProfile.contractNumber),
+          contractScope: cleanString(rawProfile.contractScope),
+          contactName: cleanString(rawProfile.contactName || data.name),
+          contactPhone: cleanString(rawProfile.contactPhone),
+          startDate: cleanDateOnly(rawProfile.startDate),
+          endDate: cleanDateOnly(rawProfile.endDate),
+          contractStatus: CONTRACTOR_PROFILE_STATUSES.includes(rawProfile.status) ? rawProfile.status : 'ENDED',
+          contractState: contractorProfileState(profile),
+          administration: cleanString(rawProfile.administration, 'إدارة الحصر الميداني'),
+          section: cleanString(rawProfile.section, 'التشوه البصري'),
+          organizationId: caller.organizationId,
+        });
+      }
+      contractors.sort((a,b)=>a.companyName.localeCompare(b.companyName,'ar'));
+      return sendJson(res, 200, { contractors });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   // Visual Distortion external-company onboarding from the Municipality
   // Manager User Center. This deliberately reuses the existing users API,
   // Firebase Auth project and contractor/contractorProfiles schema: no new
@@ -498,6 +540,8 @@ async function handler(req, res) {
           contractorUid: createdUid,
           organizationId: caller.organizationId,
           department,
+          administration: 'إدارة الحصر الميداني',
+          section: 'التشوه البصري',
           companyName,
           contractNumber,
           contractScope,
