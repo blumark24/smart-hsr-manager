@@ -64,6 +64,10 @@ const isLocalPreview = () => ['localhost', '127.0.0.1'].includes(location.hostna
 
 let activeComponent = null;
 let stopGrants = null;
+let stopRoyalOrders = null;
+let stopAllocationDecisions = null;
+let stopBeneficiaries = null;
+let stopPlans = null;
 let stopParcels = null;
 let stopDocuments = null;
 let stopAudit = null;
@@ -150,14 +154,48 @@ function normalizeDocument(entry) {
   const data = entry.data() || {};
   return { id: entry.id, ...data };
 }
+function byId(items) {
+  return new Map((Array.isArray(items) ? items : []).filter(item => item && item.id).map(item => [item.id, item]));
+}
+function relatedLabel(entity, fallback = '—') {
+  if (!entity) return fallback;
+  return entity.reference_id || entity.name || entity.id || fallback;
+}
+function unresolvedReference(id, fallback = '—') {
+  return id ? `مرجع غير متاح · ${id}` : fallback;
+}
 
-function buildViewData(grants, documents, parcels, auditEvents, auditState) {
-  const stats = decisionStats(grants);
-  const parcelsById = new Map(parcels.filter(p => p.id).map(p => [p.id, p]));
-  const missingDocs = missingDocuments(grants, documents);
-  const noLocation = noLocationRecords(grants, parcelsById);
-  const approved = grants.filter(g => g.status === 'approved').length;
-  const lowestCompletion = grants
+function buildViewData(grants, documents, related, auditEvents, auditState) {
+  const royalOrders = Array.isArray(related?.royalOrders) ? related.royalOrders : [];
+  const allocationDecisions = Array.isArray(related?.allocationDecisions) ? related.allocationDecisions : [];
+  const beneficiaries = Array.isArray(related?.beneficiaries) ? related.beneficiaries : [];
+  const plans = Array.isArray(related?.plans) ? related.plans : [];
+  const parcels = Array.isArray(related?.parcels) ? related.parcels : [];
+  const royalOrdersById = byId(royalOrders);
+  const allocationDecisionsById = byId(allocationDecisions);
+  const beneficiariesById = byId(beneficiaries);
+  const plansById = byId(plans);
+  const parcelsById = byId(parcels);
+
+  // Completeness must reflect the existence of the referenced authoritative
+  // record, not merely the presence of an *_id string on the grant.
+  const resolvedGrants = grants.map(g => ({
+    ...g,
+    completeness: computeGrantCompleteness({
+      ...g,
+      beneficiary_id: g.beneficiary_id && beneficiariesById.has(g.beneficiary_id) ? g.beneficiary_id : null,
+      royal_order_id: g.royal_order_id && royalOrdersById.has(g.royal_order_id) ? g.royal_order_id : null,
+      allocation_decision_id: g.allocation_decision_id && allocationDecisionsById.has(g.allocation_decision_id) ? g.allocation_decision_id : null,
+      plan_id: g.plan_id && plansById.has(g.plan_id) ? g.plan_id : null,
+      parcel_id: g.parcel_id && parcelsById.has(g.parcel_id) ? g.parcel_id : null
+    })
+  }));
+
+  const stats = decisionStats(resolvedGrants);
+  const missingDocs = missingDocuments(resolvedGrants, documents);
+  const noLocation = noLocationRecords(resolvedGrants, parcelsById);
+  const approved = resolvedGrants.filter(g => g.status === 'approved').length;
+  const lowestCompletion = resolvedGrants
     .filter(g => g.completeness.status === 'incomplete')
     .slice()
     .sort((a, b) => a.completeness.percentage - b.completeness.percentage)
@@ -174,18 +212,38 @@ function buildViewData(grants, documents, parcels, auditEvents, auditState) {
       missingDocs: String(missingDocs.length),
       noLocation: String(noLocation.length)
     },
-    registry: grants.map(g => ({
-      id: g.id,
-      reference: g.royal_order?.number || g.allocation_decision?.number || g.id,
-      beneficiary: g.beneficiary?.name || 'غير متاح',
-      royalOrder: g.royal_order?.number || '—',
-      allocationDecision: g.allocation_decision?.number || '—',
-      status: STATUS_LABELS[g.status] || g.status || 'غير معروف',
-      statusCode: g.status,
-      completion: `${Math.round(g.completeness.percentage)}%`,
-      docCount: documentsForGrant(g.id, documents).length,
-      updatedAt: g.updated_at || null
-    })),
+    registry: resolvedGrants.map(g => {
+      const beneficiary = beneficiariesById.get(g.beneficiary_id);
+      const royalOrder = royalOrdersById.get(g.royal_order_id);
+      const allocationDecision = allocationDecisionsById.get(g.allocation_decision_id);
+      const plan = plansById.get(g.plan_id);
+      const parcel = parcelsById.get(g.parcel_id);
+      const grantDocuments = documentsForGrant(g.id, documents);
+      return {
+        id: g.id,
+        reference: relatedLabel(royalOrder, relatedLabel(allocationDecision, g.id)),
+        beneficiary: beneficiary?.name || unresolvedReference(g.beneficiary_id, 'غير متاح'),
+        beneficiaryId: g.beneficiary_id || null,
+        royalOrder: relatedLabel(royalOrder, unresolvedReference(g.royal_order_id)),
+        royalOrderId: g.royal_order_id || null,
+        allocationDecision: relatedLabel(allocationDecision, unresolvedReference(g.allocation_decision_id)),
+        allocationDecisionId: g.allocation_decision_id || null,
+        plan: relatedLabel(plan, unresolvedReference(g.plan_id)),
+        planId: g.plan_id || null,
+        parcel: relatedLabel(parcel, unresolvedReference(g.parcel_id)),
+        parcelId: g.parcel_id || null,
+        parcelSpatial: parcel?.spatial || null,
+        status: STATUS_LABELS[g.status] || g.status || 'غير معروف',
+        statusCode: g.status,
+        completion: `${Math.round(g.completeness.percentage)}%`,
+        completionPercentage: Math.round(g.completeness.percentage),
+        missingRequirements: Array.isArray(g.completeness.missing) ? g.completeness.missing.slice() : [],
+        docCount: grantDocuments.length,
+        documents: grantDocuments,
+        updatedAt: g.updated_at || null,
+        createdAt: g.created_at || null
+      };
+    }),
     documents: documents.map(d => ({
       id: d.id,
       filename: d.filename || 'ملف بدون اسم',
@@ -197,8 +255,8 @@ function buildViewData(grants, documents, parcels, auditEvents, auditState) {
     })),
     priorities: lowestCompletion.map(g => ({
       id: g.id,
-      reference: g.royal_order?.number || g.allocation_decision?.number || g.id,
-      beneficiary: g.beneficiary?.name || 'غير متاح',
+      reference: relatedLabel(royalOrdersById.get(g.royal_order_id), relatedLabel(allocationDecisionsById.get(g.allocation_decision_id), g.id)),
+      beneficiary: beneficiariesById.get(g.beneficiary_id)?.name || unresolvedReference(g.beneficiary_id, 'غير متاح'),
       percentage: Math.round(g.completeness.percentage)
     })),
     issueFocus: [
@@ -206,8 +264,8 @@ function buildViewData(grants, documents, parcels, auditEvents, auditState) {
       { name: 'غير مرتبطة هندسيًا', n: noLocation.length },
       { name: 'نقص مستندات', n: missingDocs.length }
     ],
-    noGeometry: noLocation.length === grants.length || grants.length === 0,
-    georeferencedCount: grants.length - noLocation.length,
+    noGeometry: noLocation.length === resolvedGrants.length || resolvedGrants.length === 0,
+    georeferencedCount: resolvedGrants.length - noLocation.length,
     auditEvents: auditEvents.map(e => ({
       id: e.id,
       action: e.action || '—',
@@ -288,9 +346,10 @@ async function start(component) {
   const db = firestoreApi.getFirestore(app);
 
   const base = `landsMunicipalities/${orgId}`;
-  let grants = [], documents = [], parcels = [], auditEvents = [];
+  let grants = [], documents = [], royalOrders = [], allocationDecisions = [], beneficiaries = [], plans = [], parcels = [], auditEvents = [];
   let auditState = 'loading';
-  const update = () => publish(component, buildViewData(grants, documents, parcels, auditEvents, auditState));
+  const related = () => ({ royalOrders, allocationDecisions, beneficiaries, plans, parcels });
+  const update = () => publish(component, buildViewData(grants, documents, related(), auditEvents, auditState));
 
   stopGrants = firestoreApi.onSnapshot(
     firestoreApi.collection(db, `${base}/landGrants`),
@@ -298,6 +357,32 @@ async function start(component) {
     snapshot => { if (snapshot.metadata.fromCache) return; grants = snapshot.docs.map(normalizeGrant); update(); },
     () => fail(component, 'تعذر تحميل سجل الأراضي.')
   );
+
+  stopRoyalOrders = firestoreApi.onSnapshot(
+    firestoreApi.collection(db, `${base}/royalOrders`),
+    { includeMetadataChanges: true },
+    snapshot => { if (snapshot.metadata.fromCache) return; royalOrders = snapshot.docs.map(normalizeDocument); update(); },
+    () => { royalOrders = []; update(); }
+  );
+  stopAllocationDecisions = firestoreApi.onSnapshot(
+    firestoreApi.collection(db, `${base}/allocationDecisions`),
+    { includeMetadataChanges: true },
+    snapshot => { if (snapshot.metadata.fromCache) return; allocationDecisions = snapshot.docs.map(normalizeDocument); update(); },
+    () => { allocationDecisions = []; update(); }
+  );
+  stopBeneficiaries = firestoreApi.onSnapshot(
+    firestoreApi.collection(db, `${base}/beneficiaries`),
+    { includeMetadataChanges: true },
+    snapshot => { if (snapshot.metadata.fromCache) return; beneficiaries = snapshot.docs.map(normalizeDocument); update(); },
+    () => { beneficiaries = []; update(); }
+  );
+  stopPlans = firestoreApi.onSnapshot(
+    firestoreApi.collection(db, `${base}/plans`),
+    { includeMetadataChanges: true },
+    snapshot => { if (snapshot.metadata.fromCache) return; plans = snapshot.docs.map(normalizeDocument); update(); },
+    () => { plans = []; update(); }
+  );
+
   stopDocuments = firestoreApi.onSnapshot(
     firestoreApi.collection(db, `${base}/documents`),
     { includeMetadataChanges: true },
@@ -332,15 +417,15 @@ window.SmartHSRLandsAdapter = {
     component.liveLandsDataError = '';
     if (isLocalPreview()) {
       component.liveLandsDataState = 'ready';
-      publish(component, buildViewData([], [], [], [], 'unavailable'));
+      publish(component, buildViewData([], [], { royalOrders: [], allocationDecisions: [], beneficiaries: [], plans: [], parcels: [] }, [], 'unavailable'));
       return;
     }
     start(component).catch(() => fail(component, 'تعذر تحميل بيانات إدارة الأراضي والممتلكات.'));
   },
   disconnect(component) {
     if (component && component !== activeComponent) return;
-    stopGrants?.(); stopDocuments?.(); stopParcels?.(); stopAudit?.();
-    stopGrants = stopDocuments = stopParcels = stopAudit = null;
+    stopGrants?.(); stopRoyalOrders?.(); stopAllocationDecisions?.(); stopBeneficiaries?.(); stopPlans?.(); stopDocuments?.(); stopParcels?.(); stopAudit?.();
+    stopGrants = stopRoyalOrders = stopAllocationDecisions = stopBeneficiaries = stopPlans = stopDocuments = stopParcels = stopAudit = null;
     activeComponent = null;
   }
 };
