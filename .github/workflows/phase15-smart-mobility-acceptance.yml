@@ -1,0 +1,72 @@
+name: PHASE15 Smart Mobility Acceptance Gate
+
+on:
+  push:
+    branches:
+      - phase15-smart-mobility-v1-closure
+  workflow_dispatch:
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check Mobility integration
+        run: |
+          node --check manager-mobility-adapter.js
+          node --check api/admin/users.js
+          node --check platform/contracts/vehicle-contract.js
+          node --check platform/contracts/mission-contract.js
+          node --check platform/contracts/incident-contract.js
+          node --check platform/policies/vehicle-workflow-policy.js
+          node --check platform/policies/mission-workflow-policy.js
+          node --check platform/policies/incident-workflow-policy.js
+          node --check platform/policies/vehicle-authorization-policy.js
+
+      - name: Field Head mobility integration
+        run: node --test test/field-head-mobility-integration.test.js
+
+      - name: Shared mobility workflow
+        run: node --test test/shared-mobility-workflow.test.js
+
+      - name: Mobility server bridge
+        run: node --test test/mobility-workflow-server-bridge.test.js
+
+      - name: Vehicle authorization workflow
+        run: node --test test/vehicle-authorization-workflow.test.js
+
+      - name: Mobility integration regression
+        run: node --test test/mobility-integration-regression.test.js
+
+      - name: Manager mobility adapter
+        run: node --test test/manager-mobility-adapter.test.js
+
+      - name: Department head framework regression
+        run: node --test test/department-head-framework.test.js
+
+      - name: Field Survey closure regression
+        run: |
+          node --test test/visual-distortion-lifecycle.integration.test.js
+          node --test test/field-head-operational-map.test.js
+          node --test test/field-head-user-center-provisioning.test.js
+
+      - name: Lands closure regression
+        run: |
+          node --test test/manager-lands-digital-record.test.js
+          node --test test/manager-lands-gis.test.js
+          node --test test/manager-lands-sso.test.js
+
+      - name: Firestore security rules regression
+        run: npm run test:rules
