@@ -169,3 +169,41 @@ test('contractor mobile command workspace exposes operational KPIs without chang
   assert.match(contractorPage, /PENDING:\{label:'مسندة',action:'بدء التنفيذ'\}/);
   assert.match(contractorPage, /IN_PROGRESS:\{label:'قيد العمل',action:'رفع إثبات المعالجة'\}/);
 });
+
+
+test('day mode has complete green chrome and light table surface tokens', () => {
+  const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+  assert.match(page, /--command-bg': 'linear-gradient\(145deg,#0b6849/);
+  assert.match(page, /--sbBg': 'linear-gradient\(180deg,#0a5f44/);
+  assert.match(page, /--l3': 'rgba\(255,255,255,0\.985\)'/);
+  assert.match(page, /--l3Bd': 'rgba\(20,91,65,0\.12\)'/);
+  assert.match(page, /dh-table-shell/);
+  assert.match(page, /dh-empty-table/);
+});
+
+test('contractor-linked identities cannot surface as municipality employees', () => {
+  const employeesApi = fs.readFileSync(path.join(root, 'api/admin/employees.js'), 'utf8');
+  assert.match(employeesApi, /linkedUser\.role === 'contractor'/);
+  assert.match(runtime, /e\?\.role!=='contractor'/);
+  assert.match(runtime, /موظف داخلي/);
+  assert.match(runtime, /مراقب ميداني/);
+});
+
+test('department audit corrections are append-only and preserve original event', () => {
+  assert.match(usersApi, /action === 'appendFieldDepartmentAuditNote'/);
+  assert.match(usersApi, /resourceType: 'auditNote'/);
+  assert.match(usersApi, /parentAuditId/);
+  assert.doesNotMatch(usersApi, /parentRef\.update/);
+  assert.match(runtime, /إضافة ملاحظة \/ تصحيح/);
+  assert.match(runtime, /appendFieldDepartmentAuditNote/);
+  assert.match(runtime, /لن يتغير الحدث الأصلي/);
+});
+
+test('visual case drawer separates contractor company from representative and contract', () => {
+  assert.match(runtime, /الشركة المتعاقدة/);
+  assert.match(runtime, /ممثل الشركة/);
+  assert.match(runtime, /assignedProfile\.companyName/);
+  assert.match(runtime, /assignedProfile\.contractNumber/);
+  assert.match(runtime, /verificationLabel/);
+  assert.match(runtime, /typeLabel/);
+});
