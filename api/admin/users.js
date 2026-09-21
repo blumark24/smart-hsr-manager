@@ -1872,14 +1872,29 @@ async function handler(req, res) {
           observation, transitionKey, note, fix, afterImagePath,
         });
         if (!decision.allowed) return { ok: false, decision };
+
+        // Inspector capture intentionally remains untouched and older
+        // observations do not carry a department field. Derive the audit
+        // department from the trusted reporting-inspector record instead of
+        // accepting any department value from the contractor request.
+        const reporterUid = cleanString(observation && observation.createdByUid);
+        const reporterRef = reporterUid ? db.collection('users').doc(reporterUid) : null;
+        const reporterSnap = reporterRef ? await transaction.get(reporterRef) : null;
+        const reporter = reporterSnap && reporterSnap.exists ? (reporterSnap.data() || {}) : {};
+        const auditDepartment = reporter.role === 'inspector'
+          && reporter.organizationId === contractorCaller.organizationId
+          ? cleanString(reporter.department)
+          : '';
+
         const now = FieldValue.serverTimestamp();
         transaction.update(obsRef, { ...update, updatedAt: now });
         // The one canonical audit event, inside this same transaction —
         // actor/organization are always the trusted server-derived
-        // caller, never request-body values, so neither can ever be
-        // spoofed.
+        // caller, never request-body values. Department is derived from the
+        // reporting inspector so the Field Head audit can remain exact-scope.
         transaction.set(db.collection('auditEvents').doc(), {
           organizationId: contractorCaller.organizationId,
+          department: auditDepartment,
           actorId: contractorCaller.uid,
           actorRole: 'contractor',
           resourceType: 'observation',
