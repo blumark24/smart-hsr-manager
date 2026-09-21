@@ -214,6 +214,88 @@
     .dh-command-bar,.dh-glass,.dh-kpi-card,.dh-side-card,.dh-map-frame,.dh-map-empty{border:1px solid CanvasText!important}
     [data-f]:focus-visible{outline:2px solid Highlight!important}
   }
+  /* SMART HSR GEO — branded operational map + digital twin surfaces */
+  .dh-map-frame{isolation:isolate}
+  .dh-map-frame[data-map-mode="twin"]::after{
+    content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:
+      linear-gradient(to top,rgba(0,15,23,.22),transparent 45%),
+      repeating-linear-gradient(90deg,transparent 0 79px,rgba(65,255,213,.05) 80px),
+      repeating-linear-gradient(0deg,transparent 0 79px,rgba(65,255,213,.04) 80px);
+    mix-blend-mode:screen;opacity:.55
+  }
+  .dh-map-mode{gap:4px!important;padding:4px!important}
+  .dh-map-product-btn{
+    min-width:150px;height:46px;padding:5px 12px;border-radius:10px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+    white-space:nowrap;line-height:1.05;transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease
+  }
+  .dh-map-product-btn:hover{transform:translateY(-1px)}
+  .dh-map-product-btn[aria-pressed="true"]{box-shadow:0 9px 24px -14px rgba(34,197,94,.75),inset 0 1px 0 rgba(255,255,255,.12)}
+  .dh-map-product-code{font-size:9px;letter-spacing:.08em;font-weight:800;opacity:.76}
+  .dh-map-product-name{margin-top:3px;font-size:11px;font-weight:700}
+  .dh-map-mode,.dh-map-toolbar,.dh-map-search-stack,.dh-map-legend,.dh-map-empty{z-index:8!important}
+  .dh-map-zoom,.dh-map-search-stack>div:last-child{display:none!important}
+  .dh-map-frame .maplibregl-ctrl-bottom-right{right:10px;bottom:58px}
+  .dh-map-frame .maplibregl-ctrl-bottom-left{left:10px;bottom:58px}
+  .dh-map-frame .maplibregl-ctrl-group{overflow:hidden;border-radius:10px}
+  .dh-map-frame .maplibregl-ctrl button{width:36px;height:36px}
+  .dh-map-frame .maplibregl-ctrl-attrib{font-size:9px}
+  @media(min-width:1180px){
+    .dh-map-mode{top:12px!important;left:12px!important}
+    .dh-map-toolbar{top:12px!important;right:12px!important;max-width:calc(100% - 350px)!important}
+    .dh-map-search-stack{top:68px!important;left:12px!important}
+    .dh-map-search-stack>div:first-child{width:220px!important}
+    .dh-map-search{height:36px!important;font-size:12px!important}
+    .dh-map-legend{bottom:12px!important;left:50%!important;transform:translateX(-50%);max-width:calc(100% - 180px)!important;justify-content:center}
+  }
+  @media(min-width:761px) and (max-width:1179px){
+    .dh-operational-grid{min-height:620px!important}
+    .dh-map-frame{min-height:620px!important}
+    .dh-map-mode{top:10px!important;left:10px!important}
+    .dh-map-product-btn{min-width:135px}
+    .dh-map-toolbar{top:10px!important;right:10px!important;max-width:calc(100% - 310px)!important}
+    .dh-map-search-stack{top:66px!important;left:10px!important}
+    .dh-map-legend{bottom:10px!important;left:10px!important;right:10px!important;max-width:none!important;justify-content:center}
+  }
+  @media(max-width:760px){
+    .dh-operational-grid{min-height:70dvh!important}
+    .dh-map-frame{min-width:0!important;min-height:70dvh!important;border-radius:16px!important}
+    .dh-map-mode{
+      top:8px!important;left:8px!important;right:8px!important;
+      display:grid!important;grid-template-columns:1fr 1fr!important;gap:4px!important;
+      padding:4px!important;border-radius:13px!important
+    }
+    .dh-map-product-btn{min-width:0!important;width:100%;height:48px!important;padding:5px 8px!important;align-items:center}
+    .dh-map-product-code{font-size:8px}
+    .dh-map-product-name{font-size:10px}
+    .dh-map-toolbar{
+      top:66px!important;right:8px!important;left:8px!important;max-width:none!important;
+      display:flex!important;align-items:center!important;gap:5px!important;flex-wrap:nowrap!important;justify-content:flex-end!important
+    }
+    .dh-map-toolbar .dh-map-hud{margin-inline-start:auto;max-width:52%;overflow:hidden}
+    .dh-map-toolbar .dh-map-hud span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dh-map-fullscreen-control{display:none!important}
+    .dh-map-search-stack{top:108px!important;left:8px!important;right:auto!important}
+    .dh-map-search-stack>div:first-child{width:min(50vw,176px)!important}
+    .dh-map-search{height:36px!important;font-size:16px!important}
+    .dh-map-legend{
+      left:8px!important;right:8px!important;bottom:8px!important;max-width:none!important;
+      padding:7px 9px!important;gap:8px!important;flex-wrap:nowrap!important;overflow-x:auto!important;
+      justify-content:flex-start!important;scrollbar-width:none
+    }
+    .dh-map-legend::-webkit-scrollbar{display:none}
+    .dh-map-legend>span{flex:0 0 auto!important;width:auto!important;border-right:0!important;padding-right:0!important}
+    .dh-map-frame .maplibregl-ctrl-bottom-right{right:8px;bottom:62px}
+    .dh-map-frame .maplibregl-ctrl-bottom-left{left:8px;bottom:62px}
+    .dh-map-empty{left:12px!important;right:12px!important;bottom:76px!important;transform:none!important;max-width:none!important}
+  }
+  @media(max-width:390px){
+    .dh-map-product-name{font-size:9px}
+    .dh-map-product-code{font-size:7.5px}
+    .dh-map-toolbar .dh-map-hud{display:none!important}
+    .dh-map-search-stack{top:106px!important}
+  }
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -380,12 +462,18 @@
 
           <section class="dh-operational-grid" style="flex:1;min-height:var(--midH,430px);display:flex;gap:14px;flex-wrap:var(--midWrap,nowrap)">
 
-            <div class="dh-map-frame" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,430px);border-radius:18px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
+            <div class="dh-map-frame" data-map-mode="{{ mapMode }}" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,430px);border-radius:18px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
               <div id="deptRealMap" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0;width:100%;height:100%;display:block"></div>
 
               <div class="dh-map-mode" style="position:absolute;top:11px;left:11px;display:flex;align-items:center;gap:3px;padding:3px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));z-index:6">
-                <button onClick="{{ setOps }}" data-f="1" style="height:32px;padding:0 14px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ opsTx }};background:{{ opsBg }};border:1px solid {{ opsBd }}">الخريطة التشغيلية</button>
-                <button onClick="{{ setTwin }}" data-f="1" style="height:32px;padding:0 14px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ twinTx }};background:{{ twinBg }};border:1px solid {{ twinBd }}">التوأم الرقمي</button>
+                <button class="dh-map-product-btn" onClick="{{ setOps }}" data-f="1" aria-pressed="{{ opsActive }}" data-map-product="maps" style="color:{{ opsTx }};background:{{ opsBg }};border:1px solid {{ opsBd }}">
+                  <span class="dh-map-product-code">SMART HSR MAPS</span>
+                  <span class="dh-map-product-name">الخريطة البلدية التشغيلية</span>
+                </button>
+                <button class="dh-map-product-btn" onClick="{{ setTwin }}" data-f="1" aria-pressed="{{ twinActive }}" data-map-product="twin" style="color:{{ twinTx }};background:{{ twinBg }};border:1px solid {{ twinBd }}">
+                  <span class="dh-map-product-code">SMART HSR TWIN</span>
+                  <span class="dh-map-product-name">التوأم البلدي الرقمي</span>
+                </button>
               </div>
 
               <div class="dh-map-toolbar" style="position:absolute;top:11px;right:11px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 150px)">
@@ -416,10 +504,10 @@
                   <span style="font-size:10.5px;color:var(--glassTx,#a9c0d8);font-variant-numeric:tabular-nums">{{ liveCount }} مراقب في الميدان</span>
                 </div>
 
-                <button class="dh-map-control" onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <button class="dh-map-control dh-map-reset-control" onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
                 </button>
-                <button class="dh-map-control" onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <button class="dh-map-control dh-map-fullscreen-control" onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
                 </button>
               </div>
@@ -1226,7 +1314,7 @@ class Component extends DCLogic {
     clearInterval(this._iv); if (this._ro) this._ro.disconnect();
     try { if (this._realMap) this._realMap.remove(); } catch (_) {}
   }
-  componentDidUpdate() { this.bindCanvas(); this.bindRealMap(); this.draw(); this.drawMini(); }
+  componentDidUpdate() { this.bindCanvas(); this.bindRealMap(); this.applyRealMapMode(); this.draw(); this.drawMini(); }
 
 
   bindRealMap() {
@@ -1242,6 +1330,12 @@ class Component extends DCLogic {
     const style = {
       version: 8,
       sources: {
+        street: {
+          type: 'raster',
+          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '© OpenStreetMap contributors'
+        },
         satellite: {
           type: 'raster',
           tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
@@ -1249,19 +1343,55 @@ class Component extends DCLogic {
           attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
         }
       },
-      layers: [{ id: 'satellite', type: 'raster', source: 'satellite' }]
+      layers: [
+        { id: 'street', type: 'raster', source: 'street', layout: { visibility: 'visible' } },
+        { id: 'satellite', type: 'raster', source: 'satellite', layout: { visibility: 'none' } }
+      ]
     };
     this._realMap = new maplibregl.Map({
       container: el,
       style,
       center: [41.07889, 19.12639],
       zoom: 13,
+      pitch: 0,
+      bearing: 0,
       attributionControl: false
     });
-    this._realMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-left');
-    this._realMap.addControl(new maplibregl.FullscreenControl(), 'top-left');
+    this._realMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
+    this._realMap.addControl(new maplibregl.FullscreenControl(), 'bottom-right');
     this._realMap.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
     this._realMap.addControl(new maplibregl.AttributionControl({ compact: true }));
+    this._realMap.on('load', () => this.applyRealMapMode(true));
+  }
+
+  applyRealMapMode(immediate=false) {
+    const map = this._realMap;
+    if (!map) return;
+    try { if (!map.loaded()) return; } catch (_) { return; }
+    const twin = !!this.state.twin3D;
+    try {
+      if (map.getLayer('street')) map.setLayoutProperty('street', 'visibility', twin ? 'none' : 'visible');
+      if (map.getLayer('satellite')) map.setLayoutProperty('satellite', 'visibility', twin ? 'visible' : 'none');
+      const camera = { pitch: twin ? 48 : 0, bearing: twin ? -14 : 0, duration: immediate ? 0 : 520 };
+      if (immediate) map.jumpTo(camera); else map.easeTo(camera);
+      map.resize();
+    } catch (_) {}
+  }
+
+  focusRealMap() {
+    const map = this._realMap;
+    if (!map) return;
+    const marker = Array.isArray(this._fieldObservationMarkers) ? this._fieldObservationMarkers[0] : null;
+    try {
+      const ll = marker && typeof marker.getLngLat === 'function' ? marker.getLngLat() : null;
+      map.easeTo({
+        center: ll ? [ll.lng, ll.lat] : [41.07889, 19.12639],
+        zoom: ll ? 15 : 13,
+        pitch: this.state.twin3D ? 48 : 0,
+        bearing: this.state.twin3D ? -14 : 0,
+        duration: 480
+      });
+    } catch (_) {}
   }
 
   bindCanvas() {
@@ -2081,6 +2211,9 @@ class Component extends DCLogic {
       twinTx: st.twin3D ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
       twinBg: st.twin3D ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
       twinBd: st.twin3D ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)') : 'transparent',
+      mapMode: st.twin3D ? 'twin' : 'maps',
+      opsActive: !st.twin3D,
+      twinActive: !!st.twin3D,
       setOps: () => this.setState({ twin3D: false }),
       setTwin: () => this.setState({ twin3D: true }),
 
@@ -2117,10 +2250,13 @@ class Component extends DCLogic {
       tLayers: () => this.setState(s => ({ layersOpen: !s.layersOpen })),
       tSb: () => this.setState(s => ({ sb: !s.sb })),
       t3D: () => this.setState(s => ({ twin3D: !s.twin3D })),
-      tFs: () => this.setState(s => ({ fs: !s.fs })),
-      zIn: () => this.setState(s => ({ zoom: Math.min(2.8, s.zoom + 0.2) })),
-      zOut: () => this.setState(s => ({ zoom: Math.max(0.6, s.zoom - 0.2) })),
-      resetView: () => this.setState({ zoom: 1, panX: 0, panY: 0, sel: null }),
+      tFs: () => {
+        const el = document.getElementById('deptRealMap');
+        if (el && el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+      },
+      zIn: () => { try { this._realMap?.zoomIn({duration:220}); } catch (_) {} },
+      zOut: () => { try { this._realMap?.zoomOut({duration:220}); } catch (_) {} },
+      resetView: () => { this.setState({ zoom: 1, panX: 0, panY: 0, sel: null }); this.focusRealMap(); },
       allLayers: () => this.setState({ layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true } }),
       setDay: () => this.setState({ theme: 'day' }), setNight: () => this.setState({ theme: 'night' }),
       stop: e => { if (e && e.stopPropagation) e.stopPropagation(); },
