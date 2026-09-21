@@ -109,8 +109,64 @@ function computeGrantCompleteness(grant) {
 }
 
 // ---- ported from smart-hsr-lands/client/lands-spatial.js (verbatim logic) ----
+function validLngLat(lng, lat) {
+  return Number.isFinite(lng) && Number.isFinite(lat) && lng >= 34 && lng <= 56.5 && lat >= 16 && lat <= 33.5;
+}
+function geometryPositions(geometry) {
+  if (!geometry || typeof geometry !== 'object' || !Array.isArray(geometry.coordinates)) return [];
+  const out = [];
+  const visit = value => {
+    if (!Array.isArray(value)) return;
+    if (value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number') {
+      if (validLngLat(value[0], value[1])) out.push([value[0], value[1]]);
+      return;
+    }
+    value.forEach(visit);
+  };
+  visit(geometry.coordinates);
+  return out;
+}
 function isGeoreferenced(parcel) {
-  return Boolean(parcel && parcel.spatial && parcel.spatial.geometry);
+  return Boolean(parcel && parcel.spatial && geometryPositions(parcel.spatial.geometry).length);
+}
+function geometryCentroid(geometry) {
+  const pts = geometryPositions(geometry);
+  if (!pts.length) return null;
+  const sum = pts.reduce((acc, p) => [acc[0] + p[0], acc[1] + p[1]], [0, 0]);
+  return { lng: sum[0] / pts.length, lat: sum[1] / pts.length };
+}
+function buildGisFeatures(grants, parcelsById) {
+  const features = [];
+  for (const grant of grants) {
+    const parcel = parcelsById.get(grant.parcel_id);
+    if (!isGeoreferenced(parcel)) continue;
+    const center = geometryCentroid(parcel.spatial.geometry);
+    if (!center) continue;
+    features.push({
+      grantId: grant.id,
+      parcelId: parcel.id,
+      parcel: parcel.reference_id || parcel.name || parcel.id,
+      geometryType: parcel.spatial.geometry.type || 'Geometry',
+      source: parcel.spatial.source || 'official_gis',
+      capturedAt: parcel.spatial.captured_at || null,
+      lat: center.lat,
+      lng: center.lng,
+      statusCode: grant.status,
+      completionPercentage: Math.round(grant.completeness.percentage)
+    });
+  }
+  if (!features.length) return [];
+  const minLng = Math.min(...features.map(f => f.lng));
+  const maxLng = Math.max(...features.map(f => f.lng));
+  const minLat = Math.min(...features.map(f => f.lat));
+  const maxLat = Math.max(...features.map(f => f.lat));
+  const lngSpan = Math.max(maxLng - minLng, 0.01);
+  const latSpan = Math.max(maxLat - minLat, 0.01);
+  return features.map(f => ({
+    ...f,
+    xPct: Math.max(5, Math.min(95, 5 + ((f.lng - minLng) / lngSpan) * 90)),
+    yPct: Math.max(5, Math.min(95, 95 - ((f.lat - minLat) / latSpan) * 90))
+  }));
 }
 
 // ---- adapted from smart-hsr-lands/index.html's AutomationEngine ----
@@ -194,6 +250,7 @@ function buildViewData(grants, documents, related, auditEvents, auditState) {
   const stats = decisionStats(resolvedGrants);
   const missingDocs = missingDocuments(resolvedGrants, documents);
   const noLocation = noLocationRecords(resolvedGrants, parcelsById);
+  const gisFeatures = buildGisFeatures(resolvedGrants, parcelsById);
   const approved = resolvedGrants.filter(g => g.status === 'approved').length;
   const lowestCompletion = resolvedGrants
     .filter(g => g.completeness.status === 'incomplete')
@@ -264,8 +321,9 @@ function buildViewData(grants, documents, related, auditEvents, auditState) {
       { name: 'غير مرتبطة هندسيًا', n: noLocation.length },
       { name: 'نقص مستندات', n: missingDocs.length }
     ],
-    noGeometry: noLocation.length === resolvedGrants.length || resolvedGrants.length === 0,
-    georeferencedCount: resolvedGrants.length - noLocation.length,
+    noGeometry: gisFeatures.length === 0,
+    georeferencedCount: gisFeatures.length,
+    gisFeatures,
     auditEvents: auditEvents.map(e => ({
       id: e.id,
       action: e.action || '—',
@@ -285,6 +343,7 @@ function publish(component, payload) {
   component.liveLandsIssueFocus = payload.issueFocus;
   component.liveLandsNoGeometry = payload.noGeometry;
   component.liveLandsGeoreferencedCount = payload.georeferencedCount;
+  component.liveLandsGisFeatures = payload.gisFeatures;
   component.liveLandsAuditEvents = payload.auditEvents;
   component.liveLandsAuditState = payload.auditState;
   component.liveLandsDataState = 'ready';
