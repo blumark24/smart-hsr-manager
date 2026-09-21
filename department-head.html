@@ -541,6 +541,116 @@
     .dh-evidence-lightbox{padding:10px}.dh-evidence-lightbox-panel{border-radius:18px}
   }
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+
+  /* SMART HSR Day — glare-safe municipal surface hierarchy v2 */
+  .dh-app[data-theme="day"]{
+    --app-background:linear-gradient(145deg,#dce7e0 0%,#edf3ef 42%,#d8e4dc 100%)!important;
+    --ambient-green:rgba(22,112,75,.105)!important;
+    --ambient-cyan:rgba(29,105,132,.055)!important;
+    --grid-line:rgba(24,83,61,.022)!important;
+    --glass-bg-1:linear-gradient(180deg,rgba(239,246,242,.97),rgba(228,239,232,.95))!important;
+    --glass-bg-2:linear-gradient(180deg,rgba(234,243,237,.97),rgba(221,234,226,.95))!important;
+    --surface-elevated:#eef6f1!important;
+    --surface-deep:#dfeae3!important;
+    --card:rgba(238,246,241,.97)!important;
+    --card2:rgba(227,238,231,.96)!important;
+    --l1:linear-gradient(180deg,#edf5f0,#e3eee7)!important;
+    --l2:linear-gradient(180deg,#e8f2ec,#dce9e1)!important;
+    --l3:#eaf3ed!important;
+    --sunk:#dbe8e0!important;
+    --sunk2:#e5efe9!important;
+    --ctl:#e0ece4!important;
+    --field:#e7f0ea!important;
+    --pop:rgba(236,245,239,.985)!important;
+    --drawer:#eaf3ed!important;
+    --glass-highlight:rgba(255,255,255,.46)!important;
+    --glass-border:rgba(44,94,71,.16)!important;
+    --glass-border-hover:rgba(21,119,78,.30)!important;
+    --divider:rgba(53,94,75,.14)!important;
+    --empty-border:rgba(53,94,75,.24)!important;
+    --selection-bg:rgba(23,132,87,.20)!important;
+    --selection-text:#0d2b20!important;
+    --map-glass:rgba(231,241,235,.94)!important;
+    --map-glass-border:rgba(42,92,69,.20)!important;
+    --map-inner-ring:rgba(255,255,255,.35)!important;
+    --scrim:rgba(31,52,42,.24)!important;
+  }
+  .dh-app[data-theme="day"] .dh-kpi-card{
+    background:linear-gradient(180deg,#edf5f0,#e2ede6)!important;
+    border-color:rgba(43,91,69,.15)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.52),0 14px 28px -24px rgba(28,62,47,.42)!important;
+  }
+  .dh-app[data-theme="day"] .dh-kpi-grid .dh-kpi-card:nth-child(5n+1){background:linear-gradient(180deg,#e7f2eb,#dceae1)!important}
+  .dh-app[data-theme="day"] .dh-kpi-grid .dh-kpi-card:nth-child(5n+2){background:linear-gradient(180deg,#e5f0f1,#dbe8ea)!important}
+  .dh-app[data-theme="day"] .dh-kpi-grid .dh-kpi-card:nth-child(5n+3){background:linear-gradient(180deg,#f0ede3,#e8e3d6)!important}
+  .dh-app[data-theme="day"] .dh-kpi-grid .dh-kpi-card:nth-child(5n+4){background:linear-gradient(180deg,#ece9ef,#e3dfe7)!important}
+  .dh-app[data-theme="day"] .dh-kpi-grid .dh-kpi-card:nth-child(5n){background:linear-gradient(180deg,#e7eeeb,#dce6e1)!important}
+  .dh-app[data-theme="day"] .dh-side-card,
+  .dh-app[data-theme="day"] .dh-glass:not(.dh-sidebar-panel):not(.dh-product-panel){
+    border-color:rgba(43,91,69,.15)!important;
+  }
+  .dh-app[data-theme="day"] .dh-side-card{
+    background:linear-gradient(180deg,#e9f2ec,#dde9e1)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.48),0 16px 34px -30px rgba(27,63,46,.46)!important;
+  }
+  .dh-app[data-theme="day"] .dh-table-shell{
+    background:#e6f0e9!important;
+    border-color:rgba(43,91,69,.16)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.48),0 18px 38px -32px rgba(27,63,46,.45)!important;
+  }
+  .dh-app[data-theme="day"] .dh-table-head{background:#dbe8e0!important}
+  .dh-app[data-theme="day"] .dh-table-body{background:#eaf2ed!important}
+  .dh-app[data-theme="day"] .dh-table-body>div,
+  .dh-app[data-theme="day"] .dh-table-shell [role="row"]{
+    border-color:rgba(54,95,76,.11)!important;
+  }
+  .dh-app[data-theme="day"] input,
+  .dh-app[data-theme="day"] select,
+  .dh-app[data-theme="day"] textarea{
+    background:#e5efe9!important;
+    border-color:rgba(48,94,73,.18)!important;
+    box-shadow:inset 0 1px 2px rgba(22,55,40,.035)!important;
+  }
+  .dh-app[data-theme="day"] input:focus,
+  .dh-app[data-theme="day"] select:focus,
+  .dh-app[data-theme="day"] textarea:focus{
+    background:#edf5f0!important;
+    border-color:rgba(19,126,82,.38)!important;
+    box-shadow:0 0 0 3px rgba(19,126,82,.08)!important;
+  }
+  .dh-app[data-theme="day"] .dh-empty-state{
+    background:linear-gradient(180deg,#e5efe9,#dce8e0)!important;
+    border-color:rgba(55,99,79,.24)!important;
+  }
+  .dh-app[data-theme="day"] .dh-assignment-grid>div{
+    background:#e4eee8!important;
+    border-color:rgba(51,94,74,.15)!important;
+  }
+  .dh-app[data-theme="day"] .dh-smart-modal,
+  .dh-app[data-theme="day"] .dh-smart-modal-panel,
+  .dh-app[data-theme="day"] .dh-evidence-lightbox-panel{
+    background:linear-gradient(180deg,rgba(237,245,240,.97),rgba(222,234,227,.95))!important;
+    border-color:rgba(50,94,74,.18)!important;
+    box-shadow:0 32px 90px -42px rgba(21,51,37,.58),inset 0 1px 0 rgba(255,255,255,.55)!important;
+  }
+  .dh-app[data-theme="day"] .dh-map-mode,
+  .dh-app[data-theme="day"] .dh-map-toolbar,
+  .dh-app[data-theme="day"] .dh-map-legend,
+  .dh-app[data-theme="day"] .dh-map-search,
+  .dh-app[data-theme="day"] .dh-map-hud,
+  .dh-app[data-theme="day"] .dh-map-empty,
+  .dh-app[data-theme="day"] .dh-glass-control{
+    background:rgba(230,240,234,.94)!important;
+    border-color:rgba(45,91,70,.18)!important;
+  }
+  @media(hover:hover){
+    .dh-app[data-theme="day"] .dh-kpi-card:hover,
+    .dh-app[data-theme="day"] .dh-side-card:hover{
+      border-color:rgba(21,119,78,.28)!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.58),0 18px 34px -26px rgba(23,78,53,.34)!important;
+    }
+  }
+/* /SMART HSR Day — glare-safe municipal surface hierarchy v2 */
 </style>
 </helmet>
 
