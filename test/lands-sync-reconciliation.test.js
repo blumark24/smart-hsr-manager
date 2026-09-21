@@ -283,11 +283,15 @@ test('13. reconciliation never creates any additional audit-shaped document — 
       ok: true, exists: true, firebase_uid: targetUid, municipality_id: organizationId, lands_role: 'lands_department_manager', enabled: true,
     });
     const usersHandler = loadFreshUsersHandler();
-    const before = fakes.store.docs.size;
+    const beforeLandsAudit = [...fakes.store.docs.keys()]
+      .filter(path => path.startsWith(`landsMunicipalities/${organizationId}/auditLogs/`)).length;
     const req = fakeRequest({ uid, body: { action: 'create', organizationId, email: 'audit@example.com', name: 'Audit Check', field: { enabled: false }, lands: { enabled: true, role: 'lands_department_manager' } } });
     await usersHandler(req, fakeResponse());
-    // Exactly one new document (the created users/{uid} record itself) —
-    // reconciliation performed a read, not a write, so nothing else appears.
-    assert.equal(fakes.store.docs.size, before + 1);
+    const afterLandsAudit = [...fakes.store.docs.keys()]
+      .filter(path => path.startsWith(`landsMunicipalities/${organizationId}/auditLogs/`)).length;
+    // Reconciliation itself remains read-only. The User Center create action
+    // legitimately appends its separate adminAuditEvents record, so total
+    // document count is no longer a valid proxy for reconciliation writes.
+    assert.equal(afterLandsAudit, beforeLandsAudit);
   } finally { fakes.restore(); }
 });
