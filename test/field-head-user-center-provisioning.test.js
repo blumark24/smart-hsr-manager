@@ -10,6 +10,9 @@ const core = fs.readFileSync(path.join(root, 'manager-phase11c-user-center-core.
 const dialogs = fs.readFileSync(path.join(root, 'manager-phase11c-user-center-dialogs.js'), 'utf8');
 const employeesApi = fs.readFileSync(path.join(root, 'api', 'admin', 'employees.js'), 'utf8');
 const login = fs.readFileSync(path.join(root, 'login.html'), 'utf8');
+const enhancements = fs.readFileSync(path.join(root, 'manager-phase11d-user-center-enhancements.js'), 'utf8');
+const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
+const skin = fs.readFileSync(path.join(root, 'manager-phase11g-user-center-approved-skin.js'), 'utf8');
 
 test('User Center exposes Field Survey department-head selection', () => {
   assert.match(core, /\['head','رئيس قسم داخل المنتج'\]/);
@@ -46,4 +49,39 @@ test('Add Employee and existing employee activation both use shared readProducts
   const occurrences = (dialogs.match(/U\.readProducts\(/g) || []).length;
   assert.ok(occurrences >= 3);
   assert.match(dialogs, /action:'activateAccount'/);
+});
+
+
+test('User Center separates external contractor companies from municipal employees', () => {
+  assert.match(enhancements, /data-add-contractor/);
+  assert.match(enhancements, /\+ إضافة شركة متعاقدة/);
+  assert.match(enhancements, /openContractorCompanyDialog/);
+  assert.match(enhancements, /جهة خارجية متعاقدة — ليست موظف بلدية/);
+  assert.match(enhancements, /لا يظهر كسجل موظف بلدية/);
+  assert.match(enhancements, /data-close-center[^>]*>×</);
+});
+
+test('contracted-company window collects contract and representative account data', () => {
+  for (const id of [
+    'cc-company','cc-contract','cc-scope','cc-start','cc-end',
+    'cc-contact','cc-phone','cc-email','cc-password','cc-password2'
+  ]) assert.match(enhancements, new RegExp(id));
+  assert.match(enhancements, /createFieldContractorCompany/);
+  assert.match(enhancements, /department:'إدارة الحصر الميداني'/);
+});
+
+test('contracted-company onboarding reuses trusted users API and existing contractor schema', () => {
+  assert.match(usersApi, /action === 'createFieldContractorCompany'/);
+  assert.match(usersApi, /caller\.role !== 'manager'/);
+  assert.match(usersApi, /role: 'contractor'/);
+  assert.match(usersApi, /collection\('contractorProfiles'\)/);
+  assert.match(usersApi, /action: 'create_contractor_company'/);
+  assert.doesNotMatch(usersApi, /api\/contractor-company/);
+});
+
+test('contracted-company action uses restrained blue styling and keeps the icon close', () => {
+  assert.match(skin, /\.ucv2-btn\.contractor/);
+  assert.match(skin, /rgba\(49,94,182/);
+  assert.match(skin, /\.ucv2-btn\.icon-close/);
+  assert.match(skin, /\.ucv2-contractor-dialog/);
 });
