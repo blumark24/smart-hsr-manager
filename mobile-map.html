@@ -548,6 +548,43 @@
     @media(max-width:430px){
       #mapPanel .map-wrap{height:62dvh;min-height:520px}.map-contract-strip span{font-size:9px}.map-contract-state{margin-inline-start:0!important}.field-status-capsule{max-width:calc(100% - 92px)}
     }
+
+    /* Final contractor polish — filter sheet intentionally untouched */
+    .contractor-command-card{padding:15px 17px;margin-bottom:11px;border-radius:16px}
+    .contractor-command-card h1{font-size:clamp(18px,4.2vw,27px)}
+    .contractor-command-kicker{font-size:9px;margin-bottom:3px}
+    .contractor-command-meta{gap:6px 12px;margin-top:8px}
+    .contractor-command-meta span{font-size:9.5px}
+    .contract-state-badge{padding:6px 9px;font-size:9.5px}
+    .ops-rail.no-active-task{gap:7px}
+    .ops-rail.no-active-task .ops-card{padding:10px 11px;border-radius:13px}
+    .ops-rail.no-active-task .ops-card-head{margin-bottom:7px}
+    .ops-rail.no-active-task .ops-card-head h2{font-size:12.5px}
+    .ops-rail.no-active-task .metric-box{padding:7px 8px}
+    .ops-rail.no-active-task .metric-box span{font-size:8px}
+    .ops-rail.no-active-task .metric-box strong{font-size:10.5px}
+    .ops-rail.no-active-task .twin-grid .metric-box:nth-child(2),
+    .ops-rail.no-active-task .twin-grid .metric-box:nth-child(3),
+    .ops-rail.no-active-task .gps-grid .metric-box:nth-child(3),
+    .ops-rail.no-active-task .gps-grid .metric-box:nth-child(4),
+    .ops-rail.no-active-task .navigate-btn{display:none}
+    .ops-rail.no-active-task .twin-grid,
+    .ops-rail.no-active-task .gps-grid{grid-template-columns:1fr 1fr}
+    @media(max-width:760px){
+      .contractor-command-card{padding:13px 14px;margin-bottom:10px}
+      .contractor-command-card h1{font-size:18px}
+      .contractor-command-meta{gap:5px 9px;margin-top:7px}
+      .contractor-command-meta span{font-size:9px}
+      .contract-state-badge{padding:5px 8px;font-size:9px}
+      .ops-rail.no-active-task{grid-template-columns:1fr 1fr}
+      .ops-rail.no-active-task .ops-card{min-height:auto}
+    }
+    @media(max-width:430px){
+      .ops-rail.no-active-task{grid-template-columns:1fr 1fr}
+      .ops-rail.no-active-task .ops-card{padding:9px}
+      .ops-rail.no-active-task .ops-card-head h2{font-size:11.5px}
+      .ops-rail.no-active-task .metric-box{padding:6px}
+    }
     @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
 </head>
@@ -900,7 +937,7 @@
     const el = document.getElementById('mapStatus');
     if (!el) return;
     el.classList.remove('is-error','is-denied');
-    if (state === 'ready'){ el.classList.remove('show'); el.textContent=''; return; }
+    if (state === 'ready' || state === 'empty'){ el.classList.remove('show'); el.textContent=''; return; }
     el.textContent = MAP_STATE_TEXT[state] || '';
     if (state === 'error' || state === 'offline') el.classList.add('is-error');
     if (state === 'unauthorized') el.classList.add('is-denied');
@@ -1451,6 +1488,8 @@
     const list=document.getElementById('contractorTaskList');if(!list)return;
     const active=filteredObservations.filter(o=>o.status!=='COMPLETED');
     const count=status=>filteredObservations.filter(o=>o.status===status).length;
+    const opsRail=document.querySelector('#tasksPanel .ops-rail');
+    if(opsRail)opsRail.classList.toggle('no-active-task',active.length===0);
     document.getElementById('taskTotal').textContent=String(filteredObservations.length);
     document.getElementById('taskActive').textContent=String(active.length);
     const pendingEl=document.getElementById('taskPending');if(pendingEl)pendingEl.textContent=String(count('PENDING'));
