@@ -1247,15 +1247,16 @@ async function handler(req, res) {
     }
   }
 
-  // PHASE13D.5 — Field Department Head + Smart Mobility shared workflow.
-  // These actions stay inside the existing /api/admin/users serverless
-  // function so the deployment does not create another function. Identity,
+  // PHASE15 — Municipality-wide Smart Mobility shared workflow.
+  // Any active municipal department head with the independent Mobility
+  // department_head entitlement may use this workflow for THEIR OWN
+  // department. No Field/Lands product entitlement is required. Identity,
   // organization and department always come from the verified live account.
   if (action === 'listDepartmentMissions') {
     const caller = await getCallerContext(decoded.uid);
     if (!caller.isDepartmentHead || caller.role !== 'department_head'
-        || !isFieldSurveyDepartment(caller.department)) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+        || !caller.organizationId || !cleanString(caller.department)) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'department_head_required' });
     }
     try {
       const snap = await db.collection('missions').where('organizationId', '==', caller.organizationId).get();
@@ -1275,8 +1276,8 @@ async function handler(req, res) {
   if (action === 'submitMissionForApproval') {
     const caller = await getCallerContext(decoded.uid);
     if (!caller.isDepartmentHead || caller.role !== 'department_head'
-        || !isFieldSurveyDepartment(caller.department)) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
+        || !caller.organizationId || !cleanString(caller.department)) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'department_head_required' });
     }
     const missionId = cleanString(body.missionId);
     if (!missionId) return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_required' });
