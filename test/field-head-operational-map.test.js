@@ -158,3 +158,13 @@ test('MAPS and TWIN mode switching uses style-ready basemap toggling', () => {
   assert.match(page, /SMART HSR TWIN — التوأم البلدي الرقمي/);
   assert.match(page, /SMART HSR MAPS — الخريطة البلدية التشغيلية/);
 });
+
+
+test('department map locate control uses browser geolocation without mutating observation GPS', () => {
+  assert.match(page, /navigator\.geolocation\.getCurrentPosition/);
+  assert.match(page, /dh-user-location-marker/);
+  assert.match(page, /locateUser: \(\) => this\.locateUserOnMap\(\)/);
+  assert.match(page, /aria-label="تحديد موقعي"/);
+  const locateBlock = page.slice(page.indexOf('locateUserOnMap()'), page.indexOf('bindCanvas()', page.indexOf('locateUserOnMap()')));
+  assert.doesNotMatch(locateBlock, /updateDoc|api\(|correctedLat|correctedLng/);
+});
