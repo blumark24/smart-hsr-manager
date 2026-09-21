@@ -236,6 +236,17 @@ async function handler(req, res) {
         for (const doc of snap.docs) {
           const data = doc.data() || {};
           if (caller.isDepartmentHead && data.department !== caller.department) continue;
+
+          // Data-integrity guard: contractor identities are external company
+          // representatives and must never surface as municipality employees.
+          // Older employee rows can retain an authUid after a role correction,
+          // so verify the linked user identity before returning the row.
+          if (isNonEmptyString(data.authUid)) {
+            const linkedUserSnap = await db.collection('users').doc(data.authUid).get();
+            const linkedUser = linkedUserSnap.exists ? (linkedUserSnap.data() || {}) : {};
+            if (linkedUser.role === 'contractor') continue;
+          }
+
           out.push(safeEmployee(doc.id, data));
         }
         return sendJson(res, 200, { employees: out });
