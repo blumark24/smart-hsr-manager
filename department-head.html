@@ -296,6 +296,57 @@
     .dh-map-toolbar .dh-map-hud{display:none!important}
     .dh-map-search-stack{top:106px!important}
   }
+  /* SMART HSR GEO final workspace */
+  .dh-map-cases-control,.dh-map-search-control{
+    min-height:32px;padding:0 10px;border-radius:9px;
+    background:var(--glass,rgba(8,14,26,.72));border:1px solid var(--glassBd,rgba(122,164,224,.2));
+    backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer
+  }
+  .dh-map-cases-control b{font-size:9px;color:var(--acc,#43d98b);font-weight:800}
+  .dh-map-search-control{display:none}
+  .dh-geo-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:12px;background:var(--glass,rgba(8,14,26,.72));border:1px solid var(--glassBd,rgba(122,164,224,.18))}
+  .dh-geo-panel-head>div{display:flex;align-items:center;gap:8px}.dh-geo-panel-head b{font-size:11px;color:var(--tx,#e9f1fb)}.dh-geo-panel-head span{font-size:9px;color:var(--tx3,#7d8ea6)}
+  .dh-geo-panel-head button{width:28px;height:28px;border-radius:8px;border:1px solid var(--ctlBd,rgba(122,164,224,.16));background:var(--ctl,rgba(20,32,54,.6));color:var(--tx2,#a9bdd4);cursor:pointer;font-size:18px;line-height:1}
+  @media(min-width:1180px){
+    .dh-operational-grid{min-height:clamp(540px,63vh,720px)!important}
+    .dh-map-frame{min-height:clamp(540px,63vh,720px)!important}
+    .dh-side-column[data-geo-panel="true"]{width:min(280px,22vw)!important}
+  }
+  @media(min-width:761px) and (max-width:1179px){
+    .dh-kpi-grid{grid-template-columns:repeat(5,minmax(130px,1fr))!important;overflow-x:auto;scrollbar-width:none}
+    .dh-kpi-grid::-webkit-scrollbar{display:none}
+    .dh-kpi-card{min-width:130px}
+  }
+  @media(max-width:760px){
+    .dh-command-bar{min-height:54px!important;padding:7px 9px!important;border-radius:13px!important}
+    .dh-page-heading>div:first-child{font-size:15px!important}
+    .dh-page-heading>div:last-child{font-size:9.5px!important}
+    .dh-kpi-grid{
+      display:flex!important;grid-template-columns:none!important;gap:7px!important;
+      overflow-x:auto!important;scroll-snap-type:x proximity;padding-bottom:2px;scrollbar-width:none
+    }
+    .dh-kpi-grid::-webkit-scrollbar{display:none}
+    .dh-kpi-card{flex:0 0 138px!important;min-width:138px!important;padding:9px 10px!important;scroll-snap-align:start}
+    .dh-kpi-card span[style*="font-size:23px"]{font-size:20px!important}
+    .dh-operational-grid{min-height:72dvh!important}
+    .dh-map-frame{min-height:72dvh!important}
+    .dh-map-search-control{display:inline-flex!important;width:34px!important;padding:0!important}
+    .dh-map-search-stack{display:none!important}
+    .dh-map-search-stack[data-open="true"]{display:flex!important;top:108px!important;left:8px!important;right:8px!important}
+    .dh-map-search-stack[data-open="true"]>div:first-child{width:100%!important}
+    .dh-map-cases-control{height:34px!important;padding:0 8px!important}
+    .dh-map-cases-control span{font-size:10px}
+    .dh-map-toolbar .dh-map-hud{display:none!important}
+    .dh-side-column[data-geo-panel="true"]{
+      position:fixed!important;z-index:92!important;left:8px!important;right:8px!important;bottom:max(8px,env(safe-area-inset-bottom))!important;
+      width:auto!important;max-height:66dvh!important;padding:8px!important;border-radius:18px!important;
+      background:var(--pop,rgba(8,25,42,.985));border:1px solid var(--glassBd,rgba(122,164,224,.2));
+      box-shadow:0 -18px 60px -28px rgba(0,0,0,.88);overflow:auto!important;backdrop-filter:blur(20px)
+    }
+    .dh-side-column[data-geo-panel="true"] .dh-side-card{flex:none!important;min-height:auto!important;max-height:30dvh!important}
+    .dh-side-column[data-geo-panel="true"] .dh-side-card:last-child:has(.dh-empty-state){display:none!important}
+  }
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -463,7 +514,7 @@
           <section class="dh-operational-grid" style="flex:1;min-height:var(--midH,430px);display:flex;gap:14px;flex-wrap:var(--midWrap,nowrap)">
 
             <div class="dh-map-frame" data-map-mode="{{ mapMode }}" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,430px);border-radius:18px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
-              <div id="deptRealMap" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0;width:100%;height:100%;display:block"></div>
+              <div id="deptRealMap" aria-label="{{ mapAriaLabel }}" style="position:absolute;inset:0;width:100%;height:100%;display:block"></div>
 
               <div class="dh-map-mode" style="position:absolute;top:11px;left:11px;display:flex;align-items:center;gap:3px;padding:3px;border-radius:11px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));z-index:6">
                 <button class="dh-map-product-btn" onClick="{{ setOps }}" data-f="1" aria-pressed="{{ opsActive }}" data-map-product="maps" style="color:{{ opsTx }};background:{{ opsBg }};border:1px solid {{ opsBd }}">
@@ -499,6 +550,15 @@
                   </sc-if>
                 </div>
 
+                <sc-if value="{{ geoPanelAvailable }}">
+                  <button class="dh-map-control dh-map-cases-control" onClick="{{ toggleGeoPanel }}" data-f="1" aria-expanded="{{ geoPanelExpanded }}" aria-label="حالات التشوه الجارية">
+                    <span>الحالات</span><b>{{ sideACount }}</b>
+                  </button>
+                </sc-if>
+                <button class="dh-map-control dh-map-search-control" onClick="{{ toggleMapSearch }}" data-f="1" aria-expanded="{{ mapSearchExpanded }}" aria-label="بحث في الخريطة">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                </button>
+
                 <div class="dh-map-hud" style="display:flex;align-items:center;gap:8px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px))">
                   <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:mBreathe 2.6s ease-in-out infinite"></span>
                   <span style="font-size:10.5px;color:var(--glassTx,#a9c0d8);font-variant-numeric:tabular-nums">{{ liveCount }} مراقب في الميدان</span>
@@ -512,7 +572,7 @@
                 </button>
               </div>
 
-              <div class="dh-map-search-stack" style="position:absolute;top:55px;left:11px;display:flex;flex-direction:column;gap:8px;z-index:5">
+              <div class="dh-map-search-stack" data-open="{{ mapSearchExpanded }}" style="position:absolute;top:55px;left:11px;display:flex;flex-direction:column;gap:8px;z-index:5">
                 <div style="width:186px;position:relative">
                   <input class="dh-map-search" value="{{ mapQ }}" onChange="{{ setMapQ }}" aria-label="بحث في الخريطة" placeholder="بلاغ، ملاحظة، موقع..." style="width:100%;height:31px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 28px;outline:none">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -570,7 +630,13 @@
             </div>
 
             <sc-if value="{{ hasSide }}" hint-placeholder-val="{{ true }}">
-              <div class="dh-side-column" style="width:var(--sideW,282px);flex:none;display:flex;flex-direction:column;gap:12px">
+              <div class="dh-side-column" data-geo-panel="{{ geoPanelMode }}" style="width:var(--sideW,282px);flex:none;display:flex;flex-direction:column;gap:12px">
+                <sc-if value="{{ geoPanelMode }}">
+                  <div class="dh-geo-panel-head">
+                    <div><b>مركز الحالات</b><span>{{ sideACount }}</span></div>
+                    <button type="button" onClick="{{ closeGeoPanel }}" data-f="1" aria-label="إغلاق لوحة الحالات">×</button>
+                  </div>
+                </sc-if>
                 <div class="dh-side-card" style="flex:1;min-height:0;padding:12px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                     <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#e4eefb)">{{ sideATitle }}</span>
@@ -1238,6 +1304,7 @@ class Component extends DCLogic {
     role: 'dept', screen: 'deptops', authPending: false, orgName: 'معاينة تصميم', sessionName: 'رئيس قسم الحصر الميداني', department: 'إدارة الحصر الميداني',
     liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [],
     sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
+    geoPanelOpen: false, mapSearchOpen: false,
     twin3D: false, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
     layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true },
     sel: null, drawer: null, drawerId: null,
@@ -1367,7 +1434,9 @@ class Component extends DCLogic {
   applyRealMapMode(immediate=false) {
     const map = this._realMap;
     if (!map) return;
-    try { if (!map.loaded()) return; } catch (_) { return; }
+    try {
+      if (typeof map.isStyleLoaded === 'function' && !map.isStyleLoaded()) return;
+    } catch (_) { return; }
     const twin = !!this.state.twin3D;
     try {
       if (map.getLayer('street')) map.setLayoutProperty('street', 'visibility', twin ? 'none' : 'visible');
@@ -2174,6 +2243,7 @@ class Component extends DCLogic {
     const notifs = [];
 
     const sd = this.screenDef();
+    const geoWorkspace = st.role === 'dept' && (st.screen === 'deptops' || st.screen === 'map');
     // Sidebar "reference mission" widget: shows the first real in-progress
     // mission, if any — an honest empty state, no fabricated demo mission.
     const pinned = M.filter(x => this.missionStatus(x.id) === 'قيد التنفيذ')[0] || M[0];
@@ -2190,7 +2260,14 @@ class Component extends DCLogic {
       nav: nav, roleTitle: this.roleTitle(), roleSub: this.roleSub(),
       screenTitle: sd.title, screenSub: sd.sub, screenActions: sd.actions || [],
       isOpsLayout: sd.ops === true, hasKpis: !!(sd.kpis && sd.kpis.length), kpis: sd.kpis || [],
-      hasSide: !!sd.sideA, hasBottom: sd.bottom === true,
+      hasSide: geoWorkspace ? (!!sd.sideA && !!st.geoPanelOpen) : !!sd.sideA, hasBottom: sd.bottom === true,
+      geoPanelAvailable: geoWorkspace && !!sd.sideA,
+      geoPanelMode: geoWorkspace,
+      geoPanelExpanded: !!st.geoPanelOpen,
+      toggleGeoPanel: () => this.setState(x => ({geoPanelOpen:!x.geoPanelOpen})),
+      closeGeoPanel: () => this.setState({geoPanelOpen:false}),
+      mapSearchExpanded: !!st.mapSearchOpen,
+      toggleMapSearch: () => this.setState(x => ({mapSearchOpen:!x.mapSearchOpen})),
       sideAEmpty: !!sd.sideA && sd.sideA.length === 0, sideBEmpty: !!sd.sideB && sd.sideB.length === 0,
       showMapEmpty: V.length === 0 && M.length === 0 && I.length === 0,
       sideATitle: sd.sideATitle || '', sideACount: sd.sideACount || '', sideA: sd.sideA || [],
@@ -2212,10 +2289,11 @@ class Component extends DCLogic {
       twinBg: st.twin3D ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
       twinBd: st.twin3D ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)') : 'transparent',
       mapMode: st.twin3D ? 'twin' : 'maps',
+      mapAriaLabel: st.twin3D ? 'SMART HSR TWIN — التوأم البلدي الرقمي' : 'SMART HSR MAPS — الخريطة البلدية التشغيلية',
       opsActive: !st.twin3D,
       twinActive: !!st.twin3D,
-      setOps: () => this.setState({ twin3D: false }),
-      setTwin: () => this.setState({ twin3D: true }),
+      setOps: () => this.setState({ twin3D: false }, () => this.applyRealMapMode()),
+      setTwin: () => this.setState({ twin3D: true }, () => this.applyRealMapMode()),
 
       hasSel: !!sel, selTitle: sel ? sel.title : '', selKind: sel ? sel.kind : '',
       selCol: sel ? sel.col : '#38bdf8', selRows: sel ? sel.rows : [], selActions: sel ? sel.actions : [],
