@@ -462,6 +462,26 @@
     .dh-smart-modal-scrim{padding:8px}
     .dh-smart-modal{width:calc(100vw - 16px);max-height:88dvh;border-radius:20px}
   }
+  /* SMART HSR case evidence viewer */
+  .dh-evidence-compare{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:16px;background:color-mix(in srgb,var(--sunk2) 84%,transparent);border:1px solid var(--div)}
+  .dh-evidence-compare-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .dh-evidence-compare-head>div{display:flex;flex-direction:column;gap:2px}.dh-evidence-compare-head b{font-size:12px;color:var(--tx)}.dh-evidence-compare-head span{font-size:9.5px;color:var(--tx3)}
+  .dh-evidence-completeness{flex:none;padding:4px 8px;border-radius:999px;background:var(--chipBg);color:var(--acc);font-size:9px;font-weight:700}
+  .dh-evidence-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .dh-evidence-card{overflow:hidden;border-radius:14px;border:1px solid var(--div);background:color-mix(in srgb,var(--field) 90%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+  .dh-evidence-label{min-height:34px;padding:8px 10px;display:flex;align-items:center;gap:7px;font-size:10px;font-weight:650;color:var(--tx2);border-bottom:1px solid var(--div)}
+  .dh-evidence-dot{width:7px;height:7px;border-radius:50%}.dh-evidence-dot.before{background:#ef4444}.dh-evidence-dot.after{background:#22c55e}
+  .dh-evidence-image-button{display:block;width:100%;padding:0;border:0;background:none;cursor:zoom-in}
+  .dh-evidence-image-button img{display:block;width:100%;height:210px;object-fit:cover;transition:transform .18s ease,filter .18s ease}
+  .dh-evidence-image-button:hover img{transform:scale(1.015);filter:saturate(1.04)}
+  .dh-evidence-empty{height:210px;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:var(--tx3);font-size:10.5px;background:linear-gradient(145deg,color-mix(in srgb,var(--sunk) 90%,transparent),color-mix(in srgb,var(--field) 92%,transparent))}
+  .dh-evidence-empty.pending{border:1px dashed color-mix(in srgb,#f5a524 36%,transparent);color:#c98f1f}
+  .dh-user-location-marker{width:18px;height:18px;border-radius:50%;background:#2f80ed;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,128,237,.20),0 8px 24px rgba(0,0,0,.32);position:relative}
+  .dh-user-location-marker::after{content:"";position:absolute;inset:-7px;border:1px solid rgba(47,128,237,.40);border-radius:50%;animation:mBreathe 1.8s ease-in-out infinite}
+  @media(max-width:760px){
+    .dh-evidence-grid{grid-template-columns:1fr}
+    .dh-evidence-image-button img,.dh-evidence-empty{height:190px}
+  }
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -679,7 +699,7 @@
                   <span style="font-size:10.5px;color:var(--glassTx,#a9c0d8);font-variant-numeric:tabular-nums">{{ liveCount }} مراقب في الميدان</span>
                 </div>
 
-                <button class="dh-map-control dh-map-reset-control" onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <button class="dh-map-control dh-map-reset-control" onClick="{{ locateUser }}" data-f="1" aria-label="تحديد موقعي" title="تحديد موقعي" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
                 </button>
                 <button class="dh-map-control dh-map-fullscreen-control" onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
@@ -1366,15 +1386,53 @@
           </div>
         </sc-if>
 
-        <sc-if value="{{ dHasEvidenceImages }}">
-          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
-            <sc-for list="{{ dEvidenceImages }}" as="e" hint-placeholder-count="2">
-              <div style="border-radius:12px;overflow:hidden;border:1px solid var(--div,rgba(122,164,224,.14));background:var(--sunk2,rgba(11,18,32,.55))">
-                <img src="{{ e.url }}" alt="{{ e.label }}" style="display:block;width:100%;height:150px;object-fit:cover">
-                <div style="padding:7px 9px;font-size:10px;color:var(--tx2,#a9bdd4)">{{ e.label }}</div>
+        <sc-if value="{{ dEvidenceCompare }}">
+          <section class="dh-evidence-compare" aria-label="مقارنة صور البلاغ قبل وبعد المعالجة">
+            <div class="dh-evidence-compare-head">
+              <div>
+                <b>أدلة المعالجة</b>
+                <span>مقارنة موثقة بين حالة البلاغ قبل التنفيذ وبعده</span>
               </div>
-            </sc-for>
-          </div>
+              <span class="dh-evidence-completeness">{{ dEvidenceStatus }}</span>
+            </div>
+            <div class="dh-evidence-grid">
+              <article class="dh-evidence-card">
+                <div class="dh-evidence-label"><span class="dh-evidence-dot before"></span>قبل المعالجة</div>
+                <sc-if value="{{ dHasEvidenceBefore }}">
+                  <button class="dh-evidence-image-button" onClick="{{ openBeforeEvidence }}" data-f="1" aria-label="تكبير صورة قبل المعالجة">
+                    <img src="{{ dEvidenceBefore.url }}" alt="صورة البلاغ قبل المعالجة">
+                  </button>
+                </sc-if>
+                <sc-if value="{{ dNoEvidenceBefore }}">
+                  <div class="dh-evidence-empty">لا تتوفر صورة قبل المعالجة</div>
+                </sc-if>
+              </article>
+              <article class="dh-evidence-card">
+                <div class="dh-evidence-label"><span class="dh-evidence-dot after"></span>بعد المعالجة</div>
+                <sc-if value="{{ dHasEvidenceAfter }}">
+                  <button class="dh-evidence-image-button" onClick="{{ openAfterEvidence }}" data-f="1" aria-label="تكبير صورة بعد المعالجة">
+                    <img src="{{ dEvidenceAfter.url }}" alt="صورة البلاغ بعد المعالجة">
+                  </button>
+                </sc-if>
+                <sc-if value="{{ dNoEvidenceAfter }}">
+                  <div class="dh-evidence-empty pending">بانتظار رفع المقاول لصورة المعالجة</div>
+                </sc-if>
+              </article>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ dHasEvidenceImages }}">
+          <sc-if value="{{ dNoEvidenceCompare }}">
+            <div class="dh-evidence-grid">
+              <sc-for list="{{ dEvidenceImages }}" as="e" hint-placeholder-count="2">
+                <div class="dh-evidence-card">
+                  <img src="{{ e.url }}" alt="{{ e.label }}" style="display:block;width:100%;height:180px;object-fit:cover">
+                  <div class="dh-evidence-label">{{ e.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
         </sc-if>
 
         <sc-if value="{{ dHasList }}">
@@ -1580,6 +1638,34 @@ class Component extends DCLogic {
         duration: 480
       });
     } catch (_) {}
+  }
+
+  locateUserOnMap() {
+    const map=this._realMap;
+    if (!map) { this.flash('الخريطة غير جاهزة حالياً'); return; }
+    if (!navigator.geolocation) { this.flash('تحديد الموقع غير مدعوم على هذا الجهاز'); return; }
+    this.flash('جاري تحديد موقعك...');
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const lat=Number(pos.coords.latitude),lng=Number(pos.coords.longitude);
+      if(!Number.isFinite(lat)||!Number.isFinite(lng)){this.flash('تعذر قراءة الموقع');return;}
+      try {
+        if(this._userLocationMarker){ try{this._userLocationMarker.remove();}catch(_){} }
+        const el=document.createElement('div');
+        el.className='dh-user-location-marker';
+        el.setAttribute('aria-label','موقعي الحالي');
+        this._userLocationMarker=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([lng,lat]).addTo(map);
+        map.easeTo({
+          center:[lng,lat],zoom:16,
+          pitch:this.state.twin3D?48:0,
+          bearing:this.state.twin3D?-14:0,
+          duration:520
+        });
+        this.flash('تم تحديد موقعك على الخريطة');
+      } catch (_) { this.flash('تعذر تمركز الخريطة على موقعك'); }
+    },err=>{
+      const msg=err && err.code===1 ? 'اسمح بالوصول للموقع من إعدادات المتصفح' : 'تعذر تحديد الموقع حالياً';
+      this.flash(msg);
+    },{enableHighAccuracy:true,timeout:10000,maximumAge:15000});
   }
 
   bindCanvas() {
@@ -2461,6 +2547,7 @@ class Component extends DCLogic {
       zIn: () => { try { this._realMap?.zoomIn({duration:220}); } catch (_) {} },
       zOut: () => { try { this._realMap?.zoomOut({duration:220}); } catch (_) {} },
       resetView: () => { this.setState({ zoom: 1, panX: 0, panY: 0, sel: null }); this.focusRealMap(); },
+      locateUser: () => this.locateUserOnMap(),
       allLayers: () => this.setState({ layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true } }),
       setDay: () => this.setState({ theme: 'day' }), setNight: () => this.setState({ theme: 'night' }),
       stop: e => { if (e && e.stopPropagation) e.stopPropagation(); },
@@ -2476,6 +2563,17 @@ class Component extends DCLogic {
       dFields: (dr.fields || []).map(f => Object.assign({ isSelect: false, isText: true, options: [] }, f, f.type === 'select' ? { isSelect: true, isText: false } : {})),
       dHasChips: !!(dr.chips && dr.chips.length), dChipsLabel: dr.chipsLabel || '', dChips: dr.chips || [],
       dHasEvidence: !!dr.evidence,
+      dEvidenceCompare: !!dr.evidenceCompare,
+      dNoEvidenceCompare: !dr.evidenceCompare,
+      dHasEvidenceBefore: !!dr.evidenceBefore,
+      dHasEvidenceAfter: !!dr.evidenceAfter,
+      dNoEvidenceBefore: !dr.evidenceBefore,
+      dNoEvidenceAfter: !dr.evidenceAfter,
+      dEvidenceBefore: dr.evidenceBefore || {},
+      dEvidenceAfter: dr.evidenceAfter || {},
+      dEvidenceStatus: dr.evidenceBefore && dr.evidenceAfter ? 'مكتملة قبل / بعد' : dr.evidenceBefore ? 'قبل فقط' : 'غير مكتملة',
+      openBeforeEvidence: () => dr.evidenceBefore?.url && window.open(dr.evidenceBefore.url,'_blank','noopener'),
+      openAfterEvidence: () => dr.evidenceAfter?.url && window.open(dr.evidenceAfter.url,'_blank','noopener'),
       dHasList: !!(dr.list && dr.list.length), dListTitle: dr.listTitle || '', dList: dr.list || [],
       dHasActions: !!(dr.actions && dr.actions.length), dActions: dr.actions || []
     };
