@@ -15,7 +15,7 @@ test('approved command board separates inspectors from external contractors', ()
   assert.match(page, /مراقبو القسم/);
   assert.match(runtime, /liveContractors/);
   assert.match(runtime, /contractState === 'ACTIVE'/);
-  assert.match(runtime, /إسناد للمقاول/);
+  assert.match(runtime, /إسناد لشركة مقاول/);
 });
 
 test('field department head receives tenant-scoped observations and contractor identities', () => {
