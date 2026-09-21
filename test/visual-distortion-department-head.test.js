@@ -136,3 +136,36 @@ test('legacy incidents remain explicitly separate from visual distortion', () =>
   assert.match(runtime, /screen === 'incidents'/);
   assert.match(runtime, /وحدة تشغيلية مستقلة عن التشوه البصري/);
 });
+
+
+test('contractor portal uses runtime Firebase config so Preview session survives redirect', () => {
+  assert.match(contractorPage, /import \{ resolveFirebaseConfig \} from '\.\/firebase-runtime-config\.js'/);
+  assert.match(contractorPage, /const firebaseConfig = await resolveFirebaseConfig\(\)/);
+  assert.doesNotMatch(contractorPage, /projectId:\s*"smart-hsr-manager"/);
+});
+
+test('contractor portal loads safe company contract context through existing users API', () => {
+  assert.match(usersApi, /action === 'getContractorPortalContext'/);
+  assert.match(usersApi, /getContractorCallerContext\(decoded\.uid\)/);
+  assert.match(usersApi, /companyName:/);
+  assert.match(usersApi, /contractNumber:/);
+  assert.match(usersApi, /administration:/);
+  assert.match(usersApi, /section:/);
+  assert.match(contractorPage, /getContractorPortalContext/);
+  assert.match(contractorPage, /portalCompanyName/);
+  assert.match(contractorPage, /portalContractNumber/);
+  assert.match(contractorPage, /portalAdministration/);
+  assert.match(contractorPage, /portalSection/);
+  assert.match(contractorPage, /portalContractState/);
+});
+
+test('contractor mobile command workspace exposes operational KPIs without changing workflow states', () => {
+  for (const id of ['taskTotal','taskPending','taskInProgress','taskReview','taskCompleted','taskActive']) {
+    assert.match(contractorPage, new RegExp(id));
+  }
+  assert.match(contractorPage, /class="contractor-command-card"/);
+  assert.match(contractorPage, /شركة تنفيذ خارجية معتمدة|جهة تنفيذ خارجية معتمدة/);
+  assert.match(contractorPage, /ممثل شركة متعاقدة/);
+  assert.match(contractorPage, /PENDING:\{label:'مسندة',action:'بدء التنفيذ'\}/);
+  assert.match(contractorPage, /IN_PROGRESS:\{label:'قيد العمل',action:'رفع إثبات المعالجة'\}/);
+});
