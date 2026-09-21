@@ -50,6 +50,9 @@ jobs:
       - name: Mobility integration regression
         run: node --test test/mobility-integration-regression.test.js
 
+      - name: Mobility operational role runtime
+        run: node --test test/mobility-role-runtime.test.js
+
       - name: Manager mobility adapter
         run: node --test test/manager-mobility-adapter.test.js
 
