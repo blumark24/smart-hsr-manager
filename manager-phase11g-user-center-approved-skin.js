@@ -70,7 +70,12 @@ function injectApprovedSkin() {
   }
   .ucv2-eyebrow{display:none!important}.ucv2-header h1{font-size:22px!important;line-height:1.3!important;font-weight:700!important;letter-spacing:-.01em!important;margin:0 0 4px!important;color:#fff!important}.ucv2-header p{margin:0!important;font-size:11px!important;line-height:1.7!important;color:#7187a5!important}
   .ucv2-header-actions{gap:9px!important;align-items:center!important}.ucv2-btn{height:38px!important;min-height:38px!important;border-radius:8px!important;padding:0 14px!important;font-size:11px!important;font-weight:650!important;color:#dbe8f8!important;border:1px solid rgba(98,145,211,.18)!important;background:rgba(12,28,50,.78)!important;box-shadow:none!important}
-  .ucv2-btn:hover:not(:disabled){border-color:rgba(83,137,255,.42)!important;background:rgba(17,36,63,.88)!important}.ucv2-btn.primary{color:#04150e!important;background:#3ed39a!important;border-color:#3ed39a!important;box-shadow:none!important;font-weight:700!important}.ucv2-btn.primary:hover:not(:disabled){background:#33bd8a!important;border-color:#33bd8a!important}.ucv2-ref-import{order:-1!important;background:rgba(10,24,44,.68)!important}
+  .ucv2-btn:hover:not(:disabled){border-color:rgba(83,137,255,.42)!important;background:rgba(17,36,63,.88)!important}.ucv2-btn.primary{color:#04150e!important;background:#3ed39a!important;border-color:#3ed39a!important;box-shadow:none!important;font-weight:700!important}.ucv2-btn.primary:hover:not(:disabled){background:#33bd8a!important;border-color:#33bd8a!important}
+  .ucv2-btn.contractor{color:#dbe9ff!important;background:linear-gradient(180deg,rgba(49,94,182,.82),rgba(38,73,145,.78))!important;border-color:rgba(106,155,255,.38)!important;box-shadow:inset 0 1px rgba(255,255,255,.06)!important}
+  .ucv2-btn.contractor:hover:not(:disabled){background:linear-gradient(180deg,rgba(58,108,207,.9),rgba(43,83,164,.86))!important;border-color:rgba(126,170,255,.55)!important}
+  .ucv2-btn.icon-close{width:38px!important;min-width:38px!important;padding:0!important;font-size:19px!important;font-weight:400!important;color:#8ea3bf!important;background:rgba(12,28,50,.62)!important}
+  .ucv2-btn.icon-close:hover:not(:disabled){color:#e8f2ff!important;background:rgba(20,39,67,.86)!important}
+  .ucv2-ref-import{order:-1!important;background:rgba(10,24,44,.68)!important}
 
   /* Institutional restraint: hairline border for separation, no shadow stack,
      no per-card decorative radial glow, no hover lift — state signals via
@@ -115,6 +120,17 @@ function injectApprovedSkin() {
   .ucv21-profile-footer{position:sticky!important;bottom:0!important;z-index:10!important;display:flex!important;align-items:center!important;gap:8px!important;padding:12px 18px 15px!important;background:linear-gradient(180deg,rgba(7,18,34,.70),rgba(7,18,34,.99) 36%)!important;border-top:1px solid rgba(96,145,211,.11)!important;backdrop-filter:blur(12px)!important}.ucv21-profile-footer .ucv21-save{margin-inline-start:auto!important;min-width:142px!important;height:36px!important}.ucv21-profile-footer .ucv21-cancel{min-width:86px!important;height:36px!important}.ucv21-profile-msg{font-size:10.5px!important;color:#7d91ad!important}.ucv21-profile-msg.ok{color:#68d4a5!important}.ucv21-profile-msg.er{color:#ff7d94!important}
 
   .ucv2-add-dialog{width:min(760px,calc(100vw - 42px))!important;max-width:760px!important;max-height:min(85vh,calc(100vh - 34px))!important;border-radius:16px!important;background:linear-gradient(155deg,rgba(11,27,49,.995),rgba(7,18,34,.995))!important;border:1px solid rgba(96,145,211,.18)!important;box-shadow:0 32px 90px rgba(0,0,0,.55)!important}
+  .ucv2-contractor-dialog{width:min(760px,calc(100vw - 42px))!important}
+  .ucv2-contractor-dialog .ucv2-dialog-icon-badge.contractor:before{background:#5b91ff!important}
+  .ucv2-contractor-dialog .sec{border-color:rgba(91,145,255,.16)!important}
+  .ucv2-contractor-dialog .in:focus,.ucv2-contractor-dialog .sel:focus{border-color:#5b91ff!important;box-shadow:0 0 0 4px rgba(91,145,255,.13)!important}
+  .ucv2-contractor-dialog .contractor-company-actions{display:flex!important;gap:8px!important;justify-content:flex-end!important;margin-top:2px!important}
+  .ucv2-contractor-dialog .contractor-company-actions .pr{background:linear-gradient(180deg,#4f86ee,#3769c8)!important;border-color:#5b91ff!important;color:#fff!important;min-width:170px!important}
+  .ucv2-contractor-dialog .contractor-company-actions .pr:hover:not(:disabled){background:linear-gradient(180deg,#5a93ff,#4075dc)!important}
+  [data-theme="light"] .ucv2-btn.contractor{color:#174078!important;background:linear-gradient(180deg,#eef5ff,#e3edff)!important;border-color:rgba(31,95,214,.24)!important}
+  [data-theme="light"] .ucv2-btn.contractor:hover:not(:disabled){background:linear-gradient(180deg,#e5efff,#d9e7ff)!important;border-color:rgba(31,95,214,.38)!important}
+  [data-theme="light"] .ucv2-btn.icon-close{color:#64748b!important;background:#f5f8fb!important;border-color:rgba(71,98,128,.12)!important}
+  [data-theme="light"] .ucv2-contractor-dialog .contractor-company-actions .pr{background:linear-gradient(180deg,#2f6edb,#255cbc)!important;border-color:#2f6edb!important;color:#fff!important}
 
   @media(max-width:1450px){.ucv2-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}.ucv2-table th:nth-child(8),.ucv2-table td:nth-child(8),.ucv2-table th:nth-child(9),.ucv2-table td:nth-child(9){display:none!important}.ucv2-toolbar{grid-template-columns:minmax(220px,1.5fr) repeat(3,minmax(110px,.8fr))!important}}
   @media(max-width:1100px){.ucv2-app{padding:18px!important}.ucv2-table th:nth-child(4),.ucv2-table td:nth-child(4){display:none!important}}
