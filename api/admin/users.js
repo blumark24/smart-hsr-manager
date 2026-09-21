@@ -250,8 +250,14 @@ function safeFieldObservation(id, data) {
     correctedLng: Number.isFinite(data.correctedLng) ? data.correctedLng : null,
     locationVerified: data.locationVerified === true,
     locationAccuracyMeters: Number.isFinite(data.locationAccuracyMeters) ? data.locationAccuracyMeters : null,
+    // Evidence references only. Bytes remain private and are resolved through
+    // the authenticated storage reader on the Department Head client.
+    imageObjectKey: data.imageObjectKey || null,
     imagePath: data.imagePath || null,
+    imageUrl: data.imageUrl || null,
+    beforeImagePath: data.beforeImagePath || null,
     afterImagePath: data.afterImagePath || null,
+    afterImageUrl: data.afterImageUrl || null,
     resolutionNote: data.resolutionNote || null,
     createdByUid: data.createdByUid || null,
     assignedContractorUid: data.assignedContractorUid || null,
