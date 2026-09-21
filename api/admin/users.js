@@ -429,6 +429,41 @@ async function handler(req, res) {
     }
   }
 
+  if (action === 'getContractorPortalContext') {
+    const contractorCaller = await getContractorCallerContext(decoded.uid);
+    if (!contractorCaller.isContractor || !contractorCaller.organizationId) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'contractor_required' });
+    }
+    try {
+      const [userSnap, profileSnap] = await Promise.all([
+        db.collection('users').doc(contractorCaller.uid).get(),
+        db.collection('contractorProfiles').doc(contractorCaller.uid).get(),
+      ]);
+      const user = userSnap.exists ? (userSnap.data() || {}) : {};
+      const rawProfile = profileSnap.exists ? (profileSnap.data() || {}) : {};
+      if (cleanString(rawProfile.organizationId) && cleanString(rawProfile.organizationId) !== contractorCaller.organizationId) {
+        return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
+      }
+      const profile = safeContractorProfile(rawProfile);
+      return sendJson(res, 200, {
+        contractorUid: contractorCaller.uid,
+        organizationId: contractorCaller.organizationId,
+        companyName: cleanString(rawProfile.companyName, 'شركة متعاقدة'),
+        contactName: cleanString(rawProfile.contactName || user.name, 'ممثل الشركة'),
+        contractNumber: cleanString(rawProfile.contractNumber),
+        contractScope: cleanString(rawProfile.contractScope),
+        startDate: cleanDateOnly(rawProfile.startDate),
+        endDate: cleanDateOnly(rawProfile.endDate),
+        contractStatus: CONTRACTOR_PROFILE_STATUSES.includes(rawProfile.status) ? rawProfile.status : 'ENDED',
+        contractState: contractorProfileState(profile),
+        administration: cleanString(rawProfile.administration, 'إدارة الحصر الميداني'),
+        section: cleanString(rawProfile.section, 'التشوه البصري'),
+      });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   if (action === 'listFieldContractorCompanies') {
     const caller = await getCallerContext(decoded.uid);
     if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
