@@ -486,6 +486,14 @@
   .dh-app[data-theme="day"] .dh-command-bar{color:var(--hdrTx,#fff)!important}
   .dh-app[data-theme="day"] .dh-command-bar [style*="color:var(--tx,"]{color:var(--hdrTx,#fff)!important}
   .dh-app[data-theme="day"] .dh-command-bar [style*="color:var(--thTx,"]{color:var(--hdrTx3,#c7e0d4)!important}
+  .dh-weather-chip{
+    height:34px;padding:0 10px;border-radius:10px;display:flex;align-items:center;gap:6px;
+    background:var(--hdrCtl,rgba(255,255,255,.10));border:1px solid var(--hdrCtlBd,rgba(255,255,255,.15));
+    color:var(--hdrTx2,#e3f2ea);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)
+  }
+  .dh-weather-title{font-size:10.5px;font-weight:650;color:var(--hdrTx,#fff)}
+  .dh-weather-state{font-size:9.5px;color:var(--hdrTx3,#b7d7c7)}
+  @media(max-width:760px){.dh-weather-title{display:none}.dh-weather-chip{padding:0 8px}.dh-weather-state{font-size:9px}}
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -515,6 +523,14 @@
     </div>
 
     <div style="display:flex;align-items:center;gap:8px">
+      <div class="dh-weather-chip" aria-label="حالة الطقس">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <path d="M17.5 19H7a4 4 0 0 1-.6-7.96A6 6 0 0 1 18 9.5 4.5 4.5 0 0 1 17.5 19Z"></path>
+        </svg>
+        <span class="dh-weather-title">الطقس</span>
+        <span class="dh-weather-state">غير متصل</span>
+      </div>
+
       <div style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--hdrSunk,rgba(12,20,36,0.6));border:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
         <button onClick="{{ setDay }}" data-f="1" aria-label="النمط النهاري" aria-pressed="{{ dayActive }}" style="display:flex;align-items:center;gap:6px;height:27px;padding:0 9px;border-radius:8px;border:1px solid var(--dayBtnBd,transparent);background:var(--dayBtnBg,transparent);color:var(--dayBtnTx,#7d8ea6);font-size:10.5px;font-weight:600;cursor:pointer">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"></path></svg>
