@@ -6,7 +6,15 @@
 <title>SMART HSR - رئيس قسم الحصر الميداني</title>
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
-<script src="./field-head-runtime.js"></script>\n<script src="./support.js"></script>
+<script>
+(() => {
+  const mode = new URLSearchParams(location.search).get('mode');
+  const runtime = document.createElement('script');
+  runtime.src = mode === 'mobility' ? './mobility-runtime.js' : './field-head-runtime.js';
+  document.head.appendChild(runtime);
+})();
+</script>
+<script src="./support.js"></script>
 <link rel="stylesheet" href="vendor/maplibre-gl/4.7.1/maplibre-gl.css">
 <script src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 </head>
@@ -3152,12 +3160,19 @@ class Component extends DCLogic {
 
     if (k === 'create') {
       const f = this.state.form;
-      const canSave = !!(this.state.chip.type && (f.cDest || '').trim() && (f.cWhy || '').trim());
+      const mobilityMode = this.state.runtimeMode === 'mobility';
+      const canSave = !!(this.state.chip.type && (f.cDest || '').trim() && (f.cWhy || '').trim()
+        && (!mobilityMode || (f.cEmpId || '').trim()));
       const saveMission = submit => {
         if (!canSave) { this.flash('الرجاء تعبئة نوع المهمة والوجهة والمبرر.'); return; }
+        const selectedEmployee = mobilityMode
+          ? (this.state.liveEmployees || []).find(e => e.employeeId === f.cEmpId)
+          : null;
         const payload = {
           type: this.state.chip.type, destination: (f.cDest || '').trim(), reason: (f.cWhy || '').trim(),
-          requestedEmployeeName: (f.cEmp || '').trim(), whenLabel: (f.cWhen || '').trim(), durationLabel: (f.cDur || '').trim()
+          requestedEmployeeId: mobilityMode ? (f.cEmpId || '').trim() : undefined,
+          requestedEmployeeName: mobilityMode ? (selectedEmployee?.name || '') : (f.cEmp || '').trim(),
+          whenLabel: (f.cWhen || '').trim(), durationLabel: (f.cDur || '').trim()
         };
         this.setState({ drawer: null });
         window.SmartHSRMobilityAdapter.createMissionRequest(payload).then(missionId => {
@@ -3168,7 +3183,14 @@ class Component extends DCLogic {
       return { title: 'إنشاء طلب مهمة', sub: (this.state.department || '—') + ' · رئيس القسم', chip: 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
         form: true, formTitle: 'بيانات الطلب',
         fields: [
-          { label: 'الموظف المقترح (اختياري)', value: f.cEmp || '', ph: 'يُخصَّص الموظف فعلياً عند تخصيص المركبة', on: e => this.setForm('cEmp', e.target.value) },
+          mobilityMode
+            ? { label: 'الموظف', type: 'select', value: f.cEmpId || '', ph: 'اختر موظفاً من القسم',
+                options: (this.state.liveEmployees || []).map(e => ({
+                  value: e.employeeId,
+                  label: e.name + (e.vehicleEligible ? ' · مؤهل للمركبة' : ' · غير مؤهل للمركبة')
+                })),
+                on: e => this.setForm('cEmpId', e.target.value) }
+            : { label: 'الموظف المقترح (اختياري)', value: f.cEmp || '', ph: 'يُخصَّص الموظف فعلياً عند تخصيص المركبة', on: e => this.setForm('cEmp', e.target.value) },
           { label: 'الوجهة', value: f.cDest || '', ph: 'الموقع المستهدف', on: e => this.setForm('cDest', e.target.value) },
           { label: 'التاريخ والوقت', value: f.cWhen || '', ph: '27/05 — 13:00', on: e => this.setForm('cWhen', e.target.value) },
           { label: 'المدة المتوقعة', value: f.cDur || '', ph: 'ساعتان', on: e => this.setForm('cDur', e.target.value) },
