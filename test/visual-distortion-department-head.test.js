@@ -87,7 +87,7 @@ test('department head navigation keeps visual distortion on missions and no cont
   assert.doesNotMatch(runtime, /id:'contractors', label:'المقاولون والعقود'/);
   assert.match(runtime, /id:'fieldmobility', label:'الحركة الميدانية'/);
   assert.match(runtime, /id:'employees', label:'موظفو القسم'/);
-  assert.match(runtime, /id:'incidents', label:'البلاغات والملاحظات'/);
+  assert.match(runtime, /id:'incidents', label:'البلاغات العامة'/);
   assert.match(runtime, /id:'audit', label:'سجل القسم'/);
 });
 
@@ -247,4 +247,45 @@ test('visual distortion grid humanizes technical type and coordinate presentatio
   assert.match(runtime, /cell\(typeLabel\(o\.type\|\|o\.title\)/);
   assert.match(runtime, /cell\(locationLabel\(o\)/);
   assert.match(runtime, /موقع GPS موثّق/);
+});
+
+
+test('visual lifecycle is unified across command center table and case window', () => {
+  assert.match(runtime, /function workflowPhase\(o\)/);
+  assert.match(runtime, /label:'تم الإسناد'/);
+  assert.match(runtime, /label:'قيد التنفيذ'/);
+  assert.match(runtime, /label:'بانتظار التحقق'/);
+  assert.match(runtime, /label:'تمت المعالجة'/);
+  assert.match(runtime, /countPhase\('assigned'\)/);
+  assert.match(runtime, /countPhase\('completed'\)/);
+  assert.match(runtime, /workflowProgressLabel\(o\)/);
+});
+
+test('general reports remain separate from visual distortion cases', () => {
+  const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+  assert.match(runtime, /\{ id:'incidents', label:'البلاغات العامة' \}/);
+  assert.match(runtime, /بلاغات تشغيلية مستقلة لا تشمل حالات التشوه البصري/);
+  assert.match(page, /label: 'البلاغات العامة'/);
+});
+
+test('visual case window contains lifecycle stepper and assignment card', () => {
+  const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+  assert.match(runtime, /caseSteps:workflowSteps\(o\)/);
+  assert.match(runtime, /assignmentCard/);
+  assert.match(runtime, /assignedProfile\.companyName/);
+  assert.match(page, /dh-case-flow/);
+  assert.match(page, /dh-assignment-card/);
+  assert.match(page, /مسار الحالة/);
+  assert.match(page, /الإسناد التنفيذي/);
+});
+
+test('before-after evidence uses swipe comparison and internal lightbox', () => {
+  const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+  assert.match(page, /dh-before-after-stage/);
+  assert.match(page, /dh-ba-range/);
+  assert.match(page, /type="range"/);
+  assert.match(page, /onInput="{{ setEvidenceSplit }}"/);
+  assert.match(page, /dh-evidence-lightbox/);
+  assert.match(runtime, /evidenceLightbox/);
+  assert.match(runtime, /dEvidenceClip/);
 });
