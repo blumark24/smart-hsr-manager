@@ -104,6 +104,21 @@
   function statusColor(status) {
     return status === 'PENDING' ? '#ef4444' : status === 'IN_PROGRESS' ? '#22c55e' : status === 'PENDING_REVIEW' ? '#f5a524' : '#7d8ea6';
   }
+  function typeLabel(type) {
+    const key=String(type||'').toUpperCase();
+    return ({MAINTENANCE:'صيانة',LIGHTING:'إنارة',WASTE:'مخلفات',EXCAVATION:'حفريات',VISUAL_DISTORTION:'تشوه بصري'}[key] || type || 'تشوه بصري');
+  }
+  function verificationLabel(status) {
+    return ({VERIFIED:'تم التحقق',RETURNED:'أعيد للمقاول',PENDING:'بانتظار التحقق'}[String(status||'').toUpperCase()] || status || 'لم يبدأ');
+  }
+  function formatAuditTime(value) {
+    if (!value) return '—';
+    const d=new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    try {
+      return new Intl.DateTimeFormat('ar-SA',{day:'2-digit',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}).format(d);
+    } catch (_) { return String(value); }
+  }
   function observationMapPoint(o) {
     const rawLat = Number(o?.correctedLat), rawLng = Number(o?.correctedLng);
     const globallyValid = Number.isFinite(rawLat) && Number.isFinite(rawLng) &&
@@ -373,12 +388,15 @@
           };
         }
         if (st.role === 'dept' && screen === 'employees') {
-          const employees=(instance.state.liveEmployees||[]).filter(e=>String(e.department||'')===String(instance.state.department||'')||e?.products?.field?.enabled===true);
+          const employees=(instance.state.liveEmployees||[])
+            .filter(e=>String(e.department||'')===String(instance.state.department||'')||e?.products?.field?.enabled===true)
+            .filter(e=>e?.role!=='contractor' && e?.products?.field?.role!=='contractor');
           return {
             isTable:true,isHandover:false,isReports:false,isSettings:false,isEmp:false,
             tQ:'',setTQ:()=>{},tPlaceholder:'',tFilters:[],
             tCols:[
               {label:'الموظف',flex:'1.2',align:'right'},
+              {label:'الصفة',flex:'0 0 110px',align:'right'},
               {label:'المسمى',flex:'1',align:'right'},
               {label:'الحساب',flex:'0 0 100px',align:'left'},
               {label:'التشغيل الميداني',flex:'0 0 120px',align:'left'}
@@ -389,6 +407,7 @@
                 chip:active?'نشط':'غير نشط',chipCol:col,chipBg:'rgba(122,164,224,.10)',chipBd:col,on:()=>{},
                 cells:[
                   cell(e.name||e.employeeId||e.uid,'1.2',{weight:'650',col:'var(--tx,#e9f1fb)'}),
+                  cell(e?.products?.field?.role==='inspector'?'مراقب ميداني':'موظف داخلي','0 0 110px',{weight:'600',col:'var(--acc,#12855a)'}),
                   cell(e.jobTitle||'موظف ميداني','1'),
                   cell(e.accountStatus||'—','0 0 100px',{align:'left'}),
                   cell(e?.products?.mobility?.vehicleEligible===true?'مؤهل للمركبة':'—','0 0 120px',{align:'left'})
@@ -399,44 +418,44 @@
           };
         }
         if (st.role === 'dept' && screen === 'audit') {
-          const events=(instance.state.liveDepartmentAudit||[]).filter(e=>e.resourceType==='observation'||e.resourceType==='contractorProfile');
+          const events=(instance.state.liveDepartmentAudit||[])
+            .filter(e=>e.resourceType==='observation'||e.resourceType==='contractorProfile'||e.resourceType==='auditNote');
           const actionLabel=a=>({
-            assign_contractor:'إسناد للمقاول',
-            upsert_contractor_profile:'تحديث ملف المقاول',
-            verify_contractor_work:'اعتماد معالجة المقاول',
-            return_to_contractor:'إعادة للمقاول',
-            close_visual_distortion_case:'إغلاق حالة التشوه',
-            create_vehicle_authorization_request:'إنشاء طلب تفويض مركبة',
-            authorize_vehicle_use:'اعتماد تفويض المركبة',
-            reject_vehicle_authorization:'رفض تفويض المركبة',
-            revoke_vehicle_authorization:'إلغاء تفويض المركبة',
-            activate_vehicle_authorization:'تفعيل التفويض عند التسليم',
-            expire_vehicle_authorization:'انتهاء التفويض عند الاستلام',
-            authorization_release:'تحرير المركبة بعد رفض/إلغاء التفويض',
-            create:'إنشاء مهمة',
-            submit_for_approval:'إرسال المهمة للاعتماد'
-          }[a]||a||'حدث تشغيلي');
+            assign_contractor:'تم إسناد البلاغ لشركة متعاقدة',
+            upsert_contractor_profile:'تم تحديث الملف التعاقدي',
+            verify_contractor_work:'اعتمد المراقب معالجة المقاول',
+            return_to_contractor:'أعاد المراقب البلاغ للمقاول',
+            close_visual_distortion_case:'تم إغلاق بلاغ التشوه البصري',
+            append_audit_note:'أضيفت ملاحظة إدارية على السجل'
+          }[a]||'حدث تشغيلي');
+          const resourceLabel=e=>e.resourceType==='observation'?'بلاغ تشوه بصري'
+            :e.resourceType==='contractorProfile'?'ملف شركة متعاقدة'
+            :e.resourceType==='auditNote'?'ملاحظة مرتبطة بسجل سابق':'سجل تشغيلي';
           return {
             isTable:true,isHandover:false,isReports:false,isSettings:false,isEmp:false,
             tQ:'',setTQ:()=>{},tPlaceholder:'',tFilters:[],
             tCols:[
-              {label:'الوقت',flex:'0 0 150px',align:'right'},
-              {label:'الحدث',flex:'1.3',align:'right'},
-              {label:'المورد',flex:'1',align:'right'},
-              {label:'الحالة السابقة',flex:'0 0 100px',align:'left'},
-              {label:'الحالة الجديدة',flex:'0 0 100px',align:'left'}
+              {label:'الوقت',flex:'0 0 170px',align:'right'},
+              {label:'الحدث',flex:'1.4',align:'right'},
+              {label:'السجل',flex:'1',align:'right'},
+              {label:'من',flex:'0 0 110px',align:'left'},
+              {label:'الحالة',flex:'0 0 105px',align:'left'}
             ],
             tRows:events.map(e=>({
-              chip:'مسجّل',chipCol:'#7d8ea6',chipBg:'rgba(122,164,224,.10)',chipBd:'rgba(122,164,224,.25)',on:()=>{},
+              chip:e.resourceType==='auditNote'?'ملاحظة':'موثّق',
+              chipCol:e.resourceType==='auditNote'?'#12688f':'#12855a',
+              chipBg:e.resourceType==='auditNote'?'rgba(18,104,143,.10)':'rgba(18,133,90,.10)',
+              chipBd:e.resourceType==='auditNote'?'rgba(18,104,143,.28)':'rgba(18,133,90,.28)',
+              on:()=>instance.setState({drawer:'auditEvent',drawerId:e.auditId}),
               cells:[
-                cell(e.timestamp||'—','0 0 150px',{size:'10.5px'}),
-                cell(actionLabel(e.action),'1.3',{weight:'600',col:'var(--tx,#e9f1fb)'}),
-                cell((e.resourceType||'')+' · '+(e.resourceId||''),'1',{size:'10.5px'}),
-                cell(e.fromStatus,'0 0 100px',{align:'left'}),
-                cell(e.toStatus,'0 0 100px',{align:'left'})
+                cell(formatAuditTime(e.timestamp),'0 0 170px',{size:'10.5px'}),
+                cell(e.resourceType==='auditNote'?(e.note||actionLabel(e.action)):actionLabel(e.action),'1.4',{weight:'600',col:'var(--tx,#e9f1fb)'}),
+                cell(resourceLabel(e),'1',{size:'10.5px'}),
+                cell(e.actorRole==='department_head'?'رئيس القسم':e.actorRole||'النظام','0 0 110px',{align:'left'}),
+                cell(e.toStatus?statusLabel(e.toStatus):(e.fromStatus?statusLabel(e.fromStatus):'—'),'0 0 105px',{align:'left'})
               ]
             })),
-            tEmpty:events.length===0,tCount:events.length+' حدث'
+            tEmpty:events.length===0,tCount:events.length+' حدث موثّق'
           };
         }
         const out=originalExt(day,st);
@@ -459,11 +478,70 @@
     if (originalDrawerData) {
       instance.drawerData = () => {
         const kind = instance.state.drawer, id = instance.state.drawerId;
+        if (kind === 'auditEvent') {
+          const e=(instance.state.liveDepartmentAudit||[]).find(x=>x.auditId===id);
+          if(!e) return {title:'تعذر تحديد السجل',sub:'',chip:'',chipCol:'',chipBg:'',chipBd:''};
+          const actionLabel=({
+            assign_contractor:'إسناد البلاغ لشركة متعاقدة',
+            upsert_contractor_profile:'تحديث الملف التعاقدي',
+            verify_contractor_work:'اعتماد معالجة المقاول',
+            return_to_contractor:'إعادة البلاغ للمقاول',
+            close_visual_distortion_case:'إغلاق بلاغ التشوه البصري',
+            append_audit_note:'ملاحظة إدارية'
+          }[e.action]||'حدث تشغيلي');
+          const rows=[
+            {k:'الحدث',v:actionLabel},
+            {k:'الوقت',v:formatAuditTime(e.timestamp)},
+            {k:'المنفذ',v:e.actorRole==='department_head'?'رئيس القسم':e.actorRole||'النظام'},
+            {k:'الحالة السابقة',v:e.fromStatus?statusLabel(e.fromStatus):'—'},
+            {k:'الحالة الجديدة',v:e.toStatus?statusLabel(e.toStatus):'—'}
+          ];
+          if(e.note) rows.push({k:'الملاحظة',v:e.note});
+          return {
+            title:'سجل القسم',sub:'سجل تدقيق محفوظ ولا يتم تعديل الحدث الأصلي',
+            chip:e.resourceType==='auditNote'?'ملاحظة':'موثّق',
+            chipCol:e.resourceType==='auditNote'?'#12688f':'#12855a',
+            chipBg:'rgba(18,133,90,.10)',chipBd:'rgba(18,133,90,.28)',
+            rows,
+            actions:e.resourceType==='auditNote'?[]:[{
+              label:'إضافة ملاحظة / تصحيح',
+              on:()=>instance.setState({drawer:'auditNoteEdit',drawerId:e.auditId,chip:Object.assign({},instance.state.chip,{auditNote:''})}),
+              tx:'var(--btnTx,#fff)',bg:'var(--btn)',bd:'var(--btnBd)'
+            }]
+          };
+        }
+        if (kind === 'auditNoteEdit') {
+          const parent=(instance.state.liveDepartmentAudit||[]).find(x=>x.auditId===id);
+          if(!parent) return {title:'تعذر تحديد السجل',sub:'',chip:'',chipCol:'',chipBg:'',chipBd:''};
+          const value=instance.state.chip?.auditNote||'';
+          return {
+            title:'إضافة ملاحظة على سجل القسم',
+            sub:'لن يتغير الحدث الأصلي؛ ستُضاف الملاحظة كسجل تدقيق جديد مرتبط به.',
+            chip:'تصحيح موثّق',chipCol:'#12688f',chipBg:'rgba(18,104,143,.10)',chipBd:'rgba(18,104,143,.28)',
+            form:true,formTitle:'الملاحظة الإدارية',
+            fields:[{
+              label:'الملاحظة أو التصحيح',value,on:e=>instance.setState({chip:Object.assign({},instance.state.chip,{auditNote:e.target.value})})
+            }],
+            actions:[{
+              label:'حفظ الملاحظة',
+              on:()=>{
+                const note=String(instance.state.chip?.auditNote||'').trim();
+                if(!note){instance.flash?.('اكتب الملاحظة أولاً');return;}
+                window.SmartHSRMobilityAdapter.appendFieldDepartmentAuditNote(id,note)
+                  .then(()=>{instance.setState({drawer:null});instance.flash?.('تمت إضافة الملاحظة إلى سجل القسم');})
+                  .catch(()=>instance.flash?.('تعذر حفظ الملاحظة'));
+              },
+              tx:'var(--btnTx,#fff)',bg:'var(--btn)',bd:'var(--btnBd)'
+            }]
+          };
+        }
         if (kind === 'observation') {
           const o = (instance.state.liveObservations || []).find(x => x.observationId === id);
           if (!o) return {title:'تعذر تحديد البلاغ',sub:'',chip:'',chipCol:'',chipBg:'',chipBd:''};
           const col = statusColor(o.status);
           const actions = [];
+          const assignedContractor=(instance.state.liveContractors||[]).find(x=>x.uid===o.assignedContractorUid);
+          const assignedProfile=assignedContractor?.profile||{};
           const activeContractors = (instance.state.liveContractors || []).filter(x => x.contractState === 'ACTIVE');
           if (o.status === 'PENDING' && activeContractors.length) {
             actions.push({
@@ -481,17 +559,20 @@
           }
           return {
             title:'بلاغ التشوه · ' + (o.displayId || o.observationId || '—'),
-            sub:o.type || o.title || 'تشوه بصري',
+            sub:typeLabel(o.type || o.title),
             chip:statusLabel(o.status),chipCol:col,
             chipBg:instance.tint ? instance.tint(col,.14) : 'transparent',
             chipBd:instance.tint ? instance.tint(col,.30) : 'transparent',
             rows:[
               {k:'رقم الحالة',v:String(o.displayId || o.observationId || '—')},
-              {k:'الموقع',v:o.location || 'إحداثيات موثقة'},
+              {k:'التصنيف',v:typeLabel(o.type || o.title)},
+              {k:'الموقع',v:o.location || 'موقع GPS موثّق'},
               {k:'الحالة',v:statusLabel(o.status)},
-              {k:'المراقب',v:o.createdByName || o.inspectorName || '—'},
-              {k:'شركة المقاول',v:o.assignedContractorName || 'غير مسند'},
-              {k:'التحقق',v:o.inspectorVerification?.status || '—'}
+              {k:'المراقب',v:o.createdByName || o.inspectorName || 'غير مسند'},
+              {k:'الشركة المتعاقدة',v:assignedProfile.companyName || (o.assignedContractorUid ? 'شركة متعاقدة' : 'غير مسند')},
+              {k:'ممثل الشركة',v:assignedProfile.contactName || o.assignedContractorName || '—'},
+              {k:'العقد',v:assignedProfile.contractNumber ? ('#'+assignedProfile.contractNumber+' · '+(assignedContractor?.contractState==='ACTIVE'?'نشط':'غير نشط')) : '—'},
+              {k:'التحقق',v:verificationLabel(o.inspectorVerification?.status)}
             ],
             evidenceImages:instance.state.observationEvidence || [],
             actions
@@ -685,6 +766,7 @@
       closureNote:'تم الإغلاق بعد تحقق المراقب واعتماد رئيس قسم الحصر الميداني.'
     }).then(refresh),
     upsertFieldContractorProfile: payload => api('upsertFieldContractorProfile',payload).then(refresh),
+    appendFieldDepartmentAuditNote: (parentAuditId,note) => api('appendFieldDepartmentAuditNote',{parentAuditId,note}).then(refresh),
     resolveObservationEvidence: async reference => {
       if (!reference || !currentUser) return null;
       try {
