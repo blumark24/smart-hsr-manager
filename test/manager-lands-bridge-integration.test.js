@@ -1,6 +1,6 @@
 'use strict';
 // Integration-level coverage of the manager -> Lands trusted bridge: real
-// handler code (api/admin/users.js, api/admin/lands-bootstrap.js) and real
+// consolidated handler code (api/admin/users.js) and real
 // authorization logic (api/_lib/authz.js) run unmodified against an
 // in-memory Firestore/Auth double and a mocked Lands bridge — no real
 // Firebase project, no network. This is the level the pure-function unit
@@ -12,7 +12,6 @@ const assert = require('node:assert/strict');
 const { installFakes, fakeRequest, fakeResponse } = require('./helpers/fakeFirebaseAdmin');
 
 const USERS_HANDLER_PATH = require.resolve('../api/admin/users.js');
-const BOOTSTRAP_HANDLER_PATH = require.resolve('../api/admin/lands-bootstrap.js');
 const AUTHZ_PATH = require.resolve('../api/_lib/authz.js');
 const RECONCILIATION_PATH = require.resolve('../api/_lib/landsSyncReconciliation.js');
 
@@ -24,8 +23,7 @@ function loadFreshHandlers() {
   delete require.cache[AUTHZ_PATH];
   delete require.cache[RECONCILIATION_PATH];
   delete require.cache[USERS_HANDLER_PATH];
-  delete require.cache[BOOTSTRAP_HANDLER_PATH];
-  return { usersHandler: require(USERS_HANDLER_PATH), bootstrapHandler: require(BOOTSTRAP_HANDLER_PATH) };
+  return { usersHandler: require(USERS_HANDLER_PATH) };
 }
 
 function seedManager(fakes, { uid = 'manager-1', organizationId = 'org-alpha' } = {}) {
@@ -283,10 +281,10 @@ test('institution manager bootstrap end-to-end: creates the real municipal_manag
   const fakes = installFakes();
   try {
     const { uid, organizationId } = seedManager(fakes);
-    const { bootstrapHandler } = loadFreshHandlers();
-    const req = fakeRequest({ uid, body: {} });
+    const { usersHandler } = loadFreshHandlers();
+    const req = fakeRequest({ uid, body: { action: 'landsBootstrap' } });
     const res = fakeResponse();
-    await bootstrapHandler(req, res);
+    await usersHandler(req, res);
 
     assert.equal(res.statusCode, 200, JSON.stringify(res.body));
     assert.equal(res.body.alreadyBootstrapped, false);
@@ -307,14 +305,14 @@ test('second bootstrap call: safe no-op, no additional audit event, membership u
   const fakes = installFakes();
   try {
     const { uid, organizationId } = seedManager(fakes);
-    const { bootstrapHandler } = loadFreshHandlers();
+    const { usersHandler } = loadFreshHandlers();
 
     const res1 = fakeResponse();
-    await bootstrapHandler(fakeRequest({ uid, body: {} }), res1);
+    await usersHandler(fakeRequest({ uid, body: { action: 'landsBootstrap' } }), res1);
     assert.equal(res1.body.alreadyBootstrapped, false);
 
     const res2 = fakeResponse();
-    await bootstrapHandler(fakeRequest({ uid, body: {} }), res2);
+    await usersHandler(fakeRequest({ uid, body: { action: 'landsBootstrap' } }), res2);
     assert.equal(res2.statusCode, 200);
     assert.equal(res2.body.alreadyBootstrapped, true);
 
@@ -326,9 +324,9 @@ test('second bootstrap call: safe no-op, no additional audit event, membership u
 test('employee cannot call bootstrap', async () => {
   const fakes = installFakes();
   try {
-    const { bootstrapHandler } = loadFreshHandlers();
+    const { usersHandler } = loadFreshHandlers();
     const res = fakeResponse();
-    await bootstrapHandler(fakeRequest({ uid: 'plain-employee', body: {} }), res);
+    await usersHandler(fakeRequest({ uid: 'plain-employee', body: { action: 'landsBootstrap' } }), res);
     assert.equal(res.statusCode, 403);
     assert.equal(res.body.reason, 'manager_required');
     const access = [...fakes.store.docs.keys()].some((p) => p.includes('userAccess'));
@@ -341,10 +339,10 @@ test('another municipality cannot be targeted: two managers bootstrap into two s
   try {
     const managerA = seedManager(fakes, { uid: 'mgr-a', organizationId: 'org-a' });
     const managerB = seedManager(fakes, { uid: 'mgr-b', organizationId: 'org-b' });
-    const { bootstrapHandler } = loadFreshHandlers();
+    const { usersHandler } = loadFreshHandlers();
 
-    await bootstrapHandler(fakeRequest({ uid: managerA.uid, body: {} }), fakeResponse());
-    await bootstrapHandler(fakeRequest({ uid: managerB.uid, body: {} }), fakeResponse());
+    await usersHandler(fakeRequest({ uid: managerA.uid, body: { action: 'landsBootstrap' } }), fakeResponse());
+    await usersHandler(fakeRequest({ uid: managerB.uid, body: { action: 'landsBootstrap' } }), fakeResponse());
 
     assert.ok(fakes.store.docs.get(`landsMunicipalities/org-a/userAccess/mgr-a`));
     assert.ok(fakes.store.docs.get(`landsMunicipalities/org-b/userAccess/mgr-b`));
@@ -357,18 +355,19 @@ test('arbitrary uid/role/municipality/path input in the bootstrap request body i
   const fakes = installFakes();
   try {
     const { uid, organizationId } = seedManager(fakes);
-    const { bootstrapHandler } = loadFreshHandlers();
+    const { usersHandler } = loadFreshHandlers();
     // The handler never reads req.body for this endpoint at all — prove it
     // by sending a body full of attacker-controlled targeting fields.
     const req = fakeRequest({
       uid, body: {
+        action: 'landsBootstrap',
         uid: 'attacker-uid', organizationId: 'org-victim', municipalityId: 'org-victim',
         lands_role: 'lands_department_manager', role: 'lands_department_manager',
         path: `landsMunicipalities/org-victim/userAccess/attacker-uid`,
       },
     });
     const res = fakeResponse();
-    await bootstrapHandler(req, res);
+    await usersHandler(req, res);
 
     assert.equal(res.body.municipalityId, organizationId);
     assert.ok(fakes.store.docs.get(`landsMunicipalities/${organizationId}/userAccess/${uid}`));
