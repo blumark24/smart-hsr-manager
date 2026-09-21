@@ -48,6 +48,11 @@
       liveContractors: Array.isArray(visual.contractors) ? visual.contractors : [],
       liveMissions: Array.isArray(missions.missions) ? missions.missions : [],
       liveDepartmentAudit: Array.isArray(audit.events) ? audit.events : []
+    }, () => {
+      // Live Visual Distortion data can arrive after the real map has already
+      // completed its initial load. Repaint the same trusted state here so the
+      // KPI/empty-state and marker layer cannot remain stuck at the pre-fetch 0.
+      requestAnimationFrame(() => renderObservationMarkers(component));
     });
   };
 
@@ -99,18 +104,26 @@
   function statusColor(status) {
     return status === 'PENDING' ? '#ef4444' : status === 'IN_PROGRESS' ? '#22c55e' : status === 'PENDING_REVIEW' ? '#f5a524' : '#7d8ea6';
   }
+  function observationMapPoint(o) {
+    const rawLat = Number(o?.correctedLat), rawLng = Number(o?.correctedLng);
+    const globallyValid = Number.isFinite(rawLat) && Number.isFinite(rawLng) &&
+      Math.abs(rawLat) <= 90 && Math.abs(rawLng) <= 180;
+    if (!globallyValid) return null;
+    const inSaudiEnvelope = (lat,lng) => lat >= 16 && lat <= 33.5 && lng >= 34 && lng <= 56.5;
+    if (inSaudiEnvelope(rawLat,rawLng)) return {lat:rawLat,lng:rawLng,source:'canonical'};
+    // Read-only compatibility recovery for a legacy/swapped pair. The record is
+    // never mutated; the swap is accepted only when it is the sole Saudi-valid
+    // orientation.
+    if (inSaudiEnvelope(rawLng,rawLat)) return {lat:rawLng,lng:rawLat,source:'swapped_read_recovery'};
+    return null;
+  }
   function trustedObservations(instance) {
     const allowed = new Set(['PENDING','IN_PROGRESS','PENDING_REVIEW','COMPLETED']);
-    return (instance.state.liveObservations || []).filter(o => {
-      const lat = Number(o.correctedLat), lng = Number(o.correctedLng);
-      const globallyValid = Number.isFinite(lat) && Number.isFinite(lng) &&
-        Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
-      // SMART HSR is a Saudi municipal platform. Keep the map operationally
-      // honest by refusing coordinates outside the Saudi service envelope;
-      // this also catches common swapped lat/lng records without mutating them.
-      const inSaudiEnvelope = globallyValid && lat >= 16 && lat <= 33.5 && lng >= 34 && lng <= 56.5;
-      return allowed.has(o.status) && o.locationVerified === true && inSaudiEnvelope;
-    });
+    return (instance.state.liveObservations || []).map(o => {
+      if (!allowed.has(o.status) || o.locationVerified !== true) return null;
+      const point = observationMapPoint(o);
+      return point ? Object.assign({},o,{_mapLat:point.lat,_mapLng:point.lng,_mapPointSource:point.source}) : null;
+    }).filter(Boolean);
   }
   function clearObservationMarkers(instance) {
     (instance._fieldObservationMarkers || []).splice(0).forEach(m => { try { m.remove(); } catch (_) {} });
@@ -134,10 +147,10 @@
         instance.openFieldObservation(o.observationId);
       });
       const marker = new maplibregl.Marker({element:el,anchor:'center'})
-        .setLngLat([Number(o.correctedLng),Number(o.correctedLat)])
+        .setLngLat([Number(o._mapLng),Number(o._mapLat)])
         .addTo(map);
       instance._fieldObservationMarkers.push(marker);
-      bounds.extend([Number(o.correctedLng),Number(o.correctedLat)]);
+      bounds.extend([Number(o._mapLng),Number(o._mapLat)]);
     });
     if (observations.length && !bounds.isEmpty()) {
       try { map.fitBounds(bounds,{padding:70,maxZoom:16,duration:0}); } catch (_) {}
