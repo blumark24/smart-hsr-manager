@@ -429,6 +429,122 @@ async function handler(req, res) {
     }
   }
 
+  // Visual Distortion external-company onboarding from the Municipality
+  // Manager User Center. This deliberately reuses the existing users API,
+  // Firebase Auth project and contractor/contractorProfiles schema: no new
+  // endpoint, no Firestore Rules change, and no employee-registry record.
+  // The caller must be the real municipality manager (not the supervisor
+  // compatibility role), and the contractor is always scoped to that same
+  // organization.
+  if (action === 'createFieldContractorCompany') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+    }
+
+    const companyName = cleanString(body.companyName);
+    const contractNumber = cleanString(body.contractNumber);
+    const contractScope = cleanString(body.contractScope);
+    const contactName = cleanString(body.contactName);
+    const contactPhone = cleanString(body.contactPhone);
+    const email = cleanString(body.email);
+    const password = typeof body.password === 'string' ? body.password : '';
+    const startDate = cleanDateOnly(body.startDate);
+    const endDate = cleanDateOnly(body.endDate);
+    const status = cleanString(body.status, 'ACTIVE');
+    const department = cleanString(body.department);
+
+    if (!companyName || !contractNumber || !contractScope || !contactName || !email
+        || !startDate || !endDate || !department
+        || !CONTRACTOR_PROFILE_STATUSES.includes(status)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'complete_contractor_company_required' });
+    }
+    if (!isFieldSurveyDepartment(department)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'field_department_required' });
+    }
+    if (endDate < startDate) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'contract_date_range_invalid' });
+    }
+    const passwordReason = passwordPolicyReason(password, { name: contactName, email });
+    if (passwordReason) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: passwordReason });
+    }
+
+    let createdUid = null;
+    try {
+      const authUser = await auth.createUser({
+        email,
+        displayName: contactName,
+        disabled: false,
+        password,
+      });
+      createdUid = authUser.uid;
+      const now = FieldValue.serverTimestamp();
+
+      await db.runTransaction(async transaction => {
+        const userRef = db.collection('users').doc(createdUid);
+        const profileRef = db.collection('contractorProfiles').doc(createdUid);
+        transaction.set(userRef, {
+          uid: createdUid,
+          email,
+          name: contactName,
+          role: 'contractor',
+          organizationId: caller.organizationId,
+          active: true,
+          createdBy: caller.uid,
+          createdAt: now,
+        });
+        transaction.set(profileRef, {
+          contractorUid: createdUid,
+          organizationId: caller.organizationId,
+          department,
+          companyName,
+          contractNumber,
+          contractScope,
+          contactName,
+          contactPhone,
+          startDate,
+          endDate,
+          status,
+          updatedByUid: caller.uid,
+          updatedAt: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: caller.organizationId,
+          department,
+          actorId: caller.uid,
+          actorRole: 'manager',
+          resourceType: 'contractorProfile',
+          resourceId: createdUid,
+          action: 'create_contractor_company',
+          contractNumber,
+          contractStatus: status,
+          timestamp: now,
+        });
+      });
+
+      return sendJson(res, 200, {
+        contractorUid: createdUid,
+        companyName,
+        contactName,
+        email,
+        contractState: contractorProfileState({
+          companyName, contractNumber, contractScope, contactName, contactPhone,
+          startDate, endDate, status,
+        }),
+      });
+    } catch (error) {
+      if (createdUid && typeof auth.deleteUser === 'function') {
+        try { await auth.deleteUser(createdUid); } catch (_) { /* best-effort rollback */ }
+      }
+      const code = cleanString(error && error.code);
+      if (code === 'auth/email-already-exists') {
+        return sendJson(res, 409, { error: 'request_failed', reason: 'email_already_exists' });
+      }
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   // PHASE 02B — Visual Distortion command surface for the Field Survey
   // Department Head. Contractors are external operational identities, not
   // employee-registry records. All tenant scope comes from the verified
