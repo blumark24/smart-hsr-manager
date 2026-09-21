@@ -135,7 +135,6 @@
     clearObservationMarkers(instance);
     instance._fieldObservationMarkers = instance._fieldObservationMarkers || [];
     const observations = trustedObservations(instance);
-    const bounds = new maplibregl.LngLatBounds();
     observations.forEach(o => {
       const el = document.createElement('button');
       el.type = 'button';
@@ -150,10 +149,23 @@
         .setLngLat([Number(o._mapLng),Number(o._mapLat)])
         .addTo(map);
       instance._fieldObservationMarkers.push(marker);
-      bounds.extend([Number(o._mapLng),Number(o._mapLat)]);
     });
-    if (observations.length && !bounds.isEmpty()) {
-      try { map.fitBounds(bounds,{padding:70,maxZoom:16,duration:0}); } catch (_) {}
+    if (observations.length) {
+      // Keep the operational map at municipality scale instead of zooming out
+      // across old/stale records that may exist far apart in the same tenant.
+      // The API already returns newest first, so focus only when the newest
+      // trusted observation changes; all trusted markers still remain on map.
+      const newest = observations[0];
+      const focusKey = String(newest.observationId || newest.displayId || '');
+      if (focusKey && instance._fieldObservationFocusKey !== focusKey) {
+        instance._fieldObservationFocusKey = focusKey;
+        try {
+          map.jumpTo({
+            center:[Number(newest._mapLng),Number(newest._mapLat)],
+            zoom:15
+          });
+        } catch (_) {}
+      }
     }
   }
   function patchApprovedBoard(instance) {
@@ -428,7 +440,7 @@
           };
         }
         const out=originalExt(day,st);
-        if (st.role === 'dept' && screen === 'map') {
+        if (st.role === 'dept' && (screen === 'map' || screen === 'deptops')) {
           const trusted=trustedObservations(instance);
           out.showMapEmpty=trusted.length===0;
           out.liveCount=String(trusted.length);
@@ -616,8 +628,9 @@
         const dr = instance.drawerData?.() || {};
         vals.dHasEvidenceImages = !!(dr.evidenceImages && dr.evidenceImages.length);
         vals.dEvidenceImages = dr.evidenceImages || [];
-        if (instance.state.role === 'dept' && instance.state.screen === 'map') {
+        if (instance.state.role === 'dept' && (instance.state.screen === 'map' || instance.state.screen === 'deptops')) {
           const trusted=trustedObservations(instance);
+          vals.showMapEmpty=trusted.length===0;
           vals.mapPins=[];
           vals.zoneLabels=[];
           vals.layerList=[{
