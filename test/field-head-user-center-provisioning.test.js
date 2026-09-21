@@ -13,6 +13,8 @@ const login = fs.readFileSync(path.join(root, 'login.html'), 'utf8');
 const enhancements = fs.readFileSync(path.join(root, 'manager-phase11d-user-center-enhancements.js'), 'utf8');
 const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
 const skin = fs.readFileSync(path.join(root, 'manager-phase11g-user-center-approved-skin.js'), 'utf8');
+const managerFormat = fs.readFileSync(path.join(root, 'manager-dashboard-format.js'), 'utf8');
+const managerLogin = fs.readFileSync(path.join(root, 'manager-login.html'), 'utf8');
 
 test('User Center exposes Field Survey department-head selection', () => {
   assert.match(core, /\['head','رئيس قسم داخل المنتج'\]/);
@@ -58,7 +60,8 @@ test('User Center separates external contractor companies from municipal employe
   assert.match(enhancements, /openContractorCompanyDialog/);
   assert.match(enhancements, /جهة خارجية متعاقدة — ليست موظف بلدية/);
   assert.match(enhancements, /لا يظهر كسجل موظف بلدية/);
-  assert.match(enhancements, /data-close-center[^>]*>×</);
+  assert.doesNotMatch(enhancements, /data-close-center/);
+  assert.doesNotMatch(managerFormat, /data-route-close/);
 });
 
 test('contracted-company window collects contract and representative account data', () => {
