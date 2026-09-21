@@ -219,3 +219,32 @@ test('smart glass modal system is centered and responsive', () => {
   assert.match(page, /role="dialog" aria-modal="true"/);
   assert.match(page, /@media\(max-width:760px\)/);
 });
+
+
+test('department head command API exposes only authorized evidence references for case viewing', () => {
+  assert.match(usersApi, /imageObjectKey: data\.imageObjectKey \|\| null/);
+  assert.match(usersApi, /imagePath: data\.imagePath \|\| null/);
+  assert.match(usersApi, /imageUrl: data\.imageUrl \|\| null/);
+  assert.match(usersApi, /beforeImagePath: data\.beforeImagePath \|\| null/);
+  assert.match(usersApi, /afterImagePath: data\.afterImagePath \|\| null/);
+  assert.match(usersApi, /afterImageUrl: data\.afterImageUrl \|\| null/);
+});
+
+test('department head case viewer renders authorized before-after evidence professionally', () => {
+  const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+  assert.match(runtime, /firstEvidenceReference\(o\.imageObjectKey,o\.imagePath,o\.imageUrl,o\.beforeImagePath\)/);
+  assert.match(runtime, /firstEvidenceReference\(o\.afterImagePath,o\.afterImageUrl\)/);
+  assert.match(runtime, /kind:'before'/);
+  assert.match(runtime, /kind:'after'/);
+  assert.match(runtime, /evidenceCompare:true/);
+  assert.match(page, /dh-evidence-compare/);
+  assert.match(page, /مقارنة موثقة بين حالة البلاغ قبل التنفيذ وبعده/);
+  assert.match(page, /بانتظار رفع المقاول لصورة المعالجة/);
+});
+
+test('visual distortion grid humanizes technical type and coordinate presentation', () => {
+  assert.match(runtime, /MAINTENANCE:'صيانة'/);
+  assert.match(runtime, /cell\(typeLabel\(o\.type\|\|o\.title\)/);
+  assert.match(runtime, /cell\(locationLabel\(o\)/);
+  assert.match(runtime, /موقع GPS موثّق/);
+});
