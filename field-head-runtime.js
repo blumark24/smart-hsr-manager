@@ -398,7 +398,7 @@
                 cell(workflowProgressLabel(o),'1.25',{size:'10.5px',weight:'600',col:workflowPhase(o).color}),
                 cell(o.inspectorVerification?.status==='VERIFIED'?'متحقق':o.inspectorVerification?.status==='RETURNED'?'معاد للمقاول':'—','0 0 100px',{align:'left',size:'10.5px'})
               ]
-            },{chip:workflowPhase(o).label,chipCol:workflowPhase(o).color,chipBg:'rgba(122,164,224,.10)',chipBd:workflowPhase(o).color}))),
+            },{chip:workflowPhase(o).label,chipCol:workflowPhase(o).color,chipBg:'rgba(122,164,224,.10)',chipBd:workflowPhase(o).color})),
             tEmpty:observations.length===0,tCount:observations.length+' بلاغ معروض'
           };
         }
