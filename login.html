@@ -235,7 +235,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       && /الحصر|ميداني|field/i.test(department);
 
     if (!userDoc.exists() || data.active === false || !organizationId
-        || (!hasFieldRole && !hasLandsRole && !hasFieldDepartmentHeadRole)) {
+        || (!hasFieldRole && !hasLandsRole && !mobilityRole)) {
       await signOut(probeAuth);
       if (userDoc.exists() && data.active !== false && organizationId && mobilityRole) {
         showMsg('🚧 صلاحيتك التشغيلية مسجّلة، لكن لوحة هذا الدور لم تُفعَّل بعد لهذا الحساب. يرجى مراجعة إدارة المنصة.', 'error');
@@ -250,7 +250,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // One operational employee = one operational service (server-enforced).
     // A Lands employee/department-manager is routed to the Lands trusted
     // runtime via a one-time server-side SSO handoff.
-    if (hasLandsRole && !hasFieldRole) {
+    if (hasLandsRole && !hasFieldRole && !mobilityRole) {
       let handoffCode = null;
       try {
         const idToken = await user.getIdToken();
@@ -292,6 +292,19 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى مركز قيادة القسم', 'success');
       setTimeout(() => {
         window.location.href = 'department-head.html';
+      }, 450);
+      return;
+    }
+
+    // PHASE15 — Smart Mobility is a municipality-wide shared service.
+    // A Mobility-only identity does not need Field or Lands access. The
+    // operational page re-verifies mobilityAccess, organization and role.
+    if (mobilityRole && !hasFieldRole && !hasLandsRole && !hasFieldDepartmentHeadRole) {
+      await signInWithEmailAndPassword(auth, email, password);
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى الحركة الذكية', 'success');
+      setTimeout(() => {
+        window.location.href = 'department-head.html?mode=mobility';
       }, 450);
       return;
     }
