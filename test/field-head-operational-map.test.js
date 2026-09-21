@@ -133,3 +133,28 @@ test('map chrome keeps controls on edges across desktop tablet and mobile', () =
   assert.match(page, /dh-map-search-stack/);
   assert.match(page, /dh-map-legend/);
 });
+
+
+test('SMART HSR GEO keeps map workspace dominant on mobile and tablet', () => {
+  assert.match(page, /dh-map-cases-control/);
+  assert.match(page, /dh-map-search-control/);
+  assert.match(page, /data-geo-panel="{{ geoPanelMode }}"/);
+  assert.match(page, /mapSearchExpanded/);
+  assert.match(page, /geoPanelExpanded/);
+  assert.match(page, /72dvh/);
+});
+
+test('mobile GEO turns KPIs into a horizontal rail and cases into an on-demand sheet', () => {
+  assert.match(page, /scroll-snap-type:x proximity/);
+  assert.match(page, /flex:0 0 138px/);
+  assert.match(page, /position:fixed!important;z-index:92!important/);
+  assert.match(page, /max-height:66dvh/);
+});
+
+test('MAPS and TWIN mode switching uses style-ready basemap toggling', () => {
+  assert.match(page, /isStyleLoaded/);
+  assert.match(page, /setOps: \(\) => this\.setState\(\{ twin3D: false \}, \(\) => this\.applyRealMapMode\(\)\)/);
+  assert.match(page, /setTwin: \(\) => this\.setState\(\{ twin3D: true \}, \(\) => this\.applyRealMapMode\(\)\)/);
+  assert.match(page, /SMART HSR TWIN — التوأم البلدي الرقمي/);
+  assert.match(page, /SMART HSR MAPS — الخريطة البلدية التشغيلية/);
+});
