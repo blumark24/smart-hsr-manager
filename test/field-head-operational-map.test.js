@@ -77,3 +77,16 @@ test('department map suppresses fleet schematic semantics and fake pins', () => 
   assert.match(runtime, /vals\.layerCount='1\/1'/);
   assert.match(runtime, /بلاغ موثق على الخريطة/);
 });
+
+
+test('refresh repaints trusted markers after live command payload arrives', () => {
+  assert.match(runtime, /requestAnimationFrame\(\(\) => renderObservationMarkers\(component\)\)/);
+});
+
+test('map supports read-only recovery for legacy swapped Saudi coordinates without mutating observations', () => {
+  assert.match(runtime, /function observationMapPoint\(o\)/);
+  assert.match(runtime, /swapped_read_recovery/);
+  assert.match(runtime, /_mapLat:point\.lat/);
+  assert.match(runtime, /_mapLng:point\.lng/);
+  assert.match(runtime, /setLngLat\(\[Number\(o\._mapLng\),Number\(o\._mapLat\)\]\)/);
+});
