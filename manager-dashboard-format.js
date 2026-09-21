@@ -217,11 +217,8 @@
         app.className = 'ucv2-app';
         app.dataset.routeGuardLoading = 'true';
         app.setAttribute('aria-busy', 'true');
-        app.innerHTML = '<header class="ucv2-header"><div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div><button class="ucv2-btn ghost" type="button" data-route-close aria-label="إغلاق مركز إدارة المستخدمين">✕ إغلاق</button></header><div class="ucv2-route-loading" role="status" aria-live="polite"><b>جاري تجهيز السجل المؤسسي</b><span>يمكنك متابعة العمل فور اكتمال بيانات الجهة الموثقة.</span></div>';
+        app.innerHTML = '<header class="ucv2-header"><div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div></header><div class="ucv2-route-loading" role="status" aria-live="polite"><b>جاري تجهيز السجل المؤسسي</b><span>يمكنك متابعة العمل فور اكتمال بيانات الجهة الموثقة.</span></div>';
         root.appendChild(app);
-        app.querySelector('[data-route-close]')?.addEventListener('click', () => {
-          root.querySelector('[data-ucv2-original="true"] button[aria-label="إغلاق"]')?.click();
-        });
         window.dispatchEvent(new CustomEvent('smart-hsr:user-center-lifecycle', { detail: { active: true } }));
       }
       return true;
