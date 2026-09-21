@@ -538,8 +538,28 @@
     <button id="mapTab" class="workspace-tab" type="button" aria-selected="false" aria-controls="mapPanel"><i data-lucide="map"></i> الخريطة</button>
   </nav>
   <section id="tasksPanel" class="workspace-panel" aria-labelledby="tasksTab">
-    <div class="workspace-intro"><div><h1>مساحة العمل الميداني</h1><p>المهام المسندة إليك ضمن نطاق المؤسسة</p></div><div class="task-summary"><span class="summary-pill"><b id="taskTotal">0</b> إجمالي</span><span class="summary-pill"><b id="taskActive">0</b> نشطة</span></div></div>
-    <div class="operations-grid"><div id="contractorTaskList" class="task-list"><div class="empty-workspace">جاري تحميل مهام اليوم…</div></div><aside class="ops-rail">
+    <section class="contractor-command-card" aria-label="ملف الشركة والتعاقد">
+      <div class="contractor-command-main">
+        <span class="contractor-command-kicker">جهة تنفيذ خارجية معتمدة</span>
+        <h1 id="portalCompanyName">شركة متعاقدة</h1>
+        <div class="contractor-command-meta">
+          <span><i data-lucide="file-badge-2"></i> عقد <b id="portalContractNumber">—</b></span>
+          <span><i data-lucide="building-2"></i> <b id="portalAdministration">إدارة الحصر الميداني</b></span>
+          <span><i data-lucide="layers-3"></i> <b id="portalSection">التشوه البصري</b></span>
+        </div>
+      </div>
+      <span id="portalContractState" class="contract-state-badge" data-state="UNKNOWN">جاري التحقق</span>
+    </section>
+    <div class="workspace-intro"><div><h1>مساحة العمل الميداني</h1><p>المهام المسندة للشركة — من الاستلام حتى التسليم للمراجعة</p></div></div>
+    <div class="contractor-kpis" aria-label="مؤشرات مهام الشركة">
+      <div class="contractor-kpi"><span>إجمالي المهام</span><b id="taskTotal">0</b></div>
+      <div class="contractor-kpi"><span>بانتظار البدء</span><b id="taskPending">0</b></div>
+      <div class="contractor-kpi"><span>قيد التنفيذ</span><b id="taskInProgress">0</b></div>
+      <div class="contractor-kpi"><span>بانتظار المراجعة</span><b id="taskReview">0</b></div>
+      <div class="contractor-kpi"><span>مكتملة</span><b id="taskCompleted">0</b></div>
+      <div class="contractor-kpi accent"><span>نشطة الآن</span><b id="taskActive">0</b></div>
+    </div>
+    <div class="operations-grid"><div id="contractorTaskList" class="task-list"><div class="empty-workspace loading"><i data-lucide="loader-circle"></i><b>جاري تحميل المهام المسندة</b><span>يتم التحقق من الشركة والعقد والمهام الحالية.</span></div></div><aside class="ops-rail">
       <section class="ops-card" aria-labelledby="twinTitle"><div class="ops-card-head"><h2 id="twinTitle">التوأم التشغيلي</h2><span class="twin-state">يعمل</span></div><div class="twin-grid"><div class="metric-box"><span>المهمة الحالية</span><strong id="twinTask">لا توجد مهمة نشطة</strong></div><div class="metric-box"><span>الموقع</span><strong id="twinLocation">—</strong></div><div class="metric-box"><span>مدة التنفيذ</span><strong id="twinDuration">—</strong></div><div class="metric-box"><span>آخر مزامنة</span><strong id="twinSync">بانتظار البيانات</strong></div></div></section>
       <section class="ops-card" aria-labelledby="gpsCardTitle"><div class="ops-card-head"><h2 id="gpsCardTitle">الموقع الحالي</h2><i data-lucide="locate-fixed"></i></div><div class="gps-grid"><div class="metric-box"><span>الدقة</span><strong id="gpsAccuracyValue">—</strong></div><div class="metric-box"><span>آخر تحديث</span><strong id="gpsLastUpdate">—</strong></div><div class="metric-box"><span>السرعة</span><strong id="gpsSpeedValue">—</strong></div><div class="metric-box"><span>النطاق</span><strong id="meDistLabel">2000 م</strong></div></div><button id="openNavigationBtn" class="navigate-btn" type="button" disabled><i data-lucide="navigation"></i> فتح الملاحة</button></section>
       <section class="ops-card ai-ready-card" hidden aria-labelledby="aiReadyTitle"><div class="ops-card-head"><h2 id="aiReadyTitle">AI مساعد التنفيذ</h2><i data-lucide="sparkles"></i></div><p>تحليل الصورة · تحسين وصف المعالجة · اقتراح خطة العمل</p></section>
@@ -725,7 +745,10 @@
   // Populated ONCE from the signed-in contractor's own users/{uid} record.
   // Never read from a form field, URL parameter, sessionStorage or
   // localStorage — those are all attacker-controllable.
-  const contractorContext = { uid:null, organizationId:null, organizationName:'', contractorName:'' };
+  const contractorContext = {
+    uid:null, organizationId:null, organizationName:'', contractorName:'',
+    companyName:'', contractNumber:'', contractState:'', administration:'', section:''
+  };
   let organizationMapContext=null, mapOpenedForAssignment=false;
 
   // ===== Contractor workflow policy (pure and locally testable) =====
@@ -836,14 +859,43 @@
   }
 
   function renderOrgBadge(){
+    const company=safeIdentityText(contractorContext.companyName,safeIdentityText(contractorContext.organizationName,'شركة متعاقدة'));
     const el = document.getElementById('orgBadge');
-    if (!el) return;
-    const organizationName=safeIdentityText(contractorContext.organizationName,'شركة المقاول');
-    el.textContent = organizationName;
-    el.hidden = false;
-    const name = safeIdentityText(contractorContext.contractorName,safeIdentityText(auth?.currentUser?.displayName,safeIdentityText(auth?.currentUser?.email?.split('@')[0],'مقاول Smart HSR')));
+    if (el){ el.textContent = company; el.hidden = false; }
+    const name = safeIdentityText(contractorContext.contractorName,safeIdentityText(auth?.currentUser?.displayName,safeIdentityText(auth?.currentUser?.email?.split('@')[0],'ممثل الشركة')));
     const nameEl=document.getElementById('contractorName');if(nameEl)nameEl.textContent=name;
     const avatar=document.getElementById('contractorAvatar');if(avatar)avatar.textContent=name.trim().charAt(0)||'م';
+    const companyEl=document.getElementById('portalCompanyName');if(companyEl)companyEl.textContent=company;
+    const contractEl=document.getElementById('portalContractNumber');if(contractEl)contractEl.textContent=contractorContext.contractNumber||'—';
+    const adminEl=document.getElementById('portalAdministration');if(adminEl)adminEl.textContent=contractorContext.administration||'إدارة الحصر الميداني';
+    const sectionEl=document.getElementById('portalSection');if(sectionEl)sectionEl.textContent=contractorContext.section||'التشوه البصري';
+    const stateEl=document.getElementById('portalContractState');
+    if(stateEl){
+      const labels={ACTIVE:'عقد نشط',SUSPENDED:'عقد موقوف',ENDED:'عقد منتهي',EXPIRED:'عقد منتهي',NOT_STARTED:'لم يبدأ',UNREGISTERED:'ملف غير مكتمل'};
+      stateEl.textContent=labels[contractorContext.contractState]||'جاري التحقق';
+      stateEl.dataset.state=contractorContext.contractState||'UNKNOWN';
+    }
+  }
+
+  async function loadContractorPortalContext(user){
+    if(!user)return null;
+    const token=await user.getIdToken();
+    const response=await fetch('/api/admin/users',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({action:'getContractorPortalContext'})
+    });
+    if(!response.ok) throw new Error('contractor-portal-context-unavailable');
+    const data=await response.json();
+    contractorContext.companyName=safeIdentityText(data.companyName);
+    contractorContext.organizationName=safeIdentityText(data.companyName);
+    contractorContext.contractorName=safeIdentityText(data.contactName,contractorContext.contractorName);
+    contractorContext.contractNumber=safeIdentityText(data.contractNumber);
+    contractorContext.contractState=safeIdentityText(data.contractState);
+    contractorContext.administration=safeIdentityText(data.administration,'إدارة الحصر الميداني');
+    contractorContext.section=safeIdentityText(data.section,'التشوه البصري');
+    renderOrgBadge();
+    return data;
   }
 
   const root = document.documentElement;
@@ -1330,11 +1382,18 @@
   function renderContractorWorkspace(filteredObservations=observations){
     const list=document.getElementById('contractorTaskList');if(!list)return;
     const active=filteredObservations.filter(o=>o.status!=='COMPLETED');
+    const count=status=>filteredObservations.filter(o=>o.status===status).length;
     document.getElementById('taskTotal').textContent=String(filteredObservations.length);
     document.getElementById('taskActive').textContent=String(active.length);
+    const pendingEl=document.getElementById('taskPending');if(pendingEl)pendingEl.textContent=String(count('PENDING'));
+    const progressEl=document.getElementById('taskInProgress');if(progressEl)progressEl.textContent=String(count('IN_PROGRESS'));
+    const reviewEl=document.getElementById('taskReview');if(reviewEl)reviewEl.textContent=String(count('PENDING_REVIEW'));
+    const completedEl=document.getElementById('taskCompleted');if(completedEl)completedEl.textContent=String(count('COMPLETED'));
     if(!filteredObservations.length){
-      list.innerHTML=`<div class="empty-workspace">${observations.length?'لا توجد مهام تطابق عوامل التصفية الحالية.':'لا توجد مهام مسندة إليك حالياً.'}</div>`;
-      renderOperationalTwin(null);return;
+      list.innerHTML=observations.length
+        ? `<div class="empty-workspace"><i data-lucide="list-filter"></i><b>لا توجد نتائج مطابقة</b><span>غيّر عوامل التصفية أو النطاق لعرض بقية المهام.</span></div>`
+        : `<div class="empty-workspace"><i data-lucide="circle-check-big"></i><b>لا توجد مهام مسندة حاليًا</b><span>ستظهر هنا بلاغات التشوه البصري فور إسنادها إلى شركتك من رئيس القسم.</span></div>`;
+      renderOperationalTwin(null);if(window.lucide)lucide.createIcons();return;
     }
     list.innerHTML=filteredObservations.map(o=>{
       const stage=PRESENTATION_STAGE[o.status]||{label:STATUS_LABELS[o.status]||'حالة غير متاحة',action:'عرض التفاصيل'};
@@ -1348,7 +1407,7 @@
   function renderOperationalTwin(task){
     const taskEl=document.getElementById('twinTask'),locationEl=document.getElementById('twinLocation'),durationEl=document.getElementById('twinDuration'),syncEl=document.getElementById('twinSync');
     if(taskEl)taskEl.textContent=task?.title||'لا توجد مهمة نشطة';
-    if(locationEl)locationEl.textContent=safeIdentityText(contractorContext.organizationName,'شركة المقاول');
+    if(locationEl)locationEl.textContent=safeIdentityText(contractorContext.companyName,safeIdentityText(contractorContext.organizationName,'شركة متعاقدة'));
     if(durationEl)durationEl.textContent=task?.estimatedMinutes?`${task.estimatedMinutes} دقيقة`:'—';
     if(syncEl)syncEl.textContent=hasServerSnapshot?'الآن':'بانتظار البيانات';
   }
@@ -2030,6 +2089,9 @@
       contractorContext.organizationId = verified.organizationId;
       contractorContext.organizationName = verified.organizationName;
       contractorContext.contractorName = verified.contractorName || user.displayName || '';
+      renderOrgBadge();
+      try{ await loadContractorPortalContext(user); }
+      catch(err){ console.warn('تعذر تحميل ملف الشركة التعاقدي', err); }
       try{ organizationMapContext=await fetchOrganizationMapContext(auth,{organizationId:verified.organizationId}); }
       catch(_){ organizationMapContext=null; }
       if (epoch !== authVerificationEpoch || auth.currentUser?.uid !== user.uid) return;
