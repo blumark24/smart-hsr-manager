@@ -49,6 +49,7 @@ const {
 const { evaluateMissionTransition } = require('../../platform/policies/mission-workflow-policy');
 const { evaluateVehicleTransition } = require('../../platform/policies/vehicle-workflow-policy');
 const { evaluateVehicleAuthorizationTransition } = require('../../platform/policies/vehicle-authorization-policy');
+const { evaluateIncidentTransition } = require('../../platform/policies/incident-workflow-policy');
 
 // The manager's own already-verified bearer token, forwarded as-is to Lands'
 // trusted mutation endpoint (see api/_lib/landsBridge.js). Extracted
@@ -226,6 +227,65 @@ function safeMission(id, data) {
     durationLabel: data.durationLabel || null,
     createdAt: timestampToIso(data.createdAt),
     updatedAt: timestampToIso(data.updatedAt),
+  };
+}
+
+function safeMobilityVehicle(id, data) {
+  const odometer = Number(data.odometer ?? data.odo);
+  const fuel = Number(data.fuelLevel ?? data.fuel);
+  return {
+    vehicleId: id,
+    plate: data.plate || null,
+    internalNumber: data.internalNumber || data.vehicleNumber || null,
+    type: data.type || null,
+    make: data.make || null,
+    model: data.model || null,
+    year: Number.isFinite(Number(data.year)) ? Number(data.year) : null,
+    department: data.department || null,
+    status: data.status || null,
+    assignedEmployeeUid: data.assignedEmployeeUid || null,
+    currentMissionId: data.currentMissionId || null,
+    odometer: Number.isFinite(odometer) ? odometer : null,
+    fuelLevel: Number.isFinite(fuel) ? fuel : null,
+    lastMaintenance: data.lastMaintenance || null,
+    nextMaintenance: data.nextMaintenance || null,
+    note: data.note || null,
+    updatedAt: timestampToIso(data.updatedAt),
+  };
+}
+
+function safeMobilityIncident(id, data) {
+  return {
+    incidentId: id,
+    missionId: data.missionId || null,
+    vehicleId: data.vehicleId || null,
+    createdByUid: data.createdByUid || null,
+    employeeName: data.employeeName || null,
+    department: data.department || null,
+    category: data.category || null,
+    severity: data.severity || null,
+    note: data.note || null,
+    location: data.location || null,
+    status: data.status || 'NEW',
+    createdAt: timestampToIso(data.createdAt),
+    updatedAt: timestampToIso(data.updatedAt),
+  };
+}
+
+function safeMobilityAuthorization(id, data) {
+  return {
+    authorizationId: id,
+    authorizationNumber: data.authorizationNumber || null,
+    missionId: data.missionId || null,
+    vehicleId: data.vehicleId || null,
+    employeeUid: data.employeeUid || null,
+    employeeName: data.employeeName || null,
+    department: data.department || null,
+    status: data.status || null,
+    requestedAt: timestampToIso(data.requestedAt),
+    authorizedAt: timestampToIso(data.authorizedAt),
+    activatedAt: timestampToIso(data.activatedAt),
+    expiredAt: timestampToIso(data.expiredAt),
   };
 }
 
@@ -1509,6 +1569,84 @@ async function handler(req, res) {
     }
   }
 
+  // PHASE15 — one trusted workspace read for all Smart Mobility operational
+  // roles. Mobility is municipality-wide and independent from Field/Lands;
+  // scope is derived exclusively from the authenticated live Mobility role.
+  if (action === 'getMobilityWorkspace') {
+    const actor = await getMobilityOperationalCaller(
+      db, decoded.uid, ['mobility_head', 'department_head', 'administrative_affairs', 'employee']
+    );
+    if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
+    try {
+      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap] = await Promise.all([
+        db.collection('missions').where('organizationId', '==', actor.organizationId).get(),
+        db.collection('vehicles').where('organizationId', '==', actor.organizationId).get(),
+        db.collection('incidents').where('organizationId', '==', actor.organizationId).get(),
+        db.collection('vehicleAuthorizations').where('organizationId', '==', actor.organizationId).get(),
+        db.collection('employees').where('organizationId', '==', actor.organizationId).get(),
+      ]);
+
+      let missions = missionSnap.docs.map(doc => ({ id: doc.id, data: doc.data() || {} }));
+      if (actor.role === 'department_head') {
+        missions = missions.filter(row => cleanString(row.data.department) === cleanString(actor.department));
+      } else if (actor.role === 'employee') {
+        missions = missions.filter(row => row.data.assignedEmployeeUid === actor.uid);
+      }
+      const missionIds = new Set(missions.map(row => row.id));
+      const vehicleIds = new Set(missions.map(row => cleanString(row.data.vehicleId)).filter(Boolean));
+
+      let incidents = incidentSnap.docs.map(doc => ({ id: doc.id, data: doc.data() || {} }));
+      if (actor.role === 'department_head') {
+        incidents = incidents.filter(row => cleanString(row.data.department) === cleanString(actor.department));
+      } else if (actor.role === 'employee') {
+        incidents = incidents.filter(row => row.data.createdByUid === actor.uid || missionIds.has(row.data.missionId));
+      }
+
+      let authorizations = authorizationSnap.docs.map(doc => ({ id: doc.id, data: doc.data() || {} }));
+      if (actor.role === 'department_head') {
+        authorizations = authorizations.filter(row => cleanString(row.data.department) === cleanString(actor.department));
+      } else if (actor.role === 'employee') {
+        authorizations = authorizations.filter(row => row.data.employeeUid === actor.uid || missionIds.has(row.data.missionId));
+      }
+
+      let vehicles = vehicleSnap.docs.map(doc => ({ id: doc.id, data: doc.data() || {} }));
+      if (actor.role === 'department_head' || actor.role === 'employee') {
+        vehicles = vehicles.filter(row => vehicleIds.has(row.id));
+      }
+
+      const employees = [];
+      if (actor.role === 'department_head' || actor.role === 'mobility_head') {
+        for (const doc of employeeSnap.docs) {
+          const d = doc.data() || {};
+          if (actor.role === 'department_head' && cleanString(d.department) !== cleanString(actor.department)) continue;
+          if (d.employmentStatus === 'inactive' || d.accountStatus !== 'ACTIVE' || !isNonEmptyString(d.authUid)) continue;
+          const mobility = d.products && d.products.mobility;
+          if (!mobility || mobility.enabled !== true || mobility.role !== 'employee') continue;
+          employees.push({
+            employeeId: doc.id,
+            uid: d.authUid,
+            name: cleanString(d.name, doc.id),
+            department: cleanString(d.department),
+            vehicleEligible: mobility.vehicleEligible === true,
+          });
+        }
+      }
+
+      return sendJson(res, 200, {
+        role: actor.role,
+        organizationId: actor.organizationId,
+        department: actor.department || null,
+        missions: missions.map(row => safeMission(row.id, row.data)),
+        vehicles: vehicles.map(row => safeMobilityVehicle(row.id, row.data)),
+        incidents: incidents.map(row => safeMobilityIncident(row.id, row.data)),
+        authorizations: authorizations.map(row => safeMobilityAuthorization(row.id, row.data)),
+        employees,
+      });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   if (action === 'listMobilityMissions') {
     const actor = await getMobilityOperationalCaller(db, decoded.uid, ['administrative_affairs', 'mobility_head', 'employee']);
     if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
@@ -1913,6 +2051,51 @@ async function handler(req, res) {
       });
       if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
       return sendJson(res, 200, { incidentId: outcome.incidentId, status: 'NEW', idempotent: outcome.idempotent });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // PHASE15 — Mobility Head owns the operational incident lifecycle.
+  if (action === 'processMobilityIncident') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_head_required' });
+    const incidentId = cleanString(body.incidentId);
+    const toStatus = cleanString(body.toStatus);
+    if (!incidentId || !['ACKNOWLEDGED', 'IN_PROGRESS', 'RESOLVED'].includes(toStatus)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'incidentId_and_valid_status_required' });
+    }
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const ref = db.collection('incidents').doc(incidentId);
+        const snap = await transaction.get(ref);
+        if (!snap.exists) return { ok: false, statusCode: 404, reason: 'incident_not_found' };
+        const incident = snap.data() || {};
+        if (incident.organizationId !== actor.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        const decision = evaluateIncidentTransition({ actor, incident, toStatus });
+        if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
+        const now = FieldValue.serverTimestamp();
+        transaction.update(ref, { status: toStatus, updatedAt: now, updatedByUid: actor.uid });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: actor.organizationId,
+          department: incident.department || '',
+          actorId: actor.uid,
+          actorRole: actor.role,
+          resourceType: 'incident',
+          resourceId: incidentId,
+          action: 'incident_status_transition',
+          fromStatus: incident.status,
+          toStatus,
+          missionId: incident.missionId || null,
+          vehicleId: incident.vehicleId || null,
+          timestamp: now,
+        });
+        return { ok: true };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { incidentId, status: toStatus });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
