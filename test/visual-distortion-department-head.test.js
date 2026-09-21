@@ -134,7 +134,7 @@ test('visual audit screen filters to observation and contractor profile events',
 
 test('legacy incidents remain explicitly separate from visual distortion', () => {
   assert.match(runtime, /screen === 'incidents'/);
-  assert.match(runtime, /وحدة تشغيلية مستقلة عن التشوه البصري/);
+  assert.match(runtime, /بلاغات تشغيلية مستقلة لا تشمل حالات التشوه البصري/);
 });
 
 
@@ -238,7 +238,7 @@ test('department head case viewer renders authorized before-after evidence profe
   assert.match(runtime, /kind:'after'/);
   assert.match(runtime, /evidenceCompare:true/);
   assert.match(page, /dh-evidence-compare/);
-  assert.match(page, /مقارنة موثقة بين حالة البلاغ قبل التنفيذ وبعده/);
+  assert.match(page, /اسحب للمقارنة بين الحالة قبل التنفيذ وبعده/);
   assert.match(page, /بانتظار رفع المقاول لصورة المعالجة/);
 });
 
@@ -276,7 +276,7 @@ test('visual case window contains lifecycle stepper and assignment card', () => 
   assert.match(page, /dh-case-flow/);
   assert.match(page, /dh-assignment-card/);
   assert.match(page, /مسار الحالة/);
-  assert.match(page, /الإسناد التنفيذي/);
+  assert.match(runtime, /الإسناد التنفيذي/);
 });
 
 test('before-after evidence uses swipe comparison and internal lightbox', () => {
