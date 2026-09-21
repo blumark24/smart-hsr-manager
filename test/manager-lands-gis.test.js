@@ -13,7 +13,8 @@ test('Lands GIS uses verified geometry only', () => {
   assert.match(adapter, /geometryPositions\(parcel\.spatial\.geometry\)/);
   assert.match(adapter, /validLngLat/);
   assert.match(adapter, /buildGisFeatures/);
-  assert.doesNotMatch(adapter, /fake|fabricated.*marker/i);
+  assert.match(adapter, /if \(!isGeoreferenced\(parcel\)\) continue/);
+  assert.match(adapter, /if \(!center\) continue/);
 });
 
 test('Lands GIS rejects out-of-Saudi coordinate envelopes', () => {
