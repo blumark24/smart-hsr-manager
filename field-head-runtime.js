@@ -772,6 +772,17 @@
       instance.renderVals = () => {
         const vals = originalRenderVals();
         const dr = instance.drawerData?.() || {};
+        vals.dHasCaseSteps = !!(dr.caseSteps && dr.caseSteps.length);
+        vals.dCaseSteps = (dr.caseSteps || []).map(step=>({
+          ...step,
+          dotClass:'dh-case-step-dot '+step.state,
+          stepClass:'dh-case-step '+step.state
+        }));
+        vals.dHasAssignmentCard = !!dr.assignmentCard;
+        vals.dAssignment = dr.assignmentCard || {};
+        vals.dAssignmentAssigned = dr.assignmentCard?.state === 'assigned';
+        vals.dAssignmentPending = !!dr.assignmentCard && dr.assignmentCard.state !== 'assigned';
+
         vals.dHasEvidenceImages = !!(dr.evidenceImages && dr.evidenceImages.length);
         vals.dEvidenceImages = dr.evidenceImages || [];
         vals.dEvidenceCompare = dr.evidenceCompare === true;
@@ -784,12 +795,23 @@
         vals.dNoEvidenceAfter = !vals.dEvidenceAfter;
         vals.dEvidenceStatus = vals.dEvidenceBefore && vals.dEvidenceAfter ? 'مكتملة قبل / بعد'
           : vals.dEvidenceBefore ? 'قبل فقط' : 'غير مكتملة';
+        vals.dEvidenceBoth = !!(vals.dEvidenceBefore && vals.dEvidenceAfter);
+        vals.dEvidenceSplit = Number(instance.state.evidenceSplit || 50);
+        vals.setEvidenceSplit = e => instance.setState({evidenceSplit:Number(e.target.value||50)});
         vals.openBeforeEvidence = () => {
-          if (vals.dEvidenceBefore?.url) window.open(vals.dEvidenceBefore.url,'_blank','noopener');
+          if (vals.dEvidenceBefore?.url) instance.setState({evidenceLightbox:{url:vals.dEvidenceBefore.url,label:'قبل المعالجة'}});
         };
         vals.openAfterEvidence = () => {
-          if (vals.dEvidenceAfter?.url) window.open(vals.dEvidenceAfter.url,'_blank','noopener');
+          if (vals.dEvidenceAfter?.url) instance.setState({evidenceLightbox:{url:vals.dEvidenceAfter.url,label:'بعد المعالجة'}});
         };
+        vals.openCompareEvidence = () => {
+          const target=vals.dEvidenceSplit >= 50 ? vals.dEvidenceAfter : vals.dEvidenceBefore;
+          if (target?.url) instance.setState({evidenceLightbox:{url:target.url,label:target.label||'دليل المعالجة'}});
+        };
+        vals.evidenceLightboxOpen = !!instance.state.evidenceLightbox?.url;
+        vals.evidenceLightboxUrl = instance.state.evidenceLightbox?.url || '';
+        vals.evidenceLightboxLabel = instance.state.evidenceLightbox?.label || '';
+        vals.closeEvidenceLightbox = () => instance.setState({evidenceLightbox:null});
         if (instance.state.role === 'dept' && (instance.state.screen === 'map' || instance.state.screen === 'deptops')) {
           const trusted=trustedObservations(instance);
           vals.showMapEmpty=trusted.length===0;
