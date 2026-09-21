@@ -706,22 +706,20 @@
     getFirestore, collection, onSnapshot, doc, getDoc, getDocFromServer, updateDoc, query, where, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { resolveFirebaseConfig } from './firebase-runtime-config.js';
   import { LOCAL_DEMO_TYPE, getConnectorConfiguration, uploadObservationImage, resolveObservationImage, revokeAllObservationImageUrls, isLocalDemoReference, isServerObjectKey } from './storage-adapter.js';
   import { applyMapAttribution, statusMarkerIcon, fetchOrganizationMapContext, observationCoordinates, openVerifiedMap } from './spatial-map.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-  authDomain: "smart-hsr-manager.firebaseapp.com",
-  projectId: "smart-hsr-manager",
-  storageBucket: "smart-hsr-manager.firebasestorage.app",
-  messagingSenderId: "38965508031",
-  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-};
-
-
   let app, db, auth, FIREBASE_READY=false;
-  try { app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); FIREBASE_READY=true; }
-  catch(e){ console.warn("Firebase init failed.", e); }
+  try {
+    const firebaseConfig = await resolveFirebaseConfig();
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    FIREBASE_READY=true;
+  } catch(e){
+    console.warn("Firebase init failed.", e);
+  }
 
   // ===== Contractor organization context =====
   // Populated ONCE from the signed-in contractor's own users/{uid} record.
