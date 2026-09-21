@@ -1261,18 +1261,62 @@
             </sc-if>
 
             <sc-if value="{{ landsScreenIsGis }}">
-              <div style="flex:1;min-height:var(--lndMapH,320px);border-radius:16px;overflow:hidden;position:relative;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d);display:flex;align-items:center;justify-content:center">
-                <div dir="ltr" style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
-                  <span style="width:6px;height:6px;border-radius:50%;background:var(--tx3,#7d8ea6)"></span>
-                  الخريطة · GIS الأراضي
-                </div>
-                <div style="text-align:center;max-width:360px;padding:20px">
-                  <div style="width:52px;height:52px;margin:0 auto 14px;border-radius:14px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.16));display:flex;align-items:center;justify-content:center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--tx3,#7d8ea6)" stroke-width="1.6"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z"></path><path d="M9 4v14M15 6v14"></path></svg>
+              <div style="display:grid;grid-template-columns:minmax(0,1.45fr) minmax(260px,.75fr);gap:14px;align-items:stretch">
+                <section style="min-height:var(--lndMapH,360px);border-radius:16px;overflow:hidden;position:relative;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:linear-gradient(145deg,var(--twinBg,#03060d),var(--l2,#0c1424));">
+                  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(122,164,224,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(122,164,224,.06) 1px,transparent 1px);background-size:44px 44px;pointer-events:none"></div>
+                  <div dir="ltr" style="position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e)"></span>
+                    GIS · بيانات موثّقة فقط
                   </div>
-                  <div style="font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb)">لا تتوفر بيانات مكانية مرتبطة بالقطع الحالية</div>
-                  <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:8px;line-height:1.8">{{ landsGeoreferencedCount }} من {{ landsKpiTotal }} سجل يحمل إحداثيات هندسية موثّقة حتى الآن. يعرض هذا القسم القطع فور توفر بيانات مساحية رسمية لها.</p>
-                </div>
+
+                  <sc-if value="{{ landsHasGisFeatures }}">
+                    <sc-for list="{{ landsGisFeatures }}" as="p" hint-placeholder-count="6">
+                      <button onClick="{{ p.on }}" data-f="1" title="{{ p.label }}" style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;cursor:pointer;background:{{ p.color }};border:3px solid rgba(255,255,255,.82);box-shadow:0 0 0 5px rgba(255,255,255,.08),0 10px 22px rgba(0,0,0,.35)"></button>
+                    </sc-for>
+                  </sc-if>
+
+                  <sc-if value="{{ landsNoGisFeatures }}">
+                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center">
+                      <div style="max-width:390px">
+                        <div style="width:52px;height:52px;margin:0 auto 14px;border-radius:14px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.16));display:flex;align-items:center;justify-content:center">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--tx3,#7d8ea6)" stroke-width="1.6"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z"></path><path d="M9 4v14M15 6v14"></path></svg>
+                        </div>
+                        <div style="font-size:12.5px;font-weight:600;color:var(--tx,#e9f1fb)">لا توجد هندسة مكانية موثّقة للقطع الحالية</div>
+                        <p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:8px;line-height:1.8">لن يعرض SMART HSR أي نقطة أو قطعة تقديرية. تظهر القطع هنا فقط عند توفر GeoJSON موثّق ومربوط بالسجل الرسمي.</p>
+                      </div>
+                    </div>
+                  </sc-if>
+                </section>
+
+                <aside style="padding:15px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,.74),rgba(10,16,29,.8)));border:1px solid var(--l2Bd,rgba(122,164,224,.13));display:flex;flex-direction:column;gap:12px">
+                  <div>
+                    <div style="font-size:12px;font-weight:700;color:var(--tx,#f0f6ff)">حالة التغطية المكانية</div>
+                    <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-top:4px">من السجلات المرتبطة بقطع رسمية فقط</div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div style="padding:11px;border-radius:11px;background:var(--sunk,rgba(12,20,36,.5));border:1px solid var(--ctlBd,rgba(122,164,224,.14));text-align:center">
+                      <div style="font-size:9.5px;color:var(--tx3,#7d8ea6)">موثّقة مكانيًا</div>
+                      <strong style="display:block;margin-top:4px;font-size:20px;color:var(--ok,#22c55e)">{{ landsGeoreferencedCount }}</strong>
+                    </div>
+                    <div style="padding:11px;border-radius:11px;background:var(--sunk,rgba(12,20,36,.5));border:1px solid var(--ctlBd,rgba(122,164,224,.14));text-align:center">
+                      <div style="font-size:9.5px;color:var(--tx3,#7d8ea6)">بدون Geometry</div>
+                      <strong style="display:block;margin-top:4px;font-size:20px;color:var(--warn,#f5a524)">{{ landsKpiNoLocation }}</strong>
+                    </div>
+                  </div>
+                  <div style="font-size:10.5px;line-height:1.8;color:var(--tx3,#7d8ea6);padding:11px;border-radius:11px;border:1px dashed var(--ctlBd,rgba(122,164,224,.18))">
+                    هذا العرض مشتق من الإحداثيات الحقيقية المخزنة في <span dir="ltr">parcel.spatial.geometry</span>. لا توجد نقاط افتراضية أو إحداثيات مصطنعة.
+                  </div>
+                  <sc-if value="{{ landsHasGisFeatures }}">
+                    <div style="display:flex;flex-direction:column;gap:7px">
+                      <sc-for list="{{ landsGisFeatures }}" as="p" hint-placeholder-count="5">
+                        <button onClick="{{ p.on }}" data-f="1" style="text-align:right;padding:9px 10px;border-radius:10px;cursor:pointer;background:var(--sunk2,rgba(13,22,38,.48));border:1px solid var(--rowBd,rgba(122,164,224,.09));color:var(--tx,#f0f6ff)">
+                          <div style="font-size:10.5px;font-weight:700">{{ p.parcel }}</div>
+                          <div dir="ltr" style="margin-top:3px;font-size:9px;color:var(--tx3,#7d8ea6)">{{ p.label }}</div>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </aside>
               </div>
             </sc-if>
 
@@ -2969,6 +3013,19 @@ class Component extends DCLogic {
     const landsIssueFocus = landsIssueFocusRaw.map(f => ({ name: f.name, n: String(f.n || 0), w: `${Math.max(4, Math.round((f.n || 0) / landsIssueFocusMax * 100))}%` }));
     const landsAuditEvents = Array.isArray(this.liveLandsAuditEvents) ? this.liveLandsAuditEvents : [];
     const landsAuditState = this.liveLandsAuditState || 'unavailable';
+    const landsGisFeaturesRaw = Array.isArray(this.liveLandsGisFeatures) ? this.liveLandsGisFeatures : [];
+    const landsGisFeatures = landsGisFeaturesRaw.map(f => ({
+      ...f,
+      left: `${Number(f.xPct || 50).toFixed(2)}%`,
+      top: `${Number(f.yPct || 50).toFixed(2)}%`,
+      color: f.statusCode === 'approved'
+        ? 'var(--ok,#22c55e)'
+        : f.statusCode === 'under_review'
+          ? 'var(--warn,#f5a524)'
+          : 'var(--badTx,#f87171)',
+      label: `${f.parcel || 'قطعة'} · ${Number(f.lat).toFixed(5)}, ${Number(f.lng).toFixed(5)}`,
+      on: () => this.setState({ landsSelectedId: f.grantId, landsScreen: 'file' })
+    }));
     const landsDataState = this.liveLandsDataState || 'idle';
 
     const landsQRaw = st.landsQ || '';
@@ -3604,6 +3661,9 @@ class Component extends DCLogic {
       landsCols, landsRows, landsRegistryEmpty: !landsRows.length, landsRegistryCount: `${landsFilteredRegistry.length} سجل`,
       landsDocCols, landsDocRows, landsDocumentsEmpty: !landsDocRows.length,
       landsGeoreferencedCount: String(this.liveLandsGeoreferencedCount || 0),
+      landsGisFeatures,
+      landsHasGisFeatures: landsGisFeatures.length > 0,
+      landsNoGisFeatures: landsGisFeatures.length === 0,
 
       mobilityDataIsError: mobilityDataState === 'error', mobilityDataError: this.liveMobilityDataError || '',
       mobilityKpiMissionsTotal: mobilityKpi.missionsTotal, mobilityKpiMissionsActive: mobilityKpi.missionsActive,
