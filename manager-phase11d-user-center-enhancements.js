@@ -271,8 +271,15 @@ async function renderCenter(force=false) {
     if (generation !== renderGeneration || document.documentElement.dataset.smartHsrManagerView !== 'users' || !root.isConnected) return;
     const records = normalizeRecords(directory);
     const stats = kpis(records);
-    const departments = [...new Set(records.filter(r=>r.kind==='employee').map(r=>clean(r.employee.department)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
-    const roleValues = [...new Set(records.filter(r=>r.kind==='employee').flatMap(r=>employeeProducts(r.employee).map(k=>roleOf(r.employee,k))).filter(Boolean))].sort();
+    const departments = [...new Set(records.flatMap(r=>{
+      if(r.kind==='employee') return [institutionalSection(r.employee)];
+      if(r.kind==='contractor') return [clean(r.contractor?.section)];
+      return [];
+    }).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
+    const roleValues = [...new Set([
+      ...records.filter(r=>r.kind==='employee').flatMap(r=>employeeProducts(r.employee).map(k=>roleOf(r.employee,k))),
+      ...records.filter(r=>r.kind==='contractor').map(()=> 'contractor')
+    ].filter(Boolean))].sort();
     const filtered = sortedRecords(records.filter(matches));
     const maxPage = Math.max(1,Math.ceil(filtered.length/state.pageSize));
     if (state.page > maxPage) state.page=maxPage;
@@ -285,7 +292,7 @@ async function renderCenter(force=false) {
     app.innerHTML=`
       <header class="ucv2-header">
         <div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div>
-        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button><button class="ucv2-btn contractor" type="button" data-add-contractor>+ إضافة شركة متعاقدة</button><button class="ucv2-btn icon-close" type="button" data-close-center aria-label="إغلاق مركز إدارة المستخدمين">×</button></div>
+        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button><button class="ucv2-btn contractor" type="button" data-add-contractor>+ إضافة شركة متعاقدة</button></div>
       </header>
       <div class="ucv2-kpis" aria-label="ملخص القوى العاملة">
         ${kpiCard('total','إجمالي الموظفين',stats.total,'total',null)}
@@ -294,10 +301,12 @@ async function renderCenter(force=false) {
         ${kpiCard('field','الحصر الميداني',stats.field,'field','field')}
         ${kpiCard('lands','الأراضي',stats.lands,'lands','lands')}
         ${kpiCard('mobility','الحركة',stats.mobility,'mobility','mobility')}
+        ${kpiCard('contractors','الشركات المتعاقدة',stats.contractors,'contractors','contractors')}
       </div>
       <div class="ucv2-toolbar">
-        <label class="ucv2-search"><span class="sr-only">بحث في سجل الموظفين</span><input type="search" data-filter="search" value="${esc(state.search)}" aria-label="بحث في سجل الموظفين" placeholder="بحث بالاسم أو البريد أو الرقم الوظيفي" autocomplete="off"></label>
-        <select data-filter="status" aria-label="الحالة">${selectOptions([['ACTIVE','نشط'],['SUSPENDED','موقوف'],['NO_ACCOUNT','بدون حساب'],['PENDING_ACTIVATION','يحتاج تفعيل']],state.status,'كل الحالات')}</select>
+        <label class="ucv2-search"><span class="sr-only">بحث في السجل</span><input type="search" data-filter="search" value="${esc(state.search)}" aria-label="بحث في السجل" placeholder="بحث بالاسم أو البريد أو رقم العقد" autocomplete="off"></label>
+        <select data-filter="kind" aria-label="نوع السجل">${selectOptions([['employee','موظف بلدية'],['contractor','شركة متعاقدة']],state.kind,'كل أنواع السجلات')}</select>
+        <select data-filter="status" aria-label="الحالة">${selectOptions([['ACTIVE','نشط / عقد نشط'],['SUSPENDED','موقوف'],['NO_ACCOUNT','بدون حساب'],['PENDING_ACTIVATION','يحتاج تفعيل'],['EXPIRED','عقد منتهي']],state.status,'كل الحالات')}</select>
         <select data-filter="role" aria-label="الدور">${selectOptions(roleValues.map(r=>[r,roleLabel(r)]),state.role,'كل الأدوار')}</select>
         <select data-filter="product" aria-label="الخدمة البلدية">${selectOptions([['field','الحصر الميداني الذكي'],['lands','الأراضي الذكية'],['mobility','الحركة الذكية']],state.product,'كل الخدمات')}</select>
         <select data-filter="department" aria-label="القسم">${selectOptions(departments.map(d=>[d,d]),state.department,'كل الأقسام')}</select>
@@ -305,10 +314,10 @@ async function renderCenter(force=false) {
         <button class="ucv2-btn ghost" data-reset-filters>إعادة تعيين الفلاتر</button>
       </div>
       <div class="ucv2-quick" aria-label="فلاتر سريعة">
-        ${quickChip('active','الحسابات المفعلة')}${quickChip('no-account','بدون حساب')}${quickChip('field','الحصر')}${quickChip('lands','الأراضي')}${quickChip('mobility','الحركة')}
+        ${quickChip('active','الحسابات المفعلة')}${quickChip('no-account','بدون حساب')}${quickChip('field','الحصر')}${quickChip('lands','الأراضي')}${quickChip('mobility','الحركة')}${quickChip('contractors','الشركات المتعاقدة')}
       </div>
       <div class="ucv2-grid-head"><span aria-live="polite">عرض ${filtered.length} من ${records.length} سجل</span><label>ترتيب <select data-filter="sort" aria-label="ترتيب سجل المستخدمين"><option value="name"${state.sort==='name'?' selected':''}>الاسم</option><option value="status"${state.sort==='status'?' selected':''}>الحالة</option><option value="department"${state.sort==='department'?' selected':''}>القسم</option><option value="updated"${state.sort==='updated'?' selected':''}>آخر تعديل</option></select></label></div>
-      ${pageRecords.length ? `<div class="ucv2-table-wrap"><table class="ucv2-table"><thead><tr><th>الموظف</th><th>الحساب</th><th>البريد</th><th>الإدارة</th><th>القسم</th><th>المسمى</th><th>الخدمات</th><th>الدور التشغيلي</th><th>المركبة</th><th>آخر تعديل</th><th>الإجراءات</th></tr></thead><tbody>${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r):employeeRow(r)).join('')}</tbody></table></div><div class="ucv2-mobile-list">${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r,true):employeeRow(r,true)).join('')}</div>` : emptyState(records.length)}
+      ${pageRecords.length ? `<div class="ucv2-table-wrap"><table class="ucv2-table"><thead><tr><th>السجل</th><th>الحساب / العقد</th><th>البريد</th><th>الإدارة</th><th>القسم</th><th>المسمى / الممثل</th><th>الخدمات</th><th>الدور التشغيلي</th><th>المركبة</th><th>آخر تعديل / انتهاء العقد</th><th>الإجراءات</th></tr></thead><tbody>${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r):r.kind==='contractor'?contractorRow(r):employeeRow(r)).join('')}</tbody></table></div><div class="ucv2-mobile-list">${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r,true):r.kind==='contractor'?contractorRow(r,true):employeeRow(r,true)).join('')}</div>` : emptyState(records.length)}
       ${maxPage>1?pagination(maxPage):''}`;
     bindCenter(app,directory);
   } catch (error) {
@@ -333,7 +342,7 @@ function kpiCard(key,label,value,accent,quick){ const active=quick&&state.quick=
 function quickChip(value,label){ const active=state.quick===value;return `<button type="button" class="ucv2-chip-button${active?' active':''}" data-quick="${value}" aria-pressed="${active?'true':'false'}">${label}</button>`; }
 function emptyState(total){ return total ? `<div class="ucv2-state ucv2-state-no-results"><b>لا توجد نتائج مطابقة</b><span>غيّر معايير البحث أو أعد تعيين الفلاتر.</span><button type="button" class="ucv2-btn ghost" data-reset-filters>إعادة تعيين الفلاتر</button></div>` : `<div class="ucv2-state ucv2-state-no-records"><b>لا توجد سجلات موظفين بعد</b><span>استخدم «إضافة موظف» لإنشاء أول سجل.</span></div>`; }
 function pagination(max){ return `<nav class="ucv2-pagination" aria-label="التنقل بين صفحات الموظفين"><button class="ucv2-btn ghost" data-page="prev" ${state.page<=1?'disabled':''}>السابق</button><span>صفحة ${state.page} من ${max}</span><button class="ucv2-btn ghost" data-page="next" ${state.page>=max?'disabled':''}>التالي</button></nav>`; }
-function resetFilters(){ Object.assign(state,{search:'',status:'all',role:'all',product:'all',department:'all',vehicle:'all',quick:null,page:1,sort:'name'}); }
+function resetFilters(){ Object.assign(state,{search:'',status:'all',role:'all',product:'all',department:'all',vehicle:'all',kind:'all',quick:null,page:1,sort:'name'}); }
 function showCenterActionError(app,error){let node=app.querySelector('.ucv2-action-error');if(!node){node=document.createElement('div');node.className='ucv2-action-error';node.setAttribute('role','alert');app.querySelector('.ucv2-header')?.after(node);}node.textContent=U.why?U.why(error?.reason||error?.message):'تعذر تنفيذ الإجراء.';}
 async function openContractorCompanyDialog(app){
   const body=`
@@ -428,7 +437,6 @@ async function openContractorCompanyDialog(app){
 function bindCenter(app,directory){
   app.querySelector('[data-add-employee]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;app.setAttribute('aria-busy','true');try{await U.add();decorateAddDialog();}catch(error){showCenterActionError(app,error);}finally{button.disabled=false;app.removeAttribute('aria-busy');}});
   app.querySelector('[data-add-contractor]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;try{await openContractorCompanyDialog(app);}catch(error){showCenterActionError(app,error);}finally{button.disabled=false;}});
-  app.querySelector('[data-close-center]')?.addEventListener('click',()=>{ document.querySelector('[data-ucv2-original] button[aria-label="إغلاق"]')?.click(); });
   app.querySelectorAll('[data-reset-filters]').forEach(btn=>btn.addEventListener('click',()=>{ resetFilters(); renderCenter(); }));
   app.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{ const q=btn.dataset.quick; state.quick=state.quick===q?null:q; state.page=1; renderCenter(); }));
   app.querySelectorAll('[data-filter]').forEach(control=>{ const key=control.dataset.filter; const event=key==='search'?'input':'change'; control.addEventListener(event,()=>{ state[key]=control.value; state.page=1; const caret=key==='search'?control.selectionStart:null;renderCenter().then(()=>{if(key!=='search')return;const next=lastRoot?.querySelector('[data-filter="search"]');if(!next)return;next.focus();if(Number.isInteger(caret))next.setSelectionRange(caret,caret);}); }); });
