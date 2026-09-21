@@ -31,7 +31,7 @@ const AUDIT_LABELS = Object.freeze({
 });
 
 const state = {
-  search:'', status:'all', role:'all', product:'all', department:'all', vehicle:'all',
+  search:'', status:'all', role:'all', product:'all', department:'all', vehicle:'all', kind:'all',
   quick:null, page:1, pageSize:25, sort:'name',
 };
 let directoryCache = null;
@@ -69,22 +69,42 @@ function employeeProducts(employee) { return ['field','lands','mobility'].filter
 function normalizeRecords(directory) {
   const employees = Array.isArray(directory?.employees) ? directory.employees : [];
   const users = Array.isArray(directory?.users) ? directory.users : [];
+  const contractors = Array.isArray(directory?.contractors) ? directory.contractors : [];
   const linked = new Set(employees.map(e => e?.authUid).filter(Boolean));
-  const records = employees.map(employee => ({ kind:'employee', employee }));
+  const contractorUids = new Set(contractors.map(c=>c?.uid).filter(Boolean));
+  const records = [
+    ...employees.map(employee => ({ kind:'employee', employee })),
+    ...contractors.map(contractor => ({ kind:'contractor', contractor }))
+  ];
   for (const user of users) {
-    if (!user?.uid || linked.has(user.uid) || user.employeeId) continue;
+    if (!user?.uid || linked.has(user.uid) || contractorUids.has(user.uid) || user.employeeId) continue;
     records.push({ kind:'legacy', user });
   }
   return records;
 }
 function recordSearchText(record) {
   if (record.kind === 'legacy') return lower(`${record.user?.name||''} ${record.user?.email||''} ${record.user?.uid||''}`);
+  if (record.kind === 'contractor') {
+    const c=record.contractor||{};
+    return lower(`${c.companyName||''} ${c.contactName||''} ${c.email||''} ${c.contractNumber||''} ${c.administration||''} ${c.section||''}`);
+  }
   const e = record.employee;
   return lower(`${e?.name||''} ${e?.email||''} ${e?.employeeRef||''} ${e?.jobTitle||''} ${e?.department||''} ${e?.administration||''}`);
 }
 function matches(record) {
   if (state.search && !recordSearchText(record).includes(lower(state.search))) return false;
-  if (record.kind === 'legacy') return state.status === 'all' && state.role === 'all' && state.product === 'all' && state.department === 'all' && state.vehicle === 'all' && !state.quick;
+  if (state.kind !== 'all' && record.kind !== state.kind) return false;
+  if (record.kind === 'contractor') {
+    const c=record.contractor||{};
+    if (state.status !== 'all' && !((state.status==='ACTIVE' && c.active!==false) || state.status===c.contractState)) return false;
+    if (state.role !== 'all' && state.role !== 'contractor') return false;
+    if (state.product !== 'all' && state.product !== 'field') return false;
+    if (state.department !== 'all' && state.department !== clean(c.section)) return false;
+    if (state.vehicle !== 'all') return false;
+    if (state.quick && state.quick !== 'contractors') return false;
+    return true;
+  }
+  if (record.kind === 'legacy') return state.status === 'all' && state.role === 'all' && state.product === 'all' && state.department === 'all' && state.vehicle === 'all' && state.kind === 'all' && !state.quick;
   const e = record.employee;
   const status = accountStatus(e);
   const products = employeeProducts(e);
@@ -93,27 +113,38 @@ function matches(record) {
   if (state.status !== 'all' && state.status !== status) return false;
   if (state.role !== 'all' && !roles.includes(state.role) && pr !== state.role) return false;
   if (state.product !== 'all' && !products.includes(state.product)) return false;
-  if (state.department !== 'all' && clean(e.department) !== state.department) return false;
+  if (state.department !== 'all' && institutionalSection(e) !== state.department) return false;
   if (state.vehicle === 'eligible' && !(enabled(e,'mobility') && e.products?.mobility?.vehicleEligible === true)) return false;
   if (state.vehicle === 'ineligible' && enabled(e,'mobility') && e.products?.mobility?.vehicleEligible === true) return false;
   if (state.quick === 'active' && status !== 'ACTIVE') return false;
   if (state.quick === 'no-account' && !['NO_ACCOUNT','PENDING_ACTIVATION'].includes(status)) return false;
+  if (state.quick === 'contractors') return false;
   if (['field','lands','mobility'].includes(state.quick) && !products.includes(state.quick)) return false;
   return true;
 }
 function sortedRecords(records) {
   return records.slice().sort((a,b) => {
-    if (a.kind !== b.kind) return a.kind === 'employee' ? -1 : 1;
+    if (a.kind !== b.kind) {
+      const order={employee:0,contractor:1,legacy:2};
+      return (order[a.kind]??9)-(order[b.kind]??9);
+    }
     if (a.kind === 'legacy') return lower(a.user?.name || a.user?.email).localeCompare(lower(b.user?.name || b.user?.email),'ar');
+    if (a.kind === 'contractor') {
+      const ca=a.contractor||{},cb=b.contractor||{};
+      if (state.sort === 'status') return clean(ca.contractState).localeCompare(clean(cb.contractState),'ar');
+      if (state.sort === 'department') return clean(ca.section).localeCompare(clean(cb.section),'ar');
+      return clean(ca.companyName).localeCompare(clean(cb.companyName),'ar');
+    }
     const ea=a.employee, eb=b.employee;
     if (state.sort === 'status') return accountStatus(ea).localeCompare(accountStatus(eb),'ar');
-    if (state.sort === 'department') return clean(ea.department).localeCompare(clean(eb.department),'ar');
+    if (state.sort === 'department') return institutionalSection(ea).localeCompare(institutionalSection(eb),'ar');
     if (state.sort === 'updated') return String(eb.updatedAt||eb.createdAt||'').localeCompare(String(ea.updatedAt||ea.createdAt||''));
     return clean(ea.name).localeCompare(clean(eb.name),'ar');
   });
 }
 function kpis(records) {
   const employees = records.filter(r => r.kind === 'employee').map(r => r.employee);
+  const contractors = records.filter(r => r.kind === 'contractor').map(r => r.contractor);
   return {
     total:employees.length,
     active:employees.filter(e => accountStatus(e)==='ACTIVE').length,
@@ -121,7 +152,24 @@ function kpis(records) {
     field:employees.filter(e => enabled(e,'field')).length,
     lands:employees.filter(e => enabled(e,'lands')).length,
     mobility:employees.filter(e => enabled(e,'mobility')).length,
+    contractors:contractors.length,
   };
+}
+
+function institutionalAdministration(e){
+  const current=clean(e?.administration);
+  if(current)return current;
+  if(enabled(e,'field'))return 'إدارة الحصر الميداني';
+  if(enabled(e,'lands'))return 'إدارة الأراضي والممتلكات';
+  if(enabled(e,'mobility'))return 'إدارة حركة السير';
+  return '—';
+}
+function institutionalSection(e){
+  const current=clean(e?.department);
+  const administrations=new Set(['إدارة الحصر الميداني','إدارة الأراضي والممتلكات','إدارة حركة السير','إدارة الحركة الذكية']);
+  if(current && !administrations.has(current)) return current;
+  if(enabled(e,'field')) return 'التشوه البصري';
+  return '—';
 }
 
 function findCenterRoot() {
@@ -178,10 +226,17 @@ function legacyRow(record, mobile=false) {
   if (mobile) return `<article class="ucv2-mobile-card legacy"><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(u.name||u.email))}</span><div><b>${esc(u.name||'حساب قديم')}</b><small>${esc(u.email||u.uid||'—')}</small></div></div><div class="ucv2-legacy-note">حساب قديم غير مرتبط بسجل موظف</div></article>`;
   return `<tr class="ucv2-legacy"><td><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(u.name||u.email))}</span><div><b>${esc(u.name||'حساب قديم')}</b><small>${esc(u.uid||'—')}</small></div></div></td><td><span class="ucv2-chip warn">حساب قديم</span></td><td>${esc(u.email||'—')}</td><td colspan="6"><span class="ucv2-legacy-note">حساب قديم غير مرتبط بسجل موظف — لم يتم إنشاء هوية بديلة تلقائيًا.</span></td><td><button class="ucv2-btn ghost" disabled aria-disabled="true">يتطلب مسار ربط آمن</button></td></tr>`;
 }
+function contractorRow(record,mobile=false){
+  const c=record.contractor||{};
+  const stateLabel={ACTIVE:'عقد نشط',SUSPENDED:'عقد موقوف',ENDED:'عقد منتهي',EXPIRED:'عقد منتهي',NOT_STARTED:'لم يبدأ',UNREGISTERED:'غير مكتمل'}[c.contractState]||c.contractState||'غير مكتمل';
+  const stateClass=c.contractState==='ACTIVE'?'ok':c.contractState==='SUSPENDED'?'warn':'muted';
+  if(mobile)return `<article class="ucv2-mobile-card contractor"><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(c.companyName||c.contactName))}</span><div><b>${esc(c.companyName||'شركة متعاقدة')}</b><small>${esc(c.contractNumber||'بدون رقم عقد')}</small></div></div><div class="ucv2-mobile-meta"><span class="ucv2-chip ${stateClass}">${esc(stateLabel)}</span><span>${esc(c.section||'التشوه البصري')}</span></div><div class="ucv2-legacy-note">ممثل الشركة: ${esc(c.contactName||'—')} · ${esc(c.email||'—')}</div></article>`;
+  return `<tr class="ucv2-contractor-row"><td><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(c.companyName||c.contactName))}</span><div><b>${esc(c.companyName||'شركة متعاقدة')}</b><small>${esc(c.contractNumber||'—')}</small></div></div></td><td><span class="ucv2-chip ${stateClass}">${esc(stateLabel)}</span></td><td class="ucv2-email">${esc(c.email||'—')}</td><td>${esc(c.administration||'إدارة الحصر الميداني')}</td><td>${esc(c.section||'التشوه البصري')}</td><td>${esc(c.contactName||'ممثل الشركة')}</td><td><div class="ucv2-products"><span class="ucv2-chip product field">الحصر</span></div></td><td><span class="ucv2-role">شركة متعاقدة</span></td><td><span class="ucv2-muted">—</span></td><td><span class="ucv2-muted">${esc(c.endDate||'—')}</span></td><td><span class="ucv2-chip ${c.active===false?'danger':'ok'}">${c.active===false?'الحساب موقوف':'الحساب نشط'}</span></td></tr>`;
+}
 function employeeRow(record, mobile=false) {
   const e=record.employee, status=accountStatus(e), id=esc(e.employeeId);
-  if (mobile) return `<article class="ucv2-mobile-card" data-employee-id="${id}"><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b><small>${esc(e.employeeRef||e.email||'—')}</small></div></div><div class="ucv2-mobile-meta">${statusBadge(status)}<span>${esc(e.department||'بدون قسم')}</span></div><div class="ucv2-products">${productChips(e)}</div><div class="ucv2-mobile-actions"><button class="ucv2-btn primary" data-open-employee="${id}">عرض الملف</button></div></article>`;
-  return `<tr data-employee-id="${id}" tabindex="0"><td><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b><small>${esc(e.employeeRef||'—')}</small></div></div></td><td>${statusBadge(status)}</td><td class="ucv2-email">${esc(e.email||'—')}</td><td>${esc(e.administration||'—')}</td><td>${esc(e.department||'—')}</td><td>${esc(e.jobTitle||'—')}</td><td><div class="ucv2-products">${productChips(e)}</div></td><td>${roleMarkup(e)}</td><td>${vehicleBadge(e)}</td><td><span class="ucv2-muted">${esc(safeDate(e.updatedAt||e.createdAt))}</span></td><td><button class="ucv2-btn ghost" data-open-employee="${id}">عرض الملف</button></td></tr>`;
+  if (mobile) return `<article class="ucv2-mobile-card" data-employee-id="${id}"><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b><small>${esc(e.employeeRef||e.email||'—')}</small></div></div><div class="ucv2-mobile-meta">${statusBadge(status)}<span>${esc(institutionalSection(e)||'بدون قسم')}</span></div><div class="ucv2-products">${productChips(e)}</div><div class="ucv2-mobile-actions"><button class="ucv2-btn primary" data-open-employee="${id}">عرض الملف</button></div></article>`;
+  return `<tr data-employee-id="${id}" tabindex="0"><td><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b><small>${esc(e.employeeRef||'—')}</small></div></div></td><td>${statusBadge(status)}</td><td class="ucv2-email">${esc(e.email||'—')}</td><td>${esc(institutionalAdministration(e))}</td><td>${esc(institutionalSection(e))}</td><td>${esc(e.jobTitle||'—')}</td><td><div class="ucv2-products">${productChips(e)}</div></td><td>${roleMarkup(e)}</td><td>${vehicleBadge(e)}</td><td><span class="ucv2-muted">${esc(safeDate(e.updatedAt||e.createdAt))}</span></td><td><button class="ucv2-btn ghost" data-open-employee="${id}">عرض الملف</button></td></tr>`;
 }
 function selectOptions(values, current, allLabel='الكل') {
   return `<option value="all">${esc(allLabel)}</option>${values.map(([value,label]) => `<option value="${esc(value)}"${value===current?' selected':''}>${esc(label)}</option>`).join('')}`;
@@ -189,7 +244,15 @@ function selectOptions(values, current, allLabel='الكل') {
 
 async function getDirectory(force=false) {
   if (directoryCache && !force) return directoryCache;
-  directoryCache = await U.dir(force);
+  const base=await U.dir(force);
+  let contractors=[];
+  try {
+    const result=await U.post('/api/admin/users',{action:'listFieldContractorCompanies'});
+    contractors=Array.isArray(result.contractors)?result.contractors:[];
+  } catch (error) {
+    if(error?.status!==403) console.warn('[UC:contractors]',error?.reason||error?.message);
+  }
+  directoryCache={...base,contractors};
   return directoryCache;
 }
 async function renderCenter(force=false) {
