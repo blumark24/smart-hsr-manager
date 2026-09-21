@@ -120,7 +120,7 @@
   function trustedObservations(instance) {
     const allowed = new Set(['PENDING','IN_PROGRESS','PENDING_REVIEW','COMPLETED']);
     return (instance.state.liveObservations || []).map(o => {
-      if (!allowed.has(o.status) || o.locationVerified !== true) return null;
+      if (!(allowed.has(o.status) && o.locationVerified === true)) return null;
       const point = observationMapPoint(o);
       return point ? Object.assign({},o,{_mapLat:point.lat,_mapLng:point.lng,_mapPointSource:point.source}) : null;
     }).filter(Boolean);
