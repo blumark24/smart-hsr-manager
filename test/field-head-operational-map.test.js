@@ -90,3 +90,18 @@ test('map supports read-only recovery for legacy swapped Saudi coordinates witho
   assert.match(runtime, /_mapLng:point\.lng/);
   assert.match(runtime, /setLngLat\(\[Number\(o\._mapLng\),Number\(o\._mapLat\)\]\)/);
 });
+
+
+test('command-center map keeps municipal focus on newest trusted observation instead of fitting distant history', () => {
+  assert.match(runtime, /const newest = observations\[0\]/);
+  assert.match(runtime, /_fieldObservationFocusKey/);
+  assert.match(runtime, /map\.jumpTo\(\{/);
+  assert.match(runtime, /zoom:15/);
+  assert.doesNotMatch(runtime, /map\.fitBounds\(bounds/);
+});
+
+test('command-center embedded map empty state follows the same trusted observation set', () => {
+  assert.match(runtime, /screen === 'map' \|\| screen === 'deptops'/);
+  assert.match(runtime, /vals\.showMapEmpty=trusted\.length===0/);
+  assert.match(runtime, /instance\.state\.screen === 'map' \|\| instance\.state\.screen === 'deptops'/);
+});
