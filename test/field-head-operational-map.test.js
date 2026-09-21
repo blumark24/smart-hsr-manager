@@ -108,28 +108,28 @@ test('command-center embedded map empty state follows the same trusted observati
 
 
 test('SMART HSR branded MAPS and TWIN modes are real map products', () => {
-  assert.match(html, /SMART HSR MAPS/);
-  assert.match(html, /الخريطة البلدية التشغيلية/);
-  assert.match(html, /SMART HSR TWIN/);
-  assert.match(html, /التوأم البلدي الرقمي/);
-  assert.match(html, /data-map-mode="{{ mapMode }}"/);
+  assert.match(page, /SMART HSR MAPS/);
+  assert.match(page, /الخريطة البلدية التشغيلية/);
+  assert.match(page, /SMART HSR TWIN/);
+  assert.match(page, /التوأم البلدي الرقمي/);
+  assert.match(page, /data-map-mode="{{ mapMode }}"/);
 });
 
 test('MAPS uses street basemap while TWIN uses satellite with real 2.5D camera', () => {
-  assert.match(html, /tile\.openstreetmap\.org/);
-  assert.match(html, /server\.arcgisonline\.com/);
-  assert.match(html, /map\.setLayoutProperty\('street', 'visibility'/);
-  assert.match(html, /map\.setLayoutProperty\('satellite', 'visibility'/);
-  assert.match(html, /pitch: twin \? 48 : 0/);
-  assert.match(html, /bearing: twin \? -14 : 0/);
+  assert.match(page, /tile\.openstreetmap\.org/);
+  assert.match(page, /server\.arcgisonline\.com/);
+  assert.match(page, /map\.setLayoutProperty\('street', 'visibility'/);
+  assert.match(page, /map\.setLayoutProperty\('satellite', 'visibility'/);
+  assert.match(page, /pitch: twin \? 48 : 0/);
+  assert.match(page, /bearing: twin \? -14 : 0/);
 });
 
 test('map chrome keeps controls on edges across desktop tablet and mobile', () => {
-  assert.match(html, /@media\(min-width:1180px\)/);
-  assert.match(html, /@media\(min-width:761px\) and \(max-width:1179px\)/);
-  assert.match(html, /@media\(max-width:760px\)/);
-  assert.match(html, /dh-map-product-btn/);
-  assert.match(html, /dh-map-toolbar/);
-  assert.match(html, /dh-map-search-stack/);
-  assert.match(html, /dh-map-legend/);
+  assert.match(page, /@media\(min-width:1180px\)/);
+  assert.match(page, /@media\(min-width:761px\) and \(max-width:1179px\)/);
+  assert.match(page, /@media\(max-width:760px\)/);
+  assert.match(page, /dh-map-product-btn/);
+  assert.match(page, /dh-map-toolbar/);
+  assert.match(page, /dh-map-search-stack/);
+  assert.match(page, /dh-map-legend/);
 });
