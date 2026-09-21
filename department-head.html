@@ -347,6 +347,22 @@
     .dh-side-column[data-geo-panel="true"] .dh-side-card{flex:none!important;min-height:auto!important;max-height:30dvh!important}
     .dh-side-column[data-geo-panel="true"] .dh-side-card:last-child:has(.dh-empty-state){display:none!important}
   }
+  /* SMART HSR Day — municipal Apple-like polish */
+  .dh-app[data-theme="day"] .dh-command-bar{box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 16px 36px -28px rgba(3,68,46,.55)!important}
+  .dh-app[data-theme="day"] .dh-sidebar-panel,
+  .dh-app[data-theme="day"] .dh-product-panel{background:var(--sbBg)!important;border-color:var(--sbBd)!important;box-shadow:var(--sbSh)!important}
+  .dh-app[data-theme="day"] .dh-product-panel>div:first-child{color:var(--sbTx3)!important}
+  .dh-app[data-theme="day"] .dh-product-card{background:var(--sbSunk)!important;border-color:var(--sbDiv)!important}
+  .dh-app[data-theme="day"] .dh-product-card span{color:var(--sbTx)!important}
+  .dh-app[data-theme="day"] .dh-product-card>div:last-child{color:var(--sbTx3)!important}
+  .dh-app[data-theme="day"] .dh-table-shell{background:var(--l3)!important;border-color:var(--l3Bd)!important;box-shadow:var(--l3Sh)!important}
+  .dh-app[data-theme="day"] .dh-table-head{background:#f0f6f2!important}
+  .dh-app[data-theme="day"] .dh-table-body{background:#fff!important}
+  .dh-table-shell[data-empty="true"]{flex:0 1 auto!important;min-height:230px!important;max-height:320px!important}
+  .dh-empty-table{margin:auto;min-width:min(360px,calc(100% - 32px));max-width:420px;padding:24px 22px;border-radius:18px;border:1px dashed var(--empty-border);background:var(--sunk2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;color:var(--tx3)}
+  .dh-empty-table-icon{width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--chipBg);color:var(--acc);font-size:18px;font-weight:800}
+  .dh-empty-table b{font-size:12.5px;color:var(--tx);font-weight:700}.dh-empty-table span:last-child{font-size:10.5px;line-height:1.7}
+  .dh-app[data-theme="day"] input,.dh-app[data-theme="day"] select,.dh-app[data-theme="day"] textarea{box-shadow:inset 0 0 0 1px rgba(255,255,255,.75)}
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -752,13 +768,13 @@
             </div>
           </div>
 
-          <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
-            <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
+          <div class="dh-table-shell" data-empty="{{ tEmpty }}" style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
+            <div class="dh-table-head" style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13));background:var(--sunk,rgba(12,20,36,0.5))">
               <sc-for list="{{ tCols }}" as="c" hint-placeholder-count="6">
                 <span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);white-space:nowrap;text-align:{{ c.align }}">{{ c.label }}</span>
               </sc-for>
             </div>
-            <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+            <div class="dh-table-body" style="flex:1;overflow:auto;display:flex;flex-direction:column">
               <sc-for list="{{ tRows }}" as="r" hint-placeholder-count="8">
                 <div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,0.08));cursor:pointer;flex-wrap:var(--rowWrap,nowrap)" style-hover="border-color:var(--l1BdH,rgba(76,201,240,0.4));box-shadow:var(--l1ShH,var(--l1Sh));background:var(--ctl,rgba(20,32,54,0.5))">
                   <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
@@ -768,7 +784,11 @@
                 </div>
               </sc-for>
               <sc-if value="{{ tEmpty }}">
-                <div style="padding:44px 20px;text-align:center;color:var(--thTx,#7d8ea6);font-size:12px">لا توجد نتائج مطابقة للتصفية الحالية</div>
+                <div class="dh-empty-table">
+                  <span class="dh-empty-table-icon">✓</span>
+                  <b>لا توجد نتائج</b>
+                  <span>لا توجد سجلات مطابقة للبحث أو التصفية الحالية.</span>
+                </div>
               </sc-if>
             </div>
             <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,0.12));display:flex;align-items:center;gap:10px">
@@ -1712,19 +1732,21 @@ class Component extends DCLogic {
     '--text-primary': '#10241c', '--text-secondary': '#40574d', '--text-muted': '#62746c',
     '--focus-ring': '#087a4b', '--selection-bg': '#c8ead8', '--selection-text': '#092c20',
     '--divider': 'rgba(17,74,52,0.1)', '--empty-border': 'rgba(17,104,69,0.2)', '--scrim': 'rgba(16,38,29,0.34)',
-    '--command-bg': 'linear-gradient(180deg,rgba(253,255,254,0.96),rgba(237,247,241,0.92))',
-    '--command-border': 'rgba(18,122,79,0.18)', '--command-shadow': 'inset 0 1px 0 rgba(255,255,255,0.96),0 16px 38px -30px rgba(11,76,48,0.44)',
+    '--command-bg': 'linear-gradient(145deg,#0b6849 0%,#07563d 58%,#064a36 100%)',
+    '--command-border': 'rgba(4,71,49,0.34)', '--command-shadow': 'inset 0 1px 0 rgba(255,255,255,0.13),0 18px 44px -30px rgba(4,64,44,0.55)',
     '--map-border': 'rgba(18,122,79,0.24)', '--map-inner-ring': 'rgba(255,255,255,0.35)', '--map-shadow': '0 0 0 1px rgba(18,92,62,0.06),0 30px 72px -38px rgba(13,56,40,0.52)',
     '--map-glass': 'rgba(248,252,249,0.91)', '--map-glass-border': 'rgba(20,94,66,0.18)', '--map-control-shadow': '0 8px 24px -18px rgba(8,42,29,0.42)',
     '--pgBg': 'transparent',
     '--card': 'rgba(255,255,255,0.96)', '--card2': 'rgba(246,251,248,0.95)', '--cardBd': 'rgba(17,54,40,0.11)',
-    '--cardSh': 'var(--glass-shadow)', '--l1': 'var(--glass-bg-1)', '--l2': 'var(--glass-bg-2)', '--l1Bd': 'var(--glass-border)', '--l2Bd': 'var(--glass-border)', '--l1Sh': 'var(--glass-shadow)', '--l2Sh': 'var(--glass-shadow)',
-    '--sunk': '#edf4f0', '--sunk2': '#f4f8f5', '--ctl': 'rgba(237,246,241,0.92)', '--ctlBd': 'rgba(17,80,57,0.14)', '--ctlH': '#e3eee8',
-    '--field': '#fbfdfc', '--pop': 'rgba(251,254,252,0.98)', '--drawer': '#f7fbf8',
-    '--tx': 'var(--text-primary)', '--tx2': 'var(--text-secondary)', '--tx3': 'var(--text-muted)', '--thTx': 'var(--text-muted)',
-    '--div': 'var(--divider)', '--track': 'rgba(17,54,40,0.10)',
+    '--cardSh': 'var(--glass-shadow)', '--l1': 'var(--glass-bg-1)', '--l2': 'var(--glass-bg-2)', '--l3': 'rgba(255,255,255,0.985)',
+    '--l1Bd': 'var(--glass-border)', '--l2Bd': 'var(--glass-border)', '--l3Bd': 'rgba(20,91,65,0.12)',
+    '--l1Sh': 'var(--glass-shadow)', '--l2Sh': 'var(--glass-shadow)', '--l3Sh': '0 1px 2px rgba(13,63,44,0.035),0 14px 34px -28px rgba(9,72,48,0.32)',
+    '--sunk': '#eef6f1', '--sunk2': '#f6faf7', '--ctl': 'rgba(239,247,242,0.96)', '--ctlBd': 'rgba(17,80,57,0.14)', '--ctlH': '#e5f1ea',
+    '--field': '#ffffff', '--pop': 'rgba(255,255,255,0.985)', '--drawer': '#fbfdfc', '--drawerBd': 'rgba(18,91,65,0.14)',
+    '--tx': 'var(--text-primary)', '--tx2': 'var(--text-secondary)', '--tx3': 'var(--text-muted)', '--thTx': '#53685f',
+    '--div': 'var(--divider)', '--thBd': 'rgba(17,74,52,0.11)', '--rowBd': 'rgba(17,74,52,0.075)', '--track': 'rgba(17,54,40,0.10)',
     '--acc': 'var(--accent-green)', '--accBd': 'rgba(14,122,79,0.3)',
-    '--navBg': 'linear-gradient(90deg,rgba(14,122,79,0.16),rgba(14,122,79,0.045))', '--navTx': '#0a5839',
+    '--navBg': 'linear-gradient(90deg,rgba(255,255,255,0.19),rgba(255,255,255,0.08))', '--navTx': '#ffffff',
     '--btn': 'linear-gradient(180deg,#168a5e,#0b6543)', '--btnTx': '#ffffff', '--btnBd': 'rgba(9,80,52,0.45)',
     '--chipBg': 'rgba(20,96,66,0.075)', '--blur': 'blur(18px) saturate(135%)', '--srfBlur': 'var(--surface-blur)',
     '--ok': '#12855a', '--warn': '#b8730a', '--bad': '#c2372c', '--info': '#12688f', '--vio': '#5f43a8',
@@ -1732,12 +1754,15 @@ class Component extends DCLogic {
     '--twinBd': 'var(--map-border)', '--twinBg': '#e7eee9',
     '--glass': 'var(--map-glass)', '--glassBd': 'var(--map-glass-border)', '--glassTx': 'var(--text-secondary)',
     '--lblBg': 'rgba(255,255,255,0.95)', '--lblTx': '#35463e',
-    '--orgBg': '#edf4f0', '--orgBd': 'rgba(17,54,40,0.16)', '--badge': '#ffffff',
-    '--sbBg': 'var(--glass-bg-2)', '--sbBd': 'var(--glass-border)', '--sbSh': 'var(--glass-shadow)', '--sbSunk': 'var(--surface-deep)', '--sbDiv': 'var(--divider)', '--sbCtl': 'var(--surface-deep)', '--sbCtlBd': 'var(--glass-border)', '--sbTx': 'var(--text-primary)', '--sbTx2': 'var(--text-secondary)', '--sbTx3': 'var(--text-muted)',
-    '--hdrSunk': 'rgba(222,237,229,0.74)', '--hdrCtl': 'rgba(242,249,245,0.95)', '--hdrCtlBd': 'rgba(17,80,57,0.13)', '--hdrDiv': 'var(--divider)', '--hdrTx': 'var(--text-primary)', '--hdrTx2': 'var(--text-secondary)', '--hdrTx3': 'var(--text-muted)',
-    '--dayBtnBg': '#ffffff', '--dayBtnBd': 'rgba(14,122,79,0.35)', '--dayBtnTx': '#0b5c3b',
-    '--nightBtnBg': 'transparent', '--nightBtnBd': 'transparent', '--nightBtnTx': '#62746c',
-    '--logoNavy': '#152a4a', '--logoGreen': '#2aa84a', '--logoNavyH': '#152a4a', '--logoGreenH': '#23893f',
+    '--orgBg': '#edf4f0', '--orgBd': 'rgba(17,54,40,0.16)', '--badge': '#07563d',
+    '--sbBg': 'linear-gradient(180deg,#0a5f44 0%,#074d38 100%)', '--sbBd': 'rgba(4,69,48,0.32)', '--sbSh': '0 20px 48px -32px rgba(5,70,48,0.52)',
+    '--sbSunk': 'rgba(255,255,255,0.085)', '--sbDiv': 'rgba(255,255,255,0.12)', '--sbCtl': 'rgba(255,255,255,0.09)', '--sbCtlBd': 'rgba(255,255,255,0.13)',
+    '--sbTx': '#ffffff', '--sbTx2': '#e4f4eb', '--sbTx3': '#add1bf',
+    '--hdrSunk': 'rgba(255,255,255,0.10)', '--hdrCtl': 'rgba(255,255,255,0.10)', '--hdrCtlBd': 'rgba(255,255,255,0.15)', '--hdrDiv': 'rgba(255,255,255,0.13)',
+    '--hdrTx': '#ffffff', '--hdrTx2': '#e3f2ea', '--hdrTx3': '#b7d7c7',
+    '--dayBtnBg': 'rgba(255,255,255,0.18)', '--dayBtnBd': 'rgba(255,255,255,0.24)', '--dayBtnTx': '#ffffff',
+    '--nightBtnBg': 'transparent', '--nightBtnBd': 'transparent', '--nightBtnTx': '#c2ddd0',
+    '--logoNavy': '#ffffff', '--logoGreen': '#7de3aa', '--logoNavyH': '#ffffff', '--logoGreenH': '#8be8b2',
     '--hdrBg': 'var(--command-bg)', '--hdrBd': 'var(--command-border)', '--hdrBlur': 'var(--glass-blur)', '--hdrSh': 'var(--command-shadow)'
   };
   NIGHT = {
@@ -1760,7 +1785,9 @@ class Component extends DCLogic {
     '--map-glass': 'rgba(7,24,40,0.88)', '--map-glass-border': 'rgba(135,199,221,0.18)', '--map-control-shadow': '0 14px 34px -22px rgba(0,3,12,0.95)',
     '--pgBg': 'transparent',
     '--card': 'rgba(13,34,55,0.95)', '--card2': 'rgba(9,27,45,0.94)', '--cardBd': 'var(--glass-border)', '--cardSh': 'var(--glass-shadow)',
-    '--l1': 'var(--glass-bg-1)', '--l2': 'var(--glass-bg-2)', '--l1Bd': 'var(--glass-border)', '--l2Bd': 'var(--glass-border)', '--l1Sh': 'var(--glass-shadow)', '--l2Sh': 'var(--glass-shadow)',
+    '--l1': 'var(--glass-bg-1)', '--l2': 'var(--glass-bg-2)', '--l3': 'linear-gradient(180deg,rgba(13,34,55,0.95),rgba(8,25,42,0.96))',
+    '--l1Bd': 'var(--glass-border)', '--l2Bd': 'var(--glass-border)', '--l3Bd': 'var(--glass-border)',
+    '--l1Sh': 'var(--glass-shadow)', '--l2Sh': 'var(--glass-shadow)', '--l3Sh': 'var(--glass-shadow)',
     '--sunk': 'rgba(5,19,33,0.84)', '--sunk2': 'rgba(7,23,39,0.84)', '--ctl': 'rgba(18,43,65,0.88)', '--ctlBd': 'rgba(132,188,211,0.15)', '--ctlH': 'rgba(26,57,80,0.96)',
     '--field': 'rgba(7,24,40,0.92)', '--pop': 'rgba(8,25,42,0.985)', '--drawer': '#08192a',
     '--tx': 'var(--text-primary)', '--tx2': 'var(--text-secondary)', '--tx3': 'var(--text-muted)', '--thTx': 'var(--text-muted)',
@@ -2162,11 +2189,11 @@ class Component extends DCLogic {
     const navDefs = this.navFor(st.role);
     const nav = navDefs.map(n => {
       const a = st.screen === n.id;
-      return { label: n.label, tag: n.tag || '', current: a ? 'page' : '', dot: a ? (day ? '#12855a' : '#43d98b') : (day ? 'rgba(17,54,40,0.2)' : 'rgba(122,164,224,0.25)'),
-        tx: a ? 'var(--navTx,#eaf4ff)' : 'var(--tx2,#9db2cc)',
+      return { label: n.label, tag: n.tag || '', current: a ? 'page' : '', dot: a ? (day ? '#8df0b7' : '#43d98b') : (day ? 'rgba(226,248,236,0.40)' : 'rgba(122,164,224,0.25)'),
+        tx: a ? 'var(--navTx,#eaf4ff)' : (day ? 'var(--sbTx2,#e4f4eb)' : 'var(--tx2,#9db2cc)'),
         bg: a ? 'var(--navBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)))' : 'transparent',
         bd: a ? 'var(--accBd,rgba(76,201,240,0.4))' : 'transparent',
-        tagTx: 'var(--tx3,#7d8ea6)', tagBg: n.tag ? 'var(--chipBg,rgba(122,164,224,0.1))' : 'transparent',
+        tagTx: day ? 'var(--sbTx3,#add1bf)' : 'var(--tx3,#7d8ea6)', tagBg: n.tag ? (day ? 'rgba(255,255,255,0.09)' : 'var(--chipBg,rgba(122,164,224,0.1))') : 'transparent',
         on: () => n.soon ? this.flash(n.label + ' — قريباً') : this.setState({ screen: n.id, sel: null, mobNavOpen: false }) };
     });
 
