@@ -67,7 +67,7 @@ test('map empty state and legend derive from the same trusted observation set', 
   assert.match(runtime, /out\.showMapEmpty=trusted\.length===0/);
   assert.match(runtime, /const trusted=trustedObservations\(instance\)/);
   assert.match(runtime, /\{label:'جديدة',col:'#ef4444'\}/);
-  assert.match(runtime, /\{label:'مغلقة',col:'#7d8ea6'\}/);
+  assert.match(runtime, /\{label:'تمت المعالجة',col:'#22a06b'\}/);
 });
 
 test('department map suppresses fleet schematic semantics and fake pins', () => {
