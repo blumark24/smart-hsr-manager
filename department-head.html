@@ -494,6 +494,52 @@
   .dh-weather-title{font-size:10.5px;font-weight:650;color:var(--hdrTx,#fff)}
   .dh-weather-state{font-size:9.5px;color:var(--hdrTx3,#b7d7c7)}
   @media(max-width:760px){.dh-weather-title{display:none}.dh-weather-chip{padding:0 8px}.dh-weather-state{font-size:9px}}
+  /* SMART HSR case lifecycle + assignment + before/after compare */
+  .dh-case-flow{padding:12px 13px;border-radius:15px;background:color-mix(in srgb,var(--sunk2) 86%,transparent);border:1px solid var(--div)}
+  .dh-case-flow-title{font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:10px}
+  .dh-case-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;position:relative}
+  .dh-case-step{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+  .dh-case-step::after{content:"";position:absolute;top:7px;right:calc(50% + 8px);width:calc(100% - 16px);height:2px;background:var(--div);z-index:0}
+  .dh-case-step:first-child::after{display:none}
+  .dh-case-step-dot{width:15px;height:15px;border-radius:50%;z-index:1;border:2px solid var(--ctlBd);background:var(--field)}
+  .dh-case-step-dot.done{background:#22a06b;border-color:#22a06b;box-shadow:0 0 0 3px rgba(34,160,107,.12)}
+  .dh-case-step-dot.current{background:var(--acc);border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 16%,transparent)}
+  .dh-case-step.done::after{background:#22a06b}
+  .dh-case-step-label{font-size:8.8px;color:var(--tx3);white-space:nowrap}.dh-case-step.done .dh-case-step-label,.dh-case-step.current .dh-case-step-label{color:var(--tx);font-weight:650}
+
+  .dh-assignment-card{padding:13px;border-radius:15px;background:linear-gradient(145deg,color-mix(in srgb,#7c6cf2 9%,var(--sunk2)),var(--sunk2));border:1px solid color-mix(in srgb,#7c6cf2 24%,var(--div))}
+  .dh-assignment-card[data-assigned="true"]{background:linear-gradient(145deg,color-mix(in srgb,#22a06b 8%,var(--sunk2)),var(--sunk2));border-color:color-mix(in srgb,#22a06b 24%,var(--div))}
+  .dh-assignment-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.dh-assignment-head>div{display:flex;flex-direction:column;gap:2px}.dh-assignment-head b{font-size:11.5px;color:var(--tx)}.dh-assignment-head span{font-size:9.5px;color:var(--tx3)}
+  .dh-assignment-state{padding:4px 8px;border-radius:999px;background:var(--chipBg);color:var(--acc)!important;font-size:9px!important;font-weight:700}
+  .dh-assignment-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dh-assignment-grid>div{padding:8px 9px;border-radius:10px;background:color-mix(in srgb,var(--field) 75%,transparent);border:1px solid var(--div);display:flex;flex-direction:column;gap:3px}.dh-assignment-grid span{font-size:8.8px;color:var(--tx3)}.dh-assignment-grid b{font-size:10px;color:var(--tx);font-weight:650}
+
+  .dh-before-after-stage{position:relative;border-radius:15px;overflow:hidden;border:1px solid var(--div);background:#07101a}
+  .dh-before-after-image{position:relative;display:block;width:100%;height:300px;padding:0;border:0;background:none;overflow:hidden;cursor:zoom-in}
+  .dh-before-after-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;pointer-events:none}
+  .dh-ba-after-wrap{position:absolute;inset:0 auto 0 0;overflow:hidden}.dh-ba-after{width:100%!important;max-width:none!important}
+  .dh-ba-label{position:absolute;top:10px;padding:4px 8px;border-radius:999px;background:rgba(5,12,22,.70);color:#fff;font-size:9px;font-weight:700;backdrop-filter:blur(12px)}.dh-ba-label.before{right:10px}.dh-ba-label.after{left:10px}
+  .dh-ba-divider{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.18),0 0 18px rgba(255,255,255,.45);transform:translateX(-1px);pointer-events:none}.dh-ba-divider i{position:absolute;top:50%;left:50%;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.14);transform:translate(-50%,-50%);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .dh-ba-divider i::after{content:"↔";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#0b5f44;font-size:15px;font-style:normal;font-weight:800}
+  .dh-ba-range{position:absolute;inset:auto 0 0;width:100%;height:34px;opacity:.01;cursor:ew-resize;margin:0;z-index:3}
+
+  .dh-evidence-lightbox{position:fixed;inset:0;z-index:110;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(2,8,14,.78);backdrop-filter:blur(22px) saturate(120%);-webkit-backdrop-filter:blur(22px) saturate(120%)}
+  .dh-evidence-lightbox-panel{width:min(1120px,96vw);max-height:92dvh;border-radius:24px;overflow:hidden;background:color-mix(in srgb,var(--drawer) 90%,transparent);border:1px solid rgba(255,255,255,.16);box-shadow:0 36px 120px -36px rgba(0,0,0,.8);display:flex;flex-direction:column}
+  .dh-evidence-lightbox-head{min-height:54px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--div)}.dh-evidence-lightbox-head>div{display:flex;flex-direction:column}.dh-evidence-lightbox-head b{font-size:12px;color:var(--tx)}.dh-evidence-lightbox-head span{font-size:9px;color:var(--tx3)}.dh-evidence-lightbox-head button{width:32px;height:32px;border-radius:50%;border:1px solid var(--ctlBd);background:var(--ctl);color:var(--tx);font-size:18px;cursor:pointer}
+  .dh-evidence-lightbox-panel>img{display:block;width:100%;max-height:calc(92dvh - 54px);object-fit:contain;background:#02070c}
+
+  .dh-map-frame[data-map-mode="twin"] .hsr-observation-marker.phase-assigned{animation:hsrAssignedPulse 1.9s ease-in-out infinite}
+  .dh-map-frame[data-map-mode="twin"] .hsr-observation-marker.phase-progress{animation:hsrProgressPulse 1.4s ease-in-out infinite}
+  .dh-map-frame[data-map-mode="twin"] .hsr-observation-marker.phase-review{animation:hsrReviewPulse 2s ease-in-out infinite}
+  @keyframes hsrAssignedPulse{50%{box-shadow:0 0 0 9px rgba(124,108,242,.12),0 7px 22px rgba(0,0,0,.4)}}
+  @keyframes hsrProgressPulse{50%{transform:scale(1.24);box-shadow:0 0 0 7px rgba(245,158,11,.15),0 7px 22px rgba(0,0,0,.4)}}
+  @keyframes hsrReviewPulse{50%{box-shadow:0 0 0 8px rgba(56,189,248,.14),0 7px 22px rgba(0,0,0,.4)}}
+
+  @media(max-width:760px){
+    .dh-assignment-grid{grid-template-columns:1fr}
+    .dh-case-step-label{font-size:8px}
+    .dh-before-after-image{height:240px}
+    .dh-evidence-lightbox{padding:10px}.dh-evidence-lightbox-panel{border-radius:18px}
+  }
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -1328,6 +1374,38 @@
           </div>
         </sc-if>
 
+        <sc-if value="{{ dHasCaseSteps }}">
+          <section class="dh-case-flow" aria-label="مراحل معالجة البلاغ">
+            <div class="dh-case-flow-title">مسار الحالة</div>
+            <div class="dh-case-steps">
+              <sc-for list="{{ dCaseSteps }}" as="s" hint-placeholder-count="5">
+                <div class="{{ s.stepClass }}">
+                  <span class="{{ s.dotClass }}"></span>
+                  <span class="dh-case-step-label">{{ s.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ dHasAssignmentCard }}">
+          <section class="dh-assignment-card" data-assigned="{{ dAssignmentAssigned }}">
+            <div class="dh-assignment-head">
+              <div>
+                <b>{{ dAssignment.title }}</b>
+                <span>{{ dAssignment.status }}</span>
+              </div>
+              <span class="dh-assignment-state">{{ dAssignmentAssigned ? 'مسند' : 'بانتظار الإسناد' }}</span>
+            </div>
+            <div class="dh-assignment-grid">
+              <div><span>الشركة</span><b>{{ dAssignment.company }}</b></div>
+              <div><span>ممثل الشركة</span><b>{{ dAssignment.contact }}</b></div>
+              <div><span>العقد</span><b>{{ dAssignment.contract }}</b></div>
+              <div><span>وقت الإسناد</span><b>{{ dAssignment.assignedAt }}</b></div>
+            </div>
+          </section>
+        </sc-if>
+
         <sc-if value="{{ dHasRows }}">
           <div style="padding:13px;border-radius:13px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12));display:flex;flex-direction:column;gap:9px">
             <sc-for list="{{ dRows }}" as="r" hint-placeholder-count="6">
@@ -1411,34 +1489,43 @@
             <div class="dh-evidence-compare-head">
               <div>
                 <b>أدلة المعالجة</b>
-                <span>مقارنة موثقة بين حالة البلاغ قبل التنفيذ وبعده</span>
+                <span>اسحب للمقارنة بين الحالة قبل التنفيذ وبعده، واضغط الصورة للتكبير</span>
               </div>
               <span class="dh-evidence-completeness">{{ dEvidenceStatus }}</span>
             </div>
-            <div class="dh-evidence-grid">
-              <article class="dh-evidence-card">
-                <div class="dh-evidence-label"><span class="dh-evidence-dot before"></span>قبل المعالجة</div>
-                <sc-if value="{{ dHasEvidenceBefore }}">
-                  <button class="dh-evidence-image-button" onClick="{{ openBeforeEvidence }}" data-f="1" aria-label="تكبير صورة قبل المعالجة">
-                    <img src="{{ dEvidenceBefore.url }}" alt="صورة البلاغ قبل المعالجة">
-                  </button>
-                </sc-if>
-                <sc-if value="{{ dNoEvidenceBefore }}">
-                  <div class="dh-evidence-empty">لا تتوفر صورة قبل المعالجة</div>
-                </sc-if>
-              </article>
-              <article class="dh-evidence-card">
-                <div class="dh-evidence-label"><span class="dh-evidence-dot after"></span>بعد المعالجة</div>
-                <sc-if value="{{ dHasEvidenceAfter }}">
-                  <button class="dh-evidence-image-button" onClick="{{ openAfterEvidence }}" data-f="1" aria-label="تكبير صورة بعد المعالجة">
-                    <img src="{{ dEvidenceAfter.url }}" alt="صورة البلاغ بعد المعالجة">
-                  </button>
-                </sc-if>
-                <sc-if value="{{ dNoEvidenceAfter }}">
+
+            <sc-if value="{{ dEvidenceBoth }}">
+              <div class="dh-before-after-stage">
+                <button class="dh-before-after-image" onClick="{{ openCompareEvidence }}" data-f="1" aria-label="تكبير مقارنة قبل وبعد">
+                  <img class="dh-ba-before" src="{{ dEvidenceBefore.url }}" alt="قبل المعالجة">
+                  <div class="dh-ba-after-wrap" style="width:{{ dEvidenceSplit }}%">
+                    <img class="dh-ba-after" src="{{ dEvidenceAfter.url }}" alt="بعد المعالجة">
+                  </div>
+                  <span class="dh-ba-label before">قبل</span>
+                  <span class="dh-ba-label after">بعد</span>
+                  <span class="dh-ba-divider" style="left:{{ dEvidenceSplit }}%"><i></i></span>
+                </button>
+                <input class="dh-ba-range" type="range" min="0" max="100" value="{{ dEvidenceSplit }}" onChange="{{ setEvidenceSplit }}" aria-label="تحريك مقارنة صور قبل وبعد">
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ dNoEvidenceAfter }}">
+              <div class="dh-evidence-grid">
+                <article class="dh-evidence-card">
+                  <div class="dh-evidence-label"><span class="dh-evidence-dot before"></span>قبل المعالجة</div>
+                  <sc-if value="{{ dHasEvidenceBefore }}">
+                    <button class="dh-evidence-image-button" onClick="{{ openBeforeEvidence }}" data-f="1" aria-label="تكبير صورة قبل المعالجة">
+                      <img src="{{ dEvidenceBefore.url }}" alt="صورة البلاغ قبل المعالجة">
+                    </button>
+                  </sc-if>
+                  <sc-if value="{{ dNoEvidenceBefore }}"><div class="dh-evidence-empty">لا تتوفر صورة قبل المعالجة</div></sc-if>
+                </article>
+                <article class="dh-evidence-card">
+                  <div class="dh-evidence-label"><span class="dh-evidence-dot after"></span>بعد المعالجة</div>
                   <div class="dh-evidence-empty pending">بانتظار رفع المقاول لصورة المعالجة</div>
-                </sc-if>
-              </article>
-            </div>
+                </article>
+              </div>
+            </sc-if>
           </section>
         </sc-if>
 
@@ -1485,6 +1572,18 @@
   </div>
 </sc-if>
 
+<sc-if value="{{ evidenceLightboxOpen }}">
+  <div class="dh-evidence-lightbox" onClick="{{ closeEvidenceLightbox }}" role="presentation">
+    <div class="dh-evidence-lightbox-panel" onClick="{{ stop }}" role="dialog" aria-modal="true" aria-label="{{ evidenceLightboxLabel }}">
+      <div class="dh-evidence-lightbox-head">
+        <div><b>{{ evidenceLightboxLabel }}</b><span>دليل مصور للبلاغ</span></div>
+        <button onClick="{{ closeEvidenceLightbox }}" data-f="1" aria-label="إغلاق الصورة">×</button>
+      </div>
+      <img src="{{ evidenceLightboxUrl }}" alt="{{ evidenceLightboxLabel }}">
+    </div>
+  </div>
+</sc-if>
+
 <sc-if value="{{ hasToast }}">
   <div style="position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:95;display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:12px;background:var(--pop,rgba(10,17,30,0.98));border:1px solid var(--accBd,rgba(76,201,240,0.35));box-shadow:0 22px 48px -18px rgba(0,0,0,0.7);animation:mRise .2s ease-out;max-width:92vw">
     <span style="width:7px;height:7px;flex:none;border-radius:50%;background:var(--acc,#4cc9f0)"></span>
@@ -1505,6 +1604,7 @@ class Component extends DCLogic {
     twin3D: false, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
     layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true },
     sel: null, drawer: null, drawerId: null,
+    evidenceSplit: 50, evidenceLightbox: null,
     stat: {}, form: {}, chip: {},
     fleetFilter: 'الكل', misFilter: 'الكل', period: 'اليوم',
     empScreen: 'home', elapsed: 0, tick: 0,
@@ -2595,6 +2695,8 @@ class Component extends DCLogic {
       openBeforeEvidence: () => dr.evidenceBefore?.url && window.open(dr.evidenceBefore.url,'_blank','noopener'),
       openAfterEvidence: () => dr.evidenceAfter?.url && window.open(dr.evidenceAfter.url,'_blank','noopener'),
       dHasList: !!(dr.list && dr.list.length), dListTitle: dr.listTitle || '', dList: dr.list || [],
+      dHasCaseSteps:false,dCaseSteps:[],dHasAssignmentCard:false,dAssignment:{},dAssignmentAssigned:false,
+      evidenceLightboxOpen:false,evidenceLightboxUrl:'',evidenceLightboxLabel:'',closeEvidenceLightbox:()=>{},
       dHasActions: !!(dr.actions && dr.actions.length), dActions: dr.actions || []
     };
     return Object.assign(base, this.ext(day, st));
