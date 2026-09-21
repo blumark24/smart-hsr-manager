@@ -45,6 +45,9 @@ jobs:
       - name: Visual distortion inspector-contractor tests
         run: node --test test/visual-distortion-department-head.test.js
 
+      - name: Visual distortion full lifecycle integration test
+        run: node --test test/visual-distortion-lifecycle.integration.test.js
+
       - name: Field Head evidence access tests
         run: node --test test/field-head-evidence-access.test.js
 
