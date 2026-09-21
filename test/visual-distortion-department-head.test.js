@@ -82,26 +82,31 @@ test('inspector still cannot close visual distortion directly', () => {
 });
 
 
-test('department head navigation separates visual distortion, contractors, mobility, employees and audit', () => {
-  assert.match(runtime, /id:'visual', label:'التشوه البصري'/);
-  assert.match(runtime, /id:'contractors', label:'المقاولون والعقود'/);
+test('department head navigation keeps visual distortion on missions and no contractor nav', () => {
+  assert.match(runtime, /id:'missions', label:'التشوه البصري'/);
+  assert.doesNotMatch(runtime, /id:'contractors', label:'المقاولون والعقود'/);
   assert.match(runtime, /id:'fieldmobility', label:'الحركة الميدانية'/);
   assert.match(runtime, /id:'employees', label:'موظفو القسم'/);
+  assert.match(runtime, /id:'incidents', label:'البلاغات والملاحظات'/);
   assert.match(runtime, /id:'audit', label:'سجل القسم'/);
 });
 
-test('visual distortion table is backed only by canonical observations', () => {
-  assert.match(runtime, /screen === 'visual'/);
+test('missions is the canonical visual distortion table with no mobility creation CTA', () => {
+  assert.match(runtime, /screen === 'missions'/);
+  assert.match(runtime, /title:'التشوه البصري'/);
+  assert.match(runtime, /actions:\[\]/);
   assert.match(runtime, /instance\.state\.liveObservations/);
   assert.match(runtime, /instance\.openFieldObservation\(o\.observationId\)/);
   assert.match(runtime, /tCount:observations\.length\+' بلاغ معروض'/);
 });
 
-test('contractor registry is visible as a separate operational surface', () => {
-  assert.match(runtime, /screen === 'contractors'/);
-  assert.match(runtime, /instance\.state\.liveContractors/);
-  assert.match(runtime, /contractState==='ACTIVE'/);
-  assert.match(runtime, /drawer:'contractorProfile'/);
+test('contractor appears only contextually during visual distortion assignment', () => {
+  assert.doesNotMatch(runtime, /screen === 'contractors'/);
+  assert.match(runtime, /contractState === 'ACTIVE'/);
+  assert.match(runtime, /شركة التنفيذ المتعاقدة — العقود النشطة فقط/);
+  assert.match(runtime, /شركة المقاول \(عقد نشط\)/);
+  assert.match(runtime, /contractNumber/);
+  assert.match(runtime, /endDate/);
 });
 
 test('department audit timeline is tenant and department scoped through trusted API', () => {
@@ -109,7 +114,7 @@ test('department audit timeline is tenant and department scoped through trusted 
   assert.match(usersApi, /requireFieldDepartmentHead\(decoded\.uid\)/);
   assert.match(usersApi, /collection\('auditEvents'\)/);
   assert.match(usersApi, /where\('organizationId', '==', caller\.organizationId\)/);
-  assert.match(usersApi, /eventDepartment && eventDepartment !== cleanString\(caller\.department\)/);
+  assert.match(usersApi, /eventDepartment !== cleanString\(caller\.department\)/);
   assert.match(runtime, /api\('listFieldDepartmentAudit'\)/);
   assert.match(runtime, /liveDepartmentAudit/);
 });
@@ -121,4 +126,13 @@ test('department head can maintain contractor contract profile from the approved
   assert.match(runtime, /upsertFieldContractorProfile/);
   assert.match(runtime, /contractorUid:x\.uid/);
   assert.match(runtime, /حفظ الملف التعاقدي/);
+});
+
+test('visual audit screen filters to observation and contractor profile events', () => {
+  assert.match(runtime, /e\.resourceType==='observation'\|\|e\.resourceType==='contractorProfile'/);
+});
+
+test('legacy incidents remain explicitly separate from visual distortion', () => {
+  assert.match(runtime, /screen === 'incidents'/);
+  assert.match(runtime, /وحدة تشغيلية مستقلة عن التشوه البصري/);
 });
