@@ -46,6 +46,9 @@ jobs:
       - name: Manager Lands digital record tests
         run: node --test test/manager-lands-digital-record.test.js
 
+      - name: Manager Lands GIS tests
+        run: node --test test/manager-lands-gis.test.js
+
       - name: Manager Lands bridge integration tests
         run: node --test test/manager-lands-bridge-integration.test.js
 
