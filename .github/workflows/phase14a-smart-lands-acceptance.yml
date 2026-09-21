@@ -43,6 +43,9 @@ jobs:
       - name: Lands sync reconciliation tests
         run: node --test test/lands-sync-reconciliation.test.js
 
+      - name: Manager Lands digital record tests
+        run: node --test test/manager-lands-digital-record.test.js
+
       - name: Manager Lands bridge integration tests
         run: node --test test/manager-lands-bridge-integration.test.js
 
