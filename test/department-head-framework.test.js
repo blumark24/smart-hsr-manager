@@ -50,9 +50,11 @@ test('approved command board is now the canonical department-head UI', () => {
 
 test('field command center derives KPIs from live canonical observations', () => {
   assert.match(runtime, /liveObservations/);
-  assert.match(runtime, /observations\.filter\(o=>o\.status==='IN_PROGRESS'\)/);
-  assert.match(runtime, /observations\.filter\(o=>o\.status==='PENDING_REVIEW'\)/);
-  assert.match(runtime, /observations\.filter\(o=>o\.status==='COMPLETED'\)/);
+  assert.match(runtime, /function workflowPhase\(o\)/);
+  assert.match(runtime, /countPhase\('assigned'\)/);
+  assert.match(runtime, /countPhase\('progress'\)/);
+  assert.match(runtime, /countPhase\('review'\)/);
+  assert.match(runtime, /countPhase\('completed'\)/);
   assert.match(runtime, /getFieldVisualDistortionCommand/);
   assert.doesNotMatch(fieldHead, /fakeObservation|mockObservation|demoObservation/i);
 });
