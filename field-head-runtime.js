@@ -111,6 +111,15 @@
   function verificationLabel(status) {
     return ({VERIFIED:'تم التحقق',RETURNED:'أعيد للمقاول',PENDING:'بانتظار التحقق'}[String(status||'').toUpperCase()] || status || 'لم يبدأ');
   }
+  function locationLabel(o) {
+    const raw=String(o?.location||'').trim();
+    if (!raw) return o?.locationVerified===true ? 'موقع GPS موثّق' : 'الموقع غير موثق';
+    if (/^-?\d+(?:\.\d+)?\s*[,،]\s*-?\d+(?:\.\d+)?$/.test(raw)) return 'موقع GPS موثّق';
+    return raw;
+  }
+  function firstEvidenceReference(...values) {
+    return values.find(v=>typeof v==='string' && v.trim())?.trim() || null;
+  }
   function formatAuditTime(value) {
     if (!value) return '—';
     const d=new Date(value);
@@ -289,14 +298,16 @@
       const o = (instance.state.liveObservations || []).find(x => x.observationId === observationId);
       if (!o) return;
       instance.setState({drawer:'observation',drawerId:observationId,observationEvidence:[],notifOpen:false,layersOpen:false,mobNavOpen:false});
+      const beforeRef=firstEvidenceReference(o.imageObjectKey,o.imagePath,o.imageUrl,o.beforeImagePath);
+      const afterRef=firstEvidenceReference(o.afterImagePath,o.afterImageUrl);
       const [before,after] = await Promise.all([
-        window.SmartHSRMobilityAdapter.resolveObservationEvidence(o.imagePath),
-        window.SmartHSRMobilityAdapter.resolveObservationEvidence(o.afterImagePath)
+        window.SmartHSRMobilityAdapter.resolveObservationEvidence(beforeRef),
+        window.SmartHSRMobilityAdapter.resolveObservationEvidence(afterRef)
       ]);
       if (instance.state.drawer === 'observation' && instance.state.drawerId === observationId) {
         instance.setState({observationEvidence:[
-          ...(before ? [{label:'قبل المعالجة',url:before}] : []),
-          ...(after ? [{label:'بعد المعالجة',url:after}] : [])
+          ...(before ? [{kind:'before',label:'قبل المعالجة',url:before}] : []),
+          ...(after ? [{kind:'after',label:'بعد المعالجة',url:after}] : [])
         ]});
       }
     };
@@ -347,8 +358,8 @@
               on:()=>instance.openFieldObservation(o.observationId),
               cells:[
                 cell(o.displayId||o.observationId,'0 0 88px',{weight:'650',col:'var(--tx,#e9f1fb)'}),
-                cell(o.type||o.title||'تشوه بصري','1.1'),
-                cell(o.location||'إحداثيات موثقة','1.4',{size:'11px'}),
+                cell(typeLabel(o.type||o.title),'1.1'),
+                cell(locationLabel(o),'1.4',{size:'11px'}),
                 cell(o.createdByName||o.inspectorName,'1',{size:'11px'}),
                 cell(o.assignedContractorName||'غير مسند','1',{size:'11px'}),
                 cell(o.inspectorVerification?.status==='VERIFIED'?'متحقق':o.inspectorVerification?.status==='RETURNED'?'معاد للمقاول':'—','0 0 100px',{align:'left',size:'10.5px'})
@@ -566,7 +577,8 @@
             rows:[
               {k:'رقم الحالة',v:String(o.displayId || o.observationId || '—')},
               {k:'التصنيف',v:typeLabel(o.type || o.title)},
-              {k:'الموقع',v:o.location || 'موقع GPS موثّق'},
+              {k:'الموقع',v:locationLabel(o)},
+              {k:'الإحداثيات',v:(Number.isFinite(Number(o.correctedLat))&&Number.isFinite(Number(o.correctedLng)))?(Number(o.correctedLat).toFixed(6)+'، '+Number(o.correctedLng).toFixed(6)):'—'},
               {k:'الحالة',v:statusLabel(o.status)},
               {k:'المراقب',v:o.createdByName || o.inspectorName || 'غير مسند'},
               {k:'الشركة المتعاقدة',v:assignedProfile.companyName || (o.assignedContractorUid ? 'شركة متعاقدة' : 'غير مسند')},
@@ -575,6 +587,7 @@
               {k:'التحقق',v:verificationLabel(o.inspectorVerification?.status)}
             ],
             evidenceImages:instance.state.observationEvidence || [],
+            evidenceCompare:true,
             actions
           };
         }
@@ -709,6 +722,11 @@
         const dr = instance.drawerData?.() || {};
         vals.dHasEvidenceImages = !!(dr.evidenceImages && dr.evidenceImages.length);
         vals.dEvidenceImages = dr.evidenceImages || [];
+        vals.dEvidenceCompare = dr.evidenceCompare === true;
+        vals.dEvidenceBefore = (dr.evidenceImages||[]).find(x=>x.kind==='before') || null;
+        vals.dEvidenceAfter = (dr.evidenceImages||[]).find(x=>x.kind==='after') || null;
+        vals.dHasEvidenceBefore = !!vals.dEvidenceBefore;
+        vals.dHasEvidenceAfter = !!vals.dEvidenceAfter;
         if (instance.state.role === 'dept' && (instance.state.screen === 'map' || instance.state.screen === 'deptops')) {
           const trusted=trustedObservations(instance);
           vals.showMapEmpty=trusted.length===0;
