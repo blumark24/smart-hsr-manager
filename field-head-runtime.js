@@ -723,10 +723,21 @@
         vals.dHasEvidenceImages = !!(dr.evidenceImages && dr.evidenceImages.length);
         vals.dEvidenceImages = dr.evidenceImages || [];
         vals.dEvidenceCompare = dr.evidenceCompare === true;
+        vals.dNoEvidenceCompare = dr.evidenceCompare !== true;
         vals.dEvidenceBefore = (dr.evidenceImages||[]).find(x=>x.kind==='before') || null;
         vals.dEvidenceAfter = (dr.evidenceImages||[]).find(x=>x.kind==='after') || null;
         vals.dHasEvidenceBefore = !!vals.dEvidenceBefore;
         vals.dHasEvidenceAfter = !!vals.dEvidenceAfter;
+        vals.dNoEvidenceBefore = !vals.dEvidenceBefore;
+        vals.dNoEvidenceAfter = !vals.dEvidenceAfter;
+        vals.dEvidenceStatus = vals.dEvidenceBefore && vals.dEvidenceAfter ? 'مكتملة قبل / بعد'
+          : vals.dEvidenceBefore ? 'قبل فقط' : 'غير مكتملة';
+        vals.openBeforeEvidence = () => {
+          if (vals.dEvidenceBefore?.url) window.open(vals.dEvidenceBefore.url,'_blank','noopener');
+        };
+        vals.openAfterEvidence = () => {
+          if (vals.dEvidenceAfter?.url) window.open(vals.dEvidenceAfter.url,'_blank','noopener');
+        };
         if (instance.state.role === 'dept' && (instance.state.screen === 'map' || instance.state.screen === 'deptops')) {
           const trusted=trustedObservations(instance);
           vals.showMapEmpty=trusted.length===0;
