@@ -516,7 +516,7 @@
   .dh-before-after-stage{position:relative;border-radius:15px;overflow:hidden;border:1px solid var(--div);background:#07101a}
   .dh-before-after-image{position:relative;display:block;width:100%;height:300px;padding:0;border:0;background:none;overflow:hidden;cursor:zoom-in}
   .dh-before-after-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;pointer-events:none}
-  .dh-ba-after-wrap{position:absolute;inset:0 auto 0 0;overflow:hidden}.dh-ba-after{width:100%!important;max-width:none!important}
+  .dh-ba-after{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:none!important}
   .dh-ba-label{position:absolute;top:10px;padding:4px 8px;border-radius:999px;background:rgba(5,12,22,.70);color:#fff;font-size:9px;font-weight:700;backdrop-filter:blur(12px)}.dh-ba-label.before{right:10px}.dh-ba-label.after{left:10px}
   .dh-ba-divider{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.18),0 0 18px rgba(255,255,255,.45);transform:translateX(-1px);pointer-events:none}.dh-ba-divider i{position:absolute;top:50%;left:50%;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.14);transform:translate(-50%,-50%);box-shadow:0 8px 24px rgba(0,0,0,.25)}
   .dh-ba-divider i::after{content:"↔";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#0b5f44;font-size:15px;font-style:normal;font-weight:800}
@@ -1395,7 +1395,7 @@
                 <b>{{ dAssignment.title }}</b>
                 <span>{{ dAssignment.status }}</span>
               </div>
-              <span class="dh-assignment-state">{{ dAssignmentAssigned ? 'مسند' : 'بانتظار الإسناد' }}</span>
+              <span class="dh-assignment-state">{{ dAssignmentStateLabel }}</span>
             </div>
             <div class="dh-assignment-grid">
               <div><span>الشركة</span><b>{{ dAssignment.company }}</b></div>
@@ -1498,14 +1498,12 @@
               <div class="dh-before-after-stage">
                 <button class="dh-before-after-image" onClick="{{ openCompareEvidence }}" data-f="1" aria-label="تكبير مقارنة قبل وبعد">
                   <img class="dh-ba-before" src="{{ dEvidenceBefore.url }}" alt="قبل المعالجة">
-                  <div class="dh-ba-after-wrap" style="width:{{ dEvidenceSplit }}%">
-                    <img class="dh-ba-after" src="{{ dEvidenceAfter.url }}" alt="بعد المعالجة">
-                  </div>
+                  <img class="dh-ba-after" src="{{ dEvidenceAfter.url }}" alt="بعد المعالجة" style="clip-path:inset(0 {{ dEvidenceClip }} 0 0)">
                   <span class="dh-ba-label before">قبل</span>
                   <span class="dh-ba-label after">بعد</span>
                   <span class="dh-ba-divider" style="left:{{ dEvidenceSplit }}%"><i></i></span>
                 </button>
-                <input class="dh-ba-range" type="range" min="0" max="100" value="{{ dEvidenceSplit }}" onChange="{{ setEvidenceSplit }}" aria-label="تحريك مقارنة صور قبل وبعد">
+                <input class="dh-ba-range" type="range" min="0" max="100" value="{{ dEvidenceSplit }}" onInput="{{ setEvidenceSplit }}" onChange="{{ setEvidenceSplit }}" aria-label="تحريك مقارنة صور قبل وبعد">
               </div>
             </sc-if>
 
@@ -2695,7 +2693,8 @@ class Component extends DCLogic {
       openBeforeEvidence: () => dr.evidenceBefore?.url && window.open(dr.evidenceBefore.url,'_blank','noopener'),
       openAfterEvidence: () => dr.evidenceAfter?.url && window.open(dr.evidenceAfter.url,'_blank','noopener'),
       dHasList: !!(dr.list && dr.list.length), dListTitle: dr.listTitle || '', dList: dr.list || [],
-      dHasCaseSteps:false,dCaseSteps:[],dHasAssignmentCard:false,dAssignment:{},dAssignmentAssigned:false,
+      dHasCaseSteps:false,dCaseSteps:[],dHasAssignmentCard:false,dAssignment:{},dAssignmentAssigned:false,dAssignmentStateLabel:'',
+      dEvidenceClip:'50%',
       evidenceLightboxOpen:false,evidenceLightboxUrl:'',evidenceLightboxLabel:'',closeEvidenceLightbox:()=>{},
       dHasActions: !!(dr.actions && dr.actions.length), dActions: dr.actions || []
     };
@@ -2718,7 +2717,7 @@ class Component extends DCLogic {
       { id: 'handover', label: 'التسليم والاستلام' }, { id: 'map', label: 'الخريطة التشغيلية' }, { id: 'incidents', label: 'الحوادث والطوارئ' },
       { id: 'reports', label: 'التقارير' }, { id: 'audit', label: 'السجل التشغيلي' }, { id: 'settings', label: 'الإعدادات والسياسات' },
       { id: 'committees', label: 'اللجان', tag: 'قريباً', soon: true }];
-    if (r === 'dept') return [{ id: 'deptops', label: 'مركز قيادة القسم' }, { id: 'missions', label: 'التشوه البصري' }, { id: 'incidents', label: 'البلاغات والملاحظات' }, { id: 'audit', label: 'سجل القسم' }];
+    if (r === 'dept') return [{ id: 'deptops', label: 'مركز قيادة القسم' }, { id: 'missions', label: 'التشوه البصري' }, { id: 'incidents', label: 'البلاغات العامة' }, { id: 'audit', label: 'سجل القسم' }];
     if (r === 'admin') return [{ id: 'approvals', label: 'طلبات الاعتماد' }, { id: 'audit', label: 'سجل الاعتمادات' }, { id: 'settings', label: 'سياسة الاعتماد' }];
     return [{ id: 'emp', label: 'عملياتي' }];
   }
