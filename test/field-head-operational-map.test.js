@@ -69,3 +69,11 @@ test('map empty state and legend derive from the same trusted observation set', 
   assert.match(runtime, /\{label:'جديدة',col:'#ef4444'\}/);
   assert.match(runtime, /\{label:'مغلقة',col:'#7d8ea6'\}/);
 });
+
+test('department map suppresses fleet schematic semantics and fake pins', () => {
+  assert.match(runtime, /vals\.mapPins=\[\]/);
+  assert.match(runtime, /vals\.zoneLabels=\[\]/);
+  assert.match(runtime, /بلاغات التشوه البصري الموثقة/);
+  assert.match(runtime, /vals\.layerCount='1\/1'/);
+  assert.match(runtime, /بلاغ موثق على الخريطة/);
+});
