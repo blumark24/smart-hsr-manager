@@ -149,15 +149,19 @@ form.addEventListener("submit", async (e) => {
     // المساعد من users/{uid} فقط، وكلاهما فعّال ومرتبط بمؤسسة.
     const managerOrg = typeof managerData?.organizationId === 'string' ? managerData.organizationId.trim() : '';
     let authorized = !!(managerData && managerData.role === 'manager' && managerData.active !== false && managerOrg);
+    let fallbackUserData = null;
     if (!authorized) {
       const userSnap = await getDoc(doc(db, 'users', user.uid));
       const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+      fallbackUserData = userData;
       const userOrg = typeof userData.organizationId === 'string' ? userData.organizationId.trim() : '';
       authorized = userData.role === 'supervisor' && userData.active !== false && !!userOrg;
     }
     if (!authorized) {
       await signOut(auth);
-      showLoginMessage("❌ هذا الحساب غير مصرح له بالدخول كمدير");
+      showLoginMessage(fallbackUserData?.role === 'contractor'
+        ? "ℹ️ هذا حساب شركة متعاقدة. استخدم بوابة الدخول الموحدة للمقاولين والموظفين."
+        : "❌ هذا الحساب غير مصرح له بالدخول كمدير");
       return;
     }
 
