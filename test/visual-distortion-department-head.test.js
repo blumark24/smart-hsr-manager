@@ -207,3 +207,15 @@ test('visual case drawer separates contractor company from representative and co
   assert.match(runtime, /verificationLabel/);
   assert.match(runtime, /typeLabel/);
 });
+
+
+test('smart glass modal system is centered and responsive', () => {
+  const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+  assert.match(page, /dh-smart-modal-scrim/);
+  assert.match(page, /dh-smart-modal/);
+  assert.match(page, /align-items:center;justify-content:center/);
+  assert.match(page, /backdrop-filter:blur\(34px\) saturate\(145%\)/);
+  assert.match(page, /dhGlassModalIn/);
+  assert.match(page, /role="dialog" aria-modal="true"/);
+  assert.match(page, /@media\(max-width:760px\)/);
+});
