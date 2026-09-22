@@ -236,6 +236,95 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const hasFieldDepartmentHeadRole = hasDepartmentHeadRole
       && /الحصر|ميداني|field/i.test(administration || department);
 
+    // PHASE16 — canonical municipal identity wins routing.
+    // One employee has one active organizational path and one workspace.
+    // Product entitlements remain technical authorization inputs only; they
+    // never choose a second workspace when the HR path is canonical.
+    const canonicalInstitutionalRole = ['general_supervisor','department_head','employee'].includes(institutionalRole);
+    const canonicalFieldPath = canonicalInstitutionalRole && /الحصر|ميداني|field/i.test(administration);
+    const canonicalLandsPath = canonicalInstitutionalRole && /الأراضي|الممتلكات|lands/i.test(administration);
+    const canonicalMobilityPath = canonicalInstitutionalRole && /حركة السير|الحركة الذكية|mobility|traffic/i.test(administration);
+    const canonicalAdministrativePath = canonicalInstitutionalRole && /الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
+    const hasCanonicalPath = canonicalFieldPath || canonicalLandsPath || canonicalMobilityPath || canonicalAdministrativePath;
+
+    // Canonical Field path: ignore stale historical Mobility compatibility
+    // entitlements and open the one HR-owned workspace.
+    if (hasCanonicalPath && canonicalFieldPath && (hasFieldRole || hasFieldDepartmentHeadRole)) {
+      await signInWithEmailAndPassword(auth, email, password);
+      if (role === 'supervisor') {
+        await signInWithEmailAndPassword(managerAuth, email, password);
+      }
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
+      setTimeout(() => {
+        if (institutionalRole === 'department_head') window.location.href = 'department-head.html';
+        else if (role === 'supervisor') window.location.href = 'manager.html';
+        else if (role === 'contractor') window.location.href = 'mobile-map.html';
+        else window.location.href = 'dashboard.html';
+      }, 450);
+      return;
+    }
+
+    // Canonical Lands path keeps the trusted one-time SSO handoff.
+    if (hasCanonicalPath && canonicalLandsPath && hasLandsRole) {
+      let handoffCode = null;
+      try {
+        const idToken = await user.getIdToken();
+        const handoffResp = await fetch('/api/organization/context', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        });
+        const handoffData = await handoffResp.json().catch(() => ({}));
+        if (handoffResp.ok && typeof handoffData.code === 'string' && handoffData.code) handoffCode = handoffData.code;
+      } catch (e) {
+        console.error('lands-sso-handoff request failed', e);
+      }
+      await signOut(probeAuth);
+      if (!handoffCode) {
+        showMsg('❌ تعذر إعداد الدخول الآمن إلى الأراضي والممتلكات. حاول لاحقًا.', 'error');
+        loginButton.disabled = false;
+        loginButton.textContent = 'تسجيل الدخول';
+        return;
+      }
+      showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
+      setTimeout(() => {
+        const landsUrl = new URL(resolveLandsRedirectBase());
+        landsUrl.searchParams.set('code', handoffCode);
+        window.location.href = landsUrl.toString();
+      }, 450);
+      return;
+    }
+
+    // Canonical Traffic/Mobility path.
+    if (hasCanonicalPath && canonicalMobilityPath && mobilityRole) {
+      await signInWithEmailAndPassword(auth, email, password);
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
+      setTimeout(() => { window.location.href = 'department-head.html?mode=mobility'; }, 450);
+      return;
+    }
+
+    // Administrative Affairs is still using the existing trusted approval
+    // runtime until its dedicated institutional workspace is delivered in
+    // the next closure phase. It remains one path; no service chooser.
+    if (hasCanonicalPath && canonicalAdministrativePath && mobilityRole === 'administrative_affairs') {
+      await signInWithEmailAndPassword(auth, email, password);
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ فتح الشؤون الإدارية', 'success');
+      setTimeout(() => { window.location.href = 'department-head.html?mode=mobility'; }, 450);
+      return;
+    }
+
+    if (hasCanonicalPath) {
+      await signOut(probeAuth);
+      showMsg('🚫 المسار الوظيفي مسجل لكن صلاحية التشغيل المطابقة غير مكتملة. راجع مدير البلدية.', 'error');
+      loginButton.disabled = false;
+      loginButton.textContent = 'تسجيل الدخول';
+      return;
+    }
+
+    // Legacy fallback only: older accounts may still hold multiple service
+    // entitlements until their institutional path is migrated.
     // Unified identity routing: one person / one UID may hold multiple
     // independent SMART HSR workspaces. Count workspaces, never identities.
     const serviceCount =
@@ -255,9 +344,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       return;
     }
 
-    // ONE PERSON = ONE IDENTITY = MULTIPLE WORKSPACES.
-    // Multi-service accounts persist the SAME Firebase identity once, then
-    // choose a workspace. No duplicate employee/user record is created.
+    // LEGACY COMPATIBILITY ONLY — canonical PHASE16 identities never enter
+    // this chooser. No duplicate employee/user record is created.
     if (serviceCount > 1) {
       await signInWithEmailAndPassword(auth, email, password);
       if (role === 'supervisor') {
