@@ -57,9 +57,11 @@ test('Add Employee and existing employee activation both use shared readProducts
 
 
 test('User Center separates external contractor companies from municipal employees', () => {
-  assert.match(enhancements, /data-add-contractor/);
-  assert.match(enhancements, /\+ إضافة شركة متعاقدة/);
-  assert.match(enhancements, /openContractorCompanyDialog/);
+  assert.match(enhancements, /data-open-contractors/);
+  assert.match(enhancements, /سجل الشركات المتعاقدة/);
+  assert.match(enhancements, /contractors-registry\.html/);
+  assert.doesNotMatch(enhancements, /data-add-contractor/);
+  assert.doesNotMatch(enhancements, /kpiCard\('contractors'/);
   assert.match(enhancements, /جهة خارجية متعاقدة — ليست موظف بلدية/);
   assert.match(enhancements, /لا يظهر كسجل موظف بلدية/);
   assert.doesNotMatch(enhancements, /data-close-center/);
@@ -76,6 +78,8 @@ test('contracted-company window collects contract and representative account dat
 });
 
 test('contracted-company onboarding reuses trusted users API and existing contractor schema', () => {
+  const contractorRegistry = fs.readFileSync(path.join(root, 'contractors-registry-runtime.js'), 'utf8');
+  assert.match(contractorRegistry, /createFieldContractorCompany/);
   assert.match(usersApi, /action === 'createFieldContractorCompany'/);
   assert.match(usersApi, /caller\.role !== 'manager'/);
   assert.match(usersApi, /role: 'contractor'/);
