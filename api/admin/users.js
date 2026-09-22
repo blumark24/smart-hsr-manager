@@ -163,13 +163,28 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
   const snap = await db.collection('users').doc(uid).get();
   if (!snap.exists) return null;
   const data = snap.data() || {};
-  const role = resolveMobilityRole(data);
   const organizationId = cleanString(data.organizationId);
+  const administration = cleanString(data.administration);
+  const institutionalRole = cleanString(data.institutionalRole);
+
+  // PHASE17 — Administrative Affairs is an institutional administration,
+  // not a Smart Mobility product entitlement. A canonical active
+  // department_head in Administrative Affairs receives the narrow
+  // administrative_affairs actor role only inside the trusted Mobility
+  // approval workflow. Nothing is written back to mobilityAccess and this
+  // does not grant fleet-management or product-switching privileges.
+  const isAdministrativeAffairsHead =
+    institutionalRole === 'department_head'
+    && /الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
+
+  const role = isAdministrativeAffairsHead ? 'administrative_affairs' : resolveMobilityRole(data);
   if (!Array.isArray(allowedRoles) || !allowedRoles.includes(role)
       || data.active === false || !organizationId) return null;
   return {
     uid,
     role,
+    institutionalRole,
+    administration,
     organizationId,
     department: cleanString(data.department),
     name: cleanString(data.name),
