@@ -132,6 +132,7 @@ function safeEmployee(id, data) {
     administration: data.administration || null,
     department: data.department || null,
     jobTitle: data.jobTitle || null,
+    institutionalRole: data.institutionalRole || 'employee',
     employmentStatus: data.employmentStatus || 'active',
     directManagerEmployeeId: data.directManagerEmployeeId || null,
     accountStatus: data.accountStatus || ACCOUNT_STATUS.NO_ACCOUNT,
@@ -254,8 +255,8 @@ async function handler(req, res) {
 
       // ---- create an employee record ONLY — never a Firebase Auth account ----
       case 'create': {
-        const { organizationId, name, employeeRef, email, phone, administration, department, jobTitle, employmentStatus, directManagerEmployeeId } = body;
-        const validation = validateEmployeeRecord({ organizationId, name, email, phone, administration, department, jobTitle, employmentStatus, directManagerEmployeeId });
+        const { organizationId, name, employeeRef, email, phone, administration, department, jobTitle, institutionalRole, employmentStatus, directManagerEmployeeId } = body;
+        const validation = validateEmployeeRecord({ organizationId, name, email, phone, administration, department, jobTitle, institutionalRole, employmentStatus, directManagerEmployeeId });
         if (!validation.ok) return sendJson(res, 400, { error: 'invalid_request', reason: validation.reason });
 
         const decision = assertCanManageEmployee(caller, { targetOrganizationId: organizationId, targetDepartment: department });
@@ -293,6 +294,7 @@ async function handler(req, res) {
           administration: isNonEmptyString(administration) ? administration.trim() : null,
           department: isNonEmptyString(department) ? department.trim() : null,
           jobTitle: isNonEmptyString(jobTitle) ? jobTitle.trim() : null,
+          institutionalRole: isNonEmptyString(institutionalRole) ? institutionalRole.trim() : 'employee',
           employmentStatus: employmentStatus || 'active',
           directManagerEmployeeId: isNonEmptyString(directManagerEmployeeId) ? directManagerEmployeeId.trim() : null,
           accountStatus: ACCOUNT_STATUS.NO_ACCOUNT,
@@ -387,7 +389,9 @@ async function handler(req, res) {
               name: employee.data.name || '',
               role: fieldSel.enabled ? fieldSel.role : null,
               organizationId: employee.data.organizationId,
+              administration: employee.data.administration || null,
               department: employee.data.department || null,
+              institutionalRole: employee.data.institutionalRole || 'employee',
               active: true,
               employeeId,
               vehicleEligible: products.mobility.vehicleEligible,
@@ -468,7 +472,7 @@ async function handler(req, res) {
 
       // ---- change an active employee's product entitlements ----
       case 'assignProducts': {
-        const { employeeId, field, mobility, lands, vehicleEligible } = body;
+        const { employeeId, field, mobility, lands, vehicleEligible, institutionalRole } = body;
         if (!isNonEmptyString(employeeId)) return sendJson(res, 400, { error: 'employeeId_required' });
         const employee = await findEmployee(db, employeeId);
         if (!employee) return sendJson(res, 404, { error: 'employee_not_found' });
@@ -499,9 +503,13 @@ async function handler(req, res) {
         if (vehicleEligible !== undefined && typeof vehicleEligible !== 'boolean') {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_vehicle_eligible' });
         }
+        if (institutionalRole !== undefined && !['general_supervisor','department_head','employee'].includes(institutionalRole)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_institutional_role' });
+        }
 
         const userRef = db.collection('users').doc(employee.data.authUid);
         const userUpdate = { updatedAt: FieldValue.serverTimestamp() };
+        if (institutionalRole !== undefined) userUpdate.institutionalRole = institutionalRole;
         if (fieldSel.present) userUpdate.role = fieldSel.role;
         // PHASE 06A hotfix — Mobility's own independent entitlement field,
         // never deleted on disable (see api/admin/users.js's setServices
@@ -538,7 +546,7 @@ async function handler(req, res) {
             vehicleEligible: vehicleEligible !== undefined ? vehicleEligible : (existingProducts.mobility ? existingProducts.mobility.vehicleEligible === true : false),
           },
         };
-        await employee.ref.set({ products, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        await employee.ref.set({ products, ...(institutionalRole !== undefined ? { institutionalRole } : {}), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
 
         await recordAdminAudit(db, {
           caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_assign_products',
@@ -547,6 +555,7 @@ async function handler(req, res) {
             mobility: mobilitySel.present ? { enabled: mobilitySel.enabled, role: mobilitySel.role } : undefined,
             lands: landsSel.present ? { enabled: landsSel.enabled, role: landsSel.role } : undefined,
             vehicleEligible,
+            institutionalRole,
           },
         });
         return sendJson(res, 200, { employeeId, products });
@@ -616,8 +625,12 @@ async function handler(req, res) {
         await employee.ref.set(update, { merge: true });
         // Keep the linked users/{uid} department in sync so Mobility's own
         // department-scoped rules see the same department immediately.
-        if (department !== undefined && isNonEmptyString(employee.data.authUid)) {
-          await db.collection('users').doc(employee.data.authUid).set({ department: update.department, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        if (isNonEmptyString(employee.data.authUid) && (administration !== undefined || department !== undefined)) {
+          await db.collection('users').doc(employee.data.authUid).set({
+            ...(administration !== undefined ? { administration: update.administration } : {}),
+            ...(department !== undefined ? { department: update.department } : {}),
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
         }
 
         await recordAdminAudit(db, { caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_transfer', detail: { before, after: update } });
@@ -629,9 +642,12 @@ async function handler(req, res) {
       // account (that identity mutation is changeLoginEmail's job below,
       // which additionally requires manager role + recent re-auth). ----
       case 'updateProfile': {
-        const { employeeId, name, employeeRef, phone, jobTitle, employmentStatus, email } = body;
+        const { employeeId, name, employeeRef, phone, jobTitle, institutionalRole, employmentStatus, email } = body;
         if (!isNonEmptyString(employeeId)) return sendJson(res, 400, { error: 'invalid_request', reason: 'employeeId_required' });
         if (!isNonEmptyString(name)) return sendJson(res, 400, { error: 'invalid_request', reason: 'name_required' });
+        if (institutionalRole !== undefined && !['general_supervisor','department_head','employee'].includes(institutionalRole)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_institutional_role' });
+        }
         if (employmentStatus !== undefined && employmentStatus !== 'active' && employmentStatus !== 'inactive') {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_employment_status' });
         }
@@ -653,10 +669,17 @@ async function handler(req, res) {
         if (employeeRef !== undefined) update.employeeRef = isNonEmptyString(employeeRef) ? employeeRef.trim() : null;
         if (phone !== undefined) update.phone = isNonEmptyString(phone) ? phone.trim() : null;
         if (jobTitle !== undefined) update.jobTitle = isNonEmptyString(jobTitle) ? jobTitle.trim() : null;
+        if (institutionalRole !== undefined) update.institutionalRole = institutionalRole;
         if (employmentStatus !== undefined) update.employmentStatus = employmentStatus;
         if (email !== undefined && !linked) update.email = isNonEmptyString(email) ? email.trim() : null;
 
         await employee.ref.set(update, { merge: true });
+        if (institutionalRole !== undefined && isNonEmptyString(employee.data.authUid)) {
+          await db.collection('users').doc(employee.data.authUid).set({
+            institutionalRole,
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
 
         const changedFields = Object.keys(update).filter(k => k !== 'updatedAt');
         await recordAdminAudit(db, { caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_profile_update', detail: { changedFields } });
