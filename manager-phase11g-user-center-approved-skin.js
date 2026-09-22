@@ -762,6 +762,143 @@ function injectApprovedSkin() {
     .ucv2-add-dialog .ucv2-dialog-icon-badge,.ucv21-single-page .ucv2-dialog-icon-badge{width:40px!important;height:40px!important;min-width:40px!important;border-radius:12px!important}
     .ucv2-add-dialog .ucv2-dialog-icon-badge:before,.ucv21-single-page .ucv2-dialog-icon-badge:before{width:20px!important;height:20px!important}
   }
+  /* ============================================================
+     WINDOW SYSTEM V2 — one medium, responsive, glass/galaxy system
+     for every User Center dialog. Presentation only; no workflow,
+     data, auth, or permission behavior changes.
+     ============================================================ */
+  .iuc{
+    align-items:center!important;justify-content:center!important;
+    padding:clamp(10px,2vh,18px)!important;
+    background:rgba(1,7,16,.68)!important;
+    backdrop-filter:blur(22px) saturate(135%)!important;
+    -webkit-backdrop-filter:blur(22px) saturate(135%)!important;
+  }
+  .iuc>div,.ucv2-dialog{
+    width:min(700px,calc(100vw - 40px))!important;max-width:700px!important;
+    max-height:min(82dvh,760px)!important;height:auto!important;
+    border-radius:20px!important;
+    border:1px solid rgba(101,161,223,.24)!important;
+    background:
+      radial-gradient(520px 220px at 88% -8%,rgba(62,211,154,.10),transparent 62%),
+      radial-gradient(420px 260px at 4% 104%,rgba(72,105,255,.09),transparent 66%),
+      linear-gradient(155deg,rgba(10,27,48,.88),rgba(6,17,32,.91))!important;
+    box-shadow:
+      0 34px 100px -28px rgba(0,0,0,.78),
+      inset 0 1px 0 rgba(255,255,255,.055),
+      inset 0 0 0 1px rgba(255,255,255,.012)!important;
+    backdrop-filter:blur(28px) saturate(145%)!important;
+    -webkit-backdrop-filter:blur(28px) saturate(145%)!important;
+    overflow:auto!important;overflow-x:hidden!important;
+  }
+  #iuc-profile>div.ucv21-single-page,.ucv21-single-page,
+  .ucv2-add-dialog,.ucv2-contractor-dialog{
+    width:min(700px,calc(100vw - 40px))!important;max-width:700px!important;
+    max-height:min(82dvh,760px)!important;height:auto!important;
+    border-radius:20px!important;
+  }
+  .ucv2-password-dialog,#iuc-email>div,#iuc-suspend-confirm>div,
+  #iuc-legacy-note>div,#iuc-legacy-error>div{
+    width:min(460px,calc(100vw - 32px))!important;max-width:460px!important;
+  }
+  #iuc-import>div{
+    width:min(600px,calc(100vw - 36px))!important;max-width:600px!important;
+  }
+  .iuc .ih,.ucv21-single-page .ih{
+    display:flex!important;align-items:center!important;gap:12px!important;
+    min-height:68px!important;box-sizing:border-box!important;
+    padding:13px 16px!important;margin:0 0 10px!important;
+    border-radius:20px 20px 0 0!important;
+    background:linear-gradient(180deg,rgba(14,33,57,.78),rgba(9,24,43,.66))!important;
+    border-bottom:1px solid rgba(108,164,222,.14)!important;
+    backdrop-filter:blur(22px) saturate(135%)!important;
+    -webkit-backdrop-filter:blur(22px) saturate(135%)!important;
+  }
+  .iuc .ih main,.ucv21-single-page .ih main{
+    flex:1 1 auto!important;min-width:0!important;margin:0!important;padding:0!important;
+  }
+  .iuc .ih b,.ucv21-single-page .ih b{
+    display:block!important;font-size:15px!important;line-height:1.35!important;
+    font-weight:760!important;letter-spacing:-.01em!important;
+  }
+  .iuc .ih p,.ucv21-single-page .ih p{
+    margin:3px 0 0!important;font-size:10.5px!important;line-height:1.55!important;
+    white-space:normal!important;
+  }
+  .ucv2-add-dialog .ucv2-dialog-icon-badge,
+  .ucv21-single-page .ucv2-dialog-icon-badge{
+    width:42px!important;height:42px!important;min-width:42px!important;
+    flex:0 0 42px!important;border-radius:13px!important;
+    margin:0!important;order:0!important;
+    background:linear-gradient(145deg,rgba(62,211,154,.18),rgba(62,211,154,.055))!important;
+    border:1px solid rgba(62,211,154,.28)!important;
+    box-shadow:inset 0 1px rgba(255,255,255,.055),0 10px 26px -18px rgba(62,211,154,.62)!important;
+  }
+  .ucv2-add-dialog .ucv2-dialog-icon-badge:before,
+  .ucv21-single-page .ucv2-dialog-icon-badge:before{
+    width:21px!important;height:21px!important;
+  }
+  .iuc .ih .ix,.ucv21-single-page .ih .ix{
+    width:32px!important;height:32px!important;min-width:32px!important;
+    flex:0 0 32px!important;margin:0!important;border-radius:10px!important;
+    background:rgba(14,32,56,.62)!important;border:1px solid rgba(104,158,216,.15)!important;
+  }
+  .ucv21-progress{
+    padding:9px 16px!important;background:rgba(6,18,33,.18)!important;
+  }
+  .ucv21-progress-dot{font-size:10.5px!important}
+  .ucv21-progress-dot b{width:26px!important;height:26px!important;min-width:26px!important}
+  .ucv21-profile-stage{padding:12px 16px 16px!important}
+  .ucv21-profile-footer{
+    padding:10px 16px 12px!important;
+    background:linear-gradient(180deg,rgba(7,18,34,.48),rgba(7,18,34,.90) 38%)!important;
+    backdrop-filter:blur(22px) saturate(135%)!important;
+    -webkit-backdrop-filter:blur(22px) saturate(135%)!important;
+  }
+
+  [data-theme="light"] .iuc{
+    background:rgba(224,234,229,.55)!important;
+    backdrop-filter:blur(20px) saturate(125%)!important;
+    -webkit-backdrop-filter:blur(20px) saturate(125%)!important;
+  }
+  [data-theme="light"] .iuc>div,[data-theme="light"] .ucv2-dialog,
+  [data-theme="light"] .ucv21-single-page,[data-theme="light"] .ucv2-add-dialog{
+    background:
+      radial-gradient(460px 220px at 90% -8%,rgba(18,133,90,.08),transparent 62%),
+      linear-gradient(155deg,rgba(255,255,255,.92),rgba(246,250,248,.90))!important;
+    border-color:rgba(18,133,90,.20)!important;
+    box-shadow:0 30px 90px -30px rgba(16,60,42,.32),inset 0 1px rgba(255,255,255,.72)!important;
+    backdrop-filter:blur(24px) saturate(120%)!important;
+    -webkit-backdrop-filter:blur(24px) saturate(120%)!important;
+  }
+
+  @media(max-width:900px){
+    .iuc>div,.ucv2-dialog,#iuc-profile>div.ucv21-single-page,.ucv21-single-page,
+    .ucv2-add-dialog,.ucv2-contractor-dialog{
+      width:min(660px,calc(100vw - 24px))!important;max-width:660px!important;
+      max-height:calc(100dvh - 24px)!important;
+    }
+  }
+  @media(max-width:640px){
+    .iuc{padding:6px!important}
+    .iuc>div,.ucv2-dialog,#iuc-profile>div.ucv21-single-page,.ucv21-single-page,
+    .ucv2-add-dialog,.ucv2-contractor-dialog{
+      width:calc(100vw - 12px)!important;max-width:none!important;
+      height:auto!important;max-height:calc(100dvh - 12px)!important;border-radius:16px!important;
+    }
+    .iuc .ih,.ucv21-single-page .ih{
+      min-height:60px!important;padding:10px 12px!important;border-radius:16px 16px 0 0!important;
+    }
+    .ucv2-add-dialog .ucv2-dialog-icon-badge,
+    .ucv21-single-page .ucv2-dialog-icon-badge{
+      width:38px!important;height:38px!important;min-width:38px!important;flex-basis:38px!important;
+    }
+    .ucv21-progress{padding:8px 12px!important}
+    .ucv21-progress-dot span{display:none!important}
+    .ucv21-profile-stage{padding:10px 12px 12px!important}
+    .ucv21-profile-footer{padding:10px 12px!important}
+  }
+
   @media(prefers-reduced-motion:reduce){
     .ucv21-single-page .btn{transition:none!important}
   }
