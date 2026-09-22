@@ -12,20 +12,20 @@ U.add=async()=>{
   // manager-phase11g-user-center-approved-skin.js (the approved skin's own
   // "FINAL VISUAL OWNER" layer); this function only owns structure/logic.
   let d=await U.dir();
-  let mans=[['','بدون تحديد'],...d.employees.map(x=>[x.employeeId,x.name+(x.department?' · '+x.department:'')])];
+  let mans=U.managerOptions(d.employees,'employee','','');
   const roleOrder=['employee','department_head','general_supervisor','manager'];
   const roleLabelAr={manager:'مدير البلدية',general_supervisor:'مشرف عام',department_head:'رئيس قسم',employee:'موظف'};
   const roleDescAr={manager:'الحساب الأعلى للمؤسسة — لا يُنشأ من هذه الشاشة.',general_supervisor:'ينوب عن المدير في لوحة البلدية.',department_head:'نطاقه حسب المنتج والقسم.',employee:'حسب التسكين التشغيلي.'};
   // Step 3's label matches the approved visual reference's stepper text
   // ("الأدوار والخدمات", plural) — a copy-only change, the pane's own
   // content/id ("wiz-note" below) is untouched.
-  const stepTitles=['البيانات الأساسية','التعيين المؤسسي','الأدوار والخدمات','حساب الدخول والمراجعة'];
+  const stepTitles=['البيانات الأساسية','التعيين المؤسسي','الصلاحيات والخدمات','حساب الدخول والمراجعة'];
 
   // Field order/widths match the approved Add Employee reference: full-width
   // name, then a 2-col email+ref-number row, then full-width phone.
   const pane1=`<section class="wiz-pane" data-step-pane="1"><div class="sec"><div class="st has-icon"><span class="ucv2-section-icon" data-icon="doc" aria-hidden="true"></span><span class="st-text"><span>البيانات الأساسية</span><small>إدخال المعلومات الشخصية الأساسية للموظف</small></span></div><div class="grid">${U.input('الاسم','add-name','',{w:true})}${U.input('البريد الإلكتروني','add-email','',{type:'email'})}${U.input('الرقم الوظيفي','add-ref')}${U.input('الجوال','add-phone','',{w:true,type:'tel'})}</div></div></section>`;
-  const pane2=`<section class="wiz-pane" data-step-pane="2" hidden><div class="sec"><div class="st"><span>التعيين المؤسسي</span><small>اختياري — يمكن استكماله لاحقًا</small></div><div class="grid">${U.input('الإدارة','add-admin')}${U.input('القسم','add-dept')}${U.sel('الحالة الوظيفية','add-emp','active',[['active','على رأس العمل'],['inactive','غير نشط']])}${U.sel('المدير المباشر','add-manager','',mans,{w:true})}${U.input('المسمى الوظيفي','add-title')}</div></div></section>`;
-  const pane3=`<section class="wiz-pane" data-step-pane="3" hidden>${U.roles('employee')}<div class="wiz-note">يُطبَّق الدور والخدمات عند إنشاء حساب الدخول في الخطوة التالية.</div></section>`;
+  const pane2=`<section class="wiz-pane" data-step-pane="2" hidden><div class="sec"><div class="st"><span>التعيين المؤسسي</span><small>الإدارة + القسم + الدور + المدير المباشر</small></div><div class="grid">${U.input('الإدارة','add-admin')}${U.input('القسم','add-dept')}${U.sel('الدور المؤسسي','inst-role','employee',[['manager','مدير البلدية — من حساب المؤسسة',true],['general_supervisor','المشرف العام'],['department_head','رئيس قسم'],['employee','موظف']])}${U.input('المسمى الوظيفي','add-title')}${U.sel('المدير المباشر','add-manager','',mans,{w:true})}${U.sel('الحالة الوظيفية','add-emp','active',[['active','على رأس العمل'],['inactive','غير نشط']])}</div></div></section>`;
+  const pane3=`<section class="wiz-pane" data-step-pane="3" hidden>${U.permissions('employee')}<div class="wiz-note">فعّل الخدمات المطلوبة فقط، وحدد أهلية المركبة بشكل مستقل.</div></section>`;
   const pane4=`<section class="wiz-pane" data-step-pane="4" hidden><div class="sec"><label class="wiz-check"><input id="mk-account" type="checkbox"> إنشاء حساب دخول الآن</label><div class="acct" hidden style="margin-top:12px"><div class="grid">${U.input('بريد الدخول','login-email','',{type:'email'})}${U.input('كلمة المرور','pw','',{type:'password',ac:'new-password'})}${U.input('تأكيد كلمة المرور','pw2','',{type:'password',ac:'new-password'})}</div><div class="note">كلمة المرور التي يحددها مدير البلدية تصبح كلمة الدخول المعتمدة للحساب، ولا يُطلب تغييرها عند أول دخول.</div></div></div><div class="sec wiz-review"><div class="st"><span>مراجعة قبل الحفظ</span><small>تحقق من البيانات قبل إنشاء السجل</small></div><div class="wiz-review-body"></div></div></section>`;
 
   // Stepper circles are connected by a real .wiz-step-line element
@@ -65,7 +65,17 @@ U.add=async()=>{
   }
 
   U.bind(c);
-  c.querySelector('#add-dept').oninput=()=>U.dest(c);
+  const refreshManagers=()=>{
+    const select=c.querySelector('#add-manager'); if(!select)return;
+    const current=select.value;
+    const opts=U.managerOptions(d.employees,roleSelect?.value||'employee',c.querySelector('#add-admin')?.value||'',c.querySelector('#add-dept')?.value||'');
+    select.innerHTML=opts.map(x=>`<option value="${U.esc(x[0])}">${U.esc(x[1])}</option>`).join('');
+    if(opts.some(x=>String(x[0])===String(current)))select.value=current;
+  };
+  c.querySelector('#add-dept').oninput=()=>{U.dest(c);refreshManagers()};
+  c.querySelector('#add-admin').oninput=refreshManagers;
+  roleSelect?.addEventListener('change',refreshManagers);
+  refreshManagers();
 
   const mk=c.querySelector('#mk-account'),acct=c.querySelector('.acct');
   const wiz=c.querySelector('.wiz');
@@ -128,7 +138,7 @@ U.add=async()=>{
     }
     b.disabled=true;prevBtn.disabled=true;msg.className='msg';msg.textContent='جاري الحفظ...';
     try{
-      let r=await U.post('/api/admin/employees',{action:'create',organizationId:await U.org(),name,employeeRef:U.clean(c.querySelector('#add-ref').value)||undefined,email:U.clean(c.querySelector('#add-email').value)||email||undefined,phone:U.clean(c.querySelector('#add-phone').value)||undefined,administration:U.clean(c.querySelector('#add-admin').value)||undefined,department:U.clean(c.querySelector('#add-dept').value)||undefined,jobTitle:U.clean(c.querySelector('#add-title').value)||undefined,employmentStatus:c.querySelector('#add-emp').value,directManagerEmployeeId:c.querySelector('#add-manager').value||undefined});
+      let r=await U.post('/api/admin/employees',{action:'create',organizationId:await U.org(),name,employeeRef:U.clean(c.querySelector('#add-ref').value)||undefined,email:U.clean(c.querySelector('#add-email').value)||email||undefined,phone:U.clean(c.querySelector('#add-phone').value)||undefined,administration:U.clean(c.querySelector('#add-admin').value)||undefined,department:U.clean(c.querySelector('#add-dept').value)||undefined,jobTitle:U.clean(c.querySelector('#add-title').value)||undefined,institutionalRole:roleSelect.value,employmentStatus:c.querySelector('#add-emp').value,directManagerEmployeeId:c.querySelector('#add-manager').value||undefined});
       id=r.employee?.employeeId;
       if(mk.checked){
         msg.textContent='تم حفظ الموظف. جاري إنشاء الحساب...';
