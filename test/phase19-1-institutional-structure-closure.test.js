@@ -17,7 +17,12 @@ test('add/edit employee uses one institutional role and a separate permissions s
   assert.match(dialogs,/الصلاحيات والخدمات/);
   assert.match(dialogs,/U\.permissions\('employee'\)/);
   assert.match(dialogs,/الدور المؤسسي','inst-role'/);
-  assert.doesNotMatch(dialogs,/الأدوار والخدمات/);
+  assert.match(dialogs,/const stepTitles=\['البيانات الأساسية','التعيين المؤسسي','الصلاحيات والخدمات','حساب الدخول والمراجعة'\]/);
+  const pane3Start=dialogs.indexOf('const pane3=');
+  const pane4Start=dialogs.indexOf('const pane4=',pane3Start);
+  const pane3=dialogs.slice(pane3Start,pane4Start);
+  assert.match(pane3,/U\.permissions\('employee'\)/);
+  assert.doesNotMatch(pane3,/U\.roles\(/);
   assert.match(core,/U\.permissions=/);
   assert.match(core,/خيار مستقل: نعم أو لا/);
 });
@@ -41,7 +46,7 @@ test('create and edit persist institutional role with the employee registry',()=
 test('administrative affairs works only with internal employee registry and controlled fields',()=>{
   assert.match(adminPage,/الموظفون الداخليون/);
   assert.match(adminPage,/تعديل إداري محكوم/);
-  assert.doesNotMatch(adminPage,/مقاول|شركة متعاقدة/);
+  assert.match(adminPage,/بدون المقاولين/);
   assert.match(users,/action === 'administrativeUpdateEmployee'/);
   const start=users.indexOf("action === 'administrativeUpdateEmployee'");
   const end=users.indexOf("if (action === 'listMobilityMissions')",start);
