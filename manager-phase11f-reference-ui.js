@@ -149,7 +149,7 @@ function transformMobileCards(app) {
 function transformTable(app) {
   const table=app.querySelector('.ucv2-table');
   if(!table||table.dataset.ucv21Reference==='1')return;
-  const labels=['الموظف','البريد','الإدارة','القسم','المسمى','الخدمات المفعلة','دور الحركة','أهلية المركبة','الحالة','تعديل'];
+  const labels=['الموظف','الرقم الوظيفي','الإدارة','القسم','المسمى','الدور الوظيفي','الخدمات المفعلة','أهلية المركبة','الحالة','تعديل'];
   const head=table.querySelector('thead tr');
   if(!head)return;
   const cells=Array.from(head.children);
