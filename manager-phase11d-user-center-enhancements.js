@@ -65,7 +65,7 @@ function primaryRole(employee) {
   return roles[0] || employee?.role || null;
 }
 function roleLabel(role) { return ROLE_LABELS[role] || (role ? role : '—'); }
-function employeeProducts(employee) { return ['field','lands','mobility'].filter(key => enabled(employee,key)); }
+function employeeProducts(employee) { if(typeof U.isFieldHeadCompat==='function'&&U.isFieldHeadCompat(employee)) return ['field']; return ['field','lands','mobility'].filter(key => enabled(employee,key)); }
 function normalizeRecords(directory) {
   const employees = Array.isArray(directory?.employees) ? directory.employees : [];
   const users = Array.isArray(directory?.users) ? directory.users : [];
@@ -205,9 +205,10 @@ function statusBadge(status) {
   return `<span class="ucv2-chip ${cls}">${STATUS_LABELS[status]||status}</span>`;
 }
 function vehicleBadge(e) {
-  if (!enabled(e,'mobility')) return '<span class="ucv2-muted">—</span>';
-  return e.products?.mobility?.vehicleEligible === true
-    ? '<span class="ucv2-chip ok">مؤهل</span>' : '<span class="ucv2-chip muted">غير مؤهل</span>';
+  const eligible = e?.vehicleEligible === true || e?.products?.mobility?.vehicleEligible === true;
+  return eligible
+    ? '<span class="ucv2-chip ok">مؤهل</span>'
+    : '<span class="ucv2-muted">—</span>';
 }
 function roleMarkup(e) {
   const products = employeeProducts(e);
