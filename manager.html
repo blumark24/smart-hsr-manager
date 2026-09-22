@@ -236,6 +236,14 @@
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">إدارة حركة السير</span>
             </a>
+            <a href="admin-affairs.html" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+              <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--acc,#4cc9f0)"></span>
+              <span style="flex:1;display:var(--sbLabel,block)">إدارة الشؤون الإدارية</span>
+            </a>
+            <a href="contractors-registry.html" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+              <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--warn,#f0b429)"></span>
+              <span style="flex:1;display:var(--sbLabel,block)">إدارة العقود والشركات المتعاقدة</span>
+            </a>
           </div>
         </sc-if>
 
@@ -1582,9 +1590,7 @@
                       </sc-for>
                     </div>
                   </sc-if>
-                  <sc-if value="{{ showSvcVehicleToggle }}">
-                    <button onClick="{{ toggleSvcVehicleEligible }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;margin-top:6px;color:{{ svcVehicleToggleTx }};background:{{ svcVehicleToggleBg }};border:1px solid {{ svcVehicleToggleBd }}">{{ svcVehicleLabel }}</button>
-                  </sc-if>
+                  <button onClick="{{ toggleSvcVehicleEligible }}" data-f="1" style="height:26px;padding:0 10px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;margin-top:6px;color:{{ svcVehicleToggleTx }};background:{{ svcVehicleToggleBg }};border:1px solid {{ svcVehicleToggleBd }}">{{ svcVehicleLabel }}</button>
                 </div>
                 <div>
                   <button onClick="{{ toggleSvcLands }}" data-f="1" style="height:26px;padding:0 11px;border-radius:8px;font-size:10.5px;font-weight:700;cursor:pointer;margin-bottom:6px;color:{{ svcLandsToggleTx }};background:{{ svcLandsToggleBg }};border:1px solid {{ svcLandsToggleBd }}">{{ svcLandsToggleLabel }}</button>
@@ -3172,7 +3178,7 @@ class Component extends DCLogic {
       const mobilityCount = combinedRows.filter(r => entitlementsById.get(r.id).mobility.enabled).length;
       const vehicleEligibleCount = combinedRows.filter(r => {
         const ent = entitlementsById.get(r.id);
-        return ent.mobility.enabled && ent.mobility.vehicleEligible;
+        return ent.mobility.vehicleEligible;
       }).length;
       const kpiCard = (label, value) => ({ label, value: String(value) });
       userCenterKpis = [
@@ -3209,8 +3215,8 @@ class Component extends DCLogic {
       const vehicleScoped = tVehicleFilter === 'الكل' ? productScoped
         : productScoped.filter(r => {
           const ent = entitlementsById.get(r.id);
-          const eligible = ent.mobility.enabled && ent.mobility.vehicleEligible;
-          return tVehicleFilter === 'مؤهل' ? eligible : ent.mobility.enabled && !eligible;
+          const eligible = ent.mobility.vehicleEligible;
+          return tVehicleFilter === 'مؤهل' ? eligible : !eligible;
         });
       const deptScoped = tDeptFilter === 'الكل' ? vehicleScoped : vehicleScoped.filter(r => r.department === tDeptFilter);
       const filteredRows = usersListView.deriveVisibleUsers(deptScoped, { search: tq });
@@ -3237,7 +3243,7 @@ class Component extends DCLogic {
             cell(yesNo(ent.lands.enabled), '0 0 56px', { align: 'center' }),
             cell(yesNo(ent.mobility.enabled), '0 0 56px', { align: 'center' }),
             cell(ent.mobility.enabled ? mobilityRoleLabel(ent.mobility.role) : '—', '0.8', { size: '11px' }),
-            cell(ent.mobility.enabled ? (ent.mobility.vehicleEligible ? 'مؤهل' : 'غير مؤهل') : '—', '0 0 64px', { align: 'center', size: '10.5px' })
+            cell(ent.mobility.vehicleEligible ? 'مؤهل' : 'غير مؤهل', '0 0 64px', { align: 'center', size: '10.5px' })
           ]
         };
       });
@@ -3730,6 +3736,8 @@ class Component extends DCLogic {
         { label: 'إدارة الحصر الميداني', tag: '', view: 'survey', ...navLook(mobileNavigationAuthoritative && st.view === 'fieldSurvey') },
         { label: 'إدارة الأراضي والممتلكات', tag: '', view: 'lands', ...navLook(mobileNavigationAuthoritative && st.view === 'lands') },
         { label: 'إدارة حركة السير', tag: '', view: 'mobility', ...navLook(mobileNavigationAuthoritative && st.view === 'mobility') },
+        { label: 'إدارة الشؤون الإدارية', tag: '', on: () => { window.location.href='admin-affairs.html'; }, ...navLook(false) },
+        { label: 'إدارة العقود والشركات المتعاقدة', tag: '', on: () => { window.location.href='contractors-registry.html'; }, ...navLook(false) },
         { label: 'البلاغات', tag: metrics.inProgress || '—', view: 'observations', ...navLook(mobileNavigationAuthoritative && st.view === 'observations') },
         { label: 'الخريطة التشغيلية', tag: '', view: 'map', ...navLook(mobileNavigationAuthoritative && st.view === 'map') },
         { label: 'التقارير', tag: '', view: 'reports', ...navLook(mobileNavigationAuthoritative && st.view === 'reports') },
@@ -4408,7 +4416,7 @@ class Component extends DCLogic {
         mobility: { enabled: svcMobilityEnabled, role: svcMobilityEnabled ? svcMobilityRole : null },
         lands: { enabled: svcLandsEnabled, role: svcLandsEnabled ? svcLandsRole : null },
       };
-      if (svcMobilityEnabled) params.vehicleEligible = svcVehicleEligible;
+      params.vehicleEligible = svcVehicleEligible;
       await this.callAdminUsersApi('setServices', params);
       this.flash('تم تحديث الصلاحيات بنجاح.');
       this.setState({ serviceEditOpen: false });
