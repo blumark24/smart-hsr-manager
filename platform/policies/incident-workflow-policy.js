@@ -5,6 +5,8 @@
 // An employee creates an incident (tied to their own active mission and
 // vehicle); mobility_head processes it. Incidents are never deleted.
 
+const INCIDENT_OPERATOR_ROLES = Object.freeze(['mobility_head', 'department_head', 'administrative_affairs', 'employee']);
+
 const INCIDENT_STATUSES = Object.freeze(['NEW', 'ACKNOWLEDGED', 'IN_PROGRESS', 'RESOLVED']);
 
 function decision(allowed, code, reason) {
@@ -49,8 +51,8 @@ function evaluateIncidentTransition({ actor, incident, toStatus } = {}) {
 // incident against it, and only while the mission is IN_PROGRESS (matches
 // mission-workflow-policy.js's report_incident transition).
 function canCreateIncident({ actor, mission } = {}) {
-  if (!actor || actor.role !== 'employee') {
-    return decision(false, 'ROLE_CREATE_DENIED', 'Only an employee may create an incident.');
+  if (!actor || !INCIDENT_OPERATOR_ROLES.includes(actor.role) || actor.vehicleEligible !== true) {
+    return decision(false, 'ROLE_CREATE_DENIED', 'Only the assigned, vehicle-eligible operator may create an incident.');
   }
   if (!mission || mission.organizationId !== actor.organizationId) {
     return decision(false, 'ORGANIZATION_SCOPE_DENIED', 'The mission must be in the actor\'s own organization.');
@@ -66,6 +68,7 @@ function canCreateIncident({ actor, mission } = {}) {
 
 module.exports = Object.freeze({
   INCIDENT_STATUSES,
+  INCIDENT_OPERATOR_ROLES,
   TRANSITION_MATRIX,
   evaluateIncidentTransition,
   canCreateIncident,
