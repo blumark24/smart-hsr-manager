@@ -138,27 +138,29 @@ function serviceCell(enabled, type) {
 // the desktop's dot indicator for both, matching it against the same product
 // label text the chips already render.
 function transformMobileCards(app) {
+  // Compact registry owns service presentation. Keep "الخدمات المفعلة"
+  // as one visual group; never split it back into three service columns.
   app.querySelectorAll('.ucv2-mobile-card').forEach(card => {
-    if (card.classList.contains('legacy')) return;
-    const products = card.querySelector('.ucv2-products');
-    if (!products || products.dataset.ucv21Reference === '1') return;
-    const text = clean(products.textContent);
-    const hasField = /الحصر/.test(text), hasLands = /الأراضي/.test(text), hasMobility = /الحركة/.test(text);
-    products.innerHTML = '';
-    products.classList.add('ucv21-mobile-services');
-    products.appendChild(serviceDot(hasField, 'field'));
-    products.appendChild(serviceDot(hasLands, 'lands'));
-    products.appendChild(serviceDot(hasMobility, 'mobility'));
-    products.dataset.ucv21Reference = '1';
+    const products=card.querySelector('.ucv2-products');
+    if(products) products.dataset.ucv21Reference='1';
   });
 }
 
 function transformTable(app) {
-  const table=app.querySelector('.ucv2-table');if(!table||table.dataset.ucv21Reference==='1')return;const head=table.querySelector('thead tr');if(!head)return;
-  const labels=['الموظف','الإدارة','القسم','المسمى','الحصر','الأراضي','الحركة','دور الحركة','المركبة','الحالة','إجراءات'];head.innerHTML=labels.map(x=>`<th>${x}</th>`).join('');
-  table.querySelectorAll('tbody tr').forEach(row=>{const cells=Array.from(row.children);if(cells.length<10)return;if(row.classList.contains('ucv2-legacy')){const employee=cells[0],status=cells[1];row.innerHTML='';row.appendChild(employee);const note=document.createElement('td');note.colSpan=8;note.className='ucv2-legacy-note';note.textContent='حساب قديم غير مرتبط بسجل موظف — يتطلب مسار ربط آمن.';row.appendChild(note);const st=document.createElement('td');st.appendChild(status.querySelector('.ucv2-chip')||status);row.appendChild(st);const action=document.createElement('td');action.innerHTML='<button class="ucv21-more" disabled>•••</button>';row.appendChild(action);return;}
-    const employee=cells[0],account=cells[1],admin=cells[3],dept=cells[4],title=cells[5],services=cells[6],role=cells[7],vehicle=cells[8],action=cells[10];const text=clean(services?.textContent);const hasField=/الحصر/.test(text),hasLands=/الأراضي/.test(text),hasMobility=/الحركة/.test(text);const actionButton=action?.querySelector('button');if(actionButton){actionButton.className='ucv21-more';actionButton.textContent='•••';actionButton.setAttribute('aria-label','تعديل المستخدم');}row.innerHTML='';row.appendChild(employee);row.appendChild(admin);row.appendChild(dept);row.appendChild(title);row.appendChild(serviceCell(hasField,'field'));row.appendChild(serviceCell(hasLands,'lands'));row.appendChild(serviceCell(hasMobility,'mobility'));row.appendChild(role);row.appendChild(vehicle);row.appendChild(account);row.appendChild(action);
-  });table.dataset.ucv21Reference='1';
+  const table=app.querySelector('.ucv2-table');
+  if(!table||table.dataset.ucv21Reference==='1')return;
+  const labels=['الموظف','البريد','الإدارة','القسم','المسمى','الخدمات المفعلة','دور الحركة','أهلية المركبة','الحالة','تعديل'];
+  const head=table.querySelector('thead tr');
+  if(!head)return;
+  const cells=Array.from(head.children);
+  if(cells.length===labels.length){
+    cells.forEach((cell,index)=>{cell.textContent=labels[index];});
+    cells[cells.length-1]?.classList.add('ucv2-edit-head');
+  } else {
+    head.innerHTML=labels.map((label,index)=>`<th${index===labels.length-1?' class="ucv2-edit-head"':''}>${label}</th>`).join('');
+  }
+  // Phase 11D is the sole row-structure owner. Never rewrite tbody here.
+  table.dataset.ucv21Reference='1';
 }
 
 function tuneGridHead(app){const head=app.querySelector('.ucv2-grid-head');if(!head)return;const first=head.querySelector('span');if(first)first.textContent=first.textContent.replace(/^عرض\s+/,'إجمالي ');}
