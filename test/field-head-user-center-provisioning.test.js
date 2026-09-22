@@ -60,11 +60,11 @@ test('Add Employee and existing employee activation both use shared readProducts
 
 test('User Center separates external contractor companies from municipal employees', () => {
   assert.match(enhancements, /data-open-contractors/);
-  assert.match(enhancements, /سجل الشركات المتعاقدة/);
+  assert.match(enhancements, /إدارة العقود والشركات المتعاقدة/);
   assert.match(enhancements, /contractors-registry\.html/);
   assert.doesNotMatch(enhancements, /data-add-contractor/);
   assert.doesNotMatch(enhancements, /kpiCard\('contractors'/);
-  assert.match(contractorRegistryPage, /الشركات منفصلة عن موظفي البلدية/);
+  assert.match(contractorRegistryPage, /إدارة العقود والشركات المتعاقدة/);
   assert.doesNotMatch(managerFormat, /data-route-close/);
 });
 
@@ -89,7 +89,7 @@ test('contracted-company onboarding reuses trusted users API and existing contra
 });
 
 test('contractor registry has a dedicated responsive institutional surface', () => {
-  assert.match(contractorRegistryPage, /SMART HSR — الشركات المتعاقدة/);
+  assert.match(contractorRegistryPage, /SMART HSR — إدارة العقود والشركات المتعاقدة/);
   assert.match(contractorRegistryPage, /class="card"/);
   assert.match(contractorRegistryPage, /@media\(max-width:900px\)/);
   assert.match(contractorRegistryPage, /id="addDlg"/);
