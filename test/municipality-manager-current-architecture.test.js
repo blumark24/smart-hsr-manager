@@ -21,6 +21,8 @@ test('manager shell exposes the approved municipal administration routes',()=>{
   assert.match(manager,/إدارة الحصر الميداني/);
   assert.match(manager,/إدارة الأراضي والممتلكات/);
   assert.match(manager,/إدارة حركة السير/);
+  assert.match(manager,/إدارة الشؤون الإدارية/);
+  assert.match(manager,/إدارة العقود والشركات المتعاقدة/);
 });
 
 test('current User Center owns employee identity and account editing',()=>{
@@ -55,9 +57,10 @@ test('institutional identity remains separate from product entitlements',()=>{
 });
 
 test('contractors are managed outside the municipal employee registry',()=>{
-  assert.match(enhancements,/data-open-contractors/);
-  assert.match(enhancements,/contractors-registry\.html/);
+  assert.doesNotMatch(enhancements,/data-open-contractors/);
   assert.doesNotMatch(enhancements,/data-add-contractor/);
+  assert.match(manager,/href="contractors-registry\.html"/);
+  assert.match(manager,/إدارة العقود والشركات المتعاقدة/);
   assert.match(contractorsPage,/إدارة العقود والشركات المتعاقدة/);
   assert.match(contractorsPage,/مسار مؤسسي خامس مستقل/);
 });
