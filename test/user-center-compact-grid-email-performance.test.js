@@ -72,3 +72,21 @@ test('registry shows employee number and institutional role instead of mobility 
   assert.doesNotMatch(enh,/<th>دور الحركة<\/th>/);
   assert.doesNotMatch(enh,/<th>البريد<\/th>/);
 });
+
+test('all User Center dialogs use the shared medium glass window system',()=>{
+  const skin=fs.readFileSync(path.join(root,'manager-phase11g-user-center-approved-skin.js'),'utf8');
+  assert.match(skin,/WINDOW SYSTEM V2/);
+  assert.match(skin,/width:min\(700px,calc\(100vw - 40px\)\)/);
+  assert.match(skin,/max-height:min\(82dvh,760px\)/);
+  assert.match(skin,/backdrop-filter:blur\(28px\) saturate\(145%\)/);
+  assert.match(skin,/\.ucv2-password-dialog,#iuc-email>div/);
+  assert.match(skin,/@media\(max-width:640px\)[\s\S]*height:auto!important;max-height:calc\(100dvh - 12px\)/);
+});
+
+test('dialog header keeps icon title and close control inside one balanced row',()=>{
+  const skin=fs.readFileSync(path.join(root,'manager-phase11g-user-center-approved-skin.js'),'utf8');
+  assert.match(skin,/\.iuc \.ih,\.ucv21-single-page \.ih\{/);
+  assert.match(skin,/min-height:68px!important/);
+  assert.match(skin,/\.ucv2-dialog-icon-badge[\s\S]*width:42px!important;height:42px!important/);
+  assert.match(skin,/\.iuc \.ih \.ix,\.ucv21-single-page \.ih \.ix\{/);
+});
