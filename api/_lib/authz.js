@@ -255,7 +255,7 @@ async function getMobilityHeadCallerContext(uid) {
 // always read from the caller's live users/{uid} record after ID-token
 // verification.  A disabled or malformed Mobility entitlement never falls
 // back to a stale legacy role (resolveMobilityRole is authoritative here).
-async function getMobilityEmployeeCallerContext(uid) {
+async function getMobilityAssignedOperatorCallerContext(uid) {
   const db = getDb();
   const usrSnap = await db.collection('users').doc(uid).get();
   if (usrSnap.exists) {
@@ -263,20 +263,24 @@ async function getMobilityEmployeeCallerContext(uid) {
     const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
     const department = typeof d.department === 'string' ? d.department.trim() : '';
     const name = typeof d.name === 'string' ? d.name.trim() : '';
-    if (resolveMobilityRole(d) === 'employee' && activeIsNotFalse(d) && orgId) {
+    const role = resolveMobilityRole(d);
+    if (MOBILITY_MANAGEABLE_ROLES.includes(role) && activeIsNotFalse(d) && orgId && d.vehicleEligible === true) {
       return {
         uid,
-        isEmployee: true,
-        role: 'employee',
+        isEmployee: role === 'employee',
+        isAssignedOperatorEligible: true,
+        role,
         organizationId: orgId,
         department,
         name,
+        vehicleEligible: true,
       };
     }
   }
   return {
     uid,
     isEmployee: false,
+    isAssignedOperatorEligible: false,
     role: null,
     organizationId: null,
     department: null,
@@ -416,7 +420,7 @@ module.exports = {
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,
-  getMobilityEmployeeCallerContext,
+  getMobilityAssignedOperatorCallerContext,
   getContractorCallerContext,
   isValidMobilityAllocationTarget,
   assertCanManage,
