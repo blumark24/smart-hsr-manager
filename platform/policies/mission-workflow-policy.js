@@ -12,6 +12,8 @@
 //   -> COMPLETED -> AWAITING_RETURN -> CLOSED
 //   (PENDING_APPROVAL may also resolve to REJECTED or back to DRAFT.)
 
+const ASSIGNED_OPERATOR_ROLES = Object.freeze(['mobility_head', 'department_head', 'administrative_affairs', 'employee']);
+
 const MISSION_STATUSES = Object.freeze([
   'DRAFT',
   'PENDING_APPROVAL',
@@ -59,20 +61,20 @@ const TRANSITION_MATRIX = Object.freeze({
     HANDED_OVER: Object.freeze({ roles: Object.freeze(['mobility_head']), action: 'handover' }),
   }),
   HANDED_OVER: Object.freeze({
-    READY: Object.freeze({ roles: Object.freeze(['employee']), action: 'receive', ownership: 'employee_is_assigned' }),
+    READY: Object.freeze({ roles: ASSIGNED_OPERATOR_ROLES, action: 'receive', ownership: 'assigned_operator' }),
   }),
   READY: Object.freeze({
-    IN_PROGRESS: Object.freeze({ roles: Object.freeze(['employee']), action: 'start', ownership: 'employee_is_assigned' }),
+    IN_PROGRESS: Object.freeze({ roles: ASSIGNED_OPERATOR_ROLES, action: 'start', ownership: 'assigned_operator' }),
   }),
   IN_PROGRESS: Object.freeze({
-    INCIDENT_HOLD: Object.freeze({ roles: Object.freeze(['employee']), action: 'report_incident', ownership: 'employee_is_assigned' }),
-    COMPLETED: Object.freeze({ roles: Object.freeze(['employee']), action: 'finish', ownership: 'employee_is_assigned' }),
+    INCIDENT_HOLD: Object.freeze({ roles: ASSIGNED_OPERATOR_ROLES, action: 'report_incident', ownership: 'assigned_operator' }),
+    COMPLETED: Object.freeze({ roles: ASSIGNED_OPERATOR_ROLES, action: 'finish', ownership: 'assigned_operator' }),
   }),
   INCIDENT_HOLD: Object.freeze({
-    IN_PROGRESS: Object.freeze({ roles: Object.freeze(['employee', 'mobility_head']), action: 'resume' }),
+    IN_PROGRESS: Object.freeze({ roles: ASSIGNED_OPERATOR_ROLES, action: 'resume', ownership: 'assigned_operator_or_mobility_head' }),
   }),
   COMPLETED: Object.freeze({
-    AWAITING_RETURN: Object.freeze({ roles: Object.freeze(['employee']), action: 'return_vehicle', ownership: 'employee_is_assigned' }),
+    AWAITING_RETURN: Object.freeze({ roles: ASSIGNED_OPERATOR_ROLES, action: 'return_vehicle', ownership: 'assigned_operator' }),
   }),
   AWAITING_RETURN: Object.freeze({
     CLOSED: Object.freeze({ roles: Object.freeze(['mobility_head']), action: 'confirm_return' }),
@@ -88,10 +90,15 @@ function checkOwnership(kind, actor, mission) {
       ? decision(true, 'OWNERSHIP_CONFIRMED', 'The department head created this mission.')
       : decision(false, 'OWNERSHIP_MISMATCH', 'Only the department head who created this mission may submit it.');
   }
-  if (kind === 'employee_is_assigned') {
+  if (kind === 'employee_is_assigned' || kind === 'assigned_operator') {
     return actor.uid && mission.assignedEmployeeUid === actor.uid
-      ? decision(true, 'OWNERSHIP_CONFIRMED', 'The employee is assigned to this mission.')
-      : decision(false, 'OWNERSHIP_MISMATCH', 'Only the employee assigned to this mission may act on it.');
+      ? decision(true, 'OWNERSHIP_CONFIRMED', 'The authenticated vehicle operator is assigned to this mission.')
+      : decision(false, 'OWNERSHIP_MISMATCH', 'Only the person assigned to this mission may act on it.');
+  }
+  if (kind === 'assigned_operator_or_mobility_head') {
+    return actor.role === 'mobility_head' || (actor.uid && mission.assignedEmployeeUid === actor.uid)
+      ? decision(true, 'OWNERSHIP_CONFIRMED', 'The assigned operator or Mobility Head may resume this mission.')
+      : decision(false, 'OWNERSHIP_MISMATCH', 'Only the assigned operator or Mobility Head may resume this mission.');
   }
   return decision(false, 'OWNERSHIP_RULE_UNKNOWN', `Unknown ownership rule: ${kind}`);
 }
@@ -136,6 +143,7 @@ function describeMissionTransition(fromStatus, toStatus) {
 
 module.exports = Object.freeze({
   MISSION_STATUSES,
+  ASSIGNED_OPERATOR_ROLES,
   TRANSITION_MATRIX,
   evaluateMissionTransition,
   describeMissionTransition,
