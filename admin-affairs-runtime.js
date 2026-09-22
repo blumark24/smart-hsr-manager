@@ -3,7 +3,7 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
 
-const state={user:null,data:null};
+const state={user:null,data:null,filters:{employee:'',mission:'',missionStatus:'ALL',authorization:'',authorizationStatus:'ALL'}};
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function pill(text,type=''){return '<span class="pill '+type+'">'+esc(text)+'</span>'}
@@ -13,6 +13,16 @@ function fmtRole(v){return ({department_head:'رئيس قسم',general_superviso
 function empStatus(v){return v==='inactive'?pill('غير نشط','bad'):pill('نشط','ok')}
 function missionStatus(v){return v==='PENDING_APPROVAL'?pill('بانتظار الموافقة','wait'):v==='APPROVED'?pill('معتمد','ok'):v==='REJECTED'?pill('مرفوض','bad'):pill(v||'—')}
 function authStatus(v){return v==='PENDING_AUTHORIZATION'?pill('بانتظار الاعتماد','wait'):v==='AUTHORIZED'?pill('معتمد','ok'):['REJECTED','REVOKED'].includes(v)?pill(v==='REJECTED'?'مرفوض':'ملغي','bad'):pill(v||'—')}
+const norm=v=>String(v??'').trim().toLocaleLowerCase('ar');
+const contains=(row,needle,keys)=>!needle||keys.some(k=>norm(row?.[k]).includes(needle));
+function applyFilters(){
+  const d=state.data||{}, employees=d.employees||[], missions=d.missions||[], auths=d.authorizations||[];
+  const ef=norm(state.filters.employee), mf=norm(state.filters.mission), af=norm(state.filters.authorization);
+  const filteredEmployees=employees.filter(e=>contains(e,ef,['name','administration','department','jobTitle','institutionalRole']));
+  const filteredMissions=missions.filter(m=>(state.filters.missionStatus==='ALL'||m.status===state.filters.missionStatus)&&contains(m,mf,['requestedEmployeeName','department','destination','reason','status']));
+  const filteredAuths=auths.filter(a=>(state.filters.authorizationStatus==='ALL'||a.status===state.filters.authorizationStatus)&&contains(a,af,['employeeName','department','vehicleId','authorizationNumber','status']));
+  return {employees:filteredEmployees,missions:filteredMissions,auths:filteredAuths,totalEmployees:employees.length,totalMissions:missions.length,totalAuths:auths.length};
+}
 
 async function api(action,payload={}){
   const token=await state.user.getIdToken();
@@ -23,13 +33,17 @@ async function api(action,payload={}){
 }
 
 function render(){
-  const d=state.data||{}, employees=d.employees||[], missions=d.missions||[], auths=d.authorizations||[];
-  $('kEmployees').textContent=String(employees.length);
-  $('kMissions').textContent=String(missions.filter(x=>x.status==='PENDING_APPROVAL').length);
-  $('kAuth').textContent=String(auths.filter(x=>x.status==='PENDING_AUTHORIZATION').length);
-  $('kActive').textContent=String(missions.filter(x=>['APPROVED','VEHICLE_ALLOCATED','HANDED_OVER','READY','IN_PROGRESS','INCIDENT_HOLD','COMPLETED','AWAITING_RETURN'].includes(x.status)).length);
+  const d=state.data||{}, allEmployees=d.employees||[], allMissions=d.missions||[], allAuths=d.authorizations||[];
+  const {employees,missions,auths,totalEmployees,totalMissions,totalAuths}=applyFilters();
+  $('kEmployees').textContent=String(allEmployees.length);
+  $('kMissions').textContent=String(allMissions.filter(x=>x.status==='PENDING_APPROVAL').length);
+  $('kAuth').textContent=String(allAuths.filter(x=>x.status==='PENDING_AUTHORIZATION').length);
+  $('kActive').textContent=String(allMissions.filter(x=>['APPROVED','VEHICLE_ALLOCATED','HANDED_OVER','READY','IN_PROGRESS','INCIDENT_HOLD','COMPLETED','AWAITING_RETURN'].includes(x.status)).length);
 
-  const pending=missions.filter(x=>x.status==='PENDING_APPROVAL').slice(0,6);
+  const pending=allMissions.filter(x=>x.status==='PENDING_APPROVAL').slice(0,6);
+  $('employeeCount').textContent=employees.length+' من '+totalEmployees;
+  $('missionCount').textContent=missions.length+' من '+totalMissions;
+  $('authorizationCount').textContent=auths.length+' من '+totalAuths;
   $('overviewMissions').innerHTML=pending.length?'<div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>القسم</th><th>الحالة</th></tr></thead><tbody>'+pending.map(m=>'<tr><td>'+esc(m.requestedEmployeeName)+'</td><td>'+esc(m.department)+'</td><td>'+missionStatus(m.status)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">لا توجد طلبات معلقة حاليًا.</div>';
 
   $('employeeRows').innerHTML=employees.length?employees.map(e=>'<tr><td><b>'+esc(e.name)+'</b></td><td>'+esc(e.administration)+'</td><td>'+esc(e.department)+'</td><td>'+esc(e.jobTitle)+'</td><td>'+esc(fmtRole(e.institutionalRole))+'</td><td>'+(e.vehicleEligible?pill('مؤهل','ok'):pill('غير مؤهل'))+'</td><td>'+empStatus(e.employmentStatus)+'</td></tr>').join(''):'<tr><td colspan="7" class="empty">لا توجد بيانات موظفين متاحة.</td></tr>';
@@ -41,8 +55,16 @@ function render(){
 
 async function refresh(){
   setLoading(true);
-  try{state.data=await api('getMobilityWorkspace');render();}
-  catch(e){toast('تعذر تحميل بيانات الشؤون الإدارية.');console.error(e)}
+  try{
+    state.data=await api('getMobilityWorkspace');
+    render();
+    $('health').textContent='متصل · بيانات موثوقة';
+  }
+  catch(e){
+    $('health').textContent='تعذر التحديث';
+    toast('تعذر تحميل بيانات الشؤون الإدارية.');
+    console.error(e);
+  }
   finally{setLoading(false)}
 }
 
@@ -57,6 +79,11 @@ document.addEventListener('click',async e=>{
 
 $('theme').onclick=()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;localStorage.setItem('smart-hsr-admin-theme',next)};
 $('refresh').onclick=refresh;
+$('employeeSearch').addEventListener('input',e=>{state.filters.employee=e.target.value;render()});
+$('missionSearch').addEventListener('input',e=>{state.filters.mission=e.target.value;render()});
+$('missionFilter').addEventListener('change',e=>{state.filters.missionStatus=e.target.value;render()});
+$('authorizationSearch').addEventListener('input',e=>{state.filters.authorization=e.target.value;render()});
+$('authorizationFilter').addEventListener('change',e=>{state.filters.authorizationStatus=e.target.value;render()});
 document.documentElement.dataset.theme=localStorage.getItem('smart-hsr-admin-theme')||'light';
 
 const cfg=await resolveFirebaseConfig();
