@@ -8,7 +8,7 @@ U.__phase11fRedesignV2 = true;
 const PRODUCT_LABELS = Object.freeze({ field:'الحصر', lands:'الأراضي', mobility:'الحركة' });
 const PRODUCT_CLASS = Object.freeze({ field:'field', lands:'lands', mobility:'mobility' });
 const STATUS_LABELS = Object.freeze({
-  ACTIVE:'نشط', SUSPENDED:'موقوف', NO_ACCOUNT:'بدون حساب',
+  ACTIVE:'نشط', SUSPENDED:'موقوف', ARCHIVED:'مؤرشف', NO_ACCOUNT:'بدون حساب',
   PENDING_ACTIVATION:'بانتظار التفعيل', LEGACY:'حساب قديم غير مرتبط بسجل موظف',
 });
 const ROLE_LABELS = Object.freeze({
@@ -55,6 +55,7 @@ const safeDate = value => {
 };
 
 function accountStatus(employee) {
+  if (employee?.employmentStatus === 'inactive') return 'ARCHIVED';
   if (!employee?.authUid) return employee?.accountStatus === 'PENDING_ACTIVATION' ? 'PENDING_ACTIVATION' : 'NO_ACCOUNT';
   if (employee.accountStatus === 'SUSPENDED') return 'SUSPENDED';
   if (employee.accountStatus === 'PENDING_ACTIVATION') return 'PENDING_ACTIVATION';
@@ -201,7 +202,7 @@ function productChips(e) {
   return products.length ? products.map(key => `<span class="ucv2-chip product ${PRODUCT_CLASS[key]}">${PRODUCT_LABELS[key]}</span>`).join('') : '<span class="ucv2-muted">بدون خدمات</span>';
 }
 function statusBadge(status) {
-  const cls = status==='ACTIVE'?'ok':status==='SUSPENDED'?'danger':status==='PENDING_ACTIVATION'?'warn':'muted';
+  const cls = status==='ACTIVE'?'ok':status==='SUSPENDED'||status==='ARCHIVED'?'danger':status==='PENDING_ACTIVATION'?'warn':'muted';
   return `<span class="ucv2-chip ${cls}">${STATUS_LABELS[status]||status}</span>`;
 }
 function vehicleBadge(e) {
@@ -227,6 +228,9 @@ function institutionalRoleMarkup(e){
 function editIconButton(id,label='تعديل'){
   return `<button class="ucv2-edit-btn" type="button" data-open-employee="${id}" aria-label="${esc(label)}" title="${esc(label)}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 20h4.2L19 9.2 14.8 5 4 15.8V20Zm2-3.4 8.8-8.8 1.4 1.4L7.4 18H6v-1.4ZM16.2 3.6l4.2 4.2-1.5 1.5-4.2-4.2 1.5-1.5Z" fill="currentColor"/></svg></button>`;
 }
+function deleteIconButton(id,label='حذف / أرشفة'){
+  return `<button class="ucv2-edit-btn" style="color:#e75f68;border-color:rgba(231,95,104,.28)" type="button" data-remove-employee="${id}" aria-label="${esc(label)}" title="${esc(label)}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M8 4h8l1 2h4v2H3V6h4l1-2Zm1 6h2v8H9v-8Zm4 0h2v8h-2v-8ZM6 9h12l-1 11H7L6 9Z" fill="currentColor"/></svg></button>`;
+}
 function legacyRow(record, mobile=false) {
   const u=record.user||{};
   if (mobile) return `<article class="ucv2-mobile-card legacy"><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(u.name||'حساب قديم'))}</span><div><b>${esc(u.name||'حساب قديم')}</b><small>يتطلب ربطًا بالسجل المؤسسي</small></div></div><div class="ucv2-legacy-note">حساب قديم غير مرتبط بسجل موظف</div></article>`;
@@ -242,8 +246,8 @@ function contractorRow(record,mobile=false){
 function institutionalJobTitle(e){ const current=clean(e?.jobTitle); if(current)return current; return (typeof U.inst==='function'&&U.inst(e)==='department_head')?'رئيس قسم':'—'; }
 function employeeRow(record, mobile=false) {
   const e=record.employee, status=accountStatus(e), id=esc(e.employeeId);
-  if (mobile) return `<article class="ucv2-mobile-card" data-employee-id="${id}"><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b><small>${esc(e.employeeRef||'بدون رقم وظيفي')}</small></div></div><div class="ucv2-mobile-meta">${institutionalRoleMarkup(e)}${statusBadge(status)}<span>${esc(institutionalSection(e)||'بدون قسم')}</span></div><div class="ucv2-products">${productChips(e)}</div><div class="ucv2-mobile-actions">${editIconButton(id,'تعديل الموظف')}</div></article>`;
-  return `<tr data-employee-id="${id}" tabindex="0"><td><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b></div></div></td><td>${esc(e.employeeRef||'—')}</td><td>${esc(institutionalAdministration(e))}</td><td>${esc(institutionalSection(e))}</td><td>${esc(institutionalJobTitle(e))}</td><td>${institutionalRoleMarkup(e)}</td><td><div class="ucv2-products">${productChips(e)}</div></td><td>${vehicleBadge(e)}</td><td>${statusBadge(status)}</td><td class="ucv2-edit-cell">${editIconButton(id,'تعديل الموظف')}</td></tr>`;
+  if (mobile) return `<article class="ucv2-mobile-card" data-employee-id="${id}"><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b><small>${esc(e.employeeRef||'بدون رقم وظيفي')}</small></div></div><div class="ucv2-mobile-meta">${institutionalRoleMarkup(e)}${statusBadge(status)}<span>${esc(institutionalSection(e)||'بدون قسم')}</span></div><div class="ucv2-products">${productChips(e)}</div><div class="ucv2-mobile-actions">${editIconButton(id,'تعديل الموظف')}${deleteIconButton(id)}</div></article>`;
+  return `<tr data-employee-id="${id}" tabindex="0"><td><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b></div></div></td><td>${esc(e.employeeRef||'—')}</td><td>${esc(institutionalAdministration(e))}</td><td>${esc(institutionalSection(e))}</td><td>${esc(institutionalJobTitle(e))}</td><td>${institutionalRoleMarkup(e)}</td><td><div class="ucv2-products">${productChips(e)}</div></td><td>${vehicleBadge(e)}</td><td>${statusBadge(status)}</td><td class="ucv2-edit-cell">${editIconButton(id,'تعديل الموظف')}</td><td class="ucv2-edit-cell">${deleteIconButton(id)}</td></tr>`;
 }
 function selectOptions(values, current, allLabel='الكل') {
   return `<option value="all">${esc(allLabel)}</option>${values.map(([value,label]) => `<option value="${esc(value)}"${value===current?' selected':''}>${esc(label)}</option>`).join('')}`;
@@ -314,7 +318,7 @@ async function renderCenter(force=false) {
     app.innerHTML=`
       <header class="ucv2-header">
         <div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div>
-        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button><button class="ucv2-btn contractor" type="button" data-open-contractors>سجل الشركات المتعاقدة</button></div>
+        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button><button class="ucv2-btn contractor" type="button" data-open-contractors>إدارة العقود والشركات المتعاقدة</button></div>
       </header>
       <div class="ucv2-kpis" aria-label="ملخص القوى العاملة">
         ${kpiCard('total','إجمالي الموظفين',stats.total,'total',null)}
@@ -339,7 +343,7 @@ async function renderCenter(force=false) {
         ${quickChip('active','الحسابات المفعلة')}${quickChip('no-account','بدون حساب')}${quickChip('field','الحصر')}${quickChip('lands','الأراضي')}${quickChip('mobility','الحركة')}
       </div>
       <div class="ucv2-grid-head"><span aria-live="polite">عرض ${filtered.length} من ${records.length} سجل</span><label>ترتيب <select data-filter="sort" aria-label="ترتيب سجل المستخدمين"><option value="name"${state.sort==='name'?' selected':''}>الاسم</option><option value="status"${state.sort==='status'?' selected':''}>الحالة</option><option value="department"${state.sort==='department'?' selected':''}>القسم</option><option value="updated"${state.sort==='updated'?' selected':''}>آخر تعديل</option></select></label></div>
-      ${pageRecords.length ? `<div class="ucv2-table-wrap"><table class="ucv2-table"><thead><tr><th>الموظف</th><th>الرقم الوظيفي</th><th>الإدارة</th><th>القسم</th><th>المسمى</th><th>الدور الوظيفي</th><th>الخدمات المفعلة</th><th>أهلية المركبة</th><th>الحالة</th><th class="ucv2-edit-head">تعديل</th></tr></thead><tbody>${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r):r.kind==='contractor'?contractorRow(r):employeeRow(r)).join('')}</tbody></table></div><div class="ucv2-mobile-list">${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r,true):r.kind==='contractor'?contractorRow(r,true):employeeRow(r,true)).join('')}</div>` : emptyState(records.length)}
+      ${pageRecords.length ? `<div class="ucv2-table-wrap"><table class="ucv2-table"><thead><tr><th>الموظف</th><th>الرقم الوظيفي</th><th>الإدارة</th><th>القسم</th><th>المسمى</th><th>الدور الوظيفي</th><th>الخدمات المفعلة</th><th>أهلية المركبة</th><th>الحالة</th><th class="ucv2-edit-head">تعديل</th><th class="ucv2-edit-head">حذف</th></tr></thead><tbody>${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r):r.kind==='contractor'?contractorRow(r):employeeRow(r)).join('')}</tbody></table></div><div class="ucv2-mobile-list">${pageRecords.map(r=>r.kind==='legacy'?legacyRow(r,true):r.kind==='contractor'?contractorRow(r,true):employeeRow(r,true)).join('')}</div>` : emptyState(records.length)}
       ${maxPage>1?pagination(maxPage):''}`;
     bindCenter(app,directory);
   } catch (error) {
@@ -462,6 +466,29 @@ function bindCenter(app,directory){
   app.querySelectorAll('[data-reset-filters]').forEach(btn=>btn.addEventListener('click',()=>{ resetFilters(); renderCenter(); }));
   app.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{ const q=btn.dataset.quick; state.quick=state.quick===q?null:q; state.page=1; renderCenter(); }));
   app.querySelectorAll('[data-filter]').forEach(control=>{ const key=control.dataset.filter; const event=key==='search'?'input':'change'; control.addEventListener(event,()=>{ state[key]=control.value; state.page=1; const caret=key==='search'?control.selectionStart:null;renderCenter().then(()=>{if(key!=='search')return;const next=lastRoot?.querySelector('[data-filter="search"]');if(!next)return;next.focus();if(Number.isInteger(caret))next.setSelectionRange(caret,caret);}); }); });
+  app.querySelectorAll('[data-remove-employee]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const id=btn.dataset.removeEmployee;
+    let employee=(directory.employees||[]).find(e=>String(e.employeeId)===id);
+    if(!employee){ const refreshed=await getDirectory(true); employee=(refreshed.employees||[]).find(e=>String(e.employeeId)===id); }
+    if(!employee){ showCenterActionError(app,{reason:'employee_not_found_after_refresh'}); return; }
+    const body=`<div class="sec"><div class="st"><span>حذف / أرشفة الموظف</span><small>يحافظ النظام على التاريخ البلدي</small></div><div class="note">سيتم حذف السجل نهائيًا فقط إذا لم يسبق تفعيله ولا توجد له مهام أو تكليفات أو موظفون تابعون. خلاف ذلك سيتم إيقافه وأرشفته مع حفظ السجل والتدقيق.</div><div class="act"><button type="button" class="btn bad remove-confirm">تأكيد</button><button type="button" class="btn cancel">إلغاء</button></div><div class="msg remove-msg"></div></div>`;
+    const shell=U.shell('iuc-remove-employee','حذف / أرشفة '+(employee.name||'الموظف'),'إجراء محكوم وآمن',body,true);
+    shell.c.querySelector('.cancel')?.addEventListener('click',shell.close);
+    const confirmBtn=shell.c.querySelector('.remove-confirm'),msg=shell.c.querySelector('.remove-msg');
+    confirmBtn?.addEventListener('click',async()=>{
+      confirmBtn.disabled=true;
+      try{
+        const result=await U.post('/api/admin/employees',{action:'removeEmployee',employeeId:id});
+        directoryCache=null;
+        msg.className='msg ok remove-msg';
+        msg.textContent=result.mode==='deleted'?'تم حذف السجل غير المستخدم.':'تم إيقاف الموظف وأرشفته مع حفظ التاريخ.';
+        setTimeout(()=>{shell.close();renderCenter(true);},700);
+      }catch(error){
+        msg.className='msg er remove-msg';
+        msg.textContent=U.why?U.why(error.reason||error.message):'تعذر تنفيذ الإجراء.';
+      }finally{confirmBtn.disabled=false;}
+    });
+  }));
   app.querySelectorAll('[data-open-employee]').forEach(btn=>btn.addEventListener('click',async()=>{
     const id=btn.dataset.openEmployee;
     try{
