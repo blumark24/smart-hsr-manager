@@ -36,6 +36,7 @@
     .pill.bad{color:var(--danger);background:color-mix(in srgb,var(--danger) 8%,transparent)}.actions{display:flex;gap:6px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:9px;padding:7px 9px;cursor:pointer;font-size:10px;font-weight:800;transition:transform .15s ease,border-color .15s ease,background .15s ease}.btn:hover:not(:disabled){transform:translateY(-1px);border-color:color-mix(in srgb,var(--green) 38%,var(--line))}.btn:disabled{opacity:.55;cursor:wait}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}.btn.danger{color:var(--danger)}.tbl tbody tr{transition:background .15s ease}.tbl tbody tr:hover{background:color-mix(in srgb,var(--green) 4%,var(--surface))}.filterbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-4px 0 14px}.filterbar input,.filterbar select{height:38px;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;padding:0 11px;font-size:11px;min-width:180px}.filterbar input{flex:1;min-width:220px}.filterbar select{min-width:150px}.filterhint{font-size:10px;color:var(--muted);margin-inline-start:auto}
     .empty{padding:24px;text-align:center;color:var(--muted);font-size:12px}.loading{position:fixed;inset:72px 260px 0 0;background:color-mix(in srgb,var(--bg) 88%,transparent);display:grid;place-items:center;z-index:30}.loading[hidden]{display:none}.spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.msg{position:fixed;left:18px;bottom:18px;max-width:360px;padding:11px 13px;border-radius:11px;background:var(--navy);color:#fff;font-size:11px;box-shadow:var(--shadow);z-index:50;display:none}.msg.show{display:block}
     @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;padding:12px}.brand{padding-bottom:12px}.side nav{display:flex;overflow:auto;margin-top:10px}.nav{white-space:nowrap}.side-foot{position:static;display:flex;margin-top:10px}.top{top:0}.loading{inset:0}.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.health{display:none}}
+    dialog{border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--text);box-shadow:0 30px 90px rgba(0,0,0,.28);width:min(620px,calc(100vw - 28px));padding:0}dialog::backdrop{background:rgba(4,18,26,.48);backdrop-filter:blur(5px)}.dlg-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.dlg-body{padding:18px}.dlg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.dlg-field{display:grid;gap:5px}.dlg-field.wide{grid-column:1/-1}.dlg-field label{font-size:10px;color:var(--muted);font-weight:800}.dlg-field input,.dlg-field select,.dlg-field textarea{border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:10px;padding:9px 10px}.dlg-field textarea{min-height:96px;resize:vertical}.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}@media print{.side,.tools,.filterbar,.actions,.nav,.msg,.loading{display:none!important}.app{display:block}.content{max-width:none;padding:0}.view{display:block!important}.view:not(.on){display:none!important}.card{box-shadow:none}}
     @media(max-width:560px){.content{padding:14px}.top{padding:0 14px}.kpis{grid-template-columns:1fr}.hero{display:block}.badge{display:inline-block;margin-top:10px}}
   </style>
 </head>
@@ -48,6 +49,7 @@
       <button class="nav" data-view="employees">الموظفون</button>
       <button class="nav" data-view="missions">موافقات المهام</button>
       <button class="nav" data-view="authorizations">تفويض المركبات</button>
+      <button class="nav" data-view="audit">سجل الإجراءات</button>
     </nav>
     <div class="side-foot">
       <button id="theme" class="side-btn">الوضع الليلي / النهاري</button>
@@ -57,7 +59,7 @@
   <main>
     <header class="top">
       <div><h1 id="pageTitle">الشؤون الإدارية</h1><p id="identity">يتم التحقق من الهوية المؤسسية…</p></div>
-      <div class="tools"><span class="health" id="health">مسار مؤسسي آمن</span><button id="refresh" class="tool" type="button">تحديث</button></div>
+      <div class="tools"><span class="health" id="health">مسار مؤسسي آمن</span><button id="printPage" class="tool" type="button">طباعة</button><button id="refresh" class="tool" type="button">تحديث</button></div>
     </header>
     <div class="content">
       <section class="view on" id="overview">
@@ -74,25 +76,31 @@
         </div>
       </section>
       <section class="view" id="employees">
-        <div class="hero"><div><h2>الموظفون</h2><p>عرض مؤسسي آمن، بدون بيانات دخول أو بيانات حساسة.</p></div><span class="badge">قراءة فقط</span></div>
+        <div class="hero"><div><h2>الموظفون الداخليون</h2><p>جميع مستخدمي البلدية الداخليين فقط، بدون المقاولين أو بيانات الدخول الحساسة.</p></div><span class="badge">تعديل إداري محكوم</span></div>
         <div class="filterbar"><input id="employeeSearch" type="search" autocomplete="off" placeholder="بحث بالاسم، الإدارة، القسم أو المسمى…"><span class="filterhint" id="employeeCount">—</span></div>
-        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>الإدارة</th><th>القسم</th><th>المسمى</th><th>الدور</th><th>أهلية المركبة</th><th>الحالة</th></tr></thead><tbody id="employeeRows"></tbody></table></div></div>
+        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>الإدارة</th><th>القسم</th><th>المسمى</th><th>الدور</th><th>أهلية المركبة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="employeeRows"></tbody></table></div></div>
       </section>
       <section class="view" id="missions">
         <div class="hero"><div><h2>موافقات المهام</h2><p>اعتماد أو رفض أو إعادة طلب المهمة للجهة الطالبة.</p></div></div>
         <div class="filterbar"><input id="missionSearch" type="search" autocomplete="off" placeholder="بحث بالموظف، القسم، الوجهة أو السبب…"><select id="missionFilter" aria-label="فلترة حالة المهمة"><option value="ALL">كل الحالات</option><option value="PENDING_APPROVAL">بانتظار الموافقة</option><option value="APPROVED">معتمد</option><option value="REJECTED">مرفوض</option></select><span class="filterhint" id="missionCount">—</span></div>
-        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>القسم</th><th>الوجهة</th><th>السبب</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="missionRows"></tbody></table></div></div>
+        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>القسم</th><th>الوجهة</th><th>السبب</th><th>الملاحظة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="missionRows"></tbody></table></div></div>
       </section>
       <section class="view" id="authorizations">
         <div class="hero"><div><h2>تفويض المركبات</h2><p>اعتماد أو رفض التفويض بعد تخصيص المركبة.</p></div></div>
         <div class="filterbar"><input id="authorizationSearch" type="search" autocomplete="off" placeholder="بحث بالموظف، القسم، المركبة أو رقم التفويض…"><select id="authorizationFilter" aria-label="فلترة حالة التفويض"><option value="ALL">كل الحالات</option><option value="PENDING_AUTHORIZATION">بانتظار الاعتماد</option><option value="AUTHORIZED">معتمد</option><option value="REJECTED">مرفوض</option><option value="REVOKED">ملغي</option></select><span class="filterhint" id="authorizationCount">—</span></div>
-        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>القسم</th><th>المركبة</th><th>رقم التفويض</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="authorizationRows"></tbody></table></div></div>
+        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>القسم</th><th>المركبة</th><th>رقم التفويض</th><th>الملاحظة</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="authorizationRows"></tbody></table></div></div>
+      </section>
+      <section class="view" id="audit">
+        <div class="hero"><div><h2>سجل الإجراءات</h2><p>سجل تدقيق للقرارات والموافقات والتغييرات الإدارية.</p></div><button id="printAudit" class="btn" type="button">طباعة السجل</button></div>
+        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الوقت</th><th>النوع</th><th>الإجراء</th><th>القسم</th><th>من</th><th>إلى</th><th>الملاحظة</th></tr></thead><tbody id="auditRows"></tbody></table></div></div>
       </section>
     </div>
   </main>
 </div>
 <div class="loading" id="loading"><div class="spin"></div></div>
 <div class="msg" id="msg" role="status" aria-live="polite"></div>
+<dialog id="employeeDlg"><div class="dlg-head"><strong>تعديل الموظف</strong><button class="btn" data-close-dialog="employeeDlg">إغلاق</button></div><div class="dlg-body"><div class="dlg-grid"><div class="dlg-field wide"><label>الموظف</label><input id="editEmployeeName" disabled></div><div class="dlg-field"><label>المسمى الوظيفي</label><input id="editEmployeeTitle"></div><div class="dlg-field"><label>الحالة</label><select id="editEmployeeStatus"><option value="active">نشط</option><option value="inactive">غير نشط</option></select></div><div class="dlg-field wide"><label><input id="editEmployeeVehicle" type="checkbox"> مؤهل لاستلام مركبة</label></div><div class="dlg-field wide"><label>ملاحظة إدارية</label><textarea id="editEmployeeNote" maxlength="600"></textarea></div></div><div class="dlg-actions"><button class="btn primary" id="saveEmployeeEdit">حفظ التعديل</button></div></div></dialog>
+<dialog id="decisionDlg"><div class="dlg-head"><strong id="decisionTitle">قرار إداري</strong><button class="btn" data-close-dialog="decisionDlg">إغلاق</button></div><div class="dlg-body"><div class="dlg-field"><label>الملاحظة</label><textarea id="decisionNote" maxlength="600" placeholder="ملاحظة اختيارية تُحفظ في سجل التدقيق"></textarea></div><div class="dlg-actions"><button class="btn primary" id="confirmDecision">تأكيد القرار</button></div></div></dialog>
 <script type="module" src="./admin-affairs-runtime.js"></script>
 </body>
 </html>
