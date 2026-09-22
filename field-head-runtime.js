@@ -72,9 +72,13 @@
       const snap = await getDoc(doc(db,'users',user.uid));
       if (!snap.exists()) { await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
       const data = snap.data() || {};
-      const role = data?.mobilityAccess?.enabled === true ? data.mobilityAccess.role : data.role;
+      const mobilityRole = data?.mobilityAccess?.enabled === true ? data.mobilityAccess.role : null;
+      const institutionalRole = String(data.institutionalRole || '');
+      const administration = String(data.administration || '');
       const dept = String(data.department || '');
-      if (data.active === false || role !== 'department_head' || !/الحصر|ميداني|field/i.test(dept) || !data.organizationId) {
+      const legacyFieldHead = mobilityRole === 'department_head' && /الحصر|ميداني|field/i.test(administration || dept);
+      const institutionalFieldHead = institutionalRole === 'department_head' && /الحصر|ميداني|field/i.test(administration || dept);
+      if (data.active === false || (!institutionalFieldHead && !legacyFieldHead) || !dept || !data.organizationId) {
         await signOut(auth).catch(()=>{});
         location.replace('login.html');
         return;
