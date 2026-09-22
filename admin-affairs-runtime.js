@@ -96,11 +96,12 @@ onAuthStateChanged(auth,async user=>{
   const snap=await getDoc(doc(db,'users',user.uid)).catch(()=>null);
   if(!snap||!snap.exists()){await signOut(auth).catch(()=>{});location.replace('login.html');return}
   const d=snap.data()||{}, administration=String(d.administration||'').trim();
-  const mobility=d.mobilityAccess;
+  // PHASE17 — canonical institutional identity is sufficient for this
+  // workspace. Mobility access is not part of the user's organizational
+  // identity and is intentionally ignored here.
   const allowed=d.active!==false
     && d.institutionalRole==='department_head'
-    && /الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration)
-    && mobility&&mobility.enabled===true&&mobility.role==='administrative_affairs';
+    && /الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
   if(!allowed){await signOut(auth).catch(()=>{});location.replace('login.html');return}
   state.user=user;
   $('identity').textContent=[d.name||user.email,administration,d.department].filter(Boolean).join(' · ');
