@@ -46,6 +46,7 @@ jobs:
           node --test test/user-center-employee-profile-email-endpoint-regression.test.js
           node --test test/user-center-runtime-hang-regression.test.js
           node --test test/user-center-canonical-field-head-regression.test.js
+          node --test test/municipality-admin-polish-regression.test.js
 
       - name: Field Survey acceptance
         run: |
