@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 84" fill="none" role="img" aria-label="SMART HSR">
+  <path d="M38 4a30 30 0 1 0 0 60 30 30 0 0 0 0-60z" fill="none" stroke="#dbe6f5" stroke-width="7"/>
+  <rect x="26" y="30" width="7.5" height="22" rx="1.5" fill="#dbe6f5"/>
+  <rect x="35.5" y="20" width="7.5" height="32" rx="1.5" fill="#dbe6f5"/>
+  <rect x="45" y="26" width="7.5" height="26" rx="1.5" fill="#2aa84a"/>
+  <path d="M12 46 38 80 64 46 51 46 38 63 25 46z" fill="#2aa84a"/>
+</svg>
