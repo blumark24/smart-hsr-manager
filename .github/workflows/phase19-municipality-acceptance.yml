@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - phase19-municipality-acceptance-rc1
+      - phase19-1-institutional-structure-closure
   workflow_dispatch:
 
 jobs:
@@ -47,6 +48,7 @@ jobs:
           node --test test/user-center-runtime-hang-regression.test.js
           node --test test/user-center-canonical-field-head-regression.test.js
           node --test test/municipality-admin-polish-regression.test.js
+          node --test test/phase19-1-institutional-structure-closure.test.js
 
       - name: Field Survey acceptance
         run: |
