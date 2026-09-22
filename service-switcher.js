@@ -26,7 +26,13 @@
       const snap=await getDoc(doc(db,'users',user.uid)).catch(()=>null);
       if(!snap||!snap.exists())return;
       const d=snap.data()||{};
-      if(d.active===false||countServices(d)<2)return;
+      const administration=String(d.administration||'').trim();
+      const institutionalRole=String(d.institutionalRole||'').trim();
+      const canonicalRole=['general_supervisor','department_head','employee'].includes(institutionalRole);
+      const canonicalPath=canonicalRole && /الحصر|ميداني|field|الأراضي|الممتلكات|lands|حركة السير|الحركة الذكية|mobility|traffic|الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
+      // PHASE16: canonical institutional identities have exactly one active
+      // workspace. "خدماتي" exists only for unmigrated legacy accounts.
+      if(d.active===false||canonicalPath||countServices(d)<2)return;
       if(document.getElementById('smart-hsr-service-switcher'))return;
       const a=document.createElement('button');
       a.id='smart-hsr-service-switcher'; a.type='button'; a.textContent='خدماتي';
