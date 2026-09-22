@@ -83,5 +83,11 @@ jobs:
       - name: Contractors registry acceptance
         run: node --test test/contractors-registry-v1.test.js
 
+      - name: Municipality Manager current architecture
+        run: |
+          node --test test/municipality-manager-current-architecture.test.js
+          node --test test/manager-component-did-update-regression.test.js
+          node --test test/phase13d1-manager-shell-navigation-stability.test.js
+
       - name: Security rules regression
         run: npm run test:rules
