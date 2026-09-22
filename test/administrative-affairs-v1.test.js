@@ -14,9 +14,10 @@ const users=read('api/admin/users.js');
 
 test('canonical Administrative Affairs head routes to the dedicated workspace',()=>{
   assert.match(login,/canonicalAdministrativePath/);
-  assert.match(login,/mobilityRole === 'administrative_affairs'/);
+  assert.match(login,/canonicalAdministrativePath && institutionalRole === 'department_head'/);
   assert.match(login,/window\.location\.href = 'admin-affairs\.html'/);
   assert.doesNotMatch(login,/canonicalAdministrativePath[\s\S]{0,700}department-head\.html\?mode=mobility/);
+  assert.doesNotMatch(login,/canonicalAdministrativePath && mobilityRole === 'administrative_affairs'/);
 });
 
 test('dedicated workspace exposes only implemented V1 surfaces',()=>{
@@ -31,8 +32,15 @@ test('dedicated workspace exposes only implemented V1 surfaces',()=>{
 test('Administrative Affairs runtime fails closed on institutional identity',()=>{
   assert.match(runtime,/d\.institutionalRole==='department_head'/);
   assert.match(runtime,/الشؤون الإدارية\|الشؤون الادارية\|administrative/);
-  assert.match(runtime,/mobility\.role==='administrative_affairs'/);
+  assert.doesNotMatch(runtime,/mobility&&mobility\.enabled===true&&mobility\.role==='administrative_affairs'/);
   assert.match(runtime,/location\.replace\('login\.html'\)/);
+});
+
+test('trusted approvals derive Administrative Affairs authority from the institutional path',()=>{
+  assert.match(users,/const isAdministrativeAffairsHead =/);
+  assert.match(users,/institutionalRole === 'department_head'/);
+  assert.match(users,/الشؤون الإدارية\|الشؤون الادارية\|administrative/);
+  assert.match(users,/isAdministrativeAffairsHead \? 'administrative_affairs' : resolveMobilityRole\(data\)/);
 });
 
 test('workspace uses trusted APIs for real approvals',()=>{
