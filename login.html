@@ -245,7 +245,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const canonicalLandsPath = canonicalInstitutionalRole && /الأراضي|الممتلكات|lands/i.test(administration);
     const canonicalMobilityPath = canonicalInstitutionalRole && /حركة السير|الحركة الذكية|mobility|traffic/i.test(administration);
     const canonicalAdministrativePath = canonicalInstitutionalRole && /الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
-    const hasCanonicalPath = canonicalFieldPath || canonicalLandsPath || canonicalMobilityPath || canonicalAdministrativePath;
+    const canonicalContractsPath = canonicalInstitutionalRole && /العقود|الشركات المتعاقدة|contracts?|contractors?/i.test(administration);
+    const hasCanonicalPath = canonicalFieldPath || canonicalLandsPath || canonicalMobilityPath || canonicalAdministrativePath || canonicalContractsPath;
 
     // Canonical Field path: ignore stale historical Mobility compatibility
     // entitlements and open the one HR-owned workspace.
@@ -313,6 +314,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ فتح الشؤون الإدارية', 'success');
       setTimeout(() => { window.location.href = 'admin-affairs.html'; }, 450);
+      return;
+    }
+
+    if (hasCanonicalPath && canonicalContractsPath && ['department_head','employee'].includes(institutionalRole)) {
+      await signInWithEmailAndPassword(auth, email, password);
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ فتح إدارة العقود والشركات المتعاقدة', 'success');
+      setTimeout(() => { window.location.href = 'contractors-registry.html'; }, 450);
       return;
     }
 
