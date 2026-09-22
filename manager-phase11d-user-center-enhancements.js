@@ -159,16 +159,14 @@ function kpis(records) {
 function institutionalAdministration(e){
   const current=clean(e?.administration);
   if(current)return current;
-  if(enabled(e,'field'))return 'إدارة الحصر الميداني';
-  if(enabled(e,'lands'))return 'إدارة الأراضي والممتلكات';
-  if(enabled(e,'mobility'))return 'إدارة حركة السير';
+  if(typeof U.isFieldHeadCompat==='function' && U.isFieldHeadCompat(e)) return 'إدارة الحصر الميداني';
   return '—';
 }
 function institutionalSection(e){
   const current=clean(e?.department);
-  const administrations=new Set(['إدارة الحصر الميداني','إدارة الأراضي والممتلكات','إدارة حركة السير','إدارة الحركة الذكية']);
+  const administrations=new Set(['إدارة الحصر الميداني','إدارة الأراضي والممتلكات','إدارة حركة السير','إدارة الحركة الذكية','إدارة الشؤون الإدارية']);
   if(current && !administrations.has(current)) return current;
-  if(enabled(e,'field')) return 'التشوه البصري';
+  if(typeof U.isFieldHeadCompat==='function' && U.isFieldHeadCompat(e)) return 'التشوه البصري';
   return '—';
 }
 
@@ -245,10 +243,11 @@ function contractorRow(record,mobile=false){
   if(mobile)return `<article class="ucv2-mobile-card contractor"><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(c.companyName||c.contactName))}</span><div><b>${esc(c.companyName||'شركة متعاقدة')}</b><small>${esc(c.contractNumber||'بدون رقم عقد')}</small></div></div><div class="ucv2-mobile-meta"><span class="ucv2-chip ${stateClass}">${esc(stateLabel)}</span><span>${esc(c.section||'التشوه البصري')}</span></div><div class="ucv2-products"><span class="ucv2-chip product field">الحصر</span></div></article>`;
   return `<tr class="ucv2-contractor-row"><td><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(c.companyName||c.contactName))}</span><div><b>${esc(c.companyName||'شركة متعاقدة')}</b></div></div></td><td>${esc(c.contractNumber||'—')}</td><td>${esc(c.administration||'إدارة الحصر الميداني')}</td><td>${esc(c.section||'التشوه البصري')}</td><td>${esc(c.contactName||'ممثل الشركة')}</td><td><span class="ucv2-role">شركة متعاقدة</span></td><td><div class="ucv2-products"><span class="ucv2-chip product field">الحصر</span></div></td><td><span class="ucv2-muted">—</span></td><td><span class="ucv2-chip ${c.active===false?'danger':stateClass}">${c.active===false?'الحساب موقوف':esc(stateLabel)}</span></td><td><button class="ucv2-edit-btn" disabled aria-disabled="true" title="إدارة الشركة من سجل المتعاقدين">—</button></td></tr>`;
 }
+function institutionalJobTitle(e){ const current=clean(e?.jobTitle); if(current)return current; return (typeof U.inst==='function'&&U.inst(e)==='department_head')?'رئيس قسم':'—'; }
 function employeeRow(record, mobile=false) {
   const e=record.employee, status=accountStatus(e), id=esc(e.employeeId);
   if (mobile) return `<article class="ucv2-mobile-card" data-employee-id="${id}"><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b><small>${esc(e.employeeRef||'بدون رقم وظيفي')}</small></div></div><div class="ucv2-mobile-meta">${institutionalRoleMarkup(e)}${statusBadge(status)}<span>${esc(institutionalSection(e)||'بدون قسم')}</span></div><div class="ucv2-products">${productChips(e)}</div><div class="ucv2-mobile-actions">${editIconButton(id,'تعديل الموظف')}</div></article>`;
-  return `<tr data-employee-id="${id}" tabindex="0"><td><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b></div></div></td><td>${esc(e.employeeRef||'—')}</td><td>${esc(institutionalAdministration(e))}</td><td>${esc(institutionalSection(e))}</td><td>${esc(e.jobTitle||'—')}</td><td>${institutionalRoleMarkup(e)}</td><td><div class="ucv2-products">${productChips(e)}</div></td><td>${vehicleBadge(e)}</td><td>${statusBadge(status)}</td><td class="ucv2-edit-cell">${editIconButton(id,'تعديل الموظف')}</td></tr>`;
+  return `<tr data-employee-id="${id}" tabindex="0"><td><div class="ucv2-person"><span class="ucv2-avatar">${esc(initials(e.name))}</span><div><b>${esc(e.name||'موظف')}</b></div></div></td><td>${esc(e.employeeRef||'—')}</td><td>${esc(institutionalAdministration(e))}</td><td>${esc(institutionalSection(e))}</td><td>${esc(institutionalJobTitle(e))}</td><td>${institutionalRoleMarkup(e)}</td><td><div class="ucv2-products">${productChips(e)}</div></td><td>${vehicleBadge(e)}</td><td>${statusBadge(status)}</td><td class="ucv2-edit-cell">${editIconButton(id,'تعديل الموظف')}</td></tr>`;
 }
 function selectOptions(values, current, allLabel='الكل') {
   return `<option value="all">${esc(allLabel)}</option>${values.map(([value,label]) => `<option value="${esc(value)}"${value===current?' selected':''}>${esc(label)}</option>`).join('')}`;
