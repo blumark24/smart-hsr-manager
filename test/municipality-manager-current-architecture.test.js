@@ -58,7 +58,8 @@ test('contractors are managed outside the municipal employee registry',()=>{
   assert.match(enhancements,/data-open-contractors/);
   assert.match(enhancements,/contractors-registry\.html/);
   assert.doesNotMatch(enhancements,/data-add-contractor/);
-  assert.match(contractorsPage,/الشركات منفصلة عن موظفي البلدية/);
+  assert.match(contractorsPage,/إدارة العقود والشركات المتعاقدة/);
+  assert.match(contractorsPage,/مسار مؤسسي خامس مستقل/);
 });
 
 test('manager surfaces retain current operational integrations',()=>{
