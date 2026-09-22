@@ -52,3 +52,12 @@ test('Record stays synchronized with the trusted observation stream',()=>{
   assert.match(page,/renderObservationsList\(observationsData\);\s*renderInspectorRecord\(\);\s*renderPersonalMap\(\);/);
   assert.match(page,/renderInspectorCounts\(\);\s*renderInspectorRecord\(\);\s*renderPersonalMap\(\);/);
 });
+
+
+test('Inspector record JavaScript block parses as valid browser JavaScript',()=>{
+  const start=page.indexOf("let inspectorRecordQuery=''");
+  const end=page.indexOf('function renderPersonalMapAuthority',start);
+  assert.ok(start>=0&&end>start,'record logic block missing');
+  const block=page.slice(start,end);
+  assert.doesNotThrow(()=>new Function(block));
+});
