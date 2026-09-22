@@ -15,6 +15,7 @@ const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'u
 const skin = fs.readFileSync(path.join(root, 'manager-phase11g-user-center-approved-skin.js'), 'utf8');
 const managerFormat = fs.readFileSync(path.join(root, 'manager-dashboard-format.js'), 'utf8');
 const managerLogin = fs.readFileSync(path.join(root, 'manager-login.html'), 'utf8');
+const manager = fs.readFileSync(path.join(root, 'manager.html'), 'utf8');
 const contractorRegistryPage = fs.readFileSync(path.join(root, 'contractors-registry.html'), 'utf8');
 const contractorRegistryRuntime = fs.readFileSync(path.join(root, 'contractors-registry-runtime.js'), 'utf8');
 
@@ -59,11 +60,11 @@ test('Add Employee and existing employee activation both use shared readProducts
 
 
 test('User Center separates external contractor companies from municipal employees', () => {
-  assert.match(enhancements, /data-open-contractors/);
-  assert.match(enhancements, /إدارة العقود والشركات المتعاقدة/);
-  assert.match(enhancements, /contractors-registry\.html/);
+  assert.doesNotMatch(enhancements, /data-open-contractors/);
   assert.doesNotMatch(enhancements, /data-add-contractor/);
   assert.doesNotMatch(enhancements, /kpiCard\('contractors'/);
+  assert.match(manager, /href="contractors-registry\.html"/);
+  assert.match(manager, /إدارة العقود والشركات المتعاقدة/);
   assert.match(contractorRegistryPage, /إدارة العقود والشركات المتعاقدة/);
   assert.doesNotMatch(managerFormat, /data-route-close/);
 });
