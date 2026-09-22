@@ -41,7 +41,7 @@ test('email normalizer strips invisible bidi/control formatting characters',()=>
 test('vehicle eligibility is a global employee capability, not a Mobility-only control',()=>{
   assert.match(core,/class="ve-global"/);
   assert.match(core,/أهلية المركبة/);
-  assert.match(core,/صلاحية مستقلة عن إدارة حركة السير/);
+  assert.match(core,/خيار مستقل: نعم أو لا\. لا يفعّل إدارة حركة السير تلقائيًا/);
   assert.match(core,/independentVehicleEligible=c\.querySelector\('\.ve-global'\)\?\.checked===true/);
   assert.doesNotMatch(core,/k==='mobility'\?\`<label[^\n]*أهلية المركبة/);
 });
