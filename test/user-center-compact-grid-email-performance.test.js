@@ -44,7 +44,8 @@ test('edit opens from cached employee directory without forced full refetch',()=
 test('email is editable in profile and linked accounts use trusted email mutation',()=>{
   assert.match(dialogs,/U\.input\('البريد','edit-email',e\.email\|\|'',\{type:'email',ac:'email'\}\)/);
   assert.match(dialogs,/action:'changeLoginEmail'/);
-  assert.match(dialogs,/تم حفظ بيانات الموظف والبريد/);
+  assert.match(dialogs,/تم حفظ بيانات الموظف/);
+  assert.match(dialogs,/تم حفظ بيانات الموظف وتحديث بريد الدخول/);
 });
 
 test('legacy misplaced email is presented as email, not employee number',()=>{
