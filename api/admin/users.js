@@ -1616,19 +1616,30 @@ async function handler(req, res) {
       }
 
       const employees = [];
-      if (actor.role === 'department_head' || actor.role === 'mobility_head') {
+      if (actor.role === 'department_head' || actor.role === 'mobility_head' || actor.role === 'administrative_affairs') {
         for (const doc of employeeSnap.docs) {
           const d = doc.data() || {};
           if (actor.role === 'department_head' && cleanString(d.department) !== cleanString(actor.department)) continue;
-          if (d.employmentStatus === 'inactive' || d.accountStatus !== 'ACTIVE' || !isNonEmptyString(d.authUid)) continue;
+          if (d.employmentStatus === 'inactive') continue;
           const mobility = d.products && d.products.mobility;
-          if (!mobility || mobility.enabled !== true) continue;
+          // Administrative Affairs receives a municipality-wide SAFE registry
+          // projection for internal approvals. No email, phone, credential,
+          // national identifier, or write capability is exposed here.
+          if (actor.role !== 'administrative_affairs') {
+            if (d.accountStatus !== 'ACTIVE' || !isNonEmptyString(d.authUid)) continue;
+            if (!mobility || mobility.enabled !== true) continue;
+          }
           employees.push({
             employeeId: doc.id,
-            uid: d.authUid,
+            uid: isNonEmptyString(d.authUid) ? d.authUid : null,
             name: cleanString(d.name, doc.id),
+            administration: cleanString(d.administration),
             department: cleanString(d.department),
-            vehicleEligible: mobility.vehicleEligible === true,
+            jobTitle: cleanString(d.jobTitle),
+            institutionalRole: cleanString(d.institutionalRole),
+            employmentStatus: cleanString(d.employmentStatus) || 'active',
+            accountStatus: cleanString(d.accountStatus) || 'NO_ACCOUNT',
+            vehicleEligible: d.vehicleEligible === true || Boolean(mobility && mobility.vehicleEligible === true),
           });
         }
       }
