@@ -1,0 +1,60 @@
+name: PHASE16 Institutional Path Foundation
+
+on:
+  push:
+    branches:
+      - phase16-institutional-path-foundation
+  workflow_dispatch:
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check identity integration
+        run: |
+          node --check api/admin/employees.js
+          node --check api/admin/users.js
+          node --check api/_lib/authz.js
+          node --check manager-phase11c-user-center-core.js
+          node --check manager-phase11c-user-center-dialogs.js
+          node --check manager-phase11d-user-center-enhancements.js
+          node --check field-head-runtime.js
+
+      - name: Institutional path foundation
+        run: node --test test/institutional-path-foundation.test.js
+
+      - name: User Center regression
+        run: node --test test/user-center-compact-grid-email-performance.test.js
+
+      - name: Department Head regression
+        run: |
+          node --test test/department-head-framework.test.js
+          node --test test/field-head-user-center-provisioning.test.js
+          node --test test/field-head-operational-map.test.js
+
+      - name: Mobility regression
+        run: |
+          node --test test/shared-mobility-workflow.test.js
+          node --test test/mobility-role-runtime.test.js
+          node --test test/mobility-integration-regression.test.js
+
+      - name: Lands regression
+        run: |
+          node --test test/manager-lands-sso.test.js
+          node --test test/manager-lands-digital-record.test.js
+
+      - name: Firestore security rules regression
+        run: npm run test:rules
