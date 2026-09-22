@@ -380,8 +380,9 @@ function safeContractorProfile(data) {
 
 async function requireFieldDepartmentHead(decodedUid) {
   const caller = await getCallerContext(decodedUid);
+  const fieldScope = caller.administration || caller.department;
   if (!caller.isDepartmentHead || caller.role !== 'department_head'
-      || !caller.organizationId || !isFieldSurveyDepartment(caller.department)) {
+      || !caller.organizationId || !isFieldSurveyDepartment(fieldScope)) {
     return null;
   }
   return caller;
