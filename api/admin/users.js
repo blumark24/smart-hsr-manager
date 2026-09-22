@@ -173,11 +173,17 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
   // administrative_affairs actor role only inside the trusted Mobility
   // approval workflow. Nothing is written back to mobilityAccess and this
   // does not grant fleet-management or product-switching privileges.
+  const isAdministrativeAffairsPath = /الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
   const isAdministrativeAffairsHead =
-    institutionalRole === 'department_head'
-    && /الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
+    institutionalRole === 'department_head' && isAdministrativeAffairsPath;
+  const isAdministrativeAffairsEmployee =
+    institutionalRole === 'employee' && isAdministrativeAffairsPath;
 
-  const role = isAdministrativeAffairsHead ? 'administrative_affairs' : resolveMobilityRole(data);
+  const role = isAdministrativeAffairsHead
+    ? 'administrative_affairs'
+    : isAdministrativeAffairsEmployee
+      ? 'administrative_affairs_employee'
+      : resolveMobilityRole(data);
   if (!Array.isArray(allowedRoles) || !allowedRoles.includes(role)
       || data.active === false || !organizationId) return null;
   return {
@@ -1766,7 +1772,7 @@ async function handler(req, res) {
   // scope is derived exclusively from the authenticated live Mobility role.
   if (action === 'getMobilityWorkspace') {
     const actor = await getMobilityOperationalCaller(
-      db, decoded.uid, ['mobility_head', 'department_head', 'administrative_affairs', 'employee']
+      db, decoded.uid, ['mobility_head', 'department_head', 'administrative_affairs', 'administrative_affairs_employee', 'employee']
     );
     if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
     try {
@@ -1810,16 +1816,16 @@ async function handler(req, res) {
       }
 
       const employees = [];
-      if (actor.role === 'department_head' || actor.role === 'mobility_head' || actor.role === 'administrative_affairs') {
+      if (actor.role === 'department_head' || actor.role === 'mobility_head' || actor.role === 'administrative_affairs' || actor.role === 'administrative_affairs_employee') {
         for (const doc of employeeSnap.docs) {
           const d = doc.data() || {};
           if (actor.role === 'department_head' && cleanString(d.department) !== cleanString(actor.department)) continue;
-          if (actor.role !== 'administrative_affairs' && d.employmentStatus === 'inactive') continue;
+          if (!['administrative_affairs','administrative_affairs_employee'].includes(actor.role) && d.employmentStatus === 'inactive') continue;
           const mobility = d.products && d.products.mobility;
           // Administrative Affairs receives a municipality-wide SAFE registry
           // projection for internal approvals. No email, phone, credential,
           // national identifier, or write capability is exposed here.
-          if (actor.role !== 'administrative_affairs') {
+          if (!['administrative_affairs','administrative_affairs_employee'].includes(actor.role)) {
             if (d.accountStatus !== 'ACTIVE' || !isNonEmptyString(d.authUid)) continue;
             if (!mobility || mobility.enabled !== true) continue;
           }
