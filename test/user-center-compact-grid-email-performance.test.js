@@ -12,7 +12,7 @@ const finalSkin=fs.readFileSync(path.join(root,'manager-phase11f-reference-ui.js
 const managerFormat=fs.readFileSync(path.join(root,'manager-dashboard-format.js'),'utf8');
 
 test('employee grid uses the approved compact column order',()=>{
-  assert.match(enh,/الموظف<\/th><th>البريد<\/th><th>الإدارة<\/th><th>القسم<\/th><th>المسمى<\/th><th>الخدمات المفعلة<\/th><th>دور الحركة<\/th><th>أهلية المركبة<\/th><th>الحالة<\/th>/);
+  assert.match(enh,/الموظف<\/th><th>الرقم الوظيفي<\/th><th>الإدارة<\/th><th>القسم<\/th><th>المسمى<\/th><th>الدور الوظيفي<\/th><th>الخدمات المفعلة<\/th><th>أهلية المركبة<\/th><th>الحالة<\/th>/);
   assert.doesNotMatch(enh,/آخر تعديل \/ انتهاء العقد/);
   assert.doesNotMatch(enh,/<th>الحصر<\/th><th>الأراضي<\/th><th>الحركة<\/th>/);
 });
@@ -23,8 +23,10 @@ test('services are consolidated into one visual cell and mobility role stays sep
   assert.match(enh,/vehicleBadge\(e\)/);
 });
 
-test('employee email is visible as its own table value',()=>{
-  assert.match(enh,/class="ucv2-email">\$\{esc\(e\.email\|\|'—'\)\}/);
+test('employee email stays in profile data and is not rendered in the registry table',()=>{
+  assert.doesNotMatch(enh,/class="ucv2-email">\$\{esc\(e\.email\|\|'—'\)\}/);
+  assert.match(dialogs,/edit-email/);
+  assert.match(dialogs,/action:'changeLoginEmail'/);
 });
 
 test('pencil edit action replaces the old extra action menu',()=>{
@@ -52,7 +54,7 @@ test('legacy misplaced email is presented as email, not employee number',()=>{
 
 
 test('final visual owner cannot restore legacy service columns',()=>{
-  assert.match(finalSkin,/الخدمات المفعلة','دور الحركة','أهلية المركبة','الحالة','تعديل'/);
+  assert.match(finalSkin,/الدور الوظيفي','الخدمات المفعلة','أهلية المركبة','الحالة','تعديل'/);
   assert.doesNotMatch(finalSkin,/const labels=\['الموظف','الإدارة','القسم','المسمى','الحصر','الأراضي','الحركة'/);
   assert.doesNotMatch(finalSkin,/row\.innerHTML='';row\.appendChild\(employee\)/);
 });
@@ -62,4 +64,11 @@ test('user center loading layout keeps header at top and status centered',()=>{
   assert.match(managerFormat,/ucv2-route-loading\{[^}]*height:100%[^}]*justify-content:center[^}]*align-self:stretch/s);
   assert.match(managerFormat,/ucv2-header\{[^}]*align-items:flex-start[^}]*align-self:start/s);
   assert.match(managerFormat,/phase15-user-center-compact-grid-v3/);
+});
+
+test('registry shows employee number and institutional role instead of mobility role',()=>{
+  assert.match(enh,/\$\{esc\(e\.employeeRef\|\|'—'\)\}/);
+  assert.match(enh,/institutionalRoleMarkup\(e\)/);
+  assert.doesNotMatch(enh,/<th>دور الحركة<\/th>/);
+  assert.doesNotMatch(enh,/<th>البريد<\/th>/);
 });
