@@ -20,7 +20,7 @@
 //
 // Actions: list | create | activateAccount | setAccountStatus |
 //          assignProducts | setVehicleEligible | transfer |
-//          updateProfile | changeLoginEmail
+//          updateProfile | changeLoginEmail | removeEmployee
 //
 // SECURITY: passwords are never returned, never logged, never stored in
 // Firestore. Contractors are never represented in this registry — this
@@ -635,6 +635,89 @@ async function handler(req, res) {
 
         await recordAdminAudit(db, { caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_transfer', detail: { before, after: update } });
         return sendJson(res, 200, { employeeId, administration: update.administration, department: update.department, directManagerEmployeeId: update.directManagerEmployeeId });
+      }
+
+      // ---- RC1: safe employee removal.
+      // Hard-delete is allowed ONLY for a never-activated, unreferenced
+      // registry row. Any identity with an Auth account or municipal history
+      // is archived instead so audit/history/workflows remain intact.
+      case 'removeEmployee': {
+        const { employeeId } = body;
+        if (!isNonEmptyString(employeeId)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'employeeId_required' });
+        }
+        if (!caller.isOwner && !caller.isManager) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+        }
+        const employee = await findEmployee(db, employeeId);
+        if (!employee) return sendJson(res, 404, { error: 'employee_not_found' });
+
+        const decision = assertCanManageEmployee(caller, {
+          targetOrganizationId: employee.data.organizationId,
+          targetDepartment: employee.data.department,
+          targetAuthUid: employee.data.authUid,
+        });
+        if (!decision.allowed) {
+          return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+        }
+
+        const hasLinkedAccount = isNonEmptyString(employee.data.authUid);
+        const [assignmentsSnap, missionsSnap, directReportsSnap] = await Promise.all([
+          db.collection('employeeAssignments').where('employeeId', '==', employeeId).limit(1).get(),
+          db.collection('missions').where('requestedEmployeeId', '==', employeeId).limit(1).get(),
+          db.collection('employees').where('directManagerEmployeeId', '==', employeeId).limit(1).get(),
+        ]);
+        const hasHistory = !assignmentsSnap.empty || !missionsSnap.empty || !directReportsSnap.empty;
+
+        if (!hasLinkedAccount && !hasHistory
+            && (employee.data.accountStatus || ACCOUNT_STATUS.NO_ACCOUNT) === ACCOUNT_STATUS.NO_ACCOUNT) {
+          await employee.ref.delete();
+          await recordAdminAudit(db, {
+            caller,
+            organizationId: employee.data.organizationId,
+            targetEmployeeId: employeeId,
+            action: 'employee_delete_unused',
+            detail: { employeeRef: employee.data.employeeRef || null },
+          });
+          return sendJson(res, 200, { employeeId, mode: 'deleted' });
+        }
+
+        if (hasLinkedAccount) {
+          try {
+            await auth.updateUser(employee.data.authUid, { disabled: true });
+          } catch (authError) {
+            const code = authError && authError.errorInfo && authError.errorInfo.code;
+            if (code !== 'auth/user-not-found') throw authError;
+          }
+          await db.collection('users').doc(employee.data.authUid).set({
+            active: false,
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+
+        const currentAccountStatus = employee.data.accountStatus || ACCOUNT_STATUS.NO_ACCOUNT;
+        await employee.ref.set({
+          employmentStatus: 'inactive',
+          ...(currentAccountStatus === ACCOUNT_STATUS.ACTIVE
+            ? { accountStatus: ACCOUNT_STATUS.SUSPENDED }
+            : {}),
+          archivedAt: FieldValue.serverTimestamp(),
+          archivedBy: caller.uid,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await recordAdminAudit(db, {
+          caller,
+          organizationId: employee.data.organizationId,
+          targetEmployeeId: employeeId,
+          action: 'employee_archive',
+          detail: {
+            hadLinkedAccount: hasLinkedAccount,
+            hadAssignments: !assignmentsSnap.empty,
+            hadMissions: !missionsSnap.empty,
+            hadDirectReports: !directReportsSnap.empty,
+          },
+        });
+        return sendJson(res, 200, { employeeId, mode: 'archived' });
       }
 
       // ---- PHASE12C.5: update HR/registry fields — manager/owner only,
