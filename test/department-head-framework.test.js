@@ -12,9 +12,9 @@ const runtime = fs.readFileSync(path.join(root, 'field-head-runtime.js'), 'utf8'
 const fieldHead = page + '\n' + runtime;
 
 test('field survey department head remains a first-class login destination', () => {
-  assert.match(login, /const hasDepartmentHeadRole = mobilityRole === 'department_head';/);
+  assert.match(login, /const hasDepartmentHeadRole = institutionalRole === 'department_head' \|\| mobilityRole === 'department_head';/);
   assert.match(login, /const hasFieldDepartmentHeadRole = hasDepartmentHeadRole/);
-  assert.match(login, /\/الحصر\|ميداني\|field\/i\.test\(department\)/);
+  assert.match(login, /\/الحصر\|ميداني\|field\/i\.test\(administration \|\| department\)/);
   assert.match(login, /window\.location\.href = 'department-head\.html'/);
   assert.match(login, /window\.location\.href = 'mobile-map\.html'/);
   assert.match(login, /window\.location\.href = 'manager\.html'/);
@@ -24,8 +24,9 @@ test('field survey department head remains a first-class login destination', () 
 test('canonical premium board delegates authentication to a fail-closed field runtime', () => {
   assert.match(page, /field-head-runtime\.js/);
   assert.match(runtime, /data\.active === false/);
-  assert.match(runtime, /role !== 'department_head'/);
-  assert.match(runtime, /!\/الحصر\|ميداني\|field\/i\.test\(dept\)/);
+  assert.match(runtime, /institutionalFieldHead = institutionalRole === 'department_head'/);
+  assert.match(runtime, /legacyFieldHead = mobilityRole === 'department_head'/);
+  assert.match(runtime, /\/الحصر\|ميداني\|field\/i\.test\(administration \|\| dept\)/);
   assert.match(runtime, /!data\.organizationId/);
   assert.match(runtime, /location\.replace\('login\.html'\)/);
 });
