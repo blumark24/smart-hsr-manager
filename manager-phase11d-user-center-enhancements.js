@@ -112,8 +112,8 @@ function matches(record) {
   if (state.role !== 'all' && !roles.includes(state.role) && pr !== state.role) return false;
   if (state.product !== 'all' && !products.includes(state.product)) return false;
   if (state.department !== 'all' && institutionalSection(e) !== state.department) return false;
-  if (state.vehicle === 'eligible' && !(enabled(e,'mobility') && e.products?.mobility?.vehicleEligible === true)) return false;
-  if (state.vehicle === 'ineligible' && enabled(e,'mobility') && e.products?.mobility?.vehicleEligible === true) return false;
+  if (state.vehicle === 'eligible' && !(e?.vehicleEligible === true || e?.products?.mobility?.vehicleEligible === true)) return false;
+  if (state.vehicle === 'ineligible' && (e?.vehicleEligible === true || e?.products?.mobility?.vehicleEligible === true)) return false;
   if (state.quick === 'active' && status !== 'ACTIVE') return false;
   if (state.quick === 'no-account' && !['NO_ACCOUNT','PENDING_ACTIVATION'].includes(status)) return false;
   if (state.quick === 'contractors') return false;
@@ -318,7 +318,7 @@ async function renderCenter(force=false) {
     app.innerHTML=`
       <header class="ucv2-header">
         <div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div>
-        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button><button class="ucv2-btn contractor" type="button" data-open-contractors>إدارة العقود والشركات المتعاقدة</button></div>
+        <div class="ucv2-header-actions"><button class="ucv2-btn primary" data-add-employee>+ إضافة موظف</button></div>
       </header>
       <div class="ucv2-kpis" aria-label="ملخص القوى العاملة">
         ${kpiCard('total','إجمالي الموظفين',stats.total,'total',null)}
@@ -462,7 +462,6 @@ async function openContractorCompanyDialog(app){
 
 function bindCenter(app,directory){
   app.querySelector('[data-add-employee]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;app.setAttribute('aria-busy','true');try{await U.add();decorateAddDialog();}catch(error){showCenterActionError(app,error);}finally{button.disabled=false;app.removeAttribute('aria-busy');}});
-  app.querySelector('[data-open-contractors]')?.addEventListener('click',()=>{ window.location.href='contractors-registry.html'; });
   app.querySelectorAll('[data-reset-filters]').forEach(btn=>btn.addEventListener('click',()=>{ resetFilters(); renderCenter(); }));
   app.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{ const q=btn.dataset.quick; state.quick=state.quick===q?null:q; state.page=1; renderCenter(); }));
   app.querySelectorAll('[data-filter]').forEach(control=>{ const key=control.dataset.filter; const event=key==='search'?'input':'change'; control.addEventListener(event,()=>{ state[key]=control.value; state.page=1; const caret=key==='search'?control.selectionStart:null;renderCenter().then(()=>{if(key!=='search')return;const next=lastRoot?.querySelector('[data-filter="search"]');if(!next)return;next.focus();if(Number.isInteger(caret))next.setSelectionRange(caret,caret);}); }); });
