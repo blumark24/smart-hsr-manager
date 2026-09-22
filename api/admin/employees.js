@@ -261,6 +261,29 @@ async function handler(req, res) {
         const decision = assertCanManageEmployee(caller, { targetOrganizationId: organizationId, targetDepartment: department });
         if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
 
+        // ONE PERSON = ONE EMPLOYEE RECORD.
+        // Prevent duplicate institutional records before any Auth account exists.
+        // employeeRef is the strongest municipality-local identifier; email is
+        // a secondary guard when present. Scope never crosses organizations.
+        const existingSnap = await db.collection('employees').where('organizationId', '==', organizationId).get();
+        const normalizedEmployeeRef = isNonEmptyString(employeeRef) ? employeeRef.trim().toLowerCase() : '';
+        const normalizedEmail = isNonEmptyString(email) ? email.trim().toLowerCase() : '';
+        for (const existingDoc of existingSnap.docs) {
+          const existing = existingDoc.data() || {};
+          const existingRef = isNonEmptyString(existing.employeeRef) ? existing.employeeRef.trim().toLowerCase() : '';
+          const existingEmail = isNonEmptyString(existing.email) ? existing.email.trim().toLowerCase() : '';
+          if ((normalizedEmployeeRef && existingRef === normalizedEmployeeRef)
+              || (normalizedEmail && existingEmail === normalizedEmail)) {
+            return sendJson(res, 409, {
+              error: 'duplicate_employee',
+              reason: normalizedEmployeeRef && existingRef === normalizedEmployeeRef
+                ? 'employee_ref_already_exists'
+                : 'employee_email_already_exists',
+              employeeId: existingDoc.id,
+            });
+          }
+        }
+
         const doc = {
           organizationId,
           name: name.trim(),
