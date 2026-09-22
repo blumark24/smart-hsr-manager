@@ -46,7 +46,7 @@ const TRANSITION_MATRIX = Object.freeze({
     IN_MISSION: Object.freeze({ roles: Object.freeze(['mobility_head']), action: 'handover' }),
   }),
   IN_MISSION: Object.freeze({
-    RETURN_PENDING: Object.freeze({ roles: Object.freeze(['employee']), action: 'return_vehicle', ownership: 'employee_is_assigned' }),
+    RETURN_PENDING: Object.freeze({ roles: MOBILITY_OPERATIONAL_ROLES, action: 'return_vehicle', ownership: 'assigned_operator' }),
   }),
   RETURN_PENDING: Object.freeze({
     AVAILABLE: Object.freeze({ roles: Object.freeze(['mobility_head']), action: 'confirm_return', clearsFields: Object.freeze(['assignedEmployeeUid', 'currentMissionId']) }),
@@ -61,10 +61,10 @@ const TRANSITION_MATRIX = Object.freeze({
 
 function checkOwnership(kind, actor, vehicle) {
   if (!kind) return decision(true, 'OWNERSHIP_NOT_REQUIRED', 'This transition has no ownership constraint.');
-  if (kind === 'employee_is_assigned') {
+  if (kind === 'employee_is_assigned' || kind === 'assigned_operator') {
     return actor.uid && vehicle.assignedEmployeeUid === actor.uid
-      ? decision(true, 'OWNERSHIP_CONFIRMED', 'The employee is assigned to this vehicle.')
-      : decision(false, 'OWNERSHIP_MISMATCH', 'Only the employee assigned to this vehicle may return it.');
+      ? decision(true, 'OWNERSHIP_CONFIRMED', 'The authenticated vehicle operator is assigned to this vehicle.')
+      : decision(false, 'OWNERSHIP_MISMATCH', 'Only the person assigned to this vehicle may return it.');
   }
   return decision(false, 'OWNERSHIP_RULE_UNKNOWN', `Unknown ownership rule: ${kind}`);
 }
