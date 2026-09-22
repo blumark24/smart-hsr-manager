@@ -22,7 +22,8 @@ test('manager uses the approved SMART HSR mark from the department-head identity
 test('contracts and contractor companies are presented as the fifth institutional workspace',()=>{
   assert.match(contractors,/إدارة العقود والشركات المتعاقدة/);
   assert.match(contractors,/مسار مؤسسي خامس مستقل/);
-  assert.match(center,/إدارة العقود والشركات المتعاقدة/);
+  assert.doesNotMatch(center,/data-open-contractors/);
+  assert.match(manager,/href="contractors-registry\.html"/);
 });
 
 test('employee grid exposes direct edit and safe remove actions',()=>{
