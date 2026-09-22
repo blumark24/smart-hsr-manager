@@ -3,7 +3,7 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
 
-const state={user:null,data:null,pendingDecision:null,editingEmployeeId:null,filters:{employee:'',mission:'',missionStatus:'ALL',authorization:'',authorizationStatus:'ALL'}};
+const state={user:null,data:null,readOnly:false,pendingDecision:null,editingEmployeeId:null,filters:{employee:'',mission:'',missionStatus:'ALL',authorization:'',authorizationStatus:'ALL'}};
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function pill(text,type=''){return '<span class="pill '+type+'">'+esc(text)+'</span>'}
@@ -46,11 +46,11 @@ function render(){
   $('authorizationCount').textContent=auths.length+' من '+totalAuths;
   $('overviewMissions').innerHTML=pending.length?'<div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>القسم</th><th>الحالة</th></tr></thead><tbody>'+pending.map(m=>'<tr><td>'+esc(m.requestedEmployeeName)+'</td><td>'+esc(m.department)+'</td><td>'+missionStatus(m.status)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">لا توجد طلبات معلقة حاليًا.</div>';
 
-  $('employeeRows').innerHTML=employees.length?employees.map(e=>'<tr><td><b>'+esc(e.name)+'</b></td><td>'+esc(e.administration)+'</td><td>'+esc(e.department)+'</td><td>'+esc(e.jobTitle)+'</td><td>'+esc(fmtRole(e.institutionalRole))+'</td><td>'+(e.vehicleEligible?pill('مؤهل','ok'):pill('غير مؤهل'))+'</td><td>'+empStatus(e.employmentStatus)+'</td><td><button class="btn" data-employee-edit="'+esc(e.employeeId)+'">تعديل إداري</button></td></tr>').join(''):'<tr><td colspan="8" class="empty">لا توجد بيانات موظفين متاحة.</td></tr>';
+  $('employeeRows').innerHTML=employees.length?employees.map(e=>'<tr><td><b>'+esc(e.name)+'</b></td><td>'+esc(e.administration)+'</td><td>'+esc(e.department)+'</td><td>'+esc(e.jobTitle)+'</td><td>'+esc(fmtRole(e.institutionalRole))+'</td><td>'+(e.vehicleEligible?pill('مؤهل','ok'):pill('غير مؤهل'))+'</td><td>'+empStatus(e.employmentStatus)+'</td><td>'+(state.readOnly?'—':'<button class="btn" data-employee-edit="'+esc(e.employeeId)+'">تعديل إداري</button>')+'</td></tr>').join(''):'<tr><td colspan="8" class="empty">لا توجد بيانات موظفين متاحة.</td></tr>';
 
-  $('missionRows').innerHTML=missions.length?missions.map(m=>'<tr><td>'+esc(m.requestedEmployeeName)+'</td><td>'+esc(m.department)+'</td><td>'+esc(m.destination)+'</td><td>'+esc(m.reason)+'</td><td>'+esc(m.administrativeNote||'—')+'</td><td>'+missionStatus(m.status)+'</td><td>'+(m.status==='PENDING_APPROVAL'?'<div class="actions"><button class="btn primary" data-mission="'+esc(m.missionId)+'" data-decision="APPROVED">اعتماد</button><button class="btn danger" data-mission="'+esc(m.missionId)+'" data-decision="REJECTED">رفض</button><button class="btn" data-mission="'+esc(m.missionId)+'" data-decision="DRAFT">إعادة</button></div>':'—')+'</td></tr>').join(''):'<tr><td colspan="7" class="empty">لا توجد مهام.</td></tr>';
+  $('missionRows').innerHTML=missions.length?missions.map(m=>'<tr><td>'+esc(m.requestedEmployeeName)+'</td><td>'+esc(m.department)+'</td><td>'+esc(m.destination)+'</td><td>'+esc(m.reason)+'</td><td>'+esc(m.administrativeNote||'—')+'</td><td>'+missionStatus(m.status)+'</td><td>'+(!state.readOnly&&m.status==='PENDING_APPROVAL'?'<div class="actions"><button class="btn primary" data-mission="'+esc(m.missionId)+'" data-decision="APPROVED">اعتماد</button><button class="btn danger" data-mission="'+esc(m.missionId)+'" data-decision="REJECTED">رفض</button><button class="btn" data-mission="'+esc(m.missionId)+'" data-decision="DRAFT">إعادة</button></div>':'—')+'</td></tr>').join(''):'<tr><td colspan="7" class="empty">لا توجد مهام.</td></tr>';
 
-  $('authorizationRows').innerHTML=auths.length?auths.map(a=>'<tr><td>'+esc(a.employeeName)+'</td><td>'+esc(a.department)+'</td><td>'+esc(a.vehicleId)+'</td><td>'+esc(a.authorizationNumber)+'</td><td>'+esc(a.administrativeNote||'—')+'</td><td>'+authStatus(a.status)+'</td><td>'+(a.status==='PENDING_AUTHORIZATION'?'<div class="actions"><button class="btn primary" data-auth="'+esc(a.missionId)+'" data-auth-decision="AUTHORIZED">اعتماد</button><button class="btn danger" data-auth="'+esc(a.missionId)+'" data-auth-decision="REJECTED">رفض</button></div>':a.status==='AUTHORIZED'?'<button class="btn danger" data-auth="'+esc(a.missionId)+'" data-auth-decision="REVOKED">إلغاء التفويض</button>':'—')+'</td></tr>').join(''):'<tr><td colspan="7" class="empty">لا توجد تفويضات.</td></tr>';
+  $('authorizationRows').innerHTML=auths.length?auths.map(a=>'<tr><td>'+esc(a.employeeName)+'</td><td>'+esc(a.department)+'</td><td>'+esc(a.vehicleId)+'</td><td>'+esc(a.authorizationNumber)+'</td><td>'+esc(a.administrativeNote||'—')+'</td><td>'+authStatus(a.status)+'</td><td>'+(!state.readOnly&&a.status==='PENDING_AUTHORIZATION'?'<div class="actions"><button class="btn primary" data-auth="'+esc(a.missionId)+'" data-auth-decision="AUTHORIZED">اعتماد</button><button class="btn danger" data-auth="'+esc(a.missionId)+'" data-auth-decision="REJECTED">رفض</button></div>':!state.readOnly&&a.status==='AUTHORIZED'?'<button class="btn danger" data-auth="'+esc(a.missionId)+'" data-auth-decision="REVOKED">إلغاء التفويض</button>':'—')+'</td></tr>').join(''):'<tr><td colspan="7" class="empty">لا توجد تفويضات.</td></tr>';
   $('auditRows').innerHTML=audit.length?audit.map(x=>'<tr><td>'+esc(x.timestamp||'—')+'</td><td>'+esc(x.resourceType||'—')+'</td><td>'+esc(x.action||'—')+'</td><td>'+esc(x.department||'—')+'</td><td>'+esc(x.fromStatus||'—')+'</td><td>'+esc(x.toStatus||'—')+'</td><td>'+esc(x.note||'—')+'</td></tr>').join(''):'<tr><td colspan="7" class="empty">لا توجد إجراءات مسجلة.</td></tr>';
 }
 
@@ -144,11 +144,18 @@ onAuthStateChanged(auth,async user=>{
   // PHASE17 — canonical institutional identity is sufficient for this
   // workspace. Mobility access is not part of the user's organizational
   // identity and is intentionally ignored here.
+  const isAdminPath=/الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
   const allowed=d.active!==false
-    && d.institutionalRole==='department_head'
-    && /الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
+    && ['department_head','employee'].includes(d.institutionalRole)
+    && isAdminPath;
   if(!allowed){await signOut(auth).catch(()=>{});location.replace('login.html');return}
   state.user=user;
-  $('identity').textContent=[d.name||user.email,administration,d.department].filter(Boolean).join(' · ');
+  state.readOnly=d.institutionalRole==='employee';
+  if(state.readOnly){
+    document.querySelector('[data-view="audit"]')?.remove();
+    $('printAudit')?.closest('.hero')?.querySelector('button')?.remove();
+    const badge=document.querySelector('#employees .badge'); if(badge) badge.textContent='قراءة ومراجعة فقط';
+  }
+  $('identity').textContent=[d.name||user.email,administration,d.department,state.readOnly?'قراءة فقط':'رئيس القسم'].filter(Boolean).join(' · ');
   await refresh();
 });
