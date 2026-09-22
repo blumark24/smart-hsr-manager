@@ -70,7 +70,7 @@ test('V1 deliberately keeps HR mutation outside Administrative Affairs runtime',
 
 
 test('workspace has delivery-grade filtering and branded institutional shell',()=>{
-  assert.match(page,/Smart_HSR_Dashboard_Logo\.svg/);
+  assert.match(page,/smart-hsr-mark\.svg/);
   assert.match(page,/id="employeeSearch"/);
   assert.match(page,/id="missionFilter"/);
   assert.match(page,/id="authorizationFilter"/);
