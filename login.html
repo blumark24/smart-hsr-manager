@@ -308,7 +308,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // The HR path is authoritative; no Mobility entitlement is required to
     // decide routing. Trusted APIs independently enforce the narrow approval
     // operations available to this administration.
-    if (hasCanonicalPath && canonicalAdministrativePath && institutionalRole === 'department_head') {
+    if (hasCanonicalPath && canonicalAdministrativePath && ['department_head','employee'].includes(institutionalRole)) {
       await signInWithEmailAndPassword(auth, email, password);
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ فتح الشؤون الإدارية', 'success');
