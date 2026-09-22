@@ -22,12 +22,13 @@ test('User Center exposes Field Survey department-head selection', () => {
   assert.doesNotMatch(core, /field_head_not_ready/);
 });
 
-test('Field Survey head selection maps to the existing canonical compatibility entitlement', () => {
+test('Field Survey head selection uses institutional role plus the existing Field entitlement', () => {
   assert.match(core, /fieldHead=role==='department_head'/);
-  assert.match(core, /x\.field=\{enabled:false,role:null\}/);
-  assert.match(core, /x\.mobility=\{enabled:true,role:'department_head'\}/);
+  assert.match(core, /if\(k==='field'\)\{x\.field=\{enabled:true,role:'inspector'\}/);
+  assert.doesNotMatch(core, /x\.mobility=\{enabled:true,role:'department_head'\}/);
+  assert.match(core, /institutionalRole:o\.institutionalRole/);
   assert.match(core, /field_head_department_required/);
-  assert.match(core, /field_head_mobility_conflict/);
+  assert.doesNotMatch(core, /field_head_mobility_conflict/);
 });
 
 test('User Center presents compatibility-stored Field head as Field, not Mobility', () => {
@@ -41,9 +42,10 @@ test('account activation already persists independent mobilityAccess and departm
   assert.match(employeesApi, /mobilityAccess: \{ enabled: true, role: mobilitySel\.role/);
 });
 
-test('login routes active Field Survey department_head compatibility role to department-head.html', () => {
+test('login routes active Field Survey institutional department head to department-head.html', () => {
+  assert.match(login, /const hasDepartmentHeadRole = institutionalRole === 'department_head' \|\| mobilityRole === 'department_head'/);
   assert.match(login, /const hasFieldDepartmentHeadRole = hasDepartmentHeadRole/);
-  assert.match(login, /\/الحصر\|ميداني\|field\/i\.test\(department\)/);
+  assert.match(login, /\/الحصر\|ميداني\|field\/i\.test\(administration \|\| department\)/);
   assert.match(login, /window\.location\.href = 'department-head\.html'/);
 });
 
@@ -87,4 +89,10 @@ test('contracted-company action uses restrained blue styling and keeps the icon 
   assert.match(skin, /rgba\(49,94,182/);
   assert.match(skin, /\.ucv2-btn\.icon-close/);
   assert.match(skin, /\.ucv2-contractor-dialog/);
+});
+
+test('Field department head identity is persisted independently from Mobility access', () => {
+  assert.match(employeesApi, /institutionalRole: employee\.data\.institutionalRole \|\| 'employee'/);
+  assert.match(employeesApi, /if \(institutionalRole !== undefined\) userUpdate\.institutionalRole = institutionalRole/);
+  assert.match(dialogs, /institutionalRole:c\.querySelector\('#inst-role'\)\.value/);
 });
