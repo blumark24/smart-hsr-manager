@@ -26,7 +26,7 @@ const {
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,
-  getMobilityEmployeeCallerContext,
+  getMobilityAssignedOperatorCallerContext,
   getContractorCallerContext,
   isValidMobilityAllocationTarget,
   resolveMobilityRole,
@@ -1621,7 +1621,7 @@ async function handler(req, res) {
           if (actor.role === 'department_head' && cleanString(d.department) !== cleanString(actor.department)) continue;
           if (d.employmentStatus === 'inactive' || d.accountStatus !== 'ACTIVE' || !isNonEmptyString(d.authUid)) continue;
           const mobility = d.products && d.products.mobility;
-          if (!mobility || mobility.enabled !== true || mobility.role !== 'employee') continue;
+          if (!mobility || mobility.enabled !== true) continue;
           employees.push({
             employeeId: doc.id,
             uid: d.authUid,
@@ -1771,9 +1771,9 @@ async function handler(req, res) {
   }
 
   if (action === 'employeeAdvanceMission') {
-    const actor = await getMobilityEmployeeCallerContext(decoded.uid);
-    if (!actor.isEmployee || actor.role !== 'employee') {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'active_employee_required' });
+    const actor = await getMobilityAssignedOperatorCallerContext(decoded.uid);
+    if (!actor.isAssignedOperatorEligible) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'assigned_vehicle_operator_required' });
     }
     const missionId = cleanString(body.missionId);
     const toStatus = cleanString(body.toStatus);
@@ -1795,7 +1795,7 @@ async function handler(req, res) {
         transaction.set(db.collection('auditEvents').doc(), {
           organizationId: actor.organizationId, department: actor.department || mission.department || '',
           actorId: actor.uid, actorRole: actor.role, resourceType: 'mission', resourceId: missionId,
-          action: 'employee_advance', fromStatus: mission.status, toStatus, timestamp: now,
+          action: 'assigned_operator_advance', fromStatus: mission.status, toStatus, timestamp: now,
         });
         return { ok: true };
       });
@@ -1807,9 +1807,9 @@ async function handler(req, res) {
   }
 
   if (action === 'employeeReturnVehicle') {
-    const actor = await getMobilityEmployeeCallerContext(decoded.uid);
-    if (!actor.isEmployee || actor.role !== 'employee') {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'active_employee_required' });
+    const actor = await getMobilityAssignedOperatorCallerContext(decoded.uid);
+    if (!actor.isAssignedOperatorEligible) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'assigned_vehicle_operator_required' });
     }
     const missionId = cleanString(body.missionId);
     if (!missionId) return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_required' });
@@ -1844,12 +1844,12 @@ async function handler(req, res) {
         transaction.update(vehicleRef, { status: 'RETURN_PENDING', updatedAt: now, updatedByUid: actor.uid });
         transaction.set(db.collection('auditEvents').doc(), {
           organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
-          resourceType: 'mission', resourceId: missionId, action: 'employee_return_vehicle',
+          resourceType: 'mission', resourceId: missionId, action: 'assigned_operator_return_vehicle',
           fromStatus: mission.status, toStatus: 'AWAITING_RETURN', vehicleId: mission.vehicleId, timestamp: now,
         });
         transaction.set(db.collection('auditEvents').doc(), {
           organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
-          resourceType: 'vehicle', resourceId: mission.vehicleId, action: 'employee_return_vehicle',
+          resourceType: 'vehicle', resourceId: mission.vehicleId, action: 'assigned_operator_return_vehicle',
           fromStatus: vehicle.status, toStatus: 'RETURN_PENDING', missionId, timestamp: now,
         });
         return { ok: true, vehicleId: mission.vehicleId };
@@ -1959,8 +1959,8 @@ async function handler(req, res) {
       return sendJson(res, 400, { error: 'invalid_request', reason: 'protected_or_unknown_field' });
     }
     const caller = await getMobilityEmployeeCallerContext(decoded.uid);
-    if (!caller.isEmployee || caller.role !== 'employee') {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'active_employee_required' });
+    if (!caller.isAssignedOperatorEligible) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'assigned_vehicle_operator_required' });
     }
     const clientRequestId = body.clientRequestId;
     const incident = {
@@ -1994,7 +1994,7 @@ async function handler(req, res) {
         if (!missionSnap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
         const missionData = missionSnap.data() || {};
         if (missionData.organizationId !== caller.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
-        if (missionData.assignedEmployeeUid !== caller.uid) return { ok: false, statusCode: 403, reason: 'employee_not_assigned' };
+        if (missionData.assignedEmployeeUid !== caller.uid) return { ok: false, statusCode: 403, reason: 'operator_not_assigned' };
         if (missionData.status !== 'IN_PROGRESS') return { ok: false, statusCode: 409, reason: 'mission_not_in_progress' };
         if (vehicleRef) {
           const vehicleSnap = snapshots[2];
@@ -2028,7 +2028,7 @@ async function handler(req, res) {
           organizationId: caller.organizationId,
           department: caller.department || missionData.department || '',
           actorId: caller.uid,
-          actorRole: 'employee',
+          actorRole: caller.role,
           resourceType: 'incident',
           resourceId: incidentRef.id,
           action: 'create',
