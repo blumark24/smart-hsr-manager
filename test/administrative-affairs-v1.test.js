@@ -59,3 +59,16 @@ test('V1 deliberately keeps HR mutation outside Administrative Affairs runtime',
   assert.doesNotMatch(runtime,/assignProducts|updateProfile|transfer|activateAccount|changeLoginEmail|setAccountStatus/);
   assert.match(page,/تعديل بيانات الموظف أو النقل والترقية يبقى خاضعًا لصلاحيات مؤسسية مستقلة/);
 });
+
+
+test('workspace has delivery-grade filtering and branded institutional shell',()=>{
+  assert.match(page,/Smart_HSR_Dashboard_Logo\.svg/);
+  assert.match(page,/id="employeeSearch"/);
+  assert.match(page,/id="missionFilter"/);
+  assert.match(page,/id="authorizationFilter"/);
+  assert.match(page,/role="status" aria-live="polite"/);
+  assert.match(runtime,/function applyFilters\(\)/);
+  assert.match(runtime,/state\.filters\.missionStatus/);
+  assert.match(runtime,/state\.filters\.authorizationStatus/);
+  assert.match(runtime,/متصل · بيانات موثوقة/);
+});
