@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SMART HSR — الشؤون الإدارية</title>
+  <link rel="icon" href="favicon.svg">
+  <style>
+    :root{
+      color-scheme:light;
+      --bg:#f4f7f6;--surface:#fff;--surface2:#f8fbfa;--text:#10251f;--muted:#667a73;
+      --line:#dce7e2;--green:#0b8a5b;--green2:#14a46e;--navy:#102c3e;--amber:#a76b0a;
+      --danger:#b42318;--shadow:0 18px 55px rgba(13,44,36,.08)
+    }
+    [data-theme="dark"]{
+      color-scheme:dark;--bg:#071724;--surface:#0d2230;--surface2:#102a39;--text:#eef7f4;
+      --muted:#9aada6;--line:#203b48;--green:#31c388;--green2:#1aa46f;--navy:#07121c;
+      --amber:#e4b04d;--danger:#ff8e86;--shadow:0 18px 55px rgba(0,0,0,.24)
+    }
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Arabic",Tahoma,sans-serif;background:var(--bg);color:var(--text)}
+    button,input{font:inherit}.app{min-height:100vh;display:grid;grid-template-columns:260px 1fr}.side{background:var(--navy);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh}
+    .brand{display:flex;gap:11px;align-items:center;padding:5px 6px 23px;border-bottom:1px solid rgba(255,255,255,.1)}
+    .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#0e8c61,#32c58c);box-shadow:0 10px 28px rgba(14,140,97,.28)}
+    .brand b{font-size:16px}.brand span{display:block;font-size:10px;color:#a7bec6;margin-top:2px}
+    nav{display:grid;gap:7px;margin-top:18px}.nav{border:0;background:transparent;color:#aec1c8;text-align:right;padding:11px 12px;border-radius:11px;cursor:pointer;font-weight:700}
+    .nav.on,.nav:hover{background:rgba(255,255,255,.09);color:#fff}.side-foot{position:absolute;inset-inline:16px;bottom:18px;display:grid;gap:8px}
+    .side-btn{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.05);color:#fff;border-radius:10px;padding:10px;cursor:pointer}
+    main{min-width:0}.top{height:72px;padding:0 26px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);position:sticky;top:0;z-index:20}
+    .top h1{font-size:18px;margin:0}.top p{margin:3px 0 0;color:var(--muted);font-size:11px}.tools{display:flex;gap:8px}.tool{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;padding:9px 11px;cursor:pointer}
+    .content{padding:24px;max-width:1500px;margin:auto}.view{display:none}.view.on{display:block}.hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}
+    .hero h2{margin:0;font-size:24px}.hero p{margin:6px 0 0;color:var(--muted);font-size:12px}.badge{padding:7px 10px;border-radius:999px;background:color-mix(in srgb,var(--green) 12%,transparent);color:var(--green);font-size:11px;font-weight:800;border:1px solid color-mix(in srgb,var(--green) 25%,var(--line))}
+    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.kpi,.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+    .kpi{padding:17px}.kpi span{display:block;color:var(--muted);font-size:11px}.kpi b{display:block;font-size:27px;margin-top:8px}.kpi small{font-size:10px;color:var(--muted)}
+    .grid2{display:grid;grid-template-columns:1.25fr .75fr;gap:14px}.card{padding:16px}.card-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.card-head h3{margin:0;font-size:15px}.card-head span{font-size:10px;color:var(--muted)}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}.tbl{width:100%;border-collapse:collapse;min-width:760px}.tbl th,.tbl td{padding:11px 12px;text-align:right;border-bottom:1px solid var(--line);font-size:11px;vertical-align:middle}.tbl th{background:var(--surface2);color:var(--muted);font-weight:800;white-space:nowrap}.tbl tr:last-child td{border-bottom:0}
+    .pill{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:9.5px;font-weight:800;border:1px solid var(--line)}.pill.ok{color:var(--green);background:color-mix(in srgb,var(--green) 10%,transparent)}.pill.wait{color:var(--amber);background:color-mix(in srgb,var(--amber) 10%,transparent)}
+    .pill.bad{color:var(--danger);background:color-mix(in srgb,var(--danger) 8%,transparent)}.actions{display:flex;gap:6px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:9px;padding:7px 9px;cursor:pointer;font-size:10px;font-weight:800}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}.btn.danger{color:var(--danger)}
+    .empty{padding:24px;text-align:center;color:var(--muted);font-size:12px}.loading{position:fixed;inset:72px 260px 0 0;background:color-mix(in srgb,var(--bg) 88%,transparent);display:grid;place-items:center;z-index:30}.loading[hidden]{display:none}.spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.msg{position:fixed;left:18px;bottom:18px;max-width:360px;padding:11px 13px;border-radius:11px;background:var(--navy);color:#fff;font-size:11px;box-shadow:var(--shadow);z-index:50;display:none}.msg.show{display:block}
+    @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;padding:12px}.brand{padding-bottom:12px}.side nav{display:flex;overflow:auto;margin-top:10px}.nav{white-space:nowrap}.side-foot{position:static;display:flex;margin-top:10px}.top{top:0}.loading{inset:0}.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
+    @media(max-width:560px){.content{padding:14px}.top{padding:0 14px}.kpis{grid-template-columns:1fr}.hero{display:block}.badge{display:inline-block;margin-top:10px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo"></div><div><b>SMART HSR</b><span>إدارة الشؤون الإدارية</span></div></div>
+    <nav>
+      <button class="nav on" data-view="overview">الرئيسية</button>
+      <button class="nav" data-view="employees">الموظفون</button>
+      <button class="nav" data-view="missions">موافقات المهام</button>
+      <button class="nav" data-view="authorizations">تفويض المركبات</button>
+    </nav>
+    <div class="side-foot">
+      <button id="theme" class="side-btn">الوضع الليلي / النهاري</button>
+      <button id="logout" class="side-btn">تسجيل الخروج</button>
+    </div>
+  </aside>
+  <main>
+    <header class="top">
+      <div><h1 id="pageTitle">الشؤون الإدارية</h1><p id="identity">يتم التحقق من الهوية المؤسسية…</p></div>
+      <div class="tools"><button id="refresh" class="tool">تحديث</button></div>
+    </header>
+    <div class="content">
+      <section class="view on" id="overview">
+        <div class="hero"><div><h2>مركز الشؤون الإدارية</h2><p>الموافقات الداخلية وسياق الموظفين على مستوى البلدية.</p></div><span class="badge">مسار مؤسسي مستقل</span></div>
+        <div class="kpis">
+          <div class="kpi"><span>الموظفون</span><b id="kEmployees">—</b><small>السجل الآمن المتاح</small></div>
+          <div class="kpi"><span>طلبات بانتظار الموافقة</span><b id="kMissions">—</b><small>طلبات الحركة</small></div>
+          <div class="kpi"><span>تفويضات بانتظار القرار</span><b id="kAuth">—</b><small>تفويض المركبات</small></div>
+          <div class="kpi"><span>المهام النشطة</span><b id="kActive">—</b><small>بعد الاعتماد</small></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><div class="card-head"><h3>طلبات تحتاج إجراء</h3><span>الأحدث أولًا</span></div><div id="overviewMissions"></div></div>
+          <div class="card"><div class="card-head"><h3>نطاق العمل</h3><span>V1</span></div><div class="empty" style="text-align:right;line-height:2">تراجع الشؤون الإدارية طلبات المهام وتفويض المركبات، وتطّلع على سجل الموظفين الآمن. تعديل بيانات الموظف أو النقل والترقية يبقى خاضعًا لصلاحيات مؤسسية مستقلة في المرحلة التالية.</div></div>
+        </div>
+      </section>
+      <section class="view" id="employees">
+        <div class="hero"><div><h2>الموظفون</h2><p>عرض مؤسسي آمن، بدون بيانات دخول أو بيانات حساسة.</p></div><span class="badge">قراءة فقط</span></div>
+        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>الإدارة</th><th>القسم</th><th>المسمى</th><th>الدور</th><th>أهلية المركبة</th><th>الحالة</th></tr></thead><tbody id="employeeRows"></tbody></table></div></div>
+      </section>
+      <section class="view" id="missions">
+        <div class="hero"><div><h2>موافقات المهام</h2><p>اعتماد أو رفض أو إعادة طلب المهمة للجهة الطالبة.</p></div></div>
+        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>القسم</th><th>الوجهة</th><th>السبب</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="missionRows"></tbody></table></div></div>
+      </section>
+      <section class="view" id="authorizations">
+        <div class="hero"><div><h2>تفويض المركبات</h2><p>اعتماد أو رفض التفويض بعد تخصيص المركبة.</p></div></div>
+        <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الموظف</th><th>القسم</th><th>المركبة</th><th>رقم التفويض</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="authorizationRows"></tbody></table></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="loading" id="loading"><div class="spin"></div></div>
+<div class="msg" id="msg"></div>
+<script type="module" src="./admin-affairs-runtime.js"></script>
+</body>
+</html>
