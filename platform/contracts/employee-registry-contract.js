@@ -44,6 +44,11 @@ function canTransitionAccountStatus(from, to) {
 
 const EMPLOYMENT_STATUS_VALUES = Object.freeze(['active', 'inactive']);
 
+// Institutional identity is independent from any product/service role.
+// A department head in Field Survey is still a department head even when
+// the technical Field entitlement uses the existing inspector vocabulary.
+const INSTITUTIONAL_ROLE_VALUES = Object.freeze(['general_supervisor', 'department_head', 'employee']);
+
 // The exact field set a future Excel ingestion must map onto (Part A/K of
 // the Phase 03B brief). Deliberately narrow: no national ID, no salary, no
 // other unnecessary sensitive data — only what the product actually uses.
@@ -59,6 +64,7 @@ const EMPLOYEE_IMPORT_FIELDS = Object.freeze([
   'administration',
   'department',
   'jobTitle',
+  'institutionalRole',
   'employmentStatus',
   'directManagerEmployeeId',
 ]);
@@ -83,6 +89,10 @@ function validateEmployeeRecord(input) {
   if (input.employmentStatus !== undefined && !EMPLOYMENT_STATUS_VALUES.includes(input.employmentStatus)) {
     return { ok: false, reason: 'invalid_employment_status' };
   }
+  if (input.institutionalRole !== undefined && input.institutionalRole !== null
+      && !INSTITUTIONAL_ROLE_VALUES.includes(input.institutionalRole)) {
+    return { ok: false, reason: 'invalid_institutional_role' };
+  }
   for (const field of ['administration', 'department', 'jobTitle', 'employeeRef', 'directManagerEmployeeId']) {
     if (input[field] !== undefined && input[field] !== null && typeof input[field] !== 'string') {
       return { ok: false, reason: `invalid_${field}` };
@@ -97,6 +107,7 @@ module.exports = {
   ACCOUNT_STATUS_TRANSITIONS,
   canTransitionAccountStatus,
   EMPLOYMENT_STATUS_VALUES,
+  INSTITUTIONAL_ROLE_VALUES,
   EMPLOYEE_IMPORT_FIELDS,
   validateEmployeeRecord,
 };
