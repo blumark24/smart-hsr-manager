@@ -1,0 +1,59 @@
+name: PHASE17 Administrative Affairs V1
+
+on:
+  push:
+    branches:
+      - phase17-administrative-affairs-v1
+  workflow_dispatch:
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check
+        run: |
+          node --check api/admin/users.js
+          node --check admin-affairs-runtime.js
+
+      - name: Administrative Affairs V1
+        run: node --test test/administrative-affairs-v1.test.js
+
+      - name: Identity regression
+        run: |
+          node --test test/institutional-path-foundation.test.js
+          node --test test/unified-identity-service-switcher.test.js
+
+      - name: User Center regression
+        run: node --test test/user-center-compact-grid-email-performance.test.js
+
+      - name: Department Head regression
+        run: |
+          node --test test/department-head-framework.test.js
+          node --test test/field-head-user-center-provisioning.test.js
+
+      - name: Mobility regression
+        run: |
+          node --test test/shared-mobility-workflow.test.js
+          node --test test/mobility-role-runtime.test.js
+          node --test test/mobility-integration-regression.test.js
+
+      - name: Lands regression
+        run: |
+          node --test test/manager-lands-sso.test.js
+          node --test test/manager-lands-digital-record.test.js
+
+      - name: Firestore security rules regression
+        run: npm run test:rules
