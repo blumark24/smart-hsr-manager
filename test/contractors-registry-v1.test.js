@@ -10,6 +10,7 @@ const users=read('api/admin/users.js');
 const center=read('manager-phase11d-user-center-enhancements.js');
 const page=read('contractors-registry.html');
 const runtime=read('contractors-registry-runtime.js');
+const manager=read('manager.html');
 
 test('contractors have a dedicated registry surface',()=>{
   assert.match(page,/سجل الشركات والعقود/);
@@ -23,7 +24,8 @@ test('contractors have a dedicated registry surface',()=>{
 test('municipal employee registry excludes contractor records',()=>{
   assert.match(center,/const records = employees\.map\(employee => \(\{ kind:'employee', employee \}\)\)/);
   assert.match(center,/user\.role==='contractor'/);
-  assert.match(center,/data-open-contractors/);
+  assert.doesNotMatch(center,/data-open-contractors/);
+  assert.match(manager,/href="contractors-registry\.html"/);
   assert.doesNotMatch(center,/data-add-contractor/);
   assert.doesNotMatch(center,/kpiCard\('contractors'/);
 });
