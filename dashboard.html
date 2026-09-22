@@ -3875,6 +3875,7 @@ function subscribeObservations() {
     renderKPIs();
     renderInspectorCounts();
     renderObservationsList(observationsData);
+    renderInspectorRecord();
     renderPersonalMap();
     renderPersonalLifecycle();
     lucide.createIcons();
@@ -3907,6 +3908,7 @@ window.loadMoreObservations = async function() {
     observationsHaveMore = snapshot.size === OBSERVATIONS_PAGE_SIZE;
     renderObservationsList(observationsData);
     renderInspectorCounts();
+    renderInspectorRecord();
     renderPersonalMap();
     renderPersonalLifecycle();
   } catch (error) {
@@ -4148,6 +4150,166 @@ function ownPersonalObservations(){
   return observationsData.filter(o=>o.organizationId===organizationId&&o.createdByUid===uid);
 }
 
+let inspectorRecordQuery='';
+let inspectorRecordStatus='ALL';
+let inspectorRecordSelectedId=null;
+let inspectorRecordDetailToken=0;
+
+function inspectorRecordNormalize(value){
+  return String(value??'').trim().toLocaleLowerCase('ar-SA');
+}
+
+function inspectorRecordFilteredRows(){
+  const query=inspectorRecordNormalize(inspectorRecordQuery);
+  return ownPersonalObservations()
+    .filter(o=>o.serverConfirmed!==false)
+    .filter(o=>inspectorRecordStatus==='ALL'||o.status===inspectorRecordStatus)
+    .filter(o=>{
+      if(!query)return true;
+      const haystack=[
+        o.title,o.details,o.location,o.docId,o.id,
+        TYPE_LABELS_AR[o.type]||o.type,statusArabic(o.status)
+      ].map(inspectorRecordNormalize).join(' ');
+      return haystack.includes(query);
+    })
+    .sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+}
+
+function inspectorRecordWhen(observation){
+  return formatObservationDate(observation?.createdAt||observation?.date,'وقت غير متاح');
+}
+
+function renderInspectorRecord(){
+  const list=document.getElementById('inspectorRecordList');
+  const count=document.getElementById('inspectorRecordCount');
+  const authority=document.getElementById('inspectorRecordAuthority');
+  if(!list||!count||!authority)return;
+
+  if(!observationsServerConfirmed){
+    count.textContent='—';
+    authority.textContent=navigator.onLine?'بانتظار بيانات مؤكدة من الخادم':'الاتصال غير متاح — بانتظار آخر نسخة مؤكدة';
+    list.innerHTML='<div class="inspector-record-empty">جاري تحميل سجل ملاحظاتك الموثق…</div>';
+    document.getElementById('inspectorRecordLoadMore')?.classList.add('hidden');
+    return;
+  }
+
+  authority.textContent=navigator.onLine?'بياناتك الموثقة من الخادم فقط':'آخر نسخة مؤكدة من الخادم';
+  const rows=inspectorRecordFilteredRows();
+  count.textContent=String(rows.length);
+  if(!rows.length){
+    list.innerHTML='<div class="inspector-record-empty">لا توجد ملاحظات مطابقة للبحث أو الفلتر الحالي.</div>';
+  }else{
+    list.innerHTML=rows.map(obs=>{
+      const title=cleanDisplayText(obs.title||obs.details,'ملاحظة ميدانية',100);
+      const location=cleanDisplayText(obs.location,'الموقع غير متاح',80);
+      const ref=cleanDisplayText(obs.id||obs.docId,'—',50);
+      return `<button class="inspector-record-row" type="button" data-record-id="${escapeHTML(obs.docId)}" aria-label="فتح ${escapeHTML(title)}">
+        <span class="inspector-record-row-main">
+          <span class="inspector-record-row-title">${escapeHTML(title)}</span>
+          <span class="inspector-record-row-sub">
+            <span>${escapeHTML(inspectorRecordWhen(obs))}</span>
+            <span>·</span>
+            <span>${escapeHTML(location)}</span>
+            <span>·</span>
+            <span>#${escapeHTML(String(ref))}</span>
+          </span>
+        </span>
+        <span class="inspector-record-status" data-status="${escapeHTML(obs.status||'PENDING')}">${escapeHTML(statusArabic(obs.status))}</span>
+      </button>`;
+    }).join('');
+  }
+
+  const more=document.getElementById('inspectorRecordLoadMore');
+  if(more){
+    more.classList.toggle('hidden',!observationsHaveMore);
+    more.disabled=observationsPageLoading;
+  }
+  lucide.createIcons();
+}
+
+function resetInspectorRecordEvidence(){
+  inspectorRecordDetailToken+=1;
+  for(const id of ['inspectorRecordBeforeImage','inspectorRecordAfterImage']){
+    document.getElementById(id)?.removeAttribute('src');
+  }
+  document.getElementById('inspectorRecordBeforeFigure')?.classList.add('hidden');
+  document.getElementById('inspectorRecordAfterFigure')?.classList.add('hidden');
+  document.getElementById('inspectorRecordEvidence')?.classList.add('hidden');
+}
+
+async function showInspectorRecordDetail(docId){
+  const obs=ownPersonalObservations().find(o=>o.docId===docId&&o.serverConfirmed!==false);
+  if(!obs)return;
+  inspectorRecordSelectedId=docId;
+  const listView=document.getElementById('inspectorRecordListView');
+  const detailView=document.getElementById('inspectorRecordDetailView');
+  listView?.classList.add('hidden');
+  detailView?.classList.remove('hidden');
+
+  setText('inspectorRecordDetailTitle',cleanDisplayText(obs.title||obs.details,'ملاحظة ميدانية',120));
+  setText('inspectorRecordDetailStatus',statusArabic(obs.status));
+  setText('inspectorRecordDetailWhen',inspectorRecordWhen(obs));
+  setText('inspectorRecordDetailType',TYPE_LABELS_AR[obs.type]||obs.type||'—');
+  setText('inspectorRecordDetailId',String(obs.id||obs.docId||'—'));
+  setText('inspectorRecordDetailLocation',cleanDisplayText(obs.location,'غير متاح',180));
+  setText('inspectorRecordDetailUpdated',formatObservationDate(obs.updatedAt,'—'));
+  setText('inspectorRecordDetailDescription',cleanDisplayText(obs.details||obs.title,'لا يوجد وصف.',1200));
+
+  const hasResolution=Boolean(cleanDisplayText(obs.resolutionNote||obs.closureNote));
+  document.getElementById('inspectorRecordResolution')?.classList.toggle('hidden',!hasResolution);
+  setText('inspectorRecordDetailResolution',hasResolution?cleanDisplayText(obs.resolutionNote||obs.closureNote,'',1000):'—');
+
+  resetInspectorRecordEvidence();
+  const token=++inspectorRecordDetailToken;
+  const [before,after]=await Promise.all([
+    resolveEvidenceReference(obs.imagePath).catch(()=>''),
+    resolveEvidenceReference(obs.afterImagePath).catch(()=>'')
+  ]);
+  if(token!==inspectorRecordDetailToken||inspectorRecordSelectedId!==docId)return;
+
+  let hasEvidence=false;
+  if(before){
+    const img=document.getElementById('inspectorRecordBeforeImage');
+    if(img){img.src=before;img.referrerPolicy='no-referrer';document.getElementById('inspectorRecordBeforeFigure')?.classList.remove('hidden');hasEvidence=true}
+  }
+  if(after){
+    const img=document.getElementById('inspectorRecordAfterImage');
+    if(img){img.src=after;img.referrerPolicy='no-referrer';document.getElementById('inspectorRecordAfterFigure')?.classList.remove('hidden');hasEvidence=true}
+  }
+  document.getElementById('inspectorRecordEvidence')?.classList.toggle('hidden',!hasEvidence);
+  lucide.createIcons();
+}
+
+function showInspectorRecordList(){
+  inspectorRecordSelectedId=null;
+  resetInspectorRecordEvidence();
+  document.getElementById('inspectorRecordDetailView')?.classList.add('hidden');
+  document.getElementById('inspectorRecordListView')?.classList.remove('hidden');
+  renderInspectorRecord();
+}
+
+function openInspectorRecord(){
+  if(!inspectorContext.uid||!inspectorContext.organizationId){
+    showToast('تعذر فتح السجل قبل اكتمال التحقق من الهوية.');
+    return;
+  }
+  document.body.classList.add('inspector-record-view');
+  const page=document.getElementById('inspector-record-page');
+  page?.classList.remove('hidden');
+  showInspectorRecordList();
+  window.scrollTo({top:0,behavior:'smooth'});
+  requestAnimationFrame(()=>document.getElementById('inspectorRecordSearch')?.focus({preventScroll:true}));
+}
+
+function closeInspectorRecord(){
+  inspectorRecordSelectedId=null;
+  resetInspectorRecordEvidence();
+  document.body.classList.remove('inspector-record-view');
+  document.getElementById('inspector-record-page')?.classList.add('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+
 function renderPersonalMapAuthority(){
   const el=document.getElementById('personalMapAuthorityText');
   if(!el)return;
@@ -4316,12 +4478,7 @@ window.addEventListener('online',renderPersonalMapAuthority,{passive:true});
 window.addEventListener('offline',renderPersonalMapAuthority,{passive:true});
 
 let lifecycleRenderToken=0;
-function focusPersonalObservations(){
-  const section=document.getElementById('observations-log');
-  const list=document.getElementById('observationsList');
-  section?.scrollIntoView({behavior:'smooth',block:'start'});
-  if(list){list.setAttribute('tabindex','-1');setTimeout(()=>list.focus({preventScroll:true}),120)}
-}
+function focusPersonalObservations(){ openInspectorRecord(); }
 function resetLifecycleEvidence(){
   hide('lifecycleBeforeFigure');hide('lifecycleAfterFigure');
   document.getElementById('lifecycleBeforeImage')?.removeAttribute('src');
@@ -4373,12 +4530,29 @@ document.getElementById('refMapOpenBtn')?.addEventListener('click',openPersonalM
 document.getElementById('refLogBtn')?.addEventListener('click',focusPersonalObservations);
 document.getElementById('refTwinBtn')?.addEventListener('click',openPersonalLifecycle);
 document.getElementById('operationsLifecycleBtn')?.addEventListener('click',openPersonalLifecycle);
+document.getElementById('legacyOperationsLogBtn')?.addEventListener('click',openInspectorRecord);
+document.getElementById('inspectorRecordHomeBtn')?.addEventListener('click',closeInspectorRecord);
+document.getElementById('inspectorRecordBackToList')?.addEventListener('click',showInspectorRecordList);
+document.getElementById('inspectorRecordSearch')?.addEventListener('input',event=>{inspectorRecordQuery=event.target.value||'';renderInspectorRecord()});
+document.getElementById('inspectorRecordStatusFilter')?.addEventListener('change',event=>{inspectorRecordStatus=event.target.value||'ALL';renderInspectorRecord()});
+document.getElementById('inspectorRecordList')?.addEventListener('click',event=>{
+  const row=event.target.closest('[data-record-id]');
+  if(row)showInspectorRecordDetail(row.dataset.recordId);
+});
+document.getElementById('inspectorRecordLoadMore')?.addEventListener('click',async()=>{await window.loadMoreObservations?.();renderInspectorRecord()});
+document.getElementById('inspectorRecordOpenFullReview')?.addEventListener('click',async()=>{
+  const id=inspectorRecordSelectedId;
+  if(!id)return;
+  closeInspectorRecord();
+  await window.showObservationDetail(id);
+  document.getElementById('observations-log')?.scrollIntoView({behavior:'smooth',block:'start'});
+});
 // Smart field dock — single source of truth: one handler per button.
 const smartDockRoutes=[
-  ['mobileNavHome',()=>window.scrollTo({top:0,behavior:'smooth'})],
-  ['mobileNavMap',event=>openPersonalMap(event)],
-  ['mobileNavAdd',()=>window.openModal('smartInputModal')],
-  ['mobileNavLog',()=>focusPersonalObservations()]
+  ['mobileNavHome',()=>{closeInspectorRecord();window.scrollTo({top:0,behavior:'smooth'})}],
+  ['mobileNavMap',event=>{closeInspectorRecord();openPersonalMap(event)}],
+  ['mobileNavAdd',()=>{closeInspectorRecord();window.openModal('smartInputModal')}],
+  ['mobileNavLog',()=>openInspectorRecord()]
 ];
 const smartDockButtons=smartDockRoutes.map(([id])=>document.getElementById(id)).filter(Boolean);
 function setSmartDockActive(active){
