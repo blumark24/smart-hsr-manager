@@ -241,6 +241,7 @@ function safeMission(id, data) {
     whenLabel: data.whenLabel || null,
     durationLabel: data.durationLabel || null,
     createdAt: timestampToIso(data.createdAt),
+    administrativeNote: data.administrativeNote || null,
     updatedAt: timestampToIso(data.updatedAt),
   };
 }
@@ -301,6 +302,7 @@ function safeMobilityAuthorization(id, data) {
     authorizedAt: timestampToIso(data.authorizedAt),
     activatedAt: timestampToIso(data.activatedAt),
     expiredAt: timestampToIso(data.expiredAt),
+    administrativeNote: data.administrativeNote || null,
   };
 }
 
@@ -1582,6 +1584,8 @@ async function handler(req, res) {
 
     const missionId = cleanString(body.missionId);
     const toStatus = cleanString(body.toStatus);
+    const note = cleanString(body.note);
+    if (note.length > 600) return sendJson(res, 400, { error: 'invalid_request', reason: 'administrative_note_too_long' });
     if (!missionId || !['APPROVED', 'REJECTED', 'DRAFT'].includes(toStatus)) {
       return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_and_valid_decision_required' });
     }
@@ -1600,7 +1604,7 @@ async function handler(req, res) {
         if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
 
         const now = FieldValue.serverTimestamp();
-        transaction.update(missionRef, { status: toStatus, updatedAt: now, updatedByUid: actor.uid });
+        transaction.update(missionRef, { status: toStatus, administrativeNote: note || '', updatedAt: now, updatedByUid: actor.uid });
         transaction.set(db.collection('auditEvents').doc(), {
           organizationId: actor.organizationId,
           department: mission.department || '',
@@ -1611,6 +1615,7 @@ async function handler(req, res) {
           action: 'administrative_decision',
           fromStatus: mission.status,
           toStatus,
+          note: note || '',
           timestamp: now,
         });
         return { ok: true };
@@ -1628,6 +1633,8 @@ async function handler(req, res) {
 
     const missionId = cleanString(body.missionId);
     const toStatus = cleanString(body.toStatus);
+    const note = cleanString(body.note);
+    if (note.length > 600) return sendJson(res, 400, { error: 'invalid_request', reason: 'administrative_note_too_long' });
     if (!missionId || !['AUTHORIZED', 'REJECTED', 'REVOKED'].includes(toStatus)) {
       return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_and_valid_authorization_decision_required' });
     }
@@ -1662,6 +1669,7 @@ async function handler(req, res) {
             authorizedByUid: actor.uid,
             authorizedByName: actor.name || '',
             authorizedAt: now,
+            administrativeNote: note || '',
             updatedAt: now,
           });
           transaction.update(missionRef, {
@@ -1693,6 +1701,7 @@ async function handler(req, res) {
             decidedByUid: actor.uid,
             decidedByName: actor.name || '',
             decidedAt: now,
+            administrativeNote: note || '',
             updatedAt: now,
           });
           transaction.update(missionRef, {
@@ -1761,12 +1770,15 @@ async function handler(req, res) {
     );
     if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
     try {
-      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap] = await Promise.all([
+      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap] = await Promise.all([
         db.collection('missions').where('organizationId', '==', actor.organizationId).get(),
         db.collection('vehicles').where('organizationId', '==', actor.organizationId).get(),
         db.collection('incidents').where('organizationId', '==', actor.organizationId).get(),
         db.collection('vehicleAuthorizations').where('organizationId', '==', actor.organizationId).get(),
         db.collection('employees').where('organizationId', '==', actor.organizationId).get(),
+        actor.role === 'administrative_affairs'
+          ? db.collection('auditEvents').where('organizationId', '==', actor.organizationId).get()
+          : Promise.resolve({ docs: [] }),
       ]);
 
       let missions = missionSnap.docs.map(doc => ({ id: doc.id, data: doc.data() || {} }));
@@ -1802,7 +1814,7 @@ async function handler(req, res) {
         for (const doc of employeeSnap.docs) {
           const d = doc.data() || {};
           if (actor.role === 'department_head' && cleanString(d.department) !== cleanString(actor.department)) continue;
-          if (d.employmentStatus === 'inactive') continue;
+          if (actor.role !== 'administrative_affairs' && d.employmentStatus === 'inactive') continue;
           const mobility = d.products && d.products.mobility;
           // Administrative Affairs receives a municipality-wide SAFE registry
           // projection for internal approvals. No email, phone, credential,
@@ -1835,7 +1847,63 @@ async function handler(req, res) {
         incidents: incidents.map(row => safeMobilityIncident(row.id, row.data)),
         authorizations: authorizations.map(row => safeMobilityAuthorization(row.id, row.data)),
         employees,
+        administrativeAudit: actor.role === 'administrative_affairs'
+          ? auditSnap.docs.map(doc => {
+              const d = doc.data() || {};
+              return {
+                auditId: doc.id,
+                resourceType: cleanString(d.resourceType),
+                resourceId: cleanString(d.resourceId),
+                action: cleanString(d.action),
+                actorId: cleanString(d.actorId),
+                department: cleanString(d.department),
+                fromStatus: cleanString(d.fromStatus),
+                toStatus: cleanString(d.toStatus),
+                note: cleanString(d.note),
+                timestamp: timestampToIso(d.timestamp || d.createdAt),
+              };
+            }).sort((a,b)=>String(b.timestamp||'').localeCompare(String(a.timestamp||''))).slice(0,150)
+          : [],
       });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'administrativeUpdateEmployee') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['administrative_affairs']);
+    if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'administrative_affairs_required' });
+    const employeeId = cleanString(body.employeeId);
+    if (!employeeId) return sendJson(res, 400, { error: 'invalid_request', reason: 'employeeId_required' });
+    const ref = db.collection('employees').doc(employeeId);
+    try {
+      const snap = await ref.get();
+      if (!snap.exists) return sendJson(res, 404, { error: 'request_failed', reason: 'employee_not_found' });
+      const employee = snap.data() || {};
+      if (employee.organizationId !== actor.organizationId) return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
+      const update = { updatedAt: FieldValue.serverTimestamp() };
+      if (body.jobTitle !== undefined) update.jobTitle = cleanString(body.jobTitle) || null;
+      if (body.employmentStatus !== undefined) {
+        const status = cleanString(body.employmentStatus);
+        if (!['active','inactive'].includes(status)) return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_employment_status' });
+        update.employmentStatus = status;
+      }
+      if (body.vehicleEligible !== undefined) {
+        if (typeof body.vehicleEligible !== 'boolean') return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_vehicle_eligible' });
+        update['products.mobility.vehicleEligible'] = body.vehicleEligible;
+        if (isNonEmptyString(employee.authUid)) {
+          await db.collection('users').doc(employee.authUid).set({ vehicleEligible: body.vehicleEligible, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        }
+      }
+      await ref.update(update);
+      await recordAdminAudit(db, {
+        caller: { uid: actor.uid, role: actor.role, organizationId: actor.organizationId },
+        organizationId: actor.organizationId,
+        targetUid: employee.authUid || employeeId,
+        action: 'administrative_employee_update',
+        detail: { employeeId, jobTitle: update.jobTitle, employmentStatus: update.employmentStatus, vehicleEligible: body.vehicleEligible, note: cleanString(body.note) },
+      });
+      return sendJson(res, 200, { employeeId, updated: true });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
