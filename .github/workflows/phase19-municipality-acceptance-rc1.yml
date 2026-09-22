@@ -1,0 +1,83 @@
+name: PHASE19 Municipality Acceptance RC1
+
+on:
+  push:
+    branches:
+      - phase19-municipality-acceptance-rc1
+  workflow_dispatch:
+
+jobs:
+  municipality-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: JavaScript syntax gate
+        run: |
+          node test/check-all-javascript-syntax.js
+          node --check api/admin/users.js
+          node --check admin-affairs-runtime.js
+          node --check contractors-registry-runtime.js
+
+      - name: Identity and User Center
+        run: |
+          node --test test/institutional-path-foundation.test.js
+          node --test test/unified-identity-service-switcher.test.js
+          node --test test/user-center-compact-grid-email-performance.test.js
+          node --test test/user-center-edit-window-layout.test.js
+          node --test test/user-center-employee-profile-email-endpoint-regression.test.js
+          node --test test/user-center-lifecycle-starvation-regression.test.js
+          node --test test/user-center-runtime-hang-regression.test.js
+
+      - name: Field Survey acceptance
+        run: |
+          node --test test/department-head-framework.test.js
+          node --test test/visual-distortion-department-head.test.js
+          node --test test/visual-distortion-lifecycle.integration.test.js
+          node --test test/field-head-evidence-access.test.js
+          node --test test/field-head-operational-map.test.js
+          node --test test/field-head-user-center-provisioning.test.js
+
+      - name: Smart Lands acceptance
+        run: |
+          node --test test/lands-bootstrap.test.js
+          node --test test/lands-bridge.test.js
+          node --test test/lands-manager-auto-bootstrap.test.js
+          node --test test/lands-sync-reconciliation.test.js
+          node --test test/manager-lands-bridge-integration.test.js
+          node --test test/manager-lands-digital-record.test.js
+          node --test test/manager-lands-gis.test.js
+          node --test test/manager-lands-sso.test.js
+
+      - name: Smart Mobility acceptance
+        run: |
+          node --test test/mobility-integration-regression.test.js
+          node --test test/mobility-role-runtime.test.js
+          node --test test/mobility-workflow-server-bridge.test.js
+          node --test test/shared-mobility-workflow.test.js
+          node --test test/vehicle-authorization-workflow.test.js
+          node --test test/manager-mobility-adapter.test.js
+
+      - name: Administrative Affairs and Contractors
+        run: |
+          node --test test/administrative-affairs-v1.test.js
+          node --test test/contractors-registry-v1.test.js
+
+      - name: Municipality Manager acceptance
+        run: |
+          node --test test/manager-account-action-system.test.js
+          node --test test/manager-component-did-update-regression.test.js
+          node --test test/manager-service-entitlements.test.js
+          node --test test/manager-single-service-hotfix.test.js
+          node --test test/manager-user-center-ui.test.js
+          node --test test/manager-users-list-state.test.js
+          node --test test/phase13d1-manager-shell-navigation-stability.test.js
+
+      - name: Security rules final gate
+        run: npm run test:rules
