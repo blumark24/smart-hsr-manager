@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SMART HSR — خدماتي</title>
+  <style>
+    :root{color-scheme:light;--bg:#f4f7f6;--card:#fff;--tx:#10251f;--muted:#667a73;--line:#dfe8e4;--green:#11865d;--navy:#102a3b}
+    @media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#081724;--card:#0d2130;--tx:#eef7f4;--muted:#9db0aa;--line:#203b48;--green:#2bc083;--navy:#07131e}}
+    *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Arabic",Tahoma,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+    .shell{max-width:1060px;margin:auto;padding:34px 22px 48px}.top{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:30px}
+    .brand{display:flex;gap:12px;align-items:center}.mark{width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,var(--navy),var(--green));box-shadow:0 10px 30px rgba(16,42,59,.16)}
+    h1{font-size:22px;margin:0}.sub,.meta{color:var(--muted);font-size:13px;margin-top:4px}.logout{border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:12px;padding:10px 14px;cursor:pointer}
+    .hero{padding:24px;border:1px solid var(--line);background:var(--card);border-radius:22px;margin-bottom:18px}.hero h2{margin:0 0 6px;font-size:26px}.hero p{margin:0;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.svc{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:20px;text-align:right;cursor:pointer;min-height:180px;transition:.18s transform,.18s box-shadow,.18s border-color}
+    .svc:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(16,42,59,.10);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+    .icon{width:40px;height:40px;border-radius:12px;background:color-mix(in srgb,var(--green) 14%,transparent);display:grid;place-items:center;margin-bottom:28px;font-weight:800;color:var(--green)}
+    .svc h3{margin:0 0 6px;font-size:18px}.svc p{margin:0;color:var(--muted);font-size:13px;line-height:1.8}.tag{display:inline-block;margin-top:13px;font-size:11px;color:var(--green);font-weight:700}
+    .empty{display:none;padding:28px;border:1px dashed var(--line);border-radius:18px;color:var(--muted);text-align:center}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.hero h2{font-size:22px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <div class="brand"><div class="mark"></div><div><h1>SMART HSR</h1><div class="sub">بوابة المستخدم الموحدة</div></div></div>
+      <button class="logout" id="logout">تسجيل الخروج</button>
+    </div>
+    <section class="hero">
+      <h2>خدماتي</h2>
+      <p id="welcome">يتم التحقق من صلاحيات حسابك…</p>
+      <div class="meta" id="identity"></div>
+    </section>
+    <section class="grid" id="services"></section>
+    <div class="empty" id="empty">لا توجد مساحة عمل تشغيلية مفعلة لهذا الحساب.</div>
+  </main>
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
+
+const PROD_HOSTS=['smart-hsr-manager.vercel.app','smart-hsr-manager-blumark24-os.vercel.app'];
+const LANDS_PROD='https://lands-smart.vercel.app/';
+const LANDS_PREVIEW='https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/';
+const FIELD_ROLES=['supervisor','inspector','contractor'];
+const MOBILITY_ROLES=['mobility_head','department_head','administrative_affairs','employee'];
+
+function landsBase(){
+  return (!location.hostname.endsWith('.vercel.app') || PROD_HOSTS.includes(location.hostname)) ? LANDS_PROD : LANDS_PREVIEW;
+}
+function mobilityRole(data){
+  if(Object.prototype.hasOwnProperty.call(data,'mobilityAccess')){
+    const a=data.mobilityAccess;
+    return a&&a.enabled===true&&MOBILITY_ROLES.includes(a.role)?a.role:null;
+  }
+  return MOBILITY_ROLES.includes(data.role)?data.role:null;
+}
+function derive(data){
+  const out=[];
+  const role=data.role;
+  const department=String(data.department||'').trim();
+  const mr=mobilityRole(data);
+  const fieldRole=FIELD_ROLES.includes(role);
+  const fieldDeptHead=mr==='department_head' && /الحصر|ميداني|field/i.test(department);
+  if(fieldRole || fieldDeptHead) out.push({id:'field',title:'الحصر الميداني الذكي',desc:'البلاغات والمراقبة الميدانية وعمليات القسم.'});
+  const la=data.landsAccess;
+  if(la&&la.enabled===true&&['lands_employee','lands_department_manager'].includes(la.role)) out.push({id:'lands',title:'حصر منح الأراضي الذكي',desc:'سجل المنح والملفات الرقمية والبيانات المكانية.'});
+  if(mr) out.push({id:'mobility',title:'الحركة الذكية',desc:'المهام والمركبات والتفويض والاستلام والإعادة.'});
+  return {services:out,role,mobilityRole:mr,fieldDeptHead};
+}
+async function openLands(user){
+  const token=await user.getIdToken();
+  const res=await fetch('/api/organization/context',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok||!data.code) throw new Error(data.reason||'lands_handoff_failed');
+  const url=new URL(landsBase()); url.searchParams.set('code',data.code); location.href=url.toString();
+}
+function openField(ctx){
+  if(ctx.fieldDeptHead){ location.href='department-head.html'; return; }
+  if(ctx.role==='contractor'){ location.href='mobile-map.html'; return; }
+  if(ctx.role==='supervisor'){ location.href='manager.html'; return; }
+  location.href='dashboard.html';
+}
+const cfg=await resolveFirebaseConfig();
+const app=getApps().find(a=>a.name==='[DEFAULT]')||initializeApp(cfg);
+const auth=getAuth(app), db=getFirestore(app);
+document.getElementById('logout').onclick=async()=>{await signOut(auth).catch(()=>{}); location.replace('login.html');};
+onAuthStateChanged(auth,async user=>{
+  if(!user){location.replace('login.html');return;}
+  const snap=await getDoc(doc(db,'users',user.uid));
+  if(!snap.exists()){location.replace('login.html');return;}
+  const data=snap.data()||{};
+  if(data.active===false||!data.organizationId){location.replace('login.html');return;}
+  const ctx=derive(data), host=document.getElementById('services');
+  document.getElementById('welcome').textContent='مرحبًا '+(data.name||user.email||'');
+  document.getElementById('identity').textContent=[data.department,data.jobTitle].filter(Boolean).join(' · ');
+  if(!ctx.services.length){document.getElementById('empty').style.display='block';return;}
+  for(const svc of ctx.services){
+    const b=document.createElement('button'); b.type='button'; b.className='svc';
+    b.innerHTML='<div class="icon">✓</div><h3>'+svc.title+'</h3><p>'+svc.desc+'</p><span class="tag">دخول الخدمة</span>';
+    b.onclick=async()=>{b.disabled=true; try{
+      if(svc.id==='field') openField(ctx);
+      else if(svc.id==='mobility') location.href='department-head.html?mode=mobility';
+      else if(svc.id==='lands') await openLands(user);
+    }catch(e){b.disabled=false; alert('تعذر فتح الخدمة بأمان. حاول مرة أخرى.');}};
+    host.appendChild(b);
+  }
+});
+</script>
+</body>
+</html>
