@@ -197,6 +197,31 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
   };
 }
 
+async function getContractsRegistryCaller(db, uid) {
+  const manager = await getCallerContext(uid);
+  if (manager.isManager && manager.role === 'manager' && manager.organizationId) {
+    return { uid, role:'manager', organizationId:manager.organizationId, canManage:true };
+  }
+  const snap = await db.collection('users').doc(uid).get();
+  if (!snap.exists) return null;
+  const data = snap.data() || {};
+  const organizationId = cleanString(data.organizationId);
+  const administration = cleanString(data.administration);
+  const institutionalRole = cleanString(data.institutionalRole);
+  const contractsPath = /العقود|الشركات المتعاقدة|contracts?|contractors?/i.test(administration);
+  if (data.active === false || !organizationId || !contractsPath
+      || !['department_head','employee'].includes(institutionalRole)) return null;
+  return {
+    uid,
+    role: institutionalRole === 'department_head' ? 'contracts_head' : 'contracts_employee',
+    institutionalRole,
+    organizationId,
+    administration,
+    department: cleanString(data.department),
+    canManage: institutionalRole === 'department_head',
+  };
+}
+
 function isFieldSurveyDepartment(value) {
   return /الحصر|ميداني|field/i.test(cleanString(value));
 }
@@ -555,9 +580,9 @@ async function handler(req, res) {
   }
 
   if (action === 'listFieldContractorCompanies') {
-    const caller = await getCallerContext(decoded.uid);
-    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+    const caller = await getContractsRegistryCaller(db, decoded.uid);
+    if (!caller) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'contracts_registry_access_required' });
     }
     try {
       const [usersSnap, profilesSnap] = await Promise.all([
@@ -590,7 +615,7 @@ async function handler(req, res) {
         });
       }
       contractors.sort((a,b)=>a.companyName.localeCompare(b.companyName,'ar'));
-      return sendJson(res, 200, { contractors });
+      return sendJson(res, 200, { contractors, accessRole: caller.role, canManage: caller.canManage === true });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
@@ -604,9 +629,9 @@ async function handler(req, res) {
   // compatibility role), and the contractor is always scoped to that same
   // organization.
   if (action === 'createFieldContractorCompany') {
-    const caller = await getCallerContext(decoded.uid);
-    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+    const caller = await getContractsRegistryCaller(db, decoded.uid);
+    if (!caller || !caller.canManage) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'contracts_head_or_manager_required' });
     }
 
     const companyName = cleanString(body.companyName);
@@ -682,7 +707,7 @@ async function handler(req, res) {
           organizationId: caller.organizationId,
           department,
           actorId: caller.uid,
-          actorRole: 'manager',
+          actorRole: caller.role,
           resourceType: 'contractorProfile',
           resourceId: createdUid,
           action: 'create_contractor_company',
@@ -715,9 +740,9 @@ async function handler(req, res) {
   }
 
   if (action === 'updateFieldContractorCompany') {
-    const caller = await getCallerContext(decoded.uid);
-    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+    const caller = await getContractsRegistryCaller(db, decoded.uid);
+    if (!caller || !caller.canManage) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'contracts_head_or_manager_required' });
     }
 
     const contractorUid = cleanString(body.contractorUid);
@@ -781,7 +806,7 @@ async function handler(req, res) {
           organizationId: caller.organizationId,
           department: cleanString(currentProfile.department, 'إدارة الحصر الميداني'),
           actorId: caller.uid,
-          actorRole: 'manager',
+          actorRole: caller.role,
           resourceType: 'contractorProfile',
           resourceId: contractorUid,
           action: 'update_contractor_company',
@@ -805,9 +830,9 @@ async function handler(req, res) {
   }
 
   if (action === 'archiveFieldContractorCompany') {
-    const caller = await getCallerContext(decoded.uid);
-    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+    const caller = await getContractsRegistryCaller(db, decoded.uid);
+    if (!caller || !caller.canManage) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'contracts_head_or_manager_required' });
     }
     const contractorUid = cleanString(body.contractorUid);
     if (!contractorUid) {
@@ -861,7 +886,7 @@ async function handler(req, res) {
           organizationId: caller.organizationId,
           department: cleanString(profile.department, 'إدارة الحصر الميداني'),
           actorId: caller.uid,
-          actorRole: 'manager',
+          actorRole: caller.role,
           resourceType: 'contractorProfile',
           resourceId: contractorUid,
           action: 'archive_contractor_company',
