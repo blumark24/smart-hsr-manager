@@ -155,6 +155,33 @@ async function findEmployee(db, employeeId) {
   return { ref, data: snap.data() || {} };
 }
 
+function institutionalRoleOf(data) {
+  const explicit = data && data.institutionalRole;
+  if (['manager','general_supervisor','department_head','employee'].includes(explicit)) return explicit;
+  const products = (data && data.products) || {};
+  if (products.field && products.field.enabled === true && products.field.role === 'supervisor') return 'general_supervisor';
+  if ((products.lands && products.lands.enabled === true && products.lands.role === 'lands_department_manager')
+      || (products.mobility && products.mobility.enabled === true
+        && ['mobility_head','department_head','administrative_affairs'].includes(products.mobility.role))) return 'department_head';
+  return 'employee';
+}
+
+async function validateDirectManagerChoice(db, { organizationId, department, targetRole, directManagerEmployeeId, targetEmployeeId }) {
+  if (!isNonEmptyString(directManagerEmployeeId)) return { ok: true };
+  if (targetEmployeeId && directManagerEmployeeId === targetEmployeeId) return { ok: false, reason: 'direct_manager_self_denied' };
+  const manager = await findEmployee(db, directManagerEmployeeId);
+  if (!manager) return { ok: false, reason: 'direct_manager_not_found' };
+  if (manager.data.organizationId !== organizationId) return { ok: false, reason: 'direct_manager_cross_organization' };
+  if ((manager.data.employmentStatus || 'active') === 'inactive') return { ok: false, reason: 'direct_manager_inactive' };
+  const role = institutionalRoleOf(manager.data);
+  if (!['manager','general_supervisor','department_head'].includes(role)) return { ok: false, reason: 'direct_manager_role_not_allowed' };
+  if (targetRole === 'general_supervisor' && role !== 'manager') return { ok: false, reason: 'direct_manager_role_not_allowed' };
+  if (targetRole === 'department_head' && !['manager','general_supervisor'].includes(role)) return { ok: false, reason: 'direct_manager_role_not_allowed' };
+  if (targetRole === 'employee' && role === 'department_head' && isNonEmptyString(department)
+      && manager.data.department !== department) return { ok: false, reason: 'direct_manager_cross_department' };
+  return { ok: true };
+}
+
 // INSTITUTIONAL ASSIGNMENT FOUNDATION (micro-phase) — only ever safe,
 // non-sensitive assignment fields; never any raw internal bookkeeping
 // beyond what the contract itself already documents.
@@ -261,6 +288,15 @@ async function handler(req, res) {
 
         const decision = assertCanManageEmployee(caller, { targetOrganizationId: organizationId, targetDepartment: department });
         if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+
+        const targetRole = isNonEmptyString(institutionalRole) ? institutionalRole.trim() : 'employee';
+        if (!['general_supervisor','department_head','employee'].includes(targetRole)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_institutional_role' });
+        }
+        const managerDecision = await validateDirectManagerChoice(db, {
+          organizationId, department, targetRole, directManagerEmployeeId,
+        });
+        if (!managerDecision.ok) return sendJson(res, 400, { error: 'invalid_request', reason: managerDecision.reason });
 
         // ONE PERSON = ONE EMPLOYEE RECORD.
         // Prevent duplicate institutional records before any Auth account exists.
@@ -590,7 +626,7 @@ async function handler(req, res) {
 
       // ---- transfer department/administration/direct manager — manager/owner only ----
       case 'transfer': {
-        const { employeeId, administration, department, directManagerEmployeeId } = body;
+        const { employeeId, administration, department, directManagerEmployeeId, institutionalRole } = body;
         if (!isNonEmptyString(employeeId)) return sendJson(res, 400, { error: 'employeeId_required' });
         const employee = await findEmployee(db, employeeId);
         if (!employee) return sendJson(res, 404, { error: 'employee_not_found' });
@@ -604,14 +640,30 @@ async function handler(req, res) {
         const decision = assertCanManageEmployee(caller, { targetOrganizationId: employee.data.organizationId, targetDepartment: employee.data.department });
         if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
 
+        const nextRole = institutionalRole !== undefined ? institutionalRole : institutionalRoleOf(employee.data);
+        if (!['general_supervisor','department_head','employee'].includes(nextRole)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_institutional_role' });
+        }
+        const nextDepartment = department !== undefined ? (isNonEmptyString(department) ? department.trim() : null) : (employee.data.department || null);
+        const managerDecision = await validateDirectManagerChoice(db, {
+          organizationId: employee.data.organizationId,
+          department: nextDepartment,
+          targetRole: nextRole,
+          directManagerEmployeeId,
+          targetEmployeeId: employeeId,
+        });
+        if (!managerDecision.ok) return sendJson(res, 400, { error: 'invalid_request', reason: managerDecision.reason });
+
         const before = {
           administration: employee.data.administration || null,
           department: employee.data.department || null,
+          institutionalRole: institutionalRoleOf(employee.data),
           directManagerEmployeeId: employee.data.directManagerEmployeeId || null,
         };
         const update = { updatedAt: FieldValue.serverTimestamp() };
         if (administration !== undefined) update.administration = isNonEmptyString(administration) ? administration.trim() : null;
         if (department !== undefined) update.department = isNonEmptyString(department) ? department.trim() : null;
+        if (institutionalRole !== undefined) update.institutionalRole = nextRole;
         if (directManagerEmployeeId !== undefined) update.directManagerEmployeeId = isNonEmptyString(directManagerEmployeeId) ? directManagerEmployeeId.trim() : null;
 
         // History is append-only (a new subcollection doc per transfer) —
@@ -619,16 +671,17 @@ async function handler(req, res) {
         // never destroyed.
         const historyRef = db.collection(`employees/${employeeId}/transferHistory`).doc();
         await historyRef.set({
-          before, after: { administration: update.administration !== undefined ? update.administration : before.administration, department: update.department !== undefined ? update.department : before.department, directManagerEmployeeId: update.directManagerEmployeeId !== undefined ? update.directManagerEmployeeId : before.directManagerEmployeeId },
+          before, after: { administration: update.administration !== undefined ? update.administration : before.administration, department: update.department !== undefined ? update.department : before.department, institutionalRole: update.institutionalRole !== undefined ? update.institutionalRole : before.institutionalRole, directManagerEmployeeId: update.directManagerEmployeeId !== undefined ? update.directManagerEmployeeId : before.directManagerEmployeeId },
           changedBy: caller.uid, changedAt: FieldValue.serverTimestamp(),
         });
         await employee.ref.set(update, { merge: true });
         // Keep the linked users/{uid} department in sync so Mobility's own
         // department-scoped rules see the same department immediately.
-        if (isNonEmptyString(employee.data.authUid) && (administration !== undefined || department !== undefined)) {
+        if (isNonEmptyString(employee.data.authUid) && (administration !== undefined || department !== undefined || institutionalRole !== undefined)) {
           await db.collection('users').doc(employee.data.authUid).set({
             ...(administration !== undefined ? { administration: update.administration } : {}),
             ...(department !== undefined ? { department: update.department } : {}),
+            ...(institutionalRole !== undefined ? { institutionalRole: nextRole } : {}),
             updatedAt: FieldValue.serverTimestamp(),
           }, { merge: true });
         }
