@@ -93,3 +93,6 @@ jobs:
 
       - name: Security rules regression
         run: npm run test:rules
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
