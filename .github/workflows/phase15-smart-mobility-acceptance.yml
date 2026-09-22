@@ -56,6 +56,9 @@ jobs:
       - name: Unified identity and service switcher
         run: node --test test/unified-identity-service-switcher.test.js
 
+      - name: User Center compact grid and email performance
+        run: node --test test/user-center-compact-grid-email-performance.test.js
+
       - name: Manager mobility adapter
         run: node --test test/manager-mobility-adapter.test.js
 
