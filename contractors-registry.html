@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SMART HSR — الشركات المتعاقدة</title>
+<title>SMART HSR — إدارة العقود والشركات المتعاقدة</title>
 <link rel="icon" href="favicon.svg">
 <style>
 :root{color-scheme:light;--bg:#f4f7f6;--surface:#fff;--surface2:#f8fbfa;--text:#10251f;--muted:#667a73;--line:#dce7e2;--green:#0b8a5b;--navy:#102c3e;--danger:#b42318;--amber:#a76b0a;--shadow:0 18px 55px rgba(13,44,36,.08)}
@@ -19,8 +19,8 @@ main{min-width:0}.top{height:72px;padding:0 26px;display:flex;justify-content:sp
 </head>
 <body><div class="app">
 <aside class="side"><div class="brand"><img src="./Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR"></div><a href="manager.html">← العودة إلى لوحة مدير البلدية</a><button id="theme">الوضع الليلي / النهاري</button><button id="logout">تسجيل الخروج</button></aside>
-<main><header class="top"><div><h1>الشركات المتعاقدة</h1><p>سجل الجهات الخارجية والعقود المرتبطة بالحصر الميداني</p></div><button id="refresh" class="btn">تحديث</button></header>
-<div class="content"><div class="hero"><div><h2>سجل الشركات والعقود</h2><p>الشركات منفصلة عن موظفي البلدية، مع تاريخ وعقد وحالة تشغيلية مستقلة.</p></div><button id="addCompany" class="btn primary">+ إضافة شركة متعاقدة</button></div>
+<main><header class="top"><div><h1>إدارة العقود والشركات المتعاقدة</h1><p>إدارة الجهات الخارجية والعقود وممثلي الشركات المرتبطين بالخدمات البلدية</p></div><button id="refresh" class="btn">تحديث</button></header>
+<div class="content"><div class="hero"><div><h2>سجل الشركات والعقود</h2><p>مسار مؤسسي خامس مستقل للجهات المتعاقدة؛ الشركات لا تُعامل كموظفي بلدية.</p></div><button id="addCompany" class="btn primary">+ إضافة شركة متعاقدة</button></div>
 <div class="toolbar"><input id="search" type="search" placeholder="بحث باسم الشركة، العقد أو ممثل الشركة…" autocomplete="off"><select id="status"><option value="ALL">كل الحالات</option><option value="ACTIVE">عقد نشط</option><option value="SUSPENDED">موقوف</option><option value="ENDED">منتهي</option></select><span id="count">—</span></div>
 <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>الشركة</th><th>رقم العقد</th><th>نطاق العقد</th><th>ممثل الشركة</th><th>القسم</th><th>مدة العقد</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody id="rows"></tbody></table></div></div></div></main></div>
 <dialog id="addDlg"><div class="dlg-head"><strong>إضافة شركة متعاقدة</strong><button class="btn" id="closeAdd">إغلاق</button></div><div class="dlg-body"><div class="grid">
