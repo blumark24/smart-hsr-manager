@@ -304,10 +304,11 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       return;
     }
 
-    // Administrative Affairs is still using the existing trusted approval
-    // runtime until its dedicated institutional workspace is delivered in
-    // the next closure phase. It remains one path; no service chooser.
-    if (hasCanonicalPath && canonicalAdministrativePath && mobilityRole === 'administrative_affairs') {
+    // PHASE17 — Administrative Affairs is its own institutional workspace.
+    // The HR path is authoritative; no Mobility entitlement is required to
+    // decide routing. Trusted APIs independently enforce the narrow approval
+    // operations available to this administration.
+    if (hasCanonicalPath && canonicalAdministrativePath && institutionalRole === 'department_head') {
       await signInWithEmailAndPassword(auth, email, password);
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ فتح الشؤون الإدارية', 'success');
