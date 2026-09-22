@@ -164,16 +164,15 @@ async function getCallerContext(uid) {
       return { uid, isOwner: false, isManager: true, isDepartmentHead: false, role: 'supervisor', organizationId: orgId, department: null };
     }
     const dept = typeof d.department === 'string' ? d.department.trim() : '';
-    // Fail closed exactly like the manager check above: a department_head
-    // record missing organizationId or department is never treated as an
-    // authorized department head. resolveMobilityRole(d) — not a direct
-    // `d.role` check — so an explicit mobilityAccess disable/malformation
-    // can never be overridden by a stale legacy role, and a migrated
-    // department head (role: null, mobilityAccess: {enabled:true,
-    // role:'department_head'}) is correctly recognized.
-    if (resolveMobilityRole(d) === 'department_head' && activeIsNotFalse(d) && orgId && dept) {
+    const administration = typeof d.administration === 'string' ? d.administration.trim() : '';
+    const institutionalRole = typeof d.institutionalRole === 'string' ? d.institutionalRole.trim() : '';
+    // Institutional role is the authoritative HR identity going forward.
+    // Legacy Mobility department_head remains a compatibility fallback only.
+    const isInstitutionalDepartmentHead = institutionalRole === 'department_head';
+    const isLegacyDepartmentHead = resolveMobilityRole(d) === 'department_head';
+    if ((isInstitutionalDepartmentHead || isLegacyDepartmentHead) && activeIsNotFalse(d) && orgId && dept) {
       const name = typeof d.name === 'string' ? d.name.trim() : '';
-      return { uid, isOwner: false, isManager: false, isDepartmentHead: true, role: 'department_head', organizationId: orgId, department: dept, name };
+      return { uid, isOwner: false, isManager: false, isDepartmentHead: true, role: 'department_head', institutionalRole: 'department_head', organizationId: orgId, administration, department: dept, name };
     }
   }
   return { uid, isOwner: false, isManager: false, isDepartmentHead: false, role: null, organizationId: null, department: null };
