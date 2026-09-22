@@ -36,3 +36,25 @@ test('profile save persists employee data before optional login email mutation',
 test('email normalizer strips invisible bidi/control formatting characters',()=>{
   assert.match(core,/U\.email=v=>U\.clean\(v\)\.replace\(\/\[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\uFEFF\]\/g,''\)/);
 });
+
+
+test('vehicle eligibility is a global employee capability, not a Mobility-only control',()=>{
+  assert.match(core,/class="ve-global"/);
+  assert.match(core,/أهلية المركبة/);
+  assert.match(core,/صلاحية مستقلة عن إدارة حركة السير/);
+  assert.match(core,/independentVehicleEligible=c\.querySelector\('\.ve-global'\)\?\.checked===true/);
+  assert.doesNotMatch(core,/k==='mobility'\?\`<label[^\n]*أهلية المركبة/);
+});
+
+test('profile save persists employee data before validating or mutating login email',()=>{
+  const idx=dialogs.indexOf("let sp=c.querySelector('.savep')");
+  assert.notEqual(idx,-1);
+  const block=dialogs.slice(idx,dialogs.indexOf("let so=c.querySelector('.saveo')",idx));
+  const update=block.indexOf("action:'updateProfile'");
+  const emailMutation=block.indexOf("action:'changeLoginEmail'");
+  const invalidMessage=block.indexOf("بريد الدخول غير صالح ولم يتم تغييره");
+  assert.ok(update>-1);
+  assert.ok(emailMutation>-1);
+  assert.ok(update<emailMutation);
+  assert.ok(update<invalidMessage);
+});
