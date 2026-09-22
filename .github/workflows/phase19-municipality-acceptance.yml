@@ -1,0 +1,87 @@
+name: PHASE19 Municipality Acceptance RC1
+
+on:
+  push:
+    branches:
+      - phase19-municipality-acceptance-rc1
+  workflow_dispatch:
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax integrity
+        run: |
+          node --check api/admin/users.js
+          node --check api/admin/employees.js
+          node --check api/_lib/authz.js
+          node --check field-head-runtime.js
+          node --check manager-lands-adapter.js
+          node --check manager-mobility-adapter.js
+          node --check admin-affairs-runtime.js
+          node --check contractors-registry-runtime.js
+          node --check manager-phase11c-user-center-core.js
+          node --check manager-phase11c-user-center-dialogs.js
+          node --check manager-phase11d-user-center-enhancements.js
+
+      - name: Institutional identity and user center
+        run: |
+          node --test test/institutional-path-foundation.test.js
+          node --test test/unified-identity-service-switcher.test.js
+          node --test test/user-center-compact-grid-email-performance.test.js
+          node --test test/user-center-edit-window-layout.test.js
+          node --test test/user-center-employee-profile-email-endpoint-regression.test.js
+          node --test test/user-center-runtime-hang-regression.test.js
+
+      - name: Field Survey acceptance
+        run: |
+          node --test test/department-head-framework.test.js
+          node --test test/visual-distortion-department-head.test.js
+          node --test test/visual-distortion-lifecycle.integration.test.js
+          node --test test/field-head-evidence-access.test.js
+          node --test test/field-head-operational-map.test.js
+          node --test test/field-head-user-center-provisioning.test.js
+
+      - name: Smart Lands acceptance
+        run: |
+          node --test test/lands-bootstrap.test.js
+          node --test test/lands-bridge.test.js
+          node --test test/lands-manager-auto-bootstrap.test.js
+          node --test test/lands-sync-reconciliation.test.js
+          node --test test/manager-lands-digital-record.test.js
+          node --test test/manager-lands-gis.test.js
+          node --test test/manager-lands-bridge-integration.test.js
+          node --test test/manager-lands-sso.test.js
+          node --test test/manager-service-entitlements.test.js
+
+      - name: Smart Mobility acceptance
+        run: |
+          node --test test/field-head-mobility-integration.test.js
+          node --test test/shared-mobility-workflow.test.js
+          node --test test/mobility-workflow-server-bridge.test.js
+          node --test test/vehicle-authorization-workflow.test.js
+          node --test test/mobility-integration-regression.test.js
+          node --test test/mobility-role-runtime.test.js
+          node --test test/manager-mobility-adapter.test.js
+
+      - name: Administrative Affairs acceptance
+        run: node --test test/administrative-affairs-v1.test.js
+
+      - name: Contractors registry acceptance
+        run: node --test test/contractors-registry-v1.test.js
+
+      - name: Security rules regression
+        run: npm run test:rules
