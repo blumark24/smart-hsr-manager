@@ -72,9 +72,9 @@
            restores width:auto for just these two host classes without
            touching the observations panel's own sizing. */
         .manager-view-panel.ucv2-route-guard-host,.manager-view-panel.ucv2-host{width:auto!important;max-width:none!important}
-        .ucv2-route-guard-host>.ucv2-app{min-height:100%;box-sizing:border-box;direction:rtl;color:#f7fbff;background:radial-gradient(720px 300px at 10% -2%,rgba(74,96,255,.12),transparent 66%),linear-gradient(145deg,#07101e,#081629 48%,#07101d);padding:22px 24px}
-        .ucv2-route-guard-host .ucv2-header{display:flex;align-items:center;justify-content:space-between;gap:18px}.ucv2-route-guard-host .ucv2-header h1{margin:2px 0 4px;font-size:22px;line-height:1.25}.ucv2-route-guard-host .ucv2-header p{margin:0;color:#7e91ad;font-size:12px}.ucv2-route-guard-host .ucv2-eyebrow{color:#4a84ff;font-size:9px;font-weight:800;letter-spacing:.12em}.ucv2-route-guard-host .ucv2-btn{min-height:38px;padding:0 13px;border:1px solid rgba(96,145,211,.24);border-radius:10px;background:#101f31;color:#f7fbff;font:inherit;font-weight:700;cursor:pointer}
-        .ucv2-route-loading{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;color:#7e91ad}
+        .ucv2-route-guard-host>.ucv2-app{min-height:100%;height:100%;box-sizing:border-box;direction:rtl;color:#f7fbff;background:radial-gradient(720px 300px at 10% -2%,rgba(74,96,255,.12),transparent 66%),linear-gradient(145deg,#07101e,#081629 48%,#07101d);padding:22px 24px;display:grid;grid-template-rows:auto minmax(0,1fr);align-content:stretch}
+        .ucv2-route-guard-host .ucv2-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;align-self:start;padding:0 2px 18px;border-bottom:1px solid rgba(96,145,211,.10)}.ucv2-route-guard-host .ucv2-header h1{margin:2px 0 4px;font-size:22px;line-height:1.25}.ucv2-route-guard-host .ucv2-header p{margin:0;color:#7e91ad;font-size:12px}.ucv2-route-guard-host .ucv2-eyebrow{color:#4a84ff;font-size:9px;font-weight:800;letter-spacing:.12em}.ucv2-route-guard-host .ucv2-btn{min-height:38px;padding:0 13px;border:1px solid rgba(96,145,211,.24);border-radius:10px;background:#101f31;color:#f7fbff;font:inherit;font-weight:700;cursor:pointer}
+        .ucv2-route-loading{min-height:220px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;align-self:stretch;gap:9px;text-align:center;color:#7e91ad;padding:28px 16px}
         .ucv2-route-loading b{font-size:15px;color:#f7fbff}.ucv2-route-loading span{font-size:11px}
         .ucv2-route-loading:before{content:"";width:26px;height:26px;border-radius:50%;border:2px solid rgba(96,145,211,.18);border-top-color:#4a84ff;animation:ucv2-route-spin .8s linear infinite}
         @keyframes ucv2-route-spin{to{transform:rotate(360deg)}}
@@ -302,7 +302,7 @@
   // The real manager route is the single presentation owner for the approved
   // User Center. Load the exact approved Phase 11 chain here, in order, so
   // manager.html and its preview use the same implementation and cannot race.
-  const REV = 'phase11g-user-center-approved-skin';
+  const REV = 'phase15-user-center-compact-grid-v3';
   const files = [
     ['./manager-phase11a-foundation.js', 'phase11aManagerRoutingFoundation'],
     ['./manager-phase11c-user-center-core.js', 'ucInstitutionCoreLoader'],
