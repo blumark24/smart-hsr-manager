@@ -36,7 +36,7 @@ test('Every Mobility operational role maps to the intended UI mode', () => {
 test('Mobility runtime consumes one trusted role-scoped workspace', () => {
   assert.match(runtime, /api\('getMobilityWorkspace'\)/);
   assert.match(api, /action === 'getMobilityWorkspace'/);
-  assert.match(api, /\['mobility_head', 'department_head', 'administrative_affairs', 'employee'\]/);
+  assert.match(api, /\['mobility_head', 'department_head', 'administrative_affairs', 'administrative_affairs_employee', 'employee'\]/);
   assert.match(api, /actor\.role === 'department_head'/);
   assert.match(api, /actor\.role === 'employee'/);
 });
