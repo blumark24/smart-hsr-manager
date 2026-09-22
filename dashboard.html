@@ -2278,6 +2278,56 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   }
 </style>
 
+
+<style id="inspector-record-page-style">
+  /* PHASE 19.3 — lightweight inspector-owned record route.
+     Scoped only to #inspector-record-page; the approved inspector dashboard
+     shell, header, dock and capture workflow remain untouched. */
+  #inspector-record-page{display:none;min-height:calc(100dvh - 150px);padding:.85rem 0 calc(6.5rem + env(safe-area-inset-bottom));color:var(--app-text)}
+  body.inspector-record-view #inspector-record-page{display:block!important;animation:inspectorRecordIn .18s ease-out}
+  body.inspector-record-view main> :not(#inspector-record-page){display:none!important}
+  @keyframes inspectorRecordIn{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .inspector-record-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin:.2rem 0 .8rem}
+  .inspector-record-title-wrap{min-width:0}.inspector-record-kicker{display:block;color:var(--app-teal);font-size:.7rem;font-weight:900;letter-spacing:.03em}
+  .inspector-record-head h1{margin:.12rem 0 0;font-size:clamp(1.3rem,5vw,1.75rem);font-weight:950;color:var(--app-navy)}
+  :root[data-theme="dark"] .inspector-record-head h1{color:var(--app-text)}
+  .inspector-record-head p{margin:.22rem 0 0;color:var(--app-muted);font-size:.78rem;line-height:1.55}
+  .inspector-record-back{min-width:42px;min-height:42px;display:grid;place-items:center;border:1px solid var(--app-border);border-radius:12px;background:var(--app-surface-raised);color:var(--app-text);box-shadow:0 5px 14px rgba(10,39,54,.05)}
+  .inspector-record-back svg{width:18px;height:18px}
+  .inspector-record-toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(118px,160px);gap:.55rem;margin-bottom:.65rem}
+  .inspector-record-search{position:relative}.inspector-record-search svg{position:absolute;inset-inline-start:.75rem;top:50%;width:16px;height:16px;transform:translateY(-50%);color:var(--app-muted);pointer-events:none}
+  .inspector-record-toolbar input,.inspector-record-toolbar select{width:100%;height:42px;border:1px solid var(--app-border);border-radius:12px;background:var(--app-surface-raised);color:var(--app-text);font-size:.79rem;outline:none}
+  .inspector-record-toolbar input{padding:0 2.2rem 0 .8rem}.inspector-record-toolbar select{padding:0 .7rem}
+  .inspector-record-toolbar input:focus,.inspector-record-toolbar select:focus{border-color:var(--app-teal);box-shadow:0 0 0 3px rgba(17,143,137,.12)}
+  .inspector-record-meta{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin:.1rem .15rem .55rem;color:var(--app-muted);font-size:.7rem}
+  .inspector-record-meta strong{color:var(--app-text)}
+  .inspector-record-list{display:flex;flex-direction:column;gap:.38rem}
+  .inspector-record-row{width:100%;min-height:62px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:.55rem;padding:.58rem .68rem;border:1px solid var(--app-border);border-radius:13px;background:var(--app-surface-raised);color:var(--app-text);text-align:right;box-shadow:0 4px 12px rgba(10,39,54,.035);transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease}
+  .inspector-record-row:active{transform:scale(.992)}.inspector-record-row:hover{border-color:rgba(17,143,137,.38);box-shadow:0 7px 18px rgba(10,39,54,.07)}
+  .inspector-record-row-main{min-width:0}.inspector-record-row-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem;font-weight:900}
+  .inspector-record-row-sub{display:flex;align-items:center;gap:.38rem;margin-top:.24rem;color:var(--app-muted);font-size:.67rem;white-space:nowrap;overflow:hidden}
+  .inspector-record-row-sub span{overflow:hidden;text-overflow:ellipsis}
+  .inspector-record-status{display:inline-flex;align-items:center;gap:.28rem;min-height:27px;padding:.22rem .46rem;border-radius:999px;border:1px solid var(--app-border);background:var(--app-bg-soft);font-size:.64rem;font-weight:900;white-space:nowrap}
+  .inspector-record-status::before{content:"";width:6px;height:6px;border-radius:50%;background:#64748b}
+  .inspector-record-status[data-status="PENDING"]::before{background:#ef4444}.inspector-record-status[data-status="IN_PROGRESS"]::before{background:#f59e0b}.inspector-record-status[data-status="PENDING_REVIEW"]::before{background:#3b82f6}.inspector-record-status[data-status="COMPLETED"]::before{background:#22c55e}
+  .inspector-record-empty{padding:2rem 1rem;text-align:center;border:1px dashed var(--app-border);border-radius:14px;background:var(--app-surface-raised);color:var(--app-muted);font-size:.78rem;line-height:1.7}
+  .inspector-record-load-more{width:100%;min-height:40px;margin-top:.55rem;border:1px solid var(--app-border);border-radius:11px;background:var(--app-surface-raised);color:var(--app-teal);font-size:.75rem;font-weight:900}
+  .inspector-record-detail{padding:.72rem;border:1px solid var(--app-border);border-radius:16px;background:var(--app-surface-raised);box-shadow:var(--app-shadow)}
+  .inspector-record-detail-head{display:flex;align-items:flex-start;gap:.55rem;padding-bottom:.65rem;border-bottom:1px solid var(--app-border)}
+  .inspector-record-detail-head button{flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--app-border);border-radius:11px;background:var(--app-bg-soft);color:var(--app-text)}
+  .inspector-record-detail-head-copy{min-width:0;flex:1}.inspector-record-detail-head h2{margin:0;font-size:1.02rem;font-weight:950;color:var(--app-text)}.inspector-record-detail-head p{margin:.25rem 0 0;color:var(--app-muted);font-size:.7rem}
+  .inspector-record-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-top:.65rem}
+  .inspector-record-detail-field{padding:.55rem .6rem;border:1px solid var(--app-border);border-radius:11px;background:var(--app-bg-soft)}
+  .inspector-record-detail-field small{display:block;color:var(--app-muted);font-size:.63rem;font-weight:800}.inspector-record-detail-field strong{display:block;margin-top:.18rem;color:var(--app-text);font-size:.76rem;line-height:1.5;overflow-wrap:anywhere}
+  .inspector-record-description,.inspector-record-resolution{margin-top:.6rem;padding:.68rem;border:1px solid var(--app-border);border-radius:12px;background:var(--app-surface)}
+  .inspector-record-description h3,.inspector-record-resolution h3{margin:0 0 .34rem;font-size:.76rem;font-weight:950;color:var(--app-text)}
+  .inspector-record-description p,.inspector-record-resolution p{margin:0;color:var(--app-muted);font-size:.74rem;line-height:1.75;white-space:pre-wrap}
+  .inspector-record-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin-top:.6rem}.inspector-record-evidence figure{margin:0;overflow:hidden;border:1px solid var(--app-border);border-radius:12px;background:var(--app-bg-soft)}.inspector-record-evidence figcaption{padding:.4rem .5rem;color:var(--app-muted);font-size:.64rem;font-weight:850}.inspector-record-evidence img{display:block;width:100%;height:150px;object-fit:cover;background:var(--app-bg-soft)}
+  .inspector-record-review-action{width:100%;min-height:42px;margin-top:.65rem;border:0;border-radius:12px;background:var(--app-teal);color:#fff;font-size:.76rem;font-weight:950}
+  @media(max-width:560px){#inspector-record-page{padding-top:.55rem}.inspector-record-toolbar{grid-template-columns:1fr 122px}.inspector-record-detail-grid{grid-template-columns:1fr 1fr}.inspector-record-evidence{grid-template-columns:1fr}.inspector-record-evidence img{height:190px}}
+  @media(prefers-reduced-motion:reduce){body.inspector-record-view #inspector-record-page{animation:none}.inspector-record-row{transition:none}}
+</style>
+
 </head>
 
 <body class="text-gray-800">
@@ -2374,7 +2424,85 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   </div>
 </section>
 
+
 <main class="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
+
+  <section id="inspector-record-page" class="inspector-record-page no-print hidden" aria-labelledby="inspectorRecordTitle">
+    <div class="inspector-record-head">
+      <div class="inspector-record-title-wrap">
+        <span class="inspector-record-kicker">SMART HSR · سجل المراقب</span>
+        <h1 id="inspectorRecordTitle">سجل ملاحظاتي</h1>
+        <p>ملاحظاتك الميدانية فقط، مرتبة من الأحدث مع التاريخ والوقت والحالة.</p>
+      </div>
+      <button id="inspectorRecordHomeBtn" class="inspector-record-back" type="button" aria-label="العودة إلى الرئيسية">
+        <i data-lucide="arrow-right" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div id="inspectorRecordListView">
+      <div class="inspector-record-toolbar" role="search">
+        <label class="inspector-record-search">
+          <i data-lucide="search" aria-hidden="true"></i>
+          <span class="sr-only">بحث في سجل الملاحظات</span>
+          <input id="inspectorRecordSearch" type="search" autocomplete="off" placeholder="بحث بالملاحظة أو الموقع أو الرقم">
+        </label>
+        <label>
+          <span class="sr-only">فلترة حالة الملاحظات</span>
+          <select id="inspectorRecordStatusFilter" aria-label="فلترة حالة الملاحظات">
+            <option value="ALL">كل الحالات</option>
+            <option value="PENDING">قيد الانتظار</option>
+            <option value="IN_PROGRESS">قيد المعالجة</option>
+            <option value="PENDING_REVIEW">بانتظار التحقق</option>
+            <option value="COMPLETED">مغلقة</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="inspector-record-meta">
+        <span id="inspectorRecordAuthority">بيانات المراقب الموثقة فقط</span>
+        <span><strong id="inspectorRecordCount">0</strong> ملاحظة</span>
+      </div>
+
+      <div id="inspectorRecordList" class="inspector-record-list" aria-live="polite">
+        <div class="inspector-record-empty">جاري تحميل سجل ملاحظاتك…</div>
+      </div>
+      <button id="inspectorRecordLoadMore" class="inspector-record-load-more hidden" type="button">تحميل ملاحظات أقدم</button>
+    </div>
+
+    <article id="inspectorRecordDetailView" class="inspector-record-detail hidden" aria-labelledby="inspectorRecordDetailTitle">
+      <div class="inspector-record-detail-head">
+        <button id="inspectorRecordBackToList" type="button" aria-label="العودة إلى السجل"><i data-lucide="arrow-right" aria-hidden="true"></i></button>
+        <div class="inspector-record-detail-head-copy">
+          <h2 id="inspectorRecordDetailTitle">تفاصيل الملاحظة</h2>
+          <p><span id="inspectorRecordDetailStatus">—</span> · <span id="inspectorRecordDetailWhen">—</span></p>
+        </div>
+      </div>
+
+      <div class="inspector-record-detail-grid">
+        <div class="inspector-record-detail-field"><small>التصنيف</small><strong id="inspectorRecordDetailType">—</strong></div>
+        <div class="inspector-record-detail-field"><small>الرقم المرجعي</small><strong id="inspectorRecordDetailId">—</strong></div>
+        <div class="inspector-record-detail-field"><small>الموقع</small><strong id="inspectorRecordDetailLocation">—</strong></div>
+        <div class="inspector-record-detail-field"><small>آخر تحديث</small><strong id="inspectorRecordDetailUpdated">—</strong></div>
+      </div>
+
+      <section class="inspector-record-description">
+        <h3>الملاحظة</h3>
+        <p id="inspectorRecordDetailDescription">—</p>
+      </section>
+
+      <section id="inspectorRecordResolution" class="inspector-record-resolution hidden">
+        <h3>المعالجة / الملاحظة الختامية</h3>
+        <p id="inspectorRecordDetailResolution">—</p>
+      </section>
+
+      <div id="inspectorRecordEvidence" class="inspector-record-evidence hidden">
+        <figure id="inspectorRecordBeforeFigure" class="hidden"><figcaption>الصورة الأصلية</figcaption><img id="inspectorRecordBeforeImage" alt="الصورة الأصلية للملاحظة"></figure>
+        <figure id="inspectorRecordAfterFigure" class="hidden"><figcaption>بعد المعالجة</figcaption><img id="inspectorRecordAfterImage" alt="صورة الملاحظة بعد المعالجة"></figure>
+      </div>
+
+      <button id="inspectorRecordOpenFullReview" class="inspector-record-review-action" type="button">فتح المراجعة التشغيلية الكاملة</button>
+    </article>
+  </section>
 
   <!-- HERO -->
   <section id="hero" class="hidden" aria-hidden="true">
