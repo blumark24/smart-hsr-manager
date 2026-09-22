@@ -90,7 +90,7 @@ test('Vehicle authorization separates Administrative Affairs from Mobility Head'
 
 test('Incident lifecycle is employee-report then Mobility-head resolution', () => {
   assert.equal(incident.canCreateIncident({
-    actor:{uid:'emp',role:'employee',organizationId:'org-1'},
+    actor:{uid:'emp',role:'employee',organizationId:'org-1',vehicleEligible:true},
     mission:{organizationId:'org-1',assignedEmployeeUid:'emp',status:'IN_PROGRESS'}
   }).allowed,true);
 
