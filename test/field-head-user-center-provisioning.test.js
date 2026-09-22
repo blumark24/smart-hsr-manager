@@ -15,6 +15,8 @@ const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'u
 const skin = fs.readFileSync(path.join(root, 'manager-phase11g-user-center-approved-skin.js'), 'utf8');
 const managerFormat = fs.readFileSync(path.join(root, 'manager-dashboard-format.js'), 'utf8');
 const managerLogin = fs.readFileSync(path.join(root, 'manager-login.html'), 'utf8');
+const contractorRegistryPage = fs.readFileSync(path.join(root, 'contractors-registry.html'), 'utf8');
+const contractorRegistryRuntime = fs.readFileSync(path.join(root, 'contractors-registry-runtime.js'), 'utf8');
 
 test('User Center exposes Field Survey department-head selection', () => {
   assert.match(core, /\['head','رئيس قسم داخل المنتج'\]/);
@@ -62,19 +64,17 @@ test('User Center separates external contractor companies from municipal employe
   assert.match(enhancements, /contractors-registry\.html/);
   assert.doesNotMatch(enhancements, /data-add-contractor/);
   assert.doesNotMatch(enhancements, /kpiCard\('contractors'/);
-  assert.match(enhancements, /جهة خارجية متعاقدة — ليست موظف بلدية/);
-  assert.match(enhancements, /لا يظهر كسجل موظف بلدية/);
-  assert.doesNotMatch(enhancements, /data-close-center/);
+  assert.match(contractorRegistryPage, /الشركات منفصلة عن موظفي البلدية/);
   assert.doesNotMatch(managerFormat, /data-route-close/);
 });
 
-test('contracted-company window collects contract and representative account data', () => {
+test('dedicated contractor registry collects contract and representative account data', () => {
   for (const id of [
-    'cc-company','cc-contract','cc-scope','cc-start','cc-end',
-    'cc-contact','cc-phone','cc-email','cc-password','cc-password2'
-  ]) assert.match(enhancements, new RegExp(id));
-  assert.match(enhancements, /createFieldContractorCompany/);
-  assert.match(enhancements, /department:'إدارة الحصر الميداني'/);
+    'aCompany','aContract','aScope','aStart','aEnd',
+    'aContact','aPhone','aEmail','aPassword'
+  ]) assert.match(contractorRegistryPage, new RegExp(id));
+  assert.match(contractorRegistryRuntime, /createFieldContractorCompany/);
+  assert.match(contractorRegistryRuntime, /department:'إدارة الحصر الميداني'/);
 });
 
 test('contracted-company onboarding reuses trusted users API and existing contractor schema', () => {
@@ -88,11 +88,12 @@ test('contracted-company onboarding reuses trusted users API and existing contra
   assert.doesNotMatch(usersApi, /api\/contractor-company/);
 });
 
-test('contracted-company action uses restrained blue styling and keeps the icon close', () => {
-  assert.match(skin, /\.ucv2-btn\.contractor/);
-  assert.match(skin, /rgba\(49,94,182/);
-  assert.match(skin, /\.ucv2-btn\.icon-close/);
-  assert.match(skin, /\.ucv2-contractor-dialog/);
+test('contractor registry has a dedicated responsive institutional surface', () => {
+  assert.match(contractorRegistryPage, /SMART HSR — الشركات المتعاقدة/);
+  assert.match(contractorRegistryPage, /class="card"/);
+  assert.match(contractorRegistryPage, /@media\(max-width:900px\)/);
+  assert.match(contractorRegistryPage, /id="addDlg"/);
+  assert.match(contractorRegistryPage, /id="editDlg"/);
 });
 
 test('Field department head identity is persisted independently from Mobility access', () => {
