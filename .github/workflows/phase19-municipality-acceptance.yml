@@ -6,6 +6,7 @@ on:
       - phase19-municipality-acceptance-rc1
       - phase19-1-institutional-structure-closure
       - phase19-2-five-administrations-role-matrix
+      - phase19-3-inspector-record
   workflow_dispatch:
 
 jobs:
@@ -64,6 +65,7 @@ jobs:
           node --test test/field-head-evidence-access.test.js
           node --test test/field-head-operational-map.test.js
           node --test test/field-head-user-center-provisioning.test.js
+          node --test test/phase19-3-inspector-record.test.js
 
       - name: Smart Lands acceptance
         run: |
