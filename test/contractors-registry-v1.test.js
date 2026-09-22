@@ -13,7 +13,8 @@ const runtime=read('contractors-registry-runtime.js');
 
 test('contractors have a dedicated registry surface',()=>{
   assert.match(page,/سجل الشركات والعقود/);
-  assert.match(page,/الشركات منفصلة عن موظفي البلدية/);
+  assert.match(page,/إدارة العقود والشركات المتعاقدة/);
+  assert.match(page,/مسار مؤسسي خامس مستقل/);
   assert.match(runtime,/listFieldContractorCompanies/);
   assert.match(runtime,/updateFieldContractorCompany/);
   assert.match(runtime,/archiveFieldContractorCompany/);
