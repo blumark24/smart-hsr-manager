@@ -311,7 +311,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       await signInWithEmailAndPassword(auth, email, password);
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ فتح الشؤون الإدارية', 'success');
-      setTimeout(() => { window.location.href = 'department-head.html?mode=mobility'; }, 450);
+      setTimeout(() => { window.location.href = 'admin-affairs.html'; }, 450);
       return;
     }
 
