@@ -12,9 +12,9 @@ const page=read('admin-affairs.html');
 const runtime=read('admin-affairs-runtime.js');
 const users=read('api/admin/users.js');
 
-test('canonical Administrative Affairs head routes to the dedicated workspace',()=>{
+test('canonical Administrative Affairs head and employee route to the dedicated workspace',()=>{
   assert.match(login,/canonicalAdministrativePath/);
-  assert.match(login,/canonicalAdministrativePath && institutionalRole === 'department_head'/);
+  assert.match(login,/canonicalAdministrativePath && \['department_head','employee'\]\.includes\(institutionalRole\)/);
   assert.match(login,/window\.location\.href = 'admin-affairs\.html'/);
   assert.doesNotMatch(login,/canonicalAdministrativePath[\s\S]{0,700}department-head\.html\?mode=mobility/);
   assert.doesNotMatch(login,/canonicalAdministrativePath && mobilityRole === 'administrative_affairs'/);
@@ -29,8 +29,9 @@ test('dedicated workspace exposes only implemented V1 surfaces',()=>{
   assert.doesNotMatch(page,/إضافة موظف|نقل موظف|ترقية موظف/);
 });
 
-test('Administrative Affairs runtime fails closed on institutional identity',()=>{
-  assert.match(runtime,/d\.institutionalRole==='department_head'/);
+test('Administrative Affairs runtime fails closed on institutional identity and keeps employee read-only',()=>{
+  assert.match(runtime,/\['department_head','employee'\]\.includes\(d\.institutionalRole\)/);
+  assert.match(runtime,/state\.readOnly=d\.institutionalRole==='employee'/);
   assert.match(runtime,/الشؤون الإدارية\|الشؤون الادارية\|administrative/);
   assert.doesNotMatch(runtime,/mobility&&mobility\.enabled===true&&mobility\.role==='administrative_affairs'/);
   assert.match(runtime,/location\.replace\('login\.html'\)/);
@@ -40,7 +41,7 @@ test('trusted approvals derive Administrative Affairs authority from the institu
   assert.match(users,/const isAdministrativeAffairsHead =/);
   assert.match(users,/institutionalRole === 'department_head'/);
   assert.match(users,/الشؤون الإدارية\|الشؤون الادارية\|administrative/);
-  assert.match(users,/isAdministrativeAffairsHead \? 'administrative_affairs' : resolveMobilityRole\(data\)/);
+  assert.match(users,/isAdministrativeAffairsHead[\s\S]{0,180}'administrative_affairs'[\s\S]{0,180}isAdministrativeAffairsEmployee[\s\S]{0,180}'administrative_affairs_employee'/);
 });
 
 test('workspace uses trusted APIs for real approvals',()=>{
