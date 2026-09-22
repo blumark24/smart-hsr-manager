@@ -5,6 +5,7 @@ on:
     branches:
       - phase19-municipality-acceptance-rc1
       - phase19-1-institutional-structure-closure
+      - phase19-2-five-administrations-role-matrix
   workflow_dispatch:
 
 jobs:
@@ -49,6 +50,11 @@ jobs:
           node --test test/user-center-canonical-field-head-regression.test.js
           node --test test/municipality-admin-polish-regression.test.js
           node --test test/phase19-1-institutional-structure-closure.test.js
+          node --test test/phase19-2-field-role-matrix.test.js
+          node --test test/phase19-2-lands-role-matrix.test.js
+          node --test test/phase19-2-mobility-role-matrix.test.js
+          node --test test/phase19-2-admin-affairs-role-matrix.test.js
+          node --test test/phase19-2-contracts-role-matrix.test.js
 
       - name: Field Survey acceptance
         run: |
