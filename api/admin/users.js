@@ -706,6 +706,173 @@ async function handler(req, res) {
     }
   }
 
+  if (action === 'updateFieldContractorCompany') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+    }
+
+    const contractorUid = cleanString(body.contractorUid);
+    const profileInput = {
+      companyName: cleanString(body.companyName),
+      contractNumber: cleanString(body.contractNumber),
+      contractScope: cleanString(body.contractScope),
+      contactName: cleanString(body.contactName),
+      contactPhone: cleanString(body.contactPhone),
+      startDate: cleanDateOnly(body.startDate),
+      endDate: cleanDateOnly(body.endDate),
+      status: cleanString(body.status),
+    };
+    if (!contractorUid || !profileInput.companyName || !profileInput.contractNumber
+        || !profileInput.contractScope || !profileInput.contactName
+        || !profileInput.startDate || !profileInput.endDate
+        || !CONTRACTOR_PROFILE_STATUSES.includes(profileInput.status)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'complete_contractor_company_required' });
+    }
+    if (profileInput.endDate < profileInput.startDate) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'contract_date_range_invalid' });
+    }
+
+    try {
+      const userRef = db.collection('users').doc(contractorUid);
+      const profileRef = db.collection('contractorProfiles').doc(contractorUid);
+      const outcome = await db.runTransaction(async transaction => {
+        const [userSnap, profileSnap] = await Promise.all([
+          transaction.get(userRef), transaction.get(profileRef),
+        ]);
+        if (!userSnap.exists) return { ok: false, statusCode: 404, reason: 'contractor_not_found' };
+        const user = userSnap.data() || {};
+        if (cleanString(user.organizationId) !== caller.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        if (user.role !== 'contractor') {
+          return { ok: false, statusCode: 409, reason: 'contractor_role_required' };
+        }
+        const currentProfile = profileSnap.exists ? (profileSnap.data() || {}) : {};
+        if (cleanString(currentProfile.organizationId)
+            && cleanString(currentProfile.organizationId) !== caller.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+
+        const now = FieldValue.serverTimestamp();
+        transaction.set(profileRef, {
+          contractorUid,
+          organizationId: caller.organizationId,
+          department: cleanString(currentProfile.department, 'إدارة الحصر الميداني'),
+          administration: cleanString(currentProfile.administration, 'إدارة الحصر الميداني'),
+          section: cleanString(currentProfile.section, 'التشوه البصري'),
+          ...profileInput,
+          updatedByUid: caller.uid,
+          updatedAt: now,
+        }, { merge: true });
+        transaction.update(userRef, {
+          name: profileInput.contactName,
+          updatedAt: now,
+        });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: caller.organizationId,
+          department: cleanString(currentProfile.department, 'إدارة الحصر الميداني'),
+          actorId: caller.uid,
+          actorRole: 'manager',
+          resourceType: 'contractorProfile',
+          resourceId: contractorUid,
+          action: 'update_contractor_company',
+          contractNumber: profileInput.contractNumber,
+          contractStatus: profileInput.status,
+          timestamp: now,
+        });
+        return { ok: true };
+      });
+      if (!outcome.ok) {
+        return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      }
+      return sendJson(res, 200, {
+        contractorUid,
+        profile: safeContractorProfile(profileInput),
+        contractState: contractorProfileState(profileInput),
+      });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'archiveFieldContractorCompany') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+    }
+    const contractorUid = cleanString(body.contractorUid);
+    if (!contractorUid) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'contractorUid_required' });
+    }
+
+    try {
+      const observationsSnap = await db.collection('observations')
+        .where('organizationId', '==', caller.organizationId).get();
+      const hasOpenCases = observationsSnap.docs.some(doc => {
+        const data = doc.data() || {};
+        return cleanString(data.assignedContractorUid) === contractorUid
+          && cleanString(data.status) !== 'COMPLETED';
+      });
+      if (hasOpenCases) {
+        return sendJson(res, 409, { error: 'request_failed', reason: 'contractor_has_open_cases' });
+      }
+
+      const userRef = db.collection('users').doc(contractorUid);
+      const profileRef = db.collection('contractorProfiles').doc(contractorUid);
+      const outcome = await db.runTransaction(async transaction => {
+        const [userSnap, profileSnap] = await Promise.all([
+          transaction.get(userRef), transaction.get(profileRef),
+        ]);
+        if (!userSnap.exists) return { ok: false, statusCode: 404, reason: 'contractor_not_found' };
+        const user = userSnap.data() || {};
+        if (cleanString(user.organizationId) !== caller.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        if (user.role !== 'contractor') {
+          return { ok: false, statusCode: 409, reason: 'contractor_role_required' };
+        }
+        const profile = profileSnap.exists ? (profileSnap.data() || {}) : {};
+        if (cleanString(profile.organizationId)
+            && cleanString(profile.organizationId) !== caller.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+
+        const now = FieldValue.serverTimestamp();
+        transaction.update(userRef, { active: false, updatedAt: now });
+        transaction.set(profileRef, {
+          contractorUid,
+          organizationId: caller.organizationId,
+          status: 'ENDED',
+          archivedByUid: caller.uid,
+          archivedAt: now,
+          updatedByUid: caller.uid,
+          updatedAt: now,
+        }, { merge: true });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: caller.organizationId,
+          department: cleanString(profile.department, 'إدارة الحصر الميداني'),
+          actorId: caller.uid,
+          actorRole: 'manager',
+          resourceType: 'contractorProfile',
+          resourceId: contractorUid,
+          action: 'archive_contractor_company',
+          contractNumber: cleanString(profile.contractNumber),
+          fromStatus: cleanString(profile.status) || null,
+          toStatus: 'ENDED',
+          timestamp: now,
+        });
+        return { ok: true };
+      });
+      if (!outcome.ok) {
+        return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      }
+      return sendJson(res, 200, { contractorUid, archived: true });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   // PHASE 02B — Visual Distortion command surface for the Field Survey
   // Department Head. Contractors are external operational identities, not
   // employee-registry records. All tenant scope comes from the verified
