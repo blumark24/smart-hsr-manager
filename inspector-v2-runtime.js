@@ -225,6 +225,7 @@ async function bootAuthenticated(user, auth, db) {
 
   const ui = window.SmartHsrInspectorV2;
   ui?.setIdentity({ name: verified.name, organizationName: verified.organizationName });
+  ui?.startLiveLocation?.();
 
   let mapContext = null;
   try {
