@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../..');
 const require = createRequire(import.meta.url);
-const readiness = require(path.join(repoRoot, 'api/mobile/readiness.js'))._test;
+const readiness = require(path.join(repoRoot, 'api/_lib/mobileReadiness.js'))._test;
 
 const baseEnv = () => ({
   SMART_HSR_RUNTIME_ENV: 'staging',

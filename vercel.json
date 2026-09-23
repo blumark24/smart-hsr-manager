@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/mobile/readiness",
+      "destination": "/api/firebase-config?smartHsrRoute=mobile-readiness"
+    }
+  ]
+}
