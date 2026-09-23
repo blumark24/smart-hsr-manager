@@ -9,7 +9,8 @@
     toastTimer: null,
     theme: 'dark',
     mapView: 'operational',
-    missionCoords: null
+    missionCoords: null,
+    activeMission: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -160,6 +161,121 @@
     }, 60);
   }
 
+  function missionTab(name) {
+    document.querySelectorAll('[data-mission-tab]').forEach(button => {
+      button.classList.toggle('is-active', button.dataset.missionTab === name);
+    });
+    document.querySelectorAll('[data-mission-panel]').forEach(panel => {
+      panel.classList.toggle('is-active', panel.dataset.missionPanel === name);
+    });
+  }
+
+  function openMissionDetail(tab = 'evidence') {
+    if (!state.activeMission) {
+      showToast('لا توجد مهمة نشطة لعرضها.');
+      return;
+    }
+    const sheet = $('missionSheet');
+    if (!sheet) return;
+    missionTab(tab);
+    sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    window.dispatchEvent(new CustomEvent('smart-hsr:mission-open', { detail: { observation: state.activeMission } }));
+  }
+
+  function closeMissionDetail() {
+    const sheet = $('missionSheet');
+    if (!sheet) return;
+    sheet.classList.remove('is-open');
+    sheet.setAttribute('aria-hidden','true');
+    if (!document.body.classList.contains('map-expanded') && !$('analysisSheet')?.classList.contains('is-open')) document.body.style.overflow='';
+  }
+
+  function setMissionEvidence({ beforeUrl = null, afterUrl = null, message = '' } = {}) {
+    const paint = (id, url, fallback) => {
+      const root = $(id);
+      if (!root) return;
+      root.replaceChildren();
+      if (url) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = fallback;
+        root.appendChild(img);
+      } else {
+        const span = document.createElement('span');
+        span.textContent = fallback;
+        root.appendChild(span);
+      }
+    };
+    paint('missionBeforeImage', beforeUrl, 'لا يوجد دليل قبل متاح');
+    paint('missionAfterImage', afterUrl, 'لا يوجد دليل بعد متاح');
+    if ($('missionEvidenceHint')) $('missionEvidenceHint').textContent = message || 'تم تحميل الأدلة المصرح بها للمهمة.';
+  }
+
+  function setAiLoading(loading, message = '') {
+    for (const id of ['missionRunAiBtn','runVisionAnalysisBtn']) {
+      const btn = $(id);
+      if (btn) btn.disabled = Boolean(loading);
+    }
+    if (loading && $('missionAiResult')) $('missionAiResult').innerHTML = '<p>جارٍ تشغيل التحليل الآمن على الدليل الموثق…</p>';
+    if (!loading && message && $('missionAiResult')) $('missionAiResult').innerHTML = '<p></p>', $('missionAiResult').querySelector('p').textContent = message;
+  }
+
+  function setAiResult(payload) {
+    const root = $('missionAiResult');
+    if (!root) return;
+    const analysis = payload?.analysis || {};
+    const intelligence = payload?.intelligence || {};
+    root.replaceChildren();
+
+    const summary = document.createElement('p');
+    summary.textContent = analysis.shortSummaryAr || analysis.summaryAr || 'تم استلام تحليل استرشادي من النظام.';
+    root.appendChild(summary);
+
+    const grid = document.createElement('div');
+    grid.className = 'ai-result-grid';
+    const fields = [
+      ['التصنيف', analysis.categoryLabelAr || analysis.categoryCode || '—'],
+      ['الشدة', analysis.severity || '—'],
+      ['الأولوية', intelligence.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || '—'],
+      ['الإجراء', analysis.recommendedActionAr || intelligence.recommendedActionAr || '—']
+    ];
+    fields.forEach(([label,value]) => {
+      const item = document.createElement('div');
+      item.className = 'ai-result-item';
+      const small = document.createElement('small'); small.textContent = label;
+      const strong = document.createElement('strong'); strong.textContent = String(value);
+      item.append(small,strong); grid.appendChild(item);
+    });
+    root.appendChild(grid);
+
+    const rootCause = analysis.rootCauseAr || intelligence.rootCauseAr;
+    if (rootCause) {
+      const item = document.createElement('div'); item.className='ai-result-item'; item.style.marginTop='7px';
+      const small=document.createElement('small'); small.textContent='السبب المحتمل';
+      const strong=document.createElement('strong'); strong.textContent=String(rootCause);
+      item.append(small,strong); root.appendChild(item);
+    }
+
+    const notice=document.createElement('div');
+    notice.className='ai-review-notice';
+    notice.textContent='التحليل استرشادي ويتطلب مراجعة واعتماد المراقب. لا يغيّر الحالة أو الإسناد تلقائيًا.';
+    root.appendChild(notice);
+  }
+
+  function requestAiAnalysis() {
+    if (!state.activeMission) { showToast('لا توجد مهمة قابلة للتحليل.'); return; }
+    openMissionDetail('ai');
+    window.dispatchEvent(new CustomEvent('smart-hsr:ai-analyze', { detail: { observation: state.activeMission } }));
+  }
+
+  function printMission() {
+    if (!state.activeMission) { showToast('لا توجد مهمة للطباعة.'); return; }
+    openMissionDetail('timeline');
+    setTimeout(() => window.print(), 120);
+  }
+
   function openAnalysis() {
     const sheet = $('analysisSheet');
     if (!sheet) return;
@@ -220,6 +336,16 @@
 
   function bindActions() {
     $('themeToggleBtn')?.addEventListener('click', toggleTheme);
+    $('openMissionBtn')?.addEventListener('click', () => openMissionDetail('evidence'));
+    $('closeMissionBtn')?.addEventListener('click', closeMissionDetail);
+    $('missionBackdrop')?.addEventListener('click', closeMissionDetail);
+    $('missionSheetRouteBtn')?.addEventListener('click', routeToMission);
+    $('missionRunAiBtn')?.addEventListener('click', requestAiAnalysis);
+    $('runVisionAnalysisBtn')?.addEventListener('click', requestAiAnalysis);
+    $('openMissionEvidenceBtn')?.addEventListener('click', () => { closeAnalysis(); openMissionDetail('evidence'); });
+    $('openMissionLifecycleBtn')?.addEventListener('click', () => { closeAnalysis(); openMissionDetail('timeline'); });
+    $('printMissionBtn')?.addEventListener('click', printMission);
+    document.querySelectorAll('[data-mission-tab]').forEach(button => button.addEventListener('click', () => missionTab(button.dataset.missionTab)));
     $('centerMapBtn')?.addEventListener('click', centerOnUser);
     $('expandMapBtn')?.addEventListener('click', toggleMapExpanded);
     $('routeMissionBtn')?.addEventListener('click', routeToMission);
@@ -234,6 +360,7 @@
 
     document.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape') return;
+      if ($('missionSheet')?.classList.contains('is-open')) closeMissionDetail();
       if ($('analysisSheet')?.classList.contains('is-open')) closeAnalysis();
       if (document.body.classList.contains('map-expanded')) toggleMapExpanded();
     });
@@ -245,6 +372,7 @@
   }
 
   function setRuntimeMission(observation) {
+    state.activeMission = observation || null;
     if (!observation) {
       if ($('missionTitleText')) $('missionTitleText').textContent = 'لا توجد مهمة مفتوحة';
       if ($('missionDescription')) $('missionDescription').textContent = 'لا توجد ملاحظة ميدانية نشطة ضمن حسابك حاليًا.';
@@ -267,6 +395,12 @@
     }
     if ($('missionLocationText')) $('missionLocationText').textContent = observation.location || 'موقع موثق';
     if ($('missionDateText')) $('missionDateText').textContent = observation.date || '—';
+    if ($('missionSheetTaskTitle')) $('missionSheetTaskTitle').textContent = observation.title || 'ملاحظة ميدانية';
+    if ($('missionSheetStatus')) $('missionSheetStatus').textContent = statusLabels[observation.status] || observation.status || '—';
+    if ($('missionSheetLocation')) $('missionSheetLocation').textContent = observation.location || 'موقع موثق';
+    if ($('missionTimelineStatus')) $('missionTimelineStatus').textContent = statusLabels[observation.status] || observation.status || '—';
+    if ($('missionTimelineDate')) $('missionTimelineDate').textContent = observation.date || '—';
+    if ($('missionTimelineId')) $('missionTimelineId').textContent = observation.displayId || observation.docId || '—';
   }
 
   function haversineMeters(a, b) {
@@ -364,6 +498,9 @@
     setMission: setRuntimeMission,
     setMissionDistance: setRuntimeDistance,
     setMissionImage,
+    setMissionEvidence,
+    setAiLoading,
+    setAiResult,
     setTwinStats,
     setNearbyObservations,
     showToast
