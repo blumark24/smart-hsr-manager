@@ -9,6 +9,7 @@ const html = fs.readFileSync(path.join(root, 'inspector-v2.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'inspector-v2.css'), 'utf8');
 const js = fs.readFileSync(path.join(root, 'inspector-v2.js'), 'utf8');
 const runtime = fs.readFileSync(path.join(root, 'inspector-v2-runtime.js'), 'utf8');
+const dashboard = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
 
 test('Inspector V2 stays isolated from legacy dashboard', () => {
   assert.match(html, /inspector-v2\.css/);
@@ -102,4 +103,23 @@ test('Inspector V2 motion polish is accessibility-aware', () => {
   assert.match(css, /@keyframes smartHsrSheetIn/);
   assert.match(css, /prefers-reduced-motion:reduce/);
   assert.match(css, /animation:none!important/);
+});
+
+
+test('Inspector V2 capture routes into the protected legacy capture engine', () => {
+  assert.match(html, /id="quickCaptureBtn"/);
+  assert.match(html, /id="quickObservationBtn"/);
+  assert.match(html, /id="dockCaptureBtn"/);
+  assert.match(js, /dashboard\.html\?capture=v2&theme=/);
+  assert.match(dashboard, /V2_CAPTURE_MODE/);
+  assert.match(dashboard, /window\.openModal\('smartInputModal'\)/);
+  assert.match(dashboard, /window\.getLocation\(\)/);
+  assert.match(dashboard, /uploadImageToStorage/);
+  assert.match(dashboard, /window\.processSmartInput = async function/);
+});
+
+test('Inspector V2 does not duplicate protected camera upload or GPS capture logic', () => {
+  assert.doesNotMatch(js, /uploadImageToStorage|navigator\.mediaDevices|getUserMedia/);
+  assert.doesNotMatch(runtime, /uploadImageToStorage|navigator\.mediaDevices|getUserMedia/);
+  assert.match(dashboard, /body\.v2-capture-shell/);
 });
