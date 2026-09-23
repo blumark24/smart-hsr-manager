@@ -50,3 +50,14 @@ The adapter:
 - exposes an explicit watcher cleanup path,
 - requests camera permission before capture,
 - listens for native app resume events without modifying Auth/RBAC.
+
+
+## Native build verification
+
+Draft PR #21 is the CI-only validation gate. A push to this branch must prove:
+- mobile contract tests,
+- Capacitor doctor,
+- Android unsigned debug APK build,
+- iOS Simulator build without code signing.
+
+No merge or Production promotion is authorized by this gate.
