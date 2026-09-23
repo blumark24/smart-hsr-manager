@@ -132,3 +132,12 @@ test('Mission detail actions stay bound to the exact map-selected observation', 
   assert.match(js, /const observation = state\.detailObservation \|\| state\.activeMission/);
   assert.doesNotMatch(js, /missionSheetRouteBtn'\)\?\.addEventListener\('click', routeToMission/);
 });
+
+
+test('Mission route reveals the full-screen map before routing', () => {
+  assert.match(js, /function routeDetailObservation\(\)/);
+  assert.match(js, /closeMissionDetail\(\)/);
+  assert.match(js, /if \(!document\.body\.classList\.contains\('map-expanded'\)\) toggleMapExpanded\(\)/);
+  assert.match(js, /setSelectedMapObservation\(observation\)/);
+  assert.match(js, /routeObservation\(observation\)/);
+});
