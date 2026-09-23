@@ -6,7 +6,9 @@
     locationMarker: null,
     lastPosition: null,
     hasCenteredOnce: false,
-    toastTimer: null
+    toastTimer: null,
+    theme: 'dark',
+    mapView: 'operational'
   };
 
   const $ = (id) => document.getElementById(id);
@@ -18,6 +20,27 @@
     toast.classList.add('is-visible');
     clearTimeout(state.toastTimer);
     state.toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 2300);
+  }
+
+  function preferredTheme() {
+    const saved = localStorage.getItem('smartHSRInspectorTheme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+
+  function applyTheme(theme, persist = true) {
+    state.theme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', state.theme);
+    const toggle = $('themeToggleBtn');
+    if (toggle) toggle.setAttribute('aria-pressed', String(state.theme === 'light'));
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', state.theme === 'light' ? '#f4f8f6' : '#04162f');
+    if (persist) localStorage.setItem('smartHSRInspectorTheme', state.theme);
+  }
+
+  function toggleTheme() {
+    applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+    if (state.map) setTimeout(() => state.map.invalidateSize({ animate: false }), 30);
   }
 
   function createLocationIcon() {
@@ -136,21 +159,50 @@
     if (!document.body.classList.contains('map-expanded')) document.body.style.overflow = '';
   }
 
+  function applyMapView(view) {
+    state.mapView = view === 'twin' ? 'twin' : 'operational';
+    const shell = $('urbanMapShell');
+    if (shell) shell.setAttribute('data-map-view', state.mapView);
+
+    document.querySelectorAll('[data-map-view]').forEach((button) => {
+      const active = button.getAttribute('data-map-view') === state.mapView;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+
+    if ($('urbanMapTitle')) {
+      $('urbanMapTitle').textContent = state.mapView === 'twin' ? 'التوأم الرقمي الميداني' : 'الخريطة التشغيلية الحية';
+    }
+    if ($('mapFeedState')) {
+      $('mapFeedState').textContent = state.mapView === 'twin' ? 'Twin View' : (state.lastPosition ? 'GPS Live' : 'Live Map');
+    }
+    if ($('mapNote')) {
+      $('mapNote').textContent = state.mapView === 'twin'
+        ? 'عرض التوأم يغيّر طبقة القراءة فقط؛ لن تظهر أضرار أو أصول غير قادمة من بيانات موثوقة.'
+        : (state.lastPosition ? 'الموقع الحالي حي. الحالات تظهر فقط من المصدر التشغيلي الحقيقي.' : 'الموقع حي، وتظهر الحالات عند ربط المصدر التشغيلي الحقيقي.');
+    }
+  }
+
   function bindMapMode() {
     document.querySelectorAll('[data-map-mode]').forEach((button) => {
       button.addEventListener('click', () => {
         const mode = button.getAttribute('data-map-mode');
         if (mode === '3d') {
-          showToast('وضع 3D محفوظ للمرحلة المتقدمة بعد تثبيت الخريطة التشغيلية الحية.');
+          showToast('سيتم تفعيل 3D بمحرك خريطة حقيقي بعد تثبيت طبقة التوأم والبيانات التشغيلية.');
           return;
         }
         document.querySelectorAll('[data-map-mode]').forEach((item) => item.classList.remove('is-active'));
         button.classList.add('is-active');
       });
     });
+
+    document.querySelectorAll('[data-map-view]').forEach((button) => {
+      button.addEventListener('click', () => applyMapView(button.getAttribute('data-map-view')));
+    });
   }
 
   function bindActions() {
+    $('themeToggleBtn')?.addEventListener('click', toggleTheme);
     $('centerMapBtn')?.addEventListener('click', centerOnUser);
     $('expandMapBtn')?.addEventListener('click', toggleMapExpanded);
     $('openAnalysisBtn')?.addEventListener('click', openAnalysis);
@@ -170,6 +222,8 @@
   }
 
   function boot() {
+    applyTheme(preferredTheme(), false);
+    applyMapView('operational');
     if (window.lucide) window.lucide.createIcons();
     bindActions();
     bindMapMode();
