@@ -14,6 +14,8 @@
     selectedMapObservation: null,
     detailObservation: null,
     locationWatchId: null,
+    locationWatchStop: null,
+    locationWatchPending: false,
     liveLocationAuthorized: false
   };
 
@@ -84,6 +86,12 @@
   }
 
   function clearLiveLocationWatch() {
+    if (typeof state.locationWatchStop === 'function') {
+      try { Promise.resolve(state.locationWatchStop()).catch(() => {}); } catch (_) {}
+    }
+    state.locationWatchStop = null;
+    state.locationWatchPending = false;
+
     if (state.locationWatchId !== null && navigator.geolocation) {
       try { navigator.geolocation.clearWatch(state.locationWatchId); } catch (_) {}
     }
@@ -96,15 +104,43 @@
       if (gps) gps.textContent = 'بانتظار التحقق';
       return;
     }
+
     const loc = $('locationStateText');
-    if (!navigator.geolocation) {
+    const nativeBridge = window.SmartHsrNativeBridge;
+    const nativeLocation = Boolean(nativeBridge?.isNative && nativeBridge?.hasGeolocation);
+
+    if (!nativeLocation && !navigator.geolocation) {
       if (gps) gps.textContent = 'غير مدعوم';
       if (loc) loc.textContent = 'الموقع غير متاح';
       return;
     }
 
-    if (state.locationWatchId !== null) return;
-    if (gps) gps.textContent = 'جارٍ الاتصال';
+    if (state.locationWatchId !== null || state.locationWatchStop || state.locationWatchPending) return;
+    if (gps) gps.textContent = nativeLocation ? 'GPS الجهاز' : 'جارٍ الاتصال';
+
+    if (nativeLocation) {
+      state.locationWatchPending = true;
+      nativeBridge.watchPosition((position, error) => {
+        if (error) {
+          onPositionError(error);
+          return;
+        }
+        if (position) onPosition(position);
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 14000,
+        interval: 5000
+      }).then(stop => {
+        state.locationWatchPending = false;
+        if (typeof stop === 'function') state.locationWatchStop = stop;
+      }).catch(error => {
+        state.locationWatchPending = false;
+        onPositionError(error);
+      });
+      return;
+    }
+
     state.locationWatchId = navigator.geolocation.watchPosition(
       onPosition,
       onPositionError,
