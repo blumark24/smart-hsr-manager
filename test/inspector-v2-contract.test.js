@@ -157,3 +157,14 @@ test('Inspector V2 overlays share one body scroll-lock authority and Escape clos
   assert.match(js, /closeAnalysis\(\); return;/);
   assert.match(js, /closeMapMarkerSheet\(\); return;/);
 });
+
+
+test('Inspector V2 requests live GPS only after verified inspector authorization', () => {
+  const initMapStart = js.indexOf('function initMap()');
+  const requestStart = js.indexOf('function requestLocation()');
+  const initMapSlice = js.slice(initMapStart, requestStart);
+  assert.doesNotMatch(initMapSlice, /requestLocation\(\)/);
+  assert.match(js, /startLiveLocation: requestLocation/);
+  assert.match(runtime, /ui\?\.startLiveLocation\?\.\(\)/);
+  assert.ok(runtime.indexOf('ui?.startLiveLocation?.()') > runtime.indexOf('if (!verified)'));
+});
