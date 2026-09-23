@@ -18,11 +18,17 @@
 <body>
   <main class="inspector-app" id="inspectorV2App">
     <header class="app-header">
-      <div class="header-tools" aria-label="أدوات التطبيق">
-        <button class="icon-btn glass-control" type="button" aria-label="الإشعارات" data-action="toast">
-          <i data-lucide="bell"></i>
-          <span class="notification-dot" aria-hidden="true"></span>
-        </button>
+      <section class="employee-card" aria-label="بطاقة المراقب الميداني">
+        <div class="avatar" aria-hidden="true">
+          <i data-lucide="hard-hat"></i>
+          <b class="online-dot"></b>
+        </div>
+        <div class="identity-copy">
+          <p class="eyebrow">صباح الخير</p>
+          <h1><span id="inspectorDisplayName">المراقب</span></h1>
+          <p class="employee-role">المراقب الميداني</p>
+          <p class="employee-org"><span id="inspectorOrgName">SMART HSR · البلدية</span><b>متصل الآن</b></p>
+        </div>
         <button class="theme-toggle glass-control" id="themeToggleBtn" type="button" aria-label="تبديل الوضع النهاري والليلي" aria-pressed="false">
           <span class="theme-toggle-track" aria-hidden="true">
             <i data-lucide="sun" class="theme-sun"></i>
@@ -30,19 +36,20 @@
             <b class="theme-toggle-thumb"></b>
           </span>
         </button>
+      </section>
+
+      <div class="brand-lockup" aria-label="SMART HSR">
+        <span class="brand-symbol"><i data-lucide="building-2"></i></span>
+        <strong>SMART HSR</strong>
+        <small>سمارت حصر</small>
       </div>
 
-      <section class="identity" aria-label="بيانات المستخدم">
-        <div class="avatar" aria-hidden="true">
-          <span>م</span>
-          <b class="online-dot"></b>
-        </div>
-        <div class="identity-copy">
-          <p class="eyebrow">المراقب الميداني</p>
-          <h1>صباح الخير، <span id="inspectorDisplayName">المراقب</span></h1>
-          <p id="inspectorOrgName">SMART HSR · البلدية</p>
-        </div>
-      </section>
+      <div class="header-tools" aria-label="أدوات التطبيق">
+        <button class="icon-btn glass-control" type="button" aria-label="الإشعارات" data-action="toast">
+          <i data-lucide="bell"></i>
+          <span class="notification-dot" aria-hidden="true"></span>
+        </button>
+      </div>
     </header>
 
     <section class="context-strip" aria-label="حالة التشغيل">
@@ -66,10 +73,11 @@
           <p class="eyebrow">المشهد الحضري الذكي</p>
           <h2 id="urbanMapTitle">الخريطة التشغيلية الحية</h2>
         </div>
-        <div class="view-toggle" role="group" aria-label="نمط الخريطة">
-          <button type="button" class="is-active" data-map-mode="2d">2D</button>
-          <button type="button" data-map-mode="3d" aria-disabled="true" title="يتم ربط وضع 3D في مرحلة الخريطة المتقدمة">3D</button>
-        </div>
+      </div>
+
+      <div class="view-toggle" role="group" aria-label="نمط الخريطة">
+        <button type="button" class="is-active" data-map-mode="2d">2D</button>
+        <button type="button" data-map-mode="3d" aria-disabled="true" title="يتم ربط وضع 3D في مرحلة الخريطة المتقدمة">3D</button>
       </div>
 
       <div class="map-experience-tabs" role="tablist" aria-label="نوع الخريطة">
@@ -87,6 +95,11 @@
         <span class="twin-scan-ring twin-scan-ring-a"></span>
         <span class="twin-scan-ring twin-scan-ring-b"></span>
       </div>
+      <aside class="twin-data-panel" aria-label="ملخص التوأم الرقمي">
+        <span><small>مفتوحة</small><b id="twinOpenCount">—</b></span>
+        <span><small>معالجة</small><b id="twinProgressCount">—</b></span>
+        <span><small>مغلقة</small><b id="twinClosedCount">—</b></span>
+      </aside>
 
       <div class="map-top-actions">
         <button class="map-action glass-control" id="centerMapBtn" type="button" aria-label="توسيط الخريطة على موقعي">
@@ -94,6 +107,9 @@
         </button>
         <button class="map-action glass-control" id="expandMapBtn" type="button" aria-label="تكبير الخريطة">
           <i data-lucide="maximize-2"></i>
+        </button>
+        <button class="map-action glass-control" id="routeMissionBtn" type="button" aria-label="إظهار مسار المهمة الحالية">
+          <i data-lucide="navigation"></i>
         </button>
       </div>
 
@@ -171,18 +187,23 @@
       <div class="quick-grid">
         <button class="quick-card primary" type="button" data-action="toast">
           <span class="quick-icon"><i data-lucide="camera"></i></span>
-          <strong>بلاغ جديد</strong>
-          <small>تصوير وتوثيق</small>
-        </button>
-        <button class="quick-card" type="button" id="quickAnalysisBtn">
-          <span class="quick-icon"><i data-lucide="scan-search"></i></span>
-          <strong>تحليل ذكي</strong>
-          <small>Vision + أسباب</small>
+          <strong>إضافة صورة</strong>
+          <small>توثيق ميداني</small>
         </button>
         <button class="quick-card" type="button" data-action="toast">
-          <span class="quick-icon"><i data-lucide="list-checks"></i></span>
-          <strong>مهامي</strong>
-          <small>قائمة التشغيل</small>
+          <span class="quick-icon"><i data-lucide="notebook-pen"></i></span>
+          <strong>ملاحظة</strong>
+          <small>تحديث سريع</small>
+        </button>
+        <button class="quick-card" type="button" data-action="toast">
+          <span class="quick-icon"><i data-lucide="map-pin-plus"></i></span>
+          <strong>رصد سريع</strong>
+          <small>حالة جديدة</small>
+        </button>
+        <button class="quick-card" type="button" data-action="toast">
+          <span class="quick-icon"><i data-lucide="scan-line"></i></span>
+          <strong>مسح الموقع</strong>
+          <small>فحص النطاق</small>
         </button>
       </div>
     </section>
