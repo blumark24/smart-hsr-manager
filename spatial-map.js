@@ -1,3 +1,5 @@
+import { resolveApiInput } from './mobile-runtime-origin.js';
+
 const STATUS = Object.freeze({
   PENDING: { color:'#ef4444', icon:'!', label:'قيد الانتظار', motion:'active' },
   IN_PROGRESS: { color:'#f59e0b', icon:'↻', label:'قيد المعالجة', motion:'slow' },
@@ -50,7 +52,7 @@ export async function fetchOrganizationMapContext(auth,{organizationId='',ownerS
   if(!user) throw new Error('UNAUTHENTICATED');
   const token=await user.getIdToken();
   const query=ownerSelected&&organizationId?`?organizationId=${encodeURIComponent(organizationId)}`:'';
-  const response=await fetch(`/api/organization/context${query}`,{headers:{Authorization:`Bearer ${token}`,Accept:'application/json'},cache:'no-store'});
+  const response=await fetch(resolveApiInput(`/api/organization/context${query}`),{headers:{Authorization:`Bearer ${token}`,Accept:'application/json'},cache:'no-store'});
   if(!response.ok) throw new Error(`CONTEXT_${response.status}`);
   const value=await response.json();
   if(!value||typeof value.organizationId!=='string'||!value.organizationId.trim())throw new Error('INVALID_CONTEXT');
