@@ -2278,6 +2278,131 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   }
 </style>
 
+
+<style id="inspectorV2CaptureSkin">
+body.v2-capture-shell{
+  margin:0!important;
+  min-height:100dvh!important;
+  overflow:hidden!important;
+  background:
+    radial-gradient(420px 260px at 90% 0,rgba(24,137,255,.20),transparent 70%),
+    linear-gradient(180deg,#061a38 0,#020d1e 48%,#010711 100%)!important;
+}
+body.v2-capture-shell.v2-capture-light{
+  background:
+    radial-gradient(420px 260px at 90% 0,rgba(8,127,91,.11),transparent 70%),
+    linear-gradient(180deg,#f9fbfa 0,#f3f8f5 55%,#edf4f0 100%)!important;
+}
+body.v2-capture-shell > main,
+body.v2-capture-shell > nav,
+body.v2-capture-shell > footer,
+body.v2-capture-shell > button:not(#mobileNavSettings),
+body.v2-capture-shell > dialog:not(#locationCorrectionDialog){
+  display:none!important;
+}
+body.v2-capture-shell #smartInputModal{
+  inset:0!important;
+  padding:0!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  background:transparent!important;
+  backdrop-filter:none!important;
+  overflow:auto!important;
+}
+body.v2-capture-shell #smartInputModal .modal-content{
+  width:min(100%,430px)!important;
+  max-width:430px!important;
+  min-height:100dvh!important;
+  margin:0 auto!important;
+  padding:max(22px,env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom))!important;
+  border:0!important;
+  border-radius:0!important;
+  color:#f7fbff!important;
+  background:
+    radial-gradient(330px 230px at 92% 0,rgba(30,111,255,.26),transparent 68%),
+    linear-gradient(180deg,#061a38 0,#020d1e 42%,#010711 100%)!important;
+  box-shadow:none!important;
+}
+body.v2-capture-shell.v2-capture-light #smartInputModal .modal-content{
+  color:#14382e!important;
+  background:
+    radial-gradient(330px 230px at 92% 0,rgba(8,127,91,.08),transparent 68%),
+    linear-gradient(180deg,#f9fbfa,#f1f7f3 58%,#edf4f0)!important;
+}
+body.v2-capture-shell #smartInputModal .close-btn{
+  position:sticky!important;top:max(10px,env(safe-area-inset-top))!important;z-index:30!important;
+  float:none!important;display:grid!important;place-items:center!important;
+  width:42px!important;height:42px!important;margin:0 0 10px auto!important;
+  border:1px solid rgba(108,174,255,.25)!important;border-radius:14px!important;
+  background:rgba(6,29,61,.82)!important;color:#fff!important;
+  backdrop-filter:blur(14px)!important;
+}
+body.v2-capture-shell.v2-capture-light #smartInputModal .close-btn{
+  border-color:rgba(8,127,91,.14)!important;background:rgba(255,255,255,.9)!important;color:#17473a!important;
+}
+body.v2-capture-shell #smartInputModal h2{
+  margin:2px 0 12px!important;padding:0 0 12px!important;border-color:rgba(98,169,255,.18)!important;
+  color:#f7fbff!important;font-size:22px!important;line-height:1.35!important;
+}
+body.v2-capture-shell.v2-capture-light #smartInputModal h2{color:#14382e!important;border-color:rgba(8,127,91,.13)!important}
+body.v2-capture-shell #smartInputModal #modalStep1>p{
+  color:#9fb5d4!important;font-size:12px!important;line-height:1.7!important;
+}
+body.v2-capture-shell.v2-capture-light #smartInputModal #modalStep1>p{color:#607c75!important}
+body.v2-capture-shell #smartInputModal textarea,
+body.v2-capture-shell #smartInputModal .input-group{
+  color:#f7fbff!important;
+  background:rgba(7,29,61,.72)!important;
+  border-color:rgba(94,166,255,.22)!important;
+  border-radius:18px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 10px 28px rgba(0,0,0,.10)!important;
+}
+body.v2-capture-shell.v2-capture-light #smartInputModal textarea,
+body.v2-capture-shell.v2-capture-light #smartInputModal .input-group{
+  color:#14382e!important;background:#fff!important;border-color:rgba(8,127,91,.13)!important;
+  box-shadow:0 10px 26px rgba(23,72,58,.06)!important;
+}
+body.v2-capture-shell #smartInputModal label,
+body.v2-capture-shell #smartInputModal #locationStatus,
+body.v2-capture-shell #smartInputModal #fileStatus,
+body.v2-capture-shell #smartInputModal #smartInputBlockReason{color:#9fb5d4!important}
+body.v2-capture-shell.v2-capture-light #smartInputModal label,
+body.v2-capture-shell.v2-capture-light #smartInputModal #locationStatus,
+body.v2-capture-shell.v2-capture-light #smartInputModal #fileStatus,
+body.v2-capture-shell.v2-capture-light #smartInputModal #smartInputBlockReason{color:#607c75!important}
+body.v2-capture-shell #smartInputModal .ai-button-primary,
+body.v2-capture-shell #smartInputModal .ai-button-vision{
+  border:0!important;color:#fff!important;
+  background:linear-gradient(135deg,#0d7ff3,#2baeff)!important;
+  box-shadow:0 10px 24px rgba(13,127,243,.18)!important;
+}
+body.v2-capture-shell.v2-capture-light #smartInputModal .ai-button-primary,
+body.v2-capture-shell.v2-capture-light #smartInputModal .ai-button-vision{
+  background:linear-gradient(135deg,#087f5b,#20a66f)!important;
+  box-shadow:0 10px 22px rgba(8,127,91,.12)!important;
+}
+body.v2-capture-shell #smartInputModal .ai-button-secondary{
+  color:#dcecff!important;background:rgba(18,54,105,.42)!important;border:1px solid rgba(97,169,255,.22)!important;
+}
+body.v2-capture-shell.v2-capture-light #smartInputModal .ai-button-secondary{
+  color:#17473a!important;background:rgba(8,127,91,.06)!important;border-color:rgba(8,127,91,.14)!important;
+}
+body.v2-capture-shell #smartInputModal #processSmartInputBtn{
+  width:100%!important;max-width:none!important;min-height:48px!important;border-radius:15px!important;
+}
+body.v2-capture-shell #smartInputModal .input-group-wrapper{gap:10px!important}
+body.v2-capture-shell #smartInputModal #modalResult{
+  border-color:rgba(96,169,255,.18)!important;
+}
+body.v2-capture-shell.v2-capture-light #smartInputModal #modalResult{border-color:rgba(8,127,91,.13)!important}
+body.v2-capture-shell #locationCorrectionDialog{
+  z-index:10050!important;
+}
+@media(max-width:760px){
+  body.v2-capture-shell #smartInputModal .input-group-wrapper{flex-direction:column!important}
+}
+</style>
+
 </head>
 
 <body class="text-gray-800">
@@ -5119,6 +5244,36 @@ window.closeModal = function(id){
   }
   document.getElementById(id).style.display = "none";
 };
+
+// V2 capture mode is a presentation/navigation wrapper only. It deliberately
+// reuses this page's existing smartInputModal, GPS validation, private upload,
+// AI draft, and save orchestration without duplicating or weakening them.
+const V2_CAPTURE_MODE = new URLSearchParams(window.location.search).get('capture') === 'v2';
+const V2_CAPTURE_THEME = new URLSearchParams(window.location.search).get('theme') === 'light' ? 'light' : 'dark';
+let v2CaptureOpened = false;
+function returnFromV2Capture(){
+  if(!V2_CAPTURE_MODE)return;
+  window.location.replace('inspector-v2.html');
+}
+if(V2_CAPTURE_MODE){
+  document.body.classList.add('v2-capture-shell');
+  document.body.classList.toggle('v2-capture-light', V2_CAPTURE_THEME === 'light');
+  const baseCloseModal = window.closeModal;
+  window.closeModal = function(id){
+    baseCloseModal(id);
+    if(id === 'smartInputModal') setTimeout(returnFromV2Capture, 0);
+  };
+  const openWhenAuthorized = () => {
+    if(v2CaptureOpened)return;
+    if(auth.currentUser && inspectorContext.uid && inspectorContext.organizationId){
+      v2CaptureOpened = true;
+      window.openModal('smartInputModal');
+      return;
+    }
+    setTimeout(openWhenAuthorized, 80);
+  };
+  openWhenAuthorized();
+}
 
 window.clearAfterUpload = function(){
   currentAfterFile = null;
