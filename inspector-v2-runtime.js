@@ -201,6 +201,11 @@ function renderMapObservations(map, L, items, organizationId, mapContext) {
       icon: statusMarkerIcon(L, item.status, { title: item.title })
     });
     marker.bindTooltip(item.title, { direction: 'top', opacity: .9 });
+    marker.on('click', () => {
+      window.dispatchEvent(new CustomEvent('smart-hsr:map-observation-select', {
+        detail: { observation: item }
+      }));
+    });
     marker.addTo(layer);
   });
   applyMapAttribution(map);
