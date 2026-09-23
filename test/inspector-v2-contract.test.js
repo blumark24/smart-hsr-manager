@@ -168,3 +168,16 @@ test('Inspector V2 requests live GPS only after verified inspector authorization
   assert.match(runtime, /ui\?\.startLiveLocation\?\.\(\)/);
   assert.ok(runtime.indexOf('ui?.startLiveLocation?.()') > runtime.indexOf('if (!verified)'));
 });
+
+
+test('Inspector V2 twin is an honest server-confirmed read model, not a fabricated 3D twin', () => {
+  assert.match(html, /id="twinTotalCount"/);
+  assert.match(html, /id="twinBeforeEvidenceCount"/);
+  assert.match(html, /id="twinAfterEvidenceCount"/);
+  assert.match(html, /id="twinAuthorityText"/);
+  assert.match(js, /Operational Twin Lite/);
+  assert.match(js, /Boolean\(item\.imageReference\)/);
+  assert.match(js, /Boolean\(item\.afterReference\)/);
+  assert.match(runtime, /setTwinStats\(observations, \{ serverConfirmed: true \}\)/);
+  assert.doesNotMatch(runtime, /mockTwin|fakeTwin|syntheticTwin/);
+});
