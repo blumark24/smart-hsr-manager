@@ -238,7 +238,17 @@
   }
 
   function routeDetailObservation() {
-    routeObservation(state.detailObservation || state.activeMission);
+    const observation = state.detailObservation || state.activeMission;
+    if (!observation) {
+      showToast('لا توجد مهمة قابلة للتوجيه.');
+      return;
+    }
+    closeMissionDetail();
+    if (!document.body.classList.contains('map-expanded')) toggleMapExpanded();
+    setTimeout(() => {
+      setSelectedMapObservation(observation);
+      routeObservation(observation);
+    }, 140);
   }
 
   function toggleMapExpanded() {
