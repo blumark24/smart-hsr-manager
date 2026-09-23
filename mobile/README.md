@@ -39,3 +39,14 @@ From this directory:
 ## Next gate
 
 After the Preview Bridge runs correctly on physical devices, Phase 15.1 will replace the remote bridge with a packaged local web bundle and an explicit remote API origin. That step must preserve Firebase environment isolation and authenticated API calls before TestFlight/Google Play distribution.
+
+
+## Phase 15.1 — Native capability adapter
+
+`src/native-runtime.mjs` introduces a fail-closed adapter for Capacitor Camera, Geolocation, and App lifecycle APIs. It is deliberately isolated from Inspector V2 until the local packaged web bundle gate is ready. Browser behavior is unchanged.
+
+The adapter:
+- requests native location permission before high-accuracy GPS,
+- exposes an explicit watcher cleanup path,
+- requests camera permission before capture,
+- listens for native app resume events without modifying Auth/RBAC.
