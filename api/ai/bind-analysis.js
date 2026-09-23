@@ -1,4 +1,5 @@
 'use strict';
+const { handleMobilePreviewCors } = require('../_lib/mobileCors');
 // ============================================================================
 // POST /api/ai/bind-analysis — cache-only binding of an already-successful
 // Vision analysis onto a newly-created observation.
@@ -153,6 +154,8 @@ async function bindCachedAnalysis(db, { organizationId, uid, observationId }, no
 }
 
 async function handler(req, res) {
+  if (handleMobilePreviewCors(req, res, { methods: ["POST"] })) return;
+
   if (req.method !== 'POST') return fail(res, 405, 'method_not_allowed', 'Only POST is supported.');
 
   let decoded;
