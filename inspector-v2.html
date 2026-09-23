@@ -18,10 +18,19 @@
 <body>
   <main class="inspector-app" id="inspectorV2App">
     <header class="app-header">
-      <button class="icon-btn glass-control" type="button" aria-label="الإشعارات" data-action="toast">
-        <i data-lucide="bell"></i>
-        <span class="notification-dot" aria-hidden="true"></span>
-      </button>
+      <div class="header-tools" aria-label="أدوات التطبيق">
+        <button class="icon-btn glass-control" type="button" aria-label="الإشعارات" data-action="toast">
+          <i data-lucide="bell"></i>
+          <span class="notification-dot" aria-hidden="true"></span>
+        </button>
+        <button class="theme-toggle glass-control" id="themeToggleBtn" type="button" aria-label="تبديل الوضع النهاري والليلي" aria-pressed="false">
+          <span class="theme-toggle-track" aria-hidden="true">
+            <i data-lucide="sun" class="theme-sun"></i>
+            <i data-lucide="moon" class="theme-moon"></i>
+            <b class="theme-toggle-thumb"></b>
+          </span>
+        </button>
+      </div>
 
       <section class="identity" aria-label="بيانات المستخدم">
         <div class="avatar" aria-hidden="true">
@@ -63,7 +72,21 @@
         </div>
       </div>
 
+      <div class="map-experience-tabs" role="tablist" aria-label="نوع الخريطة">
+        <button type="button" class="is-active" data-map-view="operational" role="tab" aria-selected="true">
+          <i data-lucide="navigation"></i><span>التشغيلية</span>
+        </button>
+        <button type="button" data-map-view="twin" role="tab" aria-selected="false">
+          <i data-lucide="waypoints"></i><span>Digital Twin</span>
+        </button>
+      </div>
+
       <div class="live-map" id="inspectorLiveMap" aria-label="الخريطة الحية"></div>
+      <div class="twin-visual-layer" id="digitalTwinVisualLayer" aria-hidden="true">
+        <span class="twin-grid"></span>
+        <span class="twin-scan-ring twin-scan-ring-a"></span>
+        <span class="twin-scan-ring twin-scan-ring-b"></span>
+      </div>
 
       <div class="map-top-actions">
         <button class="map-action glass-control" id="centerMapBtn" type="button" aria-label="توسيط الخريطة على موقعي">
@@ -76,7 +99,7 @@
 
       <div class="map-footer">
         <span class="live-indicator"><b></b><span id="mapFeedState">Live Map</span></span>
-        <span class="map-note" id="mapNote">تظهر البيانات الحقيقية فقط عند ربط المصدر التشغيلي.</span>
+        <span class="map-note" id="mapNote">الموقع حي، وتظهر الحالات عند ربط المصدر التشغيلي الحقيقي.</span>
       </div>
     </section>
 
