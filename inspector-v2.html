@@ -169,7 +169,7 @@
             <span><i data-lucide="map-pin"></i><b id="missionLocationText">—</b></span>
             <span><i data-lucide="clock-3"></i><b id="missionDateText">—</b></span>
           </div>
-          <button class="primary-btn" id="openMissionBtn" type="button" data-action="toast">
+          <button class="primary-btn" id="openMissionBtn" type="button">
             <span>فتح المهمة</span>
             <i data-lucide="arrow-left"></i>
           </button>
@@ -234,6 +234,81 @@
       <button type="button" class="is-active"><i data-lucide="house"></i><span>الرئيسية</span></button>
     </nav>
 
+
+    <section class="mission-sheet" id="missionSheet" aria-hidden="true" aria-labelledby="missionSheetTitle">
+      <button class="sheet-backdrop" id="missionBackdrop" type="button" aria-label="إغلاق تفاصيل المهمة"></button>
+      <div class="sheet-panel mission-sheet-panel" role="dialog" aria-modal="true">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <header class="sheet-header mission-sheet-header">
+          <div>
+            <p class="eyebrow">SMART HSR · المهمة الميدانية</p>
+            <h2 id="missionSheetTitle">تفاصيل المهمة</h2>
+          </div>
+          <button class="icon-btn" id="closeMissionBtn" type="button" aria-label="إغلاق"><i data-lucide="x"></i></button>
+        </header>
+
+        <div class="mission-sheet-summary">
+          <div>
+            <span class="status-pill warning" id="missionSheetStatus">—</span>
+            <h3 id="missionSheetTaskTitle">—</h3>
+            <p id="missionSheetLocation">—</p>
+          </div>
+          <button class="mission-route-btn" id="missionSheetRouteBtn" type="button">
+            <i data-lucide="navigation"></i><span>الاتجاه للموقع</span>
+          </button>
+        </div>
+
+        <nav class="mission-sheet-tabs" aria-label="أقسام المهمة">
+          <button class="is-active" type="button" data-mission-tab="evidence">الأدلة</button>
+          <button type="button" data-mission-tab="ai">التحليل الذكي</button>
+          <button type="button" data-mission-tab="timeline">الحالة</button>
+        </nav>
+
+        <section class="mission-tab-panel is-active" data-mission-panel="evidence">
+          <div class="evidence-grid">
+            <article class="evidence-card">
+              <div class="evidence-image" id="missionBeforeImage">
+                <span><i data-lucide="image"></i> قبل المعالجة</span>
+              </div>
+              <strong>قبل</strong>
+            </article>
+            <article class="evidence-card">
+              <div class="evidence-image" id="missionAfterImage">
+                <span><i data-lucide="image-off"></i> لا يوجد دليل بعد</span>
+              </div>
+              <strong>بعد</strong>
+            </article>
+          </div>
+          <p class="evidence-hint" id="missionEvidenceHint">يتم تحميل الأدلة المصرح بها عند فتح المهمة فقط.</p>
+        </section>
+
+        <section class="mission-tab-panel" data-mission-panel="ai">
+          <button class="ai-run-btn" id="missionRunAiBtn" type="button">
+            <i data-lucide="sparkles"></i>
+            <span><strong>تشغيل Vision Analysis</strong><small>تحليل استرشادي يتطلب مراجعتك</small></span>
+          </button>
+          <div class="ai-result" id="missionAiResult">
+            <p>لم يتم تشغيل التحليل لهذه المهمة بعد.</p>
+          </div>
+        </section>
+
+        <section class="mission-tab-panel" data-mission-panel="timeline">
+          <div class="timeline-card">
+            <span class="timeline-dot"></span>
+            <div><small>الحالة الحالية</small><strong id="missionTimelineStatus">—</strong></div>
+          </div>
+          <div class="timeline-card">
+            <span class="timeline-dot"></span>
+            <div><small>تاريخ الرصد</small><strong id="missionTimelineDate">—</strong></div>
+          </div>
+          <div class="timeline-card">
+            <span class="timeline-dot"></span>
+            <div><small>المعرّف</small><strong id="missionTimelineId">—</strong></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
     <section class="analysis-sheet" id="analysisSheet" aria-hidden="true" aria-labelledby="analysisSheetTitle">
       <button class="sheet-backdrop" id="analysisBackdrop" type="button" aria-label="إغلاق"></button>
       <div class="sheet-panel" role="dialog" aria-modal="true">
@@ -249,12 +324,12 @@
         <p class="sheet-intro">هذه الواجهة الجديدة ستربط نفس قدرات لوحة المراقب القديمة بدون حذفها: تحليل الرؤية، السبب الجذري، أمر العمل، المقارنة قبل/بعد، الأدلة والتقرير.</p>
 
         <div class="analysis-grid">
-          <button type="button" data-action="toast"><span><i data-lucide="scan-eye"></i></span><strong>Vision Analysis</strong><small>تحليل الصورة</small></button>
-          <button type="button" data-action="toast"><span><i data-lucide="microscope"></i></span><strong>Root Cause</strong><small>السبب الجذري</small></button>
-          <button type="button" data-action="toast"><span><i data-lucide="clipboard-pen-line"></i></span><strong>Work Order</strong><small>مسودة أمر العمل</small></button>
-          <button type="button" data-action="toast"><span><i data-lucide="columns-2"></i></span><strong>Before / After</strong><small>مقارنة الأدلة</small></button>
-          <button type="button" data-action="toast"><span><i data-lucide="route"></i></span><strong>Lifecycle</strong><small>دورة الحالة</small></button>
-          <button type="button" data-action="toast"><span><i data-lucide="file-text"></i></span><strong>PDF Report</strong><small>التقرير الموثق</small></button>
+          <button type="button" id="runVisionAnalysisBtn"><span><i data-lucide="scan-eye"></i></span><strong>Vision Analysis</strong><small>تحليل فعلي للصورة</small></button>
+          <button type="button" class="analysis-secondary" id="openMissionEvidenceBtn"><span><i data-lucide="columns-2"></i></span><strong>Before / After</strong><small>الأدلة الموثقة</small></button>
+          <button type="button" class="analysis-secondary" id="openMissionLifecycleBtn"><span><i data-lucide="route"></i></span><strong>Lifecycle</strong><small>حالة المهمة الحالية</small></button>
+          <button type="button" class="analysis-disabled" disabled><span><i data-lucide="clipboard-pen-line"></i></span><strong>Work Order</strong><small>غير مفعّل في V2 بعد</small></button>
+          <button type="button" class="analysis-disabled" disabled><span><i data-lucide="microscope"></i></span><strong>Root Cause</strong><small>يعرض فقط إذا أعاده AI</small></button>
+          <button type="button" id="printMissionBtn"><span><i data-lucide="file-text"></i></span><strong>PDF / Print</strong><small>طباعة تفاصيل المهمة</small></button>
         </div>
 
         <div class="sheet-note">
