@@ -1,6 +1,9 @@
 'use strict';
+const { handleMobilePreviewCors } = require('./_lib/mobileCors');
 
 module.exports = function handler(req, res) {
+  if (handleMobilePreviewCors(req, res, { methods: ["GET"] })) return;
+
   if (req.method !== 'GET') return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
   if (process.env.VERCEL_ENV !== 'preview') return res.status(404).json({ error: 'NOT_FOUND' });
   let config;
