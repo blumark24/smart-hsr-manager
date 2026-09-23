@@ -38,6 +38,33 @@ jobs:
           if (forbidden.has(url.hostname)) throw new Error('Production origin is forbidden');
           require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'origin=' + url.origin + '\n');
           NODE
+      - name: Prove reachable Staging Firebase config and Capacitor CORS
+        shell: bash
+        env:
+          ORIGIN: ${{ steps.validate.outputs.origin }}
+        run: |
+          node <<'NODE'
+          const origin = process.env.ORIGIN;
+          const response = await fetch(origin + '/api/firebase-config', {
+            headers: {
+              Origin: 'capacitor://localhost',
+              Accept: 'application/json'
+            },
+            redirect: 'manual'
+          });
+          if (response.status !== 200) {
+            throw new Error(`Staging endpoint is not directly reachable: HTTP ${response.status}`);
+          }
+          const allowOrigin = response.headers.get('access-control-allow-origin');
+          if (allowOrigin !== 'capacitor://localhost') {
+            throw new Error('Staging endpoint did not prove Capacitor Preview CORS');
+          }
+          const config = await response.json();
+          if (config?.projectId !== 'smart-hsr-staging-blumark24') {
+            throw new Error('Staging endpoint returned the wrong Firebase project');
+          }
+          console.log('Verified reachable SMART HSR Staging API origin.');
+          NODE
 
   contract:
     name: Operational contract
