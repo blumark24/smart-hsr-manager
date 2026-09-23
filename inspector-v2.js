@@ -13,7 +13,8 @@
     activeMission: null,
     selectedMapObservation: null,
     detailObservation: null,
-    locationWatchId: null
+    locationWatchId: null,
+    liveLocationAuthorized: false
   };
 
   const $ = (id) => document.getElementById(id);
@@ -91,6 +92,10 @@
 
   function requestLocation() {
     const gps = $('gpsStateText');
+    if (!state.liveLocationAuthorized) {
+      if (gps) gps.textContent = 'بانتظار التحقق';
+      return;
+    }
     const loc = $('locationStateText');
     if (!navigator.geolocation) {
       if (gps) gps.textContent = 'غير مدعوم';
@@ -134,11 +139,19 @@
   }
 
   function onPositionError(error) {
-    if ($('gpsStateText')) $('gpsStateText').textContent = 'بحاجة إذن';
+    clearLiveLocationWatch();
+    if ($('gpsStateText')) $('gpsStateText').textContent = error?.code === 1 ? 'بحاجة إذن' : 'غير متاح';
     if ($('locationStateText')) $('locationStateText').textContent = 'لم يتم تحديد الموقع';
     if ($('mapFeedState')) $('mapFeedState').textContent = 'Map Ready';
-    if ($('mapNote')) $('mapNote').textContent = 'اسمح بالوصول للموقع لتفعيل GPS الحي.';
+    if ($('mapNote')) $('mapNote').textContent = error?.code === 1
+      ? 'اسمح بالوصول للموقع لتفعيل GPS الحي.'
+      : 'تعذر تحديث GPS مؤقتًا. يمكنك إعادة المحاولة من زر موقعي.';
     if (error && error.code === 1) showToast('يلزم السماح بالوصول للموقع لتفعيل الخريطة الحية.');
+  }
+
+  function authorizeLiveLocation() {
+    state.liveLocationAuthorized = true;
+    requestLocation();
   }
 
   function centerOnUser() {
@@ -665,7 +678,7 @@
   window.SmartHsrInspectorV2 = Object.freeze({
     getMap: () => state.map,
     getPosition: () => state.lastPosition,
-    startLiveLocation: requestLocation,
+    startLiveLocation: authorizeLiveLocation,
     setIdentity: setRuntimeIdentity,
     setMission: setRuntimeMission,
     setMissionDistance: setRuntimeDistance,
@@ -681,7 +694,11 @@
 
   window.addEventListener('pagehide', clearLiveLocationWatch);
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) clearLiveLocationWatch();
+    if (document.hidden) {
+      clearLiveLocationWatch();
+      return;
+    }
+    if (state.liveLocationAuthorized) requestLocation();
   }, { passive:true });
 
   function boot() {
