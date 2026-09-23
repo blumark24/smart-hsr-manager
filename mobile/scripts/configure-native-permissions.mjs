@@ -36,6 +36,11 @@ ensurePlistPermission(
   'NSLocationWhenInUseUsageDescription',
   'يستخدم SMART HSR موقع الجهاز لتوثيق موقع البلاغ وإظهار المهام القريبة.'
 );
+ensurePlistPermission(
+  iosPlist,
+  'NSLocationAlwaysAndWhenInUseUsageDescription',
+  'يستخدم SMART HSR موقع الجهاز أثناء استخدام التطبيق لتوثيق موقع البلاغ وإظهار المهام القريبة.'
+);
 
 ensureAndroidPermission(androidManifest, 'android.permission.CAMERA');
 ensureAndroidPermission(androidManifest, 'android.permission.ACCESS_FINE_LOCATION');
