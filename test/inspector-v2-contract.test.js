@@ -181,3 +181,13 @@ test('Inspector V2 twin is an honest server-confirmed read model, not a fabricat
   assert.match(runtime, /setTwinStats\(observations, \{ serverConfirmed: true \}\)/);
   assert.doesNotMatch(runtime, /mockTwin|fakeTwin|syntheticTwin/);
 });
+
+
+test('Inspector V2 resumes live GPS after app visibility returns, but only after authorization', () => {
+  assert.match(js, /liveLocationAuthorized: false/);
+  assert.match(js, /function authorizeLiveLocation\(\)/);
+  assert.match(js, /state\.liveLocationAuthorized = true/);
+  assert.match(js, /startLiveLocation: authorizeLiveLocation/);
+  assert.match(js, /if \(state\.liveLocationAuthorized\) requestLocation\(\)/);
+  assert.match(js, /clearLiveLocationWatch\(\);[\s\S]*error\?\.code/);
+});
