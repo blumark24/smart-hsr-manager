@@ -123,3 +123,12 @@ test('Inspector V2 does not duplicate protected camera upload or GPS capture log
   assert.doesNotMatch(runtime, /uploadImageToStorage|navigator\.mediaDevices|getUserMedia/);
   assert.match(dashboard, /body\.v2-capture-shell/);
 });
+
+
+test('Mission detail actions stay bound to the exact map-selected observation', () => {
+  assert.match(js, /detailObservation: null/);
+  assert.match(js, /state\.detailObservation = observation/);
+  assert.match(js, /routeDetailObservation/);
+  assert.match(js, /const observation = state\.detailObservation \|\| state\.activeMission/);
+  assert.doesNotMatch(js, /missionSheetRouteBtn'\)\?\.addEventListener\('click', routeToMission/);
+});
