@@ -442,14 +442,14 @@
     });
 
     if ($('urbanMapTitle')) {
-      $('urbanMapTitle').textContent = state.mapView === 'twin' ? 'التوأم الرقمي الميداني' : 'الخريطة التشغيلية الحية';
+      $('urbanMapTitle').textContent = state.mapView === 'twin' ? 'التوأم التشغيلي المصغّر' : 'الخريطة التشغيلية الحية';
     }
     if ($('mapFeedState')) {
       $('mapFeedState').textContent = state.mapView === 'twin' ? 'Twin View' : (state.lastPosition ? 'GPS Live' : 'Live Map');
     }
     if ($('mapNote')) {
       $('mapNote').textContent = state.mapView === 'twin'
-        ? 'عرض التوأم يغيّر طبقة القراءة فقط؛ لن تظهر أضرار أو أصول غير قادمة من بيانات موثوقة.'
+        ? 'Operational Twin Lite — قراءة فقط من ملاحظاتك المؤكدة من الخادم، بلا أصول أو أضرار مُنشأة اصطناعيًا.'
         : (state.lastPosition ? 'الموقع الحالي حي. الحالات تظهر فقط من المصدر التشغيلي الحقيقي.' : 'الموقع حي، وتظهر الحالات عند ربط المصدر التشغيلي الحقيقي.');
     }
   }
@@ -601,13 +601,23 @@
     art.appendChild(img);
   }
 
-  function setTwinStats(items = []) {
+  function setTwinStats(items = [], { serverConfirmed = false } = {}) {
     const open = items.filter(item => item.status === 'PENDING').length;
     const progress = items.filter(item => item.status === 'IN_PROGRESS' || item.status === 'PENDING_REVIEW').length;
     const closed = items.filter(item => item.status === 'COMPLETED').length;
+    const beforeEvidence = items.filter(item => Boolean(item.imageReference)).length;
+    const afterEvidence = items.filter(item => Boolean(item.afterReference)).length;
+    if ($('twinTotalCount')) $('twinTotalCount').textContent = String(items.length);
     if ($('twinOpenCount')) $('twinOpenCount').textContent = String(open);
     if ($('twinProgressCount')) $('twinProgressCount').textContent = String(progress);
     if ($('twinClosedCount')) $('twinClosedCount').textContent = String(closed);
+    if ($('twinBeforeEvidenceCount')) $('twinBeforeEvidenceCount').textContent = String(beforeEvidence);
+    if ($('twinAfterEvidenceCount')) $('twinAfterEvidenceCount').textContent = String(afterEvidence);
+    if ($('twinAuthorityText')) {
+      $('twinAuthorityText').textContent = serverConfirmed
+        ? 'Snapshot مؤكد من الخادم · نفس نطاق حساب المراقب'
+        : 'بانتظار Snapshot مؤكد من الخادم';
+    }
   }
 
   function setNearbyObservations(items = []) {
