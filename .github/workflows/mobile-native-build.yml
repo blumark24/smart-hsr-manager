@@ -7,6 +7,12 @@ on:
     paths:
       - 'mobile/**'
       - '.github/workflows/mobile-native-build.yml'
+  pull_request:
+    branches:
+      - phase14-inspector-v2-mobile-home
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-native-build.yml'
   workflow_dispatch:
 
 permissions:
@@ -51,6 +57,7 @@ jobs:
           java-version: '21'
       - run: npm install --ignore-scripts
       - run: npx cap add android
+      - run: npm run native:permissions
       - run: npx cap sync android
       - name: Build unsigned debug APK
         run: ./android/gradlew -p android assembleDebug
@@ -75,6 +82,7 @@ jobs:
           node-version: '22'
       - run: npm install --ignore-scripts
       - run: npx cap add ios
+      - run: npm run native:permissions
       - run: npx cap sync ios
       - name: Build for iOS Simulator
         run: >
