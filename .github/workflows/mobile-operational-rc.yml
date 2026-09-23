@@ -1,12 +1,31 @@
-name: SMART HSR Operational Mobile RC
+name: SMART HSR Staging-Connected Mobile RC
 
 on:
+  push:
+    branches:
+      - phase15-mobile-shell
+    paths:
+      - '.github/workflows/mobile-operational-rc.yml'
+      - 'mobile/**'
+      - 'mobile-runtime-origin.js'
+      - 'mobile-runtime-env.js'
+      - 'firebase-runtime-config.js'
+      - 'firebase-auth-fetch.js'
+      - 'spatial-map.js'
+      - 'storage-adapter.js'
+      - 'dashboard.html'
+      - 'inspector-v2.html'
+      - 'inspector-v2-runtime.js'
   workflow_dispatch:
     inputs:
       staging_api_origin:
         description: 'Approved non-Production HTTPS Staging API origin'
-        required: true
+        required: false
+        default: 'https://smart-hsr-staging-api-blumark24-os.vercel.app'
         type: string
+
+env:
+  SMART_HSR_STAGING_API_ORIGIN: https://smart-hsr-staging-api-blumark24-os.vercel.app
 
 permissions:
   contents: read
@@ -22,7 +41,7 @@ jobs:
         id: validate
         shell: bash
         env:
-          ORIGIN: ${{ inputs.staging_api_origin }}
+          ORIGIN: ${{ inputs.staging_api_origin || env.SMART_HSR_STAGING_API_ORIGIN }}
         run: |
           node <<'NODE'
           const raw = String(process.env.ORIGIN || '').trim();
@@ -67,7 +86,7 @@ jobs:
           NODE
 
   contract:
-    name: Operational contract
+    name: Staging-connected contract
     needs: validate-origin
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -80,12 +99,12 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --ignore-scripts
-      - name: Build operational packaged web runtime
+      - name: Build staging-connected packaged web runtime
         env:
           SMART_HSR_MOBILE_API_ORIGIN: ${{ needs.validate-origin.outputs.origin }}
         run: npm run bundle:web
       - run: npm test
-      - name: Assert build is operational, not fail-closed
+      - name: Assert build is staging-connected, not fail-closed
         shell: bash
         run: |
           grep -q "location.replace('login.html')" www/index.html
@@ -93,7 +112,7 @@ jobs:
           grep -q '"apiOrigin":"https://' www/mobile-runtime-env.js
 
   android:
-    name: Android operational APK
+    name: Android staging-connected APK
     needs: [validate-origin, contract]
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -110,7 +129,7 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: npm install --ignore-scripts
-      - name: Build operational packaged web runtime
+      - name: Build staging-connected packaged web runtime
         env:
           SMART_HSR_MOBILE_API_ORIGIN: ${{ needs.validate-origin.outputs.origin }}
         run: npm run bundle:web
@@ -120,13 +139,13 @@ jobs:
       - run: ./android/gradlew -p android assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: smart-hsr-operational-rc-android
+          name: smart-hsr-staging-connected-rc-android
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 7
 
   ios:
-    name: iOS operational simulator build
+    name: iOS staging-connected simulator build
     needs: [validate-origin, contract]
     runs-on: macos-15
     timeout-minutes: 35
@@ -139,7 +158,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --ignore-scripts
-      - name: Build operational packaged web runtime
+      - name: Build staging-connected packaged web runtime
         env:
           SMART_HSR_MOBILE_API_ORIGIN: ${{ needs.validate-origin.outputs.origin }}
         run: npm run bundle:web
