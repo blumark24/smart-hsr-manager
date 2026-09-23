@@ -10,7 +10,8 @@
     theme: 'dark',
     mapView: 'operational',
     missionCoords: null,
-    activeMission: null
+    activeMission: null,
+    selectedMapObservation: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -111,6 +112,10 @@
       state.locationMarker.setLatLng(latlng);
     }
 
+    if (state.selectedMapObservation && $('mapMarkerDistance')) {
+      $('mapMarkerDistance').textContent = formatDistance(observationDistance(state.selectedMapObservation));
+    }
+
     if (!state.hasCenteredOnce) {
       state.map.setView(latlng, 16, { animate: false });
       state.hasCenteredOnce = true;
@@ -133,6 +138,77 @@
     }
     const { latitude, longitude } = state.lastPosition.coords;
     state.map.flyTo([latitude, longitude], Math.max(state.map.getZoom(), 16), { duration: .55 });
+  }
+
+  const OBS_STATUS_LABELS = Object.freeze({
+    PENDING:'قيد الانتظار',
+    IN_PROGRESS:'قيد المعالجة',
+    PENDING_REVIEW:'بانتظار المراجعة',
+    COMPLETED:'مغلقة'
+  });
+
+  function observationDistance(observation) {
+    if (!observation?.coords || !state.lastPosition) return null;
+    return haversineMeters(
+      { lat: state.lastPosition.coords.latitude, lng: state.lastPosition.coords.longitude },
+      observation.coords
+    );
+  }
+
+  function formatDistance(meters) {
+    if (!Number.isFinite(meters)) return '—';
+    return meters < 1000 ? Math.round(meters) + ' م' : (meters/1000).toFixed(1) + ' كم';
+  }
+
+  function setSelectedMapObservation(observation) {
+    state.selectedMapObservation = observation || null;
+    const sheet = $('mapMarkerSheet');
+    if (!sheet) return;
+
+    if (!observation) {
+      sheet.classList.remove('is-open');
+      sheet.setAttribute('aria-hidden','true');
+      return;
+    }
+
+    const status = observation.status || 'PENDING';
+    if ($('mapMarkerStatus')) {
+      $('mapMarkerStatus').textContent = OBS_STATUS_LABELS[status] || status;
+      $('mapMarkerStatus').dataset.status = status;
+    }
+    if ($('mapMarkerTitle')) $('mapMarkerTitle').textContent = observation.title || 'ملاحظة ميدانية';
+    if ($('mapMarkerLocation')) $('mapMarkerLocation').textContent = observation.location || 'موقع موثق';
+    if ($('mapMarkerId')) $('mapMarkerId').textContent = observation.displayId || observation.docId || '—';
+    if ($('mapMarkerDistance')) $('mapMarkerDistance').textContent = formatDistance(observationDistance(observation));
+    sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden','false');
+
+    if (observation.coords && state.map) {
+      const zoom = document.body.classList.contains('map-expanded') ? Math.max(state.map.getZoom(), 16) : Math.max(state.map.getZoom(), 15);
+      state.map.flyTo([observation.coords.lat, observation.coords.lng], zoom, { duration: .45 });
+    }
+  }
+
+  function closeMapMarkerSheet() {
+    setSelectedMapObservation(null);
+  }
+
+  function focusSelectedMapObservation() {
+    const observation = state.selectedMapObservation;
+    if (!observation?.coords || !state.map) {
+      showToast('لا توجد إحداثيات موثوقة لهذه الحالة.');
+      return;
+    }
+    state.map.flyTo([observation.coords.lat, observation.coords.lng], Math.max(state.map.getZoom(), 17), { duration: .45 });
+  }
+
+  function openSelectedMapObservation() {
+    const observation = state.selectedMapObservation;
+    if (!observation) {
+      showToast('اختر حالة من الخريطة أولاً.');
+      return;
+    }
+    openMissionDetail('evidence', observation);
   }
 
   function routeToMission() {
@@ -170,18 +246,33 @@
     });
   }
 
-  function openMissionDetail(tab = 'evidence') {
-    if (!state.activeMission) {
+  function populateMissionSheet(observation) {
+    if (!observation) return;
+    const status = observation.status || 'PENDING';
+    if ($('missionSheetTaskTitle')) $('missionSheetTaskTitle').textContent = observation.title || 'ملاحظة ميدانية';
+    if ($('missionSheetStatus')) {
+      $('missionSheetStatus').textContent = OBS_STATUS_LABELS[status] || status;
+      $('missionSheetStatus').dataset.status = status;
+    }
+    if ($('missionSheetLocation')) $('missionSheetLocation').textContent = observation.location || 'موقع موثق';
+    if ($('missionTimelineStatus')) $('missionTimelineStatus').textContent = OBS_STATUS_LABELS[status] || status;
+    if ($('missionTimelineDate')) $('missionTimelineDate').textContent = observation.date || '—';
+    if ($('missionTimelineId')) $('missionTimelineId').textContent = observation.displayId || observation.docId || '—';
+  }
+
+  function openMissionDetail(tab = 'evidence', observation = state.activeMission) {
+    if (!observation) {
       showToast('لا توجد مهمة نشطة لعرضها.');
       return;
     }
     const sheet = $('missionSheet');
     if (!sheet) return;
+    populateMissionSheet(observation);
     missionTab(tab);
     sheet.classList.add('is-open');
     sheet.setAttribute('aria-hidden','false');
     document.body.style.overflow='hidden';
-    window.dispatchEvent(new CustomEvent('smart-hsr:mission-open', { detail: { observation: state.activeMission } }));
+    window.dispatchEvent(new CustomEvent('smart-hsr:mission-open', { detail: { observation } }));
   }
 
   function closeMissionDetail() {
@@ -348,6 +439,12 @@
     document.querySelectorAll('[data-mission-tab]').forEach(button => button.addEventListener('click', () => missionTab(button.dataset.missionTab)));
     $('centerMapBtn')?.addEventListener('click', centerOnUser);
     $('expandMapBtn')?.addEventListener('click', toggleMapExpanded);
+    $('closeExpandedMapBtn')?.addEventListener('click', () => {
+      if (document.body.classList.contains('map-expanded')) toggleMapExpanded();
+    });
+    $('closeMapMarkerSheetBtn')?.addEventListener('click', closeMapMarkerSheet);
+    $('focusMapMarkerBtn')?.addEventListener('click', focusSelectedMapObservation);
+    $('openMapMarkerDetailBtn')?.addEventListener('click', openSelectedMapObservation);
     $('routeMissionBtn')?.addEventListener('click', routeToMission);
     $('openAnalysisBtn')?.addEventListener('click', openAnalysis);
     $('quickAnalysisBtn')?.addEventListener('click', openAnalysis);
@@ -356,6 +453,10 @@
 
     document.querySelectorAll('[data-action="toast"]').forEach((button) => {
       button.addEventListener('click', () => showToast());
+    });
+
+    window.addEventListener('smart-hsr:map-observation-select', event => {
+      setSelectedMapObservation(event?.detail?.observation || null);
     });
 
     document.addEventListener('keydown', (event) => {
@@ -486,7 +587,10 @@
       distance.className = 'nearby-card__distance';
       distance.textContent = Number.isFinite(item.distance) ? (item.distance < 1000 ? Math.round(item.distance) + ' م' : (item.distance/1000).toFixed(1) + ' كم') : '—';
       card.append(marker, copy, distance);
-      card.addEventListener('click', () => showToast('سيتم فتح تفاصيل الملاحظة داخل نافذة V2 في المرحلة التالية.'));
+      card.addEventListener('click', () => {
+        setSelectedMapObservation(item);
+        if (!document.body.classList.contains('map-expanded')) toggleMapExpanded();
+      });
       root.appendChild(card);
     });
   }
@@ -501,6 +605,7 @@
     setMissionEvidence,
     setAiLoading,
     setAiResult,
+    setSelectedMapObservation,
     setTwinStats,
     setNearbyObservations,
     showToast
