@@ -141,3 +141,19 @@ test('Mission route reveals the full-screen map before routing', () => {
   assert.match(js, /setSelectedMapObservation\(observation\)/);
   assert.match(js, /routeObservation\(observation\)/);
 });
+
+
+test('Inspector V2 GPS watcher is single-instance and cleaned up', () => {
+  assert.match(js, /locationWatchId: null/);
+  assert.match(js, /if \(state\.locationWatchId !== null\) return/);
+  assert.match(js, /navigator\.geolocation\.clearWatch\(state\.locationWatchId\)/);
+  assert.match(js, /pagehide', clearLiveLocationWatch/);
+});
+
+test('Inspector V2 overlays share one body scroll-lock authority and Escape closes one layer at a time', () => {
+  assert.match(js, /function syncBodyScrollLock\(\)/);
+  assert.match(js, /document\.body\.style\.overflow = locked \? 'hidden' : ''/);
+  assert.match(js, /closeMissionDetail\(\); return;/);
+  assert.match(js, /closeAnalysis\(\); return;/);
+  assert.match(js, /closeMapMarkerSheet\(\); return;/);
+});
