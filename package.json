@@ -7,7 +7,7 @@
     "watch:css": "npx tailwindcss -i ./input.css -o ./output.css --watch",
     "test:rules": "node test/run-firestore-rules.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:mobile": "node mobile/test/mobile-shell-contract.test.mjs"
+    "test:mobile": "node --test mobile/test/*.test.mjs"
   },
   "keywords": [],
   "author": "",
