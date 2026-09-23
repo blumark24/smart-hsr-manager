@@ -450,3 +450,32 @@ body.map-expanded .map-top-actions{top:calc(var(--safe-top) + 110px)}
 @media (prefers-reduced-motion:reduce){
   .theme-toggle-thumb,.twin-visual-layer{transition:none!important}
 }
+/* Runtime-bound data surfaces */
+.nearby-list{display:grid;gap:8px}
+.nearby-list:empty{display:none}
+.nearby-list:not(:empty)+.empty-nearby{display:none}
+.nearby-card{
+  width:100%;min-height:62px;padding:9px 10px;border:1px solid var(--line);border-radius:15px;
+  background:rgba(5,24,52,.62);display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;text-align:right;color:var(--text)
+}
+.nearby-card__marker{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:14px;font-weight:900;color:#fff}
+.nearby-card__marker[data-status="PENDING"]{background:#dc4b5b}
+.nearby-card__marker[data-status="IN_PROGRESS"],.nearby-card__marker[data-status="PENDING_REVIEW"]{background:#e89d2b}
+.nearby-card__marker[data-status="COMPLETED"]{background:#0fa976}
+.nearby-card__copy{min-width:0}
+.nearby-card__copy strong{display:block;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nearby-card__copy small{display:block;margin-top:3px;font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nearby-card__distance{font-size:8px;color:var(--cyan);font-weight:800;white-space:nowrap}
+.mission-art.is-runtime-image{background:#06152c}
+.mission-art.is-runtime-image img{width:100%;height:100%;min-height:116px;display:block;object-fit:cover}
+.mission-art.is-empty{display:grid;place-items:center;color:var(--muted);font-size:9px;text-align:center;padding:12px;background:linear-gradient(145deg,rgba(6,25,54,.9),rgba(3,15,32,.95))}
+:root[data-theme="light"] .nearby-card{background:#fff;border-color:rgba(8,127,91,.12);box-shadow:0 8px 22px rgba(23,72,58,.05)}
+:root[data-theme="light"] .mission-art.is-empty{background:linear-gradient(145deg,#f7fbf8,#e8f3ed);color:#607c75}
+.runtime-gate{
+  position:fixed;z-index:8000;inset:0;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(500px 300px at 50% 30%,rgba(17,112,255,.18),transparent 70%),#020914;
+  color:#fff;text-align:center
+}
+.runtime-gate[hidden]{display:none}
+.runtime-gate__card{width:min(100%,340px);padding:24px;border:1px solid rgba(103,171,255,.22);border-radius:24px;background:rgba(6,27,57,.88);box-shadow:0 24px 70px rgba(0,0,0,.36)}
+.runtime-gate__card strong{display:block;font-size:16px}.runtime-gate__card p{font-size:10px;color:#a9bfdc;line-height:1.7;margin:8px 0 0}
