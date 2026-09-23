@@ -122,7 +122,7 @@
       </div>
 
       <article class="mission-card">
-        <div class="mission-art" aria-hidden="true">
+        <div class="mission-art" id="missionArt" aria-hidden="true">
           <svg viewBox="0 0 160 120" role="img">
             <defs>
               <linearGradient id="road" x1="0" y1="0" x2="1" y2="1">
@@ -144,15 +144,16 @@
         </div>
         <div class="mission-content">
           <div class="mission-title-row">
-            <span class="status-pill warning">قيد المعالجة</span>
-            <strong>معالجة حفرة في الطريق</strong>
+            <span class="status-pill warning" id="missionStatusPill">بانتظار البيانات</span>
+            <strong id="missionTitleText">بانتظار المهمة</strong>
           </div>
-          <p>توثيق الموقع والأدلة ثم تحديث حالة المعالجة من التطبيق.</p>
+          <p id="missionDescription">يتم تحميل مهمتك الميدانية من البيانات الموثوقة.</p>
           <div class="mission-meta">
             <span><i data-lucide="navigation"></i><b id="missionDistance">—</b> عن موقعك</span>
-            <span><i data-lucide="clock-3"></i><b>اليوم</b></span>
+            <span><i data-lucide="map-pin"></i><b id="missionLocationText">—</b></span>
+            <span><i data-lucide="clock-3"></i><b id="missionDateText">—</b></span>
           </div>
-          <button class="primary-btn" type="button" data-action="toast">
+          <button class="primary-btn" id="openMissionBtn" type="button" data-action="toast">
             <span>فتح المهمة</span>
             <i data-lucide="arrow-left"></i>
           </button>
@@ -194,10 +195,11 @@
         </div>
         <span class="honest-badge">بيانات حقيقية فقط</span>
       </div>
+      <div class="nearby-list" id="nearbyList" aria-live="polite"></div>
       <div class="empty-nearby" id="nearbyEmpty">
         <span class="empty-icon"><i data-lucide="radar"></i></span>
         <div>
-          <strong>بانتظار ربط مصدر البلاغات</strong>
+          <strong>لا توجد حالات موثوقة ضمن العرض الحالي</strong>
           <p>لن نعرض نقاطًا أو حالات تجريبية داخل الخريطة التشغيلية.</p>
         </div>
       </div>
@@ -247,5 +249,6 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="inspector-v2.js"></script>
+  <script type="module" src="inspector-v2-runtime.js"></script>
 </body>
 </html>
