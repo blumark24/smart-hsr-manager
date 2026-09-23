@@ -18,23 +18,35 @@ const baseEnv = () => ({
 test('readiness never needs secret values in its output', () => {
   const env = {
     ...baseEnv(),
-    FIREBASE_SERVICE_ACCOUNT: JSON.stringify({ project_id: 'smart-hsr-staging-blumark24', private_key: 'secret' }),
-    B2_KEY_ID: 'secret',
-    B2_APPLICATION_KEY: 'secret',
-    B2_BUCKET_NAME: 'bucket',
-    B2_S3_ENDPOINT: 'endpoint',
-    B2_REGION: 'region',
+    FIREBASE_SERVICE_ACCOUNT: JSON.stringify({ project_id: 'smart-hsr-staging-blumark24', private_key: 'secret-private-key-value' }),
+    B2_KEY_ID: 'secret-b2-key-id',
+    B2_APPLICATION_KEY: 'secret-b2-application-key',
+    B2_BUCKET_NAME: 'staging-bucket-secret-name',
+    B2_S3_ENDPOINT: 'https://staging-endpoint-secret-host.example',
+    B2_REGION: 'staging-secret-region',
     SMART_HSR_STORAGE_STAGING_ISOLATED: 'true',
     SMART_HSR_AI_PROVIDER: 'gemini',
-    GEMINI_API_KEY: 'secret',
-    GEMINI_VISION_MODEL: 'model',
+    GEMINI_API_KEY: 'secret-gemini-api-key',
+    GEMINI_VISION_MODEL: 'vision-model-secret-name',
     SMART_HSR_AI_APPLICATION_INTEGRATION: 'true',
-    SMART_HSR_AI_ALLOWED_ORGANIZATION_IDS: 'org',
+    SMART_HSR_AI_ALLOWED_ORGANIZATION_IDS: 'org-secret-id',
   };
   const result = readiness.buildReadiness(env);
   const serialized = JSON.stringify(result);
   assert.equal(result.operationalBackendReady, true);
-  assert.doesNotMatch(serialized, /private_key|secret|bucket|endpoint|model|org/);
+  for (const secretValue of [
+    'secret-private-key-value',
+    'secret-b2-key-id',
+    'secret-b2-application-key',
+    'staging-bucket-secret-name',
+    'staging-endpoint-secret-host.example',
+    'staging-secret-region',
+    'secret-gemini-api-key',
+    'vision-model-secret-name',
+    'org-secret-id',
+  ]) {
+    assert.equal(serialized.includes(secretValue), false, secretValue);
+  }
 });
 
 test('firebase admin fails closed without a staging server identity', () => {
