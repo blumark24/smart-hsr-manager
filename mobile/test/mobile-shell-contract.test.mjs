@@ -10,7 +10,7 @@ const repoRoot = path.resolve(mobileRoot, '..');
 
 const config = fs.readFileSync(path.join(mobileRoot, 'capacitor.config.ts'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(mobileRoot, 'package.json'), 'utf8'));
-const fallback = fs.readFileSync(path.join(mobileRoot, 'www', 'index.html'), 'utf8');
+const builtIndex = fs.readFileSync(path.join(mobileRoot, 'www', 'index.html'), 'utf8');
 const bundleScript = fs.readFileSync(path.join(mobileRoot, 'scripts', 'build-web-bundle.mjs'), 'utf8');
 const runtimeOrigin = fs.readFileSync(path.join(repoRoot, 'mobile-runtime-origin.js'), 'utf8');
 const firebaseRuntime = fs.readFileSync(path.join(repoRoot, 'firebase-runtime-config.js'), 'utf8');
@@ -40,9 +40,16 @@ test('operational Mobile RC requires an explicit HTTPS staging API origin and de
 });
 
 test('missing staging origin fails closed instead of opening operational data', () => {
-  assert.match(fallback, /متوقف عمدًا/);
-  assert.match(fallback, /Production/);
-  assert.doesNotMatch(fallback, /location\.replace\('login\.html'\)/);
+  assert.match(bundleScript, /if \(!apiOrigin\)/);
+  assert.match(bundleScript, /متوقف عمدًا/);
+  assert.match(bundleScript, /Production/);
+  assert.match(bundleScript, /location\.replace\('login\.html'\)/);
+  if (process.env.SMART_HSR_MOBILE_API_ORIGIN) {
+    assert.match(builtIndex, /location\.replace\('login\.html'\)/);
+  } else {
+    assert.match(builtIndex, /متوقف عمدًا/);
+    assert.doesNotMatch(builtIndex, /location\.replace\('login\.html'\)/);
+  }
 });
 
 test('native Firebase resolution is staging-only and cannot fall back to Production', () => {
