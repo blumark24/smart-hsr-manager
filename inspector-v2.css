@@ -1067,3 +1067,33 @@ body.map-expanded .urban-map-shell{
     transition:none!important;
   }
 }
+
+
+/* ===== Phase 14.6 — Trusted capture handoff ===== */
+.capture-transition{
+  position:fixed;z-index:9000;inset:0;display:none;place-items:center;align-content:center;gap:7px;padding:24px;
+  background:
+    radial-gradient(260px 180px at 50% 42%,rgba(24,137,255,.22),transparent 72%),
+    rgba(1,8,20,.94);
+  backdrop-filter:blur(18px);
+  text-align:center;
+}
+.capture-transition.is-open{display:grid;animation:smartHsrCaptureFade var(--motion-fast) ease both}
+.capture-transition-orb{
+  width:58px;height:58px;border-radius:20px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#0d7ff3,#2aaeff);
+  box-shadow:0 0 34px rgba(28,143,255,.28);
+}
+.capture-transition-orb svg{width:25px;height:25px}
+.capture-transition strong{font-size:14px}
+.capture-transition small{font-size:8px;color:var(--muted)}
+@keyframes smartHsrCaptureFade{from{opacity:0}to{opacity:1}}
+:root[data-theme="light"] .capture-transition{
+  background:
+    radial-gradient(260px 180px at 50% 42%,rgba(8,127,91,.13),transparent 72%),
+    rgba(244,248,246,.96);
+}
+:root[data-theme="light"] .capture-transition-orb{
+  background:linear-gradient(145deg,#087f5b,#20a66f);
+  box-shadow:0 0 30px rgba(8,127,91,.16);
+}
