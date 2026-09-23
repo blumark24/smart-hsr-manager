@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#04162f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="SMART HSR Inspector V2 — واجهة المراقب الميداني الجديدة">
+  <title>SMART HSR — Inspector V2</title>
+  <link rel="manifest" href="inspector-v2.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="inspector-v2.css">
+</head>
+<body>
+  <main class="inspector-app" id="inspectorV2App">
+    <header class="app-header">
+      <button class="icon-btn glass-control" type="button" aria-label="الإشعارات" data-action="toast">
+        <i data-lucide="bell"></i>
+        <span class="notification-dot" aria-hidden="true"></span>
+      </button>
+
+      <section class="identity" aria-label="بيانات المستخدم">
+        <div class="avatar" aria-hidden="true">
+          <span>م</span>
+          <b class="online-dot"></b>
+        </div>
+        <div class="identity-copy">
+          <p class="eyebrow">المراقب الميداني</p>
+          <h1>صباح الخير، <span id="inspectorDisplayName">المراقب</span></h1>
+          <p id="inspectorOrgName">SMART HSR · البلدية</p>
+        </div>
+      </section>
+    </header>
+
+    <section class="context-strip" aria-label="حالة التشغيل">
+      <article class="context-chip">
+        <span class="context-icon live"><i data-lucide="satellite"></i></span>
+        <span><small>GPS</small><strong id="gpsStateText">بانتظار الإذن</strong></span>
+      </article>
+      <article class="context-chip">
+        <span class="context-icon"><i data-lucide="map-pin"></i></span>
+        <span><small>الموقع</small><strong id="locationStateText">جارٍ التحديد</strong></span>
+      </article>
+      <article class="context-chip weather-chip">
+        <span class="context-icon"><i data-lucide="cloud-sun"></i></span>
+        <span><small>الطقس</small><strong>—</strong></span>
+      </article>
+    </section>
+
+    <section class="urban-map-shell" id="urbanMapShell" aria-labelledby="urbanMapTitle">
+      <div class="map-heading">
+        <div>
+          <p class="eyebrow">المشهد الحضري الذكي</p>
+          <h2 id="urbanMapTitle">الخريطة التشغيلية الحية</h2>
+        </div>
+        <div class="view-toggle" role="group" aria-label="نمط الخريطة">
+          <button type="button" class="is-active" data-map-mode="2d">2D</button>
+          <button type="button" data-map-mode="3d" aria-disabled="true" title="يتم ربط وضع 3D في مرحلة الخريطة المتقدمة">3D</button>
+        </div>
+      </div>
+
+      <div class="live-map" id="inspectorLiveMap" aria-label="الخريطة الحية"></div>
+
+      <div class="map-top-actions">
+        <button class="map-action glass-control" id="centerMapBtn" type="button" aria-label="توسيط الخريطة على موقعي">
+          <i data-lucide="locate-fixed"></i>
+        </button>
+        <button class="map-action glass-control" id="expandMapBtn" type="button" aria-label="تكبير الخريطة">
+          <i data-lucide="maximize-2"></i>
+        </button>
+      </div>
+
+      <div class="map-footer">
+        <span class="live-indicator"><b></b><span id="mapFeedState">Live Map</span></span>
+        <span class="map-note" id="mapNote">تظهر البيانات الحقيقية فقط عند ربط المصدر التشغيلي.</span>
+      </div>
+    </section>
+
+    <button class="ai-orbit" id="openAnalysisBtn" type="button">
+      <span class="ai-orbit-icon"><i data-lucide="sparkles"></i></span>
+      <span class="ai-orbit-copy">
+        <small>SMART HSR Intelligence</small>
+        <strong>مركز التحليل الذكي</strong>
+      </span>
+      <i data-lucide="chevron-left" class="ai-orbit-arrow"></i>
+    </button>
+
+    <section class="mission-section" aria-labelledby="missionTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">مهمتك الحالية</p>
+          <h2 id="missionTitle">مهمة ميدانية نشطة</h2>
+        </div>
+        <button class="text-action" type="button" data-action="toast">عرض الكل</button>
+      </div>
+
+      <article class="mission-card">
+        <div class="mission-art" aria-hidden="true">
+          <svg viewBox="0 0 160 120" role="img">
+            <defs>
+              <linearGradient id="road" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#173f75"/>
+                <stop offset="1" stop-color="#071b36"/>
+              </linearGradient>
+              <radialGradient id="impact" cx=".5" cy=".55" r=".45">
+                <stop offset="0" stop-color="#1ba7ff" stop-opacity=".9"/>
+                <stop offset="1" stop-color="#1ba7ff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="160" height="120" rx="22" fill="#04152e"/>
+            <path d="M-20 104 48 48 180 84" fill="none" stroke="url(#road)" stroke-width="34" stroke-linecap="round"/>
+            <path d="M12 93 62 52 162 80" fill="none" stroke="#5a77a6" stroke-width="3" stroke-dasharray="13 11" opacity=".7"/>
+            <circle cx="94" cy="75" r="34" fill="url(#impact)"/>
+            <ellipse cx="94" cy="77" rx="25" ry="12" fill="#04090f"/>
+            <ellipse cx="94" cy="76" rx="20" ry="8" fill="#0f1724"/>
+          </svg>
+        </div>
+        <div class="mission-content">
+          <div class="mission-title-row">
+            <span class="status-pill warning">قيد المعالجة</span>
+            <strong>معالجة حفرة في الطريق</strong>
+          </div>
+          <p>توثيق الموقع والأدلة ثم تحديث حالة المعالجة من التطبيق.</p>
+          <div class="mission-meta">
+            <span><i data-lucide="navigation"></i><b id="missionDistance">—</b> عن موقعك</span>
+            <span><i data-lucide="clock-3"></i><b>اليوم</b></span>
+          </div>
+          <button class="primary-btn" type="button" data-action="toast">
+            <span>فتح المهمة</span>
+            <i data-lucide="arrow-left"></i>
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <section class="quick-section" aria-labelledby="quickTitle">
+      <div class="section-heading compact">
+        <div>
+          <p class="eyebrow">إجراءات سريعة</p>
+          <h2 id="quickTitle">الأدوات اليومية</h2>
+        </div>
+      </div>
+      <div class="quick-grid">
+        <button class="quick-card primary" type="button" data-action="toast">
+          <span class="quick-icon"><i data-lucide="camera"></i></span>
+          <strong>بلاغ جديد</strong>
+          <small>تصوير وتوثيق</small>
+        </button>
+        <button class="quick-card" type="button" id="quickAnalysisBtn">
+          <span class="quick-icon"><i data-lucide="scan-search"></i></span>
+          <strong>تحليل ذكي</strong>
+          <small>Vision + أسباب</small>
+        </button>
+        <button class="quick-card" type="button" data-action="toast">
+          <span class="quick-icon"><i data-lucide="list-checks"></i></span>
+          <strong>مهامي</strong>
+          <small>قائمة التشغيل</small>
+        </button>
+      </div>
+    </section>
+
+    <section class="nearby-section" aria-labelledby="nearbyTitle">
+      <div class="section-heading compact">
+        <div>
+          <p class="eyebrow">ضمن نطاقك</p>
+          <h2 id="nearbyTitle">حالات قريبة</h2>
+        </div>
+        <span class="honest-badge">بيانات حقيقية فقط</span>
+      </div>
+      <div class="empty-nearby" id="nearbyEmpty">
+        <span class="empty-icon"><i data-lucide="radar"></i></span>
+        <div>
+          <strong>بانتظار ربط مصدر البلاغات</strong>
+          <p>لن نعرض نقاطًا أو حالات تجريبية داخل الخريطة التشغيلية.</p>
+        </div>
+      </div>
+    </section>
+
+    <nav class="bottom-dock" aria-label="التنقل الرئيسي">
+      <button type="button" data-action="toast"><i data-lucide="user-round"></i><span>الحساب</span></button>
+      <button type="button" data-action="toast"><i data-lucide="chart-no-axes-column"></i><span>الإحصائيات</span></button>
+      <button type="button" class="dock-create" data-action="toast" aria-label="بلاغ جديد"><span><i data-lucide="plus"></i></span><small>بلاغ جديد</small></button>
+      <button type="button" data-action="toast"><i data-lucide="clipboard-list"></i><span>مهامي</span></button>
+      <button type="button" class="is-active"><i data-lucide="house"></i><span>الرئيسية</span></button>
+    </nav>
+
+    <section class="analysis-sheet" id="analysisSheet" aria-hidden="true" aria-labelledby="analysisSheetTitle">
+      <button class="sheet-backdrop" id="analysisBackdrop" type="button" aria-label="إغلاق"></button>
+      <div class="sheet-panel" role="dialog" aria-modal="true">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <header class="sheet-header">
+          <div>
+            <p class="eyebrow">SMART HSR Intelligence</p>
+            <h2 id="analysisSheetTitle">أدوات التحليل</h2>
+          </div>
+          <button class="icon-btn" id="closeAnalysisBtn" type="button" aria-label="إغلاق"><i data-lucide="x"></i></button>
+        </header>
+
+        <p class="sheet-intro">هذه الواجهة الجديدة ستربط نفس قدرات لوحة المراقب القديمة بدون حذفها: تحليل الرؤية، السبب الجذري، أمر العمل، المقارنة قبل/بعد، الأدلة والتقرير.</p>
+
+        <div class="analysis-grid">
+          <button type="button" data-action="toast"><span><i data-lucide="scan-eye"></i></span><strong>Vision Analysis</strong><small>تحليل الصورة</small></button>
+          <button type="button" data-action="toast"><span><i data-lucide="microscope"></i></span><strong>Root Cause</strong><small>السبب الجذري</small></button>
+          <button type="button" data-action="toast"><span><i data-lucide="clipboard-pen-line"></i></span><strong>Work Order</strong><small>مسودة أمر العمل</small></button>
+          <button type="button" data-action="toast"><span><i data-lucide="columns-2"></i></span><strong>Before / After</strong><small>مقارنة الأدلة</small></button>
+          <button type="button" data-action="toast"><span><i data-lucide="route"></i></span><strong>Lifecycle</strong><small>دورة الحالة</small></button>
+          <button type="button" data-action="toast"><span><i data-lucide="file-text"></i></span><strong>PDF Report</strong><small>التقرير الموثق</small></button>
+        </div>
+
+        <div class="sheet-note">
+          <i data-lucide="shield-check"></i>
+          <span>في هذه المرحلة الواجهة Presentation Layer فقط. لا يتم تغيير Auth أو RBAC أو Firestore Rules أو مسارات الالتقاط القديمة.</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast" id="inspectorToast" role="status" aria-live="polite"></div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="inspector-v2.js"></script>
+</body>
+</html>
