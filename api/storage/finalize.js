@@ -1,4 +1,5 @@
 'use strict';
+const { handleMobilePreviewCors } = require('../_lib/mobileCors');
 
 const crypto = require('crypto');
 const { getDb, FieldValue } = require('../_lib/firebaseAdmin');
@@ -60,6 +61,8 @@ function evaluateFinalization(upload, observation, caller, observationId, object
 }
 
 async function handler(req, res) {
+  if (handleMobilePreviewCors(req, res, { methods: ["POST"] })) return;
+
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method_not_allowed' });
 
   let decoded;
