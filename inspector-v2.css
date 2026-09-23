@@ -944,3 +944,126 @@ body.map-expanded .map-marker-actions button{min-height:43px}
   .expanded-map-live{min-width:46px}
   .map-marker-actions{grid-template-columns:1.2fr 1fr}
 }
+
+
+/* ===== Phase 14.5 — Motion polish + interaction closure ===== */
+:root{
+  --motion-fast:160ms;
+  --motion-base:240ms;
+  --motion-slow:360ms;
+  --ease-product:cubic-bezier(.2,.75,.2,1);
+}
+.employee-card,
+.context-chip,
+.urban-map-shell,
+.ai-orbit,
+.mission-card,
+.quick-card,
+.nearby-card,
+.bottom-dock,
+.map-action,
+.icon-btn,
+.theme-toggle,
+.view-toggle button,
+.map-experience-tabs button,
+.primary-btn,
+.mission-route-btn,
+.map-marker-actions button{
+  transition:
+    transform var(--motion-base) var(--ease-product),
+    box-shadow var(--motion-base) var(--ease-product),
+    border-color var(--motion-base) var(--ease-product),
+    background-color var(--motion-base) var(--ease-product),
+    opacity var(--motion-fast) ease;
+}
+@media (hover:hover){
+  .quick-card:hover,
+  .nearby-card:hover,
+  .ai-orbit:hover,
+  .mission-card:hover{transform:translateY(-2px)}
+  .map-action:hover,
+  .icon-btn:hover{transform:translateY(-1px) scale(1.02)}
+  .primary-btn:hover,
+  .mission-route-btn:hover,
+  .map-marker-actions button:hover{transform:translateY(-1px)}
+}
+.quick-card:active,
+.nearby-card:active,
+.ai-orbit:active,
+.map-action:active,
+.icon-btn:active,
+.primary-btn:active,
+.mission-route-btn:active,
+.map-marker-actions button:active{transform:scale(.98)}
+.map-marker-sheet,
+.sheet-panel{
+  transform-origin:50% 100%;
+  animation:smartHsrSheetIn var(--motion-slow) var(--ease-product) both;
+}
+@keyframes smartHsrSheetIn{
+  from{opacity:0;transform:translateY(18px) scale(.985)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+body.map-expanded .urban-map-shell{
+  animation:smartHsrMapExpand var(--motion-slow) var(--ease-product) both;
+}
+@keyframes smartHsrMapExpand{
+  from{opacity:.92;transform:scale(.985)}
+  to{opacity:1;transform:scale(1)}
+}
+.expanded-map-chrome{
+  animation:smartHsrChromeIn var(--motion-base) var(--ease-product) both;
+}
+@keyframes smartHsrChromeIn{
+  from{opacity:0;transform:translateY(-8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.live-indicator b,
+.expanded-map-live b,
+.online-dot{
+  animation:smartHsrLivePulse 2.4s ease-in-out infinite;
+}
+@keyframes smartHsrLivePulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(61,227,163,.18),0 0 9px rgba(61,227,163,.45)}
+  50%{box-shadow:0 0 0 5px rgba(61,227,163,0),0 0 14px rgba(61,227,163,.72)}
+}
+.urban-map-shell[data-map-view="twin"] .twin-scan-ring-a{
+  animation:smartHsrTwinScan 3.2s ease-in-out infinite;
+}
+.urban-map-shell[data-map-view="twin"] .twin-scan-ring-b{
+  animation:smartHsrTwinScan 4.4s ease-in-out infinite reverse;
+}
+@keyframes smartHsrTwinScan{
+  0%,100%{opacity:.32;transform:scale(.92)}
+  50%{opacity:.72;transform:scale(1.08)}
+}
+@media (prefers-reduced-motion:reduce){
+  .employee-card,
+  .context-chip,
+  .urban-map-shell,
+  .ai-orbit,
+  .mission-card,
+  .quick-card,
+  .nearby-card,
+  .bottom-dock,
+  .map-action,
+  .icon-btn,
+  .theme-toggle,
+  .view-toggle button,
+  .map-experience-tabs button,
+  .primary-btn,
+  .mission-route-btn,
+  .map-marker-actions button,
+  .map-marker-sheet,
+  .sheet-panel,
+  body.map-expanded .urban-map-shell,
+  .expanded-map-chrome,
+  .live-indicator b,
+  .expanded-map-live b,
+  .online-dot,
+  .urban-map-shell[data-map-view="twin"] .twin-scan-ring-a,
+  .urban-map-shell[data-map-view="twin"] .twin-scan-ring-b{
+    animation:none!important;
+    transition:none!important;
+  }
+}
