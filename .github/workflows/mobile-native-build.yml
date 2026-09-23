@@ -1,0 +1,94 @@
+name: SMART HSR Mobile Native Build
+
+on:
+  push:
+    branches:
+      - phase15-mobile-shell
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-native-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smart-hsr-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Mobile contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package.json
+      - run: npm install --ignore-scripts
+      - run: npm test
+      - run: npx cap doctor
+
+  android:
+    name: Android debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm install --ignore-scripts
+      - run: npx cap add android
+      - run: npx cap sync android
+      - name: Build unsigned debug APK
+        run: ./android/gradlew -p android assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smart-hsr-android-debug
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  ios:
+    name: iOS simulator build
+    runs-on: macos-15
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package.json
+      - run: npm install --ignore-scripts
+      - run: npx cap add ios
+      - run: npx cap sync ios
+      - name: Build for iOS Simulator
+        run: >
+          xcodebuild
+          -workspace ios/App/App.xcworkspace
+          -scheme App
+          -configuration Debug
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
