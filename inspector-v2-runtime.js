@@ -185,6 +185,7 @@ async function bootAuthenticated(user, auth, db) {
     if (active) active.coords = observationCoordinates(active, verified.organizationId);
     ui?.setMission(active);
     ui?.setMissionDistance(active?.coords || null);
+    ui?.setTwinStats(observations);
 
     observations.forEach(item => { item.coords = observationCoordinates(item, verified.organizationId); });
     ui?.setNearbyObservations(observations.filter(item => item.coords));
