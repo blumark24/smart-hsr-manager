@@ -94,3 +94,12 @@ test('Map marker details are observation-backed and do not fabricate road routin
   assert.match(js, /focusSelectedMapObservation/);
   assert.doesNotMatch(js, /routeGeometry|fakeRoute|mockRoute/);
 });
+
+
+test('Inspector V2 motion polish is accessibility-aware', () => {
+  assert.match(css, /--motion-base:/);
+  assert.match(css, /@keyframes smartHsrMapExpand/);
+  assert.match(css, /@keyframes smartHsrSheetIn/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.match(css, /animation:none!important/);
+});
