@@ -1,4 +1,5 @@
 'use strict';
+const { handleMobilePreviewCors } = require('../_lib/mobileCors');
 const crypto = require('node:crypto');
 // ============================================================================
 // POST /api/admin/users  — secure server-side account & password management.
@@ -383,6 +384,8 @@ async function safeMetadata(auth, uid, record) {
 }
 
 async function handler(req, res) {
+  if (handleMobilePreviewCors(req, res, { methods: ["POST"] })) return;
+
   if (req.method !== 'POST') {
     return sendJson(res, 405, { error: 'method_not_allowed' });
   }
