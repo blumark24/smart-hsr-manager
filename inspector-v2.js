@@ -12,7 +12,8 @@
     missionCoords: null,
     activeMission: null,
     selectedMapObservation: null,
-    detailObservation: null
+    detailObservation: null,
+    locationWatchId: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -80,6 +81,13 @@
     requestLocation();
   }
 
+  function clearLiveLocationWatch() {
+    if (state.locationWatchId !== null && navigator.geolocation) {
+      try { navigator.geolocation.clearWatch(state.locationWatchId); } catch (_) {}
+    }
+    state.locationWatchId = null;
+  }
+
   function requestLocation() {
     const gps = $('gpsStateText');
     const loc = $('locationStateText');
@@ -89,8 +97,9 @@
       return;
     }
 
+    if (state.locationWatchId !== null) return;
     if (gps) gps.textContent = 'جارٍ الاتصال';
-    navigator.geolocation.watchPosition(
+    state.locationWatchId = navigator.geolocation.watchPosition(
       onPosition,
       onPositionError,
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 14000 }
@@ -105,7 +114,7 @@
     if ($('gpsStateText')) $('gpsStateText').textContent = accuracy ? `دقة ±${Math.round(accuracy)}م` : 'متصل';
     if ($('locationStateText')) $('locationStateText').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
     if ($('mapFeedState')) $('mapFeedState').textContent = 'GPS Live';
-    if ($('mapNote')) $('mapNote').textContent = 'الموقع الحالي حي. نقاط البلاغات ستظهر بعد ربط مصدر التشغيل.';
+    if ($('mapNote')) $('mapNote').textContent = 'الموقع الحالي حي. الحالات الموثوقة تظهر من المصدر التشغيلي عند توفر إحداثيات صالحة.';
 
     if (!state.locationMarker) {
       state.locationMarker = L.marker(latlng, { icon: createLocationIcon(), keyboard: false }).addTo(state.map);
@@ -251,11 +260,19 @@
     }, 140);
   }
 
+  function syncBodyScrollLock() {
+    const locked = document.body.classList.contains('map-expanded')
+      || $('missionSheet')?.classList.contains('is-open')
+      || $('analysisSheet')?.classList.contains('is-open');
+    document.body.style.overflow = locked ? 'hidden' : '';
+  }
+
   function toggleMapExpanded() {
     document.body.classList.toggle('map-expanded');
     const expanded = document.body.classList.contains('map-expanded');
     const button = $('expandMapBtn');
     if (button) button.setAttribute('aria-label', expanded ? 'تصغير الخريطة' : 'تكبير الخريطة');
+    syncBodyScrollLock();
     setTimeout(() => {
       if (state.map) state.map.invalidateSize({ animate: false });
     }, 60);
@@ -297,7 +314,7 @@
     missionTab(tab);
     sheet.classList.add('is-open');
     sheet.setAttribute('aria-hidden','false');
-    document.body.style.overflow='hidden';
+    syncBodyScrollLock();
     window.dispatchEvent(new CustomEvent('smart-hsr:mission-open', { detail: { observation } }));
   }
 
@@ -307,7 +324,7 @@
     sheet.classList.remove('is-open');
     sheet.setAttribute('aria-hidden','true');
     state.detailObservation = null;
-    if (!document.body.classList.contains('map-expanded') && !$('analysisSheet')?.classList.contains('is-open')) document.body.style.overflow='';
+    syncBodyScrollLock();
   }
 
   function setMissionEvidence({ beforeUrl = null, afterUrl = null, message = '' } = {}) {
@@ -401,7 +418,7 @@
     if (!sheet) return;
     sheet.classList.add('is-open');
     sheet.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
+    syncBodyScrollLock();
   }
 
   function closeAnalysis() {
@@ -409,7 +426,7 @@
     if (!sheet) return;
     sheet.classList.remove('is-open');
     sheet.setAttribute('aria-hidden', 'true');
-    if (!document.body.classList.contains('map-expanded')) document.body.style.overflow = '';
+    syncBodyScrollLock();
   }
 
   function applyMapView(view) {
@@ -504,8 +521,9 @@
 
     document.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape') return;
-      if ($('missionSheet')?.classList.contains('is-open')) closeMissionDetail();
-      if ($('analysisSheet')?.classList.contains('is-open')) closeAnalysis();
+      if ($('missionSheet')?.classList.contains('is-open')) { closeMissionDetail(); return; }
+      if ($('analysisSheet')?.classList.contains('is-open')) { closeAnalysis(); return; }
+      if ($('mapMarkerSheet')?.classList.contains('is-open')) { closeMapMarkerSheet(); return; }
       if (document.body.classList.contains('map-expanded')) toggleMapExpanded();
     });
   }
@@ -648,6 +666,11 @@
     setNearbyObservations,
     showToast
   });
+
+  window.addEventListener('pagehide', clearLiveLocationWatch);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearLiveLocationWatch();
+  }, { passive:true });
 
   function boot() {
     applyTheme(preferredTheme(), false);
