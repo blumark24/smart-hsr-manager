@@ -7,10 +7,10 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const script = fs.readFileSync(path.resolve(here, '../scripts/configure-native-permissions.mjs'), 'utf8');
 
-test('native permission configurator declares iOS camera and foreground location rationale', () => {
+test('native permission configurator declares iOS camera and required geolocation usage strings', () => {
   assert.match(script, /NSCameraUsageDescription/);
   assert.match(script, /NSLocationWhenInUseUsageDescription/);
-  assert.doesNotMatch(script, /NSLocationAlways/);
+  assert.match(script, /NSLocationAlwaysAndWhenInUseUsageDescription/);
 });
 
 test('native permission configurator uses foreground Android permissions only', () => {
