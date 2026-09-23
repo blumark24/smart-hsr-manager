@@ -8,7 +8,8 @@
     hasCenteredOnce: false,
     toastTimer: null,
     theme: 'dark',
-    mapView: 'operational'
+    mapView: 'operational',
+    missionCoords: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -133,6 +134,22 @@
     state.map.flyTo([latitude, longitude], Math.max(state.map.getZoom(), 16), { duration: .55 });
   }
 
+  function routeToMission() {
+    if (!state.map || !state.missionCoords) {
+      showToast('لا توجد إحداثيات موثوقة للمهمة الحالية.');
+      return;
+    }
+    const destination = [state.missionCoords.lat, state.missionCoords.lng];
+    if (state.lastPosition) {
+      const origin = [state.lastPosition.coords.latitude, state.lastPosition.coords.longitude];
+      state.map.fitBounds([origin, destination], { padding: [54,54], maxZoom: 17 });
+      showToast('تم عرض نطاق الحركة بين موقعك والمهمة.');
+    } else {
+      state.map.flyTo(destination, 17, { duration: .55 });
+      showToast('تم فتح موقع المهمة على الخريطة.');
+    }
+  }
+
   function toggleMapExpanded() {
     document.body.classList.toggle('map-expanded');
     const expanded = document.body.classList.contains('map-expanded');
@@ -205,6 +222,7 @@
     $('themeToggleBtn')?.addEventListener('click', toggleTheme);
     $('centerMapBtn')?.addEventListener('click', centerOnUser);
     $('expandMapBtn')?.addEventListener('click', toggleMapExpanded);
+    $('routeMissionBtn')?.addEventListener('click', routeToMission);
     $('openAnalysisBtn')?.addEventListener('click', openAnalysis);
     $('quickAnalysisBtn')?.addEventListener('click', openAnalysis);
     $('closeAnalysisBtn')?.addEventListener('click', closeAnalysis);
@@ -261,6 +279,7 @@
   }
 
   function setRuntimeDistance(coords) {
+    state.missionCoords = coords || null;
     const position = state.lastPosition;
     const el = $('missionDistance');
     if (!el) return;
@@ -288,6 +307,15 @@
     img.src = url;
     img.loading = 'eager';
     art.appendChild(img);
+  }
+
+  function setTwinStats(items = []) {
+    const open = items.filter(item => item.status === 'PENDING').length;
+    const progress = items.filter(item => item.status === 'IN_PROGRESS' || item.status === 'PENDING_REVIEW').length;
+    const closed = items.filter(item => item.status === 'COMPLETED').length;
+    if ($('twinOpenCount')) $('twinOpenCount').textContent = String(open);
+    if ($('twinProgressCount')) $('twinProgressCount').textContent = String(progress);
+    if ($('twinClosedCount')) $('twinClosedCount').textContent = String(closed);
   }
 
   function setNearbyObservations(items = []) {
@@ -336,6 +364,7 @@
     setMission: setRuntimeMission,
     setMissionDistance: setRuntimeDistance,
     setMissionImage,
+    setTwinStats,
     setNearbyObservations,
     showToast
   });
