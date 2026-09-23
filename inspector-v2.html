@@ -220,7 +220,7 @@
         </div>
       </div>
       <div class="quick-grid">
-        <button class="quick-card primary" type="button" data-action="toast">
+        <button class="quick-card primary" id="quickCaptureBtn" type="button">
           <span class="quick-icon"><i data-lucide="camera"></i></span>
           <strong>إضافة صورة</strong>
           <small>توثيق ميداني</small>
@@ -230,7 +230,7 @@
           <strong>ملاحظة</strong>
           <small>تحديث سريع</small>
         </button>
-        <button class="quick-card" type="button" data-action="toast">
+        <button class="quick-card" id="quickObservationBtn" type="button">
           <span class="quick-icon"><i data-lucide="map-pin-plus"></i></span>
           <strong>رصد سريع</strong>
           <small>حالة جديدة</small>
@@ -264,7 +264,7 @@
     <nav class="bottom-dock" aria-label="التنقل الرئيسي">
       <button type="button" data-action="toast"><i data-lucide="user-round"></i><span>الحساب</span></button>
       <button type="button" data-action="toast"><i data-lucide="chart-no-axes-column"></i><span>الإحصائيات</span></button>
-      <button type="button" class="dock-create" data-action="toast" aria-label="بلاغ جديد"><span><i data-lucide="plus"></i></span><small>بلاغ جديد</small></button>
+      <button type="button" class="dock-create" id="dockCaptureBtn" aria-label="بلاغ جديد"><span><i data-lucide="plus"></i></span><small>بلاغ جديد</small></button>
       <button type="button" data-action="toast"><i data-lucide="clipboard-list"></i><span>مهامي</span></button>
       <button type="button" class="is-active"><i data-lucide="house"></i><span>الرئيسية</span></button>
     </nav>
@@ -373,6 +373,12 @@
         </div>
       </div>
     </section>
+
+    <div class="capture-transition" id="captureTransition" aria-hidden="true">
+      <span class="capture-transition-orb"><i data-lucide="camera"></i></span>
+      <strong>فتح وحدة التوثيق الآمنة</strong>
+      <small>GPS · الصورة · التحليل · الحفظ الموثوق</small>
+    </div>
 
     <div class="toast" id="inspectorToast" role="status" aria-live="polite"></div>
   </main>
