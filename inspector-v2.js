@@ -78,7 +78,8 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(state.map);
 
-    requestLocation();
+    if ($('gpsStateText')) $('gpsStateText').textContent = 'بانتظار التحقق';
+    if ($('locationStateText')) $('locationStateText').textContent = 'بانتظار الجلسة';
   }
 
   function clearLiveLocationWatch() {
@@ -654,6 +655,7 @@
   window.SmartHsrInspectorV2 = Object.freeze({
     getMap: () => state.map,
     getPosition: () => state.lastPosition,
+    startLiveLocation: requestLocation,
     setIdentity: setRuntimeIdentity,
     setMission: setRuntimeMission,
     setMissionDistance: setRuntimeDistance,
