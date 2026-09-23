@@ -14,7 +14,10 @@
     "sync": "npx cap sync",
     "open:ios": "npx cap open ios",
     "open:android": "npx cap open android",
-    "native:permissions": "node scripts/configure-native-permissions.mjs"
+    "native:permissions": "node scripts/configure-native-permissions.mjs",
+    "bundle:web": "node scripts/build-web-bundle.mjs",
+    "build:android:rc": "npm run bundle:web && npx cap sync android",
+    "build:ios:rc": "npm run bundle:web && npx cap sync ios"
   },
   "dependencies": {
     "@capacitor/app": "^8.0.0",
