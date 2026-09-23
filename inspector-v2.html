@@ -117,6 +117,41 @@
         <span class="live-indicator"><b></b><span id="mapFeedState">Live Map</span></span>
         <span class="map-note" id="mapNote">الموقع حي، وتظهر الحالات عند ربط المصدر التشغيلي الحقيقي.</span>
       </div>
+
+      <div class="expanded-map-chrome" aria-hidden="true">
+        <button class="expanded-map-close glass-control" id="closeExpandedMapBtn" type="button">
+          <i data-lucide="arrow-right"></i><span>العودة</span>
+        </button>
+        <div class="expanded-map-title">
+          <small>SMART HSR</small>
+          <strong>الخريطة التشغيلية الذكية</strong>
+        </div>
+        <span class="expanded-map-live"><b></b> Live</span>
+      </div>
+
+      <aside class="map-marker-sheet" id="mapMarkerSheet" aria-hidden="true">
+        <div class="map-marker-handle" aria-hidden="true"></div>
+        <div class="map-marker-head">
+          <span class="map-marker-status" id="mapMarkerStatus">—</span>
+          <button class="map-marker-close" id="closeMapMarkerSheetBtn" type="button" aria-label="إغلاق بطاقة الموقع">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <h3 id="mapMarkerTitle">ملاحظة ميدانية</h3>
+        <p id="mapMarkerLocation">—</p>
+        <div class="map-marker-meta">
+          <span><i data-lucide="hash"></i><b id="mapMarkerId">—</b></span>
+          <span><i data-lucide="navigation"></i><b id="mapMarkerDistance">—</b></span>
+        </div>
+        <div class="map-marker-actions">
+          <button class="marker-primary" id="openMapMarkerDetailBtn" type="button">
+            <i data-lucide="clipboard-list"></i><span>عرض التفاصيل</span>
+          </button>
+          <button class="marker-secondary" id="focusMapMarkerBtn" type="button">
+            <i data-lucide="crosshair"></i><span>تركيز الموقع</span>
+          </button>
+        </div>
+      </aside>
     </section>
 
     <button class="ai-orbit" id="openAnalysisBtn" type="button">
