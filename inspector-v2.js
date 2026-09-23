@@ -11,7 +11,8 @@
     mapView: 'operational',
     missionCoords: null,
     activeMission: null,
-    selectedMapObservation: null
+    selectedMapObservation: null,
+    detailObservation: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -211,12 +212,13 @@
     openMissionDetail('evidence', observation);
   }
 
-  function routeToMission() {
-    if (!state.map || !state.missionCoords) {
-      showToast('لا توجد إحداثيات موثوقة للمهمة الحالية.');
+  function routeObservation(observation) {
+    const coords = observation?.coords || null;
+    if (!state.map || !coords) {
+      showToast('لا توجد إحداثيات موثوقة لهذه المهمة.');
       return;
     }
-    const destination = [state.missionCoords.lat, state.missionCoords.lng];
+    const destination = [coords.lat, coords.lng];
     if (state.lastPosition) {
       const origin = [state.lastPosition.coords.latitude, state.lastPosition.coords.longitude];
       state.map.fitBounds([origin, destination], { padding: [54,54], maxZoom: 17 });
@@ -225,6 +227,18 @@
       state.map.flyTo(destination, 17, { duration: .55 });
       showToast('تم فتح موقع المهمة على الخريطة.');
     }
+  }
+
+  function routeToMission() {
+    if (!state.missionCoords) {
+      showToast('لا توجد إحداثيات موثوقة للمهمة الحالية.');
+      return;
+    }
+    routeObservation({ coords: state.missionCoords });
+  }
+
+  function routeDetailObservation() {
+    routeObservation(state.detailObservation || state.activeMission);
   }
 
   function toggleMapExpanded() {
@@ -267,7 +281,9 @@
     }
     const sheet = $('missionSheet');
     if (!sheet) return;
+    state.detailObservation = observation;
     populateMissionSheet(observation);
+    if ($('missionAiResult')) $('missionAiResult').innerHTML = '<p>لم يتم تشغيل التحليل لهذه المهمة في هذه الجلسة بعد.</p>';
     missionTab(tab);
     sheet.classList.add('is-open');
     sheet.setAttribute('aria-hidden','false');
@@ -280,6 +296,7 @@
     if (!sheet) return;
     sheet.classList.remove('is-open');
     sheet.setAttribute('aria-hidden','true');
+    state.detailObservation = null;
     if (!document.body.classList.contains('map-expanded') && !$('analysisSheet')?.classList.contains('is-open')) document.body.style.overflow='';
   }
 
@@ -356,14 +373,16 @@
   }
 
   function requestAiAnalysis() {
-    if (!state.activeMission) { showToast('لا توجد مهمة قابلة للتحليل.'); return; }
-    openMissionDetail('ai');
-    window.dispatchEvent(new CustomEvent('smart-hsr:ai-analyze', { detail: { observation: state.activeMission } }));
+    const observation = state.detailObservation || state.activeMission;
+    if (!observation) { showToast('لا توجد مهمة قابلة للتحليل.'); return; }
+    openMissionDetail('ai', observation);
+    window.dispatchEvent(new CustomEvent('smart-hsr:ai-analyze', { detail: { observation } }));
   }
 
   function printMission() {
-    if (!state.activeMission) { showToast('لا توجد مهمة للطباعة.'); return; }
-    openMissionDetail('timeline');
+    const observation = state.detailObservation || state.activeMission;
+    if (!observation) { showToast('لا توجد مهمة للطباعة.'); return; }
+    openMissionDetail('timeline', observation);
     setTimeout(() => window.print(), 120);
   }
 
@@ -444,7 +463,7 @@
     $('openMissionBtn')?.addEventListener('click', () => openMissionDetail('evidence'));
     $('closeMissionBtn')?.addEventListener('click', closeMissionDetail);
     $('missionBackdrop')?.addEventListener('click', closeMissionDetail);
-    $('missionSheetRouteBtn')?.addEventListener('click', routeToMission);
+    $('missionSheetRouteBtn')?.addEventListener('click', routeDetailObservation);
     $('missionRunAiBtn')?.addEventListener('click', requestAiAnalysis);
     $('runVisionAnalysisBtn')?.addEventListener('click', requestAiAnalysis);
     $('openMissionEvidenceBtn')?.addEventListener('click', () => { closeAnalysis(); openMissionDetail('evidence'); });
@@ -510,12 +529,7 @@
     }
     if ($('missionLocationText')) $('missionLocationText').textContent = observation.location || 'موقع موثق';
     if ($('missionDateText')) $('missionDateText').textContent = observation.date || '—';
-    if ($('missionSheetTaskTitle')) $('missionSheetTaskTitle').textContent = observation.title || 'ملاحظة ميدانية';
-    if ($('missionSheetStatus')) $('missionSheetStatus').textContent = statusLabels[observation.status] || observation.status || '—';
-    if ($('missionSheetLocation')) $('missionSheetLocation').textContent = observation.location || 'موقع موثق';
-    if ($('missionTimelineStatus')) $('missionTimelineStatus').textContent = statusLabels[observation.status] || observation.status || '—';
-    if ($('missionTimelineDate')) $('missionTimelineDate').textContent = observation.date || '—';
-    if ($('missionTimelineId')) $('missionTimelineId').textContent = observation.displayId || observation.docId || '—';
+
   }
 
   function haversineMeters(a, b) {
