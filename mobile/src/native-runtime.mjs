@@ -64,13 +64,13 @@ export function createNativeRuntime({
 
     if (!cameraGranted) return null;
 
-    return Camera.getPhoto({
+    if (typeof Camera.takePhoto !== 'function') {
+      throw new Error('CAPACITOR_CAMERA_TAKE_PHOTO_UNAVAILABLE');
+    }
+
+    return Camera.takePhoto({
       quality: 85,
-      allowEditing: false,
-      resultType: 'uri',
-      source: 'camera',
       saveToGallery: false,
-      correctOrientation: true,
     });
   }
 
