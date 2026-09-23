@@ -2278,25 +2278,203 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   }
 </style>
 
-</head>
+  <link rel="stylesheet" href="./inspector-reference-v1.css">\n</head>
 
 <body class="text-gray-800">
 <div class="system-bar" role="status" aria-live="polite"><span class="system-bar-brand">Smart HSR</span><span id="systemBarState">مساحة عمل المراقب الميداني</span></div>
 <div id="localDemoBadge" class="hidden fixed bottom-3 left-3 right-3 z-[1000] bg-amber-100 border border-amber-400 text-amber-950 rounded-xl px-4 py-3 text-sm font-bold shadow-lg" role="status">بيئة عرض تجريبية — الصور محفوظة على هذا الجهاز فقط ولم تُرفع إلى خادم البلدية.</div>
 
 <!-- ========== HEADER ========== -->
-<section id="inspector-reference-dashboard" class="hidden" aria-label="لوحة المراقب الميداني">
-  <div class="ref-brand-bar"><div class="ref-brand-mark">HSR</div><div class="ref-brand-copy"><strong>منصة المراقبة الميدانية الذكية</strong><span id="refOrgName">بانتظار التحقق</span></div><button id="refNotificationBtn" class="ref-icon-button" type="button" aria-label="الإشعارات"><i data-lucide="bell"></i></button></div>
-  <section class="ref-identity-card" aria-labelledby="refGreeting"><div class="ref-identity-main"><div id="refMonogram" class="ref-monogram" aria-hidden="true">م</div><div><h1 id="refGreeting">صباح الخير</h1><strong id="refRole">مراقب ميداني</strong><span id="refIdentityOrg">بانتظار التحقق</span></div></div><div class="ref-identity-status"><div><span class="ref-status-dot" id="refConnectionDot"></span><strong id="refConnection">جاري التحقق</strong></div><div><i data-lucide="crosshair"></i><span>دقة الموقع</span><strong id="refGpsQuality">غير متاح</strong><small id="refGpsAccuracy">—</small></div></div></section>
-  <section class="ref-mission-card" aria-labelledby="refMissionTitle"><h2 id="refMissionTitle">مهمتك اليوم</h2><div class="ref-stat-grid"><div><i data-lucide="clipboard-list"></i><small>إجمالي ملاحظاتي</small><strong id="refTotalCount">—</strong></div><div><i data-lucide="clock-3"></i><small>قيد المعالجة</small><strong id="refProgressCount">—</strong></div><div><i data-lucide="circle-check"></i><small>تمت المعالجة</small><strong id="refCompletedCount">—</strong></div><div><i data-lucide="alert-circle"></i><small>قيد الانتظار</small><strong id="refPendingCount">—</strong></div></div></section>
-  <button id="refAddObservationBtn" class="ref-primary-action" type="button"><i data-lucide="plus"></i><span><b>إضافة ملاحظة ميدانية</b><small>التقط وأرسل ملاحظة جديدة</small></span></button>
-  <section class="ref-ops-grid" aria-label="الإجراءات التشغيلية"><button id="refMapBtn" type="button"><i data-lucide="map-pinned"></i><span>الخريطة الذكية لملاحظاتي</span></button><button id="refLogBtn" type="button"><i data-lucide="clipboard-list"></i><span>سجل ملاحظاتي</span></button><button id="refTwinBtn" type="button"><i data-lucide="boxes"></i><span>التوأم التشغيلي المصغّر</span></button></section>
-  <section class="ref-map-preview" aria-labelledby="refMapPreviewTitle"><div class="ref-card-heading"><h2 id="refMapPreviewTitle">ملاحظاتي في القنفذة</h2><button id="refMapOpenBtn" type="button">عرض الخريطة <i data-lucide="maximize-2"></i></button></div><div id="refMapSurface" class="ref-map-surface"><span class="ref-map-label">القنفذة</span><span class="ref-map-attribution">© OpenStreetMap contributors</span><div class="ref-map-empty">تظهر مواقع ملاحظاتك المؤكدة هنا</div></div></section>
-  <section class="ref-latest-card" aria-labelledby="refLatestTitle"><div class="ref-card-heading"><h2 id="refLatestTitle">آخر ملاحظة ميدانية</h2><span id="refLatestTime">—</span></div><div id="refLatestEmpty" class="ref-empty-state">لا توجد ملاحظات مؤكدة لك حتى الآن.</div><div id="refLatestBody" class="ref-latest-body hidden"><div class="ref-latest-copy"><h3 id="refLatestDescription">—</h3><p id="refLatestLocation">—</p><p><span id="refLatestStatus" class="ref-status-pill">—</span><span id="refLatestReference">—</span></p></div><img id="refLatestImage" alt="الصورة الأصلية لآخر ملاحظة" class="hidden"></div></section>
-  <section class="ref-lifecycle-card" aria-labelledby="refLifecycleTitle"><h2 id="refLifecycleTitle">دورة حياة الملاحظة</h2><div id="refLifecycleTrack" class="ref-lifecycle-track"><div data-stage="created"><i data-lucide="pencil"></i><span>تم الإنشاء</span><small>—</small></div><div data-stage="received"><i data-lucide="download"></i><span>تم الاستلام</span><small>غير متاح</small></div><div data-stage="progress"><i data-lucide="settings-2"></i><span>قيد المعالجة</span><small>—</small></div><div data-stage="resolved"><i data-lucide="check"></i><span>تم الحل</span><small>غير متاح</small></div><div data-stage="closed"><i data-lucide="lock"></i><span>تم الإغلاق</span><small>غير متاح</small></div></div></section>
-  <details class="ref-ai-card"><summary><span><b>قدرات الذكاء الاصطناعي</b><small>اقتراحات خاضعة للمراجعة البشرية</small></span><i data-lucide="chevron-down"></i></summary><p>التحليل عبر المزود الخادمي المعتمد استرشادي فقط، ولا ينفذ أي إجراء تلقائي.</p></details>
-  <footer class="ref-footer">Smart HSR — منصة المراقبة الميدانية الذكية</footer>
+<section id="inspector-reference-dashboard" class="hidden inspector-v3" aria-label="لوحة المراقب الميداني الجديدة">
+  <header class="ir-top">
+    <button id="irNotifications" class="ir-icon-btn" type="button" aria-label="الإشعارات">
+      <i data-lucide="bell" aria-hidden="true"></i>
+      <span id="irNotificationCount" class="ir-notification-count">0</span>
+    </button>
+
+    <div class="ir-profile">
+      <div id="irAvatar" class="ir-avatar" aria-hidden="true">م</div>
+      <div class="ir-profile-copy">
+        <h1 id="irGreeting">مرحباً</h1>
+        <strong id="irRole">المراقب الميداني</strong>
+      </div>
+    </div>
+
+    <button id="irLocate" class="ir-icon-btn" type="button" aria-label="تحديث الموقع">
+      <i data-lucide="navigation" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <p class="ir-tagline">معًا.. لبيئة حضرية أكثر أمانًا وجودة</p>
+
+  <section class="ir-status-row" aria-label="حالة المراقب">
+    <div class="ir-status-chip">
+      <i data-lucide="signal" aria-hidden="true"></i>
+      <span><small>الاتصال</small><strong id="irConnection">جارٍ التحقق</strong></span>
+    </div>
+    <button id="irLocationChipButton" class="ir-status-chip" type="button">
+      <i data-lucide="map-pin" aria-hidden="true"></i>
+      <span><small>الموقع</small><strong id="irLocationChip">تحديد الموقع</strong></span>
+    </button>
+    <div class="ir-status-chip">
+      <i data-lucide="crosshair" aria-hidden="true"></i>
+      <span><small>دقة GPS</small><strong id="irGps">غير متاح</strong></span>
+    </div>
+  </section>
+
+  <section class="ir-map-card" aria-label="الخريطة التشغيلية الذكية">
+    <div class="ir-map-tabs" role="tablist" aria-label="طبقات الخريطة">
+      <button id="irMapTabAll" class="ir-map-tab" type="button" role="tab">عرض الكل</button>
+      <button id="irMapTabContractors" class="ir-map-tab" type="button" role="tab">المقاولين</button>
+      <button id="irMapTabNearby" class="ir-map-tab" type="button" role="tab">المهام القريبة</button>
+      <button id="irMapTabCases" class="ir-map-tab is-active" type="button" role="tab">الحالات</button>
+    </div>
+
+    <div class="ir-map-wrap">
+      <div id="refMapCanvas" aria-label="خريطة ملاحظات المراقب"></div>
+      <div class="ir-map-shade" aria-hidden="true"></div>
+
+      <div class="ir-map-controls">
+        <button id="irLayers" class="ir-map-control" type="button" aria-label="طبقات الخريطة">
+          <i data-lucide="layers-3" aria-hidden="true"></i>
+        </button>
+        <button id="irOpenMap" class="ir-map-control" type="button" aria-label="فتح الخريطة الكاملة">
+          <i data-lucide="locate-fixed" aria-hidden="true"></i>
+        </button>
+        <button id="irDirectionsMap" class="ir-map-control" type="button" aria-label="الاتجاه">
+          <i data-lucide="navigation" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div id="irCenterOrbit" class="ir-center-orbit" aria-hidden="true">
+        <i data-lucide="navigation"></i>
+      </div>
+
+      <div id="irSelectedCase" class="ir-selected-case" hidden>
+        <span class="ir-case-thumb"><i data-lucide="image" aria-hidden="true"></i></span>
+        <span class="ir-selected-case-copy">
+          <b id="irSelectedRef">#HSR</b>
+          <strong id="irSelectedTitle">ملاحظة ميدانية</strong>
+          <small id="irSelectedDistance">موقع موثّق</small>
+        </span>
+      </div>
+
+      <div class="ir-map-twin">
+        <button id="irTwin" class="ir-map-control" type="button">
+          <span>3D</span>
+          <i data-lucide="boxes" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="ir-ai-strip">
+      <span class="ir-ai-badge" aria-hidden="true">AI</span>
+      <div class="ir-ai-copy">
+        <b>المساعد الذكي</b>
+        <span>يعرض اقتراحات تشغيلية من البيانات الموثّقة فقط.</span>
+      </div>
+      <button id="irAiAction" class="ir-ai-action" type="button">عرض التفاصيل</button>
+    </div>
+  </section>
+
+  <section class="ir-section" aria-labelledby="irCurrentMissionHeading">
+    <div class="ir-section-title">
+      <span id="irMissionStatus" class="ir-status-pill" data-status="PENDING">قيد المتابعة</span>
+      <h2 id="irCurrentMissionHeading">مهمتك الحالية</h2>
+    </div>
+
+    <div id="irMissionEmpty" class="ir-empty" hidden>لا توجد مهمة أو ملاحظة نشطة حاليًا.</div>
+
+    <article id="irMissionBody" class="ir-mission-card">
+      <div class="ir-mission-main">
+        <span class="ir-mission-thumb"><i data-lucide="image" aria-hidden="true"></i></span>
+        <div class="ir-mission-copy">
+          <b id="irMissionRef">#HSR</b>
+          <strong id="irMissionTitle">ملاحظة ميدانية</strong>
+          <small id="irMissionLocation">الموقع الموثّق</small>
+        </div>
+        <div class="ir-mission-meta">
+          <span>الحالة<strong id="irMissionStatusText">—</strong></span>
+          <span>الموقع<strong id="irMissionDistance">—</strong></span>
+        </div>
+      </div>
+      <div class="ir-sla-track" aria-hidden="true"><span></span></div>
+      <div class="ir-mission-actions">
+        <button id="irMissionDetails" class="ir-secondary-btn" type="button">
+          تفاصيل الحالة
+        </button>
+        <button id="irDirections" class="ir-primary-btn" type="button">
+          <i data-lucide="navigation" aria-hidden="true"></i>
+          الاتجاه إلى الموقع
+        </button>
+      </div>
+      <span id="irMissionSla" class="ir-data-mirror">متابعة نشطة</span>
+    </article>
+  </section>
+
+  <section class="ir-section" aria-labelledby="irQuickHeading">
+    <div class="ir-section-title"><h2 id="irQuickHeading">إجراءات سريعة</h2></div>
+    <div class="ir-quick-grid">
+      <button id="irQuickScan" class="ir-quick" type="button"><i data-lucide="scan-line"></i><span>مسح الموقع</span></button>
+      <button id="irQuickReport" class="ir-quick" type="button"><i data-lucide="map-pin-plus"></i><span>رصد سريع</span></button>
+      <button id="irQuickNote" class="ir-quick" type="button"><i data-lucide="notebook-pen"></i><span>ملاحظة</span></button>
+      <button id="irQuickPhoto" class="ir-quick" type="button"><i data-lucide="camera"></i><span>إضافة صورة</span></button>
+    </div>
+  </section>
+
+  <section class="ir-section" aria-labelledby="irRecentHeading">
+    <div class="ir-section-title">
+      <button id="irRecentAll" type="button">عرض الكل</button>
+      <h2 id="irRecentHeading">أحدث البلاغات القريبة</h2>
+    </div>
+    <div id="irRecentRow" class="ir-recent-row"></div>
+  </section>
+
+  <div class="ir-data-mirror" aria-hidden="true">
+    <span id="refMonogram">م</span>
+    <span id="refGreeting">صباح الخير</span>
+    <span id="refRole">مراقب ميداني</span>
+    <span id="refOrgName">بانتظار التحقق</span>
+    <span id="refIdentityOrg">بانتظار التحقق</span>
+    <span id="refConnectionDot"></span>
+    <span id="refConnection">جاري التحقق</span>
+    <span id="refGpsQuality">غير متاح</span>
+    <span id="refGpsAccuracy">—</span>
+    <span id="refTotalCount">—</span>
+    <span id="refProgressCount">—</span>
+    <span id="refCompletedCount">—</span>
+    <span id="refPendingCount">—</span>
+    <span id="refLatestTime">—</span>
+    <span id="refLatestDescription">—</span>
+    <span id="refLatestLocation">—</span>
+    <span id="refLatestStatus">—</span>
+    <span id="refLatestReference">—</span>
+    <div id="refLatestEmpty"></div>
+    <div id="refLatestBody"></div>
+    <img id="refLatestImage" alt="">
+    <div id="refLifecycleTrack">
+      <span data-stage="created"><small>—</small></span>
+      <span data-stage="received"><small>—</small></span>
+      <span data-stage="progress"><small>—</small></span>
+      <span data-stage="resolved"><small>—</small></span>
+      <span data-stage="closed"><small>—</small></span>
+    </div>
+    <button id="refNotificationBtn" type="button"></button>
+    <button id="refAddObservationBtn" type="button"></button>
+    <button id="refMapBtn" type="button"></button>
+    <button id="refMapOpenBtn" type="button"></button>
+    <button id="refLogBtn" type="button"></button>
+    <button id="refTwinBtn" type="button"></button>
+  </div>
 </section>
+
+<nav class="ir-bottom-dock no-print" aria-label="تنقل لوحة المراقب">
+  <button id="irDockAccount" class="ir-dock-item" type="button"><i data-lucide="user-round"></i><span>الحساب</span></button>
+  <button id="irDockMap" class="ir-dock-item" type="button"><i data-lucide="map"></i><span>الخريطة</span></button>
+  <button id="irDockAdd" class="ir-dock-item ir-dock-add" type="button"><span class="ir-add-circle"><i data-lucide="plus"></i></span><span>بلاغ جديد</span></button>
+  <button id="irDockLog" class="ir-dock-item" type="button"><i data-lucide="clipboard-list"></i><span>مهامي</span></button>
+  <button id="irDockHome" class="ir-dock-item is-active" type="button"><i data-lucide="house"></i><span>الرئيسية</span></button>
+</nav>
 
 <header id="hsrHeader" class="hsr-header">
   <div class="inspector-identity-card" aria-label="بطاقة هوية المراقب الميداني">
@@ -6334,5 +6512,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <script src="./service-switcher.js"></script>
-</body>
+\n<script src="./inspector-reference-v1.js"></script>\n</body>
 </html>
