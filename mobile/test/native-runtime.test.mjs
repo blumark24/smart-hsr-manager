@@ -38,8 +38,8 @@ test('camera access is user-permission gated and returns a URI payload', async (
     Camera: {
       checkPermissions: async () => ({ camera: 'prompt' }),
       requestPermissions: async () => ({ camera: 'granted' }),
-      getPhoto: async options => {
-        opened = options.source === 'camera' && options.resultType === 'uri';
+      takePhoto: async options => {
+        opened = options.quality === 85 && options.saveToGallery === false;
         return { webPath: 'capacitor://photo/1' };
       },
     },
@@ -69,4 +69,16 @@ test('native location watcher exposes an explicit cleanup function', async () =>
   assert.equal(seen, true);
   await stop();
   assert.equal(cleared, 'watch-1');
+});
+
+
+test('camera bridge rejects silently falling back to deprecated getPhoto', async () => {
+  const runtime = createNativeRuntime({
+    Capacitor: { isNativePlatform: () => true },
+    Camera: {
+      checkPermissions: async () => ({ camera: 'granted' }),
+      getPhoto: async () => ({ webPath: 'deprecated://photo' }),
+    },
+  });
+  await assert.rejects(() => runtime.capturePhoto(), /CAPACITOR_CAMERA_TAKE_PHOTO_UNAVAILABLE/);
 });
