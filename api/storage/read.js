@@ -1,4 +1,5 @@
 'use strict';
+const { handleMobilePreviewCors } = require('../_lib/mobileCors');
 // ============================================================================
 // GET /api/storage/read?key=<url-encoded object key>
 //
@@ -150,6 +151,8 @@ async function streamToResponse(body, res) {
 // --- handler -----------------------------------------------------------------
 
 async function handler(req, res) {
+  if (handleMobilePreviewCors(req, res, { methods: ["GET","HEAD"] })) return;
+
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return sendJson(res, 405, { error: 'method_not_allowed' });
   }
