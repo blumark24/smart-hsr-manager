@@ -425,8 +425,22 @@
     });
   }
 
+  function openTrustedCapture() {
+    const overlay = $('captureTransition');
+    if (overlay) {
+      overlay.classList.add('is-open');
+      overlay.setAttribute('aria-hidden','false');
+    }
+    const theme = state.theme === 'light' ? 'light' : 'dark';
+    const target = 'dashboard.html?capture=v2&theme=' + encodeURIComponent(theme);
+    setTimeout(() => window.location.assign(target), 180);
+  }
+
   function bindActions() {
     $('themeToggleBtn')?.addEventListener('click', toggleTheme);
+    $('quickCaptureBtn')?.addEventListener('click', openTrustedCapture);
+    $('quickObservationBtn')?.addEventListener('click', openTrustedCapture);
+    $('dockCaptureBtn')?.addEventListener('click', openTrustedCapture);
     $('openMissionBtn')?.addEventListener('click', () => openMissionDetail('evidence'));
     $('closeMissionBtn')?.addEventListener('click', closeMissionDetail);
     $('missionBackdrop')?.addEventListener('click', closeMissionDetail);
