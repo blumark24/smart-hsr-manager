@@ -57,3 +57,23 @@ test('Inspector V2 exposes four compact field quick actions', () => {
   assert.match(html, /رصد سريع/);
   assert.match(html, /مسح الموقع/);
 });
+
+
+test('Inspector V2 mission evidence remains lazy and user initiated', () => {
+  assert.match(html, /id="missionSheet"/);
+  assert.match(html, /id="missionBeforeImage"/);
+  assert.match(html, /id="missionAfterImage"/);
+  assert.match(js, /smart-hsr:mission-open/);
+  assert.match(runtime, /loadMissionEvidence/);
+  assert.match(runtime, /Evidence stays lazy/);
+  assert.doesNotMatch(runtime, /resolveMissionImage\(user, verified, active\)/);
+});
+
+test('Inspector V2 real AI uses the existing authenticated advisory endpoint', () => {
+  assert.match(html, /id="runVisionAnalysisBtn"/);
+  assert.match(html, /id="missionRunAiBtn"/);
+  assert.match(runtime, /fetchWithFirebaseAuth/);
+  assert.match(runtime, /input: '\/api\/ai\/analyze'/);
+  assert.match(runtime, /observationId: observation\.docId/);
+  assert.match(js, /requires.*review|يتطلب مراجعة|مراجعة واعتماد/);
+});
