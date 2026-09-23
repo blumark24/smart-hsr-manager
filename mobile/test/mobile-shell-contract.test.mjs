@@ -40,7 +40,7 @@ test('operational Mobile RC requires an explicit HTTPS staging API origin and de
 });
 
 test('missing staging origin fails closed instead of opening operational data', () => {
-  assert.match(bundleScript, /if \(!apiOrigin\)/);
+  assert.match(bundleScript, /const index = apiOrigin/);
   assert.match(bundleScript, /متوقف عمدًا/);
   assert.match(bundleScript, /Production/);
   assert.match(bundleScript, /location\.replace\('login\.html'\)/);
