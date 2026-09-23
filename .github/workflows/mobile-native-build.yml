@@ -36,6 +36,9 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --ignore-scripts
+      - run: npm run bundle:web
+        env:
+          SMART_HSR_MOBILE_API_ORIGIN: ${{ vars.SMART_HSR_MOBILE_API_ORIGIN }}
       - run: npm test
       - run: npx cap doctor
 
@@ -56,6 +59,9 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: npm install --ignore-scripts
+      - run: npm run bundle:web
+        env:
+          SMART_HSR_MOBILE_API_ORIGIN: ${{ vars.SMART_HSR_MOBILE_API_ORIGIN }}
       - run: npx cap add android
       - run: npm run native:permissions
       - run: npx cap sync android
@@ -81,6 +87,9 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --ignore-scripts
+      - run: npm run bundle:web
+        env:
+          SMART_HSR_MOBILE_API_ORIGIN: ${{ vars.SMART_HSR_MOBILE_API_ORIGIN }}
       - run: npx cap add ios
       - run: npm run native:permissions
       - run: npx cap sync ios
