@@ -5,7 +5,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 import { fetchOrganizationMapContext, observationCoordinates, statusMarkerIcon, applyMapAttribution, openVerifiedMap } from './spatial-map.js';
-import { resolveObservationImage, revokeAllObservationImageUrls } from './storage-adapter.js';
+import { resolveObservationImage, revokeAllObservationImageUrls, revokeObservationImageUrl } from './storage-adapter.js';
+import { fetchWithFirebaseAuth } from './firebase-auth-fetch.js';
 
 const gate = document.createElement('div');
 gate.className = 'runtime-gate';
@@ -64,6 +65,9 @@ function normalizeObservation(snapshot, organizationId, uid) {
   const imageReference = [
     data.imageObjectKey, data.imagePath, data.imageUrl, data.beforeImagePath
   ].find(value => typeof value === 'string' && value.trim()) || null;
+  const afterReference = [
+    data.afterImageObjectKey, data.afterImagePath, data.afterImageUrl
+  ].find(value => typeof value === 'string' && value.trim()) || null;
   const createdAt = typeof data.createdAt?.toMillis === 'function'
     ? data.createdAt.toMillis()
     : Number(data.createdAt || 0);
@@ -82,19 +86,17 @@ function normalizeObservation(snapshot, organizationId, uid) {
     lat: data.originalLat ?? data.lat,
     lng: data.originalLng ?? data.lng,
     imageReference,
+    afterReference,
+    aiAnalysis: data.aiAnalysis && typeof data.aiAnalysis === 'object' ? data.aiAnalysis : null,
     createdAt
   };
 }
 
-async function resolveMissionImage(user, context, observation) {
-  const ui = window.SmartHsrInspectorV2;
-  if (!ui || !observation?.imageReference) {
-    ui?.setMissionImage(null);
-    return;
-  }
+async function resolveEvidenceReference(user, context, reference) {
+  if (!reference) return null;
   try {
     const asset = await resolveObservationImage({
-      reference: observation.imageReference,
+      reference,
       context: {
         uid: user.uid,
         role: 'inspector',
@@ -103,9 +105,73 @@ async function resolveMissionImage(user, context, observation) {
         getIdToken: () => user.getIdToken()
       }
     });
-    ui.setMissionImage(asset?.available ? asset.url : null);
+    return asset?.available ? asset.url : null;
   } catch (_) {
-    ui.setMissionImage(null);
+    return null;
+  }
+}
+
+let activeEvidenceUrls = [];
+function releaseActiveEvidenceUrls() {
+  activeEvidenceUrls.forEach(url => {
+    try { revokeObservationImageUrl(url); } catch (_) {}
+  });
+  activeEvidenceUrls = [];
+}
+
+async function loadMissionEvidence(user, context, observation) {
+  const ui = window.SmartHsrInspectorV2;
+  releaseActiveEvidenceUrls();
+  if (!ui || !observation) return;
+  ui.setMissionEvidence({ message: 'جارٍ تحميل الأدلة المصرح بها…' });
+  const [beforeUrl, afterUrl] = await Promise.all([
+    resolveEvidenceReference(user, context, observation.imageReference),
+    resolveEvidenceReference(user, context, observation.afterReference)
+  ]);
+  activeEvidenceUrls = [beforeUrl, afterUrl].filter(url => typeof url === 'string' && url.startsWith('blob:'));
+  ui.setMissionEvidence({
+    beforeUrl,
+    afterUrl,
+    message: afterUrl
+      ? 'تم تحميل دليل قبل وبعد من المصدر الموثوق.'
+      : (beforeUrl ? 'تم تحميل دليل قبل. لا يوجد دليل بعد متاح حاليًا.' : 'لا توجد أدلة صور متاحة لهذه المهمة.')
+  });
+}
+
+async function analyzePersistedObservation(user, observation) {
+  const ui = window.SmartHsrInspectorV2;
+  if (!ui || !observation?.docId) return;
+  ui.setAiLoading(true);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetchWithFirebaseAuth({
+      getIdToken: forceRefresh => user.getIdToken(forceRefresh),
+      input: '/api/ai/analyze',
+      init: {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          observationId: observation.docId,
+          correlationId: `v2-${observation.docId}-${Date.now()}`
+        }),
+        signal: controller.signal
+      }
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || payload?.ok !== true) {
+      const code = payload?.errorCode || `ai-http-${response.status}`;
+      ui.setAiLoading(false, code === 'AI_APPLICATION_ORGANIZATION_NOT_ENABLED'
+        ? 'التحليل الذكي غير مفعّل لهذه المؤسسة حاليًا.'
+        : 'تعذر تشغيل التحليل الذكي حاليًا.');
+      return;
+    }
+    ui.setAiResult(payload);
+    ui.setAiLoading(false);
+  } catch (error) {
+    ui.setAiLoading(false, error?.name === 'AbortError' ? 'انتهت مهلة التحليل. أعد المحاولة.' : 'تعذر تشغيل التحليل الذكي حاليًا.');
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -169,7 +235,19 @@ async function bootAuthenticated(user, auth, db) {
     limit(25)
   );
 
-  let lastMissionImageReference = null;
+  let activeObservation = null;
+
+  const handleMissionOpen = event => {
+    const observation = event?.detail?.observation || activeObservation;
+    if (observation) loadMissionEvidence(user, verified, observation);
+  };
+  const handleAiAnalyze = event => {
+    const observation = event?.detail?.observation || activeObservation;
+    if (observation) analyzePersistedObservation(user, observation);
+  };
+  window.addEventListener('smart-hsr:mission-open', handleMissionOpen);
+  window.addEventListener('smart-hsr:ai-analyze', handleAiAnalyze);
+
   onSnapshot(q, { includeMetadataChanges: true }, async snapshot => {
     if (snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) return;
     const observations = [];
@@ -182,6 +260,7 @@ async function bootAuthenticated(user, auth, db) {
     if (map && window.L) renderMapObservations(map, window.L, observations, verified.organizationId, mapContext);
 
     const active = observations.find(item => item.status !== 'COMPLETED') || observations[0] || null;
+    activeObservation = active;
     if (active) active.coords = observationCoordinates(active, verified.organizationId);
     ui?.setMission(active);
     ui?.setMissionDistance(active?.coords || null);
@@ -190,12 +269,8 @@ async function bootAuthenticated(user, auth, db) {
     observations.forEach(item => { item.coords = observationCoordinates(item, verified.organizationId); });
     ui?.setNearbyObservations(observations.filter(item => item.coords));
 
-    if (active?.imageReference !== lastMissionImageReference) {
-      lastMissionImageReference = active?.imageReference || null;
-      await resolveMissionImage(user, verified, active);
-    } else if (!active) {
-      ui?.setMissionImage(null);
-    }
+    // Evidence stays lazy: no private storage read occurs on page load or snapshot refresh.
+    ui?.setMissionImage(null);
 
     gate.hidden = true;
   }, error => {
@@ -217,4 +292,7 @@ onAuthStateChanged(auth, user => {
   });
 });
 
-window.addEventListener('pagehide', revokeAllObservationImageUrls);
+window.addEventListener('pagehide', () => {
+  releaseActiveEvidenceUrls();
+  revokeAllObservationImageUrls();
+});
