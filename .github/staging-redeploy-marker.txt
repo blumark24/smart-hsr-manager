@@ -1,0 +1,4 @@
+SMART HSR Phase 15.3 staging redeploy marker
+Purpose: branch-only, non-functional redeploy trigger for smart-hsr-staging-api.
+Baseline before trigger: 83a49a5d8efc1b7e549bd5a5905ed120fac48b4f
+No Production/main changes.
