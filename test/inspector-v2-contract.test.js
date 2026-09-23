@@ -77,3 +77,20 @@ test('Inspector V2 real AI uses the existing authenticated advisory endpoint', (
   assert.match(runtime, /observationId: observation\.docId/);
   assert.match(js, /requires.*review|يتطلب مراجعة|مراجعة واعتماد/);
 });
+
+
+test('Inspector V2 full-screen map has honest marker interaction surfaces', () => {
+  assert.match(html, /id="closeExpandedMapBtn"/);
+  assert.match(html, /id="mapMarkerSheet"/);
+  assert.match(html, /id="openMapMarkerDetailBtn"/);
+  assert.match(html, /id="focusMapMarkerBtn"/);
+  assert.match(css, /body\.map-expanded \.expanded-map-chrome\{display:flex\}/);
+  assert.match(js, /setSelectedMapObservation/);
+  assert.match(runtime, /smart-hsr:map-observation-select/);
+});
+
+test('Map marker details are observation-backed and do not fabricate road routing', () => {
+  assert.match(js, /observation\.coords/);
+  assert.match(js, /focusSelectedMapObservation/);
+  assert.doesNotMatch(js, /routeGeometry|fakeRoute|mockRoute/);
+});
