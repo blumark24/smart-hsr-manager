@@ -730,3 +730,67 @@ body.map-expanded .twin-data-panel{top:calc(var(--safe-top) + 128px)}
   .quick-grid{gap:5px}
   .quick-card{padding-inline:3px}
 }
+
+
+/* ===== Mission V2 sheet + evidence + real AI ===== */
+.mission-sheet{position:fixed;z-index:5100;inset:0;display:none}
+.mission-sheet.is-open{display:block}
+.mission-sheet-panel{max-height:88dvh}
+.mission-sheet-summary{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;
+  padding:11px;border:1px solid var(--line);border-radius:17px;background:rgba(7,30,63,.62)
+}
+.mission-sheet-summary h3{margin:7px 0 4px;font-size:15px}
+.mission-sheet-summary p{margin:0;color:var(--muted);font-size:9px}
+.mission-route-btn{
+  min-width:96px;min-height:44px;border:0;border-radius:13px;padding:8px 10px;display:flex;align-items:center;justify-content:center;gap:6px;
+  background:linear-gradient(135deg,#0d7ff3,#2baeff);font-size:9px;font-weight:900;cursor:pointer
+}
+.mission-route-btn svg{width:15px;height:15px}
+.mission-sheet-tabs{
+  margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:4px;border:1px solid var(--line);border-radius:14px;background:rgba(5,24,52,.62)
+}
+.mission-sheet-tabs button{border:0;background:transparent;color:var(--muted);min-height:34px;border-radius:10px;font-size:9px;font-weight:800;cursor:pointer}
+.mission-sheet-tabs button.is-active{background:linear-gradient(135deg,#0d7ff3,#2baeff);color:#fff}
+.mission-tab-panel{display:none;margin-top:10px}
+.mission-tab-panel.is-active{display:block}
+.evidence-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.evidence-card{padding:8px;border:1px solid var(--line);border-radius:16px;background:rgba(6,27,58,.68)}
+.evidence-card>strong{display:block;margin-top:6px;font-size:9px;text-align:center}
+.evidence-image{
+  aspect-ratio:4/3;overflow:hidden;border-radius:12px;display:grid;place-items:center;background:rgba(3,16,35,.9);color:var(--muted);font-size:8px;text-align:center
+}
+.evidence-image span{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px}
+.evidence-image svg{width:20px;height:20px}
+.evidence-image img{width:100%;height:100%;object-fit:cover;display:block}
+.evidence-hint{margin:8px 2px 0;color:var(--muted);font-size:8px;line-height:1.5}
+.ai-run-btn{
+  width:100%;min-height:54px;border:1px solid rgba(74,170,255,.34);border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:9px;text-align:right;cursor:pointer;
+  background:linear-gradient(135deg,rgba(8,45,94,.96),rgba(6,28,61,.94))
+}
+.ai-run-btn>svg{width:20px;height:20px;color:var(--cyan)}
+.ai-run-btn span{display:flex;flex-direction:column}.ai-run-btn strong{font-size:11px}.ai-run-btn small{font-size:8px;color:var(--muted)}
+.ai-run-btn[disabled]{opacity:.55;cursor:not-allowed}
+.ai-result{
+  margin-top:8px;padding:11px;border:1px solid var(--line);border-radius:16px;background:rgba(5,24,52,.62);font-size:9px;line-height:1.65
+}
+.ai-result p{margin:0;color:var(--muted)}
+.ai-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.ai-result-item{padding:8px;border-radius:12px;background:rgba(23,74,139,.14);border:1px solid rgba(94,169,255,.14)}
+.ai-result-item small{display:block;color:var(--muted);font-size:7px}.ai-result-item strong{display:block;margin-top:2px;font-size:9px}
+.ai-review-notice{margin-top:8px;padding:8px;border-radius:12px;background:rgba(255,181,74,.09);border:1px solid rgba(255,181,74,.19);color:#ffd08c;font-size:8px}
+.timeline-card{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid var(--line);border-radius:14px;background:rgba(5,24,52,.62);margin-bottom:7px}
+.timeline-dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px rgba(80,216,255,.48)}
+.timeline-card div{display:flex;flex-direction:column}.timeline-card small{font-size:7px;color:var(--muted)}.timeline-card strong{font-size:10px}
+.analysis-grid button.analysis-disabled{opacity:.45;cursor:not-allowed}
+.analysis-grid button.analysis-secondary{border-color:rgba(70,177,255,.26)}
+:root[data-theme="light"] .mission-sheet-summary,
+:root[data-theme="light"] .mission-sheet-tabs,
+:root[data-theme="light"] .evidence-card,
+:root[data-theme="light"] .ai-result,
+:root[data-theme="light"] .timeline-card{background:#fff;border-color:rgba(8,127,91,.12)}
+:root[data-theme="light"] .evidence-image{background:#eef5f1}
+:root[data-theme="light"] .mission-sheet-tabs button.is-active,
+:root[data-theme="light"] .mission-route-btn{background:linear-gradient(135deg,#087f5b,#20a66f)}
+:root[data-theme="light"] .ai-run-btn{background:linear-gradient(135deg,#f7fbf8,#e8f4ed);border-color:rgba(8,127,91,.18)}
+:root[data-theme="light"] .ai-review-notice{background:rgba(184,107,20,.06);border-color:rgba(184,107,20,.16);color:#8a5418}
