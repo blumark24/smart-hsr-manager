@@ -39,3 +39,21 @@ test('Inspector V2 renders only verified map coordinates and evidence', () => {
   assert.match(runtime, /statusMarkerIcon/);
   assert.match(runtime, /openVerifiedMap/);
 });
+
+
+test('Inspector V2 reference composition keeps map tools on the edge and twin stats real', () => {
+  assert.match(html, /class="employee-card"/);
+  assert.match(html, /id="routeMissionBtn"/);
+  assert.match(html, /id="twinOpenCount"/);
+  assert.match(html, /id="twinProgressCount"/);
+  assert.match(html, /id="twinClosedCount"/);
+  assert.match(js, /setTwinStats/);
+  assert.match(runtime, /ui\?\.setTwinStats\(observations\)/);
+});
+
+test('Inspector V2 exposes four compact field quick actions', () => {
+  assert.match(html, /إضافة صورة/);
+  assert.match(html, /ملاحظة/);
+  assert.match(html, /رصد سريع/);
+  assert.match(html, /مسح الموقع/);
+});
