@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#04162f">
+  <title>SMART HSR — دخول المراقب</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Tajawal",sans-serif;color-scheme:dark}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(420px 280px at 85% 0,rgba(24,137,255,.2),transparent 70%),linear-gradient(180deg,#061a38,#020d1e 54%,#010711);color:#f7fbff}
+    main{width:min(100%,420px);border:1px solid rgba(105,178,255,.24);border-radius:26px;padding:24px;background:rgba(5,24,52,.9);box-shadow:0 24px 70px rgba(0,0,0,.28)}
+    .brand{display:flex;align-items:center;gap:10px;margin-bottom:20px}.brand b{font-size:18px}.brand span{color:#65c8ff;font-size:12px}
+    h1{margin:0 0 6px;font-size:24px}p{margin:0 0 20px;color:#a9bdd4;font-size:13px;line-height:1.7}
+    label{display:block;margin:12px 0 6px;font-size:12px;color:#b9c9dc}input{width:100%;min-height:48px;border:1px solid rgba(105,178,255,.2);border-radius:14px;padding:0 14px;background:#061b39;color:#fff;font-size:16px;outline:none}
+    button{width:100%;min-height:50px;margin-top:16px;border:0;border-radius:15px;background:linear-gradient(135deg,#0d7ff3,#2baeff);color:#fff;font-size:15px;font-weight:800}
+    button:disabled{opacity:.55}.msg{min-height:22px;margin-top:12px;color:#ffd08c;font-size:12px;line-height:1.6}.env{margin-top:15px;padding:10px;border-radius:12px;background:rgba(255,255,255,.04);font-size:10px;color:#7f9ab8}
+  </style>
+</head>
+<body>
+<main>
+  <div class="brand"><b>SMART HSR</b><span>Mobile RC · Inspector</span></div>
+  <h1>دخول المراقب</h1>
+  <p>نسخة الجوال التجريبية تعمل على بيئة Staging فقط، ولا تتصل بـProduction.</p>
+  <form id="form">
+    <label for="email">البريد الإلكتروني</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label for="password">كلمة المرور</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <button id="submit" type="submit">تسجيل الدخول</button>
+  </form>
+  <div class="msg" id="msg" role="status"></div>
+  <div class="env" id="env">جارٍ التحقق من بيئة Staging…</div>
+</main>
+<script src="mobile-runtime-env.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js';
+import { resolveFirebaseConfig } from './firebase-runtime-config.js';
+
+const msg = document.getElementById('msg');
+const env = document.getElementById('env');
+const submit = document.getElementById('submit');
+
+function show(text){ msg.textContent = text || ''; }
+
+let app, auth, db;
+try {
+  const config = await resolveFirebaseConfig();
+  if (config?.projectId !== 'smart-hsr-staging-blumark24') throw new Error('STAGING_PROJECT_REQUIRED');
+  app = initializeApp(config);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  await setPersistence(auth, browserLocalPersistence);
+  env.textContent = 'Staging verified · smart-hsr-staging-blumark24';
+} catch (error) {
+  submit.disabled = true;
+  env.textContent = 'Mobile Runtime غير مهيأ لبيئة Staging.';
+  show('تعذر تهيئة بيئة الجوال الآمنة. لا يوجد اتصال بـProduction.');
+}
+
+async function verifiedInspector(user) {
+  if (!user || !db) return false;
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  if (!snap.exists()) return false;
+  const data = snap.data() || {};
+  return data.role === 'inspector' && data.active !== false && typeof data.organizationId === 'string' && data.organizationId.trim();
+}
+
+if (auth) {
+  onAuthStateChanged(auth, async user => {
+    if (!user) return;
+    try {
+      if (await verifiedInspector(user)) window.location.replace('inspector-v2.html');
+      else { await signOut(auth); show('هذا التطبيق مخصص حاليًا للمراقب الميداني فقط.'); }
+    } catch (_) { show('تعذر التحقق من صلاحية الحساب حاليًا.'); }
+  });
+}
+
+document.getElementById('form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!auth) return;
+  submit.disabled = true;
+  show('جارٍ التحقق…');
+  try {
+    const credential = await signInWithEmailAndPassword(auth, document.getElementById('email').value.trim(), document.getElementById('password').value);
+    if (!(await verifiedInspector(credential.user))) {
+      await signOut(auth);
+      show('الحساب ليس مراقبًا ميدانيًا فعالًا.');
+      return;
+    }
+    window.location.replace('inspector-v2.html');
+  } catch (_) {
+    show('تعذر تسجيل الدخول أو التحقق من الصلاحية.');
+  } finally {
+    submit.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
