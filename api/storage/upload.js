@@ -1,4 +1,5 @@
 'use strict';
+const { handleMobilePreviewCors } = require('../_lib/mobileCors');
 // ============================================================================
 // POST /api/storage/upload — secure server-side upload of inspector evidence
 // images to a PRIVATE Backblaze B2 bucket (S3-compatible API).
@@ -211,6 +212,8 @@ function logStorageFailure(error) {
 // --- handler -----------------------------------------------------------------
 
 async function handler(req, res) {
+  if (handleMobilePreviewCors(req, res, { methods: ["POST"] })) return;
+
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method_not_allowed' });
 
   let decoded;

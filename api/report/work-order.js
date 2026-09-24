@@ -1,4 +1,5 @@
 'use strict';
+const { handleMobilePreviewCors } = require('../_lib/mobileCors');
 // ============================================================================
 // POST /api/report/work-order — deterministic Work Order Draft over an
 // already-persisted Vision result. NEVER calls an AI provider. NEVER writes
@@ -49,6 +50,8 @@ async function readJsonBody(req) {
 }
 
 async function handler(req, res) {
+  if (handleMobilePreviewCors(req, res, { methods: ["POST"] })) return;
+
   if (req.method !== 'POST') return fail(res, 405, 'method_not_allowed', 'Only POST is supported.');
 
   let decoded;

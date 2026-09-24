@@ -1,3 +1,5 @@
+import { isNativeMobileRuntime, resolveApiInput } from './mobile-runtime-origin.js';
+
 const PRODUCTION_FIREBASE_CONFIG = Object.freeze({
   apiKey: 'AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM',
   authDomain: 'smart-hsr-manager.firebaseapp.com',
@@ -14,6 +16,18 @@ const PRODUCTION_HOSTNAMES = Object.freeze([
 
 export async function resolveFirebaseConfig() {
   const hostname = location.hostname;
+
+  if (isNativeMobileRuntime()) {
+    const response = await fetch(resolveApiInput('/api/firebase-config'), {
+      cache: 'no-store',
+      credentials: 'omit'
+    });
+    if (!response.ok) throw new Error('FIREBASE_MOBILE_STAGING_CONFIG_UNAVAILABLE');
+    const config = await response.json();
+    if (config?.projectId !== 'smart-hsr-staging-blumark24') throw new Error('FIREBASE_MOBILE_PROJECT_DENIED');
+    return Object.freeze(config);
+  }
+
   if (!hostname.endsWith('.vercel.app') || PRODUCTION_HOSTNAMES.includes(hostname)) {
     return PRODUCTION_FIREBASE_CONFIG;
   }

@@ -3,6 +3,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<script src="mobile-runtime-env.js"></script>
 <script id="municipal-theme-boot">
 (function () {
   try {
@@ -2970,6 +2971,9 @@ body.v2-capture-shell #locationCorrectionDialog{
           <button class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold mt-2 flex items-center justify-center mx-auto" onclick="document.getElementById('fileUploadInput').click()" type="button">
             <i data-lucide="upload" class="w-4 h-4 ml-2"></i> اختيار ملف
           </button>
+          <button id="nativeCaptureBtn" class="ai-button-primary rounded-full px-4 py-2 text-sm font-bold mt-2 hidden items-center justify-center mx-auto" type="button">
+            <i data-lucide="camera" class="w-4 h-4 ml-2"></i> التقاط بكاميرا الجهاز
+          </button>
           <button id="inspectorAiAnalyzeBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold mt-2 hidden" type="button" disabled>تحليل ذكي</button>
         </div>
       </div>
@@ -4401,7 +4405,7 @@ document.getElementById('personalLifecycleDialog')?.addEventListener('close',()=
 
 // ========= CIVIC SPATIAL CAPTURE & FILE UPLOAD =========
 let inspectorMap=null,locationMarker=null,accuracyCircle=null;
-let locationWatchId=null,locationTimeoutId=null,locationSamples=[],locationCandidate=null,locationConfirmed=false,locationDragged=false;
+let locationWatchId=null,locationNativeStop=null,locationWatchPending=false,locationTimeoutId=null,locationSamples=[],locationCandidate=null,locationConfirmed=false,locationDragged=false;
 let locationRunToken=0,locationAttempt=0;
 let locationWarningOverride=false,locationTimedOut=false;
 let locationVerified=false,locationSource=null;
@@ -4443,9 +4447,43 @@ function normalLocationConfirmationAllowed(){
 }
 function stopInspectorGps(){
   locationRunToken+=1;
+  if(typeof locationNativeStop==='function'){
+    try{Promise.resolve(locationNativeStop()).catch(()=>{})}catch(_){}
+  }
+  locationNativeStop=null;locationWatchPending=false;
   if(locationWatchId!==null)navigator.geolocation?.clearWatch(locationWatchId);
   locationWatchId=null;clearTimeout(locationTimeoutId);locationTimeoutId=null;
   const button=document.getElementById('getLocationBtn');if(button)button.disabled=false;
+}
+function nativeLocationAvailable(){
+  const bridge=window.SmartHsrNativeBridge;
+  return Boolean(bridge?.isNative&&bridge?.hasGeolocation&&typeof bridge.watchPosition==='function');
+}
+function clearInspectorGpsHandles(){
+  if(typeof locationNativeStop==='function'){
+    try{Promise.resolve(locationNativeStop()).catch(()=>{})}catch(_){}
+  }
+  locationNativeStop=null;locationWatchPending=false;
+  if(locationWatchId!==null)navigator.geolocation?.clearWatch(locationWatchId);
+  locationWatchId=null;clearTimeout(locationTimeoutId);locationTimeoutId=null;
+}
+function startInspectorGpsWatch(options,onSuccess,onError){
+  const bridge=window.SmartHsrNativeBridge;
+  if(nativeLocationAvailable()){
+    locationWatchPending=true;
+    bridge.watchPosition((position,error)=>{
+      if(error){onError(error);return}
+      if(position)onSuccess(position);
+    },options).then(stop=>{
+      locationWatchPending=false;
+      if(typeof stop==='function')locationNativeStop=stop;
+    }).catch(error=>{
+      locationWatchPending=false;
+      onError(error);
+    });
+    return;
+  }
+  locationWatchId=navigator.geolocation.watchPosition(onSuccess,onError,options);
 }
 function setIdentityGpsStatus(text, available=true){
   const gpsText=document.getElementById('gpsText');
@@ -4635,8 +4673,9 @@ window.applyInspectorManualLocationPreview=function(draft={}){
 // gets one bounded balanced-accuracy retry; permission denial fails closed and
 // tells the inspector to change the browser permission before retrying.
 window.getLocation=function(){
-  if(!navigator.geolocation){
-    setText('locationStatus','هذا المتصفح لا يدعم تحديد الموقع عبر GPS.');
+  const nativeLocation=nativeLocationAvailable();
+  if(!nativeLocation&&!navigator.geolocation){
+    setText('locationStatus','هذا الجهاز لا يدعم تحديد الموقع عبر GPS.');
     setIdentityGpsStatus('غير مدعوم',false);checkSmartInputState();return;
   }
   stopInspectorGps();
@@ -4648,10 +4687,7 @@ window.getLocation=function(){
   for(const id of ['retryLocationBtn','manualLocationBtn','useWeakLocationBtn','editLocationBtn','confirmLocationBtn'])document.getElementById(id)?.classList.add('hidden');
   const getButton=document.getElementById('getLocationBtn');if(getButton){getButton.disabled=true;getButton.classList.remove('hidden');}
 
-  const clearRunHandles=()=>{
-    if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);
-    locationWatchId=null;clearTimeout(locationTimeoutId);locationTimeoutId=null;
-  };
+  const clearRunHandles=()=>clearInspectorGpsHandles();
   const recover=(message,status='غير متاح')=>{
     if(runToken!==locationRunToken)return;
     clearRunHandles();locationTimedOut=true;
@@ -4673,7 +4709,7 @@ window.getLocation=function(){
       if(!finalAttempt){beginAttempt();return;}
       recover(message);
     };
-    locationWatchId=navigator.geolocation.watchPosition(position=>{
+    startInspectorGpsWatch(options,position=>{
       if(runToken!==locationRunToken||!validLocationSample(position))return;
       locationSamples.push({lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy,capturedAt:new Date(position.timestamp||Date.now()).toISOString()});
       locationSamples=locationSamples.slice(-8);locationCandidate=bestStableSample(locationSamples);
@@ -4687,9 +4723,10 @@ window.getLocation=function(){
       retryOrRecover(Number(error?.code)===2
         ?'إشارة GPS غير متاحة حالياً. انتقل إلى مكان مفتوح ثم أعد المحاولة.'
         :'انتهت مهلة GPS دون موقع موثوق. أعد المحاولة في مكان مفتوح.');
-    },options);
+    });
     locationTimeoutId=setTimeout(()=>retryOrRecover('انتهت مهلة GPS دون موقع موثوق. أعد المحاولة في مكان مفتوح.'),options.timeout+500);
   };
+  if(nativeLocation){beginAttempt();return}
   Promise.resolve(navigator.permissions?.query?navigator.permissions.query({name:'geolocation'}):null)
     .then(permission=>{
       if(runToken!==locationRunToken)return;
@@ -4876,6 +4913,40 @@ window.handleFileUpload = function(e){
   setText('fileStatus', `تم اختيار الملف: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`);
   checkSmartInputState();
 };
+
+window.captureNativeSmartInputImage=async function(){
+  const button=document.getElementById('nativeCaptureBtn');
+  const bridge=window.SmartHsrNativeBridge;
+  if(!V2_CAPTURE_MODE||!bridge?.isNative||!bridge?.hasCamera||typeof bridge.captureImageFile!=='function')return;
+  if(button)button.disabled=true;
+  setText('fileStatus','جاري فتح كاميرا الجهاز...');
+  try{
+    const file=await bridge.captureImageFile();
+    if(!file){setText('fileStatus','لم يتم التقاط صورة.');return}
+    window.handleFileUpload({target:{files:[file],value:''}});
+  }catch(error){
+    const denied=Number(error?.code)===1||/permission/i.test(String(error?.message||''));
+    setText('fileStatus',denied
+      ?'إذن الكاميرا مرفوض. فعّل إذن الكاميرا من إعدادات التطبيق ثم أعد المحاولة.'
+      :'تعذر التقاط الصورة من كاميرا الجهاز. أعد المحاولة.');
+  }finally{
+    if(button)button.disabled=false;
+  }
+};
+function syncNativeCaptureAction(){
+  const button=document.getElementById('nativeCaptureBtn');
+  if(!button)return;
+  const bridge=window.SmartHsrNativeBridge;
+  const enabled=Boolean(V2_CAPTURE_MODE&&bridge?.isNative&&bridge?.hasCamera);
+  button.classList.toggle('hidden',!enabled);
+  button.classList.toggle('flex',enabled);
+  if(enabled&&!button.dataset.bound){
+    button.dataset.bound='1';
+    button.addEventListener('click',()=>window.captureNativeSmartInputImage());
+  }
+}
+window.addEventListener('smart-hsr-native-ready',syncNativeCaptureAction);
+document.addEventListener('DOMContentLoaded',syncNativeCaptureAction,{once:true});
 
 async function analyzeSmartCaptureDraft({observationId,imageObjectKey,existingDescription}){
   const user=auth.currentUser;
@@ -6488,5 +6559,6 @@ document.addEventListener('DOMContentLoaded', function () {
   syncThemeChoice();
 });
 </script>
+<script src="inspector-v2-native-bridge.js"></script>
 </body>
 </html>

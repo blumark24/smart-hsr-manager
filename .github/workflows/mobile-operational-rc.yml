@@ -1,0 +1,176 @@
+name: SMART HSR Staging-Connected Mobile RC
+
+on:
+  push:
+    branches:
+      - phase15-mobile-shell
+    paths:
+      - '.github/workflows/mobile-operational-rc.yml'
+      - 'mobile/**'
+      - 'mobile-runtime-origin.js'
+      - 'mobile-runtime-env.js'
+      - 'firebase-runtime-config.js'
+      - 'firebase-auth-fetch.js'
+      - 'spatial-map.js'
+      - 'storage-adapter.js'
+      - 'dashboard.html'
+      - 'inspector-v2.html'
+      - 'inspector-v2-runtime.js'
+  workflow_dispatch:
+    inputs:
+      staging_api_origin:
+        description: 'Approved non-Production HTTPS Staging API origin'
+        required: false
+        default: 'https://smart-hsr-staging-api-blumark24-os.vercel.app'
+        type: string
+
+env:
+  SMART_HSR_STAGING_API_ORIGIN: https://smart-hsr-staging-api-blumark24-os.vercel.app
+
+permissions:
+  contents: read
+
+jobs:
+  validate-origin:
+    name: Validate Staging origin
+    runs-on: ubuntu-latest
+    outputs:
+      origin: ${{ steps.validate.outputs.origin }}
+    steps:
+      - name: Validate explicit non-Production HTTPS origin
+        id: validate
+        shell: bash
+        env:
+          ORIGIN: ${{ inputs.staging_api_origin || env.SMART_HSR_STAGING_API_ORIGIN }}
+        run: |
+          node <<'NODE'
+          const raw = String(process.env.ORIGIN || '').trim();
+          if (!raw) throw new Error('staging_api_origin is required');
+          const url = new URL(raw);
+          if (url.protocol !== 'https:' || url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
+            throw new Error('staging_api_origin must be an HTTPS origin only');
+          }
+          const forbidden = new Set([
+            'smart-hsr-manager.vercel.app',
+            'smart-hsr-manager-blumark24-os.vercel.app'
+          ]);
+          if (forbidden.has(url.hostname)) throw new Error('Production origin is forbidden');
+          require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'origin=' + url.origin + '\n');
+          NODE
+      - name: Prove reachable Staging Firebase config and Capacitor CORS
+        shell: bash
+        env:
+          ORIGIN: ${{ steps.validate.outputs.origin }}
+        run: |
+          node <<'NODE'
+          const origin = process.env.ORIGIN;
+          const response = await fetch(origin + '/api/firebase-config', {
+            headers: {
+              Origin: 'capacitor://localhost',
+              Accept: 'application/json'
+            },
+            redirect: 'manual'
+          });
+          if (response.status !== 200) {
+            throw new Error(`Staging endpoint is not directly reachable: HTTP ${response.status}`);
+          }
+          const allowOrigin = response.headers.get('access-control-allow-origin');
+          if (allowOrigin !== 'capacitor://localhost') {
+            throw new Error('Staging endpoint did not prove Capacitor Preview CORS');
+          }
+          const config = await response.json();
+          if (config?.projectId !== 'smart-hsr-staging-blumark24') {
+            throw new Error('Staging endpoint returned the wrong Firebase project');
+          }
+          console.log('Verified reachable SMART HSR Staging API origin.');
+          NODE
+
+  contract:
+    name: Staging-connected contract
+    needs: validate-origin
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Build staging-connected packaged web runtime
+        env:
+          SMART_HSR_MOBILE_API_ORIGIN: ${{ needs.validate-origin.outputs.origin }}
+        run: npm run bundle:web
+      - run: npm test
+      - name: Assert build is staging-connected, not fail-closed
+        shell: bash
+        run: |
+          grep -q "location.replace('login.html')" www/index.html
+          grep -q '"mode":"native"' www/mobile-runtime-env.js
+          grep -q '"apiOrigin":"https://' www/mobile-runtime-env.js
+
+  android:
+    name: Android staging-connected APK
+    needs: [validate-origin, contract]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm install --ignore-scripts
+      - name: Build staging-connected packaged web runtime
+        env:
+          SMART_HSR_MOBILE_API_ORIGIN: ${{ needs.validate-origin.outputs.origin }}
+        run: npm run bundle:web
+      - run: npx cap add android
+      - run: npm run native:permissions
+      - run: npx cap sync android
+      - run: ./android/gradlew -p android assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smart-hsr-staging-connected-rc-android
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  ios:
+    name: iOS staging-connected simulator build
+    needs: [validate-origin, contract]
+    runs-on: macos-15
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Build staging-connected packaged web runtime
+        env:
+          SMART_HSR_MOBILE_API_ORIGIN: ${{ needs.validate-origin.outputs.origin }}
+        run: npm run bundle:web
+      - run: npx cap add ios
+      - run: npm run native:permissions
+      - run: npx cap sync ios
+      - run: >
+          xcodebuild
+          -project ios/App/App.xcodeproj
+          -scheme App
+          -configuration Debug
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build

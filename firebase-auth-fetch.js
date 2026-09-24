@@ -1,3 +1,5 @@
+import { resolveApiInput } from './mobile-runtime-origin.js';
+
 export const REAUTHENTICATION_REQUIRED = 'reauthentication-required';
 
 function reauthenticationError(cause) {
@@ -15,7 +17,7 @@ export async function fetchWithFirebaseAuth({ getIdToken, input, init = {}, fetc
     try { token = await getIdToken(forceRefresh); }
     catch (error) { throw reauthenticationError(error); }
     if (!token) throw reauthenticationError();
-    return fetchImpl(input, {
+    return fetchImpl(resolveApiInput(input), {
       ...init,
       headers: { ...(init.headers || {}), Authorization: `Bearer ${token}` },
     });

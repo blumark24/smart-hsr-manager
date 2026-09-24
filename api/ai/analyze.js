@@ -1,4 +1,5 @@
 'use strict';
+const { handleMobilePreviewCors } = require('../_lib/mobileCors');
 // ============================================================================
 // POST /api/ai/analyze — secure AI Vision Gateway integration
 // (Sprint 6.8: analysis + advisory response; Sprint 6.9: + persistence;
@@ -146,6 +147,8 @@ async function readObjectBytes(config, key) {
 }
 
 async function handler(req, res) {
+  if (handleMobilePreviewCors(req, res, { methods: ["POST"] })) return;
+
   if (req.method !== 'POST') return fail(res, 405, 'method_not_allowed', 'Only POST is supported.');
 
   let decoded;

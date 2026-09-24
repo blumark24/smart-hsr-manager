@@ -1,4 +1,5 @@
 'use strict';
+const { handleMobilePreviewCors } = require('../_lib/mobileCors');
 const { getDb } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 const { callLandsSsoRegister, bridgeConfigured } = require('../_lib/landsBridge');
@@ -148,6 +149,8 @@ function sanitizedMapContext(organizationId, organizationName, organizationData)
 }
 
 async function handler(req, res) {
+  if (handleMobilePreviewCors(req, res, { methods: ["GET","POST"] })) return;
+
   if (req.method === 'POST') return handleLandsSsoHandoff(req, res);
   if (req.method !== 'GET') return sendJson(res, 405, { error:'method_not_allowed' });
   let decoded;
