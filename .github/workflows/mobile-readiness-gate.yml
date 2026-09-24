@@ -1,0 +1,65 @@
+name: SMART HSR Mobile Readiness Gate
+
+on:
+  push:
+    branches:
+      - phase15-mobile-shell
+    paths:
+      - '.github/workflows/mobile-readiness-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  STAGING_ORIGIN: https://smart-hsr-staging-api-blumark24-os.vercel.app
+
+jobs:
+  readiness:
+    name: Verify Staging Backend Readiness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Firebase config and operational readiness
+        shell: bash
+        run: |
+          node <<'NODE'
+          const origin = process.env.STAGING_ORIGIN;
+
+          const firebaseResponse = await fetch(origin + '/api/firebase-config', {
+            headers: {
+              Origin: 'capacitor://localhost',
+              Accept: 'application/json'
+            },
+            redirect: 'manual'
+          });
+          if (firebaseResponse.status !== 200) {
+            throw new Error(`firebase-config HTTP ${firebaseResponse.status}`);
+          }
+          const firebase = await firebaseResponse.json();
+          if (firebase?.projectId !== 'smart-hsr-staging-blumark24') {
+            throw new Error('Wrong Firebase staging project');
+          }
+
+          const readinessResponse = await fetch(origin + '/api/mobile/readiness', {
+            headers: { Accept: 'application/json' },
+            redirect: 'manual'
+          });
+          if (readinessResponse.status !== 200) {
+            throw new Error(`mobile/readiness HTTP ${readinessResponse.status}`);
+          }
+
+          const readiness = await readinessResponse.json();
+          const safe = {
+            environment: readiness.environment,
+            firebaseClient: readiness.firebaseClient,
+            firebaseAdmin: readiness.firebaseAdmin,
+            storage: readiness.storage,
+            ai: readiness.ai,
+            operationalBackendReady: readiness.operationalBackendReady
+          };
+          console.log('SMART_HSR_MOBILE_READINESS=' + JSON.stringify(safe));
+
+          if (readiness.operationalBackendReady !== true) {
+            throw new Error('Operational backend readiness is not satisfied');
+          }
+          NODE
