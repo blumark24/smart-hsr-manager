@@ -1,0 +1,4 @@
+# Keep legacy report endpoint modules in GitHub for regression tests, but do not deploy
+# them as standalone Vercel Functions. Public routes are rewritten to api/report.js.
+api/report/root-cause.js
+api/report/work-order.js
