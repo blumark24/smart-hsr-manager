@@ -236,11 +236,11 @@
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--ok,#22c55e)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">إدارة حركة السير</span>
             </a>
-            <a href="admin-affairs.html" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" data-manager-view="adminAffairs" data-f="1" aria-current="{{ navAdminAffairsCurrent }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:{{ navAdminAffairsTx }};background:{{ navAdminAffairsBg }};border:1px solid {{ navAdminAffairsBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--acc,#4cc9f0)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">إدارة الشؤون الإدارية</span>
             </a>
-            <a href="contractors-registry.html" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:var(--sbTx2,#9db2cc);border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
+            <a href="#" data-manager-view="contracts" data-f="1" aria-current="{{ navContractsCurrent }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;font-weight:550;color:{{ navContractsTx }};background:{{ navContractsBg }};border:1px solid {{ navContractsBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
               <span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--warn,#f0b429)"></span>
               <span style="flex:1;display:var(--sbLabel,block)">إدارة العقود والشركات المتعاقدة</span>
             </a>
@@ -1421,6 +1421,79 @@
         </div>
       </sc-if>
 
+
+      <!-- PHASE21 — Notifications/Reports and the two remaining municipal
+           services are first-class Manager views inside this same <main>.
+           Municipality Manager gets supervision/oversight presentation only;
+           department-head operational screens remain separate and untouched. -->
+      <sc-if value="{{ viewIsObservations }}">
+        <section aria-label="سجل البلاغات" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:240px"><h2 style="font-size:18px;margin:0;color:var(--tx,#f0f6ff)">البلاغات</h2><p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0">سجل إشرافي موحّد لبلاغات المنظمة الحالية؛ الضغط على أي صف يفتح ملف البلاغ والأدلة.</p></div>
+            <button onClick="{{ goMap }}" data-f="1" style="height:36px;padding:0 13px;border-radius:10px;background:var(--btn,linear-gradient(180deg,rgba(76,131,236,.5),rgba(40,72,150,.45)));border:1px solid var(--btnBd,rgba(120,170,255,.35));color:var(--btnTx,#eaf4ff);font-size:11px;cursor:pointer">الخريطة التشغيلية</button>
+          </div>
+          <div style="position:relative;width:min(420px,100%)"><input type="search" value="{{ search }}" onChange="{{ setSearch }}" aria-label="بحث في البلاغات" placeholder="ابحث بالرقم أو العنوان أو المراقب..." style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,.75));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none"></div>
+          <div style="flex:1;min-height:280px;border-radius:16px;overflow:hidden;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,.72),rgba(10,16,29,.78)));border:1px solid var(--l3Bd,rgba(122,164,224,.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,.95));display:flex;flex-direction:column">
+            <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,.13));background:var(--sunk,rgba(12,20,36,.5))"><sc-for list="{{ observationCols }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);text-align:{{ c.align }}">{{ c.label }}</span></sc-for></div>
+            <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+              <sc-for list="{{ observationRows }}" as="r"><div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,.08));cursor:pointer"><sc-for list="{{ r.cells }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span></sc-for><span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span></div></sc-for>
+              <sc-if value="{{ observationRowsEmpty }}"><div style="padding:44px 20px;text-align:center;color:var(--thTx,#7d8ea6);font-size:12px">{{ viewEmptyText }}</div></sc-if>
+            </div>
+            <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,.12));font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ observationCount }}</div>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ viewIsReports }}">
+        <section aria-label="التقارير التشغيلية" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+          <div><h2 style="font-size:18px;margin:0;color:var(--tx,#f0f6ff)">التقارير التشغيلية</h2><p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0">مؤشرات حية مشتقة من بيانات المنظمة الحالية داخل لوحة مدير البلدية، وليست نافذة منفصلة.</p></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+            <sc-for list="{{ reportKpis }}" as="k"><div style="padding:13px 14px;border-radius:13px;background:var(--l1,rgba(17,26,44,.72));border:1px solid var(--l1Bd,rgba(122,164,224,.13))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">{{ k.label }}</div><div style="font-size:23px;font-weight:700;color:var(--tx,#f0f6ff);margin-top:4px">{{ k.value }}</div></div></sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+            <div style="padding:14px;border-radius:16px;background:var(--l2,rgba(17,26,44,.74));border:1px solid var(--l2Bd,rgba(122,164,224,.13))"><div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:10px">حسب الحالة</div><sc-for list="{{ cats }}" as="c"><div style="display:flex;gap:8px;align-items:center;font-size:10.5px;margin:8px 0"><span style="width:7px;height:7px;border-radius:50%;background:{{ c.col }}"></span><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ c.name }}</span><span style="color:var(--tx,#e9f1fb)">{{ c.n }} {{ c.p }}</span></div></sc-for></div>
+            <div style="padding:14px;border-radius:16px;background:var(--l2,rgba(17,26,44,.74));border:1px solid var(--l2Bd,rgba(122,164,224,.13))"><div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:10px">فرق ومستخدمون نشطون</div><sc-for list="{{ depts }}" as="d"><div style="display:flex;gap:8px;font-size:10.5px;margin:8px 0"><span style="flex:1;color:var(--tx2,#a9bdd4)">{{ d.name }}</span><span style="color:var(--tx,#e9f1fb)">{{ d.v }}</span></div></sc-for></div>
+          </div>
+          <div style="border-radius:16px;overflow:hidden;background:var(--l3,rgba(17,26,44,.72));border:1px solid var(--l3Bd,rgba(122,164,224,.13))">
+            <div style="padding:12px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,.13));font-size:12px;font-weight:600;color:var(--tx,#e9f1fb)">أحدث البلاغات</div>
+            <sc-for list="{{ reportRecentRows }}" as="r"><div onClick="{{ r.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,.08));cursor:pointer"><span style="flex:1;font-size:11px;color:var(--tx,#e9f1fb)">{{ r.title }}</span><span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ r.code }}</span><span style="font-size:9.5px;color:var(--tx2,#a9bdd4)">{{ r.status }}</span></div></sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ viewIsAdminAffairs }}">
+        <section aria-label="إدارة الشؤون الإدارية" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2 style="font-size:18px;margin:0;color:var(--tx,#f0f6ff)">إدارة الشؤون الإدارية</h2><p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0">Manager View للإشراف على الموظفين وطلبات الحركة والتفويضات والسجل الإداري؛ لا يفتح شاشة رئيس القسم.</p></div><button onClick="{{ refreshAdminAffairs }}" data-f="1" style="height:36px;padding:0 13px;border-radius:10px;background:var(--ctl,rgba(20,32,54,.6));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx2,#9db2cc);cursor:pointer">تحديث</button></div>
+          <sc-if value="{{ adminAffairsLoading }}"><div style="padding:38px;text-align:center;color:var(--tx3,#7d8ea6)">جاري تحميل البيانات الإدارية الموثقة…</div></sc-if>
+          <sc-if value="{{ adminAffairsErrorVisible }}"><div style="padding:14px;border-radius:12px;background:var(--badBg,rgba(239,68,68,.08));border:1px solid var(--badBd,rgba(239,68,68,.22));color:var(--badTx,#f87171)">{{ adminAffairsError }}</div></sc-if>
+          <sc-if value="{{ adminAffairsReady }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px"><sc-for list="{{ adminAffairsKpis }}" as="k"><div style="padding:12px 14px;border-radius:13px;background:var(--l1,rgba(17,26,44,.72));border:1px solid var(--l1Bd,rgba(122,164,224,.13))"><div style="font-size:10px;color:var(--tx3,#7d8ea6)">{{ k.label }}</div><div style="font-size:22px;font-weight:700;color:var(--tx,#f0f6ff);margin-top:4px">{{ k.value }}</div></div></sc-for></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div style="flex:1;display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ adminAffairsTabs }}" as="t"><button onClick="{{ t.on }}" data-f="1" style="height:30px;padding:0 12px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;color:{{ t.tx }};background:{{ t.bg }};border:1px solid {{ t.bd }}">{{ t.label }}</button></sc-for></div><input type="search" value="{{ adminAffairsQ }}" onChange="{{ setAdminAffairsQ }}" aria-label="بحث في الشؤون الإدارية" placeholder="بحث..." style="width:min(300px,100%);height:34px;border-radius:10px;background:var(--field,rgba(12,20,36,.75));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx,#e9f1fb);padding:0 11px"></div>
+            <div style="flex:1;min-height:260px;border-radius:16px;overflow:hidden;background:var(--l3,rgba(17,26,44,.72));border:1px solid var(--l3Bd,rgba(122,164,224,.13));display:flex;flex-direction:column">
+              <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,.13));background:var(--sunk,rgba(12,20,36,.5))"><sc-for list="{{ adminAffairsCols }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);text-align:{{ c.align }}">{{ c.label }}</span></sc-for></div>
+              <div style="flex:1;overflow:auto"><sc-for list="{{ adminAffairsRows }}" as="r"><div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,.08))"><sc-for list="{{ r.cells }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span></sc-for><span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span></div></sc-for><sc-if value="{{ adminAffairsRowsEmpty }}"><div style="padding:44px 20px;text-align:center;color:var(--tx3,#7d8ea6);font-size:12px">لا توجد سجلات مطابقة.</div></sc-if></div>
+              <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,.12));font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ adminAffairsCount }}</div>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ viewIsContracts }}">
+        <section aria-label="إدارة العقود والشركات المتعاقدة" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2 style="font-size:18px;margin:0;color:var(--tx,#f0f6ff)">إدارة العقود والشركات المتعاقدة</h2><p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0">سجل إشرافي داخل لوحة مدير البلدية لنفس الشركات والعقود الموثقة، دون فتح صفحة مستقلة أو شاشة تشغيل رئيس قسم.</p></div><button onClick="{{ refreshContracts }}" data-f="1" style="height:36px;padding:0 13px;border-radius:10px;background:var(--ctl,rgba(20,32,54,.6));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx2,#9db2cc);cursor:pointer">تحديث</button></div>
+          <sc-if value="{{ contractsLoading }}"><div style="padding:38px;text-align:center;color:var(--tx3,#7d8ea6)">جاري تحميل سجل الشركات والعقود…</div></sc-if>
+          <sc-if value="{{ contractsErrorVisible }}"><div style="padding:14px;border-radius:12px;background:var(--badBg,rgba(239,68,68,.08));border:1px solid var(--badBd,rgba(239,68,68,.22));color:var(--badTx,#f87171)">{{ contractsError }}</div></sc-if>
+          <sc-if value="{{ contractsReady }}">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><input type="search" value="{{ contractsQ }}" onChange="{{ setContractsQ }}" aria-label="بحث في العقود والشركات" placeholder="الشركة، رقم العقد، النطاق، ممثل الشركة..." style="flex:1;min-width:240px;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,.75));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx,#e9f1fb);padding:0 11px"><select value="{{ contractsStatus }}" onChange="{{ setContractsStatus }}" aria-label="تصفية حالة العقد" style="height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,.75));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx,#e9f1fb);padding:0 10px"><option value="ALL">كل الحالات</option><option value="ACTIVE">نشط</option><option value="SUSPENDED">موقوف</option><option value="ENDED">منتهي</option></select></div>
+            <div style="flex:1;min-height:280px;border-radius:16px;overflow:hidden;background:var(--l3,rgba(17,26,44,.72));border:1px solid var(--l3Bd,rgba(122,164,224,.13));display:flex;flex-direction:column">
+              <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,.13));background:var(--sunk,rgba(12,20,36,.5))"><sc-for list="{{ contractsCols }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);text-align:{{ c.align }}">{{ c.label }}</span></sc-for></div>
+              <div style="flex:1;overflow:auto"><sc-for list="{{ contractsRows }}" as="r"><div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,.08))"><sc-for list="{{ r.cells }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span></sc-for><span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span></div></sc-for><sc-if value="{{ contractsRowsEmpty }}"><div style="padding:44px 20px;text-align:center;color:var(--tx3,#7d8ea6);font-size:12px">لا توجد شركات مطابقة.</div></sc-if></div>
+              <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,.12));font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ contractsCount }}</div>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
       <!-- PHASE13D.1 — User Center now mounts here, as a normal sibling
            Manager view inside <main>, exactly like Field Survey/Lands/
            Mobility above — never as a separate fixed-position overlay
@@ -2278,6 +2351,11 @@ class Component extends DCLogic {
     sel: null,
     quick: true, toast: '', bp: 'xl',
     view: 'home', search: '', dataState: 'loading', dataError: '',
+    // PHASE21 closure — Manager-only institutional oversight views. These
+    // reuse the existing trusted Admin API and never open department-head
+    // operational pages or create a second authentication surface.
+    adminAffairsState: 'idle', adminAffairsError: '', adminAffairsData: null, adminAffairsTab: 'employees', adminAffairsQ: '',
+    contractsState: 'idle', contractsError: '', contractsData: [], contractsQ: '', contractsStatus: 'ALL',
     sessionName: 'الحساب الموثّق', sessionRole: 'جارٍ التحقق من الصلاحيات', sessionRoleCode: 'unknown', clock: Date.now()
   };
 
@@ -2489,6 +2567,8 @@ class Component extends DCLogic {
         survey: () => this.goRoute('survey'),
         lands: () => this.goLandsGateway(),
         mobility: () => this.goRoute('mobility'),
+        adminAffairs: () => this.openAdminAffairs(),
+        contracts: () => this.openContracts(),
         map: () => this.openMap(),
         reports: () => this.openView('reports'),
         observations: () => this.openView('observations'),
@@ -2967,6 +3047,75 @@ class Component extends DCLogic {
     const mobileNavigationAuthoritative = (st.bp === 'tab' || st.bp === 'mob') && st.mobNavOpen;
     const cell = (v, flex, opt) => ({ v: v, flex: String(flex), align: (opt && opt.align) || 'right',
       size: (opt && opt.size) || '11.5px', weight: (opt && opt.weight) || '400', col: (opt && opt.col) || 'var(--tx2,#a9bdd4)' });
+
+    // PHASE21 — shared row models for first-class Manager shell views.
+    const chipStyle = code => {
+      const s = String(code || '').toUpperCase();
+      if (['COMPLETED','APPROVED','AUTHORIZED','ACTIVE','RESOLVED'].includes(s)) return { chipCol:'var(--okTx,#7ee2a8)', chipBg:'var(--okBg,rgba(34,197,94,.08))', chipBd:'var(--okBd,rgba(34,197,94,.24))' };
+      if (['REJECTED','REVOKED','ENDED','INACTIVE'].includes(s)) return { chipCol:'var(--badTx,#f87171)', chipBg:'var(--badBg,rgba(239,68,68,.08))', chipBd:'var(--badBd,rgba(239,68,68,.22))' };
+      return { chipCol:'var(--warnTx,#f6c453)', chipBg:'var(--warnBg,rgba(245,165,36,.08))', chipBd:'var(--warnBd,rgba(245,165,36,.24))' };
+    };
+    const observationCols = [
+      {label:'البلاغ',flex:'0 0 92px',align:'right'},{label:'العنوان',flex:'1.4',align:'right'},{label:'النوع',flex:'.8',align:'right'},
+      {label:'المراقب',flex:'1',align:'right'},{label:'الموقع',flex:'1',align:'right'},{label:'التاريخ',flex:'0 0 132px',align:'left'}
+    ];
+    const observationRows = viewObservations.map(o => ({ on:o.on, cells:[
+      cell(o.code,'0 0 92px',{weight:'600',col:'var(--acc,#4cc9f0)'}), cell(o.title,'1.4',{weight:'600',col:'var(--tx,#e9f1fb)'}),
+      cell(o.type,'.8'), cell(o.inspector,'1'), cell(o.location,'1'), cell(o.date,'0 0 132px',{align:'left',size:'10px'})
+    ], chip:o.status, ...chipStyle(String(matchingObservations.find(x=>x.id===o.id)?.status||'')) }));
+    const reportKpis = [
+      {label:'إجمالي البلاغات',value:metrics.totalReports||'—'},{label:'نسبة الإتمام',value:metrics.completionRate||'—'},
+      {label:'قيد المعالجة',value:metrics.inProgress||'—'},{label:'فرق نشطة',value:metrics.activeTeams||'—'}
+    ];
+    const reportRecentRows = viewObservations.slice(0,8).map(o=>({title:o.title,code:o.code,status:o.status,on:o.on}));
+
+    const adminData = st.adminAffairsData || {};
+    const adminEmployeesAll = Array.isArray(adminData.employees) ? adminData.employees : [];
+    const adminMissionsAll = Array.isArray(adminData.missions) ? adminData.missions : [];
+    const adminAuthorizationsAll = Array.isArray(adminData.authorizations) ? adminData.authorizations : [];
+    const adminAuditAll = Array.isArray(adminData.administrativeAudit) ? adminData.administrativeAudit : [];
+    const adminQNorm = String(st.adminAffairsQ||'').trim().toLocaleLowerCase('ar');
+    const matchesAdmin = (row, keys) => !adminQNorm || keys.some(k=>String(row?.[k]||'').toLocaleLowerCase('ar').includes(adminQNorm));
+    const adminAffairsKpis = [
+      {label:'الموظفون',value:String(adminEmployeesAll.length)},
+      {label:'طلبات حركة معلقة',value:String(adminMissionsAll.filter(x=>x.status==='PENDING_APPROVAL').length)},
+      {label:'تفويضات معلقة',value:String(adminAuthorizationsAll.filter(x=>x.status==='PENDING_AUTHORIZATION').length)},
+      {label:'مهام نشطة',value:String(adminMissionsAll.filter(x=>['APPROVED','VEHICLE_ALLOCATED','HANDED_OVER','READY','IN_PROGRESS','INCIDENT_HOLD','COMPLETED','AWAITING_RETURN'].includes(x.status)).length)}
+    ];
+    const adminTab = st.adminAffairsTab || 'employees';
+    const adminAffairsTabs = [
+      ['employees','الموظفون'],['missions','طلبات الحركة'],['authorizations','التفويضات'],['audit','سجل التدقيق']
+    ].map(([id,label])=>pill(label,adminTab===id,()=>this.setState({adminAffairsTab:id})));
+    let adminAffairsCols=[], adminAffairsRows=[];
+    if(adminTab==='employees'){
+      adminAffairsCols=[{label:'الموظف',flex:'1.2',align:'right'},{label:'الإدارة',flex:'1',align:'right'},{label:'القسم',flex:'1',align:'right'},{label:'المسمى',flex:'1',align:'right'},{label:'الدور',flex:'.8',align:'right'}];
+      adminAffairsRows=adminEmployeesAll.filter(e=>matchesAdmin(e,['name','administration','department','jobTitle','institutionalRole'])).map(e=>({cells:[cell(e.name||'—','1.2',{weight:'600',col:'var(--tx,#e9f1fb)'}),cell(e.administration||'—','1'),cell(e.department||'—','1'),cell(e.jobTitle||'—','1'),cell(e.institutionalRole||'—','.8')],chip:e.employmentStatus==='inactive'?'غير نشط':'نشط',...chipStyle(e.employmentStatus==='inactive'?'INACTIVE':'ACTIVE')}));
+    } else if(adminTab==='missions'){
+      adminAffairsCols=[{label:'الموظف',flex:'1',align:'right'},{label:'القسم',flex:'1',align:'right'},{label:'الوجهة',flex:'1',align:'right'},{label:'السبب',flex:'1.3',align:'right'}];
+      adminAffairsRows=adminMissionsAll.filter(m=>matchesAdmin(m,['requestedEmployeeName','department','destination','reason','status'])).map(m=>({cells:[cell(m.requestedEmployeeName||'—','1',{weight:'600'}),cell(m.department||'—','1'),cell(m.destination||'—','1'),cell(m.reason||'—','1.3')],chip:m.status||'—',...chipStyle(m.status)}));
+    } else if(adminTab==='authorizations'){
+      adminAffairsCols=[{label:'الموظف',flex:'1',align:'right'},{label:'القسم',flex:'1',align:'right'},{label:'المركبة',flex:'.8',align:'right'},{label:'رقم التفويض',flex:'1',align:'right'}];
+      adminAffairsRows=adminAuthorizationsAll.filter(a=>matchesAdmin(a,['employeeName','department','vehicleId','authorizationNumber','status'])).map(a=>({cells:[cell(a.employeeName||'—','1',{weight:'600'}),cell(a.department||'—','1'),cell(a.vehicleId||'—','.8'),cell(a.authorizationNumber||'—','1')],chip:a.status||'—',...chipStyle(a.status)}));
+    } else {
+      adminAffairsCols=[{label:'الوقت',flex:'1',align:'right'},{label:'المورد',flex:'1',align:'right'},{label:'الإجراء',flex:'1',align:'right'},{label:'القسم',flex:'1',align:'right'}];
+      adminAffairsRows=adminAuditAll.filter(a=>matchesAdmin(a,['timestamp','resourceType','action','department','note'])).map(a=>({cells:[cell(a.timestamp||'—','1'),cell(a.resourceType||'—','1'),cell(a.action||'—','1'),cell(a.department||'—','1')],chip:a.toStatus||a.fromStatus||'مسجل',...chipStyle(a.toStatus||'')}));
+    }
+
+    const contractsAll = Array.isArray(st.contractsData) ? st.contractsData : [];
+    const contractsQNorm = String(st.contractsQ||'').trim().toLocaleLowerCase('ar');
+    const contractsStatus = st.contractsStatus || 'ALL';
+    const contractsFiltered = contractsAll.filter(r=>{
+      const status=String(r.contractStatus||r.contractState||'');
+      const text=[r.companyName,r.contractNumber,r.contractScope,r.contactName,r.section].join(' ').toLocaleLowerCase('ar');
+      return (!contractsQNorm||text.includes(contractsQNorm)) && (contractsStatus==='ALL'||status===contractsStatus);
+    });
+    const contractsCols=[
+      {label:'الشركة',flex:'1.2',align:'right'},{label:'رقم العقد',flex:'.9',align:'right'},{label:'نطاق العقد',flex:'1.3',align:'right'},
+      {label:'ممثل الشركة',flex:'1',align:'right'},{label:'القسم',flex:'1',align:'right'},{label:'المدة',flex:'1.2',align:'right'}
+    ];
+    const contractsRows=contractsFiltered.map(r=>{const s=String(r.contractStatus||r.contractState||'ENDED');return {cells:[
+      cell(r.companyName||'شركة متعاقدة','1.2',{weight:'600',col:'var(--tx,#e9f1fb)'}),cell(r.contractNumber||'—','.9'),cell(r.contractScope||'—','1.3'),cell(r.contactName||'—','1'),cell(r.section||'التشوه البصري','1'),cell((r.startDate||'—')+' — '+(r.endDate||'—'),'1.2',{size:'10px'})
+    ],chip:r.active===false?'الحساب موقوف':s==='ACTIVE'?'عقد نشط':s==='SUSPENDED'?'موقوف':'منتهي',...chipStyle(r.active===false?'INACTIVE':s)};});
 
     // Field Survey Manager Dashboard's own in-product navigation — three
     // real, already-implemented sections only (executive overview, the
@@ -3584,6 +3733,8 @@ class Component extends DCLogic {
       ...navPrefixed('navSurvey', !mobileNavigationAuthoritative && st.view === 'fieldSurvey'),
       ...navPrefixed('navLands', !mobileNavigationAuthoritative && st.view === 'lands'),
       ...navPrefixed('navMobility', !mobileNavigationAuthoritative && st.view === 'mobility'),
+      ...navPrefixed('navAdminAffairs', !mobileNavigationAuthoritative && st.view === 'adminAffairs'),
+      ...navPrefixed('navContracts', !mobileNavigationAuthoritative && st.view === 'contracts'),
       ...navPrefixed('navUsers', !mobileNavigationAuthoritative && st.view === 'users'),
       ...navPrefixed('navMap', !mobileNavigationAuthoritative && st.view === 'map'),
       ...navPrefixed('navObs', !mobileNavigationAuthoritative && st.view === 'observations'),
@@ -3610,7 +3761,7 @@ class Component extends DCLogic {
       // Map is now a first-class <main>-mounted view (viewIsMap below),
       // exactly like fieldSurvey/lands/mobility/users — it must not also
       // open the shared manager-view-overlay modal.
-      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'users' && st.view !== 'map',
+      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'adminAffairs' && st.view !== 'contracts' && st.view !== 'observations' && st.view !== 'reports' && st.view !== 'users' && st.view !== 'map',
       // This template engine's {{ }} expressions resolve only a single
       // property/equality/negation — it has no && / || operator support
       // (see support.js's resolve()/resolvePath()). A compound
@@ -3628,8 +3779,8 @@ class Component extends DCLogic {
       // WAVE 2B — NAV-01: 'map' added — Home's own dashboard (KPIs, priority
       // list, etc.) must unmount while the dedicated Map view is open,
       // exactly like fieldSurvey/lands/mobility/users already do.
-      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'users' && st.view !== 'map',
-      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands', viewIsMobility: st.view === 'mobility', viewIsMap: st.view === 'map',
+      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'adminAffairs' && st.view !== 'contracts' && st.view !== 'observations' && st.view !== 'reports' && st.view !== 'users' && st.view !== 'map',
+      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsAdminAffairs: st.view === 'adminAffairs', viewIsContracts: st.view === 'contracts', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands', viewIsMobility: st.view === 'mobility', viewIsMap: st.view === 'map',
       viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : st.view === 'mobility' ? 'لوحة مدير إدارة حركة السير' : st.view === 'map' ? 'الخريطة التشغيلية' : 'البلاغات',
       viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة حركة السير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : st.view === 'mobility' ? 'إشراف تنفيذي للقراءة فقط على إدارة حركة السير — بيانات حية من نظام الحركة الحقيقي لهذه المنظمة فقط.' : st.view === 'map' ? 'المشهد المكاني التنفيذي للبلاغات الموثّقة — نفس بيانات مركز القيادة، بعرض مخصص لإدارة الخريطة.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
@@ -3701,6 +3852,16 @@ class Component extends DCLogic {
       fsRecentRows: tRows.slice(0, 5), fsHasRecent: tRows.length > 0,
 
       tCols, tRows, tFilters, tPlaceholder, tQ, setTQ, tEmpty, tCount,
+      observationCols, observationRows, observationRowsEmpty: !observationRows.length, observationCount: observationRows.length + ' بلاغ',
+      reportKpis, reportRecentRows,
+      adminAffairsKpis, adminAffairsTabs, adminAffairsCols, adminAffairsRows, adminAffairsRowsEmpty: !adminAffairsRows.length, adminAffairsCount: adminAffairsRows.length + ' سجل',
+      adminAffairsQ: st.adminAffairsQ || '', setAdminAffairsQ: e => this.setState({adminAffairsQ:e.target.value}),
+      adminAffairsLoading: st.adminAffairsState === 'loading', adminAffairsReady: st.adminAffairsState === 'ready', adminAffairsErrorVisible: st.adminAffairsState === 'error', adminAffairsError: st.adminAffairsError || 'تعذر تحميل البيانات.',
+      refreshAdminAffairs: () => this.loadAdminAffairs(true),
+      contractsCols, contractsRows, contractsRowsEmpty: !contractsRows.length, contractsCount: contractsRows.length + ' شركة',
+      contractsQ: st.contractsQ || '', setContractsQ: e => this.setState({contractsQ:e.target.value}), contractsStatus: st.contractsStatus || 'ALL', setContractsStatus: e => this.setState({contractsStatus:e.target.value}),
+      contractsLoading: st.contractsState === 'loading', contractsReady: st.contractsState === 'ready', contractsErrorVisible: st.contractsState === 'error', contractsError: st.contractsError || 'تعذر تحميل سجل الشركات.',
+      refreshContracts: () => this.loadContracts(true),
       userCenterKpis, tProductFilters, tVehicleFilters, tDeptFilters,
       hasDeptFilters: tDeptFilters.length > 1,
 
@@ -3736,8 +3897,8 @@ class Component extends DCLogic {
         { label: 'إدارة الحصر الميداني', tag: '', view: 'survey', ...navLook(mobileNavigationAuthoritative && st.view === 'fieldSurvey') },
         { label: 'إدارة الأراضي والممتلكات', tag: '', view: 'lands', ...navLook(mobileNavigationAuthoritative && st.view === 'lands') },
         { label: 'إدارة حركة السير', tag: '', view: 'mobility', ...navLook(mobileNavigationAuthoritative && st.view === 'mobility') },
-        { label: 'إدارة الشؤون الإدارية', tag: '', on: () => { window.location.href='admin-affairs.html'; }, ...navLook(false) },
-        { label: 'إدارة العقود والشركات المتعاقدة', tag: '', on: () => { window.location.href='contractors-registry.html'; }, ...navLook(false) },
+        { label: 'إدارة الشؤون الإدارية', tag: '', view: 'adminAffairs', ...navLook(mobileNavigationAuthoritative && st.view === 'adminAffairs') },
+        { label: 'إدارة العقود والشركات المتعاقدة', tag: '', view: 'contracts', ...navLook(mobileNavigationAuthoritative && st.view === 'contracts') },
         { label: 'البلاغات', tag: metrics.inProgress || '—', view: 'observations', ...navLook(mobileNavigationAuthoritative && st.view === 'observations') },
         { label: 'الخريطة التشغيلية', tag: '', view: 'map', ...navLook(mobileNavigationAuthoritative && st.view === 'map') },
         { label: 'التقارير', tag: '', view: 'reports', ...navLook(mobileNavigationAuthoritative && st.view === 'reports') },
@@ -3810,6 +3971,46 @@ class Component extends DCLogic {
     this.prevent(e);
     this.setState({ mapMode: 'map', view: 'map', mobNavOpen: false, notifOpen: false, profOpen: false });
     setTimeout(() => this.syncOperationalMap(), 80);
+  }
+
+  // PHASE21 — Municipality Manager oversight for Administrative Affairs.
+  // Data comes from the existing trusted getMobilityWorkspace Admin API;
+  // this never opens admin-affairs.html (department-head operational UI).
+  async loadAdminAffairs(force=false) {
+    if (!force && (this.state.adminAffairsState === 'loading' || this.state.adminAffairsState === 'ready')) return;
+    this.setState({ adminAffairsState: 'loading', adminAffairsError: '' });
+    try {
+      const data = await this.callAdminUsersApi('getMobilityWorkspace', {});
+      this.setState({ adminAffairsState: 'ready', adminAffairsData: data || {}, adminAffairsError: '' });
+    } catch (error) {
+      this.setState({ adminAffairsState: 'error', adminAffairsError: this.adminApiErrorMessage(error) || 'تعذر تحميل بيانات الشؤون الإدارية.' });
+    }
+  }
+
+  openAdminAffairs(e) {
+    this.prevent(e);
+    this.setState({ view: 'adminAffairs', mobNavOpen: false, notifOpen: false, profOpen: false });
+    setTimeout(() => this.loadAdminAffairs(false), 0);
+  }
+
+  // PHASE21 — same verified contractor/company registry exposed as a
+  // read-only executive Manager View inside the shell. The existing
+  // contracts operational page remains untouched for its own workflow.
+  async loadContracts(force=false) {
+    if (!force && (this.state.contractsState === 'loading' || this.state.contractsState === 'ready')) return;
+    this.setState({ contractsState: 'loading', contractsError: '' });
+    try {
+      const data = await this.callAdminUsersApi('listFieldContractorCompanies', {});
+      this.setState({ contractsState: 'ready', contractsData: Array.isArray(data?.contractors) ? data.contractors : [], contractsError: '' });
+    } catch (error) {
+      this.setState({ contractsState: 'error', contractsError: this.adminApiErrorMessage(error) || 'تعذر تحميل سجل الشركات والعقود.' });
+    }
+  }
+
+  openContracts(e) {
+    this.prevent(e);
+    this.setState({ view: 'contracts', mobNavOpen: false, notifOpen: false, profOpen: false });
+    setTimeout(() => this.loadContracts(false), 0);
   }
 
   // Field Survey never uses the Twin canvas — it always shows the real
