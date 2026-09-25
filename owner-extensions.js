@@ -1,5 +1,6 @@
 import { auth } from './owner-firebase-client.js';
 import { runOwnerSupportDiagnostics, applyOwnerSafeRepairs, summarizeSupportResults } from './owner-support.js';
+import { renderOwnerOpsRoute } from './owner-governance.js';
 
 const ACCOUNTS_API = '/api/admin/platform-accounts';
 
@@ -36,6 +37,28 @@ async function accountsCall(payload) {
   return data;
 }
 
+async function ownerAdminCall(payload) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('owner_session_required');
+  const token = await user.getIdToken();
+  const response = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  let data = {};
+  try { data = await response.json(); } catch (_) {}
+  if (!response.ok) {
+    const error = new Error(data.reason || data.error || `http_${response.status}`);
+    error.payload = data;
+    throw error;
+  }
+  return data;
+}
+
 function ensureStyles() {
   if (document.getElementById('ownerExtensionStyles')) return;
   const style = el('style', { id: 'ownerExtensionStyles' });
@@ -58,6 +81,17 @@ function ensureStyles() {
     .owner-ext-perms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:10px}
     .owner-ext-perms label{display:flex;align-items:center;gap:7px;font-size:.8rem}
     .owner-ext-message{min-height:22px;font-size:.82rem;margin-top:8px}
+    .owner-support-crm{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(0,1.7fr);gap:12px}
+    .owner-support-thread-list{display:grid;gap:8px;max-height:560px;overflow:auto}
+    .owner-support-thread{width:100%;text-align:right;border:1px solid var(--stroke);border-radius:14px;padding:11px;background:var(--card)}
+    .owner-support-thread[aria-current="true"]{border-color:var(--cyan);box-shadow:0 0 0 2px color-mix(in srgb,var(--cyan) 18%,transparent)}
+    .owner-support-messages{display:flex;flex-direction:column;gap:8px;min-height:280px;max-height:430px;overflow:auto;padding:8px}
+    .owner-support-msg{max-width:82%;border:1px solid var(--stroke);border-radius:16px;padding:9px 11px;background:var(--chip)}
+    .owner-support-msg[data-role="owner"]{align-self:flex-start;border-color:color-mix(in srgb,var(--emerald) 55%,var(--stroke))}
+    .owner-support-msg[data-role="manager"]{align-self:flex-end;border-color:color-mix(in srgb,var(--cyan) 55%,var(--stroke))}
+    .owner-support-compose{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}
+    .owner-support-compose textarea{width:100%;min-height:74px;resize:vertical;border:1px solid var(--stroke);border-radius:12px;background:transparent;color:var(--text);padding:10px}
+    @media(max-width:900px){.owner-support-crm{grid-template-columns:1fr}}
     @media(max-width:900px){.owner-ext-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:640px){.owner-ext-grid,.owner-ext-form,.owner-ext-perms{grid-template-columns:1fr}}
   `;
@@ -101,6 +135,28 @@ function ensureSupportView(main) {
     <section class="card p-4">
       <div class="flex items-center justify-between gap-2 flex-wrap"><h3 class="font-bold title">نتائج الفحص</h3><span class="pill">Live Diagnostics</span></div>
       <div id="ownerSupportResults" class="owner-ext-list"><p class="muted text-sm">اضغط «فحص الآن» لقراءة الحالة الفعلية.</p></div>
+    </section>
+    <section class="card p-4">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <div><h3 class="font-bold title">صندوق دعم المؤسسات</h3><p class="muted text-xs mt-1">محادثات فعلية بين مدير المؤسسة وفريق SMART HSR.</p></div>
+        <button id="ownerSupportInboxRefresh" class="btn btn-outline" type="button">تحديث المحادثات</button>
+      </div>
+      <div class="owner-support-crm mt-3">
+        <div id="ownerSupportThreads" class="owner-support-thread-list"><p class="muted text-sm">جاري تحميل المحادثات…</p></div>
+        <div>
+          <div id="ownerSupportThreadHeader" class="muted text-sm">اختر مؤسسة لفتح المحادثة.</div>
+          <div id="ownerSupportMessages" class="owner-support-messages"><p class="muted text-sm">لا توجد محادثة محددة.</p></div>
+          <form id="ownerSupportReplyForm" class="owner-support-compose">
+            <textarea name="text" maxlength="4000" placeholder="اكتب رد فريق SMART HSR…" disabled></textarea>
+            <button class="btn btn-primary" type="submit" disabled>إرسال</button>
+          </form>
+          <div class="owner-ext-toolbar mt-2">
+            <button id="ownerSupportMarkPending" class="btn btn-outline" type="button" disabled>بانتظار متابعة</button>
+            <button id="ownerSupportResolve" class="btn btn-outline" type="button" disabled>إغلاق كمحلولة</button>
+          </div>
+          <p id="ownerSupportCrmMessage" class="owner-ext-message" role="status" aria-live="polite"></p>
+        </div>
+      </div>
     </section>
   `;
   const footer = main.querySelector('footer');
@@ -198,6 +254,113 @@ function bindSupport() {
       setMessage('ownerSupportMessage', `فشل الإصلاح الآمن: ${humanError(error)}`);
     }
   });
+}
+
+let supportCrmBound = false;
+let supportInboxLoaded = false;
+let selectedSupportOrgId = null;
+
+async function loadSupportInbox() {
+  const list = document.getElementById('ownerSupportThreads');
+  if (!list) return;
+  list.innerHTML = '<p class="muted text-sm">جاري قراءة قنوات الدعم…</p>';
+  try {
+    const data = await ownerAdminCall({ action: 'ownerSupportList' });
+    supportInboxLoaded = true;
+    list.replaceChildren();
+    const threads = Array.isArray(data.threads) ? data.threads : [];
+    if (!threads.length) {
+      list.innerHTML = '<p class="muted text-sm">لا توجد محادثات دعم بعد.</p>';
+      return;
+    }
+    for (const thread of threads) {
+      const button = el('button', {
+        type: 'button',
+        class: 'owner-support-thread',
+        'data-support-org': thread.organizationId,
+        'aria-current': String(thread.organizationId === selectedSupportOrgId),
+      });
+      button.innerHTML = `
+        <div class="flex justify-between gap-2"><strong>${escapeHtml(thread.organizationName || thread.organizationId)}</strong><span class="pill">${escapeHtml(thread.status || 'open')}</span></div>
+        <div class="muted text-xs mt-1">${escapeHtml(thread.lastMessagePreview || 'لا توجد رسالة بعد')}</div>
+        <div class="muted text-xs mt-1">غير مقروء للمالك: ${Number(thread.unreadOwner || 0)}</div>
+      `;
+      button.addEventListener('click', () => openSupportThread(thread.organizationId));
+      list.appendChild(button);
+    }
+  } catch (error) {
+    list.innerHTML = `<p class="text-sm" style="color:var(--rose)">${escapeHtml(humanError(error))}</p>`;
+  }
+}
+
+async function openSupportThread(organizationId) {
+  selectedSupportOrgId = organizationId;
+  const header = document.getElementById('ownerSupportThreadHeader');
+  const messages = document.getElementById('ownerSupportMessages');
+  const form = document.getElementById('ownerSupportReplyForm');
+  const pending = document.getElementById('ownerSupportMarkPending');
+  const resolve = document.getElementById('ownerSupportResolve');
+  messages.innerHTML = '<p class="muted text-sm">جاري فتح المحادثة…</p>';
+  try {
+    const data = await ownerAdminCall({ action: 'ownerSupportThreadGet', organizationId });
+    header.textContent = `${data.thread.organizationName || organizationId} — الحالة: ${data.thread.status}`;
+    messages.replaceChildren();
+    for (const message of data.messages || []) {
+      const bubble = el('div', { class: 'owner-support-msg', 'data-role': message.senderRole || 'system' });
+      bubble.innerHTML = `<div class="text-sm">${escapeHtml(message.text || '')}</div><div class="muted text-xs mt-1">${message.createdAt ? escapeHtml(new Date(message.createdAt).toLocaleString('ar-SA')) : '—'}</div>`;
+      messages.appendChild(bubble);
+    }
+    if (!(data.messages || []).length) messages.innerHTML = '<p class="muted text-sm">لا توجد رسائل بعد.</p>';
+    messages.scrollTop = messages.scrollHeight;
+    form.elements.text.disabled = false;
+    form.querySelector('button[type="submit"]').disabled = false;
+    pending.disabled = false;
+    resolve.disabled = false;
+    setMessage('ownerSupportCrmMessage', '');
+    await loadSupportInbox();
+  } catch (error) {
+    setMessage('ownerSupportCrmMessage', `تعذر فتح المحادثة: ${humanError(error)}`);
+  }
+}
+
+function bindSupportCrm() {
+  if (supportCrmBound) return;
+  const refresh = document.getElementById('ownerSupportInboxRefresh');
+  const form = document.getElementById('ownerSupportReplyForm');
+  const pending = document.getElementById('ownerSupportMarkPending');
+  const resolve = document.getElementById('ownerSupportResolve');
+  if (!refresh || !form || !pending || !resolve) return;
+  supportCrmBound = true;
+  refresh.addEventListener('click', loadSupportInbox);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!selectedSupportOrgId) return;
+    const text = String(new FormData(form).get('text') || '').trim();
+    if (!text) return;
+    const button = form.querySelector('button[type="submit"]');
+    button.disabled = true;
+    try {
+      await ownerAdminCall({ action: 'ownerSupportReply', organizationId: selectedSupportOrgId, text });
+      form.reset();
+      setMessage('ownerSupportCrmMessage', 'تم إرسال الرد للمؤسسة.', true);
+      await openSupportThread(selectedSupportOrgId);
+    } catch (error) {
+      setMessage('ownerSupportCrmMessage', `تعذر إرسال الرد: ${humanError(error)}`);
+    } finally {
+      button.disabled = false;
+    }
+  });
+  async function setStatus(status) {
+    if (!selectedSupportOrgId) return;
+    try {
+      await ownerAdminCall({ action: 'ownerSupportSetStatus', organizationId: selectedSupportOrgId, status });
+      await openSupportThread(selectedSupportOrgId);
+    } catch (error) {
+      setMessage('ownerSupportCrmMessage', `تعذر تحديث الحالة: ${humanError(error)}`);
+    }
+  }
+  pending.addEventListener('click', () => setStatus('pending'));
+  resolve.addEventListener('click', () => setStatus('resolved'));
 }
 
 const PERMISSION_LABELS = Object.freeze({
@@ -363,9 +526,12 @@ export function ensureOwnerExtensions() {
   ensureSupportView(main);
   ensureAccountsView(main);
   bindSupport();
+  bindSupportCrm();
   bindAccounts();
 }
 
 export async function onOwnerExtensionRoute(route) {
   if (route === '/accounts' && !accountsLoaded) await loadAccounts();
+  if (route === '/support' && !supportInboxLoaded) await loadSupportInbox();
+  if (['/audit','/security','/reports','/health'].includes(route)) await renderOwnerOpsRoute(route);
 }
