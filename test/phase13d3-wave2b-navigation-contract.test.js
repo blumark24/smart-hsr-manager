@@ -25,7 +25,7 @@ function methodBody(source, signature, maxLen = 1200) {
   return source.slice(start, start + maxLen);
 }
 
-// ---- WF-01: active-state source of truth (items 1-8) ----
+// ---- WF-01: active-state source of truth (Phase21 expanded to 10 Manager routes) ----
 
 test('WF-01: navLook/navPrefixed compute active state from st.view alone, no ternary inside {{ }} (this template engine cannot evaluate one)', () => {
   assert.match(manager, /const navLook = active => \(\{/);
@@ -33,11 +33,13 @@ test('WF-01: navLook/navPrefixed compute active state from st.view alone, no ter
   assert.match(manager, /const navPrefixed = \(prefix, active\) => \{/);
 });
 
-test('WF-01 items 1-8: each desktop route is active only for its own st.view while the mobile drawer is not authoritative', () => {
+test('WF-01: each desktop Manager route is active only for its own st.view while the mobile drawer is not authoritative', () => {
   assert.match(manager, /\.\.\.navPrefixed\('navHome', !mobileNavigationAuthoritative && st\.view === 'home'\)/);
   assert.match(manager, /\.\.\.navPrefixed\('navSurvey', !mobileNavigationAuthoritative && st\.view === 'fieldSurvey'\)/);
   assert.match(manager, /\.\.\.navPrefixed\('navLands', !mobileNavigationAuthoritative && st\.view === 'lands'\)/);
   assert.match(manager, /\.\.\.navPrefixed\('navMobility', !mobileNavigationAuthoritative && st\.view === 'mobility'\)/);
+  assert.match(manager, /\.\.\.navPrefixed\('navAdminAffairs', !mobileNavigationAuthoritative && st\.view === 'adminAffairs'\)/);
+  assert.match(manager, /\.\.\.navPrefixed\('navContracts', !mobileNavigationAuthoritative && st\.view === 'contracts'\)/);
   assert.match(manager, /\.\.\.navPrefixed\('navUsers', !mobileNavigationAuthoritative && st\.view === 'users'\)/);
   assert.match(manager, /\.\.\.navPrefixed\('navMap', !mobileNavigationAuthoritative && st\.view === 'map'\)/);
   assert.match(manager, /\.\.\.navPrefixed\('navObs', !mobileNavigationAuthoritative && st\.view === 'observations'\)/);
@@ -46,9 +48,9 @@ test('WF-01 items 1-8: each desktop route is active only for its own st.view whi
 
 test('WF-01 item 9: desktop active state remains mutually exclusive and is suppressed while the responsive drawer owns aria-current', () => {
   const activeCalls = [...manager.matchAll(/navPrefixed\('nav(\w+)', !mobileNavigationAuthoritative && st\.view === '(\w+)'\)/g)];
-  assert.equal(activeCalls.length, 8, 'expected exactly 8 navPrefixed(...) calls driving sidebar active state');
+  assert.equal(activeCalls.length, 10, 'expected exactly 10 navPrefixed(...) calls driving sidebar active state after Phase21 service-shell closure');
   const compared = activeCalls.map(m => m[2]);
-  assert.equal(new Set(compared).size, 8, 'the 8 compared route values must be distinct -- otherwise two links could read active for the same st.view');
+  assert.equal(new Set(compared).size, 10, 'the 10 compared route values must be distinct -- otherwise two links could read active for the same st.view');
   assert.match(manager, /const mobileNavigationAuthoritative = \(st\.bp === 'tab' \|\| st\.bp === 'mob'\) && st\.mobNavOpen;/);
 });
 
@@ -57,11 +59,13 @@ test('WF-01 item 10: the old static aria-current="page" hardcoded on Home only i
   assert.match(manager, /data-manager-view="home"[^>]*aria-current="\{\{ navHomeCurrent \}\}"/);
 });
 
-test('WF-01 item 11: desktop sidebar parity -- all 8 data-manager-view links (including the two accordion sub-groups) carry a dynamic aria-current bound to their own nav*Current prop', () => {
+test('WF-01 item 11: desktop sidebar parity -- all Manager service routes carry a dynamic aria-current bound to their own nav*Current prop', () => {
   assert.match(manager, /data-manager-view="home"[^>]*aria-current="\{\{ navHomeCurrent \}\}"/);
   assert.match(manager, /data-manager-view="survey"[^>]*aria-current="\{\{ navSurveyCurrent \}\}"/);
   assert.match(manager, /data-manager-view="lands"[^>]*aria-current="\{\{ navLandsCurrent \}\}"/);
   assert.match(manager, /data-manager-view="mobility"[^>]*aria-current="\{\{ navMobilityCurrent \}\}"/);
+  assert.match(manager, /data-manager-view="adminAffairs"[^>]*aria-current="\{\{ navAdminAffairsCurrent \}\}"/);
+  assert.match(manager, /data-manager-view="contracts"[^>]*aria-current="\{\{ navContractsCurrent \}\}"/);
   assert.match(manager, /data-manager-view="users"[^>]*aria-current="\{\{ navUsersCurrent \}\}"/);
   assert.match(manager, /data-manager-view="map"[^>]*aria-current="\{\{ navMapCurrent \}\}"/);
   assert.match(manager, /data-manager-view="observations"[^>]*aria-current="\{\{ navObsCurrent \}\}"/);
