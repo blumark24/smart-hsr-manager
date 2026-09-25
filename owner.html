@@ -251,7 +251,7 @@
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
           <div>
             <h2 class="text-lg font-bold title">المؤسسات المسجلة</h2>
-            <p class="text-xs muted">إدارة كاملة: إضافة، تعديل، حذف، وترقية الخطط (يتم إنشاء فاتورة عند الترقية).</p>
+            <p class="text-xs muted">إدارة كاملة: إضافة، تعديل، أرشفة آمنة، استعادة، وترقية الخطط.</p>
           </div>
           <div class="flex items-center gap-2">
             <input id="searchBox" placeholder="ابحث باسم المؤسسة..." class="bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[var(--emerald)]" />
@@ -442,7 +442,7 @@
         <label class="text-sm">تاريخ الانتهاء<input name="expiresAt" type="date" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
       </div>
       <div class="flex items-center gap-2 justify-end pt-2">
-        <button id="deleteBtn" type="button" class="btn btn-outline hidden">حذف</button>
+        <button id="deleteBtn" type="button" class="btn btn-outline hidden">أرشفة المؤسسة</button>
         <button id="saveBtn" class="btn btn-primary" value="default">حفظ</button>
       </div>
       <input type="hidden" name="docId" />
