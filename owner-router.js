@@ -12,6 +12,8 @@ export const ROUTES = Object.freeze([
   '/users',
   '/subscriptions',
   '/ai',
+  '/support',
+  '/accounts',
   '/audit',
   '/security',
   '/reports',
