@@ -94,7 +94,7 @@ test('registry search and filters retain clear municipal semantics and keyboard 
 
 test('profile save validates first and submits only sections that actually changed', () => {
   assert.match(profile, /function profileSnapshot/);
-  assert.match(profile, /if\(p1!==p2\)throw Error/);
+  assert.match(profile, /if\(p1!==p2\)\{[^}]*throw Error\('كلمتا المرور غير متطابقتين\.'\);\}/);
   assert.match(profile, /if\(!clean\(panel\.querySelector\('#edit-name'\)/);
   assert.match(profile, /current\.basic!==initial\.basic/);
   assert.match(profile, /current\.organization!==initial\.organization/);
@@ -106,7 +106,7 @@ test('profile save validates first and submits only sections that actually chang
 test('account activation does not repeat the employee entitlement write already committed by activateAccount', () => {
   assert.match(core, /employeeAlreadySynced/);
   assert.match(dialogs, /U\.sync\(id,a\.authUid,x,\{employeeAlreadySynced:true\}\)/);
-  assert.match(dialogs, /U\.sync\(e\.employeeId,a\.authUid,x,\{employeeAlreadySynced:true\}\)/);
+  assert.match(dialogs, /U\.sync\(e\.employeeId,a\.authUid,x,\{employeeAlreadySynced:true(?:,[^}]*)?\}\)/);
 });
 
 test('partial add-user failure is honest and cannot create a duplicate on retry', () => {

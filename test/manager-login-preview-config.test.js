@@ -19,9 +19,11 @@ test('manager login resolves the environment Firebase configuration', () => {
 });
 
 test('manager dashboard resolves the same environment Firebase configuration', () => {
-  const source = fs.readFileSync(path.join(__dirname, '..', 'manager.html'), 'utf8');
+  const managerSource = fs.readFileSync(path.join(__dirname, '..', 'manager.html'), 'utf8');
+  const adapterSource = fs.readFileSync(path.join(__dirname, '..', 'manager-dashboard-adapter.js'), 'utf8');
 
-  assert.match(source, /import \{ resolveFirebaseConfig \} from ['"]\.\/firebase-runtime-config\.js['"]/);
-  assert.match(source, /const firebaseConfig = await resolveFirebaseConfig\(\)/);
-  assert.doesNotMatch(source, /projectId:\s*['"]smart-hsr-manager['"]/);
+  assert.match(managerSource, /<script type="module" src="\.\/manager-dashboard-adapter\.js"><\/script>/);
+  assert.match(adapterSource, /import \{ resolveFirebaseConfig \} from ['"]\.\/firebase-runtime-config\.js['"]/);
+  assert.match(adapterSource, /resolveFirebaseConfig\(\)/);
+  assert.doesNotMatch(adapterSource, /projectId:\s*['"]smart-hsr-manager['"]/);
 });

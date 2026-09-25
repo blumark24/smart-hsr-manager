@@ -107,7 +107,7 @@ test('5. every desktop [data-manager-view] route still exists exactly once and i
 });
 
 test('5b. the other real mobNav routes use view identifiers and do not carry the Home compatibility marker', () => {
-  const mobNavBlock = methodBody(manager, 'mobNav: [', 1700);
+  const mobNavBlock = methodBody(manager, 'mobNav: [', 2500);
   const nonHomeRoutes = [
     "view: 'survey'", "view: 'lands'", "view: 'mobility'", "view: 'observations'",
     "view: 'map'", "view: 'reports'", "view: 'users'",

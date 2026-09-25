@@ -330,7 +330,7 @@ async function renderCenter(force=false) {
         
       </div>
       <div class="ucv2-toolbar">
-        <label class="ucv2-search"><span class="sr-only">بحث في السجل</span><input type="search" data-filter="search" value="${esc(state.search)}" aria-label="بحث في السجل" placeholder="بحث بالاسم أو البريد أو رقم العقد" autocomplete="off"></label>
+        <label class="ucv2-search"><span class="sr-only">بحث في سجل الموظفين</span><input type="search" data-filter="search" value="${esc(state.search)}" aria-label="بحث في سجل الموظفين" placeholder="بحث بالاسم أو البريد أو رقم العقد" autocomplete="off"></label>
         
         <select data-filter="status" aria-label="الحالة">${selectOptions([['ACTIVE','نشط / عقد نشط'],['SUSPENDED','موقوف'],['NO_ACCOUNT','بدون حساب'],['PENDING_ACTIVATION','يحتاج تفعيل'],['EXPIRED','عقد منتهي']],state.status,'كل الحالات')}</select>
         <select data-filter="role" aria-label="الدور">${selectOptions(roleValues.map(r=>[r,roleLabel(r)]),state.role,'كل الأدوار')}</select>
@@ -490,6 +490,7 @@ function bindCenter(app,directory){
   }));
   app.querySelectorAll('[data-open-employee]').forEach(btn=>btn.addEventListener('click',async()=>{
     const id=btn.dataset.openEmployee;
+    btn.disabled=true;app.setAttribute('aria-busy','true');
     try{
       let employee=(directory.employees||[]).find(e=>String(e.employeeId)===id);
       // PHASE13D.2 — a held `directory` reference can miss a row that is
@@ -504,7 +505,7 @@ function bindCenter(app,directory){
       if(!employee){ showCenterActionError(app,{reason:'employee_not_found_after_refresh'}); return; }
       await U.profile(employee);decorateProfileDialog(employee);
     }catch(error){showCenterActionError(app,error);}
-    finally{}
+    finally{btn.disabled=false;app.removeAttribute('aria-busy');}
   }));
   app.querySelectorAll('tr[data-employee-id]').forEach(row=>row.addEventListener('keydown',event=>{ if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){ event.preventDefault(); row.querySelector('[data-open-employee]')?.click(); } }));
   app.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{ state.page += btn.dataset.page==='next'?1:-1; renderCenter(); }));

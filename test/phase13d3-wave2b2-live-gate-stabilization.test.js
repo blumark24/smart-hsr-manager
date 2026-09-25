@@ -6,9 +6,9 @@ const path = require('node:path');
 const test = require('node:test');
 
 const root = path.join(__dirname, '..');
-const manager = fs.readFileSync(path.join(root, 'manager.html'), 'utf8');
-const format = fs.readFileSync(path.join(root, 'manager-dashboard-format.js'), 'utf8');
-const operationalMap = fs.readFileSync(path.join(root, 'operational-map.html'), 'utf8');
+const manager = fs.readFileSync(path.join(root, 'manager.html'), 'utf8').replace(/\r\n/g, '\n');
+const format = fs.readFileSync(path.join(root, 'manager-dashboard-format.js'), 'utf8').replace(/\r\n/g, '\n');
+const operationalMap = fs.readFileSync(path.join(root, 'operational-map.html'), 'utf8').replace(/\r\n/g, '\n');
 
 function block(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);

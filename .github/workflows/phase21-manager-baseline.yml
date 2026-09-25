@@ -31,6 +31,10 @@ jobs:
           node --input-type=module --check < manager-mobility-adapter.js
           node --input-type=module --check < manager-support.js
           node --check service-switcher.js
+          node --check manager-phase11c-user-center-core.js
+          node --check manager-phase11c-user-center-dialogs.js
+          node --check manager-phase11d-user-center-enhancements.js
+          node --check manager-phase11f-reference-ui.js
 
       - name: Manager structural baseline
         run: |
@@ -61,6 +65,7 @@ jobs:
           node --test test/manager-component-did-update-regression.test.js
           node --test test/manager-user-center-ui.test.js
           node --test test/manager-users-list-state.test.js
+          node --test test/manager-account-action-system.test.js
           node --test test/manager-login-error-classification.test.js
           node --test test/manager-login-preview-config.test.js
           node --test test/manager-service-entitlements.test.js
@@ -72,6 +77,14 @@ jobs:
           node --test test/manager-mobility-adapter.test.js
           node --test test/municipality-admin-polish-regression.test.js
           node --test test/phase13d1-manager-shell-navigation-stability.test.js
+          node --test test/phase13d2-employee-action-lookup-hardening.test.js
+          node --test test/phase13d3-command-center-dead-click-regression.test.js
+          node --test test/phase13d3-step1b-legacy-reload-guard.test.js
+          node --test test/phase13d3-wave2b-navigation-contract.test.js
+          node --test test/phase13d3-wave2b1-mobile-home-spa-guard.test.js
+          node --test test/phase13d3-wave2b2-live-gate-stabilization.test.js
+          node --test test/user-center-compact-grid-email-performance.test.js
+          node --test test/user-center-employee-profile-email-endpoint-regression.test.js
           node --test test/user-center-runtime-hang-regression.test.js
           node --test test/user-center-lifecycle-starvation-regression.test.js
           node --test test/user-center-phase12b-audit.test.js
