@@ -1,10 +1,8 @@
-// Minimal hash router for the Owner Command Center shell.
-//
-// Presentational only: it shows/hides pre-rendered module containers by
-// route and marks the matching sidebar link active. It does not fetch
-// data, call Firebase, or own any business logic — every module's existing
-// data-loading and event wiring is untouched and keeps running exactly as
-// it did before routing was introduced.
+// Owner Command Center hash router.
+// Core legacy modules remain pre-rendered in owner.html. Additive owner extensions
+// are mounted here so the shell gains real routed modules without rewriting the
+// large legacy document or disturbing its existing Firebase/business wiring.
+import { ensureOwnerExtensions, onOwnerExtensionRoute } from './owner-extensions.js';
 
 export const ROUTES = Object.freeze([
   '/overview',
@@ -43,9 +41,15 @@ export function createOwnerRouter({ onRouteChange } = {}) {
       link.classList.toggle('sidebar-link-active', link.dataset.routeLink === route);
     });
     if (typeof onRouteChange === 'function') onRouteChange(route);
+    Promise.resolve(onOwnerExtensionRoute(route)).catch((error) => {
+      console.error('Owner extension route load failed', error);
+    });
   }
 
   function start() {
+    // Mount additive real modules before resolving the first route so direct
+    // links such as #/support and #/accounts work on the initial page load.
+    ensureOwnerExtensions();
     if (resolveRoute() !== normalizeHash(window.location.hash)) {
       window.location.hash = '#' + DEFAULT_ROUTE;
     }
