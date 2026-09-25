@@ -30,6 +30,52 @@
 [data-theme="light"] .manager-observation-card:hover{border-color:rgba(18,133,90,.4)!important;background:rgba(234,247,240,.85)!important}
 [data-theme="light"] .manager-observation-meta span{background:rgba(238,249,243,.9)!important;border-color:rgba(18,133,90,.16)!important;color:#4c6357!important}
 </style>
+<style id="phase21-final-visual-closure">
+/* PHASE21 FINAL VISUAL CLOSURE — presentation only. Day/Night surfaces,
+   executive cards/KPIs, and map glass language are unified without changing
+   data sources, authorization, routing, or municipal business logic. */
+html[data-theme="light"] body{background:#e7ece9}
+html[data-theme="dark"] body{background:#020712}
+.hsr-manager-map-shell{border-radius:20px!important;border-color:var(--mapShellBd,var(--twinBd,rgba(122,164,224,.18)))!important;box-shadow:var(--mapShellSh,var(--cardSh,0 24px 60px -30px rgba(0,0,0,1)))!important}
+.hsr-manager-map-shell:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--mapInnerBd,rgba(255,255,255,.06)),inset 0 -42px 90px -72px rgba(0,0,0,.7)}
+.hsr-manager-map-overlay{backdrop-filter:blur(18px) saturate(135%)!important;-webkit-backdrop-filter:blur(18px) saturate(135%)!important}
+.hsr-exec-pin{position:relative;isolation:isolate}
+.hsr-exec-pin:before{content:"";position:absolute;z-index:-1;left:50%;top:39%;width:27px;height:27px;border-radius:50%;transform:translate(-50%,-50%);background:var(--pin-halo,rgba(76,201,240,.18));box-shadow:0 0 0 7px var(--pin-ring,rgba(76,201,240,.08)),0 0 22px var(--pin-glow,rgba(76,201,240,.22));opacity:.72;transition:opacity .16s ease,transform .16s ease}
+.hsr-exec-marker.is-selected .hsr-exec-pin:before{opacity:1;transform:translate(-50%,-50%) scale(1.18)}
+.hsr-exec-priority{position:absolute;top:-4px;right:-6px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;display:grid;place-items:center;background:#ef4444;color:#fff;border:2px solid rgba(255,255,255,.95);font-size:8px;font-weight:900;line-height:1;box-shadow:0 4px 10px rgba(0,0,0,.28)}
+.hsr-map-kpi-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.hsr-map-kpi{min-height:62px;padding:10px 12px;border-radius:14px;text-align:right;cursor:pointer;background:var(--l1);border:1px solid var(--l1Bd);box-shadow:var(--l3Sh);color:var(--tx);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.hsr-map-kpi:hover{transform:translateY(-1px);border-color:var(--mapKpiHoverBd,var(--accBd));box-shadow:var(--l1Sh)}
+.hsr-map-kpi.is-active{border-color:var(--accBd);box-shadow:0 0 0 2px var(--focusRing),var(--l1Sh)}
+.hsr-map-kpi-label{font-size:9.5px;color:var(--tx3);font-weight:650}
+.hsr-map-kpi-value{font-size:22px;line-height:1.15;margin-top:4px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--tx)}
+.hsr-manager-map-shell .leaflet-popup{margin-bottom:7px}
+.hsr-manager-map-shell .leaflet-popup-content-wrapper{padding:0;background:var(--mapPopBg)!important;border:1px solid var(--mapPopBd)!important;border-radius:17px!important;box-shadow:var(--mapPopSh)!important;backdrop-filter:blur(22px) saturate(145%);-webkit-backdrop-filter:blur(22px) saturate(145%);overflow:hidden}
+.hsr-manager-map-shell .leaflet-popup-content{margin:0!important;min-width:246px}
+.hsr-manager-map-shell .leaflet-popup-tip{background:var(--mapPopBg)!important;border:1px solid var(--mapPopBd)!important;box-shadow:none!important}
+.hsr-manager-map-shell .leaflet-popup-close-button{top:7px!important;left:7px!important;right:auto!important;width:28px!important;height:28px!important;display:grid!important;place-items:center;color:var(--mapPopTx2)!important;border-radius:9px;font-size:18px!important}
+.hsr-manager-map-shell .leaflet-popup-close-button:hover{background:var(--glassH)!important;color:var(--mapPopTx)!important}
+.hsr-map-popup-body{display:flex;flex-direction:column;min-width:246px;direction:rtl;color:var(--mapPopTx)}
+.hsr-map-popup-head{padding:14px 14px 10px;border-bottom:1px solid var(--popDiv)}
+.hsr-map-popup-eyebrow{font-size:8.5px;font-weight:750;letter-spacing:.08em;color:var(--popAcc);margin-bottom:4px}
+.hsr-map-popup-title{font-size:13px;font-weight:750;color:var(--mapPopTx);padding-left:28px;line-height:1.45}
+.hsr-map-popup-chip{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:3px 8px;border-radius:999px;font-size:9.5px;font-weight:700;background:color-mix(in srgb,var(--status-color) 12%,transparent);color:var(--status-color);border:1px solid color-mix(in srgb,var(--status-color) 28%,transparent)}
+.hsr-map-popup-chip:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--status-color)}
+.hsr-map-popup-thumb{height:92px;margin:10px 12px 0;border-radius:11px;background:var(--sunk) center/cover no-repeat;border:1px solid var(--popDiv);display:flex;align-items:center;justify-content:center;color:var(--mapPopTx2);font-size:9.5px;overflow:hidden}
+.hsr-map-popup-rows{padding:9px 13px 5px;display:flex;flex-direction:column}
+.hsr-map-popup-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--popDiv);font-size:10.5px}
+.hsr-map-popup-row:last-child{border-bottom:0}
+.hsr-map-popup-key{width:64px;flex:none;color:var(--mapPopTx2)}
+.hsr-map-popup-value{flex:1;text-align:left;color:var(--mapPopTx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hsr-map-popup-actions{display:grid;grid-template-columns:1fr auto auto;gap:6px;padding:8px 12px 12px}
+.hsr-map-popup-btn{height:32px;border-radius:9px;font-size:10.5px;font-weight:700;cursor:pointer;border:1px solid var(--ctlBd);background:var(--ctl);color:var(--tx2);padding:0 10px}
+.hsr-map-popup-btn.primary{background:var(--btn);border-color:var(--btnBd);color:var(--btnTx)}
+.hsr-map-popup-btn.icon{width:34px;padding:0;display:grid;place-items:center;font-size:13px}
+html[data-theme="light"] .hsr-manager-map-shell .leaflet-tile-pane{filter:saturate(.76) contrast(.94) brightness(1.02)}
+html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightness(.66) saturate(.68) contrast(1.1)}
+@media(max-width:760px){.hsr-map-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.hsr-map-kpi{min-height:56px}.hsr-manager-map-shell .leaflet-popup-content{min-width:220px}.hsr-map-popup-body{min-width:220px}.hsr-map-popup-actions{grid-template-columns:1fr auto auto}}
+@media(prefers-reduced-motion:reduce){.hsr-map-kpi,.hsr-exec-pin,.hsr-exec-pin:before{transition:none!important}}
+</style>
 </head>
 <body>
 <x-dc>
@@ -643,6 +689,15 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
               </button>
             </div>
+          </div>
+
+          <div class="hsr-map-kpi-strip" aria-label="مؤشرات الخريطة التشغيلية">
+            <sc-for list="{{ mapKpis }}" as="k">
+              <button onClick="{{ k.on }}" data-f="1" class="{{ k.className }}" aria-label="{{ k.label }}">
+                <div class="hsr-map-kpi-label">{{ k.label }}</div>
+                <div class="hsr-map-kpi-value">{{ k.value }}</div>
+              </button>
+            </sc-for>
           </div>
 
           <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1;min-height:420px;position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
@@ -2387,7 +2442,7 @@ class Component extends DCLogic {
 
   DAY = {
     '--pgMaxW': '1600px',
-    '--pgBg': 'radial-gradient(1100px 620px at 50% -12%,#ffffff,transparent 70%),#eef1ee',
+    '--pgBg': 'radial-gradient(980px 540px at 52% -8%,rgba(255,255,255,.86),transparent 70%),radial-gradient(760px 460px at 12% 18%,rgba(18,133,90,.055),transparent 72%),#e8edea',
     // The following are the approved Day-mode surface/header/sidebar tokens
     // from "Smart HSR Manager Dashboard.dc.html" (the approved Claude Design
     // source). Without them, every card/table/section/header/sidebar built
@@ -2456,12 +2511,12 @@ class Component extends DCLogic {
     '--gl1': 'blur(16px) saturate(135%)',
     '--gl2': 'blur(12px) saturate(125%)',
     '--gl3': 'blur(8px) saturate(115%)',
-    '--card': '#ffffff', '--card2': '#ffffff',
-    '--cardBd': 'rgba(17,54,40,0.11)',
-    '--cardSh': '0 1px 2px rgba(16,42,32,0.05),0 14px 30px -22px rgba(16,42,32,0.3)',
-    '--sunk': '#f4f7f4', '--sunk2': '#f7f9f7',
-    '--ctl': '#f2f5f2', '--ctlBd': 'rgba(17,54,40,0.12)', '--ctlH': '#e7ece8',
-    '--field': '#ffffff', '--pop': '#ffffff', '--drawer': '#ffffff',
+    '--card': 'rgba(246,250,248,.94)', '--card2': 'rgba(241,247,244,.92)',
+    '--cardBd': 'rgba(17,90,61,0.13)',
+    '--cardSh': '0 1px 2px rgba(16,42,32,0.04),0 16px 34px -24px rgba(16,55,40,0.28)',
+    '--sunk': '#eaf0ec', '--sunk2': '#eff4f1',
+    '--ctl': 'rgba(238,244,240,.94)', '--ctlBd': 'rgba(17,90,61,0.14)', '--ctlH': '#e1eae4',
+    '--field': 'rgba(249,252,250,.96)', '--pop': 'rgba(249,252,250,.97)', '--drawer': 'rgba(247,251,248,.98)',
     '--tx': '#0d1f19', '--tx2': '#4a5c53', '--tx3': '#7b8a82',
     '--div': 'rgba(17,54,40,0.10)', '--track': 'rgba(17,54,40,0.10)',
     '--acc': '#0e7a4f', '--accBg': 'rgba(14,122,79,0.08)', '--accBd': 'rgba(14,122,79,0.3)',
@@ -2477,7 +2532,11 @@ class Component extends DCLogic {
     '--areaTop': 'rgba(18,133,90,0.22)', '--areaBot': 'rgba(18,133,90,0)',
     '--twinBd': 'rgba(17,54,40,0.14)', '--twinBg': '#eaeeea',
     '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.9),inset 0 0 0 1px rgba(255,255,255,0.45),0 1px 1px rgba(14,52,38,0.06),0 2px 3px rgba(14,52,38,0.05),0 20px 38px -22px rgba(12,60,42,0.5)',
-    '--glass': 'rgba(255,255,255,0.9)', '--glassBd': 'rgba(17,54,40,0.14)', '--glassTx': '#3d5148', '--glassH': 'rgba(0,0,0,0.05)',
+    '--glass': 'rgba(244,249,246,.84)', '--glassBd': 'rgba(17,90,61,0.17)', '--glassTx': '#40584c', '--glassH': 'rgba(14,122,79,.07)',
+    '--mapShellBd': 'rgba(17,90,61,.2)', '--mapShellSh': '0 24px 54px -32px rgba(18,61,44,.42)', '--mapInnerBd': 'rgba(255,255,255,.7)',
+    '--mapKpiHoverBd': 'rgba(14,122,79,.36)',
+    '--mapPopBg': 'rgba(249,252,250,.92)', '--mapPopBd': 'rgba(17,90,61,.18)', '--mapPopTx': '#11251d', '--mapPopTx2': '#607268', '--mapPopSh': '0 20px 50px -20px rgba(15,54,39,.34)',
+    '--pin-halo': 'rgba(14,122,79,.14)', '--pin-ring': 'rgba(14,122,79,.07)', '--pin-glow': 'rgba(14,122,79,.18)',
     '--lblBg': 'rgba(255,255,255,0.95)', '--lblTx': '#35463e',
     '--avBg': 'linear-gradient(160deg,#e8f0ea,#dbe6df)', '--aiBg': 'radial-gradient(circle at 30% 25%,rgba(14,122,79,0.14),#eef2ef)',
     '--orgBg': '#f2f5f2', '--orgBd': 'rgba(17,54,40,0.16)', '--badge': '#ffffff',
@@ -2492,6 +2551,21 @@ class Component extends DCLogic {
   };
 
   NIGHT = {
+    '--pgBg': 'radial-gradient(980px 560px at 52% -10%,rgba(20,58,104,.24),transparent 72%),radial-gradient(760px 480px at 10% 24%,rgba(16,112,82,.08),transparent 74%),#030914',
+    '--l1': 'linear-gradient(155deg,rgba(12,25,42,.9),rgba(8,18,32,.93) 58%,rgba(7,16,29,.94))', '--l1Bd': 'rgba(93,146,214,.16)',
+    '--l2': 'linear-gradient(160deg,rgba(10,22,38,.88),rgba(7,17,30,.92))', '--l2Bd': 'rgba(93,146,214,.14)',
+    '--l3': 'linear-gradient(180deg,rgba(13,25,41,.9),rgba(7,16,29,.94))', '--l3Bd': 'rgba(93,146,214,.13)', '--l3Sh': '0 18px 42px -28px rgba(0,0,0,.92)',
+    '--card': 'rgba(10,22,38,.9)', '--card2': 'rgba(8,18,32,.92)', '--cardBd': 'rgba(93,146,214,.14)', '--cardSh': '0 20px 46px -28px rgba(0,0,0,.94)',
+    '--sunk': 'rgba(6,15,27,.82)', '--sunk2': 'rgba(8,18,31,.84)', '--ctl': 'rgba(19,35,57,.72)', '--ctlBd': 'rgba(111,158,218,.16)', '--ctlH': 'rgba(31,52,82,.8)',
+    '--field': 'rgba(7,17,30,.82)', '--pop': 'rgba(8,18,31,.96)', '--drawer': 'rgba(7,17,30,.98)',
+    '--tx': '#edf5ff', '--tx2': '#b4c6da', '--tx3': '#7f95ad', '--div': 'rgba(108,153,211,.12)', '--track': 'rgba(108,153,211,.13)',
+    '--acc': '#59d39d', '--accBg': 'rgba(45,190,132,.08)', '--accBd': 'rgba(89,211,157,.28)',
+    '--btn': 'linear-gradient(180deg,#177c5a,#0e5d43)', '--btnTx': '#f4fff9', '--btnBd': 'rgba(89,211,157,.3)',
+    '--glass': 'rgba(7,17,31,.72)', '--glassBd': 'rgba(122,164,224,.19)', '--glassTx': '#b3c7dc',
+    '--mapShellBd': 'rgba(102,157,220,.2)', '--mapShellSh': '0 30px 72px -34px rgba(0,0,0,.98)', '--mapInnerBd': 'rgba(255,255,255,.055)',
+    '--mapKpiHoverBd': 'rgba(89,211,157,.28)',
+    '--mapPopBg': 'rgba(7,17,30,.9)', '--mapPopBd': 'rgba(111,158,218,.2)', '--mapPopTx': '#eef6ff', '--mapPopTx2': '#91a8c0', '--mapPopSh': '0 26px 62px -18px rgba(0,0,0,.82)',
+    '--pin-halo': 'rgba(89,211,157,.16)', '--pin-ring': 'rgba(89,211,157,.07)', '--pin-glow': 'rgba(89,211,157,.2)',
     '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.07),inset 0 0 0 1px rgba(90,190,150,0.05),0 20px 44px -26px rgba(0,0,0,0.95)',
     '--glassH': 'rgba(255,255,255,0.1)',
     '--hdrBd': 'rgba(122,164,224,0.22)',
@@ -2694,13 +2768,15 @@ class Component extends DCLogic {
       const bounds = [];
       points.forEach(item => {
         const color = colors[item.status] || '#64748b';
+        const priorityKey = String(item.priority || '').toUpperCase();
+        const priorityBadge = priorityKey === 'CRITICAL' ? '<span class="hsr-exec-priority">!</span>' : priorityKey === 'HIGH' ? '<span class="hsr-exec-priority">H</span>' : '';
         const marker = L.marker([item.coordinates.lat, item.coordinates.lng], {
           title: item.title || item.displayId || 'بلاغ ميداني',
           keyboard: true,
           icon: L.divIcon({
             className: 'hsr-exec-marker',
             iconSize: [30, 38], iconAnchor: [15, 36], popupAnchor: [0, -33],
-            html: `<div class="hsr-exec-pin" aria-hidden="true"><svg viewBox="0 0 30 38"><path d="M15 37C15 37 3 22.7 3 14.6C3 7.7 8.7 2 15 2C21.3 2 27 7.7 27 14.6C27 22.7 15 37 15 37Z" fill="${color}" stroke="#fff" stroke-width="2.2"/><circle cx="15" cy="14.6" r="5.2" fill="#fff"/><circle cx="15" cy="14.6" r="2.2" fill="${color}"/></svg></div>`
+            html: `<div class="hsr-exec-pin" aria-hidden="true" style="--pin-status:${color}"><svg viewBox="0 0 30 38"><path d="M15 37C15 37 3 22.7 3 14.6C3 7.7 8.7 2 15 2C21.3 2 27 7.7 27 14.6C27 22.7 15 37 15 37Z" fill="${color}" stroke="#fff" stroke-width="2.2"/><circle cx="15" cy="14.6" r="5.2" fill="#fff"/><circle cx="15" cy="14.6" r="2.2" fill="${color}"/></svg>${priorityBadge}</div>`
           })
         });
         marker.bindPopup(() => this.buildObservationPopup(item), { maxWidth: 264, className: 'hsr-map-popup' });
@@ -2821,6 +2897,7 @@ class Component extends DCLogic {
   // the sc-for template engine.
   buildObservationPopup(item) {
     const statusLabel = ({ PENDING: 'قيد الانتظار', IN_PROGRESS: 'قيد المعالجة', COMPLETED: 'تمت المعالجة' })[item.status] || 'غير محدد';
+    const statusColor = this.constructor.OBSERVATION_MARKER_COLORS[item.status] || '#64748b';
     const categoryLabel = ({ MAINTENANCE: 'صيانة', QUALITY: 'جودة', SAFETY: 'سلامة', ENVIRONMENT: 'بيئة', ROAD: 'طرق' })[item.type] || item.type || 'غير مصنف';
     const format = window.SmartHSRFormat || {};
     const timeLabel = item.createdAt && format.dateTime ? format.dateTime(item.createdAt) : 'غير متاح';
@@ -2828,56 +2905,69 @@ class Component extends DCLogic {
 
     const root = document.createElement('div');
     root.className = 'hsr-map-popup-body';
-    root.style.cssText = 'display:flex;flex-direction:column;gap:7px;min-width:220px;font-family:inherit;direction:rtl';
+    root.style.setProperty('--status-color', statusColor);
 
-    const row = (k, v) => {
-      const r = document.createElement('div');
-      r.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:10.5px';
-      r.innerHTML = `<span style="flex:none;width:66px;color:#7d8ea6">${k}</span><span style="flex:1;text-align:left;color:#1a2333;font-weight:500">${v}</span>`;
-      return r;
-    };
+    const head = document.createElement('div');
+    head.className = 'hsr-map-popup-head';
+    const eyebrow = document.createElement('div');
+    eyebrow.className = 'hsr-map-popup-eyebrow';
+    eyebrow.textContent = 'SMART HSR · MUNICIPAL MAP';
+    const title = document.createElement('div');
+    title.className = 'hsr-map-popup-title';
+    title.textContent = item.title || 'بلاغ بلا عنوان';
+    const chip = document.createElement('span');
+    chip.className = 'hsr-map-popup-chip';
+    chip.textContent = statusLabel;
+    head.append(eyebrow, title, chip);
+    root.appendChild(head);
 
     const thumb = document.createElement('div');
-    thumb.style.cssText = 'width:100%;height:96px;border-radius:8px;background:#0b1220 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#7d8ea6;font-size:9.5px;overflow:hidden';
-    thumb.textContent = 'جارٍ التحقق من الصورة...';
+    thumb.className = 'hsr-map-popup-thumb';
+    thumb.textContent = 'جارٍ التحقق من الصورة…';
     if (item.imagePath && this.resolveEvidenceImage) {
       this.resolveEvidenceImage(item.imagePath).then(result => {
+        if (!thumb.isConnected) return;
         if (result.available && result.url) { thumb.style.backgroundImage = `url("${result.url}")`; thumb.textContent = ''; }
-        else { thumb.textContent = 'لا تتوفر صورة موثّقة'; }
-      }).catch(() => { thumb.textContent = 'لا تتوفر صورة موثّقة'; });
+        else thumb.textContent = 'لا تتوفر صورة موثّقة';
+      }).catch(() => { if (thumb.isConnected) thumb.textContent = 'لا تتوفر صورة موثّقة'; });
     } else {
       thumb.textContent = 'لا تتوفر صورة موثّقة';
     }
-
-    const title = document.createElement('div');
-    title.style.cssText = 'font-size:12px;font-weight:700;color:#0f172a';
-    title.textContent = item.title || 'بلاغ بلا عنوان';
-
-    root.appendChild(title);
     root.appendChild(thumb);
-    root.appendChild(row('الحالة', statusLabel));
-    root.appendChild(row('المعرّف', item.displayId || item.id));
-    if (priorityLabel) root.appendChild(row('الأولوية', priorityLabel));
-    root.appendChild(row('التصنيف', categoryLabel));
-    root.appendChild(row('المراقب', item.inspector || 'غير متاح'));
-    root.appendChild(row('التوقيت', timeLabel));
-    root.appendChild(row('الإحداثيات', `${item.coordinates.lat.toFixed(5)}, ${item.coordinates.lng.toFixed(5)}`));
+
+    const rows = document.createElement('div');
+    rows.className = 'hsr-map-popup-rows';
+    const row = (key, value) => {
+      const line = document.createElement('div');
+      line.className = 'hsr-map-popup-row';
+      const k = document.createElement('span'); k.className = 'hsr-map-popup-key'; k.textContent = key;
+      const v = document.createElement('span'); v.className = 'hsr-map-popup-value'; v.textContent = value || 'غير متاح';
+      line.append(k, v);
+      return line;
+    };
+    rows.appendChild(row('المعرّف', item.displayId || item.id));
+    if (priorityLabel) rows.appendChild(row('الأولوية', priorityLabel));
+    rows.appendChild(row('التصنيف', categoryLabel));
+    rows.appendChild(row('المراقب', item.inspector || 'غير متاح'));
+    rows.appendChild(row('التوقيت', timeLabel));
+    rows.appendChild(row('الموقع', item.address || item.locationText || `${item.coordinates.lat.toFixed(5)}, ${item.coordinates.lng.toFixed(5)}`));
+    root.appendChild(rows);
 
     const actions = document.createElement('div');
-    actions.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:2px';
-    const btn = (label, onClick) => {
+    actions.className = 'hsr-map-popup-actions';
+    const btn = (label, className, onClick, titleText) => {
       const b = document.createElement('button');
       b.type = 'button';
+      b.className = 'hsr-map-popup-btn ' + className;
       b.textContent = label;
-      b.style.cssText = 'width:100%;height:30px;border-radius:8px;font-size:11px;font-weight:600;color:#eaf4ff;background:#28489b;border:1px solid rgba(120,170,255,0.4);cursor:pointer';
+      if (titleText) b.title = titleText;
       b.addEventListener('click', onClick);
       return b;
     };
-    actions.appendChild(btn('عرض التفاصيل', () => this.openEvidenceDrawer(item)));
-    actions.appendChild(btn('فتح الخريطة التشغيلية', () => this.openOperationalMapForObservation(item)));
-    if (this.isTwinAdmitted()) actions.appendChild(btn('فتح في التوأم الرقمي', () => this.openTwinForObservation(item)));
+    actions.appendChild(btn('عرض التفاصيل', 'primary', () => this.openEvidenceDrawer(item)));
+    actions.appendChild(btn('↗', 'icon', () => this.openOperationalMapForObservation(item), 'فتح الخريطة التشغيلية'));
+    if (this.isTwinAdmitted()) actions.appendChild(btn('◇', 'icon', () => this.openTwinForObservation(item), 'فتح في التوأم الرقمي'));
     root.appendChild(actions);
-
     return root;
   }
 
@@ -2908,6 +2998,18 @@ class Component extends DCLogic {
     const matchingObservations = allObservations.filter(item => !query || [item.displayId, item.title, item.inspector, item.contractor, item.type]
       .filter(Boolean).join(' ').toLocaleLowerCase('ar').includes(query));
     const mapPoints = this.operationalObservations();
+    const mappedSearchSet = matchingObservations.filter(item => item.coordinates);
+    const mapStatusCounts = mappedSearchSet.reduce((acc, item) => {
+      acc.ALL += 1;
+      if (item.status in acc) acc[item.status] += 1;
+      return acc;
+    }, { ALL: 0, PENDING: 0, IN_PROGRESS: 0, COMPLETED: 0 });
+    const mapKpis = [
+      { id:'ALL', label:'كل النقاط', value:String(mapStatusCounts.ALL) },
+      { id:'PENDING', label:'قيد الانتظار', value:String(mapStatusCounts.PENDING) },
+      { id:'IN_PROGRESS', label:'قيد المعالجة', value:String(mapStatusCounts.IN_PROGRESS) },
+      { id:'COMPLETED', label:'مكتمل', value:String(mapStatusCounts.COMPLETED) }
+    ].map(k => ({ ...k, className:'hsr-map-kpi' + (st.mapFilter === k.id ? ' is-active' : ''), on:() => this.setState({ mapFilter:k.id }) }));
     const mapEmptyText = st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البلاغات الموثّقة.')
       : mapPoints.length ? '' : 'لا توجد بلاغات ذات إحداثيات موثّقة ضمن النطاق الحالي.';
     const roleLabel = role => ({
@@ -3743,6 +3845,7 @@ class Component extends DCLogic {
       hasToast: !!st.toast, toast: st.toast,
       mapFilter: st.mapFilter,
       mapPointCount: String(mapPoints.length),
+      mapKpis,
       mapStreetClass: 'hsr-map-segment' + (st.mapBasemap === 'street' ? ' is-active' : ''),
       mapSatelliteClass: 'hsr-map-segment' + (st.mapBasemap === 'satellite' ? ' is-active' : ''),
       mapEmpty: !mapPoints.length,
