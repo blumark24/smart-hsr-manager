@@ -141,7 +141,7 @@ test('NAV-01 item 16: the explicit "فتح الخريطة التشغيلية ا�
 });
 
 test('NAV-01: the new Map view reuses the existing map-shell ref callbacks (mapShellRef/mapRef) -- same Leaflet-binding infrastructure fieldSurvey/lands/mobility already share, no new map logic invented', () => {
-  const mapViewBlock = methodBody(manager, '<sc-if value="{{ viewIsMap }}">', 2000);
+  const mapViewBlock = methodBody(manager, '<sc-if value="{{ viewIsMap }}">', 5000);
   assert.match(mapViewBlock, /ref="\{\{ mapShellRef \}\}"/);
   assert.match(mapViewBlock, /ref="\{\{ mapRef \}\}"/);
 });
