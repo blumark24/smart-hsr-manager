@@ -49,9 +49,9 @@ test('Reports/Observations overlay stays below persistent navigation so the next
 
 test('responsive aria-current ownership transfers atomically to the visible drawer', () => {
   assert.match(manager, /const mobileNavigationAuthoritative = \(st\.bp === 'tab' \|\| st\.bp === 'mob'\) && st\.mobNavOpen;/);
-  assert.equal((manager.match(/navPrefixed\('nav\w+', !mobileNavigationAuthoritative && st\.view ===/g) || []).length, 8);
+  assert.equal((manager.match(/navPrefixed\('nav\w+', !mobileNavigationAuthoritative && st\.view ===/g) || []).length, 10);
   const mobile = block(manager, 'mobNav: [', '].map(item =>');
-  assert.equal((mobile.match(/navLook\(mobileNavigationAuthoritative && st\.view ===/g) || []).length, 9);
+  assert.equal((mobile.match(/navLook\(mobileNavigationAuthoritative && st\.view ===/g) || []).length, 11);
   assert.match(manager, /data-manager-view="\{\{ i\.view \}\}"[^>]*aria-current="\{\{ i\.current \}\}"/);
 });
 
