@@ -23,7 +23,8 @@ test('contracts and contractor companies are presented as the fifth institutiona
   assert.match(contractors,/إدارة العقود والشركات المتعاقدة/);
   assert.match(contractors,/مسار مؤسسي خامس مستقل/);
   assert.doesNotMatch(center,/data-open-contractors/);
-  assert.match(manager,/href="contractors-registry\.html"/);
+  assert.doesNotMatch(manager,/href="contractors-registry\.html"/);
+  assert.match(manager,/data-manager-view="contracts"/);
 });
 
 test('employee grid exposes direct edit and safe remove actions',()=>{
