@@ -88,6 +88,7 @@ jobs:
           node --test test/user-center-runtime-hang-regression.test.js
           node --test test/user-center-lifecycle-starvation-regression.test.js
           node --test test/user-center-phase12b-audit.test.js
+          node --test test/phase21-manager-shell-closure.test.js
 
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
