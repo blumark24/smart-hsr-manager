@@ -7,15 +7,29 @@
 // and are received here via dependency injection — this avoids a
 // circular import between this module and any future subscriptions
 // module that would also need ORGS.
-import { doc, addDoc, updateDoc, deleteDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { doc, addDoc, updateDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-export function initOrganizationsModule({ db, getOrgs, showNotif, refreshAll, createInvoice } = {}) {
+export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshAll, createInvoice } = {}) {
   const orgsBody = document.getElementById('orgsBody');
   const searchBox = document.getElementById('searchBox');
   const addOrgBtn = document.getElementById('addOrgBtn');
   const orgModal = document.getElementById('orgModal');
   const orgForm = document.getElementById('orgForm');
   const deleteBtn = document.getElementById('deleteBtn');
+
+  async function ownerAdminCall(payload){
+    const user = auth && auth.currentUser;
+    if(!user) throw new Error('owner_session_required');
+    const token = await user.getIdToken();
+    const response = await fetch('/api/admin/users', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body: JSON.stringify(payload)
+    });
+    const body = await response.json().catch(()=>({}));
+    if(!response.ok) throw new Error(body.reason || body.error || 'request_failed');
+    return body;
+  }
 
   function renderOrgs(filter=''){
     const ORGS = getOrgs();
@@ -57,7 +71,7 @@ export function initOrganizationsModule({ db, getOrgs, showNotif, refreshAll, cr
       };
       wrap.appendChild(mkBtn('تعديل','edit','btn btn-outline'));
       wrap.appendChild(mkBtn('ترقية','upgrade','btn btn-primary'));
-      wrap.appendChild(mkBtn('حذف','delete','btn btn-outline'));
+      wrap.appendChild(mkBtn(o.status==='archived'?'استعادة':'أرشفة',o.status==='archived'?'restore':'archive',o.status==='archived'?'btn btn-primary':'btn btn-outline'));
       tdActions.appendChild(wrap); tr.appendChild(tdActions);
 
       orgsBody.appendChild(tr);
@@ -87,8 +101,18 @@ export function initOrganizationsModule({ db, getOrgs, showNotif, refreshAll, cr
       showNotif(`تمت ترقية خطة ${org.name} إلى ${newPlan} وإصدار فاتورة تلقائيًا.`);
       await refreshAll();
     }
-    if(act==='delete'){
-      if(confirm('تأكيد حذف المؤسسة؟')){ await deleteDoc(doc(db,'organizations', id)); showNotif('تم حذف المؤسسة بنجاح.'); await refreshAll(); }
+    if(act==='archive'){
+      const label = org?.name || id;
+      if(confirm(`تأكيد أرشفة ${label}؟ لن تُحذف الحسابات أو الفواتير أو السجلات المرتبطة.`)){
+        await ownerAdminCall({ action:'ownerArchiveOrganization', organizationId:id });
+        showNotif('تمت أرشفة المؤسسة بأمان مع الإبقاء على جميع السجلات المرتبطة.');
+        await refreshAll();
+      }
+    }
+    if(act==='restore'){
+      await ownerAdminCall({ action:'ownerRestoreOrganization', organizationId:id, status:'active' });
+      showNotif('تمت استعادة المؤسسة وتفعيلها.');
+      await refreshAll();
     }
   });
 
