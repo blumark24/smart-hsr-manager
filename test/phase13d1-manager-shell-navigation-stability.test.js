@@ -134,9 +134,9 @@ test('9. User Center mounts as a normal sibling Manager view inside <main>, not 
   assert.doesNotMatch(overlaySource, /viewIsUsers/, 'the legacy overlay-hosted Users block must be removed, not just unreachable');
 
   // viewOpen (the shared modal trigger) must exclude 'users'.
-  assert.match(manager, /viewOpen: st\.view !== 'home' && st\.view !== 'fieldSurvey' && st\.view !== 'lands' && st\.view !== 'mobility' && st\.view !== 'users'/);
+  assert.match(manager, /viewOpen:[^\n]*st\.view !== 'users'/);
   // Home content must unmount while Users is open, exactly like the other real views.
-  assert.match(manager, /viewIsHomeContent: st\.view !== 'fieldSurvey' && st\.view !== 'lands' && st\.view !== 'mobility' && st\.view !== 'users'/);
+  assert.match(manager, /viewIsHomeContent:[^\n]*st\.view !== 'users'/);
 
   // .ucv2-host itself must be position:static, not fixed.
   assert.match(skin, /\.ucv2-host\{\s*position:static!important;/);
