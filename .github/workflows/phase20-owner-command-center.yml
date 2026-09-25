@@ -1,0 +1,85 @@
+name: Phase20 Owner Command Center Acceptance
+
+on:
+  push:
+    branches:
+      - phase20-organization-bootstrap
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  owner-command-center:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Server syntax
+        run: |
+          node --check api/_lib/ownerOpsSupport.js
+          node --check api/admin/users.js
+          node --check api/admin/platform-accounts.js
+          node --check api/report.js
+
+      - name: Browser module syntax
+        shell: bash
+        run: |
+          node --input-type=module --check < owner-router.js
+          node --input-type=module --check < owner-extensions.js
+          node --input-type=module --check < owner-governance.js
+          node --input-type=module --check < owner-support.js
+          node --input-type=module --check < owner-organizations.js
+          node --input-type=module --check < owner-users.js
+          node --input-type=module --check < owner-invoices.js
+          node --input-type=module --check < manager-dashboard-adapter.js
+          node --input-type=module --check < manager-support.js
+
+      - name: Owner structural acceptance
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const owner = fs.readFileSync('owner.html','utf8');
+          const router = fs.readFileSync('owner-router.js','utf8');
+          const ext = fs.readFileSync('owner-extensions.js','utf8');
+          const gov = fs.readFileSync('owner-governance.js','utf8');
+          const orgs = fs.readFileSync('owner-organizations.js','utf8');
+          const manager = fs.readFileSync('manager.html','utf8');
+          const managerSupport = fs.readFileSync('manager-support.js','utf8');
+          const api = fs.readFileSync('api/admin/users.js','utf8');
+          const ops = fs.readFileSync('api/_lib/ownerOpsSupport.js','utf8');
+
+          for (const route of ['/support','/accounts','/audit','/security','/reports','/health']) assert.ok(router.includes("'" + route + "'"));
+          assert.ok(ext.includes('ownerSupportReply'));
+          assert.ok(ext.includes('renderOwnerOpsRoute'));
+          assert.ok(gov.includes('ownerOpsSnapshot'));
+          assert.ok(orgs.includes('ownerArchiveOrganization'));
+          assert.ok(!orgs.includes('deleteDoc('));
+          assert.ok(manager.includes('manager-support.js'));
+          assert.ok(managerSupport.includes('supportThreadSend'));
+          assert.ok(api.includes('handleOwnerOpsSupport'));
+          assert.ok(ops.includes('ownerSupportList'));
+          assert.ok(ops.includes('ownerArchiveOrganization'));
+          assert.ok(owner.includes('SMART HSR — مركز قيادة المالك'));
+          console.log('Owner command center structural acceptance PASS');
+          NODE
+
+      - name: Protected regressions
+        run: |
+          node --test test/admin-password-policy.test.js
+          node --test test/manager-account-action-system.test.js
+          node --test test/municipality-manager-current-architecture.test.js
+          node --test test/root-cause-work-order-endpoints.test.js
+          node --test test/ai-bind-analysis.test.js
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
