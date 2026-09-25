@@ -10,6 +10,8 @@ const OWNER_ACTIONS = new Set([
   'ownerSupportThreadGet',
   'ownerSupportReply',
   'ownerSupportSetStatus',
+  'ownerArchiveOrganization',
+  'ownerRestoreOrganization',
 ]);
 
 const MANAGER_SUPPORT_ACTIONS = new Set([
@@ -353,6 +355,76 @@ async function handleManagerSupport({ action, body, decoded, db, FieldValue, cal
   return sendJson(res, 400, { error: 'unknown_action' });
 }
 
+
+async function handleOwnerOrganizationLifecycle({ action, body, decoded, db, FieldValue, sendJson, res }) {
+  const organizationId = cleanText(body.organizationId, 160);
+  if (!organizationId) return sendJson(res, 400, { error: 'invalid_request', reason: 'organizationId_required' });
+
+  const orgRef = db.collection('organizations').doc(organizationId);
+  const orgSnap = await orgRef.get();
+  if (!orgSnap.exists) return sendJson(res, 404, { error: 'organization_not_found' });
+
+  if (action === 'ownerArchiveOrganization') {
+    const [managers, users] = await Promise.all([
+      db.collection('managers').where('organizationId', '==', organizationId).limit(5).get(),
+      db.collection('users').where('organizationId', '==', organizationId).limit(5).get(),
+    ]);
+    const now = FieldValue.serverTimestamp();
+    await orgRef.set({
+      status: 'archived',
+      archivedAt: now,
+      archivedByUid: decoded.uid,
+      updatedAt: now,
+    }, { merge: true });
+    await db.collection('platformAdminAuditEvents').add({
+      actorUid: decoded.uid,
+      actorRole: 'owner',
+      action: 'organization_archive',
+      organizationId,
+      targetUid: null,
+      detail: {
+        managerRecordsPresent: managers.size,
+        userRecordsPresent: users.size,
+        destructiveDelete: false,
+      },
+      createdAt: now,
+    });
+    return sendJson(res, 200, {
+      ok: true,
+      organizationId,
+      status: 'archived',
+      destructiveDelete: false,
+      linkedRecordsPreserved: true,
+    });
+  }
+
+  if (action === 'ownerRestoreOrganization') {
+    const requestedStatus = cleanText(body.status, 40);
+    const status = ['active', 'trial', 'expired'].includes(requestedStatus) ? requestedStatus : 'active';
+    const now = FieldValue.serverTimestamp();
+    await orgRef.set({
+      status,
+      archivedAt: null,
+      archivedByUid: null,
+      restoredAt: now,
+      restoredByUid: decoded.uid,
+      updatedAt: now,
+    }, { merge: true });
+    await db.collection('platformAdminAuditEvents').add({
+      actorUid: decoded.uid,
+      actorRole: 'owner',
+      action: 'organization_restore',
+      organizationId,
+      targetUid: null,
+      detail: { status },
+      createdAt: now,
+    });
+    return sendJson(res, 200, { ok: true, organizationId, status });
+  }
+
+  return sendJson(res, 400, { error: 'unknown_action' });
+}
+
 async function handleOwnerSupport({ action, body, decoded, db, FieldValue, sendJson, res }) {
   if (action === 'ownerSupportList') {
     const snap = await db.collection('supportThreads').orderBy('updatedAt', 'desc').limit(SUPPORT_THREAD_LIMIT).get();
@@ -427,6 +499,10 @@ async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldVal
     if (action === 'ownerOpsSnapshot') {
       const snapshot = await buildOwnerOpsSnapshot({ db, auth, decoded, FieldValue });
       sendJson(res, 200, snapshot);
+      return true;
+    }
+    if (action === 'ownerArchiveOrganization' || action === 'ownerRestoreOrganization') {
+      await handleOwnerOrganizationLifecycle({ action, body, decoded, db, FieldValue, sendJson, res });
       return true;
     }
     await handleOwnerSupport({ action, body, decoded, db, FieldValue, sendJson, res });
