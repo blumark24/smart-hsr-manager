@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/api/report/root-cause",
+      "destination": "/api/report?kind=root-cause"
+    },
+    {
+      "source": "/api/report/work-order",
+      "destination": "/api/report?kind=work-order"
+    }
+  ]
+}
