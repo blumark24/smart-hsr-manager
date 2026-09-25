@@ -86,6 +86,7 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
     f.plan.value = org?.plan||'Trial'; f.billingCycle.value = org?.billingCycle||'monthly'; f.status.value = org?.status|| (org?.plan==='Trial'?'trial':'active');
     f.expiresAt.value = org?.expiresAt? new Date(org.expiresAt).toISOString().slice(0,10): '';
     f.docId.value = org?.id||''; deleteBtn.classList.toggle('hidden', !org);
+    deleteBtn.textContent = org?.status === 'archived' ? 'استعادة المؤسسة' : 'أرشفة المؤسسة';
     orgModal.showModal();
   }
 
@@ -137,7 +138,21 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
   });
   deleteBtn.addEventListener('click', async ()=>{
     const id = orgForm.elements.docId.value; if(!id) return;
-    if(confirm('تأكيد الحذف؟')){ await deleteDoc(doc(db,'organizations', id)); orgModal.close(); showNotif('تم حذف المؤسسة.'); await refreshAll(); }
+    const org = getOrgs().find(o=>o.id===id);
+    if(org?.status === 'archived'){
+      await ownerAdminCall({ action:'ownerRestoreOrganization', organizationId:id, status:'active' });
+      orgModal.close();
+      showNotif('تمت استعادة المؤسسة وتفعيلها.');
+      await refreshAll();
+      return;
+    }
+    const label = org?.name || id;
+    if(confirm(`تأكيد أرشفة ${label}؟ لن تُحذف الحسابات أو الفواتير أو السجلات المرتبطة.`)){
+      await ownerAdminCall({ action:'ownerArchiveOrganization', organizationId:id });
+      orgModal.close();
+      showNotif('تمت أرشفة المؤسسة بأمان مع الإبقاء على السجلات المرتبطة.');
+      await refreshAll();
+    }
   });
 
   return Object.freeze({ renderOrgs, openOrgModal });
