@@ -398,6 +398,14 @@ window.SmartHSRManagerAdapter = {
     });
   },
   disconnect,
+  getIdToken(forceRefresh = false) {
+    return (activeAuth && activeAuth.currentUser)
+      ? activeAuth.currentUser.getIdToken(forceRefresh)
+      : Promise.resolve(null);
+  },
+  getCurrentUid() {
+    return activeAuth && activeAuth.currentUser ? activeAuth.currentUser.uid : null;
+  },
   async logout() {
     await activeAuthApi?.signOut(activeAuth);
     location.replace('manager-login.html');
