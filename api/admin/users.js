@@ -50,6 +50,7 @@ const { evaluateMissionTransition } = require('../../platform/policies/mission-w
 const { evaluateVehicleTransition } = require('../../platform/policies/vehicle-workflow-policy');
 const { evaluateVehicleAuthorizationTransition } = require('../../platform/policies/vehicle-authorization-policy');
 const { evaluateIncidentTransition } = require('../../platform/policies/incident-workflow-policy');
+const { handleOwnerOpsSupport } = require('../_lib/ownerOpsSupport');
 
 // The manager's own already-verified bearer token, forwarded as-is to Lands'
 // trusted mutation endpoint (see api/_lib/landsBridge.js). Extracted
@@ -508,6 +509,14 @@ async function handler(req, res) {
   const action = body.action;
   const auth = getAuth();
   const db = getDb();
+
+  // SMART HSR Owner Command Center + institutional support channel.
+  // Reuses this existing trusted Admin API so no additional Vercel Function is created.
+  // Tenant/role checks are re-derived server-side from the verified caller token.
+  if (await handleOwnerOpsSupport({
+    action, body, decoded, db, auth, FieldValue, getCallerContext, sendJson, res,
+  })) return;
+
 
   // PHASE 06A.2 — listMobilityEmployees is authorized completely separately
   // from every other action below: it is the only action a mobility_head
