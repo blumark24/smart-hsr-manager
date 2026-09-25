@@ -556,6 +556,7 @@
     // وحدة المؤسسات (Organizations) — منطق العرض والـCRUD منقول إلى owner-organizations.js.
     // الحالة المشتركة (ORGS) والدوال المشتركة بين الوحدات تبقى هنا وتُمرَّر عبر الحقن.
     const organizationsModule = initOrganizationsModule({
+      auth,
       db,
       getOrgs: () => ORGS,
       showNotif: (text) => showNotif(text),
