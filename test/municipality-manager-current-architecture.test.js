@@ -59,7 +59,8 @@ test('institutional identity remains separate from product entitlements',()=>{
 test('contractors are managed outside the municipal employee registry',()=>{
   assert.doesNotMatch(enhancements,/data-open-contractors/);
   assert.doesNotMatch(enhancements,/data-add-contractor/);
-  assert.match(manager,/href="contractors-registry\.html"/);
+  assert.doesNotMatch(manager,/href="contractors-registry\.html"/);
+  assert.match(manager,/data-manager-view="contracts"/);
   assert.match(manager,/إدارة العقود والشركات المتعاقدة/);
   assert.match(contractorsPage,/إدارة العقود والشركات المتعاقدة/);
   assert.match(contractorsPage,/مسار مؤسسي خامس مستقل/);
