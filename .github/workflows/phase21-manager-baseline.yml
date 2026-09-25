@@ -1,0 +1,80 @@
+name: Phase21 Municipality Manager Baseline
+
+on:
+  push:
+    branches:
+      - phase21-municipality-manager-closure
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  manager-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Manager module syntax
+        shell: bash
+        run: |
+          node --input-type=module --check < manager-dashboard-adapter.js
+          node --input-type=module --check < manager-lands-adapter.js
+          node --input-type=module --check < manager-mobility-adapter.js
+          node --input-type=module --check < manager-support.js
+          node --check service-switcher.js
+
+      - name: Manager structural baseline
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const html = fs.readFileSync('manager.html','utf8');
+          const adapter = fs.readFileSync('manager-dashboard-adapter.js','utf8');
+          const lands = fs.readFileSync('manager-lands-adapter.js','utf8');
+          const mobility = fs.readFileSync('manager-mobility-adapter.js','utf8');
+          const support = fs.readFileSync('manager-support.js','utf8');
+
+          assert.ok(html.includes('manager-dashboard-adapter.js'));
+          assert.ok(html.includes('manager-lands-adapter.js'));
+          assert.ok(html.includes('manager-mobility-adapter.js'));
+          assert.ok(html.includes('manager-support.js'));
+          assert.ok(adapter.includes('organizationId'));
+          assert.ok(lands.includes('organizationId'));
+          assert.ok(mobility.includes('organizationId'));
+          assert.ok(support.includes('supportThreadSend'));
+          assert.ok(support.includes('supportThreadGet'));
+          console.log('Manager structural baseline PASS');
+          NODE
+
+      - name: Manager current-architecture regressions
+        run: |
+          node --test test/municipality-manager-current-architecture.test.js
+          node --test test/manager-component-did-update-regression.test.js
+          node --test test/manager-user-center-ui.test.js
+          node --test test/manager-users-list-state.test.js
+          node --test test/manager-login-error-classification.test.js
+          node --test test/manager-login-preview-config.test.js
+          node --test test/manager-service-entitlements.test.js
+          node --test test/manager-single-service-hotfix.test.js
+          node --test test/manager-lands-bridge-integration.test.js
+          node --test test/manager-lands-digital-record.test.js
+          node --test test/manager-lands-gis.test.js
+          node --test test/manager-lands-sso.test.js
+          node --test test/manager-mobility-adapter.test.js
+          node --test test/municipality-admin-polish-regression.test.js
+          node --test test/phase13d1-manager-shell-navigation-stability.test.js
+          node --test test/user-center-runtime-hang-regression.test.js
+          node --test test/user-center-lifecycle-starvation-regression.test.js
+          node --test test/user-center-phase12b-audit.test.js
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
