@@ -181,6 +181,37 @@
     #attributionNote{display:none}
   }
 
+  /* PHASE21 responsive closure — stable map controls, popups, drawer and
+     touch targets across desktop, iPad/tablet and narrow mobile screens. */
+  @media(min-width:768px) and (max-width:1179px){
+    .maplibregl-popup{max-width:min(310px,42vw)!important}
+    #entityCard{width:min(370px,44vw);max-width:44vw}
+    #kpiStrip{overflow-x:auto;scrollbar-width:thin;overscroll-behavior-inline:contain}
+    .maplibregl-ctrl-top-left{left:10px!important}
+    #timelinePanel{left:10px;right:10px;max-width:none}
+  }
+  @media(max-width:767px){
+    .maplibregl-popup{max-width:calc(100vw - 24px)!important}
+    .maplibregl-popup-content{max-width:calc(100vw - 24px)}
+    .geo-popup .popup-body{padding:.72rem .72rem .5rem}
+    .geo-popup .popup-thumb{width:72px;height:66px}
+    .geo-popup .rows{padding:0 .72rem .5rem}
+    .geo-popup .actions{padding:0 .72rem .72rem}
+    #entityCard{right:8px;left:8px;top:auto;bottom:8px;width:auto;max-width:none;max-height:min(72dvh,620px);border-radius:16px;border:1px solid var(--pop-border);transform:translateY(calc(100% + 18px))}
+    #entityCard.open{transform:translateY(0)}
+    #entityCardClose{min-width:40px;min-height:40px}
+    .geo-marker{touch-action:manipulation}
+    .geo-cluster{min-width:42px;min-height:42px}
+  }
+  @media(max-width:430px){
+    .geo-popup .popup-body{display:block}
+    .geo-popup .popup-thumb{width:100%;height:88px;margin-bottom:.55rem}
+    .geo-popup .actions .btn-details{min-height:38px}
+    .geo-popup .actions .btn-twin{width:40px;min-height:38px}
+    #rightPanel{right:6px;left:6px;bottom:6px}
+    #timelinePanel{left:6px;right:6px;bottom:6px}
+  }
+
   /* Geo Intelligence & Operations Center — calm government-grade shell. */
   #appShell{--header-h:64px;--kpi-h:58px}
   header.command-header{top:0;left:0;right:0;height:var(--header-h);padding:0 18px;display:grid;grid-template-columns:minmax(340px,1fr) minmax(240px,430px) minmax(340px,1fr);gap:14px;
