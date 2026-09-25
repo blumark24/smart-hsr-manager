@@ -76,8 +76,10 @@ jobs:
       - name: Protected regressions
         run: |
           node --test test/admin-password-policy.test.js
-          node --test test/manager-account-action-system.test.js
           node --test test/municipality-manager-current-architecture.test.js
+          node --test test/manager-component-did-update-regression.test.js
+          node --test test/manager-user-center-ui.test.js
+          node --test test/phase19-3-inspector-record.test.js
           node --test test/root-cause-work-order-endpoints.test.js
           node --test test/ai-bind-analysis.test.js
 
