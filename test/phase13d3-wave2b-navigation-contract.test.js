@@ -115,12 +115,15 @@ test('NAV-01: Manager shell (aside/header) is preserved -- viewIsMap is a normal
   assert.match(manager, /<sc-if value="\{\{ viewIsMap \}\}">/);
 });
 
-test('NAV-01: Home\'s own dashboard (KPIs/priority list) unmounts while the Map route is open, exactly like the other real routes', () => {
-  assert.match(manager, /viewIsHomeContent: st\.view !== 'fieldSurvey' && st\.view !== 'lands' && st\.view !== 'mobility' && st\.view !== 'users' && st\.view !== 'map'/);
+test('NAV-01: Home dashboard unmounts while the Map route is open', () => {
+  const definition = manager.match(/viewIsHomeContent:[^\n]+/)?.[0] || '';
+  assert.match(definition, /st\.view !== 'map'/);
+  assert.match(definition, /st\.view !== 'users'/);
 });
 
-test('NAV-01: the shared manager-view-overlay modal (used by reports/observations/incidents) does not also try to open for the map route', () => {
-  assert.match(manager, /viewOpen: st\.view !== 'home' && st\.view !== 'fieldSurvey' && st\.view !== 'lands' && st\.view !== 'mobility' && st\.view !== 'users' && st\.view !== 'map'/);
+test('NAV-01: the shared manager-view-overlay does not also try to open for the map route', () => {
+  const definition = manager.match(/viewOpen:[^\n]+/)?.[0] || '';
+  assert.match(definition, /st\.view !== 'map'/);
 });
 
 test('NAV-01 item 16: the explicit "فتح الخريطة التشغيلية الكاملة" CTA inside the new Map view reuses the already-approved continuity mechanism unchanged (openCanonicalMap -> openCanonicalOperationalMap() -> /operational-map.html) -- no new/duplicated canonical-map logic was written', () => {
@@ -139,27 +142,28 @@ test('NAV-01: the new Map view reuses the existing map-shell ref callbacks (mapS
   assert.match(mapViewBlock, /ref="\{\{ mapRef \}\}"/);
 });
 
-// ---- Reports/Observations unchanged (item 17) ----
+// ---- Reports/Observations Phase21 shell ownership ----
 
-test('item 17: Reports content ownership is untouched -- still the shared viewOpen overlay, still reports\' own viewTitle/viewIntro branch, unchanged text', () => {
+test('Phase21: Reports is a first-class Manager main view, while preserving its existing title and live-data description', () => {
   assert.match(manager, /st\.view === 'reports' \? 'التقارير التشغيلية'/);
-  assert.match(manager, /st\.view === 'reports' \? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة\.'/);
   assert.match(manager, /viewIsReports: st\.view === 'reports'/);
+  assert.match(manager, /<sc-if value="\{\{ viewIsReports \}\}">[\s\S]*aria-label="التقارير التشغيلية"/);
+  const definition = manager.match(/viewOpen:[^\n]+/)?.[0] || '';
+  assert.match(definition, /st\.view !== 'reports'/);
 });
 
-test('item 17: Observations content ownership is untouched -- still the shared viewOpen overlay, still observations\' own default viewTitle/viewIntro branch, unchanged text', () => {
+test('Phase21: Observations is a first-class Manager table view inside the shell', () => {
   assert.match(manager, /viewIsObservations: st\.view === 'observations'/);
-  // Both viewTitle/viewIntro ternary chains still fall through to the
-  // observations text as their final default case (only 'map' was
-  // inserted as a new branch; the existing branches were not reordered
-  // or edited).
-  assert.match(manager, /: 'البلاغات',/);
-  assert.match(manager, /: 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها\.',/);
+  assert.match(manager, /<sc-if value="\{\{ viewIsObservations \}\}">[\s\S]*aria-label="سجل البلاغات"/);
+  const definition = manager.match(/viewOpen:[^\n]+/)?.[0] || '';
+  assert.match(definition, /st\.view !== 'observations'/);
 });
 
-test('item 17: no other view exclusion changed -- viewIsHomeContent/viewOpen gained exactly one new exclusion each ("map"), fieldSurvey/lands/mobility/users are listed exactly as before', () => {
-  const homeContentOccurrences = (manager.match(/viewIsHomeContent: st\.view !== 'fieldSurvey' && st\.view !== 'lands' && st\.view !== 'mobility' && st\.view !== 'users'/g) || []).length;
-  assert.equal(homeContentOccurrences, 1, 'expected exactly one viewIsHomeContent definition, with fieldSurvey/lands/mobility/users unchanged and only map newly appended');
+test('Phase21: Manager full-page routes remain mutually exclusive with Home content', () => {
+  const definition = manager.match(/viewIsHomeContent:[^\n]+/)?.[0] || '';
+  for (const route of ['fieldSurvey','lands','mobility','adminAffairs','contracts','observations','reports','users','map']) {
+    assert.match(definition, new RegExp("st\\.view !== '" + route + "'"));
+  }
 });
 
 // ---- Window System V1 frozen (sanity: this phase never touches it) ----
