@@ -75,6 +75,75 @@ html[data-theme="light"] .hsr-manager-map-shell .leaflet-tile-pane{filter:satura
 html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightness(.66) saturate(.68) contrast(1.1)}
 @media(max-width:760px){.hsr-map-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.hsr-map-kpi{min-height:56px}.hsr-manager-map-shell .leaflet-popup-content{min-width:220px}.hsr-map-popup-body{min-width:220px}.hsr-map-popup-actions{grid-template-columns:1fr auto auto}}
 @media(prefers-reduced-motion:reduce){.hsr-map-kpi,.hsr-exec-pin,.hsr-exec-pin:before{transition:none!important}}
+
+/* PHASE21 responsive closure — computer / iPad / mobile parity. */
+.hsr-manager-root,.hsr-manager-page,.hsr-manager-layout,.hsr-manager-main{min-width:0}
+.hsr-manager-page{min-height:100dvh!important}
+.hsr-manager-main{overflow:hidden}
+.hsr-manager-map-shell{width:100%;max-width:100%}
+.hsr-manager-map-shell .leaflet-popup-content-wrapper{max-width:min(320px,calc(100vw - 28px))}
+@media(min-width:1440px){
+  .hsr-manager-page{padding:14px 16px!important}
+  .hsr-manager-main{gap:14px!important}
+}
+@media(min-width:1180px) and (max-width:1439px){
+  .hsr-manager-page{padding:12px!important;gap:12px!important}
+  .hsr-manager-layout,.hsr-manager-main{gap:12px!important}
+  .hsr-manager-header{padding:8px 12px!important}
+  .hsr-map-kpi-strip{gap:8px}
+}
+@media(min-width:768px) and (max-width:1179px){
+  .hsr-manager-page{padding:10px 12px!important;gap:12px!important}
+  .hsr-manager-layout,.hsr-manager-main{gap:12px!important}
+  .hsr-manager-header{padding:8px 10px!important;gap:8px!important}
+  .hsr-manager-header>div{min-width:0;max-width:100%}
+  .hsr-manager-header>div:first-child{flex:1 1 auto}
+  .hsr-manager-header>div:last-child{flex:0 0 auto}
+  .hsr-map-kpi-strip{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .hsr-map-kpi{min-height:58px;padding:9px 10px}
+  .hsr-manager-map-shell{min-height:380px!important}
+  .hsr-map-status{max-width:46%}
+  .hsr-map-tools{max-width:48%}
+  .hsr-map-filters>div:first-child,.hsr-map-filters>select{width:180px!important}
+}
+@media(max-width:767px){
+  html,body{overflow-x:hidden}
+  .hsr-manager-page{padding:8px!important;gap:10px!important;min-height:100dvh!important}
+  .hsr-manager-layout,.hsr-manager-main{gap:10px!important;width:100%}
+  .hsr-manager-header{padding:8px!important;gap:8px!important;border-radius:14px!important}
+  .hsr-manager-header>div{width:100%;min-width:0;max-width:100%;justify-content:space-between}
+  .hsr-manager-header>div:first-child{gap:7px!important}
+  .hsr-manager-header>div:last-child{gap:6px!important}
+  .hsr-manager-main>section,.hsr-manager-main>div{max-width:100%;min-width:0}
+  .hsr-map-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .hsr-map-kpi{min-height:54px;padding:9px 10px}
+  .hsr-map-kpi-label{font-size:9px}
+  .hsr-map-kpi-value{font-size:20px}
+  .hsr-manager-map-shell{min-height:390px!important;border-radius:16px!important}
+  .hsr-map-status{top:8px!important;left:8px!important;right:8px!important;max-width:none!important;width:auto!important;justify-content:flex-start}
+  .hsr-map-tools{top:66px!important;right:8px!important;left:auto!important;max-width:calc(100% - 16px)}
+  .hsr-map-filters{top:110px!important;left:8px!important;right:8px!important;width:auto!important;display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;gap:6px!important}
+  .hsr-map-filters>div:first-child,.hsr-map-filters>select{width:calc(50% - 3px)!important;min-width:130px;flex:1 1 130px}
+  .hsr-map-filters>div:last-child{flex:0 0 34px}
+  .hsr-exec-map-legend{display:none!important}
+  .hsr-open-map-cta{right:8px!important;bottom:8px!important;max-width:calc(100% - 16px)}
+  .hsr-manager-map-shell .leaflet-popup{max-width:calc(100vw - 24px)!important}
+  .hsr-manager-map-shell .leaflet-popup-content{min-width:0!important;width:min(280px,calc(100vw - 32px))!important}
+  .hsr-map-popup-body{min-width:0!important;width:100%}
+  .hsr-map-popup-actions{grid-template-columns:minmax(0,1fr) auto auto}
+  .hsr-map-popup-btn{min-height:36px}
+}
+@media(max-width:430px){
+  .hsr-manager-page{padding:6px!important}
+  .hsr-manager-header{border-radius:12px!important}
+  .hsr-manager-map-shell{min-height:410px!important}
+  .hsr-map-filters>div:first-child,.hsr-map-filters>select{width:100%!important;flex-basis:100%}
+  .hsr-map-filters>div:last-child{flex-direction:row!important;width:70px!important}
+  .hsr-map-filters>div:last-child button{width:34px!important;height:34px!important}
+  .hsr-map-filters>div:last-child span{width:1px!important;height:34px!important}
+  .hsr-map-popup-thumb{height:82px}
+  .hsr-map-popup-actions{padding:7px 10px 10px}
+}
 </style>
 </head>
 <body>
@@ -114,10 +183,10 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
 </style>
 </helmet>
 
-<div dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
-<div style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5;transition:background .3s ease,color .3s ease">
+<div dir="rtl" lang="ar" ref="{{ rootRef }}" class="hsr-manager-root" style="{{ themeVars }}">
+<div class="hsr-manager-page" style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5;transition:background .3s ease,color .3s ease">
 
-  <header style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:var(--hdrWrap,nowrap);gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.22));border-bottom:2px solid var(--hdrAccentBd,rgba(34,197,94,0.4));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.09),inset 0 -1px 0 rgba(0,0,0,0.3),0 4px 12px -6px rgba(0,0,0,0.6),0 26px 54px -22px rgba(0,0,0,0.98));backdrop-filter:var(--blur,blur(22px))">
+  <header class="hsr-manager-header" style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:var(--hdrWrap,nowrap);gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.22));border-bottom:2px solid var(--hdrAccentBd,rgba(34,197,94,0.4));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.09),inset 0 -1px 0 rgba(0,0,0,0.3),0 4px 12px -6px rgba(0,0,0,0.6),0 26px 54px -22px rgba(0,0,0,0.98));backdrop-filter:var(--blur,blur(22px))">
 
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
       <div style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
@@ -238,7 +307,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
     </div>
   </header>
 
-  <div style="display:flex;gap:14px;align-items:stretch">
+  <div class="hsr-manager-layout" style="display:flex;gap:14px;align-items:stretch">
 
     <aside style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease">
       <div style="padding:12px 11px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));backdrop-filter:var(--sbBlur,none);border:1px solid var(--sbBd,rgba(122,164,224,0.2));box-shadow:var(--sbSh,inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96));backdrop-filter:var(--blur,blur(18px));display:flex;flex-direction:column;gap:3px">
@@ -359,7 +428,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
       </div>
     </aside>
 
-    <main style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
+    <main class="hsr-manager-main" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
 
       <sc-if value="{{ viewIsHomeContent }}">
 
@@ -488,7 +557,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
         <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);order:var(--twinOrd,0);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,auto);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
           <div ref="{{ mapRef }}" class="hsr-manager-map-canvas" aria-label="الخريطة التنفيذية للبلاغات الموثّقة" style="position:absolute;inset:0;background:var(--twinBg,#03060d)"></div>
 
-          <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8)">
+          <div class="hsr-manager-map-overlay hsr-map-status" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8)">
             <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
             <div style="display:flex;flex-direction:column;line-height:1.35">
               <strong style="font-size:11px;color:var(--tx,#e9f1fb)">المشهد المكاني التنفيذي</strong>
@@ -496,7 +565,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
             </div>
           </div>
 
-          <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+          <div class="hsr-manager-map-overlay hsr-map-tools" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
             <div role="group" aria-label="نوع الخريطة" style="display:flex;gap:2px;padding:3px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px))">
               <button onClick="{{ setMapStreet }}" data-f="1" class="{{ mapStreetClass }}" aria-label="خريطة الشوارع">شوارع</button>
               <button onClick="{{ setMapSatellite }}" data-f="1" class="{{ mapSatelliteClass }}" aria-label="صور الأقمار الصناعية">أقمار</button>
@@ -509,7 +578,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
             </button>
           </div>
 
-          <div class="hsr-manager-map-overlay" style="position:absolute;top:68px;left:12px;display:flex;flex-direction:column;gap:8px">
+          <div class="hsr-manager-map-overlay hsr-map-filters" style="position:absolute;top:68px;left:12px;display:flex;flex-direction:column;gap:8px">
             <div style="width:196px;position:relative">
               <input aria-label="ابحث في البلاغات الموثّقة" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -703,7 +772,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
           <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1;min-height:420px;position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
             <div ref="{{ mapRef }}" class="hsr-manager-map-canvas" aria-label="الخريطة التنفيذية للبلاغات الموثّقة" style="position:absolute;inset:0;background:var(--twinBg,#03060d)"></div>
 
-            <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8)">
+            <div class="hsr-manager-map-overlay hsr-map-status" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8)">
               <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
               <div style="display:flex;flex-direction:column;line-height:1.35">
                 <strong style="font-size:11px;color:var(--tx,#e9f1fb)">المشهد المكاني التنفيذي</strong>
@@ -711,7 +780,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
               </div>
             </div>
 
-            <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+            <div class="hsr-manager-map-overlay hsr-map-tools" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
               <div role="group" aria-label="نوع الخريطة" style="display:flex;gap:2px;padding:3px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px))">
                 <button onClick="{{ setMapStreet }}" data-f="1" class="{{ mapStreetClass }}" aria-label="خريطة الشوارع">شوارع</button>
                 <button onClick="{{ setMapSatellite }}" data-f="1" class="{{ mapSatelliteClass }}" aria-label="صور الأقمار الصناعية">أقمار</button>
@@ -724,7 +793,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
               </button>
             </div>
 
-            <div class="hsr-manager-map-overlay" style="position:absolute;top:68px;left:12px;display:flex;flex-direction:column;gap:8px">
+            <div class="hsr-manager-map-overlay hsr-map-filters" style="position:absolute;top:68px;left:12px;display:flex;flex-direction:column;gap:8px">
               <div style="width:196px;position:relative">
                 <input aria-label="ابحث في البلاغات الموثّقة" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -825,11 +894,11 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
               <div style="display:flex;gap:14px;flex-wrap:var(--fsWrap,nowrap)">
                 <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1;min-width:280px;min-height:var(--fsMapH,420px);position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
                   <div ref="{{ mapRef }}" class="hsr-manager-map-canvas" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0"></div>
-                  <div dir="ltr" class="hsr-manager-map-overlay" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
+                  <div dir="ltr" class="hsr-manager-map-overlay hsr-map-status" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
                     <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
                     الخريطة التشغيلية · SMART HSR MAP
                   </div>
-                  <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px">
+                  <div class="hsr-manager-map-overlay hsr-map-tools" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px">
                     <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}" style="height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#dbe6f5);font-size:10.5px;padding:0 8px;outline:none">
                       <option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option>
                     </select>
@@ -1007,12 +1076,12 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
               <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1;min-height:var(--fsMapH,420px);position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
                 <div ref="{{ mapRef }}" class="hsr-manager-map-canvas" aria-label="الخريطة التشغيلية للحصر الميداني" style="position:absolute;inset:0"></div>
 
-                <div dir="ltr" class="hsr-manager-map-overlay" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
+                <div dir="ltr" class="hsr-manager-map-overlay hsr-map-status" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));font-size:10.5px;color:var(--glassTx,#a9c0d8);letter-spacing:.3px">
                   <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
                   الخريطة التشغيلية · SMART HSR MAP
                 </div>
 
-                <div class="hsr-manager-map-overlay" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 160px)">
+                <div class="hsr-manager-map-overlay hsr-map-tools" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 160px)">
                   <div style="width:190px;position:relative">
                     <input value="{{ search }}" onChange="{{ setSearch }}" aria-label="ابحث في أعمال الحصر على الخريطة" placeholder="الرقم، العنوان، المراقب..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -2586,14 +2655,14 @@ class Component extends DCLogic {
     lg: { '--pgMaxW': '100%', '--sbW': '216px', '--aiW': '272px', '--prioW': '256px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px', '--searchW': '150px', '--metaDisp': 'none' },
     md: { '--pgMaxW': '100%', '--sbW': '68px', '--sbLabel': 'none', '--subInd': '0px', '--aiW': '252px', '--prioW': '240px',
       '--twinH': '430px', '--midH': '430px', '--hdrNav': 'none', '--searchW': '150px', '--metaDisp': 'none', '--anaCols': 'repeat(3,1fr)', '--anaH': 'auto', '--kpiCell': '120px', '--scoreW': '210px', '--fsMapH': '380px' },
-    tab: { '--pgMaxW': '100%', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchW': '160px',
+    tab: { '--pgMaxW': '100%', '--pgPad': '12px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchW': '172px',
       '--kpiWrap': 'wrap', '--kpiCell': '33%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
-      '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '400px', '--midH': 'auto',
+      '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '420px', '--midH': 'auto',
       '--aiW': 'calc(50% - 7px)', '--prioW': 'calc(50% - 7px)', '--anaCols': 'repeat(2,1fr)', '--anaH': 'auto',
       '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none', '--profTxt': 'none',
       '--fsWrap': 'wrap', '--fsMapH': '340px', '--fsSideW': '100%',
       '--lndWrap': 'wrap', '--lndMapH': '240px' },
-    mob: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none', '--hdrWrap': 'wrap', '--hdrLabel': 'none',
+    mob: { '--pgMaxW': '100%', '--pgPad': '8px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none', '--hdrWrap': 'wrap', '--hdrLabel': 'none',
       '--kpiWrap': 'wrap', '--kpiCell': '50%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '320px', '--twinMin': '240px', '--midH': 'auto',
       '--aiW': '100%', '--prioW': '100%', '--anaCols': '1fr', '--anaH': 'auto',
