@@ -235,6 +235,14 @@ html[data-theme="dark"] .hsr-manager-root{
   --tx:#f2f7ff!important;--tx2:#bfd4ea!important;--tx3:#86a6c4!important;
   --thTx:#d8e9fa!important;--chipBg:rgba(78,151,224,.16)!important;
   --track:rgba(95,171,247,.15)!important;--div:rgba(95,171,247,.14)!important;
+  --acc:#34b7f1!important;--accBg:rgba(52,183,241,.11)!important;--accBd:rgba(52,183,241,.34)!important;
+  --ok:#31d17c!important;--okTx:#7ee7ac!important;--okBg:rgba(49,209,124,.10)!important;--okBd:rgba(49,209,124,.28)!important;
+  --warn:#f2b84b!important;--warnBg:rgba(242,184,75,.10)!important;--warnBd:rgba(242,184,75,.28)!important;
+  --bad:#ff5f6d!important;--badTx:#ff8f9a!important;--badBg:rgba(255,95,109,.10)!important;--badBd:rgba(255,95,109,.28)!important;
+  --info:#34b7f1!important;--infoBg:rgba(52,183,241,.10)!important;--infoBd:rgba(52,183,241,.28)!important;
+  --vio:#9b8cff!important;--vioBg:rgba(155,140,255,.10)!important;--vioBd:rgba(155,140,255,.27)!important;
+  --btn:linear-gradient(180deg,#1677ff,#0d5fd3)!important;--btnTx:#fff!important;--btnBd:rgba(76,160,255,.46)!important;
+  --barFill:linear-gradient(90deg,#1677ff,#34b7f1)!important;
 }
 html[data-theme="dark"] .hsr-exec-kpis>div,
 html[data-theme="dark"] .hsr-decision-card,
@@ -2829,6 +2837,7 @@ class Component extends DCLogic {
   };
 
   componentDidMount() {
+    this.syncThemeAttribute(this.state.theme);
     // UAT/dev-only introspection hook — read-only, exposes no PII beyond
     // what's already visibly rendered on the map, performs no write of any
     // kind. Matches the exact convention already established by
@@ -2890,12 +2899,21 @@ class Component extends DCLogic {
     clearInterval(this._clock);
     this._opMap?.remove();
     document.documentElement.removeAttribute('data-smart-hsr-manager-view');
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.style.removeProperty('color-scheme');
     window.dispatchEvent(new CustomEvent('smart-hsr:manager-view-change', { detail: { view: 'unmounted', organizationId: '' } }));
   }
   componentDidUpdate(_prevProps, prevState) {
     this.syncOperationalMap();
     const previous = prevState || {};
+    if (previous.theme !== this.state.theme) this.syncThemeAttribute(this.state.theme);
     if (previous.view !== this.state.view || previous.orgId !== this.state.orgId) this.publishManagerView();
+  }
+
+  syncThemeAttribute(theme) {
+    const mode = theme === 'day' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', mode);
+    document.documentElement.style.colorScheme = mode;
   }
 
   publishManagerView() {
