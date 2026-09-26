@@ -219,6 +219,48 @@ html[data-theme="dark"] .hsr-manager-map-shell{
   .hsr-analytics-grid{grid-template-columns:1fr!important}
   .hsr-admin-view .hsr-table-row,.hsr-contracts-view .hsr-table-row{align-items:flex-start!important}
 }
+
+
+/* PHASE21.2 THEME CONTRACT — force complete Day/Night parity even when
+   runtime style merging leaves a previous custom property behind. */
+html[data-theme="dark"] .hsr-manager-root{
+  --pgBg:radial-gradient(980px 560px at 18% -8%,rgba(22,119,255,.16),transparent 70%),radial-gradient(840px 520px at 82% 8%,rgba(52,183,241,.09),transparent 72%),#071a2f!important;
+  --l1:linear-gradient(155deg,rgba(16,50,85,.96),rgba(11,36,64,.97) 58%,rgba(8,29,52,.98))!important;
+  --l2:linear-gradient(160deg,rgba(14,43,74,.96),rgba(10,33,59,.98))!important;
+  --l3:linear-gradient(180deg,rgba(18,54,90,.95),rgba(10,34,61,.98))!important;
+  --card:linear-gradient(155deg,rgba(16,50,85,.96),rgba(10,36,63,.98))!important;
+  --sect:linear-gradient(160deg,rgba(14,43,74,.94),rgba(9,31,56,.97))!important;
+  --sunk:rgba(6,29,52,.92)!important;--sunk2:rgba(8,35,62,.94)!important;
+  --ctl:rgba(18,58,96,.78)!important;--field:rgba(7,31,56,.94)!important;
+  --tx:#f2f7ff!important;--tx2:#bfd4ea!important;--tx3:#86a6c4!important;
+  --thTx:#d8e9fa!important;--chipBg:rgba(78,151,224,.16)!important;
+  --track:rgba(95,171,247,.15)!important;--div:rgba(95,171,247,.14)!important;
+}
+html[data-theme="dark"] .hsr-exec-kpis>div,
+html[data-theme="dark"] .hsr-decision-card,
+html[data-theme="dark"] .hsr-priority-card,
+html[data-theme="dark"] .hsr-completion-card,
+html[data-theme="dark"] .hsr-analytics-grid>div,
+html[data-theme="dark"] .hsr-command-dock,
+html[data-theme="dark"] .hsr-integration-strip{
+  background:linear-gradient(155deg,rgba(16,50,85,.96),rgba(9,33,59,.98))!important;
+  border-color:rgba(70,160,246,.24)!important;color:#f2f7ff!important;
+}
+html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{
+  filter:brightness(.54) saturate(.76) contrast(1.16) hue-rotate(174deg)!important;
+}
+html[data-theme="dark"] .hsr-manager-map-shell:before{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(180deg,rgba(5,39,77,.10),rgba(3,24,52,.20));mix-blend-mode:multiply
+}
+html[data-theme="light"] .hsr-manager-root{
+  --pgBg:radial-gradient(980px 540px at 52% -8%,rgba(255,255,255,.72),transparent 70%),radial-gradient(760px 460px at 12% 18%,rgba(18,133,90,.09),transparent 72%),linear-gradient(180deg,#e8efeb,#e4ece7)!important;
+}
+html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)!important}
+.hsr-analytics-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.hsr-command-dock{position:relative;z-index:3}
+@media(min-width:700px) and (max-width:1179px){.hsr-analytics-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:699px){.hsr-analytics-grid{grid-template-columns:1fr!important}.hsr-integration-strip{align-items:flex-start}.hsr-command-dock{padding:6px 8px!important}}
 </style>
 </head>
 <body>
@@ -611,22 +653,32 @@ html[data-theme="dark"] .hsr-manager-map-shell{
 
       <section class="hsr-command-row" style="min-height:var(--midH,450px);flex:none;display:flex;gap:14px;flex-wrap:var(--midWrap,nowrap)">
 
-        <div class="hsr-decision-card" style="width:var(--aiW,292px);flex:none;order:var(--aiOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+        <div class="hsr-decision-card" style="width:var(--aiW,260px);flex:none;order:var(--aiOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
           <div style="display:flex;align-items:center;gap:9px">
-            <div style="flex:1;text-align:right;font-size:13px;font-weight:600;color:var(--tx,#e4eefb)">مساعد القرار البلدي</div>
-            <span style="font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:3px 7px;border-radius:6px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">قريباً</span>
+            <div style="flex:1;text-align:right">
+              <div style="font-size:13px;font-weight:700;color:var(--tx,#e4eefb)">يحتاج قرار المدير</div>
+              <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:2px">من البيانات التشغيلية الحالية فقط</div>
+            </div>
+            <span style="font-size:9px;font-weight:700;color:var(--acc,#34b7f1);padding:3px 7px;border-radius:999px;background:var(--accBg,rgba(52,183,241,.1));border:1px solid var(--accBd,rgba(52,183,241,.3))">{{ managerAttentionCount }}</span>
           </div>
 
-          <div aria-label="الملخص التنفيذي غير متاح" style="padding:12px;border-radius:13px;background:var(--sunk,linear-gradient(160deg,rgba(30,58,110,0.3),rgba(14,24,44,0.5)));border:1px solid var(--accBd,rgba(76,201,240,0.2));text-align:center">
-            <div style="font-size:11.5px;font-weight:600;color:var(--tx,#cfe6f8)">ملخص تنفيذي</div>
-            <p style="margin:8px 0 0;font-size:10.5px;line-height:1.8;color:var(--tx3,#7d8ea6)">لا تتوفر تحليلات أو توصيات معتمدة في هذه الجلسة.</p>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ managerAttentionItems }}" as="a" hint-placeholder-count="3">
+              <button onClick="{{ a.on }}" data-f="1" style="width:100%;padding:10px;border-radius:12px;text-align:right;display:flex;align-items:center;gap:9px;cursor:pointer;background:var(--sunk2,rgba(8,35,62,.7));border:1px solid {{ a.bd }};color:var(--tx,#f2f7ff)">
+                <span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{ a.col }};box-shadow:0 0 0 4px {{ a.glow }}"></span>
+                <span style="flex:1;min-width:0">
+                  <strong style="display:block;font-size:10.8px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.title }}</strong>
+                  <span style="display:block;font-size:9.3px;color:var(--tx3,#86a6c4);margin-top:2px">{{ a.meta }}</span>
+                </span>
+                <span style="font-size:15px;font-weight:800;color:{{ a.col }};font-variant-numeric:tabular-nums">{{ a.value }}</span>
+              </button>
+            </sc-for>
+            <sc-if value="{{ managerAttentionEmpty }}">
+              <div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;border-radius:12px;background:var(--sunk,rgba(7,31,56,.7));border:1px dashed var(--ctlBd,rgba(86,166,248,.2));color:var(--tx3,#86a6c4);font-size:10.5px;line-height:1.8">لا توجد حالات تشغيلية حالية تتطلب تدخّل المدير.</div>
+            </sc-if>
           </div>
 
-          <div aria-label="المساعد التنفيذي الذكي غير مفعّل" style="flex:1;min-height:0;padding:12px;border-radius:13px;background:var(--sect,rgba(11,18,32,0.55));border:1px solid var(--sectBd,rgba(122,164,224,0.12));display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
-            <div style="font-size:11.5px;font-weight:600;color:var(--tx2,#cfe0f2)">التوصيات التنفيذية</div>
-            <div style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin-top:8px;line-height:1.7">لا توجد توصيات تشغيلية موثّقة في هذه الجلسة.</div>
-            <span style="margin-top:11px;font-size:9px;font-weight:600;color:var(--tx3,#7d8ea6);padding:3px 8px;border-radius:6px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">المساعد التنفيذي الذكي — قريباً</span>
-          </div>
+          <div style="padding-top:3px;border-top:1px solid var(--div,rgba(95,171,247,.14));font-size:9px;color:var(--tx3,#86a6c4)">لا توجد توصيات آلية أو بيانات مصطنعة.</div>
         </div>
 
         <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);order:var(--twinOrd,0);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,auto);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
@@ -715,12 +767,6 @@ html[data-theme="dark"] .hsr-manager-map-shell{
 
       <section class="hsr-analytics-grid" style="min-height:var(--anaH,216px);flex:none;display:grid;grid-template-columns:var(--anaCols,0.96fr 1.06fr 1fr 1.06fr 1.02fr);gap:14px">
 
-        <div aria-label="حالة بيانات الطقس" style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column;justify-content:center;text-align:center">
-          <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">الطقس اليوم</div>
-          <div style="font-size:11px;color:var(--tx3,#7d8ea6);margin-top:13px;line-height:1.8">لا يوجد مصدر طقس تشغيلي موثّق متصل بهذه اللوحة.</div>
-          <span style="align-self:center;margin-top:10px;font-size:9.5px;color:var(--tx3,#7d8ea6);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">غير متاح</span>
-        </div>
-
         <div style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">الكفاءة التشغيلية</span>
@@ -782,15 +828,17 @@ html[data-theme="dark"] .hsr-manager-map-shell{
           </div>
         </div>
 
-        <div aria-label="اتجاه البلاغات غير متاح" style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column;justify-content:center;text-align:center">
-          <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">اتجاه البلاغات</div>
-          <div style="font-size:11px;color:var(--tx3,#7d8ea6);line-height:1.8;margin-top:13px">لا تتوفر بيانات زمنية موثّقة لعرض المقارنة أو الاتجاه.</div>
-          <span style="align-self:center;margin-top:10px;font-size:9.5px;color:var(--tx3,#7d8ea6);padding:4px 8px;border-radius:7px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">غير متاح</span>
-        </div>
+      </section>
+
+      <section class="hsr-integration-strip" aria-label="حالة التكاملات" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 10px;border-radius:13px;background:var(--sunk,rgba(7,31,56,.66));border:1px solid var(--ctlBd,rgba(86,166,248,.16));color:var(--tx3,#86a6c4)">
+        <span style="font-size:9.5px;font-weight:700;color:var(--tx2,#bfd4ea)">حالة التكاملات</span>
+        <span style="width:1px;height:18px;background:var(--div,rgba(95,171,247,.14))"></span>
+        <span style="font-size:9.5px;padding:4px 8px;border-radius:999px;background:var(--chipBg,rgba(78,151,224,.14));border:1px solid var(--ctlBd,rgba(86,166,248,.16))">الطقس · غير متصل</span>
+        <span style="font-size:9.5px;padding:4px 8px;border-radius:999px;background:var(--chipBg,rgba(78,151,224,.14));border:1px solid var(--ctlBd,rgba(86,166,248,.16))">الاتجاه الزمني · بيانات غير كافية</span>
       </section>
 
       <sc-if value="{{ showQuick }}" hint-placeholder-val="{{ true }}">
-        <section aria-label="إجراءات سريعة" style="min-height:54px;flex:none;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);flex-wrap:var(--qaWrap,nowrap)">
+        <section class="hsr-command-dock" aria-label="إجراءات سريعة" style="min-height:44px;flex:none;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:14px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);flex-wrap:var(--qaWrap,nowrap)">
           <div style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--div,rgba(122,164,224,0.14))">
             <span style="font-size:12px;font-weight:600;color:var(--tx,#dbe6f5);white-space:nowrap">إجراءات سريعة</span>
             <button onClick="{{ hideQuick }}" data-f="1" aria-label="إخفاء" style="width:20px;height:20px;border:none;background:none;color:var(--tx3,#6f8299);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">
@@ -799,7 +847,7 @@ html[data-theme="dark"] .hsr-manager-map-shell{
           </div>
           <div style="flex:1;display:flex;align-items:center;gap:9px;flex-wrap:var(--qaWrap,nowrap)">
             <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="4">
-              <button data-manager-view="{{ q.view }}" data-f="1" style="flex:1 1 var(--qaBasis,0);min-width:var(--qaMin,0);height:36px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-size:11.5px;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));cursor:pointer;white-space:nowrap" style-hover="background:var(--ctlH,rgba(32,50,84,0.8));color:var(--tx,#eaf4ff)">{{ q.label }}</button>
+              <button data-manager-view="{{ q.view }}" data-f="1" style="flex:1 1 var(--qaBasis,0);min-width:var(--qaMin,0);height:32px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-size:11.5px;color:var(--tx2,#c3d6ea);background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));cursor:pointer;white-space:nowrap" style-hover="background:var(--ctlH,rgba(32,50,84,0.8));color:var(--tx,#eaf4ff)">{{ q.label }}</button>
             </sc-for>
           </div>
         </section>
@@ -2760,14 +2808,14 @@ class Component extends DCLogic {
   };
 
   BP = {
-    xl: { '--pgMaxW': '1600px', '--sbW': '232px', '--aiW': '292px', '--prioW': '272px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px' },
-    lg: { '--pgMaxW': '100%', '--sbW': '216px', '--aiW': '272px', '--prioW': '256px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px', '--searchW': '150px', '--metaDisp': 'none' },
-    md: { '--pgMaxW': '100%', '--sbW': '68px', '--sbLabel': 'none', '--subInd': '0px', '--aiW': '252px', '--prioW': '240px',
+    xl: { '--pgMaxW': '1600px', '--sbW': '232px', '--aiW': '260px', '--prioW': '250px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px' },
+    lg: { '--pgMaxW': '100%', '--sbW': '216px', '--aiW': '244px', '--prioW': '234px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px', '--searchW': '150px', '--metaDisp': 'none' },
+    md: { '--pgMaxW': '100%', '--sbW': '68px', '--sbLabel': 'none', '--subInd': '0px', '--aiW': '210px', '--prioW': '200px',
       '--twinH': '430px', '--midH': '430px', '--hdrNav': 'none', '--searchW': '150px', '--metaDisp': 'none', '--anaCols': 'repeat(3,1fr)', '--anaH': 'auto', '--kpiCell': '120px', '--scoreW': '210px', '--fsMapH': '380px' },
     tab: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'flex', '--sbW': '176px', '--sbLabel': 'block', '--subInd': '10px', '--mobNav': 'none', '--hdrNav': 'none', '--metaDisp': 'none', '--searchW': '132px',
       '--kpiWrap': 'nowrap', '--kpiCell': '0', '--kpiDiv': 'block', '--kpiH': '122px', '--rowWrap': 'nowrap', '--kpiMin': '0', '--scoreW': '178px',
       '--midWrap': 'nowrap', '--twinBasis': 'auto', '--twinOrd': '0', '--twinH': '390px', '--midH': '390px',
-      '--aiW': '190px', '--prioW': '190px', '--anaCols': 'repeat(4,minmax(0,1fr))', '--anaH': 'auto',
+      '--aiW': '176px', '--prioW': '176px', '--anaCols': 'repeat(4,minmax(0,1fr))', '--anaH': 'auto',
       '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '132px', '--brandTxt': 'none', '--profTxt': 'none',
       '--fsWrap': 'nowrap', '--fsMapH': '320px', '--fsSideW': '220px',
       '--lndWrap': 'nowrap', '--lndMapH': '240px' },
@@ -3189,6 +3237,21 @@ class Component extends DCLogic {
     ].map(k => ({ ...k, className:'hsr-map-kpi' + (st.mapFilter === k.id ? ' is-active' : ''), on:() => this.setState({ mapFilter:k.id }) }));
     const mapEmptyText = st.dataState === 'error' ? (st.dataError || 'تعذر تحميل البلاغات الموثّقة.')
       : mapPoints.length ? '' : 'لا توجد بلاغات ذات إحداثيات موثّقة ضمن النطاق الحالي.';
+
+    // Executive attention queue: deterministic and derived only from the
+    // currently loaded real observations. No AI recommendation or fabricated
+    // severity is introduced here.
+    const pendingAttention = allObservations.filter(o => o.status === 'PENDING').length;
+    const processingAttention = allObservations.filter(o => o.status === 'IN_PROGRESS').length;
+    const noLocationAttention = allObservations.filter(o => !o.coordinates).length;
+    const highAttention = allObservations.filter(o => ['HIGH','CRITICAL'].includes(String(o.priority || '').toUpperCase())).length;
+    const attentionRaw = [
+      pendingAttention ? { title:'بلاغات بانتظار بدء المعالجة', meta:'تتطلب متابعة بدء الإجراء', value:String(pendingAttention), col:'var(--bad,#ff5f6d)', bd:'var(--badBd,rgba(255,95,109,.28))', glow:'var(--badBg,rgba(255,95,109,.10))', on:()=>this.setState({view:'observations'}) } : null,
+      highAttention ? { title:'بلاغات ذات أولوية مرتفعة', meta:'وفق الأولوية المسجلة في البلاغ', value:String(highAttention), col:'var(--warn,#f2b84b)', bd:'var(--warnBd,rgba(242,184,75,.28))', glow:'var(--warnBg,rgba(242,184,75,.10))', on:()=>this.setState({view:'observations'}) } : null,
+      processingAttention ? { title:'بلاغات قيد المعالجة', meta:'تحتاج متابعة حتى الإغلاق', value:String(processingAttention), col:'var(--info,#34b7f1)', bd:'var(--infoBd,rgba(52,183,241,.28))', glow:'var(--infoBg,rgba(52,183,241,.10))', on:()=>this.setState({view:'observations'}) } : null,
+      noLocationAttention ? { title:'بلاغات دون موقع موثّق', meta:'لا تظهر على الخريطة التنفيذية', value:String(noLocationAttention), col:'var(--vio,#8d9cff)', bd:'var(--vioBd,rgba(141,156,255,.28))', glow:'var(--vioBg,rgba(141,156,255,.10))', on:()=>this.setState({view:'observations'}) } : null,
+    ].filter(Boolean);
+    const managerAttentionItems = attentionRaw.slice(0,3);
     const roleLabel = role => ({
       manager: 'مدير', supervisor: 'مشرف', inspector: 'مراقب', contractor: 'مقاول',
       mobility_head: 'رئيس حركة', department_head: 'رئيس قسم', administrative_affairs: 'شؤون إدارية', employee: 'موظف'
@@ -4140,6 +4203,7 @@ class Component extends DCLogic {
       tCols, tRows, tFilters, tPlaceholder, tQ, setTQ, tEmpty, tCount,
       observationCols, observationRows, observationRowsEmpty: !observationRows.length, observationCount: observationRows.length + ' بلاغ',
       reportKpis, reportRecentRows,
+      managerAttentionItems, managerAttentionCount: String(attentionRaw.length), managerAttentionEmpty: managerAttentionItems.length === 0,
       adminAffairsKpis, adminAffairsTabs, adminAffairsCols, adminAffairsRows, adminAffairsRowsEmpty: !adminAffairsRows.length, adminAffairsCount: adminAffairsRows.length + ' سجل',
       adminAffairsQ: st.adminAffairsQ || '', setAdminAffairsQ: e => this.setState({adminAffairsQ:e.target.value}),
       adminAffairsLoading: st.adminAffairsState === 'loading', adminAffairsReady: st.adminAffairsState === 'ready', adminAffairsErrorVisible: st.adminAffairsState === 'error', adminAffairsError: st.adminAffairsError || 'تعذر تحميل البيانات.',
@@ -4173,9 +4237,9 @@ class Component extends DCLogic {
       cats: this.liveCategories,
       prios: this.livePriorities.map(p => ({
         n: p.n, title: p.title, meta: p.meta, col: p.col,
-        bg: this.tint(p.col, day ? 0.05 : 0.08),
-        bd: this.tint(p.col, day ? 0.26 : 0.28),
-        numBg: this.tint(p.col, day ? 0.1 : 0.16),
+        bg: this.tint(p.col, day ? 0.025 : 0.055),
+        bd: this.tint(p.col, day ? 0.18 : 0.24),
+        numBg: this.tint(p.col, day ? 0.075 : 0.14),
         on: () => this.openObservation(p.id)
       })),
       quickActions: [
