@@ -915,6 +915,73 @@ async function handler(req, res) {
     }
   }
 
+  // PHASE21.1 — permanent contractor/company removal is intentionally
+  // narrow: only a municipality manager / contracts head, only same-org,
+  // only after the contract is no longer ACTIVE, and only when no
+  // observation has ever been assigned to this contractor identity.
+  // Historical audit events are preserved as immutable evidence.
+  if (action === 'deleteFieldContractorCompany') {
+    const caller = await getContractsRegistryCaller(db, decoded.uid);
+    if (!caller || !caller.canManage) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'contracts_head_or_manager_required' });
+    }
+    const contractorUid = cleanString(body.contractorUid);
+    if (!contractorUid) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'contractorUid_required' });
+    }
+    try {
+      const userRef = db.collection('users').doc(contractorUid);
+      const profileRef = db.collection('contractorProfiles').doc(contractorUid);
+      const [userSnap, profileSnap, observationsSnap] = await Promise.all([
+        userRef.get(),
+        profileRef.get(),
+        db.collection('observations').where('organizationId', '==', caller.organizationId).get(),
+      ]);
+      if (!userSnap.exists) return sendJson(res, 404, { error: 'request_failed', reason: 'contractor_not_found' });
+      const user = userSnap.data() || {};
+      const profile = profileSnap.exists ? (profileSnap.data() || {}) : {};
+      if (cleanString(user.organizationId) !== caller.organizationId
+          || (cleanString(profile.organizationId) && cleanString(profile.organizationId) !== caller.organizationId)) {
+        return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
+      }
+      if (user.role !== 'contractor') {
+        return sendJson(res, 409, { error: 'request_failed', reason: 'contractor_role_required' });
+      }
+      if (cleanString(profile.status, 'ENDED') === 'ACTIVE') {
+        return sendJson(res, 409, { error: 'request_failed', reason: 'active_contract_cannot_be_deleted' });
+      }
+      const hasLinkedCases = observationsSnap.docs.some(doc => {
+        const data = doc.data() || {};
+        return cleanString(data.assignedContractorUid) === contractorUid;
+      });
+      if (hasLinkedCases) {
+        return sendJson(res, 409, { error: 'request_failed', reason: 'contractor_has_linked_cases' });
+      }
+
+      const now = FieldValue.serverTimestamp();
+      await db.runTransaction(async transaction => {
+        transaction.delete(userRef);
+        if (profileSnap.exists) transaction.delete(profileRef);
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: caller.organizationId,
+          department: cleanString(profile.department, 'إدارة الحصر الميداني'),
+          actorId: caller.uid,
+          actorRole: caller.role,
+          resourceType: 'contractorProfile',
+          resourceId: contractorUid,
+          action: 'delete_contractor_company',
+          contractNumber: cleanString(profile.contractNumber),
+          fromStatus: cleanString(profile.status) || null,
+          timestamp: now,
+        });
+      });
+      try { await auth.deleteUser(contractorUid); } catch (_) { /* Firestore identity is already revoked by record deletion. */ }
+      return sendJson(res, 200, { contractorUid, deleted: true });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   // PHASE 02B — Visual Distortion command surface for the Field Survey
   // Department Head. Contractors are external operational identities, not
   // employee-registry records. All tenant scope comes from the verified
