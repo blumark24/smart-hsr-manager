@@ -15,7 +15,7 @@
 <script src="geo-core.bundle.js"></script>
 <script src="./manager-dashboard-format.js"></script>
 <style id="manager-observations-reference-ui">
-.manager-view-overlay{background:rgba(2,7,16,.78)!important;backdrop-filter:blur(12px)!important}.manager-view-panel{width:min(1120px,100%)!important;border-radius:20px!important;background:linear-gradient(155deg,rgba(10,25,47,.99),rgba(6,16,31,.99))!important;border:1px solid rgba(76,139,224,.26)!important;box-shadow:0 34px 100px rgba(0,0,0,.58),0 0 40px rgba(34,116,255,.08)!important}.manager-observations-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.manager-observation-card{transition:border-color .16s ease,background .16s ease,transform .16s ease!important}.manager-observation-card:hover{transform:translateY(-1px);border-color:rgba(76,139,224,.45)!important;background:rgba(18,38,68,.82)!important}.manager-observation-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px}.manager-observation-meta span{padding:5px 7px;border-radius:7px;background:rgba(7,17,32,.7);border:1px solid rgba(93,146,214,.11);color:#8fa3bd;font-size:8.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:760px){.manager-observations-grid{grid-template-columns:1fr!important}.manager-view-panel{max-height:calc(100vh - 12px)!important;border-radius:14px!important}}
+.manager-view-overlay{background:rgba(2,7,16,.78)!important;backdrop-filter:blur(12px)!important}.manager-view-panel{width:min(1120px,100%)!important;border-radius:20px!important;background:linear-gradient(155deg,rgba(10,25,47,.99),rgba(6,16,31,.99))!important;border:1px solid rgba(76,139,224,.26)!important;box-shadow:0 34px 100px rgba(0,0,0,.58),0 0 40px rgba(34,116,255,.08)!important}.manager-observations-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.manager-observation-card{transition:border-color .16s ease,background .16s ease,transform .16s ease!important}.manager-observation-card:hover{transform:translateY(-1px);border-color:rgba(76,139,224,.45)!important;background:rgba(18,38,68,.82)!important}.manager-observation-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px}.manager-observation-meta span{padding:5px 7px;border-radius:7px;background:rgba(7,17,32,.7);border:1px solid rgba(93,146,214,.11);color:#8fa3bd;font-size:8.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:699px){.manager-observations-grid{grid-template-columns:1fr!important}.manager-view-panel{max-height:calc(100vh - 12px)!important;border-radius:14px!important}}
 </style>
 <!-- STAGE 1 FIX 2 — additive, scoped Day-mode presentation for the shared
      البلاغات/التقارير/الحوادث/observations view panel above. The base rule
@@ -73,7 +73,7 @@ html[data-theme="dark"] body{background:#020712}
 .hsr-map-popup-btn.icon{width:34px;padding:0;display:grid;place-items:center;font-size:13px}
 html[data-theme="light"] .hsr-manager-map-shell .leaflet-tile-pane{filter:saturate(.76) contrast(.94) brightness(1.02)}
 html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightness(.66) saturate(.68) contrast(1.1)}
-@media(max-width:760px){.hsr-map-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.hsr-map-kpi{min-height:56px}.hsr-manager-map-shell .leaflet-popup-content{min-width:220px}.hsr-map-popup-body{min-width:220px}.hsr-map-popup-actions{grid-template-columns:1fr auto auto}}
+@media(max-width:699px){.hsr-map-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.hsr-map-kpi{min-height:56px}.hsr-manager-map-shell .leaflet-popup-content{min-width:220px}.hsr-map-popup-body{min-width:220px}.hsr-map-popup-actions{grid-template-columns:1fr auto auto}}
 @media(prefers-reduced-motion:reduce){.hsr-map-kpi,.hsr-exec-pin,.hsr-exec-pin:before{transition:none!important}}
 
 /* PHASE21 responsive closure — computer / iPad / mobile parity. */
@@ -106,7 +106,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
   .hsr-map-tools{max-width:48%}
   .hsr-map-filters>div:first-child,.hsr-map-filters>select{width:180px!important}
 }
-@media(max-width:767px){
+@media(max-width:699px){
   html,body{overflow-x:hidden}
   .hsr-manager-page{padding:8px!important;gap:10px!important;min-height:100dvh!important}
   .hsr-manager-layout,.hsr-manager-main{gap:10px!important;width:100%}
@@ -144,6 +144,81 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
   .hsr-map-popup-thumb{height:82px}
   .hsr-map-popup-actions{padding:7px 10px 10px}
 }
+
+
+/* PHASE21.1 EXECUTIVE VISUAL SYSTEM V2
+   Government Day + Digital Blue Night, with computer-like iPad behavior. */
+.hsr-exec-kpis,.hsr-command-row,.hsr-analytics-grid{isolation:isolate}
+.hsr-exec-kpis>div,.hsr-decision-card,.hsr-priority-card,.hsr-completion-card,.hsr-analytics-grid>div,
+.hsr-admin-view>div,.hsr-contracts-view>div{transition:border-color .18s ease,box-shadow .18s ease,background .18s ease,transform .18s ease}
+.hsr-decision-card,.hsr-priority-card,.hsr-completion-card{position:relative;overflow:hidden}
+.hsr-decision-card:before,.hsr-priority-card:before,.hsr-completion-card:before{
+  content:"";position:absolute;inset:0 0 auto;height:2px;pointer-events:none;opacity:.8;
+  background:linear-gradient(90deg,transparent,var(--surfaceAccent,var(--acc,#34b7f1)),transparent)
+}
+.hsr-decision-card{--surfaceAccent:var(--acc,#34b7f1)}
+.hsr-priority-card{--surfaceAccent:var(--warn,#f5a524)}
+.hsr-completion-card{--surfaceAccent:var(--ok,#22c55e)}
+html[data-theme="light"] .hsr-exec-kpis>div,
+html[data-theme="light"] .hsr-decision-card,
+html[data-theme="light"] .hsr-priority-card,
+html[data-theme="light"] .hsr-completion-card,
+html[data-theme="light"] .hsr-analytics-grid>div{
+  box-shadow:0 1px 2px rgba(15,55,40,.06),0 14px 34px -24px rgba(10,75,51,.38),inset 0 1px 0 rgba(255,255,255,.82)!important
+}
+html[data-theme="dark"] .hsr-exec-kpis>div,
+html[data-theme="dark"] .hsr-decision-card,
+html[data-theme="dark"] .hsr-priority-card,
+html[data-theme="dark"] .hsr-completion-card,
+html[data-theme="dark"] .hsr-analytics-grid>div{
+  box-shadow:0 22px 56px -34px rgba(0,70,155,.62),inset 0 1px 0 rgba(155,214,255,.06)!important
+}
+html[data-theme="dark"] .hsr-manager-page:before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(760px 420px at 18% 8%,rgba(22,119,255,.13),transparent 72%),
+    radial-gradient(620px 360px at 82% 18%,rgba(52,183,241,.08),transparent 74%);
+}
+html[data-theme="light"] .hsr-manager-page:before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(720px 360px at 12% 8%,rgba(18,133,90,.075),transparent 72%),
+    radial-gradient(680px 340px at 86% 16%,rgba(69,150,111,.055),transparent 74%);
+}
+html[data-theme="light"] .hsr-manager-map-shell{
+  border-color:rgba(13,108,72,.32)!important;
+  box-shadow:0 30px 72px -34px rgba(13,82,57,.48),inset 0 0 0 1px rgba(255,255,255,.68)!important
+}
+html[data-theme="dark"] .hsr-manager-map-shell{
+  border-color:rgba(67,164,255,.34)!important;
+  box-shadow:0 34px 84px -36px rgba(0,88,198,.72),0 0 0 1px rgba(70,166,255,.06)!important
+}
+@media(min-width:900px) and (max-width:1179px){
+  .hsr-manager-page{font-size:12px}
+  .hsr-manager-layout{gap:10px!important}
+  .hsr-manager-header{padding:7px 9px!important}
+  .hsr-analytics-grid{gap:10px!important}
+}
+@media(min-width:700px) and (max-width:899px){
+  .hsr-manager-root{--sbW:74px!important;--sbLabel:none!important;--subInd:0px!important;--aiW:154px!important;--prioW:154px!important;--scoreW:150px!important;--searchW:0px!important;--searchDisp:none!important;--anaCols:repeat(2,minmax(0,1fr))!important}
+  .hsr-manager-page{padding:8px!important;font-size:11.5px}
+  .hsr-manager-layout,.hsr-manager-main{gap:8px!important}
+  .hsr-manager-header{padding:7px 8px!important}
+  .hsr-exec-kpis{gap:8px!important}
+  .hsr-exec-kpis>div:first-child{overflow:hidden}
+  .hsr-command-row{gap:8px!important}
+  .hsr-analytics-grid{gap:8px!important}
+  .hsr-manager-map-shell{min-height:360px!important}
+}
+@media(max-width:699px){
+  .hsr-exec-kpis{flex-wrap:wrap!important}
+  .hsr-exec-kpis>div:first-child{width:100%;flex-basis:100%}
+  .hsr-completion-card{width:100%!important}
+  .hsr-command-row{flex-wrap:wrap!important}
+  .hsr-decision-card,.hsr-priority-card{width:100%!important}
+  .hsr-analytics-grid{grid-template-columns:1fr!important}
+  .hsr-admin-view .hsr-table-row,.hsr-contracts-view .hsr-table-row{align-items:flex-start!important}
+}
 </style>
 </head>
 <body>
@@ -178,7 +253,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
   .hsr-map-segment.is-active{background:var(--btn,#12855a);color:#fff;box-shadow:0 2px 8px rgba(7,72,46,.28)}
   [data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightness(.7) saturate(.72) contrast(1.08)}
   [data-theme="light"] .hsr-manager-map-shell .leaflet-tile-pane{filter:saturate(.82) contrast(.96)}
-  @media(max-width:760px){.hsr-exec-map-legend{display:none!important}.hsr-open-map-cta{right:8px!important;bottom:8px!important}.hsr-manager-map-shell .hsr-map-segment{padding:0 7px}}
+  @media(max-width:699px){.hsr-exec-map-legend{display:none!important}.hsr-open-map-cta{right:8px!important;bottom:8px!important}.hsr-manager-map-shell .hsr-map-segment{padding:0 7px}}
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </helmet>
@@ -432,7 +507,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
 
       <sc-if value="{{ viewIsHomeContent }}">
 
-      <section aria-label="المؤشرات التنفيذية" style="min-height:var(--kpiH,122px);flex:none;display:flex;gap:14px;flex-wrap:var(--rowWrap,nowrap)">
+      <section class="hsr-exec-kpis" aria-label="المؤشرات التنفيذية" style="min-height:var(--kpiH,122px);flex:none;display:flex;gap:14px;flex-wrap:var(--rowWrap,nowrap)">
         <div style="flex:1;min-width:var(--kpiMin,0);display:flex;flex-wrap:var(--kpiWrap,nowrap);align-items:stretch;padding:0 4px;border-radius:16px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl1,none)">
 
           <div style="flex:1;min-width:var(--kpiCell,0);padding:16px 13px;display:flex;flex-direction:column;justify-content:center;gap:5px">
@@ -517,7 +592,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
           </div>
         </div>
 
-        <div style="width:var(--scoreW,238px);flex:none;padding:14px 16px;display:flex;align-items:center;gap:14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
+        <div class="hsr-completion-card" style="width:var(--scoreW,238px);flex:none;padding:14px 16px;display:flex;align-items:center;gap:14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
           <div style="flex:1;text-align:right">
             <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">نسبة إتمام البلاغات</div>
             <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:10.5px;color:var(--tx3,#8b9db5);margin-top:8px">
@@ -534,9 +609,9 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
         </div>
       </section>
 
-      <section style="min-height:var(--midH,450px);flex:none;display:flex;gap:14px;flex-wrap:var(--midWrap,nowrap)">
+      <section class="hsr-command-row" style="min-height:var(--midH,450px);flex:none;display:flex;gap:14px;flex-wrap:var(--midWrap,nowrap)">
 
-        <div style="width:var(--aiW,292px);flex:none;order:var(--aiOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+        <div class="hsr-decision-card" style="width:var(--aiW,292px);flex:none;order:var(--aiOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
           <div style="display:flex;align-items:center;gap:9px">
             <div style="flex:1;text-align:right;font-size:13px;font-weight:600;color:var(--tx,#e4eefb)">مساعد القرار البلدي</div>
             <span style="font-size:8.5px;font-weight:600;color:var(--tx3,#7d8ea6);padding:3px 7px;border-radius:6px;background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">قريباً</span>
@@ -613,7 +688,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
           </button>
         </div>
 
-        <div style="width:var(--prioW,272px);flex:none;order:var(--prioOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
+        <div class="hsr-priority-card" style="width:var(--prioW,272px);flex:none;order:var(--prioOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
           <div style="display:flex;align-items:center;gap:9px">
             <div style="flex:1;text-align:right;font-size:13px;font-weight:600;color:var(--tx,#e4eefb)">الأولويات التشغيلية</div>
             <button onClick="{{ goMap }}" data-f="1" aria-label="تصفية البلاغات على الخريطة" style="width:27px;height:27px;border-radius:8px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
@@ -638,7 +713,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
         </div>
       </section>
 
-      <section style="min-height:var(--anaH,216px);flex:none;display:grid;grid-template-columns:var(--anaCols,0.96fr 1.06fr 1fr 1.06fr 1.02fr);gap:14px">
+      <section class="hsr-analytics-grid" style="min-height:var(--anaH,216px);flex:none;display:grid;grid-template-columns:var(--anaCols,0.96fr 1.06fr 1fr 1.06fr 1.02fr);gap:14px">
 
         <div aria-label="حالة بيانات الطقس" style="padding:13px 14px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none);display:flex;flex-direction:column;justify-content:center;text-align:center">
           <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">الطقس اليوم</div>
@@ -1586,7 +1661,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
       </sc-if>
 
       <sc-if value="{{ viewIsAdminAffairs }}">
-        <section aria-label="إدارة الشؤون الإدارية" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+        <section class="hsr-admin-view" aria-label="إدارة الشؤون الإدارية" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
           <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2 style="font-size:18px;margin:0;color:var(--tx,#f0f6ff)">إدارة الشؤون الإدارية</h2><p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0">Manager View للإشراف على الموظفين وطلبات الحركة والتفويضات والسجل الإداري؛ لا يفتح شاشة رئيس القسم.</p></div><button onClick="{{ refreshAdminAffairs }}" data-f="1" style="height:36px;padding:0 13px;border-radius:10px;background:var(--ctl,rgba(20,32,54,.6));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx2,#9db2cc);cursor:pointer">تحديث</button></div>
           <sc-if value="{{ adminAffairsLoading }}"><div style="padding:38px;text-align:center;color:var(--tx3,#7d8ea6)">جاري تحميل البيانات الإدارية الموثقة…</div></sc-if>
           <sc-if value="{{ adminAffairsErrorVisible }}"><div style="padding:14px;border-radius:12px;background:var(--badBg,rgba(239,68,68,.08));border:1px solid var(--badBd,rgba(239,68,68,.22));color:var(--badTx,#f87171)">{{ adminAffairsError }}</div></sc-if>
@@ -1603,7 +1678,7 @@ html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightn
       </sc-if>
 
       <sc-if value="{{ viewIsContracts }}">
-        <section aria-label="إدارة العقود والشركات المتعاقدة" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+        <section class="hsr-contracts-view" aria-label="إدارة العقود والشركات المتعاقدة" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
           <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2 style="font-size:18px;margin:0;color:var(--tx,#f0f6ff)">إدارة العقود والشركات المتعاقدة</h2><p style="font-size:10.5px;color:var(--tx3,#7d8ea6);margin:5px 0 0">سجل إشرافي داخل لوحة مدير البلدية لنفس الشركات والعقود الموثقة، دون فتح صفحة مستقلة أو شاشة تشغيل رئيس قسم.</p></div><button onClick="{{ refreshContracts }}" data-f="1" style="height:36px;padding:0 13px;border-radius:10px;background:var(--ctl,rgba(20,32,54,.6));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx2,#9db2cc);cursor:pointer">تحديث</button></div>
           <sc-if value="{{ contractsLoading }}"><div style="padding:38px;text-align:center;color:var(--tx3,#7d8ea6)">جاري تحميل سجل الشركات والعقود…</div></sc-if>
           <sc-if value="{{ contractsErrorVisible }}"><div style="padding:14px;border-radius:12px;background:var(--badBg,rgba(239,68,68,.08));border:1px solid var(--badBd,rgba(239,68,68,.22));color:var(--badTx,#f87171)">{{ contractsError }}</div></sc-if>
@@ -2511,7 +2586,7 @@ class Component extends DCLogic {
 
   DAY = {
     '--pgMaxW': '1600px',
-    '--pgBg': 'radial-gradient(980px 540px at 52% -8%,rgba(255,255,255,.86),transparent 70%),radial-gradient(760px 460px at 12% 18%,rgba(18,133,90,.055),transparent 72%),#e8edea',
+    '--pgBg': 'radial-gradient(980px 540px at 52% -8%,rgba(255,255,255,.72),transparent 70%),radial-gradient(760px 460px at 12% 18%,rgba(18,133,90,.09),transparent 72%),linear-gradient(180deg,#e8efeb,#e4ece7)',
     // The following are the approved Day-mode surface/header/sidebar tokens
     // from "Smart HSR Manager Dashboard.dc.html" (the approved Claude Design
     // source). Without them, every card/table/section/header/sidebar built
@@ -2525,10 +2600,10 @@ class Component extends DCLogic {
     '--l1BdH': 'rgba(18,133,90,0.42)',
     '--l1Grid': 'repeating-linear-gradient(45deg,rgba(17,54,40,0.02) 0 1px,transparent 1px 3px),linear-gradient(rgba(18,133,90,0.04) 1px,transparent 1px) 0 0/100% 15px,linear-gradient(90deg,rgba(18,133,90,0.04) 1px,transparent 1px) 0 0/15px 100%',
     '--l2Grain': 'repeating-linear-gradient(45deg,rgba(17,54,40,0.022) 0 1px,transparent 1px 3px)',
-    '--l2': 'linear-gradient(160deg,rgba(222,234,227,0.78),rgba(233,243,238,0.82))',
+    '--l2': 'linear-gradient(160deg,rgba(219,234,225,.94),rgba(232,243,237,.96))',
     '--l2Bd': 'rgba(18,133,90,0.2)',
     '--l2Sh': 'inset 0 1px 0 rgba(255,255,255,0.7),0 1px 1px rgba(14,52,38,0.05),0 14px 28px -22px rgba(12,60,42,0.42)',
-    '--l3': 'linear-gradient(180deg,rgba(247,251,249,0.94),rgba(241,247,244,0.94))',
+    '--l3': 'linear-gradient(180deg,rgba(239,247,242,.98),rgba(232,242,236,.98))',
     '--l3Bd': 'rgba(18,133,90,0.2)',
     '--l3Sh': '0 1px 2px rgba(16,42,32,0.05),0 10px 24px -20px rgba(16,42,32,0.26)',
     '--thTx': '#083f2c',
@@ -2580,9 +2655,9 @@ class Component extends DCLogic {
     '--gl1': 'blur(16px) saturate(135%)',
     '--gl2': 'blur(12px) saturate(125%)',
     '--gl3': 'blur(8px) saturate(115%)',
-    '--card': 'rgba(246,250,248,.94)', '--card2': 'rgba(241,247,244,.92)',
-    '--cardBd': 'rgba(17,90,61,0.13)',
-    '--cardSh': '0 1px 2px rgba(16,42,32,0.04),0 16px 34px -24px rgba(16,55,40,0.28)',
+    '--card': 'linear-gradient(155deg,rgba(237,246,241,.98),rgba(226,239,231,.98))', '--card2': 'rgba(232,243,237,.96)',
+    '--cardBd': 'rgba(17,90,61,.20)',
+    '--cardSh': '0 1px 2px rgba(16,42,32,.05),0 20px 44px -26px rgba(16,70,48,.34)',
     '--sunk': '#eaf0ec', '--sunk2': '#eff4f1',
     '--ctl': 'rgba(238,244,240,.94)', '--ctlBd': 'rgba(17,90,61,0.14)', '--ctlH': '#e1eae4',
     '--field': 'rgba(249,252,250,.96)', '--pop': 'rgba(249,252,250,.97)', '--drawer': 'rgba(247,251,248,.98)',
@@ -2602,7 +2677,7 @@ class Component extends DCLogic {
     '--twinBd': 'rgba(17,54,40,0.14)', '--twinBg': '#eaeeea',
     '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.9),inset 0 0 0 1px rgba(255,255,255,0.45),0 1px 1px rgba(14,52,38,0.06),0 2px 3px rgba(14,52,38,0.05),0 20px 38px -22px rgba(12,60,42,0.5)',
     '--glass': 'rgba(244,249,246,.84)', '--glassBd': 'rgba(17,90,61,0.17)', '--glassTx': '#40584c', '--glassH': 'rgba(14,122,79,.07)',
-    '--mapShellBd': 'rgba(17,90,61,.2)', '--mapShellSh': '0 24px 54px -32px rgba(18,61,44,.42)', '--mapInnerBd': 'rgba(255,255,255,.7)',
+    '--mapShellBd': 'rgba(13,108,72,.32)', '--mapShellSh': '0 30px 72px -34px rgba(13,82,57,.48)', '--mapInnerBd': 'rgba(255,255,255,.7)',
     '--mapKpiHoverBd': 'rgba(14,122,79,.36)',
     '--mapPopBg': 'rgba(249,252,250,.92)', '--mapPopBd': 'rgba(17,90,61,.18)', '--mapPopTx': '#11251d', '--mapPopTx2': '#607268', '--mapPopSh': '0 20px 50px -20px rgba(15,54,39,.34)',
     '--pin-halo': 'rgba(14,122,79,.14)', '--pin-ring': 'rgba(14,122,79,.07)', '--pin-glow': 'rgba(14,122,79,.18)',
@@ -2620,34 +2695,35 @@ class Component extends DCLogic {
   };
 
   NIGHT = {
-    '--l1': 'linear-gradient(155deg,rgba(12,25,42,.9),rgba(8,18,32,.93) 58%,rgba(7,16,29,.94))', '--l1Bd': 'rgba(93,146,214,.16)',
-    '--l2': 'linear-gradient(160deg,rgba(10,22,38,.88),rgba(7,17,30,.92))', '--l2Bd': 'rgba(93,146,214,.14)',
-    '--l3': 'linear-gradient(180deg,rgba(13,25,41,.9),rgba(7,16,29,.94))', '--l3Bd': 'rgba(93,146,214,.13)', '--l3Sh': '0 18px 42px -28px rgba(0,0,0,.92)',
-    '--card': 'rgba(10,22,38,.9)', '--card2': 'rgba(8,18,32,.92)', '--cardBd': 'rgba(93,146,214,.14)', '--cardSh': '0 20px 46px -28px rgba(0,0,0,.94)',
-    '--sunk': 'rgba(6,15,27,.82)', '--sunk2': 'rgba(8,18,31,.84)', '--ctl': 'rgba(19,35,57,.72)', '--ctlBd': 'rgba(111,158,218,.16)', '--ctlH': 'rgba(31,52,82,.8)',
-    '--field': 'rgba(7,17,30,.82)', '--pop': 'rgba(8,18,31,.96)', '--drawer': 'rgba(7,17,30,.98)',
-    '--tx': '#edf5ff', '--tx2': '#b4c6da', '--tx3': '#7f95ad', '--div': 'rgba(108,153,211,.12)', '--track': 'rgba(108,153,211,.13)',
-    '--acc': '#59d39d', '--accBg': 'rgba(45,190,132,.08)', '--accBd': 'rgba(89,211,157,.28)',
-    '--btn': 'linear-gradient(180deg,#177c5a,#0e5d43)', '--btnTx': '#f4fff9', '--btnBd': 'rgba(89,211,157,.3)',
-    '--glass': 'rgba(7,17,31,.72)', '--glassBd': 'rgba(122,164,224,.19)', '--glassTx': '#b3c7dc',
-    '--mapShellBd': 'rgba(102,157,220,.2)', '--mapShellSh': '0 30px 72px -34px rgba(0,0,0,.98)', '--mapInnerBd': 'rgba(255,255,255,.055)',
+    '--pgBg': 'radial-gradient(980px 560px at 18% -8%,rgba(22,119,255,.16),transparent 70%),radial-gradient(840px 520px at 82% 8%,rgba(52,183,241,.09),transparent 72%),#071a2f',
+    '--l1': 'linear-gradient(155deg,rgba(16,50,85,.94),rgba(11,36,64,.95) 58%,rgba(8,29,52,.96))', '--l1Bd': 'rgba(70,160,246,.24)',
+    '--l2': 'linear-gradient(160deg,rgba(14,43,74,.93),rgba(10,33,59,.95))', '--l2Bd': 'rgba(69,151,235,.21)',
+    '--l3': 'linear-gradient(180deg,rgba(18,54,90,.92),rgba(10,34,61,.96))', '--l3Bd': 'rgba(69,151,235,.20)', '--l3Sh': '0 20px 46px -28px rgba(0,54,120,.72)',
+    '--card': 'linear-gradient(155deg,rgba(16,50,85,.94),rgba(10,36,63,.96))', '--card2': 'rgba(12,40,69,.94)', '--cardBd': 'rgba(72,158,244,.22)', '--cardSh': '0 24px 58px -32px rgba(0,72,158,.72)',
+    '--sunk': 'rgba(6,29,52,.86)', '--sunk2': 'rgba(8,35,62,.88)', '--ctl': 'rgba(18,58,96,.74)', '--ctlBd': 'rgba(86,166,248,.20)', '--ctlH': 'rgba(24,78,126,.84)',
+    '--field': 'rgba(7,31,56,.9)', '--pop': 'rgba(8,34,60,.97)', '--drawer': 'rgba(7,29,52,.985)',
+    '--tx': '#f2f7ff', '--tx2': '#bfd4ea', '--tx3': '#86a6c4', '--div': 'rgba(95,171,247,.14)', '--track': 'rgba(95,171,247,.14)',
+    '--acc': '#34b7f1', '--accBg': 'rgba(52,183,241,.11)', '--accBd': 'rgba(52,183,241,.34)',
+    '--btn': 'linear-gradient(180deg,#1677ff,#0f5fce)', '--btnTx': '#f7fbff', '--btnBd': 'rgba(84,169,255,.42)',
+    '--glass': 'rgba(8,34,60,.76)', '--glassBd': 'rgba(83,166,250,.26)', '--glassTx': '#c7dcf1',
+    '--mapShellBd': 'rgba(67,164,255,.34)', '--mapShellSh': '0 34px 84px -36px rgba(0,88,198,.72)', '--mapInnerBd': 'rgba(124,190,255,.08)',
     '--mapKpiHoverBd': 'rgba(89,211,157,.28)',
-    '--mapPopBg': 'rgba(7,17,30,.9)', '--mapPopBd': 'rgba(111,158,218,.2)', '--mapPopTx': '#eef6ff', '--mapPopTx2': '#91a8c0', '--mapPopSh': '0 26px 62px -18px rgba(0,0,0,.82)',
+    '--mapPopBg': 'rgba(7,31,56,.93)', '--mapPopBd': 'rgba(76,162,248,.28)', '--mapPopTx': '#f2f7ff', '--mapPopTx2': '#9ebbd6', '--mapPopSh': '0 28px 68px -20px rgba(0,69,150,.72)',
     '--pin-halo': 'rgba(89,211,157,.16)', '--pin-ring': 'rgba(89,211,157,.07)', '--pin-glow': 'rgba(89,211,157,.2)',
-    '--l1Sh': 'inset 0 1px 0 rgba(255,255,255,0.07),inset 0 0 0 1px rgba(90,190,150,0.05),0 20px 44px -26px rgba(0,0,0,0.95)',
+    '--l1Sh': 'inset 0 1px 0 rgba(170,220,255,.07),inset 0 0 0 1px rgba(45,145,255,.05),0 24px 56px -30px rgba(0,69,150,.68)',
     '--glassH': 'rgba(255,255,255,0.1)',
-    '--hdrBd': 'rgba(122,164,224,0.22)',
+    '--hdrBg': 'linear-gradient(165deg,rgba(11,48,82,.97),rgba(8,34,61,.985) 56%,rgba(8,29,52,.98))', '--hdrBd': 'rgba(74,164,252,.28)', '--hdrTx': '#f3f8ff', '--hdrTx2': '#c5d9ec', '--hdrTx3': '#8eacc8', '--hdrCtl': 'rgba(30,85,137,.38)', '--hdrCtlBd': 'rgba(91,173,255,.22)', '--hdrSunk': 'rgba(3,24,45,.52)', '--hdrDiv': 'rgba(103,181,255,.18)', '--hdrAcc': '#58c6ff', '--hdrField': 'rgba(4,28,51,.58)', '--orgBgH': 'rgba(31,92,144,.42)', '--orgBdH': 'rgba(91,173,255,.28)',
     '--hdrAccentBd': 'rgba(34,197,94,0.4)',
     '--hdrSh': 'inset 0 1px 0 rgba(255,255,255,0.09),inset 0 -1px 0 rgba(0,0,0,0.3),0 4px 12px -6px rgba(0,0,0,0.6),0 26px 54px -22px rgba(0,0,0,0.98)',
-    '--sbBd': 'rgba(122,164,224,0.2)',
+    '--sbBg': 'linear-gradient(180deg,rgba(11,48,82,.97),rgba(7,29,52,.99))', '--sbBd': 'rgba(74,164,252,.25)', '--sbTx': '#eef7ff', '--sbTx2': '#bfd6ea', '--sbTx3': '#83a6c7', '--sbNavBg': 'linear-gradient(90deg,rgba(22,119,255,.42),rgba(52,183,241,.13))', '--sbNavBd': 'rgba(72,169,255,.38)', '--sbNavTx': '#ffffff', '--sbDiv': 'rgba(95,171,247,.16)', '--sbCtl': 'rgba(22,71,116,.46)', '--sbCtlBd': 'rgba(84,166,248,.19)', '--sbSunk': 'rgba(3,24,45,.4)', '--sbChip': 'rgba(72,147,221,.18)', '--sbBlur': 'blur(18px) saturate(140%)',
     '--sbSh': 'inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96)',
-    '--thBg': 'rgba(12,20,36,0.5)', '--thBd': 'rgba(122,164,224,0.13)',
+    '--thBg': 'rgba(11,42,72,.72)', '--thBd': 'rgba(85,164,242,.19)',
     '--hdrChip': 'rgba(122,164,224,0.14)',
     '--dayBtnBg': 'transparent', '--dayBtnBd': 'transparent', '--dayBtnTx': '#7d8ea6',
     '--nightBtnBg': 'rgba(56,132,220,0.28)', '--nightBtnBd': 'rgba(76,201,240,0.4)', '--nightBtnTx': '#eaf4ff',
     '--dayCardBd': 'rgba(122,164,224,0.16)', '--dayCardBg': 'transparent',
     '--nightCardBd': 'rgba(76,201,240,0.45)', '--nightCardBg': 'rgba(56,132,220,0.14)',
-    '--popTx': '#e9f1fb', '--popTx2': '#a9bdd4', '--popDiv': 'rgba(122,164,224,0.13)', '--popAcc': '#4cc9f0'
+    '--popTx': '#f2f7ff', '--popTx2': '#b3cae1', '--popDiv': 'rgba(89,168,247,.16)', '--popAcc': '#34b7f1', '--info': '#34b7f1', '--infoBg': 'rgba(52,183,241,.11)', '--infoBd': 'rgba(52,183,241,.3)', '--vio': '#8d9cff', '--vioBg': 'rgba(141,156,255,.1)', '--vioBd': 'rgba(141,156,255,.28)', '--barFill': 'linear-gradient(90deg,#1677ff,#34b7f1)', '--areaTop': 'rgba(22,119,255,.24)', '--areaBot': 'rgba(22,119,255,0)', '--twinBd': 'rgba(68,159,248,.22)', '--twinBg': '#071a2f', '--chipBg': 'rgba(78,151,224,.16)', '--badge': '#071a2f', '--avBg': 'linear-gradient(160deg,#154774,#0d3154)', '--aiBg': 'radial-gradient(circle at 30% 25%,rgba(52,183,241,.28),#0b2947)'
   };
 
   BP = {
@@ -2655,13 +2731,13 @@ class Component extends DCLogic {
     lg: { '--pgMaxW': '100%', '--sbW': '216px', '--aiW': '272px', '--prioW': '256px', '--twinH': '450px', '--midH': '450px', '--fsMapH': '420px', '--searchW': '150px', '--metaDisp': 'none' },
     md: { '--pgMaxW': '100%', '--sbW': '68px', '--sbLabel': 'none', '--subInd': '0px', '--aiW': '252px', '--prioW': '240px',
       '--twinH': '430px', '--midH': '430px', '--hdrNav': 'none', '--searchW': '150px', '--metaDisp': 'none', '--anaCols': 'repeat(3,1fr)', '--anaH': 'auto', '--kpiCell': '120px', '--scoreW': '210px', '--fsMapH': '380px' },
-    tab: { '--pgMaxW': '100%', '--pgPad': '12px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchW': '172px',
-      '--kpiWrap': 'wrap', '--kpiCell': '33%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
-      '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '420px', '--midH': 'auto',
-      '--aiW': 'calc(50% - 7px)', '--prioW': 'calc(50% - 7px)', '--anaCols': 'repeat(2,1fr)', '--anaH': 'auto',
-      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '150px', '--brandTxt': 'none', '--profTxt': 'none',
-      '--fsWrap': 'wrap', '--fsMapH': '340px', '--fsSideW': '100%',
-      '--lndWrap': 'wrap', '--lndMapH': '240px' },
+    tab: { '--pgMaxW': '100%', '--pgPad': '10px', '--sbDisp': 'flex', '--sbW': '176px', '--sbLabel': 'block', '--subInd': '10px', '--mobNav': 'none', '--hdrNav': 'none', '--metaDisp': 'none', '--searchW': '132px',
+      '--kpiWrap': 'nowrap', '--kpiCell': '0', '--kpiDiv': 'block', '--kpiH': '122px', '--rowWrap': 'nowrap', '--kpiMin': '0', '--scoreW': '178px',
+      '--midWrap': 'nowrap', '--twinBasis': 'auto', '--twinOrd': '0', '--twinH': '390px', '--midH': '390px',
+      '--aiW': '190px', '--prioW': '190px', '--anaCols': 'repeat(4,minmax(0,1fr))', '--anaH': 'auto',
+      '--qaWrap': 'wrap', '--qaBasis': 'auto', '--qaMin': '132px', '--brandTxt': 'none', '--profTxt': 'none',
+      '--fsWrap': 'nowrap', '--fsMapH': '320px', '--fsSideW': '220px',
+      '--lndWrap': 'nowrap', '--lndMapH': '240px' },
     mob: { '--pgMaxW': '100%', '--pgPad': '8px', '--sbDisp': 'none', '--mobNav': 'flex', '--hdrNav': 'none', '--metaDisp': 'none', '--searchDisp': 'none', '--hdrWrap': 'wrap', '--hdrLabel': 'none',
       '--kpiWrap': 'wrap', '--kpiCell': '50%', '--kpiDiv': 'none', '--kpiH': 'auto', '--rowWrap': 'wrap', '--kpiMin': '100%', '--scoreW': '100%',
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinOrd': '-1', '--twinH': '320px', '--twinMin': '240px', '--midH': 'auto',
@@ -3041,7 +3117,7 @@ class Component extends DCLogic {
 
   measure() {
     const w = window.innerWidth;
-    const bp = w >= 1560 ? 'xl' : w >= 1400 ? 'lg' : w >= 1180 ? 'md' : w >= 760 ? 'tab' : 'mob';
+    const bp = w >= 1560 ? 'xl' : w >= 1400 ? 'lg' : w >= 1180 ? 'md' : w >= 700 ? 'tab' : 'mob';
     if (bp !== this.state.bp) this.setState({ bp: bp });
   }
 
@@ -3214,7 +3290,7 @@ class Component extends DCLogic {
     // hidden desktop navigation retains the sole programmatic current route.
     // Opening the drawer atomically transfers that ownership to its visible
     // route list, keeping exactly one aria-current="page" in the DOM.
-    const mobileNavigationAuthoritative = (st.bp === 'tab' || st.bp === 'mob') && st.mobNavOpen;
+    const mobileNavigationAuthoritative = st.bp === 'mob' && st.mobNavOpen;
     const cell = (v, flex, opt) => ({ v: v, flex: String(flex), align: (opt && opt.align) || 'right',
       size: (opt && opt.size) || '11.5px', weight: (opt && opt.weight) || '400', col: (opt && opt.col) || 'var(--tx2,#a9bdd4)' });
 
@@ -3243,6 +3319,7 @@ class Component extends DCLogic {
     const adminEmployeesAll = Array.isArray(adminData.employees) ? adminData.employees : [];
     const adminMissionsAll = Array.isArray(adminData.missions) ? adminData.missions : [];
     const adminAuthorizationsAll = Array.isArray(adminData.authorizations) ? adminData.authorizations : [];
+    const adminIncidentsAll = Array.isArray(adminData.incidents) ? adminData.incidents : [];
     const adminAuditAll = Array.isArray(adminData.administrativeAudit) ? adminData.administrativeAudit : [];
     const adminQNorm = String(st.adminAffairsQ||'').trim().toLocaleLowerCase('ar');
     const matchesAdmin = (row, keys) => !adminQNorm || keys.some(k=>String(row?.[k]||'').toLocaleLowerCase('ar').includes(adminQNorm));
@@ -3250,7 +3327,8 @@ class Component extends DCLogic {
       {label:'الموظفون',value:String(adminEmployeesAll.length)},
       {label:'طلبات حركة معلقة',value:String(adminMissionsAll.filter(x=>x.status==='PENDING_APPROVAL').length)},
       {label:'تفويضات معلقة',value:String(adminAuthorizationsAll.filter(x=>x.status==='PENDING_AUTHORIZATION').length)},
-      {label:'مهام نشطة',value:String(adminMissionsAll.filter(x=>['APPROVED','VEHICLE_ALLOCATED','HANDED_OVER','READY','IN_PROGRESS','INCIDENT_HOLD','COMPLETED','AWAITING_RETURN'].includes(x.status)).length)}
+      {label:'مهام نشطة',value:String(adminMissionsAll.filter(x=>['APPROVED','VEHICLE_ALLOCATED','HANDED_OVER','READY','IN_PROGRESS','INCIDENT_HOLD','AWAITING_RETURN'].includes(x.status)).length)},
+      {label:'تنبيهات مفتوحة',value:String(adminIncidentsAll.filter(x=>!['RESOLVED','CLOSED'].includes(String(x.status||'').toUpperCase())).length)}
     ];
     const adminTab = st.adminAffairsTab || 'employees';
     const adminAffairsTabs = [
@@ -4151,7 +4229,7 @@ class Component extends DCLogic {
     if (!force && (this.state.adminAffairsState === 'loading' || this.state.adminAffairsState === 'ready')) return;
     this.setState({ adminAffairsState: 'loading', adminAffairsError: '' });
     try {
-      const data = await this.callAdminUsersApi('getMobilityWorkspace', {});
+      const data = await this.callAdminUsersApi('getManagerAdministrativeAffairsOverview', {});
       this.setState({ adminAffairsState: 'ready', adminAffairsData: data || {}, adminAffairsError: '' });
     } catch (error) {
       this.setState({ adminAffairsState: 'error', adminAffairsError: this.adminApiErrorMessage(error) || 'تعذر تحميل بيانات الشؤون الإدارية.' });
