@@ -51,7 +51,7 @@ test('WF-01 item 9: desktop active state remains mutually exclusive and is suppr
   assert.equal(activeCalls.length, 10, 'expected exactly 10 navPrefixed(...) calls driving sidebar active state after Phase21 service-shell closure');
   const compared = activeCalls.map(m => m[2]);
   assert.equal(new Set(compared).size, 10, 'the 10 compared route values must be distinct -- otherwise two links could read active for the same st.view');
-  assert.match(manager, /const mobileNavigationAuthoritative = \(st\.bp === 'tab' \|\| st\.bp === 'mob'\) && st\.mobNavOpen;/);
+  assert.match(manager, /const mobileNavigationAuthoritative = st\.bp === 'mob' && st\.mobNavOpen;/);
 });
 
 test('WF-01 item 10: the old static aria-current="page" hardcoded on Home only is gone -- no stale always-on active state survives', () => {
