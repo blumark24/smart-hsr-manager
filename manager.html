@@ -1685,12 +1685,42 @@ html[data-theme="dark"] .hsr-manager-map-shell{
           <sc-if value="{{ contractsReady }}">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><input type="search" value="{{ contractsQ }}" onChange="{{ setContractsQ }}" aria-label="بحث في العقود والشركات" placeholder="الشركة، رقم العقد، النطاق، ممثل الشركة..." style="flex:1;min-width:240px;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,.75));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx,#e9f1fb);padding:0 11px"><select value="{{ contractsStatus }}" onChange="{{ setContractsStatus }}" aria-label="تصفية حالة العقد" style="height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,.75));border:1px solid var(--ctlBd,rgba(122,164,224,.16));color:var(--tx,#e9f1fb);padding:0 10px"><option value="ALL">كل الحالات</option><option value="ACTIVE">نشط</option><option value="SUSPENDED">موقوف</option><option value="ENDED">منتهي</option></select></div>
             <div style="flex:1;min-height:280px;border-radius:16px;overflow:hidden;background:var(--l3,rgba(17,26,44,.72));border:1px solid var(--l3Bd,rgba(122,164,224,.13));display:flex;flex-direction:column">
-              <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,.13));background:var(--sunk,rgba(12,20,36,.5))"><sc-for list="{{ contractsCols }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);text-align:{{ c.align }}">{{ c.label }}</span></sc-for></div>
-              <div style="flex:1;overflow:auto"><sc-for list="{{ contractsRows }}" as="r"><div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,.08))"><sc-for list="{{ r.cells }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span></sc-for><span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span></div></sc-for><sc-if value="{{ contractsRowsEmpty }}"><div style="padding:44px 20px;text-align:center;color:var(--tx3,#7d8ea6);font-size:12px">لا توجد شركات مطابقة.</div></sc-if></div>
+              <div style="display:var(--thead,flex);align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--thBd,rgba(122,164,224,.13));background:var(--sunk,rgba(12,20,36,.5))"><sc-for list="{{ contractsCols }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);text-align:{{ c.align }}">{{ c.label }}</span></sc-for><span style="flex:0 0 126px;font-size:10.5px;font-weight:600;color:var(--thTx,#7d8ea6);text-align:center">الإجراءات</span></div>
+              <div style="flex:1;overflow:auto"><sc-for list="{{ contractsRows }}" as="r"><div class="hsr-contract-row" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rowBd,rgba(122,164,224,.08))"><sc-for list="{{ r.cells }}" as="c"><span style="flex:{{ c.flex }};min-width:0;font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.col }};text-align:{{ c.align }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span></sc-for><span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 9px;border-radius:7px;color:{{ r.chipCol }};background:{{ r.chipBg }};border:1px solid {{ r.chipBd }}">{{ r.chip }}</span><div style="flex:0 0 126px;display:flex;justify-content:center;gap:5px"><sc-if value="{{ r.canManage }}"><button onClick="{{ r.onEdit }}" data-f="1" style="height:28px;padding:0 8px;border-radius:8px;font-size:9.5px;cursor:pointer;color:var(--tx2,#a9bdd4);background:var(--ctl,rgba(20,32,54,.6));border:1px solid var(--ctlBd,rgba(122,164,224,.16))">تعديل</button></sc-if><sc-if value="{{ r.canArchive }}"><button onClick="{{ r.onArchive }}" data-f="1" style="height:28px;padding:0 8px;border-radius:8px;font-size:9.5px;cursor:pointer;color:var(--warn,#f5a524);background:var(--warnBg,rgba(245,165,36,.08));border:1px solid var(--warnBd,rgba(245,165,36,.24))">أرشفة</button></sc-if><sc-if value="{{ r.canDelete }}"><button onClick="{{ r.onDelete }}" data-f="1" style="height:28px;padding:0 8px;border-radius:8px;font-size:9.5px;cursor:pointer;color:var(--badTx,#f87171);background:var(--badBg,rgba(239,68,68,.08));border:1px solid var(--badBd,rgba(239,68,68,.22))">حذف</button></sc-if></div></div></sc-for><sc-if value="{{ contractsRowsEmpty }}"><div style="padding:44px 20px;text-align:center;color:var(--tx3,#7d8ea6);font-size:12px">لا توجد شركات مطابقة.</div></sc-if></div>
               <div style="padding:10px 14px;border-top:1px solid var(--div,rgba(122,164,224,.12));font-size:10.5px;color:var(--tx3,#7d8ea6)">{{ contractsCount }}</div>
             </div>
           </sc-if>
         </section>
+      </sc-if>
+
+      <sc-if value="{{ contractEditOpen }}">
+        <div onClick="{{ closeContractEdit }}" style="position:fixed;inset:0;z-index:86;background:rgba(2,10,22,.58);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px">
+          <section onClick="{{ stop }}" role="dialog" aria-modal="true" aria-label="تعديل الشركة والعقد" style="width:min(720px,100%);max-height:calc(100dvh - 28px);overflow:auto;padding:18px;border-radius:18px;background:var(--drawer,#0a1120);border:1px solid var(--l2Bd,rgba(122,164,224,.18));box-shadow:var(--dwSh,0 34px 84px -28px rgba(0,0,0,.8))">
+            <div style="display:flex;align-items:flex-start;gap:10px"><div style="flex:1"><h3 style="margin:0;font-size:16px;color:var(--tx,#f0f6ff)">تعديل الشركة والعقد</h3><p style="margin:5px 0 0;font-size:10.5px;color:var(--tx3,#7d8ea6)">تحديث بيانات السجل الموثّق بدون إنشاء شركة جديدة.</p></div><button onClick="{{ closeContractEdit }}" data-f="1" aria-label="إغلاق" style="width:32px;height:32px;border-radius:9px;background:var(--ctl);border:1px solid var(--ctlBd);color:var(--tx2);cursor:pointer">×</button></div>
+            <sc-if value="{{ contractEditErrorVisible }}"><div style="margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--badBg);border:1px solid var(--badBd);color:var(--badTx);font-size:10.5px">{{ contractEditError }}</div></sc-if>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px">
+              <label style="font-size:10px;color:var(--tx3)">اسم الشركة<input value="{{ ceCompanyName }}" onChange="{{ setCeCompanyName }}" style="width:100%;height:36px;margin-top:5px;border-radius:10px;background:var(--field);border:1px solid var(--ctlBd);color:var(--tx);padding:0 10px"></label>
+              <label style="font-size:10px;color:var(--tx3)">رقم العقد<input value="{{ ceContractNumber }}" onChange="{{ setCeContractNumber }}" style="width:100%;height:36px;margin-top:5px;border-radius:10px;background:var(--field);border:1px solid var(--ctlBd);color:var(--tx);padding:0 10px"></label>
+              <label style="grid-column:1/-1;font-size:10px;color:var(--tx3)">نطاق العقد<input value="{{ ceContractScope }}" onChange="{{ setCeContractScope }}" style="width:100%;height:36px;margin-top:5px;border-radius:10px;background:var(--field);border:1px solid var(--ctlBd);color:var(--tx);padding:0 10px"></label>
+              <label style="font-size:10px;color:var(--tx3)">ممثل الشركة<input value="{{ ceContactName }}" onChange="{{ setCeContactName }}" style="width:100%;height:36px;margin-top:5px;border-radius:10px;background:var(--field);border:1px solid var(--ctlBd);color:var(--tx);padding:0 10px"></label>
+              <label style="font-size:10px;color:var(--tx3)">رقم التواصل<input value="{{ ceContactPhone }}" onChange="{{ setCeContactPhone }}" style="width:100%;height:36px;margin-top:5px;border-radius:10px;background:var(--field);border:1px solid var(--ctlBd);color:var(--tx);padding:0 10px"></label>
+              <label style="font-size:10px;color:var(--tx3)">بداية العقد<input type="date" value="{{ ceStartDate }}" onChange="{{ setCeStartDate }}" style="width:100%;height:36px;margin-top:5px;border-radius:10px;background:var(--field);border:1px solid var(--ctlBd);color:var(--tx);padding:0 10px"></label>
+              <label style="font-size:10px;color:var(--tx3)">نهاية العقد<input type="date" value="{{ ceEndDate }}" onChange="{{ setCeEndDate }}" style="width:100%;height:36px;margin-top:5px;border-radius:10px;background:var(--field);border:1px solid var(--ctlBd);color:var(--tx);padding:0 10px"></label>
+              <label style="grid-column:1/-1;font-size:10px;color:var(--tx3)">حالة العقد<select value="{{ ceStatus }}" onChange="{{ setCeStatus }}" style="width:100%;height:36px;margin-top:5px;border-radius:10px;background:var(--field);border:1px solid var(--ctlBd);color:var(--tx);padding:0 10px"><option value="ACTIVE">نشط</option><option value="SUSPENDED">موقوف</option><option value="ENDED">منتهي</option></select></label>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button onClick="{{ closeContractEdit }}" data-f="1" style="height:36px;padding:0 14px;border-radius:10px;background:var(--ctl);border:1px solid var(--ctlBd);color:var(--tx2);cursor:pointer">إلغاء</button><button onClick="{{ submitContractEdit }}" data-f="1" style="height:36px;padding:0 16px;border-radius:10px;background:var(--btn);border:1px solid var(--btnBd);color:var(--btnTx);font-weight:700;cursor:pointer">{{ contractEditSubmitLabel }}</button></div>
+          </section>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ contractConfirmOpen }}">
+        <div onClick="{{ closeContractConfirm }}" style="position:fixed;inset:0;z-index:87;background:rgba(2,10,22,.62);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px">
+          <section onClick="{{ stop }}" role="alertdialog" aria-modal="true" aria-label="{{ contractConfirmTitle }}" style="width:min(460px,100%);padding:18px;border-radius:18px;background:var(--drawer,#0a1120);border:1px solid var(--l2Bd,rgba(122,164,224,.18));box-shadow:var(--dwSh,0 34px 84px -28px rgba(0,0,0,.8))">
+            <h3 style="margin:0;font-size:15px;color:var(--tx,#f0f6ff)">{{ contractConfirmTitle }}</h3><p style="margin:8px 0 0;font-size:11px;line-height:1.8;color:var(--tx2,#a9bdd4)">{{ contractConfirmText }}</p>
+            <sc-if value="{{ contractConfirmErrorVisible }}"><div style="margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--badBg);border:1px solid var(--badBd);color:var(--badTx);font-size:10.5px">{{ contractConfirmError }}</div></sc-if>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button onClick="{{ closeContractConfirm }}" data-f="1" style="height:36px;padding:0 14px;border-radius:10px;background:var(--ctl);border:1px solid var(--ctlBd);color:var(--tx2);cursor:pointer">إلغاء</button><button onClick="{{ confirmContractMutation }}" data-f="1" style="height:36px;padding:0 16px;border-radius:10px;background:var(--badBg);border:1px solid var(--badBd);color:var(--badTx);font-weight:700;cursor:pointer">{{ contractConfirmButton }}</button></div>
+          </section>
+        </div>
       </sc-if>
 
       <!-- PHASE13D.1 — User Center now mounts here, as a normal sibling
@@ -2554,7 +2584,10 @@ class Component extends DCLogic {
     // reuse the existing trusted Admin API and never open department-head
     // operational pages or create a second authentication surface.
     adminAffairsState: 'idle', adminAffairsError: '', adminAffairsData: null, adminAffairsTab: 'employees', adminAffairsQ: '',
-    contractsState: 'idle', contractsError: '', contractsData: [], contractsQ: '', contractsStatus: 'ALL',
+    contractsState: 'idle', contractsError: '', contractsData: [], contractsQ: '', contractsStatus: 'ALL', contractsCanManage: false,
+    contractEditOpen: false, contractEditSubmitting: false, contractEditError: '', contractEditTarget: null,
+    ceCompanyName: '', ceContractNumber: '', ceContractScope: '', ceContactName: '', ceContactPhone: '', ceStartDate: '', ceEndDate: '', ceStatus: 'ACTIVE',
+    contractConfirmOpen: false, contractConfirmAction: '', contractConfirmTarget: null, contractConfirmSubmitting: false, contractConfirmError: '',
     sessionName: 'الحساب الموثّق', sessionRole: 'جارٍ التحقق من الصلاحيات', sessionRoleCode: 'unknown', clock: Date.now()
   };
 
@@ -3361,9 +3394,13 @@ class Component extends DCLogic {
       {label:'الشركة',flex:'1.2',align:'right'},{label:'رقم العقد',flex:'.9',align:'right'},{label:'نطاق العقد',flex:'1.3',align:'right'},
       {label:'ممثل الشركة',flex:'1',align:'right'},{label:'القسم',flex:'1',align:'right'},{label:'المدة',flex:'1.2',align:'right'}
     ];
-    const contractsRows=contractsFiltered.map(r=>{const s=String(r.contractStatus||r.contractState||'ENDED');return {cells:[
+    const contractsRows=contractsFiltered.map(r=>{const s=String(r.contractStatus||r.contractState||'ENDED');return {raw:r,cells:[
       cell(r.companyName||'شركة متعاقدة','1.2',{weight:'600',col:'var(--tx,#e9f1fb)'}),cell(r.contractNumber||'—','.9'),cell(r.contractScope||'—','1.3'),cell(r.contactName||'—','1'),cell(r.section||'التشوه البصري','1'),cell((r.startDate||'—')+' — '+(r.endDate||'—'),'1.2',{size:'10px'})
-    ],chip:r.active===false?'الحساب موقوف':s==='ACTIVE'?'عقد نشط':s==='SUSPENDED'?'موقوف':'منتهي',...chipStyle(r.active===false?'INACTIVE':s)};});
+    ],chip:r.active===false?'الحساب موقوف':s==='ACTIVE'?'عقد نشط':s==='SUSPENDED'?'موقوف':'منتهي',
+      canManage:st.contractsCanManage===true, canArchive:st.contractsCanManage===true && s==='ACTIVE',
+      canDelete:st.contractsCanManage===true && s!=='ACTIVE',
+      onEdit:()=>this.openContractEdit(r), onArchive:()=>this.requestContractMutation(r,'archive'), onDelete:()=>this.requestContractMutation(r,'delete'),
+      ...chipStyle(r.active===false?'INACTIVE':s)};});
 
     // Field Survey Manager Dashboard's own in-product navigation — three
     // real, already-implemented sections only (executive overview, the
@@ -4111,6 +4148,22 @@ class Component extends DCLogic {
       contractsQ: st.contractsQ || '', setContractsQ: e => this.setState({contractsQ:e.target.value}), contractsStatus: st.contractsStatus || 'ALL', setContractsStatus: e => this.setState({contractsStatus:e.target.value}),
       contractsLoading: st.contractsState === 'loading', contractsReady: st.contractsState === 'ready', contractsErrorVisible: st.contractsState === 'error', contractsError: st.contractsError || 'تعذر تحميل سجل الشركات.',
       refreshContracts: () => this.loadContracts(true),
+      contractEditOpen: st.contractEditOpen, contractEditErrorVisible: !!st.contractEditError, contractEditError: st.contractEditError || '',
+      ceCompanyName: st.ceCompanyName, setCeCompanyName:e=>this.setState({ceCompanyName:e.target.value}),
+      ceContractNumber: st.ceContractNumber, setCeContractNumber:e=>this.setState({ceContractNumber:e.target.value}),
+      ceContractScope: st.ceContractScope, setCeContractScope:e=>this.setState({ceContractScope:e.target.value}),
+      ceContactName: st.ceContactName, setCeContactName:e=>this.setState({ceContactName:e.target.value}),
+      ceContactPhone: st.ceContactPhone, setCeContactPhone:e=>this.setState({ceContactPhone:e.target.value}),
+      ceStartDate: st.ceStartDate, setCeStartDate:e=>this.setState({ceStartDate:e.target.value}),
+      ceEndDate: st.ceEndDate, setCeEndDate:e=>this.setState({ceEndDate:e.target.value}),
+      ceStatus: st.ceStatus, setCeStatus:e=>this.setState({ceStatus:e.target.value}),
+      closeContractEdit:()=>this.closeContractEdit(), submitContractEdit:()=>this.submitContractEdit(),
+      contractEditSubmitLabel: st.contractEditSubmitting ? 'جاري الحفظ…' : 'حفظ التعديلات',
+      contractConfirmOpen: st.contractConfirmOpen, contractConfirmErrorVisible: !!st.contractConfirmError, contractConfirmError: st.contractConfirmError || '',
+      contractConfirmTitle: st.contractConfirmAction === 'delete' ? 'حذف الشركة' : 'أرشفة الشركة والعقد',
+      contractConfirmText: st.contractConfirmAction === 'delete' ? 'الحذف النهائي متاح فقط إذا كان العقد غير نشط ولا توجد سجلات تشغيلية مرتبطة بالشركة. يحتفظ النظام بسجل التدقيق.' : 'سيتم إنهاء العقد وتعطيل حساب الشركة. إذا كانت هناك حالات مفتوحة مرتبطة بالشركة فسيمنع النظام الأرشفة.',
+      contractConfirmButton: st.contractConfirmSubmitting ? 'جاري التنفيذ…' : (st.contractConfirmAction === 'delete' ? 'تأكيد الحذف' : 'تأكيد الأرشفة'),
+      closeContractConfirm:()=>this.closeContractConfirm(), confirmContractMutation:()=>this.confirmContractMutation(),
       userCenterKpis, tProductFilters, tVehicleFilters, tDeptFilters,
       hasDeptFilters: tDeptFilters.length > 1,
 
@@ -4250,7 +4303,7 @@ class Component extends DCLogic {
     this.setState({ contractsState: 'loading', contractsError: '' });
     try {
       const data = await this.callAdminUsersApi('listFieldContractorCompanies', {});
-      this.setState({ contractsState: 'ready', contractsData: Array.isArray(data?.contractors) ? data.contractors : [], contractsError: '' });
+      this.setState({ contractsState: 'ready', contractsData: Array.isArray(data?.contractors) ? data.contractors : [], contractsCanManage: data?.canManage === true, contractsError: '' });
     } catch (error) {
       this.setState({ contractsState: 'error', contractsError: this.adminApiErrorMessage(error) || 'تعذر تحميل سجل الشركات والعقود.' });
     }
@@ -4260,6 +4313,77 @@ class Component extends DCLogic {
     this.prevent(e);
     this.setState({ view: 'contracts', mobNavOpen: false, notifOpen: false, profOpen: false });
     setTimeout(() => this.loadContracts(false), 0);
+  }
+
+  openContractEdit(row) {
+    if (!row || !this.state.contractsCanManage) return;
+    this.setState({
+      contractEditOpen: true, contractEditTarget: row, contractEditError: '',
+      ceCompanyName: row.companyName || '', ceContractNumber: row.contractNumber || '',
+      ceContractScope: row.contractScope || '', ceContactName: row.contactName || '',
+      ceContactPhone: row.contactPhone || '', ceStartDate: row.startDate || '',
+      ceEndDate: row.endDate || '', ceStatus: row.contractStatus || 'ENDED'
+    });
+  }
+
+  closeContractEdit() {
+    if (this.state.contractEditSubmitting) return;
+    this.setState({ contractEditOpen: false, contractEditTarget: null, contractEditError: '' });
+  }
+
+  async submitContractEdit() {
+    const st = this.state;
+    const target = st.contractEditTarget;
+    if (!target || st.contractEditSubmitting) return;
+    const required = [st.ceCompanyName, st.ceContractNumber, st.ceContractScope, st.ceContactName, st.ceStartDate, st.ceEndDate];
+    if (required.some(v => !String(v || '').trim())) {
+      this.setState({ contractEditError: 'أكمل بيانات الشركة والعقد المطلوبة.' }); return;
+    }
+    if (st.ceEndDate < st.ceStartDate) {
+      this.setState({ contractEditError: 'تاريخ نهاية العقد يجب أن يكون بعد تاريخ البداية.' }); return;
+    }
+    this.setState({ contractEditSubmitting: true, contractEditError: '' });
+    try {
+      await this.callAdminUsersApi('updateFieldContractorCompany', {
+        contractorUid: target.uid,
+        companyName: st.ceCompanyName.trim(), contractNumber: st.ceContractNumber.trim(),
+        contractScope: st.ceContractScope.trim(), contactName: st.ceContactName.trim(),
+        contactPhone: st.ceContactPhone.trim(), startDate: st.ceStartDate,
+        endDate: st.ceEndDate, status: st.ceStatus
+      });
+      this.setState({ contractEditOpen: false, contractEditTarget: null, contractEditSubmitting: false });
+      await this.loadContracts(true);
+      this.flash('تم تحديث بيانات الشركة والعقد.');
+    } catch (error) {
+      this.setState({ contractEditSubmitting: false, contractEditError: this.adminApiErrorMessage(error) || 'تعذر تحديث العقد.' });
+    }
+  }
+
+  requestContractMutation(row, action) {
+    if (!row || !this.state.contractsCanManage) return;
+    this.setState({ contractConfirmOpen: true, contractConfirmTarget: row, contractConfirmAction: action, contractConfirmError: '' });
+  }
+
+  closeContractConfirm() {
+    if (this.state.contractConfirmSubmitting) return;
+    this.setState({ contractConfirmOpen: false, contractConfirmTarget: null, contractConfirmAction: '', contractConfirmError: '' });
+  }
+
+  async confirmContractMutation() {
+    const st = this.state;
+    const row = st.contractConfirmTarget;
+    if (!row || st.contractConfirmSubmitting) return;
+    const action = st.contractConfirmAction;
+    if (!['archive','delete'].includes(action)) return;
+    this.setState({ contractConfirmSubmitting: true, contractConfirmError: '' });
+    try {
+      await this.callAdminUsersApi(action === 'archive' ? 'archiveFieldContractorCompany' : 'deleteFieldContractorCompany', { contractorUid: row.uid });
+      this.setState({ contractConfirmOpen: false, contractConfirmTarget: null, contractConfirmAction: '', contractConfirmSubmitting: false });
+      await this.loadContracts(true);
+      this.flash(action === 'archive' ? 'تمت أرشفة الشركة والعقد.' : 'تم حذف الشركة غير المرتبطة بسجلات تشغيلية.');
+    } catch (error) {
+      this.setState({ contractConfirmSubmitting: false, contractConfirmError: this.adminApiErrorMessage(error) || (action === 'archive' ? 'تعذر أرشفة الشركة.' : 'تعذر حذف الشركة.') });
+    }
   }
 
   // Field Survey never uses the Twin canvas — it always shows the real
