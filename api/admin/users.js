@@ -1801,6 +1801,77 @@ async function handler(req, res) {
     }
   }
 
+  // PHASE21.1 — Municipality Manager Administrative Affairs executive read.
+  // This is deliberately a read-only, same-organization projection for the
+  // Manager shell. It does NOT grant the manager an Administrative Affairs
+  // operational role and does not reuse getMobilityWorkspace's role gate.
+  if (action === 'getManagerAdministrativeAffairsOverview') {
+    const manager = await getCallerContext(decoded.uid);
+    if (!manager.isManager || manager.role !== 'manager' || !isNonEmptyString(manager.organizationId)) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_required' });
+    }
+    try {
+      const [missionSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap] = await Promise.all([
+        db.collection('missions').where('organizationId', '==', manager.organizationId).get(),
+        db.collection('incidents').where('organizationId', '==', manager.organizationId).get(),
+        db.collection('vehicleAuthorizations').where('organizationId', '==', manager.organizationId).get(),
+        db.collection('employees').where('organizationId', '==', manager.organizationId).get(),
+        db.collection('auditEvents').where('organizationId', '==', manager.organizationId).get(),
+      ]);
+
+      const employees = employeeSnap.docs.map(doc => {
+        const d = doc.data() || {};
+        const mobility = d.products && d.products.mobility;
+        return {
+          employeeId: doc.id,
+          uid: isNonEmptyString(d.authUid) ? d.authUid : null,
+          name: cleanString(d.name, doc.id),
+          administration: cleanString(d.administration),
+          department: cleanString(d.department),
+          jobTitle: cleanString(d.jobTitle),
+          institutionalRole: cleanString(d.institutionalRole),
+          employmentStatus: cleanString(d.employmentStatus) || 'active',
+          accountStatus: cleanString(d.accountStatus) || 'NO_ACCOUNT',
+          vehicleEligible: d.vehicleEligible === true || Boolean(mobility && mobility.vehicleEligible === true),
+        };
+      });
+
+      const administrativeResourceTypes = new Set([
+        'employee','mission','vehicleAuthorization','administrativeRequest','administrativeAffairs'
+      ]);
+      const administrativeAudit = auditSnap.docs.map(doc => {
+        const d = doc.data() || {};
+        return {
+          auditId: doc.id,
+          resourceType: cleanString(d.resourceType),
+          resourceId: cleanString(d.resourceId),
+          action: cleanString(d.action),
+          actorId: cleanString(d.actorId),
+          department: cleanString(d.department),
+          fromStatus: cleanString(d.fromStatus),
+          toStatus: cleanString(d.toStatus),
+          note: cleanString(d.note),
+          timestamp: timestampToIso(d.timestamp || d.createdAt),
+        };
+      }).filter(row => administrativeResourceTypes.has(row.resourceType))
+        .sort((a,b)=>String(b.timestamp||'').localeCompare(String(a.timestamp||'')))
+        .slice(0,150);
+
+      return sendJson(res, 200, {
+        role: 'manager',
+        organizationId: manager.organizationId,
+        readOnly: true,
+        employees,
+        missions: missionSnap.docs.map(doc => safeMission(doc.id, doc.data() || {})),
+        incidents: incidentSnap.docs.map(doc => safeMobilityIncident(doc.id, doc.data() || {})),
+        authorizations: authorizationSnap.docs.map(doc => safeMobilityAuthorization(doc.id, doc.data() || {})),
+        administrativeAudit,
+      });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   // PHASE15 — one trusted workspace read for all Smart Mobility operational
   // roles. Mobility is municipality-wide and independent from Field/Lands;
   // scope is derived exclusively from the authenticated live Mobility role.
