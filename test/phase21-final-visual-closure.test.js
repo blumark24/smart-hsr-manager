@@ -9,13 +9,15 @@ const root = path.resolve(__dirname, '..');
 const manager = fs.readFileSync(path.join(root, 'manager.html'), 'utf8');
 const operationalMap = fs.readFileSync(path.join(root, 'operational-map.html'), 'utf8');
 
-test('Phase21 final visual closure keeps Day mode soft and Night detection compatible', () => {
-  assert.match(manager, /#e8edea/);
+test('Phase21.1 visual system keeps Government Day depth and Digital Blue Night', () => {
+  assert.match(manager, /linear-gradient\(180deg,#e8efeb,#e4ece7\)/);
   const nightStart = manager.indexOf('NIGHT = {');
   const nightEnd = manager.indexOf('BP = {', nightStart);
   const night = manager.slice(nightStart, nightEnd);
-  assert.doesNotMatch(night, /'--pgBg':/);
-  assert.match(night, /'--card': 'rgba\(10,22,38,.9\)'/);
+  assert.match(night, /'--pgBg':[^\n]*#071a2f/);
+  assert.match(night, /'--acc': '#34b7f1'/);
+  assert.match(night, /'--btn': 'linear-gradient\(180deg,#1677ff,#0f5fce\)'/);
+  assert.match(manager, /PHASE21\.1 EXECUTIVE VISUAL SYSTEM V2/);
   assert.match(manager, /id="phase21-final-visual-closure"/);
 });
 
