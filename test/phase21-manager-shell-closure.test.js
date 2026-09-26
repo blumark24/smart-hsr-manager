@@ -28,7 +28,7 @@ test('Phase21 renders Reports and Observations as first-class main views, not th
 });
 
 test('Phase21 Manager institutional views reuse existing trusted Admin API actions', () => {
-  assert.match(source, /callAdminUsersApi\('getMobilityWorkspace', \{\}\)/);
+  assert.match(source, /callAdminUsersApi\('getManagerAdministrativeAffairsOverview', \{\}\)/);
   assert.match(source, /callAdminUsersApi\('listFieldContractorCompanies', \{\}\)/);
   assert.match(source, /openAdminAffairs\(e\)/);
   assert.match(source, /openContracts\(e\)/);
@@ -36,11 +36,16 @@ test('Phase21 Manager institutional views reuse existing trusted Admin API actio
   assert.match(source, /contracts:\s*\(\) => this\.openContracts\(\)/);
 });
 
-test('Phase21 Manager contracts view is supervisory and does not expose operational mutation actions', () => {
+test('Phase21.1 contracts view keeps mutations inside the trusted Manager shell', () => {
   const start = source.indexOf('<sc-if value="{{ viewIsContracts }}">');
   const end = source.indexOf('<!-- PHASE13D.1 — User Center', start);
   const block = source.slice(start, end);
   assert.ok(block.length > 0);
-  assert.doesNotMatch(block, /createFieldContractorCompany|updateFieldContractorCompany|archiveFieldContractorCompany/);
+  assert.match(block, /تعديل/);
+  assert.match(block, /أرشفة/);
+  assert.match(block, /حذف/);
+  assert.match(source, /callAdminUsersApi\('updateFieldContractorCompany'/);
+  assert.match(source, /archiveFieldContractorCompany/);
+  assert.match(source, /deleteFieldContractorCompany/);
   assert.match(block, /سجل إشرافي داخل لوحة مدير البلدية/);
 });
