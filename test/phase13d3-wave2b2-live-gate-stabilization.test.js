@@ -41,7 +41,7 @@ test('desktop, mobile, and quick-action routes have one delegated event owner an
 });
 
 test('Reports/Observations overlay stays below persistent navigation so the next route click is reachable', () => {
-  assert.match(manager, /<header style="[^"]*z-index:60;/);
+  assert.match(manager, /<header[^>]*style="[^"]*z-index:60;/);
   assert.match(manager, /<aside style="[^"]*z-index:55;/);
   assert.match(manager, /class="manager-view-overlay"[^>]*z-index:54;/);
   assert.match(manager, /<sc-if value="\{\{ mobNavOpen \}\}">\s*<div onClick="\{\{ tMobNav \}\}" style="[^"]*z-index:70;/);
