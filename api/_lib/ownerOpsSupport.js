@@ -12,6 +12,9 @@ const OWNER_ACTIONS = new Set([
   'ownerSupportSetStatus',
   'ownerArchiveOrganization',
   'ownerRestoreOrganization',
+  'ownerInvoiceUpdate',
+  'ownerInvoiceArchive',
+  'ownerInvoiceDelete',
 ]);
 
 const MANAGER_SUPPORT_ACTIONS = new Set([
@@ -425,6 +428,72 @@ async function handleOwnerOrganizationLifecycle({ action, body, decoded, db, Fie
   return sendJson(res, 400, { error: 'unknown_action' });
 }
 
+
+async function handleOwnerInvoiceLifecycle({ action, body, decoded, db, FieldValue, sendJson, res }) {
+  const invoiceId = cleanText(body.invoiceId, 160);
+  if (!invoiceId) return sendJson(res, 400, { error: 'invalid_request', reason: 'invoiceId_required' });
+
+  const ref = db.collection('invoices').doc(invoiceId);
+  const snap = await ref.get();
+  if (!snap.exists) return sendJson(res, 404, { error: 'invoice_not_found' });
+  const current = snap.data() || {};
+  const now = FieldValue.serverTimestamp();
+
+  if (action === 'ownerInvoiceUpdate') {
+    const plan = cleanText(body.plan, 80);
+    const billingCycle = cleanText(body.billingCycle, 40);
+    const status = cleanText(body.status, 40);
+    const amount = Number(body.amount);
+    if (!plan || !['monthly','yearly'].includes(billingCycle) ||
+        !['paid','pending','overdue','cancelled','archived'].includes(status) ||
+        !Number.isFinite(amount) || amount < 0) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_invoice_update' });
+    }
+    const vat = +(amount * 0.15).toFixed(2);
+    const total = +(amount + vat).toFixed(2);
+    await ref.set({
+      plan, billingCycle, status, amount, vat, total,
+      updatedAt: now, updatedByUid: decoded.uid,
+    }, { merge: true });
+    await db.collection('platformAdminAuditEvents').add({
+      actorUid: decoded.uid, actorRole: 'owner', action: 'invoice_update',
+      organizationId: cleanText(current.organization_id, 160) || null,
+      resourceType: 'invoice', resourceId: invoiceId,
+      detail: { plan, billingCycle, status, amount, vat, total },
+      createdAt: now,
+    });
+    return sendJson(res, 200, { ok: true, invoiceId, plan, billingCycle, status, amount, vat, total });
+  }
+
+  if (action === 'ownerInvoiceArchive') {
+    await ref.set({
+      status: 'archived', archivedAt: now, archivedByUid: decoded.uid,
+      updatedAt: now,
+    }, { merge: true });
+    await db.collection('platformAdminAuditEvents').add({
+      actorUid: decoded.uid, actorRole: 'owner', action: 'invoice_archive',
+      organizationId: cleanText(current.organization_id, 160) || null,
+      resourceType: 'invoice', resourceId: invoiceId,
+      createdAt: now,
+    });
+    return sendJson(res, 200, { ok: true, invoiceId, status: 'archived' });
+  }
+
+  if (action === 'ownerInvoiceDelete') {
+    await ref.delete();
+    await db.collection('platformAdminAuditEvents').add({
+      actorUid: decoded.uid, actorRole: 'owner', action: 'invoice_delete',
+      organizationId: cleanText(current.organization_id, 160) || null,
+      resourceType: 'invoice', resourceId: invoiceId,
+      detail: { invoiceNumber: cleanText(current.invoiceId, 120) || null },
+      createdAt: now,
+    });
+    return sendJson(res, 200, { ok: true, invoiceId, deleted: true });
+  }
+
+  return sendJson(res, 400, { error: 'unknown_action' });
+}
+
 async function handleOwnerSupport({ action, body, decoded, db, FieldValue, sendJson, res }) {
   if (action === 'ownerSupportList') {
     const snap = await db.collection('supportThreads').orderBy('updatedAt', 'desc').limit(SUPPORT_THREAD_LIMIT).get();
@@ -503,6 +572,10 @@ async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldVal
     }
     if (action === 'ownerArchiveOrganization' || action === 'ownerRestoreOrganization') {
       await handleOwnerOrganizationLifecycle({ action, body, decoded, db, FieldValue, sendJson, res });
+      return true;
+    }
+    if (action === 'ownerInvoiceUpdate' || action === 'ownerInvoiceArchive' || action === 'ownerInvoiceDelete') {
+      await handleOwnerInvoiceLifecycle({ action, body, decoded, db, FieldValue, sendJson, res });
       return true;
     }
     await handleOwnerSupport({ action, body, decoded, db, FieldValue, sendJson, res });
