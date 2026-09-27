@@ -698,6 +698,35 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
   .hsr-map-popup-actions{grid-template-columns:1fr 1fr 1fr!important}
   .hsr-manager-map-shell .leaflet-popup-content{width:min(262px,calc(100vw - 34px))!important;max-width:min(262px,calc(100vw - 34px))!important}
 }
+
+
+/* PHASE21.6 FINAL COMPACT MAP CARD + SINGLE SIDEBAR STATE */
+.hsr-manager-map-shell .leaflet-popup-content{
+  min-width:220px!important;
+  width:228px!important;
+  max-width:238px!important
+}
+.hsr-map-popup-body{padding:9px!important}
+.hsr-map-popup-head{padding-bottom:5px!important}
+.hsr-map-popup-title{
+  font-size:11.5px!important;
+  line-height:1.45!important;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden
+}
+.hsr-map-popup-chips{margin-top:5px!important}
+.hsr-map-popup-thumb{height:68px!important;margin:6px 0!important}
+.hsr-map-popup-row{min-height:22px!important;padding:3px 0!important;font-size:9.25px!important}
+.hsr-map-popup-actions{display:block!important;margin-top:7px!important}
+.hsr-map-popup-btn.primary{width:100%!important;min-height:31px!important;font-size:9.75px!important}
+@media(max-width:699px){
+  .hsr-manager-map-shell .leaflet-popup-content{
+    width:min(228px,calc(100vw - 38px))!important;
+    max-width:min(228px,calc(100vw - 38px))!important
+  }
+}
 </style>
 </head>
 <body>
@@ -3049,7 +3078,7 @@ class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
     orgName: this.props.organizationName || 'اسم البلدية',
-    sb: false, sbOverlayOpen: false, expSvc: true, expAdmin: false,
+    sb: false, sbOverlayOpen: false, sidebarOpen: false, expSvc: true, expAdmin: false,
     notifOpen: false, profOpen: false, layersOpen: false, settingsOpen: false, mobNavOpen: false,
     userDrawerOpen: false, selectedUser: null, incidentDrawerOpen: false, selectedIncident: null,
     addUserOpen: false, auName: '', auEmail: '', auRole: 'employee', auKind: 'field',
@@ -3469,7 +3498,7 @@ class Component extends DCLogic {
           })
         });
         marker.bindPopup(() => this.buildObservationPopup(item), {
-          maxWidth: 268,
+          maxWidth: 238,
           className: 'hsr-map-popup',
           autoPan: true,
           keepInView: true,
@@ -3652,10 +3681,7 @@ class Component extends DCLogic {
       return line;
     };
     rows.appendChild(row('المعرّف', item.displayId || item.id));
-    if (priorityLabel) rows.appendChild(row('الأولوية', priorityLabel));
     rows.appendChild(row('التصنيف', categoryLabel));
-    rows.appendChild(row('المراقب', item.inspector || 'غير متاح'));
-    rows.appendChild(row('التوقيت', timeLabel));
     const locationSourceLabel = ({
       gps: 'GPS موثّق',
       gps_corrected: 'GPS موثّق + تصحيح',
@@ -3666,7 +3692,7 @@ class Component extends DCLogic {
       ? '±' + Math.round(Number(item.locationAccuracyMeters)) + ' م'
       : 'الدقة غير متاحة';
     rows.appendChild(row('الموقع', item.address || item.locationText || `${item.coordinates.lat.toFixed(5)}, ${item.coordinates.lng.toFixed(5)}`, { ltr: !item.address && !item.locationText }));
-    rows.appendChild(row('مصدر الموقع', locationSourceLabel + ' · ' + accuracyLabel));
+    rows.appendChild(row('GPS', locationSourceLabel + ' · ' + accuracyLabel));
     root.appendChild(rows);
 
     const actions = document.createElement('div');
@@ -3680,9 +3706,7 @@ class Component extends DCLogic {
       b.addEventListener('click', onClick);
       return b;
     };
-    actions.appendChild(btn('عرض التفاصيل', 'primary', () => this.openEvidenceDrawer(item)));
-    actions.appendChild(btn('الخريطة', 'secondary', () => this.openOperationalMapForObservation(item), 'فتح الخريطة التشغيلية'));
-    if (this.isTwinAdmitted()) actions.appendChild(btn('Twin', 'secondary', () => this.openTwinForObservation(item), 'فتح في التوأم الرقمي'));
+    actions.appendChild(btn('عرض التفاصيل الكاملة', 'primary', () => this.openEvidenceDrawer(item)));
     root.appendChild(actions);
     return root;
   }
@@ -3704,24 +3728,20 @@ class Component extends DCLogic {
   renderVals() {
     const st = this.state, day = st.theme === 'day';
     const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
-    const sidebarCompactBp = st.bp === 'tab' || st.bp === 'md' || st.bp === 'mob';
-    const sidebarCompactOpen = sidebarCompactBp && st.sbOverlayOpen === true;
-    if (sidebarCompactBp) {
-      // One responsive sidebar state: iPad behaves like desktop push-layout,
-      // while mobile uses the same sidebar surface as an off-canvas drawer.
-      if (sidebarCompactOpen) {
-        vars['--sbW'] = st.bp === 'mob' ? 'min(300px,88vw)' : (st.bp === 'md' ? '216px' : '200px');
-        vars['--sbLabel'] = 'block';
-        vars['--subInd'] = '13px';
-      } else {
-        vars['--sbW'] = st.bp === 'mob' ? '0px' : '68px';
-        vars['--sbLabel'] = 'none';
-        vars['--subInd'] = '0px';
-      }
-    } else if (st.sb) {
-      vars['--sbW'] = '68px'; vars['--sbLabel'] = 'none'; vars['--subInd'] = '0px';
+    const sidebarExpanded = st.sidebarOpen === true;
+    if (st.bp === 'mob') {
+      vars['--sbW'] = '0px';
+      vars['--sbLabel'] = sidebarExpanded ? 'block' : 'none';
+      vars['--subInd'] = sidebarExpanded ? '13px' : '0px';
+    } else if (sidebarExpanded) {
+      vars['--sbW'] = st.bp === 'tab' ? '220px' : '232px';
+      vars['--sbLabel'] = 'block';
+      vars['--subInd'] = '13px';
+    } else {
+      vars['--sbW'] = '68px';
+      vars['--sbLabel'] = 'none';
+      vars['--subInd'] = '0px';
     }
-    const sidebarExpanded = sidebarCompactBp ? sidebarCompactOpen : !st.sb;
     const sidebarClass = sidebarExpanded ? 'hsr-manager-sidebar is-expanded' : 'hsr-manager-sidebar is-rail';
     if (st.fs) { vars['--twinPos'] = 'fixed'; vars['--twinInset'] = '14px'; vars['--twinZ'] = '75'; vars['--twinH'] = 'auto'; }
 
@@ -4365,10 +4385,8 @@ class Component extends DCLogic {
       sidebarClass,
       sidebarOverlayOpen: false,
       sidebarToggleExpanded: sidebarExpanded ? 'true' : 'false',
-      sidebarToggleLabel: sidebarCompactBp
-        ? (sidebarCompactOpen ? 'تصغير القائمة الجانبية' : 'توسيع القائمة الجانبية')
-        : (st.sb ? 'توسيع القائمة الجانبية' : 'تصغير القائمة الجانبية'),
-      closeSidebarOverlay: () => this.setState({ sbOverlayOpen: false }),
+      sidebarToggleLabel: sidebarExpanded ? 'إغلاق القائمة الجانبية' : 'فتح القائمة الجانبية',
+      closeSidebarOverlay: () => this.setState({ sidebarOpen: false }),
       orgName: st.orgName,
       sessionName: st.sessionName,
       sessionRole: st.sessionRole,
@@ -4845,12 +4863,11 @@ class Component extends DCLogic {
   }
 
   toggleSmartSidebar() {
-    const bp = this.state.bp;
-    if (bp === 'tab' || bp === 'md' || bp === 'mob') {
-      this.setState(s => ({ sbOverlayOpen: !s.sbOverlayOpen, mobNavOpen: false }));
-      return;
-    }
-    this.setState(s => ({ sb: !s.sb, mobNavOpen: false }));
+    this.setState(s => ({
+      sidebarOpen: !s.sidebarOpen,
+      sbOverlayOpen: false,
+      mobNavOpen: false
+    }));
   }
 
   prevent(e) { if (e && e.preventDefault) e.preventDefault(); }
