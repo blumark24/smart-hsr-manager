@@ -2863,9 +2863,16 @@ async function handler(req, res) {
           return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
         }
 
-        const createParams = { email: email.trim(), disabled: false };
+        if (!isNonEmptyString(password)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'password_required' });
+        }
+        const policyFailure = passwordPolicyReason(password, { email, name });
+        if (policyFailure) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: policyFailure });
+        }
+
+        const createParams = { email: email.trim(), disabled: false, password };
         if (isNonEmptyString(name)) createParams.displayName = name.trim();
-        if (isNonEmptyString(password)) createParams.password = password; // set, never stored
         const userRecord = await auth.createUser(createParams);
 
         const col = collectionForRole(role);
