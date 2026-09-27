@@ -63,7 +63,11 @@ test('User Center separates external contractor companies from municipal employe
   assert.doesNotMatch(enhancements, /data-open-contractors/);
   assert.doesNotMatch(enhancements, /data-add-contractor/);
   assert.doesNotMatch(enhancements, /kpiCard\('contractors'/);
-  assert.match(manager, /href="contractors-registry\.html"/);
+  // Phase21+ keeps the manager's contractor/company registry inside the
+  // executive shell as a trusted read/manage view instead of navigating away.
+  assert.match(manager, /data-manager-view="contracts"/);
+  assert.match(manager, /viewIsContracts/);
+  assert.match(manager, /listFieldContractorCompanies/);
   assert.match(manager, /إدارة العقود والشركات المتعاقدة/);
   assert.match(contractorRegistryPage, /إدارة العقود والشركات المتعاقدة/);
   assert.doesNotMatch(managerFormat, /data-route-close/);
