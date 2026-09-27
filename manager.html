@@ -719,8 +719,23 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 .hsr-map-popup-chips{margin-top:5px!important}
 .hsr-map-popup-thumb{height:68px!important;margin:6px 0!important}
 .hsr-map-popup-row{min-height:22px!important;padding:3px 0!important;font-size:9.25px!important}
-.hsr-map-popup-actions{display:block!important;margin-top:7px!important}
+.hsr-map-popup-actions{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 32px 32px!important;
+  gap:5px!important;
+  margin-top:7px!important
+}
 .hsr-map-popup-btn.primary{width:100%!important;min-height:31px!important;font-size:9.75px!important}
+.hsr-map-popup-btn.compact{
+  width:32px!important;
+  min-width:32px!important;
+  height:31px!important;
+  min-height:31px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  font-size:13px!important
+}
 @media(max-width:699px){
   .hsr-manager-map-shell .leaflet-popup-content{
     width:min(228px,calc(100vw - 38px))!important;
@@ -3706,7 +3721,9 @@ class Component extends DCLogic {
       b.addEventListener('click', onClick);
       return b;
     };
-    actions.appendChild(btn('عرض التفاصيل الكاملة', 'primary', () => this.openEvidenceDrawer(item)));
+    actions.appendChild(btn('عرض التفاصيل', 'primary', () => this.openEvidenceDrawer(item)));
+    actions.appendChild(btn('↗', 'secondary compact', () => this.openOperationalMapForObservation(item), 'فتح الخريطة التشغيلية'));
+    if (this.isTwinAdmitted()) actions.appendChild(btn('◇', 'secondary compact', () => this.openTwinForObservation(item), 'فتح في التوأم الرقمي'));
     root.appendChild(actions);
     return root;
   }
