@@ -742,6 +742,118 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
     max-width:min(228px,calc(100vw - 38px))!important
   }
 }
+
+
+/* PHASE21.7 DELIVERY CLEANUP */
+html,body{overscroll-behavior-y:none}
+html[data-theme="dark"],html[data-theme="dark"] body,
+html[data-theme="dark"] x-dc,
+html[data-theme="dark"] .hsr-manager-root{background:#06172a!important}
+html[data-theme="light"],html[data-theme="light"] body,
+html[data-theme="light"] x-dc,
+html[data-theme="light"] .hsr-manager-root{background:#e7ece9!important}
+body{min-height:100svh!important;min-height:100dvh!important}
+
+/* Same sidebar/toggle everywhere. Desktop pushes; iPad/mobile overlay. */
+@media(min-width:700px) and (max-width:1179px){
+  .hsr-manager-sidebar.is-overlay-open{
+    width:68px!important;
+    overflow:visible!important;
+    z-index:90!important
+  }
+  .hsr-manager-sidebar.is-overlay-open>.hsr-sidebar-panel{
+    position:absolute!important;
+    top:0!important;
+    right:0!important;
+    left:auto!important;
+    width:248px!important;
+    max-height:calc(100dvh - 112px)!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+    padding-bottom:8px!important;
+    border-radius:16px!important;
+    background:var(--pgBg,#071a2f)!important;
+    box-shadow:-20px 22px 60px -30px rgba(0,0,0,.84)!important
+  }
+  .hsr-sidebar-scrim{
+    display:block!important;
+    position:fixed!important;
+    inset:0!important;
+    z-index:78!important;
+    border-radius:0!important;
+    background:rgba(2,12,25,.30)!important;
+    backdrop-filter:blur(2px)!important
+  }
+}
+@media(max-width:699px){
+  .hsr-manager-sidebar.is-overlay-open{
+    display:flex!important;
+    position:fixed!important;
+    top:max(8px,env(safe-area-inset-top))!important;
+    right:8px!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    left:auto!important;
+    width:min(280px,88vw)!important;
+    max-width:min(280px,88vw)!important;
+    z-index:90!important;
+    transform:translateX(0)!important;
+    opacity:1!important;
+    pointer-events:auto!important
+  }
+  .hsr-manager-sidebar.is-overlay-open>.hsr-sidebar-panel{
+    width:100%!important;
+    height:100%!important;
+    overflow-y:auto!important;
+    background:var(--pgBg,#071a2f)!important
+  }
+  .hsr-sidebar-scrim{
+    display:block!important;
+    position:fixed!important;
+    inset:0!important;
+    z-index:78!important;
+    background:rgba(2,12,25,.42)!important;
+    backdrop-filter:blur(3px)!important
+  }
+}
+
+/* Priorities: tighter density and selected state synchronized with marker. */
+.hsr-priority-list{gap:7px!important}
+.hsr-priority-list>div{min-height:58px!important}
+.hsr-priority-item.is-selected{
+  border-color:var(--prio-col)!important;
+  background:color-mix(in srgb,var(--prio-col) 14%,rgba(10,30,54,.88))!important;
+  box-shadow:inset 3px 0 0 var(--prio-col),0 0 0 2px color-mix(in srgb,var(--prio-col) 28%,transparent),0 14px 26px -20px var(--prio-col)!important;
+  transform:translateY(-1px)
+}
+.hsr-priority-card .hsr-priority-all{
+  background:#0d3a61!important;
+  color:#dcecff!important;
+  -webkit-text-fill-color:#dcecff!important;
+  border-color:#2d6fa6!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important
+}
+
+/* Quick Evidence Card: compact and map-first. */
+.hsr-manager-map-shell .leaflet-popup-content{
+  min-width:208px!important;
+  width:216px!important;
+  max-width:228px!important
+}
+.hsr-map-popup-body{padding:8px!important}
+.hsr-map-popup-title{font-size:11px!important;line-height:1.4!important}
+.hsr-map-popup-thumb{height:54px!important;margin:5px 0!important}
+.hsr-map-popup-row{min-height:20px!important;padding:2.5px 0!important;font-size:9px!important}
+.hsr-map-popup-actions{margin-top:6px!important;grid-template-columns:minmax(0,1fr) 29px 29px!important}
+.hsr-map-popup-btn.primary{min-height:29px!important;font-size:9.4px!important}
+.hsr-map-popup-btn.compact{width:29px!important;min-width:29px!important;height:29px!important;min-height:29px!important}
+
+/* Final map toolbar geometry. */
+@media(min-width:700px){
+  .hsr-spatial-mode-switch{top:10px!important;left:10px!important}
+  .hsr-map-querybar{top:10px!important;left:50%!important;transform:translateX(-50%)!important;width:min(360px,calc(100% - 430px))!important}
+  .hsr-map-basemap{top:10px!important;right:10px!important}
+  .hsr-map-command-rail{top:58px!important;left:10px!important}
+}
 </style>
 </head>
 <body>
@@ -1247,7 +1359,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 
           <div ref="{{ priorityListRef }}" class="hsr-priority-list">
             <sc-for list="{{ prios }}" as="p" hint-placeholder-count="4">
-              <div onClick="{{ p.on }}" data-f="1" class="hsr-priority-item" style="--prio-col:{{ p.col }};display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:{{ p.bg }};border:1px solid {{ p.bd }};cursor:pointer">
+              <div onClick="{{ p.on }}" data-f="1" data-priority-id="{{ p.id }}" class="hsr-priority-item" style="--prio-col:{{ p.col }};display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:12px;background:{{ p.bg }};border:1px solid {{ p.bd }};cursor:pointer">
                 <div style="width:33px;height:33px;flex:none;border-radius:50%;background:{{ p.numBg }};border:1px solid {{ p.bd }};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;color:{{ p.col }};font-variant-numeric:tabular-nums">{{ p.n }}</div>
                 <div style="flex:1;text-align:right;min-width:0">
                   <div style="font-size:11.5px;font-weight:600;color:var(--tx,#f2e6e6)">{{ p.title }}</div>
@@ -3513,7 +3625,7 @@ class Component extends DCLogic {
           })
         });
         marker.bindPopup(() => this.buildObservationPopup(item), {
-          maxWidth: 238,
+          maxWidth: 228,
           className: 'hsr-map-popup',
           autoPan: true,
           keepInView: true,
@@ -3547,13 +3659,19 @@ class Component extends DCLogic {
   }
 
   applyMapSelectionStyle() {
-    if (!this._opMarkerById) return;
-    this._opMarkerById.forEach((marker, id) => {
-      const isSel = this._selectedMapId === id;
-      const element = marker.getElement && marker.getElement();
-      if (element) element.classList.toggle('is-selected', isSel);
-      if (marker.setZIndexOffset) marker.setZIndexOffset(isSel ? 1000 : 0);
-    });
+    if (this._opMarkerById) {
+      this._opMarkerById.forEach((marker, id) => {
+        const isSel = this._selectedMapId === id;
+        const element = marker.getElement && marker.getElement();
+        if (element) element.classList.toggle('is-selected', isSel);
+        if (marker.setZIndexOffset) marker.setZIndexOffset(isSel ? 1000 : 0);
+      });
+    }
+    if (this.root) {
+      this.root.querySelectorAll('[data-priority-id]').forEach(node => {
+        node.classList.toggle('is-selected', node.getAttribute('data-priority-id') === this._selectedMapId);
+      });
+    }
   }
 
   syncExecutiveBasemap() {
@@ -3695,8 +3813,6 @@ class Component extends DCLogic {
       line.append(k, v);
       return line;
     };
-    rows.appendChild(row('المعرّف', item.displayId || item.id));
-    rows.appendChild(row('التصنيف', categoryLabel));
     const locationSourceLabel = ({
       gps: 'GPS موثّق',
       gps_corrected: 'GPS موثّق + تصحيح',
@@ -3746,12 +3862,13 @@ class Component extends DCLogic {
     const st = this.state, day = st.theme === 'day';
     const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
     const sidebarExpanded = st.sidebarOpen === true;
-    if (st.bp === 'mob') {
-      vars['--sbW'] = '0px';
+    const sidebarOverlayMode = st.bp === 'tab' || st.bp === 'mob';
+    if (sidebarOverlayMode) {
+      vars['--sbW'] = st.bp === 'mob' ? '0px' : '68px';
       vars['--sbLabel'] = sidebarExpanded ? 'block' : 'none';
       vars['--subInd'] = sidebarExpanded ? '13px' : '0px';
     } else if (sidebarExpanded) {
-      vars['--sbW'] = st.bp === 'tab' ? '220px' : '232px';
+      vars['--sbW'] = '232px';
       vars['--sbLabel'] = 'block';
       vars['--subInd'] = '13px';
     } else {
@@ -3759,7 +3876,9 @@ class Component extends DCLogic {
       vars['--sbLabel'] = 'none';
       vars['--subInd'] = '0px';
     }
-    const sidebarClass = sidebarExpanded ? 'hsr-manager-sidebar is-expanded' : 'hsr-manager-sidebar is-rail';
+    const sidebarClass = sidebarExpanded
+      ? ('hsr-manager-sidebar is-expanded' + (sidebarOverlayMode ? ' is-overlay-open' : ''))
+      : 'hsr-manager-sidebar is-rail';
     if (st.fs) { vars['--twinPos'] = 'fixed'; vars['--twinInset'] = '14px'; vars['--twinZ'] = '75'; vars['--twinH'] = 'auto'; }
 
     const metrics = this.liveMetrics || {};
@@ -4400,7 +4519,7 @@ class Component extends DCLogic {
       priorityListRef: el => { this.priorityList = el; },
       themeVars: vars, rootThemeClass: day ? 'hsr-manager-root theme-day' : 'hsr-manager-root theme-night',
       sidebarClass,
-      sidebarOverlayOpen: false,
+      sidebarOverlayOpen: sidebarExpanded && sidebarOverlayMode,
       sidebarToggleExpanded: sidebarExpanded ? 'true' : 'false',
       sidebarToggleLabel: sidebarExpanded ? 'إغلاق القائمة الجانبية' : 'فتح القائمة الجانبية',
       closeSidebarOverlay: () => this.setState({ sidebarOpen: false }),
