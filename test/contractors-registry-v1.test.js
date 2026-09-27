@@ -25,7 +25,11 @@ test('municipal employee registry excludes contractor records',()=>{
   assert.match(center,/const records = employees\.map\(employee => \(\{ kind:'employee', employee \}\)\)/);
   assert.match(center,/user\.role==='contractor'/);
   assert.doesNotMatch(center,/data-open-contractors/);
-  assert.match(manager,/href="contractors-registry\.html"/);
+  // Phase21+ exposes the contractor/company registry as an integrated
+  // Municipality Manager view while preserving the dedicated operational page.
+  assert.match(manager,/data-manager-view="contracts"/);
+  assert.match(manager,/viewIsContracts/);
+  assert.match(manager,/listFieldContractorCompanies/);
   assert.doesNotMatch(center,/data-add-contractor/);
   assert.doesNotMatch(center,/kpiCard\('contractors'/);
 });
@@ -45,7 +49,10 @@ test('archive is soft and blocked while contractor has open cases',()=>{
   assert.match(users,/active: false/);
   assert.match(users,/status: 'ENDED'/);
   assert.match(users,/action: 'archive_contractor_company'/);
-  assert.doesNotMatch(users,/deleteUser\(contractorUid\)/);
+  const archiveStart=users.indexOf("if (action === 'archiveFieldContractorCompany')");
+  const archiveEnd=users.indexOf("if (action === 'deleteFieldContractorCompany')",archiveStart);
+  const archiveBlock=users.slice(archiveStart,archiveEnd);
+  assert.doesNotMatch(archiveBlock,/deleteUser\(contractorUid\)/);
 });
 
 test('registry keeps tenant boundary and least-privilege institutional access',()=>{
