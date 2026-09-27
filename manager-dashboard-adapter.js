@@ -38,13 +38,31 @@ const number = value => format.integer(value);
 const statusFor = value => STATUS[value] || STATUS.PENDING;
 
 function readCoordinates(data) {
-  let lat = typeof data.lat === 'number' ? data.lat : null;
-  let lng = typeof data.lng === 'number' ? data.lng : null;
-  if ((lat === null || lng === null) && typeof data.location === 'string') {
+  const valid = (lat, lng) => Number.isFinite(lat) && Number.isFinite(lng)
+    && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+  const pair = (latValue, lngValue, source) => {
+    const lat = Number(latValue), lng = Number(lngValue);
+    return valid(lat, lng) ? { lat, lng, source } : null;
+  };
+
+  // dashboard.html writes the trusted capture in this order:
+  // correctedLat/correctedLng -> originalLat/originalLng -> legacy location/lat/lng.
+  // Manager must never prefer an older scalar field over a later confirmed correction.
+  const corrected = pair(data.correctedLat, data.correctedLng, 'corrected');
+  if (corrected) return corrected;
+
+  const original = pair(data.originalLat, data.originalLng, 'original');
+  if (original) return original;
+
+  if (typeof data.location === 'string') {
     const parts = data.location.split(',').map(value => Number.parseFloat(value.trim()));
-    if (parts.length === 2 && parts.every(Number.isFinite)) [lat, lng] = parts;
+    if (parts.length === 2) {
+      const locationPair = pair(parts[0], parts[1], 'location');
+      if (locationPair) return locationPair;
+    }
   }
-  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+
+  return pair(data.lat, data.lng, 'legacy') || null;
 }
 
 function normalizeObservations(snapshot) {
@@ -62,6 +80,9 @@ function normalizeObservations(snapshot) {
       createdAt: asMillis(data.createdAt),
       updatedAt: asMillis(data.updatedAt),
       coordinates: readCoordinates(data),
+      locationAccuracyMeters: Number.isFinite(Number(data.locationAccuracyMeters)) ? Number(data.locationAccuracyMeters) : null,
+      locationSource: typeof data.locationSource === 'string' ? data.locationSource : null,
+      locationVerified: data.locationVerified === true,
       // Real fields already written by dashboard.html's own create payload
       // (createdByUid, riskAssessment.priority) — surfaced here so the
       // Field Survey Manager dashboard can join the real inspector identity
