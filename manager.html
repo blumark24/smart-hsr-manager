@@ -520,6 +520,102 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 @media(prefers-reduced-motion:reduce){
   .hsr-manager-sidebar,.hsr-manager-sidebar>div,.hsr-sidebar-scrim{transition:none!important;animation:none!important}
 }
+
+
+/* PHASE21.4B SMART SPATIAL EXPERIENCE */
+.hsr-spatial-mode-switch{
+  position:absolute;top:11px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:3px;padding:3px;border-radius:12px;
+  background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.28));
+  box-shadow:0 12px 28px -18px rgba(0,0,0,.62);white-space:nowrap
+}
+.hsr-spatial-mode-switch button{
+  height:30px;padding:0 11px;border-radius:9px;border:1px solid transparent;background:transparent;
+  color:var(--glassTx,#c8def2);font-size:10px;font-weight:750;display:flex;align-items:center;gap:6px;cursor:pointer
+}
+.hsr-spatial-mode-switch button.is-active{
+  color:#fff;background:linear-gradient(180deg,#1682ff,#1163d6);border-color:rgba(115,190,255,.5);
+  box-shadow:0 6px 18px -8px rgba(22,119,255,.9)
+}
+.hsr-map-basemap{
+  position:absolute;top:11px;right:12px;display:flex;gap:2px;padding:3px;border-radius:11px;
+  background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.28))
+}
+.hsr-map-basemap .hsr-map-segment{height:30px;padding:0 10px}
+.hsr-map-querybar{
+  position:absolute;top:56px;right:12px;display:flex;align-items:center;gap:6px;padding:5px;border-radius:12px;
+  background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.25));
+  box-shadow:0 12px 28px -20px rgba(0,0,0,.58)
+}
+.hsr-map-search{position:relative;width:184px}
+.hsr-map-search input,.hsr-map-querybar select{
+  height:32px;border-radius:9px;background:rgba(5,30,55,.68);border:1px solid var(--glassBd,rgba(95,177,255,.22));
+  color:var(--tx,#f2f7ff);font-size:10.5px;outline:none
+}
+.hsr-map-search input{width:100%;padding:0 10px 0 31px}
+.hsr-map-search svg{position:absolute;left:9px;top:9.5px;color:var(--tx3,#91abc5)}
+.hsr-map-querybar select{width:126px;padding:0 8px;color:var(--glassTx,#c8def2)}
+.hsr-map-command-rail{
+  position:absolute;top:64px;left:12px;display:flex;flex-direction:column;gap:4px;padding:5px;border-radius:13px;
+  background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.27));
+  box-shadow:0 18px 34px -22px rgba(0,0,0,.64)
+}
+.hsr-map-command-rail button{
+  width:34px;height:34px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--glassTx,#c8def2);
+  display:grid;place-items:center;font-size:16px;font-weight:700;cursor:pointer
+}
+.hsr-map-command-rail button:hover{
+  background:rgba(58,137,214,.18);border-color:rgba(104,181,255,.22);color:#fff
+}
+.hsr-priority-head{display:flex;align-items:center;gap:9px;flex:none}
+.hsr-priority-controls{display:flex;align-items:center;gap:4px;flex:none}
+.hsr-priority-controls button{
+  width:28px;height:28px;border-radius:8px;background:var(--ctl,rgba(20,32,54,.6));
+  border:1px solid var(--ctlBd,rgba(122,164,224,.14));color:var(--tx2,#bfd4ea);
+  display:grid;place-items:center;cursor:pointer;font-size:12px;font-weight:800
+}
+.hsr-priority-controls button:hover{background:var(--ctlH,rgba(32,50,84,.8));color:var(--tx,#fff)}
+.hsr-priority-list{
+  flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overscroll-behavior:contain;
+  padding:1px 3px 1px 1px;scrollbar-width:thin;scrollbar-color:rgba(85,164,242,.35) transparent
+}
+.hsr-priority-list::-webkit-scrollbar{width:5px}
+.hsr-priority-list::-webkit-scrollbar-thumb{background:rgba(85,164,242,.35);border-radius:999px}
+.hsr-priority-list>div{position:relative;flex:none;min-height:62px}
+.hsr-priority-list>div:after{
+  content:"";position:absolute;inset-block:9px;inset-inline-start:0;width:2px;border-radius:2px;
+  background:currentColor;opacity:.22;pointer-events:none
+}
+.hsr-map-popup-chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px}
+.hsr-map-popup-chip{margin-top:0!important}
+.hsr-map-popup-priority{
+  display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:9.5px;font-weight:700;
+  color:var(--warn,#f2b84b);background:var(--warnBg,rgba(242,184,75,.1));border:1px solid var(--warnBd,rgba(242,184,75,.28))
+}
+.hsr-map-popup-thumb{height:106px!important}
+.hsr-map-popup-actions{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr)!important}
+.hsr-map-popup-btn.secondary{background:var(--ctl,rgba(18,58,96,.82));color:var(--tx2,#bfd4ea);border-color:var(--ctlBd,rgba(91,173,255,.24))}
+.hsr-manager-map-shell .leaflet-popup-content{min-width:286px}
+@media(min-width:700px) and (max-width:1179px){
+  .hsr-spatial-mode-switch{top:9px}
+  .hsr-map-status{top:54px!important;left:10px!important;max-width:42%!important}
+  .hsr-map-basemap{top:54px;right:10px}
+  .hsr-map-querybar{top:96px;right:10px}
+  .hsr-map-command-rail{top:96px;left:10px}
+}
+@media(max-width:699px){
+  .hsr-spatial-mode-switch{top:8px;left:8px;right:8px;transform:none;justify-content:center}
+  .hsr-spatial-mode-switch button{flex:1;justify-content:center;padding:0 7px}
+  .hsr-map-status{top:50px!important;left:8px!important;right:8px!important;max-width:none!important}
+  .hsr-map-basemap{top:94px;right:8px}
+  .hsr-map-querybar{top:134px;left:8px;right:8px;display:grid;grid-template-columns:minmax(0,1fr) 118px}
+  .hsr-map-search{width:100%}
+  .hsr-map-querybar select{width:100%}
+  .hsr-map-command-rail{top:auto;left:8px;bottom:50px;flex-direction:row}
+  .hsr-manager-map-shell .leaflet-popup-content{min-width:0;width:min(300px,calc(100vw - 26px))!important}
+  .hsr-map-popup-actions{grid-template-columns:1fr!important}
+  .hsr-map-popup-btn{width:100%}
+}
 </style>
 </head>
 <body>
@@ -955,32 +1051,41 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
             </div>
           </div>
 
-          <div class="hsr-manager-map-overlay hsr-map-tools" style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end">
-            <div role="group" aria-label="نوع الخريطة" style="display:flex;gap:2px;padding:3px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px))">
-              <button onClick="{{ setMapStreet }}" data-f="1" class="{{ mapStreetClass }}" aria-label="خريطة الشوارع">شوارع</button>
-              <button onClick="{{ setMapSatellite }}" data-f="1" class="{{ mapSatelliteClass }}" aria-label="صور الأقمار الصناعية">أقمار</button>
-            </div>
-            <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز — احتواء كل البلاغات الموثّقة" title="إعادة التمركز" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+          <div class="hsr-manager-map-overlay hsr-spatial-mode-switch" role="group" aria-label="وضع الخريطة">
+            <button type="button" class="is-active" aria-current="page" aria-label="الخريطة التشغيلية الحالية">
+              <span aria-hidden="true">⌖</span><span>الخريطة التشغيلية</span>
             </button>
-            <button onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" title="ملء الشاشة" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
-            </button>
+            <sc-if value="{{ twinAllowed }}">
+              <button type="button" onClick="{{ openTwinHome }}" data-f="1" aria-label="فتح التوأم الرقمي">
+                <span aria-hidden="true">◇</span><span>التوأم الرقمي</span>
+              </button>
+            </sc-if>
           </div>
 
-          <div class="hsr-manager-map-overlay hsr-map-filters" style="position:absolute;top:68px;left:12px;display:flex;flex-direction:column;gap:8px">
-            <div style="width:196px;position:relative">
-              <input aria-label="ابحث في البلاغات الموثّقة" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--tx,#dbe6f5);font-size:10.5px;padding:0 10px 0 30px;outline:none">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="position:absolute;left:9px;top:9.5px;color:var(--tx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <div class="hsr-manager-map-overlay hsr-map-basemap" role="group" aria-label="نوع الخريطة">
+            <button onClick="{{ setMapStreet }}" data-f="1" class="{{ mapStreetClass }}" aria-label="خريطة الشوارع">شوارع</button>
+            <button onClick="{{ setMapSatellite }}" data-f="1" class="{{ mapSatelliteClass }}" aria-label="صور الأقمار الصناعية">أقمار</button>
+          </div>
+
+          <div class="hsr-manager-map-overlay hsr-map-querybar">
+            <div class="hsr-map-search">
+              <input aria-label="ابحث في البلاغات الموثّقة" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات...">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
             </div>
-            <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}" style="width:196px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#dbe6f5);font-size:10.5px;padding:0 8px;outline:none">
+            <select aria-label="تصفية حالة البلاغات على الخريطة" value="{{ mapFilter }}" onChange="{{ setMapFilter }}">
               <option value="ALL">كل الحالات</option><option value="PENDING">قيد الانتظار</option><option value="IN_PROGRESS">قيد المعالجة</option><option value="COMPLETED">تمت المعالجة</option>
             </select>
-            <div style="display:flex;flex-direction:column;border-radius:10px;background:var(--glass,rgba(8,14,26,0.7));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));overflow:hidden;width:34px">
-              <button onClick="{{ zIn }}" data-f="1" aria-label="تكبير" style="width:34px;height:32px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer">+</button>
-              <span style="height:1px;background:var(--glassBd,rgba(122,164,224,0.14))"></span>
-              <button onClick="{{ zOut }}" data-f="1" aria-label="تصغير" style="width:34px;height:32px;border:none;background:none;color:var(--glassTx,#c3d6ea);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer">−</button>
-            </div>
+          </div>
+
+          <div class="hsr-manager-map-overlay hsr-map-command-rail" role="toolbar" aria-label="أدوات الخريطة">
+            <button onClick="{{ resetView }}" data-f="1" aria-label="إعادة التمركز" title="إعادة التمركز">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+            </button>
+            <button onClick="{{ zIn }}" data-f="1" aria-label="تكبير" title="تكبير">+</button>
+            <button onClick="{{ zOut }}" data-f="1" aria-label="تصغير" title="تصغير">−</button>
+            <button onClick="{{ tFs }}" data-f="1" aria-label="ملء الشاشة" title="ملء الشاشة">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
+            </button>
           </div>
 
           <sc-if value="{{ mapEmpty }}">
@@ -1004,14 +1109,21 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
         </div>
 
         <div class="hsr-priority-card" style="width:var(--prioW,272px);flex:none;order:var(--prioOrd,0);padding:13px;display:flex;flex-direction:column;gap:10px;min-width:0;border-radius:16px;background:var(--card,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--cardBd,rgba(122,164,224,0.13));box-shadow:var(--cardSh,0 20px 44px -26px rgba(0,0,0,0.95))">
-          <div style="display:flex;align-items:center;gap:9px">
-            <div style="flex:1;text-align:right;font-size:13px;font-weight:600;color:var(--tx,#e4eefb)">الأولويات التشغيلية</div>
-            <button onClick="{{ goMap }}" data-f="1" aria-label="تصفية البلاغات على الخريطة" style="width:27px;height:27px;border-radius:8px;background:var(--ctl,rgba(20,32,54,0.6));border:1px solid var(--ctlBd,rgba(122,164,224,0.14));color:var(--tx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
-            </button>
+          <div class="hsr-priority-head">
+            <div style="flex:1;text-align:right;min-width:0">
+              <div style="font-size:13px;font-weight:700;color:var(--tx,#e4eefb)">الأولويات التشغيلية</div>
+              <div style="font-size:9px;color:var(--tx3,#7d8ea6);margin-top:2px">اضغط على الحالة لتركيزها مباشرة على الخريطة</div>
+            </div>
+            <div class="hsr-priority-controls" role="group" aria-label="التنقل في الأولويات">
+              <button onClick="{{ scrollPrioritiesUp }}" data-f="1" aria-label="التمرير لأعلى" title="أعلى">↑</button>
+              <button onClick="{{ scrollPrioritiesDown }}" data-f="1" aria-label="التمرير لأسفل" title="أسفل">↓</button>
+              <button onClick="{{ goMap }}" data-f="1" aria-label="فتح الخريطة التشغيلية" title="الخريطة">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z"></path><path d="M9 4v14M15 6v14"></path></svg>
+              </button>
+            </div>
           </div>
 
-          <div style="flex:1;display:flex;flex-direction:column;gap:9px">
+          <div ref="{{ priorityListRef }}" class="hsr-priority-list">
             <sc-for list="{{ prios }}" as="p" hint-placeholder-count="4">
               <div onClick="{{ p.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:{{ p.bg }};border:1px solid {{ p.bd }};cursor:pointer">
                 <div style="width:33px;height:33px;flex:none;border-radius:50%;background:{{ p.numBg }};border:1px solid {{ p.bd }};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;color:{{ p.col }};font-variant-numeric:tabular-nums">{{ p.n }}</div>
@@ -3412,14 +3524,23 @@ class Component extends DCLogic {
     head.className = 'hsr-map-popup-head';
     const eyebrow = document.createElement('div');
     eyebrow.className = 'hsr-map-popup-eyebrow';
-    eyebrow.textContent = 'SMART HSR · MUNICIPAL MAP';
+    eyebrow.textContent = 'SMART HSR · ' + (item.displayId || item.id || 'بلاغ بلدي');
     const title = document.createElement('div');
     title.className = 'hsr-map-popup-title';
     title.textContent = item.title || 'بلاغ بلا عنوان';
+    const chips = document.createElement('div');
+    chips.className = 'hsr-map-popup-chips';
     const chip = document.createElement('span');
     chip.className = 'hsr-map-popup-chip';
     chip.textContent = statusLabel;
-    head.append(eyebrow, title, chip);
+    chips.appendChild(chip);
+    if (priorityLabel) {
+      const priorityChip = document.createElement('span');
+      priorityChip.className = 'hsr-map-popup-priority';
+      priorityChip.textContent = 'أولوية ' + priorityLabel;
+      chips.appendChild(priorityChip);
+    }
+    head.append(eyebrow, title, chips);
     root.appendChild(head);
 
     const thumb = document.createElement('div');
@@ -3466,8 +3587,8 @@ class Component extends DCLogic {
       return b;
     };
     actions.appendChild(btn('عرض التفاصيل', 'primary', () => this.openEvidenceDrawer(item)));
-    actions.appendChild(btn('↗', 'icon', () => this.openOperationalMapForObservation(item), 'فتح الخريطة التشغيلية'));
-    if (this.isTwinAdmitted()) actions.appendChild(btn('◇', 'icon', () => this.openTwinForObservation(item), 'فتح في التوأم الرقمي'));
+    actions.appendChild(btn('الخريطة الكاملة', 'secondary', () => this.openOperationalMapForObservation(item), 'فتح الخريطة التشغيلية'));
+    if (this.isTwinAdmitted()) actions.appendChild(btn('Digital Twin', 'secondary', () => this.openTwinForObservation(item), 'فتح في التوأم الرقمي'));
     root.appendChild(actions);
     return root;
   }
@@ -4139,6 +4260,7 @@ class Component extends DCLogic {
       rootRef: el => { this.root = el; },
       mapShellRef: el => { this.mapShell = el; },
       mapRef: this.mapRefCallback,
+      priorityListRef: el => { this.priorityList = el; },
       themeVars: vars, rootThemeClass: day ? 'hsr-manager-root theme-day' : 'hsr-manager-root theme-night',
       sidebarClass,
       sidebarOverlayOpen,
@@ -4549,7 +4671,7 @@ class Component extends DCLogic {
         bg: this.tint(p.col, day ? 0.025 : 0.055),
         bd: this.tint(p.col, day ? 0.18 : 0.24),
         numBg: this.tint(p.col, day ? 0.075 : 0.14),
-        on: () => this.openObservation(p.id)
+        on: () => this.focusPriorityOnMap(p.id)
       })),
       quickActions: [
         { label: 'عرض البلاغات', view: 'observations' },
@@ -4602,6 +4724,10 @@ class Component extends DCLogic {
       setMapStreet: () => this.setExecutiveBasemap('street'),
       setMapSatellite: () => this.setExecutiveBasemap('satellite'),
       openCanonicalMap: () => this.openCanonicalOperationalMap(),
+      twinAllowed: this.isTwinAdmitted(),
+      openTwinHome: () => this.openTwinForObservation(null),
+      scrollPrioritiesUp: () => this.scrollPriorities(-1),
+      scrollPrioritiesDown: () => this.scrollPriorities(1),
       hideQuick: () => this.setState({ quick: false }),
       goSurvey: () => this.goRoute('survey'),
       goMobility: () => this.goRoute('mobility'),
@@ -4796,6 +4922,31 @@ class Component extends DCLogic {
   setSearch(e) {
     const search = e?.target?.value || '';
     this.setState({ search, view: this.state.mapMode === 'map' ? this.state.view : 'observations' });
+  }
+
+  scrollPriorities(direction) {
+    if (!this.priorityList) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.priorityList.scrollBy({ top: (direction < 0 ? -1 : 1) * 138, behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  focusPriorityOnMap(id) {
+    const obs = (Array.isArray(this.liveObservations) ? this.liveObservations : []).find(item => item.id === id);
+    if (!obs || !obs.coordinates) { this.openObservation(id); return; }
+    this._selectedMapId = obs.id;
+    if (this.state.view !== 'home' || this.state.mapMode !== 'map') this.setState({ view: 'home', mapMode: 'map' });
+    setTimeout(() => {
+      this.syncOperationalMap();
+      const marker = this._opMarkerById?.get(obs.id);
+      if (this._opMap) {
+        const target = [obs.coordinates.lat, obs.coordinates.lng];
+        const zoom = Math.max(this._opMap.getZoom?.() || 13, 16);
+        if (this._opMap.flyTo) this._opMap.flyTo(target, zoom, { duration: .45 });
+        else this._opMap.setView(target, zoom, { animate: true });
+      }
+      this.applyMapSelectionStyle();
+      marker?.openPopup();
+    }, 60);
   }
 
   zoomMap(delta) {
