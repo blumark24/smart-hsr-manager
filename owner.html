@@ -742,8 +742,9 @@
         <label class="text-sm">البريد الإلكتروني<input name="email" type="email" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
         <label class="text-sm">الدور<select name="role" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option value="manager">مدير</option><option value="supervisor">مشرف مساعد</option><option value="inspector">مراقب</option><option value="contractor">مقاول</option></select></label>
         <label class="text-sm">المؤسسة<select name="organizationId" id="userFormOrg" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"></select></label>
+        <label class="text-sm md:col-span-2">كلمة المرور<input name="password" type="password" minlength="10" autocomplete="new-password" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" placeholder="اختر كلمة مرور قوية للحساب" /></label>
       </div>
-      <p class="text-xs muted">سيتم إنشاء الحساب بدون كلمة مرور. استخدم زر «كلمة مرور مؤقتة» لتوليدها وتسليمها للمستخدم (يُطلب منه تغييرها عند أول دخول).</p>
+      <p class="text-xs muted">تُنشأ كلمة المرور التي تحددها أنت مباشرة، ولا يتم حفظها في Firestore أو إظهارها لاحقًا.</p>
       <div id="userFormMsg" class="text-xs"></div>
       <div class="flex items-center gap-2 justify-end pt-2">
         <button class="btn btn-primary" value="default">إنشاء المستخدم</button>
