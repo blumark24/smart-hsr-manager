@@ -32,12 +32,20 @@ export function initUsersModule({ auth, getOrgs } = {}) {
   async function callAdminApi(payload){
     const user = auth.currentUser;
     if(!user) throw new Error('انتهت الجلسة. الرجاء تسجيل الدخول من جديد.');
-    const token = await user.getIdToken();
-    const resp = await fetch(ADMIN_API, {
+    let token = await user.getIdToken();
+    let resp = await fetch(ADMIN_API, {
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
       body: JSON.stringify(payload)
     });
+    if(resp.status===401){
+      token = await user.getIdToken(true);
+      resp = await fetch(ADMIN_API, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+        body: JSON.stringify(payload)
+      });
+    }
     let data={}; try{ data=await resp.json(); }catch(_){}
     if(!resp.ok){
       const reason = data.reason || data.error || ('HTTP '+resp.status);
