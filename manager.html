@@ -481,15 +481,14 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 
 
 /* PHASE21.4A SMART ADAPTIVE SIDEBAR */
-.hsr-manager-sidebar{min-width:0}
+.hsr-manager-sidebar{min-width:0;position:relative}
+.hsr-sidebar-panel{width:100%;display:flex;flex-direction:column;gap:12px;min-height:100%}
 .hsr-manager-sidebar.is-rail{
   --sbW:68px!important;
   --sbLabel:none!important;
   --subInd:0px!important;
 }
-.hsr-manager-sidebar.is-expanded{
-  overflow:visible;
-}
+.hsr-manager-sidebar.is-expanded{overflow:visible}
 .hsr-manager-sidebar.is-overlay-open{
   --sbW:68px!important;
   --sbLabel:block!important;
@@ -497,15 +496,25 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
   z-index:76!important;
   overflow:visible!important;
 }
-.hsr-manager-sidebar.is-overlay-open>div{
-  position:relative;
-  left:-160px;
+.hsr-manager-sidebar.is-overlay-open>.hsr-sidebar-panel{
+  position:absolute;
+  inset-block-start:0;
+  inset-inline-end:0;
   width:228px!important;
   min-width:228px!important;
-  box-shadow:var(--sbSh,inset 0 1px 0 rgba(255,255,255,.07),0 24px 50px -22px rgba(0,0,0,.96)),0 28px 70px -34px rgba(0,0,0,.72)!important;
+  max-height:calc(100dvh - 110px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding-bottom:8px;
+  border-radius:16px;
+  background:transparent;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(85,164,242,.35) transparent;
+  animation:hsrSidebarOpen .16s ease-out;
 }
-.hsr-manager-sidebar.is-overlay-open>div[style*="flex:1"]{
-  box-shadow:none!important;
+@keyframes hsrSidebarOpen{
+  from{opacity:.35;transform:translateX(12px)}
+  to{opacity:1;transform:translateX(0)}
 }
 .hsr-sidebar-scrim{animation:hsrIn .14s ease-out}
 @media(min-width:1400px){
@@ -519,7 +528,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
   .hsr-sidebar-scrim{display:none!important}
 }
 @media(prefers-reduced-motion:reduce){
-  .hsr-manager-sidebar,.hsr-manager-sidebar>div,.hsr-sidebar-scrim{transition:none!important;animation:none!important}
+  .hsr-manager-sidebar,.hsr-sidebar-panel,.hsr-sidebar-scrim{transition:none!important;animation:none!important}
 }
 
 
@@ -544,18 +553,20 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 }
 .hsr-map-basemap .hsr-map-segment{height:30px;padding:0 10px}
 .hsr-map-querybar{
-  position:absolute;top:56px;right:12px;display:flex;align-items:center;gap:6px;padding:5px;border-radius:12px;
+  position:absolute;top:56px;left:50%;transform:translateX(-50%);
+  width:min(360px,calc(100% - 190px));display:grid;grid-template-columns:minmax(0,1fr) 122px;
+  align-items:center;gap:6px;padding:5px;border-radius:12px;
   background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.25));
   box-shadow:0 12px 28px -20px rgba(0,0,0,.58)
 }
-.hsr-map-search{position:relative;width:184px}
+.hsr-map-search{position:relative;width:100%}
 .hsr-map-search input,.hsr-map-querybar select{
   height:32px;border-radius:9px;background:rgba(5,30,55,.68);border:1px solid var(--glassBd,rgba(95,177,255,.22));
   color:var(--tx,#f2f7ff);font-size:10.5px;outline:none
 }
 .hsr-map-search input{width:100%;padding:0 10px 0 31px}
 .hsr-map-search svg{position:absolute;left:9px;top:9.5px;color:var(--tx3,#91abc5)}
-.hsr-map-querybar select{width:126px;padding:0 8px;color:var(--glassTx,#c8def2)}
+.hsr-map-querybar select{width:100%;padding:0 8px;color:var(--glassTx,#c8def2)}
 .hsr-map-command-rail{
   position:absolute;top:64px;left:12px;display:flex;flex-direction:column;gap:4px;padding:5px;border-radius:13px;
   background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.27));
@@ -620,17 +631,17 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 .hsr-manager-map-shell .leaflet-popup-content{min-width:286px}
 @media(min-width:700px) and (max-width:1179px){
   .hsr-spatial-mode-switch{top:9px}
-  .hsr-map-status{top:54px!important;left:10px!important;max-width:42%!important}
-  .hsr-map-basemap{top:54px;right:10px}
-  .hsr-map-querybar{top:96px;right:10px}
-  .hsr-map-command-rail{top:96px;left:10px}
+  .hsr-map-status{top:9px!important;left:10px!important;max-width:31%!important}
+  .hsr-map-basemap{top:9px;right:10px}
+  .hsr-map-querybar{top:54px;left:50%;right:auto;transform:translateX(-50%);width:min(350px,calc(100% - 170px))}
+  .hsr-map-command-rail{top:54px;left:10px}
 }
 @media(max-width:699px){
   .hsr-spatial-mode-switch{top:8px;left:8px;right:8px;transform:none;justify-content:center}
   .hsr-spatial-mode-switch button{flex:1;justify-content:center;padding:0 7px}
   .hsr-map-status{top:50px!important;left:8px!important;right:8px!important;max-width:none!important}
   .hsr-map-basemap{top:94px;right:8px}
-  .hsr-map-querybar{top:134px;left:8px;right:8px;display:grid;grid-template-columns:minmax(0,1fr) 118px}
+  .hsr-map-querybar{top:134px;left:8px;right:8px;transform:none;width:auto;display:grid;grid-template-columns:minmax(0,1fr) 118px}
   .hsr-map-search{width:100%}
   .hsr-map-querybar select{width:100%}
   .hsr-map-command-rail{top:auto;left:8px;bottom:50px;flex-direction:row}
@@ -644,8 +655,10 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 <x-dc>
 <helmet>
 <style>
-  html,body{margin:0;padding:0;background:#03060d;}
-  body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  html,body{margin:0;padding:0;min-height:100%;background:#06172a;}
+  html[data-theme="dark"],html[data-theme="dark"] body{background:#06172a!important;}
+  html[data-theme="light"],html[data-theme="light"] body{background:#e7ece9!important;}
+  body{min-height:100dvh;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
   *{box-sizing:border-box}
   a{color:#4cc9f0;text-decoration:none}
   a:hover{opacity:.85}
@@ -807,7 +820,8 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
       <button onClick="{{ closeSidebarOverlay }}" aria-label="إغلاق القائمة الجانبية" class="hsr-sidebar-scrim" style="position:absolute;inset:0;z-index:54;border:0;padding:0;background:rgba(2,12,25,.28);backdrop-filter:blur(1.5px);cursor:default;border-radius:18px"></button>
     </sc-if>
 
-    <aside style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease" class="{{ sidebarClass }}">
+    <aside style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease" class="{{ sidebarClass }}" ref="{{ sidebarRef }}">
+      <div class="hsr-sidebar-panel">
       <div style="padding:12px 11px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));backdrop-filter:var(--sbBlur,none);border:1px solid var(--sbBd,rgba(122,164,224,0.2));box-shadow:var(--sbSh,inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96));backdrop-filter:var(--blur,blur(18px));display:flex;flex-direction:column;gap:3px">
 
         <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12))">
@@ -923,6 +937,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
       <div style="display:var(--sbLabel,block);flex:1;min-height:30px"></div>
       <div style="display:var(--sbLabel,block);text-align:center;padding-bottom:4px;opacity:.6">
         <div style="font-size:10px;color:var(--sbTx3,#5f7d9c);letter-spacing:1.4px">SMART HSR PLATFORM · v2.4</div>
+      </div>
       </div>
     </aside>
 
@@ -3296,10 +3311,8 @@ class Component extends DCLogic {
     this.syncOperationalMap();
     const previous = prevState || {};
     if (previous.theme !== this.state.theme) this.syncThemeAttribute(this.state.theme);
-    if (previous.view !== this.state.view || previous.orgId !== this.state.orgId) {
-      this.publishManagerView();
-      if (this.state.sbOverlayOpen) this.setState({ sbOverlayOpen: false });
-    }
+    if (previous.view !== this.state.view || previous.orgId !== this.state.orgId) this.publishManagerView();
+    if (previous.view !== this.state.view && this.state.sbOverlayOpen) this.setState({ sbOverlayOpen: false });
   }
 
   syncThemeAttribute(theme) {
@@ -4280,6 +4293,7 @@ class Component extends DCLogic {
 
     return {
       rootRef: el => { this.root = el; },
+      sidebarRef: el => { this.sidebarEl = el; },
       mapShellRef: el => { this.mapShell = el; },
       mapRef: this.mapRefCallback,
       priorityListRef: el => { this.priorityList = el; },
@@ -4769,7 +4783,12 @@ class Component extends DCLogic {
   toggleSmartSidebar() {
     const bp = this.state.bp;
     if (bp === 'tab' || bp === 'md') {
-      this.setState(s => ({ sbOverlayOpen: !s.sbOverlayOpen }));
+      const next = !this.state.sbOverlayOpen;
+      if (this.sidebarEl) {
+        this.sidebarEl.classList.toggle('is-overlay-open', next);
+        this.sidebarEl.classList.toggle('is-rail', !next);
+      }
+      this.setState({ sbOverlayOpen: next });
       return;
     }
     if (bp === 'mob') {
