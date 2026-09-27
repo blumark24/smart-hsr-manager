@@ -695,13 +695,15 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <label class="text-sm">اسم المؤسسة<input name="name" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
-        <label class="text-sm">اسم المدير<input name="manager" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
-        <label class="text-sm">البريد الإلكتروني<input name="email" type="email" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">اسم مدير البلدية<input name="manager" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm">بريد مدير البلدية<input name="email" type="email" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
         <label class="text-sm">الجوال<input name="phone" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm md:col-span-2" id="managerPasswordField">كلمة مرور مدير البلدية<input name="managerPassword" type="password" minlength="10" autocomplete="new-password" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" placeholder="تُستخدم عند إنشاء المؤسسة والمدير لأول مرة" /></label>
         <label class="text-sm">الخطة<select name="plan" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>Trial</option><option>Basic</option><option>Pro</option><option>Enterprise</option></select></label>
         <label class="text-sm">الدورة<select name="billingCycle" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>monthly</option><option>yearly</option></select></label>
         <label class="text-sm">الحالة<select name="status" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>active</option><option>expired</option><option>trial</option></select></label>
         <label class="text-sm">تاريخ الانتهاء<input name="expiresAt" type="date" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
+        <label class="text-sm md:col-span-2">ملاحظات المؤسسة<textarea name="notes" maxlength="1200" rows="3" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" placeholder="ملاحظات داخلية للمالك فقط"></textarea></label>
       </div>
       <div class="flex items-center gap-2 justify-end pt-2">
         <button id="deleteBtn" type="button" class="btn btn-outline hidden">أرشفة المؤسسة</button>
