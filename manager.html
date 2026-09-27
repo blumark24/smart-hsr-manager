@@ -489,41 +489,22 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
   --subInd:0px!important;
 }
 .hsr-manager-sidebar.is-expanded{overflow:visible}
-.hsr-manager-sidebar.is-overlay-open{
-  --sbW:68px!important;
-  --sbLabel:block!important;
-  --subInd:13px!important;
-  z-index:76!important;
-  overflow:visible!important;
-}
-.hsr-manager-sidebar.is-overlay-open>.hsr-sidebar-panel{
-  position:absolute;
-  top:0;
-  right:0;
-  left:auto;
-  width:228px!important;
-  min-width:228px!important;
-  max-height:calc(100dvh - 110px);
-  overflow-y:auto;
-  overscroll-behavior:contain;
-  padding-bottom:8px;
-  border-radius:16px;
-  background:transparent;
-  scrollbar-width:thin;
-  scrollbar-color:rgba(85,164,242,.35) transparent;
+.hsr-manager-sidebar.is-expanded>.hsr-sidebar-panel{
+  width:100%;
+  min-width:0;
   animation:hsrSidebarOpen .16s ease-out;
 }
 @keyframes hsrSidebarOpen{
-  from{opacity:.35;transform:translateX(12px)}
+  from{opacity:.55;transform:translateX(8px)}
   to{opacity:1;transform:translateX(0)}
 }
-.hsr-sidebar-scrim{animation:hsrIn .14s ease-out}
+.hsr-sidebar-scrim{display:none!important}
 @media(min-width:1400px){
   .hsr-manager-sidebar.is-expanded{--sbLabel:block!important}
 }
 @media(min-width:700px) and (max-width:1399px){
-  .hsr-manager-sidebar{--sbW:68px!important;--sbLabel:none!important;--subInd:0px!important}
-  .hsr-manager-sidebar.is-overlay-open{--sbLabel:block!important;--subInd:13px!important}
+  .hsr-manager-sidebar.is-rail{--sbW:68px!important;--sbLabel:none!important;--subInd:0px!important}
+  .hsr-manager-sidebar.is-expanded{--sbLabel:block!important;--subInd:13px!important}
 }
 @media(max-width:699px){
   .hsr-sidebar-scrim{display:none!important}
@@ -535,9 +516,9 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 
 /* PHASE21.4B SMART SPATIAL EXPERIENCE */
 .hsr-spatial-mode-switch{
-  position:absolute;top:11px;left:50%;transform:translateX(-50%);
+  position:absolute;top:11px;left:12px;right:auto;transform:none;
   display:flex;align-items:center;gap:3px;padding:3px;border-radius:12px;
-  background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.28));
+  background:var(--glass,rgba(8,38,70,.92));border:1px solid var(--glassBd,rgba(95,177,255,.28));
   box-shadow:0 12px 28px -18px rgba(0,0,0,.62);white-space:nowrap
 }
 .hsr-spatial-mode-switch button{
@@ -554,11 +535,11 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 }
 .hsr-map-basemap .hsr-map-segment{height:30px;padding:0 10px}
 .hsr-map-querybar{
-  position:absolute;left:50%;right:auto;top:auto;bottom:56px;transform:translateX(-50%);
-  width:min(340px,calc(100% - 210px));display:grid;grid-template-columns:minmax(0,1fr) 118px;
-  align-items:center;gap:6px;padding:5px;border-radius:12px;
+  position:absolute;top:11px;left:50%;right:auto;bottom:auto;transform:translateX(-50%);
+  width:min(340px,calc(100% - 410px));display:grid;grid-template-columns:minmax(0,1fr) 118px;
+  align-items:center;gap:6px;padding:3px;border-radius:12px;
   background:var(--glass,rgba(8,38,70,.92));border:1px solid var(--glassBd,rgba(95,177,255,.28));
-  box-shadow:0 14px 32px -18px rgba(0,0,0,.68)
+  box-shadow:0 12px 28px -18px rgba(0,0,0,.62)
 }
 .hsr-map-search{position:relative;width:100%}
 .hsr-map-search input,.hsr-map-querybar select{
@@ -569,7 +550,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 .hsr-map-search svg{position:absolute;left:9px;top:9.5px;color:var(--tx3,#91abc5)}
 .hsr-map-querybar select{width:100%;padding:0 8px;color:var(--glassTx,#c8def2)}
 .hsr-map-command-rail{
-  position:absolute;top:64px;left:12px;display:flex;flex-direction:column;gap:4px;padding:5px;border-radius:13px;
+  position:absolute;top:58px;left:12px;display:flex;flex-direction:column;gap:4px;padding:5px;border-radius:13px;
   background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.27));
   box-shadow:0 18px 34px -22px rgba(0,0,0,.64)
 }
@@ -631,17 +612,16 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 .hsr-map-popup-btn.secondary{background:var(--ctl,rgba(18,58,96,.82));color:var(--tx2,#bfd4ea);border-color:var(--ctlBd,rgba(91,173,255,.24))}
 .hsr-manager-map-shell .leaflet-popup-content{min-width:286px}
 @media(min-width:700px) and (max-width:1179px){
-  .hsr-spatial-mode-switch{top:9px}
-  .hsr-map-status{top:9px!important;left:10px!important;max-width:31%!important}
+  .hsr-spatial-mode-switch{top:9px;left:10px}
+  .hsr-spatial-mode-switch button{padding:0 8px;font-size:9.5px}
   .hsr-map-basemap{top:9px;right:10px}
-  .hsr-map-querybar{top:auto;bottom:56px;left:50%;right:auto;transform:translateX(-50%);width:min(330px,calc(100% - 185px))}
-  .hsr-map-command-rail{top:54px;left:10px}
+  .hsr-map-querybar{top:9px;bottom:auto;left:50%;right:auto;transform:translateX(-50%);width:min(300px,calc(100% - 390px))}
+  .hsr-map-command-rail{top:55px;left:10px}
 }
 @media(max-width:699px){
   .hsr-spatial-mode-switch{top:8px;left:8px;right:8px;transform:none;justify-content:center}
   .hsr-spatial-mode-switch button{flex:1;justify-content:center;padding:0 7px}
-  .hsr-map-status{top:50px!important;left:8px!important;right:8px!important;max-width:none!important}
-  .hsr-map-basemap{top:94px;right:8px}
+    .hsr-map-basemap{top:94px;right:8px}
   .hsr-map-querybar{top:134px;left:8px;right:8px;transform:none;width:auto;display:grid;grid-template-columns:minmax(0,1fr) 118px}
   .hsr-map-search{width:100%}
   .hsr-map-querybar select{width:100%}
@@ -1081,21 +1061,13 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
         <div ref="{{ mapShellRef }}" class="hsr-manager-map-shell" style="flex:1 1 var(--twinBasis,0);min-width:var(--twinMin,320px);order:var(--twinOrd,0);position:var(--twinPos,relative);inset:var(--twinInset,auto);z-index:var(--twinZ,1);min-height:var(--twinH,auto);border-radius:16px;overflow:hidden;border:1px solid var(--twinBd,rgba(122,164,224,0.16));box-shadow:var(--cardSh,0 24px 60px -30px rgba(0,0,0,1));background:var(--twinBg,#03060d)">
           <div ref="{{ mapRef }}" class="hsr-manager-map-canvas" aria-label="الخريطة التنفيذية للبلاغات الموثّقة" style="position:absolute;inset:0;background:var(--twinBg,#03060d)"></div>
 
-          <div class="hsr-manager-map-overlay hsr-map-status" style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.82));border:1px solid var(--glassBd,rgba(122,164,224,0.24));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8)">
-            <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:hsrBreathe 2.6s ease-in-out infinite"></span>
-            <div style="display:flex;flex-direction:column;line-height:1.35">
-              <strong style="font-size:11px;color:var(--tx,#e9f1fb)">المشهد المكاني التنفيذي</strong>
-              <span style="font-size:9px;color:var(--glassTx,#a9c0d8)">المعروض مكانيًا: {{ mapPointCount }} بلاغ موثّق</span>
-            </div>
-          </div>
-
-          <div class="hsr-manager-map-overlay hsr-spatial-mode-switch" role="group" aria-label="وضع الخريطة">
-            <button type="button" class="is-active" aria-current="page" aria-label="الخريطة التشغيلية الحالية">
-              <span aria-hidden="true">⌖</span><span>الخريطة التشغيلية</span>
+          <div class="hsr-manager-map-overlay hsr-spatial-mode-switch hsr-spatial-mode-home" role="group" aria-label="تبديل نوع الخريطة">
+            <button type="button" class="is-active" aria-current="page" aria-label="الخريطة العادية الحالية">
+              <span aria-hidden="true">⌖</span><span>الخريطة العادية</span>
             </button>
             <sc-if value="{{ twinAllowed }}">
-              <button type="button" onClick="{{ openTwinHome }}" data-f="1" aria-label="فتح التوأم الرقمي">
-                <span aria-hidden="true">◇</span><span>التوأم الرقمي</span>
+              <button type="button" onClick="{{ openTwinHome }}" data-f="1" aria-label="فتح Digital Twin">
+                <span aria-hidden="true">◇</span><span>Digital Twin</span>
               </button>
             </sc-if>
           </div>
@@ -3433,8 +3405,8 @@ class Component extends DCLogic {
           className: 'hsr-map-popup',
           autoPan: true,
           keepInView: true,
-          autoPanPaddingTopLeft: [56, 92],
-          autoPanPaddingBottomRight: [56, 128]
+          autoPanPaddingTopLeft: [64, 116],
+          autoPanPaddingBottomRight: [64, 88]
         });
         // Selection is tracked OUTSIDE React state (a plain instance field)
         // and applied imperatively via applyMapSelectionStyle() — this
@@ -3664,20 +3636,25 @@ class Component extends DCLogic {
   renderVals() {
     const st = this.state, day = st.theme === 'day';
     const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
-    const sidebarOverlayBp = st.bp === 'tab' || st.bp === 'md';
-    const sidebarOverlayOpen = sidebarOverlayBp && st.sbOverlayOpen === true;
-    if (sidebarOverlayBp) {
-      // iPad / compact desktop always reserves only the 68px rail.
-      // Expansion is an overlay, so the map/cards never reflow or jump.
-      vars['--sbW'] = '68px'; vars['--sbLabel'] = 'none'; vars['--subInd'] = '0px';
+    const sidebarCompactBp = st.bp === 'tab' || st.bp === 'md';
+    const sidebarCompactOpen = sidebarCompactBp && st.sbOverlayOpen === true;
+    if (sidebarCompactBp) {
+      // iPad / compact desktop now behaves like desktop: the rail expands
+      // inside the flex layout and visibly pushes the dashboard content.
+      if (sidebarCompactOpen) {
+        vars['--sbW'] = st.bp === 'md' ? '216px' : '200px';
+        vars['--sbLabel'] = 'block';
+        vars['--subInd'] = '13px';
+      } else {
+        vars['--sbW'] = '68px';
+        vars['--sbLabel'] = 'none';
+        vars['--subInd'] = '0px';
+      }
     } else if (st.sb && st.bp !== 'mob') {
-      // Wide desktop keeps the existing push-layout collapse behavior.
       vars['--sbW'] = '68px'; vars['--sbLabel'] = 'none'; vars['--subInd'] = '0px';
     }
-    const sidebarExpanded = sidebarOverlayBp ? sidebarOverlayOpen : (st.bp !== 'mob' && !st.sb);
-    const sidebarClass = sidebarOverlayOpen
-      ? 'hsr-manager-sidebar is-overlay-open'
-      : (sidebarExpanded ? 'hsr-manager-sidebar is-expanded' : 'hsr-manager-sidebar is-rail');
+    const sidebarExpanded = sidebarCompactBp ? sidebarCompactOpen : (st.bp !== 'mob' && !st.sb);
+    const sidebarClass = sidebarExpanded ? 'hsr-manager-sidebar is-expanded' : 'hsr-manager-sidebar is-rail';
     if (st.fs) { vars['--twinPos'] = 'fixed'; vars['--twinInset'] = '14px'; vars['--twinZ'] = '75'; vars['--twinH'] = 'auto'; }
 
     const metrics = this.liveMetrics || {};
@@ -4318,10 +4295,10 @@ class Component extends DCLogic {
       priorityListRef: el => { this.priorityList = el; },
       themeVars: vars, rootThemeClass: day ? 'hsr-manager-root theme-day' : 'hsr-manager-root theme-night',
       sidebarClass,
-      sidebarOverlayOpen,
+      sidebarOverlayOpen: false,
       sidebarToggleExpanded: sidebarExpanded ? 'true' : 'false',
-      sidebarToggleLabel: sidebarOverlayBp
-        ? (sidebarOverlayOpen ? 'إغلاق القائمة الجانبية' : 'فتح القائمة الجانبية')
+      sidebarToggleLabel: sidebarCompactBp
+        ? (sidebarCompactOpen ? 'تصغير القائمة الجانبية' : 'توسيع القائمة الجانبية')
         : (st.sb ? 'توسيع القائمة الجانبية' : 'تصغير القائمة الجانبية'),
       closeSidebarOverlay: () => this.setState({ sbOverlayOpen: false }),
       orgName: st.orgName,
@@ -4802,12 +4779,7 @@ class Component extends DCLogic {
   toggleSmartSidebar() {
     const bp = this.state.bp;
     if (bp === 'tab' || bp === 'md') {
-      const next = !this.state.sbOverlayOpen;
-      if (this.sidebarEl) {
-        this.sidebarEl.classList.toggle('is-overlay-open', next);
-        this.sidebarEl.classList.toggle('is-rail', !next);
-      }
-      this.setState({ sbOverlayOpen: next });
+      this.setState(s => ({ sbOverlayOpen: !s.sbOverlayOpen }));
       return;
     }
     if (bp === 'mob') {
