@@ -854,6 +854,115 @@ body{min-height:100svh!important;min-height:100dvh!important}
   .hsr-map-basemap{top:10px!important;right:10px!important}
   .hsr-map-command-rail{top:58px!important;left:10px!important}
 }
+
+
+/* PHASE21.8 MAP TOOLBAR COLLISION CLOSURE */
+/* Reserve physical zones instead of centering controls into each other:
+   left = map mode, middle = search/filter, right = basemap. */
+@media(min-width:700px){
+  .hsr-spatial-mode-switch{
+    top:10px!important;
+    left:10px!important;
+    right:auto!important;
+    width:auto!important;
+    max-width:202px!important;
+    transform:none!important
+  }
+  .hsr-spatial-mode-switch button{
+    min-width:0!important;
+    height:32px!important;
+    padding:0 8px!important;
+    font-size:9.5px!important
+  }
+  .hsr-spatial-mode-switch button span:last-child{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+
+  .hsr-map-basemap{
+    top:10px!important;
+    right:10px!important;
+    left:auto!important;
+    width:auto!important;
+    max-width:122px!important
+  }
+  .hsr-map-basemap .hsr-map-segment{
+    min-width:48px!important;
+    height:32px!important;
+    padding:0 8px!important
+  }
+
+  .hsr-map-querybar{
+    top:10px!important;
+    left:218px!important;
+    right:142px!important;
+    bottom:auto!important;
+    width:auto!important;
+    min-width:0!important;
+    transform:none!important;
+    grid-template-columns:minmax(0,1fr) 116px!important;
+    gap:5px!important
+  }
+  .hsr-map-search,
+  .hsr-map-search input,
+  .hsr-map-querybar select{
+    min-width:0!important
+  }
+  .hsr-map-search input{
+    text-overflow:ellipsis!important
+  }
+
+  .hsr-map-command-rail{
+    top:57px!important;
+    left:10px!important;
+    right:auto!important
+  }
+}
+
+/* Compact iPad geometry — still uses reserved zones, never overlap. */
+@media(min-width:700px) and (max-width:999px){
+  .hsr-spatial-mode-switch{max-width:184px!important}
+  .hsr-spatial-mode-switch button{padding:0 6px!important;font-size:9px!important}
+  .hsr-map-querybar{
+    left:198px!important;
+    right:132px!important;
+    grid-template-columns:minmax(0,1fr) 104px!important
+  }
+  .hsr-map-basemap{max-width:112px!important}
+  .hsr-map-basemap .hsr-map-segment{min-width:44px!important;padding:0 6px!important}
+}
+
+/* Mobile remains intentionally stacked; no desktop geometry leaks in. */
+@media(max-width:699px){
+  .hsr-spatial-mode-switch{
+    top:8px!important;
+    left:8px!important;
+    right:8px!important;
+    width:auto!important;
+    max-width:none!important;
+    transform:none!important
+  }
+  .hsr-map-basemap{
+    top:94px!important;
+    right:8px!important;
+    left:auto!important
+  }
+  .hsr-map-querybar{
+    top:134px!important;
+    left:8px!important;
+    right:8px!important;
+    width:auto!important;
+    transform:none!important;
+    grid-template-columns:minmax(0,1fr) 112px!important
+  }
+  .hsr-map-command-rail{
+    top:auto!important;
+    left:8px!important;
+    bottom:50px!important;
+    flex-direction:row!important
+  }
+}
 </style>
 </head>
 <body>
