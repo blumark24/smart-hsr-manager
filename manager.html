@@ -34,8 +34,9 @@
 /* PHASE21 FINAL VISUAL CLOSURE — presentation only. Day/Night surfaces,
    executive cards/KPIs, and map glass language are unified without changing
    data sources, authorization, routing, or municipal business logic. */
-html[data-theme="light"] body{background:#e7ece9}
-html[data-theme="dark"] body{background:#020712}
+html[data-theme="light"],html[data-theme="light"] body{background:#e7ece9!important;min-height:100%}
+html[data-theme="dark"],html[data-theme="dark"] body{background:#06172a!important;min-height:100%}
+body{min-height:100dvh}
 .hsr-manager-map-shell{border-radius:20px!important;border-color:var(--mapShellBd,var(--twinBd,rgba(122,164,224,.18)))!important;box-shadow:var(--mapShellSh,var(--cardSh,0 24px 60px -30px rgba(0,0,0,1)))!important}
 .hsr-manager-map-shell:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--mapInnerBd,rgba(255,255,255,.06)),inset 0 -42px 90px -72px rgba(0,0,0,.7)}
 .hsr-manager-map-overlay{backdrop-filter:blur(18px) saturate(135%)!important;-webkit-backdrop-filter:blur(18px) saturate(135%)!important}
@@ -567,7 +568,9 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 .hsr-map-command-rail button:hover{
   background:rgba(58,137,214,.18);border-color:rgba(104,181,255,.22);color:#fff
 }
-.hsr-priority-head{display:flex;align-items:center;gap:9px;flex:none}
+.hsr-priority-head{display:flex;align-items:flex-start;gap:9px;flex:none}
+.hsr-priority-head>div:first-child{min-width:0}
+.hsr-priority-controls{margin-inline-start:auto}
 .hsr-priority-controls{display:flex;align-items:center;gap:4px;flex:none}
 .hsr-priority-controls button{
   width:28px;height:28px;border-radius:8px;background:var(--ctl,rgba(20,32,54,.6));
@@ -575,13 +578,32 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
   display:grid;place-items:center;cursor:pointer;font-size:12px;font-weight:800
 }
 .hsr-priority-controls button:hover{background:var(--ctlH,rgba(32,50,84,.8));color:var(--tx,#fff)}
+.hsr-priority-card .hsr-priority-controls button,
+.hsr-priority-card .hsr-priority-all{
+  -webkit-appearance:none!important;appearance:none!important;
+  background:var(--ctl,rgba(18,58,96,.82))!important;
+  color:var(--tx2,#bfd4ea)!important;
+  border:1px solid var(--ctlBd,rgba(91,173,255,.24))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important
+}
+.hsr-priority-card .hsr-priority-controls button:hover,
+.hsr-priority-card .hsr-priority-all:hover{
+  background:var(--ctlH,rgba(25,80,130,.9))!important;
+  color:var(--tx,#fff)!important;
+  border-color:var(--accBd,rgba(52,183,241,.34))!important
+}
+.hsr-priority-card .hsr-priority-all{flex:none}
 .hsr-priority-list{
   flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overscroll-behavior:contain;
   padding:1px 3px 1px 1px;scrollbar-width:thin;scrollbar-color:rgba(85,164,242,.35) transparent
 }
 .hsr-priority-list::-webkit-scrollbar{width:5px}
 .hsr-priority-list::-webkit-scrollbar-thumb{background:rgba(85,164,242,.35);border-radius:999px}
-.hsr-priority-list>div{position:relative;flex:none;min-height:62px}
+.hsr-priority-list>div{position:relative;flex:none;min-height:66px}
+.hsr-priority-list>div [style*="font-size:11.5px"]{
+  font-size:10.9px!important;line-height:1.55!important;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden
+}
 .hsr-priority-list>div:after{
   content:"";position:absolute;inset-block:9px;inset-inline-start:0;width:2px;border-radius:2px;
   background:currentColor;opacity:.22;pointer-events:none
@@ -1136,7 +1158,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
             </sc-for>
           </div>
 
-          <button onClick="{{ goObservations }}" data-f="1" style="width:100%;height:37px;border-radius:11px;font-size:12px;font-weight:600;color:var(--tx,#dceaf8);background:var(--ctl,rgba(20,32,54,0.7));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));cursor:pointer">عرض جميع الأولويات</button>
+          <button onClick="{{ goObservations }}" data-f="1" class="hsr-priority-all" style="width:100%;height:37px;border-radius:11px;font-size:12px;font-weight:600;color:var(--tx,#dceaf8);background:var(--ctl,rgba(20,32,54,0.7));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));cursor:pointer">عرض جميع الأولويات</button>
         </div>
       </section>
 
