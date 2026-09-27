@@ -4,8 +4,12 @@
 // This module lives under api/_lib, so it does NOT create another Vercel Function.
 // All reads/writes execute through api/admin/users.js after Firebase token verification.
 
+const { passwordPolicyReason } = require('./serviceEntitlements');
+
 const OWNER_ACTIONS = new Set([
   'ownerOpsSnapshot',
+  'ownerCreateOrganizationWithManager',
+  'ownerSetManagerPassword',
   'ownerSupportList',
   'ownerSupportThreadGet',
   'ownerSupportReply',
@@ -359,6 +363,169 @@ async function handleManagerSupport({ action, body, decoded, db, FieldValue, cal
 }
 
 
+async function handleOwnerProvisioning({ action, body, decoded, db, auth, FieldValue, sendJson, res }) {
+  if (action === 'ownerCreateOrganizationWithManager') {
+    const organization = body && body.organization && typeof body.organization === 'object' ? body.organization : {};
+    const manager = body && body.manager && typeof body.manager === 'object' ? body.manager : {};
+
+    const name = cleanText(organization.name, 180);
+    const phone = cleanText(organization.phone, 80);
+    const plan = cleanText(organization.plan, 80) || 'Trial';
+    const billingCycle = cleanText(organization.billingCycle, 40) || 'monthly';
+    const status = cleanText(organization.status, 40) || (plan === 'Trial' ? 'trial' : 'active');
+    const expiresAt = cleanText(organization.expiresAt, 40);
+    const notes = cleanText(organization.notes, 1200);
+
+    const managerName = cleanText(manager.name, 180);
+    const email = cleanText(manager.email, 240).toLowerCase();
+    const password = typeof manager.password === 'string' ? manager.password : '';
+
+    if (!name || !managerName || !email || !phone || !expiresAt) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'organization_and_manager_fields_required' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'manager_email_invalid' });
+    }
+    if (!['Trial','Basic','Pro','Enterprise'].includes(plan) ||
+        !['monthly','yearly'].includes(billingCycle) ||
+        !['active','expired','trial'].includes(status)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'organization_plan_or_status_invalid' });
+    }
+    const passwordFailure = passwordPolicyReason(password, { email, name: managerName });
+    if (passwordFailure) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: passwordFailure });
+    }
+
+    try {
+      await auth.getUserByEmail(email);
+      return sendJson(res, 409, { error: 'conflict', reason: 'manager_email_already_exists' });
+    } catch (error) {
+      if (!error || error.code !== 'auth/user-not-found') throw error;
+    }
+
+    const orgRef = db.collection('organizations').doc();
+    let managerUser = null;
+    try {
+      managerUser = await auth.createUser({
+        email,
+        password,
+        displayName: managerName,
+        disabled: false,
+      });
+
+      const now = FieldValue.serverTimestamp();
+      const managerRef = db.collection('managers').doc(managerUser.uid);
+      const auditRef = db.collection('platformAdminAuditEvents').doc();
+
+      await db.runTransaction(async transaction => {
+        transaction.create(orgRef, {
+          name,
+          manager: managerName,
+          managerUid: managerUser.uid,
+          email,
+          phone,
+          plan,
+          billingCycle,
+          status,
+          expiresAt,
+          ...(notes ? { notes } : {}),
+          createdByOwnerUid: decoded.uid,
+          createdAt: now,
+          updatedAt: now,
+        });
+        transaction.create(managerRef, {
+          uid: managerUser.uid,
+          email,
+          name: managerName,
+          role: 'manager',
+          organizationId: orgRef.id,
+          active: true,
+          mustChangePassword: false,
+          createdBy: decoded.uid,
+          createdAt: now,
+          updatedAt: now,
+        });
+        transaction.create(auditRef, {
+          actorUid: decoded.uid,
+          actorRole: 'owner',
+          action: 'organization_manager_create',
+          organizationId: orgRef.id,
+          targetUid: managerUser.uid,
+          resourceType: 'organization',
+          resourceId: orgRef.id,
+          detail: { managerCreated: true, managerEmail: email, plan, billingCycle, status },
+          createdAt: now,
+        });
+      });
+
+      return sendJson(res, 200, {
+        ok: true,
+        organizationId: orgRef.id,
+        organizationName: name,
+        managerUid: managerUser.uid,
+        managerEmail: email,
+        managerCreated: true,
+      });
+    } catch (error) {
+      if (managerUser && managerUser.uid) {
+        try { await auth.deleteUser(managerUser.uid); } catch (_) { /* best-effort rollback */ }
+      }
+      if (error && error.code === 'auth/email-already-exists') {
+        return sendJson(res, 409, { error: 'conflict', reason: 'manager_email_already_exists' });
+      }
+      throw error;
+    }
+  }
+
+  if (action === 'ownerSetManagerPassword') {
+    const organizationId = cleanText(body.organizationId, 160);
+    const managerUid = cleanText(body.managerUid, 160);
+    const password = typeof body.password === 'string' ? body.password : '';
+    if (!organizationId || !managerUid || !password) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'organization_manager_password_required' });
+    }
+
+    const managerRef = db.collection('managers').doc(managerUid);
+    const managerSnap = await managerRef.get();
+    if (!managerSnap.exists) return sendJson(res, 404, { error: 'manager_not_found' });
+    const manager = managerSnap.data() || {};
+    if (cleanText(manager.organizationId, 160) !== organizationId || cleanText(manager.role, 40) !== 'manager') {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'manager_organization_mismatch' });
+    }
+
+    const passwordFailure = passwordPolicyReason(password, { email: manager.email, name: manager.name });
+    if (passwordFailure) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: passwordFailure });
+    }
+
+    await auth.updateUser(managerUid, { password, disabled: false });
+    await auth.revokeRefreshTokens(managerUid);
+    const now = FieldValue.serverTimestamp();
+    await managerRef.set({
+      active: true,
+      mustChangePassword: false,
+      passwordUpdatedAt: now,
+      sessionsRevokedAt: now,
+      updatedAt: now,
+    }, { merge: true });
+    await db.collection('platformAdminAuditEvents').add({
+      actorUid: decoded.uid,
+      actorRole: 'owner',
+      action: 'manager_password_change',
+      organizationId,
+      targetUid: managerUid,
+      resourceType: 'manager',
+      resourceId: managerUid,
+      detail: { sessionsRevoked: true },
+      createdAt: now,
+    });
+    return sendJson(res, 200, { ok: true, organizationId, managerUid, sessionsRevoked: true });
+  }
+
+  return sendJson(res, 400, { error: 'unknown_action' });
+}
+
+
 async function handleOwnerOrganizationLifecycle({ action, body, decoded, db, FieldValue, sendJson, res }) {
   const organizationId = cleanText(body.organizationId, 160);
   if (!organizationId) return sendJson(res, 400, { error: 'invalid_request', reason: 'organizationId_required' });
@@ -568,6 +735,10 @@ async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldVal
     if (action === 'ownerOpsSnapshot') {
       const snapshot = await buildOwnerOpsSnapshot({ db, auth, decoded, FieldValue });
       sendJson(res, 200, snapshot);
+      return true;
+    }
+    if (action === 'ownerCreateOrganizationWithManager' || action === 'ownerSetManagerPassword') {
+      await handleOwnerProvisioning({ action, body, decoded, db, auth, FieldValue, sendJson, res });
       return true;
     }
     if (action === 'ownerArchiveOrganization' || action === 'ownerRestoreOrganization') {
