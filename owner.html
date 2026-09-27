@@ -723,9 +723,11 @@
         <label class="text-sm">الخطة<select name="plan" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>Basic</option><option>Pro</option><option>Enterprise</option></select></label>
         <label class="text-sm">الدورة<select name="billingCycle" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>monthly</option><option>yearly</option></select></label>
         <label class="text-sm">المبلغ (بدون ضريبة)<input name="amount" type="number" min="0" step="0.01" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" placeholder="مثال: 499" /></label>
+        <label class="text-sm">الحالة<select name="status" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option value="paid">مدفوعة</option><option value="pending">معلقة</option><option value="overdue">متأخرة</option><option value="cancelled">ملغاة</option><option value="archived">مؤرشفة</option></select></label>
       </div>
+      <input type="hidden" name="docId" />
       <div class="flex items-center gap-2 justify-end pt-2">
-        <button class="btn btn-primary" value="default">إصدار الفاتورة</button>
+        <button id="invoiceSaveBtn" class="btn btn-primary" value="default">إصدار الفاتورة</button>
       </div>
     </form>
   </dialog>
@@ -809,6 +811,7 @@
     // وحدة الفواتير والاشتراكات (Invoices) — منطق العرض والإنشاء منقول إلى owner-invoices.js.
     // الحالة المشتركة (INVOICES) و fetchInvoices() تبقى هنا، وتُقرأ عبر الحقن (getInvoices).
     const invoicesModule = initInvoicesModule({
+      auth,
       db,
       getOrgs: () => ORGS,
       getInvoices: () => INVOICES,
