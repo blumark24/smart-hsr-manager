@@ -9,6 +9,7 @@ const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const ownerFirebase=read('owner-firebase-client.js');
 const ownerHtml=read('owner.html');
 const ownerUsers=read('owner-users.js');
+const ownerOrganizations=read('owner-organizations.js');
 const ownerInvoices=read('owner-invoices.js');
 const ownerOps=read('api/_lib/ownerOpsSupport.js');
 const usersApi=read('api/admin/users.js');
@@ -56,4 +57,33 @@ test('Firestore still refuses direct browser update/delete of invoice records',(
   assert.notEqual(start,-1);
   const block=rules.slice(start,start+420);
   assert.match(block,/allow update, delete: if false/);
+});
+
+
+test('Owner organization onboarding creates and persists the municipality manager in one trusted operation',()=>{
+  assert.match(ownerHtml,/name="managerPassword"[^>]*type="password"/);
+  assert.match(ownerOrganizations,/ownerCreateOrganizationWithManager/);
+  assert.match(ownerOrganizations,/managerCreated/);
+  assert.match(ownerOps,/ownerCreateOrganizationWithManager/);
+  assert.match(ownerOps,/auth\.createUser/);
+  assert.match(ownerOps,/db\.collection\('managers'\)\.doc\(managerUser\.uid\)/);
+  assert.match(ownerOps,/organizationId: orgRef\.id/);
+  assert.match(ownerOps,/managerUid: managerUser\.uid/);
+  assert.match(ownerOps,/organization_manager_create/);
+  assert.doesNotMatch(ownerOps,/manager.*password.*Firestore/i);
+});
+
+test('Owner can rotate the linked municipality manager password and revoke prior sessions',()=>{
+  assert.match(ownerOrganizations,/ownerSetManagerPassword/);
+  assert.match(ownerOrganizations,/managerUid:org\.managerUid/);
+  assert.match(ownerOps,/ownerSetManagerPassword/);
+  assert.match(ownerOps,/auth\.updateUser\(managerUid, \{ password, disabled: false \}\)/);
+  assert.match(ownerOps,/auth\.revokeRefreshTokens\(managerUid\)/);
+  assert.match(ownerOps,/manager_password_change/);
+});
+
+test('Owner organization modal keeps internal notes without creating another owner identity',()=>{
+  assert.match(ownerHtml,/name="notes"/);
+  assert.match(ownerOrganizations,/notes:f\.notes\.value\.trim\(\)/);
+  assert.doesNotMatch(ownerOrganizations,/role:\s*['"]owner['"]/);
 });
