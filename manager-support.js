@@ -27,8 +27,8 @@ function ensureStyles() {
   const style = document.createElement('style');
   style.id = 'smartHsrManagerSupportStyles';
   style.textContent = `
-    #smartHsrSupportFab{position:fixed;inset-inline-end:18px;bottom:20px;z-index:2140;border:0;border-radius:999px;padding:12px 16px;background:linear-gradient(135deg,#0b3557,#0aa36c);color:#fff;font:700 13px/1 Cairo,system-ui;box-shadow:0 14px 38px rgba(0,0,0,.25);cursor:pointer}
-    #smartHsrSupportPanel{position:fixed;inset-inline-end:18px;bottom:76px;z-index:2141;width:min(390px,calc(100vw - 24px));max-height:min(620px,calc(100vh - 110px));display:none;flex-direction:column;border:1px solid rgba(148,163,184,.25);border-radius:20px;overflow:hidden;background:#071a2e;color:#f8fafc;box-shadow:0 24px 70px rgba(0,0,0,.42);font-family:Cairo,system-ui}
+    #smartHsrSupportFab{position:fixed;inset-inline-end:18px;bottom:86px;z-index:2140;border:1px solid rgba(125,211,252,.16);border-radius:999px;padding:10px 14px;background:linear-gradient(135deg,#0b3557,#0a8f66);color:#fff;font:700 12px/1 Cairo,system-ui;box-shadow:0 12px 30px rgba(0,0,0,.22);cursor:pointer;opacity:.96;backdrop-filter:blur(12px)}
+    #smartHsrSupportPanel{position:fixed;inset-inline-end:18px;bottom:136px;z-index:2141;width:min(390px,calc(100vw - 24px));max-height:min(620px,calc(100vh - 170px));display:none;flex-direction:column;border:1px solid rgba(148,163,184,.25);border-radius:20px;overflow:hidden;background:#071a2e;color:#f8fafc;box-shadow:0 24px 70px rgba(0,0,0,.42);font-family:Cairo,system-ui}
     #smartHsrSupportPanel[data-open="true"]{display:flex}
     .shsr-sp-head{padding:14px 15px;background:linear-gradient(135deg,#0b2947,#0a5a4b);display:flex;align-items:center;justify-content:space-between;gap:10px}
     .shsr-sp-head small{display:block;color:#cbd5e1;margin-top:3px}
@@ -43,7 +43,8 @@ function ensureStyles() {
     .shsr-sp-form textarea{min-height:66px;max-height:150px;resize:vertical;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#071522;color:#fff;padding:9px;font:13px Cairo,system-ui}
     .shsr-sp-form button{border:0;border-radius:12px;padding:0 14px;background:#10b981;color:#fff;font-weight:800;cursor:pointer}
     .shsr-sp-status{padding:0 10px 9px;color:#94a3b8;font-size:11px;min-height:18px}
-    @media(max-width:560px){#smartHsrSupportFab{inset-inline-end:12px;bottom:12px}#smartHsrSupportPanel{inset-inline-end:12px;bottom:66px}}
+    @media(max-width:1179px){#smartHsrSupportFab{inset-inline-end:14px;bottom:78px}#smartHsrSupportPanel{inset-inline-end:14px;bottom:128px;max-height:min(600px,calc(100vh - 160px))}}
+    @media(max-width:699px){#smartHsrSupportFab{inset-inline-end:10px;bottom:74px;padding:10px 12px;font-size:11.5px}#smartHsrSupportPanel{inset-inline-end:10px;bottom:122px;width:min(360px,calc(100vw - 20px));max-height:calc(100vh - 150px)}}
   `;
   document.head.appendChild(style);
 }
