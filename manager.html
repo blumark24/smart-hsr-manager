@@ -477,6 +477,49 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
     transition:none!important;
   }
 }
+
+
+/* PHASE21.4A SMART ADAPTIVE SIDEBAR */
+.hsr-manager-sidebar{min-width:0}
+.hsr-manager-sidebar.is-rail{
+  --sbW:68px!important;
+  --sbLabel:none!important;
+  --subInd:0px!important;
+}
+.hsr-manager-sidebar.is-expanded{
+  overflow:visible;
+}
+.hsr-manager-sidebar.is-overlay-open{
+  --sbW:68px!important;
+  --sbLabel:block!important;
+  --subInd:13px!important;
+  z-index:76!important;
+  overflow:visible!important;
+}
+.hsr-manager-sidebar.is-overlay-open>div{
+  position:relative;
+  left:-160px;
+  width:228px!important;
+  min-width:228px!important;
+  box-shadow:var(--sbSh,inset 0 1px 0 rgba(255,255,255,.07),0 24px 50px -22px rgba(0,0,0,.96)),0 28px 70px -34px rgba(0,0,0,.72)!important;
+}
+.hsr-manager-sidebar.is-overlay-open>div[style*="flex:1"]{
+  box-shadow:none!important;
+}
+.hsr-sidebar-scrim{animation:hsrIn .14s ease-out}
+@media(min-width:1400px){
+  .hsr-manager-sidebar.is-expanded{--sbLabel:block!important}
+}
+@media(min-width:700px) and (max-width:1399px){
+  .hsr-manager-sidebar{--sbW:68px!important;--sbLabel:none!important;--subInd:0px!important}
+  .hsr-manager-sidebar.is-overlay-open{--sbLabel:block!important;--subInd:13px!important}
+}
+@media(max-width:699px){
+  .hsr-sidebar-scrim{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .hsr-manager-sidebar,.hsr-manager-sidebar>div,.hsr-sidebar-scrim{transition:none!important;animation:none!important}
+}
 </style>
 </head>
 <body>
@@ -640,9 +683,13 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
     </div>
   </header>
 
-  <div class="hsr-manager-layout" style="display:flex;gap:14px;align-items:stretch">
+  <div class="hsr-manager-layout" style="position:relative;display:flex;gap:14px;align-items:stretch">
 
-    <aside style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease">
+    <sc-if value="{{ sidebarOverlayOpen }}">
+      <button onClick="{{ closeSidebarOverlay }}" aria-label="إغلاق القائمة الجانبية" class="hsr-sidebar-scrim" style="position:absolute;inset:0;z-index:54;border:0;padding:0;background:rgba(2,12,25,.28);backdrop-filter:blur(1.5px);cursor:default;border-radius:18px"></button>
+    </sc-if>
+
+    <aside class="{{ sidebarClass }}" style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease">
       <div style="padding:12px 11px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));backdrop-filter:var(--sbBlur,none);border:1px solid var(--sbBd,rgba(122,164,224,0.2));box-shadow:var(--sbSh,inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96));backdrop-filter:var(--blur,blur(18px));display:flex;flex-direction:column;gap:3px">
 
         <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12))">
@@ -650,7 +697,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
             <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2)">مركز القيادة</div>
             <div style="font-size:9.5px;font-weight:550;color:var(--sbTx3,#6f8299);margin-top:2px">إدارة العمليات البلدية</div>
           </div>
-          <button onClick="{{ tSb }}" data-f="1" aria-label="تصغير القائمة" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--sbCtl,rgba(20,32,54,0.6));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14));color:var(--sbTx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="color:var(--sbTx,#e9f1fb)">
+          <button onClick="{{ tSb }}" data-f="1" aria-label="{{ sidebarToggleLabel }}" aria-expanded="{{ sidebarToggleExpanded }}" title="{{ sidebarToggleLabel }}" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--sbCtl,rgba(20,32,54,0.6));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14));color:var(--sbTx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="color:var(--sbTx,#e9f1fb)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
         </div>
@@ -2812,7 +2859,7 @@ class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
     orgName: this.props.organizationName || 'اسم البلدية',
-    sb: false, expSvc: true, expAdmin: false,
+    sb: false, sbOverlayOpen: false, expSvc: true, expAdmin: false,
     notifOpen: false, profOpen: false, layersOpen: false, settingsOpen: false, mobNavOpen: false,
     userDrawerOpen: false, selectedUser: null, incidentDrawerOpen: false, selectedIncident: null,
     addUserOpen: false, auName: '', auEmail: '', auRole: 'employee', auKind: 'field',
@@ -3439,7 +3486,20 @@ class Component extends DCLogic {
   renderVals() {
     const st = this.state, day = st.theme === 'day';
     const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
-    if (st.sb && st.bp !== 'tab' && st.bp !== 'mob') { vars['--sbW'] = '68px'; vars['--sbLabel'] = 'none'; vars['--subInd'] = '0px'; }
+    const sidebarOverlayBp = st.bp === 'tab' || st.bp === 'md';
+    const sidebarOverlayOpen = sidebarOverlayBp && st.sbOverlayOpen === true;
+    if (sidebarOverlayBp) {
+      // iPad / compact desktop always reserves only the 68px rail.
+      // Expansion is an overlay, so the map/cards never reflow or jump.
+      vars['--sbW'] = '68px'; vars['--sbLabel'] = 'none'; vars['--subInd'] = '0px';
+    } else if (st.sb && st.bp !== 'mob') {
+      // Wide desktop keeps the existing push-layout collapse behavior.
+      vars['--sbW'] = '68px'; vars['--sbLabel'] = 'none'; vars['--subInd'] = '0px';
+    }
+    const sidebarExpanded = sidebarOverlayBp ? sidebarOverlayOpen : (st.bp !== 'mob' && !st.sb);
+    const sidebarClass = sidebarOverlayOpen
+      ? 'hsr-manager-sidebar is-overlay-open'
+      : (sidebarExpanded ? 'hsr-manager-sidebar is-expanded' : 'hsr-manager-sidebar is-rail');
     if (st.fs) { vars['--twinPos'] = 'fixed'; vars['--twinInset'] = '14px'; vars['--twinZ'] = '75'; vars['--twinH'] = 'auto'; }
 
     const metrics = this.liveMetrics || {};
@@ -4077,6 +4137,13 @@ class Component extends DCLogic {
       mapShellRef: el => { this.mapShell = el; },
       mapRef: this.mapRefCallback,
       themeVars: vars, rootThemeClass: day ? 'hsr-manager-root theme-day' : 'hsr-manager-root theme-night',
+      sidebarClass,
+      sidebarOverlayOpen,
+      sidebarToggleExpanded: sidebarExpanded ? 'true' : 'false',
+      sidebarToggleLabel: sidebarOverlayBp
+        ? (sidebarOverlayOpen ? 'إغلاق القائمة الجانبية' : 'فتح القائمة الجانبية')
+        : (st.sb ? 'توسيع القائمة الجانبية' : 'تصغير القائمة الجانبية'),
+      closeSidebarOverlay: () => this.setState({ sbOverlayOpen: false }),
       orgName: st.orgName,
       sessionName: st.sessionName,
       sessionRole: st.sessionRole,
@@ -4516,7 +4583,7 @@ class Component extends DCLogic {
 
       setDay: () => this.setState({ theme: 'day' }),
       setNight: () => this.setState({ theme: 'night' }),
-      tSb: () => this.setState(s => ({ sb: !s.sb })),
+      tSb: () => this.toggleSmartSidebar(),
       tSvc: () => this.setState(s => ({ expSvc: !s.expSvc })),
       tAdmin: () => this.setState(s => ({ expAdmin: !s.expAdmin })),
       tNotif: () => this.setState(s => ({ notifOpen: !s.notifOpen, profOpen: false })),
@@ -4546,6 +4613,19 @@ class Component extends DCLogic {
       closeView: () => this.setState({ view: 'home' }),
       logout: () => window.SmartHSRManagerAdapter?.logout()
     };
+  }
+
+  toggleSmartSidebar() {
+    const bp = this.state.bp;
+    if (bp === 'tab' || bp === 'md') {
+      this.setState(s => ({ sbOverlayOpen: !s.sbOverlayOpen }));
+      return;
+    }
+    if (bp === 'mob') {
+      this.setState(s => ({ mobNavOpen: !s.mobNavOpen }));
+      return;
+    }
+    this.setState(s => ({ sb: !s.sb }));
   }
 
   prevent(e) { if (e && e.preventDefault) e.preventDefault(); }
