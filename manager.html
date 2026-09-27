@@ -689,7 +689,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
       <button onClick="{{ closeSidebarOverlay }}" aria-label="إغلاق القائمة الجانبية" class="hsr-sidebar-scrim" style="position:absolute;inset:0;z-index:54;border:0;padding:0;background:rgba(2,12,25,.28);backdrop-filter:blur(1.5px);cursor:default;border-radius:18px"></button>
     </sc-if>
 
-    <aside class="{{ sidebarClass }}" style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease">
+    <aside style="position:relative;z-index:55;display:var(--sbDisp,flex);width:var(--sbW,232px);flex:none;flex-direction:column;gap:12px;transition:width .22s ease" class="{{ sidebarClass }}">
       <div style="padding:12px 11px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));backdrop-filter:var(--sbBlur,none);border:1px solid var(--sbBd,rgba(122,164,224,0.2));box-shadow:var(--sbSh,inset 0 1px 0 rgba(255,255,255,0.07),inset 0 -1px 0 rgba(0,0,0,0.25),0 4px 12px -6px rgba(0,0,0,0.55),0 24px 50px -22px rgba(0,0,0,0.96));backdrop-filter:var(--blur,blur(18px));display:flex;flex-direction:column;gap:3px">
 
         <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12))">
