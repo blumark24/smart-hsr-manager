@@ -498,8 +498,9 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 }
 .hsr-manager-sidebar.is-overlay-open>.hsr-sidebar-panel{
   position:absolute;
-  inset-block-start:0;
-  inset-inline-end:0;
+  top:0;
+  right:0;
+  left:auto;
   width:228px!important;
   min-width:228px!important;
   max-height:calc(100dvh - 110px);
@@ -553,11 +554,11 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 }
 .hsr-map-basemap .hsr-map-segment{height:30px;padding:0 10px}
 .hsr-map-querybar{
-  position:absolute;top:56px;left:50%;transform:translateX(-50%);
-  width:min(360px,calc(100% - 190px));display:grid;grid-template-columns:minmax(0,1fr) 122px;
+  position:absolute;left:50%;right:auto;top:auto;bottom:56px;transform:translateX(-50%);
+  width:min(340px,calc(100% - 210px));display:grid;grid-template-columns:minmax(0,1fr) 118px;
   align-items:center;gap:6px;padding:5px;border-radius:12px;
-  background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.25));
-  box-shadow:0 12px 28px -20px rgba(0,0,0,.58)
+  background:var(--glass,rgba(8,38,70,.92));border:1px solid var(--glassBd,rgba(95,177,255,.28));
+  box-shadow:0 14px 32px -18px rgba(0,0,0,.68)
 }
 .hsr-map-search{position:relative;width:100%}
 .hsr-map-search input,.hsr-map-querybar select{
@@ -633,7 +634,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
   .hsr-spatial-mode-switch{top:9px}
   .hsr-map-status{top:9px!important;left:10px!important;max-width:31%!important}
   .hsr-map-basemap{top:9px;right:10px}
-  .hsr-map-querybar{top:54px;left:50%;right:auto;transform:translateX(-50%);width:min(350px,calc(100% - 170px))}
+  .hsr-map-querybar{top:auto;bottom:56px;left:50%;right:auto;transform:translateX(-50%);width:min(330px,calc(100% - 185px))}
   .hsr-map-command-rail{top:54px;left:10px}
 }
 @media(max-width:699px){
@@ -3427,7 +3428,14 @@ class Component extends DCLogic {
             html: `<div class="hsr-exec-pin" aria-hidden="true" style="--pin-status:${color}"><svg viewBox="0 0 30 38"><path d="M15 37C15 37 3 22.7 3 14.6C3 7.7 8.7 2 15 2C21.3 2 27 7.7 27 14.6C27 22.7 15 37 15 37Z" fill="${color}" stroke="#fff" stroke-width="2.2"/><circle cx="15" cy="14.6" r="5.2" fill="#fff"/><circle cx="15" cy="14.6" r="2.2" fill="${color}"/></svg>${priorityBadge}</div>`
           })
         });
-        marker.bindPopup(() => this.buildObservationPopup(item), { maxWidth: 264, className: 'hsr-map-popup' });
+        marker.bindPopup(() => this.buildObservationPopup(item), {
+          maxWidth: 300,
+          className: 'hsr-map-popup',
+          autoPan: true,
+          keepInView: true,
+          autoPanPaddingTopLeft: [56, 92],
+          autoPanPaddingBottomRight: [56, 128]
+        });
         // Selection is tracked OUTSIDE React state (a plain instance field)
         // and applied imperatively via applyMapSelectionStyle() — this
         // component's setState() causes the map's DOM container itself to
@@ -3607,7 +3615,17 @@ class Component extends DCLogic {
     rows.appendChild(row('التصنيف', categoryLabel));
     rows.appendChild(row('المراقب', item.inspector || 'غير متاح'));
     rows.appendChild(row('التوقيت', timeLabel));
+    const locationSourceLabel = ({
+      gps: 'GPS موثّق',
+      gps_corrected: 'GPS موثّق + تصحيح',
+      gps_weak: 'GPS منخفض الدقة',
+      manual_map: 'تحديد يدوي'
+    })[item.locationSource] || (item.locationVerified ? 'موقع موثّق' : 'مصدر غير متاح');
+    const accuracyLabel = Number.isFinite(Number(item.locationAccuracyMeters))
+      ? '±' + Math.round(Number(item.locationAccuracyMeters)) + ' م'
+      : 'الدقة غير متاحة';
     rows.appendChild(row('الموقع', item.address || item.locationText || `${item.coordinates.lat.toFixed(5)}, ${item.coordinates.lng.toFixed(5)}`));
+    rows.appendChild(row('مصدر الموقع', locationSourceLabel + ' · ' + accuracyLabel));
     root.appendChild(rows);
 
     const actions = document.createElement('div');
