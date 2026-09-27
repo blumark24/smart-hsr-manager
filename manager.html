@@ -3602,11 +3602,12 @@ class Component extends DCLogic {
 
     const rows = document.createElement('div');
     rows.className = 'hsr-map-popup-rows';
-    const row = (key, value) => {
+    const row = (key, value, { ltr = false } = {}) => {
       const line = document.createElement('div');
       line.className = 'hsr-map-popup-row';
       const k = document.createElement('span'); k.className = 'hsr-map-popup-key'; k.textContent = key;
       const v = document.createElement('span'); v.className = 'hsr-map-popup-value'; v.textContent = value || 'غير متاح';
+      if (ltr) { v.dir = 'ltr'; v.style.textAlign = 'left'; v.style.unicodeBidi = 'isolate'; }
       line.append(k, v);
       return line;
     };
@@ -3624,7 +3625,7 @@ class Component extends DCLogic {
     const accuracyLabel = Number.isFinite(Number(item.locationAccuracyMeters))
       ? '±' + Math.round(Number(item.locationAccuracyMeters)) + ' م'
       : 'الدقة غير متاحة';
-    rows.appendChild(row('الموقع', item.address || item.locationText || `${item.coordinates.lat.toFixed(5)}, ${item.coordinates.lng.toFixed(5)}`));
+    rows.appendChild(row('الموقع', item.address || item.locationText || `${item.coordinates.lat.toFixed(5)}, ${item.coordinates.lng.toFixed(5)}`, { ltr: !item.address && !item.locationText }));
     rows.appendChild(row('مصدر الموقع', locationSourceLabel + ' · ' + accuracyLabel));
     root.appendChild(rows);
 
