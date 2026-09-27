@@ -494,6 +494,36 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
   min-width:0;
   animation:hsrSidebarOpen .16s ease-out;
 }
+@media(max-width:699px){
+  .hsr-manager-layout{position:relative!important}
+  .hsr-manager-sidebar{
+    display:flex!important;
+    position:fixed!important;
+    top:max(8px,env(safe-area-inset-top))!important;
+    right:8px!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    z-index:90!important;
+    width:min(300px,88vw)!important;
+    max-width:min(300px,88vw)!important;
+    transform:translateX(calc(100% + 18px));
+    opacity:0;
+    pointer-events:none;
+    transition:transform .2s ease,opacity .18s ease!important
+  }
+  .hsr-manager-sidebar.is-expanded{
+    transform:translateX(0);
+    opacity:1;
+    pointer-events:auto
+  }
+  .hsr-manager-sidebar>.hsr-sidebar-panel{
+    height:100%;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    padding-bottom:8px;
+    border-radius:16px
+  }
+  .hsr-manager-sidebar.is-expanded{--sbLabel:block!important;--subInd:13px!important}
+}
 @keyframes hsrSidebarOpen{
   from{opacity:.55;transform:translateX(8px)}
   to{opacity:1;transform:translateX(0)}
@@ -536,7 +566,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 .hsr-map-basemap .hsr-map-segment{height:30px;padding:0 10px}
 .hsr-map-querybar{
   position:absolute;top:11px;left:50%;right:auto;bottom:auto;transform:translateX(-50%);
-  width:min(340px,calc(100% - 410px));display:grid;grid-template-columns:minmax(0,1fr) 118px;
+  width:min(390px,calc(100% - 440px));display:grid;grid-template-columns:minmax(0,1fr) 122px;
   align-items:center;gap:6px;padding:3px;border-radius:12px;
   background:var(--glass,rgba(8,38,70,.92));border:1px solid var(--glassBd,rgba(95,177,255,.28));
   box-shadow:0 12px 28px -18px rgba(0,0,0,.62)
@@ -550,7 +580,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 .hsr-map-search svg{position:absolute;left:9px;top:9.5px;color:var(--tx3,#91abc5)}
 .hsr-map-querybar select{width:100%;padding:0 8px;color:var(--glassTx,#c8def2)}
 .hsr-map-command-rail{
-  position:absolute;top:58px;left:12px;display:flex;flex-direction:column;gap:4px;padding:5px;border-radius:13px;
+  position:absolute;top:62px;left:12px;display:flex;flex-direction:column;gap:4px;padding:5px;border-radius:13px;
   background:var(--glass,rgba(8,38,70,.88));border:1px solid var(--glassBd,rgba(95,177,255,.27));
   box-shadow:0 18px 34px -22px rgba(0,0,0,.64)
 }
@@ -629,6 +659,44 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
   .hsr-manager-map-shell .leaflet-popup-content{min-width:0;width:min(300px,calc(100vw - 26px))!important}
   .hsr-map-popup-actions{grid-template-columns:1fr!important}
   .hsr-map-popup-btn{width:100%}
+}
+
+
+/* PHASE21.5 EXECUTIVE VISUAL POLISH — approved reference alignment */
+.hsr-priority-item{
+  position:relative;
+  box-shadow:inset 3px 0 0 var(--prio-col),0 8px 18px -16px rgba(0,0,0,.72);
+  transition:transform .15s ease,border-color .15s ease,background .15s ease
+}
+.hsr-priority-item:hover{transform:translateY(-1px);border-color:var(--prio-col)!important}
+.hsr-priority-item>div:first-child{
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--prio-col) 12%,transparent)
+}
+.hsr-manager-map-shell .leaflet-popup-content-wrapper{
+  border-radius:15px!important;
+  overflow:hidden;
+  box-shadow:0 22px 54px -22px rgba(0,0,0,.78)!important
+}
+.hsr-manager-map-shell .leaflet-popup-content{
+  min-width:250px!important;
+  max-width:268px!important;
+  margin:0!important
+}
+.hsr-map-popup-body{padding:10px!important}
+.hsr-map-popup-head{padding-bottom:7px!important}
+.hsr-map-popup-title{font-size:12px!important;line-height:1.55!important}
+.hsr-map-popup-thumb{height:82px!important;border-radius:10px!important;margin:7px 0!important}
+.hsr-map-popup-row{padding:4px 0!important;font-size:9.5px!important}
+.hsr-map-popup-actions{gap:5px!important;margin-top:8px!important}
+.hsr-map-popup-btn{min-height:30px!important;padding:0 7px!important;font-size:9.5px!important;border-radius:8px!important}
+.hsr-map-popup-actions{grid-template-columns:minmax(0,1.25fr) minmax(0,.82fr) minmax(0,.62fr)!important}
+.hsr-map-querybar,.hsr-spatial-mode-switch,.hsr-map-basemap{backdrop-filter:blur(16px) saturate(125%)}
+@media(min-width:700px) and (max-width:1179px){
+  .hsr-map-querybar{width:min(350px,calc(100% - 420px))}
+}
+@media(max-width:699px){
+  .hsr-map-popup-actions{grid-template-columns:1fr 1fr 1fr!important}
+  .hsr-manager-map-shell .leaflet-popup-content{width:min(262px,calc(100vw - 34px))!important;max-width:min(262px,calc(100vw - 34px))!important}
 }
 </style>
 </head>
@@ -821,7 +889,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
         </a>
 
         <div onClick="{{ tSvc }}" data-f="1" role="button" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;font-size:12.5px;color:var(--sbTx2,#9db2cc);cursor:pointer;border:1px solid transparent" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="3" width="8" height="8" rx="2"></rect><rect x="3" y="13" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none"><path d="m12 3 8 4-8 4-8-4 8-4Z"></path><path d="m4 12 8 4 8-4"></path><path d="m4 17 8 4 8-4"></path></svg>
           <span style="flex:1;font-weight:600;display:var(--sbLabel,block)">خدمات البلدية الرقمية</span>
           <span style="display:var(--sbLabel,block);color:var(--sbTx3,#6f8299);transform:{{ svcCaret }}">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"></path></svg>
@@ -1135,7 +1203,7 @@ html[data-theme="light"] .hsr-integration-strip{background:rgba(228,239,232,.82)
 
           <div ref="{{ priorityListRef }}" class="hsr-priority-list">
             <sc-for list="{{ prios }}" as="p" hint-placeholder-count="4">
-              <div onClick="{{ p.on }}" data-f="1" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:{{ p.bg }};border:1px solid {{ p.bd }};cursor:pointer">
+              <div onClick="{{ p.on }}" data-f="1" class="hsr-priority-item" style="--prio-col:{{ p.col }};display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:{{ p.bg }};border:1px solid {{ p.bd }};cursor:pointer">
                 <div style="width:33px;height:33px;flex:none;border-radius:50%;background:{{ p.numBg }};border:1px solid {{ p.bd }};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;color:{{ p.col }};font-variant-numeric:tabular-nums">{{ p.n }}</div>
                 <div style="flex:1;text-align:right;min-width:0">
                   <div style="font-size:11.5px;font-weight:600;color:var(--tx,#f2e6e6)">{{ p.title }}</div>
@@ -3401,7 +3469,7 @@ class Component extends DCLogic {
           })
         });
         marker.bindPopup(() => this.buildObservationPopup(item), {
-          maxWidth: 300,
+          maxWidth: 268,
           className: 'hsr-map-popup',
           autoPan: true,
           keepInView: true,
@@ -3613,8 +3681,8 @@ class Component extends DCLogic {
       return b;
     };
     actions.appendChild(btn('عرض التفاصيل', 'primary', () => this.openEvidenceDrawer(item)));
-    actions.appendChild(btn('الخريطة الكاملة', 'secondary', () => this.openOperationalMapForObservation(item), 'فتح الخريطة التشغيلية'));
-    if (this.isTwinAdmitted()) actions.appendChild(btn('Digital Twin', 'secondary', () => this.openTwinForObservation(item), 'فتح في التوأم الرقمي'));
+    actions.appendChild(btn('الخريطة', 'secondary', () => this.openOperationalMapForObservation(item), 'فتح الخريطة التشغيلية'));
+    if (this.isTwinAdmitted()) actions.appendChild(btn('Twin', 'secondary', () => this.openTwinForObservation(item), 'فتح في التوأم الرقمي'));
     root.appendChild(actions);
     return root;
   }
@@ -3636,24 +3704,24 @@ class Component extends DCLogic {
   renderVals() {
     const st = this.state, day = st.theme === 'day';
     const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
-    const sidebarCompactBp = st.bp === 'tab' || st.bp === 'md';
+    const sidebarCompactBp = st.bp === 'tab' || st.bp === 'md' || st.bp === 'mob';
     const sidebarCompactOpen = sidebarCompactBp && st.sbOverlayOpen === true;
     if (sidebarCompactBp) {
-      // iPad / compact desktop now behaves like desktop: the rail expands
-      // inside the flex layout and visibly pushes the dashboard content.
+      // One responsive sidebar state: iPad behaves like desktop push-layout,
+      // while mobile uses the same sidebar surface as an off-canvas drawer.
       if (sidebarCompactOpen) {
-        vars['--sbW'] = st.bp === 'md' ? '216px' : '200px';
+        vars['--sbW'] = st.bp === 'mob' ? 'min(300px,88vw)' : (st.bp === 'md' ? '216px' : '200px');
         vars['--sbLabel'] = 'block';
         vars['--subInd'] = '13px';
       } else {
-        vars['--sbW'] = '68px';
+        vars['--sbW'] = st.bp === 'mob' ? '0px' : '68px';
         vars['--sbLabel'] = 'none';
         vars['--subInd'] = '0px';
       }
-    } else if (st.sb && st.bp !== 'mob') {
+    } else if (st.sb) {
       vars['--sbW'] = '68px'; vars['--sbLabel'] = 'none'; vars['--subInd'] = '0px';
     }
-    const sidebarExpanded = sidebarCompactBp ? sidebarCompactOpen : (st.bp !== 'mob' && !st.sb);
+    const sidebarExpanded = sidebarCompactBp ? sidebarCompactOpen : !st.sb;
     const sidebarClass = sidebarExpanded ? 'hsr-manager-sidebar is-expanded' : 'hsr-manager-sidebar is-rail';
     if (st.fs) { vars['--twinPos'] = 'fixed'; vars['--twinInset'] = '14px'; vars['--twinZ'] = '75'; vars['--twinH'] = 'auto'; }
 
@@ -4324,7 +4392,7 @@ class Component extends DCLogic {
       // real current feed size only, with no read/new/unread claim.
       notifAria: `الإشعارات — ${format.integer ? format.integer(this.liveNotifications.length) : this.liveNotifications.length} عناصر`,
       profOpen: st.profOpen, notifOpen: st.notifOpen, layersOpen: st.layersOpen,
-      settingsOpen: st.settingsOpen, mobNavOpen: st.mobNavOpen,
+      settingsOpen: st.settingsOpen, mobNavOpen: false,
       userDrawerOpen: st.userDrawerOpen, incidentDrawerOpen: st.incidentDrawerOpen,
       closeUserDrawer: () => this.closeUserDrawer(), closeIncidentDrawer: () => this.closeIncidentDrawer(),
       selectedUserName: st.selectedUser?.name || '—', selectedUserEmail: st.selectedUser?.email || '—',
@@ -4700,9 +4768,9 @@ class Component extends DCLogic {
       cats: this.liveCategories,
       prios: this.livePriorities.map(p => ({
         n: p.n, title: p.title, meta: p.meta, col: p.col,
-        bg: this.tint(p.col, day ? 0.025 : 0.055),
-        bd: this.tint(p.col, day ? 0.18 : 0.24),
-        numBg: this.tint(p.col, day ? 0.075 : 0.14),
+        bg: this.tint(p.col, day ? 0.055 : 0.105),
+        bd: this.tint(p.col, day ? 0.28 : 0.42),
+        numBg: this.tint(p.col, day ? 0.11 : 0.22),
         on: () => this.focusPriorityOnMap(p.id)
       })),
       quickActions: [
@@ -4745,7 +4813,7 @@ class Component extends DCLogic {
       tAdmin: () => this.setState(s => ({ expAdmin: !s.expAdmin })),
       tNotif: () => this.setState(s => ({ notifOpen: !s.notifOpen, profOpen: false })),
       tProf: () => this.setState(s => ({ profOpen: !s.profOpen, notifOpen: false })),
-      tMobNav: () => this.setState(s => ({ mobNavOpen: !s.mobNavOpen })),
+      tMobNav: () => this.toggleSmartSidebar(),
       openSettings: e => { this.prevent(e); this.setState({ settingsOpen: true, profOpen: false, mobNavOpen: false }); },
       closeSettings: () => this.setState({ settingsOpen: false }),
       stop: e => { if (e && e.stopPropagation) e.stopPropagation(); },
@@ -4778,15 +4846,11 @@ class Component extends DCLogic {
 
   toggleSmartSidebar() {
     const bp = this.state.bp;
-    if (bp === 'tab' || bp === 'md') {
-      this.setState(s => ({ sbOverlayOpen: !s.sbOverlayOpen }));
+    if (bp === 'tab' || bp === 'md' || bp === 'mob') {
+      this.setState(s => ({ sbOverlayOpen: !s.sbOverlayOpen, mobNavOpen: false }));
       return;
     }
-    if (bp === 'mob') {
-      this.setState(s => ({ mobNavOpen: !s.mobNavOpen }));
-      return;
-    }
-    this.setState(s => ({ sb: !s.sb }));
+    this.setState(s => ({ sb: !s.sb, mobNavOpen: false }));
   }
 
   prevent(e) { if (e && e.preventDefault) e.preventDefault(); }
