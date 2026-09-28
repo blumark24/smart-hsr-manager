@@ -150,6 +150,15 @@
         #smartSafeFooter .card{padding:18px}
         #smartSafeFooter .card b{font-size:21px}
       }
+
+      html.smart-claude-fit,html.smart-claude-fit body{overflow-x:hidden!important}
+      html.smart-claude-fit [data-screen-label]{transform-origin:top center!important}
+      html.smart-claude-fit .smart-fit-nav{box-sizing:border-box!important}
+      @media(max-width:1024px){
+        html.smart-claude-fit [data-screen-label]{max-width:none!important}
+        html.smart-claude-fit #smartSafeFooter{overflow:hidden}
+      }
+
       @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
     `;
     document.head.appendChild(style);
@@ -170,8 +179,99 @@
     try{localStorage.setItem('smart-hsr-public-theme',t)}catch(e){}
   }
 
+
+  let fitRaf=0;
+
+  function findClaudeNav(){
+    const candidates=[...document.querySelectorAll('button,a,span,div')].filter(el=>norm(el.textContent)==='القائمة');
+    for(const candidate of candidates){
+      let node=candidate;
+      for(let i=0;i<6&&node&&node!==document.body;i++,node=node.parentElement){
+        const txt=norm(node.textContent);
+        const style=getComputedStyle(node);
+        if((txt.includes('العربية')||txt.includes('EN')) && (style.position==='fixed'||style.position==='sticky'||node.getBoundingClientRect().width>240)){
+          return node;
+        }
+      }
+    }
+    return null;
+  }
+
+  function fitApprovedClaudeCanvas(){
+    cancelAnimationFrame(fitRaf);
+    fitRaf=requestAnimationFrame(()=>{
+      const viewport=Math.max(320,document.documentElement.clientWidth||window.innerWidth||320);
+      const mobile=viewport<=1024;
+      document.documentElement.classList.toggle('smart-claude-fit',mobile);
+
+      document.querySelectorAll('[data-screen-label]').forEach(sectionEl=>{
+        // Always reset before measuring the original Claude artboard.
+        sectionEl.style.zoom='';
+        sectionEl.style.width='';
+        sectionEl.style.minWidth='';
+        sectionEl.style.marginInline='';
+
+        if(!mobile) return;
+
+        const natural=Math.max(sectionEl.scrollWidth,Math.ceil(sectionEl.getBoundingClientRect().width));
+        const usable=Math.max(300,viewport-2);
+        if(natural>usable*1.015){
+          const ratio=Math.min(1,usable/natural);
+          // CSS zoom preserves the approved internal composition, typography,
+          // imagery and absolute geometry while fitting the whole artboard.
+          sectionEl.style.width=(100/ratio).toFixed(4)+'%';
+          sectionEl.style.minWidth=(100/ratio).toFixed(4)+'%';
+          sectionEl.style.zoom=ratio.toFixed(5);
+          sectionEl.style.marginInline='auto';
+        }else{
+          sectionEl.style.width='100%';
+          sectionEl.style.minWidth='0';
+        }
+      });
+
+      const nav=findClaudeNav();
+      document.querySelectorAll('.smart-fit-nav').forEach(el=>el.classList.remove('smart-fit-nav'));
+      if(nav&&mobile){
+        nav.classList.add('smart-fit-nav');
+        nav.style.zoom='';
+        nav.style.width='';
+        nav.style.maxWidth='';
+        nav.style.left='';
+        nav.style.right='';
+        nav.style.marginInline='';
+
+        const natural=Math.max(nav.scrollWidth,Math.ceil(nav.getBoundingClientRect().width));
+        const usable=Math.max(296,viewport-24);
+        if(natural>usable){
+          const ratio=Math.min(1,usable/natural);
+          nav.style.width=(100/ratio).toFixed(4)+'%';
+          nav.style.maxWidth=(100/ratio).toFixed(4)+'%';
+          nav.style.zoom=ratio.toFixed(5);
+          nav.style.marginInline='auto';
+        }
+      }
+    });
+  }
+
+  function installClaudeResponsiveFit(){
+    fitApprovedClaudeCanvas();
+    let resizeTimer=0;
+    addEventListener('resize',()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer=setTimeout(fitApprovedClaudeCanvas,100);
+    },{passive:true});
+    addEventListener('orientationchange',()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer=setTimeout(fitApprovedClaudeCanvas,180);
+    },{passive:true});
+    if(document.fonts?.ready) document.fonts.ready.then(()=>setTimeout(fitApprovedClaudeCanvas,0));
+    setTimeout(fitApprovedClaudeCanvas,250);
+    setTimeout(fitApprovedClaudeCanvas,900);
+  }
+
   function installExternalUI(){
     installCSS();
+    installClaudeResponsiveFit();
 
     if(!document.getElementById('smartSafeTheme')){
       const b=document.createElement('button');
