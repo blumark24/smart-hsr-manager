@@ -150,144 +150,6 @@
         #smartSafeFooter .card{padding:18px}
         #smartSafeFooter .card b{font-size:21px}
       }
-
-      #smartResponsiveLanding{display:none}
-      @media(max-width:1024px){
-        html,body{width:100%;max-width:100%;overflow-x:hidden!important}
-        body> *:not(#smartResponsiveLanding):not(#smartSafeMenu):not(script):not(style){display:none!important}
-        #smartSafeTheme,#smartSafeFooter{display:none!important}
-        #smartResponsiveLanding{
-          display:block!important;position:relative;z-index:10010;min-height:100dvh;width:100%;
-          background:#f4f7f5;color:#10251c;font-family:"IBM Plex Sans Arabic","Tajawal",system-ui,sans-serif;
-        }
-        #smartResponsiveLanding *{box-sizing:border-box}
-        #smartResponsiveLanding .sr-wrap{width:min(100%,920px);margin:0 auto;padding:0 24px}
-        #smartResponsiveLanding .sr-nav{
-          position:sticky;top:0;z-index:12;padding:max(12px,env(safe-area-inset-top)) 0 10px;
-          background:linear-gradient(180deg,rgba(244,247,245,.96),rgba(244,247,245,.86) 74%,rgba(244,247,245,0));
-          backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)
-        }
-        #smartResponsiveLanding .sr-nav-card{
-          min-height:68px;padding:10px 12px;border-radius:22px;border:1px solid rgba(17,76,50,.11);
-          background:rgba(255,255,255,.88);box-shadow:0 16px 40px -30px rgba(7,42,29,.38);
-          display:flex;align-items:center;gap:12px
-        }
-        #smartResponsiveLanding .sr-logo{width:122px;height:44px;object-fit:contain;display:block}
-        #smartResponsiveLanding .sr-nav-spacer{flex:1}
-        #smartResponsiveLanding .sr-nav-btn{
-          min-width:46px;height:46px;padding:0 14px;border:1px solid rgba(17,76,50,.11);border-radius:14px;
-          background:#f7faf8;color:#143126;font:700 13px inherit;cursor:pointer
-        }
-        #smartResponsiveLanding .sr-nav-btn.menu{min-width:96px}
-        #smartResponsiveLanding .sr-hero{padding:48px 0 34px}
-        #smartResponsiveLanding .sr-kicker{
-          margin-bottom:14px;color:#128443;font:600 11px/1.4 "IBM Plex Mono",monospace;letter-spacing:.16em
-        }
-        #smartResponsiveLanding h1{
-          margin:0;font:650 clamp(46px,8.5vw,76px)/1.04 "Readex Pro","IBM Plex Sans Arabic",sans-serif;letter-spacing:-.055em
-        }
-        #smartResponsiveLanding h1 span{color:#0b8d3a;font-weight:360}
-        #smartResponsiveLanding .sr-lead{
-          max-width:680px;margin:20px 0 0;color:#52675e;font-size:17px;line-height:1.95
-        }
-        #smartResponsiveLanding .sr-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
-        #smartResponsiveLanding .sr-primary,#smartResponsiveLanding .sr-secondary{
-          min-height:52px;padding:0 20px;border-radius:15px;display:inline-flex;align-items:center;justify-content:center;
-          text-decoration:none;font-weight:700;font-size:14px
-        }
-        #smartResponsiveLanding .sr-primary{background:#0b653d;color:#fff;border:1px solid #0b653d;box-shadow:0 16px 34px -25px #0b653d}
-        #smartResponsiveLanding .sr-secondary{background:#fff;color:#17362a;border:1px solid rgba(17,76,50,.12)}
-        #smartResponsiveLanding .sr-hero-visual{
-          position:relative;height:330px;margin-top:32px;border-radius:28px;overflow:hidden;
-          background:radial-gradient(75% 110% at 72% 18%,rgba(38,172,91,.22),transparent 56%),linear-gradient(145deg,#082c20,#0b402d 60%,#0b2c22);
-          border:1px solid rgba(108,219,151,.20);box-shadow:0 30px 70px -50px rgba(6,35,25,.78)
-        }
-        #smartResponsiveLanding .sr-hero-visual svg{position:absolute;inset:auto 0 0;width:100%;height:78%;opacity:.92}
-        #smartResponsiveLanding .sr-visual-label{position:absolute;top:22px;right:22px;color:#dff4e7;font-size:13px;line-height:1.75}
-        #smartResponsiveLanding .sr-visual-label b{display:block;font:600 12px "IBM Plex Mono",monospace;letter-spacing:.14em;color:#71dda0}
-        #smartResponsiveLanding .sr-section{padding:64px 0}
-        #smartResponsiveLanding .sr-section-head{display:flex;align-items:flex-end;gap:18px;justify-content:space-between;margin-bottom:24px}
-        #smartResponsiveLanding .sr-section-head h2{margin:0;font:650 clamp(32px,5.5vw,48px)/1.15 "Readex Pro","IBM Plex Sans Arabic",sans-serif}
-        #smartResponsiveLanding .sr-section-head p{max-width:430px;margin:0;color:#607169;font-size:14px;line-height:1.8}
-        #smartResponsiveLanding .sr-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-        #smartResponsiveLanding .sr-card{
-          min-height:250px;padding:23px;border-radius:24px;background:#fff;border:1px solid rgba(17,76,50,.10);
-          box-shadow:0 24px 56px -46px rgba(9,53,36,.35);display:flex;flex-direction:column;overflow:hidden
-        }
-        #smartResponsiveLanding .sr-card.dark{background:linear-gradient(145deg,#0a3224,#0b442f);color:#eff9f3;border-color:rgba(115,222,157,.14)}
-        #smartResponsiveLanding .sr-card .num{font:600 10px "IBM Plex Mono",monospace;letter-spacing:.14em;color:#0c9141}
-        #smartResponsiveLanding .sr-card.dark .num{color:#77e2a5}
-        #smartResponsiveLanding .sr-card h3{margin:18px 0 8px;font:650 26px/1.25 "Readex Pro","IBM Plex Sans Arabic",sans-serif}
-        #smartResponsiveLanding .sr-card p{margin:0;color:#687971;font-size:13px;line-height:1.8}
-        #smartResponsiveLanding .sr-card.dark p{color:#b9cec1}
-        #smartResponsiveLanding .sr-mini{margin-top:auto;padding-top:24px;display:flex;align-items:flex-end;gap:6px;min-height:68px}
-        #smartResponsiveLanding .sr-mini i{display:block;flex:1;border-radius:8px 8px 3px 3px;background:#dce8e1}
-        #smartResponsiveLanding .sr-card.dark .sr-mini i{background:rgba(108,220,151,.18);border:1px solid rgba(108,220,151,.22)}
-        #smartResponsiveLanding .sr-twin{
-          padding:30px;border-radius:30px;background:linear-gradient(150deg,#05281d,#083a29);color:#f4fbf7;overflow:hidden;border:1px solid rgba(114,223,159,.16)
-        }
-        #smartResponsiveLanding .sr-twin-copy{max-width:620px}
-        #smartResponsiveLanding .sr-twin h2{margin:0;font:650 clamp(34px,6vw,54px)/1.13 "Readex Pro","IBM Plex Sans Arabic",sans-serif}
-        #smartResponsiveLanding .sr-twin p{color:#b8ccc1;font-size:15px;line-height:1.9}
-        #smartResponsiveLanding .sr-twin-map{height:270px;margin-top:26px;border-radius:22px;background:rgba(5,24,17,.55);border:1px solid rgba(112,219,155,.13);overflow:hidden}
-        #smartResponsiveLanding .sr-twin-map svg{width:100%;height:100%}
-        #smartResponsiveLanding .sr-profile{
-          display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:28px;border-radius:28px;background:#eef3ef;border:1px solid rgba(17,76,50,.10)
-        }
-        #smartResponsiveLanding .sr-profile h2{margin:0 0 10px;font:650 34px/1.2 "Readex Pro","IBM Plex Sans Arabic",sans-serif}
-        #smartResponsiveLanding .sr-profile p{margin:0;color:#5c6e65;line-height:1.85}
-        #smartResponsiveLanding .sr-profile-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
-        #smartResponsiveLanding .sr-footer{margin-top:64px;padding:34px 0 max(34px,env(safe-area-inset-bottom));border-top:1px solid rgba(17,76,50,.10)}
-        #smartResponsiveLanding .sr-footer-row{display:flex;align-items:center;gap:14px;justify-content:space-between}
-        #smartResponsiveLanding .sr-footer b{font:650 20px "Readex Pro","IBM Plex Sans Arabic",sans-serif}
-        #smartResponsiveLanding .sr-footer span{color:#718178;font-size:12px}
-        html[data-public-theme="dark"] #smartResponsiveLanding{background:#061914;color:#f2f8f4}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-nav{background:linear-gradient(180deg,rgba(6,25,20,.96),rgba(6,25,20,.87) 74%,rgba(6,25,20,0))}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-nav-card{background:rgba(11,43,32,.88);border-color:rgba(120,220,158,.13);box-shadow:0 16px 42px -30px rgba(0,0,0,.8)}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-nav-btn{background:#0c3225;color:#eef8f2;border-color:rgba(120,220,158,.13)}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-lead,
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-section-head p{color:#a8bbb1}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-secondary{background:#0b2d22;color:#edf8f2;border-color:rgba(120,220,158,.13)}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-card{background:#0a281e;color:#f2f8f4;border-color:rgba(120,220,158,.11);box-shadow:0 24px 56px -44px rgba(0,0,0,.78)}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-card p{color:#9fb5a9}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-profile{background:#0a261d;border-color:rgba(120,220,158,.11)}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-profile p,
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-footer span{color:#9db2a7}
-        html[data-public-theme="dark"] #smartResponsiveLanding .sr-footer{border-top-color:rgba(120,220,158,.11)}
-      }
-      @media(max-width:680px){
-        #smartResponsiveLanding .sr-wrap{padding:0 16px}
-        #smartResponsiveLanding .sr-nav-card{min-height:62px;border-radius:18px;padding:8px 10px}
-        #smartResponsiveLanding .sr-logo{width:104px;height:38px}
-        #smartResponsiveLanding .sr-nav-btn{height:44px;min-width:44px;padding:0 11px}
-        #smartResponsiveLanding .sr-nav-btn.menu{min-width:78px}
-        #smartResponsiveLanding .sr-hero{padding:38px 0 26px}
-        #smartResponsiveLanding h1{font-size:clamp(42px,13vw,58px)}
-        #smartResponsiveLanding .sr-lead{font-size:15px;line-height:1.9}
-        #smartResponsiveLanding .sr-actions{display:grid;grid-template-columns:1fr 1fr}
-        #smartResponsiveLanding .sr-primary,#smartResponsiveLanding .sr-secondary{padding:0 13px;font-size:13px}
-        #smartResponsiveLanding .sr-hero-visual{height:260px;border-radius:23px}
-        #smartResponsiveLanding .sr-section{padding:50px 0}
-        #smartResponsiveLanding .sr-section-head{display:block}
-        #smartResponsiveLanding .sr-section-head p{margin-top:10px}
-        #smartResponsiveLanding .sr-grid{grid-template-columns:1fr;gap:11px}
-        #smartResponsiveLanding .sr-card{min-height:205px;padding:20px;border-radius:21px}
-        #smartResponsiveLanding .sr-card h3{font-size:24px}
-        #smartResponsiveLanding .sr-twin{padding:22px;border-radius:24px}
-        #smartResponsiveLanding .sr-twin-map{height:220px}
-        #smartResponsiveLanding .sr-profile{grid-template-columns:1fr;padding:22px;border-radius:23px}
-        #smartResponsiveLanding .sr-profile-actions{justify-content:stretch}
-        #smartResponsiveLanding .sr-profile-actions a{flex:1}
-        #smartResponsiveLanding .sr-footer-row{align-items:flex-start;flex-direction:column}
-      }
-      @media(max-width:390px){
-        #smartResponsiveLanding .sr-wrap{padding-inline:13px}
-        #smartResponsiveLanding .sr-logo{width:94px}
-        #smartResponsiveLanding .sr-nav-btn.menu{min-width:70px;font-size:12px}
-        #smartResponsiveLanding .sr-actions{grid-template-columns:1fr}
-        #smartResponsiveLanding .sr-hero-visual{height:235px}
-      }
-
       @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
     `;
     document.head.appendChild(style);
@@ -296,118 +158,20 @@
   function setTheme(t){
     document.documentElement.dataset.publicTheme=t;
     document.documentElement.style.colorScheme=t;
-    const buttons=[document.getElementById('smartSafeTheme'),document.getElementById('smartMobileTheme')].filter(Boolean);
-    buttons.forEach(b=>{
+    const b=document.getElementById('smartSafeTheme');
+    if(b){
       b.textContent=t==='dark'?'☀':'☾';
       b.title=t==='dark'?'تفعيل الوضع النهاري':'تفعيل الوضع الليلي';
       b.setAttribute('aria-pressed',String(t==='dark'));
-    });
+    }
     let meta=document.querySelector('meta[name="theme-color"]');
     if(!meta){meta=document.createElement('meta');meta.name='theme-color';document.head.appendChild(meta)}
     meta.content=t==='dark'?'#061914':'#F2F6F3';
     try{localStorage.setItem('smart-hsr-public-theme',t)}catch(e){}
   }
 
-
-  function responsiveTarget(name){
-    if(matchMedia('(max-width:1024px)').matches){
-      const map={platform:'#sr-platform',solutions:'#sr-solutions',twin:'#sr-twin',profile:'#sr-profile'};
-      return map[name]?document.querySelector(map[name]):null;
-    }
-    const map={platform:section('02 Statement'),solutions:section('04 Product Bento'),twin:section('06 Digital Twin Signature'),profile:section('07 Company Profile')};
-    return map[name]||null;
-  }
-
-  function installResponsiveLanding(){
-    if(document.getElementById('smartResponsiveLanding')) return;
-    const root=document.createElement('main');
-    root.id='smartResponsiveLanding';
-    root.dir='rtl';
-    root.innerHTML=`
-      <div class="sr-nav">
-        <div class="sr-wrap">
-          <div class="sr-nav-card">
-            <img class="sr-logo" src="Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR">
-            <div class="sr-nav-spacer"></div>
-            <button class="sr-nav-btn menu" type="button" id="smartMobileMenu">القائمة</button>
-            <button class="sr-nav-btn" type="button" id="smartMobileTheme" aria-label="تبديل المظهر">☾</button>
-          </div>
-        </div>
-      </div>
-      <div class="sr-wrap">
-        <section class="sr-hero" id="sr-platform">
-          <div class="sr-kicker" dir="ltr">SMART MUNICIPAL OPERATING PLATFORM</div>
-          <h1>من الميدان<br><span>إلى القرار.</span></h1>
-          <p class="sr-lead">منظومة بلدية ذكية تربط الحصر والبيانات المكانية والتشغيل والمستخدمين في مسار مؤسسي واحد، مع عزل كل جهة وصلاحياتها.</p>
-          <div class="sr-actions">
-            <a class="sr-primary" href="Home.html">الدخول إلى SMART HSR</a>
-            <a class="sr-secondary" href="#sr-solutions">استكشف المنصة</a>
-          </div>
-          <div class="sr-hero-visual">
-            <div class="sr-visual-label"><b>FIELD → DATA → OPERATIONS → DECISION</b>شبكة تشغيل مكانية تربط الميدان بالقرار.</div>
-            <svg viewBox="0 0 900 360" aria-hidden="true">
-              <defs><linearGradient id="srg" x1="0" x2="1"><stop offset="0" stop-color="#73e3a2"/><stop offset="1" stop-color="#38bdf8"/></linearGradient></defs>
-              <g stroke="rgba(134,225,170,.16)" stroke-width="1" fill="none">
-                <path d="M0 310L180 195L350 280L515 145L690 230L900 92"/>
-                <path d="M0 250L170 120L350 205L505 72L720 150L900 35"/>
-                <path d="M105 360L210 65M280 360L355 50M470 360L520 20M680 360L710 10"/>
-              </g>
-              <g stroke="url(#srg)" stroke-width="3" fill="none" opacity=".75"><path d="M36 286L190 178L343 247L508 126L684 211L862 104"/></g>
-              <g fill="#74e6a4"><circle cx="190" cy="178" r="6"/><circle cx="508" cy="126" r="6"/><circle cx="684" cy="211" r="6"/></g>
-              <g fill="#e7fff0"><circle cx="343" cy="247" r="5"/><circle cx="862" cy="104" r="5"/></g>
-            </svg>
-          </div>
-        </section>
-
-        <section class="sr-section" id="sr-solutions">
-          <div class="sr-section-head"><div><div class="sr-kicker">OPERATIONAL LAYERS</div><h2>الخدمات الأساسية</h2></div><p>واجهات تشغيلية واضحة، من المراقب الميداني حتى مركز القيادة، ضمن نفس الهوية المؤسسية.</p></div>
-          <div class="sr-grid">
-            <article class="sr-card"><span class="num">01 · FIELD SURVEY</span><h3>الحصر الميداني الذكي</h3><p>ملاحظات موثقة بالموقع والصورة، تمر من الرصد إلى المعالجة والتحقق.</p><div class="sr-mini"><i style="height:28px"></i><i style="height:48px"></i><i style="height:36px"></i><i style="height:58px"></i></div></article>
-            <article class="sr-card dark"><span class="num">02 · SMART LANDS</span><h3>الأراضي والممتلكات</h3><p>سجل مكاني منظم للمنح والقرارات والمستندات ونسب الاكتمال.</p><div class="sr-mini"><i style="height:36px"></i><i style="height:58px"></i><i style="height:42px"></i><i style="height:64px"></i></div></article>
-            <article class="sr-card"><span class="num">03 · MOBILITY</span><h3>الحركة الذكية</h3><p>المركبات والمهام والتغطية التشغيلية والحوادث في مسار واحد.</p><div class="sr-mini"><i style="height:45px"></i><i style="height:30px"></i><i style="height:62px"></i><i style="height:52px"></i></div></article>
-            <article class="sr-card dark"><span class="num">04 · COMMAND CENTER</span><h3>مركز القيادة</h3><p>رؤية تنفيذية موحدة للمؤشرات والمستخدمين والتشغيل والقرارات.</p><div class="sr-mini"><i style="height:52px"></i><i style="height:39px"></i><i style="height:67px"></i><i style="height:46px"></i></div></article>
-            <article class="sr-card"><span class="num">05 · USERS</span><h3>المستخدمون والتشغيل</h3><p>دخول واحد وتوجيه تلقائي حسب الجهة والدور والصلاحيات المعتمدة.</p><div class="sr-mini"><i style="height:34px"></i><i style="height:54px"></i><i style="height:45px"></i><i style="height:62px"></i></div></article>
-            <article class="sr-card dark"><span class="num">06 · MULTI-TENANT</span><h3>جهات متعددة، عزل كامل</h3><p>كل بلدية أو مؤسسة تعمل ضمن نطاقها وبياناتها وصلاحياتها دون تداخل.</p><div class="sr-mini"><i style="height:58px"></i><i style="height:42px"></i><i style="height:65px"></i><i style="height:36px"></i></div></article>
-          </div>
-        </section>
-
-        <section class="sr-section" id="sr-twin">
-          <div class="sr-twin">
-            <div class="sr-twin-copy"><div class="sr-kicker">SMART HSR DIGITAL TWIN</div><h2>نموذج واحد.<br>طبقات تشغيلية مترابطة.</h2><p>النقاط والعناصر والمواقع والبلاغات تظهر في سياق مكاني قابل للتحليل، مع بقاء الخريطة هي المرجع البصري للتشغيل.</p></div>
-            <div class="sr-twin-map">
-              <svg viewBox="0 0 900 330" aria-hidden="true">
-                <g stroke="rgba(116,224,159,.14)" fill="none"><path d="M0 265L140 178L286 242L425 118L575 205L736 96L900 170"/><path d="M20 180L160 92L305 155L450 58L600 136L760 42L900 104"/><path d="M95 330L180 46M260 330L330 30M445 330L480 10M655 330L680 0M815 330L835 25"/></g>
-                <g stroke="#71dda0" stroke-width="2.5" fill="none" opacity=".72"><path d="M38 245L158 164L294 222L436 108L584 194L742 89L868 154"/></g>
-                <g fill="#83edaf"><circle cx="158" cy="164" r="7"/><circle cx="436" cy="108" r="7"/><circle cx="584" cy="194" r="7"/><circle cx="742" cy="89" r="7"/></g>
-                <g fill="#fff"><circle cx="294" cy="222" r="5"/><circle cx="868" cy="154" r="5"/></g>
-              </svg>
-            </div>
-          </div>
-        </section>
-
-        <section class="sr-section" id="sr-profile">
-          <div class="sr-profile">
-            <div><div class="sr-kicker">COMPANY & PLATFORM PROFILE</div><h2>الملف التعريفي</h2><p>الرؤية، المكونات، نموذج التشغيل، والخدمات في وثيقة واحدة مناسبة للاجتماعات الحكومية والشراكات المؤسسية.</p></div>
-            <div class="sr-profile-actions">
-              <a class="sr-primary" href="${PROFILE_PREVIEW}" target="_blank" rel="noopener">عرض الملف</a>
-              <a class="sr-secondary" href="${PROFILE_DOWNLOAD}" target="_blank" rel="noopener">تنزيل PDF</a>
-            </div>
-          </div>
-        </section>
-
-        <footer class="sr-footer">
-          <div class="sr-footer-row"><div><b>SMART HSR</b><br><span>المنصة البلدية الذكية للإدارة والتشغيل</span></div><div><span>التطوير والتشغيل التقني</span><br><b style="font-size:15px;letter-spacing:.08em">BLUMARK24</b></div></div>
-        </footer>
-      </div>
-    `;
-    document.body.appendChild(root);
-    document.getElementById('smartMobileMenu')?.addEventListener('click',()=>document.getElementById('smartSafeMenu')?.classList.add('open'));
-    document.getElementById('smartMobileTheme')?.addEventListener('click',()=>setTheme(document.documentElement.dataset.publicTheme==='dark'?'light':'dark'));
-  }
-
   function installExternalUI(){
     installCSS();
-    installResponsiveLanding();
 
     if(!document.getElementById('smartSafeTheme')){
       const b=document.createElement('button');
@@ -427,7 +191,8 @@
       menu.addEventListener('click',e=>{
         if(e.target===menu){menu.classList.remove('open');return}
         const b=e.target.closest('[data-go]'); if(!b)return;
-        menu.classList.remove('open'); go(responsiveTarget(b.dataset.go));
+        const map={platform:section('02 Statement'),solutions:section('04 Product Bento'),twin:section('06 Digital Twin Signature'),profile:section('07 Company Profile')};
+        menu.classList.remove('open'); go(map[b.dataset.go]);
       });
     }
 
@@ -438,7 +203,8 @@
       document.body.appendChild(tail);
       tail.addEventListener('click',e=>{
         const a=e.target.closest('[data-tail]'); if(!a)return; e.preventDefault();
-        go(responsiveTarget(a.dataset.tail));
+        const map={platform:section('02 Statement'),solutions:section('04 Product Bento'),twin:section('06 Digital Twin Signature'),profile:section('07 Company Profile')};
+        go(map[a.dataset.tail]);
       });
     }
   }
