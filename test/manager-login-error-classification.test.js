@@ -61,22 +61,25 @@ test('manager-login.html: sign-in and the manager-authorization lookup are in se
   const lookupTry = submitHandler.indexOf('try {', signInTry + 1);
   assert.ok(signInTry >= 0 && lookupTry > signInTry, 'expected two separate try blocks (auth, then lookup)');
   // The sign-in try/catch must not contain the Firestore lookup, and vice versa.
+  // (probeDb/probeAuth: a memory-only credential+authorization probe, kept
+  // separate from the persisted managerAuth session — see manager-login.html
+  // lines ~276-284.)
   const signInBlock = submitHandler.slice(signInTry, lookupTry);
-  assert.doesNotMatch(signInBlock, /doc\(db, ["']managers["']/);
+  assert.doesNotMatch(signInBlock, /doc\(probeDb, ["']managers["']/);
   const lookupBlock = submitHandler.slice(lookupTry);
-  assert.match(lookupBlock, /doc\(db, ["']managers["']/);
+  assert.match(lookupBlock, /doc\(probeDb, ["']managers["']/);
 });
 
 test('manager-login.html: a real credentials failure and a system/lookup failure show different messages', () => {
   const source = read('manager-login.html');
-  assert.match(source, /فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور/);
+  assert.match(source, /البريد الإلكتروني أو كلمة المرور غير صحيحة/);
   assert.match(source, /تعذر الاتصال بخدمة المصادقة حاليًا/);
-  assert.match(source, /تعذر التحقق من صلاحياتك حاليًا/);
+  assert.match(source, /تعذر التحقق من صلاحيات القيادة حاليًا/);
   // The three messages must be distinct strings, not the same text reused.
   const messages = [
-    'فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور',
-    'تعذر الاتصال بخدمة المصادقة حاليًا',
-    'تعذر التحقق من صلاحياتك حاليًا',
+    'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+    'تعذر الاتصال بخدمة المصادقة حاليًا. حاول لاحقًا.',
+    'تعذر التحقق من صلاحيات القيادة حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.',
   ];
   assert.equal(new Set(messages).size, messages.length);
 });
@@ -84,7 +87,7 @@ test('manager-login.html: a real credentials failure and a system/lookup failure
 test('manager-login.html: a manager-authorization lookup failure signs the user out rather than leaving an unverified session', () => {
   const source = read('manager-login.html');
   const lookupCatch = source.slice(source.indexOf('} catch (lookupErr)'));
-  assert.match(lookupCatch, /await signOut\(auth\)/);
+  assert.match(lookupCatch, /await signOut\(probeAuth\)/);
 });
 
 test('manager-login.html: Firebase configuration resolution failure disables the form instead of leaving it silently broken', () => {

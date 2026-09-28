@@ -209,12 +209,19 @@ service cloud.firestore {
     }
 
     // ==========================================================
-    // presence/{presenceId} — verified deployed behavior, manager-only
+    // presence/{presenceId} — manager-only, same-organization only.
+    // Phase 25 audit fix: read was previously unscoped by organizationId
+    // (any active manager, any organization) and write did not verify the
+    // written organizationId matched the manager's own — both closed here,
+    // mirroring the existing users/ and observations/ tenant-isolation
+    // pattern. Confirmed via test/phase25-multi-org-isolation.test.js.
     // ==========================================================
     match /presence/{presenceId} {
-      allow read: if isActiveManager();
+      allow read: if isActiveManager()
+        && resource.data.organizationId == managerOrgId();
       allow write: if isActiveManager()
-        && presenceId == request.auth.token.email;
+        && presenceId == request.auth.token.email
+        && request.resource.data.organizationId == managerOrgId();
     }
 
     // ==========================================================
