@@ -2,6 +2,9 @@
   "name": "workspace",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build:css": "npx tailwindcss -i ./input.css -o ./output.css --minify",
     "watch:css": "npx tailwindcss -i ./input.css -o ./output.css --watch",
