@@ -151,12 +151,11 @@
         #smartSafeFooter .card b{font-size:21px}
       }
 
-      html.smart-claude-fit,html.smart-claude-fit body{overflow-x:hidden!important}
-      html.smart-claude-fit [data-screen-label]{transform-origin:top center!important}
-      html.smart-claude-fit .smart-fit-nav{box-sizing:border-box!important}
+      html.smart-root-fit,html.smart-root-fit body{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
+      html.smart-root-fit body{margin:0!important}
+      html.smart-root-fit #smartSafeFooter{position:relative;z-index:2}
       @media(max-width:1024px){
-        html.smart-claude-fit [data-screen-label]{max-width:none!important}
-        html.smart-claude-fit #smartSafeFooter{overflow:hidden}
+        html.smart-root-fit #smartSafeTheme{width:44px;height:44px;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left))}
       }
 
       @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
@@ -180,98 +179,73 @@
   }
 
 
-  let fitRaf=0;
+  let rootFitTimer=0;
 
-  function findClaudeNav(){
-    const candidates=[...document.querySelectorAll('button,a,span,div')].filter(el=>norm(el.textContent)==='القائمة');
-    for(const candidate of candidates){
-      let node=candidate;
-      for(let i=0;i<6&&node&&node!==document.body;i++,node=node.parentElement){
-        const txt=norm(node.textContent);
-        const style=getComputedStyle(node);
-        if((txt.includes('العربية')||txt.includes('EN')) && (style.position==='fixed'||style.position==='sticky'||node.getBoundingClientRect().width>240)){
-          return node;
-        }
-      }
+  function findClaudeRoot(){
+    const sections=[...document.querySelectorAll('[data-screen-label]')];
+    if(!sections.length) return null;
+    let node=sections[0];
+    while(node&&node.parentElement&&node.parentElement!==document.body){
+      const parent=node.parentElement;
+      if(sections.every(section=>parent.contains(section))) node=parent;
+      else break;
     }
-    return null;
+    if(node===document.body||node===document.documentElement) return null;
+    return node;
   }
 
-  function fitApprovedClaudeCanvas(){
-    cancelAnimationFrame(fitRaf);
-    fitRaf=requestAnimationFrame(()=>{
+  function clearRootFit(root){
+    if(!root) return;
+    root.style.removeProperty('width');
+    root.style.removeProperty('max-width');
+    root.style.removeProperty('min-width');
+    root.style.removeProperty('zoom');
+    root.style.removeProperty('margin-left');
+    root.style.removeProperty('margin-right');
+  }
+
+  function fitApprovedClaudeRoot(){
+    clearTimeout(rootFitTimer);
+    rootFitTimer=setTimeout(()=>{
+      const root=findClaudeRoot();
+      if(!root) return;
       const viewport=Math.max(320,document.documentElement.clientWidth||window.innerWidth||320);
       const mobile=viewport<=1024;
-      document.documentElement.classList.toggle('smart-claude-fit',mobile);
+      document.documentElement.classList.toggle('smart-root-fit',mobile);
+      clearRootFit(root);
+      if(!mobile) return;
 
-      document.querySelectorAll('[data-screen-label]').forEach(sectionEl=>{
-        // Always reset before measuring the original Claude artboard.
-        sectionEl.style.zoom='';
-        sectionEl.style.width='';
-        sectionEl.style.minWidth='';
-        sectionEl.style.marginInline='';
-
-        if(!mobile) return;
-
-        const natural=Math.max(sectionEl.scrollWidth,Math.ceil(sectionEl.getBoundingClientRect().width));
-        const usable=Math.max(300,viewport-2);
-        if(natural>usable*1.015){
-          const ratio=Math.min(1,usable/natural);
-          // CSS zoom preserves the approved internal composition, typography,
-          // imagery and absolute geometry while fitting the whole artboard.
-          sectionEl.style.width=(100/ratio).toFixed(4)+'%';
-          sectionEl.style.minWidth=(100/ratio).toFixed(4)+'%';
-          sectionEl.style.zoom=ratio.toFixed(5);
-          sectionEl.style.marginInline='auto';
-        }else{
-          sectionEl.style.width='100%';
-          sectionEl.style.minWidth='0';
-        }
-      });
-
-      const nav=findClaudeNav();
-      document.querySelectorAll('.smart-fit-nav').forEach(el=>el.classList.remove('smart-fit-nav'));
-      if(nav&&mobile){
-        nav.classList.add('smart-fit-nav');
-        nav.style.zoom='';
-        nav.style.width='';
-        nav.style.maxWidth='';
-        nav.style.left='';
-        nav.style.right='';
-        nav.style.marginInline='';
-
-        const natural=Math.max(nav.scrollWidth,Math.ceil(nav.getBoundingClientRect().width));
-        const usable=Math.max(296,viewport-24);
-        if(natural>usable){
-          const ratio=Math.min(1,usable/natural);
-          nav.style.width=(100/ratio).toFixed(4)+'%';
-          nav.style.maxWidth=(100/ratio).toFixed(4)+'%';
-          nav.style.zoom=ratio.toFixed(5);
-          nav.style.marginInline='auto';
-        }
-      }
-    });
+      // Keep the approved Claude composition intact. Render the original canvas
+      // at a stable desktop/tablet width, then scale the whole tree as one unit.
+      // This avoids per-card distortion, clipped columns and header/content drift.
+      const designWidth=viewport<=680?1080:1180;
+      const scale=Math.min(1,viewport/designWidth);
+      root.style.setProperty('width',designWidth+'px','important');
+      root.style.setProperty('max-width','none','important');
+      root.style.setProperty('min-width',designWidth+'px','important');
+      root.style.setProperty('zoom',scale.toFixed(5),'important');
+      root.style.setProperty('margin-left','auto','important');
+      root.style.setProperty('margin-right','auto','important');
+    },0);
   }
 
-  function installClaudeResponsiveFit(){
-    fitApprovedClaudeCanvas();
+  function installClaudeRootFit(){
+    fitApprovedClaudeRoot();
     let resizeTimer=0;
-    addEventListener('resize',()=>{
+    const refresh=()=>{
       clearTimeout(resizeTimer);
-      resizeTimer=setTimeout(fitApprovedClaudeCanvas,100);
-    },{passive:true});
-    addEventListener('orientationchange',()=>{
-      clearTimeout(resizeTimer);
-      resizeTimer=setTimeout(fitApprovedClaudeCanvas,180);
-    },{passive:true});
-    if(document.fonts?.ready) document.fonts.ready.then(()=>setTimeout(fitApprovedClaudeCanvas,0));
-    setTimeout(fitApprovedClaudeCanvas,250);
-    setTimeout(fitApprovedClaudeCanvas,900);
+      resizeTimer=setTimeout(fitApprovedClaudeRoot,120);
+    };
+    addEventListener('resize',refresh,{passive:true});
+    addEventListener('orientationchange',refresh,{passive:true});
+    if(document.fonts?.ready) document.fonts.ready.then(()=>setTimeout(fitApprovedClaudeRoot,0));
+    setTimeout(fitApprovedClaudeRoot,250);
+    setTimeout(fitApprovedClaudeRoot,900);
   }
 
   function installExternalUI(){
     installCSS();
-    installClaudeResponsiveFit();
+    installClaudeRootFit();
 
     if(!document.getElementById('smartSafeTheme')){
       const b=document.createElement('button');
