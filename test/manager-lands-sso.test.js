@@ -2,19 +2,19 @@
 // Regression coverage for the direct Lands SSO handoff (Manager side) and
 // the P1 users-search autofill hardening.
 //
-// Architecture: /login.html authenticates the employee once, then calls
-// POST /api/organization/context (self-service: the caller only ever acts
-// on their OWN uid) which forwards the employee's own already-verified ID
-// token to Lands' /api/lands-sso-register (api/_lib/landsBridge.js). Only an
-// opaque, single-use, short-lived handoff code returns to the browser and
-// crosses the redirect URL to Lands — never a password, ID token, or custom
-// token. See test/lands-sso.test.js (Lands repo) for the receiving side.
+// Architecture: /login.html authenticates the employee once through an
+// in-memory probe, resolves the authoritative role, then either establishes
+// the isolated workforce session or performs the trusted Lands SSO handoff.
+// POST /api/organization/context is self-service: the caller only ever acts
+// on their OWN uid and forwards the employee's own already-verified ID token
+// to Lands' /api/lands-sso-register (api/_lib/landsBridge.js). Only an opaque,
+// single-use, short-lived handoff code crosses the redirect URL to Lands —
+// never a password, ID token, or custom token.
 //
 // The handoff handler lives inside api/organization/context.js (dispatched
 // on POST, alongside that file's existing GET org-context lookup) rather
 // than its own top-level api/*.js file, solely to stay within the Vercel
-// Hobby plan's 12-Serverless-Function limit — see the comment above
-// handleLandsSsoHandoff() in that file for the full reasoning.
+// Hobby plan's 12-Serverless-Function limit.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -25,10 +25,6 @@ const vm = require('node:vm');
 const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-// Runs login.html's resolveLandsRedirectBase() for real, in a sandboxed VM
-// with a mocked location.hostname — the same real-execution technique
-// test/firebase-runtime-config.test.js already uses for this app's OWN
-// Production/Preview split, applied to the cross-app SSO redirect target.
 function resolveLandsRedirectBaseFor(hostname) {
   const source = read('login.html');
   const start = source.indexOf('const LANDS_PRODUCTION_HOSTNAMES');
@@ -41,12 +37,22 @@ function resolveLandsRedirectBaseFor(hostname) {
   return sandbox.module.exports.resolveLandsRedirectBase();
 }
 
-// ---- 1. Field login unchanged ----
-test('1. login.html: the Field branch (contractor/supervisor/other) is untouched by the SSO handoff work', () => {
+// ---- 1. Workforce login isolation ----
+test('1. login.html keeps role probing memory-only and persists the workforce session only through the isolated workforce auth', () => {
   const source = read('login.html');
+  assert.match(source, /setPersistence\(probeAuth, inMemoryPersistence\)/);
+  assert.match(source, /signInWithEmailAndPassword\(probeAuth, email, password\)/);
+
+  const persistStart = source.indexOf('async function persistWorkforceSession');
+  const persistEnd = source.indexOf('\n}\n', persistStart) + 2;
+  const persistFn = source.slice(persistStart, persistEnd);
+  assert.match(persistFn, /signInWithEmailAndPassword\(auth, email, password\)/);
+  assert.match(persistFn, /setWorkforcePortalContext\(user, organizationId, role\)/);
+  assert.doesNotMatch(persistFn, /probeAuth/);
+
   const fieldBranch = source.slice(source.indexOf("showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');"));
-  assert.match(fieldBranch, /signInWithEmailAndPassword\(managerAuth, email, password\)/);
-  assert.match(fieldBranch, /signInWithEmailAndPassword\(auth, email, password\)/);
+  assert.match(fieldBranch, /persistWorkforceSession\(email, password, user, organizationId, role \|\| institutionalRole \|\| 'user'\)/);
+  assert.match(fieldBranch, /signOut\(probeAuth\)/);
   assert.match(fieldBranch, /window\.location\.href = 'mobile-map\.html'/);
   assert.match(fieldBranch, /window\.location\.href = 'manager\.html'/);
   assert.match(fieldBranch, /window\.location\.href = 'dashboard\.html'/);
