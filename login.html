@@ -149,7 +149,7 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var
 <main class="frame">
   <header class="bar">
     <div class="brand">
-      <div class="logo" data-owner-gesture><img src="Smart_HSR_Dashboard_Logo.svg" alt="شعار SMART HSR"></div>
+      <div class="logo"><img src="Smart_HSR_Dashboard_Logo.svg" alt="شعار SMART HSR"></div>
       <div><b>SMART HSR</b><span>SMART MUNICIPAL PLATFORM</span></div>
     </div>
     <div class="bar-actions"><a class="back" href="Home.html">العودة لبوابة الدخول</a><button class="theme" type="button" data-theme-toggle aria-label="تبديل المظهر">☀</button></div>
@@ -204,7 +204,7 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var
         <button id="loginButton" type="submit" class="submit">دخول مساحة العمل</button>
       </form>
       <div id="msg" class="message" aria-live="polite"></div>
-      <div class="note">جلسة الدخول الجديدة تستبدل أي جلسة سابقة بعد نجاح التحقق، حتى لا تختلط حسابات المدير والموظفين على نفس المتصفح.</div>
+      <div class="note">جلسة المستخدمين معزولة عن جلسة مدير البلدية. كل حساب يُربط بجهته ودوره قبل فتح مساحة العمل.</div>
       <div class="switch"><span id="leadershipPortalLink" hidden>حساب قيادة بلدية؟ <a href="manager-login.html">افتح بوابة القيادات</a></span><span>مدير بلدية؟ <a href="manager-login.html">بوابة القيادات البلدية</a></span></div>
     </section>
   </div>
@@ -231,10 +231,6 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var
     });
     twin.addEventListener('pointerleave',()=>{twin.style.setProperty('--tx',0);twin.style.setProperty('--ty',0)});
   }
-  // Private convenience gesture only; owner authorization still happens on
-  // owner-login.html. Five quick taps never bypass authentication.
-  const logo=document.querySelector('[data-owner-gesture]');let taps=0,timer=0;
-  logo?.addEventListener('click',()=>{taps++;clearTimeout(timer);timer=setTimeout(()=>taps=0,2400);if(taps>=5){taps=0;clearTimeout(timer);location.href='owner-login.html'}});
 })();
 </script>
 <script type="module">
@@ -268,11 +264,9 @@ function resolveLandsRedirectBase() {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const managerApp = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
-const managerAuth = getAuth(managerApp);
-await setPersistence(managerAuth, browserLocalPersistence);
+await setPersistence(auth, browserLocalPersistence);
 // The probe never persists credentials. It determines the authoritative role
-// before either persistent Auth namespace is touched.
+// before the workforce session is touched.
 const probeApp = initializeApp(firebaseConfig, 'smart-hsr-role-probe');
 const probeAuth = getAuth(probeApp);
 const probeDb = getFirestore(probeApp);
@@ -280,12 +274,20 @@ await setPersistence(probeAuth, inMemoryPersistence);
 const loginButton = document.getElementById('loginButton');
 const msgBox = document.getElementById('msg');
 
-async function clearPersistentPortalSessions() {
-  await Promise.all([
-    signOut(auth).catch(() => {}),
-    signOut(managerAuth).catch(() => {})
-  ]);
-  sessionStorage.removeItem('smartHSRUser');
+const PORTAL_CONTEXT_KEY = 'smartHSRPortalContext';
+
+function setWorkforcePortalContext(user, organizationId, role) {
+  sessionStorage.setItem(PORTAL_CONTEXT_KEY, JSON.stringify({
+    portal: 'workforce',
+    uid: user.uid,
+    organizationId,
+    role: role || 'user'
+  }));
+}
+
+async function persistWorkforceSession(email, password, user, organizationId, role) {
+  await signInWithEmailAndPassword(auth, email, password);
+  setWorkforcePortalContext(user, organizationId, role);
 }
 
 
@@ -310,10 +312,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   try {
     const cred = await signInWithEmailAndPassword(probeAuth, email, password);
     const user = cred.user;
-    // A successful credential probe starts a fresh portal boundary. Any
-    // previous employee/manager browser session is cleared before this new
-    // identity is routed, preventing cross-account or cross-portal bleed.
-    await clearPersistentPortalSessions();
+    // Credential probing is memory-only. A workforce login must never sign out
+    // or overwrite the separate municipal leadership session.
     // managers/{uid} is authoritative. A legacy users/{uid} record must never
     // override a valid organization manager and route them to the wrong page.
     const managerSnap = await getDoc(doc(probeDb, "managers", user.uid));
@@ -321,9 +321,11 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       const manager = managerSnap.data() || {};
       const managerOrg = typeof manager.organizationId === 'string' ? manager.organizationId.trim() : '';
       if (manager.role === 'manager' && manager.active !== false && managerOrg) {
-        await signInWithEmailAndPassword(managerAuth, email, password);
-        await signOut(probeAuth);
-        window.location.href = 'manager.html';
+        await signOut(probeAuth).catch(() => {});
+        showMsg('هذا حساب مدير بلدية معتمد. استخدم بوابة القيادات البلدية.', 'error');
+        document.getElementById('leadershipPortalLink')?.removeAttribute('hidden');
+        loginButton.disabled = false;
+        loginButton.textContent = 'دخول مساحة العمل';
         return;
       }
     }
@@ -375,10 +377,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // Canonical Field path: ignore stale historical Mobility compatibility
     // entitlements and open the one HR-owned workspace.
     if (hasCanonicalPath && canonicalFieldPath && (hasFieldRole || hasFieldDepartmentHeadRole)) {
-      await signInWithEmailAndPassword(auth, email, password);
-      if (role === 'supervisor') {
-        await signInWithEmailAndPassword(managerAuth, email, password);
-      }
+      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
       setTimeout(() => {
@@ -422,7 +421,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     // Canonical Traffic/Mobility path.
     if (hasCanonicalPath && canonicalMobilityPath && mobilityRole) {
-      await signInWithEmailAndPassword(auth, email, password);
+      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
       setTimeout(() => { window.location.href = 'department-head.html?mode=mobility'; }, 450);
@@ -434,7 +433,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // decide routing. Trusted APIs independently enforce the narrow approval
     // operations available to this administration.
     if (hasCanonicalPath && canonicalAdministrativePath && ['department_head','employee'].includes(institutionalRole)) {
-      await signInWithEmailAndPassword(auth, email, password);
+      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ فتح الشؤون الإدارية', 'success');
       setTimeout(() => { window.location.href = 'admin-affairs.html'; }, 450);
@@ -442,7 +441,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
 
     if (hasCanonicalPath && canonicalContractsPath && ['department_head','employee'].includes(institutionalRole)) {
-      await signInWithEmailAndPassword(auth, email, password);
+      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ فتح إدارة العقود والشركات المتعاقدة', 'success');
       setTimeout(() => { window.location.href = 'contractors-registry.html'; }, 450);
@@ -481,10 +480,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // LEGACY COMPATIBILITY ONLY — canonical PHASE16 identities never enter
     // this chooser. No duplicate employee/user record is created.
     if (serviceCount > 1) {
-      await signInWithEmailAndPassword(auth, email, password);
-      if (role === 'supervisor') {
-        await signInWithEmailAndPassword(managerAuth, email, password);
-      }
+      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ فتح خدماتك', 'success');
       setTimeout(() => {
@@ -532,7 +528,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // users/{uid} role, organizationId and department before rendering and
     // calls only the existing department-scoped employee registry LIST action.
     if (hasFieldDepartmentHeadRole && !hasLandsRole && !mobilityRole) {
-      await signInWithEmailAndPassword(auth, email, password);
+      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى مركز قيادة القسم', 'success');
       setTimeout(() => {
@@ -545,7 +541,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // A Mobility-only identity does not need Field or Lands access. The
     // operational page re-verifies mobilityAccess, organization and role.
     if (mobilityRole && !hasFieldRole && !hasLandsRole && !hasFieldDepartmentHeadRole) {
-      await signInWithEmailAndPassword(auth, email, password);
+      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
       await signOut(probeAuth);
       showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى الحركة الذكية', 'success');
       setTimeout(() => {
@@ -556,11 +552,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
 
-    if (role === 'supervisor') {
-      await signInWithEmailAndPassword(managerAuth, email, password);
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
-    }
+    await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
     await signOut(probeAuth);
 
     setTimeout(() => {
