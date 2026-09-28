@@ -114,17 +114,41 @@
       html[data-public-theme="dark"] #smartSafeFooter .developer{background:rgba(10,37,27,.72);border-color:var(--sf-line)}
       html[data-public-theme="dark"] #smartSafeFooter footer{border-top-color:var(--sf-line)}
 
+      @media(max-width:1180px){
+        #smartSafeFooter .wrap{padding:80px 34px 30px}
+        #smartSafeFooter .headline{grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:30px}
+        #smartSafeFooter .cards{gap:13px}
+        #smartSafeFooter .card{min-height:205px;padding:23px}
+      }
       @media(max-width:900px){
         #smartSafeFooter .headline{grid-template-columns:1fr}
         #smartSafeFooter .cards{grid-template-columns:1fr}
         #smartSafeFooter .footer-grid{grid-template-columns:1fr 1fr}
-        #smartSafeFooter .wrap{padding:72px 22px 28px}
+        #smartSafeFooter .wrap{padding:68px 22px 28px}
+        #smartSafeFooter .card{min-height:0}
+        #smartSafeMenu{padding:max(16px,env(safe-area-inset-top)) 16px 16px}
+        #smartSafeMenu .panel{width:min(560px,100%);margin:58px auto auto}
       }
-      @media(max-width:560px){
-        #smartSafeTheme{top:14px;left:14px;width:40px;height:40px}
+      @media(max-width:680px){
+        #smartSafeTheme{top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));width:44px;height:44px;border-radius:13px}
+        #smartSafeMenu{padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+        #smartSafeMenu .panel{margin:56px auto auto;border-radius:22px;padding:12px}
+        #smartSafeMenu button,#smartSafeMenu a{min-height:52px;font-size:14px}
+        #smartSafeFooter .wrap{padding:56px 16px 24px}
+        #smartSafeFooter .headline{gap:22px}
+        #smartSafeFooter .cards{margin-top:28px;gap:11px}
+        #smartSafeFooter .card{padding:20px;border-radius:20px}
+        #smartSafeFooter .card b{font-size:22px}
+        #smartSafeFooter .card p{font-size:13px}
+        #smartSafeFooter footer{margin-top:50px;padding-top:28px}
         #smartSafeFooter .footer-grid{grid-template-columns:1fr}
         #smartSafeFooter .developer{align-items:flex-start;flex-direction:column}
-        #smartSafeFooter .legal{flex-direction:column}
+        #smartSafeFooter .legal{flex-direction:column;gap:10px}
+      }
+      @media(max-width:390px){
+        #smartSafeFooter .wrap{padding-inline:13px}
+        #smartSafeFooter .card{padding:18px}
+        #smartSafeFooter .card b{font-size:21px}
       }
       @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
     `;
