@@ -215,7 +215,7 @@
       }
 
       @media(max-width:680px){
-        #smartSafeTheme{top:78px!important;left:10px!important;width:40px!important;height:40px!important}
+        #smartSafeTheme{top:78px!important;left:auto!important;right:10px!important;width:40px!important;height:40px!important}
 
         .claude-nav{padding:0 8px!important}
         .claude-nav>.claude-nav-card{height:62px!important;padding:0 9px!important;gap:7px!important;border-radius:16px!important}
@@ -263,18 +263,19 @@
         .claude-journey .journey-title{font-size:38px!important}
         .claude-journey .journey-desc{font-size:14px!important;line-height:1.7!important;min-height:0!important;max-width:320px!important}
         .claude-journey .journey-progress{right:16px!important;left:16px!important;bottom:22px!important}
-        .claude-journey .journey-progress .stage-ar{font-size:11px!important}
-        .claude-journey .journey-progress .stage-en{font-size:7px!important}
+        .claude-journey .journey-progress>div:last-child>div{align-items:center!important;text-align:center!important;gap:6px!important;min-width:0!important}
+        .claude-journey .journey-progress .stage-ar{font-size:10px!important;white-space:nowrap!important;line-height:1.2!important}
+        .claude-journey .journey-progress .stage-en{display:none!important}
 
         .claude-bento{padding:78px 0 72px!important}
         .claude-bento .section-inner{padding:0 16px!important;gap:26px!important}
         .claude-bento .bento-grid{grid-template-columns:1fr!important;gap:12px!important}
         .claude-bento .bento-card{min-height:340px!important;border-radius:22px!important}
         .claude-bento .bento-card.bento-twin-card{min-height:440px!important}
-        .claude-bento .bento-card.bento-users-card{min-height:430px!important}
+        .claude-bento .bento-card.bento-users-card{min-height:500px!important}
         .claude-bento .bento-users-router{
-          transform:scale(.62)!important;transform-origin:center center!important;
-          width:160%!important;left:-30%!important;right:auto!important
+          transform:scale(.56)!important;transform-origin:center center!important;
+          width:170%!important;left:-35%!important;right:auto!important
         }
 
         .claude-presence{padding:28px 0 78px!important}
@@ -302,7 +303,8 @@
         .claude-profile .profile-book img{width:170px!important}
       }
 
-      @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
+      @media(max-width:1024px){[data-screen-label]{scroll-margin-top:88px}}
+            @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
     `;
     document.head.appendChild(style);
   }
