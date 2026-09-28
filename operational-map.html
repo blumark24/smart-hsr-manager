@@ -268,6 +268,115 @@
     #intelligencePanel{top:8px;max-height:calc(100% - 96px)}
     #timelinePanel{z-index:11}
   }
+  /* PHASE23 R2 — Living Spatial GovTech map language.
+     Presentation-only: real MapLibre sources, trusted coordinates, tenant
+     boundaries and existing authorization/data contracts remain unchanged. */
+  :root{
+    --r2-emerald:#0a5b45;--r2-emerald-hi:#19d982;--r2-cyan:#4ed7c7;
+    --r2-glass:rgba(5,31,37,.72);--r2-glass-border:rgba(166,244,218,.18);
+    --r2-glow:rgba(25,217,130,.22);
+  }
+  .command-main::before{
+    content:"";position:absolute;inset:0;z-index:3;pointer-events:none;opacity:.72;
+    background:
+      radial-gradient(circle at 18% 22%,rgba(44,224,154,.10),transparent 27%),
+      radial-gradient(circle at 74% 28%,rgba(69,198,211,.08),transparent 24%),
+      linear-gradient(115deg,transparent 0 44%,rgba(33,216,145,.035) 44.2% 44.7%,transparent 45% 100%);
+    background-size:100% 100%,100% 100%,180px 180px;
+    animation:r2SpatialDrift 18s ease-in-out infinite alternate;
+  }
+  @keyframes r2SpatialDrift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-8px,5px,0) scale(1.015)}}
+  .command-header{
+    border-bottom-color:rgba(121,226,184,.16)!important;
+    background:linear-gradient(180deg,rgba(3,29,34,.94),rgba(3,23,31,.88))!important;
+    box-shadow:0 14px 38px rgba(0,12,20,.34),inset 0 -1px 0 rgba(99,238,183,.06)!important;
+  }
+  #kpiStrip{
+    background:linear-gradient(180deg,rgba(4,35,38,.88),rgba(5,27,37,.82))!important;
+    border-bottom-color:rgba(120,229,184,.13)!important;
+    box-shadow:0 12px 34px rgba(0,13,20,.20);
+  }
+  #intelligencePanel,#layerPanel,#timelinePanel,.map-legend,#mapSummary{
+    border-color:var(--r2-glass-border)!important;
+    background:linear-gradient(160deg,rgba(5,34,40,.88),rgba(4,24,34,.82))!important;
+    box-shadow:0 24px 60px rgba(0,12,20,.34),inset 0 1px 0 rgba(255,255,255,.055)!important;
+  }
+  .spatial-mode-rail{
+    position:absolute;top:12px;right:50%;transform:translateX(50%);z-index:12;
+    display:flex;align-items:center;gap:4px;padding:5px;border-radius:18px;
+    border:1px solid var(--r2-glass-border);
+    background:linear-gradient(160deg,rgba(5,36,41,.80),rgba(5,25,34,.74));
+    box-shadow:0 18px 48px rgba(0,12,20,.30),inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter:blur(18px) saturate(135%);-webkit-backdrop-filter:blur(18px) saturate(135%);
+  }
+  .spatial-mode-btn{
+    min-height:35px;padding:0 12px;border:1px solid transparent;border-radius:13px;
+    background:transparent;color:var(--text-muted);font:inherit;font-size:10.5px;font-weight:800;cursor:pointer;
+    display:flex;align-items:center;gap:6px;white-space:nowrap;transition:transform .18s ease,background .18s ease,color .18s ease,border-color .18s ease;
+  }
+  .spatial-mode-btn::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.58;box-shadow:0 0 0 4px transparent}
+  .spatial-mode-btn:hover{color:var(--text);background:rgba(255,255,255,.055);transform:translateY(-1px)}
+  .spatial-mode-btn.active{
+    color:#f7fffb;border-color:rgba(72,235,166,.34);
+    background:linear-gradient(180deg,rgba(25,187,112,.28),rgba(10,107,74,.28));
+    box-shadow:0 8px 22px rgba(13,155,96,.18),inset 0 1px 0 rgba(255,255,255,.08)
+  }
+  .spatial-mode-btn.active::before{background:#42ed9a;opacity:1;box-shadow:0 0 0 4px rgba(66,237,154,.10),0 0 13px rgba(66,237,154,.58)}
+  body[data-spatial-mode="field"] .command-main::before{opacity:.58}
+  body[data-spatial-mode="gis"] .command-main::before{opacity:.78}
+  body[data-spatial-mode="operations"] .command-main::before{opacity:.68;filter:saturate(1.08)}
+  body[data-spatial-mode="decision"] .command-main::before{opacity:.88;filter:saturate(1.14)}
+  #timelinePanel.r2-spotlight{border-color:rgba(56,238,158,.34)!important;box-shadow:0 22px 58px rgba(0,12,20,.32),0 0 0 1px rgba(42,218,143,.08),0 0 28px rgba(30,212,136,.12)!important}
+  .geo-marker{
+    background:linear-gradient(155deg,rgba(8,45,50,.96),rgba(5,27,38,.96))!important;
+    box-shadow:0 0 0 3px rgba(242,255,249,.78),0 8px 22px rgba(0,10,17,.52),0 0 20px color-mix(in srgb,var(--marker-status,#64748b) 28%,transparent)!important;
+    transition:transform .18s ease,box-shadow .18s ease;
+  }
+  .geo-marker:hover,.geo-marker:focus-visible{transform:translateY(-2px) scale(1.05)}
+  .geo-marker-label{
+    position:absolute;top:calc(100% + 7px);right:50%;transform:translateX(50%) translateY(-2px);
+    max-width:190px;min-width:max-content;padding:5px 8px;border-radius:9px;pointer-events:none;
+    background:rgba(4,28,34,.90);border:1px solid rgba(153,237,204,.22);color:#f5fffb;
+    box-shadow:0 12px 30px rgba(0,10,18,.34),inset 0 1px 0 rgba(255,255,255,.06);
+    font-size:9.5px;font-weight:750;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    opacity:0;visibility:hidden;transition:opacity .16s ease,transform .16s ease;backdrop-filter:blur(12px);
+  }
+  .geo-marker.show-label .geo-marker-label,.geo-marker.selected .geo-marker-label{opacity:1;visibility:visible;transform:translateX(50%) translateY(0)}
+  .geo-cluster{position:relative;background:linear-gradient(145deg,color-mix(in srgb,currentColor 82%,#062b31),#0a3340)!important}
+  .geo-cluster::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px solid currentColor;opacity:.18;animation:r2ClusterBreath 2.8s ease-in-out infinite}
+  @keyframes r2ClusterBreath{0%,100%{transform:scale(.94);opacity:.10}50%{transform:scale(1.08);opacity:.28}}
+  .maplibregl-popup-content{
+    border-radius:20px!important;border-color:rgba(147,235,201,.22)!important;
+    background:linear-gradient(160deg,rgba(4,31,38,.94),rgba(4,23,34,.91))!important;
+    box-shadow:0 28px 72px -18px rgba(0,8,15,.82),inset 0 1px 0 rgba(255,255,255,.07)!important;
+  }
+  .geo-popup .actions .btn-details{
+    background:linear-gradient(180deg,#139d69,#08714f)!important;border-color:rgba(96,239,178,.48)!important;
+    box-shadow:0 12px 26px -14px rgba(30,230,148,.72)!important
+  }
+  html[data-theme="light"] .command-main::before{opacity:.34}
+  html[data-theme="light"] .command-header{background:linear-gradient(180deg,rgba(249,253,250,.96),rgba(239,248,243,.92))!important}
+  html[data-theme="light"] #kpiStrip{background:linear-gradient(180deg,rgba(248,252,249,.94),rgba(240,248,244,.92))!important}
+  html[data-theme="light"] #intelligencePanel,
+  html[data-theme="light"] #layerPanel,
+  html[data-theme="light"] #timelinePanel,
+  html[data-theme="light"] .map-legend,
+  html[data-theme="light"] #mapSummary,
+  html[data-theme="light"] .spatial-mode-rail{
+    background:linear-gradient(160deg,rgba(255,255,255,.94),rgba(239,248,243,.91))!important;
+    border-color:rgba(27,117,78,.16)!important;box-shadow:0 18px 45px rgba(20,65,46,.16),inset 0 1px 0 rgba(255,255,255,.9)!important
+  }
+  html[data-theme="light"] .spatial-mode-btn.active{color:#073e2e;background:linear-gradient(180deg,rgba(36,194,125,.18),rgba(21,137,89,.12));border-color:rgba(22,133,86,.25)}
+  html[data-theme="light"] .geo-marker-label{background:rgba(249,253,250,.95);color:#10271d;border-color:rgba(24,121,79,.18);box-shadow:0 12px 28px rgba(24,70,50,.18)}
+  @media(max-width:900px){
+    .spatial-mode-rail{top:8px;right:50%;max-width:calc(100% - 116px);overflow-x:auto;scrollbar-width:none;padding:4px}
+    .spatial-mode-rail::-webkit-scrollbar{display:none}.spatial-mode-btn{min-height:38px;padding:0 10px;font-size:10px}
+    .geo-marker-label{max-width:150px;font-size:9px}
+  }
+  @media(max-width:560px){
+    .spatial-mode-rail{right:8px;left:58px;transform:none;justify-content:flex-start}
+    .spatial-mode-btn{flex:0 0 auto}
+  }
   @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
   }
@@ -339,6 +448,12 @@
           <div class="panel-tab-content" id="filtersTab" role="tabpanel" hidden><div class="panel-section-title">حالة البلاغات وتصنيفها</div><div id="filterChips"></div></div>
         </div>
       </div>
+      <nav id="spatialModeRail" class="spatial-mode-rail" aria-label="طبقات التجربة المكانية">
+        <button class="spatial-mode-btn active" type="button" data-spatial-mode="field" aria-pressed="true">الميدان</button>
+        <button class="spatial-mode-btn" type="button" data-spatial-mode="gis" aria-pressed="false">الجغرافيا</button>
+        <button class="spatial-mode-btn" type="button" data-spatial-mode="operations" aria-pressed="false">التشغيل</button>
+        <button class="spatial-mode-btn" type="button" data-spatial-mode="decision" aria-pressed="false">القرار</button>
+      </nav>
       <div class="map-legend" aria-label="مفتاح الحالات"><span class="legend-item"><i class="legend-swatch" style="background:#ef4444"></i>انتظار</span><span class="legend-item"><i class="legend-swatch" style="background:#f5a524"></i>معالجة</span><span class="legend-item"><i class="legend-swatch" style="background:#22c55e"></i>مكتمل</span></div>
       <section id="timelinePanel" aria-label="التسلسل الزمني للعمليات">
         <div class="timeline-head"><div class="timeline-title">◷ الاستعراض الزمني</div><div class="timeline-meta"><span id="timelineDate">كل الفترات</span> · <span id="timelineState">يعرض كامل اللقطة</span></div></div>
@@ -855,6 +970,7 @@ function buildObservationPinElement(feature) {
   const color = STATUS_COLOR[status] || STATUS_COLOR.NEUTRAL;
   const category = feature.properties.category || 'UNKNOWN';
   const priority = feature.properties.priority || '';
+  const label = feature.properties.label || feature.properties.displayId || '';
   const iconPaths = {
     ROAD: '<path d="M9 22 14 8h4l5 14M14 17h5M15 12h3"/>',
     SAFETY: '<path d="M16 7 9 10v5c0 4 3 7 7 9 4-2 7-5 7-9v-5z"/><path d="m13 15 2 2 4-5"/>',
@@ -867,8 +983,8 @@ function buildObservationPinElement(feature) {
   el.style.setProperty('--marker-status', color);
   el.setAttribute('role', 'button');
   el.setAttribute('tabindex', '0');
-  el.setAttribute('aria-label', `بلاغ ميداني — ${STATUS_LABEL[status] || status}`);
-  el.innerHTML = `<svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[category] || '<circle cx="16" cy="16" r="7"/><path d="M16 12v5M16 21h.01"/>'}</svg>${priority === 'CRITICAL' || priority === 'HIGH' ? `<span class="priority-badge">${priority === 'CRITICAL' ? '!' : 'H'}</span>` : ''}`;
+  el.setAttribute('aria-label', `${label ? label + ' — ' : ''}بلاغ ميداني — ${STATUS_LABEL[status] || status}`);
+  el.innerHTML = `<svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[category] || '<circle cx="16" cy="16" r="7"/><path d="M16 12v5M16 21h.01"/>'}</svg>${priority === 'CRITICAL' || priority === 'HIGH' ? `<span class="priority-badge">${priority === 'CRITICAL' ? '!' : 'H'}</span>` : ''}${label ? `<span class="geo-marker-label">${escapeHtml(label)}</span>` : ''}`;
   const activate = (evt) => { evt.stopPropagation(); selectObservation(feature.properties.id, feature.geometry.coordinates); };
   el.addEventListener('click', activate);
   el.addEventListener('keydown', (evt) => { if (evt.key === 'Enter' || evt.key === ' ') activate(evt); });
@@ -917,6 +1033,7 @@ function buildObservationClusterElement(feature) {
 function syncObservationMarkers() {
   if (!map.getSource(OBS_SRC)) { clearObservationMarkers(); return; }
   const features = map.querySourceFeatures(OBS_SRC);
+  const showLabels = map.getZoom() >= 15;
   const seen = new Set();
   for (const feature of features) {
     const isCluster = !!feature.properties.cluster;
@@ -934,6 +1051,7 @@ function syncObservationMarkers() {
     } else {
       marker.setLngLat(feature.geometry.coordinates);
     }
+    if (!isCluster) marker.getElement().classList.toggle('show-label', showLabels || feature.properties.id === selectedEntityId);
   }
   for (const [key, marker] of observationMarkers) {
     if (!seen.has(key)) { marker.remove(); observationMarkers.delete(key); }
@@ -957,7 +1075,15 @@ function paintObservations(entities) {
     features: entities.map((e) => {
       const data = rawObservationById.get(e.id) || {};
       const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : '';
-      return { type: 'Feature', id: e.id, geometry: e.geometry, properties: { id: e.id, status: e.status || 'PENDING', severityRank: severityRankOf(data), category: data.type || 'UNKNOWN', priority } };
+      return { type: 'Feature', id: e.id, geometry: e.geometry, properties: {
+        id: e.id,
+        status: e.status || 'PENDING',
+        severityRank: severityRankOf(data),
+        category: data.type || 'UNKNOWN',
+        priority,
+        label: data.title || data.displayId || e.municipalRecordId || e.id,
+        displayId: data.displayId || e.municipalRecordId || '',
+      } };
     }),
   };
   map.addSource(OBS_SRC, {
@@ -991,8 +1117,16 @@ function paintObservations(entities) {
 function markObservationSelected(entityId) {
   const previous = selectedEntityId;
   selectedEntityId = entityId;
-  if (previous) observationMarkers.get(`p:${previous}`)?.getElement().classList.remove('selected');
-  if (entityId) observationMarkers.get(`p:${entityId}`)?.getElement().classList.add('selected');
+  if (previous) {
+    const previousEl = observationMarkers.get(`p:${previous}`)?.getElement();
+    previousEl?.classList.remove('selected');
+    if (map && map.getZoom() < 15) previousEl?.classList.remove('show-label');
+  }
+  if (entityId) {
+    const selectedEl = observationMarkers.get(`p:${entityId}`)?.getElement();
+    selectedEl?.classList.add('selected');
+    selectedEl?.classList.add('show-label');
+  }
 }
 
 function selectObservation(entityId, lngLat) {
@@ -1267,7 +1401,7 @@ function openObservationPopup(entityId, lngLat) {
   const actions = root.querySelector('.actions');
   const detailsBtn = document.createElement('button');
   detailsBtn.className = 'btn-details';
-  detailsBtn.textContent = 'عرض التفاصيل';
+  detailsBtn.textContent = 'عرض ملف الحصر';
   detailsBtn.onclick = () => { if (activePopup) activePopup.remove(); openEntityCard(entityId); };
   actions.appendChild(detailsBtn);
   if (!document.getElementById('openTwinBtn').hidden) {
@@ -1405,6 +1539,53 @@ function selectPanelTab(name) {
 }
 document.getElementById('layersTabBtn').addEventListener('click', () => selectPanelTab('layers'));
 document.getElementById('filtersTabBtn').addEventListener('click', () => selectPanelTab('filters'));
+
+function openRightPanelForSpatialMode() {
+  const panel = document.getElementById('rightPanel');
+  const toggle = document.getElementById('rightPanelToggle');
+  if (matchMedia('(max-width: 900px)').matches) {
+    panel.classList.add('expanded');
+    panel.classList.remove('collapsed');
+  } else {
+    panel.classList.remove('collapsed');
+  }
+  toggle.setAttribute('aria-expanded', 'true');
+}
+function setSpatialExperienceMode(mode) {
+  if (!['field','gis','operations','decision'].includes(mode)) return;
+  document.body.dataset.spatialMode = mode;
+  document.querySelectorAll('[data-spatial-mode]').forEach((btn) => {
+    const active = btn.dataset.spatialMode === mode;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', String(active));
+  });
+  const timeline = document.getElementById('timelinePanel');
+  timeline.classList.toggle('r2-spotlight', mode === 'operations');
+  if (mode === 'field') {
+    openRightPanelForSpatialMode();
+    selectPanelTab('filters');
+  } else if (mode === 'gis') {
+    openRightPanelForSpatialMode();
+    selectPanelTab('layers');
+  } else if (mode === 'operations') {
+    document.getElementById('intelligencePanel').classList.remove('expanded');
+    document.getElementById('intelligenceToggle').setAttribute('aria-expanded', 'false');
+  } else if (mode === 'decision') {
+    const intel = document.getElementById('intelligencePanel');
+    intel.classList.add('expanded');
+    document.getElementById('intelligenceToggle').setAttribute('aria-expanded', 'true');
+    if (matchMedia('(max-width: 1180px)').matches) {
+      const right = document.getElementById('rightPanel');
+      if (matchMedia('(max-width: 900px)').matches) right.classList.remove('expanded');
+      else right.classList.add('collapsed');
+      document.getElementById('rightPanelToggle').setAttribute('aria-expanded', 'false');
+    }
+  }
+}
+document.querySelectorAll('[data-spatial-mode]').forEach((btn) => {
+  btn.addEventListener('click', () => setSpatialExperienceMode(btn.dataset.spatialMode));
+});
+setSpatialExperienceMode('field');
 document.getElementById('intelligenceToggle').addEventListener('click', () => {
   const panel = document.getElementById('intelligencePanel');
   const expanded = panel.classList.toggle('expanded');
