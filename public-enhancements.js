@@ -151,11 +151,337 @@
         #smartSafeFooter .card b{font-size:21px}
       }
 
-      html.smart-root-fit,html.smart-root-fit body{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
-      html.smart-root-fit body{margin:0!important}
-      html.smart-root-fit #smartSafeFooter{position:relative;z-index:2}
+      /* Responsive adaptation of the approved Claude composition.
+         Same DOM, same cards, same maps, same content — only layout rules change. */
       @media(max-width:1024px){
-        html.smart-root-fit #smartSafeTheme{width:44px;height:44px;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left))}
+        html,body{width:100%;max-width:100%;overflow-x:hidden!important}
+        body>div[dir="rtl"]{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
+
+        /* Approved navigation: same elements, compact tablet/mobile geometry. */
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"]{
+          padding:0 12px!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"]>div{
+          max-width:100%!important;height:66px!important;padding:0 14px!important;gap:12px!important;border-radius:18px!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] img{
+          height:40px!important;max-width:132px!important;object-fit:contain!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] div[style*="display:flex;gap:18px;align-items:center"]{
+          gap:8px!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] span[style*="font-size:14px"][style*="white-space:nowrap"]{
+          font-size:12px!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] span[style*="height:44px"][style*="background:linear-gradient"]{
+          height:42px!important;padding:0 13px!important;font-size:12px!important
+        }
+
+        /* Section 01 — Hero */
+        [data-screen-label="01 Hero"]{height:860px!important;min-height:860px!important;max-height:none!important}
+        [data-screen-label="01 Hero"]>div[style*="right:0"][style*="width:52%"]{
+          width:70%!important
+        }
+        [data-screen-label="01 Hero"] [data-card="command"][data-depth="22"]{
+          left:6%!important;top:14%!important;width:220px!important
+        }
+        [data-screen-label="01 Hero"] [data-card="field"]{
+          left:4%!important;top:56%!important;width:190px!important
+        }
+        [data-screen-label="01 Hero"] [data-card="lands"]{
+          left:18%!important;top:76%!important;width:190px!important
+        }
+        [data-screen-label="01 Hero"]>div[style*="width:min(560px,40%)"]{
+          right:28px!important;width:min(480px,54%)!important;gap:20px!important
+        }
+        [data-screen-label="01 Hero"] [style*="font:600 clamp(60px,6.4vw,104px)"]{
+          font-size:clamp(52px,7vw,72px)!important
+        }
+        [data-screen-label="01 Hero"]>div[style*="bottom:30px"]{
+          right:28px!important;left:28px!important
+        }
+
+        /* Shared content gutters */
+        [data-screen-label="02 Statement"]>div,
+        [data-screen-label="04 Product Bento"]>div,
+        [data-screen-label="05 Product Presence"]>div,
+        [data-screen-label="07 Company Profile"]>div{
+          max-width:100%!important;padding-left:28px!important;padding-right:28px!important
+        }
+
+        /* Section 02 */
+        [data-screen-label="02 Statement"]{padding:120px 0 100px!important}
+        [data-screen-label="02 Statement"]>div{gap:38px!important}
+        [data-screen-label="02 Statement"] [style*="font-size:clamp(56px,8.6vw,140px)"]{
+          font-size:clamp(54px,9vw,86px)!important
+        }
+        [data-screen-label="02 Statement"] [style*="grid-template-columns:minmax(0,1fr) minmax(0,1.4fr)"]{
+          grid-template-columns:1fr!important;gap:22px!important
+        }
+
+        /* Section 03 — journey */
+        [data-screen-label="03 Field to Decision"]>div[style*="position:sticky"]{
+          min-height:760px!important
+        }
+        [data-screen-label="03 Field to Decision"] [style*="top:128px"][dir="ltr"]{
+          top:100px!important;right:28px!important;font-size:10px!important
+        }
+        [data-screen-label="03 Field to Decision"] [style*="width:min(460px,36%)"]{
+          right:28px!important;width:min(420px,48%)!important
+        }
+        [data-screen-label="03 Field to Decision"] [style*="font:200 128px"]{
+          font-size:96px!important
+        }
+        [data-screen-label="03 Field to Decision"] [style*="font:600 60px"]{
+          font-size:50px!important
+        }
+        [data-screen-label="03 Field to Decision"]>div>div[style*="bottom:52px"]{
+          right:28px!important;left:28px!important;bottom:34px!important
+        }
+
+        /* Section 04 — keep every approved card, reflow only the bento grid. */
+        [data-screen-label="04 Product Bento"]{padding:110px 0 100px!important}
+        [data-screen-label="04 Product Bento"]>div{gap:36px!important}
+        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)"]{
+          grid-template-columns:1fr!important;gap:20px!important
+        }
+        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]{
+          grid-template-columns:1fr 1fr!important;grid-auto-rows:auto!important;gap:14px!important
+        }
+        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]>div{
+          grid-column:span 1!important;grid-row:span 1!important;min-height:360px!important
+        }
+        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]>div[style*="grid-column:span 7"]{
+          min-height:500px!important
+        }
+        [data-screen-label="04 Product Bento"] [style*="right:290px;left:32px"]{
+          right:230px!important;left:24px!important
+        }
+
+        /* Section 05 — same desktop/tablet/mobile mockups, scaled into the available width. */
+        [data-screen-label="05 Product Presence"]{padding:40px 0 110px!important}
+        [data-screen-label="05 Product Presence"]>div{gap:38px!important}
+        [data-screen-label="05 Product Presence"]>div>div[style*="grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)"]{
+          grid-template-columns:1fr!important;gap:20px!important
+        }
+        [data-screen-label="05 Product Presence"]>div>div[style*="position:relative;height:700px"]{
+          height:590px!important
+        }
+        [data-screen-label="05 Product Presence"] [style*="right:0;top:0;width:78%;height:560px"]{
+          width:88%!important;height:430px!important
+        }
+        [data-screen-label="05 Product Presence"] [style*="left:0;bottom:0;width:36%;height:400px"]{
+          width:38%!important;height:315px!important
+        }
+        [data-screen-label="05 Product Presence"] [style*="right:6%;bottom:-20px;width:210px;height:430px"]{
+          right:5%!important;width:160px!important;height:330px!important
+        }
+
+        /* Section 06 */
+        [data-screen-label="06 Digital Twin Signature"]{min-height:820px!important}
+        [data-screen-label="06 Digital Twin Signature"]>div[style*="top:120px"]{
+          right:28px!important;max-width:470px!important
+        }
+        [data-screen-label="06 Digital Twin Signature"]>div[style*="right:max(48px"][style*="bottom:72px"][style*="width:340px"]{
+          right:28px!important;width:310px!important
+        }
+        [data-screen-label="06 Digital Twin Signature"]>div[style*="left:max(48px"][style*="bottom:72px"][style*="width:360px"]{
+          left:28px!important;width:330px!important
+        }
+
+        /* Section 07 */
+        [data-screen-label="07 Company Profile"]{padding:120px 0!important}
+        [data-screen-label="07 Company Profile"]>div{
+          grid-template-columns:1fr 1fr!important;gap:34px!important
+        }
+        [data-screen-label="07 Company Profile"]>div>div[style*="height:720px"]{
+          height:600px!important
+        }
+        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"]{
+          width:340px!important;height:482px!important
+        }
+      }
+
+      @media(max-width:680px){
+        /* Navigation stays the Claude navigation; only compact spacing changes. */
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"]{
+          padding:0 8px!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"]>div{
+          height:62px!important;padding:0 9px!important;gap:7px!important;border-radius:16px!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] img{
+          height:36px!important;max-width:112px!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] span[style*="height:44px"][style*="background:rgba(255,255,255,.7)"]{
+          height:42px!important;padding:0 12px!important;font-size:13px!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] div[style*="display:flex;gap:18px;align-items:center"]{
+          gap:5px!important
+        }
+        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] span[style*="height:44px"][style*="background:linear-gradient"]{
+          display:none!important
+        }
+
+        /* Hero — original composition adapted, not replaced. */
+        [data-screen-label="01 Hero"]{height:900px!important;min-height:900px!important}
+        [data-screen-label="01 Hero"]>div[style*="right:0"][style*="width:52%"]{
+          width:100%!important;
+          background:linear-gradient(180deg,rgba(243,246,244,.92) 0%,rgba(243,246,244,.58) 48%,rgba(243,246,244,0) 76%)!important
+        }
+        [data-screen-label="01 Hero"] [data-card="command"][data-depth="22"]{
+          left:18px!important;top:13%!important;width:175px!important;padding:12px 14px!important;border-radius:17px!important
+        }
+        [data-screen-label="01 Hero"] [data-card="field"]{
+          left:14px!important;top:61%!important;width:178px!important;padding:13px 14px!important
+        }
+        [data-screen-label="01 Hero"] [data-card="lands"]{
+          left:72px!important;top:78%!important;width:178px!important;padding:13px 14px!important
+        }
+        [data-screen-label="01 Hero"]>div[style*="width:min(560px,40%)"]{
+          right:18px!important;left:18px!important;top:28%!important;width:auto!important;transform:none!important;gap:14px!important
+        }
+        [data-screen-label="01 Hero"] [style*="font:600 clamp(60px,6.4vw,104px)"]{
+          font-size:48px!important;line-height:1.08!important
+        }
+        [data-screen-label="01 Hero"] [style*="font-size:19px;line-height:1.85"]{
+          font-size:15px!important;line-height:1.75!important;max-width:340px!important
+        }
+        [data-screen-label="01 Hero"]>div[style*="width:min(560px,40%)"]>div[style*="display:flex;gap:12px"]{
+          flex-wrap:wrap!important;gap:8px!important
+        }
+        [data-screen-label="01 Hero"]>div[style*="width:min(560px,40%)"] [style*="height:60px"]{
+          height:50px!important;padding:0 17px!important;font-size:14px!important
+        }
+        [data-screen-label="01 Hero"]>div[style*="bottom:30px"]{
+          right:16px!important;left:16px!important;bottom:14px!important
+        }
+        [data-screen-label="01 Hero"]>div[style*="bottom:30px"]>div[dir="ltr"]{
+          display:none!important
+        }
+
+        /* Statement */
+        [data-screen-label="02 Statement"]{padding:90px 0 76px!important}
+        [data-screen-label="02 Statement"]>div{padding:0 18px!important;gap:30px!important}
+        [data-screen-label="02 Statement"] [style*="font-size:clamp(56px,8.6vw,140px)"]{
+          font-size:46px!important
+        }
+        [data-screen-label="02 Statement"] [style*="display:flex;justify-content:space-between;font:500 15px"]{
+          flex-wrap:wrap!important;gap:10px 14px!important;justify-content:flex-start!important;font-size:12px!important
+        }
+
+        /* Journey */
+        [data-screen-label="03 Field to Decision"]{height:380vh!important}
+        [data-screen-label="03 Field to Decision"]>div[style*="position:sticky"]{
+          height:100dvh!important;min-height:690px!important
+        }
+        [data-screen-label="03 Field to Decision"] [style*="top:128px"][dir="ltr"]{
+          top:88px!important;right:18px!important;left:18px!important;font-size:8.5px!important;white-space:normal!important
+        }
+        [data-screen-label="03 Field to Decision"] [style*="width:min(460px,36%)"]{
+          right:18px!important;left:18px!important;top:22%!important;width:auto!important;transform:none!important;gap:8px!important
+        }
+        [data-screen-label="03 Field to Decision"] [style*="font:200 128px"]{font-size:72px!important}
+        [data-screen-label="03 Field to Decision"] [style*="font:600 60px"]{font-size:39px!important}
+        [data-screen-label="03 Field to Decision"] [style*="font-size:18px;line-height:1.9"]{
+          font-size:14px!important;line-height:1.75!important;min-height:0!important;max-width:320px!important
+        }
+        [data-screen-label="03 Field to Decision"]>div>div[style*="bottom:52px"]{
+          right:16px!important;left:16px!important;bottom:22px!important
+        }
+        [data-screen-label="03 Field to Decision"]>div>div[style*="bottom:52px"] [style*="font:600 18px"]{
+          font-size:11px!important
+        }
+        [data-screen-label="03 Field to Decision"]>div>div[style*="bottom:52px"] [dir="ltr"]{
+          font-size:7px!important
+        }
+
+        /* Product bento */
+        [data-screen-label="04 Product Bento"]{padding:82px 0 78px!important}
+        [data-screen-label="04 Product Bento"]>div{padding:0 16px!important;gap:28px!important}
+        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]{
+          grid-template-columns:1fr!important
+        }
+        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]>div{
+          grid-column:1!important;grid-row:auto!important;min-height:330px!important;border-radius:22px!important
+        }
+        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]>div[style*="grid-column:span 7"]{
+          min-height:450px!important
+        }
+        [data-screen-label="04 Product Bento"] [style*="right:290px;left:32px"]{
+          right:150px!important;left:16px!important;top:145px!important;bottom:18px!important
+        }
+        [data-screen-label="04 Product Bento"] [style*="top:32px;bottom:32px;right:290px;left:32px"] span{
+          font-size:10px!important
+        }
+        [data-screen-label="04 Product Bento"] [style*="position:absolute;top:0;bottom:0;right:0;width:26%"],
+        [data-screen-label="04 Product Bento"] [style*="position:absolute;top:0;bottom:0;left:0;width:26%"]{
+          width:31%!important;font-size:10px!important
+        }
+        [data-screen-label="04 Product Bento"] [style*="position:absolute;top:50%;right:50%"]{
+          padding:10px!important;max-width:145px!important
+        }
+
+        /* Product presence */
+        [data-screen-label="05 Product Presence"]{padding:30px 0 82px!important}
+        [data-screen-label="05 Product Presence"]>div{padding:0 16px!important;gap:30px!important}
+        [data-screen-label="05 Product Presence"]>div>div[style*="position:relative;height:700px"]{
+          height:430px!important
+        }
+        [data-screen-label="05 Product Presence"] [style*="right:0;top:0;width:78%;height:560px"]{
+          width:100%!important;height:270px!important;border-radius:17px!important
+        }
+        [data-screen-label="05 Product Presence"] [style*="left:0;bottom:0;width:36%;height:400px"]{
+          width:46%!important;height:235px!important;padding:8px!important;border-radius:22px!important
+        }
+        [data-screen-label="05 Product Presence"] [style*="right:6%;bottom:-20px;width:210px;height:430px"]{
+          right:4%!important;bottom:0!important;width:112px!important;height:236px!important;padding:6px!important;border-radius:28px!important
+        }
+
+        /* Digital Twin */
+        [data-screen-label="06 Digital Twin Signature"]{height:900px!important;min-height:900px!important}
+        [data-screen-label="06 Digital Twin Signature"]>div[style*="top:120px"]{
+          top:88px!important;right:18px!important;left:18px!important;max-width:none!important;gap:10px!important
+        }
+        [data-screen-label="06 Digital Twin Signature"] [style*="font:600 clamp(40px,4.4vw,64px)"]{
+          font-size:42px!important
+        }
+        [data-screen-label="06 Digital Twin Signature"]>div[style*="right:max(48px"][style*="bottom:72px"][style*="width:340px"]{
+          right:16px!important;left:16px!important;bottom:26px!important;width:auto!important;gap:7px!important
+        }
+        [data-screen-label="06 Digital Twin Signature"]>div[style*="right:max(48px"][style*="bottom:72px"][style*="width:340px"]>div{
+          height:54px!important;padding:0 14px!important
+        }
+        [data-screen-label="06 Digital Twin Signature"]>div[style*="left:max(48px"][style*="bottom:72px"][style*="width:360px"]{
+          left:16px!important;right:16px!important;bottom:270px!important;width:auto!important;padding:18px!important
+        }
+
+        /* Profile — same book + same copy, now stacked cleanly. */
+        [data-screen-label="07 Company Profile"]{padding:82px 0!important}
+        [data-screen-label="07 Company Profile"]>div{
+          padding:0 16px!important;grid-template-columns:1fr!important;gap:28px!important
+        }
+        [data-screen-label="07 Company Profile"]>div>div[style*="height:720px"]{
+          height:500px!important;border-radius:26px!important
+        }
+        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"]{
+          width:286px!important;height:405px!important;transform:rotateY(-10deg) rotateX(4deg)!important
+        }
+        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"] [style*="padding:44px 40px 0"]{
+          padding:30px 28px 0!important
+        }
+        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"] [style*="padding:0 40px"]{
+          padding:0 28px!important
+        }
+        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"] img{
+          width:170px!important
+        }
+        [data-screen-label="07 Company Profile"]>div>div:first-child>div[style*="display:flex;gap:12px"]{
+          flex-wrap:wrap!important
+        }
+        [data-screen-label="07 Company Profile"]>div>div:first-child>div[style*="display:flex;gap:12px"]>div{
+          min-height:52px!important;height:auto!important;padding:10px 18px!important
+        }
       }
 
       @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
@@ -178,74 +504,8 @@
     try{localStorage.setItem('smart-hsr-public-theme',t)}catch(e){}
   }
 
-
-  let rootFitTimer=0;
-
-  function findClaudeRoot(){
-    const sections=[...document.querySelectorAll('[data-screen-label]')];
-    if(!sections.length) return null;
-    let node=sections[0];
-    while(node&&node.parentElement&&node.parentElement!==document.body){
-      const parent=node.parentElement;
-      if(sections.every(section=>parent.contains(section))) node=parent;
-      else break;
-    }
-    if(node===document.body||node===document.documentElement) return null;
-    return node;
-  }
-
-  function clearRootFit(root){
-    if(!root) return;
-    root.style.removeProperty('width');
-    root.style.removeProperty('max-width');
-    root.style.removeProperty('min-width');
-    root.style.removeProperty('zoom');
-    root.style.removeProperty('margin-left');
-    root.style.removeProperty('margin-right');
-  }
-
-  function fitApprovedClaudeRoot(){
-    clearTimeout(rootFitTimer);
-    rootFitTimer=setTimeout(()=>{
-      const root=findClaudeRoot();
-      if(!root) return;
-      const viewport=Math.max(320,document.documentElement.clientWidth||window.innerWidth||320);
-      const mobile=viewport<=1024;
-      document.documentElement.classList.toggle('smart-root-fit',mobile);
-      clearRootFit(root);
-      if(!mobile) return;
-
-      // Keep the approved Claude composition intact. Render the original canvas
-      // at a stable desktop/tablet width, then scale the whole tree as one unit.
-      // This avoids per-card distortion, clipped columns and header/content drift.
-      const designWidth=viewport<=680?1080:1180;
-      const scale=Math.min(1,viewport/designWidth);
-      root.style.setProperty('width',designWidth+'px','important');
-      root.style.setProperty('max-width','none','important');
-      root.style.setProperty('min-width',designWidth+'px','important');
-      root.style.setProperty('zoom',scale.toFixed(5),'important');
-      root.style.setProperty('margin-left','auto','important');
-      root.style.setProperty('margin-right','auto','important');
-    },0);
-  }
-
-  function installClaudeRootFit(){
-    fitApprovedClaudeRoot();
-    let resizeTimer=0;
-    const refresh=()=>{
-      clearTimeout(resizeTimer);
-      resizeTimer=setTimeout(fitApprovedClaudeRoot,120);
-    };
-    addEventListener('resize',refresh,{passive:true});
-    addEventListener('orientationchange',refresh,{passive:true});
-    if(document.fonts?.ready) document.fonts.ready.then(()=>setTimeout(fitApprovedClaudeRoot,0));
-    setTimeout(fitApprovedClaudeRoot,250);
-    setTimeout(fitApprovedClaudeRoot,900);
-  }
-
   function installExternalUI(){
     installCSS();
-    installClaudeRootFit();
 
     if(!document.getElementById('smartSafeTheme')){
       const b=document.createElement('button');
