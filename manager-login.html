@@ -149,7 +149,7 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var
 <main class="frame">
   <header class="bar">
     <div class="brand">
-      <div class="logo" data-owner-gesture><img src="Smart_HSR_Dashboard_Logo.svg" alt="شعار SMART HSR"></div>
+      <div class="logo"><img src="Smart_HSR_Dashboard_Logo.svg" alt="شعار SMART HSR"></div>
       <div><b>SMART HSR</b><span>SMART MUNICIPAL PLATFORM</span></div>
     </div>
     <div class="bar-actions"><a class="back" href="Home.html">العودة لبوابة الدخول</a><button class="theme" type="button" data-theme-toggle aria-label="تبديل المظهر">☀</button></div>
@@ -231,10 +231,6 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var
     });
     twin.addEventListener('pointerleave',()=>{twin.style.setProperty('--tx',0);twin.style.setProperty('--ty',0)});
   }
-  // Private convenience gesture only; owner authorization still happens on
-  // owner-login.html. Five quick taps never bypass authentication.
-  const logo=document.querySelector('[data-owner-gesture]');let taps=0,timer=0;
-  logo?.addEventListener('click',()=>{taps++;clearTimeout(timer);timer=setTimeout(()=>taps=0,2400);if(taps>=5){taps=0;clearTimeout(timer);location.href='owner-login.html'}});
 })();
 </script>
 <script type="module">
@@ -262,12 +258,9 @@ try {
 }
 
 // Separate namespaces:
-// - fieldAuth: existing employee/user browser session, cleared only after a
-//   NEW manager identity is fully verified.
 // - managerAuth: persisted leadership session used by manager.html.
 // - probeAuth: memory-only credential + authorization probe.
-const fieldApp = initializeApp(firebaseConfig);
-const fieldAuth = getAuth(fieldApp);
+// Workforce/default Auth is intentionally untouched so both portals can coexist.
 const managerApp = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
 const managerAuth = getAuth(managerApp);
 await setPersistence(managerAuth, browserLocalPersistence);
@@ -276,12 +269,15 @@ const probeAuth = getAuth(probeApp);
 const probeDb = getFirestore(probeApp);
 await setPersistence(probeAuth, inMemoryPersistence);
 
-async function clearOldPortalSessions() {
-  await Promise.all([
-    signOut(fieldAuth).catch(() => {}),
-    signOut(managerAuth).catch(() => {})
-  ]);
-  sessionStorage.removeItem("smartHSRUser");
+const PORTAL_CONTEXT_KEY = 'smartHSRPortalContext';
+
+function setLeadershipPortalContext(user, organizationId) {
+  sessionStorage.setItem(PORTAL_CONTEXT_KEY, JSON.stringify({
+    portal: 'leadership',
+    uid: user.uid,
+    organizationId,
+    role: 'manager'
+  }));
 }
 
 const form = document.getElementById("loginForm");
@@ -327,24 +323,22 @@ form.addEventListener("submit", async (e) => {
       submitBtn.textContent = "دخول مركز القيادة";
       return;
     }
-
-    // Persist only after manager authorization succeeds, then clear the
-    // memory-only probe. This prevents a staff session and a leadership
-    // session from being silently mixed.
-    await clearOldPortalSessions();
+    // Persist only after manager authorization succeeds. The workforce/default
+    // Auth namespace is never signed out or overwritten here.
     await signInWithEmailAndPassword(managerAuth, email, password);
     await signOut(probeAuth).catch(() => {});
 
+    setLeadershipPortalContext(probeUser, organizationId);
     sessionStorage.setItem("smartHSRUser", JSON.stringify({
       uid: probeUser.uid,
       email: probeUser.email,
-      role: "manager"
+      role: "manager",
+      organizationId
     }));
     window.location.href = "manager.html";
   } catch (lookupErr) {
     console.error('manager-login: authorization lookup failed', lookupErr);
     await signOut(probeAuth).catch(() => {});
-    await signOut(managerAuth).catch(() => {});
     showLoginMessage("تعذر التحقق من صلاحيات القيادة حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.");
     submitBtn.disabled = false;
     submitBtn.textContent = "دخول مركز القيادة";
