@@ -150,6 +150,144 @@
         #smartSafeFooter .card{padding:18px}
         #smartSafeFooter .card b{font-size:21px}
       }
+
+      #smartResponsiveLanding{display:none}
+      @media(max-width:1024px){
+        html,body{width:100%;max-width:100%;overflow-x:hidden!important}
+        body> *:not(#smartResponsiveLanding):not(#smartSafeMenu):not(script):not(style){display:none!important}
+        #smartSafeTheme,#smartSafeFooter{display:none!important}
+        #smartResponsiveLanding{
+          display:block!important;position:relative;z-index:10010;min-height:100dvh;width:100%;
+          background:#f4f7f5;color:#10251c;font-family:"IBM Plex Sans Arabic","Tajawal",system-ui,sans-serif;
+        }
+        #smartResponsiveLanding *{box-sizing:border-box}
+        #smartResponsiveLanding .sr-wrap{width:min(100%,920px);margin:0 auto;padding:0 24px}
+        #smartResponsiveLanding .sr-nav{
+          position:sticky;top:0;z-index:12;padding:max(12px,env(safe-area-inset-top)) 0 10px;
+          background:linear-gradient(180deg,rgba(244,247,245,.96),rgba(244,247,245,.86) 74%,rgba(244,247,245,0));
+          backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)
+        }
+        #smartResponsiveLanding .sr-nav-card{
+          min-height:68px;padding:10px 12px;border-radius:22px;border:1px solid rgba(17,76,50,.11);
+          background:rgba(255,255,255,.88);box-shadow:0 16px 40px -30px rgba(7,42,29,.38);
+          display:flex;align-items:center;gap:12px
+        }
+        #smartResponsiveLanding .sr-logo{width:122px;height:44px;object-fit:contain;display:block}
+        #smartResponsiveLanding .sr-nav-spacer{flex:1}
+        #smartResponsiveLanding .sr-nav-btn{
+          min-width:46px;height:46px;padding:0 14px;border:1px solid rgba(17,76,50,.11);border-radius:14px;
+          background:#f7faf8;color:#143126;font:700 13px inherit;cursor:pointer
+        }
+        #smartResponsiveLanding .sr-nav-btn.menu{min-width:96px}
+        #smartResponsiveLanding .sr-hero{padding:48px 0 34px}
+        #smartResponsiveLanding .sr-kicker{
+          margin-bottom:14px;color:#128443;font:600 11px/1.4 "IBM Plex Mono",monospace;letter-spacing:.16em
+        }
+        #smartResponsiveLanding h1{
+          margin:0;font:650 clamp(46px,8.5vw,76px)/1.04 "Readex Pro","IBM Plex Sans Arabic",sans-serif;letter-spacing:-.055em
+        }
+        #smartResponsiveLanding h1 span{color:#0b8d3a;font-weight:360}
+        #smartResponsiveLanding .sr-lead{
+          max-width:680px;margin:20px 0 0;color:#52675e;font-size:17px;line-height:1.95
+        }
+        #smartResponsiveLanding .sr-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+        #smartResponsiveLanding .sr-primary,#smartResponsiveLanding .sr-secondary{
+          min-height:52px;padding:0 20px;border-radius:15px;display:inline-flex;align-items:center;justify-content:center;
+          text-decoration:none;font-weight:700;font-size:14px
+        }
+        #smartResponsiveLanding .sr-primary{background:#0b653d;color:#fff;border:1px solid #0b653d;box-shadow:0 16px 34px -25px #0b653d}
+        #smartResponsiveLanding .sr-secondary{background:#fff;color:#17362a;border:1px solid rgba(17,76,50,.12)}
+        #smartResponsiveLanding .sr-hero-visual{
+          position:relative;height:330px;margin-top:32px;border-radius:28px;overflow:hidden;
+          background:radial-gradient(75% 110% at 72% 18%,rgba(38,172,91,.22),transparent 56%),linear-gradient(145deg,#082c20,#0b402d 60%,#0b2c22);
+          border:1px solid rgba(108,219,151,.20);box-shadow:0 30px 70px -50px rgba(6,35,25,.78)
+        }
+        #smartResponsiveLanding .sr-hero-visual svg{position:absolute;inset:auto 0 0;width:100%;height:78%;opacity:.92}
+        #smartResponsiveLanding .sr-visual-label{position:absolute;top:22px;right:22px;color:#dff4e7;font-size:13px;line-height:1.75}
+        #smartResponsiveLanding .sr-visual-label b{display:block;font:600 12px "IBM Plex Mono",monospace;letter-spacing:.14em;color:#71dda0}
+        #smartResponsiveLanding .sr-section{padding:64px 0}
+        #smartResponsiveLanding .sr-section-head{display:flex;align-items:flex-end;gap:18px;justify-content:space-between;margin-bottom:24px}
+        #smartResponsiveLanding .sr-section-head h2{margin:0;font:650 clamp(32px,5.5vw,48px)/1.15 "Readex Pro","IBM Plex Sans Arabic",sans-serif}
+        #smartResponsiveLanding .sr-section-head p{max-width:430px;margin:0;color:#607169;font-size:14px;line-height:1.8}
+        #smartResponsiveLanding .sr-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+        #smartResponsiveLanding .sr-card{
+          min-height:250px;padding:23px;border-radius:24px;background:#fff;border:1px solid rgba(17,76,50,.10);
+          box-shadow:0 24px 56px -46px rgba(9,53,36,.35);display:flex;flex-direction:column;overflow:hidden
+        }
+        #smartResponsiveLanding .sr-card.dark{background:linear-gradient(145deg,#0a3224,#0b442f);color:#eff9f3;border-color:rgba(115,222,157,.14)}
+        #smartResponsiveLanding .sr-card .num{font:600 10px "IBM Plex Mono",monospace;letter-spacing:.14em;color:#0c9141}
+        #smartResponsiveLanding .sr-card.dark .num{color:#77e2a5}
+        #smartResponsiveLanding .sr-card h3{margin:18px 0 8px;font:650 26px/1.25 "Readex Pro","IBM Plex Sans Arabic",sans-serif}
+        #smartResponsiveLanding .sr-card p{margin:0;color:#687971;font-size:13px;line-height:1.8}
+        #smartResponsiveLanding .sr-card.dark p{color:#b9cec1}
+        #smartResponsiveLanding .sr-mini{margin-top:auto;padding-top:24px;display:flex;align-items:flex-end;gap:6px;min-height:68px}
+        #smartResponsiveLanding .sr-mini i{display:block;flex:1;border-radius:8px 8px 3px 3px;background:#dce8e1}
+        #smartResponsiveLanding .sr-card.dark .sr-mini i{background:rgba(108,220,151,.18);border:1px solid rgba(108,220,151,.22)}
+        #smartResponsiveLanding .sr-twin{
+          padding:30px;border-radius:30px;background:linear-gradient(150deg,#05281d,#083a29);color:#f4fbf7;overflow:hidden;border:1px solid rgba(114,223,159,.16)
+        }
+        #smartResponsiveLanding .sr-twin-copy{max-width:620px}
+        #smartResponsiveLanding .sr-twin h2{margin:0;font:650 clamp(34px,6vw,54px)/1.13 "Readex Pro","IBM Plex Sans Arabic",sans-serif}
+        #smartResponsiveLanding .sr-twin p{color:#b8ccc1;font-size:15px;line-height:1.9}
+        #smartResponsiveLanding .sr-twin-map{height:270px;margin-top:26px;border-radius:22px;background:rgba(5,24,17,.55);border:1px solid rgba(112,219,155,.13);overflow:hidden}
+        #smartResponsiveLanding .sr-twin-map svg{width:100%;height:100%}
+        #smartResponsiveLanding .sr-profile{
+          display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:28px;border-radius:28px;background:#eef3ef;border:1px solid rgba(17,76,50,.10)
+        }
+        #smartResponsiveLanding .sr-profile h2{margin:0 0 10px;font:650 34px/1.2 "Readex Pro","IBM Plex Sans Arabic",sans-serif}
+        #smartResponsiveLanding .sr-profile p{margin:0;color:#5c6e65;line-height:1.85}
+        #smartResponsiveLanding .sr-profile-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+        #smartResponsiveLanding .sr-footer{margin-top:64px;padding:34px 0 max(34px,env(safe-area-inset-bottom));border-top:1px solid rgba(17,76,50,.10)}
+        #smartResponsiveLanding .sr-footer-row{display:flex;align-items:center;gap:14px;justify-content:space-between}
+        #smartResponsiveLanding .sr-footer b{font:650 20px "Readex Pro","IBM Plex Sans Arabic",sans-serif}
+        #smartResponsiveLanding .sr-footer span{color:#718178;font-size:12px}
+        html[data-public-theme="dark"] #smartResponsiveLanding{background:#061914;color:#f2f8f4}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-nav{background:linear-gradient(180deg,rgba(6,25,20,.96),rgba(6,25,20,.87) 74%,rgba(6,25,20,0))}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-nav-card{background:rgba(11,43,32,.88);border-color:rgba(120,220,158,.13);box-shadow:0 16px 42px -30px rgba(0,0,0,.8)}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-nav-btn{background:#0c3225;color:#eef8f2;border-color:rgba(120,220,158,.13)}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-lead,
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-section-head p{color:#a8bbb1}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-secondary{background:#0b2d22;color:#edf8f2;border-color:rgba(120,220,158,.13)}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-card{background:#0a281e;color:#f2f8f4;border-color:rgba(120,220,158,.11);box-shadow:0 24px 56px -44px rgba(0,0,0,.78)}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-card p{color:#9fb5a9}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-profile{background:#0a261d;border-color:rgba(120,220,158,.11)}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-profile p,
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-footer span{color:#9db2a7}
+        html[data-public-theme="dark"] #smartResponsiveLanding .sr-footer{border-top-color:rgba(120,220,158,.11)}
+      }
+      @media(max-width:680px){
+        #smartResponsiveLanding .sr-wrap{padding:0 16px}
+        #smartResponsiveLanding .sr-nav-card{min-height:62px;border-radius:18px;padding:8px 10px}
+        #smartResponsiveLanding .sr-logo{width:104px;height:38px}
+        #smartResponsiveLanding .sr-nav-btn{height:44px;min-width:44px;padding:0 11px}
+        #smartResponsiveLanding .sr-nav-btn.menu{min-width:78px}
+        #smartResponsiveLanding .sr-hero{padding:38px 0 26px}
+        #smartResponsiveLanding h1{font-size:clamp(42px,13vw,58px)}
+        #smartResponsiveLanding .sr-lead{font-size:15px;line-height:1.9}
+        #smartResponsiveLanding .sr-actions{display:grid;grid-template-columns:1fr 1fr}
+        #smartResponsiveLanding .sr-primary,#smartResponsiveLanding .sr-secondary{padding:0 13px;font-size:13px}
+        #smartResponsiveLanding .sr-hero-visual{height:260px;border-radius:23px}
+        #smartResponsiveLanding .sr-section{padding:50px 0}
+        #smartResponsiveLanding .sr-section-head{display:block}
+        #smartResponsiveLanding .sr-section-head p{margin-top:10px}
+        #smartResponsiveLanding .sr-grid{grid-template-columns:1fr;gap:11px}
+        #smartResponsiveLanding .sr-card{min-height:205px;padding:20px;border-radius:21px}
+        #smartResponsiveLanding .sr-card h3{font-size:24px}
+        #smartResponsiveLanding .sr-twin{padding:22px;border-radius:24px}
+        #smartResponsiveLanding .sr-twin-map{height:220px}
+        #smartResponsiveLanding .sr-profile{grid-template-columns:1fr;padding:22px;border-radius:23px}
+        #smartResponsiveLanding .sr-profile-actions{justify-content:stretch}
+        #smartResponsiveLanding .sr-profile-actions a{flex:1}
+        #smartResponsiveLanding .sr-footer-row{align-items:flex-start;flex-direction:column}
+      }
+      @media(max-width:390px){
+        #smartResponsiveLanding .sr-wrap{padding-inline:13px}
+        #smartResponsiveLanding .sr-logo{width:94px}
+        #smartResponsiveLanding .sr-nav-btn.menu{min-width:70px;font-size:12px}
+        #smartResponsiveLanding .sr-actions{grid-template-columns:1fr}
+        #smartResponsiveLanding .sr-hero-visual{height:235px}
+      }
+
       @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
     `;
     document.head.appendChild(style);
