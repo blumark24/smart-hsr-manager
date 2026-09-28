@@ -1,186 +1,363 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل دخول المدير - Smart HSR</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: radial-gradient(circle at center, #0EA5A1 0%, #0B2B3A 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      overflow: hidden;
-    }
-    .card {
-      background: rgba(255,255,255,0.08);
-      border-radius: 22px;
-      padding: 3rem;
-      width: 100%;
-      max-width: 420px;
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 0 30px rgba(14,165,161,0.4);
-      text-align: center;
-      animation: fadeIn 1.2s ease-out;
-    }
-    .glow { animation: glowPulse 3s ease-in-out infinite; }
-
-    @keyframes glowPulse {
-      0%,100%{ box-shadow:0 0 25px rgba(14,165,161,0.5); }
-      50%{ box-shadow:0 0 45px rgba(14,165,161,0.9); }
-    }
-    @keyframes fadeIn {
-      from{ opacity:0; transform:translateY(20px); }
-      to{ opacity:1; transform:translateY(0); }
-    }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light">
+<title>بوابة القيادات البلدية | SMART HSR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#f7fbff;--muted:#90a6b9;--bg:#04111d;--bg2:#071c2d;
+  --glass:rgba(7,24,40,.76);--glass2:rgba(9,31,51,.93);
+  --line:rgba(106,174,225,.17);--line2:rgba(106,174,225,.30);
+  --green:#36d596;--green-deep:#159566;--blue:#76a9ff;--cyan:#52d2dc;
+  --input:rgba(5,20,35,.86);--danger:#ff8492;--shadow:0 40px 110px -50px rgba(0,0,0,.80);
+}
+html[data-theme="light"]{
+  --ink:#0a3325;--muted:#607469;--bg:#edf4f0;--bg2:#f8fbf9;
+  --glass:rgba(255,255,255,.80);--glass2:rgba(255,255,255,.96);
+  --line:rgba(18,133,90,.14);--line2:rgba(18,133,90,.26);
+  --green:#13884d;--green-deep:#0c6c3b;--blue:#336fd0;--cyan:#177e8d;
+  --input:rgba(248,251,249,.97);--danger:#b63e53;--shadow:0 36px 90px -54px rgba(13,74,49,.32);
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  margin:0;min-height:100vh;padding:18px;display:grid;place-items:center;overflow-x:hidden;
+  font-family:"IBM Plex Sans Arabic","Tajawal",system-ui,sans-serif;color:var(--ink);
+  background:
+    radial-gradient(circle at 86% 8%,rgba(54,213,150,.11),transparent 23%),
+    radial-gradient(circle at 9% 92%,rgba(83,137,222,.11),transparent 29%),
+    linear-gradient(145deg,var(--bg),var(--bg2));
+}
+.frame{
+  width:min(1260px,100%);min-height:min(790px,calc(100vh - 36px));position:relative;overflow:hidden;
+  border-radius:32px;border:1px solid var(--line);background:var(--glass);box-shadow:var(--shadow);
+  backdrop-filter:blur(17px) saturate(110%);-webkit-backdrop-filter:blur(17px) saturate(110%);
+}
+.frame:before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.19;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:64px 64px;mask-image:linear-gradient(to bottom,transparent,black 14%,black 84%,transparent);
+}
+.bar{
+  height:86px;padding:0 30px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+  border-bottom:1px solid var(--line);position:relative;z-index:5;background:color-mix(in srgb,var(--glass2) 80%,transparent)
+}
+.brand{display:flex;align-items:center;gap:13px}
+.logo{
+  width:56px;height:56px;border-radius:18px;display:grid;place-items:center;user-select:none;
+  border:1px solid var(--line2);background:color-mix(in srgb,var(--glass2) 88%,transparent);
+  box-shadow:inset 0 1px rgba(255,255,255,.06)
+}
+.logo img{width:46px;height:46px;object-fit:contain;pointer-events:none}
+.brand b{display:block;font-family:Inter,system-ui,sans-serif;font-size:16px;letter-spacing:.12em}
+.brand span{display:block;margin-top:3px;font-size:8.5px;letter-spacing:.09em;color:var(--muted)}
+.bar-actions{display:flex;align-items:center;gap:9px}
+.back,.theme{
+  height:39px;border:1px solid var(--line);background:var(--input);color:var(--ink);border-radius:11px;
+  display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font:700 9.5px inherit;cursor:pointer
+}
+.back{padding:0 13px;gap:7px}.theme{width:39px;font-size:16px}
+.portal-grid{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1.18fr) minmax(390px,.82fr);min-height:calc(min(790px,100vh - 36px) - 86px)}
+.visual{
+  position:relative;padding:46px 48px 36px;display:flex;flex-direction:column;justify-content:space-between;
+  border-inline-end:1px solid var(--line);overflow:hidden;
+  background:linear-gradient(160deg,rgba(54,213,150,.065),transparent 42%)
+}
+.hero{max-width:680px;position:relative;z-index:3}
+.kicker{font:700 9px Inter,system-ui,sans-serif;letter-spacing:.18em;color:var(--green);margin-bottom:14px}
+.hero h1{font-size:clamp(38px,4.5vw,62px);line-height:1.14;margin:0;font-weight:700;letter-spacing:-.045em}
+.hero p{max-width:630px;margin:17px 0 0;font-size:13px;line-height:2;color:var(--muted)}
+.twin{
+  position:relative;height:300px;margin-top:30px;border-radius:25px;border:1px solid var(--line);overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 48%,rgba(54,213,150,.10),transparent 27%),
+    linear-gradient(150deg,color-mix(in srgb,var(--glass2) 70%,transparent),color-mix(in srgb,var(--glass) 72%,transparent));
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+  transform:perspective(1000px) rotateX(calc(var(--ty,0)*-1deg)) rotateY(calc(var(--tx,0)*1deg));
+  transition:transform .16s ease-out
+}
+.twin svg{width:100%;height:100%;display:block}
+.scan{
+  position:absolute;left:7%;right:7%;top:18%;height:1px;opacity:.66;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);box-shadow:0 0 17px var(--green);
+  animation:scan 5.8s ease-in-out infinite
+}
+.node{transform-box:fill-box;transform-origin:center;animation:pulse 3.8s ease-in-out infinite}
+.node:nth-of-type(2n){animation-delay:.8s}
+@keyframes scan{0%,100%{top:18%;opacity:.22}50%{top:81%;opacity:.82}}
+@keyframes pulse{0%,100%{opacity:.5;transform:scale(.86)}50%{opacity:1;transform:scale(1.12)}}
+.twin-meta{position:absolute;inset:auto 18px 15px;display:flex;justify-content:space-between;align-items:end;gap:16px}
+.twin-meta b{display:block;font:700 9px Inter,system-ui,sans-serif;letter-spacing:.11em}.twin-meta span{font-size:8.5px;color:var(--muted)}
+.pills{display:flex;gap:7px;flex-wrap:wrap}
+.pills i{font-style:normal;height:28px;padding:0 9px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;background:color-mix(in srgb,var(--glass2) 72%,transparent);font-size:8px;color:var(--muted)}
+.pills i:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--green);margin-inline-end:6px}
+.visual-foot{font-size:8.5px;color:var(--muted);position:relative;z-index:3}
+.auth{
+  padding:42px;display:flex;flex-direction:column;justify-content:center;background:color-mix(in srgb,var(--glass2) 83%,transparent)
+}
+.auth-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:27px}
+.auth-head h2{margin:0 0 8px;font-size:23px;line-height:1.25;font-weight:700;letter-spacing:-.025em}
+.auth-head p{margin:0;color:var(--muted);font-size:10.5px;line-height:1.8}
+.badge{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:8.5px;white-space:nowrap}
+.badge:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green)}
+.field{display:grid;gap:7px;margin-bottom:14px}
+.field label{font-size:9.5px;font-weight:600;color:var(--muted)}
+.input-wrap{position:relative}
+input{
+  width:100%;height:50px;border-radius:13px;border:1px solid var(--line);background:var(--input);color:var(--ink);
+  outline:0;padding:0 14px;font:500 13px inherit;transition:border-color .14s ease,box-shadow .14s ease
+}
+input::placeholder{color:color-mix(in srgb,var(--muted) 66%,transparent)}
+input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 12%,transparent)}
+.password-toggle{
+  position:absolute;left:7px;top:7px;height:36px;padding:0 10px;border-radius:9px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--glass2) 88%,transparent);color:var(--muted);font:700 8.5px inherit;cursor:pointer
+}
+.submit{
+  width:100%;height:51px;margin-top:7px;border:0;border-radius:13px;cursor:pointer;
+  background:linear-gradient(135deg,var(--green),var(--green-deep));color:#fff;font:700 12.5px inherit;
+  box-shadow:0 15px 30px -22px var(--green);transition:transform .14s ease,filter .14s ease
+}
+.submit:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.04)}
+.submit:disabled{opacity:.56;cursor:wait}
+.message{min-height:22px;margin-top:13px;text-align:center;font-size:10px;font-weight:600;line-height:1.7}
+.error{color:var(--danger)}.success{color:var(--green)}
+.note{
+  margin-top:12px;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--glass) 70%,transparent);
+  color:var(--muted);font-size:8.8px;line-height:1.8
+}
+.switch{margin-top:17px;padding-top:17px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:9.5px}
+.switch a{color:var(--green);font-weight:700;text-decoration:none}
+.loading-spinner{width:17px;height:17px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-inline-end:8px;animation:spin .8s linear infinite}
+.hidden{display:none!important}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:1100px){
+  body{padding:12px}.frame{min-height:calc(100dvh - 24px);border-radius:26px}
+  .portal-grid{grid-template-columns:minmax(0,1.08fr) minmax(350px,.92fr)}
+  .visual{padding:38px 34px 30px}.auth{padding:34px}.hero h1{font-size:clamp(36px,4.8vw,52px)}.twin{height:260px}
+}
+@media(max-width:920px){
+  body{padding:9px}.frame{border-radius:22px;min-height:auto}.bar{height:72px;padding:0 18px}
+  .logo{width:50px;height:50px;border-radius:15px}.logo img{width:42px;height:42px}
+  .portal-grid{grid-template-columns:1fr;min-height:auto}.visual{padding:28px 24px;border-inline-end:0;border-bottom:1px solid var(--line)}
+  .hero h1{font-size:36px}.hero p{font-size:12px;line-height:1.9}.twin{height:190px}.auth{padding:30px 24px}
+}
+@media(max-width:680px){
+  body{padding:max(7px,env(safe-area-inset-top)) max(7px,env(safe-area-inset-right)) max(7px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left))}
+  .frame{border-radius:18px}.bar{height:66px;padding:0 14px}.brand{gap:9px}.logo{width:44px;height:44px;border-radius:13px}.logo img{width:37px;height:37px}.brand b{font-size:13px}.brand span{display:none}
+  .back,.theme{min-width:44px;height:44px;border-radius:12px}.back{font-size:0;width:44px;padding:0}.back:after{content:"←";font-size:17px}
+  .portal-grid{display:flex;flex-direction:column}.auth{order:1;padding:24px 16px 20px}.visual{order:2;padding:22px 16px 20px}
+  .auth-head{align-items:center;margin-bottom:21px}.auth-head h2{font-size:21px}.auth-head p{font-size:10.5px}.badge{display:none}
+  .field{margin-bottom:13px}.field label{font-size:10px}input{height:50px;font-size:16px}.password-toggle{height:38px;top:6px;min-width:48px}.submit{height:52px;font-size:13px}
+  .message{font-size:10.5px}.note{font-size:9.5px;line-height:1.75}.switch{font-size:10px;line-height:1.7}
+  .hero h1{font-size:30px}.hero p{font-size:11.5px}.kicker{font-size:8px}.twin{height:145px;border-radius:17px;margin-top:18px}.twin-meta{inset:auto 13px 12px}.twin-meta b{font-size:8px}.twin-meta span{font-size:7.5px}.pills{display:none}.visual-foot{margin-top:14px}
+}
+@media(max-width:380px){
+  .auth,.visual{padding-inline:13px}.auth-head h2{font-size:20px}.hero h1{font-size:28px}.twin{height:130px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.twin{transform:none!important}}
+</style>
 </head>
 <body>
-
-  <div class="card glow">
-    <img src="Smart_HSR_Dashboard_Logo.svg" class="mx-auto w-24 mb-5 animate-pulse">
-    <h2 class="text-2xl font-extrabold mb-6 text-teal-300 tracking-wide">
-      تسجيل دخول المدير
-    </h2>
-
-    <form id="loginForm" class="space-y-4">
+<main class="frame">
+  <header class="bar">
+    <div class="brand">
+      <div class="logo"><img src="Smart_HSR_Dashboard_Logo.svg" alt="شعار SMART HSR"></div>
+      <div><b>SMART HSR</b><span>SMART MUNICIPAL PLATFORM</span></div>
+    </div>
+    <div class="bar-actions"><a class="back" href="Home.html">العودة لبوابة الدخول</a><button class="theme" type="button" data-theme-toggle aria-label="تبديل المظهر">☀</button></div>
+  </header>
+  <div class="portal-grid">
+    <section class="visual">
       <div>
-        <label class="block text-right mb-1">البريد الإلكتروني</label>
-        <input type="email" id="email"
-          class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400"
-          placeholder="example@email.com" required>
-      </div>
-      <div>
-        <label class="block text-right mb-1">كلمة المرور</label>
-        <input type="password" id="password"
-          class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400"
-          placeholder="••••••••" required>
-      </div>
-
-      <button type="submit"
-        class="w-full py-3 rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:opacity-90 font-extrabold tracking-wide transition">
-        تسجيل الدخول
-      </button>
-    </form>
-
-    <p id="errorMsg" class="text-red-400 mt-4 hidden text-sm"></p>
-
-    <p class="mt-6 text-white/60 text-xs">© 2025 Smart HSR — جميع الحقوق محفوظة</p>
+        <div class="hero">
+          <div class="kicker">MUNICIPAL COMMAND ACCESS</div>
+          <h1>مركز القيادة<br>البلدية</h1>
+          <p>بوابة مخصصة لمدير البلدية والقيادات المخولة لإدارة التشغيل والمستخدمين والخدمات والقرارات البلدية من مركز واحد.</p>
+        </div>
+        <div class="twin" data-twin>
+    <svg viewBox="0 0 820 310" role="img" aria-label="توأم رقمي بصري لمركز القيادة البلدية">
+      <defs>
+        <linearGradient id="network" x1="0" x2="1"><stop offset="0" stop-color="#36d596" stop-opacity=".78"/><stop offset="1" stop-color="#76a9ff" stop-opacity=".60"/></linearGradient>
+        <filter id="soft"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <g fill="none" stroke="url(#network)" opacity=".35">
+        <path d="M42 225 L175 98 L310 202 L410 72 L545 180 L660 90 L780 190"/>
+        <path d="M82 72 L175 98 L270 50 L410 72 L520 48 L660 90 L760 44"/>
+        <path d="M175 98 L410 72 M310 202 L545 180 M545 180 L780 190 M410 72 L660 90"/>
+      </g>
+      <g fill="none" stroke="url(#network)" filter="url(#soft)">
+        <path d="M340 187 V125 L410 88 L480 125 V187" opacity=".86"/>
+        <path d="M365 187 V143 H455 V187 M388 143 V122 H432 V143" opacity=".72"/>
+      </g>
+      <g fill="#36d596">
+        <circle class="node" cx="175" cy="98" r="5"/><circle class="node" cx="410" cy="72" r="5"/><circle class="node" cx="545" cy="180" r="5"/><circle class="node" cx="660" cy="90" r="5"/>
+      </g>
+      <g fill="#76a9ff">
+        <circle class="node" cx="310" cy="202" r="4.5"/><circle class="node" cx="780" cy="190" r="4.5"/><circle class="node" cx="270" cy="50" r="4"/>
+      </g>
+      <g fill="currentColor" opacity=".66" font-family="IBM Plex Sans Arabic,Tajawal,sans-serif" font-size="10">
+        <text x="137" y="82">الفرق</text><text x="382" y="54">القرار</text><text x="513" y="204">الخدمات</text><text x="632" y="73">المؤشرات</text>
+      </g>
+    </svg>
+    <div class="scan"></div>
+    <div class="twin-meta">
+      <div><b>SMART MUNICIPAL DIGITAL TWIN</b><span>رؤية تنفيذية مترابطة للمنظومة البلدية</span></div>
+      <div class="pills"><i>هوية موثوقة</i><i>مسار واضح</i><i>وصول محكوم</i></div>
+    </div>
   </div>
-
+      </div>
+      <div class="visual-foot">SMART HSR · Digital Municipal Operating Platform</div>
+    </section>
+    <section class="auth">
+      <div class="auth-head"><div><h2>دخول القيادات البلدية</h2><p>مدير البلدية والحسابات القيادية المعتمدة فقط.</p></div><span class="badge">اتصال مؤسسي آمن</span></div>
+      <form id="loginForm" autocomplete="on">
+        <div class="field"><label for="email">البريد الإلكتروني المؤسسي</label><input id="email" type="email" inputmode="email" autocomplete="username" placeholder="name@municipality.sa" required></div>
+        <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required><button class="password-toggle" type="button" data-password-toggle="password" aria-pressed="false">إظهار</button></div></div>
+        <button id="leadershipLoginButton" type="submit" class="submit">دخول مركز القيادة</button>
+      </form>
+      <p id="errorMsg" class="message error hidden" aria-live="polite"></p>
+      <div class="note">لا تمنح صفحة الدخول أي صلاحية. تتم المصادقة أولًا، ثم التحقق من حساب مدير البلدية والجهة قبل إنشاء جلسة مركز القيادة.</div>
+      <div class="switch"><span id="workforcePortalLink" hidden>هذا ليس حساب قيادة؟ <a href="login.html">استخدم بوابة الموظفين والمستخدمين</a></span><span>رئيس قسم أو موظف أو مشرف؟ <a href="login.html">بوابة الموظفين والمستخدمين</a></span></div>
+    </section>
+  </div>
+</main>
+<script>
+(function(){
+  const key='smartHSRLoginTheme';
+  const saved=localStorage.getItem(key);
+  document.documentElement.dataset.theme=saved||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+  const theme=document.querySelector('[data-theme-toggle]');
+  const sync=()=>{if(!theme)return;const light=document.documentElement.dataset.theme==='light';theme.textContent=light?'☾':'☀';theme.setAttribute('aria-label',light?'تفعيل الوضع الليلي':'تفعيل الوضع النهاري')};
+  sync();
+  theme?.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;localStorage.setItem(key,next);sync()});
+  document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventListener('click',()=>{
+    const input=document.getElementById(btn.dataset.passwordToggle);if(!input)return;
+    const show=input.type==='password';input.type=show?'text':'password';btn.textContent=show?'إخفاء':'إظهار';btn.setAttribute('aria-pressed',String(show));
+  }));
+  const twin=document.querySelector('[data-twin]');
+  if(twin&&matchMedia('(pointer:fine)').matches&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+    let raf=0;
+    twin.addEventListener('pointermove',e=>{
+      if(raf)return;
+      raf=requestAnimationFrame(()=>{const r=twin.getBoundingClientRect();const x=((e.clientX-r.left)/r.width-.5)*1.8;const y=((e.clientY-r.top)/r.height-.5)*1.5;twin.style.setProperty('--tx',x.toFixed(2));twin.style.setProperty('--ty',y.toFixed(2));raf=0});
+    });
+    twin.addEventListener('pointerleave',()=>{twin.style.setProperty('--tx',0);twin.style.setProperty('--ty',0)});
+  }
+})();
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 import { classifyManagerLoginError } from './manager-login-error-classification.js';
 
 const errorMsg = document.getElementById("errorMsg");
-const submitBtn = document.querySelector('#loginForm button[type="submit"]');
+const submitBtn = document.getElementById("leadershipLoginButton");
 function showLoginMessage(text) {
   errorMsg.textContent = text;
   errorMsg.classList.remove("hidden");
 }
 
-// إعدادات Firebase — a failure here is a system/environment problem (wrong
-// project, Preview config unavailable), never a credentials problem, so it
-// must never be allowed to silently leave the form non-functional.
 let firebaseConfig;
 try {
   firebaseConfig = await resolveFirebaseConfig();
 } catch (configErr) {
   console.error('manager-login: Firebase configuration unavailable', configErr);
-  showLoginMessage('⚠️ تعذر تحميل إعدادات النظام. حاول لاحقًا أو تواصل مع الدعم الفني.');
+  showLoginMessage('تعذر تحميل إعدادات النظام. حاول لاحقًا أو تواصل مع الدعم الفني.');
   if (submitBtn) submitBtn.disabled = true;
   throw configErr;
 }
 
-// Dedicated persisted Auth namespace: manager/supervisor actions must never
-// mutate the field-worker session stored by the default Firebase app.
-const app = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
-const auth = getAuth(app);
-await setPersistence(auth, browserLocalPersistence);
-const db = getFirestore(app);
+// Separate namespaces:
+// - managerAuth: persisted leadership session used by manager.html.
+// - probeAuth: memory-only credential + authorization probe.
+// Workforce/default Auth is intentionally untouched so both portals can coexist.
+const managerApp = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
+const managerAuth = getAuth(managerApp);
+await setPersistence(managerAuth, browserLocalPersistence);
+const probeApp = initializeApp(firebaseConfig, 'smart-hsr-manager-login-probe');
+const probeAuth = getAuth(probeApp);
+const probeDb = getFirestore(probeApp);
+await setPersistence(probeAuth, inMemoryPersistence);
+
+const PORTAL_CONTEXT_KEY = 'smartHSRPortalContext';
+
+function setLeadershipPortalContext(user, organizationId) {
+  sessionStorage.setItem(PORTAL_CONTEXT_KEY, JSON.stringify({
+    portal: 'leadership',
+    uid: user.uid,
+    organizationId,
+    role: 'manager'
+  }));
+}
 
 const form = document.getElementById("loginForm");
-
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   errorMsg.classList.add("hidden");
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
+  if (!email || !password) {
+    showLoginMessage("أدخل البريد الإلكتروني وكلمة المرور.");
+    return;
+  }
 
-  // Step 1: Firebase Auth itself. Kept in its own try/catch so a failure
-  // here can never be confused with what happens after — a wrong password
-  // and a Firestore permission/network failure are different problems with
-  // different fixes, and telling the user to "check your password" for the
-  // second one is actively misleading.
-  let user;
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="loading-spinner"></span> جاري التحقق...';
+
+  let probeUser = null;
   try {
-    const userCred = await signInWithEmailAndPassword(auth, email, password);
-    user = userCred.user;
+    const userCred = await signInWithEmailAndPassword(probeAuth, email, password);
+    probeUser = userCred.user;
   } catch (authErr) {
     console.error('manager-login: authentication failed', authErr);
     const kind = classifyManagerLoginError(authErr);
     showLoginMessage(kind === 'credential-failed'
-      ? "❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور"
-      : "⚠️ تعذر الاتصال بخدمة المصادقة حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.");
+      ? "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+      : "تعذر الاتصال بخدمة المصادقة حاليًا. حاول لاحقًا.");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "دخول مركز القيادة";
     return;
   }
 
-  // Step 2: manager/supervisor authorization lookup. Authentication already
-  // succeeded at this point — any failure here is a lookup/authorization
-  // problem, never a credentials problem.
   try {
-    // 🔍 تحقق إذا كان موجود داخل managers
-    const ref = doc(db, "managers", user.uid);
-    const snap = await getDoc(ref);
+    const snap = await getDoc(doc(probeDb, "managers", probeUser.uid));
+    const manager = snap.exists() ? (snap.data() || {}) : null;
+    const organizationId = typeof manager?.organizationId === 'string' ? manager.organizationId.trim() : '';
 
-    const managerData = snap.exists() ? snap.data() : null;
-
-    // لا تُنشئ صلاحية من صفحة الدخول. المدير من managers/{uid} أو المشرف
-    // المساعد من users/{uid} فقط، وكلاهما فعّال ومرتبط بمؤسسة.
-    const managerOrg = typeof managerData?.organizationId === 'string' ? managerData.organizationId.trim() : '';
-    let authorized = !!(managerData && managerData.role === 'manager' && managerData.active !== false && managerOrg);
-    if (!authorized) {
-      const userSnap = await getDoc(doc(db, 'users', user.uid));
-      const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
-      const userOrg = typeof userData.organizationId === 'string' ? userData.organizationId.trim() : '';
-      authorized = userData.role === 'supervisor' && userData.active !== false && !!userOrg;
-    }
-    if (!authorized) {
-      await signOut(auth);
-      showLoginMessage("❌ هذا الحساب غير مصرح له بالدخول كمدير");
+    if (!manager || manager.role !== 'manager' || manager.active === false || !organizationId) {
+      await signOut(probeAuth).catch(() => {});
+      showLoginMessage("هذا الحساب ليس حساب مدير بلدية معتمد. استخدم بوابة الموظفين والمستخدمين.");
+      document.getElementById('workforcePortalLink')?.removeAttribute('hidden');
+      submitBtn.disabled = false;
+      submitBtn.textContent = "دخول مركز القيادة";
       return;
     }
+    // Persist only after manager authorization succeeds. The workforce/default
+    // Auth namespace is never signed out or overwritten here.
+    await signInWithEmailAndPassword(managerAuth, email, password);
+    await signOut(probeAuth).catch(() => {});
 
-    // تخزين الجلسة بعد التحقق من مستند المدير ودوره فقط
+    setLeadershipPortalContext(probeUser, organizationId);
     sessionStorage.setItem("smartHSRUser", JSON.stringify({
-      uid: user.uid,
-      email: user.email,
-      role: "manager"
+      uid: probeUser.uid,
+      email: probeUser.email,
+      role: "manager",
+      organizationId
     }));
-
     window.location.href = "manager.html";
-
   } catch (lookupErr) {
-    // Authenticated successfully but the manager-authorization lookup
-    // itself failed (Firestore permission-denied, network error, rules
-    // misconfiguration). This is never the password's fault, and the user
-    // must not be left signed in with an unverified authorization state.
-    console.error('manager-login: manager authorization lookup failed', lookupErr);
-    await signOut(auth).catch(() => {});
-    showLoginMessage("⚠️ تعذر التحقق من صلاحياتك حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.");
+    console.error('manager-login: authorization lookup failed', lookupErr);
+    await signOut(probeAuth).catch(() => {});
+    showLoginMessage("تعذر التحقق من صلاحيات القيادة حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "دخول مركز القيادة";
   }
 });
 </script>
-
-</body>
-</html>
+</body></html>

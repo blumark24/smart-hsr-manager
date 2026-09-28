@@ -29,25 +29,23 @@ export function initUsersModule({ auth, getOrgs } = {}) {
     usersMsg.style.color = ok ? 'var(--emerald)' : 'var(--rose)';
   }
 
-  function generateTempPassword(){
-    const upper='ABCDEFGHJKLMNPQRSTUVWXYZ', lower='abcdefghijkmnpqrstuvwxyz', digits='23456789', sym='!@#$%*?';
-    const all=upper+lower+digits+sym; const buf=new Uint32Array(14);
-    crypto.getRandomValues(buf);
-    let pick=c=>c[buf[i++]%c.length]; let i=0;
-    let pw=pick(upper)+pick(lower)+pick(digits)+pick(sym);
-    while(pw.length<12) pw+=all[buf[i++% buf.length]%all.length];
-    return pw;
-  }
-
   async function callAdminApi(payload){
     const user = auth.currentUser;
     if(!user) throw new Error('انتهت الجلسة. الرجاء تسجيل الدخول من جديد.');
-    const token = await user.getIdToken();
-    const resp = await fetch(ADMIN_API, {
+    let token = await user.getIdToken();
+    let resp = await fetch(ADMIN_API, {
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
       body: JSON.stringify(payload)
     });
+    if(resp.status===401){
+      token = await user.getIdToken(true);
+      resp = await fetch(ADMIN_API, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+        body: JSON.stringify(payload)
+      });
+    }
     let data={}; try{ data=await resp.json(); }catch(_){}
     if(!resp.ok){
       const reason = data.reason || data.error || ('HTTP '+resp.status);
@@ -87,7 +85,6 @@ export function initUsersModule({ auth, getOrgs } = {}) {
           <td>${mcp}</td>
           <td>
             <div class="flex items-center gap-1 justify-end flex-wrap">
-              <button class="btn btn-outline" data-act="temp" data-uid="${u.uid}">كلمة مرور مؤقتة</button>
               <button class="btn btn-outline" data-act="toggle" data-uid="${u.uid}" data-active="${u.active?1:0}">${toggleLabel}</button>
               <button class="btn btn-ghost" data-act="revoke" data-uid="${u.uid}">إنهاء الجلسات</button>
             </div>
@@ -107,14 +104,15 @@ export function initUsersModule({ auth, getOrgs } = {}) {
 
   userForm.addEventListener('submit', async (e)=>{
     const f = userForm.elements;
-    const name=f.name.value.trim(), email=f.email.value.trim(), role=f.role.value, organizationId=f.organizationId.value;
-    if(!name||!email||!organizationId){ e.preventDefault(); userFormMsg.style.color='var(--rose)'; userFormMsg.textContent='الرجاء تعبئة الاسم والبريد واختيار المؤسسة.'; return; }
+    const name=f.name.value.trim(), email=f.email.value.trim(), role=f.role.value, organizationId=f.organizationId.value, password=f.password.value;
+    if(!name||!email||!organizationId||!password){ e.preventDefault(); userFormMsg.style.color='var(--rose)'; userFormMsg.textContent='الرجاء تعبئة الاسم والبريد والمؤسسة وكلمة المرور.'; return; }
+    if(password.length < 10){ e.preventDefault(); userFormMsg.style.color='var(--rose)'; userFormMsg.textContent='كلمة المرور يجب أن تكون 10 أحرف على الأقل.'; return; }
     e.preventDefault();
     userFormMsg.style.color='var(--muted)'; userFormMsg.textContent='...جاري الإنشاء';
     try{
-      await callAdminApi({ action:'create', organizationId, role, email, name });
+      await callAdminApi({ action:'create', organizationId, role, email, name, password });
       userModal.close();
-      setUsersMsg('تم إنشاء المستخدم بنجاح. استخدم «كلمة مرور مؤقتة» لتوليد كلمة الدخول.', true);
+      setUsersMsg('تم إنشاء المستخدم بنجاح بكلمة المرور المحددة.', true);
       if(usersOrgSelect.value!==organizationId) usersOrgSelect.value=organizationId;
       renderUsers();
     }catch(err){
@@ -126,13 +124,7 @@ export function initUsersModule({ auth, getOrgs } = {}) {
     const btn = e.target.closest('button[data-act]'); if(!btn) return;
     const uid = btn.dataset.uid; const act = btn.dataset.act;
     try{
-      if(act==='temp'){
-        const pw = generateTempPassword();
-        if(!confirm('سيتم تعيين كلمة مرور مؤقتة لهذا المستخدم وسيُطلب منه تغييرها عند أول دخول.\n\nكلمة المرور المؤقتة (انسخها الآن — لن تظهر مجددًا):\n\n'+pw+'\n\nهل تريد المتابعة؟')) return;
-        await callAdminApi({ action:'setTempPassword', uid, password: pw });
-        setUsersMsg('تم تعيين كلمة المرور المؤقتة. سلّمها للمستخدم بشكل آمن.', true);
-        renderUsers();
-      } else if(act==='toggle'){
+      if(act==='toggle'){
         const currentlyActive = btn.dataset.active==='1';
         const next = !currentlyActive;
         if(!confirm(next ? 'تفعيل هذا الحساب؟' : 'تعطيل هذا الحساب سيمنع المستخدم من الدخول. متابعة؟')) return;

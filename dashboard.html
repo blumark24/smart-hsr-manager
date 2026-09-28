@@ -2278,6 +2278,56 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   }
 </style>
 
+
+<style id="inspector-record-page-style">
+  /* PHASE 19.3 — lightweight inspector-owned record route.
+     Scoped only to #inspector-record-page; the approved inspector dashboard
+     shell, header, dock and capture workflow remain untouched. */
+  #inspector-record-page{display:none;min-height:calc(100dvh - 150px);padding:.85rem 0 calc(6.5rem + env(safe-area-inset-bottom));color:var(--app-text)}
+  body.inspector-record-view #inspector-record-page{display:block!important;animation:inspectorRecordIn .18s ease-out}
+  body.inspector-record-view main> :not(#inspector-record-page){display:none!important}
+  @keyframes inspectorRecordIn{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .inspector-record-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin:.2rem 0 .8rem}
+  .inspector-record-title-wrap{min-width:0}.inspector-record-kicker{display:block;color:var(--app-teal);font-size:.7rem;font-weight:900;letter-spacing:.03em}
+  .inspector-record-head h1{margin:.12rem 0 0;font-size:clamp(1.3rem,5vw,1.75rem);font-weight:950;color:var(--app-navy)}
+  :root[data-theme="dark"] .inspector-record-head h1{color:var(--app-text)}
+  .inspector-record-head p{margin:.22rem 0 0;color:var(--app-muted);font-size:.78rem;line-height:1.55}
+  .inspector-record-back{min-width:42px;min-height:42px;display:grid;place-items:center;border:1px solid var(--app-border);border-radius:12px;background:var(--app-surface-raised);color:var(--app-text);box-shadow:0 5px 14px rgba(10,39,54,.05)}
+  .inspector-record-back svg{width:18px;height:18px}
+  .inspector-record-toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(118px,160px);gap:.55rem;margin-bottom:.65rem}
+  .inspector-record-search{position:relative}.inspector-record-search svg{position:absolute;inset-inline-start:.75rem;top:50%;width:16px;height:16px;transform:translateY(-50%);color:var(--app-muted);pointer-events:none}
+  .inspector-record-toolbar input,.inspector-record-toolbar select{width:100%;height:42px;border:1px solid var(--app-border);border-radius:12px;background:var(--app-surface-raised);color:var(--app-text);font-size:.79rem;outline:none}
+  .inspector-record-toolbar input{padding:0 2.2rem 0 .8rem}.inspector-record-toolbar select{padding:0 .7rem}
+  .inspector-record-toolbar input:focus,.inspector-record-toolbar select:focus{border-color:var(--app-teal);box-shadow:0 0 0 3px rgba(17,143,137,.12)}
+  .inspector-record-meta{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin:.1rem .15rem .55rem;color:var(--app-muted);font-size:.7rem}
+  .inspector-record-meta strong{color:var(--app-text)}
+  .inspector-record-list{display:flex;flex-direction:column;gap:.38rem}
+  .inspector-record-row{width:100%;min-height:62px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:.55rem;padding:.58rem .68rem;border:1px solid var(--app-border);border-radius:13px;background:var(--app-surface-raised);color:var(--app-text);text-align:right;box-shadow:0 4px 12px rgba(10,39,54,.035);transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease}
+  .inspector-record-row:active{transform:scale(.992)}.inspector-record-row:hover{border-color:rgba(17,143,137,.38);box-shadow:0 7px 18px rgba(10,39,54,.07)}
+  .inspector-record-row-main{min-width:0}.inspector-record-row-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem;font-weight:900}
+  .inspector-record-row-sub{display:flex;align-items:center;gap:.38rem;margin-top:.24rem;color:var(--app-muted);font-size:.67rem;white-space:nowrap;overflow:hidden}
+  .inspector-record-row-sub span{overflow:hidden;text-overflow:ellipsis}
+  .inspector-record-status{display:inline-flex;align-items:center;gap:.28rem;min-height:27px;padding:.22rem .46rem;border-radius:999px;border:1px solid var(--app-border);background:var(--app-bg-soft);font-size:.64rem;font-weight:900;white-space:nowrap}
+  .inspector-record-status::before{content:"";width:6px;height:6px;border-radius:50%;background:#64748b}
+  .inspector-record-status[data-status="PENDING"]::before{background:#ef4444}.inspector-record-status[data-status="IN_PROGRESS"]::before{background:#f59e0b}.inspector-record-status[data-status="PENDING_REVIEW"]::before{background:#3b82f6}.inspector-record-status[data-status="COMPLETED"]::before{background:#22c55e}
+  .inspector-record-empty{padding:2rem 1rem;text-align:center;border:1px dashed var(--app-border);border-radius:14px;background:var(--app-surface-raised);color:var(--app-muted);font-size:.78rem;line-height:1.7}
+  .inspector-record-load-more{width:100%;min-height:40px;margin-top:.55rem;border:1px solid var(--app-border);border-radius:11px;background:var(--app-surface-raised);color:var(--app-teal);font-size:.75rem;font-weight:900}
+  .inspector-record-detail{padding:.72rem;border:1px solid var(--app-border);border-radius:16px;background:var(--app-surface-raised);box-shadow:var(--app-shadow)}
+  .inspector-record-detail-head{display:flex;align-items:flex-start;gap:.55rem;padding-bottom:.65rem;border-bottom:1px solid var(--app-border)}
+  .inspector-record-detail-head button{flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--app-border);border-radius:11px;background:var(--app-bg-soft);color:var(--app-text)}
+  .inspector-record-detail-head-copy{min-width:0;flex:1}.inspector-record-detail-head h2{margin:0;font-size:1.02rem;font-weight:950;color:var(--app-text)}.inspector-record-detail-head p{margin:.25rem 0 0;color:var(--app-muted);font-size:.7rem}
+  .inspector-record-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-top:.65rem}
+  .inspector-record-detail-field{padding:.55rem .6rem;border:1px solid var(--app-border);border-radius:11px;background:var(--app-bg-soft)}
+  .inspector-record-detail-field small{display:block;color:var(--app-muted);font-size:.63rem;font-weight:800}.inspector-record-detail-field strong{display:block;margin-top:.18rem;color:var(--app-text);font-size:.76rem;line-height:1.5;overflow-wrap:anywhere}
+  .inspector-record-description,.inspector-record-resolution{margin-top:.6rem;padding:.68rem;border:1px solid var(--app-border);border-radius:12px;background:var(--app-surface)}
+  .inspector-record-description h3,.inspector-record-resolution h3{margin:0 0 .34rem;font-size:.76rem;font-weight:950;color:var(--app-text)}
+  .inspector-record-description p,.inspector-record-resolution p{margin:0;color:var(--app-muted);font-size:.74rem;line-height:1.75;white-space:pre-wrap}
+  .inspector-record-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin-top:.6rem}.inspector-record-evidence figure{margin:0;overflow:hidden;border:1px solid var(--app-border);border-radius:12px;background:var(--app-bg-soft)}.inspector-record-evidence figcaption{padding:.4rem .5rem;color:var(--app-muted);font-size:.64rem;font-weight:850}.inspector-record-evidence img{display:block;width:100%;height:150px;object-fit:cover;background:var(--app-bg-soft)}
+  .inspector-record-review-action{width:100%;min-height:42px;margin-top:.65rem;border:0;border-radius:12px;background:var(--app-teal);color:#fff;font-size:.76rem;font-weight:950}
+  @media(max-width:560px){#inspector-record-page{padding-top:.55rem}.inspector-record-toolbar{grid-template-columns:1fr 122px}.inspector-record-detail-grid{grid-template-columns:1fr 1fr}.inspector-record-evidence{grid-template-columns:1fr}.inspector-record-evidence img{height:190px}}
+  @media(prefers-reduced-motion:reduce){body.inspector-record-view #inspector-record-page{animation:none}.inspector-record-row{transition:none}}
+</style>
+
 </head>
 
 <body class="text-gray-800">
@@ -2374,7 +2424,85 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   </div>
 </section>
 
+
 <main class="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
+
+  <section id="inspector-record-page" class="inspector-record-page no-print hidden" aria-labelledby="inspectorRecordTitle">
+    <div class="inspector-record-head">
+      <div class="inspector-record-title-wrap">
+        <span class="inspector-record-kicker">SMART HSR · سجل المراقب</span>
+        <h1 id="inspectorRecordTitle">سجل ملاحظاتي</h1>
+        <p>ملاحظاتك الميدانية فقط، مرتبة من الأحدث مع التاريخ والوقت والحالة.</p>
+      </div>
+      <button id="inspectorRecordHomeBtn" class="inspector-record-back" type="button" aria-label="العودة إلى الرئيسية">
+        <i data-lucide="arrow-right" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div id="inspectorRecordListView">
+      <div class="inspector-record-toolbar" role="search">
+        <label class="inspector-record-search">
+          <i data-lucide="search" aria-hidden="true"></i>
+          <span class="sr-only">بحث في سجل الملاحظات</span>
+          <input id="inspectorRecordSearch" type="search" autocomplete="off" placeholder="بحث بالملاحظة أو الموقع أو الرقم">
+        </label>
+        <label>
+          <span class="sr-only">فلترة حالة الملاحظات</span>
+          <select id="inspectorRecordStatusFilter" aria-label="فلترة حالة الملاحظات">
+            <option value="ALL">كل الحالات</option>
+            <option value="PENDING">قيد الانتظار</option>
+            <option value="IN_PROGRESS">قيد المعالجة</option>
+            <option value="PENDING_REVIEW">بانتظار التحقق</option>
+            <option value="COMPLETED">مغلقة</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="inspector-record-meta">
+        <span id="inspectorRecordAuthority">بيانات المراقب الموثقة فقط</span>
+        <span><strong id="inspectorRecordCount">0</strong> ملاحظة</span>
+      </div>
+
+      <div id="inspectorRecordList" class="inspector-record-list" aria-live="polite">
+        <div class="inspector-record-empty">جاري تحميل سجل ملاحظاتك…</div>
+      </div>
+      <button id="inspectorRecordLoadMore" class="inspector-record-load-more hidden" type="button">تحميل ملاحظات أقدم</button>
+    </div>
+
+    <article id="inspectorRecordDetailView" class="inspector-record-detail hidden" aria-labelledby="inspectorRecordDetailTitle">
+      <div class="inspector-record-detail-head">
+        <button id="inspectorRecordBackToList" type="button" aria-label="العودة إلى السجل"><i data-lucide="arrow-right" aria-hidden="true"></i></button>
+        <div class="inspector-record-detail-head-copy">
+          <h2 id="inspectorRecordDetailTitle">تفاصيل الملاحظة</h2>
+          <p><span id="inspectorRecordDetailStatus">—</span> · <span id="inspectorRecordDetailWhen">—</span></p>
+        </div>
+      </div>
+
+      <div class="inspector-record-detail-grid">
+        <div class="inspector-record-detail-field"><small>التصنيف</small><strong id="inspectorRecordDetailType">—</strong></div>
+        <div class="inspector-record-detail-field"><small>الرقم المرجعي</small><strong id="inspectorRecordDetailId">—</strong></div>
+        <div class="inspector-record-detail-field"><small>الموقع</small><strong id="inspectorRecordDetailLocation">—</strong></div>
+        <div class="inspector-record-detail-field"><small>آخر تحديث</small><strong id="inspectorRecordDetailUpdated">—</strong></div>
+      </div>
+
+      <section class="inspector-record-description">
+        <h3>الملاحظة</h3>
+        <p id="inspectorRecordDetailDescription">—</p>
+      </section>
+
+      <section id="inspectorRecordResolution" class="inspector-record-resolution hidden">
+        <h3>المعالجة / الملاحظة الختامية</h3>
+        <p id="inspectorRecordDetailResolution">—</p>
+      </section>
+
+      <div id="inspectorRecordEvidence" class="inspector-record-evidence hidden">
+        <figure id="inspectorRecordBeforeFigure" class="hidden"><figcaption>الصورة الأصلية</figcaption><img id="inspectorRecordBeforeImage" alt="الصورة الأصلية للملاحظة"></figure>
+        <figure id="inspectorRecordAfterFigure" class="hidden"><figcaption>بعد المعالجة</figcaption><img id="inspectorRecordAfterImage" alt="صورة الملاحظة بعد المعالجة"></figure>
+      </div>
+
+      <button id="inspectorRecordOpenFullReview" class="inspector-record-review-action" type="button">فتح المراجعة التشغيلية الكاملة</button>
+    </article>
+  </section>
 
   <!-- HERO -->
   <section id="hero" class="hidden" aria-hidden="true">
@@ -2523,6 +2651,21 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
             <div id="aiResultContainer" class="mt-5 p-4 bg-gray-50 rounded-xl border border-gray-200 hidden">
               <h6 id="aiResultTitle" class="font-bold text-lg mb-2" style="color:var(--color-teal);"></h6>
               <div id="aiResultContent" class="text-gray-700"></div>
+            </div>
+          </div>
+
+          <div id="inspectorVerificationPanel" class="hidden mt-6 p-4 rounded-2xl border border-blue-200 bg-blue-50 no-print">
+            <div class="flex flex-col gap-3">
+              <div>
+                <h5 class="text-lg font-extrabold text-blue-900">التحقق من معالجة المقاول</h5>
+                <p class="text-sm text-blue-800 mt-1">راجع صورة ما بعد المعالجة ومذكرة المقاول. يمكنك اعتماد المعالجة أو إعادتها للمقاول مع ملاحظة واضحة.</p>
+              </div>
+              <textarea id="inspectorVerificationNote" rows="3" class="w-full rounded-xl border border-blue-200 p-3 bg-white" placeholder="ملاحظة التحقق أو سبب الإعادة للمقاول"></textarea>
+              <div class="flex flex-wrap gap-2">
+                <button id="acceptContractorWorkBtn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl">اعتماد المعالجة</button>
+                <button id="returnContractorWorkBtn" type="button" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-xl">إعادة للمقاول</button>
+                <span id="inspectorVerificationMsg" class="text-sm text-blue-900 self-center"></span>
+              </div>
             </div>
           </div>
 
@@ -3358,7 +3501,8 @@ function timestampValue(value){
 const statusMap = {
   "PENDING": { color:'bg-red-600', text:'قيد الانتظار' },
   "IN_PROGRESS": { color:'bg-yellow-600', text:'قيد المعالجة' },
-  "COMPLETED": { color:'bg-green-600', text:'تمت المعالجة' }
+  "PENDING_REVIEW": { color:'bg-blue-600', text:'بانتظار تحقق المراقب' },
+  "COMPLETED": { color:'bg-green-600', text:'مغلقة' }
 };
 // Display-only Arabic labels for the observation category/type enum. Same
 // small-lookup-table pattern as statusMap above -- the stored/API value is
@@ -3665,6 +3809,11 @@ function observationFromDocument(d, organizationId, uid) {
     riskAssessment:data.riskAssessment||{priority:'Medium',timeframe:'72 hours'},
     resolutionNote:data.resolutionNote||null, afterImagePath:evidence.after,
     organizationId:data.organizationId||null, createdByUid:data.createdByUid||null,
+    assignedContractorUid:data.assignedContractorUid||null,
+    assignedContractorName:data.assignedContractorName||null,
+    inspectorVerification:data.inspectorVerification&&typeof data.inspectorVerification==='object'?data.inspectorVerification:null,
+    closedByUid:data.closedByUid||null, closedByName:data.closedByName||null,
+    closureNote:data.closureNote||null, closedAt:timestampValue(data.closedAt),
     originalLat:data.originalLat, originalLng:data.originalLng, correctedLat:data.correctedLat,
     correctedLng:data.correctedLng, locationAccuracyMeters:data.locationAccuracyMeters,
     locationSource:data.locationSource, locationVerified:data.locationVerified===true,
@@ -3726,6 +3875,7 @@ function subscribeObservations() {
     renderKPIs();
     renderInspectorCounts();
     renderObservationsList(observationsData);
+    renderInspectorRecord();
     renderPersonalMap();
     renderPersonalLifecycle();
     lucide.createIcons();
@@ -3758,6 +3908,7 @@ window.loadMoreObservations = async function() {
     observationsHaveMore = snapshot.size === OBSERVATIONS_PAGE_SIZE;
     renderObservationsList(observationsData);
     renderInspectorCounts();
+    renderInspectorRecord();
     renderPersonalMap();
     renderPersonalLifecycle();
   } catch (error) {
@@ -3839,7 +3990,7 @@ window.showObservationDetail = async function(docId) {
   revokeAllObservationImageUrls();
   const beforeResolved=await resolveEvidenceReference(obs.imagePath);
   const afterResolved=await resolveEvidenceReference(obs.afterImagePath);
-  if (obs.status==='COMPLETED' && afterResolved) {
+  if (['PENDING_REVIEW','COMPLETED'].includes(obs.status) && afterResolved) {
     unhide('imageComparisonWrapper');
     if(beforeResolved)document.getElementById('beforeImage').src=beforeResolved;
     document.getElementById('afterImage').src=afterResolved;
@@ -3863,15 +4014,103 @@ window.showObservationDetail = async function(docId) {
   }
 
   const isCompleted = obs.status==='COMPLETED';
-  toggleHidden('updateStatusBtn', isCompleted);
-  toggleHidden('completeObservationBtn', isCompleted);
+  const contractorWorkflow = Boolean(obs.assignedContractorUid);
+  const pendingVerification = obs.status==='PENDING_REVIEW' && contractorWorkflow;
+  toggleHidden('inspectorVerificationPanel', !pendingVerification);
+  // Field Survey governance: the inspector reports and verifies; assignment
+  // and final closure belong to the Department Head workflow.
+  toggleHidden('updateStatusBtn', true);
+  toggleHidden('completeObservationBtn', true);
   toggleHidden('alreadyCompletedBtn', !isCompleted);
+  const verificationMsg=document.getElementById('inspectorVerificationMsg');
+  if(verificationMsg){
+    verificationMsg.textContent=obs.inspectorVerification?.status==='VERIFIED'
+      ? 'تم اعتماد المعالجة — بانتظار إغلاق رئيس القسم.'
+      : obs.inspectorVerification?.status==='RETURNED'
+        ? 'أعيدت الحالة سابقًا للمقاول.'
+        : '';
+  }
+  const verificationNote=document.getElementById('inspectorVerificationNote');
+  if(verificationNote)verificationNote.value='';
 
   hide('detailPlaceholder');
   unhide('observationDetail');
   hide('aiResultContainer');
   lucide.createIcons();
 };
+
+async function fieldWorkflowRequest(payload){
+  const user=auth.currentUser;
+  if(!user)throw Object.assign(new Error('unauthenticated'),{code:'unauthenticated'});
+  const response=await fetchWithFirebaseAuth({
+    getIdToken:forceRefresh=>user.getIdToken(forceRefresh),
+    input:'/api/admin/users',
+    init:{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    }
+  });
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok){
+    const error=new Error(data.reason||data.error||'request_failed');
+    error.code=data.reason||data.error||'request_failed';
+    throw error;
+  }
+  return data;
+}
+
+async function verifyContractorWork(decision){
+  const observation=currentSelectedObservation;
+  if(!observation||observation.status!=='PENDING_REVIEW')return;
+  const note=(document.getElementById('inspectorVerificationNote')?.value||'').trim();
+  const msg=document.getElementById('inspectorVerificationMsg');
+  if(decision==='RETURN'&&!note){
+    msg.textContent='اكتب سبب الإعادة للمقاول.';
+    document.getElementById('inspectorVerificationNote')?.focus();
+    return;
+  }
+  const acceptBtn=document.getElementById('acceptContractorWorkBtn');
+  const returnBtn=document.getElementById('returnContractorWorkBtn');
+  acceptBtn.disabled=true;returnBtn.disabled=true;
+  msg.textContent=decision==='ACCEPT'?'جارٍ اعتماد المعالجة…':'جارٍ إعادة الحالة للمقاول…';
+  try{
+    const data=await fieldWorkflowRequest({
+      action:'verifyFieldObservation',
+      observationId:observation.docId,
+      decision,
+      note
+    });
+    msg.textContent=decision==='ACCEPT'
+      ? 'تم اعتماد المعالجة. بانتظار إغلاق رئيس القسم.'
+      : 'تمت إعادة الحالة للمقاول لاستكمال المعالجة.';
+    observation.status=data.status||observation.status;
+    observation.inspectorVerification={
+      status:data.verificationStatus||null,
+      note,
+      verifiedByUid:inspectorContext.uid
+    };
+    renderObservationsList(observationsData);
+    renderKPIs();
+    renderInspectorCounts();
+    renderPersonalMap();
+    renderPersonalLifecycle();
+    await showObservationDetail(observation.docId);
+  }catch(error){
+    const labels={
+      reporting_inspector_required:'التحقق متاح للمراقب الذي أنشأ الحالة فقط.',
+      observation_not_pending_verification:'الحالة لم تعد بانتظار التحقق.',
+      contractor_evidence_required:'لا يمكن الاعتماد قبل اكتمال صورة ومذكرة المقاول.',
+      return_note_required:'اكتب سبب الإعادة للمقاول.',
+      cross_organization_denied:'لا يمكن التحقق من حالة خارج المؤسسة.'
+    };
+    msg.textContent=labels[error.code]||'تعذر تنفيذ قرار التحقق حاليًا.';
+  }finally{
+    acceptBtn.disabled=false;returnBtn.disabled=false;
+  }
+}
+document.getElementById('acceptContractorWorkBtn')?.addEventListener('click',()=>verifyContractorWork('ACCEPT'));
+document.getElementById('returnContractorWorkBtn')?.addEventListener('click',()=>verifyContractorWork('RETURN'));
 
 // ========= FILTER =========
 window.handleFilterChange = function() {
@@ -3882,6 +4121,7 @@ window.handleFilterChange = function() {
     const map = {
       "جديد":"PENDING",
       "قيد التنفيذ":"IN_PROGRESS",
+      "بانتظار التحقق":"PENDING_REVIEW",
       "تمت المعالجة":"COMPLETED",
       "جودة":"QUALITY",
       "صيانة":"MAINTENANCE",
@@ -3909,6 +4149,166 @@ function ownPersonalObservations(){
   if(!organizationId||!uid)return [];
   return observationsData.filter(o=>o.organizationId===organizationId&&o.createdByUid===uid);
 }
+
+let inspectorRecordQuery='';
+let inspectorRecordStatus='ALL';
+let inspectorRecordSelectedId=null;
+let inspectorRecordDetailToken=0;
+
+function inspectorRecordNormalize(value){
+  return String(value??'').trim().toLocaleLowerCase('ar-SA');
+}
+
+function inspectorRecordFilteredRows(){
+  const query=inspectorRecordNormalize(inspectorRecordQuery);
+  return ownPersonalObservations()
+    .filter(o=>o.serverConfirmed!==false)
+    .filter(o=>inspectorRecordStatus==='ALL'||o.status===inspectorRecordStatus)
+    .filter(o=>{
+      if(!query)return true;
+      const haystack=[
+        o.title,o.details,o.location,o.docId,o.id,
+        TYPE_LABELS_AR[o.type]||o.type,statusArabic(o.status)
+      ].map(inspectorRecordNormalize).join(' ');
+      return haystack.includes(query);
+    })
+    .sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+}
+
+function inspectorRecordWhen(observation){
+  return formatObservationDate(observation?.createdAt||observation?.date,'وقت غير متاح');
+}
+
+function renderInspectorRecord(){
+  const list=document.getElementById('inspectorRecordList');
+  const count=document.getElementById('inspectorRecordCount');
+  const authority=document.getElementById('inspectorRecordAuthority');
+  if(!list||!count||!authority)return;
+
+  if(!observationsServerConfirmed){
+    count.textContent='—';
+    authority.textContent=navigator.onLine?'بانتظار بيانات مؤكدة من الخادم':'الاتصال غير متاح — بانتظار آخر نسخة مؤكدة';
+    list.innerHTML='<div class="inspector-record-empty">جاري تحميل سجل ملاحظاتك الموثق…</div>';
+    document.getElementById('inspectorRecordLoadMore')?.classList.add('hidden');
+    return;
+  }
+
+  authority.textContent=navigator.onLine?'بياناتك الموثقة من الخادم فقط':'آخر نسخة مؤكدة من الخادم';
+  const rows=inspectorRecordFilteredRows();
+  count.textContent=String(rows.length);
+  if(!rows.length){
+    list.innerHTML='<div class="inspector-record-empty">لا توجد ملاحظات مطابقة للبحث أو الفلتر الحالي.</div>';
+  }else{
+    list.innerHTML=rows.map(obs=>{
+      const title=cleanDisplayText(obs.title||obs.details,'ملاحظة ميدانية',100);
+      const location=cleanDisplayText(obs.location,'الموقع غير متاح',80);
+      const ref=cleanDisplayText(obs.id||obs.docId,'—',50);
+      return `<button class="inspector-record-row" type="button" data-record-id="${escapeHTML(obs.docId)}" aria-label="فتح ${escapeHTML(title)}">
+        <span class="inspector-record-row-main">
+          <span class="inspector-record-row-title">${escapeHTML(title)}</span>
+          <span class="inspector-record-row-sub">
+            <span>${escapeHTML(inspectorRecordWhen(obs))}</span>
+            <span>·</span>
+            <span>${escapeHTML(location)}</span>
+            <span>·</span>
+            <span>#${escapeHTML(String(ref))}</span>
+          </span>
+        </span>
+        <span class="inspector-record-status" data-status="${escapeHTML(obs.status||'PENDING')}">${escapeHTML(statusArabic(obs.status))}</span>
+      </button>`;
+    }).join('');
+  }
+
+  const more=document.getElementById('inspectorRecordLoadMore');
+  if(more){
+    more.classList.toggle('hidden',!observationsHaveMore);
+    more.disabled=observationsPageLoading;
+  }
+  lucide.createIcons();
+}
+
+function resetInspectorRecordEvidence(){
+  inspectorRecordDetailToken+=1;
+  for(const id of ['inspectorRecordBeforeImage','inspectorRecordAfterImage']){
+    document.getElementById(id)?.removeAttribute('src');
+  }
+  document.getElementById('inspectorRecordBeforeFigure')?.classList.add('hidden');
+  document.getElementById('inspectorRecordAfterFigure')?.classList.add('hidden');
+  document.getElementById('inspectorRecordEvidence')?.classList.add('hidden');
+}
+
+async function showInspectorRecordDetail(docId){
+  const obs=ownPersonalObservations().find(o=>o.docId===docId&&o.serverConfirmed!==false);
+  if(!obs)return;
+  inspectorRecordSelectedId=docId;
+  const listView=document.getElementById('inspectorRecordListView');
+  const detailView=document.getElementById('inspectorRecordDetailView');
+  listView?.classList.add('hidden');
+  detailView?.classList.remove('hidden');
+
+  setText('inspectorRecordDetailTitle',cleanDisplayText(obs.title||obs.details,'ملاحظة ميدانية',120));
+  setText('inspectorRecordDetailStatus',statusArabic(obs.status));
+  setText('inspectorRecordDetailWhen',inspectorRecordWhen(obs));
+  setText('inspectorRecordDetailType',TYPE_LABELS_AR[obs.type]||obs.type||'—');
+  setText('inspectorRecordDetailId',String(obs.id||obs.docId||'—'));
+  setText('inspectorRecordDetailLocation',cleanDisplayText(obs.location,'غير متاح',180));
+  setText('inspectorRecordDetailUpdated',formatObservationDate(obs.updatedAt,'—'));
+  setText('inspectorRecordDetailDescription',cleanDisplayText(obs.details||obs.title,'لا يوجد وصف.',1200));
+
+  const hasResolution=Boolean(cleanDisplayText(obs.resolutionNote||obs.closureNote));
+  document.getElementById('inspectorRecordResolution')?.classList.toggle('hidden',!hasResolution);
+  setText('inspectorRecordDetailResolution',hasResolution?cleanDisplayText(obs.resolutionNote||obs.closureNote,'',1000):'—');
+
+  resetInspectorRecordEvidence();
+  const token=++inspectorRecordDetailToken;
+  const [before,after]=await Promise.all([
+    resolveEvidenceReference(obs.imagePath).catch(()=>''),
+    resolveEvidenceReference(obs.afterImagePath).catch(()=>'')
+  ]);
+  if(token!==inspectorRecordDetailToken||inspectorRecordSelectedId!==docId)return;
+
+  let hasEvidence=false;
+  if(before){
+    const img=document.getElementById('inspectorRecordBeforeImage');
+    if(img){img.src=before;img.referrerPolicy='no-referrer';document.getElementById('inspectorRecordBeforeFigure')?.classList.remove('hidden');hasEvidence=true}
+  }
+  if(after){
+    const img=document.getElementById('inspectorRecordAfterImage');
+    if(img){img.src=after;img.referrerPolicy='no-referrer';document.getElementById('inspectorRecordAfterFigure')?.classList.remove('hidden');hasEvidence=true}
+  }
+  document.getElementById('inspectorRecordEvidence')?.classList.toggle('hidden',!hasEvidence);
+  lucide.createIcons();
+}
+
+function showInspectorRecordList(){
+  inspectorRecordSelectedId=null;
+  resetInspectorRecordEvidence();
+  document.getElementById('inspectorRecordDetailView')?.classList.add('hidden');
+  document.getElementById('inspectorRecordListView')?.classList.remove('hidden');
+  renderInspectorRecord();
+}
+
+function openInspectorRecord(){
+  if(!inspectorContext.uid||!inspectorContext.organizationId){
+    showToast('تعذر فتح السجل قبل اكتمال التحقق من الهوية.');
+    return;
+  }
+  document.body.classList.add('inspector-record-view');
+  const page=document.getElementById('inspector-record-page');
+  page?.classList.remove('hidden');
+  showInspectorRecordList();
+  window.scrollTo({top:0,behavior:'smooth'});
+  requestAnimationFrame(()=>document.getElementById('inspectorRecordSearch')?.focus({preventScroll:true}));
+}
+
+function closeInspectorRecord(){
+  inspectorRecordSelectedId=null;
+  resetInspectorRecordEvidence();
+  document.body.classList.remove('inspector-record-view');
+  document.getElementById('inspector-record-page')?.classList.add('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 
 function renderPersonalMapAuthority(){
   const el=document.getElementById('personalMapAuthorityText');
@@ -4078,12 +4478,7 @@ window.addEventListener('online',renderPersonalMapAuthority,{passive:true});
 window.addEventListener('offline',renderPersonalMapAuthority,{passive:true});
 
 let lifecycleRenderToken=0;
-function focusPersonalObservations(){
-  const section=document.getElementById('observations-log');
-  const list=document.getElementById('observationsList');
-  section?.scrollIntoView({behavior:'smooth',block:'start'});
-  if(list){list.setAttribute('tabindex','-1');setTimeout(()=>list.focus({preventScroll:true}),120)}
-}
+function focusPersonalObservations(){ openInspectorRecord(); }
 function resetLifecycleEvidence(){
   hide('lifecycleBeforeFigure');hide('lifecycleAfterFigure');
   document.getElementById('lifecycleBeforeImage')?.removeAttribute('src');
@@ -4135,12 +4530,29 @@ document.getElementById('refMapOpenBtn')?.addEventListener('click',openPersonalM
 document.getElementById('refLogBtn')?.addEventListener('click',focusPersonalObservations);
 document.getElementById('refTwinBtn')?.addEventListener('click',openPersonalLifecycle);
 document.getElementById('operationsLifecycleBtn')?.addEventListener('click',openPersonalLifecycle);
+document.getElementById('legacyOperationsLogBtn')?.addEventListener('click',openInspectorRecord);
+document.getElementById('inspectorRecordHomeBtn')?.addEventListener('click',closeInspectorRecord);
+document.getElementById('inspectorRecordBackToList')?.addEventListener('click',showInspectorRecordList);
+document.getElementById('inspectorRecordSearch')?.addEventListener('input',event=>{inspectorRecordQuery=event.target.value||'';renderInspectorRecord()});
+document.getElementById('inspectorRecordStatusFilter')?.addEventListener('change',event=>{inspectorRecordStatus=event.target.value||'ALL';renderInspectorRecord()});
+document.getElementById('inspectorRecordList')?.addEventListener('click',event=>{
+  const row=event.target.closest('[data-record-id]');
+  if(row)showInspectorRecordDetail(row.dataset.recordId);
+});
+document.getElementById('inspectorRecordLoadMore')?.addEventListener('click',async()=>{await window.loadMoreObservations?.();renderInspectorRecord()});
+document.getElementById('inspectorRecordOpenFullReview')?.addEventListener('click',async()=>{
+  const id=inspectorRecordSelectedId;
+  if(!id)return;
+  closeInspectorRecord();
+  await window.showObservationDetail(id);
+  document.getElementById('observations-log')?.scrollIntoView({behavior:'smooth',block:'start'});
+});
 // Smart field dock — single source of truth: one handler per button.
 const smartDockRoutes=[
-  ['mobileNavHome',()=>window.scrollTo({top:0,behavior:'smooth'})],
-  ['mobileNavMap',event=>openPersonalMap(event)],
-  ['mobileNavAdd',()=>window.openModal('smartInputModal')],
-  ['mobileNavLog',()=>focusPersonalObservations()]
+  ['mobileNavHome',()=>{closeInspectorRecord();window.scrollTo({top:0,behavior:'smooth'})}],
+  ['mobileNavMap',event=>{closeInspectorRecord();openPersonalMap(event)}],
+  ['mobileNavAdd',()=>{closeInspectorRecord();window.openModal('smartInputModal')}],
+  ['mobileNavLog',()=>openInspectorRecord()]
 ];
 const smartDockButtons=smartDockRoutes.map(([id])=>document.getElementById(id)).filter(Boolean);
 function setSmartDockActive(active){
@@ -5041,52 +5453,7 @@ window.handleAfterFileUpload = function(e){
 
 window.completeObservation = async function(){
   if (!currentSelectedObservation) return;
-  if (!currentAfterFile) {
-    alert('الرجاء رفع صورة "بعد الإصلاح".');
-    return;
-  }
-
-  const note = (document.getElementById('resolutionNoteInput').value || '').trim()
-    || `تم الإغلاق التنفيذي في ${new Date().toLocaleString('ar-SA')} وتوثيقه بالصورة المرفقة.`;
-
-  try {
-    setButtonBusy('finalCloseoutBtn', true);
-    const compressedFile = await compressImage(currentAfterFile);
-    const afterUrl = await uploadImageToStorage(compressedFile, "HSR/after", currentSelectedObservation.docId);
-
-    try {
-      await updateObservationInFirestore(currentSelectedObservation.docId, {
-        status: 'COMPLETED',
-        isComparative: true,
-        afterImagePath: afterUrl,
-        resolutionNote: note
-      });
-    } catch(e) {
-      console.warn("Firestore update failed, will still update UI", e);
-    }
-
-    currentSelectedObservation.status = 'COMPLETED';
-    currentSelectedObservation.isComparative = true;
-    currentSelectedObservation.afterImagePath = afterUrl;
-    currentSelectedObservation.resolutionNote = note;
-    currentSelectedObservation.updatedAt = Date.now();
-    currentSelectedObservation.serverConfirmed = false;
-
-    closeModal('closeoutModal');
-    clearAfterUpload();
-    handleFilterChange();
-    renderInspectorCounts();
-    renderPersonalMap();
-    renderPersonalLifecycle();
-    showObservationDetail(currentSelectedObservation.docId);
-    alert(`تم إغلاق الملاحظة رقم ${currentSelectedObservation.id} وتوثيقها بنجاح!`);
-  } catch (e) {
-    console.error(e);
-    alert(e?.message || 'تعذر إغلاق الملاحظة. تحقق من الاتصال.');
-  } finally {
-    setButtonBusy('finalCloseoutBtn', false);
-    renderKPIs();
-  }
+  alert('المراقب يتحقق من المعالجة فقط. الإغلاق النهائي يتم من رئيس قسم الحصر الميداني بعد اعتماد التحقق.');
 };
 
 // ========= IMAGE COMPARISON =========
@@ -6268,5 +6635,6 @@ document.addEventListener('DOMContentLoaded', function () {
   syncThemeChoice();
 });
 </script>
+<script src="./service-switcher.js"></script>
 </body>
 </html>

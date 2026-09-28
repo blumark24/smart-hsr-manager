@@ -15,12 +15,36 @@
 // extracted modules.
 import { addDoc, collection } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-export function initInvoicesModule({ db, getOrgs, getInvoices, showNotif, refreshAll } = {}) {
+export function initInvoicesModule({ auth, db, getOrgs, getInvoices, showNotif, refreshAll } = {}) {
   const invoicesBody = document.getElementById('invoicesBody');
   const newInvoiceBtn = document.getElementById('newInvoiceBtn');
   const invoiceModal = document.getElementById('invoiceModal');
   const invoiceForm = document.getElementById('invoiceForm');
   const invoiceOrgSelect = document.getElementById('invoiceOrgId');
+  const invoiceSaveBtn = document.getElementById('invoiceSaveBtn');
+  const ADMIN_API = '/api/admin/users';
+
+  async function callAdminApi(payload){
+    const user = auth && auth.currentUser;
+    if(!user) throw new Error('انتهت جلسة المالك. سجّل الدخول من جديد.');
+    let token = await user.getIdToken();
+    let resp = await fetch(ADMIN_API, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body:JSON.stringify(payload)
+    });
+    if(resp.status===401){
+      token = await user.getIdToken(true);
+      resp = await fetch(ADMIN_API, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+        body:JSON.stringify(payload)
+      });
+    }
+    let data={}; try{ data=await resp.json(); }catch(_){}
+    if(!resp.ok) throw new Error(data.reason || data.error || ('HTTP '+resp.status));
+    return data;
+  }
 
   function formatSAR(n){ return new Intl.NumberFormat('ar-SA', {minimumFractionDigits:2, maximumFractionDigits:2}).format(n) + ' ر.س'; }
 
@@ -56,25 +80,54 @@ export function initInvoicesModule({ db, getOrgs, getInvoices, showNotif, refres
       tr.appendChild(tdDate);
 
       const tdFile = document.createElement('td');
-      const btn = document.createElement('button'); btn.className = 'btn btn-outline'; btn.textContent = 'PDF';
-      btn.dataset.dl = inv.id;
-      tdFile.appendChild(btn); tr.appendChild(tdFile);
+      const actions = document.createElement('div');
+      actions.className = 'flex items-center gap-1 justify-end flex-wrap';
+      const pdfBtn = document.createElement('button'); pdfBtn.className='btn btn-outline'; pdfBtn.textContent='PDF'; pdfBtn.dataset.dl=inv.id;
+      const editBtn = document.createElement('button'); editBtn.className='btn btn-outline'; editBtn.textContent='تعديل'; editBtn.dataset.edit=inv.id;
+      const archiveBtn = document.createElement('button'); archiveBtn.className='btn btn-outline'; archiveBtn.textContent='أرشفة'; archiveBtn.dataset.archive=inv.id;
+      const deleteBtn = document.createElement('button'); deleteBtn.className='btn btn-ghost'; deleteBtn.textContent='حذف'; deleteBtn.dataset.delete=inv.id;
+      actions.append(pdfBtn,editBtn,archiveBtn,deleteBtn);
+      tdFile.appendChild(actions); tr.appendChild(tdFile);
 
       invoicesBody.appendChild(tr);
     });
   }
 
   // مودال فاتورة يدوية
-  newInvoiceBtn.addEventListener('click', ()=> { invoiceForm.reset(); fillInvoiceOrgSelect(); invoiceModal.showModal(); });
+  newInvoiceBtn.addEventListener('click', ()=> {
+    invoiceForm.reset();
+    invoiceForm.elements.docId.value='';
+    fillInvoiceOrgSelect();
+    invoiceOrgSelect.disabled=false;
+    if(invoiceSaveBtn) invoiceSaveBtn.textContent='إصدار الفاتورة';
+    invoiceModal.querySelector('h3').textContent='إصدار فاتورة يدوية';
+    invoiceModal.showModal();
+  });
   invoiceForm.addEventListener('submit', async (e)=>{
     e.preventDefault(); const f = invoiceForm.elements;
-    const org = getOrgs().find(o=>o.id===f.orgId.value); if(!org) return;
-    await createInvoice({ org, plan:f.plan.value, billingCycle:f.billingCycle.value, amount: Number(f.amount.value||0) });
-    invoiceModal.close(); showNotif('تم إصدار الفاتورة وإضافتها إلى السجل.'); await refreshAll();
+    const docId = f.docId.value;
+    try{
+      if(docId){
+        await callAdminApi({
+          action:'ownerInvoiceUpdate', invoiceId:docId,
+          plan:f.plan.value, billingCycle:f.billingCycle.value,
+          amount:Number(f.amount.value||0), status:f.status.value
+        });
+        invoiceModal.close(); showNotif('تم تحديث الفاتورة.'); await refreshAll(); return;
+      }
+      const org = getOrgs().find(o=>o.id===f.orgId.value); if(!org) return;
+      await createInvoice({
+        org, plan:f.plan.value, billingCycle:f.billingCycle.value,
+        amount:Number(f.amount.value||0), status:f.status.value
+      });
+      invoiceModal.close(); showNotif('تم إصدار الفاتورة وإضافتها إلى السجل.'); await refreshAll();
+    }catch(error){
+      showNotif('تعذّر حفظ الفاتورة: '+(error.message||'خطأ غير معروف'));
+    }
   });
 
   // إنشاء فاتورة + حفظ PDF
-  async function createInvoice({ org, plan, billingCycle, amount }){
+  async function createInvoice({ org, plan, billingCycle, amount, status='paid' }){
     // تسعير افتراضي في حال لم يُرسل مبلغ يدوي
     const base = amount || (plan==='Basic'?249: plan==='Pro'?499: 1499);
     const vat = +(base * 0.15).toFixed(2);
@@ -86,7 +139,7 @@ export function initInvoicesModule({ db, getOrgs, getInvoices, showNotif, refres
       organization_name: org.name,
       plan, billingCycle,
       amount: base, vat, total,
-      status: 'paid', // مبدئيًا مدفوعة – يمكن ربطها لاحقًا ببوابة الدفع
+      status: ['paid','pending','overdue','cancelled','archived'].includes(status) ? status : 'paid',
       createdAt: new Date().toISOString()
     };
     await addDoc(collection(db,'invoices'), payload);
@@ -106,9 +159,37 @@ export function initInvoicesModule({ db, getOrgs, getInvoices, showNotif, refres
 
   // تنزيل PDF من الجدول (إعادة توليد سريع)
   invoicesBody.addEventListener('click', async (e)=>{
-    const btn = e.target.closest('button'); if(!btn) return; const id = btn.dataset.dl; if(!id) return;
-    const inv = getInvoices().find(x=> x.id===id); if(!inv) return;
-    const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
+    const btn = e.target.closest('button'); if(!btn) return;
+    const editId=btn.dataset.edit, archiveId=btn.dataset.archive, deleteId=btn.dataset.delete, dlId=btn.dataset.dl;
+    try{
+      if(editId){
+        const inv=getInvoices().find(x=>x.id===editId); if(!inv) return;
+        fillInvoiceOrgSelect();
+        invoiceForm.elements.docId.value=inv.id;
+        invoiceForm.elements.orgId.value=inv.organization_id||'';
+        invoiceOrgSelect.disabled=true;
+        invoiceForm.elements.plan.value=inv.plan||'Basic';
+        invoiceForm.elements.billingCycle.value=inv.billingCycle||'monthly';
+        invoiceForm.elements.amount.value=Number(inv.amount||0);
+        invoiceForm.elements.status.value=inv.status||'paid';
+        if(invoiceSaveBtn) invoiceSaveBtn.textContent='حفظ التعديلات';
+        invoiceModal.querySelector('h3').textContent='تعديل الفاتورة';
+        invoiceModal.showModal();
+        return;
+      }
+      if(archiveId){
+        if(!confirm('أرشفة هذه الفاتورة؟ ستبقى محفوظة في السجل ويمكن مراجعتها لاحقًا.')) return;
+        await callAdminApi({action:'ownerInvoiceArchive',invoiceId:archiveId});
+        showNotif('تمت أرشفة الفاتورة.'); await refreshAll(); return;
+      }
+      if(deleteId){
+        if(!confirm('حذف هذه الفاتورة نهائيًا؟ لا يمكن التراجع عن الحذف.')) return;
+        await callAdminApi({action:'ownerInvoiceDelete',invoiceId:deleteId});
+        showNotif('تم حذف الفاتورة.'); await refreshAll(); return;
+      }
+      const id=dlId; if(!id) return;
+      const inv = getInvoices().find(x=> x.id===id); if(!inv) return;
+      const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
     docPdf.setFont('helvetica','bold'); docPdf.setFontSize(16);
     docPdf.text(`فاتورة اشتراك – ${inv.invoiceId||id}` , 40, 40);
     docPdf.setFontSize(12); docPdf.setFont('helvetica','normal');
@@ -117,8 +198,11 @@ export function initInvoicesModule({ db, getOrgs, getInvoices, showNotif, refres
     docPdf.text(`المبلغ: ${inv.amount||0} SAR`, 40, 110);
     docPdf.text(`الضريبة 15%: ${inv.vat||0} SAR`, 40, 130);
     docPdf.text(`الإجمالي: ${inv.total||0} SAR`, 40, 150);
-    docPdf.text(`التاريخ: ${inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'): ''}`, 40, 170);
-    docPdf.save(`${inv.invoiceId||id}.pdf`);
+      docPdf.text(`التاريخ: ${inv.createdAt? new Date(inv.createdAt).toLocaleDateString('ar-SA'): ''}`, 40, 170);
+      docPdf.save(`${inv.invoiceId||id}.pdf`);
+    }catch(error){
+      showNotif('تعذّر تنفيذ العملية: '+(error.message||'خطأ غير معروف'));
+    }
   });
 
   return Object.freeze({ renderInvoices, fillInvoiceOrgSelect, createInvoice });

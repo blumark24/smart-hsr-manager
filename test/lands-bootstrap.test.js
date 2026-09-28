@@ -3,7 +3,14 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { computeBootstrapDecision } = require('../api/admin/lands-bootstrap.js')._test;
+// PHASE 06A.2 — computeBootstrapDecision now lives only in
+// api/_lib/landsManagerBootstrap.js; the dedicated api/admin/lands-bootstrap.js
+// endpoint that used to re-export it was consolidated into
+// api/admin/users.js action 'landsBootstrap' (see
+// test/manager-lands-bridge-integration.test.js for handler-level coverage
+// of that action) to stay within Vercel's Hobby-plan serverless-function
+// limit. This file's pure-function coverage is unaffected either way.
+const { computeBootstrapDecision } = require('../api/_lib/landsManagerBootstrap.js');
 
 const manager = { uid: 'manager-uid-1', isOwner: false, isManager: true, role: 'manager', organizationId: 'org-alpha' };
 const employee = { uid: 'employee-uid-1', isOwner: false, isManager: false, role: null, organizationId: null };
@@ -74,7 +81,7 @@ test('the audit event is recorded as an explicit bootstrap action, never disguis
   const result = computeBootstrapDecision(manager, false);
   assert.equal(result.write.auditDoc.action, 'lands.manager_bootstrapped');
   assert.equal(result.write.auditDoc.safe_metadata.reason_code, 'initial_municipality_lands_authority');
-  // Neither value is one of Lands' own TRUSTED_AUDIT_ACTIONS /
+  // Neither value is one of Lands' normal TRUSTED_AUDIT_ACTIONS /
   // TRUSTED_AUDIT_REASON_CODES entries (server/trusted-audit.js), so it can
   // never be mistaken for a normal employee entitlement.enable/change_role
   // event when read back.

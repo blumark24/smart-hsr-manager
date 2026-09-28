@@ -1,0 +1,425 @@
+(() => {
+'use strict';
+
+if (window.__smartHsrUserCenterReferenceUI) return;
+window.__smartHsrUserCenterReferenceUI = true;
+
+const U = window.SmartHSRInstitutionalUC;
+const STYLE_ID = 'ucv21-reference-style';
+const clean = value => String(value == null ? '' : value).trim();
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function injectStyle() {
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `
+  .ucv2-app{
+    --r-bg:#071224;--r-surface:rgba(11,27,50,.78);--r-surface2:rgba(14,32,58,.92);
+    --r-border:rgba(94,145,210,.16);--r-border2:rgba(94,145,210,.28);
+    --r-text:#f7fbff;--r-muted:#7f91ab;--r-blue:#4a8cff;--r-cyan:#35c8ff;
+    --r-purple:#8c65ff;--r-green:#42d49b;--r-amber:#f4a63a;--r-rose:#ff6b87;
+    position:relative!important;isolation:isolate!important;overflow:hidden!important;
+    background:
+      radial-gradient(520px 260px at 8% 14%,rgba(60,87,255,.10),transparent 65%),
+      radial-gradient(440px 300px at 92% 88%,rgba(113,52,255,.09),transparent 68%),
+      linear-gradient(145deg,#07111f 0%,#09182b 48%,#07111f 100%)!important;
+    border:0!important;border-radius:0!important;padding:22px 28px 32px!important;gap:18px!important;
+    color:var(--r-text)!important;box-shadow:inset 0 1px rgba(255,255,255,.025),0 28px 90px rgba(0,0,0,.18)!important;
+  }
+  .ucv2-shell-overlay{background:transparent!important;pointer-events:none!important;backdrop-filter:none!important}
+  .ucv2-host{position:fixed!important;top:78px!important;right:74px!important;bottom:0!important;left:0!important;width:auto!important;height:auto!important;z-index:90!important;overflow:auto!important;background:#050b15!important;padding:0!important;direction:rtl!important;pointer-events:auto!important}
+  .ucv2-host>.ucv2-app{min-height:100%!important}
+  .ucv2-app:before,.ucv2-app:after{content:"";position:absolute;border-radius:999px;filter:blur(78px);pointer-events:none;z-index:-1;opacity:.18}
+  .ucv2-app:before{width:430px;height:430px;left:-180px;top:22%;background:#3558ff}
+  .ucv2-app:after{width:350px;height:350px;right:12%;bottom:-170px;background:#6d3bff}
+  .ucv2-header{align-items:center!important}.ucv2-header>div:first-child{display:flex!important;align-items:center!important;gap:13px!important}
+  .ucv2-header>div:first-child:before{content:"👥";width:46px;height:46px;flex:0 0 46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,rgba(39,85,174,.34),rgba(40,58,111,.18));border:1px solid rgba(89,135,255,.22);box-shadow:inset 0 1px rgba(255,255,255,.05)}
+  .ucv2-eyebrow{display:none!important}.ucv2-header h1{font-size:26px!important;margin:0 0 6px!important;color:#fff!important;letter-spacing:-.02em!important}.ucv2-header p{font-size:12px!important;color:var(--r-muted)!important}
+  .ucv2-header-actions{gap:10px!important}.ucv2-btn{height:40px!important;min-height:40px!important;border-radius:11px!important;padding:0 16px!important;font-size:12px!important;border-color:var(--r-border2)!important;background:rgba(13,29,52,.82)!important;color:#dce8f8!important}
+  .ucv2-btn.primary{background:linear-gradient(135deg,#2f76ff,#5367ff)!important;border-color:rgba(109,150,255,.7)!important;box-shadow:0 8px 24px rgba(41,94,255,.24)!important;color:#fff!important}
+  .ucv2-ref-import{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+
+  .ucv2-kpis{grid-template-columns:repeat(6,minmax(130px,1fr))!important;gap:13px!important}
+  .ucv2-kpi{min-height:108px!important;border-radius:17px!important;border-color:var(--r-border)!important;background:linear-gradient(145deg,rgba(14,31,55,.90),rgba(10,24,44,.74))!important;padding:16px 17px!important;gap:14px!important;position:relative!important;overflow:hidden!important}
+  .ucv2-kpi:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 0%,currentColor 0,transparent 48%);opacity:.07;pointer-events:none}
+  .ucv2-kpi-icon{width:46px!important;height:46px!important;border-radius:14px!important;background:color-mix(in srgb,currentColor 15%,rgba(255,255,255,.02))!important;border:1px solid color-mix(in srgb,currentColor 24%,transparent)!important;box-shadow:inset 0 1px rgba(255,255,255,.04)!important}
+  .ucv2-kpi b{font-size:30px!important;color:#fff!important}.ucv2-kpi small{font-size:11px!important;color:#d8e3f4!important}.ucv2-kpi:nth-child(1){color:var(--r-purple)!important}.ucv2-kpi:nth-child(2){color:var(--r-cyan)!important}.ucv2-kpi:nth-child(3){color:var(--r-rose)!important}.ucv2-kpi:nth-child(4){color:var(--r-amber)!important}.ucv2-kpi:nth-child(5){color:var(--r-green)!important}.ucv2-kpi:nth-child(6){color:var(--r-blue)!important}
+
+  .ucv2-toolbar{grid-template-columns:minmax(300px,1.55fr) repeat(5,minmax(120px,.62fr)) auto!important;gap:9px!important;padding:14px!important;background:linear-gradient(180deg,rgba(10,24,43,.82),rgba(8,20,37,.74))!important;border:1px solid var(--r-border)!important;border-radius:16px 16px 0 0!important;margin-bottom:-16px!important}
+  .ucv2-toolbar input,.ucv2-toolbar select,.ucv2-grid-head select{height:38px!important;border-radius:10px!important;background:rgba(14,31,55,.78)!important;color:#dce7f8!important;border-color:var(--r-border)!important;font-size:10px!important}
+  .ucv2-toolbar input:focus,.ucv2-toolbar select:focus{border-color:rgba(74,140,255,.62)!important;box-shadow:0 0 0 3px rgba(74,140,255,.09)!important;outline:0!important}
+  .ucv2-quick{padding:12px 14px!important;background:rgba(8,20,37,.76)!important;border-inline:1px solid var(--r-border)!important;margin:0!important}.ucv2-chip-button{height:27px!important;border-color:rgba(86,132,190,.15)!important;background:rgba(15,33,59,.5)!important;color:#8194af!important;font-size:9px!important}.ucv2-chip-button.active{color:#d8e6ff!important;border-color:rgba(74,140,255,.44)!important;background:rgba(50,94,182,.18)!important}
+  .ucv2-grid-head{padding:10px 14px!important;background:rgba(8,20,37,.76)!important;border-inline:1px solid var(--r-border)!important;color:#7f91ab!important}
+  .ucv2-table-wrap{border-radius:0!important;border-color:var(--r-border)!important;background:rgba(8,20,37,.76)!important;max-height:min(58vh,650px)!important}.ucv2-table{font-size:10px!important}.ucv2-table thead th{background:rgba(13,29,52,.98)!important;color:#8ea1bc!important;padding:11px 10px!important;border-color:var(--r-border)!important;font-size:9px!important}.ucv2-table td{padding:11px 10px!important;border-color:rgba(91,137,195,.10)!important;color:#dce7f8!important}.ucv2-table tbody tr:hover,.ucv2-table tbody tr:focus{background:linear-gradient(90deg,rgba(38,78,144,.08),rgba(38,78,144,.02))!important}
+  .ucv2-person{min-width:170px!important}.ucv2-person b{color:#f5f9ff!important;font-size:11px!important}.ucv2-person small{color:#7387a4!important;font-size:8.5px!important}.ucv2-avatar{width:34px!important;height:34px!important;border-radius:50%!important;background:linear-gradient(145deg,#28395e,#172640)!important;border-color:rgba(113,152,215,.22)!important;color:#8cb7ff!important}
+  .ucv2-chip{height:24px!important;border-radius:999px!important;font-size:8px!important}.ucv2-chip.product{min-width:54px!important;background:rgba(14,28,49,.5)!important}.ucv2-chip.product.field{color:#f0ad4d!important;border-color:rgba(244,166,58,.23)!important}.ucv2-chip.product.lands{color:#65d6a8!important;border-color:rgba(66,212,155,.23)!important}.ucv2-chip.product.mobility{color:#77a9ff!important;border-color:rgba(74,140,255,.23)!important}.ucv2-chip.ok{color:#79d8b0!important;background:rgba(66,212,155,.06)!important;border-color:rgba(66,212,155,.20)!important}.ucv2-chip.warn{color:#f7bf69!important;background:rgba(244,166,58,.06)!important;border-color:rgba(244,166,58,.22)!important}.ucv2-chip.danger{color:#ff8198!important;background:rgba(255,107,135,.06)!important;border-color:rgba(255,107,135,.22)!important}.ucv2-role{color:#aebed3!important}.ucv2-muted{color:#71849f!important}.ucv2-legacy-note{color:#f0b866!important}
+  .ucv21-service-cell{text-align:center!important}.ucv21-service-dot{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;border:1px solid rgba(92,135,188,.13);background:rgba(14,28,49,.46);color:#53647d}.ucv21-service-dot.on.field{color:#f0ad4d;border-color:rgba(244,166,58,.24);background:rgba(244,166,58,.07)}.ucv21-service-dot.on.lands{color:#65d6a8;border-color:rgba(66,212,155,.24);background:rgba(66,212,155,.07)}.ucv21-service-dot.on.mobility{color:#77a9ff;border-color:rgba(74,140,255,.24);background:rgba(74,140,255,.07)}
+  .ucv21-more{width:32px;height:30px;border-radius:9px;border:1px solid rgba(91,137,195,.14);background:rgba(16,34,59,.55);color:#7f92ac;cursor:pointer}.ucv21-more:hover{color:#e4efff;border-color:rgba(74,140,255,.42)}
+  .ucv2-pagination{padding:12px 15px!important;border:1px solid var(--r-border)!important;border-top:0!important;border-radius:0 0 16px 16px!important;background:rgba(8,20,37,.76)!important;color:#7c8da6!important}
+
+  .iuc{background:rgba(1,7,16,.80)!important;backdrop-filter:blur(18px)!important}
+  .iuc>div,.ucv2-dialog{background:linear-gradient(155deg,rgba(11,27,49,.985),rgba(7,18,34,.985))!important;color:#edf5ff!important;border:1px solid rgba(96,145,211,.20)!important;box-shadow:0 34px 110px rgba(0,0,0,.62),inset 0 1px rgba(255,255,255,.025)!important;border-radius:22px!important;max-width:min(940px,calc(100vw - 32px))!important;max-height:calc(100vh - 34px)!important;padding:20px!important}
+  .iuc .ih{background:linear-gradient(180deg,rgba(10,25,46,.99),rgba(10,25,46,.94))!important;border-bottom-color:rgba(96,145,211,.14)!important;border-radius:22px 22px 0 0!important}.iuc .ih b{font-size:17px!important;color:#fff!important}.iuc .ih p{font-size:10px!important;color:#7f92ad!important}
+  .iuc .sec{border:1px solid rgba(96,145,211,.11)!important;background:rgba(11,26,47,.45)!important;border-radius:15px!important;padding:14px!important;margin-bottom:12px!important}.iuc .st span,.iuc label{color:#dbe7f7!important}.iuc .st small,.iuc .note{color:#7f91ab!important}
+  .iuc .in,.iuc .sel,.iuc input,.iuc select,.iuc textarea{background:rgba(13,30,54,.80)!important;color:#eaf2ff!important;border:1px solid rgba(96,145,211,.18)!important;border-radius:10px!important}.iuc .in:focus,.iuc .sel:focus,.iuc input:focus,.iuc select:focus,.iuc textarea:focus{outline:0!important;border-color:#3ed39a!important;box-shadow:0 0 0 3px rgba(62,211,154,.16)!important}
+  .iuc .btn{border-radius:8px!important;background:rgba(15,32,57,.80)!important;color:#dbe7f7!important;border-color:rgba(96,145,211,.20)!important}.iuc .btn.pr{background:#3ed39a!important;color:#04150e!important;font-weight:700!important;border-color:#3ed39a!important;box-shadow:none!important}.iuc .btn.pr:hover:not(:disabled){background:#33bd8a!important}
+  .ucv2-current-value{border-color:rgba(96,145,211,.14)!important;background:rgba(14,31,55,.66)!important}.ucv2-password-toggle{color:#6ba1ff!important}
+
+  .ucv21-single-page{width:min(760px,calc(100vw - 34px))!important;padding:0!important;overflow:auto!important}
+  .ucv2-add-dialog{width:min(760px,calc(100vw - 34px))!important}
+  .ucv2-password-dialog,#iuc-email>div,#iuc-suspend-confirm>div,#iuc-legacy-note>div,#iuc-legacy-error>div{width:min(480px,calc(100vw - 32px))!important}
+  #iuc-import>div{width:min(640px,calc(100vw - 34px))!important}
+  .ucv21-subsection-head{font-size:10.5px!important;color:#8ea1bc!important;margin:2px 0 8px!important}.ucv21-subsection-head:before{width:5px!important;height:5px!important;background:#3ed39a!important;box-shadow:none!important}
+  .ucv21-mobile-services{display:flex!important;gap:6px!important;flex-wrap:wrap!important}
+  .ucv21-single-page .ih{position:sticky;top:0;z-index:7;padding:18px 22px!important}
+  .ucv21-single-page .hier,.ucv21-single-page .tabs,.ucv21-single-page .ucv2-employee360{display:none!important}
+  .ucv21-single-page .pane{display:block!important;padding:0 22px!important;margin:0!important}
+  .ucv21-single-page .pane[hidden]{display:block!important}
+  .ucv21-single-page .pane[data-id="o"],.ucv21-single-page .pane[data-id="h"]{display:none!important}
+  .ucv21-single-page .pane>.act{display:none!important}
+  .ucv21-single-page .pane[data-id="a"]>.sec>.act{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important;margin-top:10px!important}
+  .ucv21-single-page .pane[data-id="a"] .pwbtn{display:none!important}
+  .ucv21-single-page .sec{padding:16px!important;margin:0 0 14px!important;border-radius:16px!important;background:linear-gradient(145deg,rgba(13,31,56,.78),rgba(9,23,43,.68))!important;border:1px solid rgba(101,151,219,.13)!important}
+  .ucv21-single-page .grid{gap:12px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .ucv21-section-head{display:flex;align-items:center;gap:9px;margin:2px 0 11px;color:#f4f8ff;font-size:12px;font-weight:800}.ucv21-section-head:before{content:"";width:7px;height:7px;border-radius:999px;background:#4a8cff;box-shadow:0 0 16px rgba(74,140,255,.55)}
+  .ucv21-section-head small{margin-inline-start:auto;color:#7188a7;font-size:9px;font-weight:500}
+  .ucv21-single-page .rolebox{margin:0!important}.ucv21-single-page .prod{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}.ucv21-single-page .pc{min-width:0!important;border-radius:13px!important;background:rgba(10,24,44,.72)!important;border-color:rgba(98,148,211,.13)!important}.ucv21-single-page .pc.on{border-color:rgba(74,140,255,.38)!important;box-shadow:0 0 0 1px rgba(74,140,255,.08),0 16px 34px -28px rgba(49,102,255,.7)!important}.ucv21-single-page .pc .dest,.ucv21-single-page .pc .note{font-size:8px!important}
+  .ucv21-password-inline{padding:0 22px 4px!important}.ucv21-password-inline .sec{margin-bottom:12px!important}.ucv21-password-note{font-size:9px!important;color:#7f91ab!important;margin-top:8px!important}
+  .ucv21-history-wrap{padding:0 22px 10px!important}.ucv21-history-toggle{height:34px;border-radius:9px;border:1px solid rgba(96,145,211,.15);background:rgba(12,28,51,.72);color:#8ea3bf;padding:0 12px;cursor:pointer;font-size:10px}.ucv21-history-wrap .hist{margin-top:10px!important}
+  .ucv21-profile-footer{position:sticky;bottom:0;z-index:8;display:flex;align-items:center;gap:10px;padding:14px 22px 18px;background:linear-gradient(180deg,rgba(7,18,34,.72),rgba(7,18,34,.98) 32%);border-top:1px solid rgba(96,145,211,.12);backdrop-filter:blur(14px)}
+  .ucv21-profile-footer .ucv21-save{margin-inline-start:auto;min-width:150px}.ucv21-profile-footer .ucv21-cancel{min-width:96px}.ucv21-profile-msg{flex:1;min-width:120px;font-size:10px;color:#8397b3}.ucv21-profile-msg.ok{color:#70d5a9}.ucv21-profile-msg.er{color:#ff8096}
+
+  @media(max-width:1380px){.ucv2-kpis{grid-template-columns:repeat(3,1fr)!important}.ucv2-toolbar{grid-template-columns:minmax(220px,1.4fr) repeat(3,1fr)!important}.ucv2-table th:nth-child(4),.ucv2-table td:nth-child(4),.ucv2-table th:nth-child(8),.ucv2-table td:nth-child(8){display:none!important}}
+  @media(max-width:820px){.ucv2-host{top:68px!important;right:0!important}.ucv2-app{padding:14px!important;border-radius:16px!important}.ucv2-header{align-items:flex-start!important;flex-direction:column!important}.ucv2-header-actions{width:100%!important}.ucv2-header-actions .ucv2-btn{flex:1!important}.ucv2-kpis{grid-template-columns:repeat(2,1fr)!important}.ucv2-toolbar{grid-template-columns:1fr 1fr!important}.ucv2-search{grid-column:1/-1!important}.ucv2-table-wrap{display:none!important}.ucv2-mobile-list{display:grid!important}.ucv21-single-page .grid,.ucv21-single-page .prod{grid-template-columns:1fr!important}.ucv21-single-page .pane,.ucv21-password-inline,.ucv21-history-wrap{padding-inline:14px!important}.ucv21-profile-footer{padding-inline:14px!important;flex-wrap:wrap!important}.ucv21-profile-msg{order:3;flex-basis:100%}}
+  @media(prefers-reduced-motion:reduce){.ucv2-app,.ucv2-app *,.iuc,.iuc *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+  `;
+  document.head.appendChild(style);
+}
+
+function ensureImportButton(app) {
+  const actions = app.querySelector('.ucv2-header-actions');
+  if (!actions || actions.querySelector('[data-ucv21-import]')) return;
+  const originalRoot = app.parentElement;
+  const original = Array.from(originalRoot?.querySelectorAll?.('[data-ucv2-original="true"] button,[data-ucv2-original="true"] [role="button"]') || []).find(b => /استيراد/.test(clean(b.textContent)));
+  if (!original) return;
+  const button = document.createElement('button');
+  button.type = 'button';button.className = 'ucv2-btn ghost ucv2-ref-import';button.dataset.ucv21Import = '1';button.textContent = '⇧ استيراد ملف';
+  button.addEventListener('click', () => original.click());actions.prepend(button);
+}
+
+function tuneHeader(app) {
+  const h1 = app.querySelector('.ucv2-header h1');if (h1) h1.textContent = 'مركز إدارة المستخدمين';
+  const p = app.querySelector('.ucv2-header p');if (p) p.textContent = 'إدارة بيانات الموظفين والصلاحيات والمنتجات والربط مع الأنظمة المختلفة';
+  ensureImportButton(app);
+}
+
+function tuneKpis(app) {
+  // Icon rendering itself already lives in manager-phase11g-user-center-approved-skin.js
+  // as a restrained monochrome SVG mask-image per card position (.ucv2-kpi-icon:before) —
+  // .ucv2-kpi-icon is font-size:0 there, so this layer only ever needs to set the label text.
+  const cards = Array.from(app.querySelectorAll('.ucv2-kpi'));
+  const labels = ['إجمالي الموظفين','الحسابات النشطة','بدون حساب / موقوف','الحصر الميداني','الأراضي والممتلكات','حركة السير'];
+  cards.forEach((card, i) => {const small=card.querySelector('small');if(small&&labels[i])small.textContent=labels[i];});
+}
+
+const SERVICE_DOT_LABELS = { field:'الحصر الميداني', lands:'الأراضي والممتلكات', mobility:'حركة السير' };
+function serviceDot(enabled, type) {
+  const span=document.createElement('span');span.className=`ucv21-service-dot${enabled?` on ${type}`:''}`;span.textContent=enabled?'●':'—';
+  const label=`${SERVICE_DOT_LABELS[type]||type}: ${enabled?'مفعّلة':'غير مفعّلة'}`;span.setAttribute('aria-label',label);span.title=label;
+  return span;
+}
+function serviceCell(enabled, type) {
+  const td=document.createElement('td');td.className='ucv21-service-cell';td.appendChild(serviceDot(enabled,type));return td;
+}
+// Mobile cards previously kept the older chip-based product representation
+// while the desktop table already used compact dot indicators (transformTable
+// below) — same underlying data, two different visual languages. Unify on
+// the desktop's dot indicator for both, matching it against the same product
+// label text the chips already render.
+function transformMobileCards(app) {
+  // Compact registry owns service presentation. Keep "الخدمات المفعلة"
+  // as one visual group; never split it back into three service columns.
+  app.querySelectorAll('.ucv2-mobile-card').forEach(card => {
+    const products=card.querySelector('.ucv2-products');
+    if(products) products.dataset.ucv21Reference='1';
+  });
+}
+
+function transformTable(app) {
+  const table=app.querySelector('.ucv2-table');
+  if(!table||table.dataset.ucv21Reference==='1')return;
+  const labels=['الموظف','الرقم الوظيفي','الإدارة','القسم','المسمى','الدور الوظيفي','الخدمات المفعلة','أهلية المركبة','الحالة','تعديل'];
+  const head=table.querySelector('thead tr');
+  if(!head)return;
+  const cells=Array.from(head.children);
+  if(cells.length===labels.length){
+    cells.forEach((cell,index)=>{cell.textContent=labels[index];});
+    cells[cells.length-1]?.classList.add('ucv2-edit-head');
+  } else {
+    head.innerHTML=labels.map((label,index)=>`<th${index===labels.length-1?' class="ucv2-edit-head"':''}>${label}</th>`).join('');
+  }
+  // Phase 11D is the sole row-structure owner. Never rewrite tbody here.
+  table.dataset.ucv21Reference='1';
+}
+
+function tuneGridHead(app){const head=app.querySelector('.ucv2-grid-head');if(!head)return;const first=head.querySelector('span');if(first)first.textContent=first.textContent.replace(/^عرض\s+/,'إجمالي ');}
+function addSectionHead(pane,title,small=''){if(!pane||pane.querySelector(':scope > .ucv21-section-head'))return;const h=document.createElement('div');h.className='ucv21-section-head';h.innerHTML=`<span>${title}</span>${small?`<small>${small}</small>`:''}`;pane.prepend(h);}
+
+async function runExisting(button,msg){
+  if(!button)return true;button.click();await sleep(30);if(msg?.classList.contains('er'))return false;
+  for(let i=0;i<120;i+=1){if(!button.disabled)return !msg?.classList.contains('er');await sleep(50);}return false;
+}
+
+function normalizeDepartmentHeadProducts(panel,employee){
+  const role=panel.querySelector('#inst-role')?.value||U.inst(employee);
+  if(role!=='department_head')return null;
+  const roles=panel.querySelector('.pane[data-id="r"]')||panel;
+  const cards=[...roles.querySelectorAll('.pc')];
+  let enabled=cards.filter(card=>card.querySelector('.pe')?.checked===true);
+
+  // Existing Field Survey staff may have no product checkbox selected yet.
+  // If the department already identifies Field Survey, make Field the one
+  // explicit product before validating. No fake or extra entitlements.
+  const deptInput=panel.querySelector('#edit-dept');
+  const currentDept=clean(deptInput?.value);
+  if(enabled.length===0&&/الحصر|ميداني|field/i.test(currentDept)){
+    const fieldCard=roles.querySelector('.pc[data-p="field"]');
+    const fieldEnabled=fieldCard?.querySelector('.pe');
+    if(fieldEnabled){
+      fieldEnabled.checked=true;
+      fieldEnabled.dispatchEvent(new Event('change',{bubbles:true}));
+      enabled=[fieldCard];
+    }
+  }
+
+  if(enabled.length===0){
+    const error=Error('department_head_product_required');
+    error.reason='department_head_product_required';
+    throw error;
+  }
+  if(enabled.length>1){
+    const error=Error('department_head_single_product_required');
+    error.reason='department_head_single_product_required';
+    throw error;
+  }
+
+  const card=enabled[0],product=card.dataset.p,level=card.querySelector(`#lv-${product}`);
+  if(level&&level.value!=='head'){
+    level.value='head';
+    level.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+
+  // Keep organization scope and product scope coherent. When the department
+  // field is empty, infer only the canonical department for the one selected
+  // product; the normal organization-save runs before product sync.
+  const inferred={field:'إدارة الحصر الميداني',lands:'إدارة الأراضي والممتلكات',mobility:'إدارة حركة السير'}[product];
+  if(deptInput&&!clean(deptInput.value)&&inferred){
+    deptInput.value=inferred;
+    deptInput.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  return product;
+}
+
+function profileSnapshot(panel,employee){
+  const value=id=>clean(panel.querySelector(`#${id}`)?.value);
+  let products=null;
+  if(panel.querySelector('.saver')){
+    normalizeDepartmentHeadProducts(panel,employee);
+    products=U.readProducts(panel,panel.querySelector('#inst-role')?.value||U.inst(employee));
+  }
+  return {
+    basic:JSON.stringify({name:value('edit-name'),employeeRef:value('edit-ref'),phone:value('edit-phone'),email:value('edit-email'),jobTitle:value('edit-title'),employmentStatus:value('edit-emp')}),
+    organization:JSON.stringify({administration:value('edit-admin'),department:value('edit-dept'),directManagerEmployeeId:value('edit-manager')}),
+    products:products?JSON.stringify(products):null,
+  };
+}
+
+function buildSinglePageProfile(panel,employee){
+  if(!panel)return;
+  if(employee) panel.__ucv21Employee=employee;
+  if(panel.dataset.ucv21SinglePage==='1') return;
+  panel.dataset.ucv21SinglePage='1';panel.dataset.dialogLabel='تعديل المستخدم';panel.classList.add('ucv21-single-page');
+  const title=panel.querySelector('.ih b'),sub=panel.querySelector('.ih p');if(title)title.textContent='تعديل المستخدم';if(sub)sub.textContent='تحديث بيانات المستخدم والصلاحيات';
+  // PHASE13D.3 — WINDOW SYSTEM V1 pixel-close pass (second approved
+  // reference): a leading header icon badge, matching Add Employee's
+  // treatment (same CSS class, a person-check glyph via manager-phase11g).
+  const header=panel.querySelector('.ih');
+  if(header&&!header.querySelector('.ucv2-dialog-icon-badge')) header.insertAdjacentHTML('afterbegin','<span class="ucv2-dialog-icon-badge" aria-hidden="true"></span>');
+  // A decorative, non-interactive progress row matching the reference's
+  // stepper look (circles + connecting lines). This does NOT paginate or
+  // hide anything — all five real sections below it stay exactly as they
+  // are; see the CSS comment in manager-phase11g for why the row's own
+  // four labels differ from the five section headers.
+  if(header&&!panel.querySelector('.ucv21-progress')){
+    const steps=['البيانات الأساسية','الدور والخدمات','حساب الدخول','السجل'];
+    const html=steps.map((t,i)=>`${i>0?'<span class="ucv21-progress-line" aria-hidden="true"></span>':''}<button type="button" class="ucv21-progress-dot${i===0?' on':''}" data-profile-step="${i+1}" aria-current="${i===0?'step':'false'}"><b>${i+1}</b><span>${U.esc(t)}</span></button>`).join('');
+    header.insertAdjacentHTML('afterend',`<nav class="ucv21-progress" aria-label="أقسام تعديل المستخدم">${html}</nav>`);
+    // U.shell's own queueMicrotask focuses the first field, and the
+    // browser's native scrollIntoView for that focus lands past this
+    // non-sticky row (only .ih itself is sticky). If the page has smooth
+    // scrolling on, that scroll animates over several frames, so a single
+    // scrollTop reset can land mid-animation and get overridden by its
+    // tail end -- force instant scrolling on this panel BEFORE the
+    // microtask runs (still synchronous here), then reset once after.
+    panel.style.scrollBehavior='auto';
+    setTimeout(()=>{ panel.scrollTop=0; },0);
+  }
+  const tabs=panel.querySelector('.tabs');if(tabs)tabs.hidden=true;
+  const basic=panel.querySelector('.pane[data-id="p"]'),org=panel.querySelector('.pane[data-id="o"]'),account=panel.querySelector('.pane[data-id="a"]'),roles=panel.querySelector('.pane[data-id="r"]'),history=panel.querySelector('.pane[data-id="h"]');
+  [basic,org,account,roles].forEach(p=>{if(p)p.hidden=false;});
+  if(basic)basic.dataset.ucv21Step='1';
+  if(org)org.dataset.ucv21Step='2';
+  if(roles)roles.dataset.ucv21Step='2';
+  if(account)account.dataset.ucv21Step='3';
+  // PHASE13D.3 STEP 2 — visual-only reorganization into the 5 requested
+  // sections (البيانات الأساسية / بيانات الدخول / الدور الإداري / الخدمات
+  // والصلاحيات / السجل والتكليفات). Same panes, same fields, same save/
+  // fetch logic — only the section labels and (below) the DOM position of
+  // the optional password block change, so related "بيانات الدخول" content
+  // reads as one group instead of being separated by the roles pane.
+  addSectionHead(basic,'البيانات الأساسية','بيانات الموظف');addSectionHead(org,'التعيين المؤسسي','الإدارة والقسم والمدير المباشر');addSectionHead(roles,'الدور والخدمات','الدور المؤسسي والتسكين التشغيلي');addSectionHead(account,'حساب الدخول','إدارة الوصول والهوية');
+
+  // Make the institutional role explicit in Edit User. The underlying
+  // #inst-role select remains the source of truth; this segmented control
+  // only makes the action obvious and dispatches the existing change event.
+  const editRoleSelect=roles?.querySelector('#inst-role');
+  if(editRoleSelect&&!roles.querySelector('.ucv21-role-seg')){
+    const roleField=editRoleSelect.closest('.f');
+    const seg=document.createElement('div');
+    seg.className='ucv21-role-seg';
+    seg.setAttribute('role','group');
+    seg.setAttribute('aria-label','الدور المؤسسي');
+    const choices=[
+      ['employee','موظف'],
+      ['department_head','رئيس قسم'],
+      ['general_supervisor','مشرف عام']
+    ];
+    seg.innerHTML=choices.map(([value,label])=>`<button type="button" class="ucv21-role-opt${editRoleSelect.value===value?' on':''}" data-role="${value}">${label}</button>`).join('');
+    const helper=document.createElement('div');
+    helper.className='ucv21-role-helper';
+    helper.textContent='يمكن تغيير الدور ثم تحديد المنتج والتسكين المناسب قبل الحفظ.';
+    if(roleField){roleField.classList.add('ucv21-role-native');roleField.after(seg);seg.after(helper);}
+    const syncRoleButtons=()=>seg.querySelectorAll('.ucv21-role-opt').forEach(btn=>btn.classList.toggle('on',btn.dataset.role===editRoleSelect.value));
+    editRoleSelect.addEventListener('change',syncRoleButtons);
+    seg.addEventListener('click',event=>{
+      const btn=event.target.closest('.ucv21-role-opt');
+      if(!btn)return;
+      editRoleSelect.value=btn.dataset.role;
+      editRoleSelect.dispatchEvent(new Event('change',{bubbles:true}));
+      syncRoleButtons();
+
+      if(btn.dataset.role==='department_head'){
+        try{normalizeDepartmentHeadProducts(panel,panel.__ucv21Employee);}catch(_){/* stage 2 will show a clear validation message if needed */} 
+      }
+    });
+  }
+
+
+  const normalizeDepartmentHeadSelection=()=>{
+    if(!editRoleSelect||editRoleSelect.value!=='department_head')return;
+    try{normalizeDepartmentHeadProducts(panel,panel.__ucv21Employee);}catch(_){/* wait for the manager to finish selecting one product */} 
+  };
+  roles?.addEventListener('change',event=>{
+    if(event.target.classList?.contains('pe')||event.target.id?.startsWith('lv-'))normalizeDepartmentHeadSelection();
+  });
+  normalizeDepartmentHeadSelection();
+
+  const prodBlock=roles?.querySelector('.prod');
+  if(prodBlock&&!prodBlock.previousElementSibling?.classList?.contains('ucv21-subsection-head')){const sub=document.createElement('div');sub.className='ucv21-section-head ucv21-subsection-head';sub.innerHTML='<span>الخدمات والصلاحيات</span>';prodBlock.before(sub);}
+  if(account){const oldPw=account.querySelector('.pwbtn');if(oldPw)oldPw.hidden=true;}
+  // APPROVED UX CHANGE: replace the previous two-click label-swap confirmation
+  // with a real confirmation dialog. Uses the EXACT existing .tog click handler
+  // (manager-phase11c-user-center-dialogs.js) for the actual setAccountStatus
+  // call — this only intercepts the first click to show identity + current/
+  // resulting state, then re-dispatches the real click unchanged on confirm.
+  const accountToggle=account?.querySelector('.tog');
+  if(accountToggle&&!accountToggle.dataset.ucv21Confirm){
+    accountToggle.dataset.ucv21Confirm='1';
+    accountToggle.addEventListener('click',event=>{
+      if(accountToggle.dataset.ucv21Confirmed==='1'){delete accountToggle.dataset.ucv21Confirmed;return;}
+      event.preventDefault();event.stopImmediatePropagation();
+      const suspending=/إيقاف/.test(accountToggle.textContent);
+      const employee=panel.__ucv21Employee;
+      const title=suspending?'تأكيد إيقاف الحساب':'تأكيد تفعيل الحساب';
+      const body=`<div class="sec ucv2-security-box"><div class="st"><span>${title}</span><small>${U.esc(employee?.name||'')}</small></div><div class="ucv2-current-value"><span>الحالة الحالية</span><b>${suspending?'نشط':'موقوف'}</b></div><div class="ucv2-current-value"><span>الحالة بعد التأكيد</span><b>${suspending?'موقوف':'نشط'}</b></div></div><div class="act"><button type="button" class="btn ${suspending?'bad':'pr'} ucv21-confirm-toggle">${suspending?'تأكيد الإيقاف':'تأكيد التفعيل'}</button><button type="button" class="btn ucv21-cancel-toggle">إلغاء</button></div>`;
+      const {c:confirmPanel,close:closeConfirm}=U.shell('iuc-suspend-confirm',title,employee?.email||'',body,true);
+      confirmPanel.querySelector('.ucv21-cancel-toggle').onclick=closeConfirm;
+      confirmPanel.querySelector('.ucv21-confirm-toggle').onclick=()=>{closeConfirm();accountToggle.dataset.ucv21Confirmed='1';accountToggle.click();};
+    },true);
+  }
+  if(panel.__ucv21Employee?.authUid&&!panel.querySelector('.ucv21-password-inline')){
+    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.dataset.ucv21Step='3';wrap.innerHTML=`<div class="ucv21-section-head"><span>الأمان</span><small>تعديل كلمة المرور — اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;
+    // PHASE13D.3 STEP 2 — moved from after `roles` to directly after
+    // `account` so it visually groups with بيانات الدخول (both are
+    // login/credential concerns) instead of sitting on the far side of the
+    // الدور الإداري/الخدمات والصلاحيات section. Position only; the field
+    // ids, save handler and validation this wires into are untouched.
+    account?.after(wrap)||roles?.after(wrap);
+    wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
+  }
+  if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.dataset.ucv21Step='4';hw.innerHTML='<div class="ucv21-section-head"><span>السجل والتكليفات</span><small>آخر التكليفات والحركة المؤسسية</small></div>';history.before(hw);hw.appendChild(history);history.hidden=false;}
+
+  // Window body: only this middle stage scrolls. Header, step navigation
+  // and footer remain fixed in the dialog, eliminating the long left-side
+  // scrollbar and "page inside a modal" feeling.
+  if(!panel.querySelector('.ucv21-profile-stage')){
+    const progress=panel.querySelector('.ucv21-progress');
+    const stage=document.createElement('div');
+    stage.className='ucv21-profile-stage';
+    progress?.after(stage);
+    for(let step=1;step<=4;step+=1){
+      const stepPanel=document.createElement('section');
+      stepPanel.className='ucv21-step-panel';
+      stepPanel.dataset.profilePanel=String(step);
+      stage.appendChild(stepPanel);
+      [...panel.querySelectorAll(`[data-ucv21-step="${step}"]`)].forEach(node=>stepPanel.appendChild(node));
+    }
+  }
+  try{panel.__ucv21Snapshot=profileSnapshot(panel,panel.__ucv21Employee);}catch(_){panel.__ucv21Snapshot=null;}
+  if(!panel.querySelector('.ucv21-profile-footer')){
+    const footer=document.createElement('footer');footer.className='ucv21-profile-footer';footer.innerHTML='<div class="ucv21-profile-msg" aria-live="polite"></div><div class="ucv21-profile-nav"><button type="button" class="btn ucv21-prev">السابق</button><button type="button" class="btn ucv21-next">التالي</button></div><button type="button" class="btn ucv21-cancel">إلغاء</button><button type="button" class="btn pr ucv21-save">حفظ التعديلات</button>';panel.appendChild(footer);
+    footer.querySelector('.ucv21-cancel').onclick=()=>panel.querySelector('.ix')?.click();
+    footer.querySelector('.ucv21-save').onclick=async ev=>{const b=ev.currentTarget,msg=footer.querySelector('.ucv21-profile-msg'),employeeRef=panel.__ucv21Employee;msg.className='ucv21-profile-msg';try{
+      const p1=panel.querySelector('#ucv21-npw')?.value||'',p2=panel.querySelector('#ucv21-npw2')?.value||'';if(p1||p2){if(p1!==p2){setProfileStep(3);throw Error('كلمتا المرور غير متطابقتين.');}if(!U?.strongPw?.(p1)){setProfileStep(3);throw Error('كلمة المرور لا تطابق سياسة الأمان.');}if(!employeeRef?.authUid){setProfileStep(3);throw Error('لا يوجد حساب دخول مرتبط.');}}
+      if(!clean(panel.querySelector('#edit-name')?.value)){setProfileStep(1);throw Error('اسم الموظف مطلوب.');}
+      const selectedRole=panel.querySelector('#inst-role')?.value||U.inst(employeeRef);
+      let current;
+      try{current=profileSnapshot(panel,employeeRef);}catch(error){setProfileStep(2);throw error;}
+      const initial=panel.__ucv21Snapshot||{},steps=[];if(current.basic!==initial.basic)steps.push([panel.querySelector('.savep'),panel.querySelector('.mp')]);if(current.organization!==initial.organization)steps.push([panel.querySelector('.saveo'),panel.querySelector('.mo')]);if(current.products!==initial.products)steps.push([panel.querySelector('.saver'),panel.querySelector('.mr')]);
+      if(!steps.length&&!p1&&!p2){msg.textContent='لا توجد تغييرات جديدة للحفظ.';return;}
+      b.disabled=true;msg.textContent='جاري حفظ التعديلات...';for(const [button,m] of steps){if(button&&!(await runExisting(button,m)))throw Error(clean(m?.textContent)||'تعذر حفظ أحد الأقسام.');}
+      if(p1||p2){await U.post('/api/admin/users',{action:'setPassword',uid:employeeRef.authUid,password:p1});panel.querySelector('#ucv21-npw').value='';panel.querySelector('#ucv21-npw2').value='';}
+      panel.__ucv21Snapshot=profileSnapshot(panel,employeeRef);msg.className='ucv21-profile-msg ok';msg.textContent='تم حفظ التعديلات بنجاح.';
+    }catch(error){msg.className='ucv21-profile-msg er';msg.textContent=U?.why?.(error?.reason||error?.message)||(error?.message||'تعذر حفظ التعديلات.');}finally{b.disabled=false;}};
+  }
+  function setProfileStep(step){
+    const next=Math.min(4,Math.max(1,Number(step)||1));
+    panel.dataset.profileStep=String(next);
+    panel.querySelectorAll('.ucv21-step-panel').forEach(el=>el.classList.toggle('ucv21-step-hidden',Number(el.dataset.profilePanel)!==next));
+    panel.querySelectorAll('.ucv21-progress-dot[data-profile-step]').forEach(btn=>{
+      const active=Number(btn.dataset.profileStep)===next;
+      btn.classList.toggle('on',active);
+      btn.setAttribute('aria-current',active?'step':'false');
+    });
+    const footer=panel.querySelector('.ucv21-profile-footer');
+    const prev=footer?.querySelector('.ucv21-prev'),nxt=footer?.querySelector('.ucv21-next');
+    if(prev)prev.hidden=next===1;
+    if(nxt)nxt.hidden=next===4;
+    const stage=panel.querySelector('.ucv21-profile-stage');if(stage)stage.scrollTop=0;
+  }
+  panel.querySelectorAll('.ucv21-progress-dot[data-profile-step]').forEach(btn=>btn.onclick=()=>setProfileStep(btn.dataset.profileStep));
+  panel.querySelector('.ucv21-prev')?.addEventListener('click',()=>setProfileStep((Number(panel.dataset.profileStep)||1)-1));
+  panel.querySelector('.ucv21-next')?.addEventListener('click',()=>setProfileStep((Number(panel.dataset.profileStep)||1)+1));
+  setProfileStep(1);
+}
+
+function tuneDialog(modal){const panel=modal.matches('.iuc')?modal.querySelector(':scope > div'):modal;if(!panel||!panel.__ucv21Employee)return;const text=clean(panel.textContent);if(/ملف الموظف|تعديل المستخدم/.test(text)){buildSinglePageProfile(panel,panel.__ucv21Employee);}}
+
+if(U&&typeof U.profile==='function'&&!U.__phase11fReferenceProfileWrapped){const baseProfile=U.profile;U.__phase11fReferenceProfileWrapped=true;U.profile=async employee=>{const out=await baseProfile.call(U,employee);const panel=document.querySelector('#iuc-profile > div');if(panel){panel.__ucv21Employee=employee;buildSinglePageProfile(panel,employee);}return out;};}
+
+function apply(){injectStyle();document.querySelectorAll('.ucv2-app').forEach(app=>{tuneHeader(app);tuneKpis(app);tuneGridHead(app);transformTable(app);transformMobileCards(app);});document.querySelectorAll('.iuc').forEach(tuneDialog);}
+let scheduled=false;function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;apply();});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
+new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+})();

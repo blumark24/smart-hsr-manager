@@ -18,7 +18,7 @@
 // ID token, so the client fetches this and wraps the result in a blob URL.
 // ============================================================================
 const { getDb } = require('../_lib/firebaseAdmin');
-const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
+const { verifyRequestToken, activeIsNotFalse, resolveMobilityRole } = require('../_lib/authz');
 const { b2Configuration, getS3Client, safeStorageFailure } = require('../_lib/b2Client');
 
 const MAX_KEY_LENGTH = 512;
@@ -73,8 +73,18 @@ function extensionContentType(key) {
   return '';
 }
 
+function isFieldSurveyDepartment(value) {
+  const department = typeof value === 'string' ? value.trim() : '';
+  return /الحصر|ميداني|field/i.test(department);
+}
+
 // Any active role may VIEW evidence inside its own organization. managers/{uid}
 // is authoritative so a stale users/{uid} record cannot widen or move scope.
+// PHASE 02C adds one narrowly-scoped viewer: an ACTIVE canonical
+// department_head for Field Survey. The canonical Mobility resolver is used
+// so an explicit mobilityAccess disable/malformation can never be bypassed by
+// a stale legacy role. Organization ownership is still proved separately by
+// keyBelongsToOrganization() below.
 async function resolveViewerContext(db, uid) {
   const managerSnap = await db.collection('managers').doc(uid).get();
   if (managerSnap.exists) {
@@ -90,6 +100,14 @@ async function resolveViewerContext(db, uid) {
     const org = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
     if (['supervisor', 'inspector', 'contractor'].includes(d.role) && activeIsNotFalse(d) && org) {
       return { uid, role: d.role, organizationId: org };
+    }
+    const department = typeof d.department === 'string' ? d.department.trim() : '';
+    if (resolveMobilityRole(d) === 'department_head'
+        && activeIsNotFalse(d)
+        && org
+        && department
+        && isFieldSurveyDepartment(department)) {
+      return { uid, role: 'department_head', organizationId: org, department };
     }
   }
   return null;
@@ -199,6 +217,7 @@ module.exports._test = {
   safeObjectKey,
   requestedKey,
   extensionContentType,
+  isFieldSurveyDepartment,
   resolveViewerContext,
   keyBelongsToOrganization,
   EVIDENCE_FIELDS,

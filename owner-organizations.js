@@ -7,15 +7,37 @@
 // and are received here via dependency injection — this avoids a
 // circular import between this module and any future subscriptions
 // module that would also need ORGS.
-import { doc, addDoc, updateDoc, deleteDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-export function initOrganizationsModule({ db, getOrgs, showNotif, refreshAll, createInvoice } = {}) {
+export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshAll, createInvoice } = {}) {
   const orgsBody = document.getElementById('orgsBody');
   const searchBox = document.getElementById('searchBox');
   const addOrgBtn = document.getElementById('addOrgBtn');
   const orgModal = document.getElementById('orgModal');
   const orgForm = document.getElementById('orgForm');
   const deleteBtn = document.getElementById('deleteBtn');
+
+  async function ownerAdminCall(payload){
+    const user = auth && auth.currentUser;
+    if(!user) throw new Error('owner_session_required');
+    let token = await user.getIdToken();
+    let response = await fetch('/api/admin/users', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body: JSON.stringify(payload)
+    });
+    if(response.status===401){
+      token = await user.getIdToken(true);
+      response = await fetch('/api/admin/users', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+        body: JSON.stringify(payload)
+      });
+    }
+    const body = await response.json().catch(()=>({}));
+    if(!response.ok) throw new Error(body.reason || body.error || 'request_failed');
+    return body;
+  }
 
   function renderOrgs(filter=''){
     const ORGS = getOrgs();
@@ -56,8 +78,9 @@ export function initOrganizationsModule({ db, getOrgs, showNotif, refreshAll, cr
         return b;
       };
       wrap.appendChild(mkBtn('تعديل','edit','btn btn-outline'));
+      if(o.managerUid) wrap.appendChild(mkBtn('كلمة مرور المدير','manager-password','btn btn-outline'));
       wrap.appendChild(mkBtn('ترقية','upgrade','btn btn-primary'));
-      wrap.appendChild(mkBtn('حذف','delete','btn btn-outline'));
+      wrap.appendChild(mkBtn(o.status==='archived'?'استعادة':'أرشفة',o.status==='archived'?'restore':'archive',o.status==='archived'?'btn btn-primary':'btn btn-outline'));
       tdActions.appendChild(wrap); tr.appendChild(tdActions);
 
       orgsBody.appendChild(tr);
@@ -69,9 +92,16 @@ export function initOrganizationsModule({ db, getOrgs, showNotif, refreshAll, cr
     document.getElementById('modalTitle').textContent = org? 'تعديل مؤسسة' : 'إضافة مؤسسة';
     const f = orgForm.elements;
     f.name.value = org?.name||''; f.manager.value = org?.manager||''; f.email.value = org?.email||''; f.phone.value = org?.phone||'';
+    f.managerPassword.value = '';
+    f.managerPassword.required = !org;
+    f.managerPassword.disabled = Boolean(org);
+    const passwordField = document.getElementById('managerPasswordField');
+    if(passwordField) passwordField.classList.toggle('hidden', Boolean(org));
     f.plan.value = org?.plan||'Trial'; f.billingCycle.value = org?.billingCycle||'monthly'; f.status.value = org?.status|| (org?.plan==='Trial'?'trial':'active');
     f.expiresAt.value = org?.expiresAt? new Date(org.expiresAt).toISOString().slice(0,10): '';
+    f.notes.value = org?.notes||'';
     f.docId.value = org?.id||''; deleteBtn.classList.toggle('hidden', !org);
+    deleteBtn.textContent = org?.status === 'archived' ? 'استعادة المؤسسة' : 'أرشفة المؤسسة';
     orgModal.showModal();
   }
 
@@ -80,6 +110,23 @@ export function initOrganizationsModule({ db, getOrgs, showNotif, refreshAll, cr
     const btn = e.target.closest('button'); if(!btn) return;
     const act = btn.dataset.act; const id = btn.dataset.id; const org = getOrgs().find(o=>o.id===id);
     if(act==='edit'){ openOrgModal(org); }
+    if(act==='manager-password'){
+      if(!org?.managerUid) return;
+      const password = prompt('أدخل كلمة مرور جديدة قوية لمدير البلدية:');
+      if(!password) return;
+      try{
+        await ownerAdminCall({
+          action:'ownerSetManagerPassword',
+          organizationId:id,
+          managerUid:org.managerUid,
+          password
+        });
+        showNotif('تم تحديث كلمة مرور مدير البلدية وإنهاء جلساته القديمة.');
+      }catch(error){
+        showNotif('تعذّر تحديث كلمة مرور المدير: '+(error.message||'خطأ غير معروف'));
+      }
+      return;
+    }
     if(act==='upgrade'){ // ترقية الخطة → تحديث المؤسسة + إنشاء فاتورة
       const newPlan = org.plan==='Pro' ? 'Enterprise' : (org.plan==='Basic' ? 'Pro' : 'Pro');
       await updateDoc(doc(db,'organizations', id), { plan:newPlan, status:'active', updatedAt: serverTimestamp() });
@@ -87,8 +134,18 @@ export function initOrganizationsModule({ db, getOrgs, showNotif, refreshAll, cr
       showNotif(`تمت ترقية خطة ${org.name} إلى ${newPlan} وإصدار فاتورة تلقائيًا.`);
       await refreshAll();
     }
-    if(act==='delete'){
-      if(confirm('تأكيد حذف المؤسسة؟')){ await deleteDoc(doc(db,'organizations', id)); showNotif('تم حذف المؤسسة بنجاح.'); await refreshAll(); }
+    if(act==='archive'){
+      const label = org?.name || id;
+      if(confirm(`تأكيد أرشفة ${label}؟ لن تُحذف الحسابات أو الفواتير أو السجلات المرتبطة.`)){
+        await ownerAdminCall({ action:'ownerArchiveOrganization', organizationId:id });
+        showNotif('تمت أرشفة المؤسسة بأمان مع الإبقاء على جميع السجلات المرتبطة.');
+        await refreshAll();
+      }
+    }
+    if(act==='restore'){
+      await ownerAdminCall({ action:'ownerRestoreOrganization', organizationId:id, status:'active' });
+      showNotif('تمت استعادة المؤسسة وتفعيلها.');
+      await refreshAll();
     }
   });
 
@@ -100,20 +157,68 @@ export function initOrganizationsModule({ db, getOrgs, showNotif, refreshAll, cr
 
   orgForm.addEventListener('submit', async (e)=>{
     e.preventDefault(); const f = orgForm.elements;
-    const payload = {
-      name:f.name.value.trim(), manager:f.manager.value.trim(), email:f.email.value.trim(), phone:f.phone.value.trim(),
-      plan:f.plan.value, billingCycle:f.billingCycle.value, status:f.status.value,
+    const organization = {
+      name:f.name.value.trim(),
+      phone:f.phone.value.trim(),
+      plan:f.plan.value,
+      billingCycle:f.billingCycle.value,
+      status:f.status.value,
       expiresAt: f.expiresAt.value ? new Date(f.expiresAt.value).toISOString() : null,
-      createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+      notes:f.notes.value.trim()
+    };
+    const manager = {
+      name:f.manager.value.trim(),
+      email:f.email.value.trim(),
+      password:f.managerPassword.value
     };
     const id = f.docId.value;
-    if(id){ await updateDoc(doc(db,'organizations', id), payload); showNotif('تم تحديث بيانات المؤسسة.'); }
-    else { const ref = await addDoc(collection(db,'organizations'), payload); showNotif('تمت إضافة مؤسسة جديدة بنجاح.'); }
-    orgModal.close(); await refreshAll();
+    try{
+      if(id){
+        await updateDoc(doc(db,'organizations', id), {
+          ...organization,
+          manager:manager.name,
+          email:manager.email,
+          updatedAt:serverTimestamp()
+        });
+        showNotif('تم تحديث بيانات المؤسسة.');
+      }else{
+        if(!manager.password){
+          showNotif('حدد كلمة مرور مدير البلدية قبل إنشاء المؤسسة.');
+          return;
+        }
+        const result = await ownerAdminCall({
+          action:'ownerCreateOrganizationWithManager',
+          organization,
+          manager
+        });
+        if(!result.managerCreated || !result.managerUid || !result.organizationId){
+          throw new Error('manager_provisioning_incomplete');
+        }
+        showNotif('تم إنشاء المؤسسة ومدير البلدية وربط الحساب بنجاح.');
+      }
+      orgModal.close();
+      await refreshAll();
+    }catch(error){
+      showNotif('تعذّر حفظ المؤسسة: '+(error.message||'خطأ غير معروف'));
+    }
   });
   deleteBtn.addEventListener('click', async ()=>{
     const id = orgForm.elements.docId.value; if(!id) return;
-    if(confirm('تأكيد الحذف؟')){ await deleteDoc(doc(db,'organizations', id)); orgModal.close(); showNotif('تم حذف المؤسسة.'); await refreshAll(); }
+    const org = getOrgs().find(o=>o.id===id);
+    if(org?.status === 'archived'){
+      await ownerAdminCall({ action:'ownerRestoreOrganization', organizationId:id, status:'active' });
+      orgModal.close();
+      showNotif('تمت استعادة المؤسسة وتفعيلها.');
+      await refreshAll();
+      return;
+    }
+    const label = org?.name || id;
+    if(confirm(`تأكيد أرشفة ${label}؟ لن تُحذف الحسابات أو الفواتير أو السجلات المرتبطة.`)){
+      await ownerAdminCall({ action:'ownerArchiveOrganization', organizationId:id });
+      orgModal.close();
+      showNotif('تمت أرشفة المؤسسة بأمان مع الإبقاء على السجلات المرتبطة.');
+      await refreshAll();
+    }
   });
 
   return Object.freeze({ renderOrgs, openOrgModal });

@@ -9,7 +9,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { installFakes, fakeRequest, fakeResponse } = require('./helpers/fakeFirebaseAdmin');
-const { ensureManagerLandsBootstrap } = require('../api/_lib/landsManagerBootstrap');
+const BOOTSTRAP_PATH = require.resolve('../api/_lib/landsManagerBootstrap.js');
 
 const USERS_HANDLER_PATH = require.resolve('../api/admin/users.js');
 const AUTHZ_PATH = require.resolve('../api/_lib/authz.js');
@@ -18,6 +18,7 @@ const RECONCILIATION_PATH = require.resolve('../api/_lib/landsSyncReconciliation
 function loadFreshUsersHandler() {
   delete require.cache[AUTHZ_PATH];
   delete require.cache[RECONCILIATION_PATH];
+  delete require.cache[BOOTSTRAP_PATH];
   delete require.cache[USERS_HANDLER_PATH];
   return require(USERS_HANDLER_PATH);
 }
@@ -125,6 +126,8 @@ test('5. cross-org impossible: two managers auto-bootstrap into two separate mun
 test('6. employee cannot bootstrap self: ensureManagerLandsBootstrap no-ops for a non-manager caller', async () => {
   const fakes = installFakes();
   try {
+    delete require.cache[BOOTSTRAP_PATH];
+    const { ensureManagerLandsBootstrap } = require(BOOTSTRAP_PATH);
     const employee = { uid: 'employee-uid-1', isOwner: false, isManager: false, role: null, organizationId: null };
     const result = await ensureManagerLandsBootstrap(fakes.store, employee);
     assert.equal(result.attempted, false);

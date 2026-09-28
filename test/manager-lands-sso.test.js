@@ -73,7 +73,7 @@ test('isSsoEligible: denies a disabled account, a pending (not yet synced) entit
 // ---- 2/3. Lands employee / Lands department manager direct login wiring ----
 test('2/3. login.html calls POST /api/organization/context with the employee\'s own bearer token before redirecting to Lands', () => {
   const source = read('login.html');
-  const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole)'), source.indexOf('showMsg(\'✅ تم التحقق بنجاح... جارٍ التوجيه\', \'success\');'));
+  const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole && !mobilityRole)'), source.indexOf('// Generic department-head landing.'));
   assert.match(landsBranch, /fetch\('\/api\/organization\/context'/);
   assert.match(landsBranch, /method: 'POST'/);
   assert.match(landsBranch, /'Authorization': 'Bearer ' \+ idToken/);
@@ -132,21 +132,8 @@ test('login.html never logs the handoff code, the employee password, or any toke
   assert.doesNotMatch(source, /console\.log\([^)]*idToken/i);
 });
 
-// ---- P1: users-search autofill hardening ----
-test('13/14. #userSearch is hardened against browser autofill with readonly-until-focus, type=search, and autocomplete=off (not merely cleared after the fact)', () => {
-  const source = read('manager.html');
-  const inputTag = source.slice(source.indexOf('<input id="userSearch"'), source.indexOf('/>', source.indexOf('<input id="userSearch"')) + 2);
-  assert.match(inputTag, /type="search"/);
-  assert.match(inputTag, /autocomplete="off"/);
-  assert.match(inputTag, /readonly/);
-  assert.match(inputTag, /onfocus="this\.removeAttribute\('readonly'\)"/);
-});
-
-test('15. users list stability is unaffected by the search hardening: users-list-view.js and the render pipeline are unchanged', () => {
-  const viewSource = read('users-list-view.js');
-  assert.match(viewSource, /export function belongsOnUsersList/);
-  assert.match(viewSource, /export function deriveVisibleUsers/);
-  const managerSource = read('manager.html');
-  assert.match(managerSource, /usersViewState\.search = document\.getElementById\('userSearch'\)\.value/);
-  assert.match(managerSource, /deriveVisibleUsers\(users, usersViewState\)/);
-});
+// User Center search/autofill regressions are intentionally covered by
+// test/manager-users-list-state.test.js and the Phase11 User Center suites.
+// They no longer belong in the Lands SSO contract because the User Center
+// UI was modularized out of manager.html. Keeping those assertions here
+// would couple Lands authentication to unrelated presentation structure.
