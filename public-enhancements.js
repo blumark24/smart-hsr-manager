@@ -31,6 +31,9 @@
         background:rgba(248,252,249,.96);border:1px solid rgba(255,255,255,.92);
         box-shadow:0 40px 100px -35px rgba(0,0,0,.58)
       }
+      #smartSafeMenu .menu-head{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 8px}
+      #smartSafeMenu .menu-head b{font:600 13px "Readex Pro","IBM Plex Sans Arabic",sans-serif;color:#17352A}
+      #smartSafeMenu .menu-close{width:38px!important;min-height:38px!important;height:38px!important;padding:0!important;border:0!important;border-radius:11px!important;background:#EDF3EF!important;justify-content:center!important;font:600 18px/1 system-ui!important}
       #smartSafeMenu button,#smartSafeMenu a{
         width:100%;min-height:54px;padding:0 16px;box-sizing:border-box;border:0;
         border-bottom:1px solid rgba(14,26,36,.08);background:transparent;color:#0E1A24;
@@ -212,6 +215,7 @@
         .claude-profile .section-inner{max-width:100%!important;padding:0 28px!important;grid-template-columns:1fr 1fr!important;gap:34px!important}
         .claude-profile .profile-book-stage{height:600px!important}
         .claude-profile .profile-book{width:340px!important;height:482px!important}
+        .claude-round-strip{overflow:hidden!important}
       }
 
       @media(max-width:680px){
@@ -301,9 +305,38 @@
         .claude-profile .profile-book-logo{padding:30px 28px 0!important}
         .claude-profile .profile-book-copy{padding:0 28px!important}
         .claude-profile .profile-book img{width:170px!important}
+        .claude-profile .profile-copy{gap:18px!important}
+        .claude-profile .profile-book-stage{height:460px!important}
+        .claude-round-strip{display:none!important}
+
+        .claude-bento .bento-card.bento-users-card{min-height:560px!important}
+        .claude-bento .bento-users-router{
+          top:170px!important;right:16px!important;bottom:22px!important;left:16px!important;
+          width:auto!important;transform:none!important;display:grid!important;
+          grid-template-columns:1fr 1fr!important;gap:10px 12px!important;align-content:start!important;
+          padding-top:72px!important;box-sizing:border-box!important
+        }
+        .claude-bento .bento-users-router>svg{display:none!important}
+        .claude-bento .user-role-right,.claude-bento .user-role-left{
+          position:relative!important;inset:auto!important;width:auto!important;height:auto!important;
+          display:grid!important;grid-template-columns:1fr!important;gap:7px!important;justify-content:stretch!important
+        }
+        .claude-bento .user-role-right{grid-column:2!important;grid-row:2!important}
+        .claude-bento .user-role-left{grid-column:1!important;grid-row:2!important}
+        .claude-bento .user-role-right>span,.claude-bento .user-role-left>span{
+          width:100%!important;height:34px!important;padding:0 9px!important;box-sizing:border-box!important;
+          font-size:11px!important;justify-content:center!important;text-align:center!important
+        }
+        .claude-bento .user-router-center{
+          top:0!important;right:50%!important;left:auto!important;bottom:auto!important;
+          transform:translate(50%,0)!important;width:min(250px,82%)!important;padding:11px 12px!important
+        }
+
+        #smartSafeMenu{align-items:flex-start!important;justify-content:center!important;padding:12px!important}
+        #smartSafeMenu .panel{margin:max(82px,env(safe-area-inset-top)) auto 0!important;width:min(430px,100%)!important;padding:12px!important;border-radius:22px!important}
       }
 
-      @media(max-width:1024px){[data-screen-label]{scroll-margin-top:88px}}
+      @media(max-width:1024px){[data-screen-label]{scroll-margin-top:108px}}
             @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
     `;
     document.head.appendChild(style);
@@ -418,7 +451,13 @@
           if(norm(card.textContent).includes('USERS & OPERATIONS')){
             card.classList.add('bento-users-card');
             const router=[...card.querySelectorAll('div')].find(el=>norm(el.textContent).includes('ROLE ROUTER')&&norm(el.textContent).includes('رؤساء الأقسام'));
-            router?.classList.add('bento-users-router');
+            if(router){
+              router.classList.add('bento-users-router');
+              const direct=[...router.children].filter(el=>el.tagName!=='SVG');
+              direct.find(el=>norm(el.textContent).includes('رؤساء الأقسام')&&norm(el.textContent).includes('المقاولون'))?.classList.add('user-role-right');
+              direct.find(el=>norm(el.textContent).includes('مساحة القسم')&&norm(el.textContent).includes('أوامر العمل'))?.classList.add('user-role-left');
+              direct.find(el=>norm(el.textContent).includes('ROLE ROUTER')&&norm(el.textContent).includes('التوجيه حسب الدور والصلاحيات'))?.classList.add('user-router-center');
+            }
           }
         });
       }
@@ -454,6 +493,7 @@
     if(profileInner){
       const kids=[...profileInner.children];
       const copy=kids[0], bookStage=kids[1];
+      copy?.classList.add('profile-copy');
       [...copy?.children||[]].find(el=>norm(el.textContent).includes('عرض الملف التعريفي')&&norm(el.textContent).includes('تنزيل الملف التعريفي'))?.classList.add('profile-actions');
       bookStage?.classList.add('profile-book-stage');
       const book=[...bookStage?.children||[]].find(el=>norm(el.textContent).includes('COMPANY & PLATFORM PROFILE'));
@@ -465,6 +505,10 @@
           [...face.children].find(el=>norm(el.textContent).includes('COMPANY & PLATFORM PROFILE')&&norm(el.textContent).includes('الملف التعريفي'))?.classList.add('profile-book-copy');
         }
       }
+    }
+    const legacyStrip=profile.nextElementSibling;
+    if(legacyStrip&&norm(legacyStrip.textContent).includes('ROUND 02')&&norm(legacyStrip.textContent).includes('PARTNERSHIP CTA')){
+      legacyStrip.classList.add('claude-round-strip');
     }
     return true;
   }
@@ -495,10 +539,10 @@
     if(!document.getElementById('smartSafeMenu')){
       const menu=document.createElement('div');
       menu.id='smartSafeMenu';
-      menu.innerHTML='<div class="panel" dir="rtl"><button data-go="platform">المنصة <span>←</span></button><button data-go="solutions">الحلول <span>←</span></button><button data-go="twin">التوأم الرقمي <span>←</span></button><button data-go="profile">الملف التعريفي <span>←</span></button><a class="login" href="Home.html">الدخول إلى SMART HSR</a></div>';
+      menu.innerHTML='<div class="panel" dir="rtl"><div class="menu-head"><b>التنقل داخل SMART HSR</b><button class="menu-close" type="button" aria-label="إغلاق">×</button></div><button data-go="platform">المنصة <span>←</span></button><button data-go="solutions">الحلول <span>←</span></button><button data-go="twin">التوأم الرقمي <span>←</span></button><button data-go="profile">الملف التعريفي <span>←</span></button><a class="login" href="Home.html">الدخول إلى SMART HSR</a></div>';
       document.body.appendChild(menu);
       menu.addEventListener('click',e=>{
-        if(e.target===menu){menu.classList.remove('open');return}
+        if(e.target===menu||e.target.closest('.menu-close')){menu.classList.remove('open');return}
         const b=e.target.closest('[data-go]'); if(!b)return;
         const map={platform:section('02 Statement'),solutions:section('04 Product Bento'),twin:section('06 Digital Twin Signature'),profile:section('07 Company Profile')};
         menu.classList.remove('open'); go(map[b.dataset.go]);
