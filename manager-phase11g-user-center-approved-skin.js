@@ -1291,6 +1291,148 @@ function injectApprovedSkin() {
     .ucv2-chip-button{flex:0 0 auto!important}
   }
 
+
+
+  /* ============================================================
+     PHASE23.2 — GLASS SURFACE POLISH
+     Visual-only. Preserve all layout/data/behavior. Use restrained glass
+     on the main institutional surfaces only so the UI feels premium without
+     adding heavy per-row/per-card blur or expensive decorative effects.
+     ============================================================ */
+  .ucv2-host,
+  .ucv2-app,
+  .ucv2-toolbar,
+  .ucv2-quick,
+  .ucv2-grid-head,
+  .ucv2-table-wrap,
+  .ucv2-kpi,
+  .iuc>div,
+  .ucv21-single-page{
+    -webkit-font-smoothing:antialiased!important;
+    text-rendering:optimizeLegibility!important;
+  }
+
+  /* Night: deep navy glass with crisp edge highlights. */
+  .hsr-manager-root.theme-night .ucv2-host{
+    background:rgba(5,17,31,.88)!important;
+    border:1px solid rgba(99,171,238,.20)!important;
+    box-shadow:
+      0 30px 80px -52px rgba(0,74,160,.72),
+      inset 0 1px rgba(255,255,255,.045)!important;
+  }
+  .hsr-manager-root.theme-night .ucv2-app{
+    background:
+      linear-gradient(145deg,rgba(8,25,45,.93),rgba(8,31,54,.90) 54%,rgba(7,22,40,.94))!important;
+  }
+  .hsr-manager-root.theme-night .ucv2-toolbar,
+  .hsr-manager-root.theme-night .ucv2-quick,
+  .hsr-manager-root.theme-night .ucv2-grid-head,
+  .hsr-manager-root.theme-night .ucv2-table-wrap{
+    background:rgba(9,27,48,.86)!important;
+    border-color:rgba(92,163,232,.18)!important;
+    box-shadow:inset 0 1px rgba(255,255,255,.028)!important;
+  }
+  .hsr-manager-root.theme-night .ucv2-kpi{
+    background:
+      linear-gradient(145deg,rgba(14,39,67,.90),rgba(9,26,46,.92))!important;
+    border-color:color-mix(in srgb,var(--kpi-accent) 30%,rgba(96,145,211,.12))!important;
+    box-shadow:
+      0 18px 34px -30px color-mix(in srgb,var(--kpi-accent) 54%,#000),
+      inset 0 1px rgba(255,255,255,.055)!important;
+  }
+  .hsr-manager-root.theme-night .ucv2-kpi-icon{
+    background:color-mix(in srgb,var(--kpi-accent) 13%,rgba(255,255,255,.02))!important;
+    box-shadow:inset 0 1px rgba(255,255,255,.07)!important;
+  }
+  .hsr-manager-root.theme-night .ucv2-header h1,
+  .hsr-manager-root.theme-night .ucv2-filter-heading span,
+  .hsr-manager-root.theme-night .ucv2-person b{
+    color:#f7fbff!important;
+    text-shadow:0 1px 0 rgba(255,255,255,.035)!important;
+  }
+  .hsr-manager-root.theme-night .ucv2-kpi b{
+    color:#fff!important;
+    text-shadow:0 1px 12px rgba(255,255,255,.045)!important;
+  }
+
+  /* Day: soft frosted-white glass with municipal green restraint. */
+  .hsr-manager-root.theme-day .ucv2-host{
+    background:rgba(238,246,242,.88)!important;
+    border:1px solid rgba(18,133,90,.18)!important;
+    box-shadow:
+      0 28px 70px -52px rgba(16,82,53,.34),
+      inset 0 1px rgba(255,255,255,.96)!important;
+  }
+  .hsr-manager-root.theme-day .ucv2-app{
+    background:
+      linear-gradient(145deg,rgba(255,255,255,.96),rgba(245,250,247,.94) 56%,rgba(250,252,251,.97))!important;
+  }
+  .hsr-manager-root.theme-day .ucv2-toolbar,
+  .hsr-manager-root.theme-day .ucv2-quick,
+  .hsr-manager-root.theme-day .ucv2-grid-head,
+  .hsr-manager-root.theme-day .ucv2-table-wrap{
+    background:rgba(255,255,255,.88)!important;
+    border-color:rgba(18,133,90,.15)!important;
+    box-shadow:inset 0 1px rgba(255,255,255,.92)!important;
+  }
+  .hsr-manager-root.theme-day .ucv2-kpi{
+    background:
+      linear-gradient(145deg,rgba(255,255,255,.98),rgba(247,251,249,.94))!important;
+    border-color:color-mix(in srgb,var(--kpi-accent) 27%,rgba(18,133,90,.10))!important;
+    box-shadow:
+      0 18px 34px -30px color-mix(in srgb,var(--kpi-accent) 36%,rgba(16,60,42,.22)),
+      inset 0 1px rgba(255,255,255,.98)!important;
+  }
+  .hsr-manager-root.theme-day .ucv2-header h1,
+  .hsr-manager-root.theme-day .ucv2-filter-heading span,
+  .hsr-manager-root.theme-day .ucv2-person b{
+    color:#083b2b!important;
+    text-shadow:none!important;
+  }
+  .hsr-manager-root.theme-day .ucv2-kpi b{
+    color:#083b2b!important;
+    text-shadow:none!important;
+  }
+
+  /* Dialog glass: limited to the dialog panel (not the whole page) for speed. */
+  .iuc>div,
+  .ucv21-single-page{
+    backdrop-filter:blur(12px) saturate(112%)!important;
+    -webkit-backdrop-filter:blur(12px) saturate(112%)!important;
+  }
+  .hsr-manager-root.theme-night .iuc>div,
+  .hsr-manager-root.theme-night .ucv21-single-page{
+    background:linear-gradient(155deg,rgba(10,29,52,.96),rgba(6,20,37,.965))!important;
+    border:1px solid rgba(92,163,232,.20)!important;
+    box-shadow:
+      0 34px 90px rgba(0,0,0,.50),
+      inset 0 1px rgba(255,255,255,.05)!important;
+  }
+  .hsr-manager-root.theme-day .iuc>div,
+  .hsr-manager-root.theme-day .ucv21-single-page{
+    background:linear-gradient(155deg,rgba(255,255,255,.97),rgba(246,250,248,.965))!important;
+    border:1px solid rgba(18,133,90,.17)!important;
+    box-shadow:
+      0 30px 82px rgba(16,60,42,.16),
+      inset 0 1px rgba(255,255,255,.96)!important;
+  }
+
+  /* Keep motion and paint cost controlled. */
+  .ucv2-kpi,
+  .ucv2-btn,
+  .ucv2-chip-button,
+  .ucv2-edit-btn{
+    transition:
+      transform .14s ease,
+      border-color .14s ease,
+      background-color .14s ease,
+      box-shadow .14s ease!important;
+  }
+  .ucv2-kpi:hover{transform:translateY(-1px)!important}
+  @media(prefers-reduced-motion:reduce){
+    .ucv2-kpi,.ucv2-btn,.ucv2-chip-button,.ucv2-edit-btn{transition:none!important}
+  }
+
   `;
   document.head.appendChild(style);
 }
