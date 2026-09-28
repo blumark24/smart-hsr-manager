@@ -29,6 +29,30 @@ let stopIncidents = null;
 let stopEmployees = null;
 let activeAuth = null;
 let activeAuthApi = null;
+let activePortal = 'leadership';
+
+const PORTAL_CONTEXT_KEY = 'smartHSRPortalContext';
+
+function readPortalContext() {
+  try {
+    const raw = sessionStorage.getItem(PORTAL_CONTEXT_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function resolveManagerPortal() {
+  const context = readPortalContext();
+  return context.portal === 'workforce' && context.role === 'supervisor'
+    ? 'workforce'
+    : 'leadership';
+}
+
+function portalLoginTarget(portal = activePortal) {
+  return portal === 'workforce' ? 'login.html' : 'manager-login.html';
+}
 
 const isLocalPreview = () => ['localhost', '127.0.0.1'].includes(location.hostname)
   && new URLSearchParams(location.search).get('preview') === '1';
@@ -258,8 +282,17 @@ async function start(component) {
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js'),
     resolveFirebaseConfig()
   ]);
-  const app = appApi.getApps().find(item => item.name === 'smart-hsr-manager-session')
-    || appApi.initializeApp(firebaseConfig, 'smart-hsr-manager-session');
+  const portalContext = readPortalContext();
+  const requestedPortal = resolveManagerPortal();
+  activePortal = requestedPortal;
+
+  // Municipal managers and workforce supervisors deliberately use separate
+  // Firebase Auth namespaces. This allows both sessions to exist on the same
+  // browser without either portal signing the other one out.
+  const app = requestedPortal === 'workforce'
+    ? (appApi.getApps().find(item => item.name === '[DEFAULT]') || appApi.initializeApp(firebaseConfig))
+    : (appApi.getApps().find(item => item.name === 'smart-hsr-manager-session')
+        || appApi.initializeApp(firebaseConfig, 'smart-hsr-manager-session'));
   const db = firestoreApi.getFirestore(app);
   const auth = authApi.getAuth(app);
   // Test-only: connects to the local Firebase emulators instead of
@@ -284,9 +317,18 @@ async function start(component) {
 
   stopAuth = authApi.onAuthStateChanged(auth, async user => {
     const context = await verifyManagerAccess(firestoreApi, db, user).catch(() => null);
-    if (!context) {
+    const expectedRole = requestedPortal === 'workforce' ? 'supervisor' : 'manager';
+    const markerUid = typeof portalContext.uid === 'string' ? portalContext.uid : '';
+    const markerOrg = typeof portalContext.organizationId === 'string' ? portalContext.organizationId.trim() : '';
+    const portalContextMatches = Boolean(
+      context
+      && context.role === expectedRole
+      && (!markerUid || markerUid === user?.uid)
+      && (!markerOrg || markerOrg === context.organizationId)
+    );
+    if (!portalContextMatches) {
       await authApi.signOut(auth).catch(() => undefined);
-      location.replace('manager-login.html');
+      location.replace(portalLoginTarget(requestedPortal));
       return;
     }
     if (component !== activeComponent) return;
@@ -390,6 +432,7 @@ function disconnect(component) {
   stopAuth = stopObservations = stopUsers = stopIncidents = stopEmployees = null;
   activeAuth = null;
   activeAuthApi = null;
+  activePortal = 'leadership';
   activeComponent = null;
 }
 
@@ -415,7 +458,8 @@ window.SmartHSRManagerAdapter = {
       component.liveDataError = 'تعذر بدء جلسة لوحة المدير بأمان.';
       component.setState({ dataState: 'error', dataError: component.liveDataError });
       component.flash('تعذر بدء جلسة لوحة المدير بأمان.');
-      setTimeout(() => location.replace('manager-login.html'), 800);
+      const target = portalLoginTarget(resolveManagerPortal());
+      setTimeout(() => location.replace(target), 800);
     });
   },
   disconnect,
@@ -428,8 +472,10 @@ window.SmartHSRManagerAdapter = {
     return activeAuth && activeAuth.currentUser ? activeAuth.currentUser.uid : null;
   },
   async logout() {
+    const portal = activePortal;
     await activeAuthApi?.signOut(activeAuth);
-    location.replace('manager-login.html');
+    sessionStorage.removeItem(PORTAL_CONTEXT_KEY);
+    location.replace(portalLoginTarget(portal));
   }
 };
 
