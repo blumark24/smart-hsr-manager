@@ -330,13 +330,13 @@ async function renderCenter(force=false) {
         
       </div>
       <div class="ucv2-toolbar">
-        <label class="ucv2-search"><span class="sr-only">بحث في سجل الموظفين</span><input type="search" data-filter="search" value="${esc(state.search)}" aria-label="بحث في سجل الموظفين" placeholder="بحث بالاسم أو البريد أو رقم العقد" autocomplete="off"></label>
-        
-        <select data-filter="status" aria-label="الحالة">${selectOptions([['ACTIVE','نشط / عقد نشط'],['SUSPENDED','موقوف'],['NO_ACCOUNT','بدون حساب'],['PENDING_ACTIVATION','يحتاج تفعيل'],['EXPIRED','عقد منتهي']],state.status,'كل الحالات')}</select>
-        <select data-filter="role" aria-label="الدور">${selectOptions(roleValues.map(r=>[r,roleLabel(r)]),state.role,'كل الأدوار')}</select>
-        <select data-filter="product" aria-label="الخدمة البلدية">${selectOptions([['field','الحصر الميداني الذكي'],['lands','الأراضي الذكية'],['mobility','الحركة الذكية']],state.product,'كل الخدمات')}</select>
-        <select data-filter="department" aria-label="القسم">${selectOptions(departments.map(d=>[d,d]),state.department,'كل الأقسام')}</select>
-        <select data-filter="vehicle" aria-label="أهلية المركبة">${selectOptions([['eligible','مؤهل للمركبة'],['ineligible','غير مؤهل']],state.vehicle,'كل حالات المركبة')}</select>
+        <div class="ucv2-filter-heading"><span>تصفية سجل المستخدمين</span><small>حدّد أكثر من معيار للوصول إلى السجل المطلوب بسرعة</small></div>
+        <label class="ucv2-filter-control ucv2-search"><span>البحث</span><input type="search" data-filter="search" value="${esc(state.search)}" aria-label="بحث في سجل الموظفين" placeholder="الاسم، البريد أو رقم العقد" autocomplete="off"></label>
+        <label class="ucv2-filter-control"><span>الحالة</span><select data-filter="status" aria-label="الحالة">${selectOptions([['ACTIVE','نشط / عقد نشط'],['SUSPENDED','موقوف'],['NO_ACCOUNT','بدون حساب'],['PENDING_ACTIVATION','يحتاج تفعيل'],['EXPIRED','عقد منتهي']],state.status,'كل الحالات')}</select></label>
+        <label class="ucv2-filter-control"><span>الدور</span><select data-filter="role" aria-label="الدور">${selectOptions(roleValues.map(r=>[r,roleLabel(r)]),state.role,'كل الأدوار')}</select></label>
+        <label class="ucv2-filter-control"><span>الخدمة</span><select data-filter="product" aria-label="الخدمة البلدية">${selectOptions([['field','الحصر الميداني الذكي'],['lands','الأراضي الذكية'],['mobility','الحركة الذكية']],state.product,'كل الخدمات')}</select></label>
+        <label class="ucv2-filter-control"><span>القسم</span><select data-filter="department" aria-label="القسم">${selectOptions(departments.map(d=>[d,d]),state.department,'كل الأقسام')}</select></label>
+        <label class="ucv2-filter-control"><span>أهلية المركبة</span><select data-filter="vehicle" aria-label="أهلية المركبة">${selectOptions([['eligible','مؤهل للمركبة'],['ineligible','غير مؤهل']],state.vehicle,'كل حالات المركبة')}</select></label>
         <button class="ucv2-btn ghost" data-reset-filters>إعادة تعيين الفلاتر</button>
       </div>
       <div class="ucv2-quick" aria-label="فلاتر سريعة">
