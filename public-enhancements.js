@@ -323,7 +323,7 @@
     const root=document.createElement('main');
     root.id='smartResponsiveLanding';
     root.dir='rtl';
-    root.innerHTML=\`
+    root.innerHTML=`
       <div class="sr-nav">
         <div class="sr-wrap">
           <div class="sr-nav-card">
@@ -389,8 +389,8 @@
           <div class="sr-profile">
             <div><div class="sr-kicker">COMPANY & PLATFORM PROFILE</div><h2>الملف التعريفي</h2><p>الرؤية، المكونات، نموذج التشغيل، والخدمات في وثيقة واحدة مناسبة للاجتماعات الحكومية والشراكات المؤسسية.</p></div>
             <div class="sr-profile-actions">
-              <a class="sr-primary" href="\${PROFILE_PREVIEW}" target="_blank" rel="noopener">عرض الملف</a>
-              <a class="sr-secondary" href="\${PROFILE_DOWNLOAD}" target="_blank" rel="noopener">تنزيل PDF</a>
+              <a class="sr-primary" href="${PROFILE_PREVIEW}" target="_blank" rel="noopener">عرض الملف</a>
+              <a class="sr-secondary" href="${PROFILE_DOWNLOAD}" target="_blank" rel="noopener">تنزيل PDF</a>
             </div>
           </div>
         </section>
@@ -399,7 +399,7 @@
           <div class="sr-footer-row"><div><b>SMART HSR</b><br><span>المنصة البلدية الذكية للإدارة والتشغيل</span></div><div><span>التطوير والتشغيل التقني</span><br><b style="font-size:15px;letter-spacing:.08em">BLUMARK24</b></div></div>
         </footer>
       </div>
-    \`;
+    `;
     document.body.appendChild(root);
     document.getElementById('smartMobileMenu')?.addEventListener('click',()=>document.getElementById('smartSafeMenu')?.classList.add('open'));
     document.getElementById('smartMobileTheme')?.addEventListener('click',()=>setTheme(document.documentElement.dataset.publicTheme==='dark'?'light':'dark'));
