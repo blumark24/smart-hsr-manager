@@ -151,337 +151,155 @@
         #smartSafeFooter .card b{font-size:21px}
       }
 
-      /* Responsive adaptation of the approved Claude composition.
-         Same DOM, same cards, same maps, same content — only layout rules change. */
+      /* SMART HSR responsive layer.
+         It keeps the approved Claude DOM/content/maps and only reflows geometry. */
+      .claude-nav,.claude-hero,.claude-statement,.claude-journey,.claude-bento,
+      .claude-presence,.claude-twin,.claude-profile{box-sizing:border-box}
       @media(max-width:1024px){
         html,body{width:100%;max-width:100%;overflow-x:hidden!important}
-        body>div[dir="rtl"]{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
+        #smartSafeTheme{top:84px!important;left:12px!important;width:42px!important;height:42px!important}
 
-        /* Approved navigation: same elements, compact tablet/mobile geometry. */
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"]{
-          padding:0 12px!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"]>div{
-          max-width:100%!important;height:66px!important;padding:0 14px!important;gap:12px!important;border-radius:18px!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] img{
-          height:40px!important;max-width:132px!important;object-fit:contain!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] div[style*="display:flex;gap:18px;align-items:center"]{
-          gap:8px!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] span[style*="font-size:14px"][style*="white-space:nowrap"]{
-          font-size:12px!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] span[style*="height:44px"][style*="background:linear-gradient"]{
-          height:42px!important;padding:0 13px!important;font-size:12px!important
-        }
+        .claude-nav{padding:0 12px!important}
+        .claude-nav>.claude-nav-card{max-width:100%!important;height:66px!important;padding:0 14px!important;gap:12px!important;border-radius:18px!important}
+        .claude-nav .claude-nav-logo{height:40px!important;max-width:132px!important;object-fit:contain!important}
+        .claude-nav .claude-nav-actions{gap:8px!important}
+        .claude-nav .claude-lang{font-size:12px!important}
+        .claude-nav .claude-login{height:42px!important;padding:0 13px!important;font-size:12px!important}
 
-        /* Section 01 — Hero */
-        [data-screen-label="01 Hero"]{height:860px!important;min-height:860px!important;max-height:none!important}
-        [data-screen-label="01 Hero"]>div[style*="right:0"][style*="width:52%"]{
-          width:70%!important
-        }
-        [data-screen-label="01 Hero"] [data-card="command"][data-depth="22"]{
-          left:6%!important;top:14%!important;width:220px!important
-        }
-        [data-screen-label="01 Hero"] [data-card="field"]{
-          left:4%!important;top:56%!important;width:190px!important
-        }
-        [data-screen-label="01 Hero"] [data-card="lands"]{
-          left:18%!important;top:76%!important;width:190px!important
-        }
-        [data-screen-label="01 Hero"]>div[style*="width:min(560px,40%)"]{
-          right:28px!important;width:min(480px,54%)!important;gap:20px!important
-        }
-        [data-screen-label="01 Hero"] [style*="font:600 clamp(60px,6.4vw,104px)"]{
-          font-size:clamp(52px,7vw,72px)!important
-        }
-        [data-screen-label="01 Hero"]>div[style*="bottom:30px"]{
-          right:28px!important;left:28px!important
-        }
+        .claude-hero{height:860px!important;min-height:860px!important;max-height:none!important}
+        .claude-hero .hero-wash{width:72%!important}
+        .claude-hero .hero-logo-card{left:5%!important;top:13%!important;width:220px!important}
+        .claude-hero .hero-field-card{left:4%!important;top:57%!important;width:190px!important}
+        .claude-hero .hero-lands-card{left:19%!important;top:77%!important;width:190px!important}
+        .claude-hero .hero-copy{right:28px!important;width:min(470px,54%)!important;gap:18px!important}
+        .claude-hero .hero-title{font-size:clamp(52px,7vw,72px)!important}
+        .claude-hero .hero-rail{right:28px!important;left:28px!important}
 
-        /* Shared content gutters */
-        [data-screen-label="02 Statement"]>div,
-        [data-screen-label="04 Product Bento"]>div,
-        [data-screen-label="05 Product Presence"]>div,
-        [data-screen-label="07 Company Profile"]>div{
-          max-width:100%!important;padding-left:28px!important;padding-right:28px!important
-        }
+        .claude-statement{padding:120px 0 96px!important}
+        .claude-statement .section-inner{max-width:100%!important;padding:0 28px!important;gap:38px!important}
+        .claude-statement .statement-title{font-size:clamp(54px,9vw,86px)!important}
+        .claude-statement .statement-bottom{grid-template-columns:1fr!important;gap:22px!important}
 
-        /* Section 02 */
-        [data-screen-label="02 Statement"]{padding:120px 0 100px!important}
-        [data-screen-label="02 Statement"]>div{gap:38px!important}
-        [data-screen-label="02 Statement"] [style*="font-size:clamp(56px,8.6vw,140px)"]{
-          font-size:clamp(54px,9vw,86px)!important
-        }
-        [data-screen-label="02 Statement"] [style*="grid-template-columns:minmax(0,1fr) minmax(0,1.4fr)"]{
-          grid-template-columns:1fr!important;gap:22px!important
-        }
+        .claude-journey .journey-sticky{min-height:760px!important}
+        .claude-journey .journey-kicker{top:100px!important;right:28px!important;font-size:10px!important}
+        .claude-journey .journey-copy{right:28px!important;width:min(420px,48%)!important}
+        .claude-journey .journey-num{font-size:96px!important}
+        .claude-journey .journey-title{font-size:50px!important}
+        .claude-journey .journey-progress{right:28px!important;left:28px!important;bottom:34px!important}
 
-        /* Section 03 — journey */
-        [data-screen-label="03 Field to Decision"]>div[style*="position:sticky"]{
-          min-height:760px!important
-        }
-        [data-screen-label="03 Field to Decision"] [style*="top:128px"][dir="ltr"]{
-          top:100px!important;right:28px!important;font-size:10px!important
-        }
-        [data-screen-label="03 Field to Decision"] [style*="width:min(460px,36%)"]{
-          right:28px!important;width:min(420px,48%)!important
-        }
-        [data-screen-label="03 Field to Decision"] [style*="font:200 128px"]{
-          font-size:96px!important
-        }
-        [data-screen-label="03 Field to Decision"] [style*="font:600 60px"]{
-          font-size:50px!important
-        }
-        [data-screen-label="03 Field to Decision"]>div>div[style*="bottom:52px"]{
-          right:28px!important;left:28px!important;bottom:34px!important
-        }
+        .claude-bento{padding:110px 0 96px!important}
+        .claude-bento .section-inner{max-width:100%!important;padding:0 28px!important;gap:36px!important}
+        .claude-bento .bento-head{grid-template-columns:1fr!important;gap:20px!important}
+        .claude-bento .bento-grid{grid-template-columns:1fr 1fr!important;grid-auto-rows:auto!important;gap:14px!important}
+        .claude-bento .bento-card{grid-column:auto!important;grid-row:auto!important;min-height:380px!important}
+        .claude-bento .bento-card.bento-twin-card{min-height:500px!important}
+        .claude-bento .bento-users-router{transform:scale(.82)!important;transform-origin:center center!important}
 
-        /* Section 04 — keep every approved card, reflow only the bento grid. */
-        [data-screen-label="04 Product Bento"]{padding:110px 0 100px!important}
-        [data-screen-label="04 Product Bento"]>div{gap:36px!important}
-        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)"]{
-          grid-template-columns:1fr!important;gap:20px!important
-        }
-        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]{
-          grid-template-columns:1fr 1fr!important;grid-auto-rows:auto!important;gap:14px!important
-        }
-        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]>div{
-          grid-column:span 1!important;grid-row:span 1!important;min-height:360px!important
-        }
-        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]>div[style*="grid-column:span 7"]{
-          min-height:500px!important
-        }
-        [data-screen-label="04 Product Bento"] [style*="right:290px;left:32px"]{
-          right:230px!important;left:24px!important
-        }
+        .claude-presence{padding:38px 0 105px!important}
+        .claude-presence .section-inner{max-width:100%!important;padding:0 28px!important;gap:36px!important}
+        .claude-presence .presence-head{grid-template-columns:1fr!important;gap:20px!important}
+        .claude-presence .presence-stage{height:590px!important}
+        .claude-presence .presence-desktop{width:88%!important;height:430px!important}
+        .claude-presence .presence-tablet{width:38%!important;height:315px!important}
+        .claude-presence .presence-mobile{right:5%!important;width:160px!important;height:330px!important}
 
-        /* Section 05 — same desktop/tablet/mobile mockups, scaled into the available width. */
-        [data-screen-label="05 Product Presence"]{padding:40px 0 110px!important}
-        [data-screen-label="05 Product Presence"]>div{gap:38px!important}
-        [data-screen-label="05 Product Presence"]>div>div[style*="grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)"]{
-          grid-template-columns:1fr!important;gap:20px!important
-        }
-        [data-screen-label="05 Product Presence"]>div>div[style*="position:relative;height:700px"]{
-          height:590px!important
-        }
-        [data-screen-label="05 Product Presence"] [style*="right:0;top:0;width:78%;height:560px"]{
-          width:88%!important;height:430px!important
-        }
-        [data-screen-label="05 Product Presence"] [style*="left:0;bottom:0;width:36%;height:400px"]{
-          width:38%!important;height:315px!important
-        }
-        [data-screen-label="05 Product Presence"] [style*="right:6%;bottom:-20px;width:210px;height:430px"]{
-          right:5%!important;width:160px!important;height:330px!important
-        }
+        .claude-twin{min-height:850px!important}
+        .claude-twin .twin-copy{right:28px!important;max-width:470px!important}
+        .claude-twin .twin-layers{right:28px!important;width:310px!important}
+        .claude-twin .twin-detail{left:28px!important;width:330px!important}
 
-        /* Section 06 */
-        [data-screen-label="06 Digital Twin Signature"]{min-height:820px!important}
-        [data-screen-label="06 Digital Twin Signature"]>div[style*="top:120px"]{
-          right:28px!important;max-width:470px!important
-        }
-        [data-screen-label="06 Digital Twin Signature"]>div[style*="right:max(48px"][style*="bottom:72px"][style*="width:340px"]{
-          right:28px!important;width:310px!important
-        }
-        [data-screen-label="06 Digital Twin Signature"]>div[style*="left:max(48px"][style*="bottom:72px"][style*="width:360px"]{
-          left:28px!important;width:330px!important
-        }
-
-        /* Section 07 */
-        [data-screen-label="07 Company Profile"]{padding:120px 0!important}
-        [data-screen-label="07 Company Profile"]>div{
-          grid-template-columns:1fr 1fr!important;gap:34px!important
-        }
-        [data-screen-label="07 Company Profile"]>div>div[style*="height:720px"]{
-          height:600px!important
-        }
-        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"]{
-          width:340px!important;height:482px!important
-        }
+        .claude-profile{padding:118px 0!important}
+        .claude-profile .section-inner{max-width:100%!important;padding:0 28px!important;grid-template-columns:1fr 1fr!important;gap:34px!important}
+        .claude-profile .profile-book-stage{height:600px!important}
+        .claude-profile .profile-book{width:340px!important;height:482px!important}
       }
 
       @media(max-width:680px){
-        /* Navigation stays the Claude navigation; only compact spacing changes. */
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"]{
-          padding:0 8px!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"]>div{
-          height:62px!important;padding:0 9px!important;gap:7px!important;border-radius:16px!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] img{
-          height:36px!important;max-width:112px!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] span[style*="height:44px"][style*="background:rgba(255,255,255,.7)"]{
-          height:42px!important;padding:0 12px!important;font-size:13px!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] div[style*="display:flex;gap:18px;align-items:center"]{
-          gap:5px!important
-        }
-        body>div[dir="rtl"]>div[style*="position:fixed"][style*="z-index:50"] span[style*="height:44px"][style*="background:linear-gradient"]{
-          display:none!important
-        }
+        #smartSafeTheme{top:78px!important;left:10px!important;width:40px!important;height:40px!important}
 
-        /* Hero — original composition adapted, not replaced. */
-        [data-screen-label="01 Hero"]{height:900px!important;min-height:900px!important}
-        [data-screen-label="01 Hero"]>div[style*="right:0"][style*="width:52%"]{
+        .claude-nav{padding:0 8px!important}
+        .claude-nav>.claude-nav-card{height:62px!important;padding:0 9px!important;gap:7px!important;border-radius:16px!important}
+        .claude-nav .claude-nav-logo{height:36px!important;max-width:112px!important}
+        .claude-nav .claude-nav-actions{gap:5px!important}
+        .claude-nav .claude-lang{font-size:11px!important}
+        .claude-nav .claude-login{display:none!important}
+
+        /* HERO — same Claude visual language, re-composed for the phone width. */
+        .claude-hero{height:920px!important;min-height:920px!important}
+        .claude-hero .hero-wash{
           width:100%!important;
-          background:linear-gradient(180deg,rgba(243,246,244,.92) 0%,rgba(243,246,244,.58) 48%,rgba(243,246,244,0) 76%)!important
+          background:linear-gradient(180deg,rgba(243,246,244,.92) 0%,rgba(243,246,244,.68) 45%,rgba(243,246,244,.10) 82%,rgba(243,246,244,0) 100%)!important
         }
-        [data-screen-label="01 Hero"] [data-card="command"][data-depth="22"]{
-          left:18px!important;top:13%!important;width:175px!important;padding:12px 14px!important;border-radius:17px!important
+        .claude-hero .hero-logo-card{left:18px!important;top:96px!important;width:168px!important;padding:11px 13px!important;border-radius:17px!important}
+        .claude-hero .hero-copy{
+          right:18px!important;left:18px!important;top:245px!important;width:auto!important;transform:none!important;gap:13px!important
         }
-        [data-screen-label="01 Hero"] [data-card="field"]{
-          left:14px!important;top:61%!important;width:178px!important;padding:13px 14px!important
+        .claude-hero .hero-title{font-size:48px!important;line-height:1.08!important}
+        .claude-hero .hero-lead{font-size:15px!important;line-height:1.72!important;max-width:340px!important}
+        .claude-hero .hero-actions{flex-wrap:wrap!important;gap:8px!important}
+        .claude-hero .hero-actions>div{height:50px!important;padding:0 16px!important;font-size:14px!important}
+        .claude-hero .hero-field-card{
+          left:16px!important;top:auto!important;bottom:118px!important;width:calc(50% - 22px)!important;padding:12px 13px!important;border-radius:17px!important
         }
-        [data-screen-label="01 Hero"] [data-card="lands"]{
-          left:72px!important;top:78%!important;width:178px!important;padding:13px 14px!important
+        .claude-hero .hero-lands-card{
+          left:auto!important;right:16px!important;top:auto!important;bottom:118px!important;width:calc(50% - 22px)!important;padding:12px 13px!important;border-radius:17px!important
         }
-        [data-screen-label="01 Hero"]>div[style*="width:min(560px,40%)"]{
-          right:18px!important;left:18px!important;top:28%!important;width:auto!important;transform:none!important;gap:14px!important
+        .claude-hero .hero-rail{right:16px!important;left:16px!important;bottom:18px!important}
+        .claude-hero .hero-rail .hero-rail-en{display:none!important}
+
+        .claude-statement{padding:84px 0 72px!important}
+        .claude-statement .section-inner{padding:0 18px!important;gap:28px!important}
+        .claude-statement .statement-title{font-size:45px!important;line-height:1.13!important}
+        .claude-statement .statement-bottom{padding-top:22px!important}
+        .claude-statement .statement-flow{flex-wrap:wrap!important;gap:9px 12px!important;justify-content:flex-start!important;font-size:12px!important}
+
+        .claude-journey{height:390vh!important}
+        .claude-journey .journey-sticky{height:100dvh!important;min-height:690px!important}
+        .claude-journey .journey-kicker{top:86px!important;right:18px!important;left:18px!important;font-size:8px!important;white-space:normal!important}
+        .claude-journey .journey-copy{
+          right:18px!important;left:18px!important;top:24%!important;width:auto!important;transform:none!important;gap:7px!important
         }
-        [data-screen-label="01 Hero"] [style*="font:600 clamp(60px,6.4vw,104px)"]{
-          font-size:48px!important;line-height:1.08!important
-        }
-        [data-screen-label="01 Hero"] [style*="font-size:19px;line-height:1.85"]{
-          font-size:15px!important;line-height:1.75!important;max-width:340px!important
-        }
-        [data-screen-label="01 Hero"]>div[style*="width:min(560px,40%)"]>div[style*="display:flex;gap:12px"]{
-          flex-wrap:wrap!important;gap:8px!important
-        }
-        [data-screen-label="01 Hero"]>div[style*="width:min(560px,40%)"] [style*="height:60px"]{
-          height:50px!important;padding:0 17px!important;font-size:14px!important
-        }
-        [data-screen-label="01 Hero"]>div[style*="bottom:30px"]{
-          right:16px!important;left:16px!important;bottom:14px!important
-        }
-        [data-screen-label="01 Hero"]>div[style*="bottom:30px"]>div[dir="ltr"]{
-          display:none!important
+        .claude-journey .journey-num{font-size:70px!important}
+        .claude-journey .journey-title{font-size:38px!important}
+        .claude-journey .journey-desc{font-size:14px!important;line-height:1.7!important;min-height:0!important;max-width:320px!important}
+        .claude-journey .journey-progress{right:16px!important;left:16px!important;bottom:22px!important}
+        .claude-journey .journey-progress .stage-ar{font-size:11px!important}
+        .claude-journey .journey-progress .stage-en{font-size:7px!important}
+
+        .claude-bento{padding:78px 0 72px!important}
+        .claude-bento .section-inner{padding:0 16px!important;gap:26px!important}
+        .claude-bento .bento-grid{grid-template-columns:1fr!important;gap:12px!important}
+        .claude-bento .bento-card{min-height:340px!important;border-radius:22px!important}
+        .claude-bento .bento-card.bento-twin-card{min-height:440px!important}
+        .claude-bento .bento-card.bento-users-card{min-height:430px!important}
+        .claude-bento .bento-users-router{
+          transform:scale(.62)!important;transform-origin:center center!important;
+          width:160%!important;left:-30%!important;right:auto!important
         }
 
-        /* Statement */
-        [data-screen-label="02 Statement"]{padding:90px 0 76px!important}
-        [data-screen-label="02 Statement"]>div{padding:0 18px!important;gap:30px!important}
-        [data-screen-label="02 Statement"] [style*="font-size:clamp(56px,8.6vw,140px)"]{
-          font-size:46px!important
-        }
-        [data-screen-label="02 Statement"] [style*="display:flex;justify-content:space-between;font:500 15px"]{
-          flex-wrap:wrap!important;gap:10px 14px!important;justify-content:flex-start!important;font-size:12px!important
-        }
+        .claude-presence{padding:28px 0 78px!important}
+        .claude-presence .section-inner{padding:0 16px!important;gap:28px!important}
+        .claude-presence .presence-stage{height:430px!important}
+        .claude-presence .presence-desktop{width:100%!important;height:270px!important;border-radius:17px!important}
+        .claude-presence .presence-tablet{width:46%!important;height:235px!important;padding:8px!important;border-radius:22px!important}
+        .claude-presence .presence-mobile{right:4%!important;bottom:0!important;width:112px!important;height:236px!important;padding:6px!important;border-radius:28px!important}
 
-        /* Journey */
-        [data-screen-label="03 Field to Decision"]{height:380vh!important}
-        [data-screen-label="03 Field to Decision"]>div[style*="position:sticky"]{
-          height:100dvh!important;min-height:690px!important
-        }
-        [data-screen-label="03 Field to Decision"] [style*="top:128px"][dir="ltr"]{
-          top:88px!important;right:18px!important;left:18px!important;font-size:8.5px!important;white-space:normal!important
-        }
-        [data-screen-label="03 Field to Decision"] [style*="width:min(460px,36%)"]{
-          right:18px!important;left:18px!important;top:22%!important;width:auto!important;transform:none!important;gap:8px!important
-        }
-        [data-screen-label="03 Field to Decision"] [style*="font:200 128px"]{font-size:72px!important}
-        [data-screen-label="03 Field to Decision"] [style*="font:600 60px"]{font-size:39px!important}
-        [data-screen-label="03 Field to Decision"] [style*="font-size:18px;line-height:1.9"]{
-          font-size:14px!important;line-height:1.75!important;min-height:0!important;max-width:320px!important
-        }
-        [data-screen-label="03 Field to Decision"]>div>div[style*="bottom:52px"]{
-          right:16px!important;left:16px!important;bottom:22px!important
-        }
-        [data-screen-label="03 Field to Decision"]>div>div[style*="bottom:52px"] [style*="font:600 18px"]{
-          font-size:11px!important
-        }
-        [data-screen-label="03 Field to Decision"]>div>div[style*="bottom:52px"] [dir="ltr"]{
-          font-size:7px!important
-        }
+        .claude-twin{height:920px!important;min-height:920px!important}
+        .claude-twin .twin-copy{top:86px!important;right:18px!important;left:18px!important;max-width:none!important;gap:10px!important}
+        .claude-twin .twin-title{font-size:42px!important}
+        .claude-twin .twin-detail{left:16px!important;right:16px!important;bottom:280px!important;width:auto!important;padding:17px!important}
+        .claude-twin .twin-layers{right:16px!important;left:16px!important;bottom:24px!important;width:auto!important;gap:7px!important}
+        .claude-twin .twin-layers>div{height:54px!important;padding:0 14px!important}
 
-        /* Product bento */
-        [data-screen-label="04 Product Bento"]{padding:82px 0 78px!important}
-        [data-screen-label="04 Product Bento"]>div{padding:0 16px!important;gap:28px!important}
-        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]{
-          grid-template-columns:1fr!important
-        }
-        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]>div{
-          grid-column:1!important;grid-row:auto!important;min-height:330px!important;border-radius:22px!important
-        }
-        [data-screen-label="04 Product Bento"]>div>div[style*="grid-template-columns:repeat(12,minmax(0,1fr))"]>div[style*="grid-column:span 7"]{
-          min-height:450px!important
-        }
-        [data-screen-label="04 Product Bento"] [style*="right:290px;left:32px"]{
-          right:150px!important;left:16px!important;top:145px!important;bottom:18px!important
-        }
-        [data-screen-label="04 Product Bento"] [style*="top:32px;bottom:32px;right:290px;left:32px"] span{
-          font-size:10px!important
-        }
-        [data-screen-label="04 Product Bento"] [style*="position:absolute;top:0;bottom:0;right:0;width:26%"],
-        [data-screen-label="04 Product Bento"] [style*="position:absolute;top:0;bottom:0;left:0;width:26%"]{
-          width:31%!important;font-size:10px!important
-        }
-        [data-screen-label="04 Product Bento"] [style*="position:absolute;top:50%;right:50%"]{
-          padding:10px!important;max-width:145px!important
-        }
-
-        /* Product presence */
-        [data-screen-label="05 Product Presence"]{padding:30px 0 82px!important}
-        [data-screen-label="05 Product Presence"]>div{padding:0 16px!important;gap:30px!important}
-        [data-screen-label="05 Product Presence"]>div>div[style*="position:relative;height:700px"]{
-          height:430px!important
-        }
-        [data-screen-label="05 Product Presence"] [style*="right:0;top:0;width:78%;height:560px"]{
-          width:100%!important;height:270px!important;border-radius:17px!important
-        }
-        [data-screen-label="05 Product Presence"] [style*="left:0;bottom:0;width:36%;height:400px"]{
-          width:46%!important;height:235px!important;padding:8px!important;border-radius:22px!important
-        }
-        [data-screen-label="05 Product Presence"] [style*="right:6%;bottom:-20px;width:210px;height:430px"]{
-          right:4%!important;bottom:0!important;width:112px!important;height:236px!important;padding:6px!important;border-radius:28px!important
-        }
-
-        /* Digital Twin */
-        [data-screen-label="06 Digital Twin Signature"]{height:900px!important;min-height:900px!important}
-        [data-screen-label="06 Digital Twin Signature"]>div[style*="top:120px"]{
-          top:88px!important;right:18px!important;left:18px!important;max-width:none!important;gap:10px!important
-        }
-        [data-screen-label="06 Digital Twin Signature"] [style*="font:600 clamp(40px,4.4vw,64px)"]{
-          font-size:42px!important
-        }
-        [data-screen-label="06 Digital Twin Signature"]>div[style*="right:max(48px"][style*="bottom:72px"][style*="width:340px"]{
-          right:16px!important;left:16px!important;bottom:26px!important;width:auto!important;gap:7px!important
-        }
-        [data-screen-label="06 Digital Twin Signature"]>div[style*="right:max(48px"][style*="bottom:72px"][style*="width:340px"]>div{
-          height:54px!important;padding:0 14px!important
-        }
-        [data-screen-label="06 Digital Twin Signature"]>div[style*="left:max(48px"][style*="bottom:72px"][style*="width:360px"]{
-          left:16px!important;right:16px!important;bottom:270px!important;width:auto!important;padding:18px!important
-        }
-
-        /* Profile — same book + same copy, now stacked cleanly. */
-        [data-screen-label="07 Company Profile"]{padding:82px 0!important}
-        [data-screen-label="07 Company Profile"]>div{
-          padding:0 16px!important;grid-template-columns:1fr!important;gap:28px!important
-        }
-        [data-screen-label="07 Company Profile"]>div>div[style*="height:720px"]{
-          height:500px!important;border-radius:26px!important
-        }
-        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"]{
-          width:286px!important;height:405px!important;transform:rotateY(-10deg) rotateX(4deg)!important
-        }
-        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"] [style*="padding:44px 40px 0"]{
-          padding:30px 28px 0!important
-        }
-        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"] [style*="padding:0 40px"]{
-          padding:0 28px!important
-        }
-        [data-screen-label="07 Company Profile"] [style*="width:410px;height:580px"] img{
-          width:170px!important
-        }
-        [data-screen-label="07 Company Profile"]>div>div:first-child>div[style*="display:flex;gap:12px"]{
-          flex-wrap:wrap!important
-        }
-        [data-screen-label="07 Company Profile"]>div>div:first-child>div[style*="display:flex;gap:12px"]>div{
-          min-height:52px!important;height:auto!important;padding:10px 18px!important
-        }
+        .claude-profile{padding:78px 0!important}
+        .claude-profile .section-inner{padding:0 16px!important;grid-template-columns:1fr!important;gap:26px!important}
+        .claude-profile .profile-actions{flex-wrap:wrap!important}
+        .claude-profile .profile-actions>div{height:auto!important;min-height:52px!important;padding:10px 17px!important}
+        .claude-profile .profile-book-stage{height:500px!important;border-radius:26px!important}
+        .claude-profile .profile-book{width:286px!important;height:405px!important;transform:rotateY(-10deg) rotateX(4deg)!important}
+        .claude-profile .profile-book-logo{padding:30px 28px 0!important}
+        .claude-profile .profile-book-copy{padding:0 28px!important}
+        .claude-profile .profile-book img{width:170px!important}
       }
 
       @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
@@ -504,8 +322,163 @@
     try{localStorage.setItem('smart-hsr-public-theme',t)}catch(e){}
   }
 
+
+  function tagClaudeLayout(){
+    const hero=section('01 Hero');
+    const statement=section('02 Statement');
+    const journey=section('03 Field to Decision');
+    const bento=section('04 Product Bento');
+    const presence=section('05 Product Presence');
+    const twin=section('06 Digital Twin Signature');
+    const profile=section('07 Company Profile');
+    if(!hero||!statement||!journey||!bento||!presence||!twin||!profile) return false;
+
+    const root=hero.parentElement;
+    const nav=[...root.children].find(el=>el!==hero && getComputedStyle(el).position==='fixed');
+    if(nav){
+      nav.classList.add('claude-nav');
+      nav.firstElementChild?.classList.add('claude-nav-card');
+      nav.querySelector('img')?.classList.add('claude-nav-logo');
+      const actionRow=[...nav.querySelectorAll('div')].find(el=>norm(el.textContent).includes('العربية')&&norm(el.textContent).includes('EN')&&norm(el.textContent).includes('الدخول'));
+      actionRow?.classList.add('claude-nav-actions');
+      const lang=[...nav.querySelectorAll('span')].find(el=>norm(el.textContent).includes('العربية')&&norm(el.textContent).includes('EN'));
+      lang?.classList.add('claude-lang');
+      const login=[...nav.querySelectorAll('span')].find(el=>norm(el.textContent)==='الدخول');
+      login?.classList.add('claude-login');
+    }
+
+    hero.classList.add('claude-hero');
+    hero.querySelector('[data-card="command"][data-depth="22"]')?.classList.add('hero-logo-card');
+    hero.querySelector('[data-card="field"]')?.classList.add('hero-field-card');
+    hero.querySelector('[data-card="lands"]')?.classList.add('hero-lands-card');
+    const heroChildren=[...hero.children];
+    heroChildren.find(el=>String(el.getAttribute('style')||'').includes('width:52%'))?.classList.add('hero-wash');
+    const heroCopy=heroChildren.find(el=>norm(el.textContent).includes('SMART MUNICIPAL OPERATING PLATFORM')&&norm(el.textContent).includes('من الميدان'));
+    if(heroCopy){
+      heroCopy.classList.add('hero-copy');
+      [...heroCopy.children].find(el=>norm(el.textContent).includes('من الميدان')&&norm(el.textContent).includes('إلى القرار'))?.classList.add('hero-title');
+      [...heroCopy.children].find(el=>norm(el.textContent).includes('منظومة بلدية ذكية'))?.classList.add('hero-lead');
+      [...heroCopy.children].find(el=>norm(el.textContent).includes('الدخول إلى SMART HSR')&&norm(el.textContent).includes('استكشف المنصة'))?.classList.add('hero-actions');
+    }
+    const heroRail=heroChildren.find(el=>norm(el.textContent).includes('مرّر لتتبّع الرحلة'));
+    if(heroRail){
+      heroRail.classList.add('hero-rail');
+      [...heroRail.children].find(el=>el.getAttribute('dir')==='ltr')?.classList.add('hero-rail-en');
+    }
+
+    statement.classList.add('claude-statement');
+    const statementInner=statement.firstElementChild;
+    statementInner?.classList.add('section-inner');
+    if(statementInner){
+      const kids=[...statementInner.children];
+      kids[1]?.classList.add('statement-title');
+      kids[2]?.classList.add('statement-bottom');
+      kids[2]?.children?.[1]?.classList.add('statement-flow');
+    }
+
+    journey.classList.add('claude-journey');
+    const sticky=journey.firstElementChild;
+    sticky?.classList.add('journey-sticky');
+    if(sticky){
+      const kids=[...sticky.children];
+      kids.find(el=>norm(el.textContent).includes('FIELD → DATA → ANALYSIS'))?.classList.add('journey-kicker');
+      const copy=kids.find(el=>norm(el.textContent).includes('FIELD')&&/[٠-٩0-9]{2}|0[1-5]/.test(norm(el.textContent))&&el.querySelectorAll('div').length>=3);
+      if(copy){
+        copy.classList.add('journey-copy');
+        const ck=[...copy.children];
+        ck[0]?.classList.add('journey-num');
+        ck[2]?.classList.add('journey-title');
+        ck[3]?.classList.add('journey-desc');
+      }
+      const progress=kids.find(el=>el.querySelectorAll?.('[dir="ltr"]').length>=4 && el.querySelectorAll?.('span').length>=10);
+      if(progress){
+        progress.classList.add('journey-progress');
+        [...progress.querySelectorAll('span')].forEach(s=>{
+          const st=String(s.getAttribute('style')||'');
+          if(st.includes("font:600 18px")) s.classList.add('stage-ar');
+          if(s.getAttribute('dir')==='ltr') s.classList.add('stage-en');
+        });
+      }
+    }
+
+    bento.classList.add('claude-bento');
+    const bentoInner=bento.firstElementChild;
+    bentoInner?.classList.add('section-inner');
+    if(bentoInner){
+      const kids=[...bentoInner.children];
+      kids[0]?.classList.add('bento-head');
+      const grid=kids[1];
+      grid?.classList.add('bento-grid');
+      if(grid){
+        [...grid.children].forEach((card,i)=>{
+          card.classList.add('bento-card');
+          if(i===0) card.classList.add('bento-twin-card');
+          if(norm(card.textContent).includes('USERS & OPERATIONS')){
+            card.classList.add('bento-users-card');
+            const router=[...card.querySelectorAll('div')].find(el=>norm(el.textContent).includes('ROLE ROUTER')&&norm(el.textContent).includes('رؤساء الأقسام'));
+            router?.classList.add('bento-users-router');
+          }
+        });
+      }
+    }
+
+    presence.classList.add('claude-presence');
+    const presenceInner=presence.firstElementChild;
+    presenceInner?.classList.add('section-inner');
+    if(presenceInner){
+      const kids=[...presenceInner.children];
+      kids[0]?.classList.add('presence-head');
+      const stage=kids[1];
+      stage?.classList.add('presence-stage');
+      if(stage){
+        const sk=[...stage.children];
+        sk[0]?.classList.add('presence-desktop');
+        sk[1]?.classList.add('presence-tablet');
+        sk[2]?.classList.add('presence-mobile');
+      }
+    }
+
+    twin.classList.add('claude-twin');
+    const twinKids=[...twin.children];
+    const twinCopy=twinKids.find(el=>norm(el.textContent).includes('SMART HSR DIGITAL TWIN')&&norm(el.textContent).includes('نموذج واحد'));
+    twinCopy?.classList.add('twin-copy');
+    if(twinCopy) [...twinCopy.children].find(el=>norm(el.textContent).includes('نموذج واحد')&&norm(el.textContent).includes('أربع طبقات'))?.classList.add('twin-title');
+    twinKids.find(el=>norm(el.textContent).includes('L1')&&norm(el.textContent).includes('L2')&&norm(el.textContent).includes('L3')&&norm(el.textContent).includes('L4'))?.classList.add('twin-layers');
+    twinKids.find(el=>norm(el.textContent).includes('FIELD LAYER')||norm(el.textContent).includes('GIS LAYER')||norm(el.textContent).includes('OPERATIONS LAYER')||norm(el.textContent).includes('DECISION LAYER'))?.classList.add('twin-detail');
+
+    profile.classList.add('claude-profile');
+    const profileInner=profile.firstElementChild;
+    profileInner?.classList.add('section-inner');
+    if(profileInner){
+      const kids=[...profileInner.children];
+      const copy=kids[0], bookStage=kids[1];
+      [...copy?.children||[]].find(el=>norm(el.textContent).includes('عرض الملف التعريفي')&&norm(el.textContent).includes('تنزيل الملف التعريفي'))?.classList.add('profile-actions');
+      bookStage?.classList.add('profile-book-stage');
+      const book=[...bookStage?.children||[]].find(el=>norm(el.textContent).includes('COMPANY & PLATFORM PROFILE'));
+      if(book){
+        book.classList.add('profile-book');
+        const face=[...book.children].find(el=>norm(el.textContent).includes('COMPANY & PLATFORM PROFILE'));
+        if(face){
+          face.querySelector('img')?.parentElement?.classList.add('profile-book-logo');
+          [...face.children].find(el=>norm(el.textContent).includes('COMPANY & PLATFORM PROFILE')&&norm(el.textContent).includes('الملف التعريفي'))?.classList.add('profile-book-copy');
+        }
+      }
+    }
+    return true;
+  }
+
+  function installClaudeResponsiveTags(){
+    if(tagClaudeLayout()) return;
+    let attempts=0;
+    const timer=setInterval(()=>{
+      attempts++;
+      if(tagClaudeLayout()||attempts>40) clearInterval(timer);
+    },100);
+  }
+
   function installExternalUI(){
     installCSS();
+    installClaudeResponsiveTags();
 
     if(!document.getElementById('smartSafeTheme')){
       const b=document.createElement('button');
