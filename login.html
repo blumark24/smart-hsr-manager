@@ -133,14 +133,29 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var
 .loading-spinner{width:17px;height:17px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-inline-end:8px;animation:spin .8s linear infinite}
 .hidden{display:none!important}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:920px){
-  body{padding:9px}.frame{border-radius:22px;min-height:auto}.bar{height:74px;padding:0 19px}
-  .portal-grid{grid-template-columns:1fr;min-height:auto}.visual{padding:28px 20px;border-inline-end:0;border-bottom:1px solid var(--line)}
-  .hero h1{font-size:34px}.hero p{font-size:12px}.twin{height:200px}.auth{padding:28px 20px}
+@media(max-width:1100px){
+  body{padding:12px}.frame{min-height:calc(100dvh - 24px);border-radius:26px}
+  .portal-grid{grid-template-columns:minmax(0,1.08fr) minmax(350px,.92fr)}
+  .visual{padding:38px 34px 30px}.auth{padding:34px}.hero h1{font-size:clamp(36px,4.8vw,52px)}.twin{height:260px}
 }
-@media(max-width:540px){
-  .brand span{display:none}.back{font-size:0;width:39px;padding:0}.back:after{content:"←";font-size:16px}
-  .hero h1{font-size:30px}.twin{height:168px;border-radius:18px}.pills{display:none}.auth-head{align-items:center}.badge{display:none}
+@media(max-width:920px){
+  body{padding:9px}.frame{border-radius:22px;min-height:auto}.bar{height:72px;padding:0 18px}
+  .logo{width:50px;height:50px;border-radius:15px}.logo img{width:42px;height:42px}
+  .portal-grid{grid-template-columns:1fr;min-height:auto}.visual{padding:28px 24px;border-inline-end:0;border-bottom:1px solid var(--line)}
+  .hero h1{font-size:36px}.hero p{font-size:12px;line-height:1.9}.twin{height:190px}.auth{padding:30px 24px}
+}
+@media(max-width:680px){
+  body{padding:max(7px,env(safe-area-inset-top)) max(7px,env(safe-area-inset-right)) max(7px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left))}
+  .frame{border-radius:18px}.bar{height:66px;padding:0 14px}.brand{gap:9px}.logo{width:44px;height:44px;border-radius:13px}.logo img{width:37px;height:37px}.brand b{font-size:13px}.brand span{display:none}
+  .back,.theme{min-width:44px;height:44px;border-radius:12px}.back{font-size:0;width:44px;padding:0}.back:after{content:"←";font-size:17px}
+  .portal-grid{display:flex;flex-direction:column}.auth{order:1;padding:24px 16px 20px}.visual{order:2;padding:22px 16px 20px}
+  .auth-head{align-items:center;margin-bottom:21px}.auth-head h2{font-size:21px}.auth-head p{font-size:10.5px}.badge{display:none}
+  .field{margin-bottom:13px}.field label{font-size:10px}input{height:50px;font-size:16px}.password-toggle{height:38px;top:6px;min-width:48px}.submit{height:52px;font-size:13px}
+  .message{font-size:10.5px}.note{font-size:9.5px;line-height:1.75}.switch{font-size:10px;line-height:1.7}
+  .hero h1{font-size:30px}.hero p{font-size:11.5px}.kicker{font-size:8px}.twin{height:145px;border-radius:17px;margin-top:18px}.twin-meta{inset:auto 13px 12px}.twin-meta b{font-size:8px}.twin-meta span{font-size:7.5px}.pills{display:none}.visual-foot{margin-top:14px}
+}
+@media(max-width:380px){
+  .auth,.visual{padding-inline:13px}.auth-head h2{font-size:20px}.hero h1{font-size:28px}.twin{height:130px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.twin{transform:none!important}}
 </style>
