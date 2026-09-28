@@ -1,212 +1,193 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart HSR — بوابة الإدارة والشركات</title>
-  <meta name="description" content="النظام الذكي لإدارة الجودة والملاحظات الميدانية — بوابة الإدارة والشركات لمتابعة المشاريع والمستخدمين بذكاء واحترافية عالية." />
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>SMART HSR — بوابة الدخول المؤسسية</title>
+  <meta name="description" content="بوابة الدخول المؤسسية لمنصة SMART HSR للقيادات البلدية والموظفين والمستخدمين.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
   <style>
-    /* إعدادات أساسية */
-    body {
-      font-family: 'Tajawal', sans-serif;
-      color: #ffffff;
-      min-height: 100vh;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      overflow: hidden;
-      position: relative;
-      padding-top: 120px;
-      background: radial-gradient(circle at 30% 20%, #0ea5a1 0%, #0b2533 85%);
-      background-size: 200% 200%;
-      animation: gradientMove 15s ease-in-out infinite;
+    :root{
+      --bg:#051321;--bg2:#0a2137;--panel:rgba(8,26,45,.78);--panel2:rgba(9,29,49,.93);
+      --line:rgba(108,174,225,.18);--line2:rgba(108,174,225,.31);
+      --text:#f5f9ff;--muted:#90a7bb;--green:#36d596;--green2:#18aa72;--blue:#6aa8ff;
+      --glass:rgba(255,255,255,.045);--shadow:0 38px 110px -52px rgba(0,0,0,.78);
     }
-
-    /* 🌈 حركة خلفية راقية */
-    @keyframes gradientMove {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    html[data-theme="light"]{
+      --bg:#edf4f0;--bg2:#f8fbf9;--panel:rgba(255,255,255,.78);--panel2:rgba(255,255,255,.95);
+      --line:rgba(18,133,90,.15);--line2:rgba(18,133,90,.27);
+      --text:#0a3526;--muted:#60766b;--green:#128a4b;--green2:#0d6f3b;--blue:#2f6bd2;
+      --glass:rgba(13,102,68,.035);--shadow:0 34px 90px -54px rgba(13,74,49,.34);
     }
-
-    /* ✨ الشعار */
-    .logo {
-      width: 150px;
-      height: auto;
-      margin-top: -180px;
-      margin-bottom: 25px;
-      opacity: 0;
-      animation: float 5s ease-in-out infinite, glowIn 2.5s ease forwards;
-      filter: drop-shadow(0 0 25px rgba(255,255,255,0.7));
+    *{box-sizing:border-box}
+    html,body{min-height:100%}
+    body{
+      margin:0;font-family:'Tajawal',system-ui,sans-serif;color:var(--text);
+      min-height:100vh;padding:22px;display:grid;place-items:center;overflow-x:hidden;
+      background:
+        radial-gradient(circle at 82% 12%,rgba(54,213,150,.13),transparent 22%),
+        radial-gradient(circle at 10% 88%,rgba(84,137,222,.12),transparent 28%),
+        linear-gradient(145deg,var(--bg),var(--bg2));
     }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+    .portal{
+      width:min(1180px,100%);min-height:min(740px,calc(100vh - 44px));
+      border:1px solid var(--line);border-radius:30px;overflow:hidden;position:relative;
+      background:var(--panel);box-shadow:var(--shadow);
+      backdrop-filter:blur(18px) saturate(112%);-webkit-backdrop-filter:blur(18px) saturate(112%);
     }
-
-    @keyframes glowIn {
-      0% { opacity: 0; filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
-      100% { opacity: 1; filter: drop-shadow(0 0 25px rgba(255,255,255,0.8)); }
+    .portal:before{
+      content:"";position:absolute;inset:0;pointer-events:none;opacity:.25;
+      background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+      background-size:54px 54px;
+      mask-image:linear-gradient(to bottom,transparent 0,black 15%,black 82%,transparent 100%);
     }
-
-    /* 🩵 العنوان الرئيسي */
-    h1 {
-      font-size: 2.6rem;
-      font-weight: 900;
-      margin-bottom: 0.7rem;
-      letter-spacing: 0.8px;
-      color: #fff;
-      opacity: 0;
-      animation: slideUp 1.3s ease forwards;
-      animation-delay: 0.3s;
-      text-shadow: 0 2px 8px rgba(255,255,255,0.3);
-      position: relative;
+    .topbar{
+      position:relative;z-index:3;padding:24px 30px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+      border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel2) 76%,transparent);
     }
-
-    /* ✨ تأثير لمعان متحرك */
-    .shine {
-      display: inline-block;
-      background: linear-gradient(90deg, #ffffff 0%, #e9e9e9 25%, #ffffff 50%, #e9e9e9 75%, #ffffff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: shineMove 3s linear infinite;
-      background-size: 200%;
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{
+      width:58px;height:58px;border-radius:18px;display:grid;place-items:center;
+      background:color-mix(in srgb,var(--panel2) 88%,transparent);border:1px solid var(--line2);
+      box-shadow:inset 0 1px rgba(255,255,255,.05);
     }
-
-    @keyframes shineMove {
-      from { background-position: 200% center; }
-      to { background-position: -200% center; }
+    .logo img{width:47px;height:47px;object-fit:contain}
+    .brand b{display:block;font-size:17px;letter-spacing:.04em}.brand span{font-size:9px;color:var(--muted)}
+    .theme{
+      width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--glass);
+      color:var(--text);font-size:16px;cursor:pointer
     }
-
-    /* ✨ نبض ضوء ناعم للعنوان */
-    @keyframes pulseGlow {
-      0%, 100% { text-shadow: 0 0 15px rgba(255,255,255,0.5); }
-      50% { text-shadow: 0 0 35px rgba(255,255,255,0.8); }
+    .content{position:relative;z-index:2;padding:50px 46px 40px}
+    .eyebrow{font-size:10px;color:var(--green);font-weight:900;letter-spacing:.08em;margin-bottom:12px}
+    h1{margin:0;font-size:clamp(36px,5vw,60px);line-height:1.12;font-weight:900;letter-spacing:-.04em}
+    .lead{margin:16px 0 0;max-width:720px;color:var(--muted);font-size:14px;line-height:1.9}
+    .chooser{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:34px}
+    .choice{
+      position:relative;min-height:268px;padding:25px;border-radius:22px;border:1px solid var(--line);
+      background:linear-gradient(155deg,color-mix(in srgb,var(--panel2) 86%,transparent),color-mix(in srgb,var(--glass) 88%,transparent));
+      text-decoration:none;color:var(--text);overflow:hidden;isolation:isolate;
+      transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
     }
-
-    h1:hover {
-      animation: pulseGlow 3s ease-in-out infinite;
+    .choice:before{
+      content:"";position:absolute;width:220px;height:220px;border-radius:50%;inset:auto -60px -80px auto;z-index:-1;
+      background:radial-gradient(circle,color-mix(in srgb,var(--accent) 24%,transparent),transparent 70%);
     }
-
-    /* النص */
-    p {
-      color: #f1fdfd;
-      font-size: 1.1rem;
-      max-width: 480px;
-      margin: 0 auto 2.2rem;
-      line-height: 1.9;
-      opacity: 0;
-      animation: slideUp 1.5s ease forwards;
-      animation-delay: 0.6s;
+    .choice:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 55%,var(--line));box-shadow:0 26px 50px -38px var(--accent)}
+    .choice.executive{--accent:var(--green)}.choice.users{--accent:var(--blue)}
+    .icon{
+      width:48px;height:48px;border-radius:15px;display:grid;place-items:center;margin-bottom:30px;
+      border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);
+      background:color-mix(in srgb,var(--accent) 11%,transparent);color:var(--accent);
     }
-
-    /* حركة العناصر */
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
+    .icon svg{width:24px;height:24px}
+    .choice small{display:block;color:var(--accent);font-size:8.5px;font-weight:900;letter-spacing:.07em;margin-bottom:7px}
+    .choice h2{margin:0;font-size:23px;font-weight:900;letter-spacing:-.02em}
+    .choice p{margin:9px 0 0;color:var(--muted);font-size:11px;line-height:1.8;max-width:440px}
+    .enter{
+      position:absolute;inset:auto 25px 22px 25px;display:flex;justify-content:space-between;align-items:center;gap:12px;
+      padding-top:16px;border-top:1px solid var(--line);font-size:10px;font-weight:800;color:var(--accent)
     }
-
-    /* 🌐 الأزرار الزجاجية */
-    .btn {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 999px;
-      padding: 0.7rem 2rem;
-      font-weight: 700;
-      font-size: 1rem;
-      color: #ffffff;
-      cursor: pointer;
-      transition: all 0.4s ease-in-out;
-      backdrop-filter: blur(14px);
-      background: rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 25px rgba(255,255,255,0.15);
-      transform: translateY(25px);
-      opacity: 0;
-      animation: slideUp 1.4s ease forwards;
+    .arrow{
+      width:32px;height:32px;border-radius:10px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));
+      background:color-mix(in srgb,var(--accent) 8%,transparent);font-size:16px
     }
-
-    .btn:nth-child(1) { animation-delay: 0.9s; }
-    .btn:nth-child(2) { animation-delay: 1.1s; }
-
-    .btn::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(120deg, rgba(255,255,255,0.5), rgba(255,255,255,0));
-      transition: all 0.6s ease;
+    .twin{
+      height:138px;margin-top:22px;border:1px solid var(--line);border-radius:20px;position:relative;overflow:hidden;
+      background:radial-gradient(circle at 50% 50%,rgba(54,213,150,.10),transparent 30%),color-mix(in srgb,var(--panel2) 72%,transparent)
     }
-
-    .btn:hover::before { left: 100%; }
-
-    .btn:hover {
-      transform: scale(1.08);
-      box-shadow: 0 0 40px rgba(255,255,255,0.7);
-      border-color: rgba(255,255,255,0.5);
+    .twin svg{width:100%;height:100%;display:block}
+    .scan{
+      position:absolute;left:6%;right:6%;height:1px;top:20%;background:linear-gradient(90deg,transparent,var(--green),transparent);
+      box-shadow:0 0 16px var(--green);animation:scan 5.4s ease-in-out infinite;opacity:.65
     }
-
-    /* ألوان زجاجية ناعمة */
-    .btn-primary, .btn-secondary {
-      background: linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.1));
-      color: #fff;
+    @keyframes scan{0%,100%{top:18%;opacity:.2}50%{top:80%;opacity:.8}}
+    .foot{
+      margin-top:22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+      color:var(--muted);font-size:9px
     }
-
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-top: 1rem;
+    .foot-badges{display:flex;gap:8px;flex-wrap:wrap}
+    .foot-badges span{height:29px;padding:0 10px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;background:var(--glass)}
+    @media(max-width:800px){
+      body{padding:10px}.portal{border-radius:22px;min-height:auto}.content{padding:32px 20px}.topbar{padding:18px 20px}
+      .chooser{grid-template-columns:1fr}.choice{min-height:240px}h1{font-size:36px}.lead{font-size:12.5px}.twin{height:115px}
     }
-
-    @media (min-width: 640px) {
-      .btn-group { flex-direction: row; gap: 1.4rem; }
-    }
-
-    /* الفوتر */
-    footer {
-      margin-top: 70px;
-      font-size: 0.85rem;
-      color: #e3e3e3;
-      opacity: 0.85;
-      animation: fadeIn 2s ease forwards;
-      animation-delay: 1.8s;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+    @media(max-width:480px){.choice{padding:20px}.choice h2{font-size:20px}.enter{inset:auto 20px 18px}.foot-badges{display:none}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
   </style>
 </head>
-
 <body>
-  <!-- شعار Smart HSR -->
-  <img src="Smart_HSR_Dashboard_Logo.svg" alt="شعار Smart HSR" class="logo" loading="eager" decoding="async" />
+  <main class="portal">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo"><img src="Smart_HSR_Dashboard_Logo.svg" alt="شعار SMART HSR"></div>
+        <div><b>SMART HSR</b><span>SMART MUNICIPAL PLATFORM</span></div>
+      </div>
+      <button class="theme" type="button" data-theme-toggle aria-label="تبديل المظهر">☀</button>
+    </header>
 
-  <h1>مرحبًا بك في منصة <span class="shine">Smart HSR</span></h1>
+    <section class="content">
+      <div class="eyebrow">INSTITUTIONAL ACCESS GATEWAY</div>
+      <h1>اختر مسار الدخول<br>إلى SMART HSR</h1>
+      <p class="lead">بوابة موحدة وآمنة للدخول إلى المنصة. اختر المسار المؤسسي المناسب، ثم يتولى النظام التحقق من الحساب والصلاحيات وتوجيهك إلى مساحة العمل الصحيحة.</p>
 
-  <p>
-    النظام الذكي لإدارة الجودة والملاحظات الميدانية — بوابة الإدارة والشركات لمتابعة المشاريع والمستخدمين بذكاء واحترافية عالية.
-  </p>
+      <div class="chooser">
+        <a class="choice executive" href="manager-login.html">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20h16M6 20V9l6-4 6 4v11M9 12h2m2 0h2M9 16h2m2 0h2"/></svg>
+          </div>
+          <small>MUNICIPAL LEADERSHIP</small>
+          <h2>بوابة القيادات البلدية</h2>
+          <p>لرئيس البلدية ومدير البلدية والقيادات التنفيذية والمشرفين المخولين بالدخول إلى مركز القيادة.</p>
+          <div class="enter"><span>دخول مركز القيادة</span><span class="arrow">←</span></div>
+        </a>
 
-  <div class="btn-group">
-    <button onclick="window.location.href='manager-login.html'" class="btn btn-primary">
-      🏢 دخول الإدارة
-    </button>
-    <button onclick="window.location.href='login.html'" class="btn btn-secondary">
-      👷 دخول المستخدمين
-    </button>
-  </div>
+        <a class="choice users" href="login.html">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-4 2.4-6 5.5-6s5 2 5.5 6M16 7h5m-2.5-2.5V9.5"/></svg>
+          </div>
+          <small>WORKFORCE & OPERATIONS</small>
+          <h2>بوابة الموظفين والمستخدمين</h2>
+          <p>لرؤساء الأقسام والموظفين والمراقبين والمقاولين والمستخدمين التشغيليين حسب التسكين والصلاحيات المعتمدة.</p>
+          <div class="enter"><span>دخول مساحة العمل</span><span class="arrow">←</span></div>
+        </a>
+      </div>
 
-  <footer>© 2025 Smart HSR — جميع الحقوق محفوظة.</footer>
+      <div class="twin" aria-label="واجهة Digital Twin مرئية">
+        <svg viewBox="0 0 920 160" role="img" aria-label="مخطط بصري لمنظومة SMART HSR">
+          <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#36d596" stop-opacity=".78"/><stop offset="1" stop-color="#6aa8ff" stop-opacity=".62"/></linearGradient></defs>
+          <g fill="none" stroke="url(#g)" opacity=".52">
+            <path d="M30 114 L150 67 L270 112 L388 48 L505 100 L630 54 L760 103 L890 54"/>
+            <path d="M150 67 L388 48 M270 112 L505 100 M505 100 L760 103 M630 54 L890 54" opacity=".45"/>
+          </g>
+          <g fill="#36d596"><circle cx="150" cy="67" r="4"/><circle cx="388" cy="48" r="4"/><circle cx="505" cy="100" r="4"/><circle cx="630" cy="54" r="4"/></g>
+          <g fill="#6aa8ff"><circle cx="270" cy="112" r="4"/><circle cx="760" cy="103" r="4"/><circle cx="890" cy="54" r="4"/></g>
+          <g fill="currentColor" opacity=".7" font-family="Tajawal,sans-serif" font-size="10">
+            <text x="118" y="52">القيادة</text><text x="355" y="33">الأقسام</text><text x="475" y="124">المستخدمون</text><text x="606" y="39">الخدمات</text><text x="735" y="126">التشغيل</text>
+          </g>
+        </svg>
+        <div class="scan"></div>
+      </div>
+
+      <div class="foot">
+        <span>SMART HSR · المنصة البلدية الذكية للإدارة والتشغيل</span>
+        <div class="foot-badges"><span>دخول مؤسسي</span><span>صلاحيات موثوقة</span><span>توجيه تلقائي</span></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const KEY='smartHSRLoginTheme';
+      const saved=localStorage.getItem(KEY);
+      document.documentElement.dataset.theme=saved||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+      const btn=document.querySelector('[data-theme-toggle]');
+      const sync=()=>{const light=document.documentElement.dataset.theme==='light';btn.textContent=light?'☾':'☀';btn.setAttribute('aria-label',light?'تفعيل الوضع الليلي':'تفعيل الوضع النهاري')};
+      sync();
+      btn.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;localStorage.setItem(KEY,next);sync()});
+    })();
+  </script>
 </body>
 </html>
