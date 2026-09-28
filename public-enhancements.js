@@ -296,20 +296,118 @@
   function setTheme(t){
     document.documentElement.dataset.publicTheme=t;
     document.documentElement.style.colorScheme=t;
-    const b=document.getElementById('smartSafeTheme');
-    if(b){
+    const buttons=[document.getElementById('smartSafeTheme'),document.getElementById('smartMobileTheme')].filter(Boolean);
+    buttons.forEach(b=>{
       b.textContent=t==='dark'?'☀':'☾';
       b.title=t==='dark'?'تفعيل الوضع النهاري':'تفعيل الوضع الليلي';
       b.setAttribute('aria-pressed',String(t==='dark'));
-    }
+    });
     let meta=document.querySelector('meta[name="theme-color"]');
     if(!meta){meta=document.createElement('meta');meta.name='theme-color';document.head.appendChild(meta)}
     meta.content=t==='dark'?'#061914':'#F2F6F3';
     try{localStorage.setItem('smart-hsr-public-theme',t)}catch(e){}
   }
 
+
+  function responsiveTarget(name){
+    if(matchMedia('(max-width:1024px)').matches){
+      const map={platform:'#sr-platform',solutions:'#sr-solutions',twin:'#sr-twin',profile:'#sr-profile'};
+      return map[name]?document.querySelector(map[name]):null;
+    }
+    const map={platform:section('02 Statement'),solutions:section('04 Product Bento'),twin:section('06 Digital Twin Signature'),profile:section('07 Company Profile')};
+    return map[name]||null;
+  }
+
+  function installResponsiveLanding(){
+    if(document.getElementById('smartResponsiveLanding')) return;
+    const root=document.createElement('main');
+    root.id='smartResponsiveLanding';
+    root.dir='rtl';
+    root.innerHTML=\`
+      <div class="sr-nav">
+        <div class="sr-wrap">
+          <div class="sr-nav-card">
+            <img class="sr-logo" src="Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR">
+            <div class="sr-nav-spacer"></div>
+            <button class="sr-nav-btn menu" type="button" id="smartMobileMenu">القائمة</button>
+            <button class="sr-nav-btn" type="button" id="smartMobileTheme" aria-label="تبديل المظهر">☾</button>
+          </div>
+        </div>
+      </div>
+      <div class="sr-wrap">
+        <section class="sr-hero" id="sr-platform">
+          <div class="sr-kicker" dir="ltr">SMART MUNICIPAL OPERATING PLATFORM</div>
+          <h1>من الميدان<br><span>إلى القرار.</span></h1>
+          <p class="sr-lead">منظومة بلدية ذكية تربط الحصر والبيانات المكانية والتشغيل والمستخدمين في مسار مؤسسي واحد، مع عزل كل جهة وصلاحياتها.</p>
+          <div class="sr-actions">
+            <a class="sr-primary" href="Home.html">الدخول إلى SMART HSR</a>
+            <a class="sr-secondary" href="#sr-solutions">استكشف المنصة</a>
+          </div>
+          <div class="sr-hero-visual">
+            <div class="sr-visual-label"><b>FIELD → DATA → OPERATIONS → DECISION</b>شبكة تشغيل مكانية تربط الميدان بالقرار.</div>
+            <svg viewBox="0 0 900 360" aria-hidden="true">
+              <defs><linearGradient id="srg" x1="0" x2="1"><stop offset="0" stop-color="#73e3a2"/><stop offset="1" stop-color="#38bdf8"/></linearGradient></defs>
+              <g stroke="rgba(134,225,170,.16)" stroke-width="1" fill="none">
+                <path d="M0 310L180 195L350 280L515 145L690 230L900 92"/>
+                <path d="M0 250L170 120L350 205L505 72L720 150L900 35"/>
+                <path d="M105 360L210 65M280 360L355 50M470 360L520 20M680 360L710 10"/>
+              </g>
+              <g stroke="url(#srg)" stroke-width="3" fill="none" opacity=".75"><path d="M36 286L190 178L343 247L508 126L684 211L862 104"/></g>
+              <g fill="#74e6a4"><circle cx="190" cy="178" r="6"/><circle cx="508" cy="126" r="6"/><circle cx="684" cy="211" r="6"/></g>
+              <g fill="#e7fff0"><circle cx="343" cy="247" r="5"/><circle cx="862" cy="104" r="5"/></g>
+            </svg>
+          </div>
+        </section>
+
+        <section class="sr-section" id="sr-solutions">
+          <div class="sr-section-head"><div><div class="sr-kicker">OPERATIONAL LAYERS</div><h2>الخدمات الأساسية</h2></div><p>واجهات تشغيلية واضحة، من المراقب الميداني حتى مركز القيادة، ضمن نفس الهوية المؤسسية.</p></div>
+          <div class="sr-grid">
+            <article class="sr-card"><span class="num">01 · FIELD SURVEY</span><h3>الحصر الميداني الذكي</h3><p>ملاحظات موثقة بالموقع والصورة، تمر من الرصد إلى المعالجة والتحقق.</p><div class="sr-mini"><i style="height:28px"></i><i style="height:48px"></i><i style="height:36px"></i><i style="height:58px"></i></div></article>
+            <article class="sr-card dark"><span class="num">02 · SMART LANDS</span><h3>الأراضي والممتلكات</h3><p>سجل مكاني منظم للمنح والقرارات والمستندات ونسب الاكتمال.</p><div class="sr-mini"><i style="height:36px"></i><i style="height:58px"></i><i style="height:42px"></i><i style="height:64px"></i></div></article>
+            <article class="sr-card"><span class="num">03 · MOBILITY</span><h3>الحركة الذكية</h3><p>المركبات والمهام والتغطية التشغيلية والحوادث في مسار واحد.</p><div class="sr-mini"><i style="height:45px"></i><i style="height:30px"></i><i style="height:62px"></i><i style="height:52px"></i></div></article>
+            <article class="sr-card dark"><span class="num">04 · COMMAND CENTER</span><h3>مركز القيادة</h3><p>رؤية تنفيذية موحدة للمؤشرات والمستخدمين والتشغيل والقرارات.</p><div class="sr-mini"><i style="height:52px"></i><i style="height:39px"></i><i style="height:67px"></i><i style="height:46px"></i></div></article>
+            <article class="sr-card"><span class="num">05 · USERS</span><h3>المستخدمون والتشغيل</h3><p>دخول واحد وتوجيه تلقائي حسب الجهة والدور والصلاحيات المعتمدة.</p><div class="sr-mini"><i style="height:34px"></i><i style="height:54px"></i><i style="height:45px"></i><i style="height:62px"></i></div></article>
+            <article class="sr-card dark"><span class="num">06 · MULTI-TENANT</span><h3>جهات متعددة، عزل كامل</h3><p>كل بلدية أو مؤسسة تعمل ضمن نطاقها وبياناتها وصلاحياتها دون تداخل.</p><div class="sr-mini"><i style="height:58px"></i><i style="height:42px"></i><i style="height:65px"></i><i style="height:36px"></i></div></article>
+          </div>
+        </section>
+
+        <section class="sr-section" id="sr-twin">
+          <div class="sr-twin">
+            <div class="sr-twin-copy"><div class="sr-kicker">SMART HSR DIGITAL TWIN</div><h2>نموذج واحد.<br>طبقات تشغيلية مترابطة.</h2><p>النقاط والعناصر والمواقع والبلاغات تظهر في سياق مكاني قابل للتحليل، مع بقاء الخريطة هي المرجع البصري للتشغيل.</p></div>
+            <div class="sr-twin-map">
+              <svg viewBox="0 0 900 330" aria-hidden="true">
+                <g stroke="rgba(116,224,159,.14)" fill="none"><path d="M0 265L140 178L286 242L425 118L575 205L736 96L900 170"/><path d="M20 180L160 92L305 155L450 58L600 136L760 42L900 104"/><path d="M95 330L180 46M260 330L330 30M445 330L480 10M655 330L680 0M815 330L835 25"/></g>
+                <g stroke="#71dda0" stroke-width="2.5" fill="none" opacity=".72"><path d="M38 245L158 164L294 222L436 108L584 194L742 89L868 154"/></g>
+                <g fill="#83edaf"><circle cx="158" cy="164" r="7"/><circle cx="436" cy="108" r="7"/><circle cx="584" cy="194" r="7"/><circle cx="742" cy="89" r="7"/></g>
+                <g fill="#fff"><circle cx="294" cy="222" r="5"/><circle cx="868" cy="154" r="5"/></g>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        <section class="sr-section" id="sr-profile">
+          <div class="sr-profile">
+            <div><div class="sr-kicker">COMPANY & PLATFORM PROFILE</div><h2>الملف التعريفي</h2><p>الرؤية، المكونات، نموذج التشغيل، والخدمات في وثيقة واحدة مناسبة للاجتماعات الحكومية والشراكات المؤسسية.</p></div>
+            <div class="sr-profile-actions">
+              <a class="sr-primary" href="\${PROFILE_PREVIEW}" target="_blank" rel="noopener">عرض الملف</a>
+              <a class="sr-secondary" href="\${PROFILE_DOWNLOAD}" target="_blank" rel="noopener">تنزيل PDF</a>
+            </div>
+          </div>
+        </section>
+
+        <footer class="sr-footer">
+          <div class="sr-footer-row"><div><b>SMART HSR</b><br><span>المنصة البلدية الذكية للإدارة والتشغيل</span></div><div><span>التطوير والتشغيل التقني</span><br><b style="font-size:15px;letter-spacing:.08em">BLUMARK24</b></div></div>
+        </footer>
+      </div>
+    \`;
+    document.body.appendChild(root);
+    document.getElementById('smartMobileMenu')?.addEventListener('click',()=>document.getElementById('smartSafeMenu')?.classList.add('open'));
+    document.getElementById('smartMobileTheme')?.addEventListener('click',()=>setTheme(document.documentElement.dataset.publicTheme==='dark'?'light':'dark'));
+  }
+
   function installExternalUI(){
     installCSS();
+    installResponsiveLanding();
 
     if(!document.getElementById('smartSafeTheme')){
       const b=document.createElement('button');
@@ -329,8 +427,7 @@
       menu.addEventListener('click',e=>{
         if(e.target===menu){menu.classList.remove('open');return}
         const b=e.target.closest('[data-go]'); if(!b)return;
-        const map={platform:section('02 Statement'),solutions:section('04 Product Bento'),twin:section('06 Digital Twin Signature'),profile:section('07 Company Profile')};
-        menu.classList.remove('open'); go(map[b.dataset.go]);
+        menu.classList.remove('open'); go(responsiveTarget(b.dataset.go));
       });
     }
 
@@ -341,8 +438,7 @@
       document.body.appendChild(tail);
       tail.addEventListener('click',e=>{
         const a=e.target.closest('[data-tail]'); if(!a)return; e.preventDefault();
-        const map={platform:section('02 Statement'),solutions:section('04 Product Bento'),twin:section('06 Digital Twin Signature'),profile:section('07 Company Profile')};
-        go(map[a.dataset.tail]);
+        go(responsiveTarget(a.dataset.tail));
       });
     }
   }
