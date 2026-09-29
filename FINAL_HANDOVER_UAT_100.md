@@ -36,12 +36,11 @@ Every identity must resolve to exactly one institutional workspace. No user may 
 | Smart Mobility | Employee | Mobility Employee workspace | own assigned missions and assigned vehicle only |
 | Administrative Affairs | Department Head | Administrative Affairs | mission approvals, vehicle authorization, safe employee admin |
 | Administrative Affairs | Employee | Administrative Affairs | read-only |
-| Contracts | Department Head | Contracts Registry | manage contracts/companies |
-| Contracts | Employee | Contracts Registry | read-only |
+| Contracts / Contractor Companies | Municipality Manager | Manager Dashboard — Contracts supervisory module | manage and supervise contractor-company registry |
 | External Contractor | Contractor | Contractor/field external surface | external identity only |
 
 ### Gate 1 pass criteria
-- [x] Automated routing/role contract tests exist for Field, Lands, Mobility, Administrative Affairs and Contracts.
+- [x] Automated routing/role contract tests exist for Field, Lands, Mobility and Administrative Affairs; Contracts is locked to the Municipality Manager supervisory module.
 - [x] Manager/workforce session namespaces are isolated.
 - [x] Cross-organization access is denied by tested Firestore rules.
 - [ ] Each canonical role is logged in once with a real UAT account and lands on the expected workspace.
@@ -98,9 +97,10 @@ Required real sequence:
 
 **Pass:** [ ]
 
-### E. Contracts
-- Contracts Head can manage registry mutations.
-- Contracts Employee is read-only.
+### E. Contracts / Contractor Companies
+- Contracts/company registry is available inside the Municipality Manager dashboard.
+- No canonical workforce route exists for a Contracts Department Head or Contracts Employee in this release.
+- Protected registry mutations require Municipality Manager authority.
 - Contractor identity remains external and is never treated as a municipal employee.
 
 **Pass:** [ ]
@@ -167,7 +167,7 @@ After all previous gates pass:
 SMART HSR is **100% delivery-ready** only when:
 
 - Every canonical role has a verified destination and authority.
-- Field, Lands, Mobility, Administrative Affairs and Contracts end-to-end UAT pass.
+- Field, Lands, Mobility and Administrative Affairs end-to-end UAT pass, and the Municipality Manager contracts supervisory module passes.
 - No P0/P1 defect remains.
 - Desktop/iPad/iPhone visual UAT passes.
 - Security / tenant isolation / sessions remain PASS.
