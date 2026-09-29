@@ -310,6 +310,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     const doc = new DOMParser().parseFromString(template, 'text/html');
     document.documentElement.replaceWith(doc.documentElement);
 
+    // Phase 25 closure fix — the exported bundle's own <html> tag never
+    // carried lang/dir/title (the page's RTL styling comes from an inner
+    // wrapper div, not <html>, and the template has no <title> at all), so
+    // the browser tab was left reading the bundler's own placeholder
+    // "Bundled Page" with no lang/dir on the document root. Every other
+    // SMART HSR page ships lang="ar" dir="rtl" on <html>; this restores the
+    // same baseline for the landing bundle without touching its markup.
+    document.documentElement.setAttribute('lang', 'ar');
+    document.documentElement.setAttribute('dir', 'rtl');
+    if (!document.title) document.title = 'SMART HSR — من الميدان إلى القرار';
+
     // Resolve page-frame markers: mint this document's own blob for each
     // framed page — from local text when this is the root, otherwise by
     // asking the direct parent over the relay protocol above. An
