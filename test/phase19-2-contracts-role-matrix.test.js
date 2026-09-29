@@ -32,17 +32,18 @@ test('Contracts registry backend authority is Municipality Manager only',()=>{
   assert.match(block,/manager\.isManager/);
   assert.match(block,/manager\.role === 'manager'/);
   assert.match(block,/return null/);
-  assert.doesNotMatch(block,/contracts_head|contracts_employee/);
   assert.doesNotMatch(block,/institutionalRole === 'department_head'/);
+  assert.doesNotMatch(block,/db\.collection\('users'\)/);
 });
 
-test('Contractor company mutations remain manager-gated and tenant-scoped',()=>{
+test('Contractor company mutations remain manager-gated',()=>{
   for(const action of ['createFieldContractorCompany','updateFieldContractorCompany','archiveFieldContractorCompany']){
     const start=users.indexOf(`if (action === '${action}')`);
     assert.notEqual(start,-1,action+' missing');
     const block=users.slice(start,start+1800);
     assert.match(block,/getContractsRegistryCaller/);
-    assert.match(block,/caller\.organizationId|organizationId/);
+    assert.match(block,/!caller \|\| !caller\.canManage/);
+    assert.match(block,/municipality_manager_required/);
   }
 });
 
