@@ -199,28 +199,15 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
 }
 
 async function getContractsRegistryCaller(db, uid) {
+  // Municipality handover contract:
+  // contracts / contractor-company administration is a Municipality Manager
+  // supervisory module, not a standalone workforce workspace. Do not derive
+  // contracts_head / contracts_employee authority from users/{uid}.
   const manager = await getCallerContext(uid);
   if (manager.isManager && manager.role === 'manager' && manager.organizationId) {
     return { uid, role:'manager', organizationId:manager.organizationId, canManage:true };
   }
-  const snap = await db.collection('users').doc(uid).get();
-  if (!snap.exists) return null;
-  const data = snap.data() || {};
-  const organizationId = cleanString(data.organizationId);
-  const administration = cleanString(data.administration);
-  const institutionalRole = cleanString(data.institutionalRole);
-  const contractsPath = /العقود|الشركات المتعاقدة|contracts?|contractors?/i.test(administration);
-  if (data.active === false || !organizationId || !contractsPath
-      || !['department_head','employee'].includes(institutionalRole)) return null;
-  return {
-    uid,
-    role: institutionalRole === 'department_head' ? 'contracts_head' : 'contracts_employee',
-    institutionalRole,
-    organizationId,
-    administration,
-    department: cleanString(data.department),
-    canManage: institutionalRole === 'department_head',
-  };
+  return null;
 }
 
 function isFieldSurveyDepartment(value) {
