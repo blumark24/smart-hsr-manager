@@ -337,7 +337,184 @@
       }
 
       @media(max-width:1024px){[data-screen-label]{scroll-margin-top:108px}}
-            @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
+
+      /* FINAL RESPONSIVE SIZE PASS
+         Preserve Claude composition/style; only normalize sizing, spacing and overflow. */
+      @media(max-width:700px){
+        :root{--m-gutter:16px;--m-nav:64px}
+        html,body{overflow-x:hidden!important}
+
+        .claude-nav{
+          top:10px!important;left:0!important;right:0!important;
+          padding:0 var(--m-gutter)!important;z-index:60!important
+        }
+        .claude-nav>.claude-nav-card{
+          width:100%!important;max-width:none!important;height:var(--m-nav)!important;
+          padding:0 12px!important;gap:8px!important;border-radius:18px!important;
+          box-shadow:0 16px 36px -26px rgba(18,53,39,.28)!important
+        }
+        .claude-nav .claude-nav-logo{height:38px!important;max-width:118px!important}
+        .claude-nav .claude-nav-actions{gap:6px!important}
+        .claude-nav .claude-lang{font-size:11.5px!important;white-space:nowrap!important}
+        #smartSafeTheme{
+          top:84px!important;right:16px!important;left:auto!important;
+          width:42px!important;height:42px!important;border-radius:13px!important;z-index:61!important
+        }
+
+        .claude-hero{
+          height:980px!important;min-height:980px!important;overflow:hidden!important
+        }
+        .claude-hero .hero-logo-card{
+          top:108px!important;left:18px!important;width:170px!important;
+          padding:12px 14px!important;border-radius:18px!important
+        }
+        .claude-hero .hero-copy{
+          top:292px!important;right:18px!important;left:18px!important;width:auto!important;
+          gap:14px!important;transform:none!important
+        }
+        .claude-hero .hero-title{font-size:46px!important;line-height:1.08!important;letter-spacing:-.045em!important}
+        .claude-hero .hero-lead{max-width:100%!important;font-size:15px!important;line-height:1.78!important}
+        .claude-hero .hero-actions{
+          width:100%!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important
+        }
+        .claude-hero .hero-actions>div{
+          min-width:0!important;width:100%!important;height:52px!important;padding:0 12px!important;
+          justify-content:center!important;font-size:13.5px!important;white-space:nowrap!important
+        }
+        .claude-hero .hero-field-card{
+          left:16px!important;right:auto!important;bottom:92px!important;top:auto!important;
+          width:calc(50% - 22px)!important;min-height:116px!important
+        }
+        .claude-hero .hero-lands-card{
+          right:16px!important;left:auto!important;bottom:92px!important;top:auto!important;
+          width:calc(50% - 22px)!important;min-height:116px!important
+        }
+        .claude-hero .hero-field-card *,
+        .claude-hero .hero-lands-card *{max-width:100%!important}
+        .claude-hero .hero-rail{bottom:18px!important;right:16px!important;left:16px!important}
+
+        .claude-statement{
+          padding:92px 0 80px!important;overflow:hidden!important
+        }
+        .claude-statement .section-inner{padding:0 var(--m-gutter)!important;gap:28px!important}
+        .claude-statement .statement-title{font-size:42px!important;line-height:1.15!important;letter-spacing:-.035em!important}
+        .claude-statement .statement-bottom{gap:18px!important}
+        .claude-statement .statement-flow{gap:8px 10px!important;font-size:11.5px!important}
+
+        .claude-journey{overflow:hidden!important}
+        .claude-journey .journey-sticky{min-height:720px!important}
+        .claude-journey .journey-kicker{top:94px!important;right:18px!important;left:18px!important}
+        .claude-journey .journey-copy{
+          top:24%!important;right:18px!important;left:18px!important;width:auto!important;max-width:none!important
+        }
+        .claude-journey .journey-num{font-size:68px!important}
+        .claude-journey .journey-title{font-size:38px!important;line-height:1.08!important}
+        .claude-journey .journey-desc{font-size:14px!important;line-height:1.72!important}
+        .claude-journey .journey-progress{right:16px!important;left:16px!important;bottom:26px!important}
+        .claude-journey .journey-progress .stage-ar{font-size:9.5px!important}
+
+        .claude-bento{
+          padding:82px 0 78px!important;overflow:hidden!important
+        }
+        .claude-bento .section-inner{padding:0 var(--m-gutter)!important;gap:28px!important}
+        .claude-bento .bento-head{gap:16px!important}
+        .claude-bento .bento-grid{grid-template-columns:1fr!important;gap:14px!important}
+        .claude-bento .bento-card{
+          width:100%!important;min-height:330px!important;border-radius:22px!important;overflow:hidden!important
+        }
+        .claude-bento .bento-card.bento-twin-card{min-height:440px!important}
+        .claude-bento .bento-card.bento-users-card{min-height:550px!important}
+        .claude-bento .bento-users-router{
+          top:184px!important;right:16px!important;left:16px!important;bottom:24px!important;
+          width:auto!important;transform:none!important
+        }
+        .claude-bento .user-router-center{
+          width:min(250px,82%)!important;padding:10px 12px!important
+        }
+        .claude-bento .user-role-right>span,
+        .claude-bento .user-role-left>span{
+          min-height:36px!important;height:36px!important;font-size:11px!important;border-radius:10px!important
+        }
+
+        .claude-presence{
+          padding:34px 0 82px!important;overflow:hidden!important
+        }
+        .claude-presence .section-inner{padding:0 var(--m-gutter)!important;gap:28px!important}
+        .claude-presence .presence-stage{height:420px!important}
+        .claude-presence .presence-desktop{height:260px!important}
+        .claude-presence .presence-tablet{height:222px!important}
+        .claude-presence .presence-mobile{height:224px!important}
+
+        .claude-twin{
+          height:900px!important;min-height:900px!important;overflow:hidden!important
+        }
+        .claude-twin .twin-copy{
+          top:100px!important;right:18px!important;left:18px!important;max-width:none!important
+        }
+        .claude-twin .twin-title{font-size:40px!important;line-height:1.12!important}
+        .claude-twin .twin-detail{
+          right:16px!important;left:16px!important;bottom:276px!important;width:auto!important
+        }
+        .claude-twin .twin-layers{
+          right:16px!important;left:16px!important;bottom:22px!important;width:auto!important
+        }
+
+        .claude-profile{
+          padding:84px 0 72px!important;overflow:hidden!important
+        }
+        .claude-profile .section-inner{
+          padding:0 var(--m-gutter)!important;grid-template-columns:1fr!important;gap:28px!important
+        }
+        .claude-profile .profile-copy{width:100%!important;gap:18px!important}
+        .claude-profile .profile-actions{
+          display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important
+        }
+        .claude-profile .profile-actions>div{
+          width:100%!important;min-width:0!important;min-height:50px!important;
+          justify-content:center!important;padding:10px 12px!important
+        }
+        .claude-profile .profile-book-stage{
+          width:100%!important;height:470px!important;border-radius:24px!important;overflow:hidden!important
+        }
+        .claude-profile .profile-book{
+          width:276px!important;height:392px!important;max-width:82%!important
+        }
+        .claude-round-strip{display:none!important}
+
+        #smartSafeFooter{overflow:hidden!important}
+        #smartSafeFooter .wrap{padding:52px var(--m-gutter) 26px!important}
+        #smartSafeFooter .headline{display:grid!important;grid-template-columns:1fr!important;gap:18px!important}
+        #smartSafeFooter .cards{grid-template-columns:1fr!important;gap:12px!important}
+        #smartSafeFooter .card{min-height:0!important;padding:20px!important;border-radius:20px!important}
+        #smartSafeFooter .footer-grid{
+          display:grid!important;grid-template-columns:1fr 1fr!important;gap:20px 18px!important
+        }
+        #smartSafeFooter .footer-grid>div{min-width:0!important}
+        #smartSafeFooter .developer{margin-top:22px!important;padding:14px 16px!important}
+        #smartSafeFooter .legal{font-size:11px!important}
+
+        #smartSafeMenu{padding:12px!important;align-items:flex-start!important}
+        #smartSafeMenu .panel{
+          width:calc(100% - 8px)!important;max-width:430px!important;
+          margin:86px auto 0!important;padding:12px!important;border-radius:22px!important
+        }
+      }
+
+      @media(max-width:390px){
+        :root{--m-gutter:13px}
+        .claude-nav .claude-nav-logo{max-width:102px!important}
+        .claude-nav .claude-lang{font-size:10.5px!important}
+        .claude-hero .hero-title{font-size:42px!important}
+        .claude-hero .hero-actions{grid-template-columns:1fr!important}
+        .claude-hero{height:1010px!important;min-height:1010px!important}
+        .claude-hero .hero-field-card,
+        .claude-hero .hero-lands-card{bottom:84px!important}
+        .claude-statement .statement-title{font-size:38px!important}
+        .claude-profile .profile-actions{grid-template-columns:1fr!important}
+        #smartSafeFooter .footer-grid{grid-template-columns:1fr!important}
+      }
+
+      @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
     `;
     document.head.appendChild(style);
   }
@@ -506,9 +683,13 @@
         }
       }
     }
-    const legacyStrip=profile.nextElementSibling;
-    if(legacyStrip&&norm(legacyStrip.textContent).includes('ROUND 02')&&norm(legacyStrip.textContent).includes('PARTNERSHIP CTA')){
-      legacyStrip.classList.add('claude-round-strip');
+    let legacyStrip=profile.nextElementSibling;
+    for(let i=0;i<4&&legacyStrip;i++,legacyStrip=legacyStrip.nextElementSibling){
+      const txt=norm(legacyStrip.textContent);
+      if(txt.includes('ROUND 02')&&txt.includes('PARTNERSHIP CTA')){
+        legacyStrip.classList.add('claude-round-strip');
+        break;
+      }
     }
     return true;
   }
