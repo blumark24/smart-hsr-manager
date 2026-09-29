@@ -119,7 +119,7 @@ jobs:
       - name: Portal and multi-tenant isolation
         run: |
           node --test test/portal-session-isolation.test.js
-          node --test test/phase25-multi-org-isolation.test.js
+          npx firebase emulators:exec --project demo-smart-hsr-tests --only firestore "node --test test/phase25-multi-org-isolation.test.js"
 
       - name: Security rules regression
         run: npm run test:rules
