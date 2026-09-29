@@ -2385,7 +2385,7 @@ async function handler(req, res) {
     if (Object.keys(body).some(key => !TRUSTED_CREATE_INPUT_FIELDS.createIncident.includes(key))) {
       return sendJson(res, 400, { error: 'invalid_request', reason: 'protected_or_unknown_field' });
     }
-    const caller = await getMobilityEmployeeCallerContext(decoded.uid);
+    const caller = await getMobilityAssignedOperatorCallerContext(decoded.uid);
     if (!caller.isAssignedOperatorEligible) {
       return sendJson(res, 403, { error: 'forbidden', reason: 'assigned_vehicle_operator_required' });
     }

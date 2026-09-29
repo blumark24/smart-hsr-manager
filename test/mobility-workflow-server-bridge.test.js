@@ -40,7 +40,7 @@ test('employee owns mission execution and return transitions', () => {
 
 test('cross-product workflow derives operational organization from authenticated identities', () => {
   assert.match(usersApi, /getMobilityOperationalCaller\(db, decoded\.uid/);
-  assert.match(usersApi, /getMobilityEmployeeCallerContext\(decoded\.uid\)/);
+  assert.match(usersApi, /getMobilityAssignedOperatorCallerContext\(decoded\.uid\)/);
   assert.match(usersApi, /const organizationId = mobilityCaller\.organizationId/);
   assert.match(usersApi, /cross_organization_denied/);
 });
