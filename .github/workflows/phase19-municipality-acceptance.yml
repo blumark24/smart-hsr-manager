@@ -9,6 +9,7 @@ on:
       - phase19-3-inspector-record
       - phase23-delivery-closure
       - phase24-full-platform-audit
+      - release/municipality-final-rc
   workflow_dispatch:
 
 jobs:
@@ -44,6 +45,7 @@ jobs:
           node --check owner-users.js
           node --check owner-invoices.js
           node --check api/_lib/ownerOpsSupport.js
+          node --check public-enhancements.js
 
       - name: Institutional identity and user center
         run: |
@@ -110,6 +112,11 @@ jobs:
           node --test test/municipality-manager-current-architecture.test.js
           node --test test/manager-component-did-update-regression.test.js
           node --test test/phase13d1-manager-shell-navigation-stability.test.js
+
+      - name: Portal and multi-tenant isolation
+        run: |
+          node --test test/portal-session-isolation.test.js
+          node --test test/phase25-multi-org-isolation.test.js
 
       - name: Security rules regression
         run: npm run test:rules
