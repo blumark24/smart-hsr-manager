@@ -201,8 +201,8 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
 async function getContractsRegistryCaller(db, uid) {
   // Municipality handover contract:
   // contracts / contractor-company administration is a Municipality Manager
-  // supervisory module, not a standalone workforce workspace. Do not derive
-  // contracts_head / contracts_employee authority from users/{uid}.
+  // supervisory module, not a standalone workforce workspace. No workforce
+  // identity derives contracts-registry authority from users/{uid}.
   const manager = await getCallerContext(uid);
   if (manager.isManager && manager.role === 'manager' && manager.organizationId) {
     return { uid, role:'manager', organizationId:manager.organizationId, canManage:true };
@@ -627,7 +627,7 @@ async function handler(req, res) {
   if (action === 'createFieldContractorCompany') {
     const caller = await getContractsRegistryCaller(db, decoded.uid);
     if (!caller || !caller.canManage) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'contracts_head_or_manager_required' });
+      return sendJson(res, 403, { error: 'forbidden', reason: 'municipality_manager_required' });
     }
 
     const companyName = cleanString(body.companyName);
@@ -738,7 +738,7 @@ async function handler(req, res) {
   if (action === 'updateFieldContractorCompany') {
     const caller = await getContractsRegistryCaller(db, decoded.uid);
     if (!caller || !caller.canManage) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'contracts_head_or_manager_required' });
+      return sendJson(res, 403, { error: 'forbidden', reason: 'municipality_manager_required' });
     }
 
     const contractorUid = cleanString(body.contractorUid);
@@ -828,7 +828,7 @@ async function handler(req, res) {
   if (action === 'archiveFieldContractorCompany') {
     const caller = await getContractsRegistryCaller(db, decoded.uid);
     if (!caller || !caller.canManage) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'contracts_head_or_manager_required' });
+      return sendJson(res, 403, { error: 'forbidden', reason: 'municipality_manager_required' });
     }
     const contractorUid = cleanString(body.contractorUid);
     if (!contractorUid) {
@@ -903,14 +903,14 @@ async function handler(req, res) {
   }
 
   // PHASE21.1 — permanent contractor/company removal is intentionally
-  // narrow: only a municipality manager / contracts head, only same-org,
+  // narrow: only the municipality manager, only same-org,
   // only after the contract is no longer ACTIVE, and only when no
   // observation has ever been assigned to this contractor identity.
   // Historical audit events are preserved as immutable evidence.
   if (action === 'deleteFieldContractorCompany') {
     const caller = await getContractsRegistryCaller(db, decoded.uid);
     if (!caller || !caller.canManage) {
-      return sendJson(res, 403, { error: 'forbidden', reason: 'contracts_head_or_manager_required' });
+      return sendJson(res, 403, { error: 'forbidden', reason: 'municipality_manager_required' });
     }
     const contractorUid = cleanString(body.contractorUid);
     if (!contractorUid) {
