@@ -5,41 +5,48 @@ const fs=require('node:fs');
 const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+
 const login=read('login.html');
-const page=read('contractors-registry.html');
-const runtime=read('contractors-registry-runtime.js');
+const manager=read('manager.html');
 const users=read('api/admin/users.js');
 
-test('Contracts administration is a canonical institutional path',()=>{
-  assert.match(login,/canonicalContractsPath/);
-  assert.match(login,/contractors-registry\.html/);
-  assert.match(page,/إدارة العقود والشركات المتعاقدة/);
+test('Contracts is not a canonical workforce workspace',()=>{
+  assert.doesNotMatch(login,/canonicalContractsPath/);
+  assert.doesNotMatch(login,/window\.location\.href\s*=\s*['"]contractors-registry\.html['"]/);
+  assert.doesNotMatch(login,/جارٍ فتح إدارة العقود والشركات المتعاقدة/);
 });
 
-test('Contracts registry distinguishes manager head and employee authority',()=>{
-  assert.match(users,/getContractsRegistryCaller/);
-  assert.match(users,/contracts_head/);
-  assert.match(users,/contracts_employee/);
-  assert.match(users,/canManage/);
+test('Municipality Manager owns the contracts supervisory module',()=>{
+  assert.match(manager,/data-manager-view="contracts"/);
+  assert.match(manager,/viewIsContracts/);
+  assert.match(manager,/إدارة العقود والشركات المتعاقدة/);
+  assert.match(manager,/سجل إشرافي داخل لوحة مدير البلدية/);
+  assert.match(manager,/دون فتح صفحة مستقلة أو شاشة تشغيل رئيس قسم/);
 });
 
-test('Contracts employee is read-only in the client',()=>{
-  assert.match(runtime,/state\.canManage=d\.canManage===true/);
-  assert.match(runtime,/state\.canManage\?'<button class="btn" data-edit=/);
-  assert.match(runtime,/if\(!state\.canManage\)return/);
+test('Contracts registry backend authority is Municipality Manager only',()=>{
+  const start=users.indexOf('async function getContractsRegistryCaller');
+  const end=users.indexOf('function isFieldSurveyDepartment',start);
+  assert.notEqual(start,-1);
+  const block=users.slice(start,end);
+  assert.match(block,/manager\.isManager/);
+  assert.match(block,/manager\.role === 'manager'/);
+  assert.match(block,/return null/);
+  assert.doesNotMatch(block,/contracts_head|contracts_employee/);
+  assert.doesNotMatch(block,/institutionalRole === 'department_head'/);
 });
 
-test('Contracts mutations require manager or contracts head server-side',()=>{
+test('Contractor company mutations remain manager-gated and tenant-scoped',()=>{
   for(const action of ['createFieldContractorCompany','updateFieldContractorCompany','archiveFieldContractorCompany']){
     const start=users.indexOf(`if (action === '${action}')`);
     assert.notEqual(start,-1,action+' missing');
-    const block=users.slice(start,start+1000);
-    assert.match(block,/!caller\.canManage/);
+    const block=users.slice(start,start+1800);
+    assert.match(block,/getContractsRegistryCaller/);
+    assert.match(block,/caller\.organizationId|organizationId/);
   }
 });
 
 test('Contractors remain external identities, never municipal employees',()=>{
   assert.match(users,/role: 'contractor'/);
   assert.match(users,/collection\('contractorProfiles'\)/);
-  assert.doesNotMatch(runtime,/collection\('employees'\)/);
 });
