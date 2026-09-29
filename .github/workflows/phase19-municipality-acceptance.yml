@@ -47,6 +47,9 @@ jobs:
           node --check api/_lib/ownerOpsSupport.js
           node --check public-enhancements.js
 
+      - name: Final responsive contract
+        run: node --test test/final-release-responsive-contract.test.js
+
       - name: Institutional identity and user center
         run: |
           node --test test/institutional-path-foundation.test.js
