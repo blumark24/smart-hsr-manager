@@ -31,7 +31,33 @@
       ]
     },
     {
-      "source": "/(Home|manager-login|login).html",
+      "source": "/Home.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/manager-login.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/login.html",
       "headers": [
         {
           "key": "Cache-Control",
@@ -54,4 +80,4 @@
       "destination": "/api/report?kind=work-order"
     }
   ]
-}\n
+}
