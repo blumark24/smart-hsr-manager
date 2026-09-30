@@ -711,8 +711,18 @@
       const b=document.createElement('button');
       b.id='smartSafeTheme'; b.type='button'; b.setAttribute('aria-label','تبديل الوضع النهاري والليلي');
       document.body.appendChild(b);
-      let t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
-      try{const saved=localStorage.getItem('smart-hsr-public-theme');if(saved==='dark'||saved==='light')t=saved}catch(e){}
+      const designKey='smart-hsr-public-cloud-version';
+      const designVersion='r2-r3-v1';
+      let t='light';
+      try{
+        const current=localStorage.getItem(designKey);
+        const saved=localStorage.getItem('smart-hsr-public-theme');
+        if(current===designVersion&&(saved==='dark'||saved==='light')) t=saved;
+        else{
+          localStorage.setItem('smart-hsr-public-theme','light');
+          localStorage.setItem(designKey,designVersion);
+        }
+      }catch(e){}
       setTheme(t);
       b.addEventListener('click',()=>setTheme(document.documentElement.dataset.publicTheme==='dark'?'light':'dark'));
     }
