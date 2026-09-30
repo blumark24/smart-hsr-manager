@@ -285,6 +285,45 @@ html[data-theme="light"] .submit{font-family:"Readex Pro","IBM Plex Sans Arabic"
   html[data-theme="light"] .visual .twin{height:138px}
 }
 </style>
+
+<style id="smart-hsr-cloud-night-v2">
+/* Workforce night mode is the dark counterpart of the light operational twin, not the legacy navy theme. */
+html[data-theme="dark"]{
+  --ink:#F3FBF7;--muted:#A9BDB4;--bg:#03130E;--bg2:#08241A;
+  --glass:rgba(7,35,25,.72);--glass2:rgba(8,45,31,.9);
+  --line:rgba(143,224,176,.14);--line2:rgba(143,224,176,.26);
+  --green:#8FE0B0;--green-deep:#4EBF82;--blue:#7FD5CD;--cyan:#64CFC7;
+  --input:rgba(4,28,20,.82);
+}
+html[data-theme="dark"] body{background:linear-gradient(145deg,#03130E 0%,#08241A 55%,#03120D 100%)}
+html[data-theme="dark"] .frame{background:#061D15;border-color:rgba(143,224,176,.10)}
+html[data-theme="dark"] .bar{
+  margin:14px 14px 0;height:72px;border:1px solid rgba(143,224,176,.12);border-radius:20px;
+  background:linear-gradient(180deg,rgba(12,56,40,.8),rgba(6,35,25,.74));
+}
+html[data-theme="dark"] .visual{
+  color:#F3FBF7;
+  background:
+    radial-gradient(78% 72% at 44% 48%,rgba(143,224,176,.10),transparent 58%),
+    linear-gradient(145deg,#0A4330 0%,#073324 58%,#04221A 100%);
+}
+html[data-theme="dark"] .visual .hero h1{color:#fff}
+html[data-theme="dark"] .visual .hero p{color:rgba(255,255,255,.76)}
+html[data-theme="dark"] .visual .kicker{color:#8FE0B0}
+html[data-theme="dark"] .visual .twin{
+  border-color:rgba(143,224,176,.14);background:rgba(255,255,255,.045);
+}
+html[data-theme="dark"] .visual .twin-meta span,html[data-theme="dark"] .visual-foot{color:rgba(255,255,255,.68)}
+html[data-theme="dark"] .visual .pills i{color:rgba(255,255,255,.76);border-color:rgba(143,224,176,.13);background:rgba(255,255,255,.04)}
+html[data-theme="dark"] .auth{
+  background:linear-gradient(180deg,#0A241B,#061A13);border-inline-start:1px solid rgba(143,224,176,.08)
+}
+html[data-theme="dark"] .auth input{background:#0B2B20;border-color:rgba(143,224,176,.12);color:#fff}
+html[data-theme="dark"] .note{background:rgba(143,224,176,.035);border-color:rgba(143,224,176,.08)}
+html[data-theme="dark"] .submit{background:linear-gradient(180deg,#15965B,#0E6E43)!important}
+@media(max-width:900px){html[data-theme="dark"] .bar{margin:9px 9px 0}}
+@media(max-width:600px){html[data-theme="dark"] .bar{margin:7px 7px 0;border-radius:17px}}
+</style>
 </head>
 <body>
 <main class="frame">
@@ -372,7 +411,7 @@ html[data-theme="light"] .submit{font-family:"Readex Pro","IBM Plex Sans Arabic"
 
   const key='smartHSRLoginTheme';
   const designKey='smartHSRCloudDesignVersion';
-  const designVersion='r2-r3-v1';
+  const designVersion='r2-r3-v2';
   const media=q=>{try{return window.matchMedia?window.matchMedia(q).matches:false}catch(_){return false}};
   let saved=null;
   try{
