@@ -17,7 +17,7 @@ test('Cloud R2/R3 release opens all public access surfaces in light mode first',
   for (const source of [gateway, workforce, leadership]) {
     assert.match(source, /<html lang="ar" dir="rtl" data-theme="light">/);
     assert.match(source, /smartHSRCloudDesignVersion/);
-    assert.match(source, /designVersion='r2-r3-v1'/);
+    assert.match(source, /designVersion='r2-r3-v2'/);
     assert.match(source, /saved='light'/);
     assert.match(source, /dataset\.theme=saved==='dark'\?'dark':'light'/);
   }
@@ -41,6 +41,20 @@ test('Workforce and leadership retain distinct Cloud Design spatial semantics', 
   assert.match(leadership, /Leadership = deep green command layer/);
   assert.match(leadership, /linear-gradient\(145deg,#0B4D35 0%,#073324 58%,#04221A 100%\)/);
   assert.match(leadership, /MUNICIPAL COMMAND ACCESS/);
+});
+
+test('Cloud Design mobile compositions match approved 3g/3h/3j structure', () => {
+  assert.match(gateway, /approved 3g composition/);
+  assert.match(gateway, /بوابة الدخول/);
+  assert.match(gateway, /الموحّدة/);
+
+  assert.match(leadership, /approved 3h/);
+  assert.match(leadership, /COMMAND ACCESS · L4/);
+  assert.match(leadership, /border-radius:32px 32px 0 0/);
+
+  assert.match(workforce, /approved 3j/);
+  assert.match(workforce, /WORKSPACE ACCESS/);
+  assert.match(workforce, /مساحة العمل المؤسسية/);
 });
 
 test('Cloud Design typography and responsive release contract are present', () => {

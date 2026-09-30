@@ -712,7 +712,7 @@
       b.id='smartSafeTheme'; b.type='button'; b.setAttribute('aria-label','تبديل الوضع النهاري والليلي');
       document.body.appendChild(b);
       const designKey='smart-hsr-public-cloud-version';
-      const designVersion='r2-r3-v1';
+      const designVersion='r2-r3-v2';
       let t='light';
       try{
         const current=localStorage.getItem(designKey);
