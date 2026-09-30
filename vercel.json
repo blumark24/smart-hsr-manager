@@ -1,5 +1,49 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "microphone=(), payment=(), usb=()"
+        }
+      ]
+    },
+    {
+      "source": "/(Home|manager-login|login).html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/report/root-cause",
@@ -10,4 +54,4 @@
       "destination": "/api/report?kind=work-order"
     }
   ]
-}
+}\n

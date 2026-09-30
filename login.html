@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light">
+<meta charset="utf-8">\n<meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light">
 <title>بوابة الموظفين والمستخدمين | SMART HSR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@600;700&display=swap" rel="stylesheet">
@@ -159,7 +159,76 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.twin{transform:none!important}}
 </style>
-</head>
+
+<style id="smart-hsr-login-v2">
+:root{
+  --gov-ink:#0E1A24;--gov-muted:#56626C;--gov-bg:#F3F6F4;--gov-paper:#FFFFFF;
+  --gov-green:#0C842B;--gov-green-deep:#073324;--gov-green-mid:#0E5A3B;--gov-line:rgba(14,26,36,.08);
+}
+html[data-theme="light"] body{
+  color:var(--gov-ink);
+  background:
+    radial-gradient(75% 55% at 50% 22%,#fff 0%,#F3F6F4 62%,#E4EBE7 100%);
+}
+html[data-theme="light"] .frame{
+  background:rgba(243,246,244,.88);border-color:rgba(255,255,255,.9);
+  box-shadow:0 60px 100px -50px rgba(14,26,36,.45);
+}
+html[data-theme="light"] .bar{
+  background:linear-gradient(180deg,rgba(250,252,251,.86),rgba(243,246,244,.70));
+  border-color:rgba(14,26,36,.07);backdrop-filter:blur(20px) saturate(140%);
+}
+html[data-theme="light"] .brand b,html[data-theme="light"] .hero h1,html[data-theme="light"] .auth h2{color:#0E1A24}
+html[data-theme="light"] .brand span,html[data-theme="light"] .hero p,html[data-theme="light"] .auth p,
+html[data-theme="light"] .note,html[data-theme="light"] .switch{color:#56626C}
+html[data-theme="light"] .back,html[data-theme="light"] .theme{
+  background:rgba(255,255,255,.72);border-color:rgba(14,26,36,.09);color:#0E1A24;
+}
+html[data-theme="light"] .auth input{
+  background:#fff;border-color:rgba(14,26,36,.11);color:#0E1A24;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .auth input:focus{border-color:rgba(12,132,43,.55);box-shadow:0 0 0 4px rgba(12,132,43,.10)}
+html[data-theme="light"] .submit{
+  background:linear-gradient(180deg,#119A36,#0C842B)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 16px 30px -16px rgba(12,132,43,.7)!important;
+}
+html[data-theme="light"] .badge{
+  color:#073324!important;background:rgba(7,51,36,.06)!important;border-color:rgba(7,51,36,.12)!important;
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+<style id="smart-hsr-portal-v2">
+html[data-theme="light"] .portal-grid{grid-template-columns:minmax(0,1fr) minmax(430px,560px);background:#F3F6F4}
+html[data-theme="light"] .visual{
+  border:0;color:#fff;padding:54px 58px 40px;
+  background:
+    radial-gradient(80% 65% at 60% 30%,rgba(143,224,176,.19),transparent 58%),
+    linear-gradient(145deg,#0B4D35 0%,#073324 58%,#04221A 100%);
+}
+html[data-theme="light"] .visual .hero h1,html[data-theme="light"] .visual .kicker{color:#fff}
+html[data-theme="light"] .visual .hero p{color:rgba(255,255,255,.76)}
+html[data-theme="light"] .visual .twin{border-color:rgba(255,255,255,.13);background:rgba(255,255,255,.055);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+html[data-theme="light"] .visual .twin-meta span,html[data-theme="light"] .visual-foot{color:rgba(255,255,255,.68)}
+html[data-theme="light"] .visual .pills i{color:rgba(255,255,255,.72);border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.05)}
+html[data-theme="light"] .auth{padding:58px 58px 42px;background:linear-gradient(180deg,#FFFFFF,#F7F9F8);border-inline-start:1px solid rgba(14,26,36,.06)}
+html[data-theme="light"] .auth-head{margin-bottom:34px}
+html[data-theme="light"] .auth-head h2{font-size:30px}
+html[data-theme="light"] .field label{color:#2E3A44}
+html[data-theme="light"] .password-toggle{color:#073324}
+html[data-theme="light"] .note{border-color:rgba(14,26,36,.08);background:rgba(14,26,36,.025)}
+html[data-theme="light"] .switch a{color:#073324}
+@media(max-width:900px){
+  html[data-theme="light"] .portal-grid{grid-template-columns:1fr}
+  html[data-theme="light"] .visual{min-height:390px;padding:36px 32px 28px}
+  html[data-theme="light"] .auth{padding:38px 30px 34px;border:0}
+}
+@media(max-width:600px){
+  html[data-theme="light"] .visual{min-height:300px;padding:28px 20px 22px}
+  html[data-theme="light"] .visual .twin{height:150px}
+  html[data-theme="light"] .auth{padding:30px 18px 28px}
+}
+</style>\n</head>
 <body>
 <main class="frame">
   <header class="bar">
@@ -214,7 +283,7 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var
     <section class="auth">
       <div class="auth-head"><div><h2>تسجيل الدخول المؤسسي</h2><p>استخدم حسابك المعتمد وسيتم توجيهك تلقائيًا.</p></div><span class="badge">اتصال مؤسسي آمن</span></div>
       <form id="loginForm" autocomplete="on">
-        <div class="field"><label for="email">البريد الإلكتروني المعتمد</label><input id="email" type="email" inputmode="email" autocomplete="username" placeholder="name@organization.sa" required></div>
+        <div class="field"><label for="email">البريد الإلكتروني المعتمد</label><input id="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@organization.sa" required></div>
         <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required><button class="password-toggle" type="button" data-password-toggle="password" aria-pressed="false">إظهار</button></div></div>
         <button id="loginButton" type="submit" class="submit">دخول مساحة العمل</button>
       </form>
@@ -337,7 +406,7 @@ function showMsg(text, type='') {
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
+  const password = document.getElementById('password').value;
 
   if (!email || !password) {
     showMsg('الرجاء إدخال البريد وكلمة المرور.', 'error');
