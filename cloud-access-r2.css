@@ -1,0 +1,133 @@
+:root{
+  --ink:#0E1A24;--muted:#56626C;--bg:#F3F6F4;--paper:#fff;
+  --green:#0C842B;--green-dark:#073324;--green-mid:#0E5A3B;--mint:#8FE0B0;
+  --line:rgba(14,26,36,.08);--line-strong:rgba(14,26,36,.12);
+  --shadow:0 60px 100px -50px rgba(14,26,36,.5);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--ink);background:#e9efeb}
+a{color:inherit;text-decoration:none}button,input{font:inherit}
+.cd-shell{width:min(1440px,calc(100vw - 32px));min-height:min(900px,calc(100dvh - 32px));margin:16px auto;position:relative;overflow:hidden;border-radius:18px;background:var(--bg);box-shadow:var(--shadow)}
+.cd-network{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.cd-network svg{width:100%;height:100%;display:block}
+.cd-network .node{transform-box:fill-box;transform-origin:center;animation:cdPulse 3.8s ease-in-out infinite}
+.cd-network .node:nth-child(2n){animation-delay:.7s}
+@keyframes cdPulse{0%,100%{opacity:.55;transform:scale(.88)}50%{opacity:1;transform:scale(1.12)}}
+.cd-noise{position:absolute;inset:0;pointer-events:none;opacity:.18;background-image:
+ radial-gradient(circle at 20% 10%,rgba(14,26,36,.05) 0 1px,transparent 1.5px),
+ radial-gradient(circle at 80% 70%,rgba(14,26,36,.04) 0 1px,transparent 1.5px);
+ background-size:9px 9px,13px 13px}
+
+/* GATEWAY — source 3a / 3g */
+.gateway-page{background:radial-gradient(70% 80% at 50% 58%,#fff 0%,#F3F6F4 55%,#E4EBE7 100%)}
+.gateway-page .cd-network{opacity:.62}
+.gateway-page:after{content:"";position:absolute;right:0;left:0;bottom:0;height:54%;background:linear-gradient(180deg,rgba(243,246,244,0),rgba(243,246,244,.93) 43%,#F3F6F4);pointer-events:none}
+.gateway-header{position:absolute;z-index:5;top:16px;right:16px;left:16px;height:72px;padding:0 22px;border-radius:20px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(250,252,251,.80),rgba(243,246,244,.64));backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);border:1px solid rgba(255,255,255,.88);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 1px rgba(14,26,36,.05),0 18px 40px -24px rgba(14,26,36,.35)}
+.cd-logo{height:46px;width:auto;display:block}
+.gateway-tools{display:flex;gap:18px;align-items:center;color:#56626C;font-size:14px;font-weight:500}
+.gateway-tools .divider{width:1px;height:18px;background:rgba(14,26,36,.14)}
+.gateway-tools .active{color:#0E1A24}
+.gateway-hero{position:absolute;z-index:4;top:404px;right:0;left:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.cd-kicker{font:500 12px "IBM Plex Mono",monospace;letter-spacing:.18em;color:var(--green)}
+.gateway-hero h1{margin:0;font:600 52px/1.2 "Readex Pro","IBM Plex Sans Arabic",sans-serif;letter-spacing:-.01em}
+.gateway-hero p{margin:0;font-size:18px;color:#2E3A44}
+.gateway-cards{position:absolute;z-index:4;top:580px;right:0;left:0;display:flex;justify-content:center;gap:20px}
+.gateway-card{width:min(460px,42vw);padding:26px 28px;border-radius:26px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.82));border:1px solid #fff;box-shadow:0 0 0 1px rgba(14,26,36,.06),0 30px 60px -30px rgba(7,51,36,.45);display:flex;flex-direction:column;gap:14px;color:#0E1A24;transition:transform .3s ease,box-shadow .3s ease}
+.gateway-card:hover{transform:translateY(-5px);box-shadow:0 0 0 1px rgba(7,51,36,.18),0 40px 70px -30px rgba(7,51,36,.55)}
+.gateway-card-top{display:flex;justify-content:space-between;align-items:center}
+.gateway-card-code{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.16em}
+.gateway-card.leadership .gateway-card-code{color:var(--green-dark)}
+.gateway-card.workforce .gateway-card-code{color:var(--green)}
+.gateway-dot{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 4px rgba(12,132,43,.12)}
+.leadership .gateway-dot{background:var(--green-dark)}
+.workforce .gateway-dot{background:var(--green)}
+.gateway-card h2{margin:0;font:600 26px "Readex Pro","IBM Plex Sans Arabic",sans-serif}
+.gateway-card p{margin:0;font-size:14px;line-height:1.7;color:#56626C}
+.gateway-cta{height:54px;margin-top:4px;padding:0 22px;display:flex;align-items:center;justify-content:space-between;border-radius:16px;color:#fff;font:500 16px "Readex Pro","IBM Plex Sans Arabic",sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 14px 28px -14px rgba(7,51,36,.7)}
+.leadership .gateway-cta{background:linear-gradient(180deg,#0E5A3B,#073324)}
+.workforce .gateway-cta{background:linear-gradient(180deg,#119A36,#0C842B)}
+.gateway-foot{position:absolute;z-index:4;bottom:26px;right:0;left:0;display:flex;justify-content:center;gap:10px;align-items:center;font-size:13px;color:#56626C}
+.gateway-foot i{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.gateway-mobile-en{display:none}
+
+/* LOGIN — source 3b / 3c / 3h / 3j */
+.login-page{display:grid;grid-template-columns:minmax(480px,600px) minmax(0,1fr);background:#F3F6F4}
+.login-form-panel{grid-column:1;padding:48px 72px 40px;display:flex;flex-direction:column;position:relative;background:#F3F6F4}
+.login-panel-top{display:flex;align-items:center;justify-content:space-between}
+.login-panel-top .cd-logo{height:48px}
+.lang-switch{font-size:14px;color:#56626C;white-space:nowrap}.lang-switch b{color:#0E1A24;font-weight:500}
+.login-copy{margin-top:auto}
+.login-copy .cd-kicker{text-align:right}
+.login-copy h1{margin:10px 0 0;font:600 46px/1.2 "Readex Pro","IBM Plex Sans Arabic",sans-serif;letter-spacing:-.01em}
+.login-copy p{margin:10px 0 0;font-size:17px;line-height:1.75;color:#2E3A44}
+.login-form{display:flex;flex-direction:column;gap:16px;margin-top:30px}
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-size:14px;font-weight:500;color:#2E3A44}
+.field input{width:100%;height:56px;border-radius:14px;border:1px solid rgba(14,26,36,.12);background:#fff;padding:0 16px;font-size:16px;color:#0E1A24;outline:none;box-shadow:inset 0 1px 2px rgba(14,26,36,.04)}
+.field input:focus{border-color:rgba(12,132,43,.58);box-shadow:0 0 0 4px rgba(12,132,43,.11)}
+.input-wrap{position:relative}.input-wrap input{padding-left:76px}
+.password-toggle{position:absolute;left:10px;top:50%;transform:translateY(-50%);height:38px;padding:0 10px;border:0;background:transparent;color:var(--green);cursor:pointer;font-size:13px;font-weight:500}
+.submit{height:58px;border:0;border-radius:16px;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:center;font:500 17px "Readex Pro","IBM Plex Sans Arabic",sans-serif;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 18px 36px -16px rgba(12,132,43,.7)}
+.workforce-login .submit{background:linear-gradient(180deg,#119A36,#0C842B)}
+.leadership-login .submit{background:linear-gradient(180deg,#0E5A3B,#073324)}
+.submit:disabled{opacity:.56;cursor:not-allowed}
+.login-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#56626C}
+.login-meta-row a{font-weight:500;color:var(--green)}
+.remember{display:flex;align-items:center;gap:9px}.remember-box{width:20px;height:20px;border-radius:6px;border:1.5px solid rgba(14,26,36,.22);background:#fff}
+.leadership-login .remember-box{background:#073324;border-color:#073324;position:relative}.leadership-login .remember-box:after{content:"✓";position:absolute;inset:0;color:#fff;font-size:13px;display:grid;place-items:center}
+.role-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}.role-pills span{padding:7px 12px;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(14,26,36,.08);font-size:13px;color:#2E3A44}
+.login-footer{margin-top:auto;padding-top:24px;display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;color:#56626C;border-top:1px solid rgba(14,26,36,.08)}
+.login-footer a{color:#2E3A44;white-space:nowrap}
+.secure-status{display:flex;align-items:center;gap:8px}.secure-status i{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.message{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.6}.message:empty{display:none}.message.error{background:#fff1f3;color:#9d273b;border:1px solid #f5c7d0}.message.success{background:#eefaf2;color:#0a6a35;border:1px solid #c9ead6}.hidden{display:none!important}
+.note{margin-top:12px;font-size:12px;line-height:1.7;color:#56626C}.switch{margin-top:8px;font-size:12px;color:#56626C}.switch a{color:var(--green);font-weight:600}
+.sso-visual{height:54px;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:16px;background:rgba(255,255,255,.78);border:1px solid #fff;box-shadow:0 0 0 1px rgba(14,26,36,.08);font:500 15px "Readex Pro","IBM Plex Sans Arabic",sans-serif;color:#2E3A44;opacity:.58;cursor:not-allowed}
+.login-visual{grid-column:2;position:relative;margin:16px 16px 16px 0;border-radius:30px;overflow:hidden}
+.workforce-login .login-visual{background:radial-gradient(80% 80% at 45% 50%,#fff 0%,#EEF3F0 60%,#E1E9E4 100%)}
+.leadership-login .login-visual{background:radial-gradient(80% 80% at 45% 55%,#0B4D35 0%,#073324 50%,#04221A 100%);color:#fff}
+.login-visual .cd-network{opacity:.78}
+.visual-topline{position:absolute;z-index:2;top:28px;right:30px;left:30px;display:flex;justify-content:space-between;align-items:center;font:500 11px "IBM Plex Mono",monospace;letter-spacing:.16em}
+.workforce-login .visual-topline{color:#0C842B}.workforce-login .visual-topline span:last-child{color:#56626C}
+.leadership-login .visual-topline{color:#8FE0B0}.leadership-login .visual-topline span:last-child{color:rgba(255,255,255,.76)}
+.visual-card{position:absolute;z-index:2;bottom:30px;right:30px;left:30px;border-radius:22px;padding:20px 22px;backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%)}
+.workforce-login .visual-card{display:grid;grid-template-columns:repeat(3,1fr);padding:0;background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.66));border:1px solid #fff;box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(14,26,36,.05),0 26px 50px -26px rgba(14,26,36,.4)}
+.workforce-login .visual-card div{padding:20px 22px;display:flex;flex-direction:column;gap:5px;border-left:1px solid rgba(14,26,36,.07)}.workforce-login .visual-card div:last-child{border-left:0}
+.workforce-login .visual-card small{font:500 11px "IBM Plex Mono";color:#0C842B}.workforce-login .visual-card b{font:600 16px "Readex Pro"}.workforce-login .visual-card span{font-size:13px;color:#56626C}
+.leadership-login .visual-card{left:auto;width:340px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 30px 60px -30px rgba(0,0,0,.5)}
+.leadership-login .visual-card b{font:600 20px "Readex Pro"}.leadership-login .visual-card span{display:block;margin-top:6px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.80)}
+
+@media(max-width:900px){
+  .cd-shell{width:100%;min-height:100dvh;margin:0;border-radius:0}
+  .login-page{display:block;position:relative}
+  .login-visual{position:absolute;z-index:1;top:0;right:0;left:0;height:276px;margin:0;border-radius:0}
+  .login-form-panel{position:absolute;z-index:3;top:276px;right:0;left:0;min-height:calc(100dvh - 276px);padding:28px 22px 30px;border-radius:32px 32px 0 0;background:linear-gradient(180deg,#fff,#F6F8F7);box-shadow:0 -24px 50px -24px rgba(14,26,36,.35);overflow:auto}
+  .leadership-login .login-form-panel{box-shadow:0 -24px 50px -24px rgba(0,0,0,.5)}
+  .login-panel-top{margin-top:2px}.login-panel-top .cd-logo{height:40px}.lang-switch{display:none}
+  .login-copy{margin-top:18px}.login-copy .cd-kicker{display:none}
+  .login-copy h1{font-size:28px;line-height:1.25}.login-copy p{font-size:14px;line-height:1.7;margin-top:6px}
+  .login-form{margin-top:18px;gap:12px}.field label{font-size:13px}.field input{height:56px;border-radius:16px}
+  .login-footer{display:none}.role-pills{display:none}.note{font-size:11.5px}.switch{font-size:11.5px}
+  .visual-card{display:none!important}
+  .visual-topline{top:58px;right:16px;left:16px;font-size:10px}
+  .login-visual .cd-network svg{transform:scale(1.15)}
+}
+@media(max-width:600px){
+  body{background:#0E1A24}
+  .gateway-page{width:100%;min-height:100dvh;margin:0;border-radius:0;background:radial-gradient(90% 50% at 50% 26%,#fff,#EDF2EF 60%,#E3EAE6)}
+  .gateway-page .cd-network{height:56%;opacity:.68}
+  .gateway-page:after{height:58%;background:linear-gradient(180deg,rgba(243,246,244,0),rgba(243,246,244,.88) 25%,#F3F6F4 58%)}
+  .gateway-header{top:14px;right:14px;left:14px;height:60px;padding:0 10px 0 14px}
+  .gateway-header .cd-logo{height:40px}.gateway-tools{display:none}.gateway-mobile-en{display:flex;width:44px;height:44px;align-items:center;justify-content:center;border-radius:12px;background:#fff;box-shadow:0 0 0 1px rgba(14,26,36,.08);font:500 13px "IBM Plex Sans"}
+  .gateway-hero{top:43%;right:24px;left:24px;text-align:right;align-items:flex-start;gap:8px}
+  .gateway-hero .cd-kicker{font-size:10px;letter-spacing:.16em}.gateway-hero h1{font-size:34px;line-height:1.25}.gateway-hero p{font-size:15px}
+  .gateway-cards{top:auto;right:16px;left:16px;bottom:max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
+  .gateway-card{width:100%;padding:18px;border-radius:24px;display:grid;grid-template-columns:minmax(0,1fr) 52px;grid-template-rows:auto auto auto;gap:4px 14px;align-items:center}
+  .gateway-card-top{display:block;grid-column:1;grid-row:1}.gateway-dot{display:none}.gateway-card-code{font-size:10px;letter-spacing:.14em}.gateway-card h2{grid-column:1;grid-row:2;font-size:19px}.gateway-card p{grid-column:1;grid-row:3;font-size:13px;line-height:1.45}
+  .gateway-cta{grid-column:2;grid-row:1/4;width:52px;height:52px;margin:0;padding:0;display:grid;place-items:center;border-radius:16px;font-size:0}.gateway-cta span:last-child{font-size:20px}
+  .gateway-foot{display:none}
+}
+@media(max-width:600px) and (max-height:760px){
+  .gateway-hero{top:37%}.gateway-card{padding:14px}.gateway-cards{gap:9px}.gateway-card p{font-size:12px}.gateway-card h2{font-size:18px}
+  .login-visual{height:228px}.login-form-panel{top:228px;min-height:calc(100dvh - 228px);padding-top:22px}.login-copy{margin-top:10px}.login-copy h1{font-size:25px}.login-form{margin-top:12px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}

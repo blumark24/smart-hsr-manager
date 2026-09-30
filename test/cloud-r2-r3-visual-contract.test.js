@@ -11,63 +11,65 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const gateway = read('Home.html');
 const workforce = read('login.html');
 const leadership = read('manager-login.html');
-const publicUi = read('public-enhancements.js');
+const css = read('cloud-access-r2.css');
 
-test('Cloud R2/R3 release opens all public access surfaces in light mode first', () => {
-  for (const source of [gateway, workforce, leadership]) {
-    assert.match(source, /<html lang="ar" dir="rtl" data-theme="light">/);
-    assert.match(source, /smartHSRCloudDesignVersion/);
-    assert.match(source, /designVersion='r2-r3-v2'/);
-    assert.match(source, /saved='light'/);
-    assert.match(source, /dataset\.theme=saved==='dark'\?'dark':'light'/);
-  }
-  assert.match(publicUi, /smart-hsr-public-cloud-version/);
-  assert.match(publicUi, /let t='light'/);
-});
-
-test('Gateway uses the living spatial Cloud Design layer without changing routes', () => {
-  assert.match(gateway, /smart-hsr-cloud-r3-final/);
-  assert.match(gateway, /LIVING MUNICIPAL DIGITAL TWIN/);
+test('Gateway matches approved Cloud Design 3g composition', () => {
+  assert.match(gateway, /data-screen-label="3g Mobile Gateway"/);
+  assert.match(gateway, /UNIFIED ACCESS GATEWAY/);
+  assert.match(gateway, /بوابة الدخول<br>الموحّدة/);
+  assert.match(gateway, /01 · LEADERSHIP/);
+  assert.match(gateway, /02 · WORKSPACE/);
+  assert.match(gateway, /gateway-mobile-en">EN</);
   assert.match(gateway, /href="manager-login\.html"/);
   assert.match(gateway, /href="login\.html"/);
   assert.doesNotMatch(gateway, /owner-login\.html/);
+  assert.doesNotMatch(gateway, /data-theme-toggle/);
 });
 
-test('Workforce and leadership retain distinct Cloud Design spatial semantics', () => {
-  assert.match(workforce, /Workforce = light operational Digital Twin/);
-  assert.match(workforce, /#EEF3F0 60%,#E1E9E4 100%/);
-  assert.match(workforce, /INSTITUTIONAL WORKSPACE ACCESS/);
-
-  assert.match(leadership, /Leadership = deep green command layer/);
-  assert.match(leadership, /linear-gradient\(145deg,#0B4D35 0%,#073324 58%,#04221A 100%\)/);
-  assert.match(leadership, /MUNICIPAL COMMAND ACCESS/);
-});
-
-test('Cloud Design mobile compositions match approved 3g/3h/3j structure', () => {
-  assert.match(gateway, /approved 3g composition/);
-  assert.match(gateway, /بوابة الدخول/);
-  assert.match(gateway, /الموحّدة/);
-
-  assert.match(leadership, /approved 3h/);
+test('Leadership login matches approved Cloud Design 3h composition', () => {
+  assert.match(leadership, /data-screen-label="3h Mobile Leadership"/);
+  assert.match(leadership, /01 · LEADERSHIP ACCESS/);
   assert.match(leadership, /COMMAND ACCESS · L4/);
-  assert.match(leadership, /border-radius:32px 32px 0 0/);
+  assert.match(leadership, /مركز القيادة البلدية/);
+  assert.match(leadership, /class="sso-visual"/);
+  assert.match(leadership, /id="leadershipLoginButton"/);
+  assert.match(leadership, /id="loginForm"/);
+});
 
-  assert.match(workforce, /approved 3j/);
-  assert.match(workforce, /WORKSPACE ACCESS/);
+test('Workforce login matches approved Cloud Design 3j composition', () => {
+  assert.match(workforce, /data-screen-label="3j Mobile Users"/);
+  assert.match(workforce, /02 · WORKSPACE ACCESS/);
+  assert.match(workforce, /OPERATIONS LAYER · L3/);
   assert.match(workforce, /مساحة العمل المؤسسية/);
+  assert.match(workforce, /id="loginButton"/);
+  assert.match(workforce, /id="loginForm"/);
 });
 
-test('Cloud Design typography and responsive release contract are present', () => {
-  for (const source of [gateway, workforce, leadership]) {
-    assert.match(source, /Readex\+Pro/);
-    assert.match(source, /@media\(max-width:600px\)/);
-    assert.match(source, /prefers-reduced-motion:reduce/);
-  }
+test('Exact Cloud access stylesheet locks source geometry and responsive sheets', () => {
+  assert.match(css, /\.gateway-header\{[^}]*top:16px/);
+  assert.match(css, /\.gateway-hero\{[^}]*top:404px/);
+  assert.match(css, /\.gateway-cards\{[^}]*top:580px/);
+  assert.match(css, /grid-template-columns:minmax\(480px,600px\) minmax\(0,1fr\)/);
+  assert.match(css, /border-radius:32px 32px 0 0/);
+  assert.match(css, /@media\(max-width:600px\)/);
+  assert.match(css, /gateway-mobile-en/);
+  assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
 });
 
-test('Visual patch does not alter secure portal session contracts', () => {
+test('Secure portal session contracts remain present behind rebuilt UI', () => {
   assert.match(workforce, /PORTAL_CONTEXT_KEY\s*=\s*['"]smartHSRPortalContext['"]/);
   assert.match(workforce, /portal:\s*['"]workforce['"]/);
+  assert.doesNotMatch(workforce, /smart-hsr-manager-session/);
+
   assert.match(leadership, /initializeApp\(firebaseConfig, ['"]smart-hsr-manager-session['"]\)/);
   assert.match(leadership, /portal:\s*['"]leadership['"]/);
+  assert.doesNotMatch(leadership, /fieldAuth/);
+});
+
+test('No public owner entry or legacy theme state survives exact rebuild', () => {
+  for (const source of [gateway, workforce, leadership]) {
+    assert.doesNotMatch(source, /owner-login\.html/);
+    assert.doesNotMatch(source, /smartHSRLoginTheme/);
+    assert.doesNotMatch(source, /data-theme-toggle/);
+  }
 });
