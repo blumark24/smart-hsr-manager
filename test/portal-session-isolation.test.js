@@ -49,3 +49,30 @@ test('manager shell binds auth namespace, role and organization to selected port
   assert.match(source, /markerOrg === context\.organizationId/);
   assert.match(source, /where\(['"]organizationId['"], ['"]==['"], context\.organizationId\)/);
 });
+
+
+test('gateway documents have normalized markup and hardened response policy', () => {
+  const pages = [read('Home.html'), read('login.html'), read('manager-login.html')];
+  for (const source of pages) {
+    assert.doesNotMatch(source, /<meta charset="utf-8">\\n/);
+    assert.doesNotMatch(source, /<\/style>\\n<\/head>/);
+  }
+
+  const vercel = JSON.parse(read('vercel.json'));
+  const globalRule = vercel.headers.find(rule => rule.source === '/(.*)');
+  assert.ok(globalRule);
+  assert.ok(globalRule.headers.some(header =>
+    header.key === 'X-Permitted-Cross-Domain-Policies' && header.value === 'none'
+  ));
+
+  for (const route of ['/Home.html', '/login.html', '/manager-login.html']) {
+    const rule = vercel.headers.find(item => item.source === route);
+    assert.ok(rule, `missing hardened headers for ${route}`);
+    const headerMap = Object.fromEntries(rule.headers.map(header => [header.key, header.value]));
+    assert.match(headerMap['Cache-Control'] || '', /no-store/);
+    assert.equal(headerMap['Cross-Origin-Opener-Policy'], 'same-origin');
+    assert.match(headerMap['Content-Security-Policy'] || '', /frame-ancestors 'none'/);
+    assert.match(headerMap['Content-Security-Policy'] || '', /form-action 'self'/);
+    assert.match(headerMap['Permissions-Policy'] || '', /geolocation=\(\)/);
+  }
+});
