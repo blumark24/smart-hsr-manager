@@ -735,7 +735,7 @@
 
       <div style="display:flex;align-items:center;gap:11px">
         <div style="text-align:right;display:var(--brandTxt,block);padding-right:11px;border-right:1px solid var(--div,rgba(122,164,224,0.14))">
-          <div style="font-size:13px;font-weight:700;color:var(--hdrTx,#ffffff)">إدارة الحصر الميداني</div>
+          <div style="font-size:13px;font-weight:700;color:var(--hdrTx,#ffffff)">{{ productAreaTitle }}</div>
           <div style="font-size:9.5px;color:var(--hdrTx3,#c7e0d4);margin-top:2px">{{ orgName }}</div>
         </div>
         <div style="display:flex;align-items:center;gap:9px">
@@ -783,16 +783,16 @@
         <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);text-align:center;margin-bottom:9px">المنتج النشط</div>
         <div class="dh-product-card" style="padding:10px;border-radius:11px;background:var(--sbSunk,rgba(11,18,32,0.55));border:1px solid var(--sbDiv,rgba(122,164,224,0.13))">
           <div style="display:flex;align-items:center;gap:7px">
-            <span style="flex:1;font-size:11.5px;font-weight:600;color:var(--sbTx,#e9f1fb)">التشوه البصري</span>
+            <span style="flex:1;font-size:11.5px;font-weight:600;color:var(--sbTx,#e9f1fb)">{{ activeProductName }}</span>
             <span style="font-size:9px;padding:2px 7px;border-radius:6px;color:{{ demoCol }};background:{{ demoBg }}">مفعّل</span>
           </div>
-          <div style="font-size:10px;color:var(--thTx,#7d8ea6);margin-top:5px">إدارة الحصر الميداني</div>
+          <div style="font-size:10px;color:var(--thTx,#7d8ea6);margin-top:5px">{{ activeProductArea }}</div>
         </div>
       </div>
 
       <div style="display:var(--sbLabel,block);flex:1;min-height:20px"></div>
       <div style="display:var(--sbLabel,block);text-align:center;padding-bottom:4px;opacity:.6">
-        <div style="font-size:8.5px;color:var(--tx3,#5f7d9c);letter-spacing:1.3px">SMART HSR · FIELD SURVEY</div>
+        <div style="font-size:8.5px;color:var(--tx3,#5f7d9c);letter-spacing:1.3px">{{ productCode }}</div>
       </div>
     </aside>
 
@@ -1455,7 +1455,7 @@
     <div class="dh-mobile-drawer" role="dialog" aria-modal="true" aria-label="قائمة مركز قيادة القسم" onClick="{{ stop }}" style="position:absolute;top:0;right:0;bottom:0;width:min(286px,86vw);padding:16px;background:var(--drawer,#0a1120);border-left:1px solid var(--cardBd,rgba(122,164,224,0.16));display:flex;flex-direction:column;gap:4px;overflow:auto">
       <div style="display:flex;align-items:center;gap:9px;padding-bottom:11px;margin-bottom:5px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
         <span style="flex:1;font-size:12.5px;font-weight:700;color:var(--tx,#f0f6ff)">{{ roleTitle }}</span>
-        <span style="font-size:9px;color:var(--tx3,#7d8ea6)">إدارة الحصر الميداني</span>
+        <span style="font-size:9px;color:var(--tx3,#7d8ea6)">{{ productAreaTitle }}</span>
       </div>
       <sc-for list="{{ nav }}" as="n" hint-placeholder-count="9">
         <button type="button" class="dh-nav-item" onClick="{{ n.on }}" data-f="1" aria-current="{{ n.current }}" style="display:flex;align-items:center;gap:9px;padding:12px 10px;border-radius:10px;font-size:12.5px;cursor:pointer;color:{{ n.tx }};background:{{ n.bg }};border:1px solid {{ n.bd }}">
@@ -2592,7 +2592,12 @@ class Component extends DCLogic {
   renderVals() {
     const st = this.state, day = st.theme === 'day';
     const gateShow = !!st.authPending || !st.role;
-    const gateMsg = st.authPending ? 'جارٍ التحقق من صلاحية الدخول…' : 'لا تملك صلاحية للوصول إلى إدارة الحصر الميداني.';
+    const mobilityMode = st.runtimeMode === 'mobility';
+    const productAreaTitle = mobilityMode ? 'إدارة حركة السير' : 'إدارة الحصر الميداني';
+    const activeProductName = mobilityMode ? 'الحركة الذكية' : 'التشوه البصري';
+    const activeProductArea = mobilityMode ? 'إدارة حركة السير' : 'إدارة الحصر الميداني';
+    const productCode = mobilityMode ? 'SMART HSR · SMART MOBILITY' : 'SMART HSR · FIELD SURVEY';
+    const gateMsg = st.authPending ? 'جارٍ التحقق من صلاحية الدخول…' : ('لا تملك صلاحية للوصول إلى ' + productAreaTitle + '.');
     const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
     if (st.sb && st.bp !== 'tabP' && st.bp !== 'mob') { vars['--sbW'] = '64px'; vars['--sbLabel'] = 'none'; }
     if (st.role === 'employee') {
@@ -2691,6 +2696,13 @@ class Component extends DCLogic {
     const notifs = [];
 
     const sd = this.screenDef();
+    if (mobilityMode) {
+      if (typeof sd.title === 'string') sd.title = sd.title.replaceAll('إدارة الحصر الميداني','إدارة حركة السير');
+      if (typeof sd.sub === 'string') sd.sub = sd.sub
+        .replaceAll('إدارة الحصر الميداني','إدارة حركة السير')
+        .replaceAll('التوأم الرقمي للحصر الميداني','التوأم الرقمي للحركة الذكية')
+        .replaceAll('المنتج النشط: التشوه البصري','المنتج النشط: الحركة الذكية');
+    }
     const geoWorkspace = st.role === 'dept' && (st.screen === 'deptops' || st.screen === 'map');
     // Sidebar "reference mission" widget: shows the first real in-progress
     // mission, if any — an honest empty state, no fabricated demo mission.
@@ -2705,6 +2717,7 @@ class Component extends DCLogic {
       themeVars: vars, themeName: st.theme, dayActive: day, nightActive: !day,
       mobileNavExpanded: !!st.mobNavOpen, notificationsExpanded: !!st.notifOpen, layersExpanded: !!st.layersOpen, sidebarExpanded: !st.sb,
       orgName: st.orgName || 'اسم البلدية', orgMono: (st.orgName || 'ب').trim().charAt(0) || 'ب',
+      productAreaTitle, activeProductName, activeProductArea, productCode,
       nav: nav, roleTitle: this.roleTitle(), roleSub: this.roleSub(),
       screenTitle: sd.title, screenSub: sd.sub, screenActions: sd.actions || [],
       isOpsLayout: sd.ops === true, hasKpis: !!(sd.kpis && sd.kpis.length), kpis: sd.kpis || [],
