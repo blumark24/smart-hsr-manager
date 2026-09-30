@@ -226,19 +226,41 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var
 </main>
 <script>
 (function(){
-  const key='smartHSRLoginTheme';
-  const saved=localStorage.getItem(key);
-  document.documentElement.dataset.theme=saved||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
-  const theme=document.querySelector('[data-theme-toggle]');
-  const sync=()=>{if(!theme)return;const light=document.documentElement.dataset.theme==='light';theme.textContent=light?'☾':'☀';theme.setAttribute('aria-label',light?'تفعيل الوضع الليلي':'تفعيل الوضع النهاري')};
-  sync();
-  theme?.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;localStorage.setItem(key,next);sync()});
+  window.__smartHSRLoginReady=false;
+  const form=document.getElementById('loginForm');
+  const msg=document.getElementById('msg');
+  const setInitMessage=(text,type='error')=>{if(!msg)return;msg.textContent=text;msg.className='message '+type};
+
+  // Password visibility is deliberately independent from Firebase/theme init.
   document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventListener('click',()=>{
     const input=document.getElementById(btn.dataset.passwordToggle);if(!input)return;
     const show=input.type==='password';input.type=show?'text':'password';btn.textContent=show?'إخفاء':'إظهار';btn.setAttribute('aria-pressed',String(show));
   }));
+
+  // Never leave the form apparently dead if the module/config bootstrap fails.
+  form?.addEventListener('submit',e=>{
+    if(window.__smartHSRLoginReady===true)return;
+    e.preventDefault();
+    setInitMessage('تعذر تهيئة تسجيل الدخول بعد. أعد تحميل الصفحة، وإذا استمرت المشكلة فتحقق من اتصال Preview بخدمة المصادقة.','error');
+  });
+
+  const key='smartHSRLoginTheme';
+  const media=q=>{try{return window.matchMedia?window.matchMedia(q).matches:false}catch(_){return false}};
+  let saved=null;
+  try{saved=localStorage.getItem(key)}catch(_){}
+  document.documentElement.dataset.theme=saved||(media('(prefers-color-scheme: light)')?'light':'dark');
+  const theme=document.querySelector('[data-theme-toggle]');
+  const sync=()=>{if(!theme)return;const light=document.documentElement.dataset.theme==='light';theme.textContent=light?'☾':'☀';theme.setAttribute('aria-label',light?'تفعيل الوضع الليلي':'تفعيل الوضع النهاري')};
+  sync();
+  theme?.addEventListener('click',()=>{
+    const next=document.documentElement.dataset.theme==='light'?'dark':'light';
+    document.documentElement.dataset.theme=next;
+    try{localStorage.setItem(key,next)}catch(_){}
+    sync();
+  });
+
   const twin=document.querySelector('[data-twin]');
-  if(twin&&matchMedia('(pointer:fine)').matches&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+  if(twin&&media('(pointer:fine)')&&!media('(prefers-reduced-motion:reduce)')){
     let raf=0;
     twin.addEventListener('pointermove',e=>{
       if(raf)return;
@@ -286,6 +308,7 @@ const probeApp = initializeApp(firebaseConfig, 'smart-hsr-role-probe');
 const probeAuth = getAuth(probeApp);
 const probeDb = getFirestore(probeApp);
 await setPersistence(probeAuth, inMemoryPersistence);
+window.__smartHSRLoginReady = true;
 const loginButton = document.getElementById('loginButton');
 const msgBox = document.getElementById('msg');
 
