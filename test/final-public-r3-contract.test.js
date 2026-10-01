@@ -67,7 +67,8 @@ test('the previously developed institutional footer replaces the exported navy f
   assert.match(enhancements, /BLUMARK24/);
   assert.match(enhancements, /التطوير والتشغيل التقني/);
   assert.match(enhancements, /© 2026 SMART HSR/);
-  assert.match(enhancements, /FIELD → DATA → OPERATIONS → DECISION/);
+  assert.doesNotMatch(enhancements, /FIELD → DATA → OPERATIONS → DECISION/);
+  assert.doesNotMatch(enhancements, /Arabic · English/);
   assert.match(enhancements, /@media\(max-width:900px\)/);
   assert.match(enhancements, /@media\(max-width:680px\)/);
   assert.match(enhancements, /@media\(max-width:390px\)/);

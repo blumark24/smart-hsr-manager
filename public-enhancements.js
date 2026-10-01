@@ -72,7 +72,6 @@
       #smartSafeFooter .sf-dev{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 20px;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 30px 60px -30px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);font-size:13px;color:rgba(255,255,255,.78)}
       #smartSafeFooter .sf-dev strong{font:600 14px Inter,"IBM Plex Sans",system-ui,sans-serif;letter-spacing:.14em;color:#fff}
       #smartSafeFooter .sf-legal{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:center;padding:24px 0 max(32px,env(safe-area-inset-bottom));border-top:1px solid var(--sf-line);font-size:13px;color:var(--sf-soft)}
-      #smartSafeFooter .sf-legal .sf-tag{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.16em;color:rgba(143,224,176,.82);direction:ltr;unicode-bidi:isolate}
       @media(max-width:1180px){#smartSafeFooter .sf-main{gap:28px 28px}}
       @media(max-width:900px){
         #smartSafeFooter .sf-main{grid-template-columns:1fr 1fr}
@@ -102,11 +101,11 @@
       + '<div class="sf-brand"><span class="sf-logo"><img src="smart-hsr-logo-r2.png" width="360" height="146" alt="SMART HSR"></span><p>منصة بلدية ذكية لإدارة الحصر والتشغيل والبيانات المكانية وربطها بالقرار.</p></div>'
       + '<div class="sf-col"><span class="sf-kicker">PLATFORM</span><h3>المنصة</h3><ul><li><a data-tail="platform" href="#">كيف تعمل</a></li><li><a data-tail="solutions" href="#">الحلول</a></li></ul></div>'
       + '<div class="sf-col"><span class="sf-kicker">ORGANIZATION</span><h3>المؤسسة</h3><ul><li><a data-tail="profile" href="#">الملف التعريفي</a></li><li><a href="Home.html">الدخول المؤسسي</a></li></ul></div>'
-      + '<div class="sf-col"><span class="sf-kicker">IDENTITY</span><h3>SMART HSR</h3><span class="sf-chip">Saudi GovTech</span><span class="sf-chip">Arabic · English</span></div>'
+      + '<div class="sf-col"><span class="sf-kicker">IDENTITY</span><h3>SMART HSR</h3><span class="sf-chip">Saudi GovTech</span></div>'
       + '</div>'
       + '<p class="sf-mark" aria-hidden="true">من الميدان إلى القرار</p>'
       + '<div class="sf-dev"><span>التطوير والتشغيل التقني</span><strong>BLUMARK24</strong></div>'
-      + '<div class="sf-legal"><span>© 2026 SMART HSR. جميع الحقوق محفوظة.</span><span class="sf-tag" dir="ltr">FIELD → DATA → OPERATIONS → DECISION</span></div>'
+      + '<div class="sf-legal"><span>© 2026 SMART HSR. جميع الحقوق محفوظة.</span></div>'
       + '</footer></div>';
   }
 
