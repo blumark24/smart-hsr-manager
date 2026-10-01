@@ -7,13 +7,13 @@
 <meta name="color-scheme" content="light">
 <title>مركز القيادة البلدية | SMART HSR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="cloud-access-r2.css">
 </head>
 <body>
-<main class="cd-shell login-page leadership-login" data-screen-label="3h Mobile Leadership">
+<main class="cd-shell login-page leadership-login" data-screen-label="3b Desktop Leadership · 3e iPad Leadership · 3h Mobile Leadership">
 <section class="login-form-panel">
-  <div class="login-panel-top"><img class="cd-logo" src="Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR"><span class="lang-switch"><b>العربية</b> | EN</span></div>
+  <div class="login-panel-top"><img class="cd-logo" src="smart-hsr-logo-r2.png" width="360" height="146" alt="SMART HSR"><span class="lang-switch"><b>العربية</b> | <span class="en">EN</span></span></div>
   <div class="login-copy">
     <span class="cd-kicker">01 · LEADERSHIP ACCESS</span>
     <h1>مركز القيادة البلدية</h1>
@@ -21,36 +21,38 @@
   </div>
   <form id="loginForm" class="login-form" autocomplete="on">
     <div class="field"><label for="email">البريد الإلكتروني المؤسسي</label><input id="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr" placeholder="name@municipality.gov.sa" required></div>
-    <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••••" required><button class="password-toggle" type="button" data-password-toggle="password" aria-pressed="false">إظهار</button></div></div>
-    <div class="login-meta-row"><span class="remember"><i class="remember-box"></i>تذكّر هذا الجهاز</span><span class="secure-status"><i></i>جلسة مشفّرة</span></div>
+    <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••••" data-ph-m="كلمة المرور" required><button class="password-toggle" type="button" data-password-toggle="password" aria-pressed="false">إظهار</button></div></div>
+    <div class="login-meta-row"><span class="remember"><i class="remember-box"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>تذكّر هذا الجهاز</span><button type="button" class="forgot" id="forgotButton" aria-controls="forgotNote" aria-expanded="false">نسيت كلمة المرور؟</button></div>
+    <p id="forgotNote" class="note" hidden>لإعادة تعيين كلمة المرور تواصل مع إدارة المنصة.</p>
     <button id="leadershipLoginButton" type="submit" class="submit">دخول مركز القيادة</button>
-    <div class="sso-visual" aria-disabled="true">الدخول الموحّد للجهة (SSO)</div>
+    <div class="login-or">أو</div>
+    <button type="button" class="sso-visual" id="ssoButton" aria-controls="ssoNotice" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="#073324" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>الدخول الموحّد للجهة<span class="sso-tag"> (SSO)</span></button>
+    <p id="ssoNotice" class="note" hidden>الدخول الموحّد للجهة غير مفعّل لهذه البلدية بعد. استخدم البريد الإلكتروني وكلمة المرور.</p>
   </form>
   <p id="errorMsg" class="message error hidden" aria-live="polite"></p>
-  <div class="note">لا تمنح صفحة الدخول أي صلاحية. تتم المصادقة أولًا، ثم التحقق من حساب مدير البلدية والجهة قبل إنشاء جلسة مركز القيادة.</div>
-  <div class="switch"><span id="workforcePortalLink" hidden>هذا ليس حساب قيادة؟ <a href="login.html">استخدم بوابة الموظفين والمستخدمين</a></span><span>رئيس قسم أو موظف أو مشرف؟ <a href="login.html">بوابة الموظفين والمستخدمين</a></span></div>
+  <div class="switch"><span id="workforcePortalLink" hidden>هذا ليس حساب قيادة؟ <a href="login.html">استخدم بوابة الموظفين والمستخدمين</a></span></div>
   <div class="login-footer"><span class="secure-status"><i></i>جلسة مشفّرة · تحقق مؤسسي</span><a href="Home.html">→ بوابة الدخول</a></div>
+  <div class="login-mfoot"><i class="secure-dot"></i>جلسة مشفّرة · تحقق مؤسسي</div>
 </section>
-<section class="login-visual">
-  <div class="cd-network" aria-hidden="true"><svg viewBox="0 0 820 760" preserveAspectRatio="xMidYMid slice">
-<defs><linearGradient id="leadLine" x1="0" x2="1"><stop offset="0" stop-color="#8FE0B0" stop-opacity=".72"/><stop offset="1" stop-color="#1FA9A1" stop-opacity=".42"/></linearGradient></defs>
-<g fill="none" stroke="url(#leadLine)" stroke-width="1.4" opacity=".68">
-<path d="M40 500 L160 340 L290 470 L410 270 L535 440 L660 320 L790 465"/>
-<path d="M80 230 L160 340 L275 205 L410 270 L525 190 L660 320 L760 205"/>
-<path d="M160 340 L410 270 M290 470 L535 440 M535 440 L790 465 M410 270 L660 320"/>
-</g>
-<g fill="#8FE0B0"><circle class="node" cx="160" cy="340" r="5"/><circle class="node" cx="410" cy="270" r="5"/><circle class="node" cx="535" cy="440" r="5"/><circle class="node" cx="660" cy="320" r="5"/></g>
-<g fill="#58C6A0"><circle class="node" cx="290" cy="470" r="4.5"/><circle class="node" cx="790" cy="465" r="4.5"/></g>
-</svg></div>
+<div class="login-topbar"><a class="login-back" href="Home.html"><span class="bk-arrow">→</span><span class="bk-label">بوابة الدخول</span></a><span class="login-tag">COMMAND ACCESS · L4</span></div>
+<section class="login-visual" aria-hidden="true">
+  <canvas class="cd-twin" data-tw="lead" data-d="33,.5,.44,.4,.48" data-t="33,.5,.22,.56,.24" data-m="12,.5,.18,.66,.17"></canvas>
+  <div class="cd-noise"></div>
   <div class="visual-topline"><span>COMMAND ACCESS · L4</span><span>SECURE SESSION</span></div>
   <div class="visual-card"><b>طبقة القرار</b><span>صورة مكانية واحدة تجمع الميدان والتشغيل أمام القيادة.</span></div>
 </section>
 </main>
+<script src="hsr-twin.js"></script>
+<script src="cloud-twin-mount.js"></script>
 <script>
 document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventListener('click',()=>{
   const input=document.getElementById(btn.dataset.passwordToggle);if(!input)return;
   const show=input.type==='password';input.type=show?'text':'password';btn.textContent=show?'إخفاء':'إظهار';btn.setAttribute('aria-pressed',String(show));
 }));
+(function(){[['forgotButton','forgotNote'],['ssoButton','ssoNotice']].forEach(([btnId,noteId])=>{
+  const btn=document.getElementById(btnId),note=document.getElementById(noteId);if(!btn||!note)return;
+  btn.addEventListener('click',()=>{const open=note.hidden;note.hidden=!open;btn.setAttribute('aria-expanded',String(open));});
+});})();
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";

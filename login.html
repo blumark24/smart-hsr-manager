@@ -7,41 +7,36 @@
 <meta name="color-scheme" content="light">
 <title>مساحة العمل المؤسسية | SMART HSR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="cloud-access-r2.css">
 </head>
 <body>
-<main class="cd-shell login-page workforce-login" data-screen-label="3j Mobile Users">
+<main class="cd-shell login-page workforce-login" data-screen-label="3c Desktop Users · 3f iPad Users · 3j Mobile Users">
 <section class="login-form-panel">
-  <div class="login-panel-top"><img class="cd-logo" src="Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR"><span class="lang-switch"><b>العربية</b> | EN</span></div>
+  <div class="login-panel-top"><img class="cd-logo" src="smart-hsr-logo-r2.png" width="360" height="146" alt="SMART HSR"><span class="lang-switch"><b>العربية</b> | <span class="en">EN</span></span></div>
   <div class="login-copy">
     <span class="cd-kicker">02 · WORKSPACE ACCESS</span>
     <h1>مساحة العمل المؤسسية</h1>
-    <p>سجّل الدخول وسيتم توجيهك تلقائيًا إلى مساحة العمل المعتمدة حسب دورك وصلاحياتك.</p>
+    <p><span class="not-m">سجّل الدخول وسيتم توجيهك تلقائيًا إلى مساحة العمل المعتمدة حسب دورك وصلاحياتك.</span><span class="only-m">سيتم توجيهك تلقائيًا حسب دورك وصلاحياتك.</span></p>
   </div>
   <form id="loginForm" class="login-form" autocomplete="on">
     <div class="field"><label for="email">البريد الإلكتروني أو رقم الموظف</label><input id="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr" placeholder="name@municipality.gov.sa" required></div>
-    <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••••" required><button class="password-toggle" type="button" data-password-toggle="password" aria-pressed="false">إظهار</button></div></div>
-    <div class="login-meta-row"><span class="remember"><i class="remember-box"></i>تذكّر هذا الجهاز</span><span>حسابات مؤسسية معتمدة فقط</span></div>
+    <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••••" data-ph-m="كلمة المرور" required><button class="password-toggle" type="button" data-password-toggle="password" aria-pressed="false">إظهار</button></div></div>
+    <div class="login-meta-row"><span class="remember"><i class="remember-box"></i>تذكّر هذا الجهاز</span><button type="button" class="forgot" id="forgotButton" aria-controls="forgotNote" aria-expanded="false">نسيت كلمة المرور؟</button></div>
+    <p id="forgotNote" class="note" hidden>لإعادة تعيين كلمة المرور تواصل مع مسؤول الصلاحيات في جهتك.</p>
     <button id="loginButton" type="submit" class="submit">دخول مساحة العمل</button>
     <div class="role-pills"><span>رئيس قسم</span><span>مشرف</span><span>موظف</span><span>مفتش</span><span>مقاول</span></div>
   </form>
   <div id="msg" class="message" aria-live="polite"></div>
-  <div class="note">جلسة المستخدمين معزولة عن جلسة مدير البلدية. كل حساب يُربط بجهته ودوره قبل فتح مساحة العمل.</div>
-  <div class="switch"><span id="leadershipPortalLink" hidden>حساب قيادة بلدية؟ <a href="manager-login.html">افتح بوابة القيادات</a></span><span>مدير بلدية؟ <a href="manager-login.html">بوابة القيادات البلدية</a></span></div>
+  <div class="switch"><span id="leadershipPortalLink" hidden>حساب قيادة بلدية؟ <a href="manager-login.html">افتح بوابة القيادات</a></span></div>
+  <div class="login-strip"><div><small>01</small><b>دورك</b></div><div><small>02</small><b>صلاحياتك</b></div><div><small>03</small><b>مساحة عملك</b></div></div>
   <div class="login-footer"><span>تحتاج إلى حساب؟ تواصل مع مسؤول الصلاحيات في جهتك.</span><a href="Home.html">→ بوابة الدخول</a></div>
+  <div class="login-mfoot"><i class="secure-dot"></i>جلسة مشفّرة · الحسابات المعتمدة فقط</div>
 </section>
-<section class="login-visual">
-  <div class="cd-network" aria-hidden="true"><svg viewBox="0 0 820 760" preserveAspectRatio="xMidYMid slice">
-<defs><linearGradient id="workLine" x1="0" x2="1"><stop offset="0" stop-color="#0C842B" stop-opacity=".72"/><stop offset="1" stop-color="#8BC8C2" stop-opacity=".42"/></linearGradient></defs>
-<g fill="none" stroke="url(#workLine)" stroke-width="1.4" opacity=".68">
-<path d="M40 500 L160 340 L290 470 L410 270 L535 440 L660 320 L790 465"/>
-<path d="M80 230 L160 340 L275 205 L410 270 L525 190 L660 320 L760 205"/>
-<path d="M160 340 L410 270 M290 470 L535 440 M535 440 L790 465 M410 270 L660 320"/>
-</g>
-<g fill="#0C842B"><circle class="node" cx="160" cy="340" r="5"/><circle class="node" cx="410" cy="270" r="5"/><circle class="node" cx="535" cy="440" r="5"/><circle class="node" cx="660" cy="320" r="5"/></g>
-<g fill="#7CBFBA"><circle class="node" cx="290" cy="470" r="4.5"/><circle class="node" cx="790" cy="465" r="4.5"/></g>
-</svg></div>
+<div class="login-topbar"><a class="login-back" href="Home.html"><span class="bk-arrow">→</span><span class="bk-label">بوابة الدخول</span></a><span class="login-tag"><span class="not-m">OPERATIONS LAYER · L3</span><span class="only-m">WORKSPACE ACCESS</span></span></div>
+<section class="login-visual" aria-hidden="true">
+  <canvas class="cd-twin" data-tw="users" data-d="21,.5,.44,.44,.56" data-t="21,.5,.21,.56,.24" data-m="9,.5,.18,.66,.17"></canvas>
+  <div class="cd-noise"></div>
   <div class="visual-topline"><span>OPERATIONS LAYER · L3</span><span>LIVE ROUTES</span></div>
   <div class="visual-card">
     <div><small>01</small><b>دورك</b><span>يُحدَّد من إدارة الحسابات</span></div>
@@ -50,6 +45,12 @@
   </div>
 </section>
 </main>
+<script src="hsr-twin.js"></script>
+<script src="cloud-twin-mount.js"></script>
+<script>
+(function(){const btn=document.getElementById('forgotButton'),note=document.getElementById('forgotNote');if(!btn||!note)return;
+btn.addEventListener('click',()=>{const open=note.hidden;note.hidden=!open;btn.setAttribute('aria-expanded',String(open));});})();
+</script>
 <script>
 window.__smartHSRLoginReady=false;
 const form=document.getElementById('loginForm');
