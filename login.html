@@ -64,7 +64,7 @@ form?.addEventListener('submit',e=>{if(window.__smartHSRLoginReady===true)return
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 
@@ -93,7 +93,7 @@ function resolveLandsRedirectBase() {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-await setPersistence(auth, browserLocalPersistence);
+await setPersistence(auth, browserSessionPersistence);
 // The probe never persists credentials. It determines the authoritative role
 // before the workforce session is touched.
 const probeApp = initializeApp(firebaseConfig, 'smart-hsr-role-probe');
@@ -105,6 +105,10 @@ const loginButton = document.getElementById('loginButton');
 const msgBox = document.getElementById('msg');
 
 const PORTAL_CONTEXT_KEY = 'smartHSRPortalContext';
+
+function clearPortalContext() {
+  try { sessionStorage.removeItem(PORTAL_CONTEXT_KEY); } catch (_) {}
+}
 
 function setWorkforcePortalContext(user, organizationId, role) {
   sessionStorage.setItem(PORTAL_CONTEXT_KEY, JSON.stringify({
@@ -128,6 +132,7 @@ function showMsg(text, type='') {
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  clearPortalContext();
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
