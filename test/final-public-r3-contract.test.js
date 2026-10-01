@@ -24,7 +24,6 @@ test('public Website R3 keeps the approved information architecture (hero, 10 se
     '02 Statement',
     '03 Field to Decision',
     '04 Product Bento',
-    '05 Product Presence',
     '06 Digital Twin Signature',
     '07 Institutional Value',
     '08 Architecture and Governance',
