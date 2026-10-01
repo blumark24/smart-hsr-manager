@@ -74,6 +74,18 @@ test('the previously developed institutional footer replaces the exported navy f
   assert.match(enhancements, /env\(safe-area-inset-bottom\)/);
 });
 
+test('the footer is rebuilt in the Cloud emerald glass language with the new logo', () => {
+  assert.match(enhancements, /#073324/);
+  assert.match(enhancements, /#04221A/);
+  assert.match(enhancements, /#8FE0B0/);
+  assert.match(enhancements, /smart-hsr-logo-r2\.png/);
+  assert.match(enhancements, /cloud-noise\.png/);
+  assert.match(enhancements, /\.sf-main/);
+  assert.match(enhancements, /\.sf-dev/);
+  assert.match(enhancements, /من الميدان إلى القرار/);
+  assert.match(enhancements, /prefers-reduced-motion/);
+});
+
 test('exported nav and menu items navigate to the Website R3 sections, only from fixed chrome', () => {
   for (const label of ['02 Statement', '04 Product Bento', '06 Digital Twin Signature', '07 Institutional Value', '09 Company Profile']) {
     assert.ok(enhancements.includes(label), `${label} must be a navigation target`);

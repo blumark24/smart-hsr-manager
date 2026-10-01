@@ -36,42 +36,78 @@
     style.textContent = `
       html{scroll-behavior:smooth}
       [data-screen-label="11 Footer"]{display:none!important}
+
+      /* Institutional footer — Cloud Design deep-emerald surface (Website R3 CTA/footer language). */
       #smartSafeFooter{
-        --sf-bg:#F2F6F3;--sf-card:#FFFFFF;--sf-text:#0E1A24;--sf-muted:#58675F;--sf-line:rgba(14,64,43,.10);--sf-accent:#0C842B;
-        position:relative;z-index:2;background:var(--sf-bg);color:var(--sf-text);border-top:1px solid var(--sf-line);
+        --sf-mist:rgba(255,255,255,.78);--sf-soft:rgba(255,255,255,.68);--sf-mint:#8FE0B0;--sf-line:rgba(255,255,255,.10);
+        position:relative;z-index:2;isolation:isolate;overflow:hidden;color:#fff;
+        margin-top:calc(-1 * clamp(36px,4.4vw,64px));
+        border-radius:clamp(28px,3.4vw,48px) clamp(28px,3.4vw,48px) 0 0;
+        background:radial-gradient(110% 120% at 85% 0%,#0B4D35 0%,#073324 48%,#04221A 100%);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 -44px 90px -56px rgba(4,34,26,.7);
         font-family:"IBM Plex Sans Arabic",sans-serif
       }
-      #smartSafeFooter .wrap{max-width:1320px;margin:0 auto;padding:64px 48px 34px}
-      #smartSafeFooter footer{margin:0;padding:0}
-      #smartSafeFooter .footer-grid{display:grid;grid-template-columns:minmax(280px,1.3fr) repeat(3,minmax(140px,.6fr));gap:36px}
-      #smartSafeFooter footer a{color:var(--sf-muted);text-decoration:none}
-      #smartSafeFooter footer a:hover{color:var(--sf-accent)}
-      #smartSafeFooter .developer{margin-top:26px;padding:15px 18px;border:1px solid var(--sf-line);border-radius:16px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:color-mix(in srgb,var(--sf-card) 72%,transparent);font-size:12px;color:var(--sf-muted)}
-      #smartSafeFooter .developer strong{font:600 13px Inter,system-ui,sans-serif;letter-spacing:.08em;color:var(--sf-text)}
-      #smartSafeFooter .legal{margin-top:24px;padding-top:18px;border-top:1px solid var(--sf-line);display:flex;justify-content:space-between;gap:18px;font-size:11.5px;color:#748078}
-      @media(max-width:1180px){#smartSafeFooter .wrap{padding:56px 34px 30px}}
+      #smartSafeFooter:before{content:"";position:absolute;z-index:1;top:0;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,rgba(143,224,176,.75) 50%,transparent);pointer-events:none}
+      #smartSafeFooter .sf-noise{position:absolute;inset:0;z-index:0;background-image:url(cloud-noise.png);opacity:.2;mix-blend-mode:screen;pointer-events:none}
+      #smartSafeFooter .sf-grid{position:absolute;z-index:0;left:-12%;right:-12%;bottom:-20%;height:64%;pointer-events:none;
+        background-image:linear-gradient(rgba(143,224,176,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(143,224,176,.11) 1px,transparent 1px);
+        background-size:56px 44px;transform:perspective(520px) rotateX(62deg);transform-origin:50% 100%;
+        -webkit-mask-image:linear-gradient(180deg,transparent,#000 70%);mask-image:linear-gradient(180deg,transparent,#000 70%)}
+      #smartSafeFooter .sf-wrap{position:relative;z-index:2;max-width:1320px;margin:0 auto;padding:clamp(56px,7vw,96px) clamp(20px,4vw,48px) 0;display:flex;flex-direction:column;gap:clamp(36px,5vw,60px);box-sizing:border-box}
+      #smartSafeFooter .sf-main{display:grid;grid-template-columns:minmax(0,1.35fr) repeat(3,minmax(0,.7fr));gap:clamp(28px,4vw,56px) clamp(24px,3vw,48px);align-items:start}
+      #smartSafeFooter .sf-brand{display:flex;flex-direction:column;gap:20px;max-width:420px}
+      #smartSafeFooter .sf-logo{align-self:flex-start;display:inline-flex;padding:10px 16px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(243,246,244,.9));border:1px solid #fff;box-shadow:inset 0 1px 0 #fff,0 22px 44px -24px rgba(0,0,0,.65)}
+      #smartSafeFooter .sf-logo img{height:52px;width:auto;display:block;mix-blend-mode:multiply}
+      #smartSafeFooter .sf-brand p{margin:0;max-width:380px;font-size:16px;line-height:1.85;color:var(--sf-mist);text-wrap:pretty}
+      #smartSafeFooter .sf-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+      #smartSafeFooter .sf-kicker{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.16em;color:var(--sf-mint);direction:ltr;text-align:right;unicode-bidi:isolate}
+      #smartSafeFooter .sf-col h3{margin:0;font:600 15px "Readex Pro","IBM Plex Sans Arabic",sans-serif;color:#fff}
+      #smartSafeFooter .sf-col ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+      #smartSafeFooter .sf-col a{display:inline-flex;align-items:center;min-height:28px;font-size:14px;color:rgba(255,255,255,.75);text-decoration:none;transition:color .2s}
+      #smartSafeFooter .sf-col a:hover{color:#fff}
+      #smartSafeFooter a:focus-visible{outline:2px solid var(--sf-mint);outline-offset:4px;border-radius:6px}
+      #smartSafeFooter .sf-chip{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.14);font-size:13px;color:#fff;white-space:nowrap}
+      #smartSafeFooter .sf-chip:before{content:"";width:6px;height:6px;border-radius:50%;background:#6CD696}
+      #smartSafeFooter .sf-mark{margin:0;font:600 clamp(30px,8.4vw,150px)/1.18 "Readex Pro","IBM Plex Sans Arabic",sans-serif;letter-spacing:-.03em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.16);text-align:center;text-wrap:balance;user-select:none;overflow-wrap:anywhere}
+      #smartSafeFooter .sf-dev{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 20px;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 30px 60px -30px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);font-size:13px;color:rgba(255,255,255,.78)}
+      #smartSafeFooter .sf-dev strong{font:600 14px Inter,"IBM Plex Sans",system-ui,sans-serif;letter-spacing:.14em;color:#fff}
+      #smartSafeFooter .sf-legal{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:center;padding:24px 0 max(32px,env(safe-area-inset-bottom));border-top:1px solid var(--sf-line);font-size:13px;color:var(--sf-soft)}
+      #smartSafeFooter .sf-legal .sf-tag{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.16em;color:rgba(143,224,176,.82);direction:ltr;unicode-bidi:isolate}
+      @media(max-width:1180px){#smartSafeFooter .sf-main{gap:28px 28px}}
       @media(max-width:900px){
-        #smartSafeFooter .footer-grid{grid-template-columns:1fr 1fr}
-        #smartSafeFooter .wrap{padding:48px 22px 28px}
+        #smartSafeFooter .sf-main{grid-template-columns:1fr 1fr}
+        #smartSafeFooter .sf-brand{grid-column:1/-1;max-width:none}
       }
       @media(max-width:680px){
-        #smartSafeFooter .wrap{padding:40px 16px calc(24px + env(safe-area-inset-bottom))}
-        #smartSafeFooter .footer-grid{grid-template-columns:1fr}
-        #smartSafeFooter .developer{align-items:flex-start;flex-direction:column}
-        #smartSafeFooter .legal{flex-direction:column;gap:10px}
+        #smartSafeFooter .sf-wrap{padding:44px 18px 0;gap:34px}
+        #smartSafeFooter .sf-main{grid-template-columns:1fr;gap:0}
+        #smartSafeFooter .sf-brand{padding-bottom:28px}
+        #smartSafeFooter .sf-col{padding:22px 0;gap:6px;border-top:1px solid var(--sf-line)}
+        #smartSafeFooter .sf-col ul{gap:0}
+        #smartSafeFooter .sf-col a{min-height:44px}
+        #smartSafeFooter .sf-kicker{margin-bottom:2px}
+        #smartSafeFooter .sf-dev{flex-direction:column;align-items:flex-start;gap:8px}
+        #smartSafeFooter .sf-legal{flex-direction:column;align-items:flex-start;gap:10px}
       }
-      @media(max-width:390px){#smartSafeFooter .wrap{padding-inline:13px}}
+      @media(max-width:390px){#smartSafeFooter .sf-wrap{padding-inline:16px}}
+      @media(prefers-reduced-motion:reduce){#smartSafeFooter *{transition:none!important}}
     `;
     document.head.appendChild(style);
   }
 
   function footerMarkup() {
-    return '<div class="wrap" dir="rtl"><footer><div class="footer-grid"><div><div style="font:600 24px Readex Pro,IBM Plex Sans Arabic,sans-serif">SMART HSR</div><p style="max-width:370px;font-size:14px;line-height:1.85;color:var(--sf-muted)">منصة بلدية ذكية لإدارة الحصر والتشغيل والبيانات المكانية وربطها بالقرار.</p></div>'
-      + '<div><b>المنصة</b><p><a data-tail="platform" href="#">كيف تعمل</a></p><p><a data-tail="solutions" href="#">الحلول</a></p></div>'
-      + '<div><b>المؤسسة</b><p><a data-tail="profile" href="#">الملف التعريفي</a></p><p><a href="Home.html">الدخول المؤسسي</a></p></div>'
-      + '<div><b>SMART HSR</b><p style="color:var(--sf-muted)">Saudi GovTech</p><p style="color:var(--sf-muted)">Arabic · English</p></div></div>'
-      + '<div class="developer"><span>التطوير والتشغيل التقني</span><strong>BLUMARK24</strong></div>'
-      + '<div class="legal"><span>© 2026 SMART HSR. جميع الحقوق محفوظة.</span><span dir="ltr">FIELD → DATA → OPERATIONS → DECISION</span></div></footer></div>';
+    return '<div class="sf-noise" aria-hidden="true"></div><div class="sf-grid" aria-hidden="true"></div>'
+      + '<div class="sf-wrap" dir="rtl"><footer>'
+      + '<div class="sf-main">'
+      + '<div class="sf-brand"><span class="sf-logo"><img src="smart-hsr-logo-r2.png" width="360" height="146" alt="SMART HSR"></span><p>منصة بلدية ذكية لإدارة الحصر والتشغيل والبيانات المكانية وربطها بالقرار.</p></div>'
+      + '<div class="sf-col"><span class="sf-kicker">PLATFORM</span><h3>المنصة</h3><ul><li><a data-tail="platform" href="#">كيف تعمل</a></li><li><a data-tail="solutions" href="#">الحلول</a></li></ul></div>'
+      + '<div class="sf-col"><span class="sf-kicker">ORGANIZATION</span><h3>المؤسسة</h3><ul><li><a data-tail="profile" href="#">الملف التعريفي</a></li><li><a href="Home.html">الدخول المؤسسي</a></li></ul></div>'
+      + '<div class="sf-col"><span class="sf-kicker">IDENTITY</span><h3>SMART HSR</h3><span class="sf-chip">Saudi GovTech</span><span class="sf-chip">Arabic · English</span></div>'
+      + '</div>'
+      + '<p class="sf-mark" aria-hidden="true">من الميدان إلى القرار</p>'
+      + '<div class="sf-dev"><span>التطوير والتشغيل التقني</span><strong>BLUMARK24</strong></div>'
+      + '<div class="sf-legal"><span>© 2026 SMART HSR. جميع الحقوق محفوظة.</span><span class="sf-tag" dir="ltr">FIELD → DATA → OPERATIONS → DECISION</span></div>'
+      + '</footer></div>';
   }
 
   function installFooter() {
