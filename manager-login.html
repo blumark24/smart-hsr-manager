@@ -56,7 +56,7 @@ document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventLis
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserSessionPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 import { classifyManagerLoginError } from './manager-login-error-classification.js';
@@ -84,13 +84,20 @@ try {
 // Workforce/default Auth is intentionally untouched so both portals can coexist.
 const managerApp = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
 const managerAuth = getAuth(managerApp);
-await setPersistence(managerAuth, browserLocalPersistence);
+await setPersistence(managerAuth, browserSessionPersistence);
 const probeApp = initializeApp(firebaseConfig, 'smart-hsr-manager-login-probe');
 const probeAuth = getAuth(probeApp);
 const probeDb = getFirestore(probeApp);
 await setPersistence(probeAuth, inMemoryPersistence);
 
 const PORTAL_CONTEXT_KEY = 'smartHSRPortalContext';
+
+function clearPortalContext() {
+  try {
+    sessionStorage.removeItem(PORTAL_CONTEXT_KEY);
+    sessionStorage.removeItem('smartHSRUser');
+  } catch (_) {}
+}
 
 function setLeadershipPortalContext(user, organizationId) {
   sessionStorage.setItem(PORTAL_CONTEXT_KEY, JSON.stringify({
@@ -104,6 +111,7 @@ function setLeadershipPortalContext(user, organizationId) {
 const form = document.getElementById("loginForm");
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+  clearPortalContext();
   errorMsg.classList.add("hidden");
 
   const email = document.getElementById("email").value.trim();
