@@ -3377,6 +3377,9 @@ function showUnauthorized() {
 async function denyInspectorAccess(message) {
   stopInspectorGps();
   showUnauthorized();
+  // Unified identity: a valid account that merely lacks THIS workspace keeps
+  // its session and is sent to the workspace chooser instead of being signed out.
+  if (await (window.SmartHSRWorkspaceGuard?.redirectValidSession?.(auth.currentUser) ?? false)) return;
   try { await signOut(auth); } catch (e) { console.warn(e); }
   if (message) { try { alert(message); } catch (_) {} }
   setTimeout(() => redirectToLogin(), 1200);
@@ -6636,5 +6639,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <script src="./service-switcher.js"></script>
+<script src="./workspace-guard.js"></script>
 </body>
 </html>

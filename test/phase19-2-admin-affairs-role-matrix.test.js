@@ -6,7 +6,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 
-const login=read('login.html');
+const login=read('login.html')+'\n'+read('workspace-access.js'); // routing now lives in the shared resolver
 const page=read('admin-affairs.html');
 const runtime=read('admin-affairs-runtime.js');
 const users=read('api/admin/users.js');

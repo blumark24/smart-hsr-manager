@@ -7,7 +7,7 @@ const root=path.resolve(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 
 const manager=read('manager.html');
-const login=read('login.html');
+const login=read('login.html')+'\n'+read('workspace-access.js'); // routing now lives in the shared resolver
 const adapter=read('manager-lands-adapter.js');
 
 test('Lands manager workspace is exposed from municipality manager',()=>{

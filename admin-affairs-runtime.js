@@ -148,7 +148,12 @@ onAuthStateChanged(auth,async user=>{
   const allowed=d.active!==false
     && ['department_head','employee'].includes(d.institutionalRole)
     && isAdminPath;
-  if(!allowed){await signOut(auth).catch(()=>{});location.replace('login.html');return}
+  // Unified identity: only an invalid account ends the session; a valid one
+  // that lacks THIS workspace goes to the workspace chooser.
+  if(!allowed){
+    if(d.active!==false&&String(d.organizationId||'').trim()){location.replace('workspace.html');return}
+    await signOut(auth).catch(()=>{});location.replace('login.html');return
+  }
   state.user=user;
   state.readOnly=d.institutionalRole==='employee';
   if(state.readOnly){

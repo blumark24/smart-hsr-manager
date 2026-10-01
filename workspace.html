@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SMART HSR — مسار انتقالي</title>
+  <title>SMART HSR — مساحات العمل</title>
   <style>
     :root{color-scheme:light;--bg:#f4f7f6;--card:#fff;--tx:#10251f;--muted:#667a73;--line:#dfe8e4;--green:#11865d;--navy:#102a3b}
     @media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#081724;--card:#0d2130;--tx:#eef7f4;--muted:#9db0aa;--line:#203b48;--green:#2bc083;--navy:#07131e}}
@@ -23,51 +23,35 @@
 <body>
   <main class="shell">
     <div class="top">
-      <div class="brand"><div class="mark"></div><div><h1>SMART HSR</h1><div class="sub">مسار انتقالي للحسابات القديمة</div></div></div>
+      <div class="brand"><div class="mark"></div><div><h1>SMART HSR</h1><div class="sub">مساحات العمل المصرّح بها</div></div></div>
       <button class="logout" id="logout">تسجيل الخروج</button>
     </div>
     <section class="hero">
-      <h2>الحساب يحتاج تحديث المسار الوظيفي</h2>
-      <p id="welcome">يتم التحقق من سجل الحساب القديم قبل التوجيه…</p>
+      <h2 id="heroTitle">مساحات العمل</h2>
+      <p id="welcome">يتم التحقق من الصلاحيات قبل التوجيه…</p>
       <div class="meta" id="identity"></div>
     </section>
     <section class="grid" id="services"></section>
-    <div class="empty" id="empty">لا توجد مساحة عمل تشغيلية مفعلة لهذا الحساب.</div>
+    <div class="empty" id="empty">لم يتم تعيين مساحة عمل لهذا الحساب بعد</div>
   </main>
+<script src="workspace-access.js"></script>
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
 
+// UNIFIED IDENTITY — workspace chooser / safe landing. Display and navigation
+// only: the trusted API decides which workspaces are authorized, and every
+// workspace page re-verifies server-side before it renders anything.
 const PROD_HOSTS=['smart-hsr-manager.vercel.app','smart-hsr-manager-blumark24-os.vercel.app'];
 const LANDS_PROD='https://lands-smart.vercel.app/';
 const LANDS_PREVIEW='https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/';
-const FIELD_ROLES=['supervisor','inspector','contractor'];
-const MOBILITY_ROLES=['mobility_head','department_head','administrative_affairs','employee'];
+const SAFE_ROUTE=/^[a-z0-9-]+\.html(\?mode=mobility)?$/;
+const WA=window.SmartHSRWorkspaceAccess;
 
 function landsBase(){
   return (!location.hostname.endsWith('.vercel.app') || PROD_HOSTS.includes(location.hostname)) ? LANDS_PROD : LANDS_PREVIEW;
-}
-function mobilityRole(data){
-  if(Object.prototype.hasOwnProperty.call(data,'mobilityAccess')){
-    const a=data.mobilityAccess;
-    return a&&a.enabled===true&&MOBILITY_ROLES.includes(a.role)?a.role:null;
-  }
-  return MOBILITY_ROLES.includes(data.role)?data.role:null;
-}
-function derive(data){
-  const out=[];
-  const role=data.role;
-  const department=String(data.department||'').trim();
-  const mr=mobilityRole(data);
-  const fieldRole=FIELD_ROLES.includes(role);
-  const fieldDeptHead=mr==='department_head' && /الحصر|ميداني|field/i.test(department);
-  if(fieldRole || fieldDeptHead) out.push({id:'field',title:'الحصر الميداني الذكي',desc:'البلاغات والمراقبة الميدانية وعمليات القسم.'});
-  const la=data.landsAccess;
-  if(la&&la.enabled===true&&['lands_employee','lands_department_manager'].includes(la.role)) out.push({id:'lands',title:'حصر منح الأراضي الذكي',desc:'سجل المنح والملفات الرقمية والبيانات المكانية.'});
-  if(mr) out.push({id:'mobility',title:'الحركة الذكية',desc:'المهام والمركبات والتفويض والاستلام والإعادة.'});
-  return {services:out,role,mobilityRole:mr,fieldDeptHead};
 }
 async function openLands(user){
   const token=await user.getIdToken();
@@ -76,33 +60,52 @@ async function openLands(user){
   if(!res.ok||!data.code) throw new Error(data.reason||'lands_handoff_failed');
   const url=new URL(landsBase()); url.searchParams.set('code',data.code); location.href=url.toString();
 }
-function openField(ctx){
-  if(ctx.fieldDeptHead){ location.href='department-head.html'; return; }
-  if(ctx.role==='contractor'){ location.href='mobile-map.html'; return; }
-  if(ctx.role==='supervisor'){ location.href='manager.html'; return; }
-  location.href='dashboard.html';
+async function resolveFor(user,db){
+  try{
+    const token=await user.getIdToken();
+    const res=await fetch('/api/admin/users',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({action:'resolveWorkspaces'})});
+    const data=await res.json().catch(()=>null);
+    if(res.ok&&data&&(data.kind==='manager'||(data.kind==='workforce'&&Array.isArray(data.workspaces)))) return data;
+  }catch(_){}
+  // Navigation-only fallback when the API cannot be reached.
+  const snap=await getDoc(doc(db,'users',user.uid));
+  const local=WA.resolveWorkspaces(snap.exists()?(snap.data()||{}):null);
+  const d=snap.exists()?(snap.data()||{}):{};
+  return Object.assign(local,{kind:'workforce',profile:{name:d.name||'',department:d.department||'',jobTitle:d.jobTitle||''}});
 }
+
 const cfg=await resolveFirebaseConfig();
 const app=getApps().find(a=>a.name==='[DEFAULT]')||initializeApp(cfg);
 const auth=getAuth(app), db=getFirestore(app);
 document.getElementById('logout').onclick=async()=>{await signOut(auth).catch(()=>{}); location.replace('login.html');};
 onAuthStateChanged(auth,async user=>{
   if(!user){location.replace('login.html');return;}
-  const snap=await getDoc(doc(db,'users',user.uid));
-  if(!snap.exists()){location.replace('login.html');return;}
-  const data=snap.data()||{};
-  if(data.active===false||!data.organizationId){location.replace('login.html');return;}
-  const ctx=derive(data), host=document.getElementById('services');
-  document.getElementById('welcome').textContent='مرحبًا '+(data.name||user.email||'');
-  document.getElementById('identity').textContent=[data.department,data.jobTitle].filter(Boolean).join(' · ');
-  if(!ctx.services.length){document.getElementById('empty').style.display='block';return;}
-  for(const svc of ctx.services){
-    const b=document.createElement('button'); b.type='button'; b.className='svc';
-    b.innerHTML='<div class="icon">✓</div><h3>'+svc.title+'</h3><p>'+svc.desc+'</p><span class="tag">دخول الخدمة</span>';
+  let res;
+  try{ res=await resolveFor(user,db); }catch(_){ location.replace('login.html'); return; }
+  if(res.kind==='manager'){ location.replace('manager.html'); return; }
+  // Only an invalid account/session (no record, inactive, no organization) ends the session.
+  if(!res.valid){ await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
+  const profile=res.profile||{};
+  document.getElementById('welcome').textContent='مرحبًا '+(profile.name||user.email||'');
+  document.getElementById('identity').textContent=[profile.department,profile.jobTitle].filter(Boolean).join(' · ');
+  if(!res.workspaces.length){
+    document.getElementById('heroTitle').textContent='SMART HSR';
+    document.getElementById('empty').style.display='block';
+    return;
+  }
+  document.getElementById('heroTitle').textContent='مساحات العمل';
+  const host=document.getElementById('services');
+  for(const ws of res.workspaces){
+    const b=document.createElement('button'); b.type='button'; b.className='svc'; b.dataset.workspace=ws.id;
+    const icon=document.createElement('div'); icon.className='icon'; icon.textContent='✓';
+    const h=document.createElement('h3'); h.textContent=ws.title;
+    const p=document.createElement('p'); p.textContent=ws.desc;
+    const tag=document.createElement('span'); tag.className='tag'; tag.textContent=ws.primary?'المساحة الأساسية · دخول':'دخول الخدمة';
+    b.append(icon,h,p,tag);
     b.onclick=async()=>{b.disabled=true; try{
-      if(svc.id==='field') openField(ctx);
-      else if(svc.id==='mobility') location.href='department-head.html?mode=mobility';
-      else if(svc.id==='lands') await openLands(user);
+      if(ws.id==='lands') await openLands(user);
+      else if(typeof ws.route==='string'&&SAFE_ROUTE.test(ws.route)) location.href=ws.route;
+      else b.disabled=false;
     }catch(e){b.disabled=false; alert('تعذر فتح الخدمة بأمان. حاول مرة أخرى.');}};
     host.appendChild(b);
   }

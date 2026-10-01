@@ -50,12 +50,14 @@ test('1. login.html keeps role probing memory-only and persists the workforce se
   assert.match(persistFn, /setWorkforcePortalContext\(user, organizationId, role\)/);
   assert.doesNotMatch(persistFn, /probeAuth/);
 
-  const fieldBranch = source.slice(source.indexOf("showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');"));
-  assert.match(fieldBranch, /persistWorkforceSession\(email, password, user, organizationId, role \|\| institutionalRole \|\| 'user'\)/);
-  assert.match(fieldBranch, /signOut\(probeAuth\)/);
-  assert.match(fieldBranch, /window\.location\.href = 'mobile-map\.html'/);
-  assert.match(fieldBranch, /window\.location\.href = 'manager\.html'/);
-  assert.match(fieldBranch, /window\.location\.href = 'dashboard\.html'/);
+  const routed = source.slice(source.indexOf('// Internal navigation target only'));
+  assert.match(routed, /persistWorkforceSession\(email, password, user, organizationId, sessionRole\)/);
+  assert.match(routed, /signOut\(probeAuth\)/);
+  assert.match(routed, /window\.location\.href = target/);
+  const resolver = read('workspace-access.js');
+  assert.match(resolver, /return 'mobile-map\.html'/);
+  assert.match(resolver, /return 'manager\.html'/);
+  assert.match(resolver, /return 'dashboard\.html'/);
 });
 
 // ---- eligibility (pure) ----
@@ -79,7 +81,7 @@ test('isSsoEligible: denies a disabled account, a pending (not yet synced) entit
 // ---- 2/3. Lands employee / Lands department manager direct login wiring ----
 test('2/3. login.html calls POST /api/organization/context with the employee\'s own bearer token before redirecting to Lands', () => {
   const source = read('login.html');
-  const landsBranch = source.slice(source.indexOf('if (hasLandsRole && !hasFieldRole && !mobilityRole)'), source.indexOf('// Generic department-head landing.'));
+  const landsBranch = source.slice(source.indexOf("if (primary.id === 'lands')"), source.indexOf('// Internal navigation target only'));
   assert.match(landsBranch, /fetch\('\/api\/organization\/context'/);
   assert.match(landsBranch, /method: 'POST'/);
   assert.match(landsBranch, /'Authorization': 'Bearer ' \+ idToken/);

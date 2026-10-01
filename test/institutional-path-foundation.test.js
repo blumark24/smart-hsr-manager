@@ -45,7 +45,7 @@ test('institutional administration and section are not inferred from active serv
 test('Field head authorization and runtime accept institutional role plus administration', () => {
   const authz = read('api/_lib/authz.js');
   const runtime = read('field-head-runtime.js');
-  const login = read('login.html');
+  const login = read('login.html') + '\n' + read('workspace-access.js');
   assert.match(authz, /institutionalRole === 'department_head'/);
   assert.match(authz, /administration/);
   assert.match(runtime, /institutionalFieldHead = institutionalRole === 'department_head'/);

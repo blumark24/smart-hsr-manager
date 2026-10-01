@@ -9,7 +9,7 @@ const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const manager=read('manager.html');
 const head=read('field-head-runtime.js');
 const employee=read('dashboard.html');
-const login=read('login.html');
+const login=read('login.html')+'\n'+read('workspace-access.js'); // routing now lives in the shared resolver
 const users=read('api/admin/users.js');
 
 test('Field Survey manager surface is present and operationally separated',()=>{
@@ -47,6 +47,6 @@ test('Visual Distortion closure preserves inspector verification then department
 
 test('Canonical Field identities route to one institutional workspace',()=>{
   assert.match(login,/canonicalFieldPath/);
-  assert.match(login,/institutionalRole === 'department_head'\) window\.location\.href = 'department-head\.html'/);
-  assert.match(login,/window\.location\.href = 'dashboard\.html'/);
+  assert.match(login,/if \(flags\.hasFieldDepartmentHeadRole\) return 'department-head\.html'/);
+  assert.match(login,/'dashboard\.html'/);
 });

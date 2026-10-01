@@ -13,7 +13,7 @@
 // existing field is renamed or removed, and a record that only ever held one
 // service continues to behave exactly as before.
 // ============================================================================
-const { FIELD_MANAGEABLE_ROLES, MOBILITY_MANAGEABLE_ROLES, LANDS_MANAGEABLE_ROLES } = require('./authz');
+const { FIELD_MANAGEABLE_ROLES, MOBILITY_MANAGEABLE_ROLES, LANDS_MANAGEABLE_ROLES, WorkspaceAccess } = require('./authz');
 
 function isNonEmptyString(v) { return typeof v === 'string' && v.trim().length > 0; }
 
@@ -114,6 +114,53 @@ function resolveEffectiveServiceState(fieldSel, landsSel, existingRole, existing
   return { fieldEffectiveEnabled, landsEffectiveEnabled, existingMobilityEnabled };
 }
 
+// ----------------------------------------------------------------------------
+// Unified Identity — capability entitlements (mobility.access, vehicle.*).
+// `entitlements.capabilities` is written ONLY here / by trusted APIs; clients
+// can never write users/{uid} (firestore.rules: users write false).
+// ----------------------------------------------------------------------------
+function validateCapabilitySelection(capabilities) {
+  if (capabilities === undefined) return { ok: true, present: false, capabilities: null };
+  const checked = WorkspaceAccess.validateCapabilitySelection(capabilities);
+  if (!checked.ok) return { ok: false, reason: checked.reason };
+  return { ok: true, present: true, capabilities: checked.capabilities };
+}
+
+// Once a record carries `entitlements`, that record's capabilities are
+// authoritative — so a legacy-style change (mobilityAccess toggle or
+// vehicleEligible) on such a record must be mirrored into it, otherwise a
+// "disable Mobility" click would silently leave mobility.access in force.
+// Records that never had `entitlements` return null (legacy dual-read keeps
+// deriving capabilities from mobilityAccess/vehicleEligible, no migration).
+function syncEntitlementsForLegacyChange(existingUserData, { mobilitySel, vehicleEligible } = {}) {
+  if (!existingUserData || !Object.prototype.hasOwnProperty.call(existingUserData, 'entitlements')) return null;
+  const ent = existingUserData.entitlements;
+  const current = ent && typeof ent === 'object' && Array.isArray(ent.capabilities)
+    ? WorkspaceAccess.normalizeCapabilities(ent.capabilities) : [];
+  const next = new Set(current);
+  if (mobilitySel && mobilitySel.present) {
+    if (mobilitySel.enabled) next.add('mobility.access');
+    else WorkspaceAccess.CAPABILITIES.forEach(c => next.delete(c));
+  }
+  if (vehicleEligible !== undefined) {
+    WorkspaceAccess.VEHICLE_CAPABILITIES.forEach(c => (vehicleEligible === true ? next.add(c) : next.delete(c)));
+  }
+  return WorkspaceAccess.normalizeCapabilities(Array.from(next));
+}
+
+// The employee-registry mirror of the Mobility products entry for a given
+// effective capability set (keeps selection lists in step with users/{uid}).
+function mobilityProductMirror(capabilities, existingMobility) {
+  const caps = Array.isArray(capabilities) ? capabilities : [];
+  const enabled = caps.includes('mobility.access');
+  const prior = existingMobility && typeof existingMobility === 'object' ? existingMobility : {};
+  return {
+    enabled,
+    role: enabled ? (MOBILITY_MANAGEABLE_ROLES.includes(prior.role) ? prior.role : 'employee') : null,
+    vehicleEligible: enabled && caps.includes('vehicle.drive'),
+  };
+}
+
 function passwordPolicyReason(password, target) {
   if (typeof password !== 'string' || password.length < 8) return 'password_policy_failed';
   if (password !== password.trim()) return 'password_policy_failed';
@@ -145,6 +192,9 @@ function isPasswordEligibleTarget(data) {
   // mobility value at all) must remain password-eligible exactly as it was
   // before migration, same as the existing Lands-only case right below.
   if (data.mobilityAccess && data.mobilityAccess.enabled === true) return true;
+  // Unified identity: a capability-only Mobility user (mobility.access via
+  // `entitlements`, no legacy role) is just as password-manageable.
+  if (WorkspaceAccess.hasCapability(data, 'mobility.access')) return true;
   return data.role === null && Boolean(data.landsAccess && data.landsAccess.enabled === true);
 }
 
@@ -153,6 +203,9 @@ module.exports = {
   validateFieldSelection,
   validateMobilitySelection,
   validateLandsSelection,
+  validateCapabilitySelection,
+  syncEntitlementsForLegacyChange,
+  mobilityProductMirror,
   computeLandsSyncOperation,
   assertSingleService,
   resolveEffectiveServiceState,

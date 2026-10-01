@@ -6,7 +6,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const root = path.join(__dirname, '..');
-const login = fs.readFileSync(path.join(root, 'login.html'), 'utf8');
+const login = fs.readFileSync(path.join(root, 'login.html'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'workspace-access.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
 const runtime = fs.readFileSync(path.join(root, 'field-head-runtime.js'), 'utf8');
 const fieldHead = page + '\n' + runtime;
@@ -15,10 +15,10 @@ test('field survey department head remains a first-class login destination', () 
   assert.match(login, /const hasDepartmentHeadRole = institutionalRole === 'department_head' \|\| mobilityRole === 'department_head';/);
   assert.match(login, /const hasFieldDepartmentHeadRole = hasDepartmentHeadRole/);
   assert.match(login, /\/الحصر\|ميداني\|field\/i\.test\(administration \|\| department\)/);
-  assert.match(login, /window\.location\.href = 'department-head\.html'/);
-  assert.match(login, /window\.location\.href = 'mobile-map\.html'/);
-  assert.match(login, /window\.location\.href = 'manager\.html'/);
-  assert.match(login, /window\.location\.href = 'dashboard\.html'/);
+  assert.match(login, /return 'department-head\.html'/);
+  assert.match(login, /return 'mobile-map\.html'/);
+  assert.match(login, /return 'manager\.html'/);
+  assert.match(login, /return 'dashboard\.html'/);
 });
 
 test('canonical premium board delegates authentication to a fail-closed field runtime', () => {

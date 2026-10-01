@@ -44,6 +44,9 @@
   let workspace = { role:null, organizationId:null, department:null, missions:[], vehicles:[], incidents:[], authorizations:[], employees:[] };
 
   function resolveMobilityRole(data) {
+    // Unified identity: capability-aware shared resolver (display only — the
+    // trusted API re-derives the actor's role on every action).
+    if (window.SmartHSRWorkspaceAccess) return window.SmartHSRWorkspaceAccess.resolveMobilityRole(data);
     if (data && Object.prototype.hasOwnProperty.call(data, 'mobilityAccess')) {
       const access = data.mobilityAccess;
       if (!access || typeof access !== 'object' || access.enabled !== true || !ALLOWED_ROLES.includes(access.role)) return null;
@@ -235,6 +238,9 @@
       const role = resolveMobilityRole(data);
       const department = String(data.department || '').trim();
       if (data.active === false || !role || !data.organizationId || (role === 'department_head' && !department)) {
+        // Unified identity: only an invalid account ends the session. A valid
+        // account without Mobility goes to the workspace chooser, signed in.
+        if (data.active !== false && String(data.organizationId || '').trim()) { location.replace('workspace.html'); return; }
         await signOut(auth).catch(()=>{});
         location.replace('login.html');
         return;

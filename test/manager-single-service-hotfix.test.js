@@ -130,8 +130,9 @@ test('manager session identity prioritizes the approved Firestore name over Fire
 
 test('login.html routes an active Lands-only account to the Lands trusted runtime, never denies it', () => {
   const source = read('login.html');
-  assert.match(source, /hasLandsRole = Boolean\(landsAccess && landsAccess\.enabled/);
-  assert.match(source, /hasLandsRole && !hasFieldRole/);
+  const resolver = read('workspace-access.js');
+  assert.match(resolver, /hasLands = Boolean\(la && la\.enabled === true/);
+  assert.match(source, /primary\.id === 'lands'/); // a Lands primary is never denied: it goes through the trusted handoff
   assert.match(source, /lands-smart-git-staging-lands-trusted-audit-blumark24-os\.vercel\.app/);
 });
 

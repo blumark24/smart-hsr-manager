@@ -15,6 +15,7 @@ const leadershipLogin = read('manager-login.html');
 const managerAdapter = read('manager-dashboard-adapter.js');
 const usersApi = read('api/admin/users.js');
 const authz = read('api/_lib/authz.js');
+const workspaceAccess = read('workspace-access.js');
 const productContract = read('platform/contracts/product-entitlement-contract.js');
 const landsContext = read('api/organization/context.js');
 
@@ -42,17 +43,21 @@ test('leadership route is isolated, organization-bound, and resolves only to man
 });
 
 test('canonical workforce router binds institutional path to the real project workspaces', () => {
-  assert.match(workforceLogin, /const canonicalFieldPath =/);
-  assert.match(workforceLogin, /const canonicalLandsPath =/);
-  assert.match(workforceLogin, /const canonicalMobilityPath =/);
-  assert.match(workforceLogin, /const canonicalAdministrativePath =/);
+  // Routing is resolved by the shared workspace-access resolver (server is
+  // authoritative; login.html navigates to the resolved primary route).
+  assert.match(workforceLogin, /action: 'resolveWorkspaces'/);
+  assert.match(workforceLogin, /window\.location\.href = target/);
+  assert.match(workspaceAccess, /const canonicalFieldPath =/);
+  assert.match(workspaceAccess, /const canonicalLandsPath =/);
+  assert.match(workspaceAccess, /const canonicalMobilityPath =/);
+  assert.match(workspaceAccess, /const canonicalAdministrativePath =/);
 
-  assert.match(workforceLogin, /institutionalRole === ['"]department_head['"]\) window\.location\.href = ['"]department-head\.html['"]/);
-  assert.match(workforceLogin, /role === ['"]supervisor['"]\) window\.location\.href = ['"]manager\.html['"]/);
-  assert.match(workforceLogin, /role === ['"]contractor['"]\) window\.location\.href = ['"]mobile-map\.html['"]/);
-  assert.match(workforceLogin, /window\.location\.href = ['"]dashboard\.html['"]/);
-  assert.match(workforceLogin, /window\.location\.href = ['"]department-head\.html\?mode=mobility['"]/);
-  assert.match(workforceLogin, /window\.location\.href = ['"]admin-affairs\.html['"]/);
+  assert.match(workspaceAccess, /if \(flags\.hasFieldDepartmentHeadRole\) return ['"]department-head\.html['"]/);
+  assert.match(workspaceAccess, /d\.role === ['"]supervisor['"]\) return ['"]manager\.html['"]/);
+  assert.match(workspaceAccess, /d\.role === ['"]contractor['"]\) return ['"]mobile-map\.html['"]/);
+  assert.match(workspaceAccess, /return ['"]dashboard\.html['"]/);
+  assert.match(workspaceAccess, /MOBILITY_ROUTE = ['"]department-head\.html\?mode=mobility['"]/);
+  assert.match(workspaceAccess, /['"]admin-affairs\.html['"]/);
 
   for (const target of ['department-head.html','manager.html','mobile-map.html','dashboard.html','admin-affairs.html']) {
     assert.ok(fs.existsSync(path.join(root, target)), `missing routed workspace: ${target}`);
@@ -72,7 +77,8 @@ test('product roles remain independent from institutional identity', () => {
   assert.match(productContract, /landsAccess/);
   assert.match(productContract, /vehicleEligible/);
   assert.match(authz, /function resolveMobilityRole\(data\)/);
-  assert.match(authz, /MOBILITY_MANAGEABLE_ROLES\.includes\(access\.role\)/);
+  assert.match(authz, /WorkspaceAccess\.resolveMobilityRole\(data\)/);
+  assert.match(workspaceAccess, /MOBILITY_ROLES\.includes\(a\.role\)/);
 });
 
 test('Gate A mission request is tenant- and department-bound to an eligible active employee', () => {
@@ -101,7 +107,7 @@ test('Gate A cannot silently reassign an approved mission to a different employe
 });
 
 test('disabled or malformed Mobility entitlement fails closed', () => {
-  assert.match(authz, /Object\.prototype\.hasOwnProperty\.call\(data, ['"]mobilityAccess['"]\)/);
-  assert.match(authz, /access\.enabled === true/);
-  assert.match(authz, /return enabled && MOBILITY_MANAGEABLE_ROLES\.includes\(access\.role\) \? access\.role : null/);
+  assert.match(workspaceAccess, /hasOwn\(d, ['"]mobilityAccess['"]\)/);
+  assert.match(workspaceAccess, /a\.enabled === true/);
+  assert.match(workspaceAccess, /return enabled && MOBILITY_ROLES\.includes\(a\.role\) \? a\.role : null/);
 });

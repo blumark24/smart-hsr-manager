@@ -31,6 +31,7 @@ const {
   isValidMobilityAllocationTarget,
   resolveMobilityRole,
   assertCanManage,
+  WorkspaceAccess,
 } = require('../_lib/authz');
 const { buildContractorObservationUpdate } = require('../../platform/policies/contractor-observation-workflow');
 const { callLandsTrustedMutation } = require('../_lib/landsBridge');
@@ -45,6 +46,9 @@ const {
   resolveEffectiveServiceState,
   passwordPolicyReason,
   isPasswordEligibleTarget,
+  validateCapabilitySelection,
+  syncEntitlementsForLegacyChange,
+  mobilityProductMirror,
 } = require('../_lib/serviceEntitlements');
 const { evaluateMissionTransition } = require('../../platform/policies/mission-workflow-policy');
 const { evaluateVehicleTransition } = require('../../platform/policies/vehicle-workflow-policy');
@@ -504,6 +508,51 @@ async function handler(req, res) {
     action, body, decoded, db, auth, FieldValue, getCallerContext, sendJson, res,
   })) return;
 
+
+  // UNIFIED IDENTITY — authoritative workspace resolution. The browser may
+  // call this to decide where to navigate and what to display, but every
+  // workspace page re-calls it, and every operational action re-derives its
+  // own authority from the live users/{uid} record regardless. Identity,
+  // organization and active state come ONLY from the verified token + live
+  // Firestore record — never from the request body. A municipal manager
+  // (managers/{uid}) is reported as kind:'manager' and is never routed into
+  // workforce workspaces here.
+  if (action === 'resolveWorkspaces') {
+    const requested = cleanString(body.workspace);
+    if (requested && !['field', 'lands', 'admin_affairs', 'mobility'].includes(requested)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'unknown_workspace' });
+    }
+    try {
+      const managerSnap = await db.collection('managers').doc(decoded.uid).get();
+      if (managerSnap.exists) {
+        const m = managerSnap.data() || {};
+        if (m.role === 'manager' && m.active !== false && cleanString(m.organizationId)) {
+          return sendJson(res, 200, {
+            kind: 'manager', valid: true, reason: null, primary: null, workspaces: [], capabilities: [],
+            ...(requested ? { allowed: true } : {}),
+          });
+        }
+      }
+      const userSnap = await db.collection('users').doc(decoded.uid).get();
+      const data = userSnap.exists ? (userSnap.data() || {}) : null;
+      const resolution = WorkspaceAccess.resolveWorkspaces(data);
+      const payload = {
+        kind: 'workforce',
+        valid: resolution.valid,
+        reason: resolution.reason,
+        primary: resolution.primary,
+        workspaces: resolution.workspaces,
+        capabilities: resolution.capabilities,
+        profile: resolution.valid ? {
+          name: cleanString(data.name), department: cleanString(data.department), jobTitle: cleanString(data.jobTitle),
+        } : null,
+      };
+      if (requested) payload.allowed = WorkspaceAccess.isWorkspaceAllowed(resolution, requested);
+      return sendJson(res, 200, payload);
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
 
   // PHASE 06A.2 — listMobilityEmployees is authorized completely separately
   // from every other action below: it is the only action a mobility_head
@@ -2207,6 +2256,12 @@ async function handler(req, res) {
     if (!missionId || !['READY', 'IN_PROGRESS', 'INCIDENT_HOLD', 'COMPLETED'].includes(toStatus)) {
       return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_employee_transition' });
     }
+    // Unified identity: receiving/starting a mission needs vehicle.checkout;
+    // driving-phase transitions (incident hold / completion) need vehicle.drive.
+    const requiredCapability = ['READY', 'IN_PROGRESS'].includes(toStatus) ? 'vehicle.checkout' : 'vehicle.drive';
+    if (!actor.capabilities.includes(requiredCapability)) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'capability_required', capability: requiredCapability });
+    }
 
     try {
       const outcome = await db.runTransaction(async transaction => {
@@ -2237,6 +2292,9 @@ async function handler(req, res) {
     const actor = await getMobilityAssignedOperatorCallerContext(decoded.uid);
     if (!actor.isAssignedOperatorEligible) {
       return sendJson(res, 403, { error: 'forbidden', reason: 'assigned_vehicle_operator_required' });
+    }
+    if (!actor.capabilities.includes('vehicle.return')) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'capability_required', capability: 'vehicle.return' });
     }
     const missionId = cleanString(body.missionId);
     if (!missionId) return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_required' });
@@ -2388,6 +2446,9 @@ async function handler(req, res) {
     const caller = await getMobilityAssignedOperatorCallerContext(decoded.uid);
     if (!caller.isAssignedOperatorEligible) {
       return sendJson(res, 403, { error: 'forbidden', reason: 'assigned_vehicle_operator_required' });
+    }
+    if (!caller.capabilities.includes('vehicle.drive')) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'capability_required', capability: 'vehicle.drive' });
     }
     const clientRequestId = body.clientRequestId;
     const incident = {
@@ -2603,7 +2664,7 @@ async function handler(req, res) {
             organizationId: employee.organizationId,
             active: employee.active,
             role: resolveMobilityRole(employee),
-            vehicleEligible: employee.vehicleEligible,
+            vehicleEligible: WorkspaceAccess.hasCapability(employee, 'vehicle.drive'),
           },
         });
         if (!vehicleDecision.allowed) {
@@ -3012,7 +3073,7 @@ async function handler(req, res) {
       // Firebase Auth account or the other service — "remove a service
       // without deleting the user account".
       case 'setServices': {
-        const { uid, field, mobility, lands, vehicleEligible } = body;
+        const { uid, field, mobility, lands, vehicleEligible, capabilities } = body;
         if (!isNonEmptyString(uid)) return sendJson(res, 400, { error: 'uid_required' });
         const record = await findRecord(db, uid);
         if (!record || record.collection !== 'users') return sendJson(res, 404, { error: 'record_not_found' });
@@ -3028,7 +3089,11 @@ async function handler(req, res) {
         if (vehicleEligible !== undefined && typeof vehicleEligible !== 'boolean') {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_vehicle_eligible' });
         }
-        if (!fieldSel.present && !mobilitySel.present && !landsSel.present && vehicleEligible === undefined) {
+        // Unified identity: explicit capability grant/revoke (full replace of
+        // the four allowlisted capabilities; unknown values are rejected).
+        const capabilitySel = validateCapabilitySelection(capabilities);
+        if (!capabilitySel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: capabilitySel.reason });
+        if (!fieldSel.present && !mobilitySel.present && !landsSel.present && vehicleEligible === undefined && !capabilitySel.present) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'no_service_changes' });
         }
         // Phase 03B: Field and Lands may now both be enabled at once on the
@@ -3077,6 +3142,15 @@ async function handler(req, res) {
         // platform/policies/vehicle-workflow-policy.js for where this is
         // actually enforced server-side (firestore.rules vehicle allocation).
         if (vehicleEligible !== undefined) update.vehicleEligible = vehicleEligible;
+        // Capability layer: an explicit selection replaces the set; otherwise
+        // a record that already carries `entitlements` is kept coherent with
+        // the legacy change just requested (see syncEntitlementsForLegacyChange).
+        const nextCapabilities = capabilitySel.present
+          ? capabilitySel.capabilities
+          : syncEntitlementsForLegacyChange(record.data, { mobilitySel, vehicleEligible });
+        if (nextCapabilities) {
+          update.entitlements = { capabilities: nextCapabilities, updatedBy: caller.uid, updatedAt: FieldValue.serverTimestamp() };
+        }
 
         let landsSync = null;
         let landsOutcome = null;
@@ -3117,6 +3191,23 @@ async function handler(req, res) {
         }
         await record.ref.set(update, { merge: true });
 
+        // Mirror the Mobility capability state into the linked employee
+        // registry entry (selection lists read it). Best-effort and
+        // non-authoritative: users/{uid} stays the single authority.
+        if (nextCapabilities) {
+          try {
+            const linked = await db.collection('employees').where('authUid', '==', uid).limit(1).get();
+            const employeeDoc = linked && linked.docs && linked.docs[0];
+            if (employeeDoc && (employeeDoc.data() || {}).organizationId === municipalityId) {
+              const existingProducts = (employeeDoc.data() || {}).products || {};
+              await employeeDoc.ref.set({
+                products: { ...existingProducts, mobility: mobilityProductMirror(nextCapabilities, existingProducts.mobility) },
+                updatedAt: FieldValue.serverTimestamp(),
+              }, { merge: true });
+            }
+          } catch (_) { /* registry mirror is advisory; users/{uid} is authoritative */ }
+        }
+
         await recordAdminAudit(db, {
           caller, organizationId: municipalityId, targetUid: uid, action: 'set_services',
           detail: {
@@ -3124,6 +3215,7 @@ async function handler(req, res) {
             mobility: mobilitySel.present ? { enabled: mobilitySel.enabled, role: mobilitySel.role } : undefined,
             lands: landsSel.present ? { enabled: landsSel.enabled, role: landsSel.role } : undefined,
             vehicleEligible,
+            capabilities: nextCapabilities || undefined,
           },
         });
 
@@ -3135,6 +3227,7 @@ async function handler(req, res) {
             ? { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? (update.landsAccess.syncStatus) : null, syncError: landsOutcome ? landsOutcome.syncError : null }
             : undefined,
           vehicleEligible,
+          capabilities: nextCapabilities || undefined,
         });
       }
 
