@@ -19,7 +19,7 @@ const productContract = read('platform/contracts/product-entitlement-contract.js
 const landsContext = read('api/organization/context.js');
 
 test('public site enters SMART HSR only through the hardened gateway', () => {
-  assert.match(publicEnhancements, /location\.href=['"]Home\.html['"]/);
+  assert.match(publicEnhancements, /location\.href\s*=\s*['"]Home\.html['"]/);
   assert.match(gateway, /href="manager-login\.html"/);
   assert.match(gateway, /href="login\.html"/);
   assert.doesNotMatch(gateway, /owner-login\.html/);

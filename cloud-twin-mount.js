@@ -9,7 +9,7 @@
     users: { pal: 'light', weights: { routes: 1.4, dept: 1.1, roads: .8, parcels: .6, field: .5 }, tilt: .98 }
   };
   var mqMobile = window.matchMedia('(max-width:600px)');
-  var mqTablet = window.matchMedia('(min-width:601px) and (max-width:1024px)');
+  var mqTablet = window.matchMedia('(min-width:601px) and (max-width:899px), (min-width:601px) and (max-width:1024px) and (orientation:portrait)');
   var unmounts = [];
 
   function frame(cv) {

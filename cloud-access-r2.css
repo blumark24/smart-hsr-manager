@@ -147,7 +147,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .workforce-login .visual-card span{font-size:13px;color:var(--muted)}
 
 /* ───────────── TABLET — 3d / 3e / 3f (iPad 834 portrait) ───────────── */
-@media(max-width:1024px){
+/* Tablet sheet: portrait tablets and anything under 900px. Landscape tablets (900–1024px) keep the desktop composition. */
+@media(max-width:899px),(max-width:1024px) and (orientation:portrait){
   .v-d{display:none}
   .gateway-fade,.gateway-halo,.gateway-back,.gateway-tools .divider{display:none}
   .gateway-page{background:radial-gradient(80% 60% at 50% 30%,#fff 0%,#F3F6F4 60%,#E4EBE7 100%)}

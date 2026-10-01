@@ -76,7 +76,7 @@ test('Exact Cloud access stylesheet locks source geometry and the three responsi
   assert.match(css, /grid-template-columns:600px minmax\(0,1fr\)/);
   assert.match(css, /padding:48px 80px 40px/);
   assert.match(css, /\.login-visual\{position:relative;margin:16px 0 16px 16px;border-radius:30px/);
-  assert.match(css, /@media\(max-width:1024px\)/);
+  assert.match(css, /@media\(max-width:899px\),\(max-width:1024px\) and \(orientation:portrait\)/);
   assert.match(css, /padding:48px 88px 40px;border-radius:36px 36px 0 0/);
   assert.match(css, /@media\(max-width:600px\)/);
   assert.match(css, /border-radius:32px 32px 0 0/);
