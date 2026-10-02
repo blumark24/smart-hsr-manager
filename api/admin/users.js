@@ -1639,6 +1639,9 @@ async function handler(req, res) {
           if (employee.organizationId !== caller.organizationId) {
             return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
           }
+          if (cleanString(employee.department) !== cleanString(caller.department)) {
+            return { ok: false, statusCode: 403, reason: 'cross_department_denied' };
+          }
           if (employee.employmentStatus === 'inactive') {
             return { ok: false, statusCode: 409, reason: 'employee_inactive' };
           }
