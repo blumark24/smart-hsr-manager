@@ -157,16 +157,6 @@
         department:e.department,
         vehicleEligible:e.vehicleEligible === true,
       })),
-      liveDelegationCandidates:(workspace.delegationCandidates || []).map(e => ({
-        uid:e.uid,
-        name:e.name,
-        active:e.active !== false,
-        administration:e.administration || '',
-        department:e.department || '',
-        jobTitle:e.jobTitle || '',
-        capabilities:Array.isArray(e.capabilities) ? e.capabilities : [],
-        delegation:e.delegation || null,
-      })),
     });
   }
 
@@ -257,7 +247,7 @@
         location.replace('workspace.html');
         return;
       }
-      const role = resolveMobilityRole(data) || (resolution.delegation ? 'employee' : null);
+      const role = resolveMobilityRole(data);
       if (!role || (role === 'department_head' && !department)) {
         location.replace('workspace.html');
         return;
@@ -327,8 +317,6 @@
     createIncident: payload => withRefresh(api('createIncident',{...payload,clientRequestId:requestId('incident')})).then(x=>x.incidentId),
     mobilityProcessIncident: (incidentId,toStatus) => withRefresh(api('processMobilityIncident',{incidentId,toStatus})),
     decideVehicleAuthorization: (missionId,toStatus) => withRefresh(api('decideVehicleAuthorization',{missionId,toStatus})),
-    grantMobilityDelegation: payload => withRefresh(api('grantMobilityDelegation', payload || {})),
-    revokeMobilityDelegation: delegationId => withRefresh(api('revokeMobilityDelegation',{delegationId})),
   };
 
   window.dispatchEvent(new Event('smart-hsr-mobility-adapter-ready'));
