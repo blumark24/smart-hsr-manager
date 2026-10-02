@@ -12,6 +12,7 @@ on:
       - release/municipality-final-rc
       - release/municipality-final-rc2
       - security/rc2-firebase-admin-14
+      - design/spatial-intelligence-v1
   workflow_dispatch:
 
 jobs:
@@ -130,6 +131,12 @@ jobs:
 
       - name: Final full-project integration contract
         run: node --test test/final-full-project-integration-contract.test.js
+
+      - name: Spatial closure acceptance
+        run: |
+          node --test test/geo-provider-contract.test.js
+          node --test test/geo-core-browser-bundle.test.js
+          node --test test/phase6-spatial-restoration.test.js
 
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
