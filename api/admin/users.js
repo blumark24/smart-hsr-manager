@@ -349,6 +349,8 @@ function safeMobilityAuthorization(id, data) {
     activatedAt: timestampToIso(data.activatedAt),
     expiredAt: timestampToIso(data.expiredAt),
     administrativeNote: data.administrativeNote || null,
+    workflowPolicy: normalizeWorkflowPolicy(data.workflowPolicy),
+    authorizationMode: data.authorizationMode || null,
   };
 }
 
@@ -1953,6 +1955,10 @@ async function handler(req, res) {
         if (mission.organizationId !== actor.organizationId || authorization.organizationId !== actor.organizationId) {
           return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
         }
+        const workflowPolicy = normalizeWorkflowPolicy(mission.workflowPolicy);
+        if (workflowPolicy !== MOBILITY_WORKFLOW_POLICIES.FULL) {
+          return { ok: false, statusCode: 409, reason: 'authorization_not_required_for_policy' };
+        }
         if (authorization.missionId !== missionId || authorization.vehicleId !== mission.vehicleId
             || authorization.employeeUid !== mission.assignedEmployeeUid) {
           return { ok: false, statusCode: 409, reason: 'vehicle_authorization_relationship_invalid' };
@@ -2842,6 +2848,10 @@ async function handler(req, res) {
 
         const now = FieldValue.serverTimestamp();
         const employeeName = isNonEmptyString(employee.name) ? employee.name.trim() : '';
+        const workflowPolicy = normalizeWorkflowPolicy(mission.workflowPolicy);
+        const requiresAdministrativeAuthorization = workflowPolicy === MOBILITY_WORKFLOW_POLICIES.FULL;
+        const authorizationStatus = requiresAdministrativeAuthorization ? 'PENDING_AUTHORIZATION' : 'AUTHORIZED';
+        const authorizationMode = requiresAdministrativeAuthorization ? 'ADMINISTRATIVE_AFFAIRS' : 'POLICY_AUTO';
         const authorizationRef = db.collection('vehicleAuthorizations').doc(missionId);
         const authorizationNumber = 'VA-' + String(missionId).slice(-8).toUpperCase();
         transaction.update(missionRef, {
@@ -2851,7 +2861,7 @@ async function handler(req, res) {
           assignedEmployeeName: employeeName,
           vehicleAuthorizationId: missionId,
           vehicleAuthorizationNumber: authorizationNumber,
-          vehicleAuthorizationStatus: 'PENDING_AUTHORIZATION',
+          vehicleAuthorizationStatus: authorizationStatus,
           updatedAt: now,
           updatedByUid: decoded.uid,
         });
@@ -2864,10 +2874,17 @@ async function handler(req, res) {
           vehicleId,
           employeeUid,
           employeeName,
-          status: 'PENDING_AUTHORIZATION',
+          status: authorizationStatus,
+          workflowPolicy,
+          authorizationMode,
           requestedByUid: decoded.uid,
           requestedByRole: 'mobility_head',
           requestedAt: now,
+          ...(requiresAdministrativeAuthorization ? {} : {
+            authorizedByUid: decoded.uid,
+            authorizedByRole: 'mobility_head',
+            authorizedAt: now,
+          }),
           createdAt: now,
           updatedAt: now,
         });
@@ -2914,14 +2931,18 @@ async function handler(req, res) {
           actorRole: 'mobility_head',
           resourceType: 'vehicleAuthorization',
           resourceId: missionId,
-          action: 'create_vehicle_authorization_request',
-          toStatus: 'PENDING_AUTHORIZATION',
+          action: requiresAdministrativeAuthorization
+            ? 'create_vehicle_authorization_request'
+            : 'auto_authorize_vehicle_use_by_policy',
+          toStatus: authorizationStatus,
           missionId,
           vehicleId,
           assignedEmployeeUid: employeeUid,
+          workflowPolicy,
+          authorizationMode,
           timestamp: now,
         });
-        return { ok: true, authorizationNumber };
+        return { ok: true, authorizationNumber, authorizationStatus, authorizationMode, workflowPolicy };
       });
 
       if (!outcome.ok) {
@@ -2931,7 +2952,9 @@ async function handler(req, res) {
         missionId, vehicleId, employeeUid, status: 'VEHICLE_ALLOCATED',
         vehicleAuthorizationId: missionId,
         vehicleAuthorizationNumber: outcome.authorizationNumber,
-        vehicleAuthorizationStatus: 'PENDING_AUTHORIZATION',
+        vehicleAuthorizationStatus: outcome.authorizationStatus,
+        authorizationMode: outcome.authorizationMode,
+        workflowPolicy: outcome.workflowPolicy,
       });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });

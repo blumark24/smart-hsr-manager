@@ -39,7 +39,7 @@ test('FULL requires Department Head -> Administrative Affairs -> Mobility', () =
 test('SHORT skips Administrative Affairs and goes Department Head -> Mobility', () => {
   const draft = { status:'DRAFT', workflowPolicy:'SHORT', organizationId:ORG, createdByUid:head.uid };
   assert.equal(evaluateMissionTransition({ actor:head, mission:draft, toStatus:'APPROVED' }).allowed, true);
-  assert.equal(evaluateMissionTransition({ actor:head, mission:draft, toStatus:'PENDING_APPROVAL' }).allowed, true);
+  assert.equal(evaluateMissionTransition({ actor:head, mission:draft, toStatus:'PENDING_APPROVAL' }).allowed, false);
 
   const pending = { ...draft, status:'PENDING_APPROVAL' };
   assert.equal(evaluateMissionTransition({ actor:admin, mission:pending, toStatus:'APPROVED' }).allowed, false);
@@ -48,6 +48,7 @@ test('SHORT skips Administrative Affairs and goes Department Head -> Mobility', 
 test('DIRECT approval authority belongs to Mobility Head only', () => {
   const draft = { status:'DRAFT', workflowPolicy:'DIRECT', organizationId:ORG, createdByUid:mobility.uid };
   assert.equal(evaluateMissionTransition({ actor:mobility, mission:draft, toStatus:'APPROVED' }).allowed, true);
+  assert.equal(evaluateMissionTransition({ actor:mobility, mission:draft, toStatus:'PENDING_APPROVAL' }).allowed, false);
   assert.equal(evaluateMissionTransition({ actor:head, mission:draft, toStatus:'APPROVED' }).allowed, false);
   assert.equal(evaluateMissionTransition({ actor:admin, mission:draft, toStatus:'APPROVED' }).allowed, false);
 });
@@ -109,4 +110,19 @@ test('Mobility Head vehicle handover is role-gated, not blocked by employee vehi
   assert.match(block, /\['mobility_head'\]/);
   assert.doesNotMatch(block, /resolvedActorCapability\(actor, 'vehicle\.return'/);
   assert.doesNotMatch(block, /capability_required/);
+});
+
+test('FULL keeps Administrative Affairs vehicle authorization; SHORT/DIRECT are policy-auto authorized', () => {
+  const api = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
+  const adminRuntime = fs.readFileSync(path.join(root, 'admin-affairs-runtime.js'), 'utf8');
+  const headHtml = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+
+  assert.match(api, /requiresAdministrativeAuthorization = workflowPolicy === MOBILITY_WORKFLOW_POLICIES\.FULL/);
+  assert.match(api, /authorizationMode = requiresAdministrativeAuthorization \? 'ADMINISTRATIVE_AFFAIRS' : 'POLICY_AUTO'/);
+  assert.match(api, /authorization_not_required_for_policy/);
+  assert.match(api, /auto_authorize_vehicle_use_by_policy/);
+
+  assert.match(adminRuntime, /\(a\.workflowPolicy\|\|'FULL'\)==='FULL'/);
+  assert.match(adminRuntime, /a\.authorizationMode==='POLICY_AUTO'/);
+  assert.match(headHtml, /m\.authorizationStatus === 'AUTHORIZED'/);
 });

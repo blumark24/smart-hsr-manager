@@ -3071,6 +3071,7 @@ class Component extends DCLogic {
         { k: 'طالب المهمة', v: m.requester }, { k: 'الموظف', v: m.emp }, { k: 'الوجهة', v: m.dest },
         { k: 'التاريخ والوقت', v: m.when }, { k: 'المدة المتوقعة', v: m.dur }, { k: 'النطاق', v: m.scope },
         { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : 'لم تُخصص بعد' },
+        { k: 'اعتماد استخدام المركبة', v: m.authorizationStatus === 'AUTHORIZED' ? 'معتمد' : m.authorizationStatus === 'PENDING_AUTHORIZATION' ? 'بانتظار الشؤون الإدارية' : (m.authorizationStatus || '—') },
         // PHASE 06A hotfix (GPS honesty) — no real device/location source
         // exists; never claim "GPS active", only an honest schematic/
         // unavailable disclosure. MISSION STATUS != GPS STATUS.
@@ -3118,7 +3119,7 @@ class Component extends DCLogic {
         }, tx: danger.tx, bg: danger.bg, bd: danger.bd });
       } else {
         if (stt === 'بانتظار المركبة') acts.push({ label: 'تخصيص مركبة', on: () => { window.SmartHSRMobilityAdapter.refreshMobilityEmployees?.(); this.setState({ drawer: 'alloc' }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
-        if (stt === 'تم تخصيص المركبة') acts.push({ label: 'تسليم المركبة', on: () => this.setState({ drawer: 'handover' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        if (stt === 'تم تخصيص المركبة' && m.authorizationStatus === 'AUTHORIZED') acts.push({ label: 'تسليم المركبة', on: () => this.setState({ drawer: 'handover' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
         if (stt === 'في انتظار إعادة المركبة') acts.push({ label: 'استلام المركبة', on: () => this.setState({ drawer: 'ret' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
         acts.push({ label: 'عرض في الخريطة', on: () => { const vv = V.filter(x => x.id === m.veh)[0]; this.setState({ drawer: null, screen: 'map', sel: vv ? { t: 'v', id: vv.id } : null }); }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
       }

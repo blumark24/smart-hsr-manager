@@ -1,7 +1,7 @@
 # SMART HSR — Unified Identity & Workspace Access
 
 **Principle:** One Identity → One Login → Roles + Entitlements → Authorized Workspaces.
-Branch: `feature/unified-identity-workspace-access` (Preview only; no merge, no Production).
+Release candidate: `release/municipality-final-rc2` (Preview/UAT only; no merge to main and no Production change until final acceptance).
 
 ## Model (additive, no data migration)
 `users/{uid}` keeps `organizationId`, `role`, `department`, `administration`, `institutionalRole`, `active`,
@@ -58,16 +58,12 @@ execution-only `employee` (own missions only).
 * Employee-registry selection lists keep reading the registry mirror (kept in step by the server).
 
 
-## Scoped Mobility Delegation
+## Mobility authorization model
 
-Temporary Mobility access is now distinct from permanent entitlements.
+Temporary Mobility delegation is **not** part of the release operating model.
 
-- Permanent access remains `entitlements.capabilities`.
-- Temporary access is materialized in `users/{uid}.mobilityDelegation` and recorded immutably in `mobilityDelegations/{grantId}`.
-- Every temporary grant requires an expiry time; expiry is enforced server-side on every workspace resolution and vehicle operation.
-- Grant authority is intentionally narrow: same-organization `mobility_head` only. The existing `supervisor` value is an assistant-supervisor role in the approved Field model, so it is not repurposed as “المشرف العام”. Municipality Manager and platform Owner receive no new daily Mobility control. A distinct higher municipal authority must be modeled explicitly before it can grant temporary Mobility access.
-- Cross-organization grants, self-grants, inactive targets and unknown capabilities fail closed.
-- A grant can optionally be scoped to one mission and/or vehicle.
-- Revocation is immediate because runtime authorization reads the live user record server-side.
-- Grant, revoke and delegated operational use are written to `auditEvents`.
-- The Mobility Head settings surface exposes grant/revoke without changing the approved board structure.
+- Permanent `entitlements.capabilities` are the authoritative source for Mobility workspace and vehicle-operation access.
+- Legacy `mobilityDelegation` data, if present on an older record, does not grant workspace access or operational authority.
+- No Head of Mobility grant/revoke flow is part of RC2.
+- Same-organization manager/owner trusted APIs remain the only path for permanent entitlement changes.
+- Vehicle authorization follows the municipality workflow policy: `FULL` requires Administrative Affairs authorization; `SHORT` and `DIRECT` skip Administrative Affairs and create an internally authorized vehicle-use record by policy so the audit trail and handover lifecycle stay intact.

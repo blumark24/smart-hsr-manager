@@ -145,7 +145,15 @@ function evaluateMissionTransition({ actor, mission, toStatus, requestedFields }
       roles: Object.freeze(['mobility_head']),
       action: 'direct_approve',
     });
-  } else if (policy !== MOBILITY_WORKFLOW_POLICIES.FULL && fromStatus === 'PENDING_APPROVAL') {
+  }
+
+  // SHORT and DIRECT never enter Administrative Affairs mission approval.
+  // Fail closed if any caller attempts to route either policy through
+  // PENDING_APPROVAL; otherwise a mission could be stranded in a state that
+  // those policies intentionally cannot approve.
+  if (policy !== MOBILITY_WORKFLOW_POLICIES.FULL
+      && ((fromStatus === 'DRAFT' && toStatus === 'PENDING_APPROVAL')
+          || fromStatus === 'PENDING_APPROVAL')) {
     contract = null;
   }
 
