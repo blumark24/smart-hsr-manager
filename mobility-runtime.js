@@ -147,6 +147,7 @@
     if (!component) return;
     component.setState({
       runtimeMode:'mobility',
+      workflowPolicy:workspace.workflowPolicy || 'FULL',
       liveMissions:(workspace.missions || []).map(missionView),
       liveVehicles:(workspace.vehicles || []).map(vehicleView),
       liveIncidents:(workspace.incidents || []).map(incidentView),
@@ -177,6 +178,12 @@
         if (instance.state.role === 'mobility' && instance.state.screen === 'ops') {
           out.title = 'مركز عمليات الحركة الذكية';
           out.sub = 'إدارة الأسطول والمهام والحوادث على مستوى البلدية';
+          if ((instance.state.workflowPolicy || 'FULL') === 'DIRECT') {
+            out.actions = [
+              {label:'+ مهمة مباشرة',on:()=>instance.openDrawer('create',null),tx:'var(--btnTx,#fff)',bg:'var(--btn)',bd:'var(--btnBd)'},
+              ...(out.actions || [])
+            ];
+          }
         }
         if (instance.state.role === 'dept' && instance.state.runtimeMode === 'mobility') {
           if (instance.state.screen === 'deptops') {
@@ -295,6 +302,7 @@
     },
     refresh,
     refreshMobilityEmployees: refresh,
+    createDirectMobilityMission: payload => withRefresh(api('createDirectMobilityMission',{...payload,clientRequestId:requestId('mission-direct')})).then(x=>x.missionId),
     createMissionRequest: payload => {
       const exact = (workspace.employees || []).find(e =>
         (payload.requestedEmployeeId && e.employeeId === payload.requestedEmployeeId)
