@@ -33,7 +33,6 @@ const {
   assertCanManage,
   WorkspaceAccess,
 } = require('../_lib/authz');
-const MobilityDelegation = require('../_lib/mobilityDelegation');
 const { buildContractorObservationUpdate } = require('../../platform/policies/contractor-observation-workflow');
 const { callLandsTrustedMutation } = require('../_lib/landsBridge');
 const { ensureManagerLandsBootstrap, runBootstrapTransaction } = require('../_lib/landsManagerBootstrap');
@@ -215,19 +214,6 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
     baseCapabilities: Array.from(capabilities),
     delegation: null,
   };
-}
-
-async function getMobilityDelegationAuthority(db, uid) {
-  const head = await getMobilityHeadCallerContext(uid);
-  if (head.isMobilityHead && head.organizationId) {
-    return { uid, role: 'mobility_head', organizationId: head.organizationId };
-  }
-  // No existing role is a distinct authoritative representation of
-  // رئيس البلدية / المشرف العام. The legacy supervisor value is the
-  // approved Field assistant-supervisor role, so it must not be promoted
-  // into municipality-wide Mobility grant authority. Fail closed until
-  // that higher authority is modeled explicitly.
-  return null;
 }
 
 function resolvedActorCapability(actor, capability) {
