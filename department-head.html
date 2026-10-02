@@ -1733,7 +1733,7 @@ class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
     role: 'dept', screen: 'deptops', authPending: false, orgName: 'معاينة تصميم', sessionName: 'رئيس قسم الحصر الميداني', department: 'إدارة الحصر الميداني',
-    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [],
+    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [], workflowPolicy: 'FULL',
     sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
     geoPanelOpen: false, mapSearchOpen: false,
     twin3D: false, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
@@ -3199,6 +3199,7 @@ class Component extends DCLogic {
     if (k === 'create') {
       const f = this.state.form;
       const mobilityMode = this.state.runtimeMode === 'mobility';
+      const directMobility = this.state.role === 'mobility' && (this.state.workflowPolicy || 'FULL') === 'DIRECT';
       const canSave = !!(this.state.chip.type && (f.cDest || '').trim() && (f.cWhy || '').trim()
         && (!mobilityMode || (f.cEmpId || '').trim()));
       const saveMission = submit => {
@@ -3213,16 +3214,26 @@ class Component extends DCLogic {
           whenLabel: (f.cWhen || '').trim(), durationLabel: (f.cDur || '').trim()
         };
         this.setState({ drawer: null });
-        window.SmartHSRMobilityAdapter.createMissionRequest(payload).then(missionId => {
+        const createCall = directMobility
+          ? window.SmartHSRMobilityAdapter.createDirectMobilityMission(payload)
+          : window.SmartHSRMobilityAdapter.createMissionRequest(payload);
+        createCall.then(missionId => {
+          if (directMobility) {
+            this.flash('تم إنشاء المهمة المباشرة — بانتظار تخصيص المركبة');
+            return Promise.resolve();
+          }
           if (!submit) { this.flash('تم حفظ الطلب كمسودة'); return Promise.resolve(); }
-          return window.SmartHSRMobilityAdapter.submitMissionForApproval(missionId).then(() => this.flash('تم إرسال الطلب للاعتماد الإداري'));
+          return window.SmartHSRMobilityAdapter.submitMissionForApproval(missionId).then(() => {
+            const p = this.state.workflowPolicy || 'FULL';
+            this.flash(p === 'SHORT' ? 'تم إرسال المهمة مباشرة إلى حركة السير' : 'تم إرسال الطلب للاعتماد الإداري');
+          });
         }).catch(() => this.flash('تعذر حفظ الطلب — الرجاء المحاولة مجدداً'));
       };
-      return { title: 'إنشاء طلب مهمة', sub: (this.state.department || '—') + ' · رئيس القسم', chip: 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
+      return { title: directMobility ? 'إنشاء مهمة تنفيذية مباشرة' : 'إنشاء طلب مهمة', sub: directMobility ? 'مركز حركة السير · سياسة DIRECT' : ((this.state.department || '—') + ' · رئيس القسم'), chip: directMobility ? 'معتمدة مباشرة' : 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
         form: true, formTitle: 'بيانات الطلب',
         fields: [
           mobilityMode
-            ? { label: 'الموظف', type: 'select', value: f.cEmpId || '', ph: 'اختر موظفاً من القسم',
+            ? { label: 'الموظف', type: 'select', value: f.cEmpId || '', ph: 'اختر موظفاً مؤهلاً من البلدية',
                 options: (this.state.liveEmployees || []).map(e => ({
                   value: e.employeeId,
                   label: e.name + (e.vehicleEligible ? ' · مؤهل للمركبة' : ' · غير مؤهل للمركبة')
@@ -3241,10 +3252,17 @@ class Component extends DCLogic {
             tx: on ? (this.state.theme === 'day' ? '#0b5c3b' : '#eaf4ff') : 'var(--tx2,#a9bdd4)',
             bg: on ? this.tint('#22c55e', 0.16) : 'var(--ctl,rgba(20,32,54,0.5))', bd: on ? this.tint('#22c55e', 0.4) : 'var(--ctlBd,rgba(122,164,224,0.14))' };
         }),
-        banner: 'حسب السياسة الحالية: رئيس القسم ← الشؤون الإدارية ← حركة السير ← تخصيص المركبة ← الموظف.',
+        banner: directMobility
+          ? 'المسار المباشر: مركز حركة السير ← تخصيص المركبة ← الموظف.'
+          : ((this.state.workflowPolicy || 'FULL') === 'SHORT'
+            ? 'المسار المختصر: رئيس القسم ← حركة السير ← تخصيص المركبة ← الموظف.'
+            : 'المسار الكامل: رئيس القسم ← الشؤون الإدارية ← حركة السير ← تخصيص المركبة ← الموظف.'),
         bannerCol: this.sc('محجوزة'), bannerBg: this.tint('#38bdf8', 0.1), bannerBd: this.tint('#38bdf8', 0.28),
-        actions: [{ label: 'إرسال للاعتماد', on: () => saveMission(true), tx: btn.tx, bg: btn.bg, bd: btn.bd },
-          { label: 'حفظ كمسودة', on: () => saveMission(false), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
+        actions: directMobility
+          ? [{ label: 'إنشاء المهمة المباشرة', on: () => saveMission(true), tx: btn.tx, bg: btn.bg, bd: btn.bd },
+             { label: 'إلغاء', on: () => this.setState({ drawer: null }), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }]
+          : [{ label: 'إرسال للاعتماد', on: () => saveMission(true), tx: btn.tx, bg: btn.bg, bd: btn.bd },
+             { label: 'حفظ كمسودة', on: () => saveMission(false), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
     }
 
     if (k === 'incnew') {
