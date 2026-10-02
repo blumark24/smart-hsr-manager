@@ -212,14 +212,11 @@ async function getMobilityDelegationAuthority(db, uid) {
   if (head.isMobilityHead && head.organizationId) {
     return { uid, role: 'mobility_head', organizationId: head.organizationId };
   }
-  // The existing supervisor role is the already-modeled operational deputy.
-  // It is the only higher same-organization authority admitted here. The
-  // Municipality Manager and platform Owner are deliberately NOT granted a
-  // new daily Mobility control by this feature.
-  const caller = await getCallerContext(uid);
-  if (caller.isManager && caller.role === 'supervisor' && caller.organizationId) {
-    return { uid, role: 'supervisor', organizationId: caller.organizationId };
-  }
+  // No existing role is a distinct authoritative representation of
+  // رئيس البلدية / المشرف العام. The legacy supervisor value is the
+  // approved Field assistant-supervisor role, so it must not be promoted
+  // into municipality-wide Mobility grant authority. Fail closed until
+  // that higher authority is modeled explicitly.
   return null;
 }
 

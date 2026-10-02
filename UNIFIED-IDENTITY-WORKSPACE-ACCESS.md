@@ -65,7 +65,7 @@ Temporary Mobility access is now distinct from permanent entitlements.
 - Permanent access remains `entitlements.capabilities`.
 - Temporary access is materialized in `users/{uid}.mobilityDelegation` and recorded immutably in `mobilityDelegations/{grantId}`.
 - Every temporary grant requires an expiry time; expiry is enforced server-side on every workspace resolution and vehicle operation.
-- Grant authority is intentionally narrow: same-organization `mobility_head`, plus the already-existing `supervisor` operational-deputy role. Municipality Manager and platform Owner receive no new daily Mobility control from this feature.
+- Grant authority is intentionally narrow: same-organization `mobility_head` only. The existing `supervisor` value is an assistant-supervisor role in the approved Field model, so it is not repurposed as “المشرف العام”. Municipality Manager and platform Owner receive no new daily Mobility control. A distinct higher municipal authority must be modeled explicitly before it can grant temporary Mobility access.
 - Cross-organization grants, self-grants, inactive targets and unknown capabilities fail closed.
 - A grant can optionally be scoped to one mission and/or vehicle.
 - Revocation is immediate because runtime authorization reads the live user record server-side.

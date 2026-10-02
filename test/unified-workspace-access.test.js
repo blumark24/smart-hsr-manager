@@ -480,27 +480,16 @@ test('scoped delegation: Mobility Head can grant temporary access to an active s
   assert.equal(resolved.body.primary, 'mobility');
 });
 
-test('scoped delegation: existing supervisor is the only higher same-org authority; municipality manager is not given a new daily control', async () => {
-  const s = delegationSeed();
+test('scoped delegation: no legacy higher role is silently promoted to municipality-wide grant authority', async () => {
   const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-
-  {
-    const { handler } = buildHandler(s);
-    const ok = await call(handler, 'supervisor-a', {
-      action:'grantMobilityDelegation', targetUid:'plain-target',
-      capabilities:['mobility.access'], reason:'تفويض إشرافي', expiresAt:future
-    });
-    assert.equal(ok.status, 200);
-  }
-
-  {
+  for (const uid of ['supervisor-a', 'mgr-a']) {
     const { handler } = buildHandler(delegationSeed());
-    const denied = await call(handler, 'mgr-a', {
+    const denied = await call(handler, uid, {
       action:'grantMobilityDelegation', targetUid:'plain-target',
       capabilities:['mobility.access'], reason:'لا ينبغي', expiresAt:future
     });
-    assert.equal(denied.status, 403);
-    assert.equal(denied.body.reason, 'mobility_delegation_authority_required');
+    assert.equal(denied.status, 403, uid);
+    assert.equal(denied.body.reason, 'mobility_delegation_authority_required', uid);
   }
 });
 
