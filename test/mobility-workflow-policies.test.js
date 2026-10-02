@@ -98,3 +98,15 @@ test('Mobility runtime consumes server workflowPolicy and enables direct creatio
   assert.match(runtime, /=== 'DIRECT'/);
   assert.match(runtime, /\+ مهمة مباشرة/);
 });
+
+
+test('Mobility Head vehicle handover is role-gated, not blocked by employee vehicle.return capability', () => {
+  const api = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
+  const start = api.indexOf("if (action === 'handoverVehicle')");
+  const end = api.indexOf("if (action === 'employeeAdvanceMission')", start);
+  assert.ok(start >= 0 && end > start);
+  const block = api.slice(start, end);
+  assert.match(block, /\['mobility_head'\]/);
+  assert.doesNotMatch(block, /resolvedActorCapability\(actor, 'vehicle\.return'/);
+  assert.doesNotMatch(block, /capability_required/);
+});
