@@ -34,7 +34,9 @@ test('leadership route is isolated, organization-bound, and resolves only to man
   assert.match(leadershipLogin, /manager\.active === false/);
   assert.match(leadershipLogin, /!organizationId/);
   assert.match(leadershipLogin, /setLeadershipPortalContext\(probeUser, organizationId\)/);
-  assert.match(leadershipLogin, /window\.location\.href = ["']manager\.html["']/);
+  assert.match(leadershipLogin, /const managerUrl = new URL\(["']manager\.html["'], window\.location\.href\)/);
+  assert.match(leadershipLogin, /managerUrl\.search = window\.location\.search/);
+  assert.match(leadershipLogin, /window\.location\.replace\(managerUrl\.href\)/);
 
   assert.match(managerAdapter, /expectedRole = requestedPortal === ['"]workforce['"] \? ['"]supervisor['"] : ['"]manager['"]/);
   assert.match(managerAdapter, /markerOrg === context\.organizationId/);
