@@ -11,6 +11,7 @@ on:
       - phase24-full-platform-audit
       - release/municipality-final-rc
       - release/municipality-final-rc2
+      - security/rc2-firebase-admin-14
   workflow_dispatch:
 
 jobs:
