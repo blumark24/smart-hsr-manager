@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   refresh-lock:
-    if: github.event.head_commit.message == 'ci(release): repair spatial lockfile'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
