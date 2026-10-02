@@ -433,6 +433,13 @@
         <section class="intel-block"><div class="intel-block-head"><span class="intel-dot" style="background:#ff9f1c"></span>تركيز مكاني</div><p id="hotspotInsight">يتطلب توفر بيانات مكانية في اللقطة.</p></section>
         <section class="intel-block"><div class="intel-block-head"><span class="intel-dot" style="background:#38bdf8"></span>إجراء مقترح</div><p id="recommendationInsight">لا توجد توصية مؤكدة قبل اكتمال التحميل.</p></section>
         <div class="confidence-row"><span>تغطية الإحداثيات</span><strong id="dataConfidence">—</strong></div>
+        <form id="askMapForm" class="ask-map-form" autocomplete="off">
+          <label for="askMapInput">اسأل الخريطة</label>
+          <div class="ask-map-row"><input id="askMapInput" type="search" placeholder="مثال: اعرض الحالات الحرجة" aria-describedby="askMapHint"><button type="submit">تحليل</button></div>
+          <div id="askMapHint" class="ask-map-hint">يفهم أوامر تشغيلية معروفة ويطبقها على نفس البيانات الحالية دون تعديلها.</div>
+          <div id="askMapResult" class="ask-map-result" aria-live="polite"></div>
+        </form>
+
         <div class="twin-teaser" id="twinTeaser" hidden><h3>التوأم الرقمي</h3><p>انقل السياق المكاني إلى المنتج ثلاثي الأبعاد المنفصل عند الحاجة.</p><button class="geo-btn primary" id="intelligenceTwinBtn" type="button">فتح التوأم الرقمي</button></div>
       </aside>
       <div id="rightPanel">
@@ -454,11 +461,12 @@
           <div class="panel-tab-content" id="filtersTab" role="tabpanel" hidden><div class="panel-section-title">حالة البلاغات وتصنيفها</div><div id="filterChips"></div></div>
         </div>
       </div>
-      <nav id="spatialModeRail" class="spatial-mode-rail" aria-label="طبقات التجربة المكانية">
-        <button class="spatial-mode-btn active" type="button" data-spatial-mode="field" aria-pressed="true">الميدان</button>
-        <button class="spatial-mode-btn" type="button" data-spatial-mode="gis" aria-pressed="false">الجغرافيا</button>
-        <button class="spatial-mode-btn" type="button" data-spatial-mode="operations" aria-pressed="false">التشغيل</button>
-        <button class="spatial-mode-btn" type="button" data-spatial-mode="decision" aria-pressed="false">القرار</button>
+      <nav id="spatialLensRail" class="spatial-mode-rail spatial-lens-rail" aria-label="العدسات المكانية الذكية">
+        <button class="spatial-mode-btn active" type="button" data-spatial-lens="now" aria-pressed="true">الوضع الآن</button>
+        <button class="spatial-mode-btn" type="button" data-spatial-lens="priorities" aria-pressed="false">الأولويات</button>
+        <button class="spatial-mode-btn" type="button" data-spatial-lens="coverage" aria-pressed="false">التغطية</button>
+        <button class="spatial-mode-btn" type="button" data-spatial-lens="risks" aria-pressed="false">المخاطر</button>
+        <button class="spatial-mode-btn" type="button" data-spatial-lens="achievement" aria-pressed="false">الإنجاز</button>
       </nav>
       <div class="map-legend" aria-label="مفتاح الحالات"><span class="legend-item"><i class="legend-swatch" style="background:#ef4444"></i>انتظار</span><span class="legend-item"><i class="legend-swatch" style="background:#f5a524"></i>معالجة</span><span class="legend-item"><i class="legend-swatch" style="background:#22c55e"></i>مكتمل</span></div>
       <section id="timelinePanel" aria-label="التسلسل الزمني للعمليات">
@@ -623,6 +631,7 @@ const rawObservationById = new Map();
 let observationStatusFilter = 'ALL';
 let observationCategoryFilter = 'ALL';
 let observationPriorityFilter = 'ALL';
+let spatialLens = 'now';
 let timelineCutoffMs = null;
 let timelineMinMs = null;
 let timelineMaxMs = null;
@@ -830,10 +839,12 @@ function applyObservationFilters(entities) {
     if (!data) return false;
     if (observationStatusFilter !== 'ALL' && (data.status || 'PENDING') !== observationStatusFilter) return false;
     if (observationCategoryFilter !== 'ALL' && data.type !== observationCategoryFilter) return false;
-    if (observationPriorityFilter !== 'ALL') {
-      const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : null;
-      if (priority !== observationPriorityFilter) return false;
-    }
+    const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string'
+      ? data.riskAssessment.priority.toUpperCase()
+      : null;
+    if (observationPriorityFilter !== 'ALL' && priority !== observationPriorityFilter) return false;
+    if ((spatialLens === 'priorities' || spatialLens === 'risks') && !['HIGH','CRITICAL'].includes(priority)) return false;
+    if (spatialLens === 'achievement' && (data.status || 'PENDING') !== 'COMPLETED') return false;
     const createdAt = timestampMillis(data.createdAt);
     if (timelineCutoffMs !== null && createdAt !== null && createdAt > timelineCutoffMs) return false;
     return true;
@@ -1590,11 +1601,6 @@ function openRightPanelForSpatialMode() {
 function setSpatialExperienceMode(mode) {
   if (!['field','gis','operations','decision'].includes(mode)) return;
   document.body.dataset.spatialMode = mode;
-  document.querySelectorAll('[data-spatial-mode]').forEach((btn) => {
-    const active = btn.dataset.spatialMode === mode;
-    btn.classList.toggle('active', active);
-    btn.setAttribute('aria-pressed', String(active));
-  });
   const timeline = document.getElementById('timelinePanel');
   timeline.classList.toggle('r2-spotlight', mode === 'operations');
   if (mode === 'field') {
@@ -1618,10 +1624,80 @@ function setSpatialExperienceMode(mode) {
     }
   }
 }
-document.querySelectorAll('[data-spatial-mode]').forEach((btn) => {
-  btn.addEventListener('click', () => setSpatialExperienceMode(btn.dataset.spatialMode));
+
+function applySpatialLens(lens) {
+  if (!['now','priorities','coverage','risks','achievement'].includes(lens)) return;
+  spatialLens = lens;
+  document.body.dataset.spatialLens = lens;
+  document.querySelectorAll('[data-spatial-lens]').forEach((btn) => {
+    const active = btn.dataset.spatialLens === lens;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', String(active));
+  });
+
+  // Each lens only changes presentation/filter emphasis over the already-loaded snapshot.
+  if (lens === 'coverage') {
+    setSpatialExperienceMode('gis');
+    if (document.getElementById('boundaryToggle') && !document.getElementById('boundaryToggle').disabled) {
+      document.getElementById('boundaryToggle').checked = true;
+      setBoundaryVisibility(true);
+    }
+  } else if (lens === 'risks') {
+    setSpatialExperienceMode('decision');
+    if (document.getElementById('heatmapToggle')) {
+      document.getElementById('heatmapToggle').checked = true;
+      heatmapEnabled = true;
+      if (map && map.getLayer(OBS_HEAT_LAYER)) map.setLayoutProperty(OBS_HEAT_LAYER, 'visibility', 'visible');
+    }
+  } else if (lens === 'priorities') {
+    setSpatialExperienceMode('decision');
+  } else if (lens === 'achievement') {
+    setSpatialExperienceMode('operations');
+  } else {
+    setSpatialExperienceMode('field');
+  }
+  reapplyObservationFilters();
+  updateCommandCenter();
+}
+
+document.querySelectorAll('[data-spatial-lens]').forEach((btn) => {
+  btn.addEventListener('click', () => applySpatialLens(btn.dataset.spatialLens));
 });
-setSpatialExperienceMode('field');
+applySpatialLens('now');
+function interpretMapQuestion(raw) {
+  const q = String(raw || '').trim().toLocaleLowerCase('ar');
+  if (!q) return { ok:false, message:'اكتب سؤالًا أو أمرًا مكانيًا.' };
+  if (/(حرج|حرجة|عالي|عالية|أولو)/.test(q)) return { ok:true, lens:'priorities', message:'تم إبراز الحالات عالية وحرجة الأولوية.' };
+  if (/(خطر|مخاطر|ضغط)/.test(q)) return { ok:true, lens:'risks', message:'تم تفعيل عدسة المخاطر مع إبراز الحالات الأعلى أولوية.' };
+  if (/(تغطية|نطاق|حدود)/.test(q)) return { ok:true, lens:'coverage', message:'تم تفعيل عدسة التغطية والنطاق البلدي المتاح.' };
+  if (/(مكتمل|مكتملة|إنجاز|منجز)/.test(q)) return { ok:true, lens:'achievement', message:'تم عرض البلاغات المكتملة ضمن عدسة الإنجاز.' };
+  if (/(الآن|الحالي|كل|الوضع)/.test(q)) return { ok:true, lens:'now', message:'تمت إعادة الخريطة إلى الوضع التشغيلي الحالي.' };
+  if (/(انتظار|معلق|معلّق)/.test(q)) {
+    observationStatusFilter = 'PENDING';
+    spatialLens = 'now';
+    reapplyObservationFilters();
+    renderFilterChips();
+    return { ok:true, message:'تمت تصفية البلاغات إلى قيد الانتظار.' };
+  }
+  if (/(معالجة|قيد المعالجة)/.test(q)) {
+    observationStatusFilter = 'IN_PROGRESS';
+    spatialLens = 'now';
+    reapplyObservationFilters();
+    renderFilterChips();
+    return { ok:true, message:'تمت تصفية البلاغات إلى قيد المعالجة.' };
+  }
+  return { ok:false, message:'الأمر غير معروف بعد. جرّب: المخاطر، الأولويات، التغطية، الإنجاز، الحالات الحرجة، أو قيد الانتظار.' };
+}
+
+document.getElementById('askMapForm').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const result = interpretMapQuestion(document.getElementById('askMapInput').value);
+  if (result.ok && result.lens) applySpatialLens(result.lens);
+  const out = document.getElementById('askMapResult');
+  out.textContent = result.message;
+  out.dataset.state = result.ok ? 'ok' : 'help';
+});
+
 document.getElementById('intelligenceToggle').addEventListener('click', () => {
   const panel = document.getElementById('intelligencePanel');
   const expanded = panel.classList.toggle('expanded');
