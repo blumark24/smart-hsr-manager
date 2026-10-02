@@ -1,4 +1,5 @@
 name: PHASE19 Municipality Acceptance RC1
+# Spatial closure branch runs this full gate before freeze.
 
 on:
   push:
