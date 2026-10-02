@@ -1,0 +1,232 @@
+/* SMART HSR Spatial Intelligence v1
+   Proprietary spatial presentation layer.
+   Presentation only: no auth, RBAC, Firestore, routing or data contracts changed. */
+
+:root{
+  --shsr-spatial-bg:#061522;
+  --shsr-spatial-surface:rgba(7,27,43,.92);
+  --shsr-spatial-surface-2:rgba(10,36,52,.88);
+  --shsr-spatial-line:rgba(94,177,205,.24);
+  --shsr-spatial-line-strong:rgba(72,214,182,.38);
+  --shsr-spatial-text:#eefaff;
+  --shsr-spatial-muted:#8eafbd;
+  --shsr-spatial-cyan:#49c7e8;
+  --shsr-spatial-green:#35d6a5;
+  --shsr-spatial-amber:#f5b64b;
+  --shsr-spatial-red:#ff6872;
+  --shsr-spatial-shadow:0 28px 80px -34px rgba(0,0,0,.86);
+  --shsr-spatial-glow:0 0 0 1px rgba(64,215,187,.08),0 18px 58px -32px rgba(20,171,171,.6);
+}
+html[data-theme="light"]{
+  --shsr-spatial-bg:#dfe8e4;
+  --shsr-spatial-surface:rgba(247,252,249,.94);
+  --shsr-spatial-surface-2:rgba(237,247,241,.9);
+  --shsr-spatial-line:rgba(25,111,78,.18);
+  --shsr-spatial-line-strong:rgba(24,138,97,.34);
+  --shsr-spatial-text:#12281f;
+  --shsr-spatial-muted:#60796f;
+  --shsr-spatial-shadow:0 24px 60px -34px rgba(21,67,48,.36);
+}
+
+/* ========== Manager / Executive Command Map ========== */
+.hsr-manager-map-shell{
+  position:relative!important;
+  isolation:isolate!important;
+  overflow:hidden!important;
+  background:
+    radial-gradient(90% 120% at 50% -20%,rgba(37,160,175,.12),transparent 55%),
+    var(--shsr-spatial-bg)!important;
+  border:1px solid var(--shsr-spatial-line)!important;
+  box-shadow:var(--shsr-spatial-shadow)!important;
+}
+.hsr-manager-map-canvas{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:100%!important;
+  z-index:1!important;
+  isolation:auto!important;
+  background:var(--shsr-spatial-bg)!important;
+}
+.hsr-manager-map-shell .leaflet-container{
+  background:var(--shsr-spatial-bg)!important;
+  font-family:"IBM Plex Sans Arabic","Noto Sans Arabic",system-ui,sans-serif!important;
+}
+.hsr-manager-map-shell .leaflet-map-pane,
+.hsr-manager-map-shell .leaflet-tile-pane{z-index:1!important}
+.hsr-manager-map-shell .leaflet-overlay-pane{z-index:2!important}
+.hsr-manager-map-shell .leaflet-shadow-pane{z-index:3!important}
+.hsr-manager-map-shell .leaflet-marker-pane{z-index:4!important}
+.hsr-manager-map-shell .leaflet-tooltip-pane,
+.hsr-manager-map-shell .leaflet-popup-pane{z-index:7!important}
+.hsr-manager-map-shell:before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:2!important;
+  pointer-events:none!important;
+  border-radius:inherit!important;
+  background:
+    linear-gradient(180deg,rgba(3,25,43,.015),rgba(4,30,48,.055))!important;
+  mix-blend-mode:normal!important;
+}
+.hsr-manager-map-shell:after{
+  z-index:3!important;
+  pointer-events:none!important;
+  box-shadow:
+    inset 0 0 0 1px rgba(119,219,211,.05),
+    inset 0 -80px 120px -105px rgba(0,0,0,.72)!important;
+}
+.hsr-manager-root.theme-night .hsr-manager-map-shell:before{
+  background:linear-gradient(180deg,rgba(4,38,65,.025),rgba(4,34,55,.07))!important;
+  mix-blend-mode:normal!important;
+}
+.hsr-manager-root.theme-night .hsr-manager-map-shell .leaflet-tile-pane{
+  filter:brightness(.84) saturate(.84) contrast(1.06)!important;
+}
+.hsr-manager-root.theme-day .hsr-manager-map-shell .leaflet-tile-pane,
+html[data-theme="light"] .hsr-manager-map-shell .leaflet-tile-pane{
+  filter:saturate(.86) contrast(.98) brightness(1.02)!important;
+}
+
+/* SMART HSR native map controls */
+.hsr-manager-map-shell .leaflet-control{
+  border:0!important;
+  border-radius:12px!important;
+  overflow:hidden!important;
+  box-shadow:0 16px 38px -24px rgba(0,0,0,.75)!important;
+}
+.hsr-manager-map-shell .leaflet-bar a{
+  width:36px!important;height:36px!important;line-height:34px!important;
+  color:var(--shsr-spatial-text)!important;
+  background:rgba(7,31,48,.88)!important;
+  border-color:var(--shsr-spatial-line)!important;
+  backdrop-filter:blur(14px) saturate(135%);
+}
+.hsr-manager-map-shell .leaflet-bar a:hover{
+  background:rgba(18,69,79,.94)!important;
+  color:#fff!important;
+}
+html[data-theme="light"] .hsr-manager-map-shell .leaflet-bar a{
+  background:rgba(247,252,249,.92)!important;
+  color:#18372b!important;
+}
+.hsr-manager-map-shell .leaflet-control-attribution{
+  background:rgba(4,23,35,.66)!important;
+  color:#7395a2!important;
+  border:1px solid rgba(115,174,195,.14)!important;
+  border-radius:8px 0 0 0!important;
+  padding:2px 7px!important;
+  font-size:9px!important;
+  backdrop-filter:blur(10px);
+}
+.hsr-manager-map-shell .leaflet-control-attribution a{color:#8fc1cc!important;text-decoration:none!important}
+
+/* spatial markers */
+.hsr-exec-marker{filter:drop-shadow(0 8px 15px rgba(0,0,0,.34))}
+.hsr-exec-pin{transform-origin:50% 82%;transition:transform .16s ease,filter .16s ease}
+.hsr-exec-marker:hover .hsr-exec-pin,
+.hsr-exec-marker.is-selected .hsr-exec-pin{transform:translateY(-2px) scale(1.08)}
+.hsr-exec-marker.is-selected .hsr-exec-pin{filter:drop-shadow(0 0 12px var(--pin-status,#35d6a5))}
+
+/* popup = SMART Action Card */
+.hsr-manager-map-shell .leaflet-popup-content-wrapper{
+  background:rgba(5,26,41,.94)!important;
+  border:1px solid rgba(87,183,199,.27)!important;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05)!important;
+  backdrop-filter:blur(24px) saturate(145%)!important;
+}
+.hsr-manager-map-shell .leaflet-popup-tip{background:rgba(5,26,41,.94)!important}
+html[data-theme="light"] .hsr-manager-map-shell .leaflet-popup-content-wrapper,
+html[data-theme="light"] .hsr-manager-map-shell .leaflet-popup-tip{background:rgba(248,252,249,.96)!important}
+
+/* ========== Dedicated Spatial Command Center / MapLibre ========== */
+body:has(#appShell) #map{
+  background:
+    radial-gradient(1100px 760px at 50% 35%,rgba(17,85,105,.16),transparent 70%),
+    var(--shsr-spatial-bg)!important;
+}
+body:has(#appShell) main:after{
+  box-shadow:
+    inset 0 0 0 1px rgba(86,193,209,.16),
+    inset 0 0 110px rgba(0,23,39,.32)!important;
+}
+body:has(#appShell) header{
+  top:14px!important;left:14px!important;right:14px!important;
+}
+body:has(#appShell) .product-switch,
+body:has(#appShell) .segmented,
+body:has(#appShell) #searchInput,
+body:has(#appShell) button.geo-btn{
+  background:rgba(6,29,45,.82)!important;
+  border-color:rgba(96,190,205,.24)!important;
+  box-shadow:0 16px 46px -28px rgba(0,0,0,.82),inset 0 1px 0 rgba(255,255,255,.045)!important;
+  backdrop-filter:blur(20px) saturate(140%)!important;
+}
+body:has(#appShell) .product-tab.active,
+body:has(#appShell) .segment.active,
+body:has(#appShell) button.geo-btn.primary{
+  background:linear-gradient(180deg,#16a879,#0d785e)!important;
+  border-color:rgba(77,231,185,.5)!important;
+  box-shadow:0 0 18px rgba(38,211,164,.24),inset 0 1px 0 rgba(255,255,255,.16)!important;
+}
+body:has(#appShell) #layerPanel{
+  background:linear-gradient(160deg,rgba(5,26,41,.94),rgba(6,22,36,.92))!important;
+  border-color:rgba(83,177,196,.26)!important;
+  box-shadow:0 26px 70px -34px rgba(0,0,0,.92),inset 0 1px 0 rgba(255,255,255,.045)!important;
+}
+body:has(#appShell) .maplibregl-ctrl-group{
+  background:rgba(5,29,45,.88)!important;
+  border-color:rgba(96,190,205,.25)!important;
+}
+body:has(#appShell) .maplibregl-ctrl-group button:hover{
+  background:rgba(36,132,126,.18)!important;
+}
+body:has(#appShell) .maplibregl-popup-content{
+  background:rgba(5,25,40,.95)!important;
+  border-color:rgba(89,187,197,.28)!important;
+  box-shadow:0 28px 74px -30px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05)!important;
+}
+body:has(#appShell) #entityCard{
+  background:linear-gradient(160deg,rgba(6,28,43,.97),rgba(7,23,37,.96))!important;
+  border-color:rgba(90,184,202,.26)!important;
+}
+
+/* No vendor-looking chrome. Keep legally required data attribution compact. */
+body:has(#appShell) .maplibregl-ctrl-attrib{
+  background:rgba(4,23,35,.66)!important;
+  border:1px solid rgba(115,174,195,.14)!important;
+  border-radius:8px!important;
+  color:#7899a6!important;
+  font-size:9px!important;
+  backdrop-filter:blur(10px);
+}
+body:has(#appShell) .maplibregl-ctrl-attrib a{color:#8fc1cc!important;text-decoration:none!important}
+
+/* Day mode */
+html[data-theme="light"] body:has(#appShell) .product-switch,
+html[data-theme="light"] body:has(#appShell) .segmented,
+html[data-theme="light"] body:has(#appShell) #searchInput,
+html[data-theme="light"] body:has(#appShell) button.geo-btn,
+html[data-theme="light"] body:has(#appShell) #layerPanel,
+html[data-theme="light"] body:has(#appShell) .maplibregl-ctrl-group{
+  background:rgba(247,252,249,.91)!important;
+  color:#16352a!important;
+}
+html[data-theme="light"] body:has(#appShell) #map{
+  background:#dfe8e4!important;
+}
+
+/* Accessibility / motion */
+@media(prefers-reduced-motion:reduce){
+  .hsr-exec-pin,.hsr-manager-map-shell *,body:has(#appShell) *{
+    transition-duration:.001ms!important;
+    animation-duration:.001ms!important;
+    animation-iteration-count:1!important;
+  }
+}
+@media(max-width:699px){
+  .hsr-manager-map-shell{border-radius:16px!important}
+  body:has(#appShell) header{top:8px!important;left:8px!important;right:8px!important}
+}
