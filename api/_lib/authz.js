@@ -25,7 +25,6 @@ const { getAuth, getDb } = require('./firebaseAdmin');
 // Unified Identity & Workspace Access — one pure resolver shared with the
 // browser (see /workspace-access.js). The server remains the authority.
 const WorkspaceAccess = require('../../workspace-access.js');
-const MobilityDelegation = require('./mobilityDelegation');
 
 const AUTH_CODES = Object.freeze({ HEADER_MISSING: 'AUTH_HEADER_MISSING', TOKEN_INVALID: 'AUTH_TOKEN_INVALID', TOKEN_EXPIRED: 'AUTH_TOKEN_EXPIRED', PROJECT_MISMATCH: 'AUTH_PROJECT_MISMATCH' });
 
@@ -266,11 +265,10 @@ async function getMobilityAssignedOperatorCallerContext(uid) {
     const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
     const department = typeof d.department === 'string' ? d.department.trim() : '';
     const name = typeof d.name === 'string' ? d.name.trim() : '';
-    // Permanent entitlements and an active, unexpired scoped delegation are
-    // resolved server-side from the live user record on every operational call.
-    const effective = MobilityDelegation.resolveEffectiveCapabilities(d);
-    const role = WorkspaceAccess.resolveMobilityRole(effective.data);
-    const capabilities = effective.capabilities;
+    // Permanent capabilities only. Temporary Mobility delegation is not an
+    // authorization source for operational access.
+    const capabilities = WorkspaceAccess.resolveCapabilities(d);
+    const role = WorkspaceAccess.resolveMobilityRole(d);
     const hasVehicleCapability = WorkspaceAccess.VEHICLE_CAPABILITIES.some(c => capabilities.includes(c));
     if (MOBILITY_MANAGEABLE_ROLES.includes(role) && activeIsNotFalse(d) && orgId && hasVehicleCapability) {
       return {
@@ -282,8 +280,8 @@ async function getMobilityAssignedOperatorCallerContext(uid) {
         department,
         name,
         capabilities: Array.from(capabilities),
-        baseCapabilities: Array.from(effective.baseCapabilities),
-        delegation: effective.delegation,
+        baseCapabilities: Array.from(capabilities),
+        delegation: null,
         vehicleEligible: capabilities.includes('vehicle.drive'),
       };
     }
@@ -335,11 +333,11 @@ async function getContractorCallerContext(uid) {
 function isValidMobilityAllocationTarget(targetData, organizationId) {
   if (!targetData) return false;
   const orgId = typeof targetData.organizationId === 'string' ? targetData.organizationId : '';
-  const effective = MobilityDelegation.resolveEffectiveCapabilities(targetData);
+  const capabilities = WorkspaceAccess.resolveCapabilities(targetData);
   return orgId === organizationId
     && activeIsNotFalse(targetData)
-    && MOBILITY_MANAGEABLE_ROLES.includes(WorkspaceAccess.resolveMobilityRole(effective.data))
-    && effective.capabilities.includes('vehicle.drive');
+    && MOBILITY_MANAGEABLE_ROLES.includes(WorkspaceAccess.resolveMobilityRole(targetData))
+    && capabilities.includes('vehicle.drive');
 }
 
 // Phase 03B — employee-registry authorization (api/admin/employees.js
