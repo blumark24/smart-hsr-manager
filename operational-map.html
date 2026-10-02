@@ -412,6 +412,11 @@
       </div>
     </header>
     <section id="kpiStrip" aria-label="مؤشرات العمليات الجغرافية">
+      <div class="kpi-cell pulse" id="municipalPulseCard" title="مؤشر تشغيلي استرشادي مشتق من اللقطة الحالية، وليس تصنيفًا رسميًا">
+        <span class="kpi-label">نبض اللقطة</span>
+        <div class="kpi-value" id="municipalPulseValue">—</div>
+        <small id="municipalPulseLabel" style="font-size:8.5px;color:var(--text-muted)">بانتظار البيانات</small>
+      </div>
       <div class="kpi-cell"><span class="kpi-label">إجمالي البلاغات المكانية</span><div class="kpi-value" id="kpiTotal">—</div></div>
       <div class="kpi-cell alert"><span class="kpi-label">عالية / حرجة</span><div class="kpi-value" id="kpiHigh">—</div></div>
       <div class="kpi-cell progress"><span class="kpi-label">قيد المعالجة</span><div class="kpi-value" id="kpiProgress">—</div></div>
@@ -422,7 +427,7 @@
     <main class="command-main">
       <div id="map" role="application" aria-label="الخريطة التشغيلية"></div>
       <aside id="intelligencePanel" aria-label="لوحة الذكاء الجغرافي">
-        <div class="intel-eyebrow">GEO INTELLIGENCE</div><h1 class="intel-title">مركز العمليات الجغرافية الذكية</h1>
+        <div class="intel-eyebrow">SMART HSR · SPATIAL INTELLIGENCE</div><h1 class="intel-title">مركز القيادة المكانية الذكية</h1>
         <div class="intel-sub">قراءة تشغيلية مشتقة من البيانات المكانية الموثوقة المتاحة حاليًا.</div>
         <section class="intel-block"><div class="intel-block-head"><span class="intel-dot"></span>الملخص التنفيذي</div><p id="intelligenceSummary">جارٍ تحليل اللقطة الحالية…</p></section>
         <section class="intel-block"><div class="intel-block-head"><span class="intel-dot" style="background:#ff9f1c"></span>تركيز مكاني</div><p id="hotspotInsight">يتطلب توفر بيانات مكانية في اللقطة.</p></section>
@@ -688,10 +693,11 @@ function timestampMillis(value) {
 
 function updateCommandCenter() {
   const records = cachedObservationEntities.map((entity) => ({ entity, data: rawObservationById.get(entity.id) || {} }));
-  let high = 0, progress = 0, completed = 0, dated = 0;
+  let high = 0, progress = 0, completed = 0, dated = 0, pending = 0;
   for (const { data } of records) {
     const priority = data.riskAssessment && typeof data.riskAssessment.priority === 'string' ? data.riskAssessment.priority.toUpperCase() : '';
     if (priority === 'HIGH' || priority === 'CRITICAL') high += 1;
+    if (data.status === 'PENDING') pending += 1;
     if (data.status === 'IN_PROGRESS') progress += 1;
     if (data.status === 'COMPLETED') completed += 1;
     if (timestampMillis(data.createdAt)) dated += 1;
@@ -702,6 +708,35 @@ function updateCommandCenter() {
   document.getElementById('kpiCompleted').textContent = String(completed);
   document.getElementById('kpiLayers').textContent = String(activeLayers.size);
   document.getElementById('kpiSnapshot').innerHTML = lastSnapshotAt ? `<small>${lastSnapshotAt.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</small>` : '<small>عند الطلب</small>';
+
+  // SMART HSR Municipal Pulse — transparent, deterministic and explainable.
+  // This is an operational snapshot indicator, NOT an official performance score.
+  // It only uses verified records already present in this tenant-scoped snapshot.
+  const total = records.length;
+  const pulseValue = total
+    ? Math.max(0, Math.min(100, Math.round(
+        100
+        - (high / total) * 38
+        - (pending / total) * 18
+        - (progress / total) * 8
+        + (completed / total) * 10
+      )))
+    : null;
+  const pulseEl = document.getElementById('municipalPulseValue');
+  const pulseLabelEl = document.getElementById('municipalPulseLabel');
+  if (pulseEl && pulseLabelEl) {
+    pulseEl.textContent = pulseValue == null ? '—' : String(pulseValue);
+    pulseLabelEl.textContent = pulseValue == null
+      ? 'لا توجد لقطة قابلة للحساب'
+      : (pulseValue >= 85 ? 'مستقر' : pulseValue >= 65 ? 'يحتاج انتباه' : 'ضغط تشغيلي مرتفع');
+    const card = document.getElementById('municipalPulseCard');
+    if (card) {
+      card.dataset.pulseBand = pulseValue == null ? 'empty' : (pulseValue >= 85 ? 'stable' : pulseValue >= 65 ? 'attention' : 'pressure');
+      card.title = pulseValue == null
+        ? 'لا توجد بيانات مكانية كافية لحساب نبض اللقطة.'
+        : `مؤشر استرشادي: ${high} عالية/حرجة، ${pending} انتظار، ${progress} معالجة، ${completed} مكتملة من أصل ${total}.`;
+    }
+  }
   document.getElementById('intelligenceSummary').textContent = records.length
     ? `تتضمن اللقطة ${records.length} بلاغًا مكانيًا موثوق الإحداثيات؛ ${progress} قيد المعالجة و${completed} مكتمل.`
     : 'لا توجد بلاغات مكانية قابلة للعرض ضمن اللقطة الحالية.';
