@@ -156,7 +156,15 @@ form.addEventListener("submit", async (e) => {
       role: "manager",
       organizationId
     }));
-    window.location.href = "manager.html";
+    // Preserve Preview access/query context (for example Vercel Share links)
+    // across the authenticated handoff. Dropping location.search here can
+    // send an otherwise-valid Preview login into a different access context
+    // before manager.html has a chance to restore the persisted managerAuth
+    // session. Production normally has no share query, so its URL remains
+    // manager.html with no behavioral change.
+    const managerUrl = new URL("manager.html", window.location.href);
+    managerUrl.search = window.location.search;
+    window.location.replace(managerUrl.href);
   } catch (lookupErr) {
     console.error('manager-login: authorization lookup failed', lookupErr);
     await signOut(probeAuth).catch(() => {});
