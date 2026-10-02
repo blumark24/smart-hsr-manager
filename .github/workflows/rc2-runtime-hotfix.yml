@@ -1,0 +1,77 @@
+name: RC2 Runtime Hotfix Gate
+
+on:
+  push:
+    branches:
+      - fix/rc2-user-center-firebase-sdk-parity
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  runtime-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout hotfix branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/rc2-user-center-firebase-sdk-parity
+          fetch-depth: 0
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: npm
+
+      - name: Refresh lockfile for approved override
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Verify runtime dependency loading
+        run: |
+          npm ls firebase-admin jwks-rsa jose
+          node - <<'NODE'
+          require('jwks-rsa');
+          require('firebase-admin/app');
+          require('firebase-admin/auth');
+          console.log('RUNTIME_REQUIRE_OK');
+          NODE
+
+      - name: Production dependency security gate
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Pure Node regression suite
+        shell: bash
+        run: |
+          mapfile -t files < <(find test -maxdepth 1 -type f -name '*.test.js' ! -iname '*firestore*' | sort)
+          printf 'Running %s pure test files\n' "${#files[@]}"
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::No pure test files found"
+            exit 1
+          fi
+          node --test "${files[@]}"
+
+      - name: Firestore Rules gate
+        run: npm run test:rules
+
+      - name: Diff integrity
+        run: git diff --check
+
+      - name: Commit refreshed lockfile and remove temporary gate
+        shell: bash
+        run: |
+          git config user.name "SMART HSR Release Gate"
+          git config user.email "actions@users.noreply.github.com"
+          git add package-lock.json
+          git rm .github/workflows/rc2-runtime-hotfix.yml
+          if git diff --cached --quiet; then
+            echo "::error::Expected lockfile/workflow changes are missing"
+            exit 1
+          fi
+          git commit -m "fix(runtime): refresh lockfile for jose compatibility"
+          git push origin HEAD:fix/rc2-user-center-firebase-sdk-parity
