@@ -3,6 +3,10 @@ const { getDb } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 const { callLandsSsoRegister, bridgeConfigured } = require('../_lib/landsBridge');
 
+const { evaluateReferenceLayerAccess } = require('../../platform/geo/geo-policy');
+const { createStaticReferenceExtractProvider, validateBbox, slugForOrganization } = require('../../platform/geo/geo-provider-contract');
+const { getAttribution } = require('../../platform/geo/geo-attribution-registry');
+
 const ALQUNFUDHAH_ORGANIZATION_ID = 'CnlVlKC7UcDMp2NZzjjT';
 const ALQUNFUDHAH_APPROXIMATE_CENTER = Object.freeze({ lat: 19.12639, lng: 41.07889 });
 const ALQUNFUDHAH_DEFAULT_ZOOM = 13;
@@ -30,6 +34,38 @@ function cleanBounds(value) {
   return cleanCenter(southWest) && cleanCenter(northEast)
     ? [[southWest.lat, southWest.lng], [northEast.lat, northEast.lng]] : null;
 }
+const GEO_LAYER_QUERY = Object.freeze({
+  commercial_places: (provider, args) => provider.queryPlaces(args),
+  buildings: (provider, args) => provider.queryBuildings(args),
+});
+function requestedGeoLayer(req) {
+  const direct = req.query && req.query.geoLayer;
+  if (typeof direct === 'string') return direct.trim();
+  try { return new URL(req.url || '/', 'http://localhost').searchParams.get('geoLayer')?.trim() || ''; } catch (_) { return ''; }
+}
+function requestedBboxParam(req) {
+  const raw = (req.query && req.query.bbox) || (() => { try { return new URL(req.url || '/', 'http://localhost').searchParams.get('bbox'); } catch (_) { return null; } })();
+  if (typeof raw !== 'string' || !raw) return null;
+  const parts = raw.split(',').map((p) => Number(p.trim()));
+  return parts.length === 4 && parts.every(Number.isFinite) ? parts : null;
+}
+async function handleGeoLayerQuery(req, res, caller, organizationId) {
+  const geoLayer = requestedGeoLayer(req);
+  const queryFn = GEO_LAYER_QUERY[geoLayer];
+  if (!queryFn) return sendJson(res, 400, { error: 'geo_layer_unsupported', geoLayer });
+  const accessDecision = evaluateReferenceLayerAccess({ actor: { role: caller.role }, layerId: geoLayer });
+  if (!accessDecision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: accessDecision.code });
+  const bbox = requestedBboxParam(req);
+  if (!bbox) return sendJson(res, 400, { error: 'bbox_required' });
+  const bboxDecision = validateBbox(bbox);
+  if (!bboxDecision.allowed) return sendJson(res, 400, { error: 'bbox_invalid', reason: bboxDecision.code });
+  const municipality = slugForOrganization(organizationId);
+  const provider = createStaticReferenceExtractProvider();
+  const { entities, attributions } = queryFn(provider, { municipality, bbox, limit: 500 });
+  return sendJson(res, 200, { geoLayer, organizationId, count: entities.length, entities, attributions: attributions.length ? attributions : [getAttribution('osm_basemap')].filter(Boolean) });
+}
+
+
 function requestedOrganizationId(req) {
   const direct = req.query && req.query.organizationId;
   if (typeof direct === 'string') return direct.trim();
@@ -167,9 +203,10 @@ async function handler(req, res) {
   if (!organizationId) return sendJson(res, 403, { error:'forbidden', reason:'organization_required' });
   const organization = await db.collection('organizations').doc(organizationId).get();
   if (caller.isOwner && !organization.exists) return sendJson(res, 404, { error:'organization_not_found' });
+  if (requestedGeoLayer(req)) return handleGeoLayerQuery(req, res, caller, organizationId);
   const data = organization.exists ? (organization.data() || {}) : {};
   return sendJson(res, 200, sanitizedMapContext(organizationId, caller.organizationName, data));
 }
 
 module.exports = handler;
-module.exports._test = { resolveRoleContext, sanitizedMapContext, requestedOrganizationId, cleanCenter, cleanBounds, ALQUNFUDHAH_ORGANIZATION_ID, ALQUNFUDHAH_APPROXIMATE_CENTER, ALQUNFUDHAH_DEFAULT_ZOOM, isSsoEligible };
+module.exports._test = { resolveRoleContext, sanitizedMapContext, requestedOrganizationId, cleanCenter, cleanBounds, ALQUNFUDHAH_ORGANIZATION_ID, ALQUNFUDHAH_APPROXIMATE_CENTER, ALQUNFUDHAH_DEFAULT_ZOOM, isSsoEligible, requestedGeoLayer, requestedBboxParam, handleGeoLayerQuery, GEO_LAYER_QUERY };
