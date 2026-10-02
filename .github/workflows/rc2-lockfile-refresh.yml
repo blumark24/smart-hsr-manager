@@ -23,6 +23,9 @@ jobs:
       - name: Regenerate package lock
         run: npm install --package-lock-only
 
+      - name: Apply safe transitive dependency fixes
+        run: npm audit fix --package-lock-only
+
       - name: Verify install and audit
         run: |
           npm ci
@@ -35,3 +38,4 @@ jobs:
           path: package-lock.json
           if-no-files-found: error
           retention-days: 2
+        if: always()
