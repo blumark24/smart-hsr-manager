@@ -133,6 +133,7 @@ async function getMunicipalityMobilityWorkflowPolicy(db, organizationId) {
 // other keys, including protected fields supplied with null/false values.
 const TRUSTED_CREATE_INPUT_FIELDS = {
   createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
+  createDirectMobilityMission: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
   createIncident: ['action', 'clientRequestId', 'missionId', 'vehicleId', 'category', 'severity', 'note'],
 };
 
@@ -1904,6 +1905,80 @@ async function handler(req, res) {
       return sendJson(res, 200, { missionId: outcome.missionId, status: 'DRAFT', idempotent: outcome.idempotent });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+
+  if (action === 'createDirectMobilityMission') {
+    if (Object.keys(body).some(key => !TRUSTED_CREATE_INPUT_FIELDS.createDirectMobilityMission.includes(key))) {
+      return sendJson(res, 400, { error:'invalid_request', reason:'protected_or_unknown_field' });
+    }
+    const head = await getMobilityHeadCallerContext(decoded.uid);
+    if (!head.isMobilityHead || !head.organizationId) {
+      return sendJson(res, 403, { error:'forbidden', reason:'mobility_head_required' });
+    }
+    const policy = await getMunicipalityMobilityWorkflowPolicy(db, head.organizationId);
+    if (policy !== MOBILITY_WORKFLOW_POLICIES.DIRECT) {
+      return sendJson(res, 409, { error:'request_failed', reason:'direct_policy_not_enabled' });
+    }
+    const clientRequestId = body.clientRequestId;
+    const employeeId = cleanString(body.requestedEmployeeId);
+    const type = cleanString(body.type);
+    const destination = cleanString(body.destination);
+    const reason = cleanString(body.reason);
+    if (!validClientRequestId(clientRequestId) || !employeeId || !type || !destination || !reason) {
+      return sendJson(res, 400, { error:'invalid_request', reason:'direct_mission_fields_required' });
+    }
+    const requestRef = trustedCreateRequestRef(db, action, decoded.uid, clientRequestId);
+    const missionRef = db.collection('missions').doc();
+    const hash = payloadHash(action, [employeeId, type, destination, reason, cleanString(body.whenLabel), cleanString(body.durationLabel)]);
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const employeeRef = db.collection('employees').doc(employeeId);
+        const [priorSnap, employeeSnap] = await Promise.all([transaction.get(requestRef), transaction.get(employeeRef)]);
+        if (priorSnap.exists) {
+          const prior = priorSnap.data() || {};
+          return prior.payloadHash === hash
+            ? { ok:true, missionId:prior.resourceId, idempotent:true }
+            : { ok:false, statusCode:409, reason:'idempotency_payload_mismatch' };
+        }
+        if (!employeeSnap.exists) return { ok:false, statusCode:404, reason:'employee_not_found' };
+        const employee = employeeSnap.data() || {};
+        const mobility = employee.products && employee.products.mobility;
+        if (cleanString(employee.organizationId) !== head.organizationId) return { ok:false, statusCode:403, reason:'cross_organization_denied' };
+        if (employee.employmentStatus === 'inactive' || employee.accountStatus !== 'ACTIVE' || !isNonEmptyString(employee.authUid)) {
+          return { ok:false, statusCode:409, reason:'employee_not_active' };
+        }
+        if (!mobility || mobility.enabled !== true || mobility.vehicleEligible !== true) {
+          return { ok:false, statusCode:409, reason:'employee_vehicle_not_eligible' };
+        }
+        const now = FieldValue.serverTimestamp();
+        const mission = {
+          clientRequestId, organizationId:head.organizationId, department:cleanString(employee.department),
+          workflowPolicy:MOBILITY_WORKFLOW_POLICIES.DIRECT, createdByUid:decoded.uid, requesterName:'مركز حركة السير',
+          status:'APPROVED', type, destination, reason, scope:cleanString(body.scope,'داخل النطاق') || 'داخل النطاق',
+          requestedEmployeeId:employeeSnap.id, requestedEmployeeUid:employee.authUid,
+          requestedEmployeeName:cleanString(employee.name, employeeSnap.id), whenLabel:cleanString(body.whenLabel),
+          durationLabel:cleanString(body.durationLabel), approvedByUid:decoded.uid, approvedAt:now,
+          createdAt:now, updatedAt:now, updatedByUid:decoded.uid
+        };
+        transaction.set(missionRef, mission);
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId:head.organizationId, department:mission.department || '', actorId:decoded.uid,
+          actorRole:'mobility_head', resourceType:'mission', resourceId:missionRef.id,
+          action:'direct_create_and_approve', toStatus:'APPROVED',
+          requestedEmployeeUid:employee.authUid, workflowPolicy:MOBILITY_WORKFLOW_POLICIES.DIRECT, timestamp:now
+        });
+        transaction.set(requestRef, {
+          action, callerUid:decoded.uid, organizationId:head.organizationId, clientRequestId,
+          payloadHash:hash, resourceType:'mission', resourceId:missionRef.id, createdAt:now
+        });
+        return { ok:true, missionId:missionRef.id, idempotent:false };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error:'request_failed', reason:outcome.reason });
+      return sendJson(res, 200, { missionId:outcome.missionId, status:'APPROVED', workflowPolicy:MOBILITY_WORKFLOW_POLICIES.DIRECT, idempotent:outcome.idempotent });
+    } catch (_) {
+      return sendJson(res, 500, { error:'request_failed', reason:'temporary_failure' });
     }
   }
 
