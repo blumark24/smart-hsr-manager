@@ -230,3 +230,20 @@ html[data-theme="light"] body:has(#appShell) #map{
   .hsr-manager-map-shell{border-radius:16px!important}
   body:has(#appShell) header{top:8px!important;left:8px!important;right:8px!important}
 }
+
+/* Municipal Pulse — explainable operational snapshot indicator */
+#municipalPulseCard{
+  position:relative!important;
+  overflow:hidden!important;
+  border-color:rgba(90,188,203,.24)!important;
+}
+#municipalPulseCard:before{
+  content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--shsr-spatial-cyan);opacity:.8
+}
+#municipalPulseCard[data-pulse-band="stable"]{border-color:rgba(53,214,165,.30)!important}
+#municipalPulseCard[data-pulse-band="stable"]:before{background:var(--shsr-spatial-green)}
+#municipalPulseCard[data-pulse-band="attention"]{border-color:rgba(245,182,75,.34)!important}
+#municipalPulseCard[data-pulse-band="attention"]:before{background:var(--shsr-spatial-amber)}
+#municipalPulseCard[data-pulse-band="pressure"]{border-color:rgba(255,104,114,.36)!important}
+#municipalPulseCard[data-pulse-band="pressure"]:before{background:var(--shsr-spatial-red)}
+#municipalPulseCard .kpi-value{font-variant-numeric:tabular-nums}
