@@ -3726,6 +3726,9 @@ class Component extends DCLogic {
     if (!this.mapEl || this._opMap || !window.L) return;
     const L = window.L;
     this._opMap = L.map(this.mapEl, { zoomControl: false, attributionControl: true, preferCanvas: true }).setView([0, 0], 2);
+    // SMART HSR owns the product chrome; keep only legally-required basemap
+    // data attribution from the active tile layer, not the Leaflet product prefix.
+    this._opMap.attributionControl?.setPrefix(false);
     this._opBasemaps = {
       street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
