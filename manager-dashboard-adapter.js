@@ -368,6 +368,22 @@ async function start(component) {
     // dashboard.html's Inspector/Manager evidence viewer already uses.
     // Only ever called when a manager opens a specific observation's
     // evidence drawer.
+    // Manager map context comes from the same trusted organization endpoint
+    // used by the canonical Operational Map. This gives the embedded
+    // executive Leaflet map a real municipality center/bounds even when
+    // there are currently zero georeferenced observations.
+    component.liveMapContext = null;
+    user.getIdToken().then(token => fetch('/api/organization/context', {
+      headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
+      cache: 'no-store'
+    })).then(async response => {
+      if (!response.ok || component !== activeComponent) return;
+      const value = await response.json().catch(() => null);
+      if (!value || value.organizationId !== context.organizationId || component !== activeComponent) return;
+      component.liveMapContext = value;
+      component.resetOperationalMap?.();
+    }).catch(() => undefined);
+
     component.resolveEvidenceImage = (reference) => resolveObservationImage({
       reference,
       context: { organizationId: context.organizationId, uid: user.uid, role: context.role, authUser: user },
