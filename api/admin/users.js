@@ -524,6 +524,19 @@ async function handler(req, res) {
   const auth = getAuth();
   const db = getDb();
 
+  if (action === 'getMobilityWorkflowPolicy') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'municipality_manager_required' });
+    }
+    try {
+      const policy = await getMunicipalityMobilityWorkflowPolicy(db, caller.organizationId);
+      return sendJson(res, 200, { policy });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   // Municipality-level Smart Mobility workflow policy. Only the real
   // municipality manager may change it; all operational actors can only read
   // the policy indirectly through their scoped workspace response.
