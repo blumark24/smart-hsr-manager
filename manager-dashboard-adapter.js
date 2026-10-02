@@ -305,6 +305,15 @@ async function start(component) {
   }
   activeAuth = auth;
   activeAuthApi = authApi;
+  // USER CENTER SESSION BRIDGE — expose the already-authenticated manager
+  // Firebase user to same-page modules without importing a second Firebase
+  // SDK/runtime. This preserves the single authenticated source of truth.
+  window.SmartHSRManagerSession = {
+    getCurrentUser: () => (activeAuth && activeAuth.currentUser) ? activeAuth.currentUser : null,
+    getIdToken: () => (activeAuth && activeAuth.currentUser)
+      ? activeAuth.currentUser.getIdToken()
+      : Promise.resolve(null)
+  };
   // Real Firebase ID token for the signed-in manager/supervisor, used by
   // the component's User Center actions to authenticate /api/admin/users
   // calls. Never undefined-by-omission: no signed-in user resolves to
