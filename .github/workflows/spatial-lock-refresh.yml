@@ -1,0 +1,55 @@
+name: Spatial Lock Refresh
+
+on:
+  push:
+    branches:
+      - design/spatial-intelligence-v1
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lock:
+    if: github.event.head_commit.message == 'ci(release): repair spatial lockfile'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: design/spatial-intelligence-v1
+          fetch-depth: 0
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Refresh approved lockfile
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Runtime dependency verification
+        run: |
+          npm ls firebase-admin jwks-rsa jose
+          node - <<'NODE'
+          require('jwks-rsa');
+          require('firebase-admin/app');
+          require('firebase-admin/auth');
+          console.log('RUNTIME_REQUIRE_OK');
+          NODE
+
+      - name: Security gate
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Commit refreshed lockfile and remove temporary workflow
+        run: |
+          git config user.name "SMART HSR Release Gate"
+          git config user.email "actions@users.noreply.github.com"
+          git add package-lock.json
+          git rm .github/workflows/spatial-lock-refresh.yml
+          git commit -m "fix(runtime): sync lockfile with jose override"
+          git push origin HEAD:design/spatial-intelligence-v1
