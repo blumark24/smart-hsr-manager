@@ -51,7 +51,7 @@ const {
   syncEntitlementsForLegacyChange,
   mobilityProductMirror,
 } = require('../_lib/serviceEntitlements');
-const { evaluateMissionTransition } = require('../../platform/policies/mission-workflow-policy');
+const { evaluateMissionTransition, MOBILITY_WORKFLOW_POLICIES, normalizeWorkflowPolicy } = require('../../platform/policies/mission-workflow-policy');
 const { evaluateVehicleTransition } = require('../../platform/policies/vehicle-workflow-policy');
 const { evaluateVehicleAuthorizationTransition } = require('../../platform/policies/vehicle-authorization-policy');
 const { evaluateIncidentTransition } = require('../../platform/policies/incident-workflow-policy');
@@ -119,6 +119,15 @@ function cleanString(value, fallback = '') {
 function validClientRequestId(value) {
   return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/.test(value);
 }
+
+async function getMunicipalityMobilityWorkflowPolicy(db, organizationId) {
+  const orgId = cleanString(organizationId);
+  if (!orgId) return MOBILITY_WORKFLOW_POLICIES.FULL;
+  const snap = await db.collection('municipalitySettings').doc(orgId).get();
+  const data = snap.exists ? (snap.data() || {}) : {};
+  return normalizeWorkflowPolicy(data.mobilityWorkflowPolicy);
+}
+
 
 // Only business input and the retry key belong to the client. Reject all
 // other keys, including protected fields supplied with null/false values.
@@ -315,6 +324,7 @@ function safeMission(id, data) {
     durationLabel: data.durationLabel || null,
     createdAt: timestampToIso(data.createdAt),
     administrativeNote: data.administrativeNote || null,
+    workflowPolicy: normalizeWorkflowPolicy(data.workflowPolicy),
     updatedAt: timestampToIso(data.updatedAt),
   };
 }
@@ -550,6 +560,42 @@ async function handler(req, res) {
   const action = body.action;
   const auth = getAuth();
   const db = getDb();
+
+  // Municipality-level Smart Mobility workflow policy. Only the real
+  // municipality manager may change it; all operational actors can only read
+  // the policy indirectly through their scoped workspace response.
+  if (action === 'setMobilityWorkflowPolicy') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'municipality_manager_required' });
+    }
+    const policy = normalizeWorkflowPolicy(cleanString(body.policy));
+    if (!Object.values(MOBILITY_WORKFLOW_POLICIES).includes(cleanString(body.policy))) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'unknown_mobility_workflow_policy' });
+    }
+    try {
+      const now = FieldValue.serverTimestamp();
+      await db.collection('municipalitySettings').doc(caller.organizationId).set({
+        organizationId: caller.organizationId,
+        mobilityWorkflowPolicy: policy,
+        mobilityWorkflowPolicyUpdatedAt: now,
+        mobilityWorkflowPolicyUpdatedByUid: caller.uid,
+      }, { merge: true });
+      await db.collection('auditEvents').add({
+        organizationId: caller.organizationId,
+        actorId: caller.uid,
+        actorRole: caller.role,
+        resourceType: 'municipalitySettings',
+        resourceId: caller.organizationId,
+        action: 'set_mobility_workflow_policy',
+        policy,
+        timestamp: now,
+      });
+      return sendJson(res, 200, { policy });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
 
   // SMART HSR Owner Command Center + institutional support channel.
   // Reuses this existing trusted Admin API so no additional Vercel Function is created.
@@ -1762,6 +1808,10 @@ async function handler(req, res) {
     const auditRef = db.collection('auditEvents').doc();
 
     try {
+      const workflowPolicy = await getMunicipalityMobilityWorkflowPolicy(db, caller.organizationId);
+      if (workflowPolicy === MOBILITY_WORKFLOW_POLICIES.DIRECT) {
+        return sendJson(res, 409, { error: 'request_failed', reason: 'direct_policy_requires_mobility_head' });
+      }
       const outcome = await db.runTransaction(async (transaction) => {
         const employeeRef = requestedEmployeeId ? db.collection('employees').doc(requestedEmployeeId) : null;
         const reads = [transaction.get(requestRef)];
@@ -1783,9 +1833,6 @@ async function handler(req, res) {
           const mobility = employee.products && employee.products.mobility;
           if (employee.organizationId !== caller.organizationId) {
             return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
-          }
-          if (cleanString(employee.department) !== cleanString(caller.department)) {
-            return { ok: false, statusCode: 403, reason: 'cross_department_denied' };
           }
           if (employee.employmentStatus === 'inactive') {
             return { ok: false, statusCode: 409, reason: 'employee_inactive' };
@@ -1811,6 +1858,7 @@ async function handler(req, res) {
           clientRequestId,
           organizationId: caller.organizationId,
           department: caller.department,
+          workflowPolicy,
           createdByUid: caller.uid,
           requesterName: caller.name || '',
           status: 'DRAFT',
@@ -1913,13 +1961,18 @@ async function handler(req, res) {
           return { ok: true, idempotent: true };
         }
 
+        const workflowPolicy = normalizeWorkflowPolicy(mission.workflowPolicy);
+        if (workflowPolicy === MOBILITY_WORKFLOW_POLICIES.DIRECT) {
+          return { ok: false, statusCode: 409, reason: 'direct_policy_requires_mobility_head' };
+        }
+        const toStatus = workflowPolicy === MOBILITY_WORKFLOW_POLICIES.SHORT ? 'APPROVED' : 'PENDING_APPROVAL';
         const actor = { uid: caller.uid, role: 'department_head', organizationId: caller.organizationId };
-        const decision = evaluateMissionTransition({ actor, mission, toStatus: 'PENDING_APPROVAL' });
+        const decision = evaluateMissionTransition({ actor, mission, toStatus });
         if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
 
         const now = FieldValue.serverTimestamp();
         transaction.update(missionRef, {
-          status: 'PENDING_APPROVAL',
+          status: toStatus,
           updatedAt: now,
           updatedByUid: caller.uid,
         });
@@ -1930,16 +1983,18 @@ async function handler(req, res) {
           actorRole: 'department_head',
           resourceType: 'mission',
           resourceId: missionId,
-          action: 'submit_for_approval',
+          action: toStatus === 'APPROVED' ? 'submit_direct_to_mobility' : 'submit_for_approval',
           fromStatus: mission.status,
-          toStatus: 'PENDING_APPROVAL',
+          toStatus,
           requestedEmployeeUid: mission.requestedEmployeeUid,
           timestamp: now,
         });
         return { ok: true };
       });
       if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
-      return sendJson(res, 200, { missionId, status: 'PENDING_APPROVAL', idempotent: outcome.idempotent === true });
+      const missionSnap = await db.collection('missions').doc(missionId).get();
+      const current = missionSnap.exists ? (missionSnap.data() || {}) : {};
+      return sendJson(res, 200, { missionId, status: current.status || 'PENDING_APPROVAL', workflowPolicy: normalizeWorkflowPolicy(current.workflowPolicy), idempotent: outcome.idempotent === true });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
@@ -2254,7 +2309,6 @@ async function handler(req, res) {
       if (actor.role === 'department_head' || actor.role === 'mobility_head' || actor.role === 'administrative_affairs' || actor.role === 'administrative_affairs_employee') {
         for (const doc of employeeSnap.docs) {
           const d = doc.data() || {};
-          if (actor.role === 'department_head' && cleanString(d.department) !== cleanString(actor.department)) continue;
           if (!['administrative_affairs','administrative_affairs_employee'].includes(actor.role) && d.employmentStatus === 'inactive') continue;
           const mobility = d.products && d.products.mobility;
           // Administrative Affairs receives a municipality-wide SAFE registry
@@ -2309,10 +2363,12 @@ async function handler(req, res) {
             .sort((a,b)=>a.name.localeCompare(b.name,'ar'))
         : [];
 
+      const workflowPolicy = await getMunicipalityMobilityWorkflowPolicy(db, actor.organizationId);
       return sendJson(res, 200, {
         role: actor.role,
         organizationId: actor.organizationId,
         department: actor.department || null,
+        workflowPolicy,
         missions: missions.map(row => safeMission(row.id, row.data)),
         vehicles: vehicles.map(row => safeMobilityVehicle(row.id, row.data)),
         incidents: incidents.map(row => safeMobilityIncident(row.id, row.data)),
