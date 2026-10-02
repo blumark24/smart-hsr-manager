@@ -75,6 +75,13 @@ body{min-height:100dvh}
 .hsr-map-popup-btn.icon{width:34px;padding:0;display:grid;place-items:center;font-size:13px}
 html[data-theme="light"] .hsr-manager-map-shell .leaflet-tile-pane{filter:saturate(.76) contrast(.94) brightness(1.02)}
 html[data-theme="dark"] .hsr-manager-map-shell .leaflet-tile-pane{filter:brightness(.66) saturate(.68) contrast(1.1)}
+/* RC2 delivery stabilization: base geography must remain legible in both
+   themes. Previous stacked filters/overlays could visually suppress loaded
+   OSM tiles even though Leaflet and the tile network were healthy. */
+.hsr-manager-map-shell .leaflet-tile-pane{filter:none!important}
+.hsr-manager-map-shell:before{background:transparent!important;mix-blend-mode:normal!important}
+.hsr-manager-map-canvas{z-index:0;isolation:isolate}
+
 @media(max-width:699px){.hsr-map-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.hsr-map-kpi{min-height:56px}.hsr-manager-map-shell .leaflet-popup-content{min-width:220px}.hsr-map-popup-body{min-width:220px}.hsr-map-popup-actions{grid-template-columns:1fr auto auto}}
 @media(prefers-reduced-motion:reduce){.hsr-map-kpi,.hsr-exec-pin,.hsr-exec-pin:before{transition:none!important}}
 
@@ -3790,6 +3797,19 @@ class Component extends DCLogic {
       // Mayor looking at half a province with one meaningless red dot.
       if (bounds.length === 1) this._opMap.setView(bounds[0], 15, { animate: false });
       else if (bounds.length > 1) this._opMap.fitBounds(bounds, { padding: [56, 56], maxZoom: 15 });
+      else {
+        const mapContext = this.liveMapContext;
+        const mapBounds = Array.isArray(mapContext?.mapBounds) ? mapContext.mapBounds : null;
+        if (mapBounds && mapBounds.length === 2) {
+          this._opMap.fitBounds(mapBounds, { padding: [40, 40] });
+        } else if (mapContext?.mapCenter && Number.isFinite(Number(mapContext.mapCenter.lat)) && Number.isFinite(Number(mapContext.mapCenter.lng))) {
+          this._opMap.setView(
+            [Number(mapContext.mapCenter.lat), Number(mapContext.mapCenter.lng)],
+            Number.isFinite(Number(mapContext.mapDefaultZoom)) ? Number(mapContext.mapDefaultZoom) : 13,
+            { animate: false }
+          );
+        }
+      }
       this._mapSignature = signature;
       setTimeout(() => this._opMap?.invalidateSize(), 60);
     }
