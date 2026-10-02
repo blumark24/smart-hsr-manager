@@ -437,3 +437,151 @@ test('setServices: employees registry mirror is advisory and organization-bound'
   await call(handler, 'mgr-a', { action: 'setServices', uid: 'target-ent', capabilities: ['mobility.access', 'vehicle.drive'] });
   assert.equal(db._dump()['employees/emp-1'].products.mobility.vehicleEligible, true);
 });
+
+
+function delegationSeed() {
+  const s = seed();
+  s.users['mob-head'] = U({ mobilityAccess: { enabled: true, role: 'mobility_head' }, department: 'الحركة' });
+  s.users['supervisor-a'] = U({ role: 'supervisor' });
+  s.users['plain-target'] = U({ institutionalRole: 'employee' });
+  s.users['expired-target'] = U({
+    institutionalRole: 'employee',
+    mobilityDelegation: {
+      id: 'expired-1', status: 'ACTIVE',
+      capabilities: ['mobility.access','vehicle.checkout','vehicle.drive','vehicle.return'],
+      startsAt: '2026-09-01T00:00:00.000Z',
+      expiresAt: '2026-09-02T00:00:00.000Z',
+      grantedByUid: 'mob-head', grantedByRole: 'mobility_head'
+    }
+  });
+  return s;
+}
+
+test('scoped delegation: Mobility Head can grant temporary access to an active same-org user with no department/product', async () => {
+  const { handler, db } = buildHandler(delegationSeed());
+  const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  const r = await call(handler, 'mob-head', {
+    action: 'grantMobilityDelegation',
+    targetUid: 'plain-target',
+    capabilities: ['mobility.access','vehicle.checkout','vehicle.drive','vehicle.return'],
+    reason: 'مهمة تشغيلية مؤقتة',
+    expiresAt: future
+  });
+  assert.equal(r.status, 200);
+  const target = db._dump()['users/plain-target'];
+  assert.equal(target.role, undefined);
+  assert.equal(target.department, undefined);
+  assert.equal(target.mobilityDelegation.status, 'ACTIVE');
+  assert.deepEqual(target.mobilityDelegation.capabilities, ['mobility.access','vehicle.checkout','vehicle.drive','vehicle.return']);
+
+  const resolved = await call(handler, 'plain-target', { action:'resolveWorkspaces', workspace:'mobility' });
+  assert.equal(resolved.status, 200);
+  assert.equal(resolved.body.allowed, true);
+  assert.equal(resolved.body.primary, 'mobility');
+});
+
+test('scoped delegation: existing supervisor is the only higher same-org authority; municipality manager is not given a new daily control', async () => {
+  const s = delegationSeed();
+  const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+  {
+    const { handler } = buildHandler(s);
+    const ok = await call(handler, 'supervisor-a', {
+      action:'grantMobilityDelegation', targetUid:'plain-target',
+      capabilities:['mobility.access'], reason:'تفويض إشرافي', expiresAt:future
+    });
+    assert.equal(ok.status, 200);
+  }
+
+  {
+    const { handler } = buildHandler(delegationSeed());
+    const denied = await call(handler, 'mgr-a', {
+      action:'grantMobilityDelegation', targetUid:'plain-target',
+      capabilities:['mobility.access'], reason:'لا ينبغي', expiresAt:future
+    });
+    assert.equal(denied.status, 403);
+    assert.equal(denied.body.reason, 'mobility_delegation_authority_required');
+  }
+});
+
+test('NEGATIVE scoped delegation: expiry is mandatory; self-grant, inactive target and cross-org are denied', async () => {
+  const s = delegationSeed();
+  s.users['inactive-target'] = U({ active:false });
+  const { handler } = buildHandler(s);
+  const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+  const noExpiry = await call(handler, 'mob-head', {
+    action:'grantMobilityDelegation', targetUid:'plain-target',
+    capabilities:['mobility.access'], reason:'x'
+  });
+  assert.equal(noExpiry.status, 400);
+  assert.equal(noExpiry.body.reason, 'expires_at_required');
+
+  const self = await call(handler, 'mob-head', {
+    action:'grantMobilityDelegation', targetUid:'mob-head',
+    capabilities:['mobility.access'], reason:'x', expiresAt:future
+  });
+  assert.equal(self.status, 403);
+  assert.equal(self.body.reason, 'self_grant_denied');
+
+  const inactive = await call(handler, 'mob-head', {
+    action:'grantMobilityDelegation', targetUid:'inactive-target',
+    capabilities:['mobility.access'], reason:'x', expiresAt:future
+  });
+  assert.equal(inactive.status, 409);
+  assert.equal(inactive.body.reason, 'target_inactive');
+
+  const cross = await call(handler, 'mob-head', {
+    action:'grantMobilityDelegation', targetUid:'target-b',
+    capabilities:['mobility.access'], reason:'x', expiresAt:future
+  });
+  assert.equal(cross.status, 403);
+  assert.equal(cross.body.reason, 'cross_organization_denied');
+});
+
+test('expired scoped delegation grants no workspace and no vehicle operation', async () => {
+  const { handler } = buildHandler(delegationSeed());
+  const w = await call(handler, 'expired-target', { action:'resolveWorkspaces', workspace:'mobility' });
+  assert.equal(w.body.allowed, false);
+  const op = await call(handler, 'expired-target', { action:'employeeAdvanceMission', missionId:'missing', toStatus:'READY' });
+  assert.equal(op.status, 403);
+  assert.equal(op.body.reason, 'assigned_vehicle_operator_required');
+});
+
+test('revoke scoped delegation invalidates access immediately without deleting the user', async () => {
+  const { handler, db } = buildHandler(delegationSeed());
+  const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  const granted = await call(handler, 'mob-head', {
+    action:'grantMobilityDelegation', targetUid:'plain-target',
+    capabilities:['mobility.access','vehicle.drive'], reason:'مؤقت', expiresAt:future
+  });
+  assert.equal(granted.status, 200);
+  const id = granted.body.delegation.id;
+
+  const revoked = await call(handler, 'mob-head', { action:'revokeMobilityDelegation', delegationId:id });
+  assert.equal(revoked.status, 200);
+  assert.equal(db._dump()['users/plain-target'].mobilityDelegation.status, 'REVOKED');
+  assert.equal(db._dump()['users/plain-target'].active, true);
+
+  const after = await call(handler, 'plain-target', { action:'resolveWorkspaces', workspace:'mobility' });
+  assert.equal(after.body.allowed, false);
+});
+
+test('allocation target validation honors active scoped vehicle.drive and rejects expired delegation', () => {
+  const authz = require(authzPath);
+  const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  const active = U({
+    mobilityDelegation: {
+      id:'g1', status:'ACTIVE', capabilities:['mobility.access','vehicle.drive'],
+      startsAt:new Date(Date.now()-1000).toISOString(), expiresAt:future
+    }
+  });
+  const expired = U({
+    mobilityDelegation: {
+      id:'g2', status:'ACTIVE', capabilities:['mobility.access','vehicle.drive'],
+      startsAt:'2026-09-01T00:00:00.000Z', expiresAt:'2026-09-02T00:00:00.000Z'
+    }
+  });
+  assert.equal(authz.isValidMobilityAllocationTarget(active, 'org-a'), true);
+  assert.equal(authz.isValidMobilityAllocationTarget(expired, 'org-a'), false);
+});

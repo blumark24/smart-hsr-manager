@@ -33,6 +33,7 @@ const {
   assertCanManage,
   WorkspaceAccess,
 } = require('../_lib/authz');
+const MobilityDelegation = require('../_lib/mobilityDelegation');
 const { buildContractorObservationUpdate } = require('../../platform/policies/contractor-observation-workflow');
 const { callLandsTrustedMutation } = require('../_lib/landsBridge');
 const { ensureManagerLandsBootstrap, runBootstrapTransaction } = require('../_lib/landsManagerBootstrap');
@@ -184,11 +185,12 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
   const isAdministrativeAffairsEmployee =
     institutionalRole === 'employee' && isAdministrativeAffairsPath;
 
+  const effectiveMobility = MobilityDelegation.resolveEffectiveCapabilities(data);
   const role = isAdministrativeAffairsHead
     ? 'administrative_affairs'
     : isAdministrativeAffairsEmployee
       ? 'administrative_affairs_employee'
-      : resolveMobilityRole(data);
+      : WorkspaceAccess.resolveMobilityRole(effectiveMobility.data);
   if (!Array.isArray(allowedRoles) || !allowedRoles.includes(role)
       || data.active === false || !organizationId) return null;
   return {
@@ -199,6 +201,57 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
     organizationId,
     department: cleanString(data.department),
     name: cleanString(data.name),
+    capabilities: Array.from(effectiveMobility.capabilities),
+    baseCapabilities: Array.from(effectiveMobility.baseCapabilities),
+    delegation: effectiveMobility.delegation,
+  };
+}
+
+async function getMobilityDelegationAuthority(db, uid) {
+  const head = await getMobilityHeadCallerContext(uid);
+  if (head.isMobilityHead && head.organizationId) {
+    return { uid, role: 'mobility_head', organizationId: head.organizationId };
+  }
+  // The existing supervisor role is the already-modeled operational deputy.
+  // It is the only higher same-organization authority admitted here. The
+  // Municipality Manager and platform Owner are deliberately NOT granted a
+  // new daily Mobility control by this feature.
+  const caller = await getCallerContext(uid);
+  if (caller.isManager && caller.role === 'supervisor' && caller.organizationId) {
+    return { uid, role: 'supervisor', organizationId: caller.organizationId };
+  }
+  return null;
+}
+
+function resolvedActorCapability(actor, capability, scope) {
+  if (!actor || !Array.isArray(actor.capabilities) || !actor.capabilities.includes(capability)) {
+    return { allowed: false, reason: 'capability_required', source: null };
+  }
+  if (Array.isArray(actor.baseCapabilities) && actor.baseCapabilities.includes(capability)) {
+    return { allowed: true, source: 'base', delegation: null };
+  }
+  const d = actor.delegation;
+  if (!d || !Array.isArray(d.capabilities) || !d.capabilities.includes(capability)) {
+    return { allowed: false, reason: 'capability_required', source: null };
+  }
+  const missionId = cleanString(scope && scope.missionId);
+  const vehicleId = cleanString(scope && scope.vehicleId);
+  if (d.missionId && d.missionId !== missionId) return { allowed: false, reason: 'delegation_mission_scope_mismatch', source: 'delegation', delegation: d };
+  if (d.vehicleId && d.vehicleId !== vehicleId) return { allowed: false, reason: 'delegation_vehicle_scope_mismatch', source: 'delegation', delegation: d };
+  return { allowed: true, source: 'delegation', delegation: d };
+}
+
+function safeMobilityCandidate(uid, data) {
+  const effective = MobilityDelegation.resolveEffectiveCapabilities(data);
+  return {
+    uid,
+    name: cleanString(data.name, uid),
+    active: data.active !== false,
+    administration: cleanString(data.administration),
+    department: cleanString(data.department),
+    jobTitle: cleanString(data.jobTitle),
+    capabilities: Array.from(effective.capabilities),
+    delegation: data.mobilityDelegation ? MobilityDelegation.safeDelegation(data.mobilityDelegation) : null,
   };
 }
 
@@ -535,7 +588,8 @@ async function handler(req, res) {
       }
       const userSnap = await db.collection('users').doc(decoded.uid).get();
       const data = userSnap.exists ? (userSnap.data() || {}) : null;
-      const resolution = WorkspaceAccess.resolveWorkspaces(data);
+      const effective = data ? MobilityDelegation.resolveEffectiveCapabilities(data) : { data, delegation: null };
+      const resolution = WorkspaceAccess.resolveWorkspaces(effective.data);
       const payload = {
         kind: 'workforce',
         valid: resolution.valid,
@@ -543,12 +597,185 @@ async function handler(req, res) {
         primary: resolution.primary,
         workspaces: resolution.workspaces,
         capabilities: resolution.capabilities,
+        delegation: effective.delegation ? MobilityDelegation.safeDelegation(effective.delegation) : null,
         profile: resolution.valid ? {
           name: cleanString(data.name), department: cleanString(data.department), jobTitle: cleanString(data.jobTitle),
         } : null,
       };
       if (requested) payload.allowed = WorkspaceAccess.isWorkspaceAllowed(resolution, requested);
       return sendJson(res, 200, payload);
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+
+  // SCOPED MOBILITY DELEGATION — temporary, server-authoritative grants for
+  // same-organization users who may not belong to any administration/product.
+  // Temporary grants ALWAYS expire; permanent access remains entitlements.
+  if (action === 'grantMobilityDelegation') {
+    const authority = await getMobilityDelegationAuthority(db, decoded.uid);
+    if (!authority) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_delegation_authority_required' });
+
+    const targetUid = cleanString(body.targetUid);
+    const reason = cleanString(body.reason);
+    const missionId = cleanString(body.missionId);
+    const vehicleId = cleanString(body.vehicleId);
+    if (!targetUid) return sendJson(res, 400, { error: 'invalid_request', reason: 'target_uid_required' });
+    if (targetUid === authority.uid) return sendJson(res, 403, { error: 'forbidden', reason: 'self_grant_denied' });
+    if (!reason) return sendJson(res, 400, { error: 'invalid_request', reason: 'delegation_reason_required' });
+
+    const capabilitySel = MobilityDelegation.validateDelegationCapabilities(body.capabilities);
+    if (!capabilitySel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: capabilitySel.reason });
+    const windowSel = MobilityDelegation.validateDelegationWindow(body.startsAt, body.expiresAt);
+    if (!windowSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: windowSel.reason });
+
+    const grantRef = db.collection('mobilityDelegations').doc();
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const targetRef = db.collection('users').doc(targetUid);
+        const reads = [transaction.get(targetRef)];
+        const missionRef = missionId ? db.collection('missions').doc(missionId) : null;
+        const vehicleRef = vehicleId ? db.collection('vehicles').doc(vehicleId) : null;
+        if (missionRef) reads.push(transaction.get(missionRef));
+        if (vehicleRef) reads.push(transaction.get(vehicleRef));
+        const snapshots = await Promise.all(reads);
+        const targetSnap = snapshots[0];
+        if (!targetSnap.exists) return { ok: false, statusCode: 404, reason: 'target_not_found' };
+        const target = targetSnap.data() || {};
+        if (target.active === false) return { ok: false, statusCode: 409, reason: 'target_inactive' };
+        if (cleanString(target.organizationId) !== authority.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        if (MobilityDelegation.activeDelegation(target)) {
+          return { ok: false, statusCode: 409, reason: 'active_delegation_exists' };
+        }
+
+        let offset = 1;
+        if (missionRef) {
+          const missionSnap = snapshots[offset++];
+          if (!missionSnap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
+          const mission = missionSnap.data() || {};
+          if (cleanString(mission.organizationId) !== authority.organizationId) {
+            return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+          }
+        }
+        if (vehicleRef) {
+          const vehicleSnap = snapshots[offset++];
+          if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
+          const vehicle = vehicleSnap.data() || {};
+          if (cleanString(vehicle.organizationId) !== authority.organizationId) {
+            return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+          }
+        }
+
+        const now = FieldValue.serverTimestamp();
+        const summary = {
+          id: grantRef.id,
+          status: 'ACTIVE',
+          capabilities: capabilitySel.capabilities,
+          reason,
+          startsAt: new Date(windowSel.startsAtMs),
+          expiresAt: new Date(windowSel.expiresAtMs),
+          missionId: missionId || null,
+          vehicleId: vehicleId || null,
+          grantedByUid: authority.uid,
+          grantedByRole: authority.role,
+        };
+        transaction.set(grantRef, {
+          ...summary,
+          targetUid,
+          organizationId: authority.organizationId,
+          createdAt: now,
+        });
+        transaction.set(targetRef, { mobilityDelegation: summary, updatedAt: now }, { merge: true });
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: authority.organizationId,
+          actorId: authority.uid,
+          actorRole: authority.role,
+          resourceType: 'mobilityDelegation',
+          resourceId: grantRef.id,
+          targetUid,
+          action: 'grant_mobility_delegation',
+          capabilities: capabilitySel.capabilities,
+          missionId: missionId || null,
+          vehicleId: vehicleId || null,
+          reason,
+          timestamp: now,
+        });
+        return { ok: true, summary };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { targetUid, delegation: MobilityDelegation.safeDelegation(outcome.summary) });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  if (action === 'revokeMobilityDelegation') {
+    const authority = await getMobilityDelegationAuthority(db, decoded.uid);
+    if (!authority) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_delegation_authority_required' });
+    const delegationId = cleanString(body.delegationId);
+    if (!delegationId) return sendJson(res, 400, { error: 'invalid_request', reason: 'delegation_id_required' });
+
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const grantRef = db.collection('mobilityDelegations').doc(delegationId);
+        const grantSnap = await transaction.get(grantRef);
+        if (!grantSnap.exists) return { ok: false, statusCode: 404, reason: 'delegation_not_found' };
+        const grant = grantSnap.data() || {};
+        if (cleanString(grant.organizationId) !== authority.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        const targetUid = cleanString(grant.targetUid);
+        if (!targetUid) return { ok: false, statusCode: 409, reason: 'delegation_target_missing' };
+        if (targetUid === authority.uid) return { ok: false, statusCode: 403, reason: 'self_grant_denied' };
+        if (cleanString(grant.status) !== 'ACTIVE') {
+          return { ok: false, statusCode: 409, reason: 'delegation_not_active' };
+        }
+
+        const targetRef = db.collection('users').doc(targetUid);
+        const targetSnap = await transaction.get(targetRef);
+        if (!targetSnap.exists) return { ok: false, statusCode: 404, reason: 'target_not_found' };
+        const target = targetSnap.data() || {};
+        if (cleanString(target.organizationId) !== authority.organizationId) {
+          return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+
+        const now = FieldValue.serverTimestamp();
+        transaction.update(grantRef, {
+          status: 'REVOKED',
+          revokedAt: now,
+          revokedByUid: authority.uid,
+          revokedByRole: authority.role,
+          updatedAt: now,
+        });
+        const current = target.mobilityDelegation;
+        if (current && cleanString(current.id || current.grantId) === delegationId) {
+          transaction.set(targetRef, {
+            mobilityDelegation: {
+              ...current,
+              status: 'REVOKED',
+              revokedByUid: authority.uid,
+              revokedByRole: authority.role,
+            },
+            updatedAt: now,
+          }, { merge: true });
+        }
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId: authority.organizationId,
+          actorId: authority.uid,
+          actorRole: authority.role,
+          resourceType: 'mobilityDelegation',
+          resourceId: delegationId,
+          targetUid,
+          action: 'revoke_mobility_delegation',
+          timestamp: now,
+        });
+        return { ok: true, targetUid };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
+      return sendJson(res, 200, { delegationId, targetUid: outcome.targetUid, revoked: true });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
@@ -1984,7 +2211,7 @@ async function handler(req, res) {
     );
     if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
     try {
-      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap] = await Promise.all([
+      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap, userSnap] = await Promise.all([
         db.collection('missions').where('organizationId', '==', actor.organizationId).get(),
         db.collection('vehicles').where('organizationId', '==', actor.organizationId).get(),
         db.collection('incidents').where('organizationId', '==', actor.organizationId).get(),
@@ -1992,6 +2219,9 @@ async function handler(req, res) {
         db.collection('employees').where('organizationId', '==', actor.organizationId).get(),
         actor.role === 'administrative_affairs'
           ? db.collection('auditEvents').where('organizationId', '==', actor.organizationId).get()
+          : Promise.resolve({ docs: [] }),
+        actor.role === 'mobility_head'
+          ? db.collection('users').where('organizationId', '==', actor.organizationId).get()
           : Promise.resolve({ docs: [] }),
       ]);
 
@@ -2052,6 +2282,36 @@ async function handler(req, res) {
         }
       }
 
+      // A temporary delegation may authorize a same-organization user who
+      // has no HR product mirror at all. Materialize those eligible users
+      // into the allocation list without mutating the HR registry.
+      if (actor.role === 'mobility_head') {
+        const existing = new Set(employees.map(e => e.uid).filter(Boolean));
+        for (const doc of userSnap.docs) {
+          const d = doc.data() || {};
+          if (d.active === false || existing.has(doc.id)) continue;
+          const effective = MobilityDelegation.resolveEffectiveCapabilities(d);
+          if (!effective.capabilities.includes('vehicle.drive')) continue;
+          employees.push({
+            employeeId: doc.id,
+            uid: doc.id,
+            name: cleanString(d.name, doc.id),
+            administration: cleanString(d.administration),
+            department: cleanString(d.department),
+            jobTitle: cleanString(d.jobTitle),
+            institutionalRole: cleanString(d.institutionalRole),
+            employmentStatus: 'active',
+            accountStatus: 'ACTIVE',
+            vehicleEligible: true,
+          });
+        }
+      }
+
+      const delegationCandidates = actor.role === 'mobility_head'
+        ? userSnap.docs.map(doc => safeMobilityCandidate(doc.id, doc.data() || {}))
+            .sort((a,b)=>a.name.localeCompare(b.name,'ar'))
+        : [];
+
       return sendJson(res, 200, {
         role: actor.role,
         organizationId: actor.organizationId,
@@ -2061,6 +2321,7 @@ async function handler(req, res) {
         incidents: incidents.map(row => safeMobilityIncident(row.id, row.data)),
         authorizations: authorizations.map(row => safeMobilityAuthorization(row.id, row.data)),
         employees,
+        delegationCandidates,
         administrativeAudit: actor.role === 'administrative_affairs'
           ? auditSnap.docs.map(doc => {
               const d = doc.data() || {};
@@ -2179,6 +2440,8 @@ async function handler(req, res) {
         const mission = missionSnap.data() || {};
         if (mission.organizationId !== actor.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
         if (!isNonEmptyString(mission.vehicleId)) return { ok: false, statusCode: 409, reason: 'mission_vehicle_required' };
+        const capabilityDecision = resolvedActorCapability(actor, 'vehicle.return', { missionId, vehicleId: cleanString(mission.vehicleId) });
+        if (!capabilityDecision.allowed) return { ok: false, statusCode: 403, reason: capabilityDecision.reason };
 
         const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
         const authorizationRef = db.collection('vehicleAuthorizations').doc(missionId);
@@ -2269,6 +2532,8 @@ async function handler(req, res) {
         const snap = await transaction.get(missionRef);
         if (!snap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
         const mission = snap.data() || {};
+        const capabilityDecision = resolvedActorCapability(actor, requiredCapability, { missionId, vehicleId: cleanString(mission.vehicleId) });
+        if (!capabilityDecision.allowed) return { ok: false, statusCode: 403, reason: capabilityDecision.reason };
         const decision = evaluateMissionTransition({ actor, mission, toStatus });
         if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
 
@@ -2279,6 +2544,20 @@ async function handler(req, res) {
           actorId: actor.uid, actorRole: actor.role, resourceType: 'mission', resourceId: missionId,
           action: 'assigned_operator_advance', fromStatus: mission.status, toStatus, timestamp: now,
         });
+        if (capabilityDecision.source === 'delegation') {
+          transaction.set(db.collection('auditEvents').doc(), {
+            organizationId: actor.organizationId,
+            actorId: actor.uid,
+            actorRole: actor.role,
+            resourceType: 'mobilityDelegation',
+            resourceId: capabilityDecision.delegation.id,
+            action: 'use_mobility_delegation',
+            capability: requiredCapability,
+            missionId,
+            vehicleId: cleanString(mission.vehicleId) || null,
+            timestamp: now,
+          });
+        }
         return { ok: true };
       });
       if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
@@ -2332,6 +2611,20 @@ async function handler(req, res) {
           resourceType: 'mission', resourceId: missionId, action: 'assigned_operator_return_vehicle',
           fromStatus: mission.status, toStatus: 'AWAITING_RETURN', vehicleId: mission.vehicleId, timestamp: now,
         });
+        if (capabilityDecision.source === 'delegation') {
+          transaction.set(db.collection('auditEvents').doc(), {
+            organizationId: actor.organizationId,
+            actorId: actor.uid,
+            actorRole: actor.role,
+            resourceType: 'mobilityDelegation',
+            resourceId: capabilityDecision.delegation.id,
+            action: 'use_mobility_delegation',
+            capability: 'vehicle.return',
+            missionId,
+            vehicleId: mission.vehicleId,
+            timestamp: now,
+          });
+        }
         transaction.set(db.collection('auditEvents').doc(), {
           organizationId: actor.organizationId, actorId: actor.uid, actorRole: actor.role,
           resourceType: 'vehicle', resourceId: mission.vehicleId, action: 'assigned_operator_return_vehicle',
@@ -2484,6 +2777,11 @@ async function handler(req, res) {
         if (missionData.organizationId !== caller.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
         if (missionData.assignedEmployeeUid !== caller.uid) return { ok: false, statusCode: 403, reason: 'operator_not_assigned' };
         if (missionData.status !== 'IN_PROGRESS') return { ok: false, statusCode: 409, reason: 'mission_not_in_progress' };
+        const capabilityDecision = resolvedActorCapability(caller, 'vehicle.drive', {
+          missionId: incident.missionId,
+          vehicleId: cleanString(missionData.vehicleId),
+        });
+        if (!capabilityDecision.allowed) return { ok: false, statusCode: 403, reason: capabilityDecision.reason };
         if (vehicleRef) {
           const vehicleSnap = snapshots[2];
           if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
@@ -2525,6 +2823,20 @@ async function handler(req, res) {
           clientRequestId,
           timestamp: now,
         });
+        if (capabilityDecision.source === 'delegation') {
+          transaction.set(db.collection('auditEvents').doc(), {
+            organizationId: caller.organizationId,
+            actorId: caller.uid,
+            actorRole: caller.role,
+            resourceType: 'mobilityDelegation',
+            resourceId: capabilityDecision.delegation.id,
+            action: 'use_mobility_delegation',
+            capability: 'vehicle.drive',
+            missionId: incident.missionId,
+            vehicleId: cleanString(missionData.vehicleId) || null,
+            timestamp: now,
+          });
+        }
         transaction.set(requestRef, {
           action,
           callerUid: caller.uid,
@@ -2641,8 +2953,14 @@ async function handler(req, res) {
         if (!isValidMobilityAllocationTarget(employee, organizationId)) {
           return { ok: false, statusCode: 403, reason: 'invalid_allocation_target' };
         }
+        const allocationAuth = MobilityDelegation.authorizeCapability(employee, 'vehicle.drive', { missionId, vehicleId });
+        if (!allocationAuth.allowed) {
+          return { ok: false, statusCode: 403, reason: allocationAuth.reason };
+        }
         if (isNonEmptyString(mission.requestedEmployeeUid) && mission.requestedEmployeeUid !== employeeUid) {
-          return { ok: false, statusCode: 409, reason: 'approved_employee_mismatch' };
+          const scopedOverride = allocationAuth.source === 'delegation'
+            && allocationAuth.delegation && allocationAuth.delegation.missionId === missionId;
+          if (!scopedOverride) return { ok: false, statusCode: 409, reason: 'approved_employee_mismatch' };
         }
 
         const actor = { uid: decoded.uid, role: 'mobility_head', organizationId };
@@ -2655,6 +2973,7 @@ async function handler(req, res) {
         if (!missionDecision.allowed) {
           return { ok: false, statusCode: 409, reason: missionDecision.code };
         }
+        const effectiveEmployee = MobilityDelegation.resolveEffectiveCapabilities(employee);
         const vehicleDecision = evaluateVehicleTransition({
           actor,
           vehicle,
@@ -2663,8 +2982,8 @@ async function handler(req, res) {
           assignedEmployee: {
             organizationId: employee.organizationId,
             active: employee.active,
-            role: resolveMobilityRole(employee),
-            vehicleEligible: WorkspaceAccess.hasCapability(employee, 'vehicle.drive'),
+            role: WorkspaceAccess.resolveMobilityRole(effectiveEmployee.data),
+            vehicleEligible: effectiveEmployee.capabilities.includes('vehicle.drive'),
           },
         });
         if (!vehicleDecision.allowed) {

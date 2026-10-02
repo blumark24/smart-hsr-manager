@@ -157,6 +157,16 @@
         department:e.department,
         vehicleEligible:e.vehicleEligible === true,
       })),
+      liveDelegationCandidates:(workspace.delegationCandidates || []).map(e => ({
+        uid:e.uid,
+        name:e.name,
+        active:e.active !== false,
+        administration:e.administration || '',
+        department:e.department || '',
+        jobTitle:e.jobTitle || '',
+        capabilities:Array.isArray(e.capabilities) ? e.capabilities : [],
+        delegation:e.delegation || null,
+      })),
     });
   }
 
@@ -235,14 +245,21 @@
       const snap = await getDoc(doc(db,'users',user.uid));
       if (!snap.exists()) { await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
       const data = snap.data() || {};
-      const role = resolveMobilityRole(data);
       const department = String(data.department || '').trim();
-      if (data.active === false || !role || !data.organizationId || (role === 'department_head' && !department)) {
-        // Unified identity: only an invalid account ends the session. A valid
-        // account without Mobility goes to the workspace chooser, signed in.
-        if (data.active !== false && String(data.organizationId || '').trim()) { location.replace('workspace.html'); return; }
+      let resolution = null;
+      try { resolution = await api('resolveWorkspaces', { workspace:'mobility' }); } catch (_) {}
+      if (data.active === false || !data.organizationId) {
         await signOut(auth).catch(()=>{});
         location.replace('login.html');
+        return;
+      }
+      if (!resolution || resolution.allowed !== true) {
+        location.replace('workspace.html');
+        return;
+      }
+      const role = resolveMobilityRole(data) || (resolution.delegation ? 'employee' : null);
+      if (!role || (role === 'department_head' && !department)) {
+        location.replace('workspace.html');
         return;
       }
       currentUser = user;
@@ -310,6 +327,8 @@
     createIncident: payload => withRefresh(api('createIncident',{...payload,clientRequestId:requestId('incident')})).then(x=>x.incidentId),
     mobilityProcessIncident: (incidentId,toStatus) => withRefresh(api('processMobilityIncident',{incidentId,toStatus})),
     decideVehicleAuthorization: (missionId,toStatus) => withRefresh(api('decideVehicleAuthorization',{missionId,toStatus})),
+    grantMobilityDelegation: payload => withRefresh(api('grantMobilityDelegation', payload || {})),
+    revokeMobilityDelegation: delegationId => withRefresh(api('revokeMobilityDelegation',{delegationId})),
   };
 
   window.dispatchEvent(new Event('smart-hsr-mobility-adapter-ready'));

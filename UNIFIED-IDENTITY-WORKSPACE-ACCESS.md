@@ -56,3 +56,18 @@ execution-only `employee` (own missions only).
 * No User Center UI for capabilities (no approved-board redesign): grant via API, or via the existing Mobility /
   vehicle-eligibility controls which keep working through dual-read.
 * Employee-registry selection lists keep reading the registry mirror (kept in step by the server).
+
+
+## Scoped Mobility Delegation
+
+Temporary Mobility access is now distinct from permanent entitlements.
+
+- Permanent access remains `entitlements.capabilities`.
+- Temporary access is materialized in `users/{uid}.mobilityDelegation` and recorded immutably in `mobilityDelegations/{grantId}`.
+- Every temporary grant requires an expiry time; expiry is enforced server-side on every workspace resolution and vehicle operation.
+- Grant authority is intentionally narrow: same-organization `mobility_head`, plus the already-existing `supervisor` operational-deputy role. Municipality Manager and platform Owner receive no new daily Mobility control from this feature.
+- Cross-organization grants, self-grants, inactive targets and unknown capabilities fail closed.
+- A grant can optionally be scoped to one mission and/or vehicle.
+- Revocation is immediate because runtime authorization reads the live user record server-side.
+- Grant, revoke and delegated operational use are written to `auditEvents`.
+- The Mobility Head settings surface exposes grant/revoke without changing the approved board structure.
