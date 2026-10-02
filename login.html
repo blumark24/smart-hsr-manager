@@ -7,41 +7,36 @@
 <meta name="color-scheme" content="light">
 <title>مساحة العمل المؤسسية | SMART HSR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="cloud-access-r2.css">
 </head>
 <body>
-<main class="cd-shell login-page workforce-login" data-screen-label="3j Mobile Users">
+<main class="cd-shell login-page workforce-login" data-screen-label="3c Desktop Users · 3f iPad Users · 3j Mobile Users">
 <section class="login-form-panel">
-  <div class="login-panel-top"><img class="cd-logo" src="Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR"><span class="lang-switch"><b>العربية</b> | EN</span></div>
+  <div class="login-panel-top"><img class="cd-logo" src="smart-hsr-logo-r2.png" width="360" height="146" alt="SMART HSR"><span class="lang-switch"><b>العربية</b> | <span class="en">EN</span></span></div>
   <div class="login-copy">
     <span class="cd-kicker">02 · WORKSPACE ACCESS</span>
     <h1>مساحة العمل المؤسسية</h1>
-    <p>سجّل الدخول وسيتم توجيهك تلقائيًا إلى مساحة العمل المعتمدة حسب دورك وصلاحياتك.</p>
+    <p><span class="not-m">سجّل الدخول وسيتم توجيهك تلقائيًا إلى مساحة العمل المعتمدة حسب دورك وصلاحياتك.</span><span class="only-m">سيتم توجيهك تلقائيًا حسب دورك وصلاحياتك.</span></p>
   </div>
   <form id="loginForm" class="login-form" autocomplete="on">
     <div class="field"><label for="email">البريد الإلكتروني أو رقم الموظف</label><input id="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr" placeholder="name@municipality.gov.sa" required></div>
-    <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••••" required><button class="password-toggle" type="button" data-password-toggle="password" aria-pressed="false">إظهار</button></div></div>
-    <div class="login-meta-row"><span class="remember"><i class="remember-box"></i>تذكّر هذا الجهاز</span><span>حسابات مؤسسية معتمدة فقط</span></div>
+    <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••••" data-ph-m="كلمة المرور" required><button class="password-toggle" type="button" data-password-toggle="password" aria-pressed="false">إظهار</button></div></div>
+    <div class="login-meta-row"><span class="remember"><i class="remember-box"></i>تذكّر هذا الجهاز</span><button type="button" class="forgot" id="forgotButton" aria-controls="forgotNote" aria-expanded="false">نسيت كلمة المرور؟</button></div>
+    <p id="forgotNote" class="note" hidden>لإعادة تعيين كلمة المرور تواصل مع مسؤول الصلاحيات في جهتك.</p>
     <button id="loginButton" type="submit" class="submit">دخول مساحة العمل</button>
     <div class="role-pills"><span>رئيس قسم</span><span>مشرف</span><span>موظف</span><span>مفتش</span><span>مقاول</span></div>
   </form>
   <div id="msg" class="message" aria-live="polite"></div>
-  <div class="note">جلسة المستخدمين معزولة عن جلسة مدير البلدية. كل حساب يُربط بجهته ودوره قبل فتح مساحة العمل.</div>
-  <div class="switch"><span id="leadershipPortalLink" hidden>حساب قيادة بلدية؟ <a href="manager-login.html">افتح بوابة القيادات</a></span><span>مدير بلدية؟ <a href="manager-login.html">بوابة القيادات البلدية</a></span></div>
+  <div class="switch"><span id="leadershipPortalLink" hidden>حساب قيادة بلدية؟ <a href="manager-login.html">افتح بوابة القيادات</a></span></div>
+  <div class="login-strip"><div><small>01</small><b>دورك</b></div><div><small>02</small><b>صلاحياتك</b></div><div><small>03</small><b>مساحة عملك</b></div></div>
   <div class="login-footer"><span>تحتاج إلى حساب؟ تواصل مع مسؤول الصلاحيات في جهتك.</span><a href="Home.html">→ بوابة الدخول</a></div>
+  <div class="login-mfoot"><i class="secure-dot"></i>جلسة مشفّرة · الحسابات المعتمدة فقط</div>
 </section>
-<section class="login-visual">
-  <div class="cd-network" aria-hidden="true"><svg viewBox="0 0 820 760" preserveAspectRatio="xMidYMid slice">
-<defs><linearGradient id="workLine" x1="0" x2="1"><stop offset="0" stop-color="#0C842B" stop-opacity=".72"/><stop offset="1" stop-color="#8BC8C2" stop-opacity=".42"/></linearGradient></defs>
-<g fill="none" stroke="url(#workLine)" stroke-width="1.4" opacity=".68">
-<path d="M40 500 L160 340 L290 470 L410 270 L535 440 L660 320 L790 465"/>
-<path d="M80 230 L160 340 L275 205 L410 270 L525 190 L660 320 L760 205"/>
-<path d="M160 340 L410 270 M290 470 L535 440 M535 440 L790 465 M410 270 L660 320"/>
-</g>
-<g fill="#0C842B"><circle class="node" cx="160" cy="340" r="5"/><circle class="node" cx="410" cy="270" r="5"/><circle class="node" cx="535" cy="440" r="5"/><circle class="node" cx="660" cy="320" r="5"/></g>
-<g fill="#7CBFBA"><circle class="node" cx="290" cy="470" r="4.5"/><circle class="node" cx="790" cy="465" r="4.5"/></g>
-</svg></div>
+<div class="login-topbar"><a class="login-back" href="Home.html"><span class="bk-arrow">→</span><span class="bk-label">بوابة الدخول</span></a><span class="login-tag"><span class="not-m">OPERATIONS LAYER · L3</span><span class="only-m">WORKSPACE ACCESS</span></span></div>
+<section class="login-visual" aria-hidden="true">
+  <canvas class="cd-twin" data-tw="users" data-d="21,.5,.44,.44,.56" data-t="21,.5,.21,.56,.24" data-m="9,.5,.18,.66,.17"></canvas>
+  <div class="cd-noise"></div>
   <div class="visual-topline"><span>OPERATIONS LAYER · L3</span><span>LIVE ROUTES</span></div>
   <div class="visual-card">
     <div><small>01</small><b>دورك</b><span>يُحدَّد من إدارة الحسابات</span></div>
@@ -50,6 +45,12 @@
   </div>
 </section>
 </main>
+<script src="hsr-twin.js"></script>
+<script src="cloud-twin-mount.js"></script>
+<script>
+(function(){const btn=document.getElementById('forgotButton'),note=document.getElementById('forgotNote');if(!btn||!note)return;
+btn.addEventListener('click',()=>{const open=note.hidden;note.hidden=!open;btn.setAttribute('aria-expanded',String(open));});})();
+</script>
 <script>
 window.__smartHSRLoginReady=false;
 const form=document.getElementById('loginForm');
@@ -61,6 +62,7 @@ document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventLis
 }));
 form?.addEventListener('submit',e=>{if(window.__smartHSRLoginReady===true)return;e.preventDefault();preMsg('تعذر تهيئة تسجيل الدخول بعد. أعد تحميل الصفحة، وإذا استمرت المشكلة فتحقق من اتصال Preview بخدمة المصادقة.','error')});
 </script>
+<script src="workspace-access.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -163,65 +165,56 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = userDoc.exists() ? (userDoc.data() || {}) : {};
     const role = data.role;
     const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
-    const administration = typeof data.administration === 'string' ? data.administration.trim() : '';
-    const department = typeof data.department === 'string' ? data.department.trim() : '';
     const institutionalRole = typeof data.institutionalRole === 'string' ? data.institutionalRole.trim() : '';
-    const hasFieldRole = ['supervisor','inspector','contractor'].includes(role);
-    const landsAccess = data.landsAccess;
-    const hasLandsRole = Boolean(landsAccess && landsAccess.enabled
-      && ['lands_employee','lands_department_manager'].includes(landsAccess.role));
+    const sessionRole = role || institutionalRole || 'user';
 
-    // PHASE13D.4 — Department Head Framework.
-    // Keep the existing Mobility compatibility vocabulary as the ONLY current
-    // live authorization source. No Firestore Rules/RBAC policy change here.
-    // Presence of mobilityAccess is authoritative, matching api/_lib/authz.js:
-    // a disabled/malformed entitlement must never fall back to a stale role.
-    const MOBILITY_ROLE_VALUES = ['mobility_head', 'department_head', 'administrative_affairs', 'employee'];
-    const mobilityRole = Object.prototype.hasOwnProperty.call(data, 'mobilityAccess')
-      ? (data.mobilityAccess && typeof data.mobilityAccess === 'object'
-          && data.mobilityAccess.enabled === true
-          && MOBILITY_ROLE_VALUES.includes(data.mobilityAccess.role)
-            ? data.mobilityAccess.role : null)
-      : (MOBILITY_ROLE_VALUES.includes(role) ? role : null);
-    const hasDepartmentHeadRole = institutionalRole === 'department_head' || mobilityRole === 'department_head';
-    // PHASE13D.5 — the dedicated department-head command center is currently
-    // scoped to Field Survey only. Mobility keeps its own operational product
-    // and workflow; do not route a Traffic/Mobility department head into the
-    // Field Survey command center.
-    const hasFieldDepartmentHeadRole = hasDepartmentHeadRole
-      && /الحصر|ميداني|field/i.test(administration || department);
+    // UNIFIED IDENTITY — One Identity → One Login → Roles + Entitlements →
+    // Authorized Workspaces. The trusted API is the authority on which
+    // workspaces this account may open; the shared resolver below is used
+    // ONLY as a navigation fallback if that request cannot be completed
+    // (every workspace page re-verifies server-side before rendering).
+    const WA = window.SmartHSRWorkspaceAccess;
+    let resolution = null;
+    try {
+      const idToken = await user.getIdToken();
+      const resolveResp = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        body: JSON.stringify({ action: 'resolveWorkspaces' }),
+      });
+      const resolved = await resolveResp.json().catch(() => null);
+      if (resolveResp.ok && resolved && resolved.kind === 'workforce' && Array.isArray(resolved.workspaces)) resolution = resolved;
+    } catch (e) {
+      console.error('workspace-resolution request failed', e);
+    }
+    if (!resolution) resolution = WA.resolveWorkspaces(userDoc.exists() ? data : null);
 
-    // PHASE16 — canonical municipal identity wins routing.
-    // One employee has one active organizational path and one workspace.
-    // Product entitlements remain technical authorization inputs only; they
-    // never choose a second workspace when the HR path is canonical.
-    const canonicalInstitutionalRole = ['general_supervisor','department_head','employee'].includes(institutionalRole);
-    const canonicalFieldPath = canonicalInstitutionalRole && /الحصر|ميداني|field/i.test(administration);
-    const canonicalLandsPath = canonicalInstitutionalRole && /الأراضي|الممتلكات|lands/i.test(administration);
-    const canonicalMobilityPath = canonicalInstitutionalRole && /حركة السير|الحركة الذكية|mobility|traffic/i.test(administration);
-    const canonicalAdministrativePath = canonicalInstitutionalRole && /الشؤون الإدارية|الشؤون الادارية|administrative/i.test(administration);
-    // Contracts/contractor-company administration is intentionally NOT a
-    // workforce workspace in the municipality handover model. It remains a
-    // Municipality Manager supervisory module only.
-    const hasCanonicalPath = canonicalFieldPath || canonicalLandsPath || canonicalMobilityPath || canonicalAdministrativePath;
-
-    // Canonical Field path: ignore stale historical Mobility compatibility
-    // entitlements and open the one HR-owned workspace.
-    if (hasCanonicalPath && canonicalFieldPath && (hasFieldRole || hasFieldDepartmentHeadRole)) {
-      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
+    // Only a missing record, an inactive account or a missing organization is
+    // an invalid account at the door. Everything else is a valid identity.
+    if (!resolution.valid) {
       await signOut(probeAuth);
-      showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
-      setTimeout(() => {
-        if (institutionalRole === 'department_head') window.location.href = 'department-head.html';
-        else if (role === 'supervisor') window.location.href = 'manager.html';
-        else if (role === 'contractor') window.location.href = 'mobile-map.html';
-        else window.location.href = 'dashboard.html';
-      }, 450);
+      showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
+      loginButton.disabled = false;
+      loginButton.textContent = 'تسجيل الدخول';
       return;
     }
 
-    // Canonical Lands path keeps the trusted one-time SSO handoff.
-    if (hasCanonicalPath && canonicalLandsPath && hasLandsRole) {
+    // Valid identity without any authorized workspace: keep the session and
+    // land on the safe empty state (logout only) instead of an error.
+    if (!resolution.workspaces.length) {
+      await persistWorkforceSession(email, password, user, organizationId, sessionRole);
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
+      setTimeout(() => { window.location.href = 'workspace.html'; }, 450);
+      return;
+    }
+
+    // Primary workspace = the institutional path; Mobility opens first only
+    // when nothing else is authorized (the resolver decides, in that order).
+    const primary = resolution.workspaces.find(w => w.id === resolution.primary) || resolution.workspaces[0];
+
+    // Smart Lands keeps the trusted one-time server-side SSO handoff.
+    if (primary.id === 'lands') {
       let handoffCode = null;
       try {
         const idToken = await user.getIdToken();
@@ -236,157 +229,27 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       }
       await signOut(probeAuth);
       if (!handoffCode) {
-        showMsg('❌ تعذر إعداد الدخول الآمن إلى الأراضي والممتلكات. حاول لاحقًا.', 'error');
-        loginButton.disabled = false;
-        loginButton.textContent = 'تسجيل الدخول';
-        return;
-      }
-      showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
-      setTimeout(() => {
-        const landsUrl = new URL(resolveLandsRedirectBase());
-        landsUrl.searchParams.set('code', handoffCode);
-        window.location.href = landsUrl.toString();
-      }, 450);
-      return;
-    }
-
-    // Canonical Traffic/Mobility path.
-    if (hasCanonicalPath && canonicalMobilityPath && mobilityRole) {
-      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
-      await signOut(probeAuth);
-      showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
-      setTimeout(() => { window.location.href = 'department-head.html?mode=mobility'; }, 450);
-      return;
-    }
-
-    // PHASE17 — Administrative Affairs is its own institutional workspace.
-    // The HR path is authoritative; no Mobility entitlement is required to
-    // decide routing. Trusted APIs independently enforce the narrow approval
-    // operations available to this administration.
-    if (hasCanonicalPath && canonicalAdministrativePath && ['department_head','employee'].includes(institutionalRole)) {
-      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
-      await signOut(probeAuth);
-      showMsg('✅ تم التحقق بنجاح... جارٍ فتح الشؤون الإدارية', 'success');
-      setTimeout(() => { window.location.href = 'admin-affairs.html'; }, 450);
-      return;
-    }
-
-    if (hasCanonicalPath) {
-      await signOut(probeAuth);
-      showMsg('🚫 المسار الوظيفي مسجل لكن صلاحية التشغيل المطابقة غير مكتملة. راجع مدير البلدية.', 'error');
-      loginButton.disabled = false;
-      loginButton.textContent = 'تسجيل الدخول';
-      return;
-    }
-
-    // Legacy fallback only: older accounts may still hold multiple service
-    // entitlements until their institutional path is migrated.
-    // Unified identity routing: one person / one UID may hold multiple
-    // independent SMART HSR workspaces. Count workspaces, never identities.
-    const serviceCount =
-      Number(hasFieldRole || hasFieldDepartmentHeadRole)
-      + Number(hasLandsRole)
-      + Number(Boolean(mobilityRole));
-
-    if (!userDoc.exists() || data.active === false || !organizationId || serviceCount === 0) {
-      await signOut(probeAuth);
-      if (userDoc.exists() && data.active !== false && organizationId && mobilityRole) {
-        showMsg('🚧 صلاحيتك التشغيلية مسجّلة، لكن لوحة هذا الدور لم تُفعَّل بعد لهذا الحساب. يرجى مراجعة إدارة المنصة.', 'error');
-      } else {
-        showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
-      }
-      loginButton.disabled = false;
-      loginButton.textContent = 'تسجيل الدخول';
-      return;
-    }
-
-    // LEGACY COMPATIBILITY ONLY — canonical PHASE16 identities never enter
-    // this chooser. No duplicate employee/user record is created.
-    if (serviceCount > 1) {
-      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
-      await signOut(probeAuth);
-      showMsg('✅ تم التحقق بنجاح... جارٍ فتح خدماتك', 'success');
-      setTimeout(() => {
-        window.location.href = 'workspace.html';
-      }, 450);
-      return;
-    }
-
-    // A Lands-only employee/department-manager is routed to the Lands trusted
-    // runtime via a one-time server-side SSO handoff.
-    if (hasLandsRole && !hasFieldRole && !mobilityRole) {
-      let handoffCode = null;
-      try {
-        const idToken = await user.getIdToken();
-        const handoffResp = await fetch('/api/organization/context', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
-        });
-        const handoffData = await handoffResp.json().catch(() => ({}));
-        if (handoffResp.ok && typeof handoffData.code === 'string' && handoffData.code) {
-          handoffCode = handoffData.code;
-        }
-      } catch (e) {
-        console.error('lands-sso-handoff request failed', e);
-      }
-      await signOut(probeAuth);
-
-      if (!handoffCode) {
         showMsg('❌ تعذر إعداد الدخول الآمن إلى حصر منح الأراضي الذكي. حاول لاحقًا.', 'error');
         loginButton.disabled = false;
         loginButton.textContent = 'تسجيل الدخول';
         return;
       }
-
-      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى حصر منح الأراضي الذكي', 'success');
+      showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
       setTimeout(() => {
         const landsUrl = new URL(resolveLandsRedirectBase());
         landsUrl.searchParams.set('code', handoffCode);
         window.location.href = landsUrl.toString();
-      }, 600);
-      return;
-    }
-
-    // Generic department-head landing. The page re-verifies the same live
-    // users/{uid} role, organizationId and department before rendering and
-    // calls only the existing department-scoped employee registry LIST action.
-    if (hasFieldDepartmentHeadRole && !hasLandsRole && !mobilityRole) {
-      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
-      await signOut(probeAuth);
-      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى مركز قيادة القسم', 'success');
-      setTimeout(() => {
-        window.location.href = 'department-head.html';
       }, 450);
       return;
     }
 
-    // PHASE15 — Smart Mobility is a municipality-wide shared service.
-    // A Mobility-only identity does not need Field or Lands access. The
-    // operational page re-verifies mobilityAccess, organization and role.
-    if (mobilityRole && !hasFieldRole && !hasLandsRole && !hasFieldDepartmentHeadRole) {
-      await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
-      await signOut(probeAuth);
-      showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه إلى الحركة الذكية', 'success');
-      setTimeout(() => {
-        window.location.href = 'department-head.html?mode=mobility';
-      }, 450);
-      return;
-    }
-
-    showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');
-
-    await persistWorkforceSession(email, password, user, organizationId, role || institutionalRole || 'user');
+    // Internal navigation target only (never an external URL).
+    const target = typeof primary.route === 'string' && /^[a-z0-9-]+\.html(\?mode=mobility)?$/.test(primary.route)
+      ? primary.route : 'workspace.html';
+    await persistWorkforceSession(email, password, user, organizationId, sessionRole);
     await signOut(probeAuth);
-
-    setTimeout(() => {
-      if (role === 'contractor') {
-        window.location.href = 'mobile-map.html';
-      } else if (role === 'supervisor') {
-        window.location.href = 'manager.html';
-      } else {
-        window.location.href = 'dashboard.html';
-      }
-    }, 1000);
+    showMsg('✅ تم التحقق بنجاح... جارٍ فتح مسارك الوظيفي', 'success');
+    setTimeout(() => { window.location.href = target; }, 450);
 
   } catch (e) {
     await signOut(probeAuth).catch(() => {});

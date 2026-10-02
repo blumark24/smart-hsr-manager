@@ -3131,6 +3131,19 @@ body{min-height:100svh!important;min-height:100dvh!important}
           </div>
         </div>
 
+        <div style="padding:14px;border-radius:14px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13));display:flex;flex-direction:column;gap:10px">
+          <div>
+            <div style="font-size:12px;font-weight:650;color:var(--tx,#e9f1fb)">سياسة حركة السير</div>
+            <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:4px;line-height:1.6">سياسة واحدة معتمدة للبلدية. تغييرها يطبق على المهام الجديدة فقط؛ المهام القائمة تحتفظ بسياستها.</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px">
+            <sc-for list="{{ mobilityPolicyOptions }}" as="p" hint-placeholder-count="3">
+              <button onClick="{{ p.on }}" data-f="1" disabled="{{ p.disabled }}" style="min-height:48px;padding:8px 7px;border-radius:10px;cursor:{{ p.cursor }};font-size:10.5px;font-weight:700;color:{{ p.tx }};background:{{ p.bg }};border:1px solid {{ p.bd }}">{{ p.label }}</button>
+            </sc-for>
+          </div>
+          <div style="font-size:9.5px;color:var(--tx3,#7d8ea6)">المعتمدة حاليًا: <span style="font-weight:700;color:var(--tx2,#a9bdd4)">{{ mobilityPolicyLabel }}</span></div>
+        </div>
+
         <div style="padding:14px;border-radius:14px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.13))">
           <div style="font-size:12px;font-weight:600;color:var(--tx,#e9f1fb);margin-bottom:11px">المظهر</div>
           <div style="display:flex;gap:9px">
@@ -3316,6 +3329,7 @@ class Component extends DCLogic {
     orgName: this.props.organizationName || 'اسم البلدية',
     sb: false, sbOverlayOpen: false, sidebarOpen: false, expSvc: true, expAdmin: false,
     notifOpen: false, profOpen: false, layersOpen: false, settingsOpen: false, mobNavOpen: false,
+    mobilityWorkflowPolicy: 'FULL', mobilityWorkflowPolicyLoading: false, mobilityWorkflowPolicySaving: false,
     userDrawerOpen: false, selectedUser: null, incidentDrawerOpen: false, selectedIncident: null,
     addUserOpen: false, auName: '', auEmail: '', auRole: 'employee', auKind: 'field',
     serviceEditOpen: false,
@@ -4656,6 +4670,21 @@ class Component extends DCLogic {
       notifAria: `الإشعارات — ${format.integer ? format.integer(this.liveNotifications.length) : this.liveNotifications.length} عناصر`,
       profOpen: st.profOpen, notifOpen: st.notifOpen, layersOpen: st.layersOpen,
       settingsOpen: st.settingsOpen, mobNavOpen: false,
+      mobilityPolicyLabel: ({FULL:'السياسة الكاملة',SHORT:'السياسة المختصرة',DIRECT:'المهمة التنفيذية المباشرة'})[st.mobilityWorkflowPolicy] || 'السياسة الكاملة',
+      mobilityPolicyOptions: [
+        ['FULL','كاملة'],['SHORT','مختصرة'],['DIRECT','مباشرة']
+      ].map(([id,label]) => {
+        const on = st.mobilityWorkflowPolicy === id;
+        const disabled = st.mobilityWorkflowPolicySaving || st.mobilityWorkflowPolicyLoading;
+        return {
+          label, disabled: disabled ? 'true' : '',
+          cursor: disabled ? 'wait' : 'pointer',
+          tx: on ? (day ? '#0b5c3b' : '#eaf4ff') : 'var(--tx2,#a9bdd4)',
+          bg: on ? (day ? 'rgba(18,133,90,.12)' : 'rgba(56,132,220,.16)') : 'var(--ctl,rgba(20,32,54,.5))',
+          bd: on ? (day ? 'rgba(18,133,90,.36)' : 'rgba(76,201,240,.42)') : 'var(--ctlBd,rgba(122,164,224,.16))',
+          on: () => this.setMobilityWorkflowPolicy(id)
+        };
+      }),
       userDrawerOpen: st.userDrawerOpen, incidentDrawerOpen: st.incidentDrawerOpen,
       closeUserDrawer: () => this.closeUserDrawer(), closeIncidentDrawer: () => this.closeIncidentDrawer(),
       selectedUserName: st.selectedUser?.name || '—', selectedUserEmail: st.selectedUser?.email || '—',
@@ -5065,7 +5094,7 @@ class Component extends DCLogic {
         { label: 'الهيكل الإداري', tag: 'قريباً', disabled: true, ...navLook(false) },
         { label: 'مركز إدارة المستخدمين', tag: '', view: 'users', ...navLook(mobileNavigationAuthoritative && st.view === 'users') },
         { label: 'الحوادث والطوارئ', tag: '', view: 'incidents', ...navLook(mobileNavigationAuthoritative && st.view === 'incidents') },
-        { label: 'الإعدادات والهوية', tag: '', on: () => this.setState({ settingsOpen: true, mobNavOpen: false }), ...navLook(false) },
+        { label: 'الإعدادات والهوية', tag: '', on: () => this.openSettingsPanel(), ...navLook(false) },
         { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', disabled: true, ...navLook(false) }
       ].map(item => Object.assign({ cursor: item.disabled ? 'not-allowed' : 'pointer', disabledText: item.disabled ? 'true' : 'false', mnavHome: '', view: '' }, item)),
 
@@ -5077,7 +5106,7 @@ class Component extends DCLogic {
       tNotif: () => this.setState(s => ({ notifOpen: !s.notifOpen, profOpen: false })),
       tProf: () => this.setState(s => ({ profOpen: !s.profOpen, notifOpen: false })),
       tMobNav: () => this.toggleSmartSidebar(),
-      openSettings: e => { this.prevent(e); this.setState({ settingsOpen: true, profOpen: false, mobNavOpen: false }); },
+      openSettings: e => { this.prevent(e); this.openSettingsPanel(); },
       closeSettings: () => this.setState({ settingsOpen: false }),
       stop: e => { if (e && e.stopPropagation) e.stopPropagation(); },
       tFs: () => this.toggleFullscreen(),
@@ -5947,6 +5976,30 @@ class Component extends DCLogic {
     this.setState({ incidentDrawerOpen: false, selectedIncident: null });
   }
 
+  async openSettingsPanel() {
+    this.setState({ settingsOpen:true, profOpen:false, mobNavOpen:false, mobilityWorkflowPolicyLoading:true });
+    try {
+      const result = await this.callAdminUsersApi('getMobilityWorkflowPolicy', {});
+      this.setState({ mobilityWorkflowPolicy: result.policy || 'FULL', mobilityWorkflowPolicyLoading:false });
+    } catch (_) {
+      this.setState({ mobilityWorkflowPolicyLoading:false });
+      this.flash?.('تعذر تحميل سياسة حركة السير');
+    }
+  }
+
+  async setMobilityWorkflowPolicy(policy) {
+    if (!['FULL','SHORT','DIRECT'].includes(policy) || this.state.mobilityWorkflowPolicySaving) return;
+    this.setState({ mobilityWorkflowPolicySaving:true });
+    try {
+      const result = await this.callAdminUsersApi('setMobilityWorkflowPolicy', { policy });
+      this.setState({ mobilityWorkflowPolicy: result.policy || policy, mobilityWorkflowPolicySaving:false });
+      this.flash?.('تم اعتماد سياسة حركة السير للبلدية');
+    } catch (e) {
+      this.setState({ mobilityWorkflowPolicySaving:false });
+      this.flash?.(this.adminApiErrorMessage?.(e) || 'تعذر تحديث سياسة حركة السير');
+    }
+  }
+
   // Single call point for every User Center action, matching the real
   // reconciled /api/admin/users contract exactly: one POST endpoint, one
   // `action` discriminator field, Authorization from the actual signed-in
@@ -6106,5 +6159,6 @@ class Component extends DCLogic {
 <script type="module" src="./manager-mobility-adapter.js"></script>
 <script type="module" src="./manager-support.js"></script>
 <script src="./service-switcher.js"></script>
+<script src="./workspace-guard.js"></script>
 </body>
 </html>

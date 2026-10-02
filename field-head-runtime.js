@@ -79,6 +79,9 @@
       const legacyFieldHead = mobilityRole === 'department_head' && /الحصر|ميداني|field/i.test(administration || dept);
       const institutionalFieldHead = institutionalRole === 'department_head' && /الحصر|ميداني|field/i.test(administration || dept);
       if (data.active === false || (!institutionalFieldHead && !legacyFieldHead) || !dept || !data.organizationId) {
+        // Unified identity: only an invalid account ends the session. A valid
+        // account that lacks THIS workspace goes to the workspace chooser.
+        if (data.active !== false && String(data.organizationId || '').trim()) { location.replace('workspace.html'); return; }
         await signOut(auth).catch(()=>{});
         location.replace('login.html');
         return;

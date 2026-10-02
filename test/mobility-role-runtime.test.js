@@ -6,13 +6,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
-const login = fs.readFileSync(path.join(root, 'login.html'), 'utf8');
+const login = fs.readFileSync(path.join(root, 'login.html'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'workspace-access.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
 const runtime = fs.readFileSync(path.join(root, 'mobility-runtime.js'), 'utf8');
 const api = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
 
 test('Mobility-only identities route to the approved shared operational surface', () => {
-  assert.match(login, /mobilityRole && !hasFieldRole && !hasLandsRole/);
+  assert.match(login, /WORKSPACE_ORDER = Object\.freeze\(\['field', 'lands', 'admin_affairs', 'mobility'\]\)/);
   assert.match(login, /department-head\.html\?mode=mobility/);
   assert.match(page, /mode === 'mobility' \? '\.\/mobility-runtime\.js' : '\.\/field-head-runtime\.js'/);
 });

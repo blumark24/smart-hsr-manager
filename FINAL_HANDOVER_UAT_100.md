@@ -1,6 +1,6 @@
 # SMART HSR — FINAL HANDOVER UAT 100%
 
-**Release branch:** `release/municipality-final-rc`
+**Release branch:** `release/municipality-final-rc2`
 
 This file is the single source of truth for municipality delivery closure.
 No new feature work or redesign is allowed during this phase. Only verified P0/P1 fixes may change the release candidate.
@@ -70,21 +70,44 @@ Every identity must resolve to exactly one institutional workspace. No user may 
 **Pass:** [ ]
 
 ### C. Mobility + Administrative Affairs
-Required real sequence:
+All three municipality workflow policies must pass end-to-end on the same RC SHA.
+
+**FULL**
 
 `Department Head → Administrative Affairs Head → Mobility Head → Administrative Affairs Head → Mobility Head → Assigned Employee → Mobility Head`
 
-1. Department Head creates a mission request for a real eligible employee.
+1. Department Head creates/submits a mission for a real eligible employee.
 2. Administrative Affairs Head approves/rejects/returns the mission.
 3. Mobility Head allocates an available vehicle.
 4. Allocation creates a `PENDING_AUTHORIZATION` vehicle authorization.
 5. Administrative Affairs Head authorizes/rejects/revokes the vehicle authorization.
-6. Mobility Head hands the vehicle over.
-7. Assigned employee sees only their own mission and the vehicle linked to that mission.
-8. Assigned employee advances mission state / reports incident if required / completes work.
-9. Assigned employee requests vehicle return.
-10. Mobility Head confirms return and closure.
-11. Audit events remain organization-scoped.
+6. Mobility Head hands the vehicle over only after authorization is `AUTHORIZED`.
+7. Assigned employee executes / reports an incident if required / completes / returns.
+8. Mobility Head confirms return and closure.
+
+**SHORT**
+
+`Department Head → Mobility Head → Assigned Employee → Mobility Head`
+
+1. Department Head submits directly to Mobility; `PENDING_APPROVAL` is not legal.
+2. Mobility Head allocates an available vehicle.
+3. Vehicle-use authorization is created as `AUTHORIZED` by municipality policy; Administrative Affairs receives no decision step.
+4. Mobility Head hands over; employee executes/returns; Mobility Head closes.
+
+**DIRECT**
+
+`Mobility Head → Assigned Employee → Mobility Head`
+
+1. Mobility Head creates the direct mission already `APPROVED`.
+2. Department Head and Administrative Affairs mission-approval steps are not legal.
+3. Mobility Head allocates an available vehicle.
+4. Vehicle-use authorization is created as `AUTHORIZED` by municipality policy; Administrative Affairs receives no decision step.
+5. Mobility Head hands over; employee executes/returns; Mobility Head closes.
+
+**Common pass conditions**
+- Assigned employee sees only their own mission and linked vehicle.
+- Ineligible, inactive, wrong-department and wrong-organization targets fail closed.
+- Audit events remain organization-scoped and preserve the mission's workflow-policy snapshot.
 
 **Pass:** [ ]
 

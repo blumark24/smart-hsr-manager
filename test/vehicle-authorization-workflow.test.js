@@ -43,11 +43,14 @@ test('administrative affairs authorizes while mobility activates and expires', (
   }).allowed, true);
 });
 
-test('allocation atomically creates the internal authorization request', () => {
+test('allocation creates a policy-aware internal vehicle authorization record', () => {
   assert.match(usersApi, /collection\('vehicleAuthorizations'\)\.doc\(missionId\)/);
-  assert.match(usersApi, /vehicleAuthorizationStatus: 'PENDING_AUTHORIZATION'/);
+  assert.match(usersApi, /requiresAdministrativeAuthorization = workflowPolicy === MOBILITY_WORKFLOW_POLICIES\.FULL/);
+  assert.match(usersApi, /authorizationStatus = requiresAdministrativeAuthorization \? 'PENDING_AUTHORIZATION' : 'AUTHORIZED'/);
+  assert.match(usersApi, /authorizationMode = requiresAdministrativeAuthorization \? 'ADMINISTRATIVE_AFFAIRS' : 'POLICY_AUTO'/);
   assert.match(usersApi, /authorizationNumber = 'VA-'/);
-  assert.match(usersApi, /action: 'create_vehicle_authorization_request'/);
+  assert.match(usersApi, /'create_vehicle_authorization_request'/);
+  assert.match(usersApi, /'auto_authorize_vehicle_use_by_policy'/);
 });
 
 test('administrative affairs owns authorization decision and rejection releases the reservation', () => {

@@ -8,7 +8,7 @@ const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const manager=read('manager.html');
 const runtime=read('mobility-runtime.js');
 const page=read('department-head.html');
-const login=read('login.html');
+const login=read('login.html')+'\n'+read('workspace-access.js'); // routing now lives in the shared resolver
 const users=read('api/admin/users.js');
 
 test('Mobility manager surface exists with real operational KPIs',()=>{

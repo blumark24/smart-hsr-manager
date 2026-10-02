@@ -35,6 +35,8 @@ const {
   validateMobilitySelection,
   validateLandsSelection,
   passwordPolicyReason,
+  syncEntitlementsForLegacyChange,
+  mobilityProductMirror,
 } = require('../_lib/serviceEntitlements');
 const { resolveProductEntitlements } = require('../../platform/contracts/product-entitlement-contract');
 const {
@@ -560,6 +562,17 @@ async function handler(req, res) {
             : FieldValue.delete();
         }
         if (vehicleEligible !== undefined) userUpdate.vehicleEligible = vehicleEligible;
+        // Unified identity: keep an existing `entitlements` record coherent
+        // with this legacy-style change (no-op for records without it).
+        let syncedCapabilities = null;
+        try {
+          const existingUserSnap = await userRef.get();
+          syncedCapabilities = syncEntitlementsForLegacyChange(
+            existingUserSnap && existingUserSnap.exists ? existingUserSnap.data() : null, { mobilitySel, vehicleEligible });
+        } catch (_) { syncedCapabilities = null; }
+        if (syncedCapabilities) {
+          userUpdate.entitlements = { capabilities: syncedCapabilities, updatedBy: caller.uid, updatedAt: FieldValue.serverTimestamp() };
+        }
         await userRef.set(userUpdate, { merge: true });
 
         const existingProducts = employee.data.products || { field: {}, lands: {}, mobility: {} };
@@ -582,6 +595,7 @@ async function handler(req, res) {
             vehicleEligible: vehicleEligible !== undefined ? vehicleEligible : (existingProducts.mobility ? existingProducts.mobility.vehicleEligible === true : false),
           },
         };
+        if (syncedCapabilities) products.mobility = mobilityProductMirror(syncedCapabilities, products.mobility);
         await employee.ref.set({ products, ...(institutionalRole !== undefined ? { institutionalRole } : {}), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
 
         await recordAdminAudit(db, {
@@ -615,7 +629,18 @@ async function handler(req, res) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'no_linked_account' });
         }
 
-        await db.collection('users').doc(employee.data.authUid).set({ vehicleEligible, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        const eligibleUserRef = db.collection('users').doc(employee.data.authUid);
+        const eligibleUpdate = { vehicleEligible, updatedAt: FieldValue.serverTimestamp() };
+        let syncedEligibleCapabilities = null;
+        try {
+          const existingUserSnap = await eligibleUserRef.get();
+          syncedEligibleCapabilities = syncEntitlementsForLegacyChange(
+            existingUserSnap && existingUserSnap.exists ? existingUserSnap.data() : null, { vehicleEligible });
+        } catch (_) { syncedEligibleCapabilities = null; }
+        if (syncedEligibleCapabilities) {
+          eligibleUpdate.entitlements = { capabilities: syncedEligibleCapabilities, updatedBy: caller.uid, updatedAt: FieldValue.serverTimestamp() };
+        }
+        await eligibleUserRef.set(eligibleUpdate, { merge: true });
         const existingProducts = employee.data.products || {};
         const products = { ...existingProducts, mobility: { ...(existingProducts.mobility || {}), vehicleEligible } };
         await employee.ref.set({ products, updatedAt: FieldValue.serverTimestamp() }, { merge: true });

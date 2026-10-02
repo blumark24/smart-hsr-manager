@@ -6,6 +6,7 @@
 <title>SMART HSR - رئيس قسم الحصر الميداني</title>
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
+<script src="./workspace-access.js"></script>
 <script>
 (() => {
   const mode = new URLSearchParams(location.search).get('mode');
@@ -1211,13 +1212,13 @@
             <div>
               <div style="display:flex;align-items:center;gap:8px">
                 <span style="font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">سياسة اعتماد المهام</span>
-                <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:6px;color:var(--thTx,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">معاينة تصميم — غير مفعّلة</span>
+                <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:6px;color:var(--thTx,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">معتمدة على مستوى البلدية</span>
               </div>
-              <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);margin-top:4px">هذه بطاقات معاينة فقط. دورة العمل الفعلية المطبقة على كل مهمة هي السياسة الكاملة أدناه دائماً، ولا يمكن تغييرها من هذه الشاشة.</div>
+              <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);margin-top:4px">عرض للقراءة فقط. مدير البلدية يعتمد السياسة، ورئيس الحركة ينفذ المسار المعتمد ولا يغيّره من هذه الشاشة. المهام القائمة تحتفظ بالسياسة التي أُنشئت بها.</div>
             </div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <sc-for list="{{ policies }}" as="p" hint-placeholder-count="3">
-                <div onClick="{{ p.on }}" data-f="1" style="padding:13px;border-radius:13px;cursor:pointer;background:{{ p.bg }};border:1px solid {{ p.bd }}">
+                <div style="padding:13px;border-radius:13px;cursor:default;background:{{ p.bg }};border:1px solid {{ p.bd }}">
                   <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
                     <span style="width:15px;height:15px;flex:none;border-radius:50%;border:2px solid {{ p.dot }};background:{{ p.fill }}"></span>
                     <span style="flex:1;font-size:12px;font-weight:650;color:var(--tx,#e9f1fb)">{{ p.name }}</span>
@@ -1273,6 +1274,21 @@
               <span style="flex:none;font-size:9.5px;font-weight:600;padding:4px 10px;border-radius:7px;color:var(--thTx,#7d8ea6);background:var(--chipBg,rgba(122,164,224,0.1));border:1px solid var(--ctlBd,rgba(122,164,224,0.16))">قريباً</span>
             </div>
           </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ delegationRows }}" as="u" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:var(--sunk2,rgba(11,18,32,0.55));border:1px solid var(--div,rgba(122,164,224,0.12));flex-wrap:wrap">
+                    <div style="flex:1;min-width:180px">
+                      <div style="font-size:11.5px;font-weight:650;color:var(--tx,#e9f1fb)">{{ u.name }}</div>
+                      <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-top:3px">{{ u.meta }}</div>
+                    </div>
+                    <span style="font-size:9.5px;padding:4px 8px;border-radius:7px;color:{{ u.statusCol }};background:{{ u.statusBg }};border:1px solid {{ u.statusBd }}">{{ u.status }}</span>
+                    <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ u.expiry }}</span>
+                    <button onClick="{{ u.on }}" data-f="1" style="height:31px;padding:0 11px;border-radius:9px;font-size:10.5px;font-weight:650;cursor:pointer;color:{{ u.btnTx }};background:{{ u.btnBg }};border:1px solid {{ u.btnBd }}">{{ u.btnLabel }}</button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
         </div>
       </sc-if>
 
@@ -1575,6 +1591,9 @@
                 <sc-if value="{{ f.isText }}">
                   <input value="{{ f.value }}" onChange="{{ f.on }}" placeholder="{{ f.ph }}" style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
                 </sc-if>
+                <sc-if value="{{ f.isDateTime }}">
+                  <input type="datetime-local" value="{{ f.value }}" onChange="{{ f.on }}" style="width:100%;height:36px;border-radius:10px;background:var(--field,rgba(12,20,36,0.75));border:1px solid var(--ctlBd,rgba(122,164,224,0.18));color:var(--tx,#e9f1fb);font-size:11.5px;padding:0 12px;outline:none">
+                </sc-if>
               </div>
             </sc-for>
             <sc-if value="{{ dHasChips }}">
@@ -1714,7 +1733,7 @@ class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
     role: 'dept', screen: 'deptops', authPending: false, orgName: 'معاينة تصميم', sessionName: 'رئيس قسم الحصر الميداني', department: 'إدارة الحصر الميداني',
-    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [],
+    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [], workflowPolicy: 'FULL',
     sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
     geoPanelOpen: false, mapSearchOpen: false,
     twin3D: false, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
@@ -2403,18 +2422,20 @@ class Component extends DCLogic {
     }
 
     if (s === 'settings') {
-      const pol = st.policy || 'p1';
-      const mkPol = (id, name, tag, steps) => ({ name: name, tag: tag,
-        steps: steps.map(x => ({ label: x })),
-        dot: pol === id ? (day ? '#12855a' : '#4cc9f0') : (day ? 'rgba(17,54,40,0.25)' : 'rgba(122,164,224,0.3)'),
-        fill: pol === id ? (day ? '#12855a' : '#4cc9f0') : 'transparent',
-        bg: pol === id ? (day ? 'rgba(18,133,90,0.06)' : 'rgba(56,132,220,0.12)') : 'var(--sunk2,rgba(11,18,32,0.55))',
-        bd: pol === id ? (day ? 'rgba(18,133,90,0.3)' : 'rgba(76,201,240,0.35)') : 'var(--div,rgba(122,164,224,0.12))',
-        on: () => { this.setState({ policy: id }); this.flash('معاينة فقط — السياسة المطبَّقة فعلياً تبقى السياسة الكاملة'); } });
+      const pol = (st.workflowPolicy || 'FULL');
+      const mkPol = (id, name, steps) => {
+        const active = pol === id;
+        return { name: name, tag: active ? 'المعتمدة حالياً' : 'غير معتمدة',
+          steps: steps.map(x => ({ label: x })),
+          dot: active ? (day ? '#12855a' : '#4cc9f0') : (day ? 'rgba(17,54,40,0.25)' : 'rgba(122,164,224,0.3)'),
+          fill: active ? (day ? '#12855a' : '#4cc9f0') : 'transparent',
+          bg: active ? (day ? 'rgba(18,133,90,0.06)' : 'rgba(56,132,220,0.12)') : 'var(--sunk2,rgba(11,18,32,0.55))',
+          bd: active ? (day ? 'rgba(18,133,90,0.3)' : 'rgba(76,201,240,0.35)') : 'var(--div,rgba(122,164,224,0.12))' };
+      };
       out.policies = [
-        mkPol('p1', 'السياسة الكاملة', 'افتراضية', ['رئيس القسم', 'الشؤون الإدارية', 'حركة السير', 'تخصيص المركبة', 'الموظف']),
-        mkPol('p2', 'سياسة مختصرة', 'مهام اعتيادية', ['رئيس القسم', 'حركة السير', 'الموظف']),
-        mkPol('p3', 'مهمة تنفيذية مباشرة', 'صلاحية خاصة', ['جهة تنفيذية مخوّلة', 'حركة السير', 'الموظف'])
+        mkPol('FULL', 'السياسة الكاملة', ['رئيس القسم', 'الشؤون الإدارية', 'حركة السير', 'تخصيص المركبة', 'الموظف']),
+        mkPol('SHORT', 'السياسة المختصرة', ['رئيس القسم', 'حركة السير', 'تخصيص المركبة', 'الموظف']),
+        mkPol('DIRECT', 'المهمة التنفيذية المباشرة', ['مركز حركة السير', 'تخصيص المركبة', 'الموظف'])
       ];
       const gm = st.geo || 'poly';
       out.geoModes = [['poly', 'مضلّع'], ['circle', 'دائرة'], ['admin', 'حدود إدارية']].map(g => pill(g[1], gm === g[0], () => this.setState({ geo: g[0] })));
@@ -2809,7 +2830,13 @@ class Component extends DCLogic {
       dHasRows: !!(dr.rows && dr.rows.length), dRows: dr.rows || [],
       dHasTimeline: !!(dr.timeline && dr.timeline.length), dTimeline: dr.timeline || [],
       dHasForm: !!dr.form, dFormTitle: dr.formTitle || '',
-      dFields: (dr.fields || []).map(f => Object.assign({ isSelect: false, isText: true, options: [] }, f, f.type === 'select' ? { isSelect: true, isText: false } : {})),
+      dFields: (dr.fields || []).map(f => Object.assign(
+        { isSelect: false, isText: true, isDateTime: false, options: [] },
+        f,
+        f.type === 'select' ? { isSelect: true, isText: false }
+          : f.type === 'datetime-local' ? { isDateTime: true, isText: false }
+            : {}
+      )),
       dHasChips: !!(dr.chips && dr.chips.length), dChipsLabel: dr.chipsLabel || '', dChips: dr.chips || [],
       dHasEvidence: !!dr.evidence,
       dEvidenceCompare: !!dr.evidenceCompare,
@@ -3044,6 +3071,7 @@ class Component extends DCLogic {
         { k: 'طالب المهمة', v: m.requester }, { k: 'الموظف', v: m.emp }, { k: 'الوجهة', v: m.dest },
         { k: 'التاريخ والوقت', v: m.when }, { k: 'المدة المتوقعة', v: m.dur }, { k: 'النطاق', v: m.scope },
         { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : 'لم تُخصص بعد' },
+        { k: 'اعتماد استخدام المركبة', v: m.authorizationStatus === 'AUTHORIZED' ? 'معتمد' : m.authorizationStatus === 'PENDING_AUTHORIZATION' ? 'بانتظار الشؤون الإدارية' : (m.authorizationStatus || '—') },
         // PHASE 06A hotfix (GPS honesty) — no real device/location source
         // exists; never claim "GPS active", only an honest schematic/
         // unavailable disclosure. MISSION STATUS != GPS STATUS.
@@ -3091,7 +3119,7 @@ class Component extends DCLogic {
         }, tx: danger.tx, bg: danger.bg, bd: danger.bd });
       } else {
         if (stt === 'بانتظار المركبة') acts.push({ label: 'تخصيص مركبة', on: () => { window.SmartHSRMobilityAdapter.refreshMobilityEmployees?.(); this.setState({ drawer: 'alloc' }); }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
-        if (stt === 'تم تخصيص المركبة') acts.push({ label: 'تسليم المركبة', on: () => this.setState({ drawer: 'handover' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        if (stt === 'تم تخصيص المركبة' && m.authorizationStatus === 'AUTHORIZED') acts.push({ label: 'تسليم المركبة', on: () => this.setState({ drawer: 'handover' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
         if (stt === 'في انتظار إعادة المركبة') acts.push({ label: 'استلام المركبة', on: () => this.setState({ drawer: 'ret' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
         acts.push({ label: 'عرض في الخريطة', on: () => { const vv = V.filter(x => x.id === m.veh)[0]; this.setState({ drawer: null, screen: 'map', sel: vv ? { t: 'v', id: vv.id } : null }); }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
       }
@@ -3174,6 +3202,7 @@ class Component extends DCLogic {
     if (k === 'create') {
       const f = this.state.form;
       const mobilityMode = this.state.runtimeMode === 'mobility';
+      const directMobility = this.state.role === 'mobility' && (this.state.workflowPolicy || 'FULL') === 'DIRECT';
       const canSave = !!(this.state.chip.type && (f.cDest || '').trim() && (f.cWhy || '').trim()
         && (!mobilityMode || (f.cEmpId || '').trim()));
       const saveMission = submit => {
@@ -3188,16 +3217,26 @@ class Component extends DCLogic {
           whenLabel: (f.cWhen || '').trim(), durationLabel: (f.cDur || '').trim()
         };
         this.setState({ drawer: null });
-        window.SmartHSRMobilityAdapter.createMissionRequest(payload).then(missionId => {
+        const createCall = directMobility
+          ? window.SmartHSRMobilityAdapter.createDirectMobilityMission(payload)
+          : window.SmartHSRMobilityAdapter.createMissionRequest(payload);
+        createCall.then(missionId => {
+          if (directMobility) {
+            this.flash('تم إنشاء المهمة المباشرة — بانتظار تخصيص المركبة');
+            return Promise.resolve();
+          }
           if (!submit) { this.flash('تم حفظ الطلب كمسودة'); return Promise.resolve(); }
-          return window.SmartHSRMobilityAdapter.submitMissionForApproval(missionId).then(() => this.flash('تم إرسال الطلب للاعتماد الإداري'));
+          return window.SmartHSRMobilityAdapter.submitMissionForApproval(missionId).then(() => {
+            const p = this.state.workflowPolicy || 'FULL';
+            this.flash(p === 'SHORT' ? 'تم إرسال المهمة مباشرة إلى حركة السير' : 'تم إرسال الطلب للاعتماد الإداري');
+          });
         }).catch(() => this.flash('تعذر حفظ الطلب — الرجاء المحاولة مجدداً'));
       };
-      return { title: 'إنشاء طلب مهمة', sub: (this.state.department || '—') + ' · رئيس القسم', chip: 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
+      return { title: directMobility ? 'إنشاء مهمة تنفيذية مباشرة' : 'إنشاء طلب مهمة', sub: directMobility ? 'مركز حركة السير · سياسة DIRECT' : ((this.state.department || '—') + ' · رئيس القسم'), chip: directMobility ? 'معتمدة مباشرة' : 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
         form: true, formTitle: 'بيانات الطلب',
         fields: [
           mobilityMode
-            ? { label: 'الموظف', type: 'select', value: f.cEmpId || '', ph: 'اختر موظفاً من القسم',
+            ? { label: 'الموظف', type: 'select', value: f.cEmpId || '', ph: 'اختر موظفاً مؤهلاً من البلدية',
                 options: (this.state.liveEmployees || []).map(e => ({
                   value: e.employeeId,
                   label: e.name + (e.vehicleEligible ? ' · مؤهل للمركبة' : ' · غير مؤهل للمركبة')
@@ -3216,10 +3255,17 @@ class Component extends DCLogic {
             tx: on ? (this.state.theme === 'day' ? '#0b5c3b' : '#eaf4ff') : 'var(--tx2,#a9bdd4)',
             bg: on ? this.tint('#22c55e', 0.16) : 'var(--ctl,rgba(20,32,54,0.5))', bd: on ? this.tint('#22c55e', 0.4) : 'var(--ctlBd,rgba(122,164,224,0.14))' };
         }),
-        banner: 'حسب السياسة الحالية: رئيس القسم ← الشؤون الإدارية ← حركة السير ← تخصيص المركبة ← الموظف.',
+        banner: directMobility
+          ? 'المسار المباشر: مركز حركة السير ← تخصيص المركبة ← الموظف.'
+          : ((this.state.workflowPolicy || 'FULL') === 'SHORT'
+            ? 'المسار المختصر: رئيس القسم ← حركة السير ← تخصيص المركبة ← الموظف.'
+            : 'المسار الكامل: رئيس القسم ← الشؤون الإدارية ← حركة السير ← تخصيص المركبة ← الموظف.'),
         bannerCol: this.sc('محجوزة'), bannerBg: this.tint('#38bdf8', 0.1), bannerBd: this.tint('#38bdf8', 0.28),
-        actions: [{ label: 'إرسال للاعتماد', on: () => saveMission(true), tx: btn.tx, bg: btn.bg, bd: btn.bd },
-          { label: 'حفظ كمسودة', on: () => saveMission(false), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
+        actions: directMobility
+          ? [{ label: 'إنشاء المهمة المباشرة', on: () => saveMission(true), tx: btn.tx, bg: btn.bg, bd: btn.bd },
+             { label: 'إلغاء', on: () => this.setState({ drawer: null }), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }]
+          : [{ label: 'إرسال للاعتماد', on: () => saveMission(true), tx: btn.tx, bg: btn.bg, bd: btn.bd },
+             { label: 'حفظ كمسودة', on: () => saveMission(false), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
     }
 
     if (k === 'incnew') {
@@ -3258,5 +3304,6 @@ class Component extends DCLogic {
 </script>
 
 <script src="./service-switcher.js"></script>
+<script src="./workspace-guard.js"></script>
 </body>
 </html>

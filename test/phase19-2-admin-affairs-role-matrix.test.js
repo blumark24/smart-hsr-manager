@@ -6,7 +6,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 
-const login=read('login.html');
+const login=read('login.html')+'\n'+read('workspace-access.js'); // routing now lives in the shared resolver
 const page=read('admin-affairs.html');
 const runtime=read('admin-affairs-runtime.js');
 const users=read('api/admin/users.js');
@@ -22,7 +22,7 @@ test('Administrative Affairs employee is read-only in the client',()=>{
   assert.ok(runtime.includes("state.readOnly=d.institutionalRole==='employee'"));
   assert.ok(runtime.includes("state.readOnly?'—'"));
   assert.ok(runtime.includes("!state.readOnly&&m.status==='PENDING_APPROVAL'"));
-  assert.ok(runtime.includes("!state.readOnly&&a.status==='PENDING_AUTHORIZATION'"));
+  assert.ok(runtime.includes("!state.readOnly&&(a.workflowPolicy||'FULL')==='FULL'&&a.status==='PENDING_AUTHORIZATION'"));
 });
 
 test('Administrative Affairs employee has a distinct trusted read role server-side',()=>{

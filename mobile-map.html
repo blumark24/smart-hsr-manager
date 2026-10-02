@@ -2140,6 +2140,8 @@
   async function denyMapAccess(){
     clearContractorSurface();
     setMapState('unauthorized');
+    // Unified identity: valid account without THIS workspace keeps its session.
+    if (await (window.SmartHSRWorkspaceGuard?.redirectValidSession?.(auth?.currentUser) ?? false)) return;
     try{ if (auth?.currentUser) await signOut(auth); }catch(e){ console.warn(e); }
     window.location.replace('login.html');
   }
@@ -2215,5 +2217,6 @@
   }
 </script>
 <script src="./service-switcher.js"></script>
+<script src="./workspace-guard.js"></script>
 </body>
 </html>

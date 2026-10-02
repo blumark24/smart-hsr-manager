@@ -9,7 +9,7 @@ const root = path.join(__dirname, '..');
 const core = fs.readFileSync(path.join(root, 'manager-phase11c-user-center-core.js'), 'utf8');
 const dialogs = fs.readFileSync(path.join(root, 'manager-phase11c-user-center-dialogs.js'), 'utf8');
 const employeesApi = fs.readFileSync(path.join(root, 'api', 'admin', 'employees.js'), 'utf8');
-const login = fs.readFileSync(path.join(root, 'login.html'), 'utf8');
+const login = fs.readFileSync(path.join(root, 'login.html'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'workspace-access.js'), 'utf8');
 const enhancements = fs.readFileSync(path.join(root, 'manager-phase11d-user-center-enhancements.js'), 'utf8');
 const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
 const skin = fs.readFileSync(path.join(root, 'manager-phase11g-user-center-approved-skin.js'), 'utf8');
@@ -49,7 +49,7 @@ test('login routes active Field Survey institutional department head to departme
   assert.match(login, /const hasDepartmentHeadRole = institutionalRole === 'department_head' \|\| mobilityRole === 'department_head'/);
   assert.match(login, /const hasFieldDepartmentHeadRole = hasDepartmentHeadRole/);
   assert.match(login, /\/الحصر\|ميداني\|field\/i\.test\(administration \|\| department\)/);
-  assert.match(login, /window\.location\.href = 'department-head\.html'/);
+  assert.match(login, /return 'department-head\.html'/);
 });
 
 test('Add Employee and existing employee activation both use shared readProducts contract', () => {

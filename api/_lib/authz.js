@@ -22,6 +22,9 @@
 // account-management access.
 // ============================================================================
 const { getAuth, getDb } = require('./firebaseAdmin');
+// Unified Identity & Workspace Access — one pure resolver shared with the
+// browser (see /workspace-access.js). The server remains the authority.
+const WorkspaceAccess = require('../../workspace-access.js');
 
 const AUTH_CODES = Object.freeze({ HEADER_MISSING: 'AUTH_HEADER_MISSING', TOKEN_INVALID: 'AUTH_TOKEN_INVALID', TOKEN_EXPIRED: 'AUTH_TOKEN_EXPIRED', PROJECT_MISMATCH: 'AUTH_PROJECT_MISMATCH' });
 
@@ -215,14 +218,14 @@ async function getCallerContext(uid) {
 // contractor, an empty string, or any other unrecognized value) now
 // resolves to null here too, exactly like a present-but-malformed
 // mobilityAccess value already does.
+// UNIFIED IDENTITY — the same dual-read now lives in workspace-access.js and
+// additionally honours the `entitlements.capabilities` layer: once an
+// `entitlements` key exists it alone decides mobility.access; a user who
+// holds mobility.access without a legacy operational role resolves to the
+// execution-only 'employee' role. Records never touched by `entitlements`
+// resolve exactly as before.
 function resolveMobilityRole(data) {
-  if (data && Object.prototype.hasOwnProperty.call(data, 'mobilityAccess')) {
-    const access = data.mobilityAccess;
-    const enabled = Boolean(access) && typeof access === 'object' && access.enabled === true;
-    return enabled && MOBILITY_MANAGEABLE_ROLES.includes(access.role) ? access.role : null;
-  }
-  const legacyRole = data && data.role;
-  return MOBILITY_MANAGEABLE_ROLES.includes(legacyRole) ? legacyRole : null;
+  return WorkspaceAccess.resolveMobilityRole(data);
 }
 
 // PHASE 06A.2 — a narrow, fail-closed caller-context resolver for exactly
@@ -262,8 +265,12 @@ async function getMobilityAssignedOperatorCallerContext(uid) {
     const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
     const department = typeof d.department === 'string' ? d.department.trim() : '';
     const name = typeof d.name === 'string' ? d.name.trim() : '';
-    const role = resolveMobilityRole(d);
-    if (MOBILITY_MANAGEABLE_ROLES.includes(role) && activeIsNotFalse(d) && orgId && d.vehicleEligible === true) {
+    // Permanent capabilities only. Temporary Mobility delegation is not an
+    // authorization source for operational access.
+    const capabilities = WorkspaceAccess.resolveCapabilities(d);
+    const role = WorkspaceAccess.resolveMobilityRole(d);
+    const hasVehicleCapability = WorkspaceAccess.VEHICLE_CAPABILITIES.some(c => capabilities.includes(c));
+    if (MOBILITY_MANAGEABLE_ROLES.includes(role) && activeIsNotFalse(d) && orgId && hasVehicleCapability) {
       return {
         uid,
         isEmployee: role === 'employee',
@@ -272,7 +279,10 @@ async function getMobilityAssignedOperatorCallerContext(uid) {
         organizationId: orgId,
         department,
         name,
-        vehicleEligible: true,
+        capabilities: Array.from(capabilities),
+        baseCapabilities: Array.from(capabilities),
+        delegation: null,
+        vehicleEligible: capabilities.includes('vehicle.drive'),
       };
     }
   }
@@ -284,6 +294,9 @@ async function getMobilityAssignedOperatorCallerContext(uid) {
     organizationId: null,
     department: null,
     name: '',
+    capabilities: [],
+    baseCapabilities: [],
+    delegation: null,
   };
 }
 
@@ -320,10 +333,11 @@ async function getContractorCallerContext(uid) {
 function isValidMobilityAllocationTarget(targetData, organizationId) {
   if (!targetData) return false;
   const orgId = typeof targetData.organizationId === 'string' ? targetData.organizationId : '';
+  const capabilities = WorkspaceAccess.resolveCapabilities(targetData);
   return orgId === organizationId
     && activeIsNotFalse(targetData)
-    && MOBILITY_MANAGEABLE_ROLES.includes(resolveMobilityRole(targetData))
-    && targetData.vehicleEligible === true;
+    && MOBILITY_MANAGEABLE_ROLES.includes(WorkspaceAccess.resolveMobilityRole(targetData))
+    && capabilities.includes('vehicle.drive');
 }
 
 // Phase 03B — employee-registry authorization (api/admin/employees.js
@@ -416,6 +430,7 @@ module.exports = {
   collectionForRole,
   activeIsNotFalse,
   resolveMobilityRole,
+  WorkspaceAccess,
   verifyRequestToken,
   getCallerContext,
   getMobilityHeadCallerContext,

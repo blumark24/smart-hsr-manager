@@ -31,6 +31,7 @@ const {
   isValidMobilityAllocationTarget,
   resolveMobilityRole,
   assertCanManage,
+  WorkspaceAccess,
 } = require('../_lib/authz');
 const { buildContractorObservationUpdate } = require('../../platform/policies/contractor-observation-workflow');
 const { callLandsTrustedMutation } = require('../_lib/landsBridge');
@@ -45,8 +46,11 @@ const {
   resolveEffectiveServiceState,
   passwordPolicyReason,
   isPasswordEligibleTarget,
+  validateCapabilitySelection,
+  syncEntitlementsForLegacyChange,
+  mobilityProductMirror,
 } = require('../_lib/serviceEntitlements');
-const { evaluateMissionTransition } = require('../../platform/policies/mission-workflow-policy');
+const { evaluateMissionTransition, MOBILITY_WORKFLOW_POLICIES, normalizeWorkflowPolicy } = require('../../platform/policies/mission-workflow-policy');
 const { evaluateVehicleTransition } = require('../../platform/policies/vehicle-workflow-policy');
 const { evaluateVehicleAuthorizationTransition } = require('../../platform/policies/vehicle-authorization-policy');
 const { evaluateIncidentTransition } = require('../../platform/policies/incident-workflow-policy');
@@ -115,10 +119,20 @@ function validClientRequestId(value) {
   return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/.test(value);
 }
 
+async function getMunicipalityMobilityWorkflowPolicy(db, organizationId) {
+  const orgId = cleanString(organizationId);
+  if (!orgId) return MOBILITY_WORKFLOW_POLICIES.FULL;
+  const snap = await db.collection('municipalitySettings').doc(orgId).get();
+  const data = snap.exists ? (snap.data() || {}) : {};
+  return normalizeWorkflowPolicy(data.mobilityWorkflowPolicy);
+}
+
+
 // Only business input and the retry key belong to the client. Reject all
 // other keys, including protected fields supplied with null/false values.
 const TRUSTED_CREATE_INPUT_FIELDS = {
   createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
+  createDirectMobilityMission: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
   createIncident: ['action', 'clientRequestId', 'missionId', 'vehicleId', 'category', 'severity', 'note'],
 };
 
@@ -180,11 +194,12 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
   const isAdministrativeAffairsEmployee =
     institutionalRole === 'employee' && isAdministrativeAffairsPath;
 
+  const capabilities = WorkspaceAccess.resolveCapabilities(data);
   const role = isAdministrativeAffairsHead
     ? 'administrative_affairs'
     : isAdministrativeAffairsEmployee
       ? 'administrative_affairs_employee'
-      : resolveMobilityRole(data);
+      : WorkspaceAccess.resolveMobilityRole(data);
   if (!Array.isArray(allowedRoles) || !allowedRoles.includes(role)
       || data.active === false || !organizationId) return null;
   return {
@@ -195,8 +210,19 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
     organizationId,
     department: cleanString(data.department),
     name: cleanString(data.name),
+    capabilities: Array.from(capabilities),
+    baseCapabilities: Array.from(capabilities),
+    delegation: null,
   };
 }
+
+function resolvedActorCapability(actor, capability) {
+  if (!actor || !Array.isArray(actor.capabilities) || !actor.capabilities.includes(capability)) {
+    return { allowed: false, reason: 'capability_required', source: null };
+  }
+  return { allowed: true, reason: null, source: 'base', delegation: null };
+}
+
 
 async function getContractsRegistryCaller(db, uid) {
   // Municipality handover contract:
@@ -261,6 +287,7 @@ function safeMission(id, data) {
     durationLabel: data.durationLabel || null,
     createdAt: timestampToIso(data.createdAt),
     administrativeNote: data.administrativeNote || null,
+    workflowPolicy: normalizeWorkflowPolicy(data.workflowPolicy),
     updatedAt: timestampToIso(data.updatedAt),
   };
 }
@@ -322,6 +349,8 @@ function safeMobilityAuthorization(id, data) {
     activatedAt: timestampToIso(data.activatedAt),
     expiredAt: timestampToIso(data.expiredAt),
     administrativeNote: data.administrativeNote || null,
+    workflowPolicy: normalizeWorkflowPolicy(data.workflowPolicy),
+    authorizationMode: data.authorizationMode || null,
   };
 }
 
@@ -497,12 +526,107 @@ async function handler(req, res) {
   const auth = getAuth();
   const db = getDb();
 
+  if (action === 'getMobilityWorkflowPolicy') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'municipality_manager_required' });
+    }
+    try {
+      const policy = await getMunicipalityMobilityWorkflowPolicy(db, caller.organizationId);
+      return sendJson(res, 200, { policy });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+  // Municipality-level Smart Mobility workflow policy. Only the real
+  // municipality manager may change it; all operational actors can only read
+  // the policy indirectly through their scoped workspace response.
+  if (action === 'setMobilityWorkflowPolicy') {
+    const caller = await getCallerContext(decoded.uid);
+    if (!caller.isManager || caller.role !== 'manager' || !caller.organizationId) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'municipality_manager_required' });
+    }
+    const policy = normalizeWorkflowPolicy(cleanString(body.policy));
+    if (!Object.values(MOBILITY_WORKFLOW_POLICIES).includes(cleanString(body.policy))) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'unknown_mobility_workflow_policy' });
+    }
+    try {
+      const now = FieldValue.serverTimestamp();
+      await db.collection('municipalitySettings').doc(caller.organizationId).set({
+        organizationId: caller.organizationId,
+        mobilityWorkflowPolicy: policy,
+        mobilityWorkflowPolicyUpdatedAt: now,
+        mobilityWorkflowPolicyUpdatedByUid: caller.uid,
+      }, { merge: true });
+      await db.collection('auditEvents').add({
+        organizationId: caller.organizationId,
+        actorId: caller.uid,
+        actorRole: caller.role,
+        resourceType: 'municipalitySettings',
+        resourceId: caller.organizationId,
+        action: 'set_mobility_workflow_policy',
+        policy,
+        timestamp: now,
+      });
+      return sendJson(res, 200, { policy });
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
   // SMART HSR Owner Command Center + institutional support channel.
   // Reuses this existing trusted Admin API so no additional Vercel Function is created.
   // Tenant/role checks are re-derived server-side from the verified caller token.
   if (await handleOwnerOpsSupport({
     action, body, decoded, db, auth, FieldValue, getCallerContext, sendJson, res,
   })) return;
+
+
+  // UNIFIED IDENTITY — authoritative workspace resolution. The browser may
+  // call this to decide where to navigate and what to display, but every
+  // workspace page re-calls it, and every operational action re-derives its
+  // own authority from the live users/{uid} record regardless. Identity,
+  // organization and active state come ONLY from the verified token + live
+  // Firestore record — never from the request body. A municipal manager
+  // (managers/{uid}) is reported as kind:'manager' and is never routed into
+  // workforce workspaces here.
+  if (action === 'resolveWorkspaces') {
+    const requested = cleanString(body.workspace);
+    if (requested && !['field', 'lands', 'admin_affairs', 'mobility'].includes(requested)) {
+      return sendJson(res, 400, { error: 'invalid_request', reason: 'unknown_workspace' });
+    }
+    try {
+      const managerSnap = await db.collection('managers').doc(decoded.uid).get();
+      if (managerSnap.exists) {
+        const m = managerSnap.data() || {};
+        if (m.role === 'manager' && m.active !== false && cleanString(m.organizationId)) {
+          return sendJson(res, 200, {
+            kind: 'manager', valid: true, reason: null, primary: null, workspaces: [], capabilities: [],
+            ...(requested ? { allowed: true } : {}),
+          });
+        }
+      }
+      const userSnap = await db.collection('users').doc(decoded.uid).get();
+      const data = userSnap.exists ? (userSnap.data() || {}) : null;
+      const resolution = WorkspaceAccess.resolveWorkspaces(data);
+      const payload = {
+        kind: 'workforce',
+        valid: resolution.valid,
+        reason: resolution.reason,
+        primary: resolution.primary,
+        workspaces: resolution.workspaces,
+        capabilities: resolution.capabilities,
+        profile: resolution.valid ? {
+          name: cleanString(data.name), department: cleanString(data.department), jobTitle: cleanString(data.jobTitle),
+        } : null,
+      };
+      if (requested) payload.allowed = WorkspaceAccess.isWorkspaceAllowed(resolution, requested);
+      return sendJson(res, 200, payload);
+    } catch (_) {
+      return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
 
 
   // PHASE 06A.2 — listMobilityEmployees is authorized completely separately
@@ -1489,6 +1613,10 @@ async function handler(req, res) {
     const auditRef = db.collection('auditEvents').doc();
 
     try {
+      const workflowPolicy = await getMunicipalityMobilityWorkflowPolicy(db, caller.organizationId);
+      if (workflowPolicy === MOBILITY_WORKFLOW_POLICIES.DIRECT) {
+        return sendJson(res, 409, { error: 'request_failed', reason: 'direct_policy_requires_mobility_head' });
+      }
       const outcome = await db.runTransaction(async (transaction) => {
         const employeeRef = requestedEmployeeId ? db.collection('employees').doc(requestedEmployeeId) : null;
         const reads = [transaction.get(requestRef)];
@@ -1538,6 +1666,7 @@ async function handler(req, res) {
           clientRequestId,
           organizationId: caller.organizationId,
           department: caller.department,
+          workflowPolicy,
           createdByUid: caller.uid,
           requesterName: caller.name || '',
           status: 'DRAFT',
@@ -1583,6 +1712,80 @@ async function handler(req, res) {
       return sendJson(res, 200, { missionId: outcome.missionId, status: 'DRAFT', idempotent: outcome.idempotent });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
+    }
+  }
+
+
+  if (action === 'createDirectMobilityMission') {
+    if (Object.keys(body).some(key => !TRUSTED_CREATE_INPUT_FIELDS.createDirectMobilityMission.includes(key))) {
+      return sendJson(res, 400, { error:'invalid_request', reason:'protected_or_unknown_field' });
+    }
+    const head = await getMobilityHeadCallerContext(decoded.uid);
+    if (!head.isMobilityHead || !head.organizationId) {
+      return sendJson(res, 403, { error:'forbidden', reason:'mobility_head_required' });
+    }
+    const policy = await getMunicipalityMobilityWorkflowPolicy(db, head.organizationId);
+    if (policy !== MOBILITY_WORKFLOW_POLICIES.DIRECT) {
+      return sendJson(res, 409, { error:'request_failed', reason:'direct_policy_not_enabled' });
+    }
+    const clientRequestId = body.clientRequestId;
+    const employeeId = cleanString(body.requestedEmployeeId);
+    const type = cleanString(body.type);
+    const destination = cleanString(body.destination);
+    const reason = cleanString(body.reason);
+    if (!validClientRequestId(clientRequestId) || !employeeId || !type || !destination || !reason) {
+      return sendJson(res, 400, { error:'invalid_request', reason:'direct_mission_fields_required' });
+    }
+    const requestRef = trustedCreateRequestRef(db, action, decoded.uid, clientRequestId);
+    const missionRef = db.collection('missions').doc();
+    const hash = payloadHash(action, [employeeId, type, destination, reason, cleanString(body.whenLabel), cleanString(body.durationLabel)]);
+    try {
+      const outcome = await db.runTransaction(async transaction => {
+        const employeeRef = db.collection('employees').doc(employeeId);
+        const [priorSnap, employeeSnap] = await Promise.all([transaction.get(requestRef), transaction.get(employeeRef)]);
+        if (priorSnap.exists) {
+          const prior = priorSnap.data() || {};
+          return prior.payloadHash === hash
+            ? { ok:true, missionId:prior.resourceId, idempotent:true }
+            : { ok:false, statusCode:409, reason:'idempotency_payload_mismatch' };
+        }
+        if (!employeeSnap.exists) return { ok:false, statusCode:404, reason:'employee_not_found' };
+        const employee = employeeSnap.data() || {};
+        const mobility = employee.products && employee.products.mobility;
+        if (cleanString(employee.organizationId) !== head.organizationId) return { ok:false, statusCode:403, reason:'cross_organization_denied' };
+        if (employee.employmentStatus === 'inactive' || employee.accountStatus !== 'ACTIVE' || !isNonEmptyString(employee.authUid)) {
+          return { ok:false, statusCode:409, reason:'employee_not_active' };
+        }
+        if (!mobility || mobility.enabled !== true || mobility.vehicleEligible !== true) {
+          return { ok:false, statusCode:409, reason:'employee_vehicle_not_eligible' };
+        }
+        const now = FieldValue.serverTimestamp();
+        const mission = {
+          clientRequestId, organizationId:head.organizationId, department:cleanString(employee.department),
+          workflowPolicy:MOBILITY_WORKFLOW_POLICIES.DIRECT, createdByUid:decoded.uid, requesterName:'مركز حركة السير',
+          status:'APPROVED', type, destination, reason, scope:cleanString(body.scope,'داخل النطاق') || 'داخل النطاق',
+          requestedEmployeeId:employeeSnap.id, requestedEmployeeUid:employee.authUid,
+          requestedEmployeeName:cleanString(employee.name, employeeSnap.id), whenLabel:cleanString(body.whenLabel),
+          durationLabel:cleanString(body.durationLabel), approvedByUid:decoded.uid, approvedAt:now,
+          createdAt:now, updatedAt:now, updatedByUid:decoded.uid
+        };
+        transaction.set(missionRef, mission);
+        transaction.set(db.collection('auditEvents').doc(), {
+          organizationId:head.organizationId, department:mission.department || '', actorId:decoded.uid,
+          actorRole:'mobility_head', resourceType:'mission', resourceId:missionRef.id,
+          action:'direct_create_and_approve', toStatus:'APPROVED',
+          requestedEmployeeUid:employee.authUid, workflowPolicy:MOBILITY_WORKFLOW_POLICIES.DIRECT, timestamp:now
+        });
+        transaction.set(requestRef, {
+          action, callerUid:decoded.uid, organizationId:head.organizationId, clientRequestId,
+          payloadHash:hash, resourceType:'mission', resourceId:missionRef.id, createdAt:now
+        });
+        return { ok:true, missionId:missionRef.id, idempotent:false };
+      });
+      if (!outcome.ok) return sendJson(res, outcome.statusCode, { error:'request_failed', reason:outcome.reason });
+      return sendJson(res, 200, { missionId:outcome.missionId, status:'APPROVED', workflowPolicy:MOBILITY_WORKFLOW_POLICIES.DIRECT, idempotent:outcome.idempotent });
+    } catch (_) {
+      return sendJson(res, 500, { error:'request_failed', reason:'temporary_failure' });
     }
   }
 
@@ -1640,13 +1843,18 @@ async function handler(req, res) {
           return { ok: true, idempotent: true };
         }
 
+        const workflowPolicy = normalizeWorkflowPolicy(mission.workflowPolicy);
+        if (workflowPolicy === MOBILITY_WORKFLOW_POLICIES.DIRECT) {
+          return { ok: false, statusCode: 409, reason: 'direct_policy_requires_mobility_head' };
+        }
+        const toStatus = workflowPolicy === MOBILITY_WORKFLOW_POLICIES.SHORT ? 'APPROVED' : 'PENDING_APPROVAL';
         const actor = { uid: caller.uid, role: 'department_head', organizationId: caller.organizationId };
-        const decision = evaluateMissionTransition({ actor, mission, toStatus: 'PENDING_APPROVAL' });
+        const decision = evaluateMissionTransition({ actor, mission, toStatus });
         if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
 
         const now = FieldValue.serverTimestamp();
         transaction.update(missionRef, {
-          status: 'PENDING_APPROVAL',
+          status: toStatus,
           updatedAt: now,
           updatedByUid: caller.uid,
         });
@@ -1657,16 +1865,18 @@ async function handler(req, res) {
           actorRole: 'department_head',
           resourceType: 'mission',
           resourceId: missionId,
-          action: 'submit_for_approval',
+          action: toStatus === 'APPROVED' ? 'submit_direct_to_mobility' : 'submit_for_approval',
           fromStatus: mission.status,
-          toStatus: 'PENDING_APPROVAL',
+          toStatus,
           requestedEmployeeUid: mission.requestedEmployeeUid,
           timestamp: now,
         });
         return { ok: true };
       });
       if (!outcome.ok) return sendJson(res, outcome.statusCode, { error: 'request_failed', reason: outcome.reason });
-      return sendJson(res, 200, { missionId, status: 'PENDING_APPROVAL', idempotent: outcome.idempotent === true });
+      const missionSnap = await db.collection('missions').doc(missionId).get();
+      const current = missionSnap.exists ? (missionSnap.data() || {}) : {};
+      return sendJson(res, 200, { missionId, status: current.status || 'PENDING_APPROVAL', workflowPolicy: normalizeWorkflowPolicy(current.workflowPolicy), idempotent: outcome.idempotent === true });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
@@ -1747,6 +1957,10 @@ async function handler(req, res) {
         const authorization = authSnap.data() || {};
         if (mission.organizationId !== actor.organizationId || authorization.organizationId !== actor.organizationId) {
           return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
+        }
+        const workflowPolicy = normalizeWorkflowPolicy(mission.workflowPolicy);
+        if (workflowPolicy !== MOBILITY_WORKFLOW_POLICIES.FULL) {
+          return { ok: false, statusCode: 409, reason: 'authorization_not_required_for_policy' };
         }
         if (authorization.missionId !== missionId || authorization.vehicleId !== mission.vehicleId
             || authorization.employeeUid !== mission.assignedEmployeeUid) {
@@ -1935,7 +2149,7 @@ async function handler(req, res) {
     );
     if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
     try {
-      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap] = await Promise.all([
+      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap, userSnap] = await Promise.all([
         db.collection('missions').where('organizationId', '==', actor.organizationId).get(),
         db.collection('vehicles').where('organizationId', '==', actor.organizationId).get(),
         db.collection('incidents').where('organizationId', '==', actor.organizationId).get(),
@@ -1943,6 +2157,9 @@ async function handler(req, res) {
         db.collection('employees').where('organizationId', '==', actor.organizationId).get(),
         actor.role === 'administrative_affairs'
           ? db.collection('auditEvents').where('organizationId', '==', actor.organizationId).get()
+          : Promise.resolve({ docs: [] }),
+        actor.role === 'mobility_head'
+          ? db.collection('users').where('organizationId', '==', actor.organizationId).get()
           : Promise.resolve({ docs: [] }),
       ]);
 
@@ -1978,7 +2195,6 @@ async function handler(req, res) {
       if (actor.role === 'department_head' || actor.role === 'mobility_head' || actor.role === 'administrative_affairs' || actor.role === 'administrative_affairs_employee') {
         for (const doc of employeeSnap.docs) {
           const d = doc.data() || {};
-          if (actor.role === 'department_head' && cleanString(d.department) !== cleanString(actor.department)) continue;
           if (!['administrative_affairs','administrative_affairs_employee'].includes(actor.role) && d.employmentStatus === 'inactive') continue;
           const mobility = d.products && d.products.mobility;
           // Administrative Affairs receives a municipality-wide SAFE registry
@@ -2003,10 +2219,12 @@ async function handler(req, res) {
         }
       }
 
+      const workflowPolicy = await getMunicipalityMobilityWorkflowPolicy(db, actor.organizationId);
       return sendJson(res, 200, {
         role: actor.role,
         organizationId: actor.organizationId,
         department: actor.department || null,
+        workflowPolicy,
         missions: missions.map(row => safeMission(row.id, row.data)),
         vehicles: vehicles.map(row => safeMobilityVehicle(row.id, row.data)),
         incidents: incidents.map(row => safeMobilityIncident(row.id, row.data)),
@@ -2130,7 +2348,6 @@ async function handler(req, res) {
         const mission = missionSnap.data() || {};
         if (mission.organizationId !== actor.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
         if (!isNonEmptyString(mission.vehicleId)) return { ok: false, statusCode: 409, reason: 'mission_vehicle_required' };
-
         const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
         const authorizationRef = db.collection('vehicleAuthorizations').doc(missionId);
         const [vehicleSnap, authorizationSnap] = await Promise.all([
@@ -2207,6 +2424,12 @@ async function handler(req, res) {
     if (!missionId || !['READY', 'IN_PROGRESS', 'INCIDENT_HOLD', 'COMPLETED'].includes(toStatus)) {
       return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_employee_transition' });
     }
+    // Unified identity: receiving/starting a mission needs vehicle.checkout;
+    // driving-phase transitions (incident hold / completion) need vehicle.drive.
+    const requiredCapability = ['READY', 'IN_PROGRESS'].includes(toStatus) ? 'vehicle.checkout' : 'vehicle.drive';
+    if (!actor.capabilities.includes(requiredCapability)) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'capability_required', capability: requiredCapability });
+    }
 
     try {
       const outcome = await db.runTransaction(async transaction => {
@@ -2214,6 +2437,8 @@ async function handler(req, res) {
         const snap = await transaction.get(missionRef);
         if (!snap.exists) return { ok: false, statusCode: 404, reason: 'mission_not_found' };
         const mission = snap.data() || {};
+        const capabilityDecision = resolvedActorCapability(actor, requiredCapability, { missionId, vehicleId: cleanString(mission.vehicleId) });
+        if (!capabilityDecision.allowed) return { ok: false, statusCode: 403, reason: capabilityDecision.reason };
         const decision = evaluateMissionTransition({ actor, mission, toStatus });
         if (!decision.allowed) return { ok: false, statusCode: 409, reason: decision.code };
 
@@ -2237,6 +2462,9 @@ async function handler(req, res) {
     const actor = await getMobilityAssignedOperatorCallerContext(decoded.uid);
     if (!actor.isAssignedOperatorEligible) {
       return sendJson(res, 403, { error: 'forbidden', reason: 'assigned_vehicle_operator_required' });
+    }
+    if (!actor.capabilities.includes('vehicle.return')) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'capability_required', capability: 'vehicle.return' });
     }
     const missionId = cleanString(body.missionId);
     if (!missionId) return sendJson(res, 400, { error: 'invalid_request', reason: 'missionId_required' });
@@ -2389,6 +2617,9 @@ async function handler(req, res) {
     if (!caller.isAssignedOperatorEligible) {
       return sendJson(res, 403, { error: 'forbidden', reason: 'assigned_vehicle_operator_required' });
     }
+    if (!caller.capabilities.includes('vehicle.drive')) {
+      return sendJson(res, 403, { error: 'forbidden', reason: 'capability_required', capability: 'vehicle.drive' });
+    }
     const clientRequestId = body.clientRequestId;
     const incident = {
       missionId: cleanString(body.missionId),
@@ -2423,6 +2654,11 @@ async function handler(req, res) {
         if (missionData.organizationId !== caller.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
         if (missionData.assignedEmployeeUid !== caller.uid) return { ok: false, statusCode: 403, reason: 'operator_not_assigned' };
         if (missionData.status !== 'IN_PROGRESS') return { ok: false, statusCode: 409, reason: 'mission_not_in_progress' };
+        const capabilityDecision = resolvedActorCapability(caller, 'vehicle.drive', {
+          missionId: incident.missionId,
+          vehicleId: cleanString(missionData.vehicleId),
+        });
+        if (!capabilityDecision.allowed) return { ok: false, statusCode: 403, reason: capabilityDecision.reason };
         if (vehicleRef) {
           const vehicleSnap = snapshots[2];
           if (!vehicleSnap.exists) return { ok: false, statusCode: 404, reason: 'vehicle_not_found' };
@@ -2580,6 +2816,9 @@ async function handler(req, res) {
         if (!isValidMobilityAllocationTarget(employee, organizationId)) {
           return { ok: false, statusCode: 403, reason: 'invalid_allocation_target' };
         }
+        if (!WorkspaceAccess.hasCapability(employee, 'vehicle.drive')) {
+          return { ok: false, statusCode: 403, reason: 'vehicle_drive_capability_required' };
+        }
         if (isNonEmptyString(mission.requestedEmployeeUid) && mission.requestedEmployeeUid !== employeeUid) {
           return { ok: false, statusCode: 409, reason: 'approved_employee_mismatch' };
         }
@@ -2602,8 +2841,8 @@ async function handler(req, res) {
           assignedEmployee: {
             organizationId: employee.organizationId,
             active: employee.active,
-            role: resolveMobilityRole(employee),
-            vehicleEligible: employee.vehicleEligible,
+            role: WorkspaceAccess.resolveMobilityRole(employee),
+            vehicleEligible: WorkspaceAccess.hasCapability(employee, 'vehicle.drive'),
           },
         });
         if (!vehicleDecision.allowed) {
@@ -2612,6 +2851,10 @@ async function handler(req, res) {
 
         const now = FieldValue.serverTimestamp();
         const employeeName = isNonEmptyString(employee.name) ? employee.name.trim() : '';
+        const workflowPolicy = normalizeWorkflowPolicy(mission.workflowPolicy);
+        const requiresAdministrativeAuthorization = workflowPolicy === MOBILITY_WORKFLOW_POLICIES.FULL;
+        const authorizationStatus = requiresAdministrativeAuthorization ? 'PENDING_AUTHORIZATION' : 'AUTHORIZED';
+        const authorizationMode = requiresAdministrativeAuthorization ? 'ADMINISTRATIVE_AFFAIRS' : 'POLICY_AUTO';
         const authorizationRef = db.collection('vehicleAuthorizations').doc(missionId);
         const authorizationNumber = 'VA-' + String(missionId).slice(-8).toUpperCase();
         transaction.update(missionRef, {
@@ -2621,7 +2864,7 @@ async function handler(req, res) {
           assignedEmployeeName: employeeName,
           vehicleAuthorizationId: missionId,
           vehicleAuthorizationNumber: authorizationNumber,
-          vehicleAuthorizationStatus: 'PENDING_AUTHORIZATION',
+          vehicleAuthorizationStatus: authorizationStatus,
           updatedAt: now,
           updatedByUid: decoded.uid,
         });
@@ -2634,10 +2877,17 @@ async function handler(req, res) {
           vehicleId,
           employeeUid,
           employeeName,
-          status: 'PENDING_AUTHORIZATION',
+          status: authorizationStatus,
+          workflowPolicy,
+          authorizationMode,
           requestedByUid: decoded.uid,
           requestedByRole: 'mobility_head',
           requestedAt: now,
+          ...(requiresAdministrativeAuthorization ? {} : {
+            authorizedByUid: decoded.uid,
+            authorizedByRole: 'mobility_head',
+            authorizedAt: now,
+          }),
           createdAt: now,
           updatedAt: now,
         });
@@ -2684,14 +2934,18 @@ async function handler(req, res) {
           actorRole: 'mobility_head',
           resourceType: 'vehicleAuthorization',
           resourceId: missionId,
-          action: 'create_vehicle_authorization_request',
-          toStatus: 'PENDING_AUTHORIZATION',
+          action: requiresAdministrativeAuthorization
+            ? 'create_vehicle_authorization_request'
+            : 'auto_authorize_vehicle_use_by_policy',
+          toStatus: authorizationStatus,
           missionId,
           vehicleId,
           assignedEmployeeUid: employeeUid,
+          workflowPolicy,
+          authorizationMode,
           timestamp: now,
         });
-        return { ok: true, authorizationNumber };
+        return { ok: true, authorizationNumber, authorizationStatus, authorizationMode, workflowPolicy };
       });
 
       if (!outcome.ok) {
@@ -2701,7 +2955,9 @@ async function handler(req, res) {
         missionId, vehicleId, employeeUid, status: 'VEHICLE_ALLOCATED',
         vehicleAuthorizationId: missionId,
         vehicleAuthorizationNumber: outcome.authorizationNumber,
-        vehicleAuthorizationStatus: 'PENDING_AUTHORIZATION',
+        vehicleAuthorizationStatus: outcome.authorizationStatus,
+        authorizationMode: outcome.authorizationMode,
+        workflowPolicy: outcome.workflowPolicy,
       });
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
@@ -3012,7 +3268,7 @@ async function handler(req, res) {
       // Firebase Auth account or the other service — "remove a service
       // without deleting the user account".
       case 'setServices': {
-        const { uid, field, mobility, lands, vehicleEligible } = body;
+        const { uid, field, mobility, lands, vehicleEligible, capabilities } = body;
         if (!isNonEmptyString(uid)) return sendJson(res, 400, { error: 'uid_required' });
         const record = await findRecord(db, uid);
         if (!record || record.collection !== 'users') return sendJson(res, 404, { error: 'record_not_found' });
@@ -3028,7 +3284,11 @@ async function handler(req, res) {
         if (vehicleEligible !== undefined && typeof vehicleEligible !== 'boolean') {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_vehicle_eligible' });
         }
-        if (!fieldSel.present && !mobilitySel.present && !landsSel.present && vehicleEligible === undefined) {
+        // Unified identity: explicit capability grant/revoke (full replace of
+        // the four allowlisted capabilities; unknown values are rejected).
+        const capabilitySel = validateCapabilitySelection(capabilities);
+        if (!capabilitySel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: capabilitySel.reason });
+        if (!fieldSel.present && !mobilitySel.present && !landsSel.present && vehicleEligible === undefined && !capabilitySel.present) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'no_service_changes' });
         }
         // Phase 03B: Field and Lands may now both be enabled at once on the
@@ -3077,6 +3337,15 @@ async function handler(req, res) {
         // platform/policies/vehicle-workflow-policy.js for where this is
         // actually enforced server-side (firestore.rules vehicle allocation).
         if (vehicleEligible !== undefined) update.vehicleEligible = vehicleEligible;
+        // Capability layer: an explicit selection replaces the set; otherwise
+        // a record that already carries `entitlements` is kept coherent with
+        // the legacy change just requested (see syncEntitlementsForLegacyChange).
+        const nextCapabilities = capabilitySel.present
+          ? capabilitySel.capabilities
+          : syncEntitlementsForLegacyChange(record.data, { mobilitySel, vehicleEligible });
+        if (nextCapabilities) {
+          update.entitlements = { capabilities: nextCapabilities, updatedBy: caller.uid, updatedAt: FieldValue.serverTimestamp() };
+        }
 
         let landsSync = null;
         let landsOutcome = null;
@@ -3117,6 +3386,23 @@ async function handler(req, res) {
         }
         await record.ref.set(update, { merge: true });
 
+        // Mirror the Mobility capability state into the linked employee
+        // registry entry (selection lists read it). Best-effort and
+        // non-authoritative: users/{uid} stays the single authority.
+        if (nextCapabilities) {
+          try {
+            const linked = await db.collection('employees').where('authUid', '==', uid).limit(1).get();
+            const employeeDoc = linked && linked.docs && linked.docs[0];
+            if (employeeDoc && (employeeDoc.data() || {}).organizationId === municipalityId) {
+              const existingProducts = (employeeDoc.data() || {}).products || {};
+              await employeeDoc.ref.set({
+                products: { ...existingProducts, mobility: mobilityProductMirror(nextCapabilities, existingProducts.mobility) },
+                updatedAt: FieldValue.serverTimestamp(),
+              }, { merge: true });
+            }
+          } catch (_) { /* registry mirror is advisory; users/{uid} is authoritative */ }
+        }
+
         await recordAdminAudit(db, {
           caller, organizationId: municipalityId, targetUid: uid, action: 'set_services',
           detail: {
@@ -3124,6 +3410,7 @@ async function handler(req, res) {
             mobility: mobilitySel.present ? { enabled: mobilitySel.enabled, role: mobilitySel.role } : undefined,
             lands: landsSel.present ? { enabled: landsSel.enabled, role: landsSel.role } : undefined,
             vehicleEligible,
+            capabilities: nextCapabilities || undefined,
           },
         });
 
@@ -3135,6 +3422,7 @@ async function handler(req, res) {
             ? { enabled: landsSel.enabled, role: landsSel.role, syncStatus: landsSel.enabled ? (update.landsAccess.syncStatus) : null, syncError: landsOutcome ? landsOutcome.syncError : null }
             : undefined,
           vehicleEligible,
+          capabilities: nextCapabilities || undefined,
         });
       }
 

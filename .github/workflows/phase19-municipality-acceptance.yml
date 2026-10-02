@@ -10,6 +10,8 @@ on:
       - phase23-delivery-closure
       - phase24-full-platform-audit
       - release/municipality-final-rc
+      - release/municipality-final-rc2
+      - security/rc2-firebase-admin-14
   workflow_dispatch:
 
 jobs:
@@ -103,6 +105,8 @@ jobs:
           node --test test/mobility-integration-regression.test.js
           node --test test/mobility-role-runtime.test.js
           node --test test/manager-mobility-adapter.test.js
+          node --test test/mobility-workflow-policies.test.js
+          node --test test/unified-workspace-access.test.js
 
       - name: Administrative Affairs acceptance
         run: node --test test/administrative-affairs-v1.test.js
@@ -123,6 +127,9 @@ jobs:
 
       - name: Security rules regression
         run: npm run test:rules
+
+      - name: Final full-project integration contract
+        run: node --test test/final-full-project-integration-contract.test.js
 
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high

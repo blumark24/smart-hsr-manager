@@ -44,6 +44,9 @@
   let workspace = { role:null, organizationId:null, department:null, missions:[], vehicles:[], incidents:[], authorizations:[], employees:[] };
 
   function resolveMobilityRole(data) {
+    // Unified identity: capability-aware shared resolver (display only — the
+    // trusted API re-derives the actor's role on every action).
+    if (window.SmartHSRWorkspaceAccess) return window.SmartHSRWorkspaceAccess.resolveMobilityRole(data);
     if (data && Object.prototype.hasOwnProperty.call(data, 'mobilityAccess')) {
       const access = data.mobilityAccess;
       if (!access || typeof access !== 'object' || access.enabled !== true || !ALLOWED_ROLES.includes(access.role)) return null;
@@ -144,6 +147,7 @@
     if (!component) return;
     component.setState({
       runtimeMode:'mobility',
+      workflowPolicy:workspace.workflowPolicy || 'FULL',
       liveMissions:(workspace.missions || []).map(missionView),
       liveVehicles:(workspace.vehicles || []).map(vehicleView),
       liveIncidents:(workspace.incidents || []).map(incidentView),
@@ -174,6 +178,12 @@
         if (instance.state.role === 'mobility' && instance.state.screen === 'ops') {
           out.title = 'مركز عمليات الحركة الذكية';
           out.sub = 'إدارة الأسطول والمهام والحوادث على مستوى البلدية';
+          if ((instance.state.workflowPolicy || 'FULL') === 'DIRECT') {
+            out.actions = [
+              {label:'+ مهمة مباشرة',on:()=>instance.openDrawer('create',null),tx:'var(--btnTx,#fff)',bg:'var(--btn)',bd:'var(--btnBd)'},
+              ...(out.actions || [])
+            ];
+          }
         }
         if (instance.state.role === 'dept' && instance.state.runtimeMode === 'mobility') {
           if (instance.state.screen === 'deptops') {
@@ -232,11 +242,21 @@
       const snap = await getDoc(doc(db,'users',user.uid));
       if (!snap.exists()) { await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
       const data = snap.data() || {};
-      const role = resolveMobilityRole(data);
       const department = String(data.department || '').trim();
-      if (data.active === false || !role || !data.organizationId || (role === 'department_head' && !department)) {
+      let resolution = null;
+      try { resolution = await api('resolveWorkspaces', { workspace:'mobility' }); } catch (_) {}
+      if (data.active === false || !data.organizationId) {
         await signOut(auth).catch(()=>{});
         location.replace('login.html');
+        return;
+      }
+      if (!resolution || resolution.allowed !== true) {
+        location.replace('workspace.html');
+        return;
+      }
+      const role = resolveMobilityRole(data);
+      if (!role || (role === 'department_head' && !department)) {
+        location.replace('workspace.html');
         return;
       }
       currentUser = user;
@@ -282,6 +302,7 @@
     },
     refresh,
     refreshMobilityEmployees: refresh,
+    createDirectMobilityMission: payload => withRefresh(api('createDirectMobilityMission',{...payload,clientRequestId:requestId('mission-direct')})).then(x=>x.missionId),
     createMissionRequest: payload => {
       const exact = (workspace.employees || []).find(e =>
         (payload.requestedEmployeeId && e.employeeId === payload.requestedEmployeeId)
