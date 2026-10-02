@@ -14,6 +14,18 @@
 
 const ASSIGNED_OPERATOR_ROLES = Object.freeze(['mobility_head', 'department_head', 'administrative_affairs', 'employee']);
 
+const MOBILITY_WORKFLOW_POLICIES = Object.freeze({
+  FULL: 'FULL',
+  SHORT: 'SHORT',
+  DIRECT: 'DIRECT',
+});
+
+function normalizeWorkflowPolicy(value) {
+  return Object.values(MOBILITY_WORKFLOW_POLICIES).includes(value)
+    ? value
+    : MOBILITY_WORKFLOW_POLICIES.FULL;
+}
+
 const MISSION_STATUSES = Object.freeze([
   'DRAFT',
   'PENDING_APPROVAL',
@@ -115,9 +127,30 @@ function evaluateMissionTransition({ actor, mission, toStatus, requestedFields }
     return decision(false, 'ORGANIZATION_SCOPE_DENIED', 'The actor and mission must share the same organization.');
   }
 
-  const contract = TRANSITION_MATRIX[fromStatus] && TRANSITION_MATRIX[fromStatus][toStatus];
+  const policy = normalizeWorkflowPolicy(mission.workflowPolicy);
+  let contract = TRANSITION_MATRIX[fromStatus] && TRANSITION_MATRIX[fromStatus][toStatus];
+
+  // Municipality-level workflow policy:
+  // FULL   = department head -> Administrative Affairs -> Mobility.
+  // SHORT  = department head -> Mobility (administrative approval skipped).
+  // DIRECT = Mobility Head creates/approves a direct operational mission.
+  if (policy === MOBILITY_WORKFLOW_POLICIES.SHORT && fromStatus === 'DRAFT' && toStatus === 'APPROVED') {
+    contract = Object.freeze({
+      roles: Object.freeze(['department_head']),
+      action: 'submit_direct_to_mobility',
+      ownership: 'department_head_is_creator',
+    });
+  } else if (policy === MOBILITY_WORKFLOW_POLICIES.DIRECT && fromStatus === 'DRAFT' && toStatus === 'APPROVED') {
+    contract = Object.freeze({
+      roles: Object.freeze(['mobility_head']),
+      action: 'direct_approve',
+    });
+  } else if (policy !== MOBILITY_WORKFLOW_POLICIES.FULL && fromStatus === 'PENDING_APPROVAL') {
+    contract = null;
+  }
+
   if (!contract) {
-    return decision(false, 'INVALID_TRANSITION', `The transition ${fromStatus} -> ${toStatus} is not legal.`);
+    return decision(false, 'INVALID_TRANSITION', `The transition ${fromStatus} -> ${toStatus} is not legal for workflow policy ${policy}.`);
   }
   if (!contract.roles.includes(actor.role)) {
     return decision(false, 'ROLE_TRANSITION_DENIED', 'The authenticated role may not request this transition.');
@@ -144,6 +177,8 @@ function describeMissionTransition(fromStatus, toStatus) {
 module.exports = Object.freeze({
   MISSION_STATUSES,
   ASSIGNED_OPERATOR_ROLES,
+  MOBILITY_WORKFLOW_POLICIES,
+  normalizeWorkflowPolicy,
   TRANSITION_MATRIX,
   evaluateMissionTransition,
   describeMissionTransition,
