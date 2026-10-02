@@ -2339,9 +2339,6 @@ async function handler(req, res) {
         const mission = missionSnap.data() || {};
         if (mission.organizationId !== actor.organizationId) return { ok: false, statusCode: 403, reason: 'cross_organization_denied' };
         if (!isNonEmptyString(mission.vehicleId)) return { ok: false, statusCode: 409, reason: 'mission_vehicle_required' };
-        const capabilityDecision = resolvedActorCapability(actor, 'vehicle.return', { missionId, vehicleId: cleanString(mission.vehicleId) });
-        if (!capabilityDecision.allowed) return { ok: false, statusCode: 403, reason: capabilityDecision.reason };
-
         const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
         const authorizationRef = db.collection('vehicleAuthorizations').doc(missionId);
         const [vehicleSnap, authorizationSnap] = await Promise.all([
