@@ -108,6 +108,7 @@ test('restored Twin uses existing Firebase session configuration and admission g
   const twin = fs.readFileSync(path.join(root, 'twin.html'), 'utf8');
   assert.match(twin, /resolveFirebaseConfig/);
   assert.match(twin, /getAuth\(app\)/);
+  assert.match(twin, /initializeApp\(firebaseConfig, 'smart-hsr-manager-session'\)/);
   assert.match(twin, /policy\.evaluateTwinAdmission/);
   assert.match(twin, /if \(!admission.allowed\)/);
   assert.match(twin, /continuity\.buildContinuityUrl\('\/operational-map.html' \+ location.search/);
