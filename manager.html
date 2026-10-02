@@ -5094,7 +5094,7 @@ class Component extends DCLogic {
         { label: 'الهيكل الإداري', tag: 'قريباً', disabled: true, ...navLook(false) },
         { label: 'مركز إدارة المستخدمين', tag: '', view: 'users', ...navLook(mobileNavigationAuthoritative && st.view === 'users') },
         { label: 'الحوادث والطوارئ', tag: '', view: 'incidents', ...navLook(mobileNavigationAuthoritative && st.view === 'incidents') },
-        { label: 'الإعدادات والهوية', tag: '', on: () => this.setState({ settingsOpen: true, mobNavOpen: false }), ...navLook(false) },
+        { label: 'الإعدادات والهوية', tag: '', on: () => this.openSettingsPanel(), ...navLook(false) },
         { label: 'المساعد التنفيذي الذكي', tag: 'قريباً', disabled: true, ...navLook(false) }
       ].map(item => Object.assign({ cursor: item.disabled ? 'not-allowed' : 'pointer', disabledText: item.disabled ? 'true' : 'false', mnavHome: '', view: '' }, item)),
 
