@@ -6198,5 +6198,32 @@ class Component extends DCLogic {
 <script type="module" src="./manager-support.js"></script>
 <script src="./service-switcher.js"></script>
 <script src="./workspace-guard.js"></script>
+
+<style id="rc2-manager-map-visibility-guard">
+/* RELEASE P1 — final cascade guard for the executive Leaflet map.
+   Legacy theme blocks are intentionally retained, but must never suppress
+   real basemap geography after tiles have loaded. */
+.hsr-manager-root .hsr-manager-map-shell .leaflet-tile-pane{
+  filter:none!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+.hsr-manager-root .hsr-manager-map-shell .leaflet-tile{
+  opacity:1!important;
+  visibility:visible!important;
+}
+.hsr-manager-root .hsr-manager-map-shell:before{
+  background:transparent!important;
+  mix-blend-mode:normal!important;
+}
+.hsr-manager-root .hsr-manager-map-canvas{
+  z-index:1!important;
+  background:var(--twinBg,#061522)!important;
+}
+.hsr-manager-root .hsr-manager-map-overlay{
+  z-index:800!important;
+}
+</style>
+
 </body>
 </html>
