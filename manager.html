@@ -3641,7 +3641,10 @@ class Component extends DCLogic {
     if (previous.theme !== this.state.theme) this.syncThemeAttribute(this.state.theme);
     if (previous.view !== this.state.view || previous.orgId !== this.state.orgId) this.publishManagerView();
     if (previous.view !== this.state.view) {
-      requestAnimationFrame(() => requestAnimationFrame(() => {
+      const scheduleFrame = typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame
+        : (callback) => callback();
+      scheduleFrame(() => scheduleFrame(() => {
         if (!this.mapEl || !this._opMap) return;
         this._opMap.invalidateSize({ animate: false });
         this.syncOperationalMap(true);
