@@ -1,0 +1,37 @@
+name: RC2 Lockfile Refresh
+
+on:
+  push:
+    branches:
+      - security/rc2-firebase-admin-14
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Regenerate package lock
+        run: npm install --package-lock-only
+
+      - name: Verify install and audit
+        run: |
+          npm ci
+          npm audit --omit=dev --audit-level=high
+
+      - name: Upload lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc2-package-lock
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 2
