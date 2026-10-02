@@ -23,10 +23,10 @@ jobs:
       - name: Regenerate package lock
         run: npm install --package-lock-only
 
-      - name: Apply safe transitive dependency fixes
-        run: npm audit fix --package-lock-only
+      - name: Apply safe production transitive dependency fixes
+        run: npm audit fix --package-lock-only --omit=dev || true
 
-      - name: Verify install and audit
+      - name: Verify install and production audit
         run: |
           npm ci
           npm audit --omit=dev --audit-level=high
