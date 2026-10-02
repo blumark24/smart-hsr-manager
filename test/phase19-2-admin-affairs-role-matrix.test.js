@@ -22,7 +22,7 @@ test('Administrative Affairs employee is read-only in the client',()=>{
   assert.ok(runtime.includes("state.readOnly=d.institutionalRole==='employee'"));
   assert.ok(runtime.includes("state.readOnly?'—'"));
   assert.ok(runtime.includes("!state.readOnly&&m.status==='PENDING_APPROVAL'"));
-  assert.ok(runtime.includes("!state.readOnly&&a.status==='PENDING_AUTHORIZATION'"));
+  assert.ok(runtime.includes("!state.readOnly&&(a.workflowPolicy||'FULL')==='FULL'&&a.status==='PENDING_AUTHORIZATION'"));
 });
 
 test('Administrative Affairs employee has a distinct trusted read role server-side',()=>{
