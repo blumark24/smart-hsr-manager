@@ -92,7 +92,10 @@ import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 const { continuity, attribution: attributionModule, policy } = window.SmartHSRGeoCore;
 
 const firebaseConfig = await resolveFirebaseConfig();
-const app = initializeApp(firebaseConfig);
+// Reuse the persisted municipal-manager Auth namespace used by manager-login.html,
+// manager.html, and operational-map.html so opening the Twin is a true
+// authenticated continuity handoff rather than a fresh/default Firebase session.
+const app = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
 const auth = getAuth(app);
 const db = getFirestore(app);
 const isLocalHost = ['localhost', '127.0.0.1'].includes(location.hostname);
