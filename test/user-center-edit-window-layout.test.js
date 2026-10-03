@@ -71,6 +71,15 @@ test('existing save orchestration remains intact', () => {
 });
 
 
+test('pending Lands trusted sync can retrigger through the existing save path without fake field changes', () => {
+  assert.match(reference, /function hasPendingLandsSync\(employee\)/);
+  assert.match(reference, /landsAccess\?\.enabled===true/);
+  assert.match(reference, /syncStatus==='pending_trusted_sync'/);
+  assert.match(reference, /const retryPendingLands=hasPendingLandsSync\(employeeRef\)&&current\.products===initial\.products/);
+  assert.match(reference, /steps\.push\(\[panel\.querySelector\('\.saver'\),panel\.querySelector\('\.mr'\)\]\)/);
+});
+
+
 test('role save validation keeps product errors on role/services step', () => {
   assert.match(reference, /try\{current=profileSnapshot/);
   assert.match(reference, /setProfileStep\(2\)/);
