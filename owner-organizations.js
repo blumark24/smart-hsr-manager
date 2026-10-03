@@ -194,11 +194,18 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
       if(id){
         await updateDoc(doc(db,'organizations', id), {
           ...organization,
-          ...spatialPatch,
           manager:manager.name,
           email:manager.email,
           updatedAt:serverTimestamp()
         });
+        if(Object.keys(spatialPatch).length){
+          await ownerAdminCall({
+            action:'ownerSetOrganizationSpatialContext',
+            organizationId:id,
+            mapCenter:spatialPatch.mapCenter,
+            mapDefaultZoom:spatialPatch.mapDefaultZoom
+          });
+        }
         showNotif('تم تحديث بيانات المؤسسة.');
       }else{
         if(!manager.password){
@@ -214,9 +221,11 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
           throw new Error('manager_provisioning_incomplete');
         }
         if(Object.keys(spatialPatch).length){
-          await updateDoc(doc(db,'organizations', result.organizationId), {
-            ...spatialPatch,
-            updatedAt:serverTimestamp()
+          await ownerAdminCall({
+            action:'ownerSetOrganizationSpatialContext',
+            organizationId:result.organizationId,
+            mapCenter:spatialPatch.mapCenter,
+            mapDefaultZoom:spatialPatch.mapDefaultZoom
           });
         }
         showNotif('تم إنشاء المؤسسة ومدير البلدية وربط الحساب بنجاح.');
