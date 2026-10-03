@@ -7,7 +7,7 @@
   const esc = U.esc;
   const services = {field:'الحصر الميداني',lands:'الأراضي والممتلكات',mobility:'حركة السير'};
   const roles = {manager:'مدير البلدية',general_supervisor:'مشرف عام',department_head:'رئيس قسم',employee:'موظف'};
-  const state = {view:'registry',mode:'hierarchy',selected:null,search:'',admin:'',role:'',service:'',status:'',page:1,zoom:1};
+  const state = {view:'registry',mode:'hierarchy',selected:null,search:'',admin:'',role:'',service:'',status:'',smartFilter:'all',page:1,zoom:1};
   let current, refresh, host, surface, priorFocus, backdrop;
   const isolated = new Map();
   const account = e => !e.authUid ? 'بدون حساب' : e.accountStatus === 'SUSPENDED' ? 'معطل' : e.accountStatus === 'PENDING_ACTIVATION' ? 'تحتاج مراجعة' : e.employmentStatus === 'inactive' ? 'مؤرشف' : 'نشط';
@@ -73,7 +73,8 @@
       (!state.admin||e.administration===state.admin)&&
       (!state.role||U.inst(e)===state.role)&&
       (!state.service||enabled(e).includes(state.service))&&
-      (!state.status||account(e)===state.status)
+      (!state.status||account(e)===state.status)&&
+      (state.smartFilter==='all'||(state.smartFilter==='active'&&account(e)==='نشط')||(state.smartFilter==='action'&&exceptions(e).length>0))
     );
     state.page=Math.min(state.page,Math.max(1,Math.ceil(filtered.length/25)));
     const page=filtered.slice((state.page-1)*25,state.page*25);
@@ -110,9 +111,73 @@
   }
   function hierarchy(rows) {
     const groups=new Map();
-    rows.forEach(e=>{const admin=e.administration||'غير معيّن',dept=e.department||'بدون قسم';if(!groups.has(admin))groups.set(admin,new Map());const departments=groups.get(admin);if(!departments.has(dept))departments.set(dept,[]);departments.get(dept).push(e);});
-    const employeeNode=e=>button(`<span class="icc-node-dot ${enabled(e)[0]||''}"></span>${esc(e.name)}<small>${esc(roles[U.inst(e)])} ${exceptions(e).length?'⚠':''}</small>`,`data-person="${esc(e.employeeId)}" class="icc-node"`);
-    return `<div class="icc-between"><h2>الهيكل المؤسسي</h2><div>${button('هيكلي',`data-mode="hierarchy" aria-pressed="${state.mode==='hierarchy'}"`)} ${button('مكاني',`data-mode="spatial" aria-pressed="${state.mode==='spatial'}"`)}</div></div>${state.mode==='hierarchy'?`<div class="icc-tree"><h3>البلدية · ${esc(current.org)}</h3>${[...groups].map(([a,depts])=>`<details open><summary>${esc(a)}</summary>${[...depts].map(([d,people])=>`<details open><summary>${esc(d)} · ${people.length}</summary><div class="icc-nodes">${people.slice().sort((a,b)=>(U.inst(a)==='department_head'?-1:1)-(U.inst(b)==='department_head'?-1:1)).map(employeeNode).join('')}</div></details>`).join('')}</details>`).join('')}</div>`:`<div class="icc-between"><span class="icc-muted">الأقسام والموظفون · اسحب مساحة العرض أو استخدم التمرير</span><div>${button('−','data-zoom="-0.1" aria-label="تصغير"')}${button('+','data-zoom="0.1" aria-label="تكبير"')}${button('إعادة ضبط','data-zoom="reset"')}</div></div><div class="icc-spatial" tabindex="0" aria-label="التوأم المكاني"><div class="icc-topology" style="zoom:${state.zoom}"><h3>البلدية · ${esc(current.org)}</h3><div class="icc-departments">${[...groups].flatMap(([a,depts])=>[...depts].map(([d,people])=>`<section class="icc-department"><h3>${esc(d)}</h3><p class="icc-muted">${esc(a)}</p><div class="icc-nodes">${people.map(employeeNode).join('')}</div></section>`)).join('')}</div></div></div>`}`;
+    rows.forEach(e=>{
+      const admin=e.administration||'غير معيّن',dept=e.department||'بدون قسم';
+      if(!groups.has(admin))groups.set(admin,new Map());
+      const departments=groups.get(admin);
+      if(!departments.has(dept))departments.set(dept,[]);
+      departments.get(dept).push(e);
+    });
+    const adminStats=[...groups].map(([admin,depts])=>{
+      const people=[...depts.values()].flat();
+      const head=people.find(e=>U.inst(e)==='department_head')||people.find(e=>/رئيس/.test(e.jobTitle||''));
+      const issues=people.filter(e=>exceptions(e).length).length;
+      return {admin,depts,people,head,issues};
+    });
+    const employeeNode=e=>button(
+      `<span class="icc-node-avatar">${esc((e.name||'م').slice(0,2))}</span><span class="icc-node-copy"><b>${esc(e.name||'—')}</b><small>${esc(e.jobTitle||roles[U.inst(e)]||'—')}</small></span><span class="icc-node-state ${exceptions(e).length?'warn':'ok'}"></span>`,
+      `data-person="${esc(e.employeeId)}" class="icc-node"`
+    );
+    const adminCard=({admin,depts,people,head,issues},index)=>`<article class="icc-org-unit">
+      <header>
+        <span class="icc-org-index">${String(index+1).padStart(2,'0')}</span>
+        <div><h3>${esc(admin)}</h3><p>${depts.size} أقسام · ${people.length} موظفين</p></div>
+        <span class="icc-org-health ${issues?'warn':'ok'}">${issues?issues+' تحتاج إجراء':'جاهز'}</span>
+      </header>
+      <div class="icc-org-lead"><span>الرئيس / المسؤول</span><b>${esc(head?.name||'غير معيّن')}</b><small>${esc(head?.jobTitle||roles[U.inst(head||{})]||'—')}</small></div>
+      <div class="icc-org-depts">${[...depts].map(([dept,staff])=>{
+        const deptHead=staff.find(e=>U.inst(e)==='department_head')||staff.find(e=>/رئيس/.test(e.jobTitle||''));
+        const others=staff.filter(e=>e!==deptHead);
+        return `<details class="icc-org-dept" ${staff.length<=5?'open':''}>
+          <summary><span><b>${esc(dept)}</b><small>${staff.length} موظفين</small></span><i>⌄</i></summary>
+          <div class="icc-org-people">
+            ${deptHead?`<div class="icc-head-label">رئيس القسم</div>${employeeNode(deptHead)}`:''}
+            ${others.length?`<div class="icc-staff-label">الفريق</div>${others.map(employeeNode).join('')}`:''}
+          </div>
+        </details>`;
+      }).join('')}</div>
+    </article>`;
+    return `<div class="icc-org-toolbar">
+      <div><span class="icc-kicker" dir="ltr">ORGANIZATIONAL INTELLIGENCE</span><h2>الهيكل المؤسسي</h2><p>خريطة تشغيلية للعلاقات الإدارية والتعيينات داخل البلدية.</p></div>
+      <div class="icc-view-switch">${button('هيكلي',`data-mode="hierarchy" aria-pressed="${state.mode==='hierarchy'}"`)}${button('مكاني',`data-mode="spatial" aria-pressed="${state.mode==='spatial'}"`)}</div>
+    </div>
+    <div class="icc-org-summary">
+      <span><small>الإدارات</small><b>${groups.size}</b></span>
+      <span><small>الأقسام</small><b>${adminStats.reduce((n,g)=>n+g.depts.size,0)}</b></span>
+      <span><small>الموظفون</small><b>${rows.length}</b></span>
+      <span><small>تحتاج إجراء</small><b>${rows.filter(e=>exceptions(e).length).length}</b></span>
+    </div>
+    ${state.mode==='hierarchy'?
+      `<section class="icc-org-canvas hierarchy">
+        <div class="icc-org-root"><span class="icc-root-mark">SH</span><div><small>SMART HSR</small><b>البلدية · ${esc(current.org)}</b><p>القيادة المؤسسية</p></div></div>
+        <div class="icc-org-trunk"></div>
+        <div class="icc-org-grid">${adminStats.map(adminCard).join('')}</div>
+      </section>`
+      :
+      `<section class="icc-spatial-v4" tabindex="0" aria-label="التوأم المؤسسي المكاني">
+        <div class="icc-spatial-toolbar"><span>Human Digital Twin · العلاقات المؤسسية</span><div>${button('−','data-zoom="-0.1" aria-label="تصغير"')}${button('+','data-zoom="0.1" aria-label="تكبير"')}${button('إعادة ضبط','data-zoom="reset"')}</div></div>
+        <div class="icc-spatial-stage">
+          <div class="icc-spatial-network" style="zoom:${state.zoom}">
+            <div class="icc-spatial-core"><span class="icc-root-mark">SH</span><b>البلدية</b><small>${esc(current.org)}</small></div>
+            <div class="icc-spatial-ring">${adminStats.map((g,index)=>`<article class="icc-spatial-unit" style="--unit-index:${index}">
+              <header><span class="icc-node-dot ${['field','lands','mobility','admin'][index%4]}"></span><div><b>${esc(g.admin)}</b><small>${g.people.length} موظفين · ${g.depts.size} أقسام</small></div><i class="${g.issues?'warn':'ok'}"></i></header>
+              <div class="icc-spatial-people">${g.people.slice(0,8).map(e=>button(esc((e.name||'م').slice(0,2)),`data-person="${esc(e.employeeId)}" title="${esc(e.name||'موظف')}" class="icc-spatial-person ${exceptions(e).length?'warn':''}"`)).join('')}${g.people.length>8?`<span class="icc-spatial-more">+${g.people.length-8}</span>`:''}</div>
+            </article>`).join('')}</div>
+          </div>
+        </div>
+        <div class="icc-spatial-legend"><span><i class="ok"></i> جاهز</span><span><i class="warn"></i> يحتاج إجراء</span><span>اضغط على الموظف لفتح ملفه</span></div>
+      </section>`}
+    `;
   }
   function paint() {
     if(!surface?.isConnected)return;
@@ -122,14 +187,15 @@
     const needsAction=rows.filter(e=>exceptions(e).length).length+unlinkedAccounts().length;
     surface.innerHTML=`<header class="icc-header"><div><span class="icc-kicker" dir="ltr"><i></i> SMART HSR · USER CENTER</span><div class="icc-title-line"><h1>مركز المستخدمين</h1><span class="icc-context">إدارة الهوية المؤسسية</span></div><p class="icc-header-copy">إدارة المستخدمين والتعيينات والحسابات من داخل لوحة مدير البلدية.</p></div></header>
       <div class="icc-smart-cards" aria-label="ملخص المستخدمين">
-        <article class="icc-smart-card total"><span class="icc-smart-card-shine"></span><div><small>إجمالي المستخدمين</small><b>${total}</b><p>جميع السجلات المرتبطة بالمؤسسة</p></div><i class="icc-signal"><em></em><em></em><em></em></i></article>
-        <article class="icc-smart-card active"><span class="icc-smart-card-shine"></span><div><small>المستخدمون النشطون</small><b>${active}</b><p>حسابات جاهزة للاستخدام</p></div><span class="icc-live">LIVE</span></article>
-        <article class="icc-smart-card action"><span class="icc-smart-card-shine"></span><div><small>يحتاج إجراء</small><b>${needsAction}</b><p>بدون حساب · معطل · تعيين ناقص</p></div><span class="icc-action-mark">›</span></article>
+        <button type="button" class="icc-smart-card total ${state.smartFilter==='all'?'is-selected':''}" data-smart="all"><span class="icc-smart-card-shine"></span><div><small>إجمالي المستخدمين</small><b>${total}</b><p>جميع السجلات المرتبطة بالمؤسسة</p></div><i class="icc-signal"><em></em><em></em><em></em></i></button>
+        <button type="button" class="icc-smart-card active ${state.smartFilter==='active'?'is-selected':''}" data-smart="active"><span class="icc-smart-card-shine"></span><div><small>المستخدمون النشطون</small><b>${active}</b><p>حسابات جاهزة للاستخدام</p></div><span class="icc-live">LIVE</span></button>
+        <button type="button" class="icc-smart-card action ${state.smartFilter==='action'?'is-selected':''}" data-smart="action"><span class="icc-smart-card-shine"></span><div><small>يحتاج إجراء</small><b>${needsAction}</b><p>بدون حساب · معطل · تعيين ناقص</p></div><span class="icc-action-mark">›</span></button>
       </div>
       <nav class="icc-tabs" aria-label="أقسام مركز المستخدمين">${[['registry','المستخدمون'],['hierarchy','الهيكل المؤسسي']].map(([v,l])=>button(l,`data-view="${v}" aria-current="${state.view===v?'page':'false'}"`)).join('')}</nav>
       <div class="icc-split"><section class="icc-content">${state.view==='registry'?registry(rows):hierarchy(rows)}</section></div>
       <div class="icc-feedback" role="status" aria-live="polite"></div>`;
     surface.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;paint();});
+    surface.querySelectorAll('[data-smart]').forEach(b=>b.onclick=()=>{state.smartFilter=b.dataset.smart;state.view='registry';state.page=1;paint();});
     surface.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>openProfile(rows.find(e=>e.employeeId===b.dataset.person)));
     surface.querySelectorAll('[data-filter]').forEach(c=>c.onchange=()=>{state[c.dataset.filter]=c.value;state.page=1;paint();});
     surface.querySelector('[data-search]')?.addEventListener('input',event=>{const p=event.target.selectionStart;state.search=event.target.value;state.page=1;paint();const input=surface.querySelector('[data-search]');input.focus();if(p!==null)input.setSelectionRange(p,p);});
@@ -137,7 +203,7 @@
     surface.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;paint();});
     surface.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{state.zoom=b.dataset.zoom==='reset'?1:Math.max(.6,Math.min(1.6,state.zoom+Number(b.dataset.zoom)));paint();});
     surface.querySelector('[data-add]')?.addEventListener('click',()=>openEditor());
-    surface.querySelector('[data-reset-filters]')?.addEventListener('click',()=>{state.admin='';state.role='';state.service='';state.status='';state.page=1;paint();});
+    surface.querySelector('[data-reset-filters]')?.addEventListener('click',()=>{state.admin='';state.role='';state.service='';state.status='';state.smartFilter='all';state.page=1;paint();});
     surface.querySelector('[data-close-filters]')?.addEventListener('click',event=>{event.target.closest('details')?.removeAttribute('open');});
     const spatial=surface.querySelector('.icc-spatial');
     if(spatial){let drag;spatial.onpointerdown=ev=>{if(ev.target.closest('button'))return;drag={x:ev.clientX,y:ev.clientY,left:spatial.scrollLeft,top:spatial.scrollTop};spatial.setPointerCapture(ev.pointerId);};spatial.onpointermove=ev=>{if(drag){spatial.scrollLeft=drag.left+drag.x-ev.clientX;spatial.scrollTop=drag.top+drag.y-ev.clientY;}};spatial.onpointerup=()=>drag=null;spatial.onpointercancel=()=>drag=null;}
@@ -168,6 +234,10 @@
       const panel=document.querySelector(employee?'#iuc-profile > div':'#iuc-add > div');
       if(!panel)return;
       styleSheet(panel);
+      const titleNode=panel.querySelector('.ih b');
+      const subNode=panel.querySelector('.ih p');
+      if(titleNode)titleNode.textContent=employee?'تعديل '+(employee.name||'الموظف'):'إضافة موظف جديد';
+      if(subNode)subNode.textContent=employee?'تحديث البيانات أو التعيين المؤسسي مع معاينة الأثر قبل الحفظ.':'إنشاء سجل مؤسسي وربطه بالإدارة والقسم والحساب.';
       panel.classList.remove('ucv21-single-page');
       const groups={data:[],access:[],account:[]};
       if(employee){
@@ -197,7 +267,25 @@
       panel.querySelector('.wiz')?.setAttribute('hidden','');
       panel.querySelector('.ucv21-profile-stage')?.setAttribute('hidden','');
       panel.querySelector('.save')?.removeAttribute('hidden');
-      const departmentLabels={field:'إدارة الحصر الميداني',lands:'إدارة الأراضي والممتلكات',mobility:'إدارة حركة السير'};panel.querySelectorAll('.pc').forEach(p=>{const title=p.querySelector('.pt b');if(title&&departmentLabels[p.dataset.p])title.textContent=departmentLabels[p.dataset.p];});const accessTitle=panel.querySelector('.rolebox .st span');if(accessTitle)accessTitle.textContent='الإدارة والوصول';const accessSub=panel.querySelector('.rolebox .st small');if(accessSub)accessSub.textContent='حدّد نطاق الوصول التشغيلي وفق الإدارة والقسم.';panel.classList.add('icc-employee-sheet');const simulation=document.createElement('aside');simulation.className='icc-simulation';groups.access[0]?.append(simulation);
+      const departmentLabels={field:'إدارة الحصر الميداني',lands:'إدارة الأراضي والممتلكات',mobility:'إدارة حركة السير'};panel.querySelectorAll('.pc').forEach(p=>{const title=p.querySelector('.pt b');if(title&&departmentLabels[p.dataset.p])title.textContent=departmentLabels[p.dataset.p];});const accessTitle=panel.querySelector('.rolebox .st span');if(accessTitle)accessTitle.textContent='الإدارة والوصول';const accessSub=panel.querySelector('.rolebox .st small');if(accessSub)accessSub.textContent='حدّد نطاق الوصول التشغيلي وفق الإدارة والقسم.';panel.classList.add('icc-employee-sheet');
+      if(employee){
+        const assignmentPreview=document.createElement('section');
+        assignmentPreview.className='icc-assignment-preview';
+        const currentPath=[employee.administration,employee.department,employee.jobTitle||roles[U.inst(employee)]].filter(Boolean).join(' ← ')||'غير معيّن';
+        assignmentPreview.innerHTML=`<div><span>التعيين الحالي</span><b>${esc(currentPath)}</b></div><div><span>بعد الحفظ</span><b data-next-assignment>${esc(currentPath)}</b></div>`;
+        panel.querySelector('[data-sheet-section="data"]')?.prepend(assignmentPreview);
+        const updateAssignmentPreview=()=>{
+          const a=panel.querySelector('#edit-admin')?.value||employee.administration||'غير معيّن';
+          const d=panel.querySelector('#edit-dept')?.value||employee.department||'غير معيّن';
+          const t=panel.querySelector('#edit-title')?.value||employee.jobTitle||roles[U.inst(employee)]||'—';
+          const target=assignmentPreview.querySelector('[data-next-assignment]');
+          if(target)target.textContent=[a,d,t].filter(Boolean).join(' ← ');
+        };
+        panel.addEventListener('input',updateAssignmentPreview);
+        panel.addEventListener('change',updateAssignmentPreview);
+        updateAssignmentPreview();
+      }
+      const simulation=document.createElement('aside');simulation.className='icc-simulation';groups.access[0]?.append(simulation);
       const presets=document.createElement('select');presets.setAttribute('aria-label','إعداد سريع');presets.innerHTML='<option value="">إعداد سريع — راجع قبل الحفظ</option>'+['رئيس إدارة الحصر الميداني','مراقب ميداني','رئيس إدارة الأراضي والممتلكات','موظف منح الأراضي','رئيس إدارة الحركة والتشغيل','رئيس الشؤون الإدارية','موظف حركة'].map((l,i)=>`<option value="${i}">${l}</option>`).join('');groups.access[0]?.prepend(presets);
       presets.onchange=()=>{if(presets.value==='')return;const index=Number(presets.value),service=index<2?'field':index<4?'lands':'mobility',head=[0,2,4,5].includes(index);role.value=head?'department_head':'employee';role.dispatchEvent(new Event('change',{bubbles:true}));panel.querySelectorAll('.pc').forEach(p=>{const toggle=p.querySelector('.pe');toggle.checked=p.dataset.p===service;toggle.dispatchEvent(new Event('change',{bubbles:true}));const lv=p.querySelector('[id^="lv-"]');if(lv&&p.dataset.p===service){lv.value=head?'head':'employee';lv.dispatchEvent(new Event('change',{bubbles:true}));}});const mobility=panel.querySelector('.pc[data-p="mobility"] .ctl');if(service==='mobility'&&head&&!panel.querySelector('#mob-scope'))mobility.insertAdjacentHTML('beforeend',U.sel('نطاق رئيس القسم','mob-scope',index===5?'administrative_affairs':'mobility_head',[['department_head','رئيس قسم محدد'],['mobility_head','رئيس الحركة'],['administrative_affairs','الشؤون الإدارية']]));else if(service==='mobility'&&head)panel.querySelector('#mob-scope').value=index===5?'administrative_affairs':'mobility_head';updateSimulation();};
       function show(key){panel.querySelectorAll('[data-sheet-section]').forEach(s=>s.hidden=s.dataset.sheetSection!==key);nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',b.dataset.sheetTab===key?'page':'false'));}
