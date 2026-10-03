@@ -74,6 +74,25 @@ function extractBearerToken(req) {
 // request body, so a client can never forge, spoof, or suppress an
 // entry. Never pass a password, temp password, token, or any other
 // credential material in `detail` — this function does not sanitize it.
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object') return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+function sanitizeAuditDetail(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => item === undefined ? null : sanitizeAuditDetail(item));
+  }
+  if (!isPlainObject(value)) return value;
+  const sanitized = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (item === undefined) continue;
+    sanitized[key] = sanitizeAuditDetail(item);
+  }
+  return sanitized;
+}
+
 async function recordAdminAudit(db, { caller, organizationId, targetUid, action, detail }) {
   const doc = {
     // The TARGET's organization, not necessarily the caller's — an owner
@@ -87,7 +106,7 @@ async function recordAdminAudit(db, { caller, organizationId, targetUid, action,
     action,
     createdAt: FieldValue.serverTimestamp(),
   };
-  if (detail && typeof detail === 'object') doc.detail = detail;
+  if (detail && typeof detail === 'object') doc.detail = sanitizeAuditDetail(detail);
   await db.collection('adminAuditEvents').add(doc);
 }
 
