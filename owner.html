@@ -704,6 +704,17 @@
         <label class="text-sm">الحالة<select name="status" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1"><option>active</option><option>expired</option><option>trial</option></select></label>
         <label class="text-sm">تاريخ الانتهاء<input name="expiresAt" type="date" required class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" /></label>
         <label class="text-sm md:col-span-2">ملاحظات المؤسسة<textarea name="notes" maxlength="1200" rows="3" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" placeholder="ملاحظات داخلية للمالك فقط"></textarea></label>
+        <div class="md:col-span-2 border border-[var(--stroke)] rounded-xl p-3 space-y-3">
+          <div>
+            <div class="text-sm font-bold title">الإعداد المكاني الموثوق</div>
+            <div class="text-xs muted mt-1">يحدد مركز الخريطة والتوأم الرقمي لهذه المؤسسة. اترك الحقول فارغة إذا لم يتم اعتماد النطاق بعد.</div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <label class="text-sm">خط العرض<input name="mapCenterLat" type="number" min="-90" max="90" step="0.000001" inputmode="decimal" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" placeholder="19.126390" /></label>
+            <label class="text-sm">خط الطول<input name="mapCenterLng" type="number" min="-180" max="180" step="0.000001" inputmode="decimal" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" placeholder="41.078890" /></label>
+            <label class="text-sm">مستوى التكبير<input name="mapDefaultZoom" type="number" min="4" max="19" step="1" inputmode="numeric" class="w-full bg-transparent border border-[var(--stroke)] rounded-xl px-3 py-2 mt-1" placeholder="13" /></label>
+          </div>
+        </div>
       </div>
       <div class="flex items-center gap-2 justify-end pt-2">
         <button id="deleteBtn" type="button" class="btn btn-outline hidden">أرشفة المؤسسة</button>
