@@ -134,7 +134,7 @@
         <div><h3>${esc(admin)}</h3><p>${depts.size} أقسام · ${people.length} موظفين</p></div>
         <span class="icc-org-health ${issues?'warn':'ok'}">${issues?issues+' تحتاج إجراء':'جاهز'}</span>
       </header>
-      <div class="icc-org-lead"><span>الرئيس / المسؤول</span><b>${esc(head?.name||'غير معيّن')}</b><small>${esc(head?.jobTitle||roles[U.inst(head||{})]||'—')}</small></div>
+      <div class="icc-org-lead"><span>المسؤول</span><b>${esc(head?.name||'غير معيّن')}</b><small>${esc(head?.jobTitle||roles[U.inst(head||{})]||'—')}</small></div>
       <div class="icc-org-depts">${[...depts].map(([dept,staff])=>{
         const deptHead=staff.find(e=>U.inst(e)==='department_head')||staff.find(e=>/رئيس/.test(e.jobTitle||''));
         const others=staff.filter(e=>e!==deptHead);
@@ -147,9 +147,54 @@
         </details>`;
       }).join('')}</div>
     </article>`;
+
+    const building=`<section class="icc-building" aria-label="المبنى الرقمي للمؤسسة">
+      <div class="icc-building-brand">
+        <span class="icc-building-mark">SH</span>
+        <div><small>SMART HSR</small><h3>المقر الرقمي للبلدية</h3><p>كل إدارة طابق رقمي، وكل قسم مكتب تشغيلي.</p></div>
+        <span class="icc-building-live"><i></i> متصل</span>
+      </div>
+      <div class="icc-building-spine"></div>
+      <div class="icc-building-floors">${adminStats.map((g,index)=>`<details class="icc-floor" ${index===0?'open':''}>
+        <summary>
+          <span class="icc-floor-code">F${String(index+1).padStart(2,'0')}</span>
+          <div class="icc-floor-title"><b>${esc(g.admin)}</b><small>${g.depts.size} مكاتب رقمية · ${g.people.length} موظفين</small></div>
+          <div class="icc-floor-manager"><span>المسؤول</span><b>${esc(g.head?.name||'غير معيّن')}</b></div>
+          <span class="icc-floor-health ${g.issues?'warn':'ok'}">${g.issues?g.issues+' تحتاج إجراء':'جاهز'}</span>
+          <i class="icc-floor-chevron">⌄</i>
+        </summary>
+        <div class="icc-floor-offices">${[...g.depts].map(([dept,staff],officeIndex)=>{
+          const deptHead=staff.find(e=>U.inst(e)==='department_head')||staff.find(e=>/رئيس/.test(e.jobTitle||''));
+          return `<article class="icc-office">
+            <header><span class="icc-office-no">${String(officeIndex+1).padStart(2,'0')}</span><div><b>${esc(dept)}</b><small>${staff.length} موظفين</small></div><span class="icc-office-state ${staff.some(e=>exceptions(e).length)?'warn':'ok'}"></span></header>
+            <div class="icc-office-head"><span>رئيس القسم</span><b>${esc(deptHead?.name||'غير معيّن')}</b></div>
+            <div class="icc-office-team">${staff.slice(0,6).map(employeeNode).join('')}${staff.length>6?`<span class="icc-office-more">+${staff.length-6} موظفين</span>`:''}</div>
+          </article>`;
+        }).join('')}</div>
+      </details>`).join('')}</div>
+    </section>`;
+
+    const spatial=`<section class="icc-spatial-v4" tabindex="0" aria-label="التوأم المؤسسي المكاني">
+      <div class="icc-spatial-toolbar"><span>التوأم المكاني للموارد البشرية</span><div>${button('−','data-zoom="-0.1" aria-label="تصغير"')}${button('+','data-zoom="0.1" aria-label="تكبير"')}${button('إعادة ضبط','data-zoom="reset"')}</div></div>
+      <div class="icc-spatial-stage">
+        <div class="icc-spatial-network" style="zoom:${state.zoom}">
+          <div class="icc-spatial-core"><span class="icc-root-mark">SH</span><b>البلدية</b><small>${esc(current.org)}</small></div>
+          <div class="icc-spatial-ring">${adminStats.map((g,index)=>`<article class="icc-spatial-unit" style="--unit-index:${index}">
+            <header><span class="icc-node-dot ${['field','lands','mobility','admin'][index%4]}"></span><div><b>${esc(g.admin)}</b><small>${g.people.length} موظفين · ${g.depts.size} أقسام</small></div><i class="${g.issues?'warn':'ok'}"></i></header>
+            <div class="icc-spatial-people">${g.people.slice(0,8).map(e=>button(esc((e.name||'م').slice(0,2)),`data-person="${esc(e.employeeId)}" title="${esc(e.name||'موظف')}" class="icc-spatial-person ${exceptions(e).length?'warn':''}"`)).join('')}${g.people.length>8?`<span class="icc-spatial-more">+${g.people.length-8}</span>`:''}</div>
+          </article>`).join('')}</div>
+        </div>
+      </div>
+      <div class="icc-spatial-legend"><span><i class="ok"></i> جاهز</span><span><i class="warn"></i> يحتاج إجراء</span><span>اضغط على الموظف لفتح ملفه</span></div>
+    </section>`;
+
     return `<div class="icc-org-toolbar">
-      <div><span class="icc-kicker" dir="ltr">ORGANIZATIONAL INTELLIGENCE</span><h2>الهيكل المؤسسي</h2><p>خريطة تشغيلية للعلاقات الإدارية والتعيينات داخل البلدية.</p></div>
-      <div class="icc-view-switch">${button('هيكلي',`data-mode="hierarchy" aria-pressed="${state.mode==='hierarchy'}"`)}${button('مكاني',`data-mode="spatial" aria-pressed="${state.mode==='spatial'}"`)}</div>
+      <div><span class="icc-org-badge">التوأم المؤسسي الذكي</span><h2>الهيكل الإداري</h2><p>من البلدية إلى الإدارة والقسم والموظف داخل خريطة تشغيلية واحدة.</p></div>
+      <div class="icc-view-switch">
+        ${button('إداري',`data-mode="hierarchy" aria-pressed="${state.mode==='hierarchy'}"`)}
+        ${button('مبنى رقمي',`data-mode="building" aria-pressed="${state.mode==='building'}"`)}
+        ${button('مكاني',`data-mode="spatial" aria-pressed="${state.mode==='spatial'}"`)}
+      </div>
     </div>
     <div class="icc-org-summary">
       <span><small>الإدارات</small><b>${groups.size}</b></span>
@@ -159,24 +204,11 @@
     </div>
     ${state.mode==='hierarchy'?
       `<section class="icc-org-canvas hierarchy">
-        <div class="icc-org-root"><span class="icc-root-mark">SH</span><div><small>SMART HSR</small><b>البلدية · ${esc(current.org)}</b><p>القيادة المؤسسية</p></div></div>
+        <div class="icc-org-root"><span class="icc-root-mark">SH</span><div><small>SMART HSR</small><b>البلدية · ${esc(current.org)}</b><p>مدير البلدية · القيادة المؤسسية</p></div></div>
         <div class="icc-org-trunk"></div>
         <div class="icc-org-grid">${adminStats.map(adminCard).join('')}</div>
       </section>`
-      :
-      `<section class="icc-spatial-v4" tabindex="0" aria-label="التوأم المؤسسي المكاني">
-        <div class="icc-spatial-toolbar"><span>Human Digital Twin · العلاقات المؤسسية</span><div>${button('−','data-zoom="-0.1" aria-label="تصغير"')}${button('+','data-zoom="0.1" aria-label="تكبير"')}${button('إعادة ضبط','data-zoom="reset"')}</div></div>
-        <div class="icc-spatial-stage">
-          <div class="icc-spatial-network" style="zoom:${state.zoom}">
-            <div class="icc-spatial-core"><span class="icc-root-mark">SH</span><b>البلدية</b><small>${esc(current.org)}</small></div>
-            <div class="icc-spatial-ring">${adminStats.map((g,index)=>`<article class="icc-spatial-unit" style="--unit-index:${index}">
-              <header><span class="icc-node-dot ${['field','lands','mobility','admin'][index%4]}"></span><div><b>${esc(g.admin)}</b><small>${g.people.length} موظفين · ${g.depts.size} أقسام</small></div><i class="${g.issues?'warn':'ok'}"></i></header>
-              <div class="icc-spatial-people">${g.people.slice(0,8).map(e=>button(esc((e.name||'م').slice(0,2)),`data-person="${esc(e.employeeId)}" title="${esc(e.name||'موظف')}" class="icc-spatial-person ${exceptions(e).length?'warn':''}"`)).join('')}${g.people.length>8?`<span class="icc-spatial-more">+${g.people.length-8}</span>`:''}</div>
-            </article>`).join('')}</div>
-          </div>
-        </div>
-        <div class="icc-spatial-legend"><span><i class="ok"></i> جاهز</span><span><i class="warn"></i> يحتاج إجراء</span><span>اضغط على الموظف لفتح ملفه</span></div>
-      </section>`}
+      :state.mode==='building'?building:spatial}
     `;
   }
   function paint() {
@@ -185,7 +217,7 @@
     const total=rows.length+current.users.filter(u=>!rows.some(e=>e.authUid===u.uid)).length;
     const active=rows.filter(e=>account(e)==='نشط').length;
     const needsAction=rows.filter(e=>exceptions(e).length).length+unlinkedAccounts().length;
-    surface.innerHTML=`<header class="icc-header"><div><span class="icc-kicker" dir="ltr"><i></i> SMART HSR · USER CENTER</span><div class="icc-title-line"><h1>مركز المستخدمين</h1><span class="icc-context">إدارة الهوية المؤسسية</span></div><p class="icc-header-copy">إدارة المستخدمين والتعيينات والحسابات من داخل لوحة مدير البلدية.</p></div></header>
+    surface.innerHTML=`<header class="icc-header icc-header-v5"><div class="icc-page-heading"><div class="icc-brand-wordmark" dir="ltr"><span>SMART</span><b>HSR</b></div><div class="icc-title-line"><h1>مركز المستخدمين</h1></div><p class="icc-header-copy">إدارة الهوية والتعيينات المؤسسية</p></div></header>
       <div class="icc-smart-cards" aria-label="ملخص المستخدمين">
         <button type="button" class="icc-smart-card total ${state.smartFilter==='all'?'is-selected':''}" data-smart="all"><span class="icc-smart-card-shine"></span><div><small>إجمالي المستخدمين</small><b>${total}</b><p>جميع السجلات المرتبطة بالمؤسسة</p></div><i class="icc-signal"><em></em><em></em><em></em></i></button>
         <button type="button" class="icc-smart-card active ${state.smartFilter==='active'?'is-selected':''}" data-smart="active"><span class="icc-smart-card-shine"></span><div><small>المستخدمون النشطون</small><b>${active}</b><p>حسابات جاهزة للاستخدام</p></div><span class="icc-live">LIVE</span></button>
