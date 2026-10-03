@@ -295,3 +295,126 @@ test('13. reconciliation never creates any additional audit-shaped document — 
     assert.equal(afterLandsAudit, beforeLandsAudit);
   } finally { fakes.restore(); }
 });
+
+
+test('14. explicit reconcileLandsAccess repairs a pending local mirror only when authoritative Lands matches exactly', async () => {
+  const fakes = installFakes({
+    membershipStatusResponses: [{
+      ok: true,
+      exists: true,
+      firebase_uid: 'u5',
+      municipality_id: 'org-alpha',
+      lands_role: 'lands_department_manager',
+      enabled: true,
+    }],
+  });
+  try {
+    const { uid: managerUid, organizationId } = seedManager(fakes);
+    fakes.store.seed('users/u5', {
+      uid: 'u5',
+      role: null,
+      active: true,
+      organizationId,
+      email: 'u5@smart-hsr.local',
+      landsAccess: {
+        enabled: true,
+        role: 'lands_department_manager',
+        syncStatus: 'pending_trusted_sync',
+        syncError: 'lands_bridge_unreachable',
+      },
+    });
+
+    const usersHandler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await usersHandler(fakeRequest({
+      uid: managerUid,
+      body: { action: 'reconcileLandsAccess', uid: 'u5' },
+    }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.reconciled, true);
+    assert.equal(res.body.lands.syncStatus, 'synced');
+    assert.equal(fakes.bridgeCalls.length, 0, 'reconciliation must never call the trusted mutation endpoint');
+    assert.equal(fakes.membershipStatusCalls.length, 1, 'exactly one authoritative readback');
+    const stored = fakes.store.docs.get('users/u5');
+    assert.equal(stored.landsAccess.syncStatus, 'synced');
+    assert.equal(stored.landsAccess.syncError, undefined);
+    const audits = [...fakes.store.docs.entries()]
+      .filter(([path, data]) => path.startsWith('adminAuditEvents/') && data.action === 'reconcile_lands_access');
+    assert.equal(audits.length, 1, 'reconciliation is audit-recorded');
+  } finally { fakes.restore(); }
+});
+
+test('15. explicit reconcileLandsAccess fails closed on authoritative role mismatch and writes nothing', async () => {
+  const fakes = installFakes({
+    membershipStatusResponses: [{
+      ok: true,
+      exists: true,
+      firebase_uid: 'u5',
+      municipality_id: 'org-alpha',
+      lands_role: 'lands_employee',
+      enabled: true,
+    }],
+  });
+  try {
+    const { uid: managerUid, organizationId } = seedManager(fakes);
+    const original = {
+      enabled: true,
+      role: 'lands_department_manager',
+      syncStatus: 'pending_trusted_sync',
+      syncError: 'lands_bridge_unreachable',
+    };
+    fakes.store.seed('users/u5', {
+      uid: 'u5', role: null, active: true, organizationId, email: 'u5@smart-hsr.local',
+      landsAccess: { ...original },
+    });
+
+    const usersHandler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await usersHandler(fakeRequest({
+      uid: managerUid,
+      body: { action: 'reconcileLandsAccess', uid: 'u5' },
+    }), res);
+
+    assert.equal(res.statusCode, 409, JSON.stringify(res.body));
+    assert.equal(res.body.reason, 'authoritative_membership_mismatch');
+    assert.equal(fakes.bridgeCalls.length, 0);
+    assert.equal(fakes.membershipStatusCalls.length, 1);
+    assert.deepEqual(fakes.store.docs.get('users/u5').landsAccess, original);
+  } finally { fakes.restore(); }
+});
+
+test('16. explicit reconcileLandsAccess fails closed when Lands readback is unavailable and does not mutate local state', async () => {
+  const fakes = installFakes({
+    membershipStatusResponses: [{
+      ok: false,
+      reason: 'lands_bridge_unreachable',
+    }],
+  });
+  try {
+    const { uid: managerUid, organizationId } = seedManager(fakes);
+    const original = {
+      enabled: true,
+      role: 'lands_department_manager',
+      syncStatus: 'pending_trusted_sync',
+      syncError: 'lands_bridge_unreachable',
+    };
+    fakes.store.seed('users/u5', {
+      uid: 'u5', role: null, active: true, organizationId, email: 'u5@smart-hsr.local',
+      landsAccess: { ...original },
+    });
+
+    const usersHandler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await usersHandler(fakeRequest({
+      uid: managerUid,
+      body: { action: 'reconcileLandsAccess', uid: 'u5' },
+    }), res);
+
+    assert.equal(res.statusCode, 503, JSON.stringify(res.body));
+    assert.equal(res.body.reason, 'lands_bridge_unreachable');
+    assert.equal(fakes.bridgeCalls.length, 0);
+    assert.equal(fakes.membershipStatusCalls.length, 1);
+    assert.deepEqual(fakes.store.docs.get('users/u5').landsAccess, original);
+  } finally { fakes.restore(); }
+});
