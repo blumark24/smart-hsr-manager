@@ -420,3 +420,76 @@ html[data-theme="light"] .icc-org-canvas,html[data-theme="light"] .icc-spatial-v
  .icc-spatial-stage{min-height:420px}.icc-assignment-preview{grid-template-columns:1fr}
  body .icc-sheet .icc-sheet-tabs{justify-content:flex-start;overflow:auto}body .icc-sheet .icc-sheet-tabs button{min-width:max-content}
 }
+
+
+/* User Center V5 — brand clarity, readable typography, digital building */
+.icc-header-v5{padding-bottom:4px!important}
+.icc-page-heading{display:flex;flex-direction:column;gap:3px}
+.icc-brand-wordmark{display:flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.16em;font-weight:800}
+.icc-brand-wordmark span{color:var(--icc-text)}.icc-brand-wordmark b{color:var(--icc-green)}
+.icc-header-v5 .icc-title-line{margin-top:3px!important}
+.icc-header-v5 .icc-title-line h1{font-size:30px!important;line-height:1.25!important;font-weight:700!important;letter-spacing:-.025em!important}
+.icc-header-v5 .icc-header-copy{font-size:12px!important;font-weight:500!important;color:var(--icc-muted)!important;margin-top:4px!important}
+.icc-app,.icc-sheet{font-weight:500}
+.icc-table{font-size:12.5px!important}.icc-table th{font-size:11px!important;font-weight:600!important}.icc-table td{font-size:12px!important}
+.icc-name-copy b,.icc-assignment b,.icc-role-title{font-size:12px!important;font-weight:600!important}.icc-name-copy small,.icc-assignment small{font-size:10px!important}
+.icc-smart-card small{font-size:11px!important;font-weight:600}.icc-smart-card p{font-size:10px!important;line-height:1.6}.icc-smart-card b{font-size:31px!important}
+.icc-org-badge{display:inline-flex;padding:5px 8px;border-radius:999px;background:color-mix(in srgb,var(--icc-green) 8%,transparent);border:1px solid color-mix(in srgb,var(--icc-green) 22%,var(--icc-line));color:var(--icc-green);font-size:9px;font-weight:700}
+.icc-org-toolbar h2{font-size:21px!important;font-weight:700!important;margin-top:7px!important}.icc-org-toolbar p{font-size:11px!important;line-height:1.7}
+.icc-org-summary small{font-size:10px!important}.icc-org-summary b{font-size:19px!important}
+.icc-org-unit h3{font-size:13px!important}.icc-org-unit header p{font-size:9px!important}.icc-org-lead span,.icc-org-dept>summary small,.icc-head-label,.icc-staff-label{font-size:9px!important}.icc-org-lead b{font-size:12px!important}.icc-org-dept>summary b{font-size:11px!important}
+.icc-node-copy b{font-size:10px!important}.icc-node-copy small{font-size:9px!important}
+
+/* Digital Building */
+.icc-building{position:relative;border:1px solid var(--icc-line);border-radius:18px;background:
+  radial-gradient(700px 280px at 50% -10%,color-mix(in srgb,var(--icc-green) 9%,transparent),transparent 65%),
+  linear-gradient(90deg,color-mix(in srgb,var(--icc-line) 13%,transparent) 1px,transparent 1px),
+  linear-gradient(color-mix(in srgb,var(--icc-line) 13%,transparent) 1px,transparent 1px),
+  var(--icc-panel);background-size:auto,36px 36px,36px 36px,auto;padding:20px;overflow:auto}
+.icc-building-brand{max-width:680px;margin:0 auto;display:grid;grid-template-columns:46px 1fr auto;align-items:center;gap:12px;padding:14px 15px;border:1px solid color-mix(in srgb,var(--icc-green) 34%,var(--icc-line));border-radius:16px;background:linear-gradient(180deg,var(--icc-panel-2),var(--icc-panel));box-shadow:0 14px 34px rgba(0,0,0,.12)}
+.icc-building-mark{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--icc-green) 13%,var(--icc-panel));border:1px solid color-mix(in srgb,var(--icc-green) 24%,var(--icc-line));color:var(--icc-green);font-size:10px;font-weight:800;letter-spacing:.08em}
+.icc-building-brand small{display:block;color:var(--icc-green);font-size:8px;letter-spacing:.12em;font-weight:700}.icc-building-brand h3{margin:3px 0 0!important;font-size:14px!important}.icc-building-brand p{margin:2px 0 0;color:var(--icc-muted);font-size:9px}
+.icc-building-live{display:flex;align-items:center;gap:6px;color:var(--icc-green);font-size:9px}.icc-building-live i{width:7px;height:7px;border-radius:50%;background:var(--icc-green);box-shadow:0 0 0 4px color-mix(in srgb,var(--icc-green) 9%,transparent)}
+.icc-building-spine{width:1px;height:26px;background:var(--icc-line);margin:auto}
+.icc-building-floors{display:grid;gap:10px;max-width:1000px;margin:auto}
+.icc-floor{border:1px solid var(--icc-line);border-radius:15px;background:linear-gradient(180deg,var(--icc-panel-2),var(--icc-panel));overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.icc-floor>summary{list-style:none;display:grid;grid-template-columns:42px minmax(0,1.8fr) minmax(150px,.9fr) auto 24px;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}.icc-floor>summary::-webkit-details-marker{display:none}
+.icc-floor-code{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--icc-panel);border:1px solid var(--icc-line);color:var(--icc-green);font-size:8px;font-weight:800}
+.icc-floor-title b{display:block;font-size:12px}.icc-floor-title small{display:block;margin-top:2px;color:var(--icc-muted);font-size:9px}
+.icc-floor-manager span{display:block;color:var(--icc-muted);font-size:8px}.icc-floor-manager b{display:block;margin-top:2px;font-size:10px}
+.icc-floor-health{padding:4px 7px;border:1px solid var(--icc-line);border-radius:999px;font-size:8px}.icc-floor-health.ok{color:var(--icc-green);border-color:color-mix(in srgb,var(--icc-green) 28%,var(--icc-line))}.icc-floor-health.warn{color:var(--icc-amber);border-color:color-mix(in srgb,var(--icc-amber) 28%,var(--icc-line))}
+.icc-floor-chevron{font-style:normal;color:var(--icc-muted);transition:transform .16s}.icc-floor[open] .icc-floor-chevron{transform:rotate(180deg)}
+.icc-floor-offices{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:10px;padding:12px;border-top:1px solid var(--icc-line);background:color-mix(in srgb,var(--icc-panel) 70%,transparent)}
+.icc-office{border:1px solid var(--icc-line);border-radius:13px;background:var(--icc-panel);overflow:hidden}
+.icc-office>header{display:grid;grid-template-columns:30px 1fr auto;gap:9px;align-items:center;padding:10px 11px;border-bottom:1px solid var(--icc-line);background:var(--icc-panel-2)}
+.icc-office-no{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--icc-panel);border:1px solid var(--icc-line);font-size:8px;color:var(--icc-green)}
+.icc-office header b{display:block;font-size:10px}.icc-office header small{display:block;color:var(--icc-muted);font-size:8px;margin-top:2px}.icc-office-state{width:7px;height:7px;border-radius:50%}.icc-office-state.ok{background:var(--icc-green)}.icc-office-state.warn{background:var(--icc-amber)}
+.icc-office-head{padding:9px 10px;border-bottom:1px solid var(--icc-line);background:color-mix(in srgb,var(--icc-green) 3%,transparent)}.icc-office-head span{display:block;color:var(--icc-muted);font-size:8px}.icc-office-head b{display:block;font-size:10px;margin-top:2px}
+.icc-office-team{display:grid;gap:6px;padding:9px}.icc-office-more{display:block;text-align:center;padding:6px;border-radius:8px;background:var(--icc-soft);color:var(--icc-muted);font-size:8px}
+
+/* Refine Night/Day legibility */
+html[data-theme="dark"] .icc-host>.icc-app{background:
+  radial-gradient(680px 280px at 8% -10%,rgba(52,211,153,.045),transparent 64%),
+  linear-gradient(90deg,rgba(90,125,155,.025) 1px,transparent 1px),
+  linear-gradient(rgba(90,125,155,.025) 1px,transparent 1px),
+  var(--icc-bg)!important}
+html[data-theme="light"] .icc-host>.icc-app{background:
+  radial-gradient(640px 260px at 10% -10%,rgba(8,125,87,.055),transparent 64%),
+  linear-gradient(90deg,rgba(34,74,58,.018) 1px,transparent 1px),
+  linear-gradient(rgba(34,74,58,.018) 1px,transparent 1px),
+  linear-gradient(180deg,#f3f6f3,#eef2ef)!important}
+html[data-theme="light"] .icc-brand-wordmark span{color:#173042}
+html[data-theme="light"] .icc-brand-wordmark b{color:#087d57}
+html[data-theme="light"] .icc-building,html[data-theme="light"] .icc-floor,html[data-theme="light"] .icc-office{background-color:#f8faf8}
+html[data-theme="light"] .icc-building-brand{background:linear-gradient(180deg,#fbfcfa,#f4f7f4)}
+body .icc-sheet-overlay>.icc-employee-sheet{max-width:800px!important}
+body .icc-sheet-overlay>.icc-profile-sheet{max-width:720px!important}
+body .icc-sheet .grid{column-gap:16px!important;row-gap:13px!important}
+body .icc-sheet .icc-sheet-content{padding-inline:2px}
+body .icc-sheet .icc-sheet-tabs{gap:2px!important}
+body .icc-sheet .icc-sheet-tabs button{font-weight:600!important}
+body .icc-sheet .f label,body .icc-sheet .f>span{font-size:11px!important;font-weight:600!important}
+body .icc-sheet :is(.in,.sel){font-size:14px!important}
+
+@media(max-width:1000px){.icc-floor-offices{grid-template-columns:1fr}.icc-floor>summary{grid-template-columns:40px 1fr auto}.icc-floor-manager{display:none}}
+@media(max-width:700px){.icc-header-v5 .icc-title-line h1{font-size:24px!important}.icc-building{padding:12px}.icc-building-brand{grid-template-columns:40px 1fr}.icc-building-live{display:none}.icc-floor>summary{grid-template-columns:34px 1fr auto}.icc-floor-health{display:none}.icc-floor-offices{grid-template-columns:1fr}}
