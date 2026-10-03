@@ -221,6 +221,12 @@ function normalizeDepartmentHeadProducts(panel,employee){
   return product;
 }
 
+function hasPendingLandsSync(employee){
+  if(!employee?.authUid)return false;
+  const linked=(U.cache?.users||[]).find(user=>user?.uid===employee.authUid);
+  return Boolean(linked?.landsAccess?.enabled===true&&linked?.landsAccess?.syncStatus==='pending_trusted_sync');
+}
+
 function profileSnapshot(panel,employee){
   const value=id=>clean(panel.querySelector(`#${id}`)?.value);
   let products=null;
@@ -387,6 +393,8 @@ function buildSinglePageProfile(panel,employee){
       let current;
       try{current=profileSnapshot(panel,employeeRef);}catch(error){setProfileStep(2);throw error;}
       const initial=panel.__ucv21Snapshot||{},steps=[];if(current.basic!==initial.basic)steps.push([panel.querySelector('.savep'),panel.querySelector('.mp')]);if(current.organization!==initial.organization)steps.push([panel.querySelector('.saveo'),panel.querySelector('.mo')]);if(current.products!==initial.products)steps.push([panel.querySelector('.saver'),panel.querySelector('.mr')]);
+      const retryPendingLands=hasPendingLandsSync(employeeRef)&&current.products===initial.products;
+      if(retryPendingLands&&!steps.some(([button])=>button===panel.querySelector('.saver')))steps.push([panel.querySelector('.saver'),panel.querySelector('.mr')]);
       if(!steps.length&&!p1&&!p2){msg.textContent='لا توجد تغييرات جديدة للحفظ.';return;}
       b.disabled=true;msg.textContent='جاري حفظ التعديلات...';for(const [button,m] of steps){if(button&&!(await runExisting(button,m)))throw Error(clean(m?.textContent)||'تعذر حفظ أحد الأقسام.');}
       if(p1||p2){await U.post('/api/admin/users',{action:'setPassword',uid:employeeRef.authUid,password:p1});panel.querySelector('#ucv21-npw').value='';panel.querySelector('#ucv21-npw2').value='';}
