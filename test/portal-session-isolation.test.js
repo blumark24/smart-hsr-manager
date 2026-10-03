@@ -50,6 +50,24 @@ test('manager shell binds auth namespace, role and organization to selected port
   assert.match(source, /where\(['"]organizationId['"], ['"]==['"], context\.organizationId\)/);
 });
 
+test('leadership login and manager dashboard use the same Firebase SDK runtime', () => {
+  const login = read('manager-login.html');
+  const adapter = read('manager-dashboard-adapter.js');
+
+  for (const moduleName of ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']) {
+    assert.match(login, new RegExp('firebasejs/11\\.6\\.1/' + moduleName.replace('.', '\\.')));
+    assert.match(adapter, new RegExp('firebasejs/11\\.6\\.1/' + moduleName.replace('.', '\\.')));
+  }
+  assert.doesNotMatch(adapter, /firebasejs\/10\.12\.0\//);
+});
+
+test('workforce workspace guard never classifies manager.html as a Field workspace', () => {
+  const source = read('workspace-guard.js');
+
+  assert.doesNotMatch(source, /\['dashboard\.html', 'mobile-map\.html', 'manager\.html'\]\.includes\(file\)/);
+  assert.match(source, /\['dashboard\.html', 'mobile-map\.html'\]\.includes\(file\)\) return 'field'/);
+});
+
 
 test('gateway documents have normalized markup and hardened response policy', () => {
   const pages = [read('Home.html'), read('login.html'), read('manager-login.html')];
