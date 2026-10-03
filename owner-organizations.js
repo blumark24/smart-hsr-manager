@@ -100,6 +100,9 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
     f.plan.value = org?.plan||'Trial'; f.billingCycle.value = org?.billingCycle||'monthly'; f.status.value = org?.status|| (org?.plan==='Trial'?'trial':'active');
     f.expiresAt.value = org?.expiresAt? new Date(org.expiresAt).toISOString().slice(0,10): '';
     f.notes.value = org?.notes||'';
+    f.mapCenterLat.value = Number.isFinite(Number(org?.mapCenter?.lat)) ? String(org.mapCenter.lat) : '';
+    f.mapCenterLng.value = Number.isFinite(Number(org?.mapCenter?.lng)) ? String(org.mapCenter.lng) : '';
+    f.mapDefaultZoom.value = Number.isInteger(Number(org?.mapDefaultZoom)) ? String(org.mapDefaultZoom) : '';
     f.docId.value = org?.id||''; deleteBtn.classList.toggle('hidden', !org);
     deleteBtn.textContent = org?.status === 'archived' ? 'استعادة المؤسسة' : 'أرشفة المؤسسة';
     orgModal.showModal();
@@ -166,6 +169,21 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
       expiresAt: f.expiresAt.value ? new Date(f.expiresAt.value).toISOString() : null,
       notes:f.notes.value.trim()
     };
+    const latRaw = f.mapCenterLat.value.trim();
+    const lngRaw = f.mapCenterLng.value.trim();
+    const zoomRaw = f.mapDefaultZoom.value.trim();
+    const hasAnySpatialValue = Boolean(latRaw || lngRaw || zoomRaw);
+    let spatialPatch = {};
+    if(hasAnySpatialValue){
+      const lat = Number(latRaw), lng = Number(lngRaw), zoom = Number(zoomRaw);
+      if(!latRaw || !lngRaw || !zoomRaw || !Number.isFinite(lat) || lat < -90 || lat > 90 ||
+         !Number.isFinite(lng) || lng < -180 || lng > 180 ||
+         !Number.isInteger(zoom) || zoom < 4 || zoom > 19){
+        showNotif('أكمل مركز الخريطة الموثوق بإحداثيات صحيحة ومستوى تكبير من 4 إلى 19.');
+        return;
+      }
+      spatialPatch = { mapCenter:{ lat, lng }, mapDefaultZoom:zoom };
+    }
     const manager = {
       name:f.manager.value.trim(),
       email:f.email.value.trim(),
@@ -176,6 +194,7 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
       if(id){
         await updateDoc(doc(db,'organizations', id), {
           ...organization,
+          ...spatialPatch,
           manager:manager.name,
           email:manager.email,
           updatedAt:serverTimestamp()
@@ -193,6 +212,12 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
         });
         if(!result.managerCreated || !result.managerUid || !result.organizationId){
           throw new Error('manager_provisioning_incomplete');
+        }
+        if(Object.keys(spatialPatch).length){
+          await updateDoc(doc(db,'organizations', result.organizationId), {
+            ...spatialPatch,
+            updatedAt:serverTimestamp()
+          });
         }
         showNotif('تم إنشاء المؤسسة ومدير البلدية وربط الحساب بنجاح.');
       }
