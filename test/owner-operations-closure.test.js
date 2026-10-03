@@ -87,3 +87,13 @@ test('Owner organization modal keeps internal notes without creating another own
   assert.match(ownerOrganizations,/notes:f\.notes\.value\.trim\(\)/);
   assert.doesNotMatch(ownerOrganizations,/role:\s*['"]owner['"]/);
 });
+
+
+test('Owner spatial context is saved only through the trusted owner API and audited',()=>{
+  assert.match(ownerOrganizations,/ownerSetOrganizationSpatialContext/);
+  assert.match(ownerOps,/ownerSetOrganizationSpatialContext/);
+  assert.match(ownerOps,/spatial_context_invalid/);
+  assert.match(ownerOps,/organization_spatial_context_set/);
+  assert.match(ownerOps,/mapCenter:\s*\{\s*lat,\s*lng\s*\}/);
+  assert.match(ownerOps,/mapDefaultZoom:\s*zoom/);
+});
