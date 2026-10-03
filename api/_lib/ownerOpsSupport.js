@@ -16,6 +16,7 @@ const OWNER_ACTIONS = new Set([
   'ownerSupportSetStatus',
   'ownerArchiveOrganization',
   'ownerRestoreOrganization',
+  'ownerSetOrganizationSpatialContext',
   'ownerInvoiceUpdate',
   'ownerInvoiceArchive',
   'ownerInvoiceDelete',
@@ -526,6 +527,50 @@ async function handleOwnerProvisioning({ action, body, decoded, db, auth, FieldV
 }
 
 
+async function handleOwnerSpatialContext({ body, decoded, db, FieldValue, sendJson, res }) {
+  const organizationId = cleanText(body.organizationId, 160);
+  const lat = Number(body.mapCenter && body.mapCenter.lat);
+  const lng = Number(body.mapCenter && body.mapCenter.lng);
+  const zoom = Number(body.mapDefaultZoom);
+
+  if (!organizationId) return sendJson(res, 400, { error: 'invalid_request', reason: 'organizationId_required' });
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90 ||
+      !Number.isFinite(lng) || lng < -180 || lng > 180 ||
+      !Number.isInteger(zoom) || zoom < 4 || zoom > 19) {
+    return sendJson(res, 400, { error: 'invalid_request', reason: 'spatial_context_invalid' });
+  }
+
+  const orgRef = db.collection('organizations').doc(organizationId);
+  const orgSnap = await orgRef.get();
+  if (!orgSnap.exists) return sendJson(res, 404, { error: 'organization_not_found' });
+
+  const now = FieldValue.serverTimestamp();
+  await orgRef.set({
+    mapCenter: { lat, lng },
+    mapDefaultZoom: zoom,
+    updatedAt: now,
+  }, { merge: true });
+
+  await db.collection('platformAdminAuditEvents').add({
+    actorUid: decoded.uid,
+    actorRole: 'owner',
+    action: 'organization_spatial_context_set',
+    organizationId,
+    resourceType: 'organization',
+    resourceId: organizationId,
+    detail: { mapCenter: { lat, lng }, mapDefaultZoom: zoom },
+    createdAt: now,
+  });
+
+  return sendJson(res, 200, {
+    ok: true,
+    organizationId,
+    mapCenter: { lat, lng },
+    mapDefaultZoom: zoom,
+  });
+}
+
+
 async function handleOwnerOrganizationLifecycle({ action, body, decoded, db, FieldValue, sendJson, res }) {
   const organizationId = cleanText(body.organizationId, 160);
   if (!organizationId) return sendJson(res, 400, { error: 'invalid_request', reason: 'organizationId_required' });
@@ -743,6 +788,10 @@ async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldVal
     }
     if (action === 'ownerArchiveOrganization' || action === 'ownerRestoreOrganization') {
       await handleOwnerOrganizationLifecycle({ action, body, decoded, db, FieldValue, sendJson, res });
+      return true;
+    }
+    if (action === 'ownerSetOrganizationSpatialContext') {
+      await handleOwnerSpatialContext({ body, decoded, db, FieldValue, sendJson, res });
       return true;
     }
     if (action === 'ownerInvoiceUpdate' || action === 'ownerInvoiceArchive' || action === 'ownerInvoiceDelete') {
