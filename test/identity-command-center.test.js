@@ -69,3 +69,30 @@ test('new surface loads after shared resolver and delegates before legacy fallba
   assert.ok(loader.indexOf("'./workspace-access.js'")<loader.indexOf("'./manager-identity-command-center.js'"));
   assert.match(fs.readFileSync(path.join(root,'manager-phase11d-user-center-enhancements.js'),'utf8'),/U\.commandCenter\.render\(root, app, directory/);
 });
+
+
+test('v4 smart cards are actionable presentation filters',()=>{
+  const source=fs.readFileSync(path.join(root,'manager-identity-command-center.js'),'utf8');
+  assert.match(source,/data-smart="all"/);
+  assert.match(source,/data-smart="active"/);
+  assert.match(source,/data-smart="action"/);
+  assert.match(source,/state\.smartFilter/);
+});
+
+test('v4 hierarchy exposes organizational intelligence and spatial human twin',()=>{
+  const source=fs.readFileSync(path.join(root,'manager-identity-command-center.js'),'utf8');
+  assert.match(source,/ORGANIZATIONAL INTELLIGENCE/);
+  assert.match(source,/icc-org-canvas/);
+  assert.match(source,/icc-spatial-v4/);
+  assert.match(source,/Human Digital Twin/);
+  assert.match(source,/data-mode="hierarchy"/);
+  assert.match(source,/data-mode="spatial"/);
+});
+
+test('edit workflow shows before and after institutional assignment preview',()=>{
+  const source=fs.readFileSync(path.join(root,'manager-identity-command-center.js'),'utf8');
+  assert.match(source,/icc-assignment-preview/);
+  assert.match(source,/التعيين الحالي/);
+  assert.match(source,/بعد الحفظ/);
+  assert.match(source,/تحديث البيانات أو التعيين المؤسسي مع معاينة الأثر قبل الحفظ/);
+});
