@@ -52,3 +52,11 @@ test('new surface is loaded after shared resolver and delegates before legacy pr
 
 
 test("center remains integrated and only task sheets isolate the shell",()=>{const source=fs.readFileSync(path.join(root,"manager-identity-command-center.js"),"utf8");assert.match(source,/setAttribute\('role','region'\)/);assert.doesNotMatch(source,/setAttribute\('aria-modal','true'\)/);assert.doesNotMatch(source,/backdrop=document.createElement/);assert.match(source,/const open=!!document.querySelector\('.iuc'\)/);});
+
+
+test('registry uses administration-first enterprise columns',()=>{
+  const h=harness({org:'org-test',employees:[employee],users:[user]});
+  assert.match(h.surface.innerHTML,/<th>الإدارة<\/th><th>القسم<\/th><th>الدور \/ المسمى<\/th><th>الحساب<\/th>/);
+  assert.doesNotMatch(h.surface.innerHTML,/<th>الخدمات<\/th>/);
+  assert.match(h.surface.innerHTML,/IDENTITY COMMAND CENTER/);
+});
