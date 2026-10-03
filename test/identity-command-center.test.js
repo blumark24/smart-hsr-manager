@@ -96,3 +96,13 @@ test('edit workflow shows before and after institutional assignment preview',()=
   assert.match(source,/بعد الحفظ/);
   assert.match(source,/تحديث البيانات أو التعيين المؤسسي مع معاينة الأثر قبل الحفظ/);
 });
+
+
+test('access tab preserves the service-only save path and hides broad save there',()=>{
+  const source=fs.readFileSync(path.join(root,'manager-identity-command-center.js'),'utf8');
+  assert.doesNotMatch(source,/querySelectorAll\('\.savep,\.saveo,\.saver,\.ucv2-employee360,\.ucv21-role-helper'\)/);
+  assert.match(source,/querySelectorAll\('\.savep,\.saveo,\.ucv2-employee360,\.ucv21-role-helper'\)/);
+  assert.match(source,/const serviceSave=employee\?panel\.querySelector\('\.saver'\):null/);
+  assert.match(source,/serviceSave\.hidden=false/);
+  assert.match(source,/if\(save\) save\.hidden=b\.dataset\.sheetTab==='access'/);
+});
