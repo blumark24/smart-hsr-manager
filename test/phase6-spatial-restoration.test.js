@@ -65,6 +65,34 @@ test('normal context GET retains its original response contract', async () => {
   assert.deepEqual(res.body.mapCenter, { lat: 19.12639, lng: 41.07889 });
   assert.equal(res.body.entities, undefined);
 });
+
+test('current Al Qunfudhah municipality record keeps the safe approximate-center fallback even after organization re-provisioning', async () => {
+  const currentOrg = 'q5dj1a3Zo0aDlcdtpHtE';
+  const records = {
+    'managers/actor': { role: 'manager', active: true, organizationId: currentOrg, organizationName: 'بلدية محافظة القنفذة' },
+    ['organizations/' + currentOrg]: { name: 'بلدية محافظة القنفذة' },
+  };
+  const res = await request(loadHandler(records));
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.organizationId, currentOrg);
+  assert.deepEqual(res.body.mapCenter, { lat: 19.12639, lng: 41.07889 });
+  assert.equal(res.body.mapDefaultZoom, 13);
+  assert.equal(res.body.configured, false);
+});
+
+test('non-Al Qunfudhah organizations never inherit the pilot fallback', async () => {
+  const otherOrg = 'other-org';
+  const records = {
+    'managers/actor': { role: 'manager', active: true, organizationId: otherOrg, organizationName: 'بلدية أخرى' },
+    ['organizations/' + otherOrg]: { name: 'بلدية أخرى' },
+  };
+  const res = await request(loadHandler(records));
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.organizationId, otherOrg);
+  assert.equal(res.body.mapCenter, null);
+  assert.equal(res.body.mapDefaultZoom, null);
+  assert.equal(res.body.configured, false);
+});
 test('disabled account is denied before reference lookup', async () => {
   const res = await request(loadHandler({ 'managers/actor': { role: 'manager', active: false, organizationId: org } }), { geoLayer: 'buildings', bbox: '41,19,42,20' });
   assert.equal(res.statusCode, 403);
