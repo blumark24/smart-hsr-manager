@@ -177,3 +177,99 @@ body .icc-sheet .icc-simulation{border-radius:12px!important;background:var(--ic
   .icc-filter{flex:1 1 calc(50% - 5px)!important;max-width:none!important}
   .icc-split.has-inspector{grid-template-columns:1fr!important}.icc-table{min-width:760px!important}
 }
+
+
+/* Day Comfort Pass — inherited from Manager theme */
+html[data-theme="light"] .icc-host,
+html[data-theme="light"] .icc-sheet-overlay{
+  --icc-bg:#eef2ef;
+  --icc-panel:#f8faf8;
+  --icc-panel-2:#f2f5f2;
+  --icc-panel-3:#e9efeb;
+  --icc-soft:#e7eee9;
+  --icc-text:#173042;
+  --icc-muted:#627486;
+  --icc-line:#ced9d2;
+  --icc-green:#087d57;
+  --icc-green-strong:#076f4f;
+  --icc-cyan:#2c819c;
+  --icc-violet:#6a62b8;
+  --icc-amber:#a96f1e;
+  --icc-danger:#b64f59;
+}
+html[data-theme="light"] .icc-host{
+  background:
+    radial-gradient(520px 220px at 92% -8%,rgba(8,125,87,.08),transparent 60%),
+    linear-gradient(180deg,#f3f6f3,#edf2ef)!important;
+  border-color:#cbd7d0!important;
+  box-shadow:0 20px 56px rgba(35,63,51,.14),inset 0 1px rgba(255,255,255,.88)!important;
+}
+html[data-theme="light"] .icc-host>.icc-app{
+  background:
+    linear-gradient(90deg,rgba(34,74,58,.025) 1px,transparent 1px),
+    linear-gradient(rgba(34,74,58,.025) 1px,transparent 1px),
+    linear-gradient(180deg,#f3f6f3,#eef2ef)!important;
+  background-size:44px 44px,44px 44px,auto!important;
+}
+html[data-theme="light"] .icc-metrics{
+  background:#cfdad3!important;
+  border-color:#cfdad3!important;
+}
+html[data-theme="light"] .icc-metrics>span{
+  background:linear-gradient(180deg,#fbfcfa,#f5f8f5)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.92)!important;
+}
+html[data-theme="light"] .icc-table-wrap,
+html[data-theme="light"] .icc-inspector,
+html[data-theme="light"] .icc-spatial,
+html[data-theme="light"] .icc-tree,
+html[data-theme="light"] .icc-exceptions{
+  background:linear-gradient(180deg,#fbfcfa,#f4f7f4)!important;
+  border-color:#d2ddd6!important;
+  box-shadow:0 8px 24px rgba(39,68,56,.06),inset 0 1px rgba(255,255,255,.95)!important;
+}
+html[data-theme="light"] .icc-table th{
+  background:#edf3ef!important;
+  color:#5d7080!important;
+  border-bottom-color:#d1ddd5!important;
+}
+html[data-theme="light"] .icc-table td{
+  border-bottom-color:#dbe4de!important;
+}
+html[data-theme="light"] .icc-table tbody tr:hover{
+  background:rgba(8,125,87,.045)!important;
+}
+html[data-theme="light"] .icc-table tr.selected{
+  background:rgba(8,125,87,.07)!important;
+}
+html[data-theme="light"] .icc-search input,
+html[data-theme="light"] .icc-filter select,
+html[data-theme="light"] .icc-app button:not(.primary),
+html[data-theme="light"] .icc-avatar-mini{
+  background:#f7f9f7!important;
+  border-color:#cedad2!important;
+}
+html[data-theme="light"] .icc-context,
+html[data-theme="light"] .icc-role,
+html[data-theme="light"] .icc-account{
+  color:#314b5d!important;
+}
+html[data-theme="light"] .icc-app button.primary{
+  background:linear-gradient(180deg,#0b8a63,#087d57)!important;
+  box-shadow:0 8px 20px rgba(8,125,87,.18)!important;
+}
+html[data-theme="light"] .icc-sheet-overlay{
+  background:rgba(30,43,37,.26)!important;
+  backdrop-filter:blur(9px) saturate(.92)!important;
+}
+html[data-theme="light"] .icc-sheet-overlay>.icc-sheet{
+  background:linear-gradient(180deg,#fbfcfa,#eef3ef)!important;
+  border-color:#cbd8d0!important;
+  box-shadow:0 30px 86px rgba(36,58,48,.20),0 6px 22px rgba(36,58,48,.10)!important;
+}
+html[data-theme="light"] .icc-sheet :is(.in,.sel),
+html[data-theme="light"] .icc-sheet .pc,
+html[data-theme="light"] .icc-sheet .icc-simulation{
+  background:#f7f9f7!important;
+  border-color:#d0dbd4!important;
+}
