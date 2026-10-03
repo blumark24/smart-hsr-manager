@@ -34,7 +34,7 @@ const {
   WorkspaceAccess,
 } = require('../_lib/authz');
 const { buildContractorObservationUpdate } = require('../../platform/policies/contractor-observation-workflow');
-const { callLandsTrustedMutation } = require('../_lib/landsBridge');
+const { callLandsTrustedMutation, callLandsMembershipStatus } = require('../_lib/landsBridge');
 const { ensureManagerLandsBootstrap, runBootstrapTransaction } = require('../_lib/landsManagerBootstrap');
 const { resolveLandsSyncOutcome } = require('../_lib/landsSyncReconciliation');
 const {
@@ -3277,6 +3277,105 @@ async function handler(req, res) {
           lands: landsSel.enabled
             ? { enabled: true, role: landsSel.role, syncStatus: landsOutcome.syncStatus, syncError: landsOutcome.syncError }
             : { enabled: false, role: null, syncStatus: null },
+        });
+      }
+
+      // ---- reconcile an existing pending Lands declaration against the authoritative Lands membership ----
+      // Recovery-only path: performs NO entitlement mutation on Lands. It reads
+      // Lands' authoritative membership for this uid and only repairs the
+      // Manager-side mirror when every identity/tenant/role field matches
+      // exactly. A mismatch or bridge failure is fail-closed and writes nothing.
+      case 'reconcileLandsAccess': {
+        const { uid } = body;
+        if (!isNonEmptyString(uid)) return sendJson(res, 400, { error: 'uid_required' });
+
+        const record = await findRecord(db, uid);
+        if (!record || record.collection !== 'users') {
+          return sendJson(res, 404, { error: 'record_not_found' });
+        }
+
+        const municipalityId = record.data.organizationId;
+        if (!caller.isOwner) {
+          if (!caller.isManager || municipalityId !== caller.organizationId) {
+            return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
+          }
+        }
+
+        const access = record.data.landsAccess;
+        if (!access || access.enabled !== true || !isNonEmptyString(access.role)) {
+          return sendJson(res, 409, { error: 'invalid_request', reason: 'lands_access_not_declared' });
+        }
+
+        if (access.syncStatus === 'synced') {
+          return sendJson(res, 200, {
+            uid,
+            lands: { enabled: true, role: access.role, syncStatus: 'synced' },
+            alreadySynced: true,
+          });
+        }
+
+        const status = await callLandsMembershipStatus({
+          idToken: rawToken,
+          municipalityId,
+          targetUid: uid,
+        });
+
+        if (!status || status.ok !== true) {
+          return sendJson(res, 503, {
+            error: 'lands_reconciliation_unavailable',
+            reason: status && status.reason ? status.reason : 'lands_membership_status_failed',
+          });
+        }
+
+        const matchesExactly = Boolean(
+          status.exists === true &&
+          status.firebase_uid === uid &&
+          status.municipality_id === municipalityId &&
+          status.enabled === true &&
+          status.lands_role === access.role
+        );
+
+        if (!matchesExactly) {
+          return sendJson(res, 409, {
+            error: 'lands_reconciliation_mismatch',
+            reason: 'authoritative_membership_mismatch',
+            authoritative: {
+              exists: status.exists === true,
+              enabled: status.enabled === true,
+              role: status.lands_role || null,
+            },
+          });
+        }
+
+        const reconciledAccess = {
+          ...access,
+          syncStatus: 'synced',
+          reconciledBy: caller.uid,
+          reconciledAt: FieldValue.serverTimestamp(),
+        };
+        delete reconciledAccess.syncError;
+
+        await record.ref.set({
+          landsAccess: reconciledAccess,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        await recordAdminAudit(db, {
+          caller,
+          organizationId: municipalityId,
+          targetUid: uid,
+          action: 'reconcile_lands_access',
+          detail: {
+            role: access.role,
+            previousSyncStatus: access.syncStatus || null,
+            source: 'authoritative_membership_readback',
+          },
+        });
+
+        return sendJson(res, 200, {
+          uid,
+          lands: { enabled: true, role: access.role, syncStatus: 'synced' },
+          reconciled: true,
         });
       }
 
