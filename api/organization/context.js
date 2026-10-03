@@ -166,11 +166,21 @@ async function resolveRoleContext(db, uid) {
   return null;
 }
 
+function isAlQunfudhahPilotOrganization(organizationId, organizationName, organizationData) {
+  if (organizationId === ALQUNFUDHAH_ORGANIZATION_ID) return true;
+  const label = [
+    cleanText(organizationName),
+    cleanText(organizationData && organizationData.name),
+    cleanText(organizationData && organizationData.organizationName),
+  ].filter(Boolean).join(' ').toLowerCase().replace(/\s+/g, ' ');
+  return label.includes('القنفذة') || /al[\s-]*qunfudhah/.test(label);
+}
+
 function sanitizedMapContext(organizationId, organizationName, organizationData) {
   const configuredCenter = cleanCenter(organizationData.mapCenter);
   const configuredZoom = Number.isInteger(organizationData.mapDefaultZoom) && organizationData.mapDefaultZoom >= 4 && organizationData.mapDefaultZoom <= 19 ? organizationData.mapDefaultZoom : null;
   const configured = !!(configuredCenter && configuredZoom);
-  const fallbackEligible = organizationId === ALQUNFUDHAH_ORGANIZATION_ID;
+  const fallbackEligible = isAlQunfudhahPilotOrganization(organizationId, organizationName, organizationData);
   return {
     organizationId,
     organizationName: cleanText(organizationData.organizationName, cleanText(organizationData.name, cleanText(organizationName, organizationId))),
