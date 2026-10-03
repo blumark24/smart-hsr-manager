@@ -250,7 +250,7 @@
         groups.account.push(panel.querySelector('[data-step-pane="4"]'));
       }
       panel.querySelectorAll('.wiz-steps,.ucv21-progress,.ucv21-profile-nav,.wiz-prev,.wiz-next,.tabs,.hier,.wiz-role-seg,.wiz-role-desc,.ucv21-role-seg').forEach(el=>el.hidden=true);
-      panel.querySelectorAll('.savep,.saveo,.saver,.ucv2-employee360,.ucv21-role-helper').forEach(el=>el.hidden=true);
+      panel.querySelectorAll('.savep,.saveo,.ucv2-employee360,.ucv21-role-helper').forEach(el=>el.hidden=true);
       panel.querySelectorAll('.ucv21-step-panel').forEach(el=>{el.classList.remove('ucv21-step-hidden');el.hidden=false;});
       const role=panel.querySelector('#inst-role');if(role?.closest('.f')){role.closest('.f').hidden=false;role.closest('.f').classList.remove('ucv21-role-native');}
       const nav=document.createElement('nav');nav.className='icc-sheet-tabs';nav.setAttribute('aria-label','أقسام الموظف');
@@ -309,6 +309,19 @@
       if(employee?.authUid){const controls=document.createElement('div');controls.className='act';controls.innerHTML=button('إنهاء الجلسات','class="btn"');controls.firstElementChild.onclick=()=>sensitive(employee,'sessions');panel.querySelector('[data-sheet-section="account"]').append(controls);const sync=userFor(employee)?.landsAccess;if(sync?.enabled&&sync.syncStatus){const note=document.createElement('p');note.textContent='مزامنة الأراضي: '+sync.syncStatus;controls.before(note);}}
       panel.scrollTop=0;
       const save=panel.querySelector(employee?'.ucv21-save':'.save'),originalSave=save?.onclick;
+      // Gate 2 P1 — preserve the existing service-only save path inside
+      // "الإدارة والوصول". The command-center wrapper must never force a
+      // permissions-only change through the broad employee save because that
+      // can also persist inferred organization fields (e.g. department).
+      const serviceSave=employee?panel.querySelector('.saver'):null;
+      if(serviceSave){
+        serviceSave.hidden=false;
+        serviceSave.textContent='حفظ الصلاحيات والخدمات';
+        nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+          if(save) save.hidden=b.dataset.sheetTab==='access';
+        }));
+        if(save&&initial==='access') save.hidden=true;
+      }
       if(save&&originalSave)save.onclick=async event=>{
         const name=panel.querySelector(employee?'#edit-name':'#add-name');
         if(!U.clean(name?.value)){show('data');name?.focus();const msg=panel.querySelector(employee?'.ucv21-profile-msg':'.msg');msg.textContent='اسم الموظف مطلوب.';msg.classList.add('er');return;}
