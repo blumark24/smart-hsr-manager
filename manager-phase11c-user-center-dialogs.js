@@ -134,7 +134,7 @@ U.add=async()=>{
       if(!email)return msg.className='msg er',msg.textContent='بريد الدخول مطلوب.';
       if(pw!==c.querySelector('#pw2').value)return msg.className='msg er',msg.textContent='كلمتا المرور غير متطابقتين.';
       if(!U.strongPw(pw))return msg.className='msg er',msg.textContent='كلمة المرور: 8 أحرف مع كبير وصغير ورقم ورمز.';
-      try{x=U.readProducts(c,roleSelect.value)}catch(er){return msg.className='msg er',msg.textContent=er.reason==='field_head_not_ready'?'رئيس قسم الحصر يحتاج صلاحية قسمية مستقلة قبل تفعيله.':'فعّل منتجًا واحدًا على الأقل.'}
+      try{x=U.readProducts(c,roleSelect.value)}catch(er){return msg.className='msg er',msg.textContent=U.why(er.reason||er.message)}
     }
     b.disabled=true;prevBtn.disabled=true;msg.className='msg';msg.textContent='جاري الحفظ...';
     try{

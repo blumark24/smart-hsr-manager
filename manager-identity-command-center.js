@@ -1,0 +1,169 @@
+/* Presentation owner for the municipal identity window. All mutations continue
+ * through InstitutionalUC; the shared workspace resolver remains authoritative. */
+(() => {
+  'use strict';
+  const U = window.SmartHSRInstitutionalUC;
+  if (!U || U.commandCenter) return;
+  const esc = U.esc;
+  const services = {field:'الحصر',lands:'الأراضي',mobility:'الحركة'};
+  const roles = {manager:'مدير البلدية',general_supervisor:'مشرف عام',department_head:'رئيس قسم',employee:'موظف'};
+  const state = {view:'registry',mode:'hierarchy',selected:null,search:'',admin:'',role:'',service:'',status:'',page:1,zoom:1};
+  let current, refresh, host, surface, priorFocus, backdrop;
+  const isolated = new Map();
+  const account = e => !e.authUid ? 'بدون حساب' : e.accountStatus === 'SUSPENDED' ? 'معطل' : e.accountStatus === 'PENDING_ACTIVATION' ? 'تحتاج مراجعة' : e.employmentStatus === 'inactive' ? 'مؤرشف' : 'نشط';
+  const userFor = e => current.users.find(u => u.uid === e.authUid);
+  function unlinkedAccounts(){return current.users.filter(u=>!current.employees.some(e=>e.authUid===u.uid));}
+  function accountInspector(u){return `<aside class="icc-inspector" aria-label="ملف الموظف"><div class="icc-between"><h2>${esc(u.name||u.email||u.uid)}</h2>${button('×','data-dismiss aria-label="إغلاق ملف الموظف"')}</div><p class="icc-muted">حساب غير مرتبط بسجل موظف</p><dl>${[['المؤسسة',u.organizationId],['البريد',u.email],['الدور',roles[u.institutionalRole]||u.role],['الإدارة',u.administration],['القسم',u.department]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v||'—')}</dd></div>`).join('')}</dl><h3>مساحات العمل المصرح بها</h3>${window.SmartHSRWorkspaceAccess.resolveWorkspaces(u).workspaces.map(w=>`<p>✓ ${esc(w.title)}</p>`).join('')||'<p>لا توجد مساحة مؤكدة.</p>'}<p class="note">تعديل الموظف يتطلب سجلًا مؤسسيًا مرتبطًا؛ لا يتم إنشاء سجل أو ربطه تلقائيًا.</p></aside>`;}
+  const enabled = e => Object.keys(services).filter(k => U.state(e,k).en);
+  function exceptions(e) {
+    const issues = [];
+    if (account(e) !== 'نشط') issues.push(account(e));
+    if (e.authUid && !userFor(e)) issues.push('غير مرتبط بسجل حساب');
+    if (!e.administration || !e.department) issues.push('تعيين مؤسسي غير مكتمل');
+    const sync = userFor(e)?.landsAccess?.syncStatus;
+    if (userFor(e)?.landsAccess?.enabled && sync && !['synced','success','ready'].includes(sync)) issues.push('مزامنة الأراضي: '+sync);
+    return issues;
+  }
+  function resolution(e, products) {
+    if (!products) return window.SmartHSRWorkspaceAccess.resolveWorkspaces(userFor(e) || {organizationId:current.org,active:false});
+    // Mirror the existing U.sync payload for a proposed selection, without I/O.
+    const role = products.field.enabled ? products.field.role : products.mobility.enabled ? products.mobility.role : products.lands.enabled ? products.lands.role : 'employee';
+    return window.SmartHSRWorkspaceAccess.resolveWorkspaces({organizationId:current.org,active:true,institutionalRole:e.institutionalRole,administration:e.administration,department:e.department,role,landsAccess:products.lands,mobilityAccess:products.mobility,vehicleEligible:products.vehicleEligible});
+  }
+  const button = (label,attrs='') => `<button type="button" ${attrs}>${label}</button>`;
+  const chips = e => enabled(e).map(k=>`<span class="icc-chip ${k}">${services[k]}</span>`).join(' ') || '<span class="icc-muted">—</span>';
+  function select(label,key,values) {
+    return `<label class="icc-filter"><span>${label}</span><select data-filter="${key}" aria-label="${label}"><option value="">الكل</option>${values.map(v=>`<option value="${esc(v[0])}" ${state[key]===v[0]?'selected':''}>${esc(v[1])}</option>`).join('')}</select></label>`;
+  }
+  function inspector(e) {
+    const r=resolution(e), issues=exceptions(e), sync=userFor(e)?.landsAccess?.enabled?userFor(e)?.landsAccess?.syncStatus:null;
+    return `<aside class="icc-inspector" aria-label="ملف الموظف"><div class="icc-between"><span class="icc-muted">USER INSPECTOR</span>${button('×','data-dismiss aria-label="إغلاق ملف الموظف"')}</div><div class="icc-person"><span class="icc-avatar">${esc((e.name||'م')[0])}</span><div><h2>${esc(e.name)}</h2><span>${esc(e.employeeRef||'—')} · ${esc(e.jobTitle||roles[U.inst(e)])}</span></div></div><div class="icc-health"><span class="icc-ring">${issues.length?'!':'✓'}</span><div><b>صحة الهوية التشغيلية</b><p>${issues.length?esc(issues.join(' · ')):'لا توجد استثناءات في البيانات المتاحة'}</p></div></div><div class="icc-pulse" dir="ltr">Identity ${e.department?'✓':'⚠'} · Access ${r.workspaces.length?'✓':'⚠'} · Account ${account(e)==='نشط'?'✓':'⚠'} · Session — · Sync ${sync?esc(sync):'—'}</div><p class="icc-muted">حالة الجلسة غير متاحة في السجل الحالي.</p><dl>${[['المؤسسة',current.org],['الإدارة',e.administration],['القسم',e.department],['الدور',roles[U.inst(e)]],['الحساب',account(e)],['بريد الدخول',userFor(e)?.email||e.email]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v||'—')}</dd></div>`).join('')}</dl><h3>مساحات العمل المصرح بها</h3>${r.workspaces.length?r.workspaces.map(w=>`<p>✓ ${esc(w.title)}</p>`).join(''):'<p class="icc-muted">لا توجد مساحة مؤكدة من سجل الحساب.</p>'}<div class="icc-actions">${button('تعديل الموظف','data-edit class="primary"')}${button('الحساب والأمان','data-security') }<details><summary aria-label="إجراءات الموظف">⋯</summary>${e.authUid?button('تعطيل حساب الدخول','data-sensitive="disable"')+button('إنهاء الجلسات','data-sensitive="sessions"'):''}${button('حذف / أرشفة','data-sensitive="remove"')}</details></div></aside>`;
+  }
+  function registry(rows) {
+    const filtered=rows.filter(e=>(!state.search||`${e.name} ${e.employeeRef||''} ${e.email||''}`.toLowerCase().includes(state.search.toLowerCase()))&&(!state.admin||e.administration===state.admin)&&(!state.role||U.inst(e)===state.role)&&(!state.service||enabled(e).includes(state.service))&&(!state.status||account(e)===state.status));
+    state.page=Math.min(state.page,Math.max(1,Math.ceil(filtered.length/25)));
+    const page=filtered.slice((state.page-1)*25,state.page*25);
+    return `<div class="icc-toolbar"><label class="icc-search"><span class="sr-only">بحث المستخدمين</span><input type="search" data-search value="${esc(state.search)}" placeholder="اسم / رقم وظيفي / بريد · Ctrl K" aria-label="بحث المستخدمين"></label>${select('الإدارة','admin',[...new Set(rows.map(e=>e.administration).filter(Boolean))].map(v=>[v,v]))}${select('الدور','role',Object.entries(roles))}${select('الخدمة','service',Object.entries(services))}${select('الحساب','status',['نشط','بدون حساب','معطل','تحتاج مراجعة','مؤرشف'].map(v=>[v,v]))}${button('+ إضافة موظف','data-add class="primary"')}</div><div class="icc-table-wrap"><table class="icc-table"><thead><tr>${['الموظف','التعيين','الدور / المسمى','الخدمات','الحساب','الإجراءات'].map(t=>`<th>${t}</th>`).join('')}</tr></thead><tbody>${page.map(e=>`<tr class="${state.selected===e.employeeId?'selected':''}"><td>${button(`<b>${esc(e.name)}</b><small>${esc(e.employeeRef||'—')}</small>`,`data-person="${esc(e.employeeId)}" class="icc-name"`)}</td><td>${esc(e.administration||'—')}<small>${esc(e.department||'—')}</small></td><td>${esc(e.jobTitle||roles[U.inst(e)])}<small>${esc(roles[U.inst(e)])}</small></td><td>${chips(e)}</td><td><span class="icc-chip">${account(e)}</span></td><td>${button('⋯',`data-person="${esc(e.employeeId)}" aria-label="إجراءات ${esc(e.name)}"`)}</td></tr>`).join('')||'<tr><td colspan="6">لا توجد نتائج مطابقة.</td></tr>'}</tbody></table></div><footer class="icc-between"><span class="icc-muted">${filtered.length} سجل · صفحة ${state.page}</span><div>${button('السابق',`data-page="-1" ${state.page===1?'disabled':''}`)} ${button('التالي',`data-page="1" ${state.page*25>=filtered.length?'disabled':''}`)}</div></footer>`;
+  }
+  function hierarchy(rows) {
+    const groups=new Map();
+    rows.forEach(e=>{const admin=e.administration||'غير معيّن',dept=e.department||'بدون قسم';if(!groups.has(admin))groups.set(admin,new Map());const departments=groups.get(admin);if(!departments.has(dept))departments.set(dept,[]);departments.get(dept).push(e);});
+    const employeeNode=e=>button(`<span class="icc-node-dot ${enabled(e)[0]||''}"></span>${esc(e.name)}<small>${esc(roles[U.inst(e)])} ${exceptions(e).length?'⚠':''}</small>`,`data-person="${esc(e.employeeId)}" class="icc-node"`);
+    return `<div class="icc-between"><h2>الهيكل المؤسسي</h2><div>${button('هيكلي',`data-mode="hierarchy" aria-pressed="${state.mode==='hierarchy'}"`)} ${button('مكاني',`data-mode="spatial" aria-pressed="${state.mode==='spatial'}"`)}</div></div>${state.mode==='hierarchy'?`<div class="icc-tree"><h3>البلدية · ${esc(current.org)}</h3>${[...groups].map(([a,depts])=>`<details open><summary>${esc(a)}</summary>${[...depts].map(([d,people])=>`<details open><summary>${esc(d)} · ${people.length}</summary><div class="icc-nodes">${people.slice().sort((a,b)=>(U.inst(a)==='department_head'?-1:1)-(U.inst(b)==='department_head'?-1:1)).map(employeeNode).join('')}</div></details>`).join('')}</details>`).join('')}</div>`:`<div class="icc-between"><span class="icc-muted">الأقسام والموظفون · اسحب مساحة العرض أو استخدم التمرير</span><div>${button('−','data-zoom="-0.1" aria-label="تصغير"')}${button('+','data-zoom="0.1" aria-label="تكبير"')}${button('إعادة ضبط','data-zoom="reset"')}</div></div><div class="icc-spatial" tabindex="0" aria-label="التوأم المكاني"><div class="icc-topology" style="zoom:${state.zoom}"><h3>البلدية · ${esc(current.org)}</h3><div class="icc-departments">${[...groups].flatMap(([a,depts])=>[...depts].map(([d,people])=>`<section class="icc-department"><h3>${esc(d)}</h3><p class="icc-muted">${esc(a)}</p><div class="icc-nodes">${people.map(employeeNode).join('')}</div></section>`)).join('')}</div></div></div>`}`;
+  }
+  function paint() {
+    if(!surface?.isConnected)return;
+    const rows=current.employees, e=rows.find(e=>e.employeeId===state.selected),unlinked=unlinkedAccounts().find(u=>'account:'+u.uid===state.selected);
+    const metrics=[['إجمالي المستخدمين',rows.length+current.users.filter(u=>!rows.some(e=>e.authUid===u.uid)).length],['نشط',rows.filter(e=>account(e)==='نشط').length],['بدون حساب',rows.filter(e=>!e.authUid).length],...Object.entries(services).map(([k,v])=>[v,rows.filter(e=>enabled(e).includes(k)).length]),['تحتاج مراجعة',rows.filter(e=>exceptions(e).length).length]];
+    surface.innerHTML=`<header class="icc-header"><div><span class="icc-muted" dir="ltr">SMART HSR · IDENTITY COMMAND CENTER</span><h1>مركز المستخدمين</h1></div></header><nav class="icc-tabs" aria-label="أقسام مركز المستخدمين">${[['registry','السجل'],['hierarchy','الهيكل المؤسسي'],['health','صحة الحسابات']].map(([v,l])=>button(l,`data-view="${v}" aria-current="${state.view===v?'page':'false'}"`)).join('')}</nav><div class="icc-metrics">${metrics.map(([l,n])=>`<span>${l} <b>${n}</b></span>`).join('')}</div><div class="icc-split ${e?'has-inspector':''}"><section class="icc-content">${state.view==='registry'?registry(rows):state.view==='hierarchy'?hierarchy(rows):`<h2>حالات تحتاج تدخلًا</h2><div class="icc-exceptions">${rows.filter(e=>exceptions(e).length).map(e=>button(`<b>${esc(e.name)}</b><span>${esc(exceptions(e).join(' · '))}</span>`,`data-person="${esc(e.employeeId)}"`)).join('')||'<p>لا توجد استثناءات في السجلات المتاحة.</p>'}${current.users.filter(u=>!rows.some(e=>e.authUid===u.uid)).map(u=>`<button type="button" class="icc-unlinked" data-person="account:${esc(u.uid)}"><b>${esc(u.name||u.email||u.uid)}</b><p>حساب غير مرتبط بسجل موظف</p></button>`).join('')}</div>`}</section>${e?inspector(e):unlinked?accountInspector(unlinked):''}</div><div class="icc-feedback" role="status" aria-live="polite"></div>`;
+    surface.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;paint();});
+    surface.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{state.selected=b.dataset.person;paint();surface.querySelector('[data-edit]')?.focus();});
+    surface.querySelector('[data-dismiss]')?.addEventListener('click',()=>{state.selected=null;paint();});
+    surface.querySelectorAll('[data-filter]').forEach(c=>c.onchange=()=>{state[c.dataset.filter]=c.value;state.page=1;paint();});
+    surface.querySelector('[data-search]')?.addEventListener('input',event=>{const p=event.target.selectionStart;state.search=event.target.value;state.page=1;paint();const input=surface.querySelector('[data-search]');input.focus();if(p!==null)input.setSelectionRange(p,p);});
+    surface.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{state.page+=Number(b.dataset.page);paint();});
+    surface.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;paint();});
+    surface.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{state.zoom=b.dataset.zoom==='reset'?1:Math.max(.6,Math.min(1.6,state.zoom+Number(b.dataset.zoom)));paint();});
+    surface.querySelector('[data-add]')?.addEventListener('click',()=>openEditor());
+    surface.querySelector('[data-edit]')?.addEventListener('click',()=>openEditor(e));
+    surface.querySelector('[data-security]')?.addEventListener('click',()=>openEditor(e,'account'));
+    surface.querySelectorAll('[data-sensitive]').forEach(b=>b.onclick=()=>sensitive(e,b.dataset.sensitive));
+    const spatial=surface.querySelector('.icc-spatial');
+    if(spatial){let drag;spatial.onpointerdown=ev=>{if(ev.target.closest('button'))return;drag={x:ev.clientX,y:ev.clientY,left:spatial.scrollLeft,top:spatial.scrollTop};spatial.setPointerCapture(ev.pointerId);};spatial.onpointermove=ev=>{if(drag){spatial.scrollLeft=drag.left+drag.x-ev.clientX;spatial.scrollTop=drag.top+drag.y-ev.clientY;}};spatial.onpointerup=()=>drag=null;spatial.onpointercancel=()=>drag=null;}
+  }
+  async function sensitive(e,action) {
+    const title={remove:'حذف / أرشفة الموظف',disable:'تعطيل حساب الدخول',sessions:'إنهاء الجلسات'}[action];
+    const s=U.shell('iuc-impact',title,e.name,`<div class="sec"><p>السجل: ${esc(e.name)} · الحسابات المرتبطة: ${e.authUid?1:0} · الخدمات المفعلة: ${enabled(e).length}</p><p>الموظفون التابعون: ${current.employees.filter(x=>x.directManagerEmployeeId===e.employeeId).length}</p><p class="note">${action==='remove'?'الخادم يحدد الحذف للسجل غير المستخدم أو الأرشفة مع حفظ التاريخ. عدد المهام والجلسات غير متاح.':'يُعتمد الإجراء بعد تأكيد الخادم فقط.'}</p></div><div class="act">${button('تأكيد','class="btn bad save"')}${action==='remove'&&e.authUid?button('تعطيل بدل الحذف','class="btn alternative"'):''}${button('إلغاء','class="btn cancel"')}</div><div class="msg"></div>`,true);
+    styleSheet(s.c);s.c.querySelector('.cancel').onclick=s.close;
+    async function run(kind) {const b=s.c.querySelector('.save'),msg=s.c.querySelector('.msg');b.disabled=true;s.m.dataset.busy='true';msg.textContent='جاري التنفيذ…';try{if(kind==='sessions')await U.post('/api/admin/users',{action:'revokeSessions',uid:e.authUid});else await U.post('/api/admin/employees',kind==='remove'?{action:'removeEmployee',employeeId:e.employeeId}:{action:'setAccountStatus',employeeId:e.employeeId,status:'SUSPENDED'});await refresh();msg.textContent='تم التنفيذ ✓';delete s.m.dataset.busy;b.disabled=false;s.close();}catch(error){msg.textContent=U.why(error.reason||error.message);delete s.m.dataset.busy;b.disabled=false;}}
+    s.c.querySelector('.save').onclick=()=>run(action);s.c.querySelector('.alternative')?.addEventListener('click',()=>run('disable'));
+  }
+  function styleSheet(panel) {panel.classList.add('icc-sheet');panel.closest('.iuc').classList.add('icc-sheet-overlay');}
+  const baseShell=U.shell,baseWhy=U.why;
+  U.why=reason=>{const message=baseWhy(reason);if(message!=='تعذر تنفيذ الإجراء.'||!reason)return message;return /^[a-z0-9_.-]+$/i.test(String(reason))?`${message} (${String(reason).slice(0,120)})`:String(reason).slice(0,240);};
+  U.shell=(...args)=>{
+    const previous=document.querySelector('.iuc');
+    if(previous){if(previous.dataset.busy==='true')throw Error('request_in_progress');previous.querySelector('.ix')?.click();}
+    const shell=baseShell(...args);styleSheet(shell.c);
+    if(host)host.inert=true;
+    return shell;
+  };
+  function syncSheetIsolation(){const open=!!document.querySelector('.iuc');if(open&&host?.isConnected){for(let branch=host;branch&&branch!==document.body;branch=branch.parentElement){for(const sibling of branch.parentElement?.children||[]){if(sibling===branch||sibling.matches('script,style,link,.iuc'))continue;if(!isolated.has(sibling)){isolated.set(sibling,sibling.inert);sibling.inert=true;}}}host.inert=true;}else{if(host)host.inert=false;for(const [node,value] of isolated)node.inert=value;isolated.clear();}}
+  const sheetObserver=new MutationObserver(syncSheetIsolation);
+  sheetObserver.observe(document.body,{childList:true});
+  async function openEditor(employee,initial='data') {
+    if(document.querySelector('.iuc'))return;
+    try{if(employee)await U.profile(employee);else await U.add();
+      const panel=document.querySelector(employee?'#iuc-profile > div':'#iuc-add > div');
+      if(!panel)return;
+      styleSheet(panel);
+      panel.classList.remove('ucv21-single-page');
+      const groups={data:[],access:[],account:[]};
+      if(employee){
+        ['p','o'].forEach(id=>groups.data.push(panel.querySelector(`.pane[data-id="${id}"]`)));
+        groups.access.push(panel.querySelector('.pane[data-id="r"]'));
+        groups.account.push(panel.querySelector('.pane[data-id="a"]'));
+      }else{
+        [1,2].forEach(id=>groups.data.push(panel.querySelector(`[data-step-pane="${id}"]`)));
+        groups.access.push(panel.querySelector('[data-step-pane="3"]'));
+        groups.account.push(panel.querySelector('[data-step-pane="4"]'));
+      }
+      panel.querySelectorAll('.wiz-steps,.ucv21-progress,.ucv21-profile-nav,.wiz-prev,.wiz-next,.tabs,.hier,.wiz-role-seg,.wiz-role-desc,.ucv21-role-seg').forEach(el=>el.hidden=true);
+      panel.querySelectorAll('.savep,.saveo,.saver,.ucv2-employee360,.ucv21-role-helper').forEach(el=>el.hidden=true);
+      panel.querySelectorAll('.ucv21-step-panel').forEach(el=>{el.classList.remove('ucv21-step-hidden');el.hidden=false;});
+      const role=panel.querySelector('#inst-role');if(role?.closest('.f')){role.closest('.f').hidden=false;role.closest('.f').classList.remove('ucv21-role-native');}
+      const nav=document.createElement('nav');nav.className='icc-sheet-tabs';nav.setAttribute('aria-label','أقسام الموظف');
+      nav.innerHTML=[['data','البيانات'],['access','الوصول'],['account','الحساب']].map(([k,l])=>button(l,`data-sheet-tab="${k}"`)).join('');panel.querySelector('.ih').after(nav);
+      const content=document.createElement('div');content.className='icc-sheet-content';nav.after(content);
+      Object.entries(groups).forEach(([key,nodes])=>{const section=document.createElement('section');section.dataset.sheetSection=key;nodes.filter(Boolean).forEach(n=>{n.hidden=false;section.append(n);});content.append(section);});
+      const footer=panel.querySelector(employee?'.ucv21-profile-footer':'.wiz-footer');if(footer)panel.append(footer);
+      const passwordFields=panel.querySelector('.ucv21-password-inline');
+      if(passwordFields)panel.querySelector('[data-sheet-section="account"]').append(passwordFields);
+      const history=panel.querySelector('.ucv21-history-wrap');
+      if(history){const detail=document.createElement('details');detail.innerHTML='<summary>السجل والتكليفات</summary>';detail.append(history);panel.querySelector('[data-sheet-section="account"]').append(detail);}
+      // Retain original nodes for captured validation callbacks; their empty
+      // wizard surface no longer participates in layout.
+      panel.querySelector('.wiz')?.setAttribute('hidden','');
+      panel.querySelector('.ucv21-profile-stage')?.setAttribute('hidden','');
+      panel.querySelector('.save')?.removeAttribute('hidden');
+      const simulation=document.createElement('aside');simulation.className='icc-simulation';groups.access[0]?.append(simulation);
+      const presets=document.createElement('select');presets.setAttribute('aria-label','إعداد سريع');presets.innerHTML='<option value="">إعداد سريع — راجع قبل الحفظ</option>'+['رئيس قسم الحصر','مراقب ميداني','رئيس الأراضي','موظف أراضي','رئيس الحركة','رئيس الشؤون الإدارية','موظف حركة'].map((l,i)=>`<option value="${i}">${l}</option>`).join('');groups.access[0]?.prepend(presets);
+      presets.onchange=()=>{if(presets.value==='')return;const index=Number(presets.value),service=index<2?'field':index<4?'lands':'mobility',head=[0,2,4,5].includes(index);role.value=head?'department_head':'employee';role.dispatchEvent(new Event('change',{bubbles:true}));panel.querySelectorAll('.pc').forEach(p=>{const toggle=p.querySelector('.pe');toggle.checked=p.dataset.p===service;toggle.dispatchEvent(new Event('change',{bubbles:true}));const lv=p.querySelector('[id^="lv-"]');if(lv&&p.dataset.p===service){lv.value=head?'head':'employee';lv.dispatchEvent(new Event('change',{bubbles:true}));}});const mobility=panel.querySelector('.pc[data-p="mobility"] .ctl');if(service==='mobility'&&head&&!panel.querySelector('#mob-scope'))mobility.insertAdjacentHTML('beforeend',U.sel('نطاق رئيس القسم','mob-scope',index===5?'administrative_affairs':'mobility_head',[['department_head','رئيس قسم محدد'],['mobility_head','رئيس الحركة'],['administrative_affairs','الشؤون الإدارية']]));else if(service==='mobility'&&head)panel.querySelector('#mob-scope').value=index===5?'administrative_affairs':'mobility_head';updateSimulation();};
+      function show(key){panel.querySelectorAll('[data-sheet-section]').forEach(s=>s.hidden=s.dataset.sheetSection!==key);nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',b.dataset.sheetTab===key?'page':'false'));}
+      nav.querySelectorAll('button').forEach(b=>b.onclick=()=>show(b.dataset.sheetTab));show(initial);
+      function updateSimulation(){
+        const prefix=employee?'edit':'add',mobilityOn=panel.querySelector('.pc[data-p="mobility"] .pe')?.checked;
+        const vehicle=panel.querySelector('.vehicle-eligibility-control');if(vehicle)vehicle.hidden=!mobilityOn;
+        try{const clone=panel.cloneNode(true);panel.querySelectorAll('input,select').forEach((input,i)=>{const copy=clone.querySelectorAll('input,select')[i];copy.value=input.value;if('checked'in input)copy.checked=input.checked;});const products=U.readProducts(clone,role.value);const r=resolution({administration:panel.querySelector(`#${prefix}-admin`)?.value,department:panel.querySelector(`#${prefix}-dept`)?.value,institutionalRole:role.value},products);
+          simulation.innerHTML='<h3>محاكاة الوصول قبل الحفظ</h3>'+Object.entries(services).map(([k,l])=>`<p>${r.workspaces.some(w=>w.id===k)?'✓':'×'} ${l}</p>`).join('')+`<p>${r.workspaces.some(w=>w.route==='manager.html')?'✓':'×'} لوحة مدير البلدية</p><p>المساحة الأساسية: ${esc(r.workspaces.find(w=>w.id===r.primary)?.title||'غير معيّنة')}</p>`+(products.vehicleEligible&&!mobilityOn?'<p class="note">أهلية المركبة تحتاج وصول الحركة لتصبح فعالة؛ راجع الإعداد الحالي.</p>':'');
+        }catch(error){simulation.innerHTML=`<h3>محاكاة الوصول</h3><p role="alert">${esc(U.why(error.reason||error.message))}</p>`;}
+      }
+      panel.addEventListener('input',updateSimulation);panel.addEventListener('change',updateSimulation);updateSimulation();
+      if(employee?.authUid){const controls=document.createElement('div');controls.className='act';controls.innerHTML=button('إنهاء الجلسات','class="btn"');controls.firstElementChild.onclick=()=>sensitive(employee,'sessions');panel.querySelector('[data-sheet-section="account"]').append(controls);const sync=userFor(employee)?.landsAccess;if(sync?.enabled&&sync.syncStatus){const note=document.createElement('p');note.textContent='مزامنة الأراضي: '+sync.syncStatus;controls.before(note);}}
+      panel.scrollTop=0;
+      const save=panel.querySelector(employee?'.ucv21-save':'.save'),originalSave=save?.onclick;
+      if(save&&originalSave)save.onclick=async event=>{
+        const name=panel.querySelector(employee?'#edit-name':'#add-name');
+        if(!U.clean(name?.value)){show('data');name?.focus();const msg=panel.querySelector(employee?'.ucv21-profile-msg':'.msg');msg.textContent='اسم الموظف مطلوب.';msg.classList.add('er');return;}
+        const label=save.textContent;save.textContent='جاري الحفظ…';
+        try{await originalSave(event);}finally{if(save.isConnected){if(panel.querySelector('.msg.ok,.ucv21-profile-msg.ok'))save.textContent='تم الحفظ ✓';else save.textContent=label;}}
+      };
+      // Replace nested password sheet with existing inline password fields.
+      panel.querySelector('.pwbtn')?.addEventListener('click',event=>{event.stopImmediatePropagation();panel.querySelector('#ucv21-npw')?.focus();},true);
+    }catch(error){surface.querySelector('.icc-feedback').textContent=U.why(error.reason||error.message);}
+  }
+  function render(root,app,directory,reload){
+    current=directory;refresh=reload;host=root;surface=app;root.classList.add('icc-host');app.classList.add('icc-app');
+    root.setAttribute('role','region');root.setAttribute('aria-label','مركز المستخدمين');
+    if(!root.dataset.iccOpened){root.dataset.iccOpened='true';Object.assign(state,{view:'registry',selected:null,search:'',page:1});}
+    paint();
+  }
+  document.addEventListener('keydown',event=>{
+    if(!surface?.isConnected||document.documentElement.dataset.smartHsrManagerView!=='users'||document.querySelector('.iuc'))return;
+    if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();state.view='registry';paint();surface.querySelector('[data-search]')?.focus();}
+  });
+  window.addEventListener('smart-hsr:user-center-lifecycle',event=>{if(event.detail?.active===false){state.selected=null;state.view='registry';backdrop?.remove();for(const [node,value] of isolated)node.inert=value;isolated.clear();priorFocus?.isConnected&&priorFocus.focus();}});
+  U.commandCenter={render};
+  U.stale();
+})();
+

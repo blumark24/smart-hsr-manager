@@ -111,7 +111,7 @@
     // for — this activates that existing light/dark variable system
     // instead of adding a second one.
     const themeRoot = () => document.querySelector('div[dir="rtl"][lang="ar"]') || document.documentElement;
-    const isDayMode = () => getComputedStyle(themeRoot()).getPropertyValue('--pgBg').trim() !== '';
+    const isDayMode = () => { const shell = document.querySelector('.hsr-manager-root'); return shell ? shell.classList.contains('theme-day') : document.documentElement.dataset.theme === 'light'; };
     const syncTheme = () => {
       document.documentElement.setAttribute('data-theme', isDayMode() ? 'light' : 'dark');
     };
@@ -313,7 +313,9 @@
     ['./manager-phase11f-reference-ui.js', 'ucPhase11fReferenceUiLoader'],
     ['./manager-phase11e-user-center-interactions.js', 'ucPhase11eInteractionsLoader'],
     ['./manager-phase11f-executive-polish.js', 'managerPhase11fExecutivePolishLoader'],
-    ['./manager-phase11g-user-center-approved-skin.js', 'ucPhase11gApprovedSkinLoader']
+    ['./manager-phase11g-user-center-approved-skin.js', 'ucPhase11gApprovedSkinLoader'],
+    ['./workspace-access.js', 'identityWorkspaceResolverLoader'],
+    ['./manager-identity-command-center.js', 'identityCommandCenterLoader']
   ];
 
   let index = 0;

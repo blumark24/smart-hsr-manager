@@ -315,6 +315,10 @@ async function renderCenter(force=false) {
     if (!app) { app=document.createElement('section'); app.className='ucv2-app'; root.appendChild(app); }
     delete app.dataset.routeGuardLoading;
     app.removeAttribute('aria-busy');
+    if (U.commandCenter) {
+      U.commandCenter.render(root, app, directory, () => renderCenter(true));
+      return;
+    }
     app.innerHTML=`
       <header class="ucv2-header">
         <div><div class="ucv2-eyebrow">SMART HSR · MUNICIPAL OPERATIONS</div><h1>مركز إدارة المستخدمين</h1><p>إدارة الموظفين والحسابات والصلاحيات والخدمات البلدية</p></div>

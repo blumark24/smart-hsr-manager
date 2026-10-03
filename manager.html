@@ -14,6 +14,7 @@
 <script src="vendor/leaflet/1.9.4/leaflet.js"></script>
 <script src="geo-core.bundle.js"></script>
 <script src="./manager-dashboard-format.js"></script>
+<link rel="stylesheet" href="./manager-identity-command-center.css">
 <style id="manager-observations-reference-ui">
 .manager-view-overlay{background:rgba(2,7,16,.78)!important;backdrop-filter:blur(12px)!important}.manager-view-panel{width:min(1120px,100%)!important;border-radius:20px!important;background:linear-gradient(155deg,rgba(10,25,47,.99),rgba(6,16,31,.99))!important;border:1px solid rgba(76,139,224,.26)!important;box-shadow:0 34px 100px rgba(0,0,0,.58),0 0 40px rgba(34,116,255,.08)!important}.manager-observations-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.manager-observation-card{transition:border-color .16s ease,background .16s ease,transform .16s ease!important}.manager-observation-card:hover{transform:translateY(-1px);border-color:rgba(76,139,224,.45)!important;background:rgba(18,38,68,.82)!important}.manager-observation-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px}.manager-observation-meta span{padding:5px 7px;border-radius:7px;background:rgba(7,17,32,.7);border:1px solid rgba(93,146,214,.11);color:#8fa3bd;font-size:8.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:699px){.manager-observations-grid{grid-template-columns:1fr!important}.manager-view-panel{max-height:calc(100vh - 12px)!important;border-radius:14px!important}}
 </style>
@@ -2506,7 +2507,7 @@ body{min-height:100svh!important;min-height:100dvh!important}
            (also updated) and appends .ucv2-app into it exactly as before.
            No User Center business logic lives in this template. -->
       <sc-if value="{{ viewIsUsers }}">
-        <div class="manager-users-mount" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
+        <div class="manager-users-mount" style="flex:1;min-height:0;display:flex;flex-direction:column"><button type="button" data-icc-original-close aria-label="إغلاق مركز المستخدمين" onClick="{{ closeView }}" hidden>إغلاق</button></div>
       </sc-if>
 
     </main>
@@ -4989,7 +4990,7 @@ class Component extends DCLogic {
       // WAVE 2B — NAV-01: 'map' added — Home's own dashboard (KPIs, priority
       // list, etc.) must unmount while the dedicated Map view is open,
       // exactly like fieldSurvey/lands/mobility/users already do.
-      viewIsHomeContent: st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'adminAffairs' && st.view !== 'contracts' && st.view !== 'observations' && st.view !== 'reports' && st.view !== 'users' && st.view !== 'map',
+      viewIsHomeContent: st.view !== 'users' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'adminAffairs' && st.view !== 'contracts' && st.view !== 'observations' && st.view !== 'reports' && st.view !== 'map',
       viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsAdminAffairs: st.view === 'adminAffairs', viewIsContracts: st.view === 'contracts', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands', viewIsMobility: st.view === 'mobility', viewIsMap: st.view === 'map',
       viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : st.view === 'mobility' ? 'لوحة مدير إدارة حركة السير' : st.view === 'map' ? 'الخريطة التشغيلية' : 'البلاغات',
       viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة حركة السير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : st.view === 'mobility' ? 'إشراف تنفيذي للقراءة فقط على إدارة حركة السير — بيانات حية من نظام الحركة الحقيقي لهذه المنظمة فقط.' : st.view === 'map' ? 'المشهد المكاني التنفيذي للبلاغات الموثّقة — نفس بيانات مركز القيادة، بعرض مخصص لإدارة الخريطة.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
