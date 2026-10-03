@@ -16,7 +16,7 @@
     const mode = new URLSearchParams(location.search).get('mode');
     if (file === 'department-head.html') return mode === 'mobility' ? 'mobility' : 'field';
     if (file === 'admin-affairs.html') return 'admin_affairs';
-    if (['dashboard.html', 'mobile-map.html', 'manager.html'].includes(file)) return 'field';
+    if (['dashboard.html', 'mobile-map.html'].includes(file)) return 'field';
     return null;
   }
 

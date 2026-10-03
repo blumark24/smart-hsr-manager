@@ -277,9 +277,9 @@ async function verifyManagerAccess(api, db, user) {
 
 async function start(component) {
   const [appApi, firestoreApi, authApi, firebaseConfig] = await Promise.all([
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'),
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js'),
+    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'),
+    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'),
     resolveFirebaseConfig()
   ]);
   const portalContext = readPortalContext();
