@@ -96,3 +96,29 @@ test('edit workflow shows before and after institutional assignment preview',()=
   assert.match(source,/بعد الحفظ/);
   assert.match(source,/تحديث البيانات أو التعيين المؤسسي مع معاينة الأثر قبل الحفظ/);
 });
+
+
+test('v5 header keeps SMART HSR as restrained brand signature and removes duplicate user-center english label',()=>{
+  const source=fs.readFileSync(path.join(root,'manager-identity-command-center.js'),'utf8');
+  assert.match(source,/icc-brand-wordmark/);
+  assert.match(source,/>SMART<\/span><b>HSR<\/b>/);
+  assert.doesNotMatch(source,/SMART HSR · USER CENTER/);
+  assert.match(source,/إدارة الهوية والتعيينات المؤسسية/);
+});
+
+test('v5 hierarchy includes a digital building drill-down mode',()=>{
+  const source=fs.readFileSync(path.join(root,'manager-identity-command-center.js'),'utf8');
+  assert.match(source,/data-mode="building"/);
+  assert.match(source,/icc-building/);
+  assert.match(source,/المقر الرقمي للبلدية/);
+  assert.match(source,/كل إدارة طابق رقمي، وكل قسم مكتب تشغيلي/);
+  assert.match(source,/icc-floor-offices/);
+});
+
+test('v5 organization twin keeps administrative and spatial modes',()=>{
+  const source=fs.readFileSync(path.join(root,'manager-identity-command-center.js'),'utf8');
+  assert.match(source,/data-mode="hierarchy"/);
+  assert.match(source,/data-mode="spatial"/);
+  assert.match(source,/التوأم المؤسسي الذكي/);
+  assert.match(source,/الهيكل الإداري/);
+});
