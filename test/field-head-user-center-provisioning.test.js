@@ -34,6 +34,21 @@ test('Field Survey head selection uses institutional role plus the existing Fiel
   assert.doesNotMatch(core, /field_head_mobility_conflict/);
 });
 
+test('Field head provisioning requires a real department instead of relying on administration name', () => {
+  assert.match(core, /fieldHead&&\(!dept\|\|!\/الحصر\|ميداني\|field\/i\.test\(admin\|\|dept\)\)/);
+  assert.match(employeesApi, /effectiveInstitutionalRole === 'department_head'/);
+  assert.match(employeesApi, /effectiveFieldEnabled && !isNonEmptyString\(employee\.data\.department\)/);
+  assert.match(employeesApi, /reason: 'field_head_department_required'/);
+});
+
+test('Identity Command Center quick setup writes canonical administration values but never invents a Field department', () => {
+  const commandCenter = fs.readFileSync(path.join(root, 'manager-identity-command-center.js'), 'utf8');
+  assert.match(commandCenter, /administration:'إدارة الحصر الميداني'/);
+  assert.match(commandCenter, /title:'رئيس قسم الحصر الميداني'/);
+  assert.match(commandCenter, /adminInput\.value=preset\.administration/);
+  assert.doesNotMatch(commandCenter, /department:'قسم الحصر الميداني'/);
+});
+
 test('User Center presents compatibility-stored Field head as Field, not Mobility', () => {
   assert.match(core, /U\.isFieldHeadCompat=/);
   assert.match(core, /compat&&k==='field'/);

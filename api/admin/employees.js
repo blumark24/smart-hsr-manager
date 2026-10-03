@@ -383,6 +383,9 @@ async function handler(req, res) {
         if (!mobilitySel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: mobilitySel.reason });
         const landsSel = validateLandsSelection(lands);
         if (!landsSel.ok) return sendJson(res, 400, { error: 'invalid_request', reason: landsSel.reason });
+        if ((employee.data.institutionalRole || 'employee') === 'department_head' && fieldSel.enabled === true && !isNonEmptyString(employee.data.department)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'field_head_department_required' });
+        }
         if (isNonEmptyString(password)) {
           const policyFailure = passwordPolicyReason(password, { email, name: employee.data.name });
           if (policyFailure) return sendJson(res, 400, { error: 'invalid_request', reason: policyFailure });
@@ -543,6 +546,12 @@ async function handler(req, res) {
         }
         if (institutionalRole !== undefined && !['general_supervisor','department_head','employee'].includes(institutionalRole)) {
           return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_institutional_role' });
+        }
+        const effectiveInstitutionalRole = institutionalRole !== undefined ? institutionalRole : institutionalRoleOf(employee.data);
+        const currentFieldEnabled = Boolean(employee.data.products && employee.data.products.field && employee.data.products.field.enabled);
+        const effectiveFieldEnabled = fieldSel.present ? fieldSel.enabled : currentFieldEnabled;
+        if (effectiveInstitutionalRole === 'department_head' && effectiveFieldEnabled && !isNonEmptyString(employee.data.department)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'field_head_department_required' });
         }
 
         const userRef = db.collection('users').doc(employee.data.authUid);
