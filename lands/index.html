@@ -709,6 +709,33 @@
       .panel,.metric,.file-head,.record-section,.table-wrap,.decision-record,.summary-strip,.btn,.theme-toggle,.nav button{transition:none!important}
     }
 
+
+/* SMART HSR Lands — premium delivery polish */
+:root{--premium-radius:16px;--premium-shadow:0 14px 38px rgba(11,61,46,.10);--premium-shadow-hover:0 20px 48px rgba(11,61,46,.16)}
+body{background:radial-gradient(circle at 84% -10%,rgba(46,139,87,.08),transparent 34%),linear-gradient(180deg,#fafbf8 0%,var(--canvas) 100%);line-height:1.65}
+.topbar{height:80px;background:linear-gradient(135deg,#06271c 0%,#0B3D2E 56%,#145A3A 100%);box-shadow:0 10px 30px rgba(7,42,30,.18);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)}
+.brand img{width:46px;height:46px;border-radius:14px;padding:4px;box-shadow:0 8px 22px rgba(0,0,0,.16)}.brand b{font-size:18px;font-weight:800}.brand small{font-size:11px;color:#c5ddd5}
+.env-badge,.theme-toggle{border-radius:999px}.theme-toggle{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18)}.theme-toggle:hover{background:rgba(255,255,255,.12)}
+.shell{grid-template-columns:minmax(0,1fr) 272px;max-width:1680px}
+.side{background:rgba(246,243,236,.96);padding:28px 18px;box-shadow:-14px 0 34px rgba(11,61,46,.05);backdrop-filter:blur(15px)}
+.nav{gap:7px}.nav button{min-height:48px;padding:13px 15px;border-radius:12px;font-weight:650;transition:.18s ease}.nav button:hover{transform:translateX(-2px)}.nav button.active{border-right:4px solid var(--teal);box-shadow:inset 0 0 0 1px rgba(46,139,87,.08),0 8px 20px rgba(46,139,87,.08)}
+.main{padding:36px 40px 72px}.page-head{margin-bottom:30px}.page-head h1{font-size:30px;font-weight:800}.page-head p{font-size:13px}
+.btn{border-radius:11px;min-height:42px;font-weight:700;box-shadow:0 4px 12px rgba(11,61,46,.04);transition:.18s ease}.btn:hover{transform:translateY(-1px)}.btn.primary{box-shadow:0 8px 20px rgba(20,90,58,.20)}
+.metrics{gap:14px}.metric,.panel,.file-head,.record-section,.table-wrap,.decision-record,.summary-strip{border-radius:var(--premium-radius);box-shadow:var(--premium-shadow);border-color:rgba(11,61,46,.11)}
+.metric{overflow:hidden;transition:.2s ease}.metric:hover,.decision-record:hover{transform:translateY(-2px);box-shadow:var(--premium-shadow-hover)}.metric .value{font-size:31px}.metric .label{font-weight:700}
+.panel{overflow:hidden}.panel-head{padding:20px 22px 16px}.panel-head h2{font-size:17px;font-weight:800}.panel-body{padding:22px}
+.map-wrap{border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(11,61,46,.08)}.gis-map{min-height:350px}.map-chip{border-radius:999px;font-weight:700}.map-chip.active{box-shadow:0 5px 14px rgba(46,139,87,.16)}
+.legend{background:var(--surface-tint);padding:14px 20px}.selection{border-radius:13px;box-shadow:inset 0 0 0 1px rgba(46,139,87,.08)}
+.progress{height:9px}.status,.chip{border-radius:999px;font-weight:700}.insight{border-radius:12px;box-shadow:0 8px 22px rgba(11,61,46,.05)}
+.search,.select,.text-input{border-radius:10px}.data-table th{font-weight:800}.data-table td{font-size:12.5px}.file-head{padding:24px 26px}.record-section h2{font-size:15px}
+body.dark{background:radial-gradient(circle at 84% -10%,rgba(46,139,87,.15),transparent 34%),#071A12}
+body.dark .topbar{background:linear-gradient(135deg,#04110c,#071A12 55%,#0b3022)}
+body.dark .side{background:rgba(11,35,24,.97);border-color:#2b5541}
+body.dark .metric,body.dark .panel,body.dark .file-head,body.dark .record-section,body.dark .table-wrap,body.dark .decision-record,body.dark .summary-strip{box-shadow:0 16px 40px rgba(0,0,0,.25)}
+body.dark .nav button.active{box-shadow:inset 0 0 0 1px rgba(107,197,142,.12),0 8px 20px rgba(0,0,0,.15)}
+@media(max-width:1100px){.shell{grid-template-columns:1fr 238px}.main{padding:28px 24px 60px}.metrics{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.topbar{height:auto;min-height:72px;padding:12px 14px}.shell{display:block}.side{position:relative;top:0;height:auto;min-height:0}.main{padding:22px 14px 48px}.metrics{grid-template-columns:1fr}.page-head{flex-direction:column}}
+
 </style>
 </head>
 <body>
@@ -1010,7 +1037,11 @@ function mountGisMap(containerId, featureCollection, layer) {
     gisMap = map;
     L.tileLayer(GIS_TILE_URL, { maxZoom: 19, attribution: GIS_TILE_ATTRIBUTION }).addTo(map);
     map.on("moveend", () => { const c = map.getCenter(); gisLastCamera = { lat: c.lat, lng: c.lng, zoom: map.getZoom() }; });
-    map.on("tileerror", () => gisMapErrorEl(containerId)?.removeAttribute("hidden"));
+    map.on("tileerror", (event) => {
+      // A transient basemap tile failure must not be reported as a spatial-data failure.
+      // Keep the operational overlays usable and log the tile issue for diagnostics.
+      console.warn("GIS basemap tile failed", event?.tile?.src || "unknown tile");
+    });
     const clusterGroup = L.markerClusterGroup({
       maxClusterRadius: 45, spiderfyOnMaxZoom: true, showCoverageOnHover: false,
       iconCreateFunction: (cluster) => L.divIcon({ html: String(cluster.getChildCount()), className: "gis-cluster-icon", iconSize: [36, 36] })
