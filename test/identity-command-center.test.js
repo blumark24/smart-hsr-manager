@@ -117,3 +117,10 @@ test('pending Lands sync exposes readback-only reconciliation using authoritativ
   assert.doesNotMatch(source,/reconcile[^\n]{0,400}setServices/);
   assert.doesNotMatch(source,/reconcile[^\n]{0,400}entitlement\.enable/);
 });
+
+
+test('pending Lands sync recovery control calls repairLandsAccess, not reconcileLandsAccess',()=>{
+  const source=fs.readFileSync(path.join(root,'manager-identity-command-center.js'),'utf8');
+  assert.match(source,/action:'repairLandsAccess',uid:employee\.authUid/);
+  assert.doesNotMatch(source,/action:'reconcileLandsAccess',uid:employee\.authUid/);
+});
