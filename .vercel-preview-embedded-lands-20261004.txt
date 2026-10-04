@@ -1,2 +1,3 @@
 SMART HSR Embedded Lands Preview trigger.
-Branch-only integration. No main or Production changes.
+PHASE19 PASS; single final Preview build trigger after rate-limit cooldown.
+No main or Production changes.
