@@ -581,7 +581,135 @@
      .axis-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-inline-end:6px;vertical-align:middle}
      .axis-dot.ok{background:var(--green)}
      .axis-dot.pending{background:var(--amber)}
-  </style>
+  
+    /* ==== MUNICIPAL SHELL ALIGNMENT V4 ==== */
+    /* Presentation-only alignment with the municipality manager shell.
+       No routing, SSO, RBAC, Firestore, mutation or GIS behavior is changed. */
+    :root{
+      --shell-radius:16px;
+      --card-radius:14px;
+      --control-radius:10px;
+      --shadow-card:0 10px 28px -22px rgba(11,61,46,.42),0 2px 8px rgba(11,61,46,.055);
+      --shadow-card-hover:0 16px 36px -24px rgba(11,61,46,.52),0 5px 14px rgba(11,61,46,.08);
+      --shadow-shell:inset 0 1px 0 rgba(255,255,255,.11),inset 0 -1px 0 rgba(0,0,0,.16),0 5px 16px -9px rgba(11,61,46,.36),0 24px 48px -30px rgba(11,61,46,.42);
+    }
+    .topbar{
+      background:linear-gradient(180deg,#0d4836 0%,#082f24 100%);
+      border-bottom:1px solid rgba(163,217,184,.18);
+      box-shadow:var(--shadow-shell);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+    }
+    .brand{min-width:0}
+    .brand img{
+      width:42px;height:42px;padding:4px;border-radius:12px;
+      background:rgba(255,255,255,.96);
+      border:1px solid rgba(255,255,255,.35);
+      box-shadow:0 6px 16px -10px rgba(0,0,0,.55);
+    }
+    .brand b{font-size:15px;font-weight:700;color:#f2fbf5;white-space:nowrap}
+    .brand small{color:#a9c9b6;font-size:9.5px;letter-spacing:.02em}
+    .top-actions{gap:8px}
+    .theme-toggle,.env-badge{
+      min-height:36px;border-radius:var(--control-radius);
+      transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+    }
+    .theme-toggle{
+      border-color:rgba(177,220,194,.22);
+      background:rgba(255,255,255,.045);
+      color:#dcefe3;
+    }
+    .theme-toggle:hover{
+      background:rgba(255,255,255,.09);
+      border-color:rgba(177,220,194,.34);
+      transform:translateY(-1px);
+    }
+    .theme-toggle:focus-visible,.nav button:focus-visible,.btn:focus-visible,.side-collapse-toggle:focus-visible{
+      outline:0;box-shadow:0 0 0 3px rgba(110,197,142,.22);
+    }
+    .env-badge{
+      display:inline-flex;align-items:center;
+      border-color:rgba(231,196,112,.36);
+      background:rgba(122,89,25,.26);
+      color:#f5d98e;
+    }
+    .user{border-right-color:rgba(177,220,194,.16)}
+    .avatar{
+      border-radius:11px;background:rgba(224,245,232,.94);color:#0B3D2E;
+      border:1px solid rgba(255,255,255,.4);
+    }
+    .side{
+      background:linear-gradient(180deg,#F2EFE8 0%,#ECE8DF 100%);
+      border-left-color:#d9d2c6;
+      box-shadow:-10px 0 28px -28px rgba(19,54,39,.45);
+    }
+    .side-label{color:#736a60;font-weight:700;letter-spacing:.02em}
+    .nav button{
+      border:1px solid transparent;border-radius:11px;
+      color:#344b40;font-weight:600;
+    }
+    .nav button:hover{
+      background:rgba(255,255,255,.58);
+      border-color:rgba(30,98,67,.08);
+      box-shadow:0 6px 16px -15px rgba(11,61,46,.5);
+    }
+    .nav button.active{
+      color:#0d6948;background:#dfeee4;
+      border-color:#c9e0d1;
+      box-shadow:inset -3px 0 #2E8B57,0 7px 18px -16px rgba(11,61,46,.58);
+    }
+    .side-collapse-toggle{border-radius:9px!important}
+    .panel,.metric,.file-head,.record-section,.table-wrap,.decision-record,.summary-strip,.auth-card{
+      border-radius:var(--card-radius);
+      box-shadow:var(--shadow-card);
+    }
+    .panel,.metric,.file-head,.record-section,.table-wrap,.decision-record,.summary-strip{
+      transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease;
+    }
+    .metric:hover,.decision-record:hover{
+      box-shadow:var(--shadow-card-hover);
+      border-color:#c7d9cd;
+    }
+    .panel-head{border-radius:var(--card-radius) var(--card-radius) 0 0}
+    .btn,.select,.text-input,.search{border-radius:var(--control-radius)}
+    .btn{font-weight:600;transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 7px 15px -13px rgba(11,61,46,.55)}
+    .btn.primary{box-shadow:0 7px 16px -12px rgba(11,61,46,.72)}
+    .map-wrap{
+      border-radius:14px;
+      border:1px solid var(--line);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 12px 28px -24px rgba(11,61,46,.52);
+    }
+    .map-filter-overlay,.map-controls-glass{border-radius:12px!important}
+    .data-table th:first-child{border-top-right-radius:12px}
+    .data-table th:last-child{border-top-left-radius:12px}
+    .toast{border-radius:11px}
+    body.dark{
+      --shadow-card:0 12px 30px -22px rgba(0,0,0,.82),0 2px 9px rgba(0,0,0,.24);
+      --shadow-card-hover:0 18px 38px -24px rgba(0,0,0,.92),0 5px 15px rgba(0,0,0,.28);
+      --shadow-shell:inset 0 1px 0 rgba(255,255,255,.055),inset 0 -1px 0 rgba(0,0,0,.38),0 5px 16px -8px rgba(0,0,0,.72),0 24px 50px -28px rgba(0,0,0,.82);
+    }
+    body.dark .topbar{background:linear-gradient(180deg,#0a261b 0%,#06170f 100%);border-bottom-color:#214835}
+    body.dark .side{background:linear-gradient(180deg,#0d2a1d 0%,#0a2318 100%);border-left-color:#284a39}
+    body.dark .side-label{color:#91a99a}
+    body.dark .nav button{color:#b7cbbd}
+    body.dark .nav button:hover{background:#143a28;border-color:#28533d}
+    body.dark .nav button.active{background:#17432e;color:#8fe0b0;border-color:#2d6247;box-shadow:inset -3px 0 #6bc58e,0 8px 20px -18px rgba(0,0,0,.9)}
+    body.dark .metric:hover,body.dark .decision-record:hover{border-color:#37634c}
+    body.dark .map-wrap{border-color:#2b5541;box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 14px 30px -24px rgba(0,0,0,.9)}
+    @media(max-width:760px){
+      .topbar{padding-left:14px;padding-right:14px}
+      .brand b{font-size:13px}
+      .brand small{font-size:8.5px}
+      .brand img{width:38px;height:38px}
+      .main{padding-left:14px;padding-right:14px}
+      .panel,.metric,.file-head,.record-section,.table-wrap,.decision-record,.summary-strip{border-radius:12px}
+    }
+    @media (prefers-reduced-motion: reduce){
+      .panel,.metric,.file-head,.record-section,.table-wrap,.decision-record,.summary-strip,.btn,.theme-toggle,.nav button{transition:none!important}
+    }
+
+</style>
 </head>
 <body>
 <div class="auth-screen" id="bootScreen">
@@ -621,7 +749,7 @@
 </div>
 <div class="app" id="appShell" hidden>
   <header class="topbar">
-    <div class="brand"><img src="https://99d3d677-7e95-41b0-8d5b-4f9fc47b49b6-00-2uzxuz4dz4a3k.pike.replit.dev/attached_assets/JbN2pYmn_400x400_1787245209925.jpg" alt="شعار سياقي"><div><b>نظام الحصر الذكي لمنح الأراضي</b><small>Smart HSR Lands</small></div></div>
+    <div class="brand"><img src="/smart-hsr-mark.svg" alt="SMART HSR"><div><b>SMART HSR — الأراضي الذكية</b><small>إدارة الأراضي والممتلكات</small></div></div>
     <div class="top-actions"><button class="theme-toggle" id="mobileNavToggle" type="button" aria-label="فتح قائمة التنقل" onclick="toggleMobileNav()"><i data-lucide="menu"></i></button><span class="env-badge" id="envBadge">بيئة ما قبل الإنتاج</span><button class="theme-toggle" id="managerModeToggle" type="button" aria-pressed="false" aria-label="تبديل وضع المدير" onclick="toggleManagerMode()"><i data-lucide="presentation"></i> وضع المدير</button><button class="theme-toggle" id="themeToggle" type="button" aria-label="تبديل الوضع الليلي" onclick="toggleTheme()"></button><div class="user" id="userInfo"></div></div>
   </header>
   <div class="shell">
