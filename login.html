@@ -86,7 +86,7 @@ const LANDS_STAGING_PREVIEW_URL = 'https://lands-smart-git-staging-lands-trusted
 function resolveLandsRedirectBase() {
   const hostname = location.hostname;
   if (hostname.endsWith('.vercel.app') && !LANDS_PRODUCTION_HOSTNAMES.includes(hostname)) {
-    return new URL('/lands/', location.origin).toString();
+    return location.origin.replace(/\/$/, '') + '/lands/';
   }
   return LANDS_PRODUCTION_URL;
 }
