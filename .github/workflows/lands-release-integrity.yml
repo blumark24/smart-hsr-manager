@@ -53,7 +53,7 @@ jobs:
           npx firebase emulators:exec \
             --only firestore,storage \
             --project demo-smart-hsr-lands-release \
-            "node --test test/firestore.rules.test.js test/lands-rules-candidate.test.js"
+            "bash -lc 'node --test test/firestore.rules.test.js && node --test test/lands-rules-candidate.test.js'"
 
       - name: Lands application regression
         run: npm run test:lands
