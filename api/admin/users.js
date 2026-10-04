@@ -3379,6 +3379,175 @@ async function handler(req, res) {
         });
       }
 
+      // ---- safe repair for an existing pending Lands declaration ----
+      // Preflights the authoritative Lands record before any mutation.
+      // Safe repair is allowed only when the authoritative membership is
+      // absent, or exists disabled with the exact same uid/org/role. Any
+      // conflicting existing identity/tenant/role fails closed with no write.
+      case 'repairLandsAccess': {
+        const { uid } = body;
+        if (!isNonEmptyString(uid)) return sendJson(res, 400, { error: 'uid_required' });
+
+        const record = await findRecord(db, uid);
+        if (!record || record.collection !== 'users') {
+          return sendJson(res, 404, { error: 'record_not_found' });
+        }
+
+        const municipalityId = record.data.organizationId;
+        if (!caller.isOwner) {
+          if (!caller.isManager || municipalityId !== caller.organizationId) {
+            return sendJson(res, 403, { error: 'forbidden', reason: 'cross_organization_denied' });
+          }
+        }
+
+        const access = record.data.landsAccess;
+        if (!access || access.enabled !== true || !isNonEmptyString(access.role)) {
+          return sendJson(res, 409, { error: 'invalid_request', reason: 'lands_access_not_declared' });
+        }
+        if (access.syncStatus === 'synced') {
+          return sendJson(res, 200, {
+            uid,
+            lands: { enabled: true, role: access.role, syncStatus: 'synced' },
+            alreadySynced: true,
+          });
+        }
+        if (access.syncStatus !== 'pending_trusted_sync') {
+          return sendJson(res, 409, { error: 'invalid_request', reason: 'lands_repair_not_pending' });
+        }
+
+        const exact = (status) => Boolean(
+          status && status.ok === true &&
+          status.exists === true &&
+          status.firebase_uid === uid &&
+          status.municipality_id === municipalityId &&
+          status.enabled === true &&
+          status.lands_role === access.role
+        );
+        const safeDisabledMatch = (status) => Boolean(
+          status && status.ok === true &&
+          status.exists === true &&
+          status.firebase_uid === uid &&
+          status.municipality_id === municipalityId &&
+          status.enabled === false &&
+          status.lands_role === access.role
+        );
+        const summary = (status) => ({
+          exists: Boolean(status && status.exists === true),
+          enabled: Boolean(status && status.enabled === true),
+          role: status && isNonEmptyString(status.lands_role) ? status.lands_role : null,
+        });
+
+        const before = await callLandsMembershipStatus({
+          idToken: rawToken,
+          municipalityId,
+          targetUid: uid,
+        });
+        if (!before || before.ok !== true) {
+          return sendJson(res, 503, {
+            error: 'lands_repair_unavailable',
+            reason: before && before.reason ? before.reason : 'lands_membership_status_failed',
+          });
+        }
+
+        if (exact(before)) {
+          const reconciledAccess = {
+            ...access,
+            syncStatus: 'synced',
+            repairedBy: caller.uid,
+            repairedAt: FieldValue.serverTimestamp(),
+          };
+          delete reconciledAccess.syncError;
+          await record.ref.set({
+            landsAccess: reconciledAccess,
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+          await recordAdminAudit(db, {
+            caller,
+            organizationId: municipalityId,
+            targetUid: uid,
+            action: 'repair_lands_access',
+            detail: { mode: 'reconciled_existing', role: access.role },
+          });
+          return sendJson(res, 200, {
+            uid,
+            lands: { enabled: true, role: access.role, syncStatus: 'synced' },
+            repaired: true,
+            mode: 'reconciled_existing',
+          });
+        }
+
+        const mayEnable = before.exists !== true || safeDisabledMatch(before);
+        if (!mayEnable) {
+          return sendJson(res, 409, {
+            error: 'lands_repair_conflict',
+            reason: 'authoritative_membership_conflict',
+            authoritative: summary(before),
+          });
+        }
+
+        await ensureManagerLandsBootstrap(db, caller);
+        const mutation = await callLandsTrustedMutation({
+          idToken: rawToken,
+          municipalityId,
+          operation: 'entitlement.enable',
+          recordId: uid,
+          ...(before.exists !== true ? { recordChanges: { lands_role: access.role } } : {}),
+        });
+
+        // Always verify the authoritative state after the attempted repair.
+        // Even if the mutation response is ambiguous/conflicted, an exact
+        // readback is sufficient proof that the desired state exists.
+        const after = await callLandsMembershipStatus({
+          idToken: rawToken,
+          municipalityId,
+          targetUid: uid,
+        });
+        if (!after || after.ok !== true) {
+          return sendJson(res, 503, {
+            error: 'lands_repair_readback_unavailable',
+            reason: after && after.reason ? after.reason : 'lands_membership_status_failed',
+            mutationAccepted: Boolean(mutation && mutation.ok === true),
+          });
+        }
+        if (!exact(after)) {
+          return sendJson(res, mutation && mutation.ok === true ? 409 : 502, {
+            error: 'lands_repair_failed',
+            reason: mutation && mutation.reason ? mutation.reason : 'lands_repair_readback_mismatch',
+            authoritative: summary(after),
+          });
+        }
+
+        const repairedAccess = {
+          ...access,
+          syncStatus: 'synced',
+          repairedBy: caller.uid,
+          repairedAt: FieldValue.serverTimestamp(),
+          ...(mutation && mutation.eventId ? { lastAuditEventId: mutation.eventId } : {}),
+        };
+        delete repairedAccess.syncError;
+        await record.ref.set({
+          landsAccess: repairedAccess,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await recordAdminAudit(db, {
+          caller,
+          organizationId: municipalityId,
+          targetUid: uid,
+          action: 'repair_lands_access',
+          detail: {
+            mode: before.exists === true ? 'reenabled_exact_disabled_membership' : 'created_missing_membership',
+            role: access.role,
+          },
+        });
+
+        return sendJson(res, 200, {
+          uid,
+          lands: { enabled: true, role: access.role, syncStatus: 'synced' },
+          repaired: true,
+          mode: before.exists === true ? 'reenabled_exact_disabled_membership' : 'created_missing_membership',
+        });
+      }
+
       // ---- set a user's per-service entitlements (Field and/or Lands) ----
       // Field's changes here behave exactly like the existing status/role
       // model (same MANAGER_SCOPED_ROLES, same organizationId scoping).
