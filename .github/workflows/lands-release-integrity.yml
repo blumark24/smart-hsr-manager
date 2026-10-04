@@ -1,0 +1,68 @@
+name: Lands Release Integrity Gate
+
+on:
+  push:
+    branches:
+      - design/lands-system-polish-v2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify frozen payload blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          check_blob() {
+            file="$1"
+            expected="$2"
+            actual="$(git hash-object "$file")"
+            if [ "$actual" != "$expected" ]; then
+              echo "::error file=$file::release payload drift: expected $expected, got $actual"
+              exit 1
+            fi
+            echo "PASS $file $actual"
+          }
+          check_blob firestore.rules 98730bbbdbc2ed130cd1eee32d6c7d1a1835b1d2
+          check_blob storage.rules eebc4c473013c845b8d15417c3f0a5364ab371d9
+          check_blob firebase.json ca75b7ec6532c49fcb18f480cd578a83fe3dde17
+          check_blob lands/index.html 5eb8cb84e37a81a466cd06b34115da14625c6cfe
+          check_blob package.json 6643855721e27777cf4b4bd41344152e44a46d11
+          check_blob test/lands-rules-candidate.test.js 91c5cf548dbd4098cbc1f8ec2b845f5810935dc1
+          check_blob test/lands-shell-ui.test.js 89e02508f052081dd328d821e8bd814b34c2e6e5
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Firestore + Storage regression
+        run: |
+          npx firebase emulators:exec \
+            --only firestore,storage \
+            --project demo-smart-hsr-lands-release \
+            "node --test test/firestore.rules.test.js test/lands-rules-candidate.test.js"
+
+      - name: Lands application regression
+        run: npm run test:lands
+
+      - name: Confirm staging-only release contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"rules": "firestore.rules"' firebase.json
+          grep -q '"rules": "storage.rules"' firebase.json
+          ! grep -q 'https://smart-hsr-manager.vercel.app/login.html' lands/index.html
+          echo "PASS staging release contract"
