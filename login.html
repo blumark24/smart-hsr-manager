@@ -85,10 +85,10 @@ const LANDS_PRODUCTION_URL = 'https://lands-smart.vercel.app/';
 const LANDS_STAGING_PREVIEW_URL = 'https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/';
 function resolveLandsRedirectBase() {
   const hostname = location.hostname;
-  if (!hostname.endsWith('.vercel.app') || LANDS_PRODUCTION_HOSTNAMES.includes(hostname)) {
-    return LANDS_PRODUCTION_URL;
+  if (hostname.endsWith('.vercel.app') && !LANDS_PRODUCTION_HOSTNAMES.includes(hostname)) {
+    return location.origin.replace(/\/$/, '') + '/lands/';
   }
-  return LANDS_STAGING_PREVIEW_URL;
+  return LANDS_PRODUCTION_URL;
 }
 
 const app = initializeApp(firebaseConfig);
