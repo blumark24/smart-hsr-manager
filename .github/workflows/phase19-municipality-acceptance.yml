@@ -14,6 +14,7 @@ on:
       - release/municipality-final-rc2
       - release/municipality-closure-v4
       - fix/embedded-lands-preview
+      - fix/release-embedded-lands-closure
       - security/rc2-firebase-admin-14
       - design/spatial-intelligence-v1
   workflow_dispatch:
