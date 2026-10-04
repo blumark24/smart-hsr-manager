@@ -319,11 +319,10 @@
           note.textContent='مزامنة الأراضي: '+sync.syncStatus;
           controls.before(note);
 
-          // Gate 2 recovery — explicit, readback-only reconciliation.
-          // This button NEVER calls setServices / entitlement.* and therefore
-          // cannot repeat the original Lands mutation. It is only offered for
-          // the one recoverable local state that requires authoritative
-          // readback: pending_trusted_sync.
+          // Gate 2 recovery — preflighted safe repair against authoritative Lands.
+          // This button never calls broad employee save or setServices. The server-side
+          // repair action preflights the authoritative Lands membership and only
+          // mutates when the membership is missing or safely re-enableable.
           if(sync.syncStatus==='pending_trusted_sync'){
             const reconcile= document.createElement('button');
             reconcile.type='button';
@@ -339,9 +338,9 @@
               const original=reconcile.textContent;
               reconcile.textContent='جاري التحقق…';
               result.hidden=false;
-              result.textContent='يتم التحقق من عضوية الأراضي الموثوقة بدون إعادة أي صلاحية.';
+              result.textContent='يتم فحص عضوية الأراضي الموثوقة وإصلاح الحالة بأمان عند الحاجة.';
               try{
-                const outcome=await U.post('/api/admin/users',{action:'reconcileLandsAccess',uid:employee.authUid});
+                const outcome=await U.post('/api/admin/users',{action:'repairLandsAccess',uid:employee.authUid});
                 if(outcome?.lands?.syncStatus!=='synced'){
                   throw Object.assign(new Error('lands_reconciliation_incomplete'),{reason:'lands_reconciliation_incomplete'});
                 }
