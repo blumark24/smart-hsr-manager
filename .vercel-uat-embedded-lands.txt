@@ -1,0 +1,2 @@
+Trigger Vercel Preview for embedded Lands UAT.
+Runtime code is unchanged from PHASE19-passed SHA b0e002e45a7e8821114773ec874be69133e40043.
