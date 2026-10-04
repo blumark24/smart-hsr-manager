@@ -241,6 +241,188 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+
+    // ==========================================================
+    // SMART HSR Lands — candidate tenant boundary
+    // Candidate source-of-truth only. Client SDK gets:
+    //   - membership/self reads
+    //   - tenant-scoped reads
+    //   - create-only draft/domain/document metadata writes
+    // All consequential updates/deletes remain server/Admin-only and are
+    // therefore denied to every browser client here.
+    // ==========================================================
+    function landsAccessPath(municipalityId, uid) {
+      return /databases/$(database)/documents/landsMunicipalities/$(municipalityId)/userAccess/$(uid);
+    }
+
+    function landsAccessRecord(municipalityId) {
+      return get(landsAccessPath(municipalityId, request.auth.uid));
+    }
+
+    function isActiveLandsUser(municipalityId) {
+      return signedIn()
+        && exists(landsAccessPath(municipalityId, request.auth.uid))
+        && landsAccessRecord(municipalityId).data.firebase_uid == request.auth.uid
+        && landsAccessRecord(municipalityId).data.municipality_id == municipalityId
+        && landsAccessRecord(municipalityId).data.enabled == true
+        && landsAccessRecord(municipalityId).data.lands_role in [
+          'municipal_manager', 'lands_department_manager', 'lands_employee'
+        ];
+    }
+
+    function landsRole(municipalityId) {
+      return isActiveLandsUser(municipalityId)
+        ? landsAccessRecord(municipalityId).data.lands_role
+        : null;
+    }
+
+    function isLandsReviewer(municipalityId) {
+      return landsRole(municipalityId) in ['municipal_manager', 'lands_department_manager'];
+    }
+
+    function isLandsManager(municipalityId) {
+      return landsRole(municipalityId) == 'municipal_manager';
+    }
+
+    function isLandsDomain(domain) {
+      return domain in [
+        'royalOrders', 'allocationDecisions', 'beneficiaries', 'plans', 'parcels'
+      ];
+    }
+
+    function isLandsDocumentDomain(domain) {
+      return domain in [
+        'landGrants', 'royalOrders', 'allocationDecisions',
+        'beneficiaries', 'plans', 'parcels'
+      ];
+    }
+
+    function validLandsDomainCreate(municipalityId) {
+      let data = request.resource.data;
+      return isActiveLandsUser(municipalityId)
+        && data.keys().hasOnly([
+          'municipality_id', 'created_by', 'created_at', 'updated_at',
+          'reference_id', 'name', 'description', 'land_grant_id',
+          'royal_order_id', 'allocation_decision_id', 'beneficiary_id',
+          'plan_id', 'parcel_id', 'document_ids'
+        ])
+        && data.municipality_id == municipalityId
+        && data.created_by == request.auth.uid
+        && data.updated_at == request.time
+        && (!data.keys().hasAny(['created_at']) || data.created_at == request.time);
+    }
+
+    function validLandsGrantCreate(municipalityId) {
+      let data = request.resource.data;
+      return isActiveLandsUser(municipalityId)
+        && data.keys().hasOnly([
+          'municipality_id', 'beneficiary', 'royal_order',
+          'allocation_decision', 'status', 'created_by',
+          'created_at', 'updated_at'
+        ])
+        && data.municipality_id == municipalityId
+        && data.created_by == request.auth.uid
+        && data.status == 'draft'
+        && data.created_at == request.time
+        && data.updated_at == request.time
+        && data.beneficiary is map
+        && data.beneficiary.keys().hasOnly(['name', 'national_id'])
+        && data.beneficiary.name is string
+        && data.beneficiary.name.size() > 0
+        && data.beneficiary.name.size() <= 240
+        && (data.beneficiary.national_id == null || data.beneficiary.national_id is string)
+        && data.royal_order is map
+        && data.royal_order.keys().hasOnly(['number', 'date'])
+        && (data.royal_order.number == null || data.royal_order.number is string)
+        && (data.royal_order.date == null || data.royal_order.date is string)
+        && data.allocation_decision == null;
+    }
+
+    function validLandsDocumentCreate(municipalityId, documentId) {
+      let data = request.resource.data;
+      return isActiveLandsUser(municipalityId)
+        && data.keys().hasOnly([
+          'municipality_id', 'created_by', 'record_domain', 'record_id',
+          'file_id', 'filename', 'mime_type', 'size_bytes', 'storage_path',
+          'created_at', 'updated_at'
+        ])
+        && data.municipality_id == municipalityId
+        && data.created_by == request.auth.uid
+        && isLandsDocumentDomain(data.record_domain)
+        && data.record_id is string
+        && data.record_id.size() > 0
+        && data.record_id.size() <= 128
+        && data.file_id == documentId
+        && data.filename is string
+        && data.filename.size() > 0
+        && data.filename.size() <= 128
+        && data.mime_type in ['application/pdf', 'image/jpeg', 'image/png']
+        && data.size_bytes is int
+        && data.size_bytes > 0
+        && data.size_bytes <= 10 * 1024 * 1024
+        && data.storage_path == 'landsMunicipalities/' + municipalityId
+          + '/documents/' + data.record_domain + '/' + data.record_id + '/' + documentId
+        && data.created_at == request.time
+        && data.updated_at == request.time;
+    }
+
+    match /landsMunicipalities/{municipalityId} {
+      allow read, write: if false;
+
+      match /userAccess/{userId} {
+        allow get: if signedIn()
+          && resource.data.firebase_uid == userId
+          && resource.data.municipality_id == municipalityId
+          && (
+            request.auth.uid == userId
+            || isLandsManager(municipalityId)
+          );
+        // The collection path itself is already tenant-scoped. Requiring a
+        // resource-field predicate here would force the browser to add a
+        // redundant where() clause and would break the current list call.
+        allow list: if isLandsManager(municipalityId);
+        allow create, update, delete: if false;
+      }
+
+      match /landGrants/{grantId} {
+        allow get: if isActiveLandsUser(municipalityId)
+          && resource.data.municipality_id == municipalityId;
+        allow list: if isActiveLandsUser(municipalityId);
+        allow create: if validLandsGrantCreate(municipalityId);
+        allow update, delete: if false;
+      }
+
+      match /documents/{documentId} {
+        allow get: if isActiveLandsUser(municipalityId)
+          && resource.data.municipality_id == municipalityId;
+        allow list: if isActiveLandsUser(municipalityId);
+        allow create: if validLandsDocumentCreate(municipalityId, documentId);
+        allow update, delete: if false;
+      }
+
+      match /auditLogs/{eventId} {
+        allow get: if isLandsReviewer(municipalityId)
+          && resource.data.municipality_id == municipalityId;
+        allow list: if isLandsReviewer(municipalityId);
+        allow create, update, delete: if false;
+      }
+
+      match /{domain}/{recordId} {
+        allow get: if isLandsDomain(domain)
+          && isActiveLandsUser(municipalityId)
+          && resource.data.municipality_id == municipalityId;
+        allow list: if isLandsDomain(domain)
+          && isActiveLandsUser(municipalityId);
+        allow create: if isLandsDomain(domain)
+          && validLandsDomainCreate(municipalityId);
+        allow update, delete: if false;
+      }
+
+      match /{landsPath=**} {
+        allow read, write: if false;
+      }
+    }
+
     // ==========================================================
     // Final fallback — everything else denied.
     // ==========================================================

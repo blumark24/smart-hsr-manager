@@ -18,8 +18,8 @@ const {
 } = require('firebase/storage');
 
 const PROJECT_ID = 'demo-smart-hsr-lands-candidate';
-const FIRESTORE_RULES = path.resolve(__dirname, '..', 'firestore.rules.lands-candidate');
-const STORAGE_RULES = path.resolve(__dirname, '..', 'storage.rules.lands-candidate');
+const FIRESTORE_RULES = path.resolve(__dirname, '..', 'firestore.rules');
+const STORAGE_RULES = path.resolve(__dirname, '..', 'storage.rules');
 const MUNICIPALITY_A = 'municipality-a';
 const MUNICIPALITY_B = 'municipality-b';
 

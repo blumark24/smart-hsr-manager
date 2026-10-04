@@ -1,4 +1,4 @@
-name: Lands Rules Candidate Gate
+name: Lands Rules Gate
 
 on:
   push:
@@ -26,10 +26,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Firestore + Storage candidate regression
+      - name: Firestore + Storage rules regression
         run: |
           npx firebase emulators:exec \
             --only firestore,storage \
             --project demo-smart-hsr-lands-candidate \
-            --config firebase.lands-candidate.json \
-            "bash -lc 'cp firestore.rules.lands-candidate firestore.rules && node --test test/firestore.rules.test.js && node --test test/lands-rules-candidate.test.js'"
+            "node --test test/firestore.rules.test.js test/lands-rules-candidate.test.js"
+
+      - name: Lands application regression
+        run: npm run test:lands
