@@ -73,7 +73,8 @@ service firebase.storage {
 
       allow list: if false;
 
-      allow create: if isActiveLandsUser(municipalityId)
+      allow create: if resource == null
+        && isActiveLandsUser(municipalityId)
         && isDocumentDomain(recordDomain)
         && request.resource.size > 0
         && request.resource.size <= 10 * 1024 * 1024
