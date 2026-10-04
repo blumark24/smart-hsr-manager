@@ -51,3 +51,25 @@ test('Lands shell is visually aligned with the manager shell without copying man
   assert.match(lands, /--shadow-card:/);
   assert.match(lands, /prefers-reduced-motion/);
 });
+
+
+test('role-aware shell hides manager-only controls from a Lands employee', () => {
+  assert.match(lands, /if \(!session \|\| !mod\.canReviewGrant\(session\.role\)\) return;/);
+  assert.match(lands, /managerToggle\.hidden = !canReview/);
+  assert.match(lands, /\[data-view="audit"\]/);
+  assert.match(lands, /\[data-view="users"\]/);
+  assert.match(lands, /canManageUsers = mod\.canManageEntitlements\(session\.role\)/);
+});
+
+test('release chrome is environment-truthful and does not expose dead primary actions', () => {
+  assert.match(lands, /isProductionHost\(\) \? "بيئة الإنتاج" : "بيئة المعاينة"/);
+  assert.doesNotMatch(lands, /id="envBadge">بيئة ما قبل الإنتاج/);
+  assert.doesNotMatch(lands, /onclick='openDigitize\(\)'/);
+  assert.doesNotMatch(lands, /رفع مستند عام للقرار غير مفعّل/);
+  assert.doesNotMatch(lands, /التخزين السحابي لهذه البيئة غير مهيأ حاليًا/);
+});
+
+test('GIS empty states never ask the user to select a parcel when no verified geometry exists', () => {
+  const honestNotes = lands.match(/fc\.features\.length \? "اختر قطعة لعرض المنحة المرتبطة بها" : "بانتظار بيانات GIS موثّقة للقطع"/g) || [];
+  assert.ok(honestNotes.length >= 3);
+});

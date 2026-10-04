@@ -750,7 +750,7 @@
 <div class="app" id="appShell" hidden>
   <header class="topbar">
     <div class="brand"><img src="/smart-hsr-mark.svg" alt="SMART HSR"><div><b>SMART HSR — الأراضي الذكية</b><small>إدارة الأراضي والممتلكات</small></div></div>
-    <div class="top-actions"><button class="theme-toggle" id="mobileNavToggle" type="button" aria-label="فتح قائمة التنقل" onclick="toggleMobileNav()"><i data-lucide="menu"></i></button><span class="env-badge" id="envBadge">بيئة ما قبل الإنتاج</span><button class="theme-toggle" id="managerModeToggle" type="button" aria-pressed="false" aria-label="تبديل وضع المدير" onclick="toggleManagerMode()"><i data-lucide="presentation"></i> وضع المدير</button><button class="theme-toggle" id="themeToggle" type="button" aria-label="تبديل الوضع الليلي" onclick="toggleTheme()"></button><div class="user" id="userInfo"></div></div>
+    <div class="top-actions"><button class="theme-toggle" id="mobileNavToggle" type="button" aria-label="فتح قائمة التنقل" onclick="toggleMobileNav()"><i data-lucide="menu"></i></button><span class="env-badge" id="envBadge">SMART HSR</span><button class="theme-toggle" id="managerModeToggle" type="button" aria-pressed="false" aria-label="تبديل وضع المدير" onclick="toggleManagerMode()"><i data-lucide="presentation"></i> وضع المدير</button><button class="theme-toggle" id="themeToggle" type="button" aria-label="تبديل الوضع الليلي" onclick="toggleTheme()"></button><div class="user" id="userInfo"></div></div>
   </header>
   <div class="shell">
     <aside class="side"><button class="side-collapse-toggle" id="sidebarToggle" type="button" onclick="toggleSidebar()" aria-label="طي/توسيع القائمة الجانبية" aria-expanded="true" title="طي/توسيع القائمة"><i data-lucide="chevron-left"></i></button><div class="side-label">مساحات العمل</div><nav class="nav">
@@ -778,7 +778,7 @@
 <button class="ai-trigger" id="aiTrigger" type="button" data-state="idle" aria-label="فتح المساعد الإداري الذكي" onclick="toggleAiPanel()"><span class="ai-face" aria-hidden="true"></span><span class="ai-attention-badge" id="aiAttentionBadge" hidden></span></button>
 <div class="ai-panel glass" id="aiPanel" role="dialog" aria-label="المساعد الإداري الذكي">
   <div class="ai-panel-head">
-    <div><b>المساعد الذكي</b><small>وضع تجريبي — سيتم ربطه بمحرك الذكاء الاصطناعي الفعلي لاحقًا</small></div>
+    <div><b>المساعد الذكي</b><small>تحليل تشغيلي من بيانات النظام · قراءة وتوصية فقط</small></div>
     <button class="close" onclick="toggleAiPanel()"><i data-lucide="x"></i></button>
   </div>
   <div class="ai-attention-summary" id="aiAttentionSummary" hidden></div>
@@ -1152,6 +1152,7 @@ function closeMobileNav() { document.body.classList.remove("mobile-nav-open"); }
 // changes how centerView() renders (see managerModeView()); it reads
 // exclusively from AutomationEngine and never mutates grants/decisions.
 function toggleManagerMode() {
+  if (!session || !mod.canReviewGrant(session.role)) return;
   managerMode = !managerMode;
   const b = document.getElementById("managerModeToggle");
   if (b) { b.classList.toggle("active", managerMode); b.setAttribute("aria-pressed", String(managerMode)); }
@@ -1327,9 +1328,17 @@ async function refreshWorkspace() { await loadWorkspace(); render(); }
 function renderShellChrome() {
   document.getElementById("userInfo").innerHTML = `<span>${esc(ROLE_LABELS[session.role] || session.role)}</span><span class="avatar">${esc((ROLE_LABELS[session.role] || "?")[0])}</span><button class="btn small ghost" id="logoutBtn" type="button">${icon("log-out")} خروج</button>`;
   document.getElementById("logoutBtn").onclick = handleLogout;
-  document.getElementById("sideFoot").innerHTML = `${reviewMode ? "وضع المراجعة · بيانات تجريبية" : "بيئة ما قبل الإنتاج"}<br><b class="mono">${esc(session.municipalityId)}</b>`;
+  const canReview = mod.canReviewGrant(session.role);
+  const canManageUsers = mod.canManageEntitlements(session.role);
+  const environmentLabel = reviewMode ? "وضع المراجعة · بيانات تجريبية" : (isProductionHost() ? "بيئة الإنتاج" : "بيئة المعاينة");
+  if (!canReview) managerMode = false;
+  const managerToggle = document.getElementById("managerModeToggle");
+  if (managerToggle) managerToggle.hidden = !canReview;
+  document.querySelectorAll('[data-view="audit"]').forEach(el => { el.hidden = !canReview; });
+  document.querySelectorAll('[data-view="users"]').forEach(el => { el.hidden = !canManageUsers; });
+  document.getElementById("sideFoot").innerHTML = `${environmentLabel}<br><b class="mono">${esc(session.municipalityId)}</b>`;
   const envBadge = document.getElementById("envBadge");
-  if (envBadge && reviewMode) envBadge.textContent = "وضع المراجعة — بيانات تجريبية فقط، بلا اتصال Firebase";
+  if (envBadge) envBadge.textContent = reviewMode ? "وضع المراجعة — بيانات تجريبية فقط، بلا اتصال Firebase" : environmentLabel;
 }
 
 // ---- main render dispatch ----
@@ -1437,7 +1446,7 @@ function centerView() {
   const stats = AutomationEngine.decisionStats(grants.filter(g => !g.archived));
   const activeDecisions = decisionGroups().filter(g => g.number).length;
   const approved = grants.filter(g => g.status === "approved").length;
-  const actions = (mod.canCreateGrant(session.role) ? `<button class='btn ghost' onclick='openDigitize()'>${icon("scan-text")} رقمنة مستند</button><button class='btn primary' onclick='openAdd()'>${icon("plus")} إضافة منحة</button>` : "");
+  const actions = (mod.canCreateGrant(session.role) ? `<button class='btn primary' onclick='openAdd()'>${icon("plus")} إضافة منحة</button>` : "");
   const needsCompletion = grants.filter(g => g.completeness.missing.length > 0).slice(0, 3);
   const statusOrder = ["draft", "under_review", "incomplete", "approved", "rejected"];
   const statusMax = Math.max(1, ...statusOrder.map(s => grants.filter(g => g.status === s).length));
@@ -1661,8 +1670,7 @@ function decisionDetailView() {
 <section class="decision-hero">
   <div class="decision-hero-info"><div class="decision-hero-title-row"><span class="decision-hero-icon-badge">${icon("gavel")}</span><h1>${esc(label)}${archived ? ` <span class="chip archived">${icon("archive")} مؤرشف</span>` : ""}</h1></div><div class="decision-hero-meta">${authority ? `<span>${icon("landmark")} ${esc(authority)}</span>` : ""}${date ? `<span class="mono">${icon("calendar")} ${esc(date)}</span>` : ""}<span>${icon("users-round")} ${total} مستفيد</span>${decisionChip({ grants: scoped })}</div></div>
   ${(canAddGrantHere || canManageDecision) && !archived ? `<div class="decision-hero-actions">
-  ${canAddGrantHere ? `<button class="btn primary small" onclick="openAddGrant('${esc(number || "")}')">${icon("plus")} إضافة منحة</button>
-  <button class="btn small" onclick="showToast('رفع مستند عام للقرار غير مفعّل في هذه المعاينة — ارفع المستند من داخل ملف المنحة')">${icon("upload-cloud")} إضافة مستند</button>` : ""}
+  ${canAddGrantHere ? `<button class="btn primary small" onclick="openAddGrant('${esc(number || "")}')">${icon("plus")} إضافة منحة</button>` : ""}
   ${canManageDecision ? `<button class="btn small" onclick="openEditDecision('${esc(number || "")}')">${icon("pencil")} تعديل القرار</button>
   <div class="kebab-menu" id="decisionKebab"><button class="btn small" onclick="event.stopPropagation();toggleKebab('decisionKebab')">${icon("more-vertical")}</button>
     <div class="kebab-menu-list"><button onclick="openArchiveDecision('${esc(number || "")}')" class="danger">${icon("archive")} أرشفة القرار</button></div>
@@ -1699,7 +1707,7 @@ function decisionTwinTab(scoped) {
   return `<div class="workgrid"><section class="panel map-panel"><div class="panel-head"><div><h2>التوأم الرقمي — مقصور على هذا القرار</h2><p>محاكاة مكانية تشغيلية لقطع هذا القرار — غير مرتبطة حاليًا بحدود مساحية رسمية${twinLayerFilter !== "all" ? ` · طبقة: ${esc(TWIN_LAYERS.find(l => l[0] === twinLayerFilter)?.[1] || "")}` : ""}</p></div>${reviewDemoLocationChip()}</div>
   ${activeWhatIfScenario ? whatIfMapBanner() : ""}
   ${twinStatusBar(previewSet, fc.features.length)}
-  <div class="map-wrap map-wrap-lg">${gisMapWrapMarkup("gisMapDecision")}<div class="map-filter-overlay glass"><input class="select" type="search" placeholder="بحث: رقم قطعة / مخطط / مستفيد (Enter)" aria-label="بحث مكاني" onkeydown="if(event.key==='Enter')submitGisSearch(this.value)">${mapQuickChips(twinLayerFilter)}<details><summary>${icon("sliders-horizontal")} تصفية متقدمة</summary><select class="select" aria-label="طبقة الحالة (كل الطبقات)" onchange="setTwinLayerFilter(this.value)">${layerOptions}</select><select class="select" aria-label="تصفية حسب المخطط" onchange="setTwinPlanFilter(this.value)">${planOptions}</select></details></div><div class="map-controls-glass glass"><button onclick="gisZoomIn()" aria-label="تكبير">${icon("zoom-in")}</button><button onclick="gisZoomOut()" aria-label="تصغير">${icon("zoom-out")}</button></div><div class="map-note">اختر قطعة لعرض المنحة المرتبطة بها</div></div>
+  <div class="map-wrap map-wrap-lg">${gisMapWrapMarkup("gisMapDecision")}<div class="map-filter-overlay glass"><input class="select" type="search" placeholder="بحث: رقم قطعة / مخطط / مستفيد (Enter)" aria-label="بحث مكاني" onkeydown="if(event.key==='Enter')submitGisSearch(this.value)">${mapQuickChips(twinLayerFilter)}<details><summary>${icon("sliders-horizontal")} تصفية متقدمة</summary><select class="select" aria-label="طبقة الحالة (كل الطبقات)" onchange="setTwinLayerFilter(this.value)">${layerOptions}</select><select class="select" aria-label="تصفية حسب المخطط" onchange="setTwinPlanFilter(this.value)">${planOptions}</select></details></div><div class="map-controls-glass glass"><button onclick="gisZoomIn()" aria-label="تكبير">${icon("zoom-in")}</button><button onclick="gisZoomOut()" aria-label="تصغير">${icon("zoom-out")}</button></div><div class="map-note">${fc.features.length ? "اختر قطعة لعرض المنحة المرتبطة بها" : "بانتظار بيانات GIS موثّقة للقطع"}</div></div>
   <div class="legend"><span><i class="dot" style="background:#5aa978"></i>مكتمل</span><span><i class="dot" style="background:#e0a14d"></i>تحت المراجعة</span><span><i class="dot" style="background:#d56c66"></i>غير مكتمل</span><span><i class="dot" style="background:#aeb8bb"></i>خارج نطاق الطبقة/القرار</span></div>
   ${twinLayerFilter === "all" && planFiltered.length > 0 && fc.features.length === 0 ? noSpatialDataState(noLocation.length) : ""}
   ${twinLayerFilter !== "all" && heatmapSet.length === 0 ? twinZeroResultState() : ""}
@@ -2092,12 +2100,19 @@ async function submitReturnForCompletion(grantId, reason) {
     catch (error) { showToast(error.message || "تعذر إعادة المنحة للاستكمال", true); }
   });
 }
-async function uploadDocumentFor(grantId) {
+async function documentActionError(error, fallback) {
+  const code = String(error?.message || "");
+  if (code.includes("INVALID_DOCUMENT_SIZE")) return "حجم المستند غير مسموح. الحد الأقصى 10 MB.";
+  if (code.includes("INVALID_DOCUMENT_MIME_TYPE")) return "نوع المستند غير مسموح. استخدم PDF أو JPG أو PNG.";
+  if (/DENIED|permission-denied|ACCESS/i.test(code)) return "لا تملك الصلاحية اللازمة لتنفيذ هذا الإجراء.";
+  return fallback;
+}
+function uploadDocumentFor(grantId) {
   const input = document.getElementById(`uploadInput-${grantId}`); const file = input?.files?.[0];
   if (!file) return showToast("اختر ملفًا أولًا", true);
   await withBusyButton("جارٍ الرفع…", async () => {
     try { await client.uploadDocument(session.municipalityId, { recordDomain: "landGrants", recordId: grantId, file }); await refreshWorkspace(); openFile(grantId); showToast("تم رفع المستند"); }
-    catch (error) { showToast("تعذر رفع المستند — التخزين السحابي لهذه البيئة غير مهيأ حاليًا", true); }
+    catch (error) { showToast(documentActionError(error, "تعذر رفع المستند. تحقق من الاتصال وإعداد التخزين ثم أعد المحاولة."), true); }
   });
 }
 async function replaceDocumentFor(grantId, documentId) {
@@ -2105,7 +2120,7 @@ async function replaceDocumentFor(grantId, documentId) {
   inputEl.onchange = async () => {
     const file = inputEl.files?.[0]; if (!file) return;
     try { await client.replaceDocument(session.municipalityId, documentId, file); await refreshWorkspace(); openFile(grantId); showToast("تم استبدال المستند"); }
-    catch (error) { showToast("تعذر استبدال المستند — التخزين السحابي لهذه البيئة غير مهيأ حاليًا", true); }
+    catch (error) { showToast(documentActionError(error, "تعذر استبدال المستند. تحقق من الاتصال وإعداد التخزين ثم أعد المحاولة."), true); }
   };
   inputEl.click();
 }
@@ -2626,7 +2641,7 @@ function mapView() {
   return shellHead("الخريطة", "الخريطة", "التوأم الرقمي للمخططات والقطع عبر القرارات — Global Twin") + `
  <div class="workgrid"><section class="panel map-panel"><div class="panel-head"><div><h2>التوأم الرقمي للمخططات</h2><p>${esc(spatialCaption)} · ${mapDecisionFilter ? `عرض مقصور على قرار رقم ${esc(mapDecisionFilter)}` : "عرض كل القرارات"}${twinLayerFilter !== "all" ? ` · طبقة: ${esc(TWIN_LAYERS.find(l => l[0] === twinLayerFilter)?.[1] || "")}` : ""}</p></div>${reviewDemoLocationChip()}</div>
  ${twinStatusBar(activeGrants, fc.features.length)}
- <div class="map-wrap map-wrap-lg">${gisMapWrapMarkup("gisMapGlobal")}<div class="map-filter-overlay glass"><input class="select" type="search" placeholder="بحث: رقم قرار / قطعة / مخطط / مستفيد (Enter)" aria-label="بحث مكاني" onkeydown="if(event.key==='Enter')submitGisSearch(this.value)"><select class="select" aria-label="تصفية حسب القرار" onchange="setMapDecisionFilter(this.value)">${options}</select>${mapQuickChips(twinLayerFilter)}<details><summary>${icon("sliders-horizontal")} تصفية متقدمة</summary><select class="select" aria-label="طبقة الحالة (كل الطبقات)" onchange="setTwinLayerFilter(this.value)">${layerOptions}</select><select class="select" aria-label="تصفية حسب سنة القرار" onchange="setTwinYearFilter(this.value)">${yearOptions}</select><select class="select" aria-label="تصفية حسب المخطط" onchange="setTwinPlanFilter(this.value)">${planOptions}</select></details></div><div class="map-controls-glass glass"><button onclick="gisZoomIn()" aria-label="تكبير">${icon("zoom-in")}</button><button onclick="gisZoomOut()" aria-label="تصغير">${icon("zoom-out")}</button></div><div class="map-note">اختر قطعة لعرض المنحة المرتبطة بها</div></div><div class="legend"><span><i class="dot" style="background:#5aa978"></i>منحة معتمدة</span><span><i class="dot" style="background:#e0a14d"></i>قيد المراجعة/مسودة</span><span><i class="dot" style="background:#d56c66"></i>غير مكتملة</span><span><i class="dot" style="background:#aeb8bb"></i>خارج نطاق الطبقة/القرار</span></div>
+ <div class="map-wrap map-wrap-lg">${gisMapWrapMarkup("gisMapGlobal")}<div class="map-filter-overlay glass"><input class="select" type="search" placeholder="بحث: رقم قرار / قطعة / مخطط / مستفيد (Enter)" aria-label="بحث مكاني" onkeydown="if(event.key==='Enter')submitGisSearch(this.value)"><select class="select" aria-label="تصفية حسب القرار" onchange="setMapDecisionFilter(this.value)">${options}</select>${mapQuickChips(twinLayerFilter)}<details><summary>${icon("sliders-horizontal")} تصفية متقدمة</summary><select class="select" aria-label="طبقة الحالة (كل الطبقات)" onchange="setTwinLayerFilter(this.value)">${layerOptions}</select><select class="select" aria-label="تصفية حسب سنة القرار" onchange="setTwinYearFilter(this.value)">${yearOptions}</select><select class="select" aria-label="تصفية حسب المخطط" onchange="setTwinPlanFilter(this.value)">${planOptions}</select></details></div><div class="map-controls-glass glass"><button onclick="gisZoomIn()" aria-label="تكبير">${icon("zoom-in")}</button><button onclick="gisZoomOut()" aria-label="تصغير">${icon("zoom-out")}</button></div><div class="map-note">${fc.features.length ? "اختر قطعة لعرض المنحة المرتبطة بها" : "بانتظار بيانات GIS موثّقة للقطع"}</div></div><div class="legend"><span><i class="dot" style="background:#5aa978"></i>منحة معتمدة</span><span><i class="dot" style="background:#e0a14d"></i>قيد المراجعة/مسودة</span><span><i class="dot" style="background:#d56c66"></i>غير مكتملة</span><span><i class="dot" style="background:#aeb8bb"></i>خارج نطاق الطبقة/القرار</span></div>
  ${twinLayerFilter === "all" && activeGrants.length > 0 && fc.features.length === 0 ? noSpatialDataState(noLocation.length) : ""}
  ${twinLayerFilter !== "all" && heatmapSet.length === 0 ? twinZeroResultState() : ""}
  </section>
@@ -2638,7 +2653,7 @@ function mapView() {
 // ---- المستندات (كل القرارات) ----
 function documentsView() {
   const rows = grants.flatMap(g => documentsForGrant(g.id).map(d => ({ ...d, grant: g })));
-  return shellHead("المستندات", "المستندات", "كل المستندات المرفوعة عبر جميع قرارات المعاينة") +
+  return shellHead("المستندات", "المستندات", reviewMode ? "كل المستندات المرفوعة في بيانات المعاينة" : "كل المستندات المرفوعة عبر القرارات الحالية") +
     `<div class="table-wrap"><table class="data-table"><thead><tr><th>الملف</th><th>القرار</th><th>رقم المنحة</th><th>المستفيد</th><th>النوع</th><th>إجراء</th></tr></thead><tbody>${rows.length ? rows.map(d => `<tr onclick="openFile('${esc(d.grant.id)}')"><td>${icon("file-check-2")} ${esc(d.filename || d.id)}</td><td class="mono">${esc(d.grant.allocation_decision?.number || "—")}</td><td class="mono">${esc(d.grant.id)}</td><td>${esc(d.grant.beneficiary?.name || "—")}</td><td class="mono">${esc(d.mime_type || "—")}</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(d.grant.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="6"><div class="empty">${icon("folder-open")}<br>لا توجد مستندات مرفوعة بعد</div></td></tr>`}</tbody></table></div>`;
 }
 
