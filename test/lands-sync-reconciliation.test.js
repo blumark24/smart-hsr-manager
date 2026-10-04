@@ -418,3 +418,86 @@ test('16. explicit reconcileLandsAccess fails closed when Lands readback is unav
     assert.deepEqual(fakes.store.docs.get('users/u5').landsAccess, original);
   } finally { fakes.restore(); }
 });
+
+
+test('17. repairLandsAccess creates a missing authoritative membership then marks local mirror synced', async () => {
+  const fakes = installFakes({
+    bridgeResponses: [{ ok: true, bridged: true, eventId: 'repair-event-1' }],
+    membershipStatusResponses: [
+      { ok: true, exists: false, firebase_uid: null, municipality_id: null, lands_role: null, enabled: false },
+      { ok: true, exists: true, firebase_uid: 'u5', municipality_id: 'org-alpha', lands_role: 'lands_department_manager', enabled: true },
+    ],
+  });
+  try {
+    const { uid: managerUid, organizationId } = seedManager(fakes);
+    fakes.store.seed('users/u5', {
+      uid: 'u5', role: null, active: true, organizationId, email: 'u5@smart-hsr.local',
+      landsAccess: { enabled: true, role: 'lands_department_manager', syncStatus: 'pending_trusted_sync', syncError: 'legacy_failure' },
+    });
+    const usersHandler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await usersHandler(fakeRequest({ uid: managerUid, body: { action: 'repairLandsAccess', uid: 'u5' } }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.repaired, true);
+    assert.equal(res.body.mode, 'created_missing_membership');
+    assert.equal(fakes.bridgeCalls.length, 1);
+    assert.equal(fakes.bridgeCalls[0].operation, 'entitlement.enable');
+    assert.equal(fakes.bridgeCalls[0].recordId, 'u5');
+    assert.deepEqual(fakes.bridgeCalls[0].recordChanges, { lands_role: 'lands_department_manager' });
+    assert.equal(fakes.membershipStatusCalls.length, 2);
+    assert.equal(fakes.store.docs.get('users/u5').landsAccess.syncStatus, 'synced');
+  } finally { fakes.restore(); }
+});
+
+test('18. repairLandsAccess re-enables only an exact disabled authoritative membership', async () => {
+  const fakes = installFakes({
+    bridgeResponses: [{ ok: true, bridged: true, eventId: 'repair-event-2' }],
+    membershipStatusResponses: [
+      { ok: true, exists: true, firebase_uid: 'u5', municipality_id: 'org-alpha', lands_role: 'lands_department_manager', enabled: false },
+      { ok: true, exists: true, firebase_uid: 'u5', municipality_id: 'org-alpha', lands_role: 'lands_department_manager', enabled: true },
+    ],
+  });
+  try {
+    const { uid: managerUid, organizationId } = seedManager(fakes);
+    fakes.store.seed('users/u5', {
+      uid: 'u5', role: null, active: true, organizationId, email: 'u5@smart-hsr.local',
+      landsAccess: { enabled: true, role: 'lands_department_manager', syncStatus: 'pending_trusted_sync' },
+    });
+    const usersHandler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await usersHandler(fakeRequest({ uid: managerUid, body: { action: 'repairLandsAccess', uid: 'u5' } }), res);
+
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.mode, 'reenabled_exact_disabled_membership');
+    assert.equal(fakes.bridgeCalls.length, 1);
+    assert.equal(fakes.bridgeCalls[0].operation, 'entitlement.enable');
+    assert.equal(Object.prototype.hasOwnProperty.call(fakes.bridgeCalls[0], 'recordChanges'), false);
+    assert.equal(fakes.store.docs.get('users/u5').landsAccess.syncStatus, 'synced');
+  } finally { fakes.restore(); }
+});
+
+test('19. repairLandsAccess fails closed when an authoritative enabled membership exists with a different role', async () => {
+  const fakes = installFakes({
+    membershipStatusResponses: [{
+      ok: true, exists: true, firebase_uid: 'u5', municipality_id: 'org-alpha', lands_role: 'lands_employee', enabled: true,
+    }],
+  });
+  try {
+    const { uid: managerUid, organizationId } = seedManager(fakes);
+    const original = { enabled: true, role: 'lands_department_manager', syncStatus: 'pending_trusted_sync' };
+    fakes.store.seed('users/u5', {
+      uid: 'u5', role: null, active: true, organizationId, email: 'u5@smart-hsr.local',
+      landsAccess: { ...original },
+    });
+    const usersHandler = loadFreshUsersHandler();
+    const res = fakeResponse();
+    await usersHandler(fakeRequest({ uid: managerUid, body: { action: 'repairLandsAccess', uid: 'u5' } }), res);
+
+    assert.equal(res.statusCode, 409, JSON.stringify(res.body));
+    assert.equal(res.body.reason, 'authoritative_membership_conflict');
+    assert.equal(fakes.bridgeCalls.length, 0, 'conflicting authoritative role must never be mutated');
+    assert.equal(fakes.membershipStatusCalls.length, 1);
+    assert.deepEqual(fakes.store.docs.get('users/u5').landsAccess, original);
+  } finally { fakes.restore(); }
+});
