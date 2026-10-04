@@ -771,28 +771,6 @@ body.dark .splash-core:before,body.dark .splash-core:after{border-color:rgba(107
     <div class="splash-label">SMART HSR · SECURE LAND WORKSPACE <span class="splash-dots"><i></i><i></i><i></i></span></div>
   </div>
 </div>
-<div class="auth-screen" id="loginScreen" hidden>
-  <section class="auth-card">
-    <div class="auth-brand"><img src="/smart-hsr-mark.svg" alt="شعار سياقي"><h1>Smart HSR</h1><p>نظام الحصر الذكي لمنح الأراضي</p></div>
-    <p class="notice info" style="margin:0 0 18px">المسار المعتاد لجميع موظفي Smart HSR هو <a href="https://smart-hsr-manager.vercel.app/login.html" style="color:inherit;font-weight:700">بوابة الموظفين الموحدة</a>. هذه الصفحة مسار احتياطي مؤقت لأغراض الاختبار على البيئة التجريبية فقط.</p>
-    <form id="loginForm" novalidate>
-      <label class="input-label" for="loginEmail">البريد الإلكتروني</label>
-      <input class="text-input" id="loginEmail" type="email" autocomplete="username" required>
-      <label class="input-label" for="loginPassword">كلمة المرور</label>
-      <div class="password-field">
-        <input class="text-input" id="loginPassword" type="password" autocomplete="current-password" required>
-        <button type="button" class="password-toggle" id="passwordToggle" aria-label="إظهار كلمة المرور" aria-pressed="false"><i data-lucide="eye"></i></button>
-      </div>
-      <label class="input-label" for="loginMunicipality">معرّف البلدية</label>
-      <input class="text-input mono" id="loginMunicipality" placeholder="مثال: municipality-001" required aria-describedby="municipalityHint">
-      <small id="municipalityHint" class="muted" style="display:block;margin-top:4px">يوفّره مدير النظام لكل بلدية مشتركة في المنصة</small>
-      <div class="auth-error" id="loginError" role="alert" hidden></div>
-      <button class="btn primary auth-submit" id="loginSubmit" type="submit">تسجيل الدخول</button>
-      <button class="btn ghost auth-forgot" id="forgotPassword" type="button">نسيت كلمة المرور؟</button>
-    </form>
-    <p class="auth-footnote">بيئة ما قبل الإنتاج · نظام تنظيمي مخصص لموظفي البلدية المفوّضين فقط</p>
-  </section>
-</div>
 <div class="auth-screen" id="deniedScreen" hidden>
   <section class="auth-card">
     <div class="auth-brand"><h1>تعذّر الدخول</h1></div>
@@ -992,11 +970,8 @@ const UNIFIED_LOGIN_URL = "/login.html";
 function goToUnifiedLogin() { window.location.href = UNIFIED_LOGIN_URL; }
 // In Production there is no standalone Lands login to fall back to at all —
 // every path that would otherwise show it instead leaves for the unified
-// employee gateway. Preview/local keeps the exact previous behavior.
-function showLoginOrRedirect() {
-  if (isProductionHost()) { goToUnifiedLogin(); return; }
-  showScreen("login");
-}
+// employee gateway. Preview and Production are SSO-only.
+function showLoginOrRedirect() { goToUnifiedLogin(); }
 // ---- GIS Digital Twin — Leaflet renderer (§2/§12) ----
 // Pure renderer/input glue: reads already-authorized, already-scoped
 // grants + parcels, asks client/lands-spatial.js (the adapter boundary)
@@ -1162,7 +1137,6 @@ async function loadModules() {
 // ---- screen management ----
 function showScreen(name) {
   document.getElementById("bootScreen").hidden = name !== "boot";
-  document.getElementById("loginScreen").hidden = name !== "login";
   document.getElementById("deniedScreen").hidden = name !== "denied";
   document.getElementById("appShell").hidden = name !== "app";
 }
@@ -1266,22 +1240,7 @@ const AUDIT_ACTION_LABELS = {
   "document.uploaded": "رفع مستند", "document.replaced": "استبدال مستند", "document.deleted": "حذف مستند", "lands.entitlement_enabled": "تفعيل صلاحية مستخدم", "lands.entitlement_disabled": "تعطيل صلاحية مستخدم", "lands.role_changed": "تغيير دور مستخدم"
 };
 
-// ---- auth flow ----
-function bindLoginScreen() {
-  document.getElementById("passwordToggle").onclick = () => {
-    const input = document.getElementById("loginPassword"); const btn = document.getElementById("passwordToggle");
-    const show = input.type === "password"; input.type = show ? "text" : "password";
-    btn.innerHTML = icon(show ? "eye-off" : "eye"); btn.setAttribute("aria-label", show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"); btn.setAttribute("aria-pressed", String(show)); lucide.createIcons();
-  };
-  document.getElementById("forgotPassword").onclick = async () => {
-    const email = document.getElementById("loginEmail").value.trim();
-    if (!email) return setLoginError("أدخل البريد الإلكتروني أولًا ثم اضغط نسيت كلمة المرور");
-    try { const c = ensureClient(); await c.resetPassword(email); showToast("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني"); }
-    catch { setLoginError("تعذر إرسال رابط إعادة التعيين. تحقق من صحة البريد الإلكتروني."); }
-  };
-  document.getElementById("loginForm").onsubmit = async (e) => { e.preventDefault(); await handleLogin(); };
-}
-function setLoginError(message) { const el = document.getElementById("loginError"); if (!message) { el.hidden = true; el.textContent = ""; return; } el.hidden = false; el.textContent = message; }
+// ---- auth flow (SSO-only) ----
 function ensureClient() { if (!client) client = mod.createLandsClient({ firebaseConfig: resolveLandsFirebaseConfig(), useEmulators: false }); return client; }
 const LOGIN_ERROR_MESSAGES = { LANDS_ACCESS_DENIED: "لا تملك صلاحية وصول مفعّلة لنظام الحصر الذكي لمنح الأراضي في هذه البلدية. الرجاء التواصل مع مدير النظام.", INVALID_MUNICIPALITY_ID: "معرّف البلدية غير صحيح.", "auth/invalid-credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة.", "auth/invalid-email": "صيغة البريد الإلكتروني غير صحيحة.", "auth/too-many-requests": "محاولات كثيرة متتالية. الرجاء المحاولة لاحقًا." };
 async function handleLogin() {
@@ -1317,8 +1276,8 @@ function showDenied(message, { returnToUnified = false } = {}) {
     action.textContent = "العودة إلى بوابة الموظفين";
     action.onclick = goToUnifiedLogin;
   } else {
-    action.textContent = "العودة لتسجيل الدخول";
-    action.onclick = () => { handleLogout(); };
+    action.textContent = "العودة إلى بوابة الموظفين";
+    action.onclick = goToUnifiedLogin;
   }
   showScreen("denied");
 }
@@ -1332,8 +1291,7 @@ function showDenied(message, { returnToUnified = false } = {}) {
 // unified-SSO arrival is in progress: any failure from here on shows the
 // existing dedicated denied/error screen (showDenied — same one the normal
 // login flow already uses for entitlement denial), never the plain login
-// form. Only a genuine standalone visit with NO code at all ever reaches
-// that form (see the boot sequence below).
+// form. A direct visit with no valid persisted session returns to the unified employee gateway.
 async function consumeSsoHandoff() {
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
@@ -1369,7 +1327,6 @@ async function consumeSsoHandoff() {
 async function handleLogout() {
   try { if (client) await client.signOutUser(); } catch { /* best-effort */ }
   session = null; grants = []; domains = { royalOrders: [], allocationDecisions: [], beneficiaries: [], plans: [], parcels: [], documents: [] }; users = []; auditEvents = []; selectedGrantId = null;
-  document.getElementById("loginPassword").value = ""; setLoginError(null);
   showLoginOrRedirect();
 }
 async function loadWorkspace() {
@@ -3119,14 +3076,6 @@ document.getElementById("modalBackdrop").onclick = e => { if (e.target.id === "m
 applyTheme(localStorage.getItem("slgr-theme") || "light");
 sidebarCollapsed = localStorage.getItem("slgr-sidebar-collapsed") === "1";
 applySidebarState();
-bindLoginScreen();
-// Pre-fill only — never trusted as an access decision. If a user arrives from
-// the Smart HSR employee gateway with ?municipality=<id>, this just saves a
-// re-type; session()/Firestore Rules remain the sole source of truth for
-// whether this user actually has access to that municipality.
-const municipalityHint = new URLSearchParams(location.search).get("municipality");
-if (municipalityHint) document.getElementById("loginMunicipality").value = municipalityHint;
-
 // ---- Golden Preview Review Mode: hardcoded demo fixtures ----
 // Entirely synthetic, clearly-labeled data — never a Firebase read, never a
 // Firebase write, staging or Production. Mirrors the exact shapes the real
@@ -3341,10 +3290,7 @@ async function boot() {
     if (!user && isProductionHost()) goToUnifiedLogin();
   });
 }
-boot().catch(() => {
-  setLoginError("تعذر تحميل مكونات النظام. حدّث الصفحة وحاول مجددًا.");
-  showLoginOrRedirect();
-});
+boot().catch(() => { showLoginOrRedirect(); });
 lucide.createIcons();
 </script>
 </body>
