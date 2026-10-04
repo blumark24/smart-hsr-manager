@@ -1,0 +1,2 @@
+SMART HSR Embedded Lands Preview trigger.
+Branch-only integration. No main or Production changes.
