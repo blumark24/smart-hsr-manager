@@ -736,14 +736,40 @@ body.dark .nav button.active{box-shadow:inset 0 0 0 1px rgba(107,197,142,.12),0 
 @media(max-width:1100px){.shell{grid-template-columns:1fr 238px}.main{padding:28px 24px 60px}.metrics{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.topbar{height:auto;min-height:72px;padding:12px 14px}.shell{display:block}.side{position:relative;top:0;height:auto;min-height:0}.main{padding:22px 14px 48px}.metrics{grid-template-columns:1fr}.page-head{flex-direction:column}}
 
+
+/* ==== SMART HSR premium boot splash — preview visual layer ==== */
+#bootScreen.splash-screen{position:fixed;inset:0;z-index:9999;min-height:100vh;padding:0;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 46%,rgba(46,139,87,.11),transparent 27%),linear-gradient(145deg,#fbfcfa 0%,#f4f7f3 52%,#eef4ef 100%)}
+#bootScreen.splash-screen[hidden]{display:none!important}
+.splash-core{position:relative;width:min(420px,86vw);height:300px;display:grid;place-items:center;text-align:center}
+.splash-core:before,.splash-core:after{content:"";position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);border:1px solid rgba(46,139,87,.24);border-radius:50%;pointer-events:none}
+.splash-core:before{width:190px;height:190px;animation:hsrPulse 1.1s ease-out infinite}
+.splash-core:after{width:142px;height:142px;border-style:dashed;animation:hsrSpin 4s linear infinite}
+.splash-logo{width:112px;height:124px;object-fit:contain;background:transparent!important;padding:0!important;border-radius:0!important;filter:drop-shadow(0 18px 34px rgba(11,61,46,.18));animation:hsrLogoIn .72s cubic-bezier(.2,.8,.2,1) both}
+.splash-scan{position:absolute;width:190px;height:1px;background:linear-gradient(90deg,transparent,#2aa84a,transparent);box-shadow:0 0 14px rgba(42,168,74,.55);animation:hsrScan 1s ease-in-out infinite}
+.splash-label{position:absolute;bottom:18px;left:0;right:0;color:#0B3D2E;font:600 11px/1.4 "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;opacity:.72}
+.splash-dots{display:inline-flex;gap:5px;margin-inline-start:8px;vertical-align:middle}
+.splash-dots i{width:4px;height:4px;border-radius:50%;background:#2aa84a;animation:hsrDot .9s ease-in-out infinite}
+.splash-dots i:nth-child(2){animation-delay:.15s}.splash-dots i:nth-child(3){animation-delay:.3s}
+.brand img{background:transparent!important;border-radius:0!important;padding:0!important}
+body.dark #bootScreen.splash-screen{background:radial-gradient(circle at 50% 46%,rgba(107,197,142,.14),transparent 30%),linear-gradient(145deg,#06130d 0%,#071A12 55%,#0a2318 100%)}
+body.dark .splash-label{color:#dff4e6}
+body.dark .splash-core:before,body.dark .splash-core:after{border-color:rgba(107,197,142,.25)}
+@keyframes hsrLogoIn{0%{opacity:0;transform:scale(.86);filter:blur(8px)}65%{opacity:1;transform:scale(1.035);filter:blur(0)}100%{opacity:1;transform:scale(1)}}
+@keyframes hsrPulse{0%{opacity:.65;transform:translate(-50%,-50%) scale(.72)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.16)}}
+@keyframes hsrSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes hsrScan{0%,100%{transform:translateY(-54px);opacity:.12}50%{transform:translateY(54px);opacity:.9}}
+@keyframes hsrDot{0%,100%{opacity:.25;transform:scale(.75)}50%{opacity:1;transform:scale(1.15)}}
+@media(prefers-reduced-motion:reduce){.splash-logo,.splash-core:before,.splash-core:after,.splash-scan,.splash-dots i{animation:none!important}}
+
 </style>
 </head>
 <body>
-<div class="auth-screen" id="bootScreen">
-  <section class="auth-card" style="text-align:center">
-    <div class="auth-brand"><img src="/smart-hsr-mark.svg" alt="شعار سياقي"><h1>Smart HSR</h1><p>نظام الحصر الذكي لمنح الأراضي</p></div>
-    <p class="muted">جاري فتح حصر منح الأراضي…</p>
-  </section>
+<div class="auth-screen splash-screen" id="bootScreen" aria-label="جاري فتح SMART HSR">
+  <div class="splash-core" aria-hidden="true">
+    <span class="splash-scan"></span>
+    <img class="splash-logo" src="/smart-hsr-mark.svg" alt="">
+    <div class="splash-label">SMART HSR · SECURE LAND WORKSPACE <span class="splash-dots"><i></i><i></i><i></i></span></div>
+  </div>
 </div>
 <div class="auth-screen" id="loginScreen" hidden>
   <section class="auth-card">
@@ -1026,7 +1052,7 @@ function gisMarkerIcon(props) {
 function mountGisMap(containerId, featureCollection, layer) {
   const el = document.getElementById(containerId);
   if (!el) return;
-  if (typeof L === "undefined" || typeof L.markerClusterGroup !== "function") {
+  if (typeof L === "undefined") {
     gisMapErrorEl(containerId)?.removeAttribute("hidden");
     return;
   }
@@ -1042,10 +1068,12 @@ function mountGisMap(containerId, featureCollection, layer) {
       // Keep the operational overlays usable and log the tile issue for diagnostics.
       console.warn("GIS basemap tile failed", event?.tile?.src || "unknown tile");
     });
-    const clusterGroup = L.markerClusterGroup({
-      maxClusterRadius: 45, spiderfyOnMaxZoom: true, showCoverageOnHover: false,
-      iconCreateFunction: (cluster) => L.divIcon({ html: String(cluster.getChildCount()), className: "gis-cluster-icon", iconSize: [36, 36] })
-    });
+    const clusterGroup = typeof L.markerClusterGroup === "function"
+      ? L.markerClusterGroup({
+          maxClusterRadius: 45, spiderfyOnMaxZoom: true, showCoverageOnHover: false,
+          iconCreateFunction: (cluster) => L.divIcon({ html: String(cluster.getChildCount()), className: "gis-cluster-icon", iconSize: [36, 36] })
+        })
+      : L.layerGroup();
     featureCollection.features.forEach((f) => {
       const [lng, lat] = f.geometry.coordinates;
       const marker = L.marker([lat, lng], { icon: gisMarkerIcon(f.properties) });
