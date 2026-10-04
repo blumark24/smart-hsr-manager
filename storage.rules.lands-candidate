@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function landsMembership(municipalityId) {
+      return firestore.get(
+        /databases/(default)/documents/landsMunicipalities/$(municipalityId)/userAccess/$(request.auth.uid)
+      );
+    }
+
+    function isActiveLandsUser(municipalityId) {
+      return request.auth != null
+        && firestore.exists(
+          /databases/(default)/documents/landsMunicipalities/$(municipalityId)/userAccess/$(request.auth.uid)
+        )
+        && landsMembership(municipalityId).data.firebase_uid == request.auth.uid
+        && landsMembership(municipalityId).data.municipality_id == municipalityId
+        && landsMembership(municipalityId).data.enabled == true
+        && landsMembership(municipalityId).data.lands_role in [
+          'municipal_manager', 'lands_department_manager', 'lands_employee'
+        ];
+    }
+
+    function isDocumentDomain(recordDomain) {
+      return recordDomain in [
+        'landGrants', 'royalOrders', 'allocationDecisions',
+        'beneficiaries', 'plans', 'parcels'
+      ];
+    }
+
+    function validDocumentMetadata(municipalityId, recordDomain, recordId, fileId) {
+      return request.resource.metadata.keys().hasOnly([
+          'document_id', 'municipality_id', 'record_domain', 'record_id'
+        ])
+        && request.resource.metadata.document_id == fileId
+        && request.resource.metadata.municipality_id == municipalityId
+        && request.resource.metadata.record_domain == recordDomain
+        && request.resource.metadata.record_id == recordId;
+    }
+
+    match /landsMunicipalities/{municipalityId}/documents/{recordDomain}/{recordId}/{fileId} {
+      allow get: if isActiveLandsUser(municipalityId)
+        && isDocumentDomain(recordDomain)
+        && resource.metadata.document_id == fileId
+        && resource.metadata.municipality_id == municipalityId
+        && resource.metadata.record_domain == recordDomain
+        && resource.metadata.record_id == recordId;
+
+      allow list: if false;
+
+      allow create: if isActiveLandsUser(municipalityId)
+        && isDocumentDomain(recordDomain)
+        && request.resource.size > 0
+        && request.resource.size <= 10 * 1024 * 1024
+        && request.resource.contentType in ['application/pdf', 'image/jpeg', 'image/png']
+        && validDocumentMetadata(municipalityId, recordDomain, recordId, fileId);
+
+      // Browser clients never replace or delete objects. Those operations
+      // are trusted server/Admin mutations and bypass Security Rules.
+      allow update, delete: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
