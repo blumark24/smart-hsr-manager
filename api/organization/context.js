@@ -194,6 +194,11 @@ function sanitizedMapContext(organizationId, organizationName, organizationData)
 }
 
 async function handler(req, res) {
+  const embeddedLandsAction = (req.query && typeof req.query.embeddedLandsAction === 'string' ? req.query.embeddedLandsAction : (() => { try { return new URL(req.url || '/', 'http://localhost').searchParams.get('embeddedLandsAction') || ''; } catch (_) { return ''; } })()).trim();
+  if (embeddedLandsAction) {
+    const { handleEmbeddedLandsHttp } = require('../_lib/embeddedLandsRuntime');
+    return handleEmbeddedLandsHttp(req, res, embeddedLandsAction);
+  }
   if (req.method === 'POST') return handleLandsSsoHandoff(req, res);
   if (req.method !== 'GET') return sendJson(res, 405, { error:'method_not_allowed' });
   let decoded;
