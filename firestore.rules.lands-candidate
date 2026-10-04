@@ -377,35 +377,42 @@ service cloud.firestore {
             request.auth.uid == userId
             || isLandsManager(municipalityId)
           );
-        allow list: if isLandsManager(municipalityId)
-          && resource.data.municipality_id == municipalityId;
+        // The collection path itself is already tenant-scoped. Requiring a
+        // resource-field predicate here would force the browser to add a
+        // redundant where() clause and would break the current list call.
+        allow list: if isLandsManager(municipalityId);
         allow create, update, delete: if false;
       }
 
       match /landGrants/{grantId} {
-        allow read: if isActiveLandsUser(municipalityId)
+        allow get: if isActiveLandsUser(municipalityId)
           && resource.data.municipality_id == municipalityId;
+        allow list: if isActiveLandsUser(municipalityId);
         allow create: if validLandsGrantCreate(municipalityId);
         allow update, delete: if false;
       }
 
       match /documents/{documentId} {
-        allow read: if isActiveLandsUser(municipalityId)
+        allow get: if isActiveLandsUser(municipalityId)
           && resource.data.municipality_id == municipalityId;
+        allow list: if isActiveLandsUser(municipalityId);
         allow create: if validLandsDocumentCreate(municipalityId, documentId);
         allow update, delete: if false;
       }
 
       match /auditLogs/{eventId} {
-        allow read: if isLandsReviewer(municipalityId)
+        allow get: if isLandsReviewer(municipalityId)
           && resource.data.municipality_id == municipalityId;
+        allow list: if isLandsReviewer(municipalityId);
         allow create, update, delete: if false;
       }
 
       match /{domain}/{recordId} {
-        allow read: if isLandsDomain(domain)
+        allow get: if isLandsDomain(domain)
           && isActiveLandsUser(municipalityId)
           && resource.data.municipality_id == municipalityId;
+        allow list: if isLandsDomain(domain)
+          && isActiveLandsUser(municipalityId);
         allow create: if isLandsDomain(domain)
           && validLandsDomainCreate(municipalityId);
         allow update, delete: if false;

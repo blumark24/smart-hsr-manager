@@ -28,8 +28,21 @@ service firebase.storage {
       ];
     }
 
+    function documentMetadataPath(municipalityId, fileId) {
+      return /databases/(default)/documents/landsMunicipalities/$(municipalityId)/documents/$(fileId);
+    }
+
     function validDocumentMetadata(municipalityId, recordDomain, recordId, fileId) {
-      return request.resource.metadata.keys().hasOnly([
+      let metadataDoc = firestore.get(documentMetadataPath(municipalityId, fileId));
+      return firestore.exists(documentMetadataPath(municipalityId, fileId))
+        && metadataDoc.data.municipality_id == municipalityId
+        && metadataDoc.data.created_by == request.auth.uid
+        && metadataDoc.data.file_id == fileId
+        && metadataDoc.data.record_domain == recordDomain
+        && metadataDoc.data.record_id == recordId
+        && metadataDoc.data.storage_path == 'landsMunicipalities/' + municipalityId
+          + '/documents/' + recordDomain + '/' + recordId + '/' + fileId
+        && request.resource.metadata.keys().hasOnly([
           'document_id', 'municipality_id', 'record_domain', 'record_id'
         ])
         && request.resource.metadata.document_id == fileId
@@ -38,9 +51,21 @@ service firebase.storage {
         && request.resource.metadata.record_id == recordId;
     }
 
+    function storedDocumentMetadataMatches(municipalityId, recordDomain, recordId, fileId) {
+      let metadataDoc = firestore.get(documentMetadataPath(municipalityId, fileId));
+      return firestore.exists(documentMetadataPath(municipalityId, fileId))
+        && metadataDoc.data.municipality_id == municipalityId
+        && metadataDoc.data.file_id == fileId
+        && metadataDoc.data.record_domain == recordDomain
+        && metadataDoc.data.record_id == recordId
+        && metadataDoc.data.storage_path == 'landsMunicipalities/' + municipalityId
+          + '/documents/' + recordDomain + '/' + recordId + '/' + fileId;
+    }
+
     match /landsMunicipalities/{municipalityId}/documents/{recordDomain}/{recordId}/{fileId} {
       allow get: if isActiveLandsUser(municipalityId)
         && isDocumentDomain(recordDomain)
+        && storedDocumentMetadataMatches(municipalityId, recordDomain, recordId, fileId)
         && resource.metadata.document_id == fileId
         && resource.metadata.municipality_id == municipalityId
         && resource.metadata.record_domain == recordDomain

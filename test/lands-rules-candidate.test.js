@@ -163,12 +163,18 @@ test('only municipal_manager can list Lands memberships', async () => {
   await assertFails(getDocs(collection(firestore(UID.employeeA), 'landsMunicipalities', MUNICIPALITY_A, 'userAccess')));
 });
 
-test('active Lands roles read only their own municipality', async () => {
+test('active Lands roles read/list only their own municipality', async () => {
   for (const uid of [UID.managerA, UID.headA, UID.employeeA]) {
     await assertSucceeds(getDoc(doc(firestore(uid), 'landsMunicipalities', MUNICIPALITY_A, 'landGrants', 'grant-a')));
     await assertSucceeds(getDoc(doc(firestore(uid), 'landsMunicipalities', MUNICIPALITY_A, 'plans', 'plan-a')));
+    await assertSucceeds(getDocs(query(
+      collection(firestore(uid), 'landsMunicipalities', MUNICIPALITY_A, 'landGrants'),
+      orderBy('updated_at', 'desc')
+    )));
+    await assertSucceeds(getDocs(collection(firestore(uid), 'landsMunicipalities', MUNICIPALITY_A, 'plans')));
   }
   await assertFails(getDoc(doc(firestore(UID.employeeA), 'landsMunicipalities', MUNICIPALITY_B, 'landGrants', 'grant-b')));
+  await assertFails(getDocs(collection(firestore(UID.employeeA), 'landsMunicipalities', MUNICIPALITY_B, 'landGrants')));
 });
 
 test('grant create is tenant-bound, creator-bound, draft-only and browser updates/deletes stay denied', async () => {
@@ -218,10 +224,14 @@ test('unknown Lands subcollections and top-level paths fail closed', async () =>
   await assertFails(getDoc(doc(firestore(UID.managerA), 'unapprovedCollection', 'x')));
 });
 
-test('storage upload/read is same-tenant, metadata-bound and create-only', async () => {
+test('storage upload/read is same-tenant, Firestore-metadata-bound and create-only', async () => {
   const recordDomain = 'landGrants';
   const recordId = 'grant-a';
   const fileId = 'file-a';
+  await assertSucceeds(setDoc(
+    doc(firestore(UID.employeeA), 'landsMunicipalities', MUNICIPALITY_A, 'documents', fileId),
+    documentMeta(UID.employeeA, fileId)
+  ));
   const path = `landsMunicipalities/${MUNICIPALITY_A}/documents/${recordDomain}/${recordId}/${fileId}`;
   const fileRef = ref(storage(UID.employeeA), path);
   await assertSucceeds(uploadBytes(fileRef, new Uint8Array([1, 2, 3]), uploadMetadata(MUNICIPALITY_A, recordDomain, recordId, fileId)));
@@ -231,8 +241,19 @@ test('storage upload/read is same-tenant, metadata-bound and create-only', async
   await assertFails(deleteObject(fileRef));
 });
 
-test('storage rejects bad MIME, metadata spoofing, oversized objects and unrelated paths', async () => {
+test('storage rejects missing Firestore metadata, bad MIME, metadata spoofing, oversized objects and unrelated paths', async () => {
   const base = `landsMunicipalities/${MUNICIPALITY_A}/documents/landGrants/grant-a`;
+  await assertFails(uploadBytes(
+    ref(storage(UID.employeeA), base + '/no-metadata'),
+    new Uint8Array([1]),
+    uploadMetadata(MUNICIPALITY_A, 'landGrants', 'grant-a', 'no-metadata')
+  ));
+  for (const fileId of ['bad-mime', 'spoof-meta', 'too-large']) {
+    await assertSucceeds(setDoc(
+      doc(firestore(UID.employeeA), 'landsMunicipalities', MUNICIPALITY_A, 'documents', fileId),
+      documentMeta(UID.employeeA, fileId)
+    ));
+  }
   await assertFails(uploadBytes(
     ref(storage(UID.employeeA), base + '/bad-mime'),
     new Uint8Array([1]),
