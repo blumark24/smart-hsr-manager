@@ -1,3 +1,3 @@
 SMART HSR Manager Preview redeploy trigger.
-Reason: reload Preview env LANDS_TRUSTED_API_URL to official Lands design branch alias.
-No runtime logic change.
+Reason: disable dead Lands bridge target until lands-smart Preview is recreated.
+No runtime logic change. Preview only; Production untouched.
