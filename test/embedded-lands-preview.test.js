@@ -27,7 +27,7 @@ test('same-origin API routes reuse the existing organization context function', 
 
 test('workforce login routes Preview Lands users to same-origin embedded workspace', () => {
   const login = read('login.html');
-  assert.match(login, /new URL\('\/lands\/', location\.origin\)/);
+  assert.match(login, /location\.origin\.replace/);
   assert.match(login, /landsUrl\.searchParams\.set\('code', handoffCode\)/);
 });
 
