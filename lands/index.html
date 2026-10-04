@@ -714,13 +714,13 @@
 <body>
 <div class="auth-screen" id="bootScreen">
   <section class="auth-card" style="text-align:center">
-    <div class="auth-brand"><img src="https://99d3d677-7e95-41b0-8d5b-4f9fc47b49b6-00-2uzxuz4dz4a3k.pike.replit.dev/attached_assets/JbN2pYmn_400x400_1787245209925.jpg" alt="شعار سياقي"><h1>Smart HSR</h1><p>نظام الحصر الذكي لمنح الأراضي</p></div>
+    <div class="auth-brand"><img src="/smart-hsr-mark.svg" alt="شعار سياقي"><h1>Smart HSR</h1><p>نظام الحصر الذكي لمنح الأراضي</p></div>
     <p class="muted">جاري فتح حصر منح الأراضي…</p>
   </section>
 </div>
 <div class="auth-screen" id="loginScreen" hidden>
   <section class="auth-card">
-    <div class="auth-brand"><img src="https://99d3d677-7e95-41b0-8d5b-4f9fc47b49b6-00-2uzxuz4dz4a3k.pike.replit.dev/attached_assets/JbN2pYmn_400x400_1787245209925.jpg" alt="شعار سياقي"><h1>Smart HSR</h1><p>نظام الحصر الذكي لمنح الأراضي</p></div>
+    <div class="auth-brand"><img src="/smart-hsr-mark.svg" alt="شعار سياقي"><h1>Smart HSR</h1><p>نظام الحصر الذكي لمنح الأراضي</p></div>
     <p class="notice info" style="margin:0 0 18px">المسار المعتاد لجميع موظفي Smart HSR هو <a href="https://smart-hsr-manager.vercel.app/login.html" style="color:inherit;font-weight:700">بوابة الموظفين الموحدة</a>. هذه الصفحة مسار احتياطي مؤقت لأغراض الاختبار على البيئة التجريبية فقط.</p>
     <form id="loginForm" novalidate>
       <label class="input-label" for="loginEmail">البريد الإلكتروني</label>
@@ -1036,7 +1036,7 @@ function mountGisMap(containerId, featureCollection, layer) {
 function gisZoomIn() { gisMap?.zoomIn(); }
 function gisZoomOut() { gisMap?.zoomOut(); }
 // §19: never a blank map with no explanation.
-function noSpatialDataState(count) { return `<div class="empty">${icon("map-pin-off")}<br>لا توجد بيانات مكانية لهذا القرار — يوجد ${count} سجل بدون موقع، راجع القائمة أدناه</div>`; }
+function noSpatialDataState(count) { return `<div class="empty">${icon("map-pin-off")}<br>لا توجد بيانات مكانية موثّقة لهذا النطاق — يوجد ${count} سجل بدون موقع، راجع القائمة أدناه</div>`; }
 function gisMapErrorMarkup() { return `<div class="gis-map-error empty" hidden>${icon("alert-triangle")}<br>تعذر تحميل الخريطة<br>تعذر تحميل البيانات المكانية — حاول تحديث الصفحة</div>`; }
 function gisMapWrapMarkup(containerId) { return `<div id="${containerId}" class="gis-map"></div>${gisMapErrorMarkup()}`; }
 // A curated 5-value subset of TWIN_LAYERS for the compact overlay's quick
@@ -1122,7 +1122,7 @@ function showToast(t, isError, kind) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 3600);
 }
 function normalizeDigits(root = document.body) { const arabic = "٠١٢٣٤٥٦٧٨٩", latin = "0123456789", walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode); nodes.forEach(n => { n.nodeValue = n.nodeValue.replace(/[٠-٩]/g, d => latin[arabic.indexOf(d)]); }); root.querySelectorAll("input,textarea,select").forEach(el => { ["placeholder", "value", "aria-label"].forEach(a => { if (el.hasAttribute(a)) el.setAttribute(a, el.getAttribute(a).replace(/[٠-٩]/g, d => latin[arabic.indexOf(d)])); }); }); }
-function applyTheme(theme) { document.body.classList.toggle("dark", theme === "dark"); localStorage.setItem("slgr-theme", theme); const b = document.getElementById("themeToggle"); if (b) b.innerHTML = icon(theme === "dark" ? "sun" : "moon") + " " + (theme === "dark" ? "الوضع النهاري" : "الوضع الليلي"); b?.setAttribute("aria-pressed", theme === "dark"); }
+function applyTheme(theme) { document.body.classList.toggle("dark", theme === "dark"); try { localStorage.setItem("slgr-theme", theme); } catch { /* presentation preference only */ } const b = document.getElementById("themeToggle"); if (b) b.innerHTML = icon(theme === "dark" ? "sun" : "moon") + " " + (theme === "dark" ? "الوضع النهاري" : "الوضع الليلي"); b?.setAttribute("aria-pressed", theme === "dark"); }
 function toggleTheme() {
   applyTheme(document.body.classList.contains("dark") ? "light" : "dark");
   lucide.createIcons();
@@ -1452,7 +1452,7 @@ function centerView() {
    const active = grants.filter(g => !g.archived);
    const fc = mod.buildFeatureCollection(active, mod.buildParcelIndex(domains.parcels), g => classifyForMap(g, "all"), selectedGrantId);
    requestAnimationFrame(() => mountGisMap("gisMapDash", fc, "all"));
-   return `<div class="map-wrap">${gisMapWrapMarkup("gisMapDash")}<div class="map-controls-glass glass"><button onclick="gisZoomIn()" aria-label="تكبير">${icon("zoom-in")}</button><button onclick="gisZoomOut()" aria-label="تصغير">${icon("zoom-out")}</button></div><div class="map-note">اختر قطعة لعرض المنحة المرتبطة بها</div></div>`;
+   return `<div class="map-wrap">${gisMapWrapMarkup("gisMapDash")}<div class="map-controls-glass glass"><button onclick="gisZoomIn()" aria-label="تكبير">${icon("zoom-in")}</button><button onclick="gisZoomOut()" aria-label="تصغير">${icon("zoom-out")}</button></div><div class="map-note">${fc.features.length ? "اختر قطعة لعرض المنحة المرتبطة بها" : "بانتظار بيانات GIS موثّقة للقطع"}</div></div>`;
  })()}<div class="legend"><span><i class="dot" style="background:#5aa978"></i>منحة معتمدة</span><span><i class="dot" style="background:#e0a14d"></i>قيد المراجعة/مسودة</span><span><i class="dot" style="background:#d56c66"></i>غير مكتملة</span><span><i class="dot" style="background:#aeb8bb"></i>غير مخصصة</span></div>${dashboardSelection()}</section>
  <section class="panel"><div class="panel-head"><div><h2>سجلات تحتاج استكمالاً</h2><p>مبنية على بيانات النظام الفعلية</p></div></div><div class="panel-body">${needsCompletion.length ? needsCompletion.map(g => insight(g)).join("") : `<div class="empty">${icon("circle-check")}<br>لا توجد سجلات ناقصة حاليًا</div>`}</div></section></div>
  <div class="lower-grid"><section class="panel"><div class="panel-head"><div><h2>توزيع حالات السجلات</h2><p>قراءة سريعة لحالة السجلات الفعلية</p></div></div><div class="panel-body bars">${statusOrder.map(s => bar(STATUS_LABELS[s], grants.filter(g => g.status === s).length, statusColors[s], statusMax)).join("")}</div></section><section class="panel"><div class="panel-head"><div><h2>سجل التدقيق الحديث</h2><p>${mod.canReviewGrant(session.role) ? "أحدث أحداث Trusted Audit" : "متاح لمدير القسم والمدير العام"}</p></div>${icon("history")}</div><div class="panel-body timeline">${mod.canReviewGrant(session.role) ? (auditEvents.slice(0, 5).length ? auditEvents.slice(0, 5).map(e => auditEventRow(e)).join("") : `<div class="empty">لا توجد أحداث مسجّلة بعد</div>`) : `<div class="empty">سجل التدقيق مقصور على أدوار المراجعة</div>`}</div></section></div>
@@ -2619,9 +2619,12 @@ function mapView() {
   const heatmapSet = twinLayerFilter !== "all" ? activeGrants.filter(g => AutomationEngine.matchesLayer(g, twinLayerFilter)) : activeGrants;
   const noLocation = AutomationEngine.noLocationRecords(activeGrants);
   const fc = mod.buildFeatureCollection(activeGrants, mod.buildParcelIndex(domains.parcels), g => classifyForMap(g, twinLayerFilter), selectedGrantId);
+  const spatialCaption = fc.features.length
+    ? "بيانات مكانية موثّقة من سجلات القطع — ليست بديلاً عن المرجع المساحي الرسمي"
+    : "لا توجد هندسة مكانية موثّقة للقطع في هذا النطاق حاليًا";
   requestAnimationFrame(() => mountGisMap("gisMapGlobal", fc, twinLayerFilter));
   return shellHead("الخريطة", "الخريطة", "التوأم الرقمي للمخططات والقطع عبر القرارات — Global Twin") + `
- <div class="workgrid"><section class="panel map-panel"><div class="panel-head"><div><h2>التوأم الرقمي للمخططات</h2><p>محاكاة مكانية تشغيلية — غير مرتبطة حاليًا بحدود مساحية رسمية · ${mapDecisionFilter ? `عرض مقصور على قرار رقم ${esc(mapDecisionFilter)}` : "عرض كل قرارات المعاينة"}${twinLayerFilter !== "all" ? ` · طبقة: ${esc(TWIN_LAYERS.find(l => l[0] === twinLayerFilter)?.[1] || "")}` : ""}</p></div>${reviewDemoLocationChip()}</div>
+ <div class="workgrid"><section class="panel map-panel"><div class="panel-head"><div><h2>التوأم الرقمي للمخططات</h2><p>${esc(spatialCaption)} · ${mapDecisionFilter ? `عرض مقصور على قرار رقم ${esc(mapDecisionFilter)}` : "عرض كل القرارات"}${twinLayerFilter !== "all" ? ` · طبقة: ${esc(TWIN_LAYERS.find(l => l[0] === twinLayerFilter)?.[1] || "")}` : ""}</p></div>${reviewDemoLocationChip()}</div>
  ${twinStatusBar(activeGrants, fc.features.length)}
  <div class="map-wrap map-wrap-lg">${gisMapWrapMarkup("gisMapGlobal")}<div class="map-filter-overlay glass"><input class="select" type="search" placeholder="بحث: رقم قرار / قطعة / مخطط / مستفيد (Enter)" aria-label="بحث مكاني" onkeydown="if(event.key==='Enter')submitGisSearch(this.value)"><select class="select" aria-label="تصفية حسب القرار" onchange="setMapDecisionFilter(this.value)">${options}</select>${mapQuickChips(twinLayerFilter)}<details><summary>${icon("sliders-horizontal")} تصفية متقدمة</summary><select class="select" aria-label="طبقة الحالة (كل الطبقات)" onchange="setTwinLayerFilter(this.value)">${layerOptions}</select><select class="select" aria-label="تصفية حسب سنة القرار" onchange="setTwinYearFilter(this.value)">${yearOptions}</select><select class="select" aria-label="تصفية حسب المخطط" onchange="setTwinPlanFilter(this.value)">${planOptions}</select></details></div><div class="map-controls-glass glass"><button onclick="gisZoomIn()" aria-label="تكبير">${icon("zoom-in")}</button><button onclick="gisZoomOut()" aria-label="تصغير">${icon("zoom-out")}</button></div><div class="map-note">اختر قطعة لعرض المنحة المرتبطة بها</div></div><div class="legend"><span><i class="dot" style="background:#5aa978"></i>منحة معتمدة</span><span><i class="dot" style="background:#e0a14d"></i>قيد المراجعة/مسودة</span><span><i class="dot" style="background:#d56c66"></i>غير مكتملة</span><span><i class="dot" style="background:#aeb8bb"></i>خارج نطاق الطبقة/القرار</span></div>
  ${twinLayerFilter === "all" && activeGrants.length > 0 && fc.features.length === 0 ? noSpatialDataState(noLocation.length) : ""}
