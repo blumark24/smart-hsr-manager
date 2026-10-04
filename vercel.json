@@ -108,6 +108,24 @@
           "value": "camera=(), geolocation=(), microphone=(), payment=(), usb=(), browsing-topics=()"
         }
       ]
+    },
+    {
+      "source": "/lands",
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/lands/(.*)",
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
     }
   ],
   "rewrites": [
