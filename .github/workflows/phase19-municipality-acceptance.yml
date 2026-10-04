@@ -13,6 +13,8 @@ on:
       - release/municipality-final-rc
       - release/municipality-final-rc2
       - release/municipality-closure-v4
+      - fix/embedded-lands-preview
+      - fix/release-embedded-lands-closure
       - security/rc2-firebase-admin-14
       - design/spatial-intelligence-v1
   workflow_dispatch:
@@ -39,6 +41,7 @@ jobs:
           node --check api/admin/users.js
           node --check api/admin/employees.js
           node --check api/_lib/authz.js
+          node --check api/_lib/embeddedLandsRuntime.js
           node --check field-head-runtime.js
           node --check manager-lands-adapter.js
           node --check manager-mobility-adapter.js
@@ -97,6 +100,7 @@ jobs:
           node --test test/manager-lands-gis.test.js
           node --test test/manager-lands-bridge-integration.test.js
           node --test test/manager-lands-sso.test.js
+          node --test test/embedded-lands-preview.test.js
           node --test test/manager-service-entitlements.test.js
 
       - name: Smart Mobility acceptance

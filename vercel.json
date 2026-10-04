@@ -112,6 +112,34 @@
   ],
   "rewrites": [
     {
+      "source": "/lands",
+      "destination": "/lands/index.html"
+    },
+    {
+      "source": "/lands/",
+      "destination": "/lands/index.html"
+    },
+    {
+      "source": "/api/lands-health",
+      "destination": "/api/organization/context?embeddedLandsAction=health"
+    },
+    {
+      "source": "/api/lands-mutations",
+      "destination": "/api/organization/context?embeddedLandsAction=mutation"
+    },
+    {
+      "source": "/api/lands-membership-status",
+      "destination": "/api/organization/context?embeddedLandsAction=membership"
+    },
+    {
+      "source": "/api/lands-sso-register",
+      "destination": "/api/organization/context?embeddedLandsAction=sso-register"
+    },
+    {
+      "source": "/api/lands-sso-consume",
+      "destination": "/api/organization/context?embeddedLandsAction=sso-consume"
+    },
+    {
       "source": "/api/report/root-cause",
       "destination": "/api/report?kind=root-cause"
     },

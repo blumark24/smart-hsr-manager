@@ -30,7 +30,7 @@ function resolveLandsRedirectBaseFor(hostname) {
   const start = source.indexOf('const LANDS_PRODUCTION_HOSTNAMES');
   const end = source.indexOf('const app = initializeApp(firebaseConfig);');
   const snippet = source.slice(start, end) + 'module.exports = { resolveLandsRedirectBase };';
-  const sandbox = { module: { exports: {} }, location: { hostname }, Object };
+  const sandbox = { module: { exports: {} }, location: { hostname, origin: `https://${hostname}` }, Object };
   sandbox.exports = sandbox.module.exports;
   vm.createContext(sandbox);
   vm.runInContext(snippet, sandbox, { filename: 'login.html (extracted)' });
@@ -116,8 +116,8 @@ test('resolveLandsRedirectBase: a real custom/non-vercel.app domain defaults to 
   assert.equal(resolveLandsRedirectBaseFor('localhost'), 'https://lands-smart.vercel.app/');
 });
 
-test('resolveLandsRedirectBase: an unrecognized *.vercel.app Preview hostname falls back to the Lands staging Preview URL, never Production', () => {
-  assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager-git-some-branch-blumark24-os.vercel.app'), 'https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/');
+test('resolveLandsRedirectBase: an unrecognized *.vercel.app Preview hostname stays same-origin on the embedded Lands workspace, never Production', () => {
+  assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager-git-some-branch-blumark24-os.vercel.app'), 'https://smart-hsr-manager-git-some-branch-blumark24-os.vercel.app/lands/');
 });
 
 // ---- 12. no auth secrets in the redirect URL ----
