@@ -1,0 +1,3 @@
+SMART HSR Manager Preview redeploy trigger.
+Reason: reload Preview env LANDS_TRUSTED_API_URL to official Lands design branch alias.
+No runtime logic change.
