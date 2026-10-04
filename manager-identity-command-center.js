@@ -306,7 +306,58 @@
         }catch(error){simulation.innerHTML=`<h3>محاكاة الوصول</h3><p role="alert">${esc(U.why(error.reason||error.message))}</p>`;}
       }
       panel.addEventListener('input',updateSimulation);panel.addEventListener('change',updateSimulation);updateSimulation();
-      if(employee?.authUid){const controls=document.createElement('div');controls.className='act';controls.innerHTML=button('إنهاء الجلسات','class="btn"');controls.firstElementChild.onclick=()=>sensitive(employee,'sessions');panel.querySelector('[data-sheet-section="account"]').append(controls);const sync=userFor(employee)?.landsAccess;if(sync?.enabled&&sync.syncStatus){const note=document.createElement('p');note.textContent='مزامنة الأراضي: '+sync.syncStatus;controls.before(note);}}
+      if(employee?.authUid){
+        const controls=document.createElement('div');
+        controls.className='act';
+        controls.innerHTML=button('إنهاء الجلسات','class="btn"');
+        controls.firstElementChild.onclick=()=>sensitive(employee,'sessions');
+        const accountSection=panel.querySelector('[data-sheet-section="account"]');
+        accountSection.append(controls);
+        const sync=userFor(employee)?.landsAccess;
+        if(sync?.enabled&&sync.syncStatus){
+          const note=document.createElement('p');
+          note.textContent='مزامنة الأراضي: '+sync.syncStatus;
+          controls.before(note);
+
+          // Gate 2 recovery — explicit, readback-only reconciliation.
+          // This button NEVER calls setServices / entitlement.* and therefore
+          // cannot repeat the original Lands mutation. It is only offered for
+          // the one recoverable local state that requires authoritative
+          // readback: pending_trusted_sync.
+          if(sync.syncStatus==='pending_trusted_sync'){
+            const reconcile= document.createElement('button');
+            reconcile.type='button';
+            reconcile.className='btn';
+            reconcile.textContent='تحقق ومزامنة آمنة';
+            const result=document.createElement('p');
+            result.className='note';
+            result.hidden=true;
+            controls.before(reconcile,result);
+            reconcile.onclick=async()=>{
+              if(reconcile.disabled)return;
+              reconcile.disabled=true;
+              const original=reconcile.textContent;
+              reconcile.textContent='جاري التحقق…';
+              result.hidden=false;
+              result.textContent='يتم التحقق من عضوية الأراضي الموثوقة بدون إعادة أي صلاحية.';
+              try{
+                const outcome=await U.post('/api/admin/users',{action:'reconcileLandsAccess',uid:employee.authUid});
+                if(outcome?.lands?.syncStatus!=='synced'){
+                  throw Object.assign(new Error('lands_reconciliation_incomplete'),{reason:'lands_reconciliation_incomplete'});
+                }
+                result.textContent='تمت المزامنة الآمنة ✓';
+                note.textContent='مزامنة الأراضي: synced';
+                reconcile.textContent='تم التحقق ✓';
+                await refresh();
+              }catch(error){
+                reconcile.disabled=false;
+                reconcile.textContent=original;
+                result.textContent=U.why(error.reason||error.message);
+              }
+            };
+          }
+        }
+      }
       panel.scrollTop=0;
       const save=panel.querySelector(employee?'.ucv21-save':'.save'),originalSave=save?.onclick;
       // Gate 2 P1 — preserve the existing service-only save path inside
