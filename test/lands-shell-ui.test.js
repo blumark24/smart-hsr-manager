@@ -51,3 +51,22 @@ test('Lands shell is visually aligned with the manager shell without copying man
   assert.match(lands, /--shadow-card:/);
   assert.match(lands, /prefers-reduced-motion/);
 });
+
+
+test('Lands visual unification keeps manager shell parity and role-aware chrome', () => {
+  assert.match(lands, /LANDS VISUAL UNIFICATION V1/);
+  assert.match(lands, /class="header-context"/);
+  assert.match(lands, /data-review-only/);
+  assert.match(lands, /data-admin-only/);
+  assert.match(lands, /mod\.canReviewGrant\(session\.role\)/);
+  assert.match(lands, /mod\.canManageEntitlements\(session\.role\)/);
+  assert.match(lands, /managerModeToggle\.hidden = !canReview/);
+  assert.match(lands, /if \(!session \|\| !mod\.canReviewGrant\(session\.role\)\) return;/);
+});
+
+test('Lands dashboard separates GIS empty state from map initialization errors', () => {
+  assert.match(lands, /لا توجد حدود GIS موثّقة حاليًا/);
+  assert.match(lands, /if \(fc\.features\.length\) requestAnimationFrame\(\(\) => mountGisMap\("gisMapDash"/);
+  assert.match(lands, /gisMapErrorMarkup\(\)/);
+  assert.doesNotMatch(lands, /سجل التدقيق مقصور على أدوار المراجعة/);
+});
