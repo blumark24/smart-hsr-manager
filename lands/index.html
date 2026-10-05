@@ -1804,6 +1804,64 @@ body.sidebar-collapsed .shell{
 @media(prefers-reduced-motion:reduce){
   .side{transition:none!important}
 }
+
+/* ==== LANDS DELIVERY POLISH R4 ==== */
+/* Delivery-only visual hardening. Keeps the manager-parity header structure
+   and all existing Auth/RBAC/workflow/data contracts unchanged. */
+.command-header.manager-parity-header{
+  background:linear-gradient(135deg,rgba(7,42,30,.88),rgba(11,61,46,.78))!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  box-shadow:0 10px 30px rgba(7,42,30,.14)!important;
+  backdrop-filter:blur(20px) saturate(145%)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(145%)!important;
+}
+body.dark .command-header.manager-parity-header{
+  background:linear-gradient(135deg,rgba(5,24,18,.9),rgba(7,42,30,.82))!important;
+  border-color:rgba(143,224,176,.12)!important;
+}
+#bootScreen.splash-screen{
+  background:
+    radial-gradient(circle at 50% 47%,rgba(46,139,87,.08),transparent 22%),
+    rgba(248,251,249,.94)!important;
+  backdrop-filter:blur(18px) saturate(125%);
+  -webkit-backdrop-filter:blur(18px) saturate(125%);
+}
+.splash-core{height:220px!important;width:min(330px,82vw)!important}
+.splash-core:before{width:150px!important;height:150px!important}
+.splash-core:after{width:116px!important;height:116px!important}
+.splash-logo{width:86px!important;height:96px!important}
+.splash-scan{width:150px!important}
+.splash-label{bottom:0!important;font-size:9px!important;letter-spacing:.12em!important}
+body.dark #bootScreen.splash-screen{background:rgba(5,24,18,.94)!important}
+
+/* Empty GIS is intentionally not rendered as a regional basemap. */
+.map-wrap.gis-empty{height:auto!important;min-height:220px!important;background:transparent!important}
+.map-wrap.gis-empty:after{display:none!important}
+.gis-empty-state{min-height:220px;display:grid;place-items:center;padding:28px;text-align:center;
+  border:1px dashed var(--line);border-radius:16px;background:var(--surface-tint,rgba(255,255,255,.72))}
+.gis-empty-state svg{width:30px;height:30px;margin-bottom:8px;color:var(--teal)}
+.gis-empty-state strong{display:block;font-size:14px;margin-bottom:5px}
+.gis-empty-state span{display:block;color:var(--muted);font-size:12px;max-width:420px}
+body.dark .gis-empty-state{background:rgba(255,255,255,.025)}
+
+/* Decision workspace remains the visual anchor on narrow screens. */
+@media(max-width:700px){
+  .command-header.manager-parity-header{background:linear-gradient(135deg,rgba(7,42,30,.9),rgba(11,61,46,.8))!important}
+  .decision-hero{padding:18px 14px!important;border-radius:16px!important;min-height:0!important}
+  .decision-hero-center,.decision-hero-edge-ornament{opacity:.12!important}
+  .decision-hero-actions{width:100%!important;display:flex!important;flex-wrap:wrap!important;gap:7px!important}
+  .decision-hero-actions .btn{flex:1 1 auto!important;min-height:42px!important}
+  .decision-hero-ring-block{position:relative!important;inset:auto!important;margin-top:12px!important}
+  .summary-strip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1px!important}
+  .summary-seg{min-width:0!important;padding:12px 8px!important}
+  .tabs{overflow-x:auto!important;scrollbar-width:none!important;white-space:nowrap!important}
+  .tabs::-webkit-scrollbar{display:none!important}
+  .tab-btn{flex:0 0 auto!important;min-height:44px!important}
+  .table-wrap{border-radius:14px!important}
+  .data-table{min-width:920px!important}
+  .ai-trigger{display:none!important}
+}
+
 </style>
 
 </head>
@@ -2129,6 +2187,16 @@ function mountGisMap(containerId, featureCollection, layer) {
   }
   destroyGisMap();
   try {
+    const bounds = mod.featureCollectionBounds(featureCollection);
+    if (!bounds) {
+      destroyGisMap();
+      const wrap = el.closest(".map-wrap");
+      if (wrap) {
+        wrap.classList.add("gis-empty");
+        wrap.innerHTML = `<div class="gis-empty-state">${icon("map-pin-off")}<div><strong>لا توجد بيانات مكانية موثّقة بعد</strong><span>لن يعرض SMART HSR نطاقًا جغرافيًا افتراضيًا. تظهر الخريطة تلقائيًا عند توفر موقع موثوق للقطعة.</span></div></div>`;
+      }
+      return;
+    }
     const map = L.map(containerId, { attributionControl: true, zoomControl: false })
       .setView(gisLastCamera ? [gisLastCamera.lat, gisLastCamera.lng] : GIS_DEFAULT_CENTER, gisLastCamera?.zoom ?? 5);
     gisMap = map;
@@ -2153,7 +2221,6 @@ function mountGisMap(containerId, featureCollection, layer) {
       clusterGroup.addLayer(marker);
     });
     map.addLayer(clusterGroup);
-    const bounds = mod.featureCollectionBounds(featureCollection);
     if (bounds && !gisLastCamera) {
       // adapter bounds are [[minLng,minLat],[maxLng,maxLat]] — Leaflet wants [[lat,lng],[lat,lng]]
       map.fitBounds([[bounds[0][1], bounds[0][0]], [bounds[1][1], bounds[1][0]]], { padding: [40, 40], maxZoom: 12, animate: false });
