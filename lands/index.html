@@ -1981,6 +1981,12 @@ body.dark .gis-empty-state{background:rgba(255,255,255,.025)}
 @keyframes signatureExit{to{opacity:0;transform:scale(1.012);filter:blur(5px)}}
 @media(max-width:700px){#bootScreen.signature-entry .splash-core{min-height:250px!important}#bootScreen.signature-entry .splash-logo{width:88px!important}#bootScreen.signature-entry .signature-orbit{width:154px!important;height:154px!important}#bootScreen.signature-entry .signature-wordmark b{font-size:18px!important}#bootScreen.signature-entry .signature-status{bottom:5px!important}}
 
+
+/* Splash is a secure transition surface, never an application surface. */
+#bootScreen.signature-entry ~ .ai-trigger{visibility:hidden!important;pointer-events:none!important}
+body:has(#bootScreen.signature-entry:not([hidden])) .ai-trigger,
+body:has(#bootScreen.signature-entry:not([hidden])) .ai-panel{visibility:hidden!important;pointer-events:none!important}
+
 </style>
 
 </head>
@@ -2629,7 +2635,6 @@ async function consumeSsoHandoff() {
 async function handleLogout() {
   try { if (client) await client.signOutUser(); } catch { /* best-effort */ }
   session = null; grants = []; domains = { royalOrders: [], allocationDecisions: [], beneficiaries: [], plans: [], parcels: [], documents: [] }; users = []; auditEvents = []; selectedGrantId = null;
-  document.getElementById("loginPassword").value = ""; setLoginError(null);
   showLoginOrRedirect();
 }
 async function loadWorkspace() {
