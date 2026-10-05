@@ -1862,6 +1862,28 @@ body.dark .gis-empty-state{background:rgba(255,255,255,.025)}
   .ai-trigger{display:none!important}
 }
 
+
+/* ==== SECURE LAND HANDOFF SPLASH R5 ==== */
+#bootScreen.splash-screen{overflow:hidden;isolation:isolate;background:
+ radial-gradient(circle at 50% 48%,rgba(25,139,78,.16),transparent 22%),
+ linear-gradient(145deg,#041811 0%,#072a1e 48%,#03120d 100%)!important}
+#bootScreen.splash-screen:before{content:"";position:absolute;inset:-20%;z-index:-2;opacity:.34;
+ background-image:linear-gradient(rgba(143,224,176,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(143,224,176,.08) 1px,transparent 1px);
+ background-size:42px 42px;transform:perspective(520px) rotateX(58deg) translateY(26%);transform-origin:center}
+#bootScreen.splash-screen:after{content:"";position:absolute;z-index:-1;width:58vmin;height:58vmin;max-width:520px;max-height:520px;border-radius:50%;
+ border:1px solid rgba(143,224,176,.18);box-shadow:0 0 70px rgba(25,139,78,.13),inset 0 0 60px rgba(25,139,78,.08);animation:twinOrbit 1.15s ease-out both}
+#bootScreen .splash-core{height:260px!important;width:min(420px,88vw)!important}
+#bootScreen .splash-core:before{width:188px!important;height:188px!important;border-color:rgba(143,224,176,.22)!important;box-shadow:0 0 45px rgba(25,139,78,.13)}
+#bootScreen .splash-core:after{width:144px!important;height:144px!important;border-color:rgba(143,224,176,.18)!important}
+#bootScreen .splash-logo{width:min(310px,72vw)!important;height:auto!important;max-height:138px!important;object-fit:contain!important;filter:drop-shadow(0 12px 30px rgba(0,0,0,.32));animation:brandResolve .72s cubic-bezier(.2,.75,.25,1) both}
+#bootScreen .splash-scan{width:190px!important;height:1px!important;background:linear-gradient(90deg,transparent,#8fe0b0,transparent)!important;box-shadow:0 0 14px rgba(143,224,176,.8)!important;animation:secureScan .92s ease-in-out infinite!important}
+#bootScreen .splash-label{bottom:-2px!important;color:rgba(230,248,237,.72)!important;font-size:9px!important;letter-spacing:.18em!important}
+#bootScreen .splash-label:before{content:"SECURE DIGITAL TWIN · ";color:#8fe0b0}
+@keyframes twinOrbit{0%{opacity:0;transform:scale(.7) rotate(-12deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes brandResolve{0%{opacity:0;transform:translateY(8px) scale(.94);filter:blur(8px)}100%{opacity:1;transform:none;filter:drop-shadow(0 12px 30px rgba(0,0,0,.32))}}
+@keyframes secureScan{0%,100%{opacity:.28;transform:translateY(-20px) scaleX(.72)}50%{opacity:1;transform:translateY(20px) scaleX(1)}}
+@media(prefers-reduced-motion:reduce){#bootScreen.splash-screen:after,#bootScreen .splash-logo,#bootScreen .splash-scan{animation:none!important}}
+
 </style>
 
 </head>
