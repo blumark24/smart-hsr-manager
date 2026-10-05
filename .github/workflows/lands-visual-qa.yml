@@ -1,0 +1,47 @@
+name: Lands Visual QA
+
+on:
+  push:
+    branches:
+      - fix/lands-visual-unification-v1
+  workflow_dispatch:
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LANDS_PREVIEW_URL: https://smart-hsr-manager-git-fix-lands-visual-unif-9687d5-blumark24-os.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for branch Preview
+        shell: bash
+        run: |
+          for i in {1..36}; do
+            body="$(curl -fsSL "$LANDS_PREVIEW_URL/lands/?review=1" || true)"
+            if echo "$body" | grep -q "LANDS VISUAL UNIFICATION V1"; then
+              echo "Preview is ready"
+              exit 0
+            fi
+            echo "Waiting for Vercel Preview... ($i/36)"
+            sleep 5
+          done
+          echo "Preview did not become ready in time"
+          exit 1
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Run Lands visual QA
+        run: node scripts/lands-visual-qa.mjs
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lands-visual-qa
+          path: artifacts/lands-visual-qa
+          retention-days: 7
