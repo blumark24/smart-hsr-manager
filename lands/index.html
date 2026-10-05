@@ -763,6 +763,20 @@ body.dark .splash-core:before,body.dark .splash-core:after{border-color:rgba(107
 
 
 /* ==== LANDS VISUAL UNIFICATION V1 ==== */
+/* Grid contract: sidebar track first in RTL, content track second.
+   This intentionally overrides older premium-polish declarations that
+   reversed the track sizes while keeping .side/.main on columns 1/2. */
+.shell{direction:rtl;grid-template-columns:272px minmax(0,1fr);width:100%;max-width:1680px}
+.side{grid-column:1;min-width:0}
+.main{grid-column:2;min-width:0;width:100%}
+.metrics>* ,.workgrid>* ,.lower-grid>* ,.record-layout>*{min-width:0}
+@media(max-width:1100px) and (min-width:761px){
+  .shell{grid-template-columns:238px minmax(0,1fr)}
+}
+@media(min-width:981px){
+  body.sidebar-collapsed .shell{grid-template-columns:72px minmax(0,1fr)}
+}
+
 /* Presentation-only. Reuses existing RBAC/SSO/GIS contracts and mirrors the manager shell. */
 .app{padding-top:1px}
 .topbar{
