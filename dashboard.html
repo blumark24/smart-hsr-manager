@@ -2328,6 +2328,72 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
   @media(prefers-reduced-motion:reduce){body.inspector-record-view #inspector-record-page{animation:none}.inspector-record-row{transition:none}}
 </style>
 
+
+<style id="field-inspector-visual-unification-v1">
+/* FIELD INSPECTOR VISUAL UNIFICATION V1 — presentation only. */
+:root{
+  --field-ui-radius:16px;
+  --field-ui-shadow:0 12px 30px -22px rgba(10,25,49,.28),0 2px 9px rgba(10,25,49,.06);
+}
+#hsrHeader.hsr-header{
+  width:min(1152px,calc(100% - 2rem));
+  margin:10px auto 14px;
+  border-radius:16px;
+  overflow:visible;
+}
+#hsrHeader .inspector-identity-card{
+  border-radius:16px!important;
+  border:1px solid var(--ui-border,rgba(15,118,110,.14))!important;
+  box-shadow:var(--field-ui-shadow)!important;
+}
+.mission-summary{
+  width:min(1152px,calc(100% - 2rem));
+  border-radius:16px!important;
+  border:1px solid var(--ui-border,rgba(15,118,110,.14))!important;
+  box-shadow:var(--field-ui-shadow)!important;
+}
+.inspector-light-grid{gap:.75rem!important}
+.inspector-light-card{
+  border-radius:15px!important;
+  box-shadow:var(--field-ui-shadow)!important;
+  min-height:88px!important;
+  transform:none!important;
+}
+.inspector-light-card:hover{transform:translateY(-2px)!important}
+#observations-log>div.bg-white,
+.personal-map-card,
+.inspector-record-page,
+.inspector-record-detail,
+.modal-content{
+  border-radius:16px!important;
+  border-color:var(--ui-border,rgba(15,118,110,.14))!important;
+  box-shadow:var(--field-ui-shadow)!important;
+}
+#personal-smart-map-launch.personal-map-card{
+  border-inline-start-width:3px!important;
+  box-shadow:var(--field-ui-shadow)!important;
+}
+.personal-map-dialog-shell{border-radius:16px}
+.map-filter-btn{min-height:38px;border-radius:10px}
+#personalObservationsMap{border-radius:14px;overflow:hidden}
+@media(max-width:700px){
+  body{padding-top:92px}
+  #hsrHeader.hsr-header{width:calc(100% - 12px);margin:6px auto 10px}
+  #hsrHeader .inspector-identity-card{border-radius:13px!important}
+  .mission-summary{width:calc(100% - 1rem)!important;border-radius:14px!important}
+  .inspector-light-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .inspector-light-card{min-height:80px!important}
+  #observations-log>div.bg-white,.personal-map-card,.inspector-record-page,.inspector-record-detail,.modal-content{border-radius:14px!important}
+}
+@media(max-width:390px){
+  .inspector-light-grid{grid-template-columns:1fr!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .inspector-light-card{transition:none!important}
+  .inspector-light-card:hover{transform:none!important}
+}
+</style>
+
 </head>
 
 <body class="text-gray-800">
