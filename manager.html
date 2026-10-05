@@ -1596,7 +1596,7 @@ body{min-height:100svh!important;min-height:100dvh!important}
       <sc-if value="{{ viewIsMap }}">
         <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
 
-          <div style="flex:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
+          <div class="hsr-field-context-card" style="flex:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
             <div style="flex:1;min-width:220px">
               <div style="font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--acc,#4cc9f0);margin-bottom:4px">مركز القيادة · الخريطة التشغيلية</div>
               <h2 style="font-size:17px;margin:0;color:var(--tx,#f0f6ff)">{{ viewTitle }}</h2>
@@ -1681,7 +1681,7 @@ body{min-height:100svh!important;min-height:100dvh!important}
       </sc-if>
 
       <sc-if value="{{ viewIsFieldSurvey }}">
-        <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
+        <div class="hsr-field-workspace" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px">
 
           <div style="flex:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,0.74),rgba(10,16,29,0.8)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--gl2,none)">
             <div style="flex:1;min-width:220px">
@@ -1697,8 +1697,8 @@ body{min-height:100svh!important;min-height:100dvh!important}
             </div>
           </div>
 
-          <div style="flex:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <sc-for list="{{ fsNav }}" as="n" hint-placeholder-count="3">
+          <div class="hsr-field-nav" style="flex:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <sc-for list="{{ fsNav }}" as="n" hint-placeholder-count="4">
               <button onClick="{{ n.on }}" data-f="1" style="height:32px;padding:0 14px;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ n.tx }};background:{{ n.bg }};border:1px solid {{ n.bd }}">{{ n.label }}</button>
             </sc-for>
           </div>
@@ -1706,7 +1706,7 @@ body{min-height:100svh!important;min-height:100dvh!important}
           <div style="flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:14px">
 
             <sc-if value="{{ fsScreenIsExec }}">
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+              <div class="hsr-field-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
                 <div style="padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:10px;background:var(--l1Grid,none),var(--l1,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l1Bd,rgba(122,164,224,0.13));box-shadow:var(--l1Sh,0 20px 44px -26px rgba(0,0,0,0.95))">
                   <span style="width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--acc,#4cc9f0)"></span>
                   <div style="flex:1;min-width:0">
@@ -6227,6 +6227,73 @@ class Component extends DCLogic {
 .hsr-manager-root .hsr-manager-map-overlay{
   z-index:800!important;
 }
+
+/* ==== FIELD SURVEY VISUAL UNIFICATION V1 ==== */
+/* Presentation-only: no Auth/RBAC/data-contract behavior is altered. */
+.hsr-field-workspace{
+  --field-radius:16px;
+  --field-shadow:0 14px 34px -26px rgba(0,0,0,.58),0 3px 12px -8px rgba(17,66,45,.20);
+  --field-border:var(--l2Bd,rgba(122,164,224,.14));
+}
+.hsr-field-context-card{
+  border-radius:var(--field-radius)!important;
+  border-color:var(--field-border)!important;
+  box-shadow:var(--field-shadow)!important;
+}
+.hsr-field-context-card h2{font-size:18px!important;letter-spacing:-.015em}
+.hsr-field-nav{
+  padding:5px;
+  border-radius:13px;
+  background:var(--l1,rgba(17,26,44,.55));
+  border:1px solid var(--l1Bd,rgba(122,164,224,.12));
+  box-shadow:0 10px 30px -28px rgba(0,0,0,.8);
+}
+.hsr-field-nav>button{
+  min-height:36px!important;
+  border-radius:9px!important;
+  transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+.hsr-field-nav>button:hover{transform:translateY(-1px)}
+.hsr-field-kpis{gap:12px!important}
+.hsr-field-kpis>div{
+  min-height:102px;
+  border-radius:14px!important;
+  border-color:var(--field-border)!important;
+  box-shadow:var(--field-shadow)!important;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.hsr-field-kpis>div:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 42px -30px rgba(0,0,0,.7),0 5px 14px -9px rgba(17,66,45,.26)!important;
+}
+.hsr-field-workspace .hsr-manager-map-shell{
+  border-radius:var(--field-radius)!important;
+  border-color:var(--field-border)!important;
+  box-shadow:0 18px 44px -30px rgba(0,0,0,.82)!important;
+}
+.hsr-field-workspace .hsr-manager-map-overlay{
+  box-shadow:0 8px 22px -16px rgba(0,0,0,.65);
+}
+@media(max-width:1024px){
+  .hsr-field-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .hsr-field-workspace{gap:12px!important}
+}
+@media(max-width:640px){
+  .hsr-field-context-card{padding:12px!important;border-radius:14px!important}
+  .hsr-field-context-card>div:first-child{min-width:0!important;width:100%}
+  .hsr-field-context-card>div:last-child{width:100%}
+  .hsr-field-context-card button{width:100%;justify-content:center}
+  .hsr-field-nav{flex-wrap:nowrap!important;overflow-x:auto;padding:4px;scrollbar-width:none}
+  .hsr-field-nav::-webkit-scrollbar{display:none}
+  .hsr-field-nav>button{flex:0 0 auto}
+  .hsr-field-kpis{grid-template-columns:1fr!important}
+  .hsr-field-kpis>div{min-height:88px}
+}
+@media(prefers-reduced-motion:reduce){
+  .hsr-field-nav>button,.hsr-field-kpis>div{transition:none!important}
+  .hsr-field-nav>button:hover,.hsr-field-kpis>div:hover{transform:none!important}
+}
+
 </style>
 
 </body>
