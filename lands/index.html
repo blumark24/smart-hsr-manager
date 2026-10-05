@@ -1069,7 +1069,10 @@ function isProductionHost() {
 // and called separately at the review-mode call site so the gate is
 // unambiguous on its own, not implied.
 function isReviewModeAllowed() {
-  return !isProductionHost() && new URLSearchParams(location.search).get("review") === "1";
+  const hostname = location.hostname;
+  const localQaHost = hostname === "localhost" || hostname === "127.0.0.1";
+  const previewHost = hostname.endsWith(".vercel.app") && !LANDS_PRODUCTION_HOSTNAMES.includes(hostname);
+  return (localQaHost || previewHost) && new URLSearchParams(location.search).get("review") === "1";
 }
 function resolveLandsFirebaseConfig() {
   return isProductionHost() ? LANDS_PRODUCTION_FIREBASE_CONFIG : LANDS_STAGING_FIREBASE_CONFIG;
