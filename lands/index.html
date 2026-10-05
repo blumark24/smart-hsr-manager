@@ -1733,7 +1733,7 @@ body.sidebar-collapsed .shell{
       <button data-view="map"><i data-lucide="map"></i><span>الخريطة</span></button>
       <div class="nav-group-label">المتابعة</div>
       <button data-view="reviews" data-review-only><i data-lucide="clipboard-check"></i><span>المراجعات</span></button>
-      <button data-view="reports"><i data-lucide="bar-chart-3"></i><span>التقارير</span></button>
+      <button data-view="reports" data-review-only><i data-lucide="bar-chart-3"></i><span>التقارير</span></button>
       <button data-view="audit" data-review-only><i data-lucide="history"></i><span>سجل العمليات</span></button>
       <div class="nav-group-label" data-admin-only>الإدارة</div>
       <button data-view="users" data-admin-only><i data-lucide="users-round"></i><span>مستخدمو الأراضي</span></button>
@@ -1748,7 +1748,7 @@ body.sidebar-collapsed .shell{
     <button data-view="decisions"><i data-lucide="gavel"></i>القرارات</button>
     <button data-view="map"><i data-lucide="map"></i>الخريطة</button>
     <button onclick="openAiPanel()"><i data-lucide="sparkles"></i>المساعد</button>
-    <button data-view="reports"><i data-lucide="bar-chart-3"></i>تقارير</button>
+    <button data-view="reports" data-review-only><i data-lucide="bar-chart-3"></i>تقارير</button>
   </nav>
 </div>
 <button class="ai-trigger" id="aiTrigger" type="button" data-state="idle" aria-label="فتح المساعد الإداري الذكي" onclick="toggleAiPanel()"><span class="ai-face" aria-hidden="true"></span><span class="ai-attention-badge" id="aiAttentionBadge" hidden></span></button>
@@ -2439,6 +2439,11 @@ function centerView() {
   const statusMax = Math.max(1, ...statusOrder.map(s => grants.filter(g => g.status === s).length));
   const statusColors = { draft: "#aeb8bb", under_review: "#e0a14d", incomplete: "#d56c66", approved: "#5aa978", rejected: "#b84945" };
   const attention = AutomationEngine.attentionItems();
+  const canReview = mod.canReviewGrant(session.role);
+  const employeeRecent = grants.filter(g => !g.archived).slice(0, 4);
+  const roleDailyPanels = canReview
+    ? `<div class="lower-grid" style="margin-top:18px"><section class="panel"><div class="panel-head"><div><h2>أولوية اليوم</h2><p>مبنية على محرك الأتمتة — Automation Engine، وليس نموذجًا لغويًا</p></div>${icon("compass")}</div><div class="panel-body">${attention.length ? attention.slice(0, 4).map(item => `<div class="auto-row"><span>${icon("alert-triangle")} قرار ${esc(item.number)} — ${item.needsWork} يحتاج استكمال${item.overdueCount ? `، ${item.overdueCount} متأخر` : ""}</span><button class="btn small ghost" onclick="openDecision('${esc(item.number)}')">${icon("arrow-left")} فتح</button></div>`).join("") : `<div class="empty">${icon("circle-check")}<br>لا توجد أولويات عاجلة اليوم</div>`}</div></section><section class="panel"><div class="panel-head"><div><h2>القرارات التي تحتاج تدخل</h2><p>قرارات بنسبة إنجاز منخفضة أو مراجعات معلّقة</p></div>${icon("gavel")}</div><div class="panel-body">${attention.length ? attention.map(item => `<div class="auto-row"><span>قرار ${esc(item.number)}</span><b class="mono">${item.avgPercent}%</b></div>`).join("") : `<div class="empty">${icon("circle-check")}<br>كل القرارات ضمن المعدل المستهدف</div>`}</div></section></div>`
+    : `<div class="lower-grid" style="margin-top:18px"><section class="panel"><div class="panel-head"><div><h2>آخر الملفات</h2><p>ملفات الأراضي المتاحة لك ضمن نطاق العمل الحالي</p></div>${icon("folder-open")}</div><div class="panel-body">${employeeRecent.length ? employeeRecent.map(g => `<div class="auto-row"><span><b class="mono">${esc(g.id)}</b> · ${esc(g.beneficiary?.name || "بدون مستفيد")}</span><button class="btn small ghost" onclick="openFile('${esc(g.id)}')">${icon("arrow-left")} فتح الملف</button></div>`).join("") : `<div class="empty">${icon("inbox")}<br>لا توجد ملفات متاحة حاليًا</div>`}</div></section><section class="panel"><div class="panel-head"><div><h2>إجراءات العمل</h2><p>أدوات تشغيلية مباشرة لموظف الأراضي</p></div>${icon("list-checks")}</div><div class="panel-body"><div class="auto-row"><span>${icon("plus")} إضافة سجل منحة جديد</span><button class="btn small ghost" onclick="openAdd()">بدء</button></div><div class="auto-row"><span>${icon("scan-text")} رقمنة مستند وربطه بالملف</span><button class="btn small ghost" onclick="openDigitize()">بدء</button></div><div class="auto-row"><span>${icon("map")} مراجعة المواقع على الخريطة</span><button class="btn small ghost" onclick="setView('map')">فتح</button></div></div></section></div>`;
   if (managerMode) {
     return shellHead("وضع المدير — عرض تنفيذي", "وضع المدير", "أهم القضايا التشغيلية التي تحتاج قرارًا خلال ثوانٍ") + managerModeView(attention);
   }
@@ -2454,7 +2459,7 @@ function centerView() {
  })()}<div class="legend"><span><i class="dot" style="background:#5aa978"></i>منحة معتمدة</span><span><i class="dot" style="background:#e0a14d"></i>قيد المراجعة/مسودة</span><span><i class="dot" style="background:#d56c66"></i>غير مكتملة</span><span><i class="dot" style="background:#aeb8bb"></i>غير مخصصة</span></div>${dashboardSelection()}</section>
  <section class="panel"><div class="panel-head"><div><h2>سجلات تحتاج استكمالاً</h2><p>مبنية على بيانات النظام الفعلية</p></div></div><div class="panel-body">${needsCompletion.length ? needsCompletion.map(g => insight(g)).join("") : `<div class="empty">${icon("circle-check")}<br>لا توجد سجلات ناقصة حاليًا</div>`}</div></section></div>
  <div class="lower-grid role-aware"><section class="panel"><div class="panel-head"><div><h2>توزيع حالات السجلات</h2><p>قراءة سريعة لحالة السجلات الفعلية</p></div></div><div class="panel-body bars">${statusOrder.map(s => bar(STATUS_LABELS[s], grants.filter(g => g.status === s).length, statusColors[s], statusMax)).join("")}</div></section>${mod.canReviewGrant(session.role) ? `<section class="panel review-only"><div class="panel-head"><div><h2>سجل التدقيق الحديث</h2><p>أحدث أحداث Trusted Audit</p></div>${icon("history")}</div><div class="panel-body timeline">${auditEvents.slice(0, 5).length ? auditEvents.slice(0, 5).map(e => auditEventRow(e)).join("") : `<div class="empty">لا توجد أحداث مسجّلة بعد</div>`}</div></section>` : ""}</div>
- <div class="lower-grid" style="margin-top:18px"><section class="panel"><div class="panel-head"><div><h2>أولوية اليوم</h2><p>مبنية على محرك الأتمتة — Automation Engine، وليس نموذجًا لغويًا</p></div>${icon("compass")}</div><div class="panel-body">${attention.length ? attention.slice(0, 4).map(item => `<div class="auto-row"><span>${icon("alert-triangle")} قرار ${esc(item.number)} — ${item.needsWork} يحتاج استكمال${item.overdueCount ? `، ${item.overdueCount} متأخر` : ""}</span><button class="btn small ghost" onclick="openDecision('${esc(item.number)}')">${icon("arrow-left")} فتح</button></div>`).join("") : `<div class="empty">${icon("circle-check")}<br>لا توجد أولويات عاجلة اليوم</div>`}</div></section><section class="panel"><div class="panel-head"><div><h2>القرارات التي تحتاج تدخل</h2><p>قرارات بنسبة إنجاز منخفضة أو مراجعات معلّقة</p></div>${icon("gavel")}</div><div class="panel-body">${attention.length ? attention.map(item => `<div class="auto-row"><span>قرار ${esc(item.number)}</span><b class="mono">${item.avgPercent}%</b></div>`).join("") : `<div class="empty">${icon("circle-check")}<br>كل القرارات ضمن المعدل المستهدف</div>`}</div></section></div>`;
+ ${roleDailyPanels}`;
 }
 // Reused unchanged by the GIS map's click handler (mountGisMap above) —
 // this is still the single source of truth for "select a parcel", whether
@@ -3652,6 +3657,9 @@ function reviewsView() {
 
 // ---- التقارير (ملخص تنفيذي عبر القرارات) ----
 function reportsView() {
+  if (!mod.canReviewGrant(session.role)) {
+    return shellHead("التقارير", "التقارير", "هذه الصفحة متاحة لأدوار المراجعة المعتمدة فقط.");
+  }
   const groups = decisionGroups();
   const total = grants.length;
   const complete = grants.filter(g => g.completeness.status === "complete").length;
@@ -3714,9 +3722,12 @@ function renderAiContext() {
   const total = g.length, complete = g.filter(x => x.completeness.status === "complete").length;
   const avgPercent = total ? Math.round(g.reduce((a, x) => a + completenessPercent(x), 0) / total) : (scope.grant ? completenessPercent(scope.grant) : 0);
   contextEl.innerHTML = `<div class="eyebrow">السياق الحالي</div><b style="color:var(--navy)">${esc(aiContextLabel(scope))}</b>${scope.kind !== "grant" ? `<div style="display:flex;gap:14px;margin-top:8px;font-size:12px" class="mono"><span>${total} منحة</span><span>${complete} مكتملة</span><span>${avgPercent}%</span></div>` : `<div style="margin-top:8px;font-size:12px" class="mono">${avgPercent}% مكتمل</div>`}`;
-  const actions = AI_QUICK_ACTIONS[scope.kind] || [];
+  const canReview = mod.canReviewGrant(session.role);
+  const actions = scope.kind === "overview" && !canReview
+    ? [["الملفات التي تحتاج استكمال", "map.concentration"], ["فتح الخريطة", "overview.opentwin"]]
+    : (AI_QUICK_ACTIONS[scope.kind] || []);
   actionsEl.innerHTML = actions.map(([label, action]) => `<button onclick="submitAiQuestion(null,'${action}')">${esc(label)}</button>`).join("")
-    + `<button onclick="submitAiQuestion(null,'report.generate')">${icon("file-text")} إنشاء تقرير تنفيذي</button>`
+    + (canReview ? `<button onclick="submitAiQuestion(null,'report.generate')">${icon("file-text")} إنشاء تقرير تنفيذي</button>` : "")
     + (scope.kind === "decision" ? `<button onclick="openTwinForDecision('${esc(scope.number)}')">${icon("map")} عرض على التوأم الرقمي</button>` : "")
     + (scope.kind === "decision" || scope.kind === "digital_twin" ? `<button onclick="openMapForDecision('${esc(scope.number)}')">${icon("map-pin")} فتح على الخريطة العامة</button>` : "");
 }
