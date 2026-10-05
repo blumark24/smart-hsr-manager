@@ -2252,7 +2252,7 @@ function showToast(t, isError, kind) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 3600);
 }
 function normalizeDigits(root = document.body) { const arabic = "٠١٢٣٤٥٦٧٨٩", latin = "0123456789", walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode); nodes.forEach(n => { n.nodeValue = n.nodeValue.replace(/[٠-٩]/g, d => latin[arabic.indexOf(d)]); }); root.querySelectorAll("input,textarea,select").forEach(el => { ["placeholder", "value", "aria-label"].forEach(a => { if (el.hasAttribute(a)) el.setAttribute(a, el.getAttribute(a).replace(/[٠-٩]/g, d => latin[arabic.indexOf(d)])); }); }); }
-function applyTheme(theme) { document.body.classList.toggle("dark", theme === "dark"); try { localStorage.setItem("slgr-theme", theme); } catch { /* presentation preference only */ } const b = document.getElementById("themeToggle"); if (b) b.innerHTML = icon(theme === "dark" ? "sun" : "moon") + " " + (theme === "dark" ? "الوضع النهاري" : "الوضع الليلي"); b?.setAttribute("aria-pressed", theme === "dark"); }
+function applyTheme(theme) { document.body.classList.toggle("dark", theme === "dark"); try { localStorage.setItem("slgr-theme", theme); } catch { /* presentation preference only */ } const b = document.getElementById("themeToggle"); if (b) { const nextLabel = theme === "dark" ? "تفعيل الوضع النهاري" : "تفعيل الوضع الداكن"; b.innerHTML = icon(theme === "dark" ? "sun" : "moon"); b.setAttribute("aria-label", nextLabel); b.setAttribute("title", nextLabel); } b?.setAttribute("aria-pressed", theme === "dark"); }
 function toggleTheme() {
   applyTheme(document.body.classList.contains("dark") ? "light" : "dark");
   lucide.createIcons();
@@ -2488,7 +2488,7 @@ function render() {
   renderAiAttention();
   updateAiIdleState();
 }
-function setView(v) { if (v === "assistant") { openAiPanel(); return; } currentView = v; render(); window.scrollTo({ top: 0, behavior: "smooth" }); syncRouteToUrl(); }
+function setView(v) { if (v === "assistant") { closeMobileNav(); openAiPanel(); return; } currentView = v; closeMobileNav(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); syncRouteToUrl(); }
 // ---- RC2 §5: lightweight client-side routing (Back/Forward/Refresh/deep
 // links). This is navigation state ONLY — it selects which already-loaded,
 // already-tenant-scoped in-memory record to display (grants/domains are
