@@ -1875,24 +1875,9 @@ body.dark .gis-empty-state{background:rgba(255,255,255,.025)}
 </div>
 <div class="auth-screen" id="loginScreen" hidden>
   <section class="auth-card">
-    <div class="auth-brand"><img src="/smart-hsr-mark.svg" alt="شعار سياقي"><h1>Smart HSR</h1><p>نظام الحصر الذكي لمنح الأراضي</p></div>
-    <p class="notice info" style="margin:0 0 18px">المسار المعتاد لجميع موظفي Smart HSR هو <a href="https://smart-hsr-manager.vercel.app/login.html" style="color:inherit;font-weight:700">بوابة الموظفين الموحدة</a>. هذه الصفحة مسار احتياطي مؤقت لأغراض الاختبار على البيئة التجريبية فقط.</p>
-    <form id="loginForm" novalidate>
-      <label class="input-label" for="loginEmail">البريد الإلكتروني</label>
-      <input class="text-input" id="loginEmail" type="email" autocomplete="username" required>
-      <label class="input-label" for="loginPassword">كلمة المرور</label>
-      <div class="password-field">
-        <input class="text-input" id="loginPassword" type="password" autocomplete="current-password" required>
-        <button type="button" class="password-toggle" id="passwordToggle" aria-label="إظهار كلمة المرور" aria-pressed="false"><i data-lucide="eye"></i></button>
-      </div>
-      <label class="input-label" for="loginMunicipality">معرّف البلدية</label>
-      <input class="text-input mono" id="loginMunicipality" placeholder="مثال: municipality-001" required aria-describedby="municipalityHint">
-      <small id="municipalityHint" class="muted" style="display:block;margin-top:4px">يوفّره مدير النظام لكل بلدية مشتركة في المنصة</small>
-      <div class="auth-error" id="loginError" role="alert" hidden></div>
-      <button class="btn primary auth-submit" id="loginSubmit" type="submit">تسجيل الدخول</button>
-      <button class="btn ghost auth-forgot" id="forgotPassword" type="button">نسيت كلمة المرور؟</button>
-    </form>
-    <p class="auth-footnote">بيئة ما قبل الإنتاج · نظام تنظيمي مخصص لموظفي البلدية المفوّضين فقط</p>
+    <div class="auth-brand"><img src="/smart-hsr-mark.svg" alt="سمارت حصر"><h1>SMART HSR</h1><p>الأراضي الذكية</p></div>
+    <p class="auth-denied-message">الدخول إلى الأراضي يتم حصريًا عبر بوابة الموظفين الموحدة.</p>
+    <button class="btn primary auth-submit" type="button" onclick="goToUnifiedLogin()">فتح بوابة الموظفين</button>
   </section>
 </div>
 <div class="auth-screen" id="deniedScreen" hidden>
@@ -2123,8 +2108,10 @@ function goToUnifiedLogin() { window.location.href = UNIFIED_LOGIN_URL; }
 // every path that would otherwise show it instead leaves for the unified
 // employee gateway. Preview/local keeps the exact previous behavior.
 function showLoginOrRedirect() {
-  if (isProductionHost()) { goToUnifiedLogin(); return; }
-  showScreen("login");
+  // Institutional access contract: Lands has no standalone credentials screen
+  // in Preview or Production. Authentication always starts at the unified
+  // employee gateway; Lands only accepts the trusted one-time SSO handoff.
+  goToUnifiedLogin();
 }
 // ---- GIS Digital Twin — Leaflet renderer (§2/§12) ----
 // Pure renderer/input glue: reads already-authorized, already-scoped
@@ -4509,13 +4496,10 @@ async function boot() {
     // does this deterministically for the logout button itself; this is
     // the backstop for an involuntary sign-out (revoked token, account
     // disabled) detected elsewhere.
-    if (!user && isProductionHost()) goToUnifiedLogin();
+    if (!user) goToUnifiedLogin();
   });
 }
-boot().catch(() => {
-  setLoginError("تعذر تحميل مكونات النظام. حدّث الصفحة وحاول مجددًا.");
-  showLoginOrRedirect();
-});
+boot().catch(() => { showLoginOrRedirect(); });
 lucide.createIcons();
 </script>
 <!-- LANDS UI CLOSURE CANDIDATE: premium role-aware preview -->
