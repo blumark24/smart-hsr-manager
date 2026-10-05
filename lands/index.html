@@ -1619,6 +1619,48 @@ body.dark .btn:focus-visible,body.dark .select:focus-visible,body.dark .text-inp
 }
 </style>
 
+
+<style id="lands-premium-qa-hardening-v2">
+/* ==== LANDS PREMIUM QA HARDENING v2 ==== */
+/* Final authoritative layout contract for RTL Lands shell. */
+[hidden]{display:none!important}
+
+.shell{
+  grid-template-columns:minmax(0,1fr) 252px!important;
+}
+.main{
+  grid-column:1!important;
+  min-width:0!important;
+  width:100%!important;
+}
+.side{
+  grid-column:2!important;
+  min-width:0!important;
+}
+body.sidebar-collapsed .shell{
+  grid-template-columns:minmax(0,1fr) 72px!important;
+}
+.metrics>*,
+.workgrid>*,
+.lower-grid>*,
+.record-layout>*,
+.main>*{
+  min-width:0!important;
+}
+@media(max-width:1180px) and (min-width:981px){
+  .shell{grid-template-columns:minmax(0,1fr) 222px!important}
+}
+@media(min-width:701px) and (max-width:980px){
+  .shell{grid-template-columns:minmax(0,1fr) 70px!important}
+  .main{grid-column:1!important}
+  .side{grid-column:2!important}
+}
+@media(max-width:700px){
+  .shell{display:block!important}
+  .main,.side{grid-column:auto!important;width:100%!important}
+}
+</style>
+
 </head>
 <body>
 <div class="auth-screen splash-screen" id="bootScreen" aria-label="جاري فتح SMART HSR">
