@@ -1884,15 +1884,73 @@ body.dark .gis-empty-state{background:rgba(255,255,255,.025)}
 @keyframes secureScan{0%,100%{opacity:.28;transform:translateY(-20px) scaleX(.72)}50%{opacity:1;transform:translateY(20px) scaleX(1)}}
 @media(prefers-reduced-motion:reduce){#bootScreen.splash-screen:after,#bootScreen .splash-logo,#bootScreen .splash-scan{animation:none!important}}
 
+
+/* ==== SMART HSR SIGNATURE ENTRY — institutional Digital Twin transition ==== */
+#bootScreen.signature-entry{isolation:isolate;background:#04110c!important;color:#f3fff7}
+#bootScreen.signature-entry:before{
+  content:"";position:absolute;inset:-18%;z-index:-3;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(47,193,91,.16) 0 7%,transparent 30%),
+    radial-gradient(circle at 50% 48%,rgba(0,93,255,.10),transparent 34%),
+    linear-gradient(145deg,#020906 0%,#061a12 48%,#03110b 100%);
+}
+#bootScreen.signature-entry .twin-grid{position:absolute;inset:0;z-index:-2;opacity:.32;
+  background-image:linear-gradient(rgba(143,224,176,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(143,224,176,.07) 1px,transparent 1px);
+  background-size:42px 42px;transform:perspective(560px) rotateX(61deg) scale(1.6) translateY(15%);transform-origin:50% 65%;
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 8%,transparent 68%);mask-image:radial-gradient(ellipse at center,#000 8%,transparent 68%)}
+#bootScreen.signature-entry .twin-glow{position:absolute;width:min(620px,92vw);aspect-ratio:1;border-radius:50%;z-index:-1;
+  background:repeating-radial-gradient(circle,transparent 0 58px,rgba(143,224,176,.09) 59px 60px);
+  filter:drop-shadow(0 0 26px rgba(47,193,91,.12));animation:signatureBreath 1.25s ease-in-out infinite alternate}
+#bootScreen.signature-entry .splash-core{width:min(680px,92vw)!important;height:auto!important;min-height:330px!important;display:flex!important;flex-direction:column;gap:22px}
+#bootScreen.signature-entry .splash-core:before,#bootScreen.signature-entry .splash-core:after{display:none!important}
+#bootScreen.signature-entry .signature-orbit{position:absolute;top:50%;left:50%;width:230px;height:230px;border-radius:50%;
+  border:1px solid rgba(143,224,176,.19);transform:translate(-50%,-58%);animation:signatureOrbit 5s linear infinite}
+#bootScreen.signature-entry .signature-orbit:before{content:"";position:absolute;inset:17px;border-radius:50%;border:1px dashed rgba(143,224,176,.16)}
+#bootScreen.signature-entry .signature-orbit:after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;top:-4px;left:50%;background:#7cff9b;box-shadow:0 0 18px #37df68}
+#bootScreen.signature-entry .splash-logo{position:relative;z-index:2;width:min(500px,82vw)!important;height:auto!important;max-height:210px!important;
+  object-fit:contain;filter:drop-shadow(0 20px 44px rgba(0,0,0,.46));animation:signatureResolve .62s cubic-bezier(.16,.84,.3,1) both!important}
+#bootScreen.signature-entry .splash-scan{z-index:3;width:min(510px,82vw)!important;height:1px!important;
+  background:linear-gradient(90deg,transparent,rgba(115,255,147,.22),#78ff98,rgba(115,255,147,.22),transparent)!important;
+  box-shadow:0 0 20px rgba(63,255,112,.48)!important;animation:signatureScan .9s cubic-bezier(.4,0,.2,1) 1 both!important}
+#bootScreen.signature-entry .signature-copy{position:relative;z-index:2;text-align:center;animation:signatureCopy .45s ease .18s both}
+#bootScreen.signature-entry .signature-copy strong{display:block;font-size:13px;letter-spacing:.03em;color:#eaffef}
+#bootScreen.signature-entry .signature-copy span{display:block;margin-top:5px;font:600 9px/1.5 "IBM Plex Mono",monospace;letter-spacing:.18em;color:#79b98d}
+#bootScreen.signature-entry .signature-status{display:flex;align-items:center;gap:8px;font-size:9px;color:#88ad94;letter-spacing:.05em}
+#bootScreen.signature-entry .signature-status i{width:6px;height:6px;border-radius:50%;background:#51e879;box-shadow:0 0 10px rgba(81,232,121,.75);animation:signatureStatus .8s ease-in-out infinite alternate}
+@keyframes signatureResolve{0%{opacity:0;transform:translateY(9px) scale(.965);filter:blur(12px)}55%{opacity:1;filter:blur(0) drop-shadow(0 20px 44px rgba(0,0,0,.46))}100%{opacity:1;transform:none}}
+@keyframes signatureScan{0%{opacity:0;transform:translateY(-92px) scaleX(.45)}18%{opacity:1}100%{opacity:0;transform:translateY(92px) scaleX(1)}}
+@keyframes signatureOrbit{to{transform:translate(-50%,-58%) rotate(360deg)}}
+@keyframes signatureBreath{from{opacity:.55;transform:scale(.97)}to{opacity:1;transform:scale(1.03)}}
+@keyframes signatureCopy{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes signatureStatus{from{opacity:.45}to{opacity:1}}
+@media(max-width:700px){
+ #bootScreen.signature-entry .splash-core{min-height:270px!important;gap:17px}
+ #bootScreen.signature-entry .splash-logo{width:min(330px,84vw)!important;max-height:150px!important}
+ #bootScreen.signature-entry .signature-orbit{width:176px;height:176px}
+ #bootScreen.signature-entry .twin-grid{background-size:32px 32px}
+ #bootScreen.signature-entry .signature-copy strong{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ #bootScreen.signature-entry .signature-orbit,#bootScreen.signature-entry .twin-glow,#bootScreen.signature-entry .splash-scan,#bootScreen.signature-entry .signature-status i{animation:none!important}
+ #bootScreen.signature-entry .splash-logo,#bootScreen.signature-entry .signature-copy{animation:none!important;opacity:1!important}
+}
+
 </style>
 
 </head>
 <body>
-<div class="auth-screen splash-screen" id="bootScreen" aria-label="جاري فتح SMART HSR">
+<div class="auth-screen splash-screen signature-entry" id="bootScreen" aria-label="جاري فتح مركز الأراضي الذكية">
+  <div class="twin-grid" aria-hidden="true"></div>
+  <div class="twin-glow" aria-hidden="true"></div>
   <div class="splash-core" aria-hidden="true">
+    <span class="signature-orbit"></span>
     <span class="splash-scan"></span>
-    <img class="splash-logo" src="/smart-hsr-mark.svg" alt="">
-    <div class="splash-label">SMART HSR · SECURE LAND WORKSPACE <span class="splash-dots"><i></i><i></i><i></i></span></div>
+    <img class="splash-logo" src="/smart-hsr-logo-r2.png" alt="">
+    <div class="signature-copy">
+      <strong>مركز الأراضي الذكية</strong>
+      <span>SMART HSR · SPATIAL INTELLIGENCE</span>
+    </div>
+    <div class="signature-status"><i></i><span>تجهيز مساحة العمل الآمنة</span></div>
   </div>
 </div>
 <div class="auth-screen" id="loginScreen" hidden>
