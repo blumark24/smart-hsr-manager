@@ -2401,7 +2401,7 @@ function centerView() {
     return shellHead("وضع المدير — عرض تنفيذي", "وضع المدير", "أهم القضايا التشغيلية التي تحتاج قرارًا خلال ثوانٍ") + managerModeView(attention);
   }
   return shellHead("مركز الحصر الذكي لمنح الأراضي", "مركز الحصر الذكي", "متابعة اكتمال وجودة وربط سجلات منح الأراضي ودعم أعمال المراجعة والاعتماد", actions) + `
- <section class="metrics"><div class="metric teal"><span class="label">القرارات النشطة</span><div class="value mono">${activeDecisions}</div><span class="hint">عبر بلدية ${esc(session.municipalityId)}</span></div><div class="metric"><span class="label">إجمالي المنح</span><div class="value mono">${stats.total}</div><span class="hint">في نطاق هذه البلدية</span></div><div class="metric green"><span class="label">مكتمل</span><div class="value mono">${stats.complete}</div><span class="hint"><strong>${approved}</strong> منها معتمدة رسميًا</span></div><div class="metric red"><span class="label">يحتاج استكمال</span><div class="value mono">${stats.needsWork}</div><span class="hint">تنقصها بيانات أساسية</span></div><div class="metric amber"><span class="label">تحت المراجعة</span><div class="value mono">${stats.review}</div><span class="hint">بانتظار قرار المراجع</span></div><div class="metric"><span class="label">متوسط اكتمال الملفات</span><div class="value mono">${stats.avgPercent}%</div><span class="hint">محسوب آليًا من متطلبات كل سجل</span></div></section>
+ <section class="metrics"><div class="metric teal"><span class="label">القرارات النشطة</span><div class="value mono">${activeDecisions}</div><span class="hint">في نطاق البلدية الحالية</span></div><div class="metric"><span class="label">إجمالي المنح</span><div class="value mono">${stats.total}</div><span class="hint">في نطاق هذه البلدية</span></div><div class="metric green"><span class="label">مكتمل</span><div class="value mono">${stats.complete}</div><span class="hint"><strong>${approved}</strong> منها معتمدة رسميًا</span></div><div class="metric red"><span class="label">يحتاج استكمال</span><div class="value mono">${stats.needsWork}</div><span class="hint">تنقصها بيانات أساسية</span></div><div class="metric amber"><span class="label">تحت المراجعة</span><div class="value mono">${stats.review}</div><span class="hint">بانتظار قرار المراجع</span></div><div class="metric"><span class="label">متوسط اكتمال الملفات</span><div class="value mono">${stats.avgPercent}%</div><span class="hint">محسوب آليًا من متطلبات كل سجل</span></div></section>
  <div class="workgrid"><section class="panel map-panel"><div class="panel-head"><div><h2>التوأم الرقمي للمخططات</h2><p>محاكاة مكانية تشغيلية — غير مرتبطة حاليًا بحدود مساحية رسمية</p></div>${reviewDemoLocationChip()}</div>${(() => {
    const active = grants.filter(g => !g.archived);
    const fc = mod.buildFeatureCollection(active, mod.buildParcelIndex(domains.parcels), g => classifyForMap(g, "all"), selectedGrantId);
@@ -3523,7 +3523,7 @@ async function submitCreateDomainEntity(domain) {
 function usersView() {
   if (!mod.canManageEntitlements(session.role)) return shellHead("مستخدمو الأراضي", "مستخدمو الأراضي", "لا تملك صلاحية إدارة مستخدمي Lands في هذه البلدية.");
   const roleOptions = mod.LANDS_ROLES.map(r => `<option value="${r}">${esc(ROLE_LABELS[r])}</option>`).join("");
-  return shellHead("مستخدمو الأراضي", "مستخدمو الأراضي", `بلدية ${esc(session.municipalityId)}`) + `<section class="panel"><div class="panel-head"><h2>إدارة صلاحيات Smart HSR Lands</h2></div><div class="panel-body"><div class="form-grid"><input id="lands-user-uid" class="text-input" placeholder="Firebase UID"><select id="lands-user-role" class="select text-input">${roleOptions}</select><select id="lands-user-enabled" class="select text-input"><option value="true">مفعّل</option><option value="false">معطّل</option></select><button class="btn primary" onclick="saveLandsUser()">حفظ صلاحية Lands</button></div><p class="muted">يعدّل هذا صلاحية Lands فقط؛ لا يقرأ أو يغيّر دور Smart HSR Field.</p>${users.length ? users.map(u => `<div class="audit-line"><strong class="mono">${esc(u.firebase_uid)}</strong><small>${u.enabled ? "مفعّل" : "معطّل"} · ${esc(ROLE_LABELS[u.lands_role] || u.lands_role)}</small></div>`).join("") : `<div class="empty">لا توجد عضويات Lands قابلة للعرض</div>`}</div></section>`;
+  return shellHead("مستخدمو الأراضي", "مستخدمو الأراضي", "إدارة عضويات وصلاحيات الأراضي ضمن البلدية الحالية") + `<section class="panel"><div class="panel-head"><h2>إدارة صلاحيات Smart HSR Lands</h2></div><div class="panel-body"><div class="form-grid"><input id="lands-user-uid" class="text-input" placeholder="Firebase UID"><select id="lands-user-role" class="select text-input">${roleOptions}</select><select id="lands-user-enabled" class="select text-input"><option value="true">مفعّل</option><option value="false">معطّل</option></select><button class="btn primary" onclick="saveLandsUser()">حفظ صلاحية Lands</button></div><p class="muted">يعدّل هذا صلاحية Lands فقط؛ لا يقرأ أو يغيّر دور Smart HSR Field.</p>${users.length ? users.map(u => `<div class="audit-line"><strong class="mono">${esc(u.firebase_uid)}</strong><small>${u.enabled ? "مفعّل" : "معطّل"} · ${esc(ROLE_LABELS[u.lands_role] || u.lands_role)}</small></div>`).join("") : `<div class="empty">لا توجد عضويات Lands قابلة للعرض</div>`}</div></section>`;
 }
 async function saveLandsUser() {
   const uid = document.getElementById("lands-user-uid").value.trim();
@@ -3600,6 +3600,9 @@ function documentsView() {
 
 // ---- المراجعات (كل السجلات تحت المراجعة) ----
 function reviewsView() {
+  if (!mod.canReviewGrant(session.role)) {
+    return shellHead("المراجعات", "المراجعات", "هذه الصفحة متاحة لأدوار المراجعة المعتمدة فقط.");
+  }
   const rows = grants.filter(g => g.status === "under_review");
   return shellHead("المراجعات", "المراجعات", "السجلات التي تنتظر قرار المراجع عبر جميع القرارات") +
     `<div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>القرار</th><th>المستفيد</th><th>نسبة الاكتمال</th><th>إجراء</th></tr></thead><tbody>${rows.length ? rows.map(g => `<tr onclick="openFile('${esc(g.id)}')"><td><b class="mono">${esc(g.id)}</b></td><td class="mono">${esc(g.allocation_decision?.number || "—")}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${completenessPercent(g)}%</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(g.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="5"><div class="empty">${icon("circle-check")}<br>لا توجد سجلات قيد المراجعة حاليًا</div></td></tr>`}</tbody></table></div>`;
@@ -3618,8 +3621,11 @@ function reportsView() {
 
 // ---- سجل العمليات (Trusted Audit، كل القرارات) ----
 function auditView() {
+  if (!mod.canReviewGrant(session.role)) {
+    return shellHead("سجل العمليات", "سجل العمليات", "هذه الصفحة متاحة لأدوار المراجعة المعتمدة فقط.");
+  }
   return shellHead("سجل العمليات", "سجل العمليات", "أحدث أحداث Trusted Audit عبر جميع القرارات") +
-    `<section class="panel"><div class="panel-body timeline">${mod.canReviewGrant(session.role) ? (auditEvents.length ? auditEvents.map(e => auditEventRow(e)).join("") : `<div class="empty">لا توجد أحداث مسجّلة بعد</div>`) : `<div class="empty">سجل التدقيق مقصور على أدوار المراجعة</div>`}</div></section>`;
+    `<section class="panel"><div class="panel-body timeline">${auditEvents.length ? auditEvents.map(e => auditEventRow(e)).join("") : `<div class="empty">لا توجد أحداث مسجّلة بعد</div>`}</div></section>`;
 }
 
 // ---- مساعد الأراضي الذكي (Smart HSR Intelligence) ----
