@@ -1661,6 +1661,151 @@ body.sidebar-collapsed .shell{
 }
 </style>
 
+
+<style id="lands-mobile-responsive-gate-v3">
+/* ==== LANDS MOBILE RESPONSIVE GATE v3 ==== */
+/* Presentation-only mobile/tablet hardening. No Auth/RBAC/data/GIS logic changes. */
+@media (max-width:700px){
+  html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
+  body{min-width:0!important}
+  .app{width:100%!important;max-width:100%!important;min-height:100dvh!important;padding:0 0 calc(76px + env(safe-area-inset-bottom))!important}
+
+  /* One-row institutional command bar on phones. */
+  .command-header.manager-parity-header{
+    position:sticky!important;top:0!important;
+    width:100%!important;max-width:100%!important;
+    margin:0!important;border-radius:0 0 16px 16px!important;
+    overflow:hidden!important;
+  }
+  .manager-header-inner{
+    min-height:64px!important;width:100%!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-areas:"brand actions"!important;
+    padding:8px 10px!important;gap:8px!important;
+  }
+  .manager-brand-zone{grid-area:brand!important;min-width:0!important;gap:8px!important}
+  .manager-brand-logo{height:38px!important;max-width:38px!important}
+  .manager-header-title{font-size:14px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  .brand-copy .eyebrow{display:none!important}
+  .header-meta{display:none!important}
+  .header-actions{grid-area:actions!important;gap:5px!important;min-width:0!important}
+  .header-actions .icon-button,.header-actions .manager-mode-chip{
+    width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;
+    padding:0!important;border-radius:11px!important;display:inline-grid!important;place-items:center!important;
+  }
+  #sidebarToggle{display:none!important}
+  #themeToggle span,.manager-mode-chip span{display:none!important}
+  .manager-user-chip{display:none!important}
+
+  /* Main content owns the viewport. Sidebar is a true off-canvas drawer. */
+  .shell{
+    display:block!important;width:100%!important;max-width:100%!important;
+    min-height:0!important;margin:0!important;padding:12px 10px 18px!important;
+    overflow:visible!important;
+  }
+  .main{
+    display:block!important;position:relative!important;
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    padding:0!important;margin:0!important;overflow:visible!important;
+  }
+  .side{
+    display:block!important;position:fixed!important;
+    top:0!important;right:0!important;bottom:0!important;left:auto!important;
+    width:min(86vw,320px)!important;max-width:320px!important;
+    height:100dvh!important;min-height:100dvh!important;
+    margin:0!important;padding:18px 12px calc(18px + env(safe-area-inset-bottom))!important;
+    border-radius:0!important;z-index:90!important;
+    transform:translateX(105%)!important;
+    transition:transform .2s ease!important;
+    overflow-y:auto!important;overscroll-behavior:contain!important;
+    box-shadow:-24px 0 60px rgba(5,35,24,.22)!important;
+  }
+  body.mobile-nav-open{overflow:hidden!important}
+  body.mobile-nav-open .side{transform:translateX(0)!important}
+  .mobile-nav-backdrop{
+    position:fixed!important;inset:0!important;z-index:85!important;
+    background:rgba(5,23,16,.48)!important;backdrop-filter:blur(3px)!important;
+  }
+  body.mobile-nav-open .mobile-nav-backdrop{display:block!important}
+  .side .nav{padding-bottom:96px!important;overflow:visible!important}
+  .side .nav button{min-height:46px!important;padding:11px 12px!important}
+
+  /* Content hierarchy: no desktop-sized voids or clipped surfaces. */
+  .crumb{margin:2px 2px 10px!important;font-size:10px!important}
+  .page-head{
+    display:flex!important;flex-direction:column!important;align-items:stretch!important;
+    gap:12px!important;margin:0 0 12px!important;padding:16px!important;
+    border-radius:15px!important;
+  }
+  .page-head h1{font-size:21px!important;line-height:1.35!important;margin-bottom:5px!important}
+  .page-head p{font-size:11.5px!important;line-height:1.75!important}
+  .head-tools{width:100%!important;margin-top:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .head-tools .btn{width:100%!important;justify-content:center!important;white-space:normal!important}
+
+  .metrics{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;margin-bottom:12px!important}
+  .metric{min-height:100px!important;padding:13px!important;border-radius:14px!important}
+  .metric .label{font-size:10px!important;line-height:1.45!important}
+  .metric .value{font-size:24px!important;margin:7px 0 4px!important}
+  .metric .hint{font-size:9px!important;line-height:1.45!important}
+
+  .workgrid,.lower-grid,.record-layout,.role-aware{
+    display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important;
+  }
+  .panel,.file-head,.record-section,.decision-record,.summary-strip,.table-wrap,.selection{
+    width:100%!important;max-width:100%!important;min-width:0!important;border-radius:14px!important;
+  }
+  .panel-head{padding:14px!important;align-items:flex-start!important;flex-wrap:wrap!important}
+  .panel-head h2{font-size:13.5px!important}
+  .panel-head p{font-size:9.5px!important}
+  .panel-body{padding:14px!important}
+  .map-panel{min-height:0!important}
+  .map-wrap{width:auto!important;height:280px!important;min-height:280px!important;margin:8px!important;border-radius:13px!important}
+  .gis-map,.gis-empty-state{min-height:280px!important}
+  .legend{gap:8px 12px!important;padding:10px 12px!important;font-size:9.5px!important}
+  .selection{margin:0 8px 8px!important;padding:13px!important}
+  .selection-grid,.detail-grid{grid-template-columns:1fr!important}
+  .registry-tools,.file-head-top{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important}
+  .search,.select,.text-input{width:100%!important;max-width:100%!important;font-size:16px!important}
+  .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
+  .data-table{min-width:680px!important}
+
+  /* Floating tools must never cover the navigation/content. */
+  .mobile-bottom-nav{
+    display:flex!important;position:fixed!important;left:0!important;right:0!important;bottom:0!important;
+    z-index:70!important;min-height:64px!important;
+    padding:7px 4px calc(7px + env(safe-area-inset-bottom))!important;
+    background:rgba(255,255,255,.94)!important;
+    border-top:1px solid rgba(29,92,62,.12)!important;
+    box-shadow:0 -12px 30px -22px rgba(7,42,30,.34)!important;
+    backdrop-filter:blur(18px) saturate(140%)!important;
+  }
+  body.dark .mobile-bottom-nav{background:rgba(8,28,45,.95)!important;border-top-color:rgba(103,168,220,.16)!important}
+  .mobile-bottom-nav button{min-height:48px!important;font-size:9px!important;gap:3px!important}
+  .mobile-bottom-nav i{width:19px!important;height:19px!important}
+  .ai-trigger{left:14px!important;right:auto!important;bottom:calc(82px + env(safe-area-inset-bottom))!important;width:48px!important;height:48px!important;z-index:72!important}
+  .ai-panel{left:10px!important;right:10px!important;width:auto!important;max-width:none!important;bottom:calc(142px + env(safe-area-inset-bottom))!important;max-height:58dvh!important;z-index:75!important}
+
+  .drawer{width:min(94vw,420px)!important;max-width:94vw!important}
+  .modal{width:min(94vw,560px)!important;max-width:94vw!important;max-height:88dvh!important;overflow:auto!important}
+}
+@media (max-width:360px){
+  .metrics{grid-template-columns:1fr!important}
+  .head-tools{grid-template-columns:1fr!important}
+  .manager-header-logo{height:34px!important}
+  .header-actions .icon-button,.header-actions .manager-mode-chip{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important}
+}
+@media (min-width:701px) and (max-width:1024px){
+  .shell{grid-template-columns:minmax(0,1fr) 72px!important;padding:10px!important}
+  .main{min-width:0!important}
+  .metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .workgrid,.lower-grid,.record-layout{grid-template-columns:1fr!important}
+  .map-wrap{height:360px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .side{transition:none!important}
+}
+</style>
+
 </head>
 <body>
 <div class="auth-screen splash-screen" id="bootScreen" aria-label="جاري فتح SMART HSR">
