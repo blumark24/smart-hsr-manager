@@ -3358,7 +3358,10 @@ function buildReviewModeFixtures() {
 function enterReviewMode() {
   reviewMode = true;
   const fixtures = buildReviewModeFixtures();
-  session = fixtures.session;
+  const reviewRoleParam = new URLSearchParams(location.search).get("reviewRole");
+  const allowedReviewRoles = new Set(["lands_department_manager", "lands_employee"]);
+  const requestedReviewRole = allowedReviewRoles.has(reviewRoleParam) ? reviewRoleParam : fixtures.session.role;
+  session = { ...fixtures.session, role: requestedReviewRole, firebaseUid: requestedReviewRole === "lands_employee" ? "review-demo-employee" : "review-demo-manager" };
   grants = fixtures.grants;
   domains = fixtures.domains;
   users = fixtures.users;
