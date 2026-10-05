@@ -1935,6 +1935,30 @@ body.dark .gis-empty-state{background:rgba(255,255,255,.025)}
  #bootScreen.signature-entry .splash-logo,#bootScreen.signature-entry .signature-copy{animation:none!important;opacity:1!important}
 }
 
+
+/* ==== SIGNATURE ENTRY R2 — transparent mark, fast handoff ==== */
+#bootScreen.signature-entry .splash-logo{
+  width:clamp(92px,11vw,138px)!important;height:auto!important;max-height:none!important;
+  filter:drop-shadow(0 18px 38px rgba(0,0,0,.42)) drop-shadow(0 0 22px rgba(66,225,109,.10))!important;
+}
+#bootScreen.signature-entry .signature-wordmark{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;margin-top:-12px;
+  animation:signatureCopy .38s ease .12s both}
+#bootScreen.signature-entry .signature-wordmark b{font:700 clamp(20px,2.2vw,28px)/1 "Cairo",sans-serif;letter-spacing:.13em;color:#f2fff6}
+#bootScreen.signature-entry .signature-wordmark b em{font-style:normal;color:#63e681}
+#bootScreen.signature-entry .signature-wordmark small{margin-top:8px;font:600 8px/1.4 "IBM Plex Mono",monospace;letter-spacing:.24em;color:#6fa987}
+#bootScreen.signature-entry .signature-copy{margin-top:-4px}
+#bootScreen.signature-entry .signature-copy strong{font-size:12px;font-weight:650;color:#d9eee0}
+#bootScreen.signature-entry .signature-copy span{display:none}
+#bootScreen.signature-entry .signature-orbit{width:204px;height:204px}
+#bootScreen.signature-entry .signature-status{position:absolute;bottom:20px}
+#bootScreen.signature-entry .twin-glow{width:min(520px,88vw)}
+@media(max-width:700px){
+ #bootScreen.signature-entry .splash-logo{width:96px!important}
+ #bootScreen.signature-entry .signature-wordmark b{font-size:20px}
+ #bootScreen.signature-entry .signature-orbit{width:166px;height:166px}
+ #bootScreen.signature-entry .signature-status{bottom:10px}
+}
+
 </style>
 
 </head>
@@ -1945,11 +1969,9 @@ body.dark .gis-empty-state{background:rgba(255,255,255,.025)}
   <div class="splash-core" aria-hidden="true">
     <span class="signature-orbit"></span>
     <span class="splash-scan"></span>
-    <img class="splash-logo" src="/smart-hsr-logo-r2.png" alt="">
-    <div class="signature-copy">
-      <strong>مركز الأراضي الذكية</strong>
-      <span>SMART HSR · SPATIAL INTELLIGENCE</span>
-    </div>
+    <img class="splash-logo" src="/smart-hsr-mark.svg" alt="">
+    <div class="signature-wordmark"><b>SMART <em>HSR</em></b><small>SPATIAL INTELLIGENCE</small></div>
+    <div class="signature-copy"><strong>مركز الأراضي الذكية</strong></div>
     <div class="signature-status"><i></i><span>تجهيز مساحة العمل الآمنة</span></div>
   </div>
 </div>
