@@ -1032,6 +1032,117 @@ body.dark .map-wrap{border-color:#2a543f!important;box-shadow:inset 0 1px 0 rgba
   .map-wrap{height:320px!important;margin:10px!important}
 }
 
+
+/* ==== Manager Header Parity — copied from manager.html visual contract ==== */
+.command-header.manager-parity-header{
+  width:100%!important;max-width:none!important;
+  height:auto!important;min-height:0!important;
+  margin:0!important;top:0!important;padding:0!important;border-radius:0!important;
+  background:linear-gradient(124deg,#061a2e 0%,#0b304a 70%,#075d4b 100%)!important;
+  color:#fff!important;position:sticky!important;z-index:40!important;
+  border:0!important;border-bottom:1px solid rgba(255,255,255,.14)!important;
+  box-shadow:0 10px 28px rgba(7,29,51,.18)!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.command-header.manager-parity-header:after{
+  content:"";position:absolute;inset:auto 0 0;height:3px;
+  background:linear-gradient(90deg,transparent,#1ba7b8 30%,#10a77a 70%,transparent);
+}
+.manager-header-inner{
+  width:min(1480px,100%)!important;margin:auto!important;
+  padding:.75rem 1.5rem!important;
+  display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;
+  align-items:center!important;gap:1rem!important;
+}
+.manager-brand-zone{display:flex;align-items:center;gap:.75rem;min-width:0}
+.brand-mark{
+  width:46px!important;height:46px!important;min-width:46px!important;
+  border:1px solid rgba(255,255,255,.3)!important;border-radius:14px!important;
+  display:grid!important;place-items:center!important;
+  background:rgba(255,255,255,.08)!important;color:#fff!important;
+  font-weight:900!important;letter-spacing:-1px!important;
+  box-shadow:none!important;padding:0!important;
+}
+.brand-copy{min-width:0}
+.brand-copy .eyebrow{
+  margin:0!important;font-size:.69rem!important;font-weight:800!important;
+  letter-spacing:.08em!important;color:#5dd9d0!important;text-transform:uppercase!important;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.manager-header-title{
+  margin:0!important;color:#fff!important;font-size:1.125rem!important;
+  font-weight:900!important;line-height:1.25!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.header-meta{
+  min-width:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  gap:.5rem!important;flex-wrap:wrap!important;
+}
+.header-chip{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:.5rem!important;
+  min-height:36px!important;max-width:100%!important;padding:.35rem .75rem!important;
+  border:1px solid rgba(255,255,255,.16)!important;border-radius:999px!important;
+  background:rgba(255,255,255,.07)!important;color:#fff!important;
+  font-size:.76rem!important;font-weight:700!important;white-space:normal!important;text-align:center!important;
+  box-shadow:none!important;
+}
+.header-actions{
+  min-width:0!important;justify-self:end!important;display:flex!important;align-items:center!important;gap:.5rem!important;flex-wrap:nowrap!important;
+}
+.icon-button{
+  min-width:44px!important;width:44px!important;height:44px!important;min-height:44px!important;
+  border-radius:12px!important;display:inline-grid!important;place-items:center!important;
+  border:1px solid rgba(255,255,255,.18)!important;background:rgba(255,255,255,.08)!important;
+  color:#fff!important;transition:.2s!important;padding:0!important;box-shadow:none!important;
+}
+.icon-button:hover{background:rgba(255,255,255,.16)!important;transform:none!important}
+.icon-button i{width:20px!important;height:20px!important}
+.manager-mode-chip{cursor:pointer}
+.manager-mode-chip:hover,.manager-mode-chip.active{background:rgba(255,255,255,.16)!important}
+.manager-user-chip{padding-inline:.55rem .7rem!important}
+.manager-user-chip .avatar{
+  width:28px!important;height:28px!important;min-width:28px!important;border-radius:50%!important;
+  background:rgba(255,255,255,.92)!important;color:#0b304a!important;border:0!important;box-shadow:none!important;
+  font-size:11px!important;
+}
+.manager-user-chip .user-copy{display:flex!important;flex-direction:column!important;line-height:1.15!important;text-align:right!important}
+.manager-user-chip .user-copy strong{font-size:10.5px!important;color:#fff!important}
+.manager-user-chip .user-copy small{font-size:8.5px!important;color:#c1d8df!important}
+.mobile-nav-toggle-btn{display:none!important}
+.app{padding-top:0!important}
+.shell{margin-top:0!important}
+.side{top:79px!important;height:calc(100vh - 79px)!important;min-height:calc(100vh - 79px)!important}
+body.dark .command-header.manager-parity-header{
+  background:linear-gradient(124deg,#061a2e 0%,#0b304a 70%,#075d4b 100%)!important;
+  border-bottom-color:rgba(255,255,255,.14)!important;
+}
+@media(max-width:1180px){
+  .manager-header-inner{grid-template-columns:auto minmax(0,1fr) auto!important;row-gap:.55rem!important}
+  .header-meta{grid-column:1/-1;grid-row:2;justify-content:center!important;border-top:1px solid rgba(255,255,255,.12);padding-top:.55rem}
+  .header-chip{font-size:.72rem!important}
+}
+@media(max-width:820px){
+  .command-header.manager-parity-header{position:relative!important}
+  .manager-header-inner{grid-template-columns:minmax(0,1fr) auto!important}
+  .manager-brand-zone{grid-column:1;grid-row:1}
+  .header-actions{grid-column:2;grid-row:1}
+  .header-meta{grid-column:1/-1;grid-row:2;display:flex!important}
+  .manager-user-chip{display:none!important}
+  .lands-context-chip,#envBadge{display:inline-flex!important;flex:1 1 220px!important;max-width:calc(50% - .25rem)!important;min-height:44px!important}
+  .mobile-nav-toggle-btn{display:inline-grid!important}
+  .side{top:0!important}
+}
+@media(max-width:520px){
+  .manager-header-inner{width:100%!important;max-width:100%!important;padding-inline:.75rem!important}
+  .brand-copy .eyebrow{display:none!important}
+  .manager-header-title{font-size:.92rem!important;white-space:normal!important;line-height:1.25!important}
+  .brand-mark{width:40px!important;height:40px!important;min-width:40px!important}
+  .header-actions{gap:.35rem!important}
+  .header-actions .header-chip{width:44px!important;min-width:44px!important;padding:0!important}
+  .manager-mode-chip span{display:none!important}
+  .header-chip{padding:.35rem .5rem!important}
+  .lands-context-chip,#envBadge{flex-basis:100%!important;max-width:100%!important;width:100%!important}
+}
+
 </style>
 </head>
 <body>
@@ -1072,15 +1183,31 @@ body.dark .map-wrap{border-color:#2a543f!important;box-shadow:inset 0 1px 0 rgba
   </section>
 </div>
 <div class="app" id="appShell" hidden>
-  <header class="topbar">
-    <div class="header-identity">
-      <div class="brand"><img src="/smart-hsr-mark.svg" alt="SMART HSR"><div><b>SMART HSR</b><small>SMART MUNICIPAL PLATFORM</small></div></div>
-      <div class="header-context"><span>الأراضي الذكية</span><strong>إدارة الأراضي والممتلكات</strong></div>
+  <header class="topbar command-header manager-parity-header" aria-label="رأس الأراضي الذكية">
+    <div class="header-inner manager-header-inner">
+      <div class="manager-brand-zone">
+        <div class="brand-mark" aria-hidden="true">HSR</div>
+        <div class="brand-copy">
+          <p class="eyebrow">Smart HSR — Saudi Municipal Intelligence System</p>
+          <p class="manager-header-title">الأراضي الذكية</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span id="envBadge" class="header-chip">بيئة ما قبل الإنتاج</span>
+        <span class="header-chip lands-context-chip">إدارة الأراضي والممتلكات</span>
+        <div class="header-chip user manager-user-chip" id="userInfo"></div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-button mobile-nav-toggle-btn" id="mobileNavToggle" type="button" aria-label="فتح قائمة التنقل" onclick="toggleMobileNav()" title="القائمة"><i data-lucide="menu"></i></button>
+        <button class="header-chip manager-mode-chip" id="managerModeToggle" type="button" aria-pressed="false" aria-label="تبديل وضع المدير" onclick="toggleManagerMode()"><i data-lucide="presentation"></i><span>وضع المدير</span></button>
+        <button id="sidebarToggle" class="icon-button" type="button" aria-label="طي/فتح القائمة الجانبية" aria-pressed="false" aria-expanded="true" title="القائمة الجانبية" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
+        <button id="themeToggle" class="icon-button" type="button" aria-label="تفعيل الوضع الداكن" aria-pressed="false" title="الوضع الداكن" onclick="toggleTheme()"></button>
+        <button id="logoutBtn" class="icon-button" type="button" aria-label="تسجيل الخروج" title="تسجيل الخروج"><i data-lucide="log-out"></i></button>
+      </div>
     </div>
-    <div class="top-actions"><button class="theme-toggle" id="mobileNavToggle" type="button" aria-label="فتح قائمة التنقل" onclick="toggleMobileNav()"><i data-lucide="menu"></i></button><span class="env-badge" id="envBadge">بيئة ما قبل الإنتاج</span><button class="theme-toggle" id="managerModeToggle" type="button" aria-pressed="false" aria-label="تبديل وضع المدير" onclick="toggleManagerMode()"><i data-lucide="presentation"></i> وضع المدير</button><button class="theme-toggle" id="themeToggle" type="button" aria-label="تبديل الوضع الليلي" onclick="toggleTheme()"></button><div class="user" id="userInfo"></div></div>
   </header>
   <div class="shell">
-    <aside class="side"><button class="side-collapse-toggle" id="sidebarToggle" type="button" onclick="toggleSidebar()" aria-label="طي/توسيع القائمة الجانبية" aria-expanded="true" title="طي/توسيع القائمة"><i data-lucide="chevron-left"></i></button><div class="side-brand"><strong>الأراضي الذكية</strong><span>إدارة الأراضي والممتلكات</span></div><nav class="nav">
+    <aside class="side"><div class="side-brand"><strong>الأراضي الذكية</strong><span>إدارة الأراضي والممتلكات</span></div><nav class="nav">
       <div class="nav-group-label">الرئيسية</div>
       <button class="active" data-view="center"><i data-lucide="layout-dashboard"></i><span>لوحة المعلومات</span></button>
       <div class="nav-group-label">إدارة الأراضي</div>
@@ -1672,7 +1799,7 @@ function renderShellChrome() {
   const canAdmin = mod.canManageEntitlements(session.role);
   document.body.classList.toggle("lands-reviewer", canReview);
   document.body.classList.toggle("lands-admin", canAdmin);
-  document.getElementById("userInfo").innerHTML = `<div class="user-copy"><strong>${esc(roleLabel)}</strong><small>الأراضي الذكية</small></div><span class="avatar">${esc((roleLabel || "?")[0])}</span><button class="header-icon-btn" id="logoutBtn" type="button" aria-label="تسجيل الخروج" title="تسجيل الخروج">${icon("log-out")}</button>`;
+  document.getElementById("userInfo").innerHTML = `<span class="avatar">${esc((roleLabel || "?")[0])}</span><span class="user-copy"><strong>${esc(roleLabel)}</strong><small>الأراضي الذكية</small></span>`;
   document.getElementById("logoutBtn").onclick = handleLogout;
   document.querySelectorAll("[data-review-only]").forEach(el => { el.hidden = !canReview; });
   document.querySelectorAll("[data-admin-only]").forEach(el => { el.hidden = !canAdmin; });
