@@ -1959,6 +1959,28 @@ body.dark .gis-empty-state{background:rgba(255,255,255,.025)}
  #bootScreen.signature-entry .signature-status{bottom:10px}
 }
 
+
+/* ==== SIGNATURE ENTRY R3 — global product-grade spatial reveal ==== */
+#bootScreen.signature-entry{background:#020a06!important}
+#bootScreen.signature-entry:before{background:radial-gradient(circle at 50% 46%,rgba(66,222,107,.10),transparent 23%),radial-gradient(circle at 50% 48%,rgba(33,107,255,.055),transparent 38%),linear-gradient(155deg,#010604 0%,#03110b 52%,#020906 100%)!important}
+#bootScreen.signature-entry .twin-grid{opacity:.20!important;background-size:48px 48px!important;transform:perspective(620px) rotateX(65deg) scale(1.65) translateY(18%)!important}
+#bootScreen.signature-entry .twin-glow{width:min(470px,82vw)!important;opacity:.62}
+#bootScreen.signature-entry .splash-core{min-height:300px!important;gap:14px!important}
+#bootScreen.signature-entry .signature-orbit{width:184px!important;height:184px!important;border-color:rgba(143,224,176,.12)!important;animation:signatureOrbit 7s linear infinite!important}
+#bootScreen.signature-entry .signature-orbit:before{inset:22px!important;border-color:rgba(143,224,176,.10)!important}
+#bootScreen.signature-entry .signature-orbit:after{width:5px!important;height:5px!important;top:-3px!important;background:#8dffa7!important}
+#bootScreen.signature-entry .splash-logo{width:104px!important;filter:drop-shadow(0 16px 34px rgba(0,0,0,.46)) drop-shadow(0 0 18px rgba(63,226,105,.08))!important;animation:signatureResolve .48s cubic-bezier(.16,.84,.3,1) both!important}
+#bootScreen.signature-entry .signature-wordmark{margin-top:-6px!important;animation:signatureCopy .32s ease .09s both!important}
+#bootScreen.signature-entry .signature-wordmark b{font-size:22px!important;font-weight:650!important;letter-spacing:.16em!important}
+#bootScreen.signature-entry .signature-wordmark small{margin-top:7px!important;font-size:7px!important;letter-spacing:.28em!important;color:#729780!important}
+#bootScreen.signature-entry .signature-copy{margin-top:7px!important;animation:signatureCopy .3s ease .16s both!important}
+#bootScreen.signature-entry .signature-copy strong{font-size:11px!important;font-weight:550!important;color:#a9c6b2!important}
+#bootScreen.signature-entry .signature-status{bottom:14px!important;font-size:8px!important;color:#668171!important;opacity:.78}
+#bootScreen.signature-entry .splash-scan{width:190px!important;animation:signatureScan .68s cubic-bezier(.4,0,.2,1) .06s 1 both!important}
+#bootScreen.signature-entry.signature-exit{animation:signatureExit .26s cubic-bezier(.4,0,.8,1) both}
+@keyframes signatureExit{to{opacity:0;transform:scale(1.012);filter:blur(5px)}}
+@media(max-width:700px){#bootScreen.signature-entry .splash-core{min-height:250px!important}#bootScreen.signature-entry .splash-logo{width:88px!important}#bootScreen.signature-entry .signature-orbit{width:154px!important;height:154px!important}#bootScreen.signature-entry .signature-wordmark b{font-size:18px!important}#bootScreen.signature-entry .signature-status{bottom:5px!important}}
+
 </style>
 
 </head>
@@ -2388,10 +2410,20 @@ async function loadModules() {
 
 // ---- screen management ----
 function showScreen(name) {
-  document.getElementById("bootScreen").hidden = name !== "boot";
-  document.getElementById("loginScreen").hidden = name !== "login";
-  document.getElementById("deniedScreen").hidden = name !== "denied";
-  document.getElementById("appShell").hidden = name !== "app";
+  const boot = document.getElementById("bootScreen");
+  const login = document.getElementById("loginScreen");
+  const denied = document.getElementById("deniedScreen");
+  const app = document.getElementById("appShell");
+  if (name === "app" && boot && !boot.hidden) {
+    app.hidden = false;
+    boot.classList.add("signature-exit");
+    window.setTimeout(() => { boot.hidden = true; boot.classList.remove("signature-exit"); }, 260);
+  } else {
+    boot.hidden = name !== "boot";
+    app.hidden = name !== "app";
+  }
+  login.hidden = name !== "login";
+  denied.hidden = name !== "denied";
 }
 function icon(n) { return `<i data-lucide="${n}"></i>`; }
 function esc(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c])); }
