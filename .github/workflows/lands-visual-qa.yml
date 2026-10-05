@@ -11,23 +11,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      LANDS_PREVIEW_URL: https://smart-hsr-manager-git-fix-lands-visual-unif-9687d5-blumark24-os.vercel.app
+      LANDS_PREVIEW_URL: http://127.0.0.1:4173
     steps:
       - uses: actions/checkout@v4
 
-      - name: Wait for branch Preview
+      - name: Start isolated review server
         shell: bash
         run: |
-          for i in {1..36}; do
-            body="$(curl -fsSL "$LANDS_PREVIEW_URL/lands/?review=1" || true)"
-            if echo "$body" | grep -q "LANDS VISUAL UNIFICATION V1"; then
-              echo "Preview is ready"
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/lands-review-server.log 2>&1 &
+          echo $! > /tmp/lands-review-server.pid
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:4173/lands/ >/dev/null; then
+              echo "Local review server ready"
               exit 0
             fi
-            echo "Waiting for Vercel Preview... ($i/36)"
-            sleep 5
+            sleep 1
           done
-          echo "Preview did not become ready in time"
+          cat /tmp/lands-review-server.log
           exit 1
 
       - name: Install Playwright
