@@ -30,4 +30,4 @@ jobs:
         run: |
           node --test test/phase19-2-field-role-matrix.test.js
           node --test test/phase19-3-inspector-record.test.js
-          node --test test/inspector-closure-regression.test.js
+          node --test test/inspector-ai-persisted-flow-regression.test.js
