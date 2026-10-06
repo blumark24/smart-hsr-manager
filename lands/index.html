@@ -2312,11 +2312,183 @@ body.dark .demo-scenario-card{
   }
 }
 
+
+/* ==== SIGNATURE ENTRY R7 — SMART HSR Spatial Continuum ==== */
+/* Final visual authority for the Lands secure handoff. The launch surface
+   previews the product shell, then the spatial object converges on the
+   authenticated map area. No auth/session/RBAC decisions are made here. */
+#bootScreen.continuum-entry{
+  --continuum-x:0px;
+  --continuum-y:0px;
+  --continuum-scale:.52;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  background:rgba(2,9,6,.985)!important;
+}
+#bootScreen.continuum-entry .continuum-shell{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  opacity:.34;
+  filter:saturate(.72);
+  transform:scale(1.008);
+  animation:continuumShellIn .42s ease both;
+  pointer-events:none;
+}
+#bootScreen.continuum-entry .continuum-topbar{
+  position:absolute;
+  inset:0 0 auto 0;
+  height:76px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 34px;
+  border-bottom:1px solid rgba(143,224,176,.07);
+  background:linear-gradient(180deg,rgba(9,40,29,.60),rgba(6,28,20,.42));
+}
+#bootScreen.continuum-entry .continuum-brand-dot{
+  width:30px;height:30px;border-radius:8px;
+  border:1px solid rgba(143,224,176,.14);
+  background:rgba(143,224,176,.055);
+}
+#bootScreen.continuum-entry .continuum-brand-line{
+  width:150px;height:10px;border-radius:999px;background:rgba(200,235,213,.09);
+}
+#bootScreen.continuum-entry .continuum-top-actions{
+  margin-inline-start:auto;width:210px;height:30px;border-radius:999px;background:rgba(200,235,213,.045);
+}
+#bootScreen.continuum-entry .continuum-layout{
+  position:absolute;inset:76px 0 0 0;
+  display:grid;grid-template-columns:1fr 254px;
+}
+#bootScreen.continuum-entry .continuum-side{
+  grid-column:2;
+  border-inline-start:1px solid rgba(143,224,176,.055);
+  background:rgba(6,28,20,.34);
+  padding:32px 20px;
+  display:flex;flex-direction:column;gap:14px;
+}
+#bootScreen.continuum-entry .continuum-side span{
+  height:36px;border-radius:9px;background:rgba(200,235,213,.045);
+}
+#bootScreen.continuum-entry .continuum-side span:first-child{background:rgba(107,197,142,.09)}
+#bootScreen.continuum-entry .continuum-main{
+  grid-column:1;
+  padding:38px;
+}
+#bootScreen.continuum-entry .continuum-title{
+  width:min(310px,34vw);height:22px;border-radius:999px;background:rgba(200,235,213,.07);margin-bottom:28px;
+}
+#bootScreen.continuum-entry .continuum-metrics{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px;
+}
+#bootScreen.continuum-entry .continuum-metrics span{
+  height:84px;border:1px solid rgba(143,224,176,.045);background:rgba(200,235,213,.028);
+}
+#bootScreen.continuum-entry .continuum-map-frame{
+  height:min(42vh,360px);
+  border:1px solid rgba(143,224,176,.065);
+  background:
+    linear-gradient(rgba(143,224,176,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(143,224,176,.025) 1px,transparent 1px),
+    rgba(200,235,213,.018);
+  background-size:64px 64px;
+}
+#bootScreen.continuum-entry .spatial-stage{
+  z-index:2!important;
+  transition:
+    transform .46s cubic-bezier(.2,.76,.22,1),
+    opacity .38s ease,
+    filter .38s ease!important;
+  will-change:transform,opacity,filter;
+}
+#bootScreen.continuum-entry .spatial-parcel{
+  transition:filter .42s ease!important;
+}
+#bootScreen.continuum-entry .spatial-logo,
+#bootScreen.continuum-entry .spatial-service-name,
+#bootScreen.continuum-entry .spatial-status{
+  transition:opacity .22s ease,transform .22s ease!important;
+}
+#bootScreen.continuum-entry.continuum-exit{
+  background:rgba(2,9,6,0)!important;
+  transition:background .46s ease!important;
+}
+#bootScreen.continuum-entry.continuum-exit:before{
+  opacity:0!important;
+  transition:opacity .28s ease!important;
+}
+#bootScreen.continuum-entry.continuum-exit .continuum-shell{
+  opacity:0;
+  transition:opacity .26s ease;
+}
+#bootScreen.continuum-entry.continuum-exit .spatial-stage{
+  transform:translate(var(--continuum-x),var(--continuum-y)) scale(var(--continuum-scale))!important;
+  opacity:.34;
+  filter:saturate(.92);
+}
+#bootScreen.continuum-entry.continuum-exit .spatial-brand,
+#bootScreen.continuum-entry.continuum-exit .spatial-status{
+  opacity:0!important;
+  transform:scale(.96)!important;
+}
+#bootScreen.continuum-entry.continuum-exit .spatial-parcel{
+  filter:drop-shadow(0 10px 24px rgba(0,0,0,.14))!important;
+}
+#bootScreen.continuum-entry.signature-exit{
+  animation:none!important;
+}
+@keyframes continuumShellIn{
+  from{opacity:0;transform:scale(1.018)}
+  to{opacity:.34;transform:scale(1.008)}
+}
+@media(max-width:760px){
+  #bootScreen.continuum-entry .continuum-topbar{height:70px;padding:0 16px}
+  #bootScreen.continuum-entry .continuum-brand-line{width:112px}
+  #bootScreen.continuum-entry .continuum-top-actions{width:90px}
+  #bootScreen.continuum-entry .continuum-layout{inset:70px 0 0 0;display:block}
+  #bootScreen.continuum-entry .continuum-side{display:none}
+  #bootScreen.continuum-entry .continuum-main{padding:28px 16px}
+  #bootScreen.continuum-entry .continuum-title{width:52vw}
+  #bootScreen.continuum-entry .continuum-metrics{grid-template-columns:repeat(2,1fr)}
+  #bootScreen.continuum-entry .continuum-metrics span{height:68px}
+  #bootScreen.continuum-entry .continuum-map-frame{height:36vh}
+}
+@media(prefers-reduced-motion:reduce){
+  #bootScreen.continuum-entry .continuum-shell,
+  #bootScreen.continuum-entry .spatial-stage,
+  #bootScreen.continuum-entry .spatial-logo,
+  #bootScreen.continuum-entry .spatial-service-name,
+  #bootScreen.continuum-entry .spatial-status{
+    animation:none!important;
+    transition:none!important;
+  }
+  #bootScreen.continuum-entry.continuum-exit .spatial-stage{opacity:0!important;transform:none!important}
+}
+
 </style>
 
 </head>
 <body class="secure-handoff-active">
-<div class="auth-screen splash-screen signature-entry spatial-reveal-entry" id="bootScreen" aria-label="جاري فتح مركز الأراضي الذكية">
+<div class="auth-screen splash-screen signature-entry spatial-reveal-entry continuum-entry" id="bootScreen" aria-label="جاري فتح مركز الأراضي الذكية">
+  <div class="continuum-shell" aria-hidden="true">
+    <div class="continuum-topbar">
+      <span class="continuum-brand-dot"></span>
+      <span class="continuum-brand-line"></span>
+      <span class="continuum-top-actions"></span>
+    </div>
+    <div class="continuum-layout">
+      <aside class="continuum-side">
+        <span></span><span></span><span></span><span></span><span></span>
+      </aside>
+      <main class="continuum-main">
+        <div class="continuum-title"></div>
+        <div class="continuum-metrics"><span></span><span></span><span></span><span></span></div>
+        <div class="continuum-map-frame"></div>
+      </main>
+    </div>
+  </div>
   <div class="spatial-stage" aria-hidden="true">
     <svg class="spatial-parcel" viewBox="0 0 460 286" role="presentation" focusable="false">
       <path class="spatial-parcel-fill" d="M74 66 L342 43 L397 160 L322 226 L104 211 L57 133 Z"></path>
@@ -2745,19 +2917,48 @@ async function loadModules() {
 }
 
 // ---- screen management ----
+const CONTINUUM_MIN_VISIBLE_MS = 620;
+const continuumStartedAt = performance.now();
+function beginContinuumExit(boot, app) {
+  window.requestAnimationFrame(() => {
+    const stage = boot.querySelector(".spatial-stage");
+    const target = app.querySelector(".map-wrap") || app.querySelector(".map-panel") || app.querySelector(".main");
+    if (stage && target) {
+      const from = stage.getBoundingClientRect();
+      const to = target.getBoundingClientRect();
+      const fromX = from.left + from.width / 2;
+      const fromY = from.top + from.height / 2;
+      const toX = to.left + to.width / 2;
+      const toY = to.top + Math.min(to.height / 2, 220);
+      const scale = Math.max(.30, Math.min(.68, (to.width / Math.max(from.width, 1)) * .72));
+      boot.style.setProperty("--continuum-x", (toX - fromX).toFixed(1) + "px");
+      boot.style.setProperty("--continuum-y", (toY - fromY).toFixed(1) + "px");
+      boot.style.setProperty("--continuum-scale", scale.toFixed(3));
+    }
+    bootStatus("جاهز");
+    boot.classList.add("continuum-exit","signature-exit");
+  });
+}
 function showScreen(name) {
   const boot = document.getElementById("bootScreen");
   const login = document.getElementById("loginScreen");
   const denied = document.getElementById("deniedScreen");
   const app = document.getElementById("appShell");
   if (name === "app" && boot && !boot.hidden) {
+    // Reveal the authenticated shell immediately so its real map target can
+    // participate in the transition. The boot layer remains above it and
+    // intercepts interaction until the secure handoff animation completes.
     app.hidden = false;
-    boot.classList.add("signature-exit");
+    const remaining = Math.max(0, CONTINUUM_MIN_VISIBLE_MS - (performance.now() - continuumStartedAt));
+    window.setTimeout(() => beginContinuumExit(boot, app), remaining);
     window.setTimeout(() => {
       boot.hidden = true;
-      boot.classList.remove("signature-exit");
+      boot.classList.remove("continuum-exit","signature-exit");
+      boot.style.removeProperty("--continuum-x");
+      boot.style.removeProperty("--continuum-y");
+      boot.style.removeProperty("--continuum-scale");
       document.body.classList.remove("secure-handoff-active");
-    }, 260);
+    }, remaining + 560);
   } else {
     boot.hidden = name !== "boot";
     app.hidden = name !== "app";
