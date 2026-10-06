@@ -9,14 +9,17 @@ const root = path.join(__dirname, '..');
 const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const enhancements = fs.readFileSync(path.join(root, 'public-enhancements.js'), 'utf8');
 
-function bundledTemplate(source) {
-  const match = source.match(/<script type="__bundler\/template">([\s\S]*?)<\/script>/);
-  assert.ok(match, 'index.html must contain the approved bundled Website R3 template');
-  return JSON.parse(match[1]);
+function publicR3(source) {
+  assert.doesNotMatch(source, /__bundler\//, 'public R3 must ship as static HTML/assets, not a bundler manifest');
+  assert.doesNotMatch(source, /__bundler_/, 'public R3 must not expose bundler runtime markers');
+  assert.doesNotMatch(source, /blob:/, 'public R3 must not depend on Blob mounting');
+  assert.match(source, /\/public-r3-assets\/runtime\//, 'R3 resources must ship as static local assets');
+  assert.match(source, /\/public-enhancements\.js/, 'approved public behavior layer must be loaded');
+  return source;
 }
 
 test('public Website R3 keeps the approved information architecture (hero, 10 sections, footer)', () => {
-  const template = bundledTemplate(index);
+  const template = publicR3(index);
   const labels = [...template.matchAll(/data-screen-label="([^"]+)"/g)].map(match => match[1]);
   assert.deepEqual(labels, [
     '01 Hero',
@@ -24,6 +27,7 @@ test('public Website R3 keeps the approved information architecture (hero, 10 se
     '02 Statement',
     '03 Field to Decision',
     '04 Product Bento',
+    '05 Product Presence',
     '06 Digital Twin Signature',
     '07 Institutional Value',
     '08 Architecture and Governance',
@@ -34,7 +38,7 @@ test('public Website R3 keeps the approved information architecture (hero, 10 se
 });
 
 test('Website R3 keeps its native responsive engine (desktop / tablet / mobile) and new logo', () => {
-  const template = bundledTemplate(index);
+  const template = publicR3(index);
   assert.match(template, /const SPANS = \{\s*d: \{[\s\S]*?\},\s*t: \{[\s\S]*?\},\s*m: \{/);
   assert.match(template, /bpOf\(window\.innerWidth\)/);
   assert.match(template, /01 Hero Compact/);
@@ -43,15 +47,14 @@ test('Website R3 keeps its native responsive engine (desktop / tablet / mobile) 
 });
 
 test('the exported component no longer reads prevState that the design runtime never supplies', () => {
-  const template = bundledTemplate(index);
+  const template = publicR3(index);
   assert.doesNotMatch(template, /componentDidUpdate\(pp, ps\)/);
   assert.match(template, /componentDidUpdate\(\) \{ if \(this\._bp !== this\.state\.bp\)/);
 });
 
 test('document root keeps Arabic RTL language, direction and a real title', () => {
-  assert.match(index, /document\.documentElement\.setAttribute\('lang', 'ar'\)/);
-  assert.match(index, /document\.documentElement\.setAttribute\('dir', 'rtl'\)/);
-  assert.match(index, /SMART HSR — من الميدان إلى القرار/);
+  assert.match(index, /<html[^>]*lang="ar"[^>]*dir="rtl"/);
+  assert.match(index, /<title>SMART HSR — من الميدان إلى القرار<\/title>/);
 });
 
 test('every public institutional-login CTA resolves to the hardened gateway only', () => {
