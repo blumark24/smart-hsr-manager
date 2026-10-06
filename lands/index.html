@@ -2680,6 +2680,184 @@ body.secure-handoff-active .toast{
 
 <link rel="stylesheet" href="../smart-hsr-company-splash.css">
 <script src="../smart-hsr-company-splash.js" data-hsr-splash="manual"></script>
+
+<style id="lands-manager-shell-unification-v1">
+/* Final V5 — presentation-only shell parity with Municipality Manager.
+   No Auth/RBAC/Firestore/workflow behavior changes. */
+.command-header.manager-parity-header{
+  position:sticky!important;
+  top:8px!important;
+  z-index:60!important;
+  width:min(calc(100% - 28px),1572px)!important;
+  min-height:64px!important;
+  height:auto!important;
+  margin:10px auto 0!important;
+  padding:0!important;
+  overflow:visible!important;
+  border-radius:16px!important;
+  background:linear-gradient(168deg,rgba(10,74,52,.97),rgba(8,58,42,.98) 52%,rgba(11,46,38,.97))!important;
+  border:1px solid rgba(120,200,165,.26)!important;
+  border-bottom:2px solid rgba(20,156,43,.55)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.14),0 14px 32px -22px rgba(6,40,28,.7)!important;
+  backdrop-filter:blur(20px) saturate(150%)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(150%)!important;
+}
+.command-header.manager-parity-header:after{display:none!important}
+body.dark .command-header.manager-parity-header{
+  background:linear-gradient(165deg,rgba(11,48,82,.97),rgba(8,34,61,.985) 56%,rgba(8,29,52,.98))!important;
+  border-color:rgba(74,164,252,.28)!important;
+  border-bottom-color:rgba(34,197,94,.4)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.3),0 4px 12px -6px rgba(0,0,0,.6),0 26px 54px -22px rgba(0,0,0,.98)!important;
+}
+.manager-header-inner{
+  width:100%!important;
+  min-height:64px!important;
+  padding:8px 16px!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:12px!important;
+}
+.manager-brand-zone{
+  min-width:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+}
+.manager-brand-logo{
+  width:38px!important;
+  height:38px!important;
+  max-width:38px!important;
+  object-fit:contain!important;
+  flex:none!important;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.16));
+}
+.brand-copy{min-width:0!important;text-align:right!important}
+.brand-copy .eyebrow{
+  margin:0 0 1px!important;
+  color:#8fe6b8!important;
+  font:700 9px/1.15 "IBM Plex Mono",monospace!important;
+  letter-spacing:.14em!important;
+}
+body.dark .brand-copy .eyebrow{color:#58c6ff!important}
+.manager-header-title{
+  margin:0!important;
+  color:#f2faf5!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+}
+.manager-header-subtitle{
+  margin:2px 0 0!important;
+  color:rgba(220,240,228,.78)!important;
+  font-size:9.5px!important;
+  font-weight:550!important;
+  line-height:1.25!important;
+}
+body.dark .manager-header-subtitle{color:#8eacc8!important}
+.header-actions{
+  justify-self:end!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  flex-wrap:nowrap!important;
+}
+.header-meta,.lands-context-chip,#envBadge{display:none!important}
+.header-chip.manager-user-chip{
+  min-height:38px!important;
+  padding:4px 8px!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.10)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  box-shadow:none!important;
+}
+.icon-button,.manager-mode-chip{
+  width:38px!important;
+  min-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  padding:0!important;
+  border-radius:11px!important;
+  background:rgba(255,255,255,.10)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  color:#f2faf5!important;
+  box-shadow:none!important;
+}
+body.dark .icon-button,body.dark .manager-mode-chip{
+  background:rgba(30,85,137,.38)!important;
+  border-color:rgba(91,173,255,.22)!important;
+  color:#f3f8ff!important;
+}
+.icon-button:hover,.manager-mode-chip:hover,.manager-mode-chip.active{
+  background:rgba(255,255,255,.17)!important;
+  transform:none!important;
+}
+
+/* Physical desktop/tablet placement: navigation rail on the RIGHT. */
+.shell{
+  direction:ltr!important;
+  grid-template-columns:minmax(0,1fr) 252px!important;
+  max-width:1600px!important;
+}
+.main{
+  grid-column:1!important;
+  direction:rtl!important;
+}
+.side{
+  grid-column:2!important;
+  direction:rtl!important;
+  margin:0 0 14px 14px!important;
+  border-left:0!important;
+  border-right:1px solid rgba(46,139,87,.14)!important;
+  top:88px!important;
+}
+.side .nav button{direction:rtl!important;text-align:right!important;justify-content:flex-start!important}
+body.sidebar-collapsed .shell{grid-template-columns:minmax(0,1fr) 72px!important}
+
+@media(max-width:1180px) and (min-width:981px){
+  .shell{grid-template-columns:minmax(0,1fr) 222px!important}
+}
+@media(min-width:701px) and (max-width:980px){
+  .shell{grid-template-columns:minmax(0,1fr) 70px!important}
+}
+@media(max-width:820px){
+  .manager-user-chip{display:none!important}
+}
+@media(max-width:700px){
+  .command-header.manager-parity-header{
+    top:0!important;
+    width:100%!important;
+    margin:0!important;
+    border-radius:0 0 14px 14px!important;
+  }
+  .manager-header-inner{
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-areas:none!important;
+    padding:8px 10px!important;
+  }
+  .manager-brand-zone{grid-area:auto!important}
+  .header-actions{grid-area:auto!important;gap:5px!important}
+  .manager-header-subtitle{display:none!important}
+  .manager-brand-logo{width:34px!important;height:34px!important}
+  .manager-header-title{font-size:12.5px!important}
+  .header-actions .icon-button,.header-actions .manager-mode-chip{
+    width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;
+  }
+  #sidebarToggle{display:none!important}
+  .shell{display:block!important;direction:rtl!important}
+  .side{
+    position:fixed!important;
+    top:0!important;right:0!important;left:auto!important;
+    width:min(82vw,300px)!important;height:100dvh!important;
+    margin:0!important;border-radius:0!important;
+    border-right:0!important;border-left:1px solid var(--line)!important;
+    transform:translateX(100%)!important;
+  }
+  body.mobile-nav-open .side{transform:translateX(0)!important}
+  .main{grid-column:auto!important;width:100%!important}
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -2702,18 +2880,15 @@ body.secure-handoff-active .toast{
       <div class="manager-brand-zone">
         <img class="manager-brand-logo" src="/smart-hsr-mark.svg" alt="سمارت حصر" width="30" height="42">
         <div class="brand-copy">
-          <p class="eyebrow">Smart HSR — Saudi Municipal Intelligence System</p>
+          <p class="eyebrow">SMART HSR</p>
           <p class="manager-header-title">الأراضي الذكية</p>
+          <p class="manager-header-subtitle">إدارة الأراضي والممتلكات</p>
         </div>
       </div>
-      <div class="header-meta">
-        <span id="envBadge" class="header-chip">بيئة ما قبل الإنتاج</span>
-        <span class="header-chip lands-context-chip">إدارة الأراضي والممتلكات</span>
-        <div class="header-chip user manager-user-chip" id="userInfo"></div>
-      </div>
       <div class="header-actions">
+        <div class="header-chip user manager-user-chip" id="userInfo"></div>
         <button class="icon-button mobile-nav-toggle-btn" id="mobileNavToggle" type="button" aria-label="فتح قائمة التنقل" onclick="toggleMobileNav()" title="القائمة"><i data-lucide="menu"></i></button>
-        <button class="header-chip manager-mode-chip" id="managerModeToggle" type="button" aria-pressed="false" aria-label="تبديل وضع المدير" onclick="toggleManagerMode()"><i data-lucide="presentation"></i><span>وضع المدير</span></button>
+        <button class="icon-button manager-mode-chip" id="managerModeToggle" type="button" aria-pressed="false" aria-label="تبديل وضع المدير" onclick="toggleManagerMode()" title="وضع المدير"><i data-lucide="presentation"></i></button>
         <button id="sidebarToggle" class="icon-button" type="button" aria-label="طي/فتح القائمة الجانبية" aria-pressed="false" aria-expanded="true" title="القائمة الجانبية" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
         <button id="themeToggle" class="icon-button" type="button" aria-label="تفعيل الوضع الداكن" aria-pressed="false" title="الوضع الداكن" onclick="toggleTheme()"></button>
         <button id="logoutBtn" class="icon-button" type="button" aria-label="تسجيل الخروج" title="تسجيل الخروج"><i data-lucide="log-out"></i></button>
