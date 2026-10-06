@@ -131,12 +131,22 @@ async function updateR3Contract() {
     test = test.replaceAll('bundledTemplate(index)', 'publicR3(index)');
   }
 
+  // The current approved R3 source includes Product Presence; Release Hygiene
+  // preserves the source 1:1 and must not silently remove a visual section.
+  if (!test.includes("'05 Product Presence'")) {
+    test = test.replace(
+      "    '04 Product Bento',\n    '06 Digital Twin Signature',",
+      "    '04 Product Bento',\n    '05 Product Presence',\n    '06 Digital Twin Signature',"
+    );
+  }
+
   test = test.replace(
-    "  assert.match(index, /document\\\\.documentElement\\\\.setAttribute\\\\('lang', 'ar'\\\\)/);\n  assert.match(index, /document\\\\.documentElement\\\\.setAttribute\\\\('dir', 'rtl'\\\\)/);\n  assert.match(index, /SMART HSR — من الميدان إلى القرار/);",
-    "  assert.match(index, /<html[^>]*lang=\"ar\"[^>]*dir=\"rtl\"/);\n  assert.match(index, /<title>SMART HSR — من الميدان إلى القرار<\\\\/title>/);"
+    /  assert\.match\(index, \/document\\\.documentElement\\\.setAttribute[\s\S]*?SMART HSR — من الميدان إلى القرار\/\);/,
+    '  assert.match(index, /<html[^>]*lang="ar"[^>]*dir="rtl"/);\n  assert.match(index, /<title>SMART HSR — من الميدان إلى القرار<\\/title>/);'
   );
 
   ensure(!test.includes('bundledTemplate(index)'), 'Stale bundled R3 test call remains');
+  ensure(!test.includes("document\\.documentElement\\.setAttribute('lang', 'ar')"), 'Stale dynamic lang assertion remains');
   await fs.writeFile(testPath, test, 'utf8');
 }
 
