@@ -6,6 +6,8 @@
   const key="smart-hsr.company-splash.v6";
   let root=null;
   let startedAt=performance.now();
+  let hiddenUi=[];
+  let uiObserver=null;
   const minimum=760;
 
   function shouldShow(){
@@ -15,6 +17,33 @@
   }
   function markShown(){
     try{sessionStorage.setItem(key,"shown");}catch{}
+  }
+  function isolateUi(){
+    const selectors=[".ai-trigger",".ai-panel",".mobile-bottom-nav",".toast","[data-ai-trigger]","[aria-label*=\"المساعد\"]"];
+    hiddenUi=[];
+    const hide=()=>{
+      document.querySelectorAll(selectors.join(",")).forEach(el=>{
+        if(root&&root.contains(el)) return;
+        if(!hiddenUi.includes(el)) hiddenUi.push(el);
+        el.style.setProperty("display","none","important");
+        el.style.setProperty("visibility","hidden","important");
+        el.style.setProperty("pointer-events","none","important");
+      });
+    };
+    hide();
+    if(uiObserver) uiObserver.disconnect();
+    uiObserver=new MutationObserver(hide);
+    uiObserver.observe(document.documentElement,{childList:true,subtree:true});
+  }
+  function restoreUi(){
+    if(uiObserver){uiObserver.disconnect();uiObserver=null;}
+    hiddenUi.forEach(el=>{
+      if(!el||!el.style) return;
+      el.style.removeProperty("display");
+      el.style.removeProperty("visibility");
+      el.style.removeProperty("pointer-events");
+    });
+    hiddenUi=[];
   }
   function mount(){
     if(root||!shouldShow()) return root;
@@ -38,6 +67,7 @@
     '</div>';
     document.documentElement.classList.add("hsr-splash-active");
     document.documentElement.appendChild(root);
+    isolateUi();
     startedAt=performance.now();
     return root;
   }
@@ -60,6 +90,7 @@
         if(doomed&&doomed.parentNode) doomed.remove();
         if(root===doomed) root=null;
         document.documentElement.classList.remove("hsr-splash-active");
+        restoreUi();
       },260);
     },remaining);
   }
