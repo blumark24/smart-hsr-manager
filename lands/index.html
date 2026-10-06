@@ -2035,10 +2035,15 @@ body:has(#bootScreen.signature-entry:not([hidden])) .ai-panel{visibility:hidden!
 @media(max-width:900px){.demo-scenario-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.demo-scenario-grid{grid-template-columns:1fr}.demo-scenarios-head small{width:100%}}
 
+
+/* Secure handoff is isolated from application controls on every supported browser. */
+body.secure-handoff-active .ai-trigger,
+body.secure-handoff-active .ai-panel{display:none!important}
+
 </style>
 
 </head>
-<body>
+<body class="secure-handoff-active">
 <div class="auth-screen splash-screen signature-entry" id="bootScreen" aria-label="جاري فتح مركز الأراضي الذكية">
   <div class="twin-grid" aria-hidden="true"></div>
   <div class="twin-glow" aria-hidden="true"></div>
@@ -2471,10 +2476,15 @@ function showScreen(name) {
   if (name === "app" && boot && !boot.hidden) {
     app.hidden = false;
     boot.classList.add("signature-exit");
-    window.setTimeout(() => { boot.hidden = true; boot.classList.remove("signature-exit"); }, 260);
+    window.setTimeout(() => {
+      boot.hidden = true;
+      boot.classList.remove("signature-exit");
+      document.body.classList.remove("secure-handoff-active");
+    }, 260);
   } else {
     boot.hidden = name !== "boot";
     app.hidden = name !== "app";
+    document.body.classList.toggle("secure-handoff-active", name === "boot");
   }
   login.hidden = name !== "login";
   denied.hidden = name !== "denied";
@@ -4682,9 +4692,16 @@ async function boot() {
   // check, which races the SDK's own restore and would incorrectly treat a
   // real persisted session as "signed out" on a plain refresh.
   const c = ensureClient();
+  bootStatus("استعادة الجلسة الآمنة");
+  const authRestoreWatchdog = window.setTimeout(() => {
+    if (initialAuthStateResolved) return;
+    initialAuthStateResolved = true;
+    showDenied("تعذر استعادة الجلسة الآمنة في الوقت المحدد. أعد الدخول من بوابة الموظفين.", { returnToUnified: true });
+  }, BOOT_STEP_TIMEOUT_MS);
   c.onAuthChange(async (user) => {
     if (!initialAuthStateResolved) {
       initialAuthStateResolved = true;
+      window.clearTimeout(authRestoreWatchdog);
       if (!user) { showLoginOrRedirect(); return; }
       try {
         // The custom token minted at SSO consume time (server/lands-sso.js)
@@ -4692,30 +4709,28 @@ async function boot() {
         // way to recover municipality context on a refresh, never the URL.
         // session() below independently re-validates against the real,
         // live membership record regardless of what the claims say.
-        const tokenResult = await user.getIdTokenResult();
+        bootStatus("التحقق من هوية الجلسة");
+        const tokenResult = await withBootTimeout(user.getIdTokenResult(), "restore-token");
         const municipalityId = tokenResult.claims && typeof tokenResult.claims.municipality_id === "string"
           ? tokenResult.claims.municipality_id : null;
         if (!municipalityId) throw new Error("LANDS_TRUSTED_CONTEXT_MISSING");
-        session = await c.session(municipalityId);
-        await loadWorkspace();
-        // A plain page refresh is exactly the "Refresh restoration" case
-        // §5 requires — restore whatever decision/tab/grant the URL still
-        // names (if any); municipality/session itself always comes from
-        // the trusted token claims above, never from the URL.
+        bootStatus("تأكيد صلاحية الأراضي");
+        session = await withBootTimeout(c.session(municipalityId), "restore-membership");
+        bootStatus("تحميل مساحة العمل");
+        await withBootTimeout(loadWorkspace(), "restore-workspace");
         applyRouteFromUrl();
         showScreen("app"); renderShellChrome(); render();
-      } catch (_) {
-        try { await c.signOutUser(); } catch (_) { /* best-effort */ }
-        showLoginOrRedirect();
+      } catch (error) {
+        console.error("[LANDS_RESTORE]", error && error.message ? error.message : "unknown");
+        showDenied(
+          error && String(error.message || "").startsWith("LANDS_BOOT_TIMEOUT:")
+            ? "استغرق استعادة مساحة العمل وقتًا أطول من المتوقع. أعد الدخول من بوابة الموظفين."
+            : "تعذر استعادة جلسة الأراضي الآمنة. أعد الدخول من بوابة الموظفين.",
+          { returnToUnified: true }
+        );
       }
       return;
     }
-    // Post-boot: auth state changed again after a session was already
-    // established. In Production there is no standalone Lands login to
-    // fall back to — leave for the unified gateway. handleLogout() already
-    // does this deterministically for the logout button itself; this is
-    // the backstop for an involuntary sign-out (revoked token, account
-    // disabled) detected elsewhere.
     if (!user) goToUnifiedLogin();
   });
 }
