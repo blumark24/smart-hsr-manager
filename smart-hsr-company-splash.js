@@ -3,7 +3,7 @@
   const script=document.currentScript;
   const mode=(script&&script.dataset.hsrSplash)||"auto";
   const force=new URLSearchParams(location.search).get("splash")==="1";
-  const key="smart-hsr.company-splash.v3";
+  const key="smart-hsr.company-splash.v4";
   let root=null;
   let startedAt=performance.now();
   const minimum=720;
@@ -30,7 +30,7 @@
       '</div>'+
       '<span class="hsr-company-splash__tagline">Saudi Municipal Intelligence System</span>'+
       '<span class="hsr-company-splash__line"></span>'+
-      '<div class="hsr-company-splash__status signature-status"><i></i><span>تهيئة النظام الآمن</span></div>'+
+      '<div class="hsr-company-splash__status signature-status"><i></i><span>تشغيل بيئة SMART HSR الآمنة</span></div>'+
     '</div>';
     document.documentElement.appendChild(root);
     startedAt=performance.now();
