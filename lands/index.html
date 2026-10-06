@@ -2017,6 +2017,24 @@ body:has(#bootScreen.signature-entry:not([hidden])) .ai-panel{visibility:hidden!
  #bootScreen.signature-entry .twin-glow{width:270px!important;height:270px!important}
 }
 
+
+/* Preview-only scenario launcher: explicit synthetic fixtures, never real municipal data. */
+.demo-scenarios{margin:0 0 18px;padding:14px;border:1px solid rgba(13,112,72,.14);border-radius:18px;background:linear-gradient(135deg,rgba(13,112,72,.055),rgba(13,112,72,.018))}
+.demo-scenarios-head>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.demo-scenarios-head strong{font-size:14px;color:var(--navy)}
+.demo-scenarios-head small{font-size:11px;color:var(--muted)}
+.demo-badge{font:700 9px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;padding:6px 8px;border-radius:999px;background:var(--green-soft);color:var(--green)}
+.demo-scenario-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
+.demo-scenario-card{appearance:none;border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:11px;text-align:right;display:flex;align-items:center;gap:9px;cursor:pointer;color:var(--text);min-height:64px}
+.demo-scenario-card>svg:first-child{width:17px;height:17px;color:var(--teal);flex:0 0 auto}
+.demo-scenario-card>svg:last-child{width:15px;height:15px;color:var(--muted);margin-inline-start:auto}
+.demo-scenario-card span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.demo-scenario-card b{font-size:12px}
+.demo-scenario-card small{font-size:9px;color:var(--muted);line-height:1.5}
+.demo-scenario-card:hover{border-color:rgba(13,112,72,.28);transform:translateY(-1px)}
+@media(max-width:900px){.demo-scenario-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.demo-scenario-grid{grid-template-columns:1fr}.demo-scenarios-head small{width:100%}}
+
 </style>
 
 </head>
@@ -2815,6 +2833,20 @@ function managerModeView(attention) {
     <section class="panel"><div class="panel-head"><div><h2>إجراءات موصى بها</h2></div>${icon("list-checks")}</div><div class="panel-body">${recommendations.map(r => `<div class="auto-row"><span>${icon("arrow-left-circle")} ${esc(r)}</span></div>`).join("")}</div></section>
   </div>`;
 }
+function reviewScenarioStrip() {
+  if (!reviewMode) return "";
+  const scenarios = [
+    ["0013", "ملف مكتمل ومعتمد", "100% · اعتماد رسمي", "circle-check"],
+    ["0014", "قيد المراجعة", "يحتاج قرار المراجع", "clipboard-check"],
+    ["0018", "أُعيد للاستكمال", "ملاحظة رسمية ومسار إعادة إرسال", "rotate-ccw"],
+    ["0016", "ملف أولي بدون GIS", "بيانات ناقصة · لا موقع موثّق", "map-pin-off"]
+  ];
+  return `<section class="demo-scenarios" aria-label="سيناريوهات العرض التجريبية">
+    <div class="demo-scenarios-head"><div><span class="demo-badge">DEMO · PREVIEW ONLY</span><strong>سيناريوهات جاهزة للعرض</strong><small>بيانات تجريبية معزولة — لا تمثل سجلات بلدية حقيقية</small></div></div>
+    <div class="demo-scenario-grid">${scenarios.map(([id,title,meta,ic]) => `<button type="button" class="demo-scenario-card" onclick="openFile('${id}')">${icon(ic)}<span><b>${esc(title)}</b><small>${esc(meta)}</small></span>${icon("arrow-left")}</button>`).join("")}</div>
+  </section>`;
+}
+
 function centerView() {
   const stats = AutomationEngine.decisionStats(grants.filter(g => !g.archived));
   const activeDecisions = decisionGroups().filter(g => g.number).length;
@@ -2834,6 +2866,7 @@ function centerView() {
     return shellHead("وضع المدير — عرض تنفيذي", "وضع المدير", "أهم القضايا التشغيلية التي تحتاج قرارًا خلال ثوانٍ") + managerModeView(attention);
   }
   return shellHead("مركز الحصر الذكي لمنح الأراضي", "مركز الحصر الذكي", "متابعة اكتمال وجودة وربط سجلات منح الأراضي ودعم أعمال المراجعة والاعتماد", actions) + `
+ ${reviewMode ? reviewScenarioStrip() : ""}
  <section class="metrics"><div class="metric teal"><span class="label">القرارات النشطة</span><div class="value mono">${activeDecisions}</div><span class="hint">في نطاق البلدية الحالية</span></div><div class="metric"><span class="label">إجمالي المنح</span><div class="value mono">${stats.total}</div><span class="hint">في نطاق هذه البلدية</span></div><div class="metric green"><span class="label">مكتمل</span><div class="value mono">${stats.complete}</div><span class="hint"><strong>${approved}</strong> منها معتمدة رسميًا</span></div><div class="metric red"><span class="label">يحتاج استكمال</span><div class="value mono">${stats.needsWork}</div><span class="hint">تنقصها بيانات أساسية</span></div><div class="metric amber"><span class="label">تحت المراجعة</span><div class="value mono">${stats.review}</div><span class="hint">بانتظار قرار المراجع</span></div><div class="metric"><span class="label">متوسط اكتمال الملفات</span><div class="value mono">${stats.avgPercent}%</div><span class="hint">محسوب آليًا من متطلبات كل سجل</span></div></section>
  <div class="workgrid"><section class="panel map-panel"><div class="panel-head"><div><h2>التوأم الرقمي للمخططات</h2><p>محاكاة مكانية تشغيلية — غير مرتبطة حاليًا بحدود مساحية رسمية</p></div>${reviewDemoLocationChip()}</div>${(() => {
    const active = grants.filter(g => !g.archived);
