@@ -1,0 +1,80 @@
+name: Final V5 Release Hygiene
+
+on:
+  push:
+    branches:
+      - release/municipality-final-v5
+    paths:
+      - scripts/final-v5-release-hygiene.mjs
+      - .github/workflows/final-v5-release-hygiene.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BRANCH: release/municipality-final-v5
+    steps:
+      - name: Checkout Final V5
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate hygiene extractor
+        run: node --check scripts/final-v5-release-hygiene.mjs
+
+      - name: Extract approved R3 and vendor pinned GIS runtime
+        run: node scripts/final-v5-release-hygiene.mjs
+
+      - name: Verify release-hygiene contracts
+        run: |
+          node --test test/final-public-r3-contract.test.js
+          node --test test/final-v5-release-hygiene.test.js
+
+      - name: Commit deterministic release output
+        id: commit
+        shell: bash
+        run: |
+          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "No release-hygiene changes required"
+            echo "sha=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            index.html \
+            lands/index.html \
+            public-r3-assets/runtime \
+            vendor/leaflet.markercluster/1.5.3 \
+            test/final-public-r3-contract.test.js \
+            test/final-v5-release-hygiene.test.js
+
+          git commit -m "fix(release): clean R3 runtime and vendor Lands GIS dependencies"
+          git pull --rebase origin "$BRANCH"
+          git push origin HEAD:"$BRANCH"
+
+          SHA="$(git rev-parse HEAD)"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Generated Final V5 hygiene SHA: $SHA"
+
+      - name: Dispatch final acceptance gates on generated SHA
+        if: steps.commit.outputs.sha != ''
+        env:
+          GH_TOKEN: \${{ github.token }}
+        run: |
+          gh workflow run phase19-municipality-acceptance.yml --ref "$BRANCH"
+          gh workflow run lands-visual-qa.yml --ref "$BRANCH"
+          echo "PHASE19 and Lands Visual QA dispatched for \${{ steps.commit.outputs.sha }}"
