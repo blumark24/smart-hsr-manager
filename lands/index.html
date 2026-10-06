@@ -2629,16 +2629,62 @@ body.dark #bootScreen.silent-authority-entry .silent-authority-status i{backgrou
   #bootScreen.silent-authority-entry.silent-authority-exit{transition:opacity .16s linear!important;transform:none!important}
 }
 
+
+/* ==== SIGNATURE ENTRY R9 — SMART HSR Company Splash Candidate ==== */
+/* Company-level identity only. Service names belong inside their workspaces. */
+#bootScreen.company-splash-entry .company-splash-logo{
+  width:clamp(250px,26vw,340px)!important;
+  max-width:78vw!important;
+  max-height:150px!important;
+  object-fit:contain!important;
+  image-rendering:auto!important;
+  filter:drop-shadow(0 14px 30px rgba(11,61,46,.08))!important;
+}
+#bootScreen.company-splash-entry .company-splash-name{
+  margin-top:9px!important;
+  font:700 14px/1.3 "IBM Plex Sans","Cairo",sans-serif!important;
+  letter-spacing:.12em!important;
+  direction:ltr!important;
+  color:#0b3d2e!important;
+}
+#bootScreen.company-splash-entry .company-splash-tagline{
+  margin-top:7px;
+  color:#728078;
+  font:500 8.5px/1.4 "IBM Plex Mono","IBM Plex Sans",sans-serif;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  direction:ltr;
+  opacity:0;
+  animation:authorityCopyIn .24s ease .34s forwards;
+}
+body.dark #bootScreen.company-splash-entry .company-splash-name{color:#e4f1e8!important}
+body.dark #bootScreen.company-splash-entry .company-splash-tagline{color:#7f9b8b}
+#bootScreen.company-splash-entry .silent-authority-line{margin-top:17px!important}
+#bootScreen.company-splash-entry .silent-authority-status{margin-top:13px!important}
+body.secure-handoff-active .ai-trigger,
+body.secure-handoff-active .ai-panel,
+body.secure-handoff-active .mobile-bottom-nav,
+body.secure-handoff-active .toast{
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+@media(max-width:700px){
+  #bootScreen.company-splash-entry .company-splash-logo{width:min(270px,76vw)!important;max-height:128px!important}
+  #bootScreen.company-splash-entry .company-splash-name{font-size:12px!important}
+  #bootScreen.company-splash-entry .company-splash-tagline{font-size:7.5px}
+}
+
 </style>
 
 </head>
 <body class="secure-handoff-active">
-<div class="auth-screen splash-screen signature-entry silent-authority-entry" id="bootScreen" aria-label="جاري فتح مركز الأراضي الذكية">
-  <div class="silent-authority-core" aria-hidden="true">
-    <img class="silent-authority-logo" src="/smart-hsr-signature-transparent.png" alt="">
-    <strong class="silent-authority-service">الأراضي الذكية</strong>
+<div class="auth-screen splash-screen signature-entry silent-authority-entry company-splash-entry" id="bootScreen" aria-label="جاري تشغيل منصة SMART HSR">
+  <div class="silent-authority-core company-splash-core" aria-hidden="true">
+    <img class="silent-authority-logo company-splash-logo" src="/smart-hsr-logo-r2.png" alt="">
+    <strong class="silent-authority-service company-splash-name">SMART HSR</strong>
+    <span class="company-splash-tagline">Saudi Municipal Intelligence System</span>
     <span class="silent-authority-line"></span>
-    <div class="signature-status silent-authority-status"><i></i><span>جاري فتح مساحة العمل الآمنة</span></div>
+    <div class="signature-status silent-authority-status"><i></i><span>تهيئة النظام الآمن</span></div>
   </div>
 </div>
 <div class="auth-screen" id="loginScreen" hidden>
