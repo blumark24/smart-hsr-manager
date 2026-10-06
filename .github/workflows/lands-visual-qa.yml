@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - fix/lands-visual-unification-v1
+      - release/municipality-final-v5
   workflow_dispatch:
 
 jobs:
