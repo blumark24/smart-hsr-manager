@@ -73,8 +73,8 @@ jobs:
       - name: Dispatch final acceptance gates on generated SHA
         if: steps.commit.outputs.sha != ''
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh workflow run phase19-municipality-acceptance.yml --ref "$BRANCH"
           gh workflow run lands-visual-qa.yml --ref "$BRANCH"
-          echo "PHASE19 and Lands Visual QA dispatched for \${{ steps.commit.outputs.sha }}"
+          echo "PHASE19 and Lands Visual QA dispatched for ${{ steps.commit.outputs.sha }}"
