@@ -2607,6 +2607,18 @@ function showDenied(message, { returnToUnified = false } = {}) {
 // login flow already uses for entitlement denial), never the plain login
 // form. Only a genuine standalone visit with NO code at all ever reaches
 // that form (see the boot sequence below).
+const BOOT_STEP_TIMEOUT_MS = 8000;
+function bootStatus(label) {
+  const el = document.querySelector("#bootScreen .signature-status span");
+  if (el) el.textContent = label;
+}
+function withBootTimeout(promise, step) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => reject(new Error("LANDS_BOOT_TIMEOUT:" + step)), BOOT_STEP_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timer));
+}
 async function consumeSsoHandoff() {
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
@@ -2629,13 +2641,19 @@ async function consumeSsoHandoff() {
       return true;
     }
     const c = ensureClient();
-    await c.signInWithHandoffToken(data.custom_token);
-    session = await c.session(data.municipality_id);
-    await loadWorkspace();
+    bootStatus("التحقق من الهوية الآمنة");
+    await withBootTimeout(c.signInWithHandoffToken(data.custom_token), "sign-in");
+    bootStatus("تأكيد صلاحية الأراضي");
+    session = await withBootTimeout(c.session(data.municipality_id), "membership");
+    bootStatus("تحميل مساحة العمل");
+    await withBootTimeout(loadWorkspace(), "workspace");
     showScreen("app"); currentView = "center"; renderShellChrome(); render();
     return true;
-  } catch (_) {
-    showDenied(ssoFailureMessage, { returnToUnified: true });
+  } catch (error) {
+    console.error("[LANDS_BOOT]", error && error.message ? error.message : "unknown");
+    showDenied(error && String(error.message || "").startsWith("LANDS_BOOT_TIMEOUT:")
+      ? "استغرق تجهيز مساحة العمل وقتًا أطول من المتوقع. أعد الدخول من البوابة الموحدة."
+      : ssoFailureMessage, { returnToUnified: true });
     return true;
   }
 }
