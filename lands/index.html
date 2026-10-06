@@ -3217,18 +3217,23 @@ const AUDIT_ACTION_LABELS = {
 
 // ---- auth flow ----
 function bindLoginScreen() {
-  // Lands is SSO-only: the standalone credentials form was intentionally
-  // removed. Keep the legacy binder inert when those controls are absent so
-  // Review Mode and trusted SSO boot cannot crash before admission routing.
+  // Lands is SSO-only: the standalone credentials form is intentionally
+  // absent in the unified runtime. Bind legacy controls only when the full
+  // legacy surface exists; otherwise leave the SSO/review boot untouched.
   const loginForm = document.getElementById("loginForm");
-  if (!loginForm) return;
-  document.getElementById("passwordToggle").onclick = () => {
-    const input = document.getElementById("loginPassword"); const btn = document.getElementById("passwordToggle");
+  const passwordToggle = document.getElementById("passwordToggle");
+  const forgotPassword = document.getElementById("forgotPassword");
+  const loginPassword = document.getElementById("loginPassword");
+  const loginEmail = document.getElementById("loginEmail");
+  if (!loginForm || !passwordToggle || !forgotPassword || !loginPassword || !loginEmail) return;
+
+  passwordToggle.onclick = () => {
+    const input = loginPassword; const btn = passwordToggle;
     const show = input.type === "password"; input.type = show ? "text" : "password";
     btn.innerHTML = icon(show ? "eye-off" : "eye"); btn.setAttribute("aria-label", show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"); btn.setAttribute("aria-pressed", String(show)); lucide.createIcons();
   };
-  document.getElementById("forgotPassword").onclick = async () => {
-    const email = document.getElementById("loginEmail").value.trim();
+  forgotPassword.onclick = async () => {
+    const email = loginEmail.value.trim();
     if (!email) return setLoginError("أدخل البريد الإلكتروني أولًا ثم اضغط نسيت كلمة المرور");
     try { const c = ensureClient(); await c.resetPassword(email); showToast("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني"); }
     catch { setLoginError("تعذر إرسال رابط إعادة التعيين. تحقق من صحة البريد الإلكتروني."); }
