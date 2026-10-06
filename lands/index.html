@@ -2676,17 +2676,11 @@ body.secure-handoff-active .toast{
 
 </style>
 
+
+<link rel="stylesheet" href="../smart-hsr-company-splash.css">
+<script src="../smart-hsr-company-splash.js" data-hsr-splash="manual"></script>
 </head>
 <body class="secure-handoff-active">
-<div class="auth-screen splash-screen signature-entry silent-authority-entry company-splash-entry" id="bootScreen" aria-label="جاري تشغيل منصة SMART HSR">
-  <div class="silent-authority-core company-splash-core" aria-hidden="true">
-    <img class="silent-authority-logo company-splash-logo" src="/smart-hsr-logo-r2.png" alt="">
-    <strong class="silent-authority-service company-splash-name">SMART HSR</strong>
-    <span class="company-splash-tagline">Saudi Municipal Intelligence System</span>
-    <span class="silent-authority-line"></span>
-    <div class="signature-status silent-authority-status"><i></i><span>تهيئة النظام الآمن</span></div>
-  </div>
-</div>
 <div class="auth-screen" id="loginScreen" hidden>
   <section class="auth-card">
     <div class="auth-brand"><img src="/smart-hsr-mark.svg" alt="سمارت حصر"><h1>SMART HSR</h1><p>الأراضي الذكية</p></div>
@@ -3099,29 +3093,23 @@ async function loadModules() {
 }
 
 // ---- screen management ----
-const AUTHORITY_MIN_VISIBLE_MS = 680;
-const authorityStartedAt = performance.now();
 function showScreen(name) {
-  const boot = document.getElementById("bootScreen");
   const login = document.getElementById("loginScreen");
   const denied = document.getElementById("deniedScreen");
   const app = document.getElementById("appShell");
-  if (name === "app" && boot && !boot.hidden) {
-    app.hidden = false;
-    const remaining = Math.max(0, AUTHORITY_MIN_VISIBLE_MS - (performance.now() - authorityStartedAt));
-    window.setTimeout(() => {
-      bootStatus("جاهز");
-      boot.classList.add("silent-authority-exit");
-    }, remaining);
-    window.setTimeout(() => {
-      boot.hidden = true;
-      boot.classList.remove("silent-authority-exit");
-      document.body.classList.remove("secure-handoff-active");
-    }, remaining + 280);
+  if (name === "boot") {
+    window.SmartHSRCompanySplash?.show();
+    app.hidden = true;
+    document.body.classList.add("secure-handoff-active");
   } else {
-    boot.hidden = name !== "boot";
-    app.hidden = name !== "app";
-    document.body.classList.toggle("secure-handoff-active", name === "boot");
+    if (name === "app") {
+      app.hidden = false;
+      bootStatus("جاهز");
+    } else {
+      app.hidden = true;
+    }
+    window.SmartHSRCompanySplash?.dismiss();
+    window.setTimeout(() => document.body.classList.remove("secure-handoff-active"), 300);
   }
   login.hidden = name !== "login";
   denied.hidden = name !== "denied";
@@ -3297,6 +3285,10 @@ function showDenied(message, { returnToUnified = false } = {}) {
 // that form (see the boot sequence below).
 const BOOT_STEP_TIMEOUT_MS = 8000;
 function bootStatus(label) {
+  if (window.SmartHSRCompanySplash?.setStatus) {
+    window.SmartHSRCompanySplash.setStatus(label, label === "جاهز");
+    return;
+  }
   const el = document.querySelector("#bootScreen .signature-status span");
   if (el) el.textContent = label;
 }
