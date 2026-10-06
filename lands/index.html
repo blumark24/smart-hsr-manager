@@ -3217,6 +3217,11 @@ const AUDIT_ACTION_LABELS = {
 
 // ---- auth flow ----
 function bindLoginScreen() {
+  // Lands is SSO-only: the standalone credentials form was intentionally
+  // removed. Keep the legacy binder inert when those controls are absent so
+  // Review Mode and trusted SSO boot cannot crash before admission routing.
+  const loginForm = document.getElementById("loginForm");
+  if (!loginForm) return;
   document.getElementById("passwordToggle").onclick = () => {
     const input = document.getElementById("loginPassword"); const btn = document.getElementById("passwordToggle");
     const show = input.type === "password"; input.type = show ? "text" : "password";
@@ -3228,7 +3233,7 @@ function bindLoginScreen() {
     try { const c = ensureClient(); await c.resetPassword(email); showToast("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني"); }
     catch { setLoginError("تعذر إرسال رابط إعادة التعيين. تحقق من صحة البريد الإلكتروني."); }
   };
-  document.getElementById("loginForm").onsubmit = async (e) => { e.preventDefault(); await handleLogin(); };
+  loginForm.onsubmit = async (e) => { e.preventDefault(); await handleLogin(); };
 }
 function setLoginError(message) { const el = document.getElementById("loginError"); if (!message) { el.hidden = true; el.textContent = ""; return; } el.hidden = false; el.textContent = message; }
 function ensureClient() { if (!client) client = mod.createLandsClient({ firebaseConfig: resolveLandsFirebaseConfig(), useEmulators: false }); return client; }
