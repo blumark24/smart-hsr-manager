@@ -3,10 +3,10 @@
   const script=document.currentScript;
   const mode=(script&&script.dataset.hsrSplash)||"auto";
   const force=new URLSearchParams(location.search).get("splash")==="1";
-  const key="smart-hsr.company-splash.v1";
+  const key="smart-hsr.company-splash.v2";
   let root=null;
   let startedAt=performance.now();
-  const minimum=720;
+  const minimum=780;
 
   function shouldShow(){
     if(mode==="manual") return true;
@@ -24,15 +24,24 @@
     root.setAttribute("role","status");
     root.setAttribute("aria-live","polite");
     root.setAttribute("aria-label","جاري تشغيل منصة SMART HSR");
-    root.innerHTML='<div class="hsr-company-splash__core" aria-hidden="true">'+
-      '<div class="hsr-company-splash__brand">'+
-        '<img class="hsr-company-splash__mark" src="/smart-hsr-mark.svg" alt="">'+
-        '<div class="hsr-company-splash__wordmark"><strong class="hsr-company-splash__name">SMART HSR</strong></div>'+
+    root.innerHTML=
+      '<div class="hsr-company-splash__twin" aria-hidden="true">'+
+        '<span class="hsr-company-splash__twin-field"></span>'+
+        '<span class="hsr-company-splash__axis hsr-company-splash__axis--a"></span>'+
+        '<span class="hsr-company-splash__axis hsr-company-splash__axis--b"></span>'+
+        '<i class="hsr-company-splash__node hsr-company-splash__node--1"></i>'+
+        '<i class="hsr-company-splash__node hsr-company-splash__node--2"></i>'+
+        '<i class="hsr-company-splash__node hsr-company-splash__node--3"></i>'+
+        '<i class="hsr-company-splash__node hsr-company-splash__node--4"></i>'+
       '</div>'+
-      '<span class="hsr-company-splash__tagline">Saudi Municipal Intelligence System</span>'+
-      '<span class="hsr-company-splash__line"></span>'+
-      '<div class="hsr-company-splash__status signature-status"><i></i><span>تهيئة النظام الآمن</span></div>'+
-    '</div>';
+      '<div class="hsr-company-splash__core" aria-hidden="true">'+
+        '<div class="hsr-company-splash__brand">'+
+          '<img class="hsr-company-splash__signature" src="/smart-hsr-signature-transparent.png" alt="">'+
+        '</div>'+
+        '<span class="hsr-company-splash__tagline">Saudi Municipal Intelligence System</span>'+
+        '<span class="hsr-company-splash__line"></span>'+
+        '<div class="hsr-company-splash__status signature-status"><i></i><span>تهيئة النظام الآمن</span></div>'+
+      '</div>';
     document.documentElement.appendChild(root);
     startedAt=performance.now();
     return root;
@@ -52,7 +61,10 @@
       root.classList.add("is-exiting");
       markShown();
       const doomed=root;
-      window.setTimeout(()=>{if(doomed&&doomed.parentNode) doomed.remove(); if(root===doomed) root=null;},260);
+      window.setTimeout(()=>{
+        if(doomed&&doomed.parentNode) doomed.remove();
+        if(root===doomed) root=null;
+      },280);
     },remaining);
   }
   function show(){
@@ -66,6 +78,6 @@
     const done=()=>dismiss();
     if(document.readyState==="complete") done();
     else window.addEventListener("load",done,{once:true});
-    window.setTimeout(done,2600);
+    window.setTimeout(done,2800);
   }
 })();
