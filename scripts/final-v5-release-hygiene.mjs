@@ -151,7 +151,7 @@ async function updateR3Contract() {
 }
 
 async function writeHygieneContract() {
-  const contract = String.raw\`'use strict';
+  const contract = String.raw`'use strict';
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -191,7 +191,7 @@ test('Final V5 runtime remains pinned to Node 22.x', () => {
   const pkg = JSON.parse(read('package.json'));
   assert.equal(pkg.engines && pkg.engines.node, '22.x');
 });
-\`;
+`;
   await fs.writeFile(path.join(root, 'test', 'final-v5-release-hygiene.test.js'), contract, 'utf8');
 }
 
