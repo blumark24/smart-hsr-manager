@@ -3,7 +3,7 @@
   const script=document.currentScript;
   const mode=(script&&script.dataset.hsrSplash)||"auto";
   const force=new URLSearchParams(location.search).get("splash")==="1";
-  const key="smart-hsr.company-splash.v5";
+  const key="smart-hsr.company-splash.v6";
   let root=null;
   let startedAt=performance.now();
   const minimum=760;
