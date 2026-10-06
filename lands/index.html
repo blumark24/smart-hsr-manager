@@ -1689,10 +1689,11 @@ body.sidebar-collapsed .shell{
   .brand-copy .eyebrow{display:none!important}
   .header-meta{display:none!important}
   .header-actions{grid-area:actions!important;gap:5px!important;min-width:0!important}
-  .header-actions .icon-button,.header-actions .manager-mode-chip{
+  .header-actions .icon-button,.header-actions .manager-mode-chip:not([hidden]){
     width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;
     padding:0!important;border-radius:11px!important;display:inline-grid!important;place-items:center!important;
   }
+  .header-actions .manager-mode-chip[hidden]{display:none!important}
   #sidebarToggle{display:none!important}
   #themeToggle span,.manager-mode-chip span{display:none!important}
   .manager-user-chip{display:none!important}
