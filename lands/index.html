@@ -2144,20 +2144,193 @@ body.dark .demo-scenario-card{
   color:var(--ink)!important;
 }
 
+
+/* ==== SIGNATURE ENTRY R6 — Spatial Reveal / final lands handoff ==== */
+/* Presentation-only layer. Authentication, SSO, RBAC and routing are unchanged. */
+#bootScreen.signature-entry.spatial-reveal-entry{
+  background:
+    radial-gradient(ellipse at 50% 45%,rgba(82,220,126,.095) 0%,rgba(35,113,73,.035) 30%,transparent 58%),
+    linear-gradient(158deg,#010604 0%,#03110b 52%,#020906 100%)!important;
+  isolation:isolate;
+}
+#bootScreen.signature-entry.spatial-reveal-entry:before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(143,224,176,.045),transparent 28%),
+    linear-gradient(115deg,transparent 34%,rgba(255,255,255,.018) 50%,transparent 66%)!important;
+  opacity:1!important;
+  pointer-events:none!important;
+}
+#bootScreen.signature-entry.spatial-reveal-entry:after,
+#bootScreen.signature-entry.spatial-reveal-entry .twin-grid,
+#bootScreen.signature-entry.spatial-reveal-entry .twin-glow,
+#bootScreen.signature-entry.spatial-reveal-entry .signature-orbit,
+#bootScreen.signature-entry.spatial-reveal-entry .splash-scan,
+#bootScreen.signature-entry.spatial-reveal-entry .signature-meta,
+#bootScreen.signature-entry.spatial-reveal-entry .signature-copy{
+  display:none!important;
+}
+#bootScreen.signature-entry .spatial-stage{
+  position:relative;
+  width:min(520px,90vw);
+  height:min(360px,62vh);
+  min-height:300px;
+  display:grid;
+  place-items:center;
+  z-index:1;
+}
+#bootScreen.signature-entry .spatial-parcel{
+  position:absolute;
+  inset:50% auto auto 50%;
+  width:min(460px,88vw);
+  height:auto;
+  overflow:visible;
+  transform:translate(-50%,-53%);
+  filter:drop-shadow(0 24px 54px rgba(0,0,0,.28));
+}
+#bootScreen.signature-entry .spatial-parcel-fill{
+  fill:rgba(93,222,133,.018);
+  stroke:none;
+  animation:spatialParcelFill .36s ease .46s both;
+}
+#bootScreen.signature-entry .spatial-parcel-line{
+  fill:none;
+  stroke:rgba(143,224,176,.58);
+  stroke-width:1.15;
+  vector-effect:non-scaling-stroke;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-dasharray:1;
+  stroke-dashoffset:1;
+  animation:spatialParcelDraw .58s cubic-bezier(.25,.72,.35,1) .04s forwards;
+}
+#bootScreen.signature-entry .spatial-parcel-axis{
+  fill:none;
+  stroke:rgba(143,224,176,.12);
+  stroke-width:.8;
+  vector-effect:non-scaling-stroke;
+  stroke-dasharray:.03 .025;
+  stroke-dashoffset:1;
+  animation:spatialAxisDraw .34s ease .34s forwards;
+}
+#bootScreen.signature-entry .spatial-node{
+  fill:#8fe0b0;
+  stroke:rgba(3,17,11,.88);
+  stroke-width:2;
+  vector-effect:non-scaling-stroke;
+  opacity:0;
+  transform-box:fill-box;
+  transform-origin:center;
+  filter:drop-shadow(0 0 7px rgba(91,227,132,.46));
+}
+#bootScreen.signature-entry .node-a{animation:spatialNodeIn .22s ease .42s forwards}
+#bootScreen.signature-entry .node-b{animation:spatialNodeIn .22s ease .50s forwards}
+#bootScreen.signature-entry .node-c{animation:spatialNodeIn .22s ease .58s forwards}
+#bootScreen.signature-entry .spatial-brand{
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  transform:translateY(-4px);
+}
+#bootScreen.signature-entry .spatial-logo{
+  width:clamp(210px,25vw,286px)!important;
+  max-width:72vw!important;
+  max-height:162px!important;
+  object-fit:contain!important;
+  filter:drop-shadow(0 18px 38px rgba(0,0,0,.44))!important;
+  animation:spatialBrandIn .32s cubic-bezier(.16,.84,.3,1) .28s both!important;
+}
+#bootScreen.signature-entry .spatial-service-name{
+  color:#dceee2;
+  font:600 12px/1.4 "Cairo",sans-serif;
+  letter-spacing:.01em;
+  opacity:0;
+  animation:spatialTitleIn .28s ease .49s forwards;
+}
+#bootScreen.signature-entry .spatial-status{
+  position:absolute!important;
+  inset:auto 0 5px 0!important;
+  margin:0!important;
+  min-height:20px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  color:#6f8e7b!important;
+  font:500 9px/1.4 "Cairo",sans-serif!important;
+  letter-spacing:0!important;
+  opacity:0;
+  animation:spatialStatusIn .24s ease .62s forwards;
+}
+#bootScreen.signature-entry .spatial-status i{
+  width:5px!important;
+  height:5px!important;
+  flex:0 0 5px;
+  border-radius:50%;
+  background:#66df88!important;
+  box-shadow:0 0 10px rgba(102,223,136,.56)!important;
+  animation:spatialStatusPulse 1.1s ease-in-out infinite alternate!important;
+}
+#bootScreen.signature-entry.signature-exit{
+  animation:spatialEntryExit .22s cubic-bezier(.4,0,.8,1) both!important;
+}
+@keyframes spatialParcelDraw{to{stroke-dashoffset:0}}
+@keyframes spatialAxisDraw{to{stroke-dashoffset:0}}
+@keyframes spatialParcelFill{from{opacity:0}to{opacity:1}}
+@keyframes spatialNodeIn{0%{opacity:0;transform:scale(.25)}70%{opacity:1;transform:scale(1.18)}100%{opacity:1;transform:scale(1)}}
+@keyframes spatialBrandIn{from{opacity:0;transform:translateY(7px) scale(.975);filter:blur(8px)}to{opacity:1;transform:none;filter:drop-shadow(0 18px 38px rgba(0,0,0,.44))}}
+@keyframes spatialTitleIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes spatialStatusIn{to{opacity:1}}
+@keyframes spatialStatusPulse{from{opacity:.42;transform:scale(.82)}to{opacity:1;transform:scale(1)}}
+@keyframes spatialEntryExit{to{opacity:0;transform:scale(1.008);filter:blur(4px)}}
+@media(max-width:700px){
+  #bootScreen.signature-entry .spatial-stage{width:94vw;height:330px;min-height:280px}
+  #bootScreen.signature-entry .spatial-parcel{width:min(390px,92vw);transform:translate(-50%,-54%)}
+  #bootScreen.signature-entry .spatial-logo{width:min(222px,68vw)!important;max-height:132px!important}
+  #bootScreen.signature-entry .spatial-service-name{font-size:11px}
+  #bootScreen.signature-entry .spatial-status{bottom:10px!important;font-size:9px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #bootScreen.signature-entry .spatial-parcel-line,
+  #bootScreen.signature-entry .spatial-parcel-axis,
+  #bootScreen.signature-entry .spatial-parcel-fill,
+  #bootScreen.signature-entry .spatial-node,
+  #bootScreen.signature-entry .spatial-logo,
+  #bootScreen.signature-entry .spatial-service-name,
+  #bootScreen.signature-entry .spatial-status,
+  #bootScreen.signature-entry .spatial-status i{
+    animation:none!important;
+    opacity:1!important;
+    stroke-dashoffset:0!important;
+    transform:none!important;
+  }
+}
+
 </style>
 
 </head>
 <body class="secure-handoff-active">
-<div class="auth-screen splash-screen signature-entry" id="bootScreen" aria-label="جاري فتح مركز الأراضي الذكية">
-  <div class="twin-grid" aria-hidden="true"></div>
-  <div class="twin-glow" aria-hidden="true"></div>
-  <div class="splash-core" aria-hidden="true">
-    <span class="signature-orbit"></span>
-    <span class="splash-scan"></span>
-    <img class="splash-logo signature-original-logo" src="/smart-hsr-signature-transparent.png" alt="">
-    <div class="signature-wordmark signature-meta"><small>SPATIAL INTELLIGENCE</small></div>
-    <div class="signature-copy"><strong>مركز الأراضي الذكية</strong></div>
-    <div class="signature-status"><i></i><span>تجهيز مساحة العمل الآمنة</span></div>
+<div class="auth-screen splash-screen signature-entry spatial-reveal-entry" id="bootScreen" aria-label="جاري فتح مركز الأراضي الذكية">
+  <div class="spatial-stage" aria-hidden="true">
+    <svg class="spatial-parcel" viewBox="0 0 460 286" role="presentation" focusable="false">
+      <path class="spatial-parcel-fill" d="M74 66 L342 43 L397 160 L322 226 L104 211 L57 133 Z"></path>
+      <path class="spatial-parcel-line" pathLength="1" d="M74 66 L342 43 L397 160 L322 226 L104 211 L57 133 Z"></path>
+      <path class="spatial-parcel-axis" pathLength="1" d="M104 211 L186 126 L342 43"></path>
+      <circle class="spatial-node node-a" cx="74" cy="66" r="4"></circle>
+      <circle class="spatial-node node-b" cx="397" cy="160" r="4"></circle>
+      <circle class="spatial-node node-c" cx="104" cy="211" r="4"></circle>
+    </svg>
+    <div class="spatial-brand">
+      <img class="signature-original-logo spatial-logo" src="/smart-hsr-signature-transparent.png" alt="">
+      <strong class="spatial-service-name">الأراضي الذكية</strong>
+    </div>
+    <div class="signature-status spatial-status"><i></i><span>التحقق من الهوية والوصول الآمن</span></div>
   </div>
 </div>
 <div class="auth-screen" id="loginScreen" hidden>
