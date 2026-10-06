@@ -1987,6 +1987,13 @@ body.dark .gis-empty-state{background:rgba(255,255,255,.025)}
 body:has(#bootScreen.signature-entry:not([hidden])) .ai-trigger,
 body:has(#bootScreen.signature-entry:not([hidden])) .ai-panel{visibility:hidden!important;pointer-events:none!important}
 
+
+/* Original transparent SMART HSR signature — no duplicate synthetic wordmark. */
+#bootScreen.signature-entry .signature-original-logo{width:clamp(170px,22vw,240px)!important;max-height:150px!important;object-fit:contain!important}
+#bootScreen.signature-entry .signature-meta{margin-top:-10px!important}
+#bootScreen.signature-entry .signature-meta small{font-size:7px!important;letter-spacing:.30em!important;color:#739b80!important}
+@media(max-width:700px){#bootScreen.signature-entry .signature-original-logo{width:178px!important;max-height:112px!important}}
+
 </style>
 
 </head>
@@ -1997,8 +2004,8 @@ body:has(#bootScreen.signature-entry:not([hidden])) .ai-panel{visibility:hidden!
   <div class="splash-core" aria-hidden="true">
     <span class="signature-orbit"></span>
     <span class="splash-scan"></span>
-    <img class="splash-logo" src="/smart-hsr-mark.svg" alt="">
-    <div class="signature-wordmark"><b>SMART <em>HSR</em></b><small>SPATIAL INTELLIGENCE</small></div>
+    <img class="splash-logo signature-original-logo" src="/smart-hsr-signature-transparent.png" alt="">
+    <div class="signature-wordmark signature-meta"><small>SPATIAL INTELLIGENCE</small></div>
     <div class="signature-copy"><strong>مركز الأراضي الذكية</strong></div>
     <div class="signature-status"><i></i><span>تجهيز مساحة العمل الآمنة</span></div>
   </div>
