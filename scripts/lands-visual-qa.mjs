@@ -32,7 +32,21 @@ try {
         consoleErrors.length = 0;
         const url = `${base}/lands/?review=1&reviewRole=${role.role}&view=${view}`;
         await page.goto(url, { waitUntil: "networkidle", timeout: 90000 });
-        await page.locator("#appShell").waitFor({ state: "visible", timeout: 30000 });
+        try {
+          await page.locator("#appShell").waitFor({ state: "visible", timeout: 30000 });
+        } catch (error) {
+          const diag = await page.evaluate(() => ({
+            href: location.href,
+            readyState: document.readyState,
+            appHidden: document.querySelector("#appShell")?.hidden ?? null,
+            bootText: document.querySelector("#bootScreen")?.textContent?.trim().slice(0, 500) ?? null,
+            loginHidden: document.querySelector("#loginScreen")?.hidden ?? null,
+            deniedHidden: document.querySelector("#deniedScreen")?.hidden ?? null,
+            bodyClasses: document.body?.className ?? "",
+          })).catch(() => null);
+          console.error("LANDS_VISUAL_QA_BOOT_DIAGNOSTIC", JSON.stringify({ vp: vp.id, role: role.id, view, diag, consoleErrors }, null, 2));
+          throw error;
+        }
         await page.waitForTimeout(800);
 
         const managerModeVisible = await page.locator("#managerModeToggle").isVisible();
