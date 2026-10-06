@@ -2467,42 +2467,178 @@ body.dark .demo-scenario-card{
   #bootScreen.continuum-entry.continuum-exit .spatial-stage{opacity:0!important;transform:none!important}
 }
 
+
+/* ==== SIGNATURE ENTRY R8 — Silent Authority ==== */
+/* Final presentation authority for the Lands secure handoff.
+   One mark, one service label, one live status. No GIS simulation,
+   skeleton, spinner, orbit, particles, or looping decorative motion. */
+#bootScreen.silent-authority-entry{
+  position:fixed!important;
+  inset:0!important;
+  z-index:9999!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  overflow:hidden!important;
+  background:#f4f1e9!important;
+  color:#0b3d2e!important;
+  opacity:1;
+}
+#bootScreen.silent-authority-entry:before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  display:block!important;
+  background:
+    radial-gradient(circle at 50% 43%,rgba(35,122,85,.055),transparent 30%),
+    linear-gradient(180deg,rgba(255,255,255,.30),transparent 32%)!important;
+  opacity:1!important;
+  pointer-events:none!important;
+}
+#bootScreen.silent-authority-entry:after{display:none!important}
+body.dark #bootScreen.silent-authority-entry{
+  background:#06150f!important;
+  color:#ecf7ef!important;
+}
+body.dark #bootScreen.silent-authority-entry:before{
+  background:
+    radial-gradient(circle at 50% 43%,rgba(111,225,151,.055),transparent 31%),
+    linear-gradient(180deg,rgba(255,255,255,.012),transparent 36%)!important;
+}
+#bootScreen.silent-authority-entry .silent-authority-core{
+  position:relative;
+  z-index:1;
+  width:min(420px,86vw);
+  min-height:240px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  gap:0;
+}
+#bootScreen.silent-authority-entry .silent-authority-logo{
+  width:clamp(210px,24vw,286px)!important;
+  max-width:76vw!important;
+  max-height:164px!important;
+  object-fit:contain!important;
+  background:transparent!important;
+  filter:drop-shadow(0 12px 26px rgba(11,61,46,.10))!important;
+  opacity:0;
+  animation:authorityLogoIn .36s cubic-bezier(.16,.84,.3,1) .04s forwards!important;
+}
+body.dark #bootScreen.silent-authority-entry .silent-authority-logo{
+  filter:drop-shadow(0 16px 32px rgba(0,0,0,.30))!important;
+}
+#bootScreen.silent-authority-entry .silent-authority-service{
+  margin-top:4px;
+  color:#174f3a;
+  font:600 13px/1.5 "Cairo",sans-serif;
+  letter-spacing:.005em;
+  opacity:0;
+  transform:translateY(3px);
+  animation:authorityCopyIn .24s ease .27s forwards;
+}
+body.dark #bootScreen.silent-authority-entry .silent-authority-service{color:#dceee2}
+#bootScreen.silent-authority-entry .silent-authority-line{
+  position:relative;
+  display:block;
+  width:min(168px,44vw);
+  height:1px;
+  margin-top:18px;
+  overflow:hidden;
+  background:rgba(35,122,85,.13);
+  opacity:0;
+  animation:authorityLineBase .18s ease .34s forwards;
+}
+body.dark #bootScreen.silent-authority-entry .silent-authority-line{background:rgba(143,224,176,.12)}
+#bootScreen.silent-authority-entry .silent-authority-line:after{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-48%;
+  width:48%;
+  height:1px;
+  background:linear-gradient(90deg,transparent,#2e8b57,transparent);
+  box-shadow:0 0 8px rgba(46,139,87,.18);
+  animation:authorityLightPass .44s cubic-bezier(.4,0,.2,1) .42s 1 both;
+}
+body.dark #bootScreen.silent-authority-entry .silent-authority-line:after{
+  background:linear-gradient(90deg,transparent,#8fe0b0,transparent);
+  box-shadow:0 0 8px rgba(143,224,176,.20);
+}
+#bootScreen.silent-authority-entry .silent-authority-status{
+  position:static!important;
+  inset:auto!important;
+  margin-top:16px!important;
+  min-height:18px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  color:#73847a!important;
+  font:500 9px/1.4 "Cairo",sans-serif!important;
+  letter-spacing:0!important;
+  opacity:0;
+  animation:authorityStatusIn .22s ease .54s forwards;
+}
+body.dark #bootScreen.silent-authority-entry .silent-authority-status{color:#789588!important}
+#bootScreen.silent-authority-entry .silent-authority-status i{
+  width:5px!important;
+  height:5px!important;
+  flex:0 0 5px;
+  border-radius:50%;
+  background:#2e8b57!important;
+  box-shadow:none!important;
+  animation:none!important;
+}
+body.dark #bootScreen.silent-authority-entry .silent-authority-status i{background:#73d998!important}
+#bootScreen.silent-authority-entry.silent-authority-exit{
+  opacity:0!important;
+  transform:scale(1.006);
+  transition:opacity .26s ease,transform .26s ease!important;
+}
+#bootScreen.silent-authority-entry.silent-authority-exit .silent-authority-core{
+  transform:translateY(-2px);
+  transition:transform .26s ease!important;
+}
+@keyframes authorityLogoIn{
+  from{opacity:0;transform:translateY(5px) scale(.985);filter:blur(7px)}
+  to{opacity:1;transform:none;filter:drop-shadow(0 12px 26px rgba(11,61,46,.10))}
+}
+@keyframes authorityCopyIn{to{opacity:1;transform:none}}
+@keyframes authorityLineBase{to{opacity:1}}
+@keyframes authorityLightPass{from{transform:translateX(0)}to{transform:translateX(310%)}}
+@keyframes authorityStatusIn{to{opacity:1}}
+@media(max-width:700px){
+  #bootScreen.silent-authority-entry .silent-authority-core{min-height:220px;width:90vw}
+  #bootScreen.silent-authority-entry .silent-authority-logo{width:min(222px,70vw)!important;max-height:132px!important}
+  #bootScreen.silent-authority-entry .silent-authority-service{font-size:12px}
+  #bootScreen.silent-authority-entry .silent-authority-line{margin-top:16px;width:150px}
+}
+@media(prefers-reduced-motion:reduce){
+  #bootScreen.silent-authority-entry .silent-authority-logo,
+  #bootScreen.silent-authority-entry .silent-authority-service,
+  #bootScreen.silent-authority-entry .silent-authority-line,
+  #bootScreen.silent-authority-entry .silent-authority-line:after,
+  #bootScreen.silent-authority-entry .silent-authority-status{
+    animation:none!important;
+    opacity:1!important;
+    transform:none!important;
+  }
+  #bootScreen.silent-authority-entry.silent-authority-exit{transition:opacity .16s linear!important;transform:none!important}
+}
+
 </style>
 
 </head>
 <body class="secure-handoff-active">
-<div class="auth-screen splash-screen signature-entry spatial-reveal-entry continuum-entry" id="bootScreen" aria-label="جاري فتح مركز الأراضي الذكية">
-  <div class="continuum-shell" aria-hidden="true">
-    <div class="continuum-topbar">
-      <span class="continuum-brand-dot"></span>
-      <span class="continuum-brand-line"></span>
-      <span class="continuum-top-actions"></span>
-    </div>
-    <div class="continuum-layout">
-      <aside class="continuum-side">
-        <span></span><span></span><span></span><span></span><span></span>
-      </aside>
-      <main class="continuum-main">
-        <div class="continuum-title"></div>
-        <div class="continuum-metrics"><span></span><span></span><span></span><span></span></div>
-        <div class="continuum-map-frame"></div>
-      </main>
-    </div>
-  </div>
-  <div class="spatial-stage" aria-hidden="true">
-    <svg class="spatial-parcel" viewBox="0 0 460 286" role="presentation" focusable="false">
-      <path class="spatial-parcel-fill" d="M74 66 L342 43 L397 160 L322 226 L104 211 L57 133 Z"></path>
-      <path class="spatial-parcel-line" pathLength="1" d="M74 66 L342 43 L397 160 L322 226 L104 211 L57 133 Z"></path>
-      <path class="spatial-parcel-axis" pathLength="1" d="M104 211 L186 126 L342 43"></path>
-      <circle class="spatial-node node-a" cx="74" cy="66" r="4"></circle>
-      <circle class="spatial-node node-b" cx="397" cy="160" r="4"></circle>
-      <circle class="spatial-node node-c" cx="104" cy="211" r="4"></circle>
-    </svg>
-    <div class="spatial-brand">
-      <img class="signature-original-logo spatial-logo" src="/smart-hsr-signature-transparent.png" alt="">
-      <strong class="spatial-service-name">الأراضي الذكية</strong>
-    </div>
-    <div class="signature-status spatial-status"><i></i><span>التحقق من الهوية والوصول الآمن</span></div>
+<div class="auth-screen splash-screen signature-entry silent-authority-entry" id="bootScreen" aria-label="جاري فتح مركز الأراضي الذكية">
+  <div class="silent-authority-core" aria-hidden="true">
+    <img class="silent-authority-logo" src="/smart-hsr-signature-transparent.png" alt="">
+    <strong class="silent-authority-service">الأراضي الذكية</strong>
+    <span class="silent-authority-line"></span>
+    <div class="signature-status silent-authority-status"><i></i><span>جاري فتح مساحة العمل الآمنة</span></div>
   </div>
 </div>
 <div class="auth-screen" id="loginScreen" hidden>
@@ -2917,48 +3053,25 @@ async function loadModules() {
 }
 
 // ---- screen management ----
-const CONTINUUM_MIN_VISIBLE_MS = 620;
-const continuumStartedAt = performance.now();
-function beginContinuumExit(boot, app) {
-  window.requestAnimationFrame(() => {
-    const stage = boot.querySelector(".spatial-stage");
-    const target = app.querySelector(".map-wrap") || app.querySelector(".map-panel") || app.querySelector(".main");
-    if (stage && target) {
-      const from = stage.getBoundingClientRect();
-      const to = target.getBoundingClientRect();
-      const fromX = from.left + from.width / 2;
-      const fromY = from.top + from.height / 2;
-      const toX = to.left + to.width / 2;
-      const toY = to.top + Math.min(to.height / 2, 220);
-      const scale = Math.max(.30, Math.min(.68, (to.width / Math.max(from.width, 1)) * .72));
-      boot.style.setProperty("--continuum-x", (toX - fromX).toFixed(1) + "px");
-      boot.style.setProperty("--continuum-y", (toY - fromY).toFixed(1) + "px");
-      boot.style.setProperty("--continuum-scale", scale.toFixed(3));
-    }
-    bootStatus("جاهز");
-    boot.classList.add("continuum-exit","signature-exit");
-  });
-}
+const AUTHORITY_MIN_VISIBLE_MS = 680;
+const authorityStartedAt = performance.now();
 function showScreen(name) {
   const boot = document.getElementById("bootScreen");
   const login = document.getElementById("loginScreen");
   const denied = document.getElementById("deniedScreen");
   const app = document.getElementById("appShell");
   if (name === "app" && boot && !boot.hidden) {
-    // Reveal the authenticated shell immediately so its real map target can
-    // participate in the transition. The boot layer remains above it and
-    // intercepts interaction until the secure handoff animation completes.
     app.hidden = false;
-    const remaining = Math.max(0, CONTINUUM_MIN_VISIBLE_MS - (performance.now() - continuumStartedAt));
-    window.setTimeout(() => beginContinuumExit(boot, app), remaining);
+    const remaining = Math.max(0, AUTHORITY_MIN_VISIBLE_MS - (performance.now() - authorityStartedAt));
+    window.setTimeout(() => {
+      bootStatus("جاهز");
+      boot.classList.add("silent-authority-exit");
+    }, remaining);
     window.setTimeout(() => {
       boot.hidden = true;
-      boot.classList.remove("continuum-exit","signature-exit");
-      boot.style.removeProperty("--continuum-x");
-      boot.style.removeProperty("--continuum-y");
-      boot.style.removeProperty("--continuum-scale");
+      boot.classList.remove("silent-authority-exit");
       document.body.classList.remove("secure-handoff-active");
-    }, remaining + 560);
+    }, remaining + 280);
   } else {
     boot.hidden = name !== "boot";
     app.hidden = name !== "app";
