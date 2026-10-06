@@ -1,8 +1,8 @@
 :root{
   --hsr-splash-bg:#03110d;
   --hsr-splash-bg-2:#061a13;
-  --hsr-splash-ink:#ffffff;
-  --hsr-splash-muted:#8fa79a;
+  --hsr-splash-ink:#f4f7f5;
+  --hsr-splash-muted:#90a69a;
   --hsr-splash-accent:#70e39a;
   --hsr-splash-line:rgba(112,227,154,.18);
 }
@@ -14,56 +14,80 @@
   place-items:center;
   overflow:hidden;
   background:
-    radial-gradient(circle at 50% 44%,rgba(34,126,79,.12) 0%,rgba(6,26,19,.05) 26%,transparent 56%),
+    radial-gradient(circle at 50% 43%,rgba(34,126,79,.11) 0%,rgba(6,26,19,.045) 28%,transparent 58%),
     linear-gradient(180deg,var(--hsr-splash-bg-2) 0%,var(--hsr-splash-bg) 58%,#020b08 100%);
   color:var(--hsr-splash-ink);
   opacity:1;
   isolation:isolate;
-  font-family:"IBM Plex Sans Arabic","IBM Plex Sans","Cairo",system-ui,sans-serif;
+  font-family:"Cairo",system-ui,sans-serif;
 }
 .hsr-company-splash::before{
   content:"";
   position:absolute;
   inset:0;
   background:
-    linear-gradient(180deg,rgba(255,255,255,.014),transparent 34%),
-    radial-gradient(circle at 50% 44%,rgba(112,227,154,.055),transparent 28%);
+    linear-gradient(180deg,rgba(255,255,255,.012),transparent 34%),
+    radial-gradient(circle at 50% 43%,rgba(112,227,154,.045),transparent 30%);
   pointer-events:none;
 }
 .hsr-company-splash__core{
   position:relative;
   z-index:1;
-  width:min(500px,90vw);
+  width:min(560px,92vw);
   display:flex;
   flex-direction:column;
   align-items:center;
   text-align:center;
-  transform:translateY(-1.2vh);
+  transform:translateY(-1.5vh);
 }
 .hsr-company-splash__brand{
   display:flex;
   align-items:center;
   justify-content:center;
+  gap:18px;
   direction:ltr;
   opacity:0;
   animation:hsrBrandIn .34s cubic-bezier(.16,.84,.3,1) .04s forwards;
 }
-.hsr-company-splash__signature{
-  width:clamp(285px,29vw,382px);
-  max-width:82vw;
-  max-height:162px;
+.hsr-company-splash__mark{
+  width:88px;
+  height:97px;
+  flex:0 0 auto;
   object-fit:contain;
-  image-rendering:auto;
-  filter:
-    brightness(0) invert(1)
-    drop-shadow(0 16px 34px rgba(0,0,0,.34))
-    drop-shadow(0 0 16px rgba(112,227,154,.045));
-  opacity:.97;
+  filter:brightness(0) invert(1) drop-shadow(0 14px 28px rgba(0,0,0,.28));
+}
+.hsr-company-splash__wordmark{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  min-width:250px;
+  color:#f7faf8;
+  text-shadow:0 8px 22px rgba(0,0,0,.22);
+}
+.hsr-company-splash__smart{
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:30px;
+  line-height:.94;
+  font-weight:700;
+  letter-spacing:.23em;
+  margin-left:.18em;
+  white-space:nowrap;
+}
+.hsr-company-splash__hsr{
+  margin-top:7px;
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:64px;
+  line-height:.76;
+  font-weight:800;
+  letter-spacing:-.045em;
+  transform:scaleX(1.04);
+  transform-origin:left center;
+  white-space:nowrap;
 }
 .hsr-company-splash__tagline{
-  margin-top:13px;
+  margin-top:21px;
   color:var(--hsr-splash-muted);
-  font:500 8px/1.45 "IBM Plex Mono","IBM Plex Sans",system-ui,sans-serif;
+  font:500 8.5px/1.45 "IBM Plex Mono","Courier New",monospace;
   letter-spacing:.16em;
   text-transform:uppercase;
   direction:ltr;
@@ -73,7 +97,7 @@
 .hsr-company-splash__line{
   position:relative;
   display:block;
-  width:160px;
+  width:168px;
   height:1px;
   margin-top:18px;
   overflow:hidden;
@@ -89,7 +113,7 @@
   width:52%;
   height:1px;
   background:linear-gradient(90deg,transparent,var(--hsr-splash-accent),transparent);
-  box-shadow:0 0 10px rgba(112,227,154,.16);
+  box-shadow:0 0 10px rgba(112,227,154,.15);
   animation:hsrLightPass .42s cubic-bezier(.4,0,.2,1) .43s 1 both;
 }
 .hsr-company-splash__status,
@@ -101,7 +125,7 @@
   justify-content:center;
   gap:8px;
   color:var(--hsr-splash-muted);
-  font:500 9px/1.4 "IBM Plex Sans Arabic","Cairo",system-ui,sans-serif;
+  font:500 10px/1.5 "Cairo",system-ui,sans-serif;
   opacity:0;
   animation:hsrCopyIn .20s ease .53s forwards;
 }
@@ -118,10 +142,13 @@
 .hsr-company-splash[data-ready="true"] .signature-status i{
   box-shadow:0 0 0 3px rgba(112,227,154,.10),0 0 12px rgba(112,227,154,.28);
 }
-html:has(.hsr-company-splash) .ai-trigger,
-html:has(.hsr-company-splash) .ai-panel,
-html:has(.hsr-company-splash) .mobile-bottom-nav,
-html:has(.hsr-company-splash) .toast{
+html.hsr-splash-active .ai-trigger,
+html.hsr-splash-active .ai-panel,
+html.hsr-splash-active .mobile-bottom-nav,
+html.hsr-splash-active .toast,
+html.hsr-splash-active [data-ai-trigger],
+html.hsr-splash-active [aria-label*="المساعد"]{
+  display:none!important;
   visibility:hidden!important;
   pointer-events:none!important;
 }
@@ -132,15 +159,20 @@ html:has(.hsr-company-splash) .toast{
   pointer-events:none;
 }
 @keyframes hsrBrandIn{
-  from{opacity:0;transform:translateY(5px) scale(.986);filter:blur(6px)}
+  from{opacity:0;transform:translateY(5px) scale(.987);filter:blur(5px)}
   to{opacity:1;transform:none;filter:none}
 }
 @keyframes hsrCopyIn{to{opacity:1}}
 @keyframes hsrLightPass{from{transform:translateX(0)}to{transform:translateX(300%)}}
 @media(max-width:620px){
-  .hsr-company-splash__core{width:92vw}
-  .hsr-company-splash__signature{width:min(300px,80vw);max-height:140px}
-  .hsr-company-splash__tagline{font-size:7px;letter-spacing:.13em}
+  .hsr-company-splash__core{width:94vw}
+  .hsr-company-splash__brand{gap:12px}
+  .hsr-company-splash__mark{width:68px;height:75px}
+  .hsr-company-splash__wordmark{min-width:195px}
+  .hsr-company-splash__smart{font-size:23px;letter-spacing:.21em}
+  .hsr-company-splash__hsr{font-size:49px;margin-top:6px}
+  .hsr-company-splash__tagline{font-size:7px;letter-spacing:.12em;margin-top:18px}
+  .hsr-company-splash__status,.hsr-company-splash .signature-status{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){
   .hsr-company-splash__brand,
@@ -154,8 +186,6 @@ html:has(.hsr-company-splash) .toast{
     transform:none!important;
     filter:none!important;
   }
-  .hsr-company-splash__signature{
-    filter:brightness(0) invert(1)!important;
-  }
+  .hsr-company-splash__mark{filter:brightness(0) invert(1)!important}
   .hsr-company-splash.is-exiting{transition:opacity .12s linear;transform:none}
 }
