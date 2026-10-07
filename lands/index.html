@@ -3018,6 +3018,104 @@ body.sidebar-collapsed .side-identity div{display:none}.body.sidebar-collapsed .
 @media(max-width:980px) and (min-width:701px){.manager-header-inner{grid-template-columns:auto minmax(180px,1fr) auto!important}.manager-profile-copy{display:none}.manager-profile-button{padding:5px!important}.manager-brand-logo{width:72px!important}.side-identity div{display:none}.side-identity img{margin:auto}}
 @media(max-width:700px){.manager-header-inner{grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important}.manager-profile-zone{display:none!important}.manager-brand-zone{justify-self:start!important}.manager-brand-logo{width:72px!important;height:38px!important}.brand-copy{display:none!important}.side-identity{display:none!important}}
 </style>
+
+<style id="lands-manager-header-sidebar-final-parity">
+/* Final presentation parity with the approved Municipality Manager shell.
+   Visual/layout state only — no auth, RBAC, data or route behavior changes. */
+.command-header.manager-parity-header{
+  margin:8px 10px 0!important;
+  width:calc(100% - 20px)!important;
+  border-radius:16px!important;
+  overflow:visible!important;
+  position:sticky!important;
+  top:8px!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    0 22px 54px -34px rgba(1,17,30,.90),
+    0 0 0 1px rgba(76,211,145,.035)!important;
+}
+.command-header.manager-parity-header:before{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(112deg,rgba(255,255,255,.065),transparent 28%,transparent 70%,rgba(71,219,151,.055));
+}
+.manager-header-inner{
+  width:100%!important;max-width:none!important;
+  grid-template-columns:minmax(220px,auto) minmax(120px,1fr) minmax(220px,auto)!important;
+  grid-template-areas:"brand actions profile"!important;
+  direction:ltr!important;
+}
+.manager-brand-zone{grid-area:brand!important;justify-self:start!important;direction:rtl!important}
+.header-actions{grid-area:actions!important;justify-self:center!important;direction:rtl!important}
+.manager-profile-zone{grid-area:profile!important;justify-self:end!important;direction:rtl!important}
+.manager-brand-logo{
+  width:104px!important;max-width:104px!important;height:46px!important;
+  filter:drop-shadow(0 8px 18px rgba(0,0,0,.28)) drop-shadow(0 0 12px rgba(89,219,154,.08))!important;
+}
+.manager-profile-button{
+  min-width:176px!important;
+  justify-content:flex-start!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.065),0 10px 26px -22px rgba(0,0,0,.78)!important;
+}
+.account-menu{right:0!important;left:auto!important}
+
+/* Sidebar behaves like the manager shell: expanded text rail -> compact icon rail. */
+.shell{transition:grid-template-columns .20s ease!important}
+.side{transition:width .20s ease,padding .20s ease,transform .20s ease,opacity .18s ease!important}
+@media(min-width:701px){
+  body.sidebar-collapsed .shell{grid-template-columns:72px minmax(0,1fr)!important}
+  body.sidebar-collapsed .side{padding-inline:9px!important}
+  body.sidebar-collapsed .side-identity div,
+  body.sidebar-collapsed .nav-group-label,
+  body.sidebar-collapsed .side-foot{display:none!important}
+  body.sidebar-collapsed .side-identity{justify-content:center!important;padding-inline:0!important}
+  body.sidebar-collapsed .side-identity img{width:46px!important}
+  body.sidebar-collapsed .side .nav button{
+    justify-content:center!important;padding-inline:8px!important;min-height:44px!important;
+  }
+  body.sidebar-collapsed .side .nav button>span{
+    position:fixed!important;right:82px!important;
+    width:max-content!important;max-width:210px!important;
+    padding:7px 10px!important;border-radius:9px!important;
+    background:rgba(7,35,27,.96)!important;color:#f3fff8!important;
+    border:1px solid rgba(122,218,164,.18)!important;
+    box-shadow:0 16px 34px -20px rgba(0,0,0,.72)!important;
+    opacity:0!important;pointer-events:none!important;z-index:95!important;
+    transform:translateY(0)!important;
+  }
+  body.dark.sidebar-collapsed .side .nav button>span{
+    background:rgba(7,29,52,.97)!important;border-color:rgba(91,173,255,.20)!important;
+  }
+  body.sidebar-collapsed .side .nav button:hover>span,
+  body.sidebar-collapsed .side .nav button:focus-visible>span{opacity:1!important}
+}
+@media(min-width:701px) and (max-width:980px){
+  .side-collapse-toggle{display:none!important}
+}
+@media(max-width:700px){
+  .command-header.manager-parity-header{margin:6px!important;width:calc(100% - 12px)!important;top:6px!important;border-radius:14px!important}
+  .manager-header-inner{
+    grid-template-columns:minmax(0,1fr) auto auto!important;
+    grid-template-areas:"brand actions profile"!important;
+    padding:7px 9px!important;gap:7px!important;
+  }
+  .manager-brand-zone{display:flex!important;justify-self:start!important}
+  .manager-brand-logo{width:74px!important;height:38px!important}
+  .brand-copy{display:none!important}
+  .manager-profile-zone{display:block!important}
+  .manager-profile-button{
+    min-width:0!important;width:40px!important;height:40px!important;padding:4px!important;
+    justify-content:center!important;border-radius:11px!important;
+  }
+  .manager-profile-copy,.manager-profile-chevron{display:none!important}
+  .manager-profile-avatar{width:30px!important;height:30px!important;flex-basis:30px!important}
+  .header-actions{gap:4px!important}
+  .header-actions .icon-button{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important}
+  .account-menu{top:46px!important;right:0!important;left:auto!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .shell,.side,.command-header.manager-parity-header,.manager-profile-button{transition:none!important}
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
