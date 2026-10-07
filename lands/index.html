@@ -2858,6 +2858,143 @@ body.sidebar-collapsed .shell{grid-template-columns:minmax(0,1fr) 72px!important
   .main{grid-column:auto!important;width:100%!important}
 }
 </style>
+
+<style id="lands-manager-header-glass-v2">
+/* Final V5 — compact institutional header, presentation-only. */
+.command-header.manager-parity-header{
+  overflow:visible!important;
+  background:
+    linear-gradient(168deg,rgba(9,70,50,.82),rgba(7,51,39,.88) 55%,rgba(9,43,36,.86)),
+    radial-gradient(520px 120px at 82% -50%,rgba(143,224,176,.16),transparent 72%)!important;
+  border:1px solid rgba(160,222,184,.24)!important;
+  border-bottom:1px solid rgba(107,197,142,.38)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.17),
+    inset 0 -1px 0 rgba(0,0,0,.10),
+    0 12px 28px -22px rgba(3,34,23,.76),
+    0 26px 56px -40px rgba(4,42,29,.82)!important;
+  backdrop-filter:blur(22px) saturate(145%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(145%)!important;
+}
+.command-header.manager-parity-header:before{
+  content:"";position:absolute;inset:0 12% auto;height:1px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent);
+}
+body.dark .command-header.manager-parity-header{
+  background:
+    linear-gradient(165deg,rgba(9,42,72,.88),rgba(7,31,55,.92) 56%,rgba(6,27,48,.90)),
+    radial-gradient(520px 120px at 82% -50%,rgba(88,198,255,.13),transparent 72%)!important;
+  border-color:rgba(92,174,247,.25)!important;
+  border-bottom-color:rgba(34,197,94,.32)!important;
+}
+.manager-header-inner{
+  grid-template-columns:minmax(220px,1fr) auto auto!important;
+  min-height:66px!important;
+  padding:8px 14px!important;
+  gap:16px!important;
+}
+.manager-context-zone{
+  min-width:180px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1.2!important;
+  padding:0 16px!important;
+  border-inline:1px solid rgba(255,255,255,.10)!important;
+}
+.manager-context-zone span{
+  color:rgba(220,240,228,.68)!important;
+  font-size:9.5px!important;
+  font-weight:600!important;
+}
+.manager-context-zone strong{
+  margin-top:3px!important;
+  color:#f3faf5!important;
+  font-size:11.5px!important;
+  font-weight:750!important;
+}
+body.dark .manager-context-zone span{color:#8eacc8!important}
+body.dark .manager-context-zone strong{color:#f3f8ff!important}
+.header-actions{gap:6px!important}
+.header-actions .icon-button{
+  width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;
+  border-radius:10px!important;
+  background:transparent!important;
+  border-color:rgba(255,255,255,.13)!important;
+}
+.header-actions .icon-button:hover,
+.header-actions .icon-button[aria-expanded="true"]{
+  background:rgba(255,255,255,.10)!important;
+  border-color:rgba(255,255,255,.24)!important;
+}
+.account-menu-wrap{position:relative!important}
+.account-menu{
+  position:absolute!important;
+  top:44px!important;
+  left:0!important;
+  width:218px!important;
+  display:none!important;
+  padding:7px!important;
+  z-index:90!important;
+  border-radius:13px!important;
+  background:rgba(8,52,38,.96)!important;
+  border:1px solid rgba(143,224,176,.20)!important;
+  box-shadow:0 24px 54px -22px rgba(0,0,0,.72)!important;
+  backdrop-filter:blur(20px) saturate(145%)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(145%)!important;
+}
+body.dark .account-menu{
+  background:rgba(7,31,55,.97)!important;
+  border-color:rgba(91,173,255,.20)!important;
+}
+.account-menu.open{display:block!important}
+.account-menu-summary{
+  display:flex!important;align-items:center!important;gap:9px!important;
+  padding:8px 9px 10px!important;margin-bottom:5px!important;
+  border-bottom:1px solid rgba(255,255,255,.11)!important;
+}
+.account-avatar{
+  width:30px!important;height:30px!important;flex:none!important;border-radius:9px!important;
+  display:grid!important;place-items:center!important;
+  background:rgba(255,255,255,.10)!important;color:#fff!important;
+  border:1px solid rgba(255,255,255,.16)!important;font-size:11px!important;font-weight:800!important;
+}
+.account-copy{display:flex!important;flex-direction:column!important;min-width:0!important}
+.account-copy strong{color:#fff!important;font-size:10.5px!important}
+.account-copy small{margin-top:2px!important;color:rgba(220,240,228,.68)!important;font-size:8.5px!important}
+body.dark .account-copy small{color:#8eacc8!important}
+.account-menu>button{
+  width:100%!important;min-height:38px!important;
+  display:flex!important;align-items:center!important;gap:9px!important;
+  padding:8px 9px!important;border:0!important;border-radius:9px!important;
+  background:transparent!important;color:rgba(239,249,243,.84)!important;
+  font:600 11px/1.3 "Cairo",sans-serif!important;text-align:right!important;
+}
+.account-menu>button:hover,.account-menu>button.active{background:rgba(255,255,255,.09)!important;color:#fff!important}
+.account-menu>button i{width:15px!important;height:15px!important}
+.side-brand{display:none!important}
+.side{padding-top:12px!important}
+.side .nav{padding-top:0!important;padding-bottom:24px!important}
+.side-foot{display:none!important}
+.ai-trigger{
+  left:20px!important;bottom:24px!important;width:48px!important;height:48px!important;
+  box-shadow:0 12px 28px -16px rgba(11,61,46,.55)!important;
+}
+@media(max-width:980px) and (min-width:701px){
+  .manager-header-inner{grid-template-columns:minmax(180px,1fr) auto!important}
+  .manager-context-zone{display:none!important}
+}
+@media(max-width:700px){
+  .manager-header-inner{grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important}
+  .manager-context-zone{display:none!important}
+  .brand-copy .eyebrow{display:none!important}
+  .manager-header-subtitle{display:none!important}
+  .header-actions .icon-button{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important}
+  .account-menu{position:fixed!important;top:58px!important;left:10px!important;right:auto!important;width:min(230px,calc(100vw - 20px))!important}
+  .ai-trigger{left:14px!important;bottom:76px!important}
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -2885,18 +3022,26 @@ body.sidebar-collapsed .shell{grid-template-columns:minmax(0,1fr) 72px!important
           <p class="manager-header-subtitle">إدارة الأراضي والممتلكات</p>
         </div>
       </div>
+      <div class="manager-context-zone" aria-label="سياق مساحة العمل">
+        <span id="headerOrgLabel">الجهة البلدية</span>
+        <strong id="headerRoleLabel">مساحة عمل الأراضي</strong>
+      </div>
       <div class="header-actions">
-        <div class="header-chip user manager-user-chip" id="userInfo"></div>
-        <button class="icon-button mobile-nav-toggle-btn" id="mobileNavToggle" type="button" aria-label="فتح قائمة التنقل" onclick="toggleMobileNav()" title="القائمة"><i data-lucide="menu"></i></button>
-        <button class="icon-button manager-mode-chip" id="managerModeToggle" type="button" aria-pressed="false" aria-label="تبديل وضع المدير" onclick="toggleManagerMode()" title="وضع المدير"><i data-lucide="presentation"></i></button>
-        <button id="sidebarToggle" class="icon-button" type="button" aria-label="طي/فتح القائمة الجانبية" aria-pressed="false" aria-expanded="true" title="القائمة الجانبية" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
-        <button id="themeToggle" class="icon-button" type="button" aria-label="تفعيل الوضع الداكن" aria-pressed="false" title="الوضع الداكن" onclick="toggleTheme()"></button>
-        <button id="logoutBtn" class="icon-button" type="button" aria-label="تسجيل الخروج" title="تسجيل الخروج"><i data-lucide="log-out"></i></button>
+        <button id="themeToggle" class="icon-button" type="button" aria-label="تبديل المظهر" aria-pressed="false" title="الوضع الليلي/النهاري" onclick="toggleTheme()"></button>
+        <button id="sidebarToggle" class="icon-button" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-pressed="false" aria-expanded="true" title="القائمة الجانبية" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
+        <div class="account-menu-wrap">
+          <button id="accountButton" class="icon-button account-button" type="button" aria-label="الحساب" aria-haspopup="menu" aria-expanded="false" title="الحساب" onclick="toggleAccountMenu(event)"><i data-lucide="user-round"></i></button>
+          <div id="accountMenu" class="account-menu" role="menu" aria-label="قائمة الحساب">
+            <div class="account-menu-summary" id="userInfo"></div>
+            <button id="managerModeMenuItem" type="button" role="menuitem" onclick="toggleManagerMode();closeAccountMenu()"><i data-lucide="presentation"></i><span>وضع المدير</span></button>
+            <button type="button" role="menuitem" onclick="closeAccountMenu();handleLogout()"><i data-lucide="log-out"></i><span>تسجيل الخروج</span></button>
+          </div>
+        </div>
       </div>
     </div>
   </header>
   <div class="shell">
-    <aside class="side"><div class="side-brand"><strong>الأراضي الذكية</strong><span>إدارة الأراضي والممتلكات</span></div><nav class="nav">
+    <aside class="side"><nav class="nav">
       <div class="nav-group-label">الرئيسية</div>
       <button class="active" data-view="center"><i data-lucide="layout-dashboard"></i><span>لوحة المعلومات</span></button>
       <div class="nav-group-label">إدارة الأراضي</div>
@@ -3325,20 +3470,45 @@ function applySidebarState() {
   if (btn) btn.setAttribute("aria-expanded", String(!sidebarCollapsed));
 }
 function toggleSidebar() {
+  if (window.matchMedia("(max-width:700px)").matches) {
+    document.body.classList.toggle("mobile-nav-open");
+    const btn = document.getElementById("sidebarToggle");
+    if (btn) btn.setAttribute("aria-expanded", String(document.body.classList.contains("mobile-nav-open")));
+    return;
+  }
   sidebarCollapsed = !sidebarCollapsed;
   applySidebarState();
   try { localStorage.setItem("slgr-sidebar-collapsed", sidebarCollapsed ? "1" : "0"); } catch { /* best-effort */ }
 }
 function toggleMobileNav() { document.body.classList.toggle("mobile-nav-open"); }
-function closeMobileNav() { document.body.classList.remove("mobile-nav-open"); }
+function closeMobileNav() {
+  document.body.classList.remove("mobile-nav-open");
+  const btn = document.getElementById("sidebarToggle");
+  if (btn && window.matchMedia("(max-width:700px)").matches) btn.setAttribute("aria-expanded", "false");
+}
+function toggleAccountMenu(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById("accountMenu");
+  const btn = document.getElementById("accountButton");
+  if (!menu || !btn) return;
+  const open = !menu.classList.contains("open");
+  menu.classList.toggle("open", open);
+  btn.setAttribute("aria-expanded", String(open));
+}
+function closeAccountMenu() {
+  const menu = document.getElementById("accountMenu");
+  const btn = document.getElementById("accountButton");
+  if (menu) menu.classList.remove("open");
+  if (btn) btn.setAttribute("aria-expanded", "false");
+}
 // وضع المدير — a concise, opt-in Executive GIS View. Toggling it only
 // changes how centerView() renders (see managerModeView()); it reads
 // exclusively from AutomationEngine and never mutates grants/decisions.
 function toggleManagerMode() {
   if (!session || !mod.canReviewGrant(session.role)) return;
   managerMode = !managerMode;
-  const b = document.getElementById("managerModeToggle");
-  if (b) { b.classList.toggle("active", managerMode); b.setAttribute("aria-pressed", String(managerMode)); }
+  const b = document.getElementById("managerModeMenuItem");
+  if (b) b.classList.toggle("active", managerMode);
   if (currentView === "center") render();
   showToast(managerMode ? "تم تفعيل وضع المدير" : "تم إيقاف وضع المدير");
 }
@@ -3545,16 +3715,23 @@ function renderShellChrome() {
   const canAdmin = mod.canManageEntitlements(session.role);
   document.body.classList.toggle("lands-reviewer", canReview);
   document.body.classList.toggle("lands-admin", canAdmin);
-  document.getElementById("userInfo").innerHTML = `<span class="avatar">${esc((roleLabel || "?")[0])}</span><span class="user-copy"><strong>${esc(roleLabel)}</strong><small>الأراضي الذكية</small></span>`;
-  document.getElementById("logoutBtn").onclick = handleLogout;
+  document.getElementById("userInfo").innerHTML = `<span class="account-avatar">${esc((roleLabel || "?")[0])}</span><span class="account-copy"><strong>${esc(roleLabel)}</strong><small>${reviewMode ? "بيانات معاينة" : "الأراضي الذكية"}</small></span>`;
+  const roleEl = document.getElementById("headerRoleLabel");
+  const orgEl = document.getElementById("headerOrgLabel");
+  if (roleEl) roleEl.textContent = roleLabel;
+  if (orgEl) {
+    orgEl.textContent = reviewMode ? "معاينة تجريبية" : "الجهة البلدية";
+    if (!reviewMode && session?.municipalityId) orgEl.title = session.municipalityId;
+  }
+  const accountButton = document.getElementById("accountButton");
+  if (accountButton) accountButton.title = roleLabel;
   document.querySelectorAll("[data-review-only]").forEach(el => { el.hidden = !canReview; });
   document.querySelectorAll("[data-admin-only]").forEach(el => { el.hidden = !canAdmin; });
-  const managerModeToggle = document.getElementById("managerModeToggle");
+  const managerModeToggle = document.getElementById("managerModeMenuItem");
   if (managerModeToggle) managerModeToggle.hidden = !canReview;
   if (!canReview && managerMode) managerMode = false;
-  document.getElementById("sideFoot").innerHTML = `<span>${reviewMode ? "وضع المراجعة · بيانات تجريبية" : "بيئة ما قبل الإنتاج"}</span><strong>${esc(roleLabel)}</strong>`;
-  const envBadge = document.getElementById("envBadge");
-  if (envBadge) envBadge.textContent = reviewMode ? "وضع المراجعة — بيانات تجريبية فقط" : "بيئة ما قبل الإنتاج";
+  const sideFoot = document.getElementById("sideFoot");
+  if (sideFoot) sideFoot.innerHTML = "";
 }
 
 // ---- main render dispatch ----
@@ -5316,6 +5493,9 @@ function openAiPanel() { toggleAiPanel(true); }
 document.querySelectorAll(".nav button[data-view], .mobile-bottom-nav button[data-view]").forEach(b => b.onclick = () => { closeMobileNav(); setView(b.dataset.view); });
 document.getElementById("drawerBackdrop").onclick = e => { if (e.target.id === "drawerBackdrop") closeDrawer(); };
 document.getElementById("modalBackdrop").onclick = e => { if (e.target.id === "modalBackdrop") closeModal(); };
+document.addEventListener("click", e => {
+  if (!e.target.closest(".account-menu-wrap")) closeAccountMenu();
+});
 applyTheme(localStorage.getItem("slgr-theme") || "light");
 sidebarCollapsed = localStorage.getItem("slgr-sidebar-collapsed") === "1";
 applySidebarState();
