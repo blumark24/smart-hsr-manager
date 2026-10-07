@@ -54,13 +54,13 @@
     root.setAttribute("aria-live","polite");
     root.setAttribute("aria-label","جاري تشغيل منصة SMART HSR");
     root.innerHTML='<div class="hsr-company-splash__core" aria-hidden="true">'+
-      '<div class="hsr-company-splash__brand">'+
-        '<span class="hsr-company-splash__orbit" aria-hidden="true"></span>'+
-        '<img class="hsr-company-splash__logo" src="/smart-hsr-signature-transparent.png" alt="">'+
+      '<div class="hsr-company-splash__brand hsr-company-splash__brand--minimal">'+
+        '<img class="hsr-company-splash__manager-mark" src="/smart-hsr-mark.svg" alt="">'+
+        '<div class="hsr-company-splash__manager-wordmark">'+
+          '<div class="hsr-company-splash__manager-name"><span>SMART</span><span>HSR</span></div>'+
+        '</div>'+
       '</div>'+
-      '<span class="hsr-company-splash__tagline">SMART MUNICIPAL PLATFORM</span>'+
       '<span class="hsr-company-splash__line"></span>'+
-      '<div class="hsr-company-splash__status signature-status"><i></i><span>تهيئة بيئة SMART HSR الآمنة</span></div>'+
     '</div>';
     document.documentElement.classList.add("hsr-splash-active");
     document.documentElement.appendChild(root);
