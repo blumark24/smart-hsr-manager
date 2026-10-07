@@ -3,12 +3,12 @@
   const script=document.currentScript;
   const mode=(script&&script.dataset.hsrSplash)||"auto";
   const force=new URLSearchParams(location.search).get("splash")==="1";
-  const key="smart-hsr.company-splash.v7";
+  const key="smart-hsr.company-splash.v8";
   let root=null;
   let startedAt=performance.now();
   let hiddenUi=[];
   let uiObserver=null;
-  const minimum=760;
+  const minimum=1250;
 
   function shouldShow(){
     if(mode==="manual") return true;
@@ -55,13 +55,10 @@
     root.setAttribute("aria-label","جاري تشغيل منصة SMART HSR");
     root.innerHTML='<div class="hsr-company-splash__core" aria-hidden="true">'+
       '<div class="hsr-company-splash__brand">'+
-        '<img class="hsr-company-splash__mark" src="/smart-hsr-mark.svg" alt="">'+
-        '<div class="hsr-company-splash__wordmark">'+
-          '<span class="hsr-company-splash__smart">SMART</span>'+
-          '<span class="hsr-company-splash__hsr">HSR</span>'+
-        '</div>'+
+        '<span class="hsr-company-splash__orbit" aria-hidden="true"></span>'+
+        '<img class="hsr-company-splash__logo" src="/smart-hsr-signature-transparent.png" alt="">'+
       '</div>'+
-      '<span class="hsr-company-splash__tagline">SAUDI MUNICIPAL INTELLIGENCE SYSTEM</span>'+
+      '<span class="hsr-company-splash__tagline">SMART MUNICIPAL PLATFORM</span>'+
       '<span class="hsr-company-splash__line"></span>'+
       '<div class="hsr-company-splash__status signature-status"><i></i><span>تهيئة بيئة SMART HSR الآمنة</span></div>'+
     '</div>';
