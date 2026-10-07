@@ -3706,6 +3706,71 @@ body.dark{
 }
 </style>
 
+
+<style id="lands-spatial-command-v1">
+/* Lands Spatial Command v1 — isolated visual layer; no auth/data-contract changes. */
+.spatial-command-panel{overflow:hidden}
+.lands-spatial-toolbar{display:grid;grid-template-columns:auto minmax(210px,1fr) auto;gap:10px;align-items:center;padding:12px 16px;background:linear-gradient(180deg,rgba(8,39,61,.96),rgba(7,30,49,.98));border-bottom:1px solid rgba(92,173,218,.18)}
+body:not(.dark) .lands-spatial-toolbar{background:linear-gradient(180deg,#0a4a34,#083b2c);border-color:rgba(126,202,166,.2)}
+.lands-spatial-modes{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.lands-spatial-modes button,.lands-spatial-expand{min-height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.06);color:rgba(235,247,241,.78);padding:0 10px;font-size:10.5px;font-weight:700;cursor:pointer}
+.lands-spatial-modes button.active{background:rgba(54,197,121,.18);border-color:rgba(79,220,144,.42);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.lands-spatial-search{height:36px;border-radius:10px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.13);display:flex;align-items:center;gap:8px;padding:0 11px;color:rgba(221,239,230,.72)}
+.lands-spatial-search svg{width:15px;height:15px;flex:none}
+.lands-spatial-search input{width:100%;border:0;outline:0;background:transparent;color:#f4fbf7;font-size:12px;min-width:0}
+.lands-spatial-search input::placeholder{color:rgba(218,237,227,.58)}
+.lands-spatial-expand{display:flex;align-items:center;gap:7px;justify-content:center;color:#fff;background:rgba(255,255,255,.09)}
+.lands-spatial-expand svg{width:14px;height:14px}
+.spatial-command-panel .map-wrap{height:420px;border-bottom-color:rgba(74,164,252,.18);background:#071c2c}
+.spatial-command-panel .map-wrap:after{opacity:.12}
+body:not(.dark) .spatial-command-panel .map-wrap{background:#dfe9e2}
+.spatial-command-panel .map-note{border-radius:8px;background:rgba(5,26,39,.82);border:1px solid rgba(255,255,255,.12);color:#d9e8e1;backdrop-filter:blur(10px)}
+body:not(.dark) .spatial-command-panel .map-note{background:rgba(247,251,248,.92);color:#52665b;border-color:rgba(24,98,66,.16)}
+.spatial-command-panel .legend{background:rgba(5,26,39,.94);border-bottom:1px solid rgba(78,162,214,.12);padding:10px 16px;color:#b9ccda}
+body:not(.dark) .spatial-command-panel .legend{background:#eef4f0;color:#53685d;border-color:rgba(24,98,66,.12)}
+.spatial-command-panel .selection.parcel-inspector{margin:14px;border-radius:14px;border:1px solid rgba(77,166,226,.22);border-right:3px solid #22c55e;background:linear-gradient(155deg,rgba(10,39,64,.96),rgba(7,29,49,.98));box-shadow:0 20px 44px -30px rgba(0,0,0,.8);color:#eef7ff}
+body:not(.dark) .spatial-command-panel .selection.parcel-inspector{background:linear-gradient(155deg,#edf6f0,#e4f0e8);border-color:rgba(14,122,79,.22);border-right-color:#12855a;box-shadow:0 18px 38px -30px rgba(9,67,42,.5);color:#143125}
+.parcel-inspector-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+.parcel-inspector-head h3{color:inherit!important;margin:4px 0 0!important}
+.parcel-inspector-kicker{font-size:8px;font-weight:800;letter-spacing:1.5px;color:#65dca0}
+.parcel-readiness{display:grid;place-items:center;min-width:70px;padding:7px 9px;border-radius:10px;background:rgba(34,197,94,.09);border:1px solid rgba(72,218,137,.22)}
+.parcel-readiness strong{font-size:17px;color:#7ce5aa}.parcel-readiness span{font-size:8.5px;color:#98b8a7}
+.parcel-next-action{display:flex;align-items:center;gap:9px;padding:10px 12px;margin:0 0 14px;border-radius:10px;background:rgba(34,197,94,.08);border:1px solid rgba(72,218,137,.18);color:#cfeedd}
+.parcel-next-action svg{width:17px;height:17px;color:#63d999}.parcel-next-action span{display:flex;flex-direction:column}.parcel-next-action small{font-size:8.5px;color:#86aa98}.parcel-next-action strong{font-size:11.5px}
+.spatial-command-panel .selection-grid .field-label{color:#84a2b7}.spatial-command-panel .selection-grid .field-value{color:#edf6ff}
+body:not(.dark) .spatial-command-panel .selection-grid .field-label{color:#64796d}body:not(.dark) .spatial-command-panel .selection-grid .field-value{color:#153226}
+.spatial-command-panel .btn.ghost{border-color:rgba(105,181,229,.22);color:#cfe2f2}
+body:not(.dark) .spatial-command-panel .btn.ghost{border-color:rgba(18,133,90,.2);color:#235c44}
+.lands-premium-popup .leaflet-popup-content-wrapper{border-radius:14px!important;background:rgba(7,28,46,.96)!important;color:#eff7ff!important;border:1px solid rgba(88,172,229,.25)!important;box-shadow:0 20px 46px -20px rgba(0,0,0,.75)!important;backdrop-filter:blur(16px)}
+.lands-premium-popup .leaflet-popup-tip{background:#071c2e!important}
+.lands-map-popup{min-width:210px}.lands-map-popup-kicker{font-size:9px;color:#62d998;font-weight:800;margin-bottom:4px}.lands-map-popup>strong{display:block;font-size:13px;margin-bottom:9px}
+.lands-map-popup-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}.lands-map-popup-meta span{font-size:9px;color:#98b4c7}.lands-map-popup-meta b{display:block;color:#eef7ff;font-size:11px;margin-top:2px}
+.lands-map-popup-state{margin-bottom:9px}.lands-map-popup-actions{display:flex;gap:6px}.lands-map-popup-actions button{flex:1;min-height:32px;border-radius:8px;border:1px solid rgba(91,174,230,.25);background:rgba(30,85,137,.28);color:#eef7ff;font-size:9.5px;font-weight:700;cursor:pointer}
+.lands-completion-card{border:1px solid rgba(81,160,215,.18)!important;border-right:3px solid #f0a23b!important;background:linear-gradient(155deg,rgba(10,37,61,.96),rgba(7,29,49,.98))!important;border-radius:12px!important;padding:14px!important;box-shadow:0 16px 34px -28px rgba(0,0,0,.85)}
+.lands-completion-card.critical{border-right-color:#ef6b67!important}.lands-completion-card.near{border-right-color:#55c987!important}
+.lands-completion-card .insight-title{color:#edf6ff!important}.lands-completion-card p{color:#9db6c8!important;margin:8px 0 11px!important}.lands-completion-progress{height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:9px}.lands-completion-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#e09b3d,#65d89a)}
+.lands-completion-open{min-height:34px;border:1px solid rgba(91,174,230,.22);border-radius:8px;background:rgba(22,71,116,.32);color:#dcecf7;padding:0 10px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.lands-completion-open svg{width:14px;height:14px}
+body:not(.dark) .lands-completion-card{background:linear-gradient(155deg,#e7f1eb,#eef6f1)!important;border-color:rgba(16,104,70,.18)!important;box-shadow:0 14px 30px -26px rgba(12,70,47,.5)}
+body:not(.dark) .lands-completion-card .insight-title{color:#123526!important}body:not(.dark) .lands-completion-card p{color:#60766a!important}
+body:not(.dark) .lands-completion-progress{background:rgba(14,83,56,.09)}body:not(.dark) .lands-completion-open{background:rgba(14,122,79,.08);border-color:rgba(14,122,79,.22);color:#13583b}
+@media(min-width:1200px){.spatial-command-panel .selection.parcel-inspector{padding:16px 18px}.spatial-command-panel .selection-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(min-width:768px) and (max-width:1199px){
+  .workgrid{grid-template-columns:minmax(0,1.4fr) minmax(280px,.8fr)!important}
+  .lands-spatial-toolbar{grid-template-columns:1fr auto}.lands-spatial-search{grid-column:1/-1;grid-row:2}.spatial-command-panel .map-wrap{height:380px}
+  .spatial-command-panel .selection-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:767px){
+  .workgrid{grid-template-columns:1fr!important}.lands-spatial-toolbar{grid-template-columns:1fr auto;padding:9px}.lands-spatial-modes{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.lands-spatial-modes::-webkit-scrollbar{display:none}
+  .lands-spatial-modes button{white-space:nowrap;min-height:44px}.lands-spatial-search{grid-column:1/-1;grid-row:2;height:44px}.lands-spatial-search input{font-size:16px}.lands-spatial-expand{min-height:44px;padding:0 12px}.lands-spatial-expand span{display:none}
+  .spatial-command-panel .map-wrap{height:min(58vh,460px);min-height:340px}.spatial-command-panel .legend{gap:9px;font-size:9.5px;padding:9px 11px;overflow-x:auto;flex-wrap:nowrap}.spatial-command-panel .legend span{white-space:nowrap}
+  .spatial-command-panel .selection.parcel-inspector:not(.is-empty){position:fixed;z-index:75;left:8px;right:8px;bottom:72px;margin:0;max-height:58vh;overflow:auto;border-radius:18px;padding:16px;box-shadow:0 26px 70px -22px rgba(0,0,0,.85)}
+  .spatial-command-panel .selection-grid{grid-template-columns:1fr 1fr;gap:11px}.parcel-inspector-head{position:sticky;top:-16px;background:inherit;padding-top:4px;z-index:2}.parcel-readiness{min-width:62px}
+  .lands-completion-card{min-height:132px}.lands-completion-open{min-height:44px;width:100%;justify-content:center}
+}
+@media(max-width:430px){.spatial-command-panel .selection-grid{grid-template-columns:1fr}.lands-spatial-expand{width:44px;padding:0}.lands-spatial-toolbar{gap:7px}.spatial-command-panel .map-wrap{min-height:320px}}
+</style>
+
 </head>
 <body class="secure-handoff-active">
 
@@ -3897,7 +3962,7 @@ body.dark{
 // every onclick="fn()" attribute resolvable against the global scope) ----
 let mod = {};
 let client = null, session = null, grants = [], domains = { royalOrders: [], allocationDecisions: [], beneficiaries: [], plans: [], parcels: [], documents: [] }, users = [], auditEvents = [];
-let currentView = "center", query = "", statusFilter = "all", completenessFilter = "all", selectedGrantId = null, selectedDecisionNumber = null, toastTimer, reviewMode = false, managerMode = false, sidebarCollapsed = false;
+let currentView = "center", query = "", statusFilter = "all", completenessFilter = "all", selectedGrantId = null, selectedDecisionNumber = null, toastTimer, reviewMode = false, managerMode = false, sidebarCollapsed = false, dashboardSpatialMode = "all";
 // Review-Mode-only decision metadata (number/year/date/authority/status),
 // independent of grants — lets "+ إضافة قرار" create a decision before any
 // grant references it, and lets archive/edit persist across a re-render
@@ -4137,7 +4202,21 @@ function mountGisMap(containerId, featureCollection, layer) {
     featureCollection.features.forEach((f) => {
       const [lng, lat] = f.geometry.coordinates;
       const marker = L.marker([lat, lng], { icon: gisMarkerIcon(f.properties) });
-      marker.bindPopup(`<strong>قطعة ${esc(f.properties.reference || "—")}</strong><br>${esc(GIS_STATUS_LABELS[f.properties.status] || f.properties.status)}`, { closeButton: false });
+      const grant = grantById(f.properties.grantId);
+      const popupHtml = grant ? `<div class="lands-map-popup">
+        <div class="lands-map-popup-kicker">قطعة ${esc(f.properties.reference || parcelLabel(grant.parcel_id) || "—")}</div>
+        <strong>${esc(grant.beneficiary?.name || "بدون مستفيد")}</strong>
+        <div class="lands-map-popup-meta">
+          <span>القرار <b>${esc(grant.allocation_decision?.number || "—")}</b></span>
+          <span>الاكتمال <b>${completenessPercent(grant)}%</b></span>
+        </div>
+        <div class="lands-map-popup-state">${statusBadge(grant)}</div>
+        <div class="lands-map-popup-actions">
+          <button type="button" onclick="selectParcelSlot('${esc(f.properties.parcelId)}')">عرض التفاصيل</button>
+          <button type="button" onclick="openFile('${esc(grant.id)}')">الملف الرقمي</button>
+        </div>
+      </div>` : `<strong>قطعة ${esc(f.properties.reference || "—")}</strong><br>${esc(GIS_STATUS_LABELS[f.properties.status] || f.properties.status)}`;
+      marker.bindPopup(popupHtml, { closeButton: false, className: "lands-premium-popup", maxWidth: 300 });
       marker.on("click", () => selectParcelSlot(f.properties.parcelId));
       clusterGroup.addLayer(marker);
     });
@@ -4153,6 +4232,26 @@ function mountGisMap(containerId, featureCollection, layer) {
 }
 function gisZoomIn() { gisMap?.zoomIn(); }
 function gisZoomOut() { gisMap?.zoomOut(); }
+function dashboardSpatialScope() {
+  const active = grants.filter(g => !g.archived);
+  if (dashboardSpatialMode === "complete") return active.filter(g => g.status === "approved" || g.completeness?.status === "complete");
+  if (dashboardSpatialMode === "review") return active.filter(g => g.status === "under_review");
+  if (dashboardSpatialMode === "needs") return active.filter(g => g.completeness?.status === "incomplete" || g.status === "incomplete");
+  return active;
+}
+function setDashboardSpatialMode(mode) {
+  if (!["all","complete","review","needs"].includes(mode)) return;
+  dashboardSpatialMode = mode;
+  if (currentView === "center") render();
+}
+function dashboardSpatialToolbar() {
+  const modes = [["all","كل القطع"],["complete","مكتمل"],["review","تحت المراجعة"],["needs","يحتاج استكمال"]];
+  return `<div class="lands-spatial-toolbar">
+    <div class="lands-spatial-modes">${modes.map(([v,l]) => `<button type="button" class="${dashboardSpatialMode===v?"active":""}" onclick="setDashboardSpatialMode('${v}')">${esc(l)}</button>`).join("")}</div>
+    <label class="lands-spatial-search">${icon("search")}<input type="search" aria-label="بحث في التوأم المكاني" placeholder="قطعة، قرار، مستفيد، مخطط" onkeydown="if(event.key==='Enter')submitGisSearch(this.value)"></label>
+    <button class="lands-spatial-expand" type="button" onclick="setView('map')">${icon("maximize-2")}<span>فتح التوأم المكاني</span></button>
+  </div>`;
+}
 // §19: never a blank map with no explanation.
 function noSpatialDataState(count) { return `<div class="empty">${icon("map-pin-off")}<br>لا توجد بيانات مكانية موثّقة لهذا النطاق — يوجد ${count} سجل بدون موقع، راجع القائمة أدناه</div>`; }
 function gisMapErrorMarkup() { return `<div class="gis-map-error empty" hidden>${icon("alert-triangle")}<br>تعذر تحميل الخريطة<br>تعذر تحميل البيانات المكانية — حاول تحديث الصفحة</div>`; }
@@ -4721,8 +4820,8 @@ function centerView() {
   return shellHead("مركز إدارة الأراضي والممتلكات", "مركز إدارة الأراضي والممتلكات", "متابعة اكتمال وجودة وربط سجلات الأراضي والممتلكات ودعم أعمال المراجعة والاعتماد", actions) + `
  
  <section class="metrics"><div class="metric teal"><span class="label">القرارات النشطة</span><div class="value mono">${activeDecisions}</div><span class="hint">في نطاق البلدية الحالية</span></div><div class="metric"><span class="label">إجمالي المنح</span><div class="value mono">${stats.total}</div><span class="hint">في نطاق هذه البلدية</span></div><div class="metric green"><span class="label">مكتمل</span><div class="value mono">${stats.complete}</div><span class="hint"><strong>${approved}</strong> منها معتمدة رسميًا</span></div><div class="metric red"><span class="label">يحتاج استكمال</span><div class="value mono">${stats.needsWork}</div><span class="hint">تنقصها بيانات أساسية</span></div><div class="metric amber"><span class="label">تحت المراجعة</span><div class="value mono">${stats.review}</div><span class="hint">بانتظار قرار المراجع</span></div><div class="metric"><span class="label">متوسط اكتمال الملفات</span><div class="value mono">${stats.avgPercent}%</div><span class="hint">محسوب آليًا من متطلبات كل سجل</span></div></section>
- <div class="workgrid"><section class="panel map-panel"><div class="panel-head"><div><h2>التوأم الرقمي للمخططات</h2><p>محاكاة مكانية تشغيلية — غير مرتبطة حاليًا بحدود مساحية رسمية</p></div>${reviewDemoLocationChip()}</div>${(() => {
-   const active = grants.filter(g => !g.archived);
+ <div class="workgrid"><section class="panel map-panel spatial-command-panel"><div class="panel-head"><div><h2>التوأم المكاني للأراضي والممتلكات</h2><p>قراءة تشغيلية للقطع والقرارات والاكتمال — ضمن البيانات المكانية الموثّقة المتاحة</p></div>${reviewDemoLocationChip()}</div>${dashboardSpatialToolbar()}${(() => {
+   const active = dashboardSpatialScope();
    const fc = mod.buildFeatureCollection(active, mod.buildParcelIndex(domains.parcels), g => classifyForMap(g, "all"), selectedGrantId);
    if (fc.features.length) requestAnimationFrame(() => mountGisMap("gisMapDash", fc, "all"));
    return fc.features.length
@@ -4749,12 +4848,13 @@ function selectParcelSlot(parcelId) {
 // underneath stay solid.
 function dashboardSelection() {
   const g = grantById(selectedGrantId);
-  if (!g) return `<div class="selection glass"><h3>لا توجد قطعة محددة</h3><p class="muted" style="font-size:12px;margin:0">اختر قطعة من المخطط أعلاه</p></div>`;
+  if (!g) return `<div class="selection parcel-inspector is-empty glass"><h3>${icon("mouse-pointer-click")} اختر قطعة من الخريطة</h3><p class="muted" style="font-size:12px;margin:0">ستظهر هنا جاهزية الملف، النواقص، القرار والإجراء التالي.</p></div>`;
   const missingLabel = AXIS_LABELS;
   const missing = g.completeness.missing.map(m => missingLabel[m] || m);
   const meta = decisionMeta(g.allocation_decision?.number);
   const timelineEvents = auditEventsForGrant(g.id);
-  return `<div class="selection glass"><h3>${icon("map-pin")} قطعة ${esc(parcelLabel(g.parcel_id) || "—")} · منحة ${esc(g.id)}</h3><div class="selection-grid">
+  const nextAction = missing.length ? `استكمال ${missing[0]}` : (g.status === "under_review" ? "متابعة المراجعة والاعتماد" : "الملف جاهز للمتابعة");
+  return `<div class="selection parcel-inspector glass"><div class="parcel-inspector-head"><div><span class="parcel-inspector-kicker">LAND SPATIAL TWIN</span><h3>${icon("map-pin")} قطعة ${esc(parcelLabel(g.parcel_id) || "—")} · منحة ${esc(g.id)}</h3></div><div class="parcel-readiness"><strong class="mono">${completenessPercent(g)}%</strong><span>جاهزية الملف</span></div></div><div class="parcel-next-action">${icon("sparkles")}<span><small>الإجراء التالي</small><strong>${esc(nextAction)}</strong></span></div><div class="selection-grid">
     <div><span class="field-label">القرار</span><span class="field-value mono">${esc(g.allocation_decision?.number || "—")}</span></div>
     <div><span class="field-label">السنة</span><span class="field-value mono">${esc(meta.year || g.allocation_decision?.number || "—")}</span></div>
     <div><span class="field-label">المخطط</span><span class="field-value mono">${esc(planLabel(g.plan_id) || "—")}</span></div>
@@ -4775,7 +4875,7 @@ function dashboardSelection() {
   </div></div>`;
 }
 function toggleParcelTimeline() { const el = document.getElementById("parcelTwinTimeline"); if (el) el.hidden = !el.hidden; }
-function insight(g) { return `<div class="insight"><div class="insight-title"><span>${icon("alert-triangle")} ${esc(g.beneficiary?.name || g.id)}</span><b class="mono">${completenessPercent(g)}%</b></div><p>الحقول الناقصة: ${g.completeness.missing.map(m => AXIS_LABELS[m] || m).join("، ")}</p><a onclick="openFile('${esc(g.id)}')">فتح الملف الرقمي ←</a></div>`; }
+function insight(g) { const pct = completenessPercent(g); const severity = pct < 50 ? "critical" : pct < 80 ? "warning" : "near"; return `<div class="insight lands-completion-card ${severity}"><div class="insight-title"><span>${icon("alert-triangle")} ${esc(g.beneficiary?.name || g.id)}</span><b class="mono">${pct}%</b></div><div class="lands-completion-progress"><span style="width:${pct}%"></span></div><p>الحقول الناقصة: ${g.completeness.missing.map(m => AXIS_LABELS[m] || m).join("، ")}</p><button class="lands-completion-open" onclick="openFile('${esc(g.id)}')">${icon("folder-open")} فتح الملف الرقمي</button></div>`; }
 function bar(label, n, color, max) { return `<div class="bar-row"><span>${esc(label)}</span><div class="bar-track"><span style="width:${Math.max(n / max * 100, n ? 4 : 0)}%;background:${color}"></span></div><b class="mono">${n}</b></div>`; }
 function auditEventRow(e) { return `<div class="event"><span class="event-icon">${icon("history")}</span><div><strong>${esc(AUDIT_ACTION_LABELS[e.action] || e.action)}</strong><small>${esc(ROLE_LABELS[e.actor_role] || e.actor_role)}</small></div><time>${fmtDateTime(e.occurred_at)}</time></div>`; }
 
