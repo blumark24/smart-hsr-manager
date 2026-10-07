@@ -3617,6 +3617,39 @@ body.sidebar-collapsed .manager-like-nav button{justify-content:center!important
 }
 </style>
 
+
+<style id="lands-manager-header-exact-parity-r11">
+.command-header.manager-parity-header{
+  min-height:64px!important;padding:8px 16px!important;border-radius:16px!important;
+  background:linear-gradient(168deg,rgba(10,74,52,.97),rgba(8,58,42,.98) 52%,rgba(11,46,38,.97)),radial-gradient(600px 200px at 88% -40%,rgba(90,200,150,.16),transparent 70%)!important;
+  border:1px solid rgba(120,200,165,.26)!important;border-bottom:2px solid rgba(20,156,43,.55)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.14),0 14px 32px -22px rgba(6,40,28,.7)!important;
+  backdrop-filter:blur(20px) saturate(150%)!important;-webkit-backdrop-filter:blur(20px) saturate(150%)!important;
+}
+body.dark .command-header.manager-parity-header{
+  background:linear-gradient(165deg,rgba(11,48,82,.97),rgba(8,34,61,.985) 56%,rgba(8,29,52,.98))!important;
+  border:1px solid rgba(74,164,252,.28)!important;border-bottom:2px solid rgba(34,197,94,.4)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.3),0 4px 12px -6px rgba(0,0,0,.6),0 26px 54px -22px rgba(0,0,0,.98)!important;
+}
+.manager-header-inner{min-height:64px!important;padding:0!important}
+.manager-brand-zone.manager-brand-zone-exact{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;flex:none!important;padding-right:12px!important;border-right:1px solid rgba(255,255,255,.16)!important}
+body.dark .manager-brand-zone.manager-brand-zone-exact{border-right-color:rgba(103,181,255,.18)!important}
+.manager-wordmark-copy{display:block!important;text-align:left!important}
+.manager-wordmark-line{display:flex!important;align-items:baseline!important;gap:5px!important;font-size:15px!important;font-weight:700!important;letter-spacing:2.5px!important;line-height:1!important}
+.manager-wordmark-smart{color:#eaf3ee!important}.manager-wordmark-hsr{color:#3fc25a!important}
+body.dark .manager-wordmark-smart{color:#e9f1fb!important}body.dark .manager-wordmark-hsr{color:#149c2b!important}
+.manager-wordmark-sub{margin-top:3px!important;color:rgba(190,218,201,.78)!important;font:600 7px/1.3 "IBM Plex Mono",monospace!important;letter-spacing:1.6px!important;white-space:nowrap!important}
+body.dark .manager-wordmark-sub{color:#8eacc8!important}
+.manager-brand-mark{flex:none!important;display:block!important;height:42px!important;width:auto!important;max-width:none!important;object-fit:contain!important;filter:none!important}
+.lands-theme-segment{background:rgba(0,0,0,.18)!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:11px!important;padding:3px!important}
+body.dark .lands-theme-segment{background:rgba(3,24,45,.52)!important;border-color:rgba(103,181,255,.18)!important}
+.lands-theme-segment button{height:28px!important;padding:0 10px!important;border-radius:8px!important;font-size:11px!important;font-weight:600!important}
+#themeDayButton.active,#themeNightButton.active{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.24)!important;color:#f2faf5!important}
+body.dark #themeNightButton.active{background:rgba(56,132,220,.28)!important;border-color:rgba(76,201,240,.4)!important;color:#eaf4ff!important}
+body.dark #themeDayButton.active{background:rgba(30,85,137,.38)!important;border-color:rgba(91,173,255,.22)!important;color:#f3f8ff!important}
+@media(max-width:700px){.manager-wordmark-copy{display:none!important}.manager-brand-zone.manager-brand-zone-exact{padding-right:8px!important}.manager-brand-mark{height:38px!important}}
+</style>
+
 </head>
 <body class="secure-handoff-active">
 
@@ -3745,12 +3778,12 @@ body.sidebar-collapsed .manager-like-nav button{justify-content:center!important
         </div>
       </div>
 
-      <div class="manager-brand-zone">
-        <img class="manager-brand-logo manager-brand-logo-full" src="/smart-hsr-signature-transparent.png" alt="SMART HSR — سمارت حصر">
-        <div class="brand-copy">
-          <p class="manager-header-title">مركز إدارة الأراضي والممتلكات</p>
-          <p class="manager-header-subtitle">LANDS &amp; PROPERTIES CENTER</p>
+      <div class="manager-brand-zone manager-brand-zone-exact">
+        <div class="manager-wordmark-copy">
+          <div class="manager-wordmark-line" dir="ltr"><span class="manager-wordmark-smart">SMART</span><span class="manager-wordmark-hsr">HSR</span></div>
+          <div class="manager-wordmark-sub" dir="ltr">SMART MUNICIPAL PLATFORM</div>
         </div>
+        <img class="manager-brand-mark" src="/smart-hsr-mark.svg" alt="سمارت حصر" width="30" height="42">
       </div>
     </div>
   </header>
