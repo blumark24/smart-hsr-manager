@@ -4085,16 +4085,7 @@ function isProductionHost() {
   const hostname = location.hostname;
   return !hostname.endsWith(".vercel.app") || LANDS_PRODUCTION_HOSTNAMES.includes(hostname);
 }
-// Golden Preview Review Mode — design/lands-golden-preview branch ONLY, for
-// rapid visual/product review: skips auth/SSO/Firestore entirely and shows
-// hardcoded demo fixtures (see buildReviewModeFixtures()) so the dashboard
-// opens directly. Explicit, independent, second guard beyond "this branch
-// is never merged/deployed to Production": isReviewModeAllowed() is false
-// on any real Production hostname, so even a misconfigured deploy could
-// never activate it there — matches isProductionHost() exactly, but named
-// and called separately at the review-mode call site so the gate is
-// unambiguous on its own, not implied.
-function isReviewModeAllowed() { return false; }
+// Delivery build: no visual-review bypass and no fixture-backed session path.
 function resolveLandsFirebaseConfig() {
   return isProductionHost() ? LANDS_PRODUCTION_FIREBASE_CONFIG : LANDS_STAGING_FIREBASE_CONFIG;
 }
