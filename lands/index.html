@@ -3442,6 +3442,92 @@ body.dark .manager-profile-copy small{color:#8fa3bd!important}
 }
 </style>
 
+
+<style id="lands-sidebar-brand-cleanup-r2">
+/* Owner-directed cleanup: one brand statement, calm manager-like navigation. */
+.manager-brand-zone .manager-header-title{
+  font-size:13px!important;
+  font-weight:800!important;
+  letter-spacing:-.01em!important;
+}
+.manager-brand-zone .manager-header-subtitle{
+  font:700 7px/1.2 "IBM Plex Mono",monospace!important;
+  letter-spacing:.14em!important;
+  direction:ltr!important;
+  color:#70867a!important;
+}
+body.dark .manager-brand-zone .manager-header-subtitle{color:#8299af!important}
+
+.side{
+  padding-top:10px!important;
+}
+.side-identity{
+  min-height:54px!important;
+  height:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:8px!important;
+  padding:8px 8px 10px!important;
+  margin-bottom:8px!important;
+  border-bottom:1px solid rgba(255,255,255,.075)!important;
+}
+.side-identity img{display:none!important}
+.side-identity-copy{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:3px!important;
+  min-width:0!important;
+}
+.side-identity-copy strong{
+  color:#edf9f2!important;
+  font-size:10.5px!important;
+  font-weight:750!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.side-identity-copy span{
+  font:650 6.5px/1 "IBM Plex Mono",monospace!important;
+  letter-spacing:.15em!important;
+  color:#6f9d88!important;
+}
+.manager-like-nav{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:4px!important;
+}
+.manager-like-nav .nav-group-label{display:none!important}
+.manager-like-nav button{
+  min-height:42px!important;
+  border-radius:11px!important;
+  padding:10px 11px!important;
+  gap:10px!important;
+  border:1px solid transparent!important;
+  background:transparent!important;
+  transition:background .16s ease,border-color .16s ease,color .16s ease!important;
+}
+.manager-like-nav button:hover{
+  background:rgba(255,255,255,.05)!important;
+  border-color:rgba(255,255,255,.055)!important;
+}
+.manager-like-nav button.active{
+  background:linear-gradient(90deg,rgba(52,176,109,.14),rgba(255,255,255,.025))!important;
+  border-color:rgba(84,213,141,.12)!important;
+  box-shadow:inset -3px 0 #54d58d!important;
+}
+.manager-like-nav button i{width:17px!important;height:17px!important;flex:none!important}
+.manager-like-nav button span{font-size:11.5px!important;font-weight:650!important}
+body.sidebar-collapsed .side-identity-copy{display:none!important}
+body.sidebar-collapsed .side-identity{justify-content:center!important;padding:8px 0 10px!important}
+body.sidebar-collapsed .side-rail-toggle{position:static!important;transform:none!important;margin:auto!important}
+body.sidebar-collapsed .manager-like-nav button>span{display:none!important}
+body.sidebar-collapsed .manager-like-nav button{justify-content:center!important;padding-inline:8px!important}
+.side-foot{
+  opacity:.72!important;
+  font-size:9.5px!important;
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -3499,27 +3585,22 @@ body.dark .manager-profile-copy small{color:#8fa3bd!important}
       <div class="manager-brand-zone">
         <img class="manager-brand-logo manager-brand-logo-full" src="/smart-hsr-signature-transparent.png" alt="SMART HSR — سمارت حصر">
         <div class="brand-copy">
-          <p class="manager-header-title">الأراضي والممتلكات</p>
-          <p class="manager-header-subtitle">مركز إدارة الأراضي والممتلكات</p>
+          <p class="manager-header-title">مركز إدارة الأراضي والممتلكات</p>
+          <p class="manager-header-subtitle">LANDS &amp; PROPERTIES CENTER</p>
         </div>
       </div>
     </div>
   </header>
   <div class="shell">
-    <aside class="side"><div class="side-identity"><img src="/smart-hsr-signature-transparent.png" alt="SMART HSR"><div><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav">
-      <div class="nav-group-label">الرئيسية</div>
+    <aside class="side"><div class="side-identity"><div class="side-identity-copy"><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav manager-like-nav">
       <button class="active" data-view="center"><i data-lucide="layout-dashboard"></i><span>لوحة المعلومات</span></button>
-      <div class="nav-group-label">إدارة الأراضي</div>
       <button data-view="decisions"><i data-lucide="gavel"></i><span>القرارات</span></button>
       <button data-view="documents"><i data-lucide="folder-open"></i><span>المستندات</span></button>
       <button data-view="map"><i data-lucide="map"></i><span>الخريطة</span></button>
-      <div class="nav-group-label">المتابعة</div>
       <button data-view="reviews" data-review-only><i data-lucide="clipboard-check"></i><span>المراجعات</span></button>
       <button data-view="reports" data-review-only><i data-lucide="bar-chart-3"></i><span>التقارير</span></button>
       <button data-view="audit" data-review-only><i data-lucide="history"></i><span>سجل العمليات</span></button>
-      <div class="nav-group-label" data-admin-only>الإدارة</div>
       <button data-view="users" data-admin-only><i data-lucide="users-round"></i><span>مستخدمو الأراضي</span></button>
-      <div class="nav-group-label">الذكاء الاصطناعي</div>
       <button data-view="assistant"><i data-lucide="sparkles"></i><span>المساعد الذكي</span></button>
     </nav><div class="side-foot" id="sideFoot"></div></aside>
     <main class="main" id="main"></main>
