@@ -3160,6 +3160,101 @@ body.dark .metric,body.dark .panel{background:linear-gradient(180deg,rgba(15,28,
 @media(max-width:1100px){.lands-manager-header{grid-template-columns:auto 1fr auto!important}.lands-header-date{display:none!important}.lands-header-search{width:min(260px,34vw)!important}.brand-copy{display:none!important}}
 @media(max-width:760px){.lands-manager-header{grid-template-columns:auto 1fr auto!important;gap:7px!important;padding:7px 9px!important}.manager-brand-logo{height:36px!important;max-width:36px!important}.lands-header-search{display:none!important}.lands-theme-segment span{display:none!important}.lands-theme-segment button{width:30px!important;padding:0!important;justify-content:center!important}.manager-profile-copy,.manager-profile-chevron{display:none!important}.manager-profile-button{width:40px!important;min-width:40px!important;padding:4px!important;justify-content:center!important}.lands-header-center{justify-content:center!important}}
 </style>
+
+<style id="lands-brand-sidebar-control-final">
+/* Final owner-directed header identity: full SMART HSR wordmark at the far left,
+   Lands & Properties label immediately to its right, sidebar control moved out of header. */
+.lands-manager-header{
+  grid-template-columns:auto minmax(260px,1fr) auto!important;
+  grid-template-areas:"brand center profile"!important;
+}
+.manager-brand-zone{
+  grid-area:brand!important;
+  justify-self:start!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:11px!important;
+  direction:ltr!important;
+  min-width:0!important;
+}
+.manager-brand-logo-full{
+  width:132px!important;
+  max-width:132px!important;
+  height:46px!important;
+  object-fit:contain!important;
+  object-position:left center!important;
+  background:transparent!important;
+  border:0!important;
+  padding:0!important;
+  filter:drop-shadow(0 7px 16px rgba(0,0,0,.22))!important;
+  flex:none!important;
+}
+.manager-brand-zone .brand-copy{
+  display:block!important;
+  padding:0 0 0 11px!important;
+  border-left:1px solid rgba(122,164,224,.14)!important;
+  text-align:left!important;
+  direction:rtl!important;
+  min-width:0!important;
+}
+.manager-brand-zone .manager-header-title{
+  font-size:12.5px!important;
+  font-weight:800!important;
+  line-height:1.25!important;
+  white-space:nowrap!important;
+}
+.manager-brand-zone .manager-header-subtitle{
+  margin-top:3px!important;
+  font-size:8.5px!important;
+  letter-spacing:0!important;
+  direction:rtl!important;
+  white-space:nowrap!important;
+}
+.side-identity{
+  position:relative!important;
+  padding-left:38px!important;
+  overflow:visible!important;
+}
+.side-identity img{
+  width:76px!important;
+  height:34px!important;
+  object-fit:contain!important;
+  object-position:right center!important;
+}
+.side-rail-toggle{
+  position:absolute!important;
+  left:7px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  width:28px!important;
+  height:28px!important;
+  border-radius:8px!important;
+  border:1px solid rgba(143,224,176,.16)!important;
+  background:rgba(255,255,255,.045)!important;
+  color:#9bc5ae!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  cursor:pointer!important;
+}
+.side-rail-toggle:hover{background:rgba(255,255,255,.08)!important;color:#e9fff3!important}
+.side-rail-toggle svg{width:14px!important;height:14px!important}
+body.sidebar-collapsed .side-identity{justify-content:center!important;padding-left:8px!important}
+body.sidebar-collapsed .side-identity img{display:none!important}
+body.sidebar-collapsed .side-rail-toggle{position:static!important;transform:none!important;margin:auto!important}
+@media(max-width:1100px){
+  .manager-brand-logo-full{width:112px!important;max-width:112px!important}
+  .manager-brand-zone .brand-copy{display:block!important}
+}
+@media(max-width:760px){
+  .manager-brand-logo-full{width:104px!important;max-width:104px!important;height:38px!important}
+  .manager-brand-zone .brand-copy{display:none!important}
+  .side-identity{display:flex!important}
+  .side-identity div,.side-identity img{display:none!important}
+  .side-identity{height:48px!important;justify-content:flex-start!important;padding:8px!important}
+  .side-rail-toggle{position:static!important;transform:none!important;margin-inline-start:auto!important}
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -3212,20 +3307,19 @@ body.dark .metric,body.dark .panel{background:linear-gradient(180deg,rgba(15,28,
           <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
           <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
         </div>
-        <button id="sidebarToggle" class="icon-button lands-sidebar-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-pressed="false" aria-expanded="true" title="القائمة الجانبية" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
       </div>
 
       <div class="manager-brand-zone">
+        <img class="manager-brand-logo manager-brand-logo-full" src="/smart-hsr-signature-transparent.png" alt="SMART HSR — سمارت حصر">
         <div class="brand-copy">
-          <p class="manager-header-title">مركز إدارة الأراضي والممتلكات</p>
-          <p class="manager-header-subtitle">SMART MUNICIPAL PLATFORM</p>
+          <p class="manager-header-title">الأراضي والممتلكات</p>
+          <p class="manager-header-subtitle">مركز إدارة الأراضي والممتلكات</p>
         </div>
-        <img class="manager-brand-logo" src="/smart-hsr-mark.svg" alt="سمارت حصر">
       </div>
     </div>
   </header>
   <div class="shell">
-    <aside class="side"><div class="side-identity"><img src="/smart-hsr-mark.svg" alt="SMART HSR"><div><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div></div><nav class="nav">
+    <aside class="side"><div class="side-identity"><img src="/smart-hsr-signature-transparent.png" alt="SMART HSR"><div><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav">
       <div class="nav-group-label">الرئيسية</div>
       <button class="active" data-view="center"><i data-lucide="layout-dashboard"></i><span>لوحة المعلومات</span></button>
       <div class="nav-group-label">إدارة الأراضي</div>
