@@ -6246,16 +6246,19 @@ function enterReviewMode() {
 let initialAuthStateResolved = false;
 
 async function boot() {
-  await withBootTimeout(loadModules(), "modules");
-  // Golden Preview Review Mode takes priority over everything else and
-  // never calls ensureClient()/createLandsClient() — no Firebase app is
-  // even initialized on this path, so no read or write of any kind is
-  // structurally possible. Independently hostname-gated (isReviewModeAllowed)
-  // so it can never activate on a real Production hostname.
-  if (isReviewModeAllowed()) {
+  const reviewRequested = isReviewModeAllowed();
+  if (reviewRequested) {
+    // Visual review must never be blocked behind the manual company splash.
+    // Dismiss it immediately, then load the review modules with the same
+    // bounded timeout before rendering demo-only fixtures.
+    window.SmartHSRCompanySplash?.dismiss();
+    document.body.classList.remove("secure-handoff-active");
+    await withBootTimeout(loadModules(), "modules");
     enterReviewMode();
     return;
   }
+  await withBootTimeout(loadModules(), "modules");
+  // Normal authenticated flow continues unchanged below.
   const hasSsoHandoffCode = new URLSearchParams(location.search).has("code");
   if (hasSsoHandoffCode) {
     initialAuthStateResolved = true;
