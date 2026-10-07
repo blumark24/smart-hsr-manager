@@ -330,3 +330,76 @@ html.hsr-splash-active [aria-label*="المساعد"]{
   .hsr-company-splash::before,.hsr-company-splash__orbit,.hsr-company-splash__line::before{animation:none!important}
   .hsr-company-splash__logo{animation:none!important;opacity:1!important;transform:none!important;filter:drop-shadow(0 16px 34px rgba(0,0,0,.42))!important}
 }
+
+/* Minimal manager-parity splash: official manager identity + loading line only. */
+.hsr-company-splash__brand--minimal{
+  min-height:auto!important;
+  gap:16px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.hsr-company-splash__brand--minimal::before,
+.hsr-company-splash__brand--minimal::after{display:none!important}
+.hsr-company-splash__manager-mark{
+  display:block!important;
+  width:auto!important;
+  height:76px!important;
+  max-width:92px!important;
+  object-fit:contain!important;
+  filter:drop-shadow(0 12px 24px rgba(0,0,0,.36))!important;
+}
+.hsr-company-splash__manager-wordmark{display:block!important;text-align:left!important;direction:ltr!important}
+.hsr-company-splash__manager-name{
+  display:flex!important;
+  align-items:baseline!important;
+  gap:7px!important;
+  font:700 34px/1 Arial,Helvetica,sans-serif!important;
+  letter-spacing:.18em!important;
+  white-space:nowrap!important;
+}
+.hsr-company-splash__manager-name span:first-child{color:#eef6f1!important}
+.hsr-company-splash__manager-name span:last-child{color:#35e86f!important}
+.hsr-company-splash__tagline,
+.hsr-company-splash__status,
+.hsr-company-splash .signature-status,
+.hsr-company-splash__orbit,
+.hsr-company-splash__logo,
+.hsr-company-splash__mark,
+.hsr-company-splash__wordmark{display:none!important}
+.hsr-company-splash__line{
+  width:240px!important;
+  max-width:62vw!important;
+  height:2px!important;
+  margin-top:26px!important;
+  border-radius:999px!important;
+  overflow:hidden!important;
+  background:rgba(143,224,176,.14)!important;
+  opacity:1!important;
+  animation:none!important;
+}
+.hsr-company-splash__line::before{
+  content:""!important;
+  position:absolute!important;
+  top:0!important;
+  left:-46%!important;
+  width:46%!important;
+  height:2px!important;
+  border-radius:999px!important;
+  transform:none!important;
+  background:linear-gradient(90deg,transparent,#35e86f,transparent)!important;
+  box-shadow:0 0 12px rgba(53,232,111,.44)!important;
+  animation:hsrMinimalLoad 1.05s ease-in-out infinite!important;
+}
+.hsr-company-splash__line::after{display:none!important}
+@keyframes hsrMinimalLoad{
+  0%{left:-46%;opacity:.45}
+  50%{opacity:1}
+  100%{left:100%;opacity:.45}
+}
+@media(max-width:700px){
+  .hsr-company-splash__brand--minimal{gap:11px!important}
+  .hsr-company-splash__manager-mark{height:58px!important;max-width:70px!important}
+  .hsr-company-splash__manager-name{font-size:24px!important;letter-spacing:.14em!important}
+  .hsr-company-splash__line{width:190px!important;margin-top:22px!important}
+}
