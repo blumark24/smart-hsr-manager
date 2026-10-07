@@ -4121,6 +4121,18 @@ async function loadModules() {
   mod = { ...clientMod, ...domainMod, ...coreMod, ...spatialMod };
 }
 
+// Review Preview is deliberately Firebase-independent. It uses local,
+// deterministic fixtures only, so it must never wait on lands-client.js or
+// Google's Firebase ESM CDN before showing the Lands workspace.
+async function loadReviewModules() {
+  const [domainMod, coreMod, spatialMod] = await Promise.all([
+    import('./client/lands-domain.js'),
+    import('./client/lands-core.js'),
+    import('./client/lands-spatial.js')
+  ]);
+  mod = { ...domainMod, ...coreMod, ...spatialMod };
+}
+
 // ---- screen management ----
 function showScreen(name) {
   const login = document.getElementById("loginScreen");
@@ -6415,7 +6427,7 @@ async function boot() {
   window.SmartHSRCompanySplash?.show();
   bootStatus("تحميل مركز إدارة الأراضي");
   try {
-    await withBootTimeout(loadModules(), "review-modules");
+    await withBootTimeout(loadReviewModules(), "review-modules");
     bootStatus("تجهيز مساحة العمل");
     enterReviewMode();
   } catch (error) {
