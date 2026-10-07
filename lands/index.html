@@ -3769,9 +3769,12 @@ function isProductionHost() {
 // and called separately at the review-mode call site so the gate is
 // unambiguous on its own, not implied.
 function isReviewModeAllowed() {
-  // Review/demo fixtures are intentionally disabled on shared previews.
-  // Municipal review must use the authenticated, tenant-scoped data path.
-  return false;
+  // Explicit visual-review gate: Preview hosts only, never Production.
+  // Requires ?review=1 so normal Preview traffic still follows real SSO.
+  const params = new URLSearchParams(location.search);
+  return location.hostname.endsWith(".vercel.app") &&
+    !LANDS_PRODUCTION_HOSTNAMES.includes(location.hostname) &&
+    params.get("review") === "1";
 }
 function resolveLandsFirebaseConfig() {
   return isProductionHost() ? LANDS_PRODUCTION_FIREBASE_CONFIG : LANDS_STAGING_FIREBASE_CONFIG;
