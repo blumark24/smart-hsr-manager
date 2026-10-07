@@ -31,9 +31,11 @@ test('workforce login routes Preview Lands users to same-origin embedded workspa
   assert.match(login, /landsUrl\.searchParams\.set\('code', handoffCode\)/);
 });
 
-test('latest Lands UI is embedded but Review Mode is opt-in only', () => {
+test('latest Lands UI is delivery-clean: no Review Mode or fixture bypass, trusted SSO remains', () => {
   const ui = read('lands/index.html');
-  assert.match(ui, /new URLSearchParams\(location\.search\)\.get\("review"\) === "1"/);
+  assert.doesNotMatch(ui, /reviewMode\s*=\s*true/);
+  assert.doesNotMatch(ui, /buildReviewModeFixtures/);
+  assert.doesNotMatch(ui, /review-demo-|DEMO · PREVIEW ONLY|بلدية-معاينة-تجريبية|مستفيد تجريبي/);
   assert.match(ui, /fetch\("\/api\/lands-sso-consume"/);
   assert.match(ui, /import\('\.\/client\/lands-client\.js'\)/);
 });
