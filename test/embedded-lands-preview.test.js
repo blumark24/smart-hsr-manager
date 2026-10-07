@@ -33,7 +33,10 @@ test('workforce login routes Preview Lands users to same-origin embedded workspa
 
 test('latest Lands UI is embedded but Review Mode is opt-in only', () => {
   const ui = read('lands/index.html');
-  assert.match(ui, /new URLSearchParams\(location\.search\)\.get\("review"\) === "1"/);
+  assert.match(ui, /const params = new URLSearchParams\(location\.search\);/);
+  assert.match(ui, /params\.get\("review"\) === "1"/);
+  assert.match(ui, /location\.hostname\.endsWith\("\.vercel\.app"\)/);
+  assert.match(ui, /!LANDS_PRODUCTION_HOSTNAMES\.includes\(location\.hostname\)/);
   assert.match(ui, /fetch\("\/api\/lands-sso-consume"/);
   assert.match(ui, /import\('\.\/client\/lands-client\.js'\)/);
 });
