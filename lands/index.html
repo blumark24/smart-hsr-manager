@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0B3D2E">
-  <title>مركز إدارة الأراضي والممتلكات | SMART HSR</title>
+  <title>معاينة الأراضي والممتلكات | SMART HSR</title>
   <link rel="icon" href="/smart-hsr-logo-r2.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2678,8 +2678,8 @@ body.secure-handoff-active .toast{
 </style>
 
 
-<link rel="stylesheet" href="../smart-hsr-company-splash.css">
-<script src="../smart-hsr-company-splash.js" data-hsr-splash="manual"></script>
+
+
 
 <style id="lands-manager-shell-unification-v1">
 /* Final V5 — presentation-only shell parity with Municipality Manager.
@@ -3014,7 +3014,7 @@ body.dark .side{background:linear-gradient(180deg,rgba(7,27,48,.99),rgba(5,20,37
 .side-identity{height:58px;display:flex;align-items:center;gap:9px;padding:6px 8px 10px;margin-bottom:7px;border-bottom:1px solid rgba(255,255,255,.075);overflow:hidden}.side-identity img{width:54px;height:34px;object-fit:contain;background:transparent;filter:drop-shadow(0 6px 12px rgba(0,0,0,.26))}.side-identity div{display:flex;flex-direction:column;min-width:0}.side-identity strong{font-size:10px;color:#edf9f2;white-space:nowrap}.side-identity span{margin-top:2px;font:600 6.5px/1 "IBM Plex Mono",monospace;letter-spacing:.16em;color:#6f9d88}
 .side .nav-group-label{color:#6f927f!important}.side .nav button{color:#bdd2c6!important;background:transparent!important;border:1px solid transparent!important}.side .nav button i{color:#80a28f!important}.side .nav button:hover{background:rgba(255,255,255,.045)!important;color:#f0faf4!important}.side .nav button.active{background:linear-gradient(90deg,rgba(52,176,109,.13),rgba(255,255,255,.035))!important;color:#fff!important;box-shadow:inset -3px 0 #54d58d!important}.side .nav button.active i{color:#75e4a6!important}
 body.sidebar-collapsed .side-identity div{display:none}.body.sidebar-collapsed .side-identity img{margin:auto}
-#bootScreen.hsr-company-splash{display:grid!important}
+#bootScreen.hsr-company-splash[hidden]{display:none!important}
 @media(max-width:980px) and (min-width:701px){.manager-header-inner{grid-template-columns:auto minmax(180px,1fr) auto!important}.manager-profile-copy{display:none}.manager-profile-button{padding:5px!important}.manager-brand-logo{width:72px!important}.side-identity div{display:none}.side-identity img{margin:auto}}
 @media(max-width:700px){.manager-header-inner{grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important}.manager-profile-zone{display:none!important}.manager-brand-zone{justify-self:start!important}.manager-brand-logo{width:72px!important;height:38px!important}.brand-copy{display:none!important}.side-identity{display:none!important}}
 </style>
@@ -3528,8 +3528,326 @@ body.sidebar-collapsed .manager-like-nav button{justify-content:center!important
   font-size:9.5px!important;
 }
 </style>
+
+<style id="lands-company-splash-r10">
+#bootScreen.company-splash-r10{
+  position:fixed;inset:0;z-index:10000;display:grid;place-items:center;overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(74,222,128,.14),transparent 26%),
+    radial-gradient(circle at 50% 110%,rgba(14,116,74,.20),transparent 38%),
+    linear-gradient(155deg,#020806 0%,#04120d 45%,#061b13 100%);
+  color:#eefbf3;opacity:1;visibility:visible;
+  transition:opacity .22s ease,visibility .22s ease;
+  isolation:isolate;
+}
+#bootScreen.company-splash-r10[hidden]{display:none!important}
+#bootScreen.company-splash-r10.is-exiting{opacity:0;visibility:hidden}
+#bootScreen.company-splash-r10:before{
+  content:"";position:absolute;inset:-28%;z-index:-3;opacity:.26;
+  background-image:
+    linear-gradient(rgba(125,226,161,.07) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(125,226,161,.07) 1px,transparent 1px);
+  background-size:42px 42px;
+  transform:perspective(650px) rotateX(63deg) translateY(28%);
+  transform-origin:center;
+  animation:hsrGridDrift 4s linear infinite;
+}
+#bootScreen.company-splash-r10:after{
+  content:"";position:absolute;width:min(58vmin,520px);aspect-ratio:1;border-radius:50%;z-index:-2;
+  border:1px solid rgba(126,231,166,.16);
+  box-shadow:0 0 72px rgba(34,197,94,.11),inset 0 0 70px rgba(34,197,94,.07);
+  animation:hsrTwinResolve .8s cubic-bezier(.2,.8,.2,1) both;
+}
+#bootScreen .hsr-splash-core{
+  width:min(460px,88vw);min-height:290px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;text-align:center;position:relative;
+}
+#bootScreen .hsr-splash-orbit{
+  position:absolute;width:214px;height:214px;border-radius:50%;
+  border:1px solid rgba(143,224,176,.16);animation:hsrOrbit 4.2s linear infinite;
+}
+#bootScreen .hsr-splash-orbit:before{
+  content:"";position:absolute;inset:22px;border-radius:50%;border:1px dashed rgba(143,224,176,.16)
+}
+#bootScreen .hsr-splash-orbit:after{
+  content:"";position:absolute;width:7px;height:7px;border-radius:50%;top:-4px;left:50%;
+  background:#7df29e;box-shadow:0 0 16px rgba(125,242,158,.85)
+}
+#bootScreen .hsr-splash-logo{
+  width:clamp(220px,29vw,330px);max-width:80vw;max-height:150px;object-fit:contain;position:relative;z-index:2;
+  filter:drop-shadow(0 18px 34px rgba(0,0,0,.42));
+  animation:hsrLogoResolve .44s cubic-bezier(.16,.84,.3,1) both;
+}
+#bootScreen .hsr-splash-scan{
+  width:min(300px,70vw);height:1px;position:relative;z-index:3;margin-top:-12px;
+  background:linear-gradient(90deg,transparent,rgba(143,224,176,.30),#8fe0b0,rgba(143,224,176,.30),transparent);
+  box-shadow:0 0 18px rgba(143,224,176,.52);
+  animation:hsrScanFast .95s cubic-bezier(.4,0,.2,1) both;
+}
+#bootScreen .hsr-splash-copy{position:relative;z-index:2}
+#bootScreen .hsr-splash-copy strong{display:block;font:700 15px/1.3 "Cairo",sans-serif;color:#f2fff6}
+#bootScreen .hsr-splash-copy span{
+  display:block;margin-top:6px;font:600 8px/1.5 "IBM Plex Mono",monospace;
+  letter-spacing:.18em;color:#78a98b;direction:ltr
+}
+#bootScreen .hsr-splash-status{
+  display:flex;align-items:center;gap:8px;position:relative;z-index:2;
+  color:#8eb4a0;font:600 10px/1.4 "Cairo",sans-serif
+}
+#bootScreen .hsr-splash-status i{
+  width:6px;height:6px;border-radius:50%;background:#54e47d;box-shadow:0 0 10px rgba(84,228,125,.75);
+  animation:hsrStatusPulse .75s ease-in-out infinite alternate
+}
+#bootScreen .hsr-splash-status.ready i{background:#8fe0b0}
+@keyframes hsrLogoResolve{from{opacity:0;transform:translateY(6px) scale(.975);filter:blur(8px)}to{opacity:1;transform:none;filter:drop-shadow(0 18px 34px rgba(0,0,0,.42))}}
+@keyframes hsrScanFast{0%{opacity:0;transform:translateY(-54px) scaleX(.45)}18%{opacity:1}100%{opacity:0;transform:translateY(58px) scaleX(1)}}
+@keyframes hsrOrbit{to{transform:rotate(360deg)}}
+@keyframes hsrTwinResolve{from{opacity:0;transform:scale(.84)}to{opacity:1;transform:scale(1)}}
+@keyframes hsrGridDrift{to{transform:perspective(650px) rotateX(63deg) translateY(31%)}}
+@keyframes hsrStatusPulse{from{opacity:.45}to{opacity:1}}
+@media(max-width:700px){
+  #bootScreen .hsr-splash-core{min-height:240px}
+  #bootScreen .hsr-splash-logo{width:min(280px,78vw);max-height:128px}
+  #bootScreen .hsr-splash-orbit{width:176px;height:176px}
+}
+@media(prefers-reduced-motion:reduce){
+  #bootScreen.company-splash-r10:before,#bootScreen.company-splash-r10:after,
+  #bootScreen .hsr-splash-orbit,#bootScreen .hsr-splash-logo,#bootScreen .hsr-splash-scan,
+  #bootScreen .hsr-splash-status i{animation:none!important}
+}
+</style>
+
+
+<style id="lands-manager-header-exact-parity-r11">
+.command-header.manager-parity-header{
+  min-height:64px!important;padding:8px 16px!important;border-radius:16px!important;
+  background:linear-gradient(168deg,rgba(10,74,52,.97),rgba(8,58,42,.98) 52%,rgba(11,46,38,.97)),radial-gradient(600px 200px at 88% -40%,rgba(90,200,150,.16),transparent 70%)!important;
+  border:1px solid rgba(120,200,165,.26)!important;border-bottom:2px solid rgba(20,156,43,.55)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.14),0 14px 32px -22px rgba(6,40,28,.7)!important;
+  backdrop-filter:blur(20px) saturate(150%)!important;-webkit-backdrop-filter:blur(20px) saturate(150%)!important;
+}
+body.dark .command-header.manager-parity-header{
+  background:linear-gradient(165deg,rgba(11,48,82,.97),rgba(8,34,61,.985) 56%,rgba(8,29,52,.98))!important;
+  border:1px solid rgba(74,164,252,.28)!important;border-bottom:2px solid rgba(34,197,94,.4)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.3),0 4px 12px -6px rgba(0,0,0,.6),0 26px 54px -22px rgba(0,0,0,.98)!important;
+}
+.manager-header-inner{min-height:64px!important;padding:0!important}
+.manager-brand-zone.manager-brand-zone-exact{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;flex:none!important;padding-right:12px!important;border-right:1px solid rgba(255,255,255,.16)!important}
+body.dark .manager-brand-zone.manager-brand-zone-exact{border-right-color:rgba(103,181,255,.18)!important}
+.manager-wordmark-copy{display:block!important;text-align:left!important}
+.manager-wordmark-line{display:flex!important;align-items:baseline!important;gap:5px!important;font-size:15px!important;font-weight:700!important;letter-spacing:2.5px!important;line-height:1!important}
+.manager-wordmark-smart{color:#eaf3ee!important}.manager-wordmark-hsr{color:#3fc25a!important}
+body.dark .manager-wordmark-smart{color:#e9f1fb!important}body.dark .manager-wordmark-hsr{color:#149c2b!important}
+.manager-wordmark-sub{margin-top:3px!important;color:rgba(190,218,201,.78)!important;font:600 7px/1.3 "IBM Plex Mono",monospace!important;letter-spacing:1.6px!important;white-space:nowrap!important}
+body.dark .manager-wordmark-sub{color:#8eacc8!important}
+.manager-brand-mark{flex:none!important;display:block!important;height:42px!important;width:auto!important;max-width:none!important;object-fit:contain!important;filter:none!important}
+.lands-theme-segment{background:rgba(0,0,0,.18)!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:11px!important;padding:3px!important}
+body.dark .lands-theme-segment{background:rgba(3,24,45,.52)!important;border-color:rgba(103,181,255,.18)!important}
+.lands-theme-segment button{height:28px!important;padding:0 10px!important;border-radius:8px!important;font-size:11px!important;font-weight:600!important}
+#themeDayButton.active,#themeNightButton.active{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.24)!important;color:#f2faf5!important}
+body.dark #themeNightButton.active{background:rgba(56,132,220,.28)!important;border-color:rgba(76,201,240,.4)!important;color:#eaf4ff!important}
+body.dark #themeDayButton.active{background:rgba(30,85,137,.38)!important;border-color:rgba(91,173,255,.22)!important;color:#f3f8ff!important}
+@media(max-width:700px){.manager-wordmark-copy{display:none!important}.manager-brand-zone.manager-brand-zone-exact{padding-right:8px!important}.manager-brand-mark{height:38px!important}}
+</style>
+
+
+<style id="lands-manager-header-literal-copy-r12">
+/* Literal visual contract copied from manager.html; only Lands controls differ. */
+body{
+  --hdrBg:linear-gradient(168deg,rgba(10,74,52,.97),rgba(8,58,42,.98) 52%,rgba(11,46,38,.97)),radial-gradient(600px 200px at 88% -40%,rgba(90,200,150,.16),transparent 70%);
+  --hdrBd:rgba(120,200,165,.26);
+  --hdrAccentBd:rgba(20,156,43,.55);
+  --hdrSh:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.14),0 14px 32px -22px rgba(6,40,28,.7);
+  --hdrTx:#f2faf5;--hdrTx2:rgba(220,240,228,.85);--hdrTx3:rgba(190,218,201,.78);
+  --hdrCtl:rgba(255,255,255,.10);--hdrCtlBd:rgba(255,255,255,.18);--hdrSunk:rgba(0,0,0,.18);--hdrDiv:rgba(255,255,255,.16);
+  --hdrField:rgba(255,255,255,.10);--logoNavyH:#eaf3ee;--logoGreenH:#3fc25a;
+  --dayBtnBg:rgba(255,255,255,.16);--dayBtnBd:rgba(255,255,255,.24);--dayBtnTx:#f2faf5;
+  --nightBtnBg:transparent;--nightBtnBd:transparent;--nightBtnTx:rgba(190,218,201,.78);
+}
+body.dark{
+  --hdrBg:linear-gradient(165deg,rgba(11,48,82,.97),rgba(8,34,61,.985) 56%,rgba(8,29,52,.98));
+  --hdrBd:rgba(74,164,252,.28);--hdrAccentBd:rgba(34,197,94,.4);
+  --hdrSh:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.3),0 4px 12px -6px rgba(0,0,0,.6),0 26px 54px -22px rgba(0,0,0,.98);
+  --hdrTx:#f3f8ff;--hdrTx2:#c5d9ec;--hdrTx3:#8eacc8;
+  --hdrCtl:rgba(30,85,137,.38);--hdrCtlBd:rgba(91,173,255,.22);--hdrSunk:rgba(3,24,45,.52);--hdrDiv:rgba(103,181,255,.18);
+  --hdrField:rgba(4,28,51,.58);--logoNavyH:#e9f1fb;--logoGreenH:#149c2b;
+  --dayBtnBg:transparent;--dayBtnBd:transparent;--dayBtnTx:#7d8ea6;
+  --nightBtnBg:rgba(56,132,220,.28);--nightBtnBd:rgba(76,201,240,.4);--nightBtnTx:#eaf4ff;
+}
+.lands-manager-exact-header{width:min(calc(100% - 28px),1572px);margin:10px auto 0}
+.lands-manager-profile-exact{border:0;background:transparent;display:flex;align-items:center;gap:10px;padding:0;color:var(--hdrTx);cursor:pointer}
+.lands-manager-avatar-exact{width:38px;height:38px;border-radius:12px;background:var(--hdrCtl);border:1px solid var(--hdrCtlBd);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--hdrTx2)}
+.lands-manager-profile-copy-exact{display:flex;flex-direction:column;text-align:right;line-height:1.25}
+.lands-manager-profile-copy-exact strong{font-size:13px;font-weight:600;color:var(--hdrTx)}
+.lands-manager-profile-copy-exact small{font-size:10px;font-weight:550;color:var(--hdrTx3);margin-top:2px}
+.lands-manager-search-exact{position:relative;width:212px;display:block}
+.lands-manager-search-exact input{width:100%;height:36px;border-radius:10px;background:var(--hdrField);border:1px solid var(--hdrCtlBd);color:var(--hdrTx);font-size:11.5px;padding:0 12px 0 34px;outline:none}
+.lands-manager-search-exact>svg{position:absolute;left:11px;top:11px;width:15px;height:15px;color:var(--hdrTx3)}
+.lands-manager-date-exact{display:flex;align-items:center;gap:8px;padding:0 12px;height:36px;border-radius:10px;background:var(--hdrSunk);border:1px solid var(--hdrDiv);color:var(--hdrTx2);font-size:10.5px;white-space:nowrap}
+.lands-manager-date-exact>svg{width:16px;height:16px}
+.lands-manager-theme-exact{display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--hdrSunk);border:1px solid var(--hdrDiv);flex:none}
+.lands-manager-theme-exact button{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer}
+.lands-manager-theme-exact button>svg{width:13px;height:13px}
+#themeDayButton{border:1px solid var(--dayBtnBd);background:var(--dayBtnBg);color:var(--dayBtnTx)}
+#themeNightButton{border:1px solid var(--nightBtnBd);background:var(--nightBtnBg);color:var(--nightBtnTx)}
+.lands-manager-brand-exact{display:flex;align-items:center;gap:10px;padding-right:12px;border-right:1px solid var(--hdrDiv);flex:none;min-width:0;margin-right:auto}
+.lands-manager-brand-copy-exact{text-align:left;display:block}
+.lands-manager-wordmark-exact{display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:700;letter-spacing:2.5px;line-height:1}
+.lands-manager-smart-exact{color:var(--logoNavyH)}
+.lands-manager-hsr-exact{color:var(--logoGreenH)}
+.lands-manager-platform-exact{font-size:7px;letter-spacing:1.6px;color:var(--hdrTx3);margin-top:3px}
+.lands-manager-mark-exact{flex:none;display:block;height:42px;width:auto;object-fit:contain}
+@media(max-width:1100px){.lands-manager-date-exact{display:none}.lands-manager-search-exact{width:150px}}
+@media(max-width:760px){
+  .lands-manager-exact-header{width:calc(100% - 16px);padding:8px!important;gap:8px!important;flex-wrap:wrap!important}
+  .lands-manager-search-exact{display:none}.lands-manager-brand-copy-exact{display:none}
+  .lands-manager-profile-copy-exact{display:none}.lands-manager-brand-exact{padding-right:8px}
+  .lands-manager-mark-exact{height:38px}
+}
+</style>
+
+
+<style id="lands-spatial-command-v1">
+/* Lands Spatial Command v1 — isolated visual layer; no auth/data-contract changes. */
+.spatial-command-panel{overflow:hidden}
+.lands-spatial-toolbar{display:grid;grid-template-columns:auto minmax(210px,1fr) auto;gap:10px;align-items:center;padding:12px 16px;background:linear-gradient(180deg,rgba(8,39,61,.96),rgba(7,30,49,.98));border-bottom:1px solid rgba(92,173,218,.18)}
+body:not(.dark) .lands-spatial-toolbar{background:linear-gradient(180deg,#0a4a34,#083b2c);border-color:rgba(126,202,166,.2)}
+.lands-spatial-modes{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.lands-spatial-modes button,.lands-spatial-expand{min-height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.06);color:rgba(235,247,241,.78);padding:0 10px;font-size:10.5px;font-weight:700;cursor:pointer}
+.lands-spatial-modes button.active{background:rgba(54,197,121,.18);border-color:rgba(79,220,144,.42);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.lands-spatial-search{height:36px;border-radius:10px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.13);display:flex;align-items:center;gap:8px;padding:0 11px;color:rgba(221,239,230,.72)}
+.lands-spatial-search svg{width:15px;height:15px;flex:none}
+.lands-spatial-search input{width:100%;border:0;outline:0;background:transparent;color:#f4fbf7;font-size:12px;min-width:0}
+.lands-spatial-search input::placeholder{color:rgba(218,237,227,.58)}
+.lands-spatial-expand{display:flex;align-items:center;gap:7px;justify-content:center;color:#fff;background:rgba(255,255,255,.09)}
+.lands-spatial-expand svg{width:14px;height:14px}
+.spatial-command-panel .map-wrap{height:420px;border-bottom-color:rgba(74,164,252,.18);background:#071c2c}
+.spatial-command-panel .map-wrap:after{opacity:.12}
+body:not(.dark) .spatial-command-panel .map-wrap{background:#dfe9e2}
+.spatial-command-panel .map-note{border-radius:8px;background:rgba(5,26,39,.82);border:1px solid rgba(255,255,255,.12);color:#d9e8e1;backdrop-filter:blur(10px)}
+body:not(.dark) .spatial-command-panel .map-note{background:rgba(247,251,248,.92);color:#52665b;border-color:rgba(24,98,66,.16)}
+.spatial-command-panel .legend{background:rgba(5,26,39,.94);border-bottom:1px solid rgba(78,162,214,.12);padding:10px 16px;color:#b9ccda}
+body:not(.dark) .spatial-command-panel .legend{background:#eef4f0;color:#53685d;border-color:rgba(24,98,66,.12)}
+.spatial-command-panel .selection.parcel-inspector{margin:14px;border-radius:14px;border:1px solid rgba(77,166,226,.22);border-right:3px solid #22c55e;background:linear-gradient(155deg,rgba(10,39,64,.96),rgba(7,29,49,.98));box-shadow:0 20px 44px -30px rgba(0,0,0,.8);color:#eef7ff}
+body:not(.dark) .spatial-command-panel .selection.parcel-inspector{background:linear-gradient(155deg,#edf6f0,#e4f0e8);border-color:rgba(14,122,79,.22);border-right-color:#12855a;box-shadow:0 18px 38px -30px rgba(9,67,42,.5);color:#143125}
+.parcel-inspector-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+.parcel-inspector-head h3{color:inherit!important;margin:4px 0 0!important}
+.parcel-inspector-kicker{font-size:8px;font-weight:800;letter-spacing:1.5px;color:#65dca0}
+.parcel-readiness{display:grid;place-items:center;min-width:70px;padding:7px 9px;border-radius:10px;background:rgba(34,197,94,.09);border:1px solid rgba(72,218,137,.22)}
+.parcel-readiness strong{font-size:17px;color:#7ce5aa}.parcel-readiness span{font-size:8.5px;color:#98b8a7}
+.parcel-next-action{display:flex;align-items:center;gap:9px;padding:10px 12px;margin:0 0 14px;border-radius:10px;background:rgba(34,197,94,.08);border:1px solid rgba(72,218,137,.18);color:#cfeedd}
+.parcel-next-action svg{width:17px;height:17px;color:#63d999}.parcel-next-action span{display:flex;flex-direction:column}.parcel-next-action small{font-size:8.5px;color:#86aa98}.parcel-next-action strong{font-size:11.5px}
+.spatial-command-panel .selection-grid .field-label{color:#84a2b7}.spatial-command-panel .selection-grid .field-value{color:#edf6ff}
+body:not(.dark) .spatial-command-panel .selection-grid .field-label{color:#64796d}body:not(.dark) .spatial-command-panel .selection-grid .field-value{color:#153226}
+.spatial-command-panel .btn.ghost{border-color:rgba(105,181,229,.22);color:#cfe2f2}
+body:not(.dark) .spatial-command-panel .btn.ghost{border-color:rgba(18,133,90,.2);color:#235c44}
+.lands-premium-popup .leaflet-popup-content-wrapper{border-radius:14px!important;background:rgba(7,28,46,.96)!important;color:#eff7ff!important;border:1px solid rgba(88,172,229,.25)!important;box-shadow:0 20px 46px -20px rgba(0,0,0,.75)!important;backdrop-filter:blur(16px)}
+.lands-premium-popup .leaflet-popup-tip{background:#071c2e!important}
+.lands-map-popup{min-width:210px}.lands-map-popup-kicker{font-size:9px;color:#62d998;font-weight:800;margin-bottom:4px}.lands-map-popup>strong{display:block;font-size:13px;margin-bottom:9px}
+.lands-map-popup-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}.lands-map-popup-meta span{font-size:9px;color:#98b4c7}.lands-map-popup-meta b{display:block;color:#eef7ff;font-size:11px;margin-top:2px}
+.lands-map-popup-state{margin-bottom:9px}.lands-map-popup-actions{display:flex;gap:6px}.lands-map-popup-actions button{flex:1;min-height:32px;border-radius:8px;border:1px solid rgba(91,174,230,.25);background:rgba(30,85,137,.28);color:#eef7ff;font-size:9.5px;font-weight:700;cursor:pointer}
+.lands-completion-card{border:1px solid rgba(81,160,215,.18)!important;border-right:3px solid #f0a23b!important;background:linear-gradient(155deg,rgba(10,37,61,.96),rgba(7,29,49,.98))!important;border-radius:12px!important;padding:14px!important;box-shadow:0 16px 34px -28px rgba(0,0,0,.85)}
+.lands-completion-card.critical{border-right-color:#ef6b67!important}.lands-completion-card.near{border-right-color:#55c987!important}
+.lands-completion-card .insight-title{color:#edf6ff!important}.lands-completion-card p{color:#9db6c8!important;margin:8px 0 11px!important}.lands-completion-progress{height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:9px}.lands-completion-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#e09b3d,#65d89a)}
+.lands-completion-open{min-height:34px;border:1px solid rgba(91,174,230,.22);border-radius:8px;background:rgba(22,71,116,.32);color:#dcecf7;padding:0 10px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.lands-completion-open svg{width:14px;height:14px}
+body:not(.dark) .lands-completion-card{background:linear-gradient(155deg,#e7f1eb,#eef6f1)!important;border-color:rgba(16,104,70,.18)!important;box-shadow:0 14px 30px -26px rgba(12,70,47,.5)}
+body:not(.dark) .lands-completion-card .insight-title{color:#123526!important}body:not(.dark) .lands-completion-card p{color:#60766a!important}
+body:not(.dark) .lands-completion-progress{background:rgba(14,83,56,.09)}body:not(.dark) .lands-completion-open{background:rgba(14,122,79,.08);border-color:rgba(14,122,79,.22);color:#13583b}
+@media(min-width:1200px){.spatial-command-panel .selection.parcel-inspector{padding:16px 18px}.spatial-command-panel .selection-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(min-width:768px) and (max-width:1199px){
+  .workgrid{grid-template-columns:minmax(0,1.4fr) minmax(280px,.8fr)!important}
+  .lands-spatial-toolbar{grid-template-columns:1fr auto}.lands-spatial-search{grid-column:1/-1;grid-row:2}.spatial-command-panel .map-wrap{height:380px}
+  .spatial-command-panel .selection-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:767px){
+  .workgrid{grid-template-columns:1fr!important}.lands-spatial-toolbar{grid-template-columns:1fr auto;padding:9px}.lands-spatial-modes{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.lands-spatial-modes::-webkit-scrollbar{display:none}
+  .lands-spatial-modes button{white-space:nowrap;min-height:44px}.lands-spatial-search{grid-column:1/-1;grid-row:2;height:44px}.lands-spatial-search input{font-size:16px}.lands-spatial-expand{min-height:44px;padding:0 12px}.lands-spatial-expand span{display:none}
+  .spatial-command-panel .map-wrap{height:min(58vh,460px);min-height:340px}.spatial-command-panel .legend{gap:9px;font-size:9.5px;padding:9px 11px;overflow-x:auto;flex-wrap:nowrap}.spatial-command-panel .legend span{white-space:nowrap}
+  .spatial-command-panel .selection.parcel-inspector:not(.is-empty){position:fixed;z-index:75;left:8px;right:8px;bottom:72px;margin:0;max-height:58vh;overflow:auto;border-radius:18px;padding:16px;box-shadow:0 26px 70px -22px rgba(0,0,0,.85)}
+  .spatial-command-panel .selection-grid{grid-template-columns:1fr 1fr;gap:11px}.parcel-inspector-head{position:sticky;top:-16px;background:inherit;padding-top:4px;z-index:2}.parcel-readiness{min-width:62px}
+  .lands-completion-card{min-height:132px}.lands-completion-open{min-height:44px;width:100%;justify-content:center}
+}
+@media(max-width:430px){.spatial-command-panel .selection-grid{grid-template-columns:1fr}.lands-spatial-expand{width:44px;padding:0}.lands-spatial-toolbar{gap:7px}.spatial-command-panel .map-wrap{min-height:320px}}
+</style>
+
+<meta name="smart-hsr-build" content="lands-delivery-clean-v1">
 </head>
 <body class="secure-handoff-active">
+
+<div id="bootScreen" class="company-splash-r10" role="status" aria-live="polite" aria-label="جاري فتح SMART HSR">
+  <div class="hsr-splash-core">
+    <div class="hsr-splash-orbit" aria-hidden="true"></div>
+    <img class="hsr-splash-logo" src="/smart-hsr-signature-transparent.png" alt="SMART HSR"
+         onerror="this.onerror=null;this.src='/smart-hsr-logo-r2.png'">
+    <div class="hsr-splash-scan" aria-hidden="true"></div>
+    <div class="hsr-splash-copy">
+      <strong>SMART HSR</strong>
+      <span>SMART MUNICIPAL PLATFORM</span>
+    </div>
+    <div class="hsr-splash-status" id="bootSplashStatus"><i aria-hidden="true"></i><span>تهيئة المساحة الآمنة</span></div>
+  </div>
+</div>
+<script>
+(function(){
+  "use strict";
+  var splash=document.getElementById("bootScreen");
+  var status=document.getElementById("bootSplashStatus");
+  var started=performance.now();
+  var MIN_MS=650;
+  var WATCHDOG_MS=9000;
+  var dismissTimer=null;
+  var watchdog=null;
+
+  function setStatus(label,ready){
+    if(!status)return;
+    var text=status.querySelector("span");
+    if(text)text.textContent=label||"جاري الفتح";
+    status.classList.toggle("ready",!!ready);
+  }
+  function revealFailure(){
+    if(!splash || splash.hidden)return;
+    var denied=document.getElementById("deniedScreen");
+    var deniedMessage=document.getElementById("deniedMessage");
+    var app=document.getElementById("appShell");
+    if(app)app.hidden=true;
+    if(deniedMessage)deniedMessage.textContent="تعذر إكمال فتح مركز إدارة الأراضي في الوقت المحدد. أعد فتح الصفحة أو ارجع إلى بوابة الموظفين.";
+    if(denied)denied.hidden=false;
+    splash.classList.add("is-exiting");
+    window.setTimeout(function(){ splash.hidden=true; document.body.classList.remove("secure-handoff-active"); },220);
+  }
+  function armWatchdog(){
+    window.clearTimeout(watchdog);
+    watchdog=window.setTimeout(revealFailure,WATCHDOG_MS);
+  }
+  function show(){
+    if(!splash)return;
+    window.clearTimeout(dismissTimer);
+    splash.hidden=false;
+    splash.classList.remove("is-exiting");
+    document.body.classList.add("secure-handoff-active");
+    setStatus("تهيئة المساحة الآمنة",false);
+    armWatchdog();
+  }
+  function dismiss(){
+    if(!splash)return;
+    window.clearTimeout(watchdog);
+    var elapsed=performance.now()-started;
+    var wait=Math.max(0,MIN_MS-elapsed);
+    window.clearTimeout(dismissTimer);
+    dismissTimer=window.setTimeout(function(){
+      splash.classList.add("is-exiting");
+      window.setTimeout(function(){
+        splash.hidden=true;
+        document.body.classList.remove("secure-handoff-active");
+      },220);
+    },wait);
+  }
+  window.SmartHSRCompanySplash={show:show,dismiss:dismiss,setStatus:setStatus};
+  armWatchdog();
+})();
+</script>
+
 <div class="auth-screen" id="loginScreen" hidden>
   <section class="auth-card">
     <div class="auth-brand"><img src="/smart-hsr-signature-transparent.png" alt="سمارت حصر"><h1>SMART HSR</h1><p>الأراضي الذكية</p></div>
@@ -3545,17 +3863,17 @@ body.sidebar-collapsed .manager-like-nav button{justify-content:center!important
   </section>
 </div>
 <div class="app" id="appShell" hidden>
-  <header class="topbar command-header manager-parity-header" aria-label="رأس مركز إدارة الأراضي والممتلكات">
-    <div class="header-inner manager-header-inner lands-manager-header">
-      <div class="manager-profile-zone">
+  <header class="hsr-manager-header lands-manager-exact-header" aria-label="رأس مركز إدارة الأراضي والممتلكات" style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg);border:1px solid var(--hdrBd);border-bottom:2px solid var(--hdrAccentBd);box-shadow:var(--hdrSh);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%)">
+
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
+      <div style="position:relative;display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid var(--hdrDiv)">
         <div class="account-menu-wrap">
-          <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف" aria-haspopup="menu" aria-expanded="false" title="ملف الموظف" onclick="toggleAccountMenu(event)">
-            <span id="headerProfileAvatar" class="manager-profile-avatar">م</span>
-            <span class="manager-profile-copy">
+          <button id="accountButton" class="lands-manager-profile-exact" type="button" aria-label="ملف الموظف" aria-haspopup="menu" aria-expanded="false" title="ملف الموظف" onclick="toggleAccountMenu(event)">
+            <span id="headerProfileAvatar" class="lands-manager-avatar-exact">م</span>
+            <span class="lands-manager-profile-copy-exact">
               <strong id="headerProfileName">ملف الموظف</strong>
               <small><span id="headerProfileRole">مساحة عمل الأراضي</span><span class="profile-sep"> · </span><span id="headerOrgLabel">الجهة البلدية</span></small>
             </span>
-            <i data-lucide="chevron-down" class="manager-profile-chevron"></i>
           </button>
           <div id="accountMenu" class="account-menu" role="menu" aria-label="قائمة الحساب">
             <div class="account-menu-summary" id="userInfo"></div>
@@ -3565,29 +3883,37 @@ body.sidebar-collapsed .manager-like-nav button{justify-content:center!important
         </div>
       </div>
 
-      <div class="lands-header-center">
-        <div class="lands-header-search" role="search">
-          <input id="headerSearchInput" type="search" placeholder="بحث في الأراضي والممتلكات…" aria-label="بحث في الأراضي والممتلكات" onkeydown="if(event.key==='Enter')runHeaderSearch()">
-          <button type="button" aria-label="بحث" title="بحث" onclick="runHeaderSearch()"><i data-lucide="search"></i></button>
-        </div>
-        <div class="lands-header-date" aria-label="التاريخ الهجري والميلادي">
-          <i data-lucide="calendar-days"></i>
-          <span id="headerGregorianDate">—</span>
-          <span class="date-sep">·</span>
-          <span id="headerHijriDate">—</span>
-        </div>
-        <div class="lands-theme-segment" aria-label="اختيار المظهر">
-          <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
-          <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
-        </div>
+      <div class="lands-manager-search-exact" role="search">
+        <input id="headerSearchInput" type="search" placeholder="ابحث في الأراضي والممتلكات..." aria-label="بحث في الأراضي والممتلكات" onkeydown="if(event.key==='Enter')runHeaderSearch()">
+        <i data-lucide="search"></i>
       </div>
 
-      <div class="manager-brand-zone">
-        <img class="manager-brand-logo manager-brand-logo-full" src="/smart-hsr-signature-transparent.png" alt="SMART HSR — سمارت حصر">
-        <div class="brand-copy">
-          <p class="manager-header-title">مركز إدارة الأراضي والممتلكات</p>
-          <p class="manager-header-subtitle">LANDS &amp; PROPERTIES CENTER</p>
+      <div class="lands-manager-date-exact" aria-label="التاريخ الهجري والميلادي">
+        <i data-lucide="calendar-days"></i>
+        <span id="headerGregorianDate">—</span>
+        <span class="date-sep">·</span>
+        <span id="headerHijriDate">—</span>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:nowrap">
+      <div class="lands-manager-theme-exact" aria-label="اختيار المظهر">
+        <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')">
+          <i data-lucide="sun"></i><span>نهاري</span>
+        </button>
+        <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')">
+          <i data-lucide="moon"></i><span>ليلي</span>
+        </button>
+      </div>
+
+      <div class="lands-manager-brand-exact">
+        <div class="lands-manager-brand-copy-exact">
+          <div dir="ltr" class="lands-manager-wordmark-exact">
+            <span class="lands-manager-smart-exact">SMART</span><span class="lands-manager-hsr-exact">HSR</span>
+          </div>
+          <div dir="ltr" class="lands-manager-platform-exact">SMART MUNICIPAL PLATFORM</div>
         </div>
+        <img src="/smart-hsr-mark.svg" alt="سمارت حصر" width="30" height="42" class="lands-manager-mark-exact">
       </div>
     </div>
   </header>
@@ -3617,7 +3943,7 @@ body.sidebar-collapsed .manager-like-nav button{justify-content:center!important
 <button class="ai-trigger" id="aiTrigger" type="button" data-state="idle" aria-label="فتح المساعد الإداري الذكي" onclick="toggleAiPanel()"><span class="ai-face" aria-hidden="true"></span><span class="ai-attention-badge" id="aiAttentionBadge" hidden></span></button>
 <div class="ai-panel glass" id="aiPanel" role="dialog" aria-label="المساعد الإداري الذكي">
   <div class="ai-panel-head">
-    <div><b>المساعد الذكي</b><small>وضع تجريبي — سيتم ربطه بمحرك الذكاء الاصطناعي الفعلي لاحقًا</small></div>
+    <div><b>المساعد الذكي</b><small>مساعد إداري ضمن صلاحيات المستخدم الحالية</small></div>
     <button class="close" onclick="toggleAiPanel()"><i data-lucide="x"></i></button>
   </div>
   <div class="ai-attention-summary" id="aiAttentionSummary" hidden></div>
@@ -3637,7 +3963,7 @@ body.sidebar-collapsed .manager-like-nav button{justify-content:center!important
 // every onclick="fn()" attribute resolvable against the global scope) ----
 let mod = {};
 let client = null, session = null, grants = [], domains = { royalOrders: [], allocationDecisions: [], beneficiaries: [], plans: [], parcels: [], documents: [] }, users = [], auditEvents = [];
-let currentView = "center", query = "", statusFilter = "all", completenessFilter = "all", selectedGrantId = null, selectedDecisionNumber = null, toastTimer, reviewMode = false, managerMode = false, sidebarCollapsed = false;
+let currentView = "center", query = "", statusFilter = "all", completenessFilter = "all", selectedGrantId = null, selectedDecisionNumber = null, toastTimer, reviewMode = false, managerMode = false, sidebarCollapsed = false, dashboardSpatialMode = "all";
 // Review-Mode-only decision metadata (number/year/date/authority/status),
 // independent of grants — lets "+ إضافة قرار" create a decision before any
 // grant references it, and lets archive/edit persist across a re-render
@@ -3768,14 +4094,7 @@ function isProductionHost() {
 // never activate it there — matches isProductionHost() exactly, but named
 // and called separately at the review-mode call site so the gate is
 // unambiguous on its own, not implied.
-function isReviewModeAllowed() {
-  // Explicit visual-review gate: Preview hosts only, never Production.
-  // Requires ?review=1 so normal Preview traffic still follows real SSO.
-  const params = new URLSearchParams(location.search);
-  return location.hostname.endsWith(".vercel.app") &&
-    !LANDS_PRODUCTION_HOSTNAMES.includes(location.hostname) &&
-    params.get("review") === "1";
-}
+function isReviewModeAllowed() { return false; }
 function resolveLandsFirebaseConfig() {
   return isProductionHost() ? LANDS_PRODUCTION_FIREBASE_CONFIG : LANDS_STAGING_FIREBASE_CONFIG;
 }
@@ -3880,7 +4199,21 @@ function mountGisMap(containerId, featureCollection, layer) {
     featureCollection.features.forEach((f) => {
       const [lng, lat] = f.geometry.coordinates;
       const marker = L.marker([lat, lng], { icon: gisMarkerIcon(f.properties) });
-      marker.bindPopup(`<strong>قطعة ${esc(f.properties.reference || "—")}</strong><br>${esc(GIS_STATUS_LABELS[f.properties.status] || f.properties.status)}`, { closeButton: false });
+      const grant = grantById(f.properties.grantId);
+      const popupHtml = grant ? `<div class="lands-map-popup">
+        <div class="lands-map-popup-kicker">قطعة ${esc(f.properties.reference || parcelLabel(grant.parcel_id) || "—")}</div>
+        <strong>${esc(grant.beneficiary?.name || "بدون مستفيد")}</strong>
+        <div class="lands-map-popup-meta">
+          <span>القرار <b>${esc(grant.allocation_decision?.number || "—")}</b></span>
+          <span>الاكتمال <b>${completenessPercent(grant)}%</b></span>
+        </div>
+        <div class="lands-map-popup-state">${statusBadge(grant)}</div>
+        <div class="lands-map-popup-actions">
+          <button type="button" onclick="selectParcelSlot('${esc(f.properties.parcelId)}')">عرض التفاصيل</button>
+          <button type="button" onclick="openFile('${esc(grant.id)}')">الملف الرقمي</button>
+        </div>
+      </div>` : `<strong>قطعة ${esc(f.properties.reference || "—")}</strong><br>${esc(GIS_STATUS_LABELS[f.properties.status] || f.properties.status)}`;
+      marker.bindPopup(popupHtml, { closeButton: false, className: "lands-premium-popup", maxWidth: 300 });
       marker.on("click", () => selectParcelSlot(f.properties.parcelId));
       clusterGroup.addLayer(marker);
     });
@@ -3896,6 +4229,26 @@ function mountGisMap(containerId, featureCollection, layer) {
 }
 function gisZoomIn() { gisMap?.zoomIn(); }
 function gisZoomOut() { gisMap?.zoomOut(); }
+function dashboardSpatialScope() {
+  const active = grants.filter(g => !g.archived);
+  if (dashboardSpatialMode === "complete") return active.filter(g => g.status === "approved" || g.completeness?.status === "complete");
+  if (dashboardSpatialMode === "review") return active.filter(g => g.status === "under_review");
+  if (dashboardSpatialMode === "needs") return active.filter(g => g.completeness?.status === "incomplete" || g.status === "incomplete");
+  return active;
+}
+function setDashboardSpatialMode(mode) {
+  if (!["all","complete","review","needs"].includes(mode)) return;
+  dashboardSpatialMode = mode;
+  if (currentView === "center") render();
+}
+function dashboardSpatialToolbar() {
+  const modes = [["all","كل القطع"],["complete","مكتمل"],["review","تحت المراجعة"],["needs","يحتاج استكمال"]];
+  return `<div class="lands-spatial-toolbar">
+    <div class="lands-spatial-modes">${modes.map(([v,l]) => `<button type="button" class="${dashboardSpatialMode===v?"active":""}" onclick="setDashboardSpatialMode('${v}')">${esc(l)}</button>`).join("")}</div>
+    <label class="lands-spatial-search">${icon("search")}<input type="search" aria-label="بحث في التوأم المكاني" placeholder="قطعة، قرار، مستفيد، مخطط" onkeydown="if(event.key==='Enter')submitGisSearch(this.value)"></label>
+    <button class="lands-spatial-expand" type="button" onclick="setView('map')">${icon("maximize-2")}<span>فتح التوأم المكاني</span></button>
+  </div>`;
+}
 // §19: never a blank map with no explanation.
 function noSpatialDataState(count) { return `<div class="empty">${icon("map-pin-off")}<br>لا توجد بيانات مكانية موثّقة لهذا النطاق — يوجد ${count} سجل بدون موقع، راجع القائمة أدناه</div>`; }
 function gisMapErrorMarkup() { return `<div class="gis-map-error empty" hidden>${icon("alert-triangle")}<br>تعذر تحميل الخريطة<br>تعذر تحميل البيانات المكانية — حاول تحديث الصفحة</div>`; }
@@ -3912,9 +4265,7 @@ function mapQuickChips(activeLayer) {
 // existing "محاكاة مكانية تشغيلية" caption, which is about this NOT being
 // an official cadastral source at all (true in Production too). This chip
 // only ever renders when reviewMode is true.
-function reviewDemoLocationChip() {
-  return reviewMode ? `<span class="chip" style="color:var(--amber);background:var(--amber-soft);white-space:normal">${icon("flask-conical")} بيانات مكانية تجريبية للمعاينة فقط</span>` : "";
-}
+function reviewDemoLocationChip() { return ""; }
 // §9 of the map visual-rebuild spec: the "بدون موقع" list needs a reason
 // per record, not just a name — distinct from insight() (used by the
 // Dashboard's unrelated "needs completion" panel).
@@ -4417,19 +4768,7 @@ function managerModeView(attention) {
     <section class="panel"><div class="panel-head"><div><h2>إجراءات موصى بها</h2></div>${icon("list-checks")}</div><div class="panel-body">${recommendations.map(r => `<div class="auto-row"><span>${icon("arrow-left-circle")} ${esc(r)}</span></div>`).join("")}</div></section>
   </div>`;
 }
-function reviewScenarioStrip() {
-  if (!reviewMode) return "";
-  const scenarios = [
-    ["0013", "ملف مكتمل ومعتمد", "100% · اعتماد رسمي", "circle-check"],
-    ["0014", "قيد المراجعة", "يحتاج قرار المراجع", "clipboard-check"],
-    ["0018", "أُعيد للاستكمال", "ملاحظة رسمية ومسار إعادة إرسال", "rotate-ccw"],
-    ["0016", "ملف أولي بدون GIS", "بيانات ناقصة · لا موقع موثّق", "map-pin-off"]
-  ];
-  return `<section class="demo-scenarios" aria-label="سيناريوهات العرض التجريبية">
-    <div class="demo-scenarios-head"><div><span class="demo-badge">DEMO · PREVIEW ONLY</span><strong>سيناريوهات جاهزة للعرض</strong><small>بيانات تجريبية معزولة — لا تمثل سجلات بلدية حقيقية</small></div></div>
-    <div class="demo-scenario-grid">${scenarios.map(([id,title,meta,ic]) => `<button type="button" class="demo-scenario-card" onclick="openFile('${id}')">${icon(ic)}<span><b>${esc(title)}</b><small>${esc(meta)}</small></span>${icon("arrow-left")}</button>`).join("")}</div>
-  </section>`;
-}
+function reviewScenarioStrip() { return ""; }
 
 function centerView() {
   const stats = AutomationEngine.decisionStats(grants.filter(g => !g.archived));
@@ -4452,8 +4791,8 @@ function centerView() {
   return shellHead("مركز إدارة الأراضي والممتلكات", "مركز إدارة الأراضي والممتلكات", "متابعة اكتمال وجودة وربط سجلات الأراضي والممتلكات ودعم أعمال المراجعة والاعتماد", actions) + `
  
  <section class="metrics"><div class="metric teal"><span class="label">القرارات النشطة</span><div class="value mono">${activeDecisions}</div><span class="hint">في نطاق البلدية الحالية</span></div><div class="metric"><span class="label">إجمالي المنح</span><div class="value mono">${stats.total}</div><span class="hint">في نطاق هذه البلدية</span></div><div class="metric green"><span class="label">مكتمل</span><div class="value mono">${stats.complete}</div><span class="hint"><strong>${approved}</strong> منها معتمدة رسميًا</span></div><div class="metric red"><span class="label">يحتاج استكمال</span><div class="value mono">${stats.needsWork}</div><span class="hint">تنقصها بيانات أساسية</span></div><div class="metric amber"><span class="label">تحت المراجعة</span><div class="value mono">${stats.review}</div><span class="hint">بانتظار قرار المراجع</span></div><div class="metric"><span class="label">متوسط اكتمال الملفات</span><div class="value mono">${stats.avgPercent}%</div><span class="hint">محسوب آليًا من متطلبات كل سجل</span></div></section>
- <div class="workgrid"><section class="panel map-panel"><div class="panel-head"><div><h2>التوأم الرقمي للمخططات</h2><p>محاكاة مكانية تشغيلية — غير مرتبطة حاليًا بحدود مساحية رسمية</p></div>${reviewDemoLocationChip()}</div>${(() => {
-   const active = grants.filter(g => !g.archived);
+ <div class="workgrid"><section class="panel map-panel spatial-command-panel"><div class="panel-head"><div><h2>التوأم المكاني للأراضي والممتلكات</h2><p>قراءة تشغيلية للقطع والقرارات والاكتمال — ضمن البيانات المكانية الموثّقة المتاحة</p></div>${reviewDemoLocationChip()}</div>${dashboardSpatialToolbar()}${(() => {
+   const active = dashboardSpatialScope();
    const fc = mod.buildFeatureCollection(active, mod.buildParcelIndex(domains.parcels), g => classifyForMap(g, "all"), selectedGrantId);
    if (fc.features.length) requestAnimationFrame(() => mountGisMap("gisMapDash", fc, "all"));
    return fc.features.length
@@ -4480,12 +4819,13 @@ function selectParcelSlot(parcelId) {
 // underneath stay solid.
 function dashboardSelection() {
   const g = grantById(selectedGrantId);
-  if (!g) return `<div class="selection glass"><h3>لا توجد قطعة محددة</h3><p class="muted" style="font-size:12px;margin:0">اختر قطعة من المخطط أعلاه</p></div>`;
+  if (!g) return `<div class="selection parcel-inspector is-empty glass"><h3>${icon("mouse-pointer-click")} اختر قطعة من الخريطة</h3><p class="muted" style="font-size:12px;margin:0">ستظهر هنا جاهزية الملف، النواقص، القرار والإجراء التالي.</p></div>`;
   const missingLabel = AXIS_LABELS;
   const missing = g.completeness.missing.map(m => missingLabel[m] || m);
   const meta = decisionMeta(g.allocation_decision?.number);
   const timelineEvents = auditEventsForGrant(g.id);
-  return `<div class="selection glass"><h3>${icon("map-pin")} قطعة ${esc(parcelLabel(g.parcel_id) || "—")} · منحة ${esc(g.id)}</h3><div class="selection-grid">
+  const nextAction = missing.length ? `استكمال ${missing[0]}` : (g.status === "under_review" ? "متابعة المراجعة والاعتماد" : "الملف جاهز للمتابعة");
+  return `<div class="selection parcel-inspector glass"><div class="parcel-inspector-head"><div><span class="parcel-inspector-kicker">LAND SPATIAL TWIN</span><h3>${icon("map-pin")} قطعة ${esc(parcelLabel(g.parcel_id) || "—")} · منحة ${esc(g.id)}</h3></div><div class="parcel-readiness"><strong class="mono">${completenessPercent(g)}%</strong><span>جاهزية الملف</span></div></div><div class="parcel-next-action">${icon("sparkles")}<span><small>الإجراء التالي</small><strong>${esc(nextAction)}</strong></span></div><div class="selection-grid">
     <div><span class="field-label">القرار</span><span class="field-value mono">${esc(g.allocation_decision?.number || "—")}</span></div>
     <div><span class="field-label">السنة</span><span class="field-value mono">${esc(meta.year || g.allocation_decision?.number || "—")}</span></div>
     <div><span class="field-label">المخطط</span><span class="field-value mono">${esc(planLabel(g.plan_id) || "—")}</span></div>
@@ -4506,7 +4846,7 @@ function dashboardSelection() {
   </div></div>`;
 }
 function toggleParcelTimeline() { const el = document.getElementById("parcelTwinTimeline"); if (el) el.hidden = !el.hidden; }
-function insight(g) { return `<div class="insight"><div class="insight-title"><span>${icon("alert-triangle")} ${esc(g.beneficiary?.name || g.id)}</span><b class="mono">${completenessPercent(g)}%</b></div><p>الحقول الناقصة: ${g.completeness.missing.map(m => AXIS_LABELS[m] || m).join("، ")}</p><a onclick="openFile('${esc(g.id)}')">فتح الملف الرقمي ←</a></div>`; }
+function insight(g) { const pct = completenessPercent(g); const severity = pct < 50 ? "critical" : pct < 80 ? "warning" : "near"; return `<div class="insight lands-completion-card ${severity}"><div class="insight-title"><span>${icon("alert-triangle")} ${esc(g.beneficiary?.name || g.id)}</span><b class="mono">${pct}%</b></div><div class="lands-completion-progress"><span style="width:${pct}%"></span></div><p>الحقول الناقصة: ${g.completeness.missing.map(m => AXIS_LABELS[m] || m).join("، ")}</p><button class="lands-completion-open" onclick="openFile('${esc(g.id)}')">${icon("folder-open")} فتح الملف الرقمي</button></div>`; }
 function bar(label, n, color, max) { return `<div class="bar-row"><span>${esc(label)}</span><div class="bar-track"><span style="width:${Math.max(n / max * 100, n ? 4 : 0)}%;background:${color}"></span></div><b class="mono">${n}</b></div>`; }
 function auditEventRow(e) { return `<div class="event"><span class="event-icon">${icon("history")}</span><div><strong>${esc(AUDIT_ACTION_LABELS[e.action] || e.action)}</strong><small>${esc(ROLE_LABELS[e.actor_role] || e.actor_role)}</small></div><time>${fmtDateTime(e.occurred_at)}</time></div>`; }
 
@@ -6094,151 +6434,6 @@ if (municipalityHint) document.getElementById("loginMunicipality").value = munic
 // Firebase write, staging or Production. Mirrors the exact shapes the real
 // client (client/lands-client.js) returns so every existing view function
 // renders unmodified.
-function buildReviewModeFixtures() {
-  // authority/date on allocation_decision are demo-only display fields —
-  // Firestore Rules only constrain the LandGrant document's OWN top-level
-  // keys, never the internal shape of allocation_decision, so this adds
-  // nothing the real schema disallows; real grants simply won't have them
-  // populated yet, and every render below falls back to "—" when absent.
-  // Gate 2: completeness is no longer a hardcoded literal per fixture —
-  // every fixture grant is computed via the same canonical
-  // mod.computeGrantCompleteness() every real grant uses, so Review Mode
-  // demonstrates the exact same 5-axis/20%-each model, never a fixture-only
-  // approximation of it. The spread across fixtures (100/100/80/80/20/100)
-  // deliberately exercises: all five axes complete; the Conveyance axis
-  // incomplete despite everything else being done (0014 — a status/date
-  // recorded but no letter yet); no Conveyance entered at all (0015); and
-  // only the Beneficiary axis complete (0016).
-  const grantBases = [
-    { id: "0012", status: "draft", created_by: "review-demo-manager", created_at: new Date("2024-01-12"), updated_at: new Date("2024-02-01"),
-      beneficiary: { name: "أحمد صالح العتيبي", national_id: "1020000048" }, royal_order: { number: "أ/1440/142", date: "1440/03/12" },
-      allocation_decision: { number: "1440", date: "1440/05/10", authority: "وزارة البلديات والإسكان" }, plan_id: "plan-3247", parcel_id: "parcel-208",
-      plan_reference_number: "3247", parcel_reference_number: "208",
-      conveyance: { stage: "تم الإفراغ", letter_number: "إفراغ-1440-018", letter_date: "1440/07/02" } },
-    { id: "0013", status: "approved", created_by: "review-demo", created_at: new Date("2024-01-20"), updated_at: new Date("2024-03-05"),
-      beneficiary: { name: "سارة محمد القحطاني", national_id: "1040000071" }, royal_order: { number: "أ/1440/158", date: "1440/06/08" },
-      allocation_decision: { number: "1440", date: "1440/05/10", authority: "وزارة البلديات والإسكان" }, plan_id: "plan-3310", parcel_id: "parcel-114",
-      plan_reference_number: "3310", parcel_reference_number: "114",
-      conveyance: { stage: "تم الإفراغ", letter_number: "إفراغ-1440-031", letter_date: "1440/08/15" } },
-    { id: "0014", status: "under_review", created_by: "review-demo", created_at: new Date("2024-02-02"), updated_at: new Date("2024-03-10"),
-      beneficiary: { name: "مستفيد تجريبي 03", national_id: "1070000026" }, royal_order: { number: "أ/1441/166", date: "1441/09/21" },
-      allocation_decision: { number: "1441", date: "1441/02/02", authority: "وزارة البلديات والإسكان" }, plan_id: "plan-3310", parcel_id: "parcel-56",
-      plan_reference_number: "3310", parcel_reference_number: "56",
-      conveyance: { stage: "جاري استكمال إجراءات الإفراغ", letter_number: null, letter_date: null } },
-    // Deliberately demonstrates that manual reference numbers and GIS
-    // entity linkage are independent: this grant IS linked to a real
-    // parcel entity (parcel_id) for the Twin, yet its Plan+Parcel axis
-    // is still incomplete because parcel_reference_number was never
-    // manually entered — 60% (beneficiary + royal_order + allocation
-    // decision only; conveyance also not entered).
-    { id: "0015", status: "approved", created_by: "review-demo", created_at: new Date("2024-02-14"), updated_at: new Date("2024-03-12"),
-      beneficiary: { name: "نورة عبدالله الحربي", national_id: "1090000053" }, royal_order: { number: "أ/1442/174", date: "1442/01/04" },
-      allocation_decision: { number: "1442", date: "1442/04/18", authority: "وزارة البلديات والإسكان" }, plan_id: "plan-3382", parcel_id: "parcel-17",
-      plan_reference_number: "3382", parcel_reference_number: null,
-      conveyance: null },
-    { id: "0016", status: "draft", created_by: "review-demo-manager", created_at: new Date("2024-02-20"), updated_at: new Date("2024-02-20"),
-      beneficiary: { name: "مستفيد تجريبي 05", national_id: "1110000090" }, royal_order: { number: null, date: null },
-      allocation_decision: null, plan_id: null, parcel_id: null, plan_reference_number: null, parcel_reference_number: null, conveyance: null },
-    { id: "0017", status: "draft", created_by: "review-demo-manager", created_at: new Date("2024-02-25"), updated_at: new Date("2024-03-01"),
-      beneficiary: { name: "خالد إبراهيم الزهراني", national_id: "1130000035" }, royal_order: { number: "أ/1442/181", date: "1442/03/19" },
-      allocation_decision: { number: "1442", date: "1442/04/18", authority: "وزارة البلديات والإسكان" }, plan_id: "plan-3382", parcel_id: "parcel-92",
-      plan_reference_number: "3382", parcel_reference_number: "92",
-      conveyance: { stage: "تم الإفراغ", letter_number: "إفراغ-1442-009", letter_date: "1442/06/01" } },
-    // Gate 3: a representative "تحتاج استكمال" (incomplete) fixture — real
-    // reviewer return_reason, owned by the session identity so the
-    // employee/editor lifecycle (تعديل البيانات -> إعادة إرسال للمراجعة)
-    // can be demonstrated end-to-end in Review Mode. 80% data-complete
-    // (everything but the Conveyance letter) while its WORKFLOW status is
-    // "تحتاج استكمال" — deliberately proving these are independent axes.
-    { id: "0018", status: "incomplete", created_by: "review-demo-manager", created_at: new Date("2024-03-05"), updated_at: new Date("2024-03-15"),
-      beneficiary: { name: "منيرة سعد القرني", national_id: "1150000067" }, royal_order: { number: "أ/1442/190", date: "1442/05/02" },
-      allocation_decision: { number: "1442", date: "1442/04/18", authority: "وزارة البلديات والإسكان" }, plan_id: null, parcel_id: null,
-      plan_reference_number: "3382", parcel_reference_number: "104",
-      conveyance: { stage: "جاري استكمال إجراءات الإفراغ", letter_number: null, letter_date: null },
-      return_reason: "الرجاء إرفاق رقم وتاريخ خطاب الإفراغ الرسمي قبل إعادة الإرسال.", return_origin: "review" },
-    // Gate 3 P1: a representative "أُعيدت للفتح بعد الاعتماد" fixture —
-    // demonstrates the controlled-reopen path end-to-end in Review Mode.
-    // Fully data-complete (100%) yet its WORKFLOW status is "تحتاج
-    // استكمال" via reopen, not a normal review return — proving workflow
-    // status and completeness stay independent even in this new path, and
-    // that return_origin (not a new status) is what distinguishes a normal
-    // return from a post-approval reopen. Owned by the session identity so
-    // the creator-edit-after-reopen lifecycle is demonstrable here too.
-    { id: "0019", status: "incomplete", created_by: "review-demo-manager", created_at: new Date("2024-01-05"), updated_at: new Date("2024-03-20"),
-      beneficiary: { name: "فهد ناصر الدوسري", national_id: "1170000012" }, royal_order: { number: "أ/1440/205", date: "1440/02/10" },
-      allocation_decision: { number: "1440", date: "1440/05/10", authority: "وزارة البلديات والإسكان" }, plan_id: null, parcel_id: null,
-      plan_reference_number: "3247", parcel_reference_number: "88",
-      conveyance: { letter_number: "إفراغ-1440-050", letter_date: "1440/07/10" },
-      return_reason: "الرجاء تصحيح تاريخ خطاب الإفراغ بعد ملاحظة تدقيق لاحقة.", return_origin: "approved" }
-  ];
-  const grants = grantBases.map(g => ({ ...g, completeness: mod.computeGrantCompleteness(g) }));
-  const domains = {
-    royalOrders: [], allocationDecisions: [], beneficiaries: [],
-    plans: [{ id: "plan-3247", reference_id: "3247" }, { id: "plan-3310", reference_id: "3310" }, { id: "plan-3382", reference_id: "3382" }],
-    // spatial.geometry on the first three is CLEARLY LABELED demo-only
-    // (spatial.source is "review_demo") — fictional points near Riyadh, never a real
-    // cadastral position, isolated entirely to Review Mode fixtures (see
-    // isReviewModeAllowed(), which independently gates this whole function
-    // off the Production hostname). The last two intentionally carry no
-    // spatial field at all, so Review Mode also demonstrates the honest
-    // "بدون موقع" operational state end-to-end, exactly like real data would.
-    parcels: [
-      { id: "parcel-208", reference_id: "208", land_grant_id: "0012", spatial: { type: "Point", geometry: { type: "Point", coordinates: [46.7219, 24.6408] }, source: "review_demo", captured_at: "2024-01-01" } },
-      { id: "parcel-114", reference_id: "114", land_grant_id: "0013", spatial: { type: "Point", geometry: { type: "Point", coordinates: [46.6753, 24.7136] }, source: "review_demo", captured_at: "2024-01-01" } },
-      { id: "parcel-56", reference_id: "56", land_grant_id: "0014", spatial: { type: "Point", geometry: { type: "Point", coordinates: [46.6289, 24.6877] }, source: "review_demo", captured_at: "2024-01-01" } },
-      { id: "parcel-17", reference_id: "17", land_grant_id: "0015" },
-      { id: "parcel-92", reference_id: "92", land_grant_id: "0017" }
-    ],
-    documents: [
-      { id: "doc-1", record_domain: "landGrants", record_id: "0013", filename: "صك-تخصيص-0013.pdf", mime_type: "application/pdf" },
-      { id: "doc-2", record_domain: "landGrants", record_id: "0015", filename: "صك-تخصيص-0015.pdf", mime_type: "application/pdf" },
-      { id: "doc-3", record_domain: "landGrants", record_id: "0014", filename: "مقترح-OCR-0014.jpg", mime_type: "image/jpeg" }
-    ]
-  };
-  const users = [
-    { firebase_uid: "review-demo-manager", lands_role: "municipal_manager", enabled: true },
-    { firebase_uid: "review-demo-employee", lands_role: "lands_employee", enabled: true }
-  ];
-  const auditEvents = [
-    { record_id: "0012", action: "land_grant.created", actor_role: "lands_employee", occurred_at: new Date("2024-03-01T09:12:00Z") },
-    { record_id: "0013", action: "land_grant.approved", actor_role: "municipal_manager", occurred_at: new Date("2024-03-05T09:00:00Z") },
-    { record_id: "0014", action: "document.uploaded", actor_role: "lands_employee", occurred_at: new Date("2024-03-02T07:40:00Z") },
-    { record_id: "0017", action: "land_grant.updated", actor_role: "lands_department_manager", occurred_at: new Date("2024-03-03T15:05:00Z") },
-    { record_id: "0018", action: "land_grant.workflow_transitioned", actor_role: "lands_department_manager", occurred_at: new Date("2024-03-10T11:20:00Z") },
-    { record_id: "0018", action: "land_grant.returned_for_completion", actor_role: "municipal_manager", occurred_at: new Date("2024-03-15T10:00:00Z") },
-    // Gate 3 P1: 0019's full represented lifecycle — created, submitted,
-    // approved, then reopened. approvalStatePanel() would show this exact
-    // land_grant.approved event's actor/date if 0019 were still approved;
-    // once reopened, workflowContextPanel() shows the reopen reason instead.
-    { record_id: "0019", action: "land_grant.created", actor_role: "lands_employee", occurred_at: new Date("2024-01-05T08:00:00Z") },
-    { record_id: "0019", action: "land_grant.workflow_transitioned", actor_role: "lands_employee", occurred_at: new Date("2024-01-10T08:00:00Z") },
-    { record_id: "0019", action: "land_grant.approved", actor_role: "municipal_manager", occurred_at: new Date("2024-02-01T10:00:00Z") },
-    { record_id: "0019", action: "land_grant.reopened", actor_role: "lands_department_manager", occurred_at: new Date("2024-03-20T09:30:00Z") }
-  ];
-  const session = { firebaseUid: "review-demo-manager", municipalityId: "بلدية-معاينة-تجريبية", role: "lands_department_manager" };
-  return { grants, domains, users, auditEvents, session };
-}
-function enterReviewMode() {
-  reviewMode = true;
-  const fixtures = buildReviewModeFixtures();
-  const reviewRoleParam = new URLSearchParams(location.search).get("reviewRole");
-  const allowedReviewRoles = new Set(["lands_department_manager", "lands_employee"]);
-  const requestedReviewRole = allowedReviewRoles.has(reviewRoleParam) ? reviewRoleParam : fixtures.session.role;
-  session = { ...fixtures.session, role: requestedReviewRole, firebaseUid: requestedReviewRole === "lands_employee" ? "review-demo-employee" : "review-demo-manager" };
-  grants = fixtures.grants;
-  domains = fixtures.domains;
-  users = fixtures.users;
-  auditEvents = fixtures.auditEvents;
-  reviewModeDecisions = [
-    { number: "1440", year: "1440", date: "1440/05/10", authority: "وزارة البلديات والإسكان", status: "active", notes: "" },
-    { number: "1441", year: "1441", date: "1441/02/02", authority: "وزارة البلديات والإسكان", status: "active", notes: "" },
-    { number: "1442", year: "1442", date: "1442/04/18", authority: "وزارة البلديات والإسكان", status: "active", notes: "" }
-  ];
-  selectedGrantId = grants[0]?.id ?? null;
-  applyRouteFromUrl(); // deep link / refresh restoration, see setView()
-  showScreen("app"); renderShellChrome(); render();
-}
-
 // Whether the FIRST auth-state resolution (below) has been handled yet —
 // every invocation after that is a LATER change (manual logout, a token
 // that stops validating, an account disabled mid-session), not the initial
@@ -6246,37 +6441,6 @@ function enterReviewMode() {
 let initialAuthStateResolved = false;
 
 async function boot() {
-  const reviewRequested = isReviewModeAllowed();
-  if (reviewRequested) {
-    // Review preview must never expose a blank page while local modules load.
-    // Replace the company splash with an in-page, bounded review loader.
-    window.SmartHSRCompanySplash?.dismiss();
-    document.body.classList.remove("secure-handoff-active");
-    const reviewLoader = document.createElement("div");
-    reviewLoader.id = "landsReviewLoader";
-    reviewLoader.setAttribute("role", "status");
-    reviewLoader.style.cssText = "position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:#f4f7f5;color:#12352a;font-family:inherit;";
-    reviewLoader.innerHTML = `
-      <div style="min-width:min(86vw,360px);text-align:center;padding:28px 24px;border:1px solid rgba(18,53,42,.12);border-radius:22px;background:rgba(255,255,255,.92);box-shadow:0 18px 48px rgba(18,53,42,.10)">
-        <div style="font-size:17px;font-weight:800;margin-bottom:8px">مركز إدارة الأراضي والممتلكات</div>
-        <div id="landsReviewLoaderText" style="font-size:13px;opacity:.72">جاري تجهيز نسخة المراجعة…</div>
-        <div style="height:3px;margin-top:18px;border-radius:99px;background:rgba(18,53,42,.10);overflow:hidden">
-          <div style="height:100%;width:42%;border-radius:99px;background:#138a5b;animation:landsReviewProgress 1.1s ease-in-out infinite alternate"></div>
-        </div>
-      </div>
-      <style>@keyframes landsReviewProgress{from{transform:translateX(0)}to{transform:translateX(135%)}}</style>`;
-    document.body.appendChild(reviewLoader);
-    try {
-      await withBootTimeout(loadModules(), "review-modules");
-      enterReviewMode();
-      reviewLoader.remove();
-    } catch (error) {
-      const label = reviewLoader.querySelector("#landsReviewLoaderText");
-      if (label) label.textContent = "تعذر تحميل نسخة المراجعة. أعد فتح الصفحة.";
-      console.error("[LANDS_REVIEW_BOOT]", error && error.message ? error.message : "unknown");
-    }
-    return;
-  }
   await withBootTimeout(loadModules(), "modules");
   // Normal authenticated flow continues unchanged below.
   const hasSsoHandoffCode = new URLSearchParams(location.search).has("code");
