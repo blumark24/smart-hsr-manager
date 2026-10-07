@@ -14,6 +14,7 @@ on:
       - release/municipality-final-rc2
       - release/municipality-closure-v4
       - release/municipality-final-v5
+      - release/lands-delivery-clean-v1
       - fix/embedded-lands-preview
       - security/rc2-firebase-admin-14
       - design/spatial-intelligence-v1
