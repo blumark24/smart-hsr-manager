@@ -8,6 +8,8 @@ body:not(.dark) .command-header.manager-parity-header,body.dark .command-header.
 body:not(.dark) .manager-brand-zone .manager-header-title,body.dark .manager-brand-zone .manager-header-title,body:not(.dark) .manager-profile-copy strong,body.dark .manager-profile-copy strong{color:var(--lands-hdr-tx)!important}
 body:not(.dark) .manager-brand-zone .manager-header-subtitle,body.dark .manager-brand-zone .manager-header-subtitle,body:not(.dark) .manager-profile-copy small,body.dark .manager-profile-copy small{color:var(--lands-hdr-muted)!important}
 body:not(.dark) .manager-profile-button,body.dark .manager-profile-button,body:not(.dark) .lands-header-search input,body.dark .lands-header-search input,body:not(.dark) .lands-header-date,body.dark .lands-header-date,body:not(.dark) .lands-theme-segment,body.dark .lands-theme-segment{background:var(--lands-hdr-ctl)!important;border-color:var(--lands-hdr-bd)!important;color:var(--lands-hdr-tx)!important}
+body:not(.dark) .lands-theme-segment button,body.dark .lands-theme-segment button{color:var(--lands-hdr-muted)!important}
+body:not(.dark) .lands-theme-segment button.active,body.dark .lands-theme-segment button.active{background:var(--lands-hdr-ctl)!important;border-color:var(--lands-hdr-bd)!important;color:var(--lands-hdr-tx)!important}
 .shell{direction:rtl!important;grid-template-areas:"sidebar content"!important;grid-template-columns:238px minmax(0,1fr)!important}
 .shell>.side{grid-area:sidebar!important;grid-column:1!important;grid-row:1!important;direction:rtl!important;min-width:0!important}
 .shell>.main{grid-area:content!important;grid-column:2!important;grid-row:1!important;direction:rtl!important;min-width:0!important}
