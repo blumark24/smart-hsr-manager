@@ -33,6 +33,7 @@ try {
       });
     }
     const page = await context.newPage();
+    page.setDefaultTimeout(20000);
     const consoleErrors = [];
     page.on("console", msg => { if (msg.type() === "error") consoleErrors.push(msg.text()); });
     page.on("pageerror", err => consoleErrors.push(String(err)));
@@ -42,7 +43,8 @@ try {
        for (const theme of themes) {
         consoleErrors.length = 0;
         const url = `${base}/lands/?review=1&reviewRole=${role.role}&view=${view}`;
-        await page.goto(url, { waitUntil: "networkidle", timeout: 90000 });
+        console.log("LANDS_VISUAL_CASE_START", vp.id, role.id, view, theme);
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
         try {
           await page.locator("#appShell").waitFor({ state: "visible", timeout: 30000 });
         } catch (error) {
@@ -84,7 +86,8 @@ try {
         if (overflow) failures.push(`${vp.id}/${role.id}/${view}: horizontal overflow`);
 
         const name = `${vp.id}__${role.id}__${view}__${theme}.png`;
-        await page.screenshot({ path: `${outDir}/${name}`, fullPage: true });
+        await page.screenshot({ path: `${outDir}/${name}`, fullPage: true, animations: "disabled", timeout: 20000 });
+        console.log("LANDS_VISUAL_CASE_DONE", name);
 
         if (consoleErrors.length) {
           await fs.writeFile(`${outDir}/${vp.id}__${role.id}__${view}__${theme}.console.txt`, consoleErrors.join("\n"), "utf8");
