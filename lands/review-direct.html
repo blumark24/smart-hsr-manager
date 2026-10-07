@@ -3771,6 +3771,267 @@ body:not(.dark) .lands-completion-progress{background:rgba(14,83,56,.09)}body:no
 @media(max-width:430px){.spatial-command-panel .selection-grid{grid-template-columns:1fr}.lands-spatial-expand{width:44px;padding:0}.lands-spatial-toolbar{gap:7px}.spatial-command-panel .map-wrap{min-height:320px}}
 </style>
 
+
+  <style id="lands-smart-glass-dialog-system-v1">
+    /* SMART HSR — unified Lands dialog system. Visual-only; no auth/data logic changes. */
+    .modal-backdrop,
+    .drawer-backdrop{
+      position:fixed!important;
+      inset:0!important;
+      z-index:110!important;
+      background:rgba(4,18,13,.48)!important;
+      -webkit-backdrop-filter:blur(14px) saturate(118%)!important;
+      backdrop-filter:blur(14px) saturate(118%)!important;
+      padding:
+        max(96px,calc(env(safe-area-inset-top) + 82px))
+        max(20px,env(safe-area-inset-right))
+        max(24px,env(safe-area-inset-bottom))
+        max(20px,env(safe-area-inset-left))!important;
+      overflow:auto!important;
+      overscroll-behavior:contain;
+    }
+    .modal-backdrop.open,
+    .drawer-backdrop.open{
+      display:grid!important;
+      place-items:center!important;
+      animation:hsrGlassBackdropIn .18s ease-out both!important;
+    }
+    .modal,
+    .drawer{
+      position:relative!important;
+      inset:auto!important;
+      margin:0!important;
+      width:min(720px,calc(100vw - 40px))!important;
+      max-width:100%!important;
+      max-height:calc(100dvh - 132px)!important;
+      overflow:auto!important;
+      direction:rtl;
+      color:var(--ink)!important;
+      background:
+        linear-gradient(145deg,rgba(255,255,255,.84),rgba(247,251,248,.72))!important;
+      border:1px solid rgba(64,124,91,.18)!important;
+      border-radius:24px!important;
+      box-shadow:
+        0 32px 90px rgba(4,31,20,.24),
+        0 8px 28px rgba(4,31,20,.12),
+        inset 0 1px 0 rgba(255,255,255,.72)!important;
+      -webkit-backdrop-filter:blur(26px) saturate(145%)!important;
+      backdrop-filter:blur(26px) saturate(145%)!important;
+      padding:26px!important;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(46,139,87,.36) transparent;
+      animation:hsrGlassDialogIn .22s cubic-bezier(.2,.8,.2,1) both!important;
+      transform-origin:center center;
+    }
+    .drawer{width:min(760px,calc(100vw - 40px))!important;}
+    .modal::-webkit-scrollbar,.drawer::-webkit-scrollbar{width:8px}
+    .modal::-webkit-scrollbar-thumb,.drawer::-webkit-scrollbar-thumb{
+      background:rgba(46,139,87,.26);
+      border-radius:999px;
+    }
+
+    .modal-head,
+    .drawer-head{
+      position:sticky;
+      top:-26px;
+      z-index:3;
+      display:flex!important;
+      align-items:flex-start!important;
+      justify-content:space-between!important;
+      gap:18px!important;
+      margin:-2px 0 20px!important;
+      padding:2px 0 16px!important;
+      background:linear-gradient(180deg,rgba(249,252,250,.96) 0%,rgba(249,252,250,.88) 76%,rgba(249,252,250,0) 100%)!important;
+      border-bottom:1px solid rgba(35,122,85,.14)!important;
+      -webkit-backdrop-filter:blur(16px)!important;
+      backdrop-filter:blur(16px)!important;
+    }
+    .modal-head h2,
+    .drawer-head h2{
+      margin:0!important;
+      color:#0B3D2E!important;
+      font-size:20px!important;
+      line-height:1.45!important;
+      letter-spacing:-.02em;
+    }
+    .modal-head .drawer-sub,
+    .drawer-head .drawer-sub{
+      margin-top:5px!important;
+      color:#66776e!important;
+      line-height:1.65!important;
+    }
+    .close{
+      width:38px!important;
+      height:38px!important;
+      min-width:38px!important;
+      display:grid!important;
+      place-items:center!important;
+      padding:0!important;
+      border:1px solid rgba(35,122,85,.14)!important;
+      border-radius:12px!important;
+      background:rgba(255,255,255,.64)!important;
+      color:#486357!important;
+      box-shadow:0 4px 14px rgba(11,61,46,.07)!important;
+      transition:transform .16s ease,background .16s ease,border-color .16s ease!important;
+    }
+    .close:hover{
+      transform:translateY(-1px);
+      background:rgba(229,242,234,.92)!important;
+      border-color:rgba(46,139,87,.28)!important;
+    }
+
+    .modal .text-input,
+    .modal .select,
+    .drawer .text-input,
+    .drawer .select{
+      min-height:44px!important;
+      border-radius:12px!important;
+      border:1px solid rgba(35,122,85,.18)!important;
+      background:rgba(255,255,255,.68)!important;
+      color:var(--ink)!important;
+      padding:10px 12px!important;
+      transition:border-color .16s ease,box-shadow .16s ease,background .16s ease!important;
+    }
+    .modal .text-input:focus,
+    .modal .select:focus,
+    .drawer .text-input:focus,
+    .drawer .select:focus{
+      outline:none!important;
+      border-color:rgba(46,139,87,.58)!important;
+      box-shadow:0 0 0 4px rgba(46,139,87,.10)!important;
+      background:rgba(255,255,255,.88)!important;
+    }
+    .modal .input-label,
+    .drawer .input-label{
+      color:#52695d!important;
+      font-weight:600!important;
+      margin:12px 0 6px!important;
+    }
+    .modal .drawer-foot,
+    .drawer .drawer-foot{
+      position:sticky;
+      bottom:-26px;
+      z-index:3;
+      display:flex!important;
+      align-items:center!important;
+      gap:10px!important;
+      margin:22px -2px -2px!important;
+      padding:16px 0 2px!important;
+      border-top:1px solid rgba(35,122,85,.14)!important;
+      background:linear-gradient(0deg,rgba(249,252,250,.98) 0%,rgba(249,252,250,.92) 72%,rgba(249,252,250,0) 100%)!important;
+      -webkit-backdrop-filter:blur(16px)!important;
+      backdrop-filter:blur(16px)!important;
+    }
+    .modal .drawer-foot .btn,
+    .drawer .drawer-foot .btn{
+      min-height:44px!important;
+      border-radius:12px!important;
+    }
+    .modal .drawer-foot .btn.primary,
+    .drawer .drawer-foot .btn.primary{
+      box-shadow:0 8px 18px rgba(20,90,58,.18)!important;
+    }
+
+    body.dark .modal-backdrop,
+    body.dark .drawer-backdrop{
+      background:rgba(0,8,5,.68)!important;
+    }
+    body.dark .modal,
+    body.dark .drawer{
+      color:#e5f3e9!important;
+      background:
+        linear-gradient(145deg,rgba(13,42,29,.88),rgba(8,29,20,.80))!important;
+      border-color:rgba(124,202,153,.18)!important;
+      box-shadow:
+        0 34px 96px rgba(0,0,0,.52),
+        0 10px 30px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.08)!important;
+    }
+    body.dark .modal-head,
+    body.dark .drawer-head{
+      background:linear-gradient(180deg,rgba(13,42,29,.98) 0%,rgba(13,42,29,.90) 76%,rgba(13,42,29,0) 100%)!important;
+      border-color:rgba(116,201,154,.14)!important;
+    }
+    body.dark .modal-head h2,
+    body.dark .drawer-head h2{color:#dff4e6!important}
+    body.dark .modal-head .drawer-sub,
+    body.dark .drawer-head .drawer-sub{color:#a9c0b1!important}
+    body.dark .close{
+      color:#cfe7d7!important;
+      background:rgba(255,255,255,.055)!important;
+      border-color:rgba(139,224,167,.14)!important;
+      box-shadow:none!important;
+    }
+    body.dark .close:hover{background:rgba(107,197,142,.12)!important}
+    body.dark .modal .text-input,
+    body.dark .modal .select,
+    body.dark .drawer .text-input,
+    body.dark .drawer .select{
+      background:rgba(16,47,32,.72)!important;
+      border-color:rgba(116,201,154,.18)!important;
+      color:#e5f3e9!important;
+    }
+    body.dark .modal .input-label,
+    body.dark .drawer .input-label{color:#b8cfc0!important}
+    body.dark .modal .drawer-foot,
+    body.dark .drawer .drawer-foot{
+      background:linear-gradient(0deg,rgba(13,42,29,.98) 0%,rgba(13,42,29,.92) 72%,rgba(13,42,29,0) 100%)!important;
+      border-color:rgba(116,201,154,.14)!important;
+    }
+
+    @keyframes hsrGlassBackdropIn{
+      from{opacity:0}
+      to{opacity:1}
+    }
+    @keyframes hsrGlassDialogIn{
+      from{opacity:0;transform:translateY(12px) scale(.985)}
+      to{opacity:1;transform:translateY(0) scale(1)}
+    }
+
+    @media (max-width:767px){
+      .modal-backdrop,
+      .drawer-backdrop{
+        padding:
+          max(78px,calc(env(safe-area-inset-top) + 68px))
+          10px
+          max(8px,env(safe-area-inset-bottom))
+          10px!important;
+        place-items:end center!important;
+      }
+      .modal,
+      .drawer{
+        width:100%!important;
+        max-height:calc(100dvh - 86px)!important;
+        border-radius:24px 24px 18px 18px!important;
+        padding:20px!important;
+      }
+      .modal-head,
+      .drawer-head{top:-20px!important}
+      .modal .drawer-foot,
+      .drawer .drawer-foot{bottom:-20px!important}
+      .form-row,
+      .form-grid{grid-template-columns:1fr!important}
+      .modal .text-input,
+      .modal .select,
+      .drawer .text-input,
+      .drawer .select{font-size:16px!important}
+      .modal .drawer-foot,
+      .drawer .drawer-foot{
+        display:grid!important;
+        grid-template-columns:1fr 1fr!important;
+      }
+      .modal .drawer-foot .btn,
+      .drawer .drawer-foot .btn{width:100%!important;justify-content:center!important}
+    }
+    @media (max-width:430px){
+      .modal .drawer-foot,
+      .drawer .drawer-foot{grid-template-columns:1fr!important}
+    }
+    @media (prefers-reduced-motion:reduce){
+      .modal-backdrop.open,.drawer-backdrop.open,.modal,.drawer{animation:none!important}
+    }
+  </style>
+
 </head>
 <body class="secure-handoff-active">
 
