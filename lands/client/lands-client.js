@@ -222,3 +222,65 @@ export function createLandsClient({ firebaseConfig, useEmulators = false, emulat
     }
   };
 }
+
+
+/* LANDS_FINAL_HEADER_PARITY_R4 — presentation only */
+if (typeof document !== 'undefined') {
+  const applyLandsFinalHeaderParity = () => {
+    if (!document.getElementById('lands-final-header-parity-r4')) {
+      const style = document.createElement('style');
+      style.id = 'lands-final-header-parity-r4';
+      style.textContent = `
+body:not(.dark) .command-header.manager-parity-header{
+  background:linear-gradient(180deg,rgba(8,60,44,.985),rgba(7,45,34,.99))!important;
+  border-color:rgba(120,200,165,.20)!important;
+  border-bottom-color:rgba(63,194,90,.46)!important;
+}
+body:not(.dark) .lands-header-search input,
+body:not(.dark) .lands-header-date,
+body:not(.dark) .lands-theme-segment,
+body:not(.dark) .manager-profile-button{
+  background:rgba(255,255,255,.075)!important;
+  border-color:rgba(255,255,255,.15)!important;
+  color:#edf8f1!important;
+}
+body:not(.dark) .manager-profile-copy strong{color:#fff!important}
+body:not(.dark) .manager-profile-copy small{color:rgba(216,236,224,.78)!important}
+.manager-exact-logo{display:flex!important;align-items:center!important;gap:10px!important;direction:ltr!important}
+.manager-exact-logo-copy{text-align:left!important}
+.manager-exact-wordmark{display:flex!important;gap:5px!important;font-size:15px!important;font-weight:700!important;letter-spacing:2.5px!important;line-height:1!important}
+.manager-exact-wordmark span:first-child{color:#e9f1fb!important}
+.manager-exact-wordmark span:last-child{color:#3fc25a!important}
+.manager-exact-tagline{font-size:7px!important;letter-spacing:1.6px!important;color:rgba(220,240,228,.72)!important;margin-top:3px!important}
+.manager-exact-mark{height:42px!important;width:auto!important;object-fit:contain!important}
+.manager-profile-avatar{border-radius:50%!important}
+.manager-profile-button{min-width:190px!important}
+.manager-profile-copy{display:flex!important;flex-direction:column!important}
+.manager-profile-copy #headerProfileName{display:none!important}
+.account-menu{transform-origin:top right!important;animation:landsProfileIn .16s ease-out!important}
+@keyframes landsProfileIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+      `;
+      document.head.appendChild(style);
+    }
+    const zone = document.querySelector('.manager-brand-zone');
+    if (zone && !zone.querySelector('.manager-exact-logo')) {
+      zone.querySelector('.manager-brand-logo,.manager-brand-logo-full')?.remove();
+      const logo = document.createElement('div');
+      logo.className = 'manager-exact-logo';
+      logo.innerHTML = '<div class="manager-exact-logo-copy"><div dir="ltr" class="manager-exact-wordmark"><span>SMART</span><span>HSR</span></div><div dir="ltr" class="manager-exact-tagline">SMART MUNICIPAL PLATFORM</div></div><img class="manager-exact-mark" src="/smart-hsr-mark.svg" alt="سمارت حصر">';
+      zone.prepend(logo);
+    }
+    const copy = document.querySelector('.manager-profile-copy');
+    const org = document.getElementById('headerOrgLabel');
+    const role = document.getElementById('headerProfileRole');
+    const name = document.getElementById('headerProfileName');
+    if (copy && org && role) {
+      copy.prepend(org);
+      org.after(role);
+      if (name) { name.hidden = true; name.style.display = 'none'; copy.append(name); }
+    }
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyLandsFinalHeaderParity, { once:true });
+  else applyLandsFinalHeaderParity();
+  new MutationObserver(applyLandsFinalHeaderParity).observe(document.documentElement,{subtree:true,childList:true});
+}
