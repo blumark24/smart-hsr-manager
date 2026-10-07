@@ -3528,8 +3528,171 @@ body.sidebar-collapsed .manager-like-nav button{justify-content:center!important
   font-size:9.5px!important;
 }
 </style>
+
+<style id="lands-company-splash-r10">
+#bootScreen.company-splash-r10{
+  position:fixed;inset:0;z-index:10000;display:grid;place-items:center;overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(74,222,128,.14),transparent 26%),
+    radial-gradient(circle at 50% 110%,rgba(14,116,74,.20),transparent 38%),
+    linear-gradient(155deg,#020806 0%,#04120d 45%,#061b13 100%);
+  color:#eefbf3;opacity:1;visibility:visible;
+  transition:opacity .22s ease,visibility .22s ease;
+  isolation:isolate;
+}
+#bootScreen.company-splash-r10[hidden]{display:none!important}
+#bootScreen.company-splash-r10.is-exiting{opacity:0;visibility:hidden}
+#bootScreen.company-splash-r10:before{
+  content:"";position:absolute;inset:-28%;z-index:-3;opacity:.26;
+  background-image:
+    linear-gradient(rgba(125,226,161,.07) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(125,226,161,.07) 1px,transparent 1px);
+  background-size:42px 42px;
+  transform:perspective(650px) rotateX(63deg) translateY(28%);
+  transform-origin:center;
+  animation:hsrGridDrift 4s linear infinite;
+}
+#bootScreen.company-splash-r10:after{
+  content:"";position:absolute;width:min(58vmin,520px);aspect-ratio:1;border-radius:50%;z-index:-2;
+  border:1px solid rgba(126,231,166,.16);
+  box-shadow:0 0 72px rgba(34,197,94,.11),inset 0 0 70px rgba(34,197,94,.07);
+  animation:hsrTwinResolve .8s cubic-bezier(.2,.8,.2,1) both;
+}
+#bootScreen .hsr-splash-core{
+  width:min(460px,88vw);min-height:290px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;text-align:center;position:relative;
+}
+#bootScreen .hsr-splash-orbit{
+  position:absolute;width:214px;height:214px;border-radius:50%;
+  border:1px solid rgba(143,224,176,.16);animation:hsrOrbit 4.2s linear infinite;
+}
+#bootScreen .hsr-splash-orbit:before{
+  content:"";position:absolute;inset:22px;border-radius:50%;border:1px dashed rgba(143,224,176,.16)
+}
+#bootScreen .hsr-splash-orbit:after{
+  content:"";position:absolute;width:7px;height:7px;border-radius:50%;top:-4px;left:50%;
+  background:#7df29e;box-shadow:0 0 16px rgba(125,242,158,.85)
+}
+#bootScreen .hsr-splash-logo{
+  width:clamp(220px,29vw,330px);max-width:80vw;max-height:150px;object-fit:contain;position:relative;z-index:2;
+  filter:drop-shadow(0 18px 34px rgba(0,0,0,.42));
+  animation:hsrLogoResolve .44s cubic-bezier(.16,.84,.3,1) both;
+}
+#bootScreen .hsr-splash-scan{
+  width:min(300px,70vw);height:1px;position:relative;z-index:3;margin-top:-12px;
+  background:linear-gradient(90deg,transparent,rgba(143,224,176,.30),#8fe0b0,rgba(143,224,176,.30),transparent);
+  box-shadow:0 0 18px rgba(143,224,176,.52);
+  animation:hsrScanFast .95s cubic-bezier(.4,0,.2,1) both;
+}
+#bootScreen .hsr-splash-copy{position:relative;z-index:2}
+#bootScreen .hsr-splash-copy strong{display:block;font:700 15px/1.3 "Cairo",sans-serif;color:#f2fff6}
+#bootScreen .hsr-splash-copy span{
+  display:block;margin-top:6px;font:600 8px/1.5 "IBM Plex Mono",monospace;
+  letter-spacing:.18em;color:#78a98b;direction:ltr
+}
+#bootScreen .hsr-splash-status{
+  display:flex;align-items:center;gap:8px;position:relative;z-index:2;
+  color:#8eb4a0;font:600 10px/1.4 "Cairo",sans-serif
+}
+#bootScreen .hsr-splash-status i{
+  width:6px;height:6px;border-radius:50%;background:#54e47d;box-shadow:0 0 10px rgba(84,228,125,.75);
+  animation:hsrStatusPulse .75s ease-in-out infinite alternate
+}
+#bootScreen .hsr-splash-status.ready i{background:#8fe0b0}
+@keyframes hsrLogoResolve{from{opacity:0;transform:translateY(6px) scale(.975);filter:blur(8px)}to{opacity:1;transform:none;filter:drop-shadow(0 18px 34px rgba(0,0,0,.42))}}
+@keyframes hsrScanFast{0%{opacity:0;transform:translateY(-54px) scaleX(.45)}18%{opacity:1}100%{opacity:0;transform:translateY(58px) scaleX(1)}}
+@keyframes hsrOrbit{to{transform:rotate(360deg)}}
+@keyframes hsrTwinResolve{from{opacity:0;transform:scale(.84)}to{opacity:1;transform:scale(1)}}
+@keyframes hsrGridDrift{to{transform:perspective(650px) rotateX(63deg) translateY(31%)}}
+@keyframes hsrStatusPulse{from{opacity:.45}to{opacity:1}}
+@media(max-width:700px){
+  #bootScreen .hsr-splash-core{min-height:240px}
+  #bootScreen .hsr-splash-logo{width:min(280px,78vw);max-height:128px}
+  #bootScreen .hsr-splash-orbit{width:176px;height:176px}
+}
+@media(prefers-reduced-motion:reduce){
+  #bootScreen.company-splash-r10:before,#bootScreen.company-splash-r10:after,
+  #bootScreen .hsr-splash-orbit,#bootScreen .hsr-splash-logo,#bootScreen .hsr-splash-scan,
+  #bootScreen .hsr-splash-status i{animation:none!important}
+}
+</style>
+
 </head>
 <body class="secure-handoff-active">
+
+<div id="bootScreen" class="company-splash-r10" role="status" aria-live="polite" aria-label="جاري فتح SMART HSR">
+  <div class="hsr-splash-core">
+    <div class="hsr-splash-orbit" aria-hidden="true"></div>
+    <img class="hsr-splash-logo" src="/smart-hsr-signature-transparent.png" alt="SMART HSR"
+         onerror="this.onerror=null;this.src='/smart-hsr-logo-r2.png'">
+    <div class="hsr-splash-scan" aria-hidden="true"></div>
+    <div class="hsr-splash-copy">
+      <strong>SMART HSR</strong>
+      <span>SMART MUNICIPAL PLATFORM</span>
+    </div>
+    <div class="hsr-splash-status" id="bootSplashStatus"><i aria-hidden="true"></i><span>تهيئة المساحة الآمنة</span></div>
+  </div>
+</div>
+<script>
+(function(){
+  "use strict";
+  var splash=document.getElementById("bootScreen");
+  var status=document.getElementById("bootSplashStatus");
+  var started=performance.now();
+  var MIN_MS=650;
+  var WATCHDOG_MS=9000;
+  var dismissTimer=null;
+  var watchdog=null;
+
+  function setStatus(label,ready){
+    if(!status)return;
+    var text=status.querySelector("span");
+    if(text)text.textContent=label||"جاري الفتح";
+    status.classList.toggle("ready",!!ready);
+  }
+  function revealFailure(){
+    if(!splash || splash.hidden)return;
+    var denied=document.getElementById("deniedScreen");
+    var deniedMessage=document.getElementById("deniedMessage");
+    var app=document.getElementById("appShell");
+    if(app)app.hidden=true;
+    if(deniedMessage)deniedMessage.textContent="تعذر إكمال فتح مركز إدارة الأراضي في الوقت المحدد. أعد فتح الصفحة أو ارجع إلى بوابة الموظفين.";
+    if(denied)denied.hidden=false;
+    splash.classList.add("is-exiting");
+    window.setTimeout(function(){ splash.hidden=true; document.body.classList.remove("secure-handoff-active"); },220);
+  }
+  function armWatchdog(){
+    window.clearTimeout(watchdog);
+    watchdog=window.setTimeout(revealFailure,WATCHDOG_MS);
+  }
+  function show(){
+    if(!splash)return;
+    window.clearTimeout(dismissTimer);
+    splash.hidden=false;
+    splash.classList.remove("is-exiting");
+    document.body.classList.add("secure-handoff-active");
+    setStatus("تهيئة المساحة الآمنة",false);
+    armWatchdog();
+  }
+  function dismiss(){
+    if(!splash)return;
+    window.clearTimeout(watchdog);
+    var elapsed=performance.now()-started;
+    var wait=Math.max(0,MIN_MS-elapsed);
+    window.clearTimeout(dismissTimer);
+    dismissTimer=window.setTimeout(function(){
+      splash.classList.add("is-exiting");
+      window.setTimeout(function(){
+        splash.hidden=true;
+        document.body.classList.remove("secure-handoff-active");
+      },220);
+    },wait);
+  }
+  window.SmartHSRCompanySplash={show:show,dismiss:dismiss,setStatus:setStatus};
+  armWatchdog();
+})();
+</script>
+
 <div class="auth-screen" id="loginScreen" hidden>
   <section class="auth-card">
     <div class="auth-brand"><img src="/smart-hsr-signature-transparent.png" alt="سمارت حصر"><h1>SMART HSR</h1><p>الأراضي الذكية</p></div>
