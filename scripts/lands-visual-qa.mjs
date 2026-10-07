@@ -18,6 +18,7 @@ const viewports = [
   { id: "mobile-390", width: 390, height: 844 }
 ];
 const views = ["center", "map", "decisions"];
+const themes = ["light", "dark"];
 
 const browser = await chromium.launch({ headless: true });
 const failures = [];
@@ -38,6 +39,7 @@ try {
 
     for (const role of roles) {
       for (const view of views) {
+       for (const theme of themes) {
         consoleErrors.length = 0;
         const url = `${base}/lands/?review=1&reviewRole=${role.role}&view=${view}`;
         await page.goto(url, { waitUntil: "networkidle", timeout: 90000 });
@@ -58,7 +60,8 @@ try {
         }
         await page.waitForTimeout(800);
 
-        const managerModeVisible = await page.locator("#managerModeToggle").isVisible();
+        await page.locator(theme === "dark" ? "#themeNightButton" : "#themeDayButton").click();
+        const managerModeVisible = await page.locator("#managerModeMenuItem").evaluate(el => !el.hidden);
         const usersVisible = await page.locator('[data-view="users"]').isVisible();
         const auditVisible = await page.locator('[data-view="audit"]').isVisible();
         const reviewsVisible = await page.locator('[data-view="reviews"]').isVisible();
@@ -70,15 +73,23 @@ try {
           failures.push(`${vp.id}/${role.id}/${view}: reviewer controls missing`);
         }
 
+        if (vp.width > 760) {
+          const sidebar = await page.locator(".shell > .side").boundingBox();
+          const main = await page.locator(".shell > .main").boundingBox();
+          if (!sidebar || !main || sidebar.x < main.x + main.width - 2) {
+            failures.push(`${vp.id}/${role.id}/${view}/${theme}: sidebar is not on the right`);
+          }
+        }
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
         if (overflow) failures.push(`${vp.id}/${role.id}/${view}: horizontal overflow`);
 
-        const name = `${vp.id}__${role.id}__${view}.png`;
+        const name = `${vp.id}__${role.id}__${view}__${theme}.png`;
         await page.screenshot({ path: `${outDir}/${name}`, fullPage: true });
 
         if (consoleErrors.length) {
-          await fs.writeFile(`${outDir}/${vp.id}__${role.id}__${view}.console.txt`, consoleErrors.join("\n"), "utf8");
+          await fs.writeFile(`${outDir}/${vp.id}__${role.id}__${view}__${theme}.console.txt`, consoleErrors.join("\n"), "utf8");
         }
+       }
       }
     }
     await context.close();
