@@ -3650,6 +3650,62 @@ body.dark #themeDayButton.active{background:rgba(30,85,137,.38)!important;border
 @media(max-width:700px){.manager-wordmark-copy{display:none!important}.manager-brand-zone.manager-brand-zone-exact{padding-right:8px!important}.manager-brand-mark{height:38px!important}}
 </style>
 
+
+<style id="lands-manager-header-literal-copy-r12">
+/* Literal visual contract copied from manager.html; only Lands controls differ. */
+body{
+  --hdrBg:linear-gradient(168deg,rgba(10,74,52,.97),rgba(8,58,42,.98) 52%,rgba(11,46,38,.97)),radial-gradient(600px 200px at 88% -40%,rgba(90,200,150,.16),transparent 70%);
+  --hdrBd:rgba(120,200,165,.26);
+  --hdrAccentBd:rgba(20,156,43,.55);
+  --hdrSh:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.14),0 14px 32px -22px rgba(6,40,28,.7);
+  --hdrTx:#f2faf5;--hdrTx2:rgba(220,240,228,.85);--hdrTx3:rgba(190,218,201,.78);
+  --hdrCtl:rgba(255,255,255,.10);--hdrCtlBd:rgba(255,255,255,.18);--hdrSunk:rgba(0,0,0,.18);--hdrDiv:rgba(255,255,255,.16);
+  --hdrField:rgba(255,255,255,.10);--logoNavyH:#eaf3ee;--logoGreenH:#3fc25a;
+  --dayBtnBg:rgba(255,255,255,.16);--dayBtnBd:rgba(255,255,255,.24);--dayBtnTx:#f2faf5;
+  --nightBtnBg:transparent;--nightBtnBd:transparent;--nightBtnTx:rgba(190,218,201,.78);
+}
+body.dark{
+  --hdrBg:linear-gradient(165deg,rgba(11,48,82,.97),rgba(8,34,61,.985) 56%,rgba(8,29,52,.98));
+  --hdrBd:rgba(74,164,252,.28);--hdrAccentBd:rgba(34,197,94,.4);
+  --hdrSh:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.3),0 4px 12px -6px rgba(0,0,0,.6),0 26px 54px -22px rgba(0,0,0,.98);
+  --hdrTx:#f3f8ff;--hdrTx2:#c5d9ec;--hdrTx3:#8eacc8;
+  --hdrCtl:rgba(30,85,137,.38);--hdrCtlBd:rgba(91,173,255,.22);--hdrSunk:rgba(3,24,45,.52);--hdrDiv:rgba(103,181,255,.18);
+  --hdrField:rgba(4,28,51,.58);--logoNavyH:#e9f1fb;--logoGreenH:#149c2b;
+  --dayBtnBg:transparent;--dayBtnBd:transparent;--dayBtnTx:#7d8ea6;
+  --nightBtnBg:rgba(56,132,220,.28);--nightBtnBd:rgba(76,201,240,.4);--nightBtnTx:#eaf4ff;
+}
+.lands-manager-exact-header{width:min(calc(100% - 28px),1572px);margin:10px auto 0}
+.lands-manager-profile-exact{border:0;background:transparent;display:flex;align-items:center;gap:10px;padding:0;color:var(--hdrTx);cursor:pointer}
+.lands-manager-avatar-exact{width:38px;height:38px;border-radius:12px;background:var(--hdrCtl);border:1px solid var(--hdrCtlBd);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--hdrTx2)}
+.lands-manager-profile-copy-exact{display:flex;flex-direction:column;text-align:right;line-height:1.25}
+.lands-manager-profile-copy-exact strong{font-size:13px;font-weight:600;color:var(--hdrTx)}
+.lands-manager-profile-copy-exact small{font-size:10px;font-weight:550;color:var(--hdrTx3);margin-top:2px}
+.lands-manager-search-exact{position:relative;width:212px;display:block}
+.lands-manager-search-exact input{width:100%;height:36px;border-radius:10px;background:var(--hdrField);border:1px solid var(--hdrCtlBd);color:var(--hdrTx);font-size:11.5px;padding:0 12px 0 34px;outline:none}
+.lands-manager-search-exact>svg{position:absolute;left:11px;top:11px;width:15px;height:15px;color:var(--hdrTx3)}
+.lands-manager-date-exact{display:flex;align-items:center;gap:8px;padding:0 12px;height:36px;border-radius:10px;background:var(--hdrSunk);border:1px solid var(--hdrDiv);color:var(--hdrTx2);font-size:10.5px;white-space:nowrap}
+.lands-manager-date-exact>svg{width:16px;height:16px}
+.lands-manager-theme-exact{display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:var(--hdrSunk);border:1px solid var(--hdrDiv);flex:none}
+.lands-manager-theme-exact button{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer}
+.lands-manager-theme-exact button>svg{width:13px;height:13px}
+#themeDayButton{border:1px solid var(--dayBtnBd);background:var(--dayBtnBg);color:var(--dayBtnTx)}
+#themeNightButton{border:1px solid var(--nightBtnBd);background:var(--nightBtnBg);color:var(--nightBtnTx)}
+.lands-manager-brand-exact{display:flex;align-items:center;gap:10px;padding-right:12px;border-right:1px solid var(--hdrDiv);flex:none;min-width:0;margin-right:auto}
+.lands-manager-brand-copy-exact{text-align:left;display:block}
+.lands-manager-wordmark-exact{display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:700;letter-spacing:2.5px;line-height:1}
+.lands-manager-smart-exact{color:var(--logoNavyH)}
+.lands-manager-hsr-exact{color:var(--logoGreenH)}
+.lands-manager-platform-exact{font-size:7px;letter-spacing:1.6px;color:var(--hdrTx3);margin-top:3px}
+.lands-manager-mark-exact{flex:none;display:block;height:42px;width:auto;object-fit:contain}
+@media(max-width:1100px){.lands-manager-date-exact{display:none}.lands-manager-search-exact{width:150px}}
+@media(max-width:760px){
+  .lands-manager-exact-header{width:calc(100% - 16px);padding:8px!important;gap:8px!important;flex-wrap:wrap!important}
+  .lands-manager-search-exact{display:none}.lands-manager-brand-copy-exact{display:none}
+  .lands-manager-profile-copy-exact{display:none}.lands-manager-brand-exact{padding-right:8px}
+  .lands-manager-mark-exact{height:38px}
+}
+</style>
+
 </head>
 <body class="secure-handoff-active">
 
@@ -3741,17 +3797,17 @@ body.dark #themeDayButton.active{background:rgba(30,85,137,.38)!important;border
   </section>
 </div>
 <div class="app" id="appShell" hidden>
-  <header class="topbar command-header manager-parity-header" aria-label="رأس مركز إدارة الأراضي والممتلكات">
-    <div class="header-inner manager-header-inner lands-manager-header">
-      <div class="manager-profile-zone">
+  <header class="hsr-manager-header lands-manager-exact-header" aria-label="رأس مركز إدارة الأراضي والممتلكات" style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg);border:1px solid var(--hdrBd);border-bottom:2px solid var(--hdrAccentBd);box-shadow:var(--hdrSh);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%)">
+
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
+      <div style="position:relative;display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid var(--hdrDiv)">
         <div class="account-menu-wrap">
-          <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف" aria-haspopup="menu" aria-expanded="false" title="ملف الموظف" onclick="toggleAccountMenu(event)">
-            <span id="headerProfileAvatar" class="manager-profile-avatar">م</span>
-            <span class="manager-profile-copy">
+          <button id="accountButton" class="lands-manager-profile-exact" type="button" aria-label="ملف الموظف" aria-haspopup="menu" aria-expanded="false" title="ملف الموظف" onclick="toggleAccountMenu(event)">
+            <span id="headerProfileAvatar" class="lands-manager-avatar-exact">م</span>
+            <span class="lands-manager-profile-copy-exact">
               <strong id="headerProfileName">ملف الموظف</strong>
               <small><span id="headerProfileRole">مساحة عمل الأراضي</span><span class="profile-sep"> · </span><span id="headerOrgLabel">الجهة البلدية</span></small>
             </span>
-            <i data-lucide="chevron-down" class="manager-profile-chevron"></i>
           </button>
           <div id="accountMenu" class="account-menu" role="menu" aria-label="قائمة الحساب">
             <div class="account-menu-summary" id="userInfo"></div>
@@ -3761,29 +3817,37 @@ body.dark #themeDayButton.active{background:rgba(30,85,137,.38)!important;border
         </div>
       </div>
 
-      <div class="lands-header-center">
-        <div class="lands-header-search" role="search">
-          <input id="headerSearchInput" type="search" placeholder="بحث في الأراضي والممتلكات…" aria-label="بحث في الأراضي والممتلكات" onkeydown="if(event.key==='Enter')runHeaderSearch()">
-          <button type="button" aria-label="بحث" title="بحث" onclick="runHeaderSearch()"><i data-lucide="search"></i></button>
-        </div>
-        <div class="lands-header-date" aria-label="التاريخ الهجري والميلادي">
-          <i data-lucide="calendar-days"></i>
-          <span id="headerGregorianDate">—</span>
-          <span class="date-sep">·</span>
-          <span id="headerHijriDate">—</span>
-        </div>
-        <div class="lands-theme-segment" aria-label="اختيار المظهر">
-          <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
-          <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
-        </div>
+      <div class="lands-manager-search-exact" role="search">
+        <input id="headerSearchInput" type="search" placeholder="ابحث في الأراضي والممتلكات..." aria-label="بحث في الأراضي والممتلكات" onkeydown="if(event.key==='Enter')runHeaderSearch()">
+        <i data-lucide="search"></i>
       </div>
 
-      <div class="manager-brand-zone manager-brand-zone-exact">
-        <div class="manager-wordmark-copy">
-          <div class="manager-wordmark-line" dir="ltr"><span class="manager-wordmark-smart">SMART</span><span class="manager-wordmark-hsr">HSR</span></div>
-          <div class="manager-wordmark-sub" dir="ltr">SMART MUNICIPAL PLATFORM</div>
+      <div class="lands-manager-date-exact" aria-label="التاريخ الهجري والميلادي">
+        <i data-lucide="calendar-days"></i>
+        <span id="headerGregorianDate">—</span>
+        <span class="date-sep">·</span>
+        <span id="headerHijriDate">—</span>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:nowrap">
+      <div class="lands-manager-theme-exact" aria-label="اختيار المظهر">
+        <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')">
+          <i data-lucide="sun"></i><span>نهاري</span>
+        </button>
+        <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')">
+          <i data-lucide="moon"></i><span>ليلي</span>
+        </button>
+      </div>
+
+      <div class="lands-manager-brand-exact">
+        <div class="lands-manager-brand-copy-exact">
+          <div dir="ltr" class="lands-manager-wordmark-exact">
+            <span class="lands-manager-smart-exact">SMART</span><span class="lands-manager-hsr-exact">HSR</span>
+          </div>
+          <div dir="ltr" class="lands-manager-platform-exact">SMART MUNICIPAL PLATFORM</div>
         </div>
-        <img class="manager-brand-mark" src="/smart-hsr-mark.svg" alt="سمارت حصر" width="30" height="42">
+        <img src="/smart-hsr-mark.svg" alt="سمارت حصر" width="30" height="42" class="lands-manager-mark-exact">
       </div>
     </div>
   </header>
