@@ -5319,8 +5319,8 @@ function decisionCard(group) {
 }
 function decisionsView() {
   const groups = decisionGroups();
-  const canManage = mod.canManageEntitlements(session.role) || mod.canCreateGrant(session.role);
-  const actions = (canManage ? `<button class="btn primary" onclick="openAddDecision()">${icon("plus")} إضافة قرار</button>` : "")
+  const canManageDecision = mod.canReviewGrant(session.role);
+  const actions = (canManageDecision ? `<button class="btn primary" onclick="openAddDecision()">${icon("plus")} إضافة قرار</button>` : "")
     + (groups.filter(g => g.number).length >= 2 ? `<button class="btn" onclick="setView('comparison')">${icon("git-compare")} مقارنة القرارات</button>` : "");
   return shellHead("القرارات", "القرارات", "كل قرار تخصيص يملك سجل منحه الخاص المستقل — دون خلط بين القرارات", actions) +
     `<div class="decision-list">${groups.length ? groups.map(decisionCard).join("") : `<div class="empty">${icon("gavel")}<br>لا توجد قرارات تخصيص مرتبطة بعد</div>`}</div>`;
@@ -6167,6 +6167,10 @@ function closeModal() { document.getElementById("modalBackdrop").classList.remov
 // Every real branch either fully succeeds (refreshWorkspace() + a success
 // toast) or throws (surfaced inline, nothing is ever marked done first).
 function openAddDecision() {
+  if (!mod.canReviewGrant(session.role)) {
+    showToast("إضافة قرار متاحة لمدير قسم الأراضي أو مدير البلدية فقط", true);
+    return;
+  }
   document.getElementById("drawer").innerHTML = `<div class="drawer-head"><h2>إضافة قرار</h2><button class="close" onclick="closeDrawer()">${icon("x")}</button></div>
   <div class="form-row">
     <label class="input-label">رقم القرار<input class="text-input" id="decNumber" required></label>
@@ -6180,6 +6184,10 @@ function openAddDecision() {
   document.getElementById("drawerBackdrop").classList.add("open"); lucide.createIcons();
 }
 async function submitAddDecision() {
+  if (!mod.canReviewGrant(session.role)) {
+    showToast("لا تملك صلاحية إنشاء قرار تخصيص", true);
+    return;
+  }
   const number = document.getElementById("decNumber").value.trim();
   const year = document.getElementById("decYear").value.trim() || number;
   const date = document.getElementById("decDate").value.trim() || null;
