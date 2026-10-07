@@ -1,0 +1,20 @@
+/* Final shell ownership: explicit RTL placement and Municipality Manager header surfaces. */
+body{--lands-hdr:linear-gradient(168deg,rgba(10,74,52,.97),rgba(8,58,42,.98) 52%,rgba(11,46,38,.97));--lands-hdr-bd:rgba(120,200,165,.26);--lands-hdr-tx:#f2faf5;--lands-hdr-muted:rgba(190,218,201,.78);--lands-hdr-ctl:rgba(255,255,255,.1)}
+body.dark{--lands-hdr:linear-gradient(165deg,rgba(11,48,82,.97),rgba(8,34,61,.985) 56%,rgba(8,29,52,.98));--lands-hdr-bd:rgba(74,164,252,.28);--lands-hdr-tx:#f3f8ff;--lands-hdr-muted:#8eacc8;--lands-hdr-ctl:rgba(30,85,137,.38)}
+body:not(.dark) .command-header.manager-parity-header,body.dark .command-header.manager-parity-header{background:var(--lands-hdr)!important;border-color:var(--lands-hdr-bd)!important;border-bottom:2px solid rgba(34,197,94,.4)!important;min-height:64px!important;backdrop-filter:blur(22px)!important;-webkit-backdrop-filter:blur(22px)!important}
+.command-header.manager-parity-header::before,.command-header.manager-parity-header::after{display:none!important}
+.lands-manager-header{grid-template-areas:"brand center profile"!important;direction:ltr!important}
+.manager-brand-zone,.manager-profile-zone,.lands-header-center{direction:rtl!important}
+body:not(.dark) .manager-brand-zone .manager-header-title,body.dark .manager-brand-zone .manager-header-title,body:not(.dark) .manager-profile-copy strong,body.dark .manager-profile-copy strong{color:var(--lands-hdr-tx)!important}
+body:not(.dark) .manager-brand-zone .manager-header-subtitle,body.dark .manager-brand-zone .manager-header-subtitle,body:not(.dark) .manager-profile-copy small,body.dark .manager-profile-copy small{color:var(--lands-hdr-muted)!important}
+body:not(.dark) .manager-profile-button,body.dark .manager-profile-button,body:not(.dark) .lands-header-search input,body.dark .lands-header-search input,body:not(.dark) .lands-header-date,body.dark .lands-header-date,body:not(.dark) .lands-theme-segment,body.dark .lands-theme-segment{background:var(--lands-hdr-ctl)!important;border-color:var(--lands-hdr-bd)!important;color:var(--lands-hdr-tx)!important}
+body:not(.dark) .lands-theme-segment button,body.dark .lands-theme-segment button{color:var(--lands-hdr-muted)!important}
+body:not(.dark) .lands-theme-segment button.active,body.dark .lands-theme-segment button.active{background:var(--lands-hdr-ctl)!important;border-color:var(--lands-hdr-bd)!important;color:var(--lands-hdr-tx)!important}
+.shell{direction:rtl!important;grid-template-areas:"sidebar content"!important;grid-template-columns:238px minmax(0,1fr)!important}
+.shell>.side{grid-area:sidebar!important;grid-column:1!important;grid-row:1!important;direction:rtl!important;min-width:0!important}
+.shell>.main{grid-area:content!important;grid-column:2!important;grid-row:1!important;direction:rtl!important;min-width:0!important}
+body.sidebar-collapsed .shell{grid-template-columns:72px minmax(0,1fr)!important}
+#bootScreen.hsr-company-splash[hidden]{display:none!important}
+@media(min-width:761px) and (max-width:980px){.shell{grid-template-columns:70px minmax(0,1fr)!important}.lands-manager-header{grid-template-columns:minmax(150px,auto) minmax(0,1fr) auto!important}.lands-header-date{display:none!important}}
+@media(max-width:760px){.shell{display:block!important}.lands-manager-header{grid-template-areas:"brand profile" "center center"!important;grid-template-columns:minmax(0,1fr) auto!important}.lands-header-center{overflow:visible!important;flex-wrap:wrap!important}.lands-header-date{display:none!important}.shell>.side,.shell>.main{grid-area:auto!important;grid-column:auto!important}}
+@media(prefers-reduced-motion:reduce){.shell,.side,.command-header{transition:none!important}}

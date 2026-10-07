@@ -33,7 +33,19 @@ test('workforce login routes Preview Lands users to same-origin embedded workspa
 
 test('latest Lands UI is embedded but Review Mode is opt-in only', () => {
   const ui = read('lands/index.html');
-  assert.match(ui, /new URLSearchParams\(location\.search\)\.get\("review"\) === "1"/);
+  const vm = require('node:vm');
+  const start = ui.indexOf('function isReviewModeAllowed()');
+  const end = ui.indexOf('function resolveLandsFirebaseConfig()', start);
+  assert.ok(start >= 0 && end > start);
+  const gate = ui.slice(start, end);
+  const allowed = (hostname, search) => vm.runInNewContext(gate + '; isReviewModeAllowed()', {
+    URLSearchParams, location: { hostname, search },
+    LANDS_PRODUCTION_HOSTNAMES: ['lands-smart.vercel.app']
+  });
+  assert.equal(allowed('qa.vercel.app', '?review=1'), true);
+  for (const [host, query] of [['qa.vercel.app',''],['qa.vercel.app','?review=0'],['lands-smart.vercel.app','?review=1'],['127.0.0.1','?review=1'],['smart-hsr.example.com','?review=1']]) {
+    assert.equal(allowed(host, query), false);
+  }
   assert.match(ui, /fetch\("\/api\/lands-sso-consume"/);
   assert.match(ui, /import\('\.\/client\/lands-client\.js'\)/);
 });
