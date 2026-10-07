@@ -6243,7 +6243,7 @@ function enterReviewMode() {
 let initialAuthStateResolved = false;
 
 async function boot() {
-  await loadModules();
+  await withBootTimeout(loadModules(), "modules");
   // Golden Preview Review Mode takes priority over everything else and
   // never calls ensureClient()/createLandsClient() — no Firebase app is
   // even initialized on this path, so no read or write of any kind is
