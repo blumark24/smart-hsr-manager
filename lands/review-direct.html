@@ -6408,14 +6408,15 @@ let initialAuthStateResolved = false;
 async function boot() {
   const reviewRequested = isReviewModeAllowed();
   if (reviewRequested) {
-  // Review Preview opens the workspace immediately: no splash wait/hang.
-  // Normal authenticated Lands entry keeps the approved company handoff.
-  window.SmartHSRCompanySplash?.dismiss();
-  const reviewBootScreen = document.getElementById("bootScreen");
-  if (reviewBootScreen) reviewBootScreen.hidden = true;
-  document.body.classList.remove("secure-handoff-active");
+  // Keep the company splash visible while Preview modules initialize.
+  // enterReviewMode() is the single success path that reveals appShell and
+  // dismisses the splash via showScreen("app"). This prevents the previous
+  // white gap caused by hiding the splash before dynamic imports completed.
+  window.SmartHSRCompanySplash?.show();
+  bootStatus("تحميل مركز إدارة الأراضي");
   try {
     await withBootTimeout(loadModules(), "review-modules");
+    bootStatus("تجهيز مساحة العمل");
     enterReviewMode();
   } catch (error) {
     console.error("[LANDS_REVIEW_BOOT]", error && error.message ? error.message : "unknown");
