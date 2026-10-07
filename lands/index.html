@@ -3116,6 +3116,50 @@ body.sidebar-collapsed .side-identity div{display:none}.body.sidebar-collapsed .
   .shell,.side,.command-header.manager-parity-header,.manager-profile-button{transition:none!important}
 }
 </style>
+
+<style id="lands-manager-header-final-v5">
+/* Header parity + calm Day/Night card polish. Presentation only. */
+.command-header.manager-parity-header{
+  height:auto!important;min-height:64px!important;padding:8px 16px!important;
+  border-radius:16px!important;position:sticky!important;top:0!important;z-index:80!important;
+  background:linear-gradient(180deg,rgba(17,26,44,.88),rgba(9,15,28,.92))!important;
+  border:1px solid rgba(122,164,224,.22)!important;border-bottom:2px solid rgba(34,197,94,.40)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.30),0 4px 12px -6px rgba(0,0,0,.60),0 26px 54px -22px rgba(0,0,0,.98)!important;
+  backdrop-filter:blur(22px)!important;-webkit-backdrop-filter:blur(22px)!important;
+}
+.lands-manager-header{width:100%!important;max-width:none!important;margin:0!important;display:grid!important;grid-template-columns:auto minmax(260px,1fr) auto!important;grid-template-areas:"brand center profile"!important;align-items:center!important;gap:12px!important;direction:ltr!important}
+.manager-brand-zone{grid-area:brand!important;justify-self:start!important;display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;direction:ltr!important}
+.manager-brand-logo{width:auto!important;height:42px!important;max-width:42px!important;object-fit:contain!important;background:transparent!important;padding:0!important;border-radius:0!important}
+.brand-copy{text-align:left!important;direction:rtl!important}
+.manager-header-title{margin:0!important;font-size:12px!important;font-weight:700!important;color:#edf4fb!important;white-space:nowrap!important}
+.manager-header-subtitle{margin:2px 0 0!important;font-size:7px!important;letter-spacing:1.35px!important;color:#7d8ea6!important;direction:ltr!important}
+.manager-profile-zone{grid-area:profile!important;justify-self:end!important;direction:rtl!important}
+.manager-profile-button{min-height:42px!important;border-radius:12px!important;background:rgba(12,20,36,.62)!important;border:1px solid rgba(122,164,224,.18)!important;color:#e9f1fb!important}
+.manager-profile-copy strong{color:#edf4fb!important}.manager-profile-copy small{color:#8fa3bd!important}
+.manager-profile-avatar{background:linear-gradient(160deg,#1d3a5c,#0e1c30)!important;border:1px solid rgba(122,164,224,.28)!important;color:#9fc7e8!important}
+.lands-header-center{grid-area:center!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;min-width:0!important;direction:rtl!important}
+.lands-header-search{position:relative!important;width:min(300px,34vw)!important;min-width:180px!important;display:flex!important;align-items:center!important}
+.lands-header-search input{width:100%!important;height:36px!important;border-radius:10px!important;background:rgba(12,20,36,.72)!important;border:1px solid rgba(122,164,224,.16)!important;color:#dbe6f5!important;padding:0 38px 0 12px!important;outline:none!important;font-size:11.5px!important}
+.lands-header-search input:focus{border-color:rgba(76,201,240,.42)!important;box-shadow:0 0 0 3px rgba(76,201,240,.08)!important}
+.lands-header-search button{position:absolute!important;right:4px!important;width:30px!important;height:30px!important;border:0!important;border-radius:8px!important;background:transparent!important;color:#7d8ea6!important;display:grid!important;place-items:center!important}
+.lands-header-search svg{width:15px!important;height:15px!important}
+.lands-header-date{height:36px!important;display:flex!important;align-items:center!important;gap:7px!important;padding:0 10px!important;border-radius:10px!important;background:rgba(12,20,36,.55)!important;border:1px solid rgba(122,164,224,.11)!important;color:#9db2cc!important;font-size:10.5px!important;white-space:nowrap!important}
+.lands-header-date svg{width:14px!important;height:14px!important;color:#f5a524!important}.date-sep{color:#54677f!important}
+.lands-theme-segment{display:flex!important;align-items:center!important;gap:2px!important;padding:3px!important;border-radius:11px!important;background:rgba(12,20,36,.60)!important;border:1px solid rgba(122,164,224,.14)!important}
+.lands-theme-segment button{height:28px!important;padding:0 9px!important;border-radius:8px!important;border:1px solid transparent!important;background:transparent!important;color:#7d8ea6!important;display:flex!important;align-items:center!important;gap:5px!important;font-size:10.5px!important;font-weight:600!important}
+.lands-theme-segment button.active{border-color:rgba(76,201,240,.34)!important;background:rgba(56,132,220,.25)!important;color:#eaf4ff!important}
+.lands-theme-segment svg{width:13px!important;height:13px!important}.lands-sidebar-toggle{flex:none!important}
+body:not(.dark){background:#e7ece9!important}
+body:not(.dark) .command-header.manager-parity-header{background:linear-gradient(180deg,rgba(248,252,250,.94),rgba(235,244,239,.96))!important;border-color:rgba(18,133,90,.18)!important;border-bottom-color:rgba(20,156,43,.34)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.88),0 18px 42px -30px rgba(16,60,42,.34)!important}
+body:not(.dark) .manager-header-title{color:#17392d!important}body:not(.dark) .manager-header-subtitle{color:#70847a!important}
+body:not(.dark) .manager-profile-button,body:not(.dark) .lands-header-search input,body:not(.dark) .lands-header-date,body:not(.dark) .lands-theme-segment{background:rgba(255,255,255,.66)!important;border-color:rgba(18,133,90,.14)!important;color:#28463a!important}
+body:not(.dark) .manager-profile-copy strong{color:#17392d!important}body:not(.dark) .manager-profile-copy small,body:not(.dark) .lands-header-date{color:#5f7469!important}
+body:not(.dark) .lands-theme-segment button{color:#61766b!important}body:not(.dark) .lands-theme-segment button.active{background:rgba(20,156,43,.10)!important;border-color:rgba(20,156,43,.24)!important;color:#0b6b39!important}
+body:not(.dark) .metric,body:not(.dark) .panel{background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(244,249,246,.92))!important;border-color:rgba(23,83,57,.12)!important;box-shadow:0 12px 28px -24px rgba(11,61,46,.36),0 2px 8px rgba(11,61,46,.05)!important}
+body.dark .metric,body.dark .panel{background:linear-gradient(180deg,rgba(15,28,48,.92),rgba(9,19,35,.94))!important;border-color:rgba(122,164,224,.16)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 20px 46px -32px rgba(0,0,0,.9)!important}
+@media(max-width:1100px){.lands-manager-header{grid-template-columns:auto 1fr auto!important}.lands-header-date{display:none!important}.lands-header-search{width:min(260px,34vw)!important}.brand-copy{display:none!important}}
+@media(max-width:760px){.lands-manager-header{grid-template-columns:auto 1fr auto!important;gap:7px!important;padding:7px 9px!important}.manager-brand-logo{height:36px!important;max-width:36px!important}.lands-header-search{display:none!important}.lands-theme-segment span{display:none!important}.lands-theme-segment button{width:30px!important;padding:0!important;justify-content:center!important}.manager-profile-copy,.manager-profile-chevron{display:none!important}.manager-profile-button{width:40px!important;min-width:40px!important;padding:4px!important;justify-content:center!important}.lands-header-center{justify-content:center!important}}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -3133,13 +3177,16 @@ body.sidebar-collapsed .side-identity div{display:none}.body.sidebar-collapsed .
   </section>
 </div>
 <div class="app" id="appShell" hidden>
-  <header class="topbar command-header manager-parity-header" aria-label="رأس الأراضي الذكية">
-    <div class="header-inner manager-header-inner">
+  <header class="topbar command-header manager-parity-header" aria-label="رأس مركز إدارة الأراضي والممتلكات">
+    <div class="header-inner manager-header-inner lands-manager-header">
       <div class="manager-profile-zone">
         <div class="account-menu-wrap">
           <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف" aria-haspopup="menu" aria-expanded="false" title="ملف الموظف" onclick="toggleAccountMenu(event)">
             <span id="headerProfileAvatar" class="manager-profile-avatar">م</span>
-            <span class="manager-profile-copy"><strong>ملف الموظف</strong><small id="headerProfileRole">مساحة عمل الأراضي</small></span>
+            <span class="manager-profile-copy">
+              <strong id="headerProfileName">ملف الموظف</strong>
+              <small><span id="headerProfileRole">مساحة عمل الأراضي</span><span class="profile-sep"> · </span><span id="headerOrgLabel">الجهة البلدية</span></small>
+            </span>
             <i data-lucide="chevron-down" class="manager-profile-chevron"></i>
           </button>
           <div id="accountMenu" class="account-menu" role="menu" aria-label="قائمة الحساب">
@@ -3149,21 +3196,36 @@ body.sidebar-collapsed .side-identity div{display:none}.body.sidebar-collapsed .
           </div>
         </div>
       </div>
-      <div class="manager-brand-zone">
-        <img class="manager-brand-logo" src="/smart-hsr-signature-transparent.png" alt="SMART HSR">
-        <div class="brand-copy">
-          <p class="manager-header-title">إدارة مركز إدارة الأراضي والممتلكات</p>
-          <p class="manager-header-subtitle">SMART HSR</p>
+
+      <div class="lands-header-center">
+        <div class="lands-header-search" role="search">
+          <input id="headerSearchInput" type="search" placeholder="بحث في الأراضي والممتلكات…" aria-label="بحث في الأراضي والممتلكات" onkeydown="if(event.key==='Enter')runHeaderSearch()">
+          <button type="button" aria-label="بحث" title="بحث" onclick="runHeaderSearch()"><i data-lucide="search"></i></button>
         </div>
+        <div class="lands-header-date" aria-label="التاريخ الهجري والميلادي">
+          <i data-lucide="calendar-days"></i>
+          <span id="headerGregorianDate">—</span>
+          <span class="date-sep">·</span>
+          <span id="headerHijriDate">—</span>
+        </div>
+        <div class="lands-theme-segment" aria-label="اختيار المظهر">
+          <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
+          <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
+        </div>
+        <button id="sidebarToggle" class="icon-button lands-sidebar-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-pressed="false" aria-expanded="true" title="القائمة الجانبية" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
       </div>
-      <div class="header-actions">
-        <button id="themeToggle" class="icon-button" type="button" aria-label="تبديل المظهر" aria-pressed="false" title="الوضع الليلي/النهاري" onclick="toggleTheme()"></button>
-        <button id="sidebarToggle" class="icon-button" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-pressed="false" aria-expanded="true" title="القائمة الجانبية" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
+
+      <div class="manager-brand-zone">
+        <div class="brand-copy">
+          <p class="manager-header-title">مركز إدارة الأراضي والممتلكات</p>
+          <p class="manager-header-subtitle">SMART MUNICIPAL PLATFORM</p>
+        </div>
+        <img class="manager-brand-logo" src="/smart-hsr-mark.svg" alt="سمارت حصر">
       </div>
     </div>
   </header>
   <div class="shell">
-    <aside class="side"><div class="side-identity"><img src="/smart-hsr-signature-transparent.png" alt="SMART HSR"><div><strong>الأراضي الذكية</strong><span>LANDS COMMAND</span></div></div><nav class="nav">
+    <aside class="side"><div class="side-identity"><img src="/smart-hsr-mark.svg" alt="SMART HSR"><div><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div></div><nav class="nav">
       <div class="nav-group-label">الرئيسية</div>
       <button class="active" data-view="center"><i data-lucide="layout-dashboard"></i><span>لوحة المعلومات</span></button>
       <div class="nav-group-label">إدارة الأراضي</div>
@@ -3345,10 +3407,9 @@ function isProductionHost() {
 // and called separately at the review-mode call site so the gate is
 // unambiguous on its own, not implied.
 function isReviewModeAllowed() {
-  const hostname = location.hostname;
-  const localQaHost = hostname === "localhost" || hostname === "127.0.0.1";
-  const previewHost = hostname.endsWith(".vercel.app") && !LANDS_PRODUCTION_HOSTNAMES.includes(hostname);
-  return (localQaHost || previewHost) && new URLSearchParams(location.search).get("review") === "1";
+  // Review/demo fixtures are intentionally disabled on shared previews.
+  // Municipal review must use the authenticated, tenant-scoped data path.
+  return false;
 }
 function resolveLandsFirebaseConfig() {
   return isProductionHost() ? LANDS_PRODUCTION_FIREBASE_CONFIG : LANDS_STAGING_FIREBASE_CONFIG;
@@ -3572,7 +3633,15 @@ function showToast(t, isError, kind) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 3600);
 }
 function normalizeDigits(root = document.body) { const arabic = "٠١٢٣٤٥٦٧٨٩", latin = "0123456789", walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode); nodes.forEach(n => { n.nodeValue = n.nodeValue.replace(/[٠-٩]/g, d => latin[arabic.indexOf(d)]); }); root.querySelectorAll("input,textarea,select").forEach(el => { ["placeholder", "value", "aria-label"].forEach(a => { if (el.hasAttribute(a)) el.setAttribute(a, el.getAttribute(a).replace(/[٠-٩]/g, d => latin[arabic.indexOf(d)])); }); }); }
-function applyTheme(theme) { document.body.classList.toggle("dark", theme === "dark"); try { localStorage.setItem("slgr-theme", theme); } catch { /* presentation preference only */ } const b = document.getElementById("themeToggle"); if (b) { const nextLabel = theme === "dark" ? "تفعيل الوضع النهاري" : "تفعيل الوضع الداكن"; b.innerHTML = icon(theme === "dark" ? "sun" : "moon"); b.setAttribute("aria-label", nextLabel); b.setAttribute("title", nextLabel); } b?.setAttribute("aria-pressed", theme === "dark"); }
+function applyTheme(theme) {
+  const dark = theme === "dark";
+  document.body.classList.toggle("dark", dark);
+  try { localStorage.setItem("slgr-theme", theme); } catch { /* presentation preference only */ }
+  const day = document.getElementById("themeDayButton");
+  const night = document.getElementById("themeNightButton");
+  if (day) { day.classList.toggle("active", !dark); day.setAttribute("aria-pressed", String(!dark)); }
+  if (night) { night.classList.toggle("active", dark); night.setAttribute("aria-pressed", String(dark)); }
+}
 function toggleTheme() {
   applyTheme(document.body.classList.contains("dark") ? "light" : "dark");
   lucide.createIcons();
@@ -3831,12 +3900,32 @@ async function loadWorkspace() {
   selectedGrantId = grants[0]?.id ?? null;
 }
 async function refreshWorkspace() { await loadWorkspace(); render(); }
+function updateHeaderDates() {
+  const now = new Date();
+  const gregorian = new Intl.DateTimeFormat("ar-SA-u-ca-gregory", { day:"2-digit", month:"long", year:"numeric" }).format(now);
+  const hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", { day:"2-digit", month:"long", year:"numeric" }).format(now);
+  const g = document.getElementById("headerGregorianDate");
+  const h = document.getElementById("headerHijriDate");
+  if (g) g.textContent = gregorian;
+  if (h) h.textContent = hijri + " هـ";
+}
+function runHeaderSearch() {
+  const input = document.getElementById("headerSearchInput");
+  query = (input?.value || "").trim();
+  currentView = "registry";
+  closeMobileNav();
+  render();
+  syncRouteToUrl();
+}
 function renderShellChrome() {
   const roleLabel = ROLE_LABELS[session.role] || session.role;
   const profileRole = document.getElementById("headerProfileRole");
   const profileAvatar = document.getElementById("headerProfileAvatar");
+  const profileName = document.getElementById("headerProfileName");
+  const displayName = session?.displayName || session?.name || session?.employeeName || roleLabel;
+  if (profileName) profileName.textContent = displayName;
   if (profileRole) profileRole.textContent = roleLabel;
-  if (profileAvatar) profileAvatar.textContent = (roleLabel || "م").trim().charAt(0) || "م";
+  if (profileAvatar) profileAvatar.textContent = (displayName || roleLabel || "م").trim().charAt(0) || "م";
   const canReview = mod.canReviewGrant(session.role);
   const canAdmin = mod.canManageEntitlements(session.role);
   document.body.classList.toggle("lands-reviewer", canReview);
@@ -3846,9 +3935,11 @@ function renderShellChrome() {
   const orgEl = document.getElementById("headerOrgLabel");
   if (roleEl) roleEl.textContent = roleLabel;
   if (orgEl) {
-    orgEl.textContent = reviewMode ? "معاينة تجريبية" : "الجهة البلدية";
-    if (!reviewMode && session?.municipalityId) orgEl.title = session.municipalityId;
+    const municipalityLabel = session?.municipalityName || session?.organizationName || session?.orgName || session?.municipalityId || "الجهة البلدية";
+    orgEl.textContent = municipalityLabel;
+    if (session?.municipalityId) orgEl.title = session.municipalityId;
   }
+  updateHeaderDates();
   const accountButton = document.getElementById("accountButton");
   if (accountButton) accountButton.title = roleLabel;
   document.querySelectorAll("[data-review-only]").forEach(el => { el.hidden = !canReview; });
@@ -3993,8 +4084,8 @@ function centerView() {
   if (managerMode) {
     return shellHead("وضع المدير — عرض تنفيذي", "وضع المدير", "أهم القضايا التشغيلية التي تحتاج قرارًا خلال ثوانٍ") + managerModeView(attention);
   }
-  return shellHead("مركز الحصر الذكي لمنح الأراضي", "مركز الحصر الذكي", "متابعة اكتمال وجودة وربط سجلات منح الأراضي ودعم أعمال المراجعة والاعتماد", actions) + `
- ${reviewMode ? reviewScenarioStrip() : ""}
+  return shellHead("مركز إدارة الأراضي والممتلكات", "مركز إدارة الأراضي والممتلكات", "متابعة اكتمال وجودة وربط سجلات الأراضي والممتلكات ودعم أعمال المراجعة والاعتماد", actions) + `
+ 
  <section class="metrics"><div class="metric teal"><span class="label">القرارات النشطة</span><div class="value mono">${activeDecisions}</div><span class="hint">في نطاق البلدية الحالية</span></div><div class="metric"><span class="label">إجمالي المنح</span><div class="value mono">${stats.total}</div><span class="hint">في نطاق هذه البلدية</span></div><div class="metric green"><span class="label">مكتمل</span><div class="value mono">${stats.complete}</div><span class="hint"><strong>${approved}</strong> منها معتمدة رسميًا</span></div><div class="metric red"><span class="label">يحتاج استكمال</span><div class="value mono">${stats.needsWork}</div><span class="hint">تنقصها بيانات أساسية</span></div><div class="metric amber"><span class="label">تحت المراجعة</span><div class="value mono">${stats.review}</div><span class="hint">بانتظار قرار المراجع</span></div><div class="metric"><span class="label">متوسط اكتمال الملفات</span><div class="value mono">${stats.avgPercent}%</div><span class="hint">محسوب آليًا من متطلبات كل سجل</span></div></section>
  <div class="workgrid"><section class="panel map-panel"><div class="panel-head"><div><h2>التوأم الرقمي للمخططات</h2><p>محاكاة مكانية تشغيلية — غير مرتبطة حاليًا بحدود مساحية رسمية</p></div>${reviewDemoLocationChip()}</div>${(() => {
    const active = grants.filter(g => !g.archived);
