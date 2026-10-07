@@ -1,7 +1,9 @@
 import { chromium } from "playwright";
 import fs from "node:fs/promises";
 
-const base = process.env.LANDS_PREVIEW_URL;
+const sourceBase = process.env.LANDS_PREVIEW_URL;
+const localReview = sourceBase && ['127.0.0.1', 'localhost'].includes(new URL(sourceBase).hostname);
+const base = localReview ? 'http://lands-visual-qa.vercel.app' : sourceBase;
 if (!base) throw new Error("LANDS_PREVIEW_URL is required");
 const outDir = "artifacts/lands-visual-qa";
 await fs.mkdir(outDir, { recursive: true });
@@ -22,6 +24,13 @@ const failures = [];
 try {
   for (const vp of viewports) {
     const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 1 });
+    if (localReview) {
+      await context.route(base + '/**', async route => {
+        const requested = new URL(route.request().url());
+        const response = await route.fetch({ url: new URL(requested.pathname + requested.search, sourceBase).toString() });
+        await route.fulfill({ response });
+      });
+    }
     const page = await context.newPage();
     const consoleErrors = [];
     page.on("console", msg => { if (msg.type() === "error") consoleErrors.push(msg.text()); });

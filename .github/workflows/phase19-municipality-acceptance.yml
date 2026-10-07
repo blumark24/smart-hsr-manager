@@ -4,6 +4,7 @@ name: PHASE19 Municipality Acceptance RC1
 on:
   push:
     branches:
+      - fix/lands-final-closure-v5
       - phase19-municipality-acceptance-rc1
       - phase19-1-institutional-structure-closure
       - phase19-2-five-administrations-role-matrix

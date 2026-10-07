@@ -3,6 +3,7 @@ name: Lands Visual QA
 on:
   push:
     branches:
+      - fix/lands-final-closure-v5
       - fix/lands-visual-unification-v1
       - release/municipality-final-v5
   workflow_dispatch:
