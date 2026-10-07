@@ -3528,6 +3528,366 @@ body.sidebar-collapsed .manager-like-nav button{justify-content:center!important
   font-size:9.5px!important;
 }
 </style>
+<style id="lands-smart-glass-dialog-system-v1">
+    /* SMART HSR — unified Lands dialog system. Visual-only; no auth/data logic changes. */
+    .modal-backdrop,
+    .drawer-backdrop{
+      position:fixed!important;
+      inset:0!important;
+      z-index:110!important;
+      background:rgba(4,18,13,.48)!important;
+      -webkit-backdrop-filter:blur(14px) saturate(118%)!important;
+      backdrop-filter:blur(14px) saturate(118%)!important;
+      padding:
+        max(96px,calc(env(safe-area-inset-top) + 82px))
+        max(20px,env(safe-area-inset-right))
+        max(24px,env(safe-area-inset-bottom))
+        max(20px,env(safe-area-inset-left))!important;
+      overflow:auto!important;
+      overscroll-behavior:contain;
+    }
+    .modal-backdrop.open,
+    .drawer-backdrop.open{
+      display:grid!important;
+      place-items:center!important;
+      animation:hsrGlassBackdropIn .18s ease-out both!important;
+    }
+    .modal,
+    .drawer{
+      position:relative!important;
+      inset:auto!important;
+      margin:0!important;
+      width:min(720px,calc(100vw - 40px))!important;
+      max-width:100%!important;
+      max-height:calc(100dvh - 132px)!important;
+      overflow:auto!important;
+      direction:rtl;
+      color:var(--ink)!important;
+      background:
+        linear-gradient(145deg,rgba(255,255,255,.84),rgba(247,251,248,.72))!important;
+      border:1px solid rgba(64,124,91,.18)!important;
+      border-radius:24px!important;
+      box-shadow:
+        0 32px 90px rgba(4,31,20,.24),
+        0 8px 28px rgba(4,31,20,.12),
+        inset 0 1px 0 rgba(255,255,255,.72)!important;
+      -webkit-backdrop-filter:blur(26px) saturate(145%)!important;
+      backdrop-filter:blur(26px) saturate(145%)!important;
+      padding:26px!important;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(46,139,87,.36) transparent;
+      animation:hsrGlassDialogIn .22s cubic-bezier(.2,.8,.2,1) both!important;
+      transform-origin:center center;
+    }
+    .drawer{width:min(760px,calc(100vw - 40px))!important;}
+    .modal::-webkit-scrollbar,.drawer::-webkit-scrollbar{width:8px}
+    .modal::-webkit-scrollbar-thumb,.drawer::-webkit-scrollbar-thumb{
+      background:rgba(46,139,87,.26);
+      border-radius:999px;
+    }
+
+    .modal-head,
+    .drawer-head{
+      position:sticky;
+      top:-26px;
+      z-index:3;
+      display:flex!important;
+      align-items:flex-start!important;
+      justify-content:space-between!important;
+      gap:18px!important;
+      margin:-2px 0 20px!important;
+      padding:2px 0 16px!important;
+      background:linear-gradient(180deg,rgba(249,252,250,.96) 0%,rgba(249,252,250,.88) 76%,rgba(249,252,250,0) 100%)!important;
+      border-bottom:1px solid rgba(35,122,85,.14)!important;
+      -webkit-backdrop-filter:blur(16px)!important;
+      backdrop-filter:blur(16px)!important;
+    }
+    .modal-head h2,
+    .drawer-head h2{
+      margin:0!important;
+      color:#0B3D2E!important;
+      font-size:20px!important;
+      line-height:1.45!important;
+      letter-spacing:-.02em;
+    }
+    .modal-head .drawer-sub,
+    .drawer-head .drawer-sub{
+      margin-top:5px!important;
+      color:#66776e!important;
+      line-height:1.65!important;
+    }
+    .close{
+      width:38px!important;
+      height:38px!important;
+      min-width:38px!important;
+      display:grid!important;
+      place-items:center!important;
+      padding:0!important;
+      border:1px solid rgba(35,122,85,.14)!important;
+      border-radius:12px!important;
+      background:rgba(255,255,255,.64)!important;
+      color:#486357!important;
+      box-shadow:0 4px 14px rgba(11,61,46,.07)!important;
+      transition:transform .16s ease,background .16s ease,border-color .16s ease!important;
+    }
+    .close:hover{
+      transform:translateY(-1px);
+      background:rgba(229,242,234,.92)!important;
+      border-color:rgba(46,139,87,.28)!important;
+    }
+
+    .modal .text-input,
+    .modal .select,
+    .drawer .text-input,
+    .drawer .select{
+      min-height:44px!important;
+      border-radius:12px!important;
+      border:1px solid rgba(35,122,85,.18)!important;
+      background:rgba(255,255,255,.68)!important;
+      color:var(--ink)!important;
+      padding:10px 12px!important;
+      transition:border-color .16s ease,box-shadow .16s ease,background .16s ease!important;
+    }
+    .modal .text-input:focus,
+    .modal .select:focus,
+    .drawer .text-input:focus,
+    .drawer .select:focus{
+      outline:none!important;
+      border-color:rgba(46,139,87,.58)!important;
+      box-shadow:0 0 0 4px rgba(46,139,87,.10)!important;
+      background:rgba(255,255,255,.88)!important;
+    }
+    .modal .input-label,
+    .drawer .input-label{
+      color:#52695d!important;
+      font-weight:600!important;
+      margin:12px 0 6px!important;
+    }
+    .modal .drawer-foot,
+    .drawer .drawer-foot{
+      position:sticky;
+      bottom:-26px;
+      z-index:3;
+      display:flex!important;
+      align-items:center!important;
+      gap:10px!important;
+      margin:22px -2px -2px!important;
+      padding:16px 0 2px!important;
+      border-top:1px solid rgba(35,122,85,.14)!important;
+      background:linear-gradient(0deg,rgba(249,252,250,.98) 0%,rgba(249,252,250,.92) 72%,rgba(249,252,250,0) 100%)!important;
+      -webkit-backdrop-filter:blur(16px)!important;
+      backdrop-filter:blur(16px)!important;
+    }
+    .modal .drawer-foot .btn,
+    .drawer .drawer-foot .btn{
+      min-height:44px!important;
+      border-radius:12px!important;
+    }
+    .modal .drawer-foot .btn.primary,
+    .drawer .drawer-foot .btn.primary{
+      box-shadow:0 8px 18px rgba(20,90,58,.18)!important;
+    }
+
+    body.dark .modal-backdrop,
+    body.dark .drawer-backdrop{
+      background:rgba(0,8,5,.68)!important;
+    }
+    body.dark .modal,
+    body.dark .drawer{
+      color:#e5f3e9!important;
+      background:
+        linear-gradient(145deg,rgba(13,42,29,.88),rgba(8,29,20,.80))!important;
+      border-color:rgba(124,202,153,.18)!important;
+      box-shadow:
+        0 34px 96px rgba(0,0,0,.52),
+        0 10px 30px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.08)!important;
+    }
+    body.dark .modal-head,
+    body.dark .drawer-head{
+      background:linear-gradient(180deg,rgba(13,42,29,.98) 0%,rgba(13,42,29,.90) 76%,rgba(13,42,29,0) 100%)!important;
+      border-color:rgba(116,201,154,.14)!important;
+    }
+    body.dark .modal-head h2,
+    body.dark .drawer-head h2{color:#dff4e6!important}
+    body.dark .modal-head .drawer-sub,
+    body.dark .drawer-head .drawer-sub{color:#a9c0b1!important}
+    body.dark .close{
+      color:#cfe7d7!important;
+      background:rgba(255,255,255,.055)!important;
+      border-color:rgba(139,224,167,.14)!important;
+      box-shadow:none!important;
+    }
+    body.dark .close:hover{background:rgba(107,197,142,.12)!important}
+    body.dark .modal .text-input,
+    body.dark .modal .select,
+    body.dark .drawer .text-input,
+    body.dark .drawer .select{
+      background:rgba(16,47,32,.72)!important;
+      border-color:rgba(116,201,154,.18)!important;
+      color:#e5f3e9!important;
+    }
+    body.dark .modal .input-label,
+    body.dark .drawer .input-label{color:#b8cfc0!important}
+    body.dark .modal .drawer-foot,
+    body.dark .drawer .drawer-foot{
+      background:linear-gradient(0deg,rgba(13,42,29,.98) 0%,rgba(13,42,29,.92) 72%,rgba(13,42,29,0) 100%)!important;
+      border-color:rgba(116,201,154,.14)!important;
+    }
+
+    @keyframes hsrGlassBackdropIn{
+      from{opacity:0}
+      to{opacity:1}
+    }
+    @keyframes hsrGlassDialogIn{
+      from{opacity:0;transform:translateY(12px) scale(.985)}
+      to{opacity:1;transform:translateY(0) scale(1)}
+    }
+
+    @media (max-width:767px){
+      .modal-backdrop,
+      .drawer-backdrop{
+        padding:
+          max(78px,calc(env(safe-area-inset-top) + 68px))
+          10px
+          max(8px,env(safe-area-inset-bottom))
+          10px!important;
+        place-items:end center!important;
+      }
+      .modal,
+      .drawer{
+        width:100%!important;
+        max-height:calc(100dvh - 86px)!important;
+        border-radius:24px 24px 18px 18px!important;
+        padding:20px!important;
+      }
+      .modal-head,
+      .drawer-head{top:-20px!important}
+      .modal .drawer-foot,
+      .drawer .drawer-foot{bottom:-20px!important}
+      .form-row,
+      .form-grid{grid-template-columns:1fr!important}
+      .modal .text-input,
+      .modal .select,
+      .drawer .text-input,
+      .drawer .select{font-size:16px!important}
+      .modal .drawer-foot,
+      .drawer .drawer-foot{
+        display:grid!important;
+        grid-template-columns:1fr 1fr!important;
+      }
+      .modal .drawer-foot .btn,
+      .drawer .drawer-foot .btn{width:100%!important;justify-content:center!important}
+    }
+    @media (max-width:430px){
+      .modal .drawer-foot,
+      .drawer .drawer-foot{grid-template-columns:1fr!important}
+    }
+    @media (prefers-reduced-motion:reduce){
+      .modal-backdrop.open,.drawer-backdrop.open,.modal,.drawer{animation:none!important}
+    }
+  </style>
+<style id="lands-digital-file-v2">
+/* SMART HSR — Digital Grant File V2. Presentation only; existing handlers, RBAC and data contracts stay intact. */
+.digital-file-shell{display:flex;flex-direction:column;gap:16px}
+.digital-file-crumb{margin-bottom:0!important}
+.digital-file-command{padding:24px!important}
+.digital-file-command-main{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:24px;align-items:center}
+.digital-file-identity{min-width:0}
+.digital-file-identity h1{margin:5px 0 10px!important;font-size:24px!important;line-height:1.45!important}
+.digital-file-readiness{padding:16px 18px;border-radius:14px;background:var(--surface-tint);border:1px solid var(--line)}
+.digital-file-readiness strong{display:block;font-size:28px;color:var(--navy);margin:2px 0 8px}
+.digital-file-readiness small{display:block;color:var(--muted);font-size:11px;line-height:1.55;margin-top:8px}
+.digital-file-readiness .progress{height:6px;margin:0}
+.digital-file-spine{margin-top:20px!important;padding-top:16px!important;border-top:1px solid var(--line);gap:8px!important}
+.digital-file-spine .step{min-height:38px!important;min-width:0!important;padding:8px 10px!important;font-size:10.5px!important}
+.digital-file-workflow{margin-top:14px}
+.digital-file-workflow .decision-path{margin:0!important}
+.digital-file-workflow .decision-path-context{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.digital-file-workflow .decision-path-actions{margin-top:10px!important}
+
+.digital-file-primary-grid{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(300px,.85fr);gap:16px;align-items:start}
+.digital-file-side-stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.digital-file-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.digital-file-section-head h2{margin:2px 0 0!important;font-size:15px!important;display:flex;align-items:center;gap:8px}
+.digital-file-section-head p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.65}
+.digital-file-section-head .eyebrow{font-size:9px;letter-spacing:.11em;color:var(--teal);font-weight:800}
+.digital-file-dossier{padding:0!important}
+.dossier-group{padding:18px 20px;border-bottom:1px solid var(--line)}
+.dossier-group:last-child{border-bottom:0}
+.dossier-group-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--navy);margin-bottom:10px}
+.dossier-group-title svg{width:16px;height:16px;color:var(--teal)}
+.dossier-group .detail-grid{padding:0!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px 18px!important}
+.dossier-group .detail-grid>div{padding:10px 12px;border-radius:10px;background:var(--surface-tint)}
+.digital-file-spatial-note{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:var(--teal-soft);color:var(--muted);font-size:10.5px;line-height:1.65}
+.digital-file-intelligence{padding:0!important}
+.digital-file-intelligence .completion-intel{padding:18px 20px!important}
+.digital-file-next-action{margin:0 20px 20px;padding:13px 14px;border-radius:12px;background:var(--teal-soft);border:1px solid rgba(46,139,87,.12)}
+.digital-file-next-action span{display:block;font-size:9.5px;color:var(--muted);margin-bottom:4px}
+.digital-file-next-action strong{display:block;font-size:12px;color:var(--navy);line-height:1.6}
+.digital-file-side-stack .workflow-context-panel{margin:0!important}
+
+.digital-file-map-section{padding:0!important;overflow:hidden}
+.digital-file-map-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.digital-file-map-canvas{position:relative;height:390px;background:var(--surface-tint)}
+.digital-file-map-canvas .gis-map{position:absolute;inset:0}
+.digital-file-map-empty{min-height:250px;display:flex;align-items:center;justify-content:center;gap:14px;text-align:right;padding:26px;background:var(--surface-tint);color:var(--muted)}
+.digital-file-map-empty svg{width:28px;height:28px;color:var(--teal);flex:0 0 auto}
+.digital-file-map-empty strong{display:block;color:var(--navy);font-size:14px;margin-bottom:4px}
+.digital-file-map-empty span{display:block;font-size:11px;line-height:1.7;max-width:520px}
+
+.digital-file-secondary-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.8fr);gap:16px;align-items:start}
+.digital-file-documents,.digital-file-audit{padding:0!important}
+.digital-file-doc-list{padding:14px 18px}
+.digital-file-doc-list .doc{border-radius:12px;margin-bottom:8px;background:var(--surface-tint)}
+.digital-file-upload{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-top:1px solid var(--line)}
+.digital-file-upload input{min-width:0;max-width:65%}
+.digital-file-audit .audit{padding:18px!important}
+
+body.dark .digital-file-readiness,
+body.dark .dossier-group .detail-grid>div,
+body.dark .digital-file-map-canvas,
+body.dark .digital-file-map-empty,
+body.dark .digital-file-doc-list .doc{background:rgba(255,255,255,.035)}
+body.dark .digital-file-spatial-note,
+body.dark .digital-file-next-action{background:rgba(107,197,142,.09);border-color:rgba(107,197,142,.12)}
+body.dark .digital-file-readiness strong,
+body.dark .dossier-group-title,
+body.dark .digital-file-map-empty strong,
+body.dark .digital-file-next-action strong{color:var(--ink)}
+
+@media(max-width:1180px){
+  .digital-file-command-main{grid-template-columns:minmax(0,1fr) 190px}
+  .digital-file-primary-grid{grid-template-columns:minmax(0,1.5fr) minmax(270px,.9fr)}
+  .digital-file-map-canvas{height:350px}
+}
+@media(max-width:980px){
+  .digital-file-command-main,
+  .digital-file-primary-grid,
+  .digital-file-secondary-grid{grid-template-columns:1fr!important}
+  .digital-file-readiness{display:grid;grid-template-columns:auto 1fr;column-gap:16px;align-items:center}
+  .digital-file-readiness .field-label,.digital-file-readiness small{grid-column:1/-1}
+  .digital-file-readiness strong{margin:2px 0}
+  .digital-file-map-canvas{height:340px}
+}
+@media(max-width:700px){
+  .digital-file-shell{gap:12px}
+  .digital-file-command{padding:16px!important}
+  .digital-file-identity h1{font-size:19px!important}
+  .digital-file-spine{display:flex!important;overflow-x:auto!important;padding-bottom:4px}
+  .digital-file-spine .step{min-width:122px!important}
+  .digital-file-workflow .decision-path-context{grid-template-columns:1fr!important}
+  .digital-file-section-head{padding:14px!important;flex-direction:column}
+  .digital-file-map-actions{width:100%;justify-content:stretch}
+  .digital-file-map-actions .btn{flex:1;justify-content:center}
+  .dossier-group{padding:14px}
+  .dossier-group .detail-grid{grid-template-columns:1fr!important}
+  .digital-file-map-canvas{height:290px}
+  .digital-file-upload{align-items:stretch;flex-direction:column}
+  .digital-file-upload input{max-width:100%;width:100%}
+  .digital-file-upload .btn{width:100%;justify-content:center}
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -4383,6 +4743,10 @@ function applyRouteFromUrl() {
     return true;
   }
   if (!VIEW_RENDERERS[view]) return false;
+  if (["reviews","reports","audit"].includes(view) && session && !mod.canReviewGrant(session.role)) {
+    currentView = "center";
+    return true;
+  }
   currentView = view;
   return true;
 }
@@ -4586,8 +4950,8 @@ function decisionCard(group) {
 }
 function decisionsView() {
   const groups = decisionGroups();
-  const canManage = mod.canManageEntitlements(session.role) || mod.canCreateGrant(session.role);
-  const actions = (canManage ? `<button class="btn primary" onclick="openAddDecision()">${icon("plus")} إضافة قرار</button>` : "")
+  const canManageDecision = mod.canReviewGrant(session.role);
+  const actions = (canManageDecision ? `<button class="btn primary" onclick="openAddDecision()">${icon("plus")} إضافة قرار</button>` : "")
     + (groups.filter(g => g.number).length >= 2 ? `<button class="btn" onclick="setView('comparison')">${icon("git-compare")} مقارنة القرارات</button>` : "");
   return shellHead("القرارات", "القرارات", "كل قرار تخصيص يملك سجل منحه الخاص المستقل — دون خلط بين القرارات", actions) +
     `<div class="decision-list">${groups.length ? groups.map(decisionCard).join("") : `<div class="empty">${icon("gavel")}<br>لا توجد قرارات تخصيص مرتبطة بعد</div>`}</div>`;
@@ -5008,32 +5372,151 @@ function fileView() {
   if (!g) return shellHead("الملف الرقمي للمنحة", "الملف الرقمي للمنحة", "لا توجد منحة محددة حاليًا") + `<div class="empty">${icon("file-search")}<br>اختر منحة من سجل منح الأراضي لعرض ملفها الرقمي</div>`;
   const percent = completenessPercent(g);
   const isOwner = g.created_by === session.firebaseUid;
-  // Gate 3: editing and submitting/resubmitting are creator actions,
-  // available on BOTH draft and incomplete (returned) grants — never on
-  // under_review/approved/rejected. Ownership is checked here explicitly
-  // (mod.canTransitionGrant only knows role/from/to, not ownership); the
-  // real security boundary is server/lands-authorization.js's independent
-  // created_by check for the land_grant.transition operation.
   const canEditDraft = (g.status === "draft" || g.status === "incomplete") && isOwner;
   const canSubmit = (g.status === "draft" || g.status === "incomplete") && isOwner && mod.canTransitionGrant(session.role, g.status, "under_review");
   const canDecide = g.status === "under_review" && mod.canReviewGrant(session.role);
   const docs = documentsForGrant(g.id);
   const events = auditEventsForGrant(g.id);
   const decisionPathFrame = liveDecisionPath(g, canEditDraft, canSubmit, canDecide);
-  return `<div class="crumb">نظام الحصر الذكي <span>‹</span> <span>سجل منح الأراضي</span><span>‹</span><b>الملف الرقمي للمنحة</b></div><section class="file-head"><div class="file-head-top"><div><div class="file-id">GRANT-${esc(g.id)}</div><h1>المنحة رقم ${esc(g.id)} — ${esc(g.beneficiary?.name || "—")}</h1><div class="file-meta"><span>${icon("clock")} آخر تحديث: ${fmtDate(g.updated_at)}</span><span>${icon("calendar-plus")} أُنشئت: ${fmtDate(g.created_at)}</span><span>${statusBadge(g)}</span></div></div><div class="file-actions">${decisionPathFrame}</div></div><div class="spine">${spineStep("الأمر السامي", Boolean(g.royal_order?.number))}${spineStep("قرار التخصيص", Boolean(g.allocation_decision?.number))}${spineStep("المستفيد", Boolean(g.beneficiary?.name))}${spineStep("المخطط والقطعة", Boolean(g.plan_reference_number && g.parcel_reference_number))}${spineStep("المستندات", docs.length > 0)}${spineStep("الاعتماد", g.status === "approved", g.status === "rejected")}</div></section><div class="record-layout"><div>${workflowContextPanel(g)}<section class="record-section"><h2>${icon("scroll-text")} الأمر السامي</h2><div class="detail-grid">${detail("رقم الأمر", g.royal_order?.number || "—")}${detail("تاريخ الأمر", g.royal_order?.date || "—")}</div></section><section class="record-section"><h2>${icon("file-check-2")} قرار التخصيص</h2><div class="detail-grid">${detail("رقم القرار", g.allocation_decision?.number || "—")}${detail("تاريخ القرار", g.allocation_decision?.date || "—")}</div>${!g.allocation_decision?.number ? `<div class="notice">ينقص السجل رقم قرار التخصيص. ${canEditDraft ? "أضفه عبر تعديل المسودة." : "بانتظار استكمال صاحب المسودة."}</div>` : ""}</section><section class="record-section"><h2>${icon("user-round")} المستفيد</h2><div class="detail-grid">${detail("الاسم", g.beneficiary?.name || "—")}${detail("السجل المدني", g.beneficiary?.national_id || "—")}</div></section><section class="record-section"><h2>${icon("landmark")} المخطط والقطعة</h2><div class="detail-grid">${detail("رقم المخطط", g.plan_reference_number || "—")}${detail("رقم القطعة", g.parcel_reference_number || "—")}</div>${g.plan_id || g.parcel_id ? `<p class="muted" style="font-size:11px;padding:0 20px 16px">مرتبطة أيضًا بسجل ${planLabel(g.plan_id) ? `مخطط ${esc(planLabel(g.plan_id))}` : ""}${g.plan_id && g.parcel_id ? " و" : ""}${parcelLabel(g.parcel_id) ? `قطعة ${esc(parcelLabel(g.parcel_id))}` : ""} على التوأم الرقمي — ربط مكاني منفصل عن رقمي المخطط/القطعة أعلاه، وغير موثّق مساحيًا بالضرورة.</p>` : ""}</section><section class="record-section"><h2>${icon("stamp")} مرحلة إفراغ القطعة</h2><div class="detail-grid">${detail("رقم خطاب الإفراغ", g.conveyance?.letter_number || "—")}${detail("تاريخ خطاب الإفراغ", g.conveyance?.letter_date || "—")}</div></section><section class="record-section"><h2>${icon("folder-open")} المستندات</h2>${docs.length ? docs.map(d => docRow(d, g)).join("") : `<div class="empty" style="padding:24px">لا توجد مستندات مرفوعة لهذا السجل</div>`}${mod.canCreateGrant(session.role) ? `<div class="panel-body"><input type="file" id="uploadInput-${esc(g.id)}" accept=".pdf,.jpg,.jpeg,.png"><button class="btn small primary" style="margin-top:8px" onclick="uploadDocumentFor('${esc(g.id)}')">${icon("upload-cloud")} رفع مستند جديد</button></div>` : ""}</section></div><div><section class="record-section"><h2>${icon("sparkles")} ذكاء الاكتمال</h2>${completionIntel(g)}</section><section class="record-section"><h2>${icon("map")} التوأم الرقمي للقطعة</h2>${(() => {
-    const parcel = parcelById(g.parcel_id);
-    if (!mod.isGeoreferenced(parcel)) return `<div class="side-map side-map-empty">${icon("map-pin-off")}<span>بدون موقع محدد على الخريطة</span></div>`;
+  const firstMissing = g.completeness?.missing?.[0] || null;
+  const nextAction = g.status === "under_review"
+    ? "بانتظار قرار مدير قسم الأراضي"
+    : g.status === "approved"
+      ? "الملف معتمد وجاهز للمتابعة"
+      : firstMissing
+        ? `استكمال ${AXIS_LABELS[firstMissing] || firstMissing}`
+        : "الملف جاهز للإرسال للمراجعة";
+  const parcel = parcelById(g.parcel_id);
+  const hasSpatial = mod.isGeoreferenced(parcel);
+  const spatialCaption = reviewMode
+    ? "بيانات مكانية تجريبية للمعاينة فقط"
+    : hasSpatial
+      ? "الموقع مأخوذ من السجل المكاني الموثّق المرتبط بهذه القطعة"
+      : "لا توجد بيانات مكانية موثّقة لهذه القطعة حتى الآن";
+  let spatialMarkup = `<div class="digital-file-map-empty">${icon("map-pin-off")}<div><strong>بدون موقع موثّق</strong><span>لن يعرض SMART HSR موقعًا افتراضيًا. تظهر الخريطة تلقائيًا عند توفر بيانات مكانية موثوقة.</span></div></div>`;
+  if (hasSpatial) {
     const fc = { type: "FeatureCollection", features: [{ type: "Feature", geometry: parcel.spatial.geometry, properties: { grantId: g.id, parcelId: parcel.id, reference: parcel.reference_id || parcel.name || "", status: classifyForMap(g, "all"), selected: true } }] };
     requestAnimationFrame(() => mountGisMap("gisMapFile", fc, "all"));
-    return `<div class="side-map">${gisMapWrapMarkup("gisMapFile")}</div>`;
-  })()}<div class="panel-body" style="display:flex;flex-direction:column;gap:10px"><span class="field-label">محاكاة مكانية تشغيلية — غير مرتبطة حاليًا بحدود مساحية رسمية</span><div style="display:flex;gap:8px;flex-wrap:wrap">${g.allocation_decision?.number ? `<button class="btn small ghost" onclick="openTwinForDecision('${esc(g.allocation_decision.number)}')">${icon("map")} فتح توأم القرار</button>` : ""}<button class="btn small ghost" onclick="openParcelOnGlobalTwin('${esc(g.id)}')">${icon("map-pin")} فتح على التوأم العام</button></div></div></section><section class="record-section"><h2>${icon("history")} سجل التدقيق (Trusted Audit)</h2><div class="audit">${mod.canReviewGrant(session.role) ? (events.length ? events.map(e => `<div class="audit-line"><strong>${esc(AUDIT_ACTION_LABELS[e.action] || e.action)}</strong><small>${esc(ROLE_LABELS[e.actor_role] || e.actor_role)} · ${fmtDateTime(e.occurred_at)}</small></div>`).join("") : `<div class="empty">لا توجد أحداث مسجّلة بعد</div>`) : `<div class="empty">سجل التدقيق مقصور على أدوار المراجعة</div>`}</div></section></div></div>`;
+    spatialMarkup = `<div class="digital-file-map-canvas">${gisMapWrapMarkup("gisMapFile")}</div>`;
+  }
+
+  return `<div class="digital-file-shell">
+    <div class="crumb digital-file-crumb">نظام الحصر الذكي <span>‹</span> <span>سجل منح الأراضي</span><span>‹</span><b>الملف الرقمي للمنحة</b></div>
+
+    <section class="file-head digital-file-command">
+      <div class="digital-file-command-main">
+        <div class="digital-file-identity">
+          <div class="file-id">GRANT-${esc(g.id)}</div>
+          <h1>المنحة رقم ${esc(g.id)} — ${esc(g.beneficiary?.name || "—")}</h1>
+          <div class="file-meta">
+            <span>${icon("clock")} آخر تحديث: ${fmtDate(g.updated_at)}</span>
+            <span>${icon("calendar-plus")} أُنشئت: ${fmtDate(g.created_at)}</span>
+            <span>${statusBadge(g)}</span>
+          </div>
+        </div>
+        <div class="digital-file-readiness">
+          <span class="field-label">جاهزية الملف</span>
+          <strong class="mono">${percent}%</strong>
+          <div class="progress"><span style="width:${Math.min(100, Math.max(0, percent))}%"></span></div>
+          <small>${esc(nextAction)}</small>
+        </div>
+      </div>
+      <div class="spine digital-file-spine">${spineStep("الأمر السامي", Boolean(g.royal_order?.number))}${spineStep("قرار التخصيص", Boolean(g.allocation_decision?.number))}${spineStep("المستفيد", Boolean(g.beneficiary?.name))}${spineStep("المخطط والقطعة", Boolean(g.plan_reference_number && g.parcel_reference_number))}${spineStep("المستندات", docs.length > 0)}${spineStep("الاعتماد", g.status === "approved", g.status === "rejected")}</div>
+      <div class="digital-file-workflow">${decisionPathFrame}</div>
+    </section>
+
+    <div class="digital-file-primary-grid">
+      <section class="record-section digital-file-dossier">
+        <div class="digital-file-section-head">
+          <div><span class="eyebrow">GRANT DOSSIER</span><h2>${icon("folder-kanban")} بيانات المنحة الأساسية</h2></div>
+          <span class="chip">${percent}% مكتمل</span>
+        </div>
+
+        <div class="dossier-group">
+          <div class="dossier-group-title">${icon("scroll-text")} الأمر السامي</div>
+          <div class="detail-grid">${detail("رقم الأمر", g.royal_order?.number || "—")}${detail("تاريخ الأمر", g.royal_order?.date || "—")}</div>
+        </div>
+
+        <div class="dossier-group">
+          <div class="dossier-group-title">${icon("file-check-2")} قرار التخصيص</div>
+          <div class="detail-grid">${detail("رقم القرار", g.allocation_decision?.number || "—")}${detail("تاريخ القرار", g.allocation_decision?.date || "—")}</div>
+          ${!g.allocation_decision?.number ? `<div class="notice">ينقص السجل رقم قرار التخصيص. ${canEditDraft ? "أضفه عبر تعديل المسودة." : "بانتظار استكمال صاحب المسودة."}</div>` : ""}
+        </div>
+
+        <div class="dossier-group">
+          <div class="dossier-group-title">${icon("user-round")} المستفيد</div>
+          <div class="detail-grid">${detail("الاسم", g.beneficiary?.name || "—")}${detail("السجل المدني", g.beneficiary?.national_id || "—")}</div>
+        </div>
+
+        <div class="dossier-group">
+          <div class="dossier-group-title">${icon("landmark")} المخطط والقطعة</div>
+          <div class="detail-grid">${detail("رقم المخطط", g.plan_reference_number || "—")}${detail("رقم القطعة", g.parcel_reference_number || "—")}</div>
+          ${g.plan_id || g.parcel_id ? `<p class="digital-file-spatial-note">مرتبطة بسجل ${planLabel(g.plan_id) ? `مخطط ${esc(planLabel(g.plan_id))}` : ""}${g.plan_id && g.parcel_id ? " و" : ""}${parcelLabel(g.parcel_id) ? `قطعة ${esc(parcelLabel(g.parcel_id))}` : ""} في التوأم الرقمي.</p>` : ""}
+        </div>
+
+        <div class="dossier-group">
+          <div class="dossier-group-title">${icon("stamp")} مرحلة إفراغ القطعة</div>
+          <div class="detail-grid">${detail("رقم خطاب الإفراغ", g.conveyance?.letter_number || "—")}${detail("تاريخ خطاب الإفراغ", g.conveyance?.letter_date || "—")}</div>
+        </div>
+      </section>
+
+      <aside class="digital-file-side-stack">
+        <section class="record-section digital-file-intelligence">
+          <div class="digital-file-section-head">
+            <div><span class="eyebrow">FILE READINESS</span><h2>${icon("sparkles")} جاهزية الملف</h2></div>
+          </div>
+          ${completionIntel(g)}
+          <div class="digital-file-next-action">
+            <span>الإجراء التالي</span>
+            <strong>${esc(nextAction)}</strong>
+          </div>
+        </section>
+        ${workflowContextPanel(g)}
+      </aside>
+    </div>
+
+    <section class="record-section digital-file-map-section">
+      <div class="digital-file-section-head">
+        <div><span class="eyebrow">SPATIAL TWIN</span><h2>${icon("map")} التوأم الرقمي للقطعة</h2><p>${esc(spatialCaption)}</p></div>
+        <div class="digital-file-map-actions">
+          ${g.allocation_decision?.number ? `<button class="btn small ghost" onclick="openTwinForDecision('${esc(g.allocation_decision.number)}')">${icon("map")} توأم القرار</button>` : ""}
+          <button class="btn small ghost" onclick="openParcelOnGlobalTwin('${esc(g.id)}')">${icon("map-pin")} التوأم العام</button>
+        </div>
+      </div>
+      ${spatialMarkup}
+    </section>
+
+    <div class="digital-file-secondary-grid">
+      <section class="record-section digital-file-documents">
+        <div class="digital-file-section-head">
+          <div><span class="eyebrow">DOCUMENTS</span><h2>${icon("folder-open")} المستندات</h2></div>
+          <span class="chip">${docs.length} ملف</span>
+        </div>
+        <div class="digital-file-doc-list">
+          ${docs.length ? docs.map(d => docRow(d, g)).join("") : `<div class="empty">لا توجد مستندات مرفوعة لهذا السجل</div>`}
+        </div>
+        ${mod.canCreateGrant(session.role) ? `<div class="digital-file-upload"><input type="file" id="uploadInput-${esc(g.id)}" accept=".pdf,.jpg,.jpeg,.png"><button class="btn small primary" onclick="uploadDocumentFor('${esc(g.id)}')">${icon("upload-cloud")} رفع مستند جديد</button></div>` : ""}
+      </section>
+
+      <section class="record-section digital-file-audit">
+        <div class="digital-file-section-head">
+          <div><span class="eyebrow">TRUSTED AUDIT</span><h2>${icon("history")} سجل العمليات</h2></div>
+        </div>
+        <div class="audit">
+          ${mod.canReviewGrant(session.role)
+            ? (events.length ? events.map(e => `<div class="audit-line"><strong>${esc(AUDIT_ACTION_LABELS[e.action] || e.action)}</strong><small>${esc(ROLE_LABELS[e.actor_role] || e.actor_role)} · ${fmtDateTime(e.occurred_at)}</small></div>`).join("") : `<div class="empty">لا توجد أحداث مسجّلة بعد</div>`)
+            : `<div class="empty">سجل التدقيق مقصور على أدوار المراجعة</div>`}
+        </div>
+      </section>
+    </div>
+  </div>`;
 }
 function spineStep(label, ok, bad) { const cls = bad ? "" : ok ? "ok" : "warn"; return `<div class="step ${cls}"><i>${ok ? icon("check") : bad ? icon("x") : icon("alert-circle")}</i> ${esc(label)}</div>`; }
 function detail(l, v) { return `<div><span class="field-label">${esc(l)}</span><div class="detail-value">${esc(v)}</div></div>`; }
 function check(t, ok) { return `<div class="check ${ok ? "ok" : "bad"}">${icon(ok ? "circle-check" : "circle-x")}<span>${esc(t)}<small>${ok ? "مكتمل" : "ناقص"}</small></span></div>`; }
 function docRow(d, g) {
   const canReplace = mod.canReplaceLandsDocument(session.role); const canDelete = mod.canDeleteLandsDocument(session.role);
-  return `<div class="doc"><span class="doc-icon">${icon("file-check-2")}</span><div><strong>${esc(d.filename)}</strong><small>${esc(d.mime_type)} · ${(d.size_bytes / 1024).toFixed(0)} ك.ب</small></div><div style="display:flex;gap:6px">${canReplace ? `<button class="btn small" onclick="replaceDocumentFor('${esc(g.id)}','${esc(d.id)}')">${icon("replace")}</button>` : ""}${canDelete ? `<button class="btn small danger" onclick="deleteDocumentFor('${esc(g.id)}','${esc(d.id)}')">${icon("trash-2")}</button>` : ""}</div></div>`;
+  return `<div class="doc"><span class="doc-icon">${icon("file-check-2")}</span><div><strong>${esc(d.filename)}</strong><small>${esc(d.mime_type)}${Number.isFinite(Number(d.size_bytes)) ? ` · ${Math.round(Number(d.size_bytes) / 1024)} ك.ب` : ""}</small></div><div style="display:flex;gap:6px">${canReplace ? `<button class="btn small" onclick="replaceDocumentFor('${esc(g.id)}','${esc(d.id)}')">${icon("replace")}</button>` : ""}${canDelete ? `<button class="btn small danger" onclick="deleteDocumentFor('${esc(g.id)}','${esc(d.id)}')">${icon("trash-2")}</button>` : ""}</div></div>`;
 }
 
 // ---- consequential mutations ----
@@ -5315,6 +5798,10 @@ function closeModal() { document.getElementById("modalBackdrop").classList.remov
 // Every real branch either fully succeeds (refreshWorkspace() + a success
 // toast) or throws (surfaced inline, nothing is ever marked done first).
 function openAddDecision() {
+  if (!mod.canReviewGrant(session.role)) {
+    showToast("إضافة قرار متاحة لمدير قسم الأراضي أو مدير البلدية فقط", true);
+    return;
+  }
   document.getElementById("drawer").innerHTML = `<div class="drawer-head"><h2>إضافة قرار</h2><button class="close" onclick="closeDrawer()">${icon("x")}</button></div>
   <div class="form-row">
     <label class="input-label">رقم القرار<input class="text-input" id="decNumber" required></label>
@@ -5328,6 +5815,10 @@ function openAddDecision() {
   document.getElementById("drawerBackdrop").classList.add("open"); lucide.createIcons();
 }
 async function submitAddDecision() {
+  if (!mod.canReviewGrant(session.role)) {
+    showToast("لا تملك صلاحية إنشاء قرار تخصيص", true);
+    return;
+  }
   const number = document.getElementById("decNumber").value.trim();
   const year = document.getElementById("decYear").value.trim() || number;
   const date = document.getElementById("decDate").value.trim() || null;
