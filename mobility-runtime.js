@@ -37,11 +37,24 @@
     RESOLVED:'تم الحل',
   });
   const SEVERITY = Object.freeze({ LOW:'منخفضة', MEDIUM:'متوسطة', CRITICAL:'حرجة' });
+  const TELEMETRY_ACTIVE_STATUSES = Object.freeze(['HANDED_OVER','READY','IN_PROGRESS','INCIDENT_HOLD']);
+  const TELEMETRY_LIVE_MS = 90 * 1000;
+  const TELEMETRY_STALE_MS = 5 * 60 * 1000;
+  const TELEMETRY_REPORT_MIN_MS = 15 * 1000;
 
   let component = null;
   let auth = null;
   let currentUser = null;
-  let workspace = { role:null, organizationId:null, department:null, missions:[], vehicles:[], incidents:[], authorizations:[], employees:[] };
+  let refreshTimer = null;
+  let geoWatchId = null;
+  let trackedMissionId = null;
+  let lastTelemetrySentAt = 0;
+  let lastTelemetryPoint = null;
+  let workspace = {
+    role:null, organizationId:null, department:null, capabilities:[],
+    missions:[], vehicles:[], incidents:[], authorizations:[], employees:[],
+    telemetry:[], mapContext:null
+  };
 
   function resolveMobilityRole(data) {
     // Unified identity: capability-aware shared resolver (display only — the
@@ -140,7 +153,107 @@
       ev:'—',
       note:i.note || '',
       status:INCIDENT_STATUS[i.status] || i.status || '—',
+      rawStatus:i.status || null,
     };
+  }
+
+  function telemetryView(t) {
+    const reported = Date.parse(t.reportedAt || '');
+    const ageMs = Number.isFinite(reported) ? Math.max(0, Date.now() - reported) : Infinity;
+    const freshness = ageMs <= TELEMETRY_LIVE_MS ? 'LIVE' : ageMs <= TELEMETRY_STALE_MS ? 'STALE' : 'OFFLINE';
+    return {
+      id:t.telemetryId || t.missionId,
+      missionId:t.missionId || null,
+      vehicleId:t.vehicleId || null,
+      employeeUid:t.employeeUid || null,
+      employeeName:t.employeeName || '—',
+      department:t.department || '—',
+      lat:Number(t.lat),
+      lng:Number(t.lng),
+      accuracyMeters:Number.isFinite(Number(t.accuracyMeters)) ? Number(t.accuracyMeters) : null,
+      headingDegrees:Number.isFinite(Number(t.headingDegrees)) ? Number(t.headingDegrees) : null,
+      speedMps:Number.isFinite(Number(t.speedMps)) ? Number(t.speedMps) : null,
+      reportedAt:t.reportedAt || null,
+      ageSeconds:Number.isFinite(ageMs) ? Math.round(ageMs / 1000) : null,
+      freshness,
+    };
+  }
+
+  function stopTelemetryWatch() {
+    if (geoWatchId !== null && navigator.geolocation) {
+      try { navigator.geolocation.clearWatch(geoWatchId); } catch (_) {}
+    }
+    geoWatchId = null;
+    trackedMissionId = null;
+    lastTelemetrySentAt = 0;
+    lastTelemetryPoint = null;
+  }
+
+  function metersBetween(a, b) {
+    if (!a || !b) return Infinity;
+    const rad = Math.PI / 180;
+    const dLat = (b.lat - a.lat) * rad;
+    const dLng = (b.lng - a.lng) * rad;
+    const lat1 = a.lat * rad, lat2 = b.lat * rad;
+    const h = Math.sin(dLat/2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng/2) ** 2;
+    return 6371000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(Math.max(0,1-h)));
+  }
+
+  function activeTelemetryMission() {
+    if (workspace.role !== 'employee' || !Array.isArray(workspace.capabilities)
+        || !workspace.capabilities.includes('vehicle.drive')) return null;
+    return (workspace.missions || []).find(m =>
+      m && m.assignedEmployeeUid === currentUser?.uid
+      && m.vehicleId
+      && TELEMETRY_ACTIVE_STATUSES.includes(m.status)
+    ) || null;
+  }
+
+  async function reportTelemetryPosition(mission, pos) {
+    if (!mission || !pos || !pos.coords) return;
+    const now = Date.now();
+    const point = { lat:Number(pos.coords.latitude), lng:Number(pos.coords.longitude) };
+    if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng)) return;
+    const moved = metersBetween(lastTelemetryPoint, point);
+    if (lastTelemetrySentAt && now - lastTelemetrySentAt < TELEMETRY_REPORT_MIN_MS && moved < 8) return;
+    try {
+      await api('reportMobilityTelemetry', {
+        missionId:mission.missionId,
+        lat:point.lat,
+        lng:point.lng,
+        accuracyMeters:Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : undefined,
+        headingDegrees:Number.isFinite(pos.coords.heading) ? pos.coords.heading : undefined,
+        speedMps:Number.isFinite(pos.coords.speed) ? pos.coords.speed : undefined,
+      });
+      lastTelemetrySentAt = now;
+      lastTelemetryPoint = point;
+    } catch (e) {
+      if (['mission_not_tracking_active','operator_not_assigned','mission_vehicle_relationship_invalid'].includes(e.code)) {
+        stopTelemetryWatch();
+        refresh().catch(()=>{});
+      }
+    }
+  }
+
+  function syncTelemetryWatch() {
+    const mission = activeTelemetryMission();
+    if (!mission || !navigator.geolocation) {
+      stopTelemetryWatch();
+      return;
+    }
+    if (geoWatchId !== null && trackedMissionId === mission.missionId) return;
+    stopTelemetryWatch();
+    trackedMissionId = mission.missionId;
+    geoWatchId = navigator.geolocation.watchPosition(
+      pos => reportTelemetryPosition(mission, pos),
+      () => {},
+      { enableHighAccuracy:true, maximumAge:10000, timeout:15000 }
+    );
+  }
+
+  function restartRefreshLoop() {
+    if (refreshTimer) window.clearInterval(refreshTimer);
+    refreshTimer = window.setInterval(() => refresh().catch(()=>{}), 15000);
   }
 
   function publish() {
@@ -148,6 +261,8 @@
     component.setState({
       runtimeMode:'mobility',
       workflowPolicy:workspace.workflowPolicy || 'FULL',
+      mapContext:workspace.mapContext || null,
+      liveTelemetry:(workspace.telemetry || []).map(telemetryView),
       liveMissions:(workspace.missions || []).map(missionView),
       liveVehicles:(workspace.vehicles || []).map(vehicleView),
       liveIncidents:(workspace.incidents || []).map(incidentView),
@@ -164,6 +279,7 @@
   async function refresh() {
     workspace = await api('getMobilityWorkspace');
     publish();
+    syncTelemetryWatch();
     return workspace;
   }
 
@@ -176,8 +292,26 @@
       instance.screenDef = () => {
         const out = originalScreenDef();
         if (instance.state.role === 'mobility' && instance.state.screen === 'ops') {
+          const missions = instance.state.liveMissions || [];
+          const vehicles = instance.state.liveVehicles || [];
+          const incidents = instance.state.liveIncidents || [];
+          const telemetry = instance.state.liveTelemetry || [];
+          const liveNow = telemetry.filter(t => t.freshness === 'LIVE').length;
+          const stale = telemetry.filter(t => t.freshness === 'STALE').length;
+          const pendingAllocation = missions.filter(m => m.rawStatus === 'APPROVED').length;
+          const openIncidents = incidents.filter(i => i.rawStatus && i.rawStatus !== 'RESOLVED').length;
+          const inMission = vehicles.filter(v => v.status === 'في مهمة').length;
+          const available = vehicles.filter(v => v.status === 'متاحة').length;
+
           out.title = 'مركز عمليات الحركة الذكية';
-          out.sub = 'إدارة الأسطول والمهام والحوادث على مستوى البلدية';
+          out.sub = 'إدارة الأسطول والمهام والحوادث · ' + liveNow + ' موقع مباشر' + (stale ? ' · ' + stale + ' موقع متأخر' : '');
+          out.kpis = [
+            {label:'في مهمة الآن',value:String(inMission),delta:'',col:'#a78bfa',on:()=>instance.setState({screen:'fleet'})},
+            {label:'مواقع مباشرة',value:String(liveNow),delta:stale ? ('+'+stale+' متأخر') : '',col:'#22c55e',on:()=>instance.setState({screen:'map'})},
+            {label:'بانتظار التخصيص',value:String(pendingAllocation),delta:'',col:'#f5a524',on:()=>instance.setState({screen:'missions'})},
+            {label:'حوادث مفتوحة',value:String(openIncidents),delta:'',col:'#ef4444',on:()=>instance.setState({screen:'incidents'})},
+            {label:'مركبات متاحة',value:String(available),delta:'',col:'#38bdf8',on:()=>instance.setState({screen:'fleet'})},
+          ];
           if ((instance.state.workflowPolicy || 'FULL') === 'DIRECT') {
             out.actions = [
               {label:'+ مهمة مباشرة',on:()=>instance.openDrawer('create',null),tx:'var(--btnTx,#fff)',bg:'var(--btn)',bd:'var(--btnBd)'},
@@ -281,6 +415,7 @@
         });
         document.title = 'SMART HSR - الحركة الذكية';
         await refresh();
+        restartRefreshLoop();
       }
     });
   }
@@ -297,9 +432,15 @@
       initAuth().catch(() => location.replace('login.html'));
     },
     disconnect(instance) {
-      if (!instance || instance === component) component = null;
+      if (!instance || instance === component) {
+        component = null;
+        stopTelemetryWatch();
+        if (refreshTimer) { window.clearInterval(refreshTimer); refreshTimer = null; }
+      }
     },
     logout: async () => {
+      stopTelemetryWatch();
+      if (refreshTimer) { window.clearInterval(refreshTimer); refreshTimer = null; }
       if (auth) {
         const {signOut} = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
         await signOut(auth).catch(()=>{});
