@@ -3131,7 +3131,11 @@ class Component extends DCLogic {
         return { title: i.cat + ' · ' + i.id, meta: i.emp + ' · ' + i.loc, time: i.time.split(' ')[1],
           col: c.col, bg: c.bg, bd: c.bd, on: () => this.openDrawer('inc', i.id) };
       }),
-      goIncidents: () => this.setState({ role: 'mobility', screen: 'incidents' }),
+      // Navigation must never mutate the authenticated role. Server authz
+      // already derives authority from the token; keeping the UI role stable
+      // also prevents Manager/Department views from visually jumping into a
+      // Mobility Head surface when opening the incidents list.
+      goIncidents: () => this.setState({ screen: 'incidents' }),
 
       demoNo: pinned ? pinned.no : 'لا توجد مهمة', demoStatus: pinned ? demoSt : '—', demoCol: demoChip.col, demoBg: demoChip.bg,
       demoMeta: pinned ? (pinned.emp + ' · ' + pinned.dept + (pinnedVeh ? ' · ' + pinnedVeh.no : '')) : 'لا توجد مهمة نشطة حالياً',
