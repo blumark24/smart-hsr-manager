@@ -86,6 +86,11 @@ function injectStyle() {
   .ucv21-section-head small{margin-inline-start:auto;color:#7188a7;font-size:9px;font-weight:500}
   .ucv21-single-page .rolebox{margin:0!important}.ucv21-single-page .prod{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}.ucv21-single-page .pc{min-width:0!important;border-radius:13px!important;background:rgba(10,24,44,.72)!important;border-color:rgba(98,148,211,.13)!important}.ucv21-single-page .pc.on{border-color:rgba(74,140,255,.38)!important;box-shadow:0 0 0 1px rgba(74,140,255,.08),0 16px 34px -28px rgba(49,102,255,.7)!important}.ucv21-single-page .pc .dest,.ucv21-single-page .pc .note{font-size:8px!important}
   .ucv21-password-inline{padding:0 22px 4px!important}.ucv21-password-inline .sec{margin-bottom:12px!important}.ucv21-password-note{font-size:9px!important;color:#7f91ab!important;margin-top:8px!important}
+  .ucv21-password-field{position:relative!important}.ucv21-password-field .in{padding-inline-end:44px!important}
+  .ucv21-password-eye{position:absolute!important;inset-inline-end:7px!important;bottom:4px!important;width:30px!important;height:30px!important;border:0!important;border-radius:8px!important;background:transparent!important;color:#8ea3bf!important;display:grid!important;place-items:center!important;cursor:pointer!important;padding:0!important}
+  .ucv21-password-eye:hover{background:rgba(96,145,211,.10)!important;color:#e8f0fb!important}.ucv21-password-eye:focus-visible{outline:2px solid #3ed39a!important;outline-offset:1px!important}
+  .ucv21-password-eye .ucv21-eye-icon{width:17px;height:17px;display:block;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") center/contain no-repeat;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") center/contain no-repeat}
+  .ucv21-password-eye[aria-pressed="true"] .ucv21-eye-icon{mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 3 18 18'/%3E%3Cpath d='M10.6 10.6a2 2 0 0 0 2.8 2.8'/%3E%3Cpath d='M9.9 4.2A10.5 10.5 0 0 1 12 4c6.5 0 10 8 10 8a18.3 18.3 0 0 1-2.3 3.4'/%3E%3Cpath d='M6.6 6.6A18.5 18.5 0 0 0 2 12s3.5 8 10 8a10.5 10.5 0 0 0 5.4-1.5'/%3E%3C/svg%3E") center/contain no-repeat;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 3 18 18'/%3E%3Cpath d='M10.6 10.6a2 2 0 0 0 2.8 2.8'/%3E%3Cpath d='M9.9 4.2A10.5 10.5 0 0 1 12 4c6.5 0 10 8 10 8a18.3 18.3 0 0 1-2.3 3.4'/%3E%3Cpath d='M6.6 6.6A18.5 18.5 0 0 0 2 12s3.5 8 10 8a10.5 10.5 0 0 0 5.4-1.5'/%3E%3C/svg%3E") center/contain no-repeat}
   .ucv21-history-wrap{padding:0 22px 10px!important}.ucv21-history-toggle{height:34px;border-radius:9px;border:1px solid rgba(96,145,211,.15);background:rgba(12,28,51,.72);color:#8ea3bf;padding:0 12px;cursor:pointer;font-size:10px}.ucv21-history-wrap .hist{margin-top:10px!important}
   .ucv21-profile-footer{position:sticky;bottom:0;z-index:8;display:flex;align-items:center;gap:10px;padding:14px 22px 18px;background:linear-gradient(180deg,rgba(7,18,34,.72),rgba(7,18,34,.98) 32%);border-top:1px solid rgba(96,145,211,.12);backdrop-filter:blur(14px)}
   .ucv21-profile-footer .ucv21-save{margin-inline-start:auto;min-width:150px}.ucv21-profile-footer .ucv21-cancel{min-width:96px}.ucv21-profile-msg{flex:1;min-width:120px;font-size:10px;color:#8397b3}.ucv21-profile-msg.ok{color:#70d5a9}.ucv21-profile-msg.er{color:#ff8096}
@@ -355,7 +360,7 @@ function buildSinglePageProfile(panel,employee){
     },true);
   }
   if(panel.__ucv21Employee?.authUid&&!panel.querySelector('.ucv21-password-inline')){
-    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.dataset.ucv21Step='3';wrap.innerHTML=`<div class="ucv21-section-head"><span>الأمان</span><small>تعديل كلمة المرور — اختياري</small></div><div class="sec"><div class="grid"><div class="f"><label>كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"></div><div class="f"><label>تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;
+    const wrap=document.createElement('section');wrap.className='ucv21-password-inline';wrap.dataset.ucv21Step='3';wrap.innerHTML=`<div class="ucv21-section-head"><span>الأمان</span><small>تعديل كلمة المرور — اختياري</small></div><div class="sec"><div class="grid"><div class="f ucv21-password-field"><label for="ucv21-npw">كلمة المرور الجديدة</label><input class="in" id="ucv21-npw" type="password" autocomplete="new-password"><button type="button" class="ucv21-password-eye" data-password-target="ucv21-npw" aria-label="إظهار كلمة المرور الجديدة" aria-pressed="false"><span class="ucv21-eye-icon" aria-hidden="true"></span></button></div><div class="f ucv21-password-field"><label for="ucv21-npw2">تأكيد كلمة المرور</label><input class="in" id="ucv21-npw2" type="password" autocomplete="new-password"><button type="button" class="ucv21-password-eye" data-password-target="ucv21-npw2" aria-label="إظهار تأكيد كلمة المرور" aria-pressed="false"><span class="ucv21-eye-icon" aria-hidden="true"></span></button></div></div><div class="ucv21-password-note">إذا تركت الحقلين فارغين تبقى كلمة المرور الحالية بدون تغيير. عند الحفظ تصبح الكلمة الجديدة معتمدة وتُنهي الجلسات السابقة.</div></div>`;
     // PHASE13D.3 STEP 2 — moved from after `roles` to directly after
     // `account` so it visually groups with بيانات الدخول (both are
     // login/credential concerns) instead of sitting on the far side of the
@@ -363,6 +368,18 @@ function buildSinglePageProfile(panel,employee){
     // ids, save handler and validation this wires into are untouched.
     account?.after(wrap)||roles?.after(wrap);
     wrap.querySelectorAll('input[type="password"]').forEach(i=>i.setAttribute('aria-label',i.previousElementSibling?.textContent||'كلمة المرور'));
+    wrap.querySelectorAll('.ucv21-password-eye').forEach(button=>button.addEventListener('click',()=>{
+      const input=wrap.querySelector('#'+button.dataset.passwordTarget);
+      if(!input)return;
+      const showing=input.type==='text';
+      input.type=showing?'password':'text';
+      button.setAttribute('aria-pressed',String(!showing));
+      const label=input.id==='ucv21-npw2'?'تأكيد كلمة المرور':'كلمة المرور الجديدة';
+      button.setAttribute('aria-label',(showing?'إظهار ':'إخفاء ')+label);
+      input.focus({preventScroll:true});
+      const end=input.value.length;
+      try{input.setSelectionRange(end,end);}catch(_){}
+    }));
   }
   if(history&&!panel.querySelector('.ucv21-history-wrap')){const hw=document.createElement('div');hw.className='ucv21-history-wrap';hw.dataset.ucv21Step='4';hw.innerHTML='<div class="ucv21-section-head"><span>السجل والتكليفات</span><small>آخر التكليفات والحركة المؤسسية</small></div>';history.before(hw);hw.appendChild(history);history.hidden=false;}
 
