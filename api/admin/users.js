@@ -2403,6 +2403,12 @@ async function handler(req, res) {
             if (d.accountStatus !== 'ACTIVE' || !isNonEmptyString(d.authUid)) continue;
             if (!mobility || mobility.enabled !== true) continue;
           }
+          // Department heads must only see/select vehicle-eligible people
+          // inside their own department. The API already rejects cross-
+          // department mission creation; filtering the workspace prevents
+          // presenting a choice that can never succeed.
+          if (actor.role === 'department_head'
+              && cleanString(d.department) !== cleanString(actor.department)) continue;
           employees.push({
             employeeId: doc.id,
             uid: isNonEmptyString(d.authUid) ? d.authUid : null,
