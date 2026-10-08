@@ -2652,13 +2652,8 @@ class Component extends DCLogic {
     }
 
     if (s === 'reports') {
-      const p = st.period || 'اليوم';
-      out.periods = ['اليوم', 'الأسبوع', 'الشهر', 'السنة', 'فترة مخصصة'].map(x => pill(x, p === x, () => this.setState({ period: x })));
-      // No per-period historical query exists yet (missions/incidents carry
-      // no client-exposed timestamp to bucket by) — every number below is a
-      // real, all-time count rather than a number invented to move when a
-      // period pill is clicked.
-      out.reportsPeriodNote = 'الأرقام أدناه إجمالية على مستوى البلدية حتى الآن — التصفية حسب فترة زمنية محددة غير متاحة بعد.';
+      out.periods = [pill('إجمالي حتى الآن', true, () => {})];
+      out.reportsPeriodNote = 'قراءات تشغيلية فعلية من البيانات الحالية. لا يتم عرض فلتر زمني حتى يتوفر سجل تاريخي كامل لكل حدث.';
       const closedCount = M.filter(m => this.missionStatus(m.id) === 'مغلقة').length;
       out.repKpis = [
         { label: 'المهام المغلقة', v: String(closedCount), sub: 'إجمالي حتى الآن', col: this.sc('قيد التنفيذ') },
@@ -2669,7 +2664,8 @@ class Component extends DCLogic {
       const bar = (k, n, max) => ({ k: k, v: String(n), w: Math.round((n / Math.max(1, max)) * 100) + '%' });
       const byOdo = V.slice().sort((a, b) => b.odo - a.odo).slice(0, 5);
       const maxOdo = byOdo.length ? byOdo[0].odo : 1;
-      const deptRows = this.DEPTS.map(d => ({ d, n: M.filter(m => m.dept === d).length }));
+      const reportDepartments = Array.from(new Set(M.map(m=>m.dept).filter(d=>d&&d!=='—'))).sort();
+      const deptRows = reportDepartments.map(d => ({ d, n: M.filter(m => m.dept === d).length }));
       const maxDept = Math.max(1, ...deptRows.map(x => x.n));
       const destCounts = {};
       M.forEach(m => { if (m.dest && m.dest !== '—') destCounts[m.dest] = (destCounts[m.dest] || 0) + 1; });
@@ -2678,11 +2674,11 @@ class Component extends DCLogic {
       const catRows = ['حادث مروري', 'عطل مركبة', 'نقص وقود', 'حالة طارئة'].map(c => ({ c, n: I.filter(i => i.cat === c).length }));
       const maxCat = Math.max(1, ...catRows.map(x => x.n));
       out.repCards = [
-        { title: 'الأعلى استخداماً بقراءة العداد', rows: byOdo.map(v => bar(v.no + ' · ' + v.plate, v.odo, maxOdo)), on: () => this.flash('تفصيل استخدام المركبات — نموذج أولي') },
-        { title: 'المهام حسب القسم', rows: deptRows.map(x => bar(x.d, x.n, maxDept)), on: () => this.flash('تفصيل مهام الأقسام — نموذج أولي') },
-        { title: 'الوجهات الأكثر تكراراً', rows: topDest.map(([name, n]) => bar(name, n, maxDest)), on: () => this.flash('تفصيل الوجهات — نموذج أولي') },
-        { title: 'توفر الأسطول', rows: ['متاحة', 'في مهمة', 'محجوزة', 'صيانة'].map(x => bar(x, V.filter(v => v.status === x).length, V.length)), on: () => this.flash('تفصيل توفر الأسطول — نموذج أولي') },
-        { title: 'الحوادث حسب التصنيف', rows: catRows.map(x => bar(x.c, x.n, maxCat)), on: () => this.flash('تفصيل الحوادث — نموذج أولي') }
+        { title: 'الأعلى استخداماً بقراءة العداد', rows: byOdo.map(v => bar(v.no + ' · ' + v.plate, v.odo, maxOdo)), on: () => this.setState({screen:'fleet'}) },
+        { title: 'المهام حسب القسم', rows: deptRows.map(x => bar(x.d, x.n, maxDept)), on: () => this.setState({screen:'missions'}) },
+        { title: 'الوجهات الأكثر تكراراً', rows: topDest.map(([name, n]) => bar(name, n, maxDest)), on: () => this.setState({screen:'missions'}) },
+        { title: 'توفر الأسطول', rows: ['متاحة', 'في مهمة', 'محجوزة', 'صيانة'].map(x => bar(x, V.filter(v => v.status === x).length, V.length)), on: () => this.setState({screen:'fleet'}) },
+        { title: 'الحوادث حسب التصنيف', rows: catRows.map(x => bar(x.c, x.n, maxCat)), on: () => this.setState({screen:'incidents'}) }
       ];
     }
 
@@ -2702,19 +2698,19 @@ class Component extends DCLogic {
         mkPol('SHORT', 'السياسة المختصرة', ['رئيس القسم', 'حركة السير', 'تخصيص المركبة', 'الموظف']),
         mkPol('DIRECT', 'المهمة التنفيذية المباشرة', ['مركز حركة السير', 'تخصيص المركبة', 'الموظف'])
       ];
-      const gm = st.geo || 'poly';
-      out.geoModes = [['poly', 'مضلّع'], ['circle', 'دائرة'], ['admin', 'حدود إدارية']].map(g => pill(g[1], gm === g[0], () => this.setState({ geo: g[0] })));
+      const ctx=st.mapContext||{};
+      const geoLabel=ctx.mapBounds?'حدود البلدية المعتمدة':ctx.mapCenter?'مركز البلدية المعتمد':'النطاق غير مهيأ';
+      out.geoModes=[pill(geoLabel,true,()=>this.flash('مصدر النطاق: إعدادات البلدية المعتمدة'))];
       out.geoStates = [
-        { label: 'داخل النطاق', note: 'وضع طبيعي', col: this.sc('متاحة') },
-        { label: 'خارج النطاق بتصريح', note: 'لا يُعد مخالفة', col: this.sc('محجوزة') },
-        { label: 'خروج غير متوقع', note: 'تنبيه تشغيلي', col: this.sc('صيانة') }
+        { label: ctx.mapBounds ? 'نطاق البلدية مربوط بالخريطة' : 'حدود البلدية غير مهيأة بعد', note: ctx.serviceArea || 'مصدر مؤسسي', col: ctx.mapBounds ? this.sc('متاحة') : this.sc('صيانة') },
+        { label: 'الموقع لا يُعتبر مباشراً بعد 90 ثانية', note: 'يصنف متأخراً تلقائياً', col: this.sc('محجوزة') },
+        { label: 'لا يتم تتبع المستخدم خارج مهمة مركبة نشطة', note: 'خصوصية تشغيلية', col: this.sc('متاحة') }
       ];
-      // PHASE 06A hotfix (GPS honesty) — no real device/location source
-      // exists anywhere in this app; these states describe schematic/
-      // planned position only, never a live-GPS claim.
+      const tele=st.liveTelemetry||[];
+      const live=tele.filter(t=>t.freshness==='LIVE').length, stale=tele.filter(t=>t.freshness==='STALE').length;
       out.gpsStates = [
-        { label: 'التتبع الفعلي للموقع غير متاح', col: day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)' },
-        { label: 'المسار تخطيطي أثناء المهمة المعتمدة', col: day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)' }
+        { label: live+' موقع مباشر موثوق الآن', col: live?this.sc('متاحة'):(day?'rgba(17,54,40,0.3)':'rgba(122,164,224,0.35)') },
+        { label: stale+' موقع متأخر بانتظار تحديث', col: stale?this.sc('صيانة'):(day?'rgba(17,54,40,0.3)':'rgba(122,164,224,0.35)') }
       ];
     }
 
@@ -3021,7 +3017,7 @@ class Component extends DCLogic {
       if (typeof sd.title === 'string') sd.title = sd.title.replaceAll('إدارة الحصر الميداني','إدارة حركة السير');
       if (typeof sd.sub === 'string') sd.sub = sd.sub
         .replaceAll('إدارة الحصر الميداني','إدارة حركة السير')
-        .replaceAll('التوأم الرقمي للحصر الميداني','التوأم الرقمي للحركة الذكية')
+        .replaceAll('التوأم الرقمي للحصر الميداني','الخريطة التشغيلية للحركة الذكية')
         .replaceAll('المنتج النشط: التشوه البصري','المنتج النشط: الحركة الذكية');
     }
     const geoWorkspace = st.role === 'dept' && (st.screen === 'deptops' || st.screen === 'map');
@@ -3271,7 +3267,7 @@ class Component extends DCLogic {
     }
 
     if (st.screen === 'map') {
-      return { ops: true, bottom: false, title: 'الخريطة التشغيلية', sub: 'التوأم الرقمي للحصر الميداني · مركبات ومهام وحوادث ومناطق',
+      return { ops: true, bottom: false, title: 'الخريطة التشغيلية', sub: this.state.runtimeMode === 'mobility' ? 'مواقع مركبات موثوقة · حوادث · نطاق البلدية' : 'التوأم الرقمي للحصر الميداني · حالات ومهام ومناطق',
         actions: [{ label: 'إعادة ضبط العرض', on: () => this.setState({ zoom: 1, panX: 0, panY: 0, sel: null }), tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }],
         kpis: [], sideA: null };
     }
@@ -3279,28 +3275,30 @@ class Component extends DCLogic {
     const btn = { tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' };
     const ghost = { tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' };
     const acts = [];
-    if (st.screen === 'fleet') acts.push(Object.assign({ label: '+ إضافة مركبة', on: () => this.proto() }, btn));
+    if (st.screen === 'fleet' && st.role === 'mobility') acts.push(Object.assign({
+      label:'+ إضافة مركبة',
+      on:()=>this.setState({drawer:'vehadd',drawerId:null,form:{},chip:{}})
+    },btn));
     if (st.screen === 'missions' && st.role === 'dept') acts.push(Object.assign({ label: '+ إنشاء طلب مهمة', on: () => this.openDrawer('create', null) }, btn));
-    if (st.screen === 'reports') {
-      acts.push(Object.assign({ label: 'تصدير PDF', on: () => this.flash('تصدير PDF — نموذج أولي، يُنفّذ لاحقاً') }, ghost));
-      acts.push(Object.assign({ label: 'تصدير Excel', on: () => this.flash('تصدير Excel — نموذج أولي، يُنفّذ لاحقاً') }, ghost));
-    }
-    if (st.screen === 'audit') acts.push(Object.assign({ label: 'تصدير السجل', on: () => this.flash('تصدير السجل — نموذج أولي') }, ghost));
+    if (st.screen === 'reports') acts.push(Object.assign({
+      label:'تحديث البيانات',
+      on:()=>window.SmartHSRMobilityAdapter?.refresh().then(()=>this.flash('تم تحديث التقرير من البيانات التشغيلية')).catch(()=>this.flash('تعذر تحديث البيانات'))
+    },ghost));
     const titleMap = { missions: st.role === 'dept' ? 'التشوه البصري' : 'المهام والطلبات', incidents: st.role === 'dept' ? 'البلاغات والملاحظات' : 'الحوادث والطوارئ', audit: st.role === 'dept' ? 'سجل القسم' : (st.role === 'admin' ? 'سجل الاعتمادات' : 'السجل التشغيلي'), settings: st.role === 'admin' ? 'سياسة الاعتماد' : 'الإعدادات والسياسات' };
     return { ops: false, title: titleMap[st.screen] || this.titleOf(st.screen), sub: this.subOf(st.screen), actions: acts };
   }
 
   titleOf(s) {
     const m = { missions: 'المهام والطلبات', fleet: 'الأسطول', handover: 'التسليم والاستلام', incidents: 'الحوادث والطوارئ',
-      reports: 'التقارير', audit: 'السجل التشغيلي', settings: 'الإعدادات والسياسات', approvals: 'طلبات الاعتماد', emp: 'عملياتي' };
+      reports: 'التقارير', audit: 'السجل التشغيلي', settings: 'الإعدادات والسياسات', approvals: 'طلبات الاعتماد', emp: 'عملياتي', myvehicle:'مركبتي ومهمتي' };
     return m[s] || 'إدارة الحصر الميداني';
   }
   subOf(s) {
     const m = { missions: 'دورة حياة المهمة من الطلب حتى الإغلاق', fleet: 'سجل المركبات البلدية وحالتها التشغيلية',
       handover: 'تسليم المركبة للموظف واستلامها عند العودة', incidents: 'مركز إدارة الحوادث والطوارئ الميدانية',
-      reports: 'تقارير تشغيلية قابلة للتصفية والتصدير', audit: 'سجل تدقيق رسمي لكل حدث تشغيلي',
-      settings: 'سياسة الاعتماد والنطاق الجغرافي وإعدادات التشغيل', approvals: 'مراجعة واعتماد طلبات المهام',
-      emp: 'مهمتك الحالية وإجراءاتها' };
+      reports: 'قراءات تشغيلية محسوبة من البيانات الحالية', audit: 'سجل تدقيق رسمي لكل حدث تشغيلي',
+      settings: 'السياسات والنطاق الجغرافي وحالة التتبع', approvals: 'مراجعة واعتماد طلبات المهام',
+      emp: 'مهمتك الحالية وإجراءاتها', myvehicle:'مهمتك الشخصية ومركبتك المخصصة' };
     return m[s] || '';
   }
   actionsOf(s) { return []; }
@@ -3340,26 +3338,38 @@ class Component extends DCLogic {
   openDrawer(kind, id) { this.setState({ drawer: kind, drawerId: id, notifOpen: false, layersOpen: false, mobNavOpen: false }); }
 
   timelineFor(id) {
+    const m = this.missions().find(x => x.id === id);
     const st = this.missionStatus(id);
-    const order = ['تم إنشاء الطلب', 'تم الاعتماد', 'تم تخصيص المركبة', 'تم التسليم', 'بدأت المهمة', 'تم الوصول', 'تم التنفيذ', 'بدأت العودة', 'تمت إعادة المركبة', 'أُغلق السجل'];
+    const order = ['تم إنشاء الطلب', 'تم الاعتماد', 'تم تخصيص المركبة', 'تم التسليم', 'بدأت المهمة', 'تم التنفيذ', 'بدأت العودة', 'تمت إعادة المركبة', 'أُغلق السجل'];
     let reached = 1;
-    if (['معتمدة', 'بانتظار المركبة'].indexOf(st) >= 0) reached = 2;
+    if (['معتمدة', 'بانتظار المركبة'].includes(st)) reached = 2;
     if (st === 'تم تخصيص المركبة') reached = 3;
     if (st === 'تم التسليم' || st === 'جاهزة للبدء') reached = 4;
-    if (st === 'قيد التنفيذ') reached = 6;
-    if (st === 'متوقفة بسبب حادث') reached = 6;
-    if (st === 'مكتملة') reached = 7;
-    if (st === 'في انتظار إعادة المركبة') reached = 8;
-    if (st === 'مغلقة') reached = 10;
-    const who = ['رئيس القسم', 'الشؤون الإدارية', 'حركة السير', 'مسؤول التسليم', 'الموظف', 'الموظف', 'الموظف', 'الموظف', 'مسؤول الاستلام', 'حركة السير'];
-    const times = ['08:02', '08:20', '08:41', '08:55', '09:05', '09:34', '10:48', '11:20', '11:52', '11:58'];
+    if (st === 'قيد التنفيذ' || st === 'متوقفة بسبب حادث') reached = 5;
+    if (st === 'مكتملة') reached = 6;
+    if (st === 'في انتظار إعادة المركبة') reached = 7;
+    if (st === 'مغلقة') reached = 9;
     const day = this.state.theme === 'day';
-    return order.map((l, i) => {
-      const done = i < reached;
-      const col = done ? this.sc('قيد التنفيذ') : (day ? 'rgba(17,54,40,0.18)' : 'rgba(122,164,224,0.22)');
-      return { label: l, time: done ? '27/05 · ' + times[i] : '—', who: done ? who[i] : 'بانتظار التنفيذ',
-        col: col, ring: day ? '#ffffff' : '#0a1120', line: done ? this.tint('#22c55e', 0.35) : (day ? 'rgba(17,54,40,0.12)' : 'rgba(122,164,224,0.14)'),
-        tx: done ? 'var(--tx,#e9f1fb)' : 'var(--tx3,#7d8ea6)' };
+    const fmt = value => {
+      if (!value) return null;
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toLocaleString('ar-SA',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    };
+    return order.map((label,i)=>{
+      const done=i<reached;
+      const col=done?this.sc('قيد التنفيذ'):(day?'rgba(17,54,40,0.18)':'rgba(122,164,224,0.22)');
+      // Only the mission's real createdAt/current updatedAt are available in
+      // this workspace response. Never fabricate intermediate audit times.
+      const realTime = i===0 ? fmt(m?.createdAt) : (done && i===reached-1 ? fmt(m?.updatedAt) : null);
+      return {
+        label,
+        time: realTime || (done ? 'مكتمل — بدون توقيت تفصيلي' : '—'),
+        who: done ? 'حالة مسجلة في المهمة' : 'بانتظار التنفيذ',
+        col, ring:day?'#ffffff':'#0a1120',
+        line:done?this.tint('#22c55e',0.35):(day?'rgba(17,54,40,0.12)':'rgba(122,164,224,0.14)'),
+        tx:done?'var(--tx,#e9f1fb)':'var(--tx3,#7d8ea6)'
+      };
     });
   }
 
@@ -3476,6 +3486,58 @@ class Component extends DCLogic {
       return d;
     }
 
+    if (k === 'vehadd' || k === 'vehedit') {
+      const editing = k === 'vehedit';
+      const v = editing ? V.find(x=>x.id===id) : null;
+      if (editing && !v) return Object.assign({},none,{title:'تعذر تحديد المركبة'});
+      const f=this.state.form||{};
+      const val=(key,fallback='')=>f[key]!==undefined?f[key]:fallback;
+      const payload=()=>({
+        internalNumber:String(val('vNo',v?.no||'')).trim(),
+        plate:String(val('vPlate',v?.plate||'')).trim(),
+        type:String(val('vType',v?.type||'')).trim(),
+        make:String(val('vMake',v?.make||'')).trim(),
+        model:String(val('vModel',v?.model||'')).trim(),
+        year:String(val('vYear',v?.year==='—'?'':v?.year||'')).trim(),
+        department:String(val('vDept',v?.dept==='أسطول البلدية'?'':v?.dept||'')).trim(),
+        odometer:String(val('vOdo',v?.odo||'')).trim(),
+        fuelLevel:String(val('vFuel',v?.fuel||'')).trim(),
+        note:String(val('vNote',v?.note||'')).trim()
+      });
+      const save=()=>{
+        const p=payload();
+        if(!p.internalNumber||!p.plate||!p.type){this.flash('الرقم الداخلي واللوحة والنوع مطلوبة');return;}
+        const call=editing
+          ? window.SmartHSRMobilityAdapter.updateMobilityVehicle(v.id,p)
+          : window.SmartHSRMobilityAdapter.createMobilityVehicle(p);
+        call.then(()=>{this.setState({drawer:null,form:{}});this.flash(editing?'تم تحديث بيانات المركبة':'تمت إضافة المركبة للأسطول');})
+          .catch(e=>this.flash(e?.code==='vehicle_identifier_exists'?'الرقم الداخلي أو اللوحة مستخدمة مسبقاً':'تعذر حفظ بيانات المركبة'));
+      };
+      return {
+        title:editing?('تعديل '+v.no):'إضافة مركبة للأسطول',
+        sub:'سجل الأسطول البلدي · رئيس حركة السير',
+        chip:editing?v.status:'متاحة',
+        chipCol:this.sc(editing?v.status:'متاحة'),chipBg:this.tint('#22c55e',0.1),chipBd:this.tint('#22c55e',0.28),
+        form:true,formTitle:'بيانات المركبة',
+        fields:[
+          {label:'الرقم الداخلي',value:val('vNo',v?.no||''),ph:'مثال V-102',on:e=>this.setForm('vNo',e.target.value)},
+          {label:'رقم اللوحة',value:val('vPlate',v?.plate||''),ph:'رقم اللوحة',on:e=>this.setForm('vPlate',e.target.value)},
+          {label:'النوع',value:val('vType',v?.type||''),ph:'دفع رباعي / سيدان / شاحنة',on:e=>this.setForm('vType',e.target.value)},
+          {label:'الشركة',value:val('vMake',v?.make||''),ph:'الشركة',on:e=>this.setForm('vMake',e.target.value)},
+          {label:'الموديل',value:val('vModel',v?.model||''),ph:'الموديل',on:e=>this.setForm('vModel',e.target.value)},
+          {label:'السنة',value:val('vYear',v?.year==='—'?'':v?.year||''),ph:'2026',on:e=>this.setForm('vYear',e.target.value)},
+          {label:'القسم / الوحدة',value:val('vDept',v?.dept==='أسطول البلدية'?'':v?.dept||''),ph:'أسطول البلدية',on:e=>this.setForm('vDept',e.target.value)},
+          {label:'قراءة العداد',value:val('vOdo',v?.odo||''),ph:'كم',on:e=>this.setForm('vOdo',e.target.value)},
+          {label:'الوقود %',value:val('vFuel',v?.fuel||''),ph:'0-100',on:e=>this.setForm('vFuel',e.target.value)},
+          {label:'ملاحظات',value:val('vNote',v?.note||''),ph:'اختياري',on:e=>this.setForm('vNote',e.target.value)}
+        ],
+        actions:[
+          {label:editing?'حفظ التعديلات':'إضافة المركبة',on:save,tx:btn.tx,bg:btn.bg,bd:btn.bd},
+          {label:'إلغاء',on:()=>this.setState({drawer:null,form:{}}),tx:ghost.tx,bg:ghost.bg,bd:ghost.bd}
+        ]
+      };
+    }
+
     if (k === 'veh') {
       const v = V.filter(x => x.id === id)[0] || V[0];
       const c = this.chipOf(v.status);
@@ -3490,8 +3552,19 @@ class Component extends DCLogic {
         list: ms.map(m => { const cc = this.chipOf(this.missionStatus(m.id));
           return { title: m.no + ' · ' + m.type, meta: m.emp + ' · ' + m.when, tag: this.missionStatus(m.id), col: cc.col,
             bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('mission', m.id) }; }),
-        actions: [{ label: 'تعديل بيانات المركبة', on: () => this.proto(), tx: btn.tx, bg: btn.bg, bd: btn.bd },
-          { label: 'تحديد صيانة', on: () => this.proto(), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd }] };
+        actions: (() => {
+          const a=[{label:'تعديل بيانات المركبة',on:()=>this.setState({drawer:'vehedit',drawerId:v.id,form:{}}),tx:btn.tx,bg:btn.bg,bd:btn.bd}];
+          const setStatus=(to,msg)=>window.SmartHSRMobilityAdapter.setMobilityVehicleStatus(v.id,to)
+            .then(()=>{this.setState({drawer:null});this.flash(msg);})
+            .catch(()=>this.flash('تعذر تغيير حالة المركبة — تحقق أنها غير مرتبطة بمهمة نشطة'));
+          if(v.status==='متاحة'){
+            a.push({label:'إدخال للصيانة',on:()=>setStatus('MAINTENANCE','تم إدخال المركبة للصيانة'),tx:ghost.tx,bg:ghost.bg,bd:ghost.bd});
+            a.push({label:'إخراج من الخدمة',on:()=>setStatus('OUT_OF_SERVICE','تم وضع المركبة خارج الخدمة'),tx:danger.tx,bg:danger.bg,bd:danger.bd});
+          }else if(v.status==='صيانة'||v.status==='خارج الخدمة'){
+            a.push({label:'إعادة للخدمة',on:()=>setStatus('AVAILABLE','عادت المركبة إلى الخدمة'),tx:btn.tx,bg:btn.bg,bd:btn.bd});
+          }
+          return a;
+        })() };
     }
 
     if (k === 'inc') {
@@ -3603,7 +3676,7 @@ class Component extends DCLogic {
           return { label: t, on: () => this.setChip('inc', t),
             tx: on ? '#ffffff' : 'var(--tx2,#a9bdd4)', bg: on ? this.tint('#ef4444', 0.75) : 'var(--ctl,rgba(20,32,54,0.5))', bd: on ? this.tint('#ef4444', 0.5) : 'var(--ctlBd,rgba(122,164,224,0.14))' };
         }),
-        evidence: true,
+        evidence: false,
         actions: [{ label: 'إرسال البلاغ', on: () => {
           if (!im) { this.flash('تعذر تحديد المهمة'); return; }
           const category = this.state.chip.inc || 'أخرى';
