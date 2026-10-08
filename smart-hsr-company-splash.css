@@ -6,6 +6,7 @@
   --hsr-green-2:#129e43;
   --hsr-muted:#b7c5be;
 }
+.hsr-company-splash[hidden]{display:none!important}
 .hsr-company-splash{
   position:fixed;
   inset:0;
