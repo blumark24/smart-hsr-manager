@@ -1387,7 +1387,7 @@
 
             <div style="padding:16px;border-radius:16px;background:var(--l3,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l3Bd,rgba(122,164,224,0.13));box-shadow:var(--l3Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column;gap:11px">
               <div style="font-size:13px;font-weight:650;color:var(--tx,#e9f1fb)">حالة تتبع الموقع</div>
-              <p style="margin:0;font-size:11px;line-height:1.85;color:var(--tx2,#a9bdd4);text-wrap:pretty">لا يتوفر مصدر GPS حقيقي حاليًا في هذا النظام. المواضع المعروضة أثناء المهمة تخطيطية فقط، وليست إحداثيات جهاز فعلية.</p>
+              <p style="margin:0;font-size:11px;line-height:1.85;color:var(--tx2,#a9bdd4);text-wrap:pretty">يعمل التتبع من جهاز المشغّل أثناء مهمة مركبة نشطة فقط. الموقع المباشر يُصنّف تلقائياً إلى متأخر عند توقف التحديث، ولا يُعرض كـ Live بدون Fix حديث.</p>
               <div style="display:flex;flex-direction:column;gap:7px">
                 <sc-for list="{{ gpsStates }}" as="g" hint-placeholder-count="2">
                   <div style="display:flex;align-items:center;gap:9px;font-size:11px">
@@ -3090,9 +3090,10 @@ class Component extends DCLogic {
       ],
       utilPct: (V.length ? Math.round(((cnt('في مهمة') + cnt('محجوزة')) / V.length) * 100) : 0) + '%',
       utilDash: Math.round((V.length ? (cnt('في مهمة') + cnt('محجوزة')) / V.length : 0) * 264) + ' 264',
-      deptRows: this.DEPTS.map(d => {
+      deptRows: Array.from(new Set(M.map(m=>m.dept).filter(d=>d&&d!=='—'))).map(d => {
         const n = M.filter(m => m.dept === d).length;
-        return { name: d, v: String(n), w: (n ? Math.min(100, n * 14) : 0) + '%', on: () => this.flash('تفصيل طلب ' + d + ' — نموذج أولي') };
+        const max = Math.max(1, ...Array.from(new Set(M.map(x=>x.dept).filter(Boolean))).map(name=>M.filter(x=>x.dept===name).length));
+        return { name:d, v:String(n), w:Math.round((n/max)*100)+'%', on:()=>this.setState({screen:'missions',tq:d}) };
       }),
       critical: I.slice(0, 3).map(i => {
         const c = this.chipOf(i.status === 'تم الحل' ? 'تم الحل' : 'جديد');
@@ -3214,8 +3215,8 @@ class Component extends DCLogic {
             col: c.col, chipBg: c.bg, bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))',
             on: () => this.openDrawer(this.missionStatus(m.id) === 'بانتظار المركبة' ? 'alloc' : 'mission', m.id) };
         }),
-        sideBTitle: 'الحوادث المفتوحة', sideBCount: I.filter(i => i.status !== 'مغلق').length + ' حادث',
-        sideB: I.filter(i => i.status !== 'مغلق').map(i => {
+        sideBTitle: 'الحوادث المفتوحة', sideBCount: I.filter(i => !['مغلق','تم الحل'].includes(i.status)).length + ' حادث',
+        sideB: I.filter(i => !['مغلق','تم الحل'].includes(i.status)).map(i => {
           const c = this.chipOf(i.status);
           return { title: i.cat + ' · ' + i.id, meta: i.emp + ' · ' + i.veh, tag: i.status, col: c.col, chipBg: c.bg,
             bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))', on: () => this.openDrawer('inc', i.id) };
@@ -3473,7 +3474,7 @@ class Component extends DCLogic {
           { label: 'الوقود %', value: this.state.form.fuel || (v ? String(v.fuel) : ''), ph: '0-100', on: e => this.setForm('fuel', e.target.value) },
           { label: k === 'ret' ? 'ملاحظات الاستلام / الأضرار' : 'حالة المركبة عند التسليم', value: this.state.form.note || '', ph: 'سليمة / ملاحظات', on: e => this.setForm('note', e.target.value) }
         ];
-        d.evidence = k === 'ret';
+        d.evidence = false;
         d.banner = k === 'handover' ? 'يقر الموظف إلكترونياً باستلام المركبة عند تأكيد التسليم.' : 'بعد تأكيد الاستلام يتم إغلاق السجل التشغيلي للمهمة.';
         d.bannerCol = this.sc('محجوزة'); d.bannerBg = this.tint('#38bdf8', 0.1); d.bannerBd = this.tint('#38bdf8', 0.28);
       }
