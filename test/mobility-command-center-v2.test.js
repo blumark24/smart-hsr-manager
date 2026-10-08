@@ -46,3 +46,44 @@ test('Mobility map no longer uses a hard-coded center or synthetic mobility laye
   assert.match(page, /SMART HSR SATELLITE/);
   assert.doesNotMatch(page, /SMART HSR TWIN — التوأم البلدي الرقمي/);
 });
+
+
+test('FULL workflow exposes both Administrative Affairs gates and no dead authorization path', () => {
+  assert.match(page, /اعتماد المهمة — الشؤون الإدارية/);
+  assert.match(page, /اعتماد تشغيل المركبة — الشؤون الإدارية/);
+  assert.match(page, /vehicleauth/);
+  assert.match(page, /decideVehicleAuthorization\(m\.id, 'AUTHORIZED'\)/);
+  assert.match(page, /decideVehicleAuthorization\(m\.id, 'REJECTED'\)/);
+  assert.match(api, /status: 'APPROVED'/);
+  assert.match(api, /status: 'AVAILABLE'/);
+  assert.match(api, /action: 'authorization_release'/);
+});
+
+test('Department-head Mobility candidates are department-scoped and self-driving remains supported', () => {
+  assert.match(api, /actor\.role === 'department_head'[\s\S]{0,260}cleanString\(d\.department\) !== cleanString\(actor\.department\)/);
+  assert.match(api, /assignSelf/);
+  assert.match(api, /department_head_vehicle_eligibility_required/);
+  assert.match(page, /طلب مركبة لي/);
+  assert.match(page, /myvehicle/);
+});
+
+test('Trusted Mobility map layer toggles and search control actual rendered data', () => {
+  assert.match(page, /this\.state\.layers\.veh \? telemetry : \[\]/);
+  assert.match(page, /this\.state\.layers\.inc \? incidents : \[\]/);
+  assert.match(page, /this\.state\.layers\.bound && Array\.isArray\(bounds\)/);
+  assert.match(page, /const q=String\(this\.state\.mapQ\|\|''\)\.trim\(\)\.toLowerCase\(\)/);
+  assert.match(page, /if\(!matches\(vehicle\?\.no/);
+  assert.match(page, /if\(!matches\(i\.id/);
+  assert.match(page, /موقع مباشر/);
+  assert.match(page, /حادث مفتوح/);
+});
+
+test('Mobility allocation queue contains only missions ready for vehicle allocation', () => {
+  assert.match(page, /sideA: M\.filter\(m => this\.missionStatus\(m\.id\) === 'بانتظار المركبة'\)/);
+  assert.doesNotMatch(page, /sideA: M\.filter\(m => \['بانتظار المركبة', 'معتمدة', 'بانتظار الاعتماد'\]/);
+});
+
+test('Administrative approval surface does not fabricate employee availability', () => {
+  assert.doesNotMatch(page, /لا توجد إجازة مسجلة · لا يوجد تعارض مع مهمة أخرى/);
+  assert.match(page, /لا تُفترض الإجازات أو التعارضات الزمنية/);
+});
