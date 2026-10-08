@@ -34,3 +34,12 @@ test('Registry activation mirrors department and Mobility role to the login iden
 test('Department-head authorization requires a real department',()=>{
   assert.match(authz,/\(isInstitutionalDepartmentHead \|\| isLegacyDepartmentHead\) && activeIsNotFalse\(d\) && orgId && dept/);
 });
+
+
+test('Manager vehicle eligibility changes stay visible to trusted allocation pickers',()=>{
+  const usersApi=fs.readFileSync(path.join(root,'api','admin','users.js'),'utf8');
+  assert.match(usersApi,/mobilitySel\.present \|\| vehicleEligible !== undefined \|\| nextCapabilities/);
+  assert.match(usersApi,/effectiveCapabilities/);
+  assert.match(usersApi,/vehicleEligible: mobilityEnabled && effectiveCapabilities\.includes\('vehicle\.drive'\)/);
+  assert.match(usersApi,/role: mobilityEnabled \? effectiveRole : null/);
+});
