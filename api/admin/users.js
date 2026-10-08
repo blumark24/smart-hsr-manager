@@ -2972,9 +2972,11 @@ async function handler(req, res) {
     try {
       const outcome = await db.runTransaction(async (transaction) => {
         const missionRef = db.collection('missions').doc(incident.missionId);
+        const telemetryRef = db.collection('mobilityTelemetry').doc(incident.missionId);
         const reads = [transaction.get(requestRef), transaction.get(missionRef)];
         const vehicleRef = incident.vehicleId ? db.collection('vehicles').doc(incident.vehicleId) : null;
         if (vehicleRef) reads.push(transaction.get(vehicleRef));
+        reads.push(transaction.get(telemetryRef));
         const snapshots = await Promise.all(reads);
         const priorSnap = snapshots[0];
         if (priorSnap.exists) {
@@ -3004,6 +3006,27 @@ async function handler(req, res) {
             && vehicleData.status === 'IN_MISSION';
           if (!validRelationship) return { ok: false, statusCode: 409, reason: 'vehicle_relationship_invalid' };
         }
+        const telemetrySnap = snapshots[vehicleRef ? 3 : 2];
+        const telemetryData = telemetrySnap && telemetrySnap.exists ? (telemetrySnap.data() || {}) : {};
+        const telemetryLat = finiteCoordinate(telemetryData.lat, -90, 90);
+        const telemetryLng = finiteCoordinate(telemetryData.lng, -180, 180);
+        const telemetryMillis = telemetryData.reportedAt && typeof telemetryData.reportedAt.toMillis === 'function'
+          ? telemetryData.reportedAt.toMillis() : null;
+        const telemetryFresh = Number.isFinite(telemetryMillis) && Date.now() - telemetryMillis <= 5 * 60 * 1000;
+        const trustedLocation = telemetryFresh
+          && telemetryData.organizationId === caller.organizationId
+          && telemetryData.missionId === incident.missionId
+          && telemetryData.employeeUid === caller.uid
+          && (!incident.vehicleId || telemetryData.vehicleId === incident.vehicleId)
+          && telemetryLat !== null && telemetryLng !== null
+          ? {
+              lat: telemetryLat,
+              lng: telemetryLng,
+              accuracyMeters: Number.isFinite(Number(telemetryData.accuracyMeters)) ? Number(telemetryData.accuracyMeters) : null,
+              source: 'mobilityTelemetry',
+              capturedAt: telemetryData.reportedAt,
+            }
+          : null;
         const now = FieldValue.serverTimestamp();
         transaction.set(incidentRef, {
           clientRequestId,
@@ -3016,6 +3039,7 @@ async function handler(req, res) {
           category: incident.category,
           severity: incident.severity,
           note: incident.note,
+          ...(trustedLocation ? { location: trustedLocation } : {}),
           status: 'NEW',
           createdAt: now,
           updatedAt: now,
