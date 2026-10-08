@@ -43,3 +43,10 @@ test('Manager vehicle eligibility changes stay visible to trusted allocation pic
   assert.match(usersApi,/vehicleEligible: mobilityEnabled && effectiveCapabilities\.includes\('vehicle\.drive'\)/);
   assert.match(usersApi,/role: mobilityEnabled \? effectiveRole : null/);
 });
+
+
+test('Administrative Affairs vehicle eligibility also updates authoritative capabilities when present',()=>{
+  const usersApi=fs.readFileSync(path.join(root,'api','admin','users.js'),'utf8');
+  assert.match(usersApi,/administrativeUpdateEmployee[\s\S]{0,4200}syncEntitlementsForLegacyChange\([\s\S]{0,700}vehicleEligible: body\.vehicleEligible/);
+  assert.match(usersApi,/userUpdate\.entitlements = \{[\s\S]{0,260}capabilities: syncedCapabilities/);
+});
