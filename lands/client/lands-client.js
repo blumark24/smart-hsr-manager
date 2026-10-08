@@ -275,9 +275,17 @@ body:not(.dark) .manager-profile-copy small{color:rgba(216,236,224,.78)!importan
     const role = document.getElementById('headerProfileRole');
     const name = document.getElementById('headerProfileName');
     if (copy && org && role) {
-      copy.prepend(org);
-      org.after(role);
-      if (name) { name.hidden = true; name.style.display = 'none'; copy.append(name); }
+      // Idempotent header normalization: do not reinsert nodes that are
+      // already in the correct order. Re-inserting them on every
+      // MutationObserver callback creates a self-triggering childList loop
+      // that can keep the Lands page perpetually busy during boot.
+      if (org.parentElement !== copy || copy.firstElementChild !== org) copy.prepend(org);
+      if (role.parentElement !== copy || org.nextElementSibling !== role) org.after(role);
+      if (name) {
+        name.hidden = true;
+        name.style.display = 'none';
+        if (name.parentElement !== copy || copy.lastElementChild !== name) copy.append(name);
+      }
     }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyLandsFinalHeaderParity, { once:true });
