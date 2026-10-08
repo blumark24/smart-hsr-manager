@@ -2400,6 +2400,7 @@ async function handler(req, res) {
         role: actor.role,
         organizationId: actor.organizationId,
         department: actor.department || null,
+        capabilities: Array.isArray(actor.capabilities) ? actor.capabilities : [],
         workflowPolicy,
         mapContext,
         telemetry,
