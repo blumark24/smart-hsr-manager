@@ -1865,7 +1865,7 @@ class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
     role: 'dept', screen: 'deptops', authPending: false, orgName: 'معاينة تصميم', sessionName: 'رئيس قسم الحصر الميداني', department: 'إدارة الحصر الميداني',
-    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [], liveTelemetry: [], mapContext: null, workflowPolicy: 'FULL',
+    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [], liveTelemetry: [], mapContext: null, mobilityCapabilities: [], sessionUid: null, workflowPolicy: 'FULL',
     sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
     geoPanelOpen: false, mapSearchOpen: false,
     twin3D: false, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
@@ -2543,7 +2543,7 @@ class Component extends DCLogic {
     const cell = (v, flex, opt) => ({ v: v, flex: String(flex), align: (opt && opt.align) || 'right',
       size: (opt && opt.size) || '11.5px', weight: (opt && opt.weight) || '400', col: (opt && opt.col) || 'var(--tx2,#a9bdd4)' });
 
-    const out = { isTable: isTable, isHandover: s === 'handover', isReports: s === 'reports', isSettings: s === 'settings', isEmp: s === 'emp',
+    const out = { isTable: isTable, isHandover: s === 'handover', isReports: s === 'reports', isSettings: s === 'settings', isEmp: s === 'emp' || s === 'myvehicle',
       tQ: st.tq || '', setTQ: e => this.setState({ tq: e.target.value }) };
 
     if (isTable) {
@@ -2718,12 +2718,20 @@ class Component extends DCLogic {
       ];
     }
 
-    if (s === 'emp') {
+    if (s === 'emp' || s === 'myvehicle') {
+      const EM = s === 'myvehicle'
+        ? EM.filter(x => x.assignedUid === st.sessionUid || x.requestedUid === st.sessionUid)
+        : M;
+      const EI = s === 'myvehicle'
+        ? I.filter(i => EM.some(m => m.id === i.mis))
+        : I;
+      // Employee mode is server-scoped; myvehicle is additionally filtered
+      // to the authenticated department head's own requested/assigned mission.
       // M is already scoped to this employee's own assignedEmployeeUid by
       // smart-mobility-adapter.js. Pick whichever mission is currently
       // moving through the active stages as the one shown on "الرئيسية".
       const ACTIVE_STAGES = ['تم التسليم', 'جاهزة للبدء', 'قيد التنفيذ', 'متوقفة بسبب حادث', 'مكتملة', 'في انتظار إعادة المركبة'];
-      const m = M.filter(x => ACTIVE_STAGES.indexOf(this.missionStatus(x.id)) >= 0)[0] || null;
+      const m = EM.filter(x => ACTIVE_STAGES.indexOf(this.missionStatus(x.id)) >= 0)[0] || null;
       const stt = m ? this.missionStatus(m.id) : '';
       const c = this.chipOf(stt);
       const v = m ? V.filter(x => x.id === m.veh)[0] : null;
@@ -2734,9 +2742,9 @@ class Component extends DCLogic {
 
       out.empHasMission = !!m;
       out.empNoMission = !m;
-      out.empGreet = 'صباح الخير';
-      out.empName = st.sessionName || 'موظف ميداني';
-      out.empRoleDeptLine = 'موظف ميداني' + (st.department ? ' · ' + st.department : '');
+      out.empGreet = 'مرحباً';
+      out.empName = st.sessionName || (s === 'myvehicle' ? 'رئيس القسم' : 'موظف ميداني');
+      out.empRoleDeptLine = (s === 'myvehicle' ? 'رئيس قسم · تشغيل مركبة' : 'موظف ميداني') + (st.department ? ' · ' + st.department : '');
       out.empStatus = stt; out.empStCol = c.col; out.empStBg = c.bg; out.empStBd = c.bd;
       out.empHome = tab === 'home'; out.empActive = tab === 'active'; out.empTasks = tab === 'tasks';
       out.empAlerts = tab === 'alerts'; out.empAcc = tab === 'account';
@@ -2744,18 +2752,18 @@ class Component extends DCLogic {
       out.empRows = m ? [{ k: 'رقم المهمة', v: m.no }, { k: 'النوع', v: m.type }, { k: 'الوجهة', v: m.dest },
         { k: 'التاريخ', v: m.when }, { k: 'المدة', v: m.dur }, { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : '—' }] : [];
 
-      // PHASE 06A hotfix (GPS honesty) — this app has no real device/location
-      // source anywhere; the mission-running state below is operational
-      // context only, never a claim that real GPS is active. No green
-      // "live" color, no pulsing animation (both previously implied real
-      // live tracking), and never the words "GPS نشط"/"تم تفعيل" — only an
-      // honest planned/unavailable label. MISSION STATUS != GPS STATUS.
-      out.gpsCol = day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)';
-      out.gpsBg = 'var(--sunk2,rgba(11,18,32,0.5))';
-      out.gpsBd = 'var(--div,rgba(122,164,224,0.13))';
-      out.gpsLabel = running ? 'المسار تخطيطي — لا تتوفر بيانات GPS حقيقية' : 'التتبع الفعلي للموقع غير متاح';
-      out.gpsAnim = 'none';
-      out.geoLabel = m && m.scope === 'داخل النطاق' ? 'داخل النطاق التشغيلي' : 'خارج النطاق بتصريح';
+      const telemetry = m ? (st.liveTelemetry || []).find(t => t.missionId === m.id) : null;
+      const liveFix = telemetry && telemetry.freshness === 'LIVE';
+      const staleFix = telemetry && telemetry.freshness === 'STALE';
+      out.gpsCol = liveFix ? '#22c55e' : staleFix ? '#f5a524' : (day ? 'rgba(17,54,40,0.3)' : 'rgba(122,164,224,0.35)');
+      out.gpsBg = liveFix ? this.tint('#22c55e',0.08) : staleFix ? this.tint('#f5a524',0.08) : 'var(--sunk2,rgba(11,18,32,0.5))';
+      out.gpsBd = liveFix ? this.tint('#22c55e',0.28) : staleFix ? this.tint('#f5a524',0.28) : 'var(--div,rgba(122,164,224,0.13))';
+      out.gpsLabel = liveFix
+        ? ('موقع مباشر موثوق' + (Number.isFinite(telemetry.accuracyMeters) ? ' · دقة ' + Math.round(telemetry.accuracyMeters) + 'م' : ''))
+        : staleFix ? 'آخر موقع متأخر — بانتظار تحديث جديد'
+          : (running ? 'بانتظار أول تحديث موقع من الجهاز' : 'التتبع يعمل فقط أثناء المهمة النشطة');
+      out.gpsAnim = liveFix ? 'mBreathe 2.6s ease-in-out infinite' : 'none';
+      out.geoLabel = liveFix ? 'الموقع التشغيلي الحالي' : (m && m.scope === 'داخل النطاق' ? 'داخل النطاق التشغيلي' : 'خارج النطاق بتصريح');
 
       const P = { tx: '#ffffff', bg: day ? 'linear-gradient(180deg,#12855a,#0b6442)' : 'linear-gradient(180deg,rgba(34,197,94,0.9),rgba(20,120,60,0.9))', bd: day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)' };
       const S = { tx: 'var(--tx,#e9f1fb)', bg: 'var(--ctl,rgba(20,32,54,0.7))', bd: 'var(--ctlBd,rgba(122,164,224,0.2))' };
@@ -2805,8 +2813,8 @@ class Component extends DCLogic {
 
       const et = st.empTab || 'الحالية';
       out.empTabs = ['الحالية', 'المكتملة'].map(x => pill(x, et === x, () => this.setState({ empTab: x })));
-      const listSrc = et === 'الحالية' ? M.filter(x => ACTIVE_STAGES.indexOf(this.missionStatus(x.id)) >= 0)
-        : M.filter(x => ['مغلقة'].indexOf(this.missionStatus(x.id)) >= 0);
+      const listSrc = et === 'الحالية' ? EM.filter(x => ACTIVE_STAGES.indexOf(this.missionStatus(x.id)) >= 0)
+        : EM.filter(x => ['مغلقة'].indexOf(this.missionStatus(x.id)) >= 0);
       out.empList = listSrc.map(x => { const cc = this.chipOf(this.missionStatus(x.id));
         return { title: x.no + ' · ' + x.type, dest: x.dest, meta: x.when + ' · ' + x.dur, chip: this.missionStatus(x.id),
           chipCol: cc.col, chipBg: cc.bg, on: () => this.openDrawer('mission', x.id) }; });
@@ -2819,7 +2827,7 @@ class Component extends DCLogic {
       out.empProfile = [
         { k: 'الاسم', v: st.sessionName || 'غير متاح' },
         { k: 'القسم', v: st.department || '—' },
-        { k: 'الدور', v: 'موظف ميداني' },
+        { k: 'الدور', v: s === 'myvehicle' ? 'رئيس قسم · مشغّل مركبة مؤهل' : 'موظف ميداني' },
         { k: 'الرقم الوظيفي', v: 'غير مسجَّل في النظام' }
       ];
       // Only the two counts below are derived from real, already-fetched
@@ -2827,8 +2835,8 @@ class Component extends DCLogic {
       // metrics would need due-time tracking this system doesn't have —
       // shown honestly as unavailable rather than a fabricated percentage.
       out.empIndicators = [
-        { k: 'المهام المكتملة', v: String(M.filter(x => this.missionStatus(x.id) === 'مغلقة').length) },
-        { k: 'الحوادث المسجّلة', v: String(I.length) },
+        { k: 'المهام المكتملة', v: String(EM.filter(x => this.missionStatus(x.id) === 'مغلقة').length) },
+        { k: 'الحوادث المسجّلة', v: String(EI.length) },
         { k: 'الالتزام بالتوقيت', v: 'لا تتوفر بيانات كافية' },
         { k: 'إعادة المركبة في الوقت', v: 'لا تتوفر بيانات كافية' }
       ];
@@ -2853,6 +2861,24 @@ class Component extends DCLogic {
     if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
     const g = cv.getContext('2d'); if (!g) return;
     g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    if (this.state.runtimeMode === 'mobility') {
+      const day=this.state.theme==='day';
+      g.fillStyle=day?'#eef4f0':'#050b16'; g.fillRect(0,0,w,h);
+      g.strokeStyle=day?'rgba(17,54,40,.07)':'rgba(122,164,224,.07)';
+      for(let x=0;x<w;x+=26){g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke();}
+      for(let y=0;y<h;y+=26){g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke();}
+      const own=(this.state.liveMissions||[]).find(m =>
+        (m.assignedUid===this.state.sessionUid || m.requestedUid===this.state.sessionUid)
+        && ['HANDED_OVER','READY','IN_PROGRESS','INCIDENT_HOLD'].includes(m.rawStatus)
+      );
+      const t=own?(this.state.liveTelemetry||[]).find(x=>x.missionId===own.id):null;
+      const col=t?.freshness==='LIVE'?'#22c55e':t?.freshness==='STALE'?'#f5a524':(day?'#7b8d85':'#7d8ea6');
+      g.fillStyle=col; g.beginPath(); g.arc(w/2,h/2,8,0,Math.PI*2); g.fill();
+      g.strokeStyle=day?'#fff':'#eaf9ff'; g.lineWidth=2; g.stroke();
+      g.fillStyle=day?'#40574d':'#a9bdd4'; g.font='12px sans-serif'; g.textAlign='center';
+      g.fillText(t?.freshness==='LIVE'?'موقع مباشر موثوق':t?.freshness==='STALE'?'آخر موقع متأخر':'بانتظار موقع موثوق',w/2,h/2+30);
+      return;
+    }
     const day = this.state.theme === 'day';
     g.fillStyle = day ? '#eaeeea' : '#050b16'; g.fillRect(0, 0, w, h);
     g.strokeStyle = day ? 'rgba(17,54,40,0.07)' : 'rgba(122,164,224,0.07)'; g.lineWidth = 1;
@@ -3350,20 +3376,21 @@ class Component extends DCLogic {
       const m = M.filter(x => x.id === id)[0] || M[0];
       const stt = this.missionStatus(m.id), c = this.chipOf(stt);
       const v = V.filter(x => x.id === m.veh)[0];
+      const missionTelemetry = (this.state.liveTelemetry || []).find(t => t.missionId === m.id);
+      const locationState = missionTelemetry
+        ? (missionTelemetry.freshness === 'LIVE' ? 'مباشر وموثوق' : missionTelemetry.freshness === 'STALE' ? 'متأخر' : 'غير مباشر')
+        : 'لا يوجد تحديث موقع بعد';
       const rows = [
         { k: 'رقم المهمة', v: m.no }, { k: 'نوع المهمة', v: m.type }, { k: 'القسم', v: m.dept },
         { k: 'طالب المهمة', v: m.requester }, { k: 'الموظف', v: m.emp }, { k: 'الوجهة', v: m.dest },
         { k: 'التاريخ والوقت', v: m.when }, { k: 'المدة المتوقعة', v: m.dur }, { k: 'النطاق', v: m.scope },
         { k: 'المركبة', v: v ? v.no + ' · ' + v.plate : 'لم تُخصص بعد' },
         { k: 'اعتماد استخدام المركبة', v: m.authorizationStatus === 'AUTHORIZED' ? 'معتمد' : m.authorizationStatus === 'PENDING_AUTHORIZATION' ? 'بانتظار الشؤون الإدارية' : (m.authorizationStatus || '—') },
-        // PHASE 06A hotfix (GPS honesty) — no real device/location source
-        // exists; never claim "GPS active", only an honest schematic/
-        // unavailable disclosure. MISSION STATUS != GPS STATUS.
-        { k: 'حالة الموقع', v: m.gps ? 'موقع تخطيطي أثناء المهمة' : 'التتبع الفعلي للموقع غير متاح' }, { k: 'المبرر', v: m.why }
+        { k: 'حالة الموقع', v: locationState }, { k: 'المبرر', v: m.why }
       ];
       const acts = [];
       if (k === 'alloc') {
-        const vehId = this.state.chip.veh, empUid = this.state.form.allocEmployeeUid;
+        const vehId = this.state.chip.veh, empUid = m.requestedUid || this.state.form.allocEmployeeUid;
         acts.push({ label: 'تخصيص المركبة المحددة', on: () => {
           if (!vehId || !empUid) { this.flash('الرجاء اختيار مركبة متاحة وموظف.'); return; }
           const empName = (this.state.liveEmployees || []).find(e => e.uid === empUid)?.name || '';
@@ -3414,9 +3441,11 @@ class Component extends DCLogic {
       if (k === 'alloc') {
         d.form = true; d.formTitle = forms[k];
         d.fields = [
-          { label: 'الموظف', type: 'select', value: this.state.form.allocEmployeeUid || '', ph: 'اختر موظفاً',
-            options: (this.state.liveEmployees || []).map(e => ({ value: e.uid, label: e.name })),
-            on: e => this.setForm('allocEmployeeUid', e.target.value) },
+          { label: 'المستفيد المعتمد', type: 'select', value: m.requestedUid || this.state.form.allocEmployeeUid || '', ph: 'اختر موظفاً',
+            options: m.requestedUid
+              ? [{ value:m.requestedUid, label:(m.emp || 'المستفيد') + ' · مثبت في الطلب' }]
+              : (this.state.liveEmployees || []).map(e => ({ value: e.uid, label: e.name })),
+            on: e => { if (!m.requestedUid) this.setForm('allocEmployeeUid', e.target.value); } },
           { label: 'ملاحظة التخصيص', value: this.state.form.allocNote || '', ph: 'اختياري', on: e => this.setForm('allocNote', e.target.value) }
         ];
         d.chipsLabel = 'المركبات المتاحة الآن';
@@ -3487,17 +3516,20 @@ class Component extends DCLogic {
       const f = this.state.form;
       const mobilityMode = this.state.runtimeMode === 'mobility';
       const directMobility = this.state.role === 'mobility' && (this.state.workflowPolicy || 'FULL') === 'DIRECT';
+      const selfMobility = mobilityMode && this.state.role === 'dept' && f.cSelf === true;
       const canSave = !!(this.state.chip.type && (f.cDest || '').trim() && (f.cWhy || '').trim()
-        && (!mobilityMode || (f.cEmpId || '').trim()));
+        && (!mobilityMode || selfMobility || (f.cEmpId || '').trim()));
       const saveMission = submit => {
         if (!canSave) { this.flash('الرجاء تعبئة نوع المهمة والوجهة والمبرر.'); return; }
-        const selectedEmployee = mobilityMode
+        const selectedEmployee = mobilityMode && !selfMobility
           ? (this.state.liveEmployees || []).find(e => e.employeeId === f.cEmpId)
           : null;
         const payload = {
           type: this.state.chip.type, destination: (f.cDest || '').trim(), reason: (f.cWhy || '').trim(),
-          requestedEmployeeId: mobilityMode ? (f.cEmpId || '').trim() : undefined,
-          requestedEmployeeName: mobilityMode ? (selectedEmployee?.name || '') : (f.cEmp || '').trim(),
+          assignSelf: selfMobility || undefined,
+          requestedEmployeeId: mobilityMode && !selfMobility ? (f.cEmpId || '').trim() : undefined,
+          requestedEmployeeName: selfMobility ? (this.state.sessionName || 'رئيس القسم')
+            : mobilityMode ? (selectedEmployee?.name || '') : (f.cEmp || '').trim(),
           whenLabel: (f.cWhen || '').trim(), durationLabel: (f.cDur || '').trim()
         };
         this.setState({ drawer: null });
@@ -3516,16 +3548,18 @@ class Component extends DCLogic {
           });
         }).catch(() => this.flash('تعذر حفظ الطلب — الرجاء المحاولة مجدداً'));
       };
-      return { title: directMobility ? 'إنشاء مهمة تنفيذية مباشرة' : 'إنشاء طلب مهمة', sub: directMobility ? 'مركز حركة السير · سياسة DIRECT' : ((this.state.department || '—') + ' · رئيس القسم'), chip: directMobility ? 'معتمدة مباشرة' : 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
+      return { title: directMobility ? 'إنشاء مهمة تنفيذية مباشرة' : selfMobility ? 'طلب مركبة لي' : 'إنشاء طلب مهمة', sub: directMobility ? 'مركز حركة السير · سياسة DIRECT' : selfMobility ? ((this.state.sessionName || 'رئيس القسم') + ' · مستفيد الطلب') : ((this.state.department || '—') + ' · رئيس القسم'), chip: directMobility ? 'معتمدة مباشرة' : 'مسودة', chipCol: this.sc('مسودة'), chipBg: this.tint('#7d8ea6', 0.14), chipBd: this.tint('#7d8ea6', 0.3),
         form: true, formTitle: 'بيانات الطلب',
         fields: [
           mobilityMode
-            ? { label: 'الموظف', type: 'select', value: f.cEmpId || '', ph: 'اختر موظفاً مؤهلاً من البلدية',
-                options: (this.state.liveEmployees || []).map(e => ({
-                  value: e.employeeId,
-                  label: e.name + (e.vehicleEligible ? ' · مؤهل للمركبة' : ' · غير مؤهل للمركبة')
-                })),
-                on: e => this.setForm('cEmpId', e.target.value) }
+            ? selfMobility
+              ? { label:'المستفيد', type:'select', value:'self', ph:'المستفيد', options:[{value:'self',label:'أنا — '+(this.state.sessionName||'رئيس القسم')+' · مؤهل للمركبة'}], on:()=>{} }
+              : { label: 'الموظف', type: 'select', value: f.cEmpId || '', ph: 'اختر موظفاً مؤهلاً من البلدية',
+                  options: (this.state.liveEmployees || []).map(e => ({
+                    value: e.employeeId,
+                    label: e.name + (e.vehicleEligible ? ' · مؤهل للمركبة' : ' · غير مؤهل للمركبة')
+                  })),
+                  on: e => this.setForm('cEmpId', e.target.value) }
             : { label: 'الموظف المقترح (اختياري)', value: f.cEmp || '', ph: 'يُخصَّص الموظف فعلياً عند تخصيص المركبة', on: e => this.setForm('cEmp', e.target.value) },
           { label: 'الوجهة', value: f.cDest || '', ph: 'الموقع المستهدف', on: e => this.setForm('cDest', e.target.value) },
           { label: 'التاريخ والوقت', value: f.cWhen || '', ph: '27/05 — 13:00', on: e => this.setForm('cWhen', e.target.value) },
@@ -3541,6 +3575,10 @@ class Component extends DCLogic {
         }),
         banner: directMobility
           ? 'المسار المباشر: مركز حركة السير ← تخصيص المركبة ← الموظف.'
+          : selfMobility
+            ? ((this.state.workflowPolicy || 'FULL') === 'SHORT'
+              ? 'طلب شخصي: رئيس القسم ← حركة السير ← تخصيص المركبة ← الاستلام والتنفيذ والإرجاع.'
+              : 'طلب شخصي: رئيس القسم ← الشؤون الإدارية ← حركة السير ← تخصيص المركبة ← الاستلام والتنفيذ والإرجاع.')
           : ((this.state.workflowPolicy || 'FULL') === 'SHORT'
             ? 'المسار المختصر: رئيس القسم ← حركة السير ← تخصيص المركبة ← الموظف.'
             : 'المسار الكامل: رئيس القسم ← الشؤون الإدارية ← حركة السير ← تخصيص المركبة ← الموظف.'),
