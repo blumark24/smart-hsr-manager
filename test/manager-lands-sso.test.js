@@ -106,18 +106,23 @@ test('api/organization/context.js: the SSO handoff branch is self-service only â
 
 // ---- final routing bug: the Lands redirect target must match the real
 // environment, never a hardcoded stale Preview URL ----
-test('resolveLandsRedirectBase: on Manager Production hostnames, redirects to real Lands Production, not a Preview URL', () => {
-  assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager.vercel.app'), 'https://lands-smart.vercel.app/');
-  assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager-blumark24-os.vercel.app'), 'https://lands-smart.vercel.app/');
+test('resolveLandsRedirectBase: Manager Production stays same-origin on the embedded Lands workspace', () => {
+  assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager.vercel.app'), 'https://smart-hsr-manager.vercel.app/lands/');
+  assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager-blumark24-os.vercel.app'), 'https://smart-hsr-manager-blumark24-os.vercel.app/lands/');
 });
 
-test('resolveLandsRedirectBase: a real custom/non-vercel.app domain defaults to Lands Production, same rule as this app\'s own firebase-runtime-config.js', () => {
-  assert.equal(resolveLandsRedirectBaseFor('smart-hsr.gov.sa'), 'https://lands-smart.vercel.app/');
-  assert.equal(resolveLandsRedirectBaseFor('localhost'), 'https://lands-smart.vercel.app/');
+test('resolveLandsRedirectBase: a real custom domain stays same-origin on the embedded Lands workspace', () => {
+  assert.equal(resolveLandsRedirectBaseFor('smart.blumark24.com'), 'https://smart.blumark24.com/lands/');
+  assert.equal(resolveLandsRedirectBaseFor('localhost'), 'https://localhost/lands/');
 });
 
-test('resolveLandsRedirectBase: an unrecognized *.vercel.app Preview hostname stays same-origin on the embedded Lands workspace, never Production', () => {
+test('resolveLandsRedirectBase: Preview hostnames stay same-origin on the embedded Lands workspace', () => {
   assert.equal(resolveLandsRedirectBaseFor('smart-hsr-manager-git-some-branch-blumark24-os.vercel.app'), 'https://smart-hsr-manager-git-some-branch-blumark24-os.vercel.app/lands/');
+});
+
+test('login.html no longer references the legacy standalone Lands Production host', () => {
+  const source = read('login.html');
+  assert.doesNotMatch(source, /lands-smart\.vercel\.app/);
 });
 
 // ---- 12. no auth secrets in the redirect URL ----
