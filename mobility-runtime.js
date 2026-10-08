@@ -144,6 +144,10 @@
   }
 
   function incidentView(i) {
+    const location = i && i.location && typeof i.location === 'object' ? i.location : null;
+    const lat = Number(location && (location.lat ?? location.latitude));
+    const lng = Number(location && (location.lng ?? location.longitude));
+    const hasCoordinate = Number.isFinite(lat) && Number.isFinite(lng);
     return {
       id:i.incidentId,
       cat:i.category || 'حالة تشغيلية',
@@ -152,7 +156,12 @@
       mis:i.missionId || '—',
       veh:i.vehicleId || '—',
       dept:i.department || '—',
-      loc:i.location || 'غير متاح',
+      // Preserve the trusted coordinate object for the operational map, while
+      // keeping table/drawer text human-readable. Previously only `loc`
+      // survived this view-model conversion, so mobilityIncidentCoordinate()
+      // always received no location and real incident pins silently vanished.
+      location: hasCoordinate ? { ...location, lat, lng } : null,
+      loc: hasCoordinate ? (lat.toFixed(5) + ', ' + lng.toFixed(5)) : 'غير متاح',
       time:i.createdAt || '—',
       ev:'—',
       note:i.note || '',
