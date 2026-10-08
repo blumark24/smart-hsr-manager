@@ -2512,6 +2512,138 @@ async function handler(req, res) {
     }
   }
 
+  // SMART MOBILITY FLEET REGISTRY — Mobility Head is the operational owner.
+  // These mutations stay inside the existing trusted users API to avoid a new
+  // serverless surface. Organization/status/audit identity are server-derived.
+  if (action === 'createMobilityVehicle') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res, 403, { error:'forbidden', reason:'mobility_head_required' });
+    const allowed = new Set(['action','internalNumber','plate','type','make','model','year','department','odometer','fuelLevel','note','lastMaintenance','nextMaintenance']);
+    if (Object.keys(body).some(k=>!allowed.has(k))) return sendJson(res,400,{error:'invalid_request',reason:'protected_or_unknown_field'});
+    const internalNumber=cleanString(body.internalNumber).slice(0,40);
+    const plate=cleanString(body.plate).slice(0,40);
+    const type=cleanString(body.type).slice(0,80);
+    if(!internalNumber||!plate||!type) return sendJson(res,400,{error:'invalid_request',reason:'internalNumber_plate_type_required'});
+    const year=body.year==null||body.year===''?null:Number(body.year);
+    const odometer=body.odometer==null||body.odometer===''?null:Number(body.odometer);
+    const fuelLevel=body.fuelLevel==null||body.fuelLevel===''?null:Number(body.fuelLevel);
+    if((year!==null&&(!Number.isInteger(year)||year<1950||year>2100))
+      ||(odometer!==null&&(!Number.isFinite(odometer)||odometer<0||odometer>10000000))
+      ||(fuelLevel!==null&&(!Number.isFinite(fuelLevel)||fuelLevel<0||fuelLevel>100))){
+      return sendJson(res,400,{error:'invalid_request',reason:'invalid_vehicle_numeric_field'});
+    }
+    try{
+      const existing=await db.collection('vehicles').where('organizationId','==',actor.organizationId).get();
+      if(existing.docs.some(d=>{
+        const x=d.data()||{};
+        return cleanString(x.internalNumber).toLowerCase()===internalNumber.toLowerCase()
+          || cleanString(x.plate).toLowerCase()===plate.toLowerCase();
+      })) return sendJson(res,409,{error:'request_failed',reason:'vehicle_identifier_exists'});
+      const ref=db.collection('vehicles').doc();
+      const now=FieldValue.serverTimestamp();
+      const doc={
+        organizationId:actor.organizationId, internalNumber, plate, type,
+        make:cleanString(body.make).slice(0,80)||null,
+        model:cleanString(body.model).slice(0,80)||null,
+        year,
+        department:cleanString(body.department).slice(0,120)||null,
+        odometer, fuelLevel,
+        note:cleanString(body.note).slice(0,500)||null,
+        lastMaintenance:cleanString(body.lastMaintenance).slice(0,40)||null,
+        nextMaintenance:cleanString(body.nextMaintenance).slice(0,40)||null,
+        status:'AVAILABLE', createdAt:now, updatedAt:now, createdByUid:actor.uid, updatedByUid:actor.uid,
+      };
+      await db.runTransaction(async tx=>{
+        tx.set(ref,doc);
+        tx.set(db.collection('auditEvents').doc(),{
+          organizationId:actor.organizationId, actorId:actor.uid, actorRole:actor.role,
+          resourceType:'vehicle', resourceId:ref.id, action:'create_vehicle', toStatus:'AVAILABLE', timestamp:now,
+        });
+      });
+      return sendJson(res,200,{vehicle:safeMobilityVehicle(ref.id,doc)});
+    }catch(_){return sendJson(res,500,{error:'request_failed',reason:'temporary_failure'});}
+  }
+
+  if (action === 'updateMobilityVehicle') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res,403,{error:'forbidden',reason:'mobility_head_required'});
+    const allowed=new Set(['action','vehicleId','internalNumber','plate','type','make','model','year','department','odometer','fuelLevel','note','lastMaintenance','nextMaintenance']);
+    if(Object.keys(body).some(k=>!allowed.has(k))) return sendJson(res,400,{error:'invalid_request',reason:'protected_or_unknown_field'});
+    const vehicleId=cleanString(body.vehicleId);
+    if(!vehicleId) return sendJson(res,400,{error:'invalid_request',reason:'vehicleId_required'});
+    try{
+      const ref=db.collection('vehicles').doc(vehicleId);
+      const snap=await ref.get();
+      if(!snap.exists) return sendJson(res,404,{error:'request_failed',reason:'vehicle_not_found'});
+      const vehicle=snap.data()||{};
+      if(vehicle.organizationId!==actor.organizationId) return sendJson(res,403,{error:'forbidden',reason:'cross_organization_denied'});
+      if(['RESERVED','IN_MISSION','RETURN_PENDING'].includes(vehicle.status)){
+        return sendJson(res,409,{error:'request_failed',reason:'vehicle_committed_cannot_edit'});
+      }
+      const update={updatedAt:FieldValue.serverTimestamp(),updatedByUid:actor.uid};
+      const stringFields=['internalNumber','plate','type','make','model','department','note','lastMaintenance','nextMaintenance'];
+      for(const key of stringFields){
+        if(body[key]!==undefined) update[key]=cleanString(body[key]).slice(0,key==='note'?500:120)||null;
+      }
+      for(const key of ['year','odometer','fuelLevel']){
+        if(body[key]===undefined) continue;
+        const raw=body[key], value=raw===''||raw===null?null:Number(raw);
+        const ok=value===null || (key==='year'
+          ? Number.isInteger(value)&&value>=1950&&value<=2100
+          : Number.isFinite(value)&&value>=0&&(key!=='fuelLevel'||value<=100)&&(key!=='odometer'||value<=10000000));
+        if(!ok) return sendJson(res,400,{error:'invalid_request',reason:'invalid_vehicle_numeric_field'});
+        update[key]=value;
+      }
+      if(update.internalNumber===null||update.plate===null||update.type===null) return sendJson(res,400,{error:'invalid_request',reason:'vehicle_required_field_cannot_be_empty'});
+      if(update.internalNumber||update.plate){
+        const existing=await db.collection('vehicles').where('organizationId','==',actor.organizationId).get();
+        const nextNo=cleanString(update.internalNumber||vehicle.internalNumber).toLowerCase();
+        const nextPlate=cleanString(update.plate||vehicle.plate).toLowerCase();
+        if(existing.docs.some(d=>d.id!==vehicleId&&(()=>{
+          const x=d.data()||{}; return cleanString(x.internalNumber).toLowerCase()===nextNo||cleanString(x.plate).toLowerCase()===nextPlate;
+        })())) return sendJson(res,409,{error:'request_failed',reason:'vehicle_identifier_exists'});
+      }
+      await ref.update(update);
+      await db.collection('auditEvents').add({
+        organizationId:actor.organizationId,actorId:actor.uid,actorRole:actor.role,
+        resourceType:'vehicle',resourceId:vehicleId,action:'update_vehicle',timestamp:FieldValue.serverTimestamp(),
+      });
+      const next=Object.assign({},vehicle,update);
+      return sendJson(res,200,{vehicle:safeMobilityVehicle(vehicleId,next)});
+    }catch(_){return sendJson(res,500,{error:'request_failed',reason:'temporary_failure'});}
+  }
+
+  if (action === 'setMobilityVehicleStatus') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res,403,{error:'forbidden',reason:'mobility_head_required'});
+    const vehicleId=cleanString(body.vehicleId);
+    const toStatus=cleanString(body.toStatus);
+    if(!vehicleId||!['AVAILABLE','MAINTENANCE','OUT_OF_SERVICE'].includes(toStatus)){
+      return sendJson(res,400,{error:'invalid_request',reason:'vehicleId_and_valid_status_required'});
+    }
+    try{
+      const outcome=await db.runTransaction(async tx=>{
+        const ref=db.collection('vehicles').doc(vehicleId);
+        const snap=await tx.get(ref);
+        if(!snap.exists) return {ok:false,statusCode:404,reason:'vehicle_not_found'};
+        const vehicle=snap.data()||{};
+        if(vehicle.organizationId!==actor.organizationId) return {ok:false,statusCode:403,reason:'cross_organization_denied'};
+        const decision=evaluateVehicleTransition({actor,vehicle,toStatus});
+        if(!decision.allowed) return {ok:false,statusCode:409,reason:decision.code};
+        const now=FieldValue.serverTimestamp();
+        tx.update(ref,{status:toStatus,updatedAt:now,updatedByUid:actor.uid});
+        tx.set(db.collection('auditEvents').doc(),{
+          organizationId:actor.organizationId,actorId:actor.uid,actorRole:actor.role,
+          resourceType:'vehicle',resourceId:vehicleId,action:'vehicle_status_transition',
+          fromStatus:vehicle.status,toStatus,timestamp:now,
+        });
+        return {ok:true};
+      });
+      if(!outcome.ok) return sendJson(res,outcome.statusCode,{error:'request_failed',reason:outcome.reason});
+      return sendJson(res,200,{vehicleId,status:toStatus});
+    }catch(_){return sendJson(res,500,{error:'request_failed',reason:'temporary_failure'});}
+  }
+
   if (action === 'listAvailableVehicles') {
     const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
     if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_head_required' });
