@@ -114,6 +114,8 @@
       why:m.reason || '—',
       status:MISSION_STATUS[m.status] || m.status || '—',
       rawStatus:m.status || null,
+      createdAt:m.createdAt || null,
+      updatedAt:m.updatedAt || null,
       requestedUid:m.requestedEmployeeUid || null,
       assignedUid:m.assignedEmployeeUid || null,
       authorizationStatus:m.vehicleAuthorizationStatus || null,
@@ -498,6 +500,9 @@
     createIncident: payload => withRefresh(api('createIncident',{...payload,clientRequestId:requestId('incident')})).then(x=>x.incidentId),
     mobilityProcessIncident: (incidentId,toStatus) => withRefresh(api('processMobilityIncident',{incidentId,toStatus})),
     decideVehicleAuthorization: (missionId,toStatus) => withRefresh(api('decideVehicleAuthorization',{missionId,toStatus})),
+    createMobilityVehicle: payload => withRefresh(api('createMobilityVehicle',payload)).then(x=>x.vehicle),
+    updateMobilityVehicle: (vehicleId,payload) => withRefresh(api('updateMobilityVehicle',{vehicleId,...payload})).then(x=>x.vehicle),
+    setMobilityVehicleStatus: (vehicleId,toStatus) => withRefresh(api('setMobilityVehicleStatus',{vehicleId,toStatus})),
   };
 
   window.dispatchEvent(new Event('smart-hsr-mobility-adapter-ready'));
