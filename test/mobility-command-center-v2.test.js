@@ -121,3 +121,12 @@ test('Stale drawer ids fail closed instead of falling back to another mission or
   assert.doesNotMatch(page, /M\.filter\(x => x\.id === id\)\[0\] \|\| M\[0\]/);
   assert.doesNotMatch(page, /V\.filter\(x => x\.id === id\)\[0\] \|\| V\[0\]/);
 });
+
+
+test('Mission lifecycle UI does not fabricate audit timestamps or actors', () => {
+  assert.match(page, /يعرض المراحل المستنتجة من الحالة الحالية فقط؛ لا يعرض أوقاتاً أو منفذين غير مسجلين/);
+  assert.match(page, /time: done \? 'مكتملة' : '—'/);
+  assert.match(page, /who: done \? 'وفق حالة المهمة الحالية' : 'بانتظار التنفيذ'/);
+  assert.doesNotMatch(page, /const times = \['08:02'/);
+  assert.doesNotMatch(page, /27\/05 · /);
+});
