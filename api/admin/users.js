@@ -4044,17 +4044,46 @@ async function handler(req, res) {
         }
         await record.ref.set(update, { merge: true });
 
-        // Mirror the Mobility capability state into the linked employee
-        // registry entry (selection lists read it). Best-effort and
-        // non-authoritative: users/{uid} stays the single authority.
-        if (nextCapabilities) {
+        // Mirror the EFFECTIVE Mobility state into the linked employee
+        // registry entry (selection/allocation pickers read it). Legacy
+        // accounts may not have an entitlements object yet, so nextCapabilities
+        // can legitimately be null even though vehicleEligible/mobilityAccess
+        // just changed. Compute the requested effective state explicitly
+        // instead of skipping the mirror in that case.
+        if (mobilitySel.present || vehicleEligible !== undefined || nextCapabilities) {
           try {
             const linked = await db.collection('employees').where('authUid', '==', uid).limit(1).get();
             const employeeDoc = linked && linked.docs && linked.docs[0];
             if (employeeDoc && (employeeDoc.data() || {}).organizationId === municipalityId) {
               const existingProducts = (employeeDoc.data() || {}).products || {};
+              const currentMobility = existingProducts.mobility || {};
+              const effectiveCapabilities = nextCapabilities || (() => {
+                const caps = new Set(WorkspaceAccess.resolveCapabilities(record.data));
+                if (mobilitySel.present) {
+                  if (mobilitySel.enabled) caps.add('mobility.access');
+                  else WorkspaceAccess.CAPABILITIES.forEach(cap => caps.delete(cap));
+                }
+                if (vehicleEligible !== undefined) {
+                  WorkspaceAccess.VEHICLE_CAPABILITIES.forEach(cap => (
+                    vehicleEligible === true ? caps.add(cap) : caps.delete(cap)
+                  ));
+                }
+                return WorkspaceAccess.normalizeCapabilities(Array.from(caps));
+              })();
+              const mobilityEnabled = effectiveCapabilities.includes('mobility.access');
+              const effectiveRole = mobilitySel.present
+                ? mobilitySel.role
+                : (currentMobility.role || WorkspaceAccess.resolveMobilityRole(record.data) || 'employee');
               await employeeDoc.ref.set({
-                products: { ...existingProducts, mobility: mobilityProductMirror(nextCapabilities, existingProducts.mobility) },
+                products: {
+                  ...existingProducts,
+                  mobility: {
+                    ...currentMobility,
+                    enabled: mobilityEnabled,
+                    role: mobilityEnabled ? effectiveRole : null,
+                    vehicleEligible: mobilityEnabled && effectiveCapabilities.includes('vehicle.drive'),
+                  },
+                },
                 updatedAt: FieldValue.serverTimestamp(),
               }, { merge: true });
             }
