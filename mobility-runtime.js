@@ -243,6 +243,13 @@
       if (!snap.exists()) { await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
       const data = snap.data() || {};
       const department = String(data.department || '').trim();
+
+      // Establish the authenticated runtime identity before calling the
+      // authoritative workspace resolver. The API helper requires currentUser
+      // so resolving before this assignment causes a false unauthenticated
+      // result and a workspace redirect loop.
+      currentUser = user;
+
       let resolution = null;
       try { resolution = await api('resolveWorkspaces', { workspace:'mobility' }); } catch (_) {}
       if (data.active === false || !data.organizationId) {
@@ -259,7 +266,6 @@
         location.replace('workspace.html');
         return;
       }
-      currentUser = user;
       const uiRole = UI_ROLE[role];
       if (component) {
         patchBoard(component);
