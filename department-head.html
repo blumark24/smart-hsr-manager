@@ -3527,7 +3527,7 @@ class Component extends DCLogic {
       if (k === 'approve') {
         d.form = true; d.formTitle = forms[k];
         d.fields = [{ label: 'ملاحظة / سبب', value: this.state.form.appNote || '', ph: 'يُشترط عند الرفض', on: e => this.setForm('appNote', e.target.value) }];
-        d.banner = 'التوفر التشغيلي للموظف: متاح · لا توجد إجازة مسجلة · لا يوجد تعارض مع مهمة أخرى.';
+        d.banner = 'يعرض النظام بيانات المهمة والموظف المسجلة فقط. لا تُفترض الإجازات أو التعارضات الزمنية ما لم تكن لها بيانات موثوقة في النظام.';
         d.bannerCol = this.sc('متاحة'); d.bannerBg = this.tint('#22c55e', 0.1); d.bannerBd = this.tint('#22c55e', 0.28);
       }
       return d;
