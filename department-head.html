@@ -21,6 +21,135 @@
 
 <link rel="stylesheet" href="./smart-hsr-company-splash.css">
 <script src="./smart-hsr-company-splash.js" data-hsr-splash="auto"></script>
+
+<style id="u3-mobility-polish-v1">
+  /* U3 / SMART MOBILITY — municipal visual unification, scoped to mobility only */
+  .dh-app[data-product="الحركة الذكية"]{
+    --mob-radius-lg:18px;
+    --mob-radius-md:14px;
+    --mob-gap:14px;
+  }
+  .dh-app[data-product="الحركة الذكية"] .dh-command-bar{
+    min-height:60px!important;
+    border-radius:18px!important;
+    padding:8px 12px!important;
+  }
+  .dh-app[data-product="الحركة الذكية"] .dh-sidebar{
+    order:0!important;
+    margin-inline-start:0!important;
+  }
+  .dh-app[data-product="الحركة الذكية"] .dh-sidebar-panel,
+  .dh-app[data-product="الحركة الذكية"] .dh-product-panel{
+    border-radius:18px!important;
+  }
+  .dh-app[data-product="الحركة الذكية"] .dh-nav-item{
+    min-height:40px!important;
+    border-radius:11px!important;
+  }
+  .dh-app[data-product="الحركة الذكية"] .dh-kpi-grid{
+    gap:12px!important;
+  }
+  .dh-app[data-product="الحركة الذكية"] .dh-kpi-card{
+    min-height:82px!important;
+    border-radius:16px!important;
+    padding:13px 14px!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 14px 32px -28px rgba(0,0,0,.72)!important;
+  }
+  .dh-app[data-product="الحركة الذكية"] .dh-side-card,
+  .dh-app[data-product="الحركة الذكية"] .dh-table-shell,
+  .dh-app[data-product="الحركة الذكية"] .dh-glass{
+    border-radius:16px!important;
+  }
+
+  /* Allocation queue + department operational cards */
+  .dh-app[data-product="الحركة الذكية"] .dh-side-card button,
+  .dh-app[data-product="الحركة الذكية"] .dh-side-card [data-f="1"]{
+    min-height:40px;
+  }
+  .dh-app[data-product="الحركة الذكية"] .dh-side-card{
+    overflow:hidden;
+  }
+
+  /* Day mode: reduce glare and make cards readable, not flat white */
+  .dh-app[data-product="الحركة الذكية"][data-theme="day"] .dh-shell{
+    background:
+      radial-gradient(1000px 560px at 82% -8%,rgba(38,132,89,.10),transparent 70%),
+      linear-gradient(180deg,#eef4f0 0%,#e8f0eb 100%)!important;
+  }
+  .dh-app[data-product="الحركة الذكية"][data-theme="day"] .dh-command-bar{
+    background:linear-gradient(180deg,#0b4b37,#073d2f)!important;
+    border-color:rgba(255,255,255,.10)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 18px 36px -28px rgba(3,54,39,.72)!important;
+  }
+  .dh-app[data-product="الحركة الذكية"][data-theme="day"] .dh-kpi-card{
+    background:linear-gradient(180deg,#f7faf8,#edf4ef)!important;
+    border-color:rgba(42,92,68,.16)!important;
+    color:#12392b!important;
+  }
+  .dh-app[data-product="الحركة الذكية"][data-theme="day"] .dh-kpi-card:nth-child(5n+2){
+    background:linear-gradient(180deg,#f4f8f5,#e8f1eb)!important;
+  }
+  .dh-app[data-product="الحركة الذكية"][data-theme="day"] .dh-kpi-card:nth-child(5n+3){
+    background:linear-gradient(180deg,#f7f6f0,#efeee5)!important;
+  }
+  .dh-app[data-product="الحركة الذكية"][data-theme="day"] .dh-side-card{
+    background:linear-gradient(180deg,#f5f9f6,#eaf2ed)!important;
+    border-color:rgba(42,92,68,.15)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 18px 38px -32px rgba(21,74,51,.34)!important;
+  }
+  .dh-app[data-product="الحركة الذكية"][data-theme="day"] .dh-table-shell{
+    background:#f4f8f5!important;
+    border-color:rgba(42,92,68,.15)!important;
+  }
+  .dh-app[data-product="الحركة الذكية"][data-theme="day"] .dh-table-head{
+    background:#e1ece5!important;
+  }
+  .dh-app[data-product="الحركة الذكية"][data-theme="day"] .dh-table-body{
+    background:#f6f9f7!important;
+  }
+
+  /* Night mode: premium, quieter glass */
+  .dh-app[data-product="الحركة الذكية"][data-theme="night"] .dh-command-bar{
+    background:linear-gradient(180deg,rgba(13,28,42,.96),rgba(8,19,31,.97))!important;
+    border-color:rgba(87,160,132,.16)!important;
+  }
+  .dh-app[data-product="الحركة الذكية"][data-theme="night"] .dh-kpi-card,
+  .dh-app[data-product="الحركة الذكية"][data-theme="night"] .dh-side-card{
+    background:linear-gradient(180deg,rgba(18,33,48,.88),rgba(11,24,37,.92))!important;
+    border-color:rgba(94,157,134,.14)!important;
+  }
+
+  /* Dialogs / drawers */
+  .dh-app[data-product="الحركة الذكية"] [role="dialog"],
+  .dh-app[data-product="الحركة الذكية"] .dh-drawer,
+  .dh-app[data-product="الحركة الذكية"] .dh-modal{
+    border-radius:20px!important;
+    box-shadow:0 30px 80px -36px rgba(0,0,0,.78)!important;
+  }
+
+  @media(max-width:980px){
+    .dh-app[data-product="الحركة الذكية"] .dh-command-bar{
+      min-height:58px!important;
+    }
+    .dh-app[data-product="الحركة الذكية"] .dh-kpi-card{
+      min-height:76px!important;
+    }
+  }
+  @media(max-width:760px){
+    .dh-app[data-product="الحركة الذكية"] .dh-kpi-grid{
+      gap:10px!important;
+    }
+    .dh-app[data-product="الحركة الذكية"] .dh-command-bar{
+      border-radius:14px!important;
+      padding:7px 9px!important;
+    }
+    .dh-app[data-product="الحركة الذكية"] .dh-side-card,
+    .dh-app[data-product="الحركة الذكية"] .dh-table-shell{
+      border-radius:14px!important;
+    }
+  }
+</style>
+
 </head>
 <body>
 <x-dc>
@@ -673,7 +802,7 @@
   </div>
 </sc-if>
 
-<div class="dh-app" data-theme="{{ themeName }}" dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
+<div class="dh-app" data-theme="{{ themeName }}" data-product="{{ activeProductName }}" dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
 <div class="dh-shell" style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5">
 
   <header class="dh-command-bar" style="min-height:62px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--hdrBlur,blur(22px))">
