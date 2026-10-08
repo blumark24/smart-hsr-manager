@@ -72,23 +72,12 @@ import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 // إعدادات Firebase
 const firebaseConfig = await resolveFirebaseConfig();
 
-// Same hostname-based decision rule firebase-runtime-config.js already uses
-// for this app's OWN identity: any hostname that isn't a recognized
-// Preview/staging *.vercel.app host (a real Production/custom domain, for
-// instance) is Production by default — never the reverse. The unified SSO
-// redirect target must follow the SAME rule Lands' own client already uses
-// to pick its Firebase project (lands-smart's index.html), or a Production
-// employee gets handed off to a deployment running the wrong project
-// entirely and the handoff code is meaningless there.
-const LANDS_PRODUCTION_HOSTNAMES = Object.freeze(['smart-hsr-manager.vercel.app', 'smart-hsr-manager-blumark24-os.vercel.app']);
-const LANDS_PRODUCTION_URL = 'https://lands-smart.vercel.app/';
-const LANDS_STAGING_PREVIEW_URL = 'https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/';
+// Smart Lands is embedded in this release. Keep the one-time SSO handoff
+// same-origin in Preview and Production so the code is consumed by the exact
+// deployment/runtime that minted it. Never hand Production users to the
+// legacy standalone lands-smart project.
 function resolveLandsRedirectBase() {
-  const hostname = location.hostname;
-  if (hostname.endsWith('.vercel.app') && !LANDS_PRODUCTION_HOSTNAMES.includes(hostname)) {
-    return location.origin.replace(/\/$/, '') + '/lands/';
-  }
-  return LANDS_PRODUCTION_URL;
+  return location.origin.replace(/\/$/, '') + '/lands/';
 }
 
 const app = initializeApp(firebaseConfig);
