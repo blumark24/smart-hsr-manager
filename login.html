@@ -198,8 +198,36 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       return;
     }
 
-    // Primary workspace = the institutional path; Mobility opens first only
-    // when nothing else is authorized (the resolver decides, in that order).
+    const mobilityRole = WA.resolveMobilityRole(userDoc.exists() ? data : null);
+    const mobilityWorkspace = resolution.workspaces.find(w => w.id === 'mobility');
+
+    // Mobility leadership (u3 pattern) owns a single operational command
+    // destination. It must never stop at the workspace selector, even if a
+    // future secondary entitlement is also present on the identity.
+    if (mobilityRole === 'mobility_head' && mobilityWorkspace) {
+      const mobilityTarget = typeof mobilityWorkspace.route === 'string'
+        && /^[a-z0-9-]+\.html(\?mode=mobility)?$/.test(mobilityWorkspace.route)
+        ? mobilityWorkspace.route : 'department-head.html?mode=mobility';
+      await persistWorkforceSession(email, password, user, organizationId, sessionRole);
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ فتح مركز قيادة الحركة', 'success');
+      setTimeout(() => { window.location.href = mobilityTarget; }, 450);
+      return;
+    }
+
+    // The chooser is now intentional, not a mandatory intermediate page:
+    // show it only when a workforce identity has more than one real,
+    // authorized path (for example: primary department + vehicle service).
+    if (resolution.workspaces.length > 1) {
+      await persistWorkforceSession(email, password, user, organizationId, sessionRole);
+      await signOut(probeAuth);
+      showMsg('✅ تم التحقق بنجاح... جارٍ فتح المسارات المصرّح بها', 'success');
+      setTimeout(() => { window.location.href = 'workspace.html'; }, 450);
+      return;
+    }
+
+    // A single authorized service opens directly. Primary remains the
+    // institutional path selected by the trusted resolver.
     const primary = resolution.workspaces.find(w => w.id === resolution.primary) || resolution.workspaces[0];
 
     // Smart Lands keeps the trusted one-time server-side SSO handoff.
