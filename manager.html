@@ -4829,8 +4829,8 @@ class Component extends DCLogic {
       auRoleOptions: (st.auKind === 'lands' ? [
         { label: 'موظف أراضي', role: 'lands_employee' }, { label: 'رئيس قسم أراضي', role: 'lands_department_manager' }
       ] : st.auKind === 'mobility' ? [
-        { label: 'مدير حركة', role: 'mobility_head' }, { label: 'رئيس قسم', role: 'department_head' },
-        { label: 'شؤون إدارية', role: 'administrative_affairs' }, { label: 'موظف', role: 'employee' }
+        { label: 'رئيس الحركة', role: 'mobility_head' }, { label: 'رئيس قسم', role: 'department_head' },
+        { label: 'رئيس الشؤون الإدارية', role: 'administrative_affairs' }, { label: 'موظف', role: 'employee' }
       ] : [
         { label: 'مشرف', role: 'supervisor' }, { label: 'مراقب', role: 'inspector' }, { label: 'مقاول', role: 'contractor' }
       ]).map(o => pill(o.label, st.auRole === o.role, () => this.setState({ auRole: o.role }))),
