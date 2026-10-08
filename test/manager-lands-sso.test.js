@@ -27,7 +27,7 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 function resolveLandsRedirectBaseFor(hostname) {
   const source = read('login.html');
-  const start = source.indexOf('const LANDS_PRODUCTION_HOSTNAMES');
+  const start = source.indexOf('function resolveLandsRedirectBase()');
   const end = source.indexOf('const app = initializeApp(firebaseConfig);');
   const snippet = source.slice(start, end) + 'module.exports = { resolveLandsRedirectBase };';
   const sandbox = { module: { exports: {} }, location: { hostname, origin: `https://${hostname}` }, Object };
