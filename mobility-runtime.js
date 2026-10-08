@@ -366,10 +366,43 @@
               ],
               sideATitle:'المهام الجارية',
               sideACount:String(instance.missions().filter(m=>!['مغلقة','ملغاة'].includes(instance.missionStatus(m.id))).length),
-              sideA:[],
+              sideAEmptyText:'لا توجد مهام جارية في القسم حالياً.',
+              sideA:instance.missions()
+                .filter(m=>!['مغلقة','ملغاة'].includes(instance.missionStatus(m.id)))
+                .slice(0,8)
+                .map(m=>{
+                  const st=instance.missionStatus(m.id);
+                  const chip=instance.chipOf(st);
+                  return {
+                    badge:instance.missionBadge(m.no),
+                    title:(m.type||'مهمة')+' · '+(m.emp||'—'),
+                    meta:(m.dest||'—')+' · '+(m.when||'—'),
+                    tag:st,
+                    col:chip.col,chipBg:chip.bg,
+                    bg:'var(--ctl,rgba(20,32,54,0.6))',
+                    bd:'var(--ctlBd,rgba(122,164,224,0.12))',
+                    on:()=>instance.openDrawer('mission',m.id)
+                  };
+                }),
               sideBTitle:'الموظفون المؤهلون للمركبة',
               sideBCount:String((instance.state.liveEmployees||[]).filter(e=>e.vehicleEligible).length),
-              sideB:[],
+              sideBEmptyText:'لا يوجد موظفون مؤهلون لاستلام مركبة في هذا القسم حالياً.',
+              sideB:(instance.state.liveEmployees||[])
+                .filter(e=>e.vehicleEligible)
+                .slice(0,8)
+                .map(e=>({
+                  title:e.name||e.employeeId,
+                  meta:e.department||instance.state.department||'—',
+                  tag:'مؤهل',
+                  col:'#22c55e',
+                  chipBg:'rgba(34,197,94,.12)',
+                  bg:'var(--ctl,rgba(20,32,54,0.6))',
+                  bd:'var(--ctlBd,rgba(122,164,224,0.12))',
+                  on:()=>instance.setState(x=>({
+                    drawer:'create',
+                    form:{...(x.form||{}),cSelf:false,cEmpId:e.employeeId}
+                  }))
+                })),
             };
           }
         }
