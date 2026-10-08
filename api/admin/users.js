@@ -2509,7 +2509,26 @@ async function handler(req, res) {
         if (typeof body.vehicleEligible !== 'boolean') return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_vehicle_eligible' });
         update['products.mobility.vehicleEligible'] = body.vehicleEligible;
         if (isNonEmptyString(employee.authUid)) {
-          await db.collection('users').doc(employee.authUid).set({ vehicleEligible: body.vehicleEligible, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+          const userRef = db.collection('users').doc(employee.authUid);
+          const userUpdate = { vehicleEligible: body.vehicleEligible, updatedAt: FieldValue.serverTimestamp() };
+          // Accounts that already carry capability entitlements treat them
+          // as authoritative. Keep that layer coherent with the
+          // Administrative Affairs eligibility decision; legacy accounts
+          // continue to derive capabilities from vehicleEligible exactly as
+          // before.
+          const userSnap = await userRef.get();
+          const syncedCapabilities = syncEntitlementsForLegacyChange(
+            userSnap && userSnap.exists ? userSnap.data() : null,
+            { vehicleEligible: body.vehicleEligible }
+          );
+          if (syncedCapabilities) {
+            userUpdate.entitlements = {
+              capabilities: syncedCapabilities,
+              updatedBy: actor.uid,
+              updatedAt: FieldValue.serverTimestamp(),
+            };
+          }
+          await userRef.set(userUpdate, { merge: true });
         }
       }
       await ref.update(update);
