@@ -87,3 +87,11 @@ test('Administrative approval surface does not fabricate employee availability',
   assert.doesNotMatch(page, /لا توجد إجازة مسجلة · لا يوجد تعارض مع مهمة أخرى/);
   assert.match(page, /لا تُفترض الإجازات أو التعارضات الزمنية/);
 });
+
+
+test('Trusted incident coordinates survive the runtime view model and can render as map pins', () => {
+  assert.match(runtime, /location: hasCoordinate \? \{ \.\.\.location, lat, lng \} : null/);
+  assert.match(runtime, /loc: hasCoordinate \? \(lat\.toFixed\(5\) \+ ', ' \+ lng\.toFixed\(5\)\) : 'غير متاح'/);
+  assert.match(page, /mobilityIncidentCoordinate\(i\)/);
+  assert.match(page, /const loc=i&&i\.location/);
+});
