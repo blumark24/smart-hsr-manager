@@ -1685,7 +1685,8 @@
 
         <sc-if value="{{ dHasTimeline }}">
           <div>
-            <div style="font-size:12px;font-weight:650;color:var(--tx,#e9f1fb);margin-bottom:11px">السجل التشغيلي للمهمة</div>
+            <div style="font-size:12px;font-weight:650;color:var(--tx,#e9f1fb);margin-bottom:4px">مسار حالة المهمة</div>
+            <div style="font-size:9.5px;color:var(--tx3,#7d8ea6);margin-bottom:11px">يعرض المراحل المستنتجة من الحالة الحالية فقط؛ لا يعرض أوقاتاً أو منفذين غير مسجلين.</div>
             <div style="display:flex;flex-direction:column">
               <sc-for list="{{ dTimeline }}" as="t" hint-placeholder-count="6">
                 <div style="display:flex;gap:11px">
@@ -3383,37 +3384,29 @@ class Component extends DCLogic {
   openDrawer(kind, id) { this.setState({ drawer: kind, drawerId: id, notifOpen: false, layersOpen: false, mobNavOpen: false }); }
 
   timelineFor(id) {
-    const m = this.missions().find(x => x.id === id);
     const st = this.missionStatus(id);
-    const order = ['تم إنشاء الطلب', 'تم الاعتماد', 'تم تخصيص المركبة', 'تم التسليم', 'بدأت المهمة', 'تم التنفيذ', 'بدأت العودة', 'تمت إعادة المركبة', 'أُغلق السجل'];
+    const order = ['تم إنشاء الطلب', 'تم الاعتماد', 'تم تخصيص المركبة', 'تم التسليم', 'بدأت المهمة', 'تم الوصول', 'تم التنفيذ', 'بدأت العودة', 'تمت إعادة المركبة', 'أُغلق السجل'];
     let reached = 1;
-    if (['معتمدة', 'بانتظار المركبة'].includes(st)) reached = 2;
+    if (['معتمدة', 'بانتظار المركبة'].indexOf(st) >= 0) reached = 2;
     if (st === 'تم تخصيص المركبة') reached = 3;
     if (st === 'تم التسليم' || st === 'جاهزة للبدء') reached = 4;
-    if (st === 'قيد التنفيذ' || st === 'متوقفة بسبب حادث') reached = 5;
-    if (st === 'مكتملة') reached = 6;
-    if (st === 'في انتظار إعادة المركبة') reached = 7;
-    if (st === 'مغلقة') reached = 9;
+    if (st === 'قيد التنفيذ') reached = 6;
+    if (st === 'متوقفة بسبب حادث') reached = 6;
+    if (st === 'مكتملة') reached = 7;
+    if (st === 'في انتظار إعادة المركبة') reached = 8;
+    if (st === 'مغلقة') reached = 10;
     const day = this.state.theme === 'day';
-    const fmt = value => {
-      if (!value) return null;
-      const d = new Date(value);
-      if (Number.isNaN(d.getTime())) return null;
-      return d.toLocaleString('ar-SA',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    };
-    return order.map((label,i)=>{
-      const done=i<reached;
-      const col=done?this.sc('قيد التنفيذ'):(day?'rgba(17,54,40,0.18)':'rgba(122,164,224,0.22)');
-      // Only the mission's real createdAt/current updatedAt are available in
-      // this workspace response. Never fabricate intermediate audit times.
-      const realTime = i===0 ? fmt(m?.createdAt) : (done && i===reached-1 ? fmt(m?.updatedAt) : null);
+    return order.map((label, i) => {
+      const done = i < reached;
+      const col = done ? this.sc('قيد التنفيذ') : (day ? 'rgba(17,54,40,0.18)' : 'rgba(122,164,224,0.22)');
       return {
         label,
-        time: realTime || (done ? 'مكتمل — بدون توقيت تفصيلي' : '—'),
-        who: done ? 'حالة مسجلة في المهمة' : 'بانتظار التنفيذ',
-        col, ring:day?'#ffffff':'#0a1120',
-        line:done?this.tint('#22c55e',0.35):(day?'rgba(17,54,40,0.12)':'rgba(122,164,224,0.14)'),
-        tx:done?'var(--tx,#e9f1fb)':'var(--tx3,#7d8ea6)'
+        time: done ? 'مكتملة' : '—',
+        who: done ? 'وفق حالة المهمة الحالية' : 'بانتظار التنفيذ',
+        col,
+        ring: day ? '#ffffff' : '#0a1120',
+        line: done ? this.tint('#22c55e', 0.35) : (day ? 'rgba(17,54,40,0.12)' : 'rgba(122,164,224,0.14)'),
+        tx: done ? 'var(--tx,#e9f1fb)' : 'var(--tx3,#7d8ea6)'
       };
     });
   }
