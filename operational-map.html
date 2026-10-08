@@ -487,9 +487,9 @@
   </div>
 
 <script type="module">
-import { initializeApp } from "./vendor/firebase/11.0.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator } from "./vendor/firebase/11.0.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, connectFirestoreEmulator } from "./vendor/firebase/11.0.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, connectAuthEmulator, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 import { observationCoordinates } from './spatial-map.js';
 import { resolveObservationImage } from './storage-adapter.js';
@@ -502,6 +502,7 @@ const firebaseConfig = await resolveFirebaseConfig();
 // organization authorization checks below.
 const app = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
 const auth = getAuth(app);
+await setPersistence(auth, browserLocalPersistence);
 const db = getFirestore(app);
 // Local-only, explicitly opt-in Firebase Emulator connection — mirrors the
 // pattern already proven safe in the Owner Console (Phase 07B). Never
