@@ -243,6 +243,9 @@
       if (!snap.exists()) { await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
       const data = snap.data() || {};
       const department = String(data.department || '').trim();
+      // The workspace resolver uses api(), which requires the authenticated
+      // Firebase user to be available for its bearer token.
+      currentUser = user;
       let resolution = null;
       try { resolution = await api('resolveWorkspaces', { workspace:'mobility' }); } catch (_) {}
       if (data.active === false || !data.organizationId) {
