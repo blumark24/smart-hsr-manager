@@ -1095,7 +1095,7 @@
                     <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ sideACount }}</span>
                   </div>
                   <div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:auto">
-                    <sc-if value="{{ sideAEmpty }}"><div class="dh-empty-state" role="status">لا توجد حالات تشوه تشغيلية موثوقة للعرض حالياً.</div></sc-if>
+                    <sc-if value="{{ sideAEmpty }}"><div class="dh-empty-state" role="status">{{ sideAEmptyText }}</div></sc-if>
                     <sc-for list="{{ sideA }}" as="i" hint-placeholder-count="4">
                       <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
                         <span style="width:30px;height:30px;flex:none;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;color:{{ i.col }};background:{{ i.chipBg }}">{{ i.badge }}</span>
@@ -1115,7 +1115,7 @@
                     <span style="font-size:9.5px;color:var(--tx3,#7d8ea6)">{{ sideBCount }}</span>
                   </div>
                   <div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:auto">
-                    <sc-if value="{{ sideBEmpty }}"><div class="dh-empty-state" role="status">لا توجد بيانات مراقبين ميدانية موثوقة للعرض حالياً.</div></sc-if>
+                    <sc-if value="{{ sideBEmpty }}"><div class="dh-empty-state" role="status">{{ sideBEmptyText }}</div></sc-if>
                     <sc-for list="{{ sideB }}" as="i" hint-placeholder-count="3">
                       <div onClick="{{ i.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;background:{{ i.bg }};border:1px solid {{ i.bd }}">
                         <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ i.col }}"></span>
@@ -3072,7 +3072,9 @@ class Component extends DCLogic {
         ? ((st.liveTelemetry || []).length === 0 && I.filter(i=>this.mobilityIncidentCoordinate(i)).length === 0)
         : (V.length === 0 && M.length === 0 && I.length === 0),
       sideATitle: sd.sideATitle || '', sideACount: sd.sideACount || '', sideA: sd.sideA || [],
+      sideAEmptyText: sd.sideAEmptyText || 'لا توجد بيانات تشغيلية موثوقة للعرض حالياً.',
       sideBTitle: sd.sideBTitle || '', sideBCount: sd.sideBCount || '', sideB: sd.sideB || [],
+      sideBEmptyText: sd.sideBEmptyText || 'لا توجد بيانات تشغيلية موثوقة للعرض حالياً.',
 
       notifOpen: st.notifOpen, notifs: notifs, notifCount: String(notifs.length),
       readAll: () => this.flash('تم تعليم التنبيهات كمقروءة'),
@@ -3238,6 +3240,7 @@ class Component extends DCLogic {
           K('المتأخرة في العودة', mcnt('في انتظار إعادة المركبة'), 'في انتظار إعادة المركبة'), K('الحوادث المفتوحة', I.filter(i => i.status !== 'مغلق' && i.status !== 'تم الحل').length, 'جديد')
         ],
         sideATitle: 'طابور تخصيص المركبات', sideACount: mcnt('بانتظار المركبة') + ' طلب',
+        sideAEmptyText: 'لا توجد مهام بانتظار تخصيص مركبة حالياً.',
         sideA: M.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة').map(m => {
           const c = this.chipOf(this.missionStatus(m.id));
           return { badge: this.missionBadge(m.no), title: m.type + ' · ' + m.dept, meta: m.emp + ' · ' + m.when, tag: this.missionStatus(m.id),
@@ -3245,6 +3248,7 @@ class Component extends DCLogic {
             on: () => this.openDrawer(this.missionStatus(m.id) === 'بانتظار المركبة' ? 'alloc' : 'mission', m.id) };
         }),
         sideBTitle: 'الحوادث المفتوحة', sideBCount: I.filter(i => !['مغلق','تم الحل'].includes(i.status)).length + ' حادث',
+        sideBEmptyText: 'لا توجد حوادث تشغيلية مفتوحة حالياً.',
         sideB: I.filter(i => !['مغلق','تم الحل'].includes(i.status)).map(i => {
           const c = this.chipOf(i.status);
           return { title: i.cat + ' · ' + i.id, meta: i.emp + ' · ' + i.veh, tag: i.status, col: c.col, chipBg: c.bg,
@@ -3290,8 +3294,10 @@ class Component extends DCLogic {
           K('مراقبو القسم', team.length, 'متاحة')
         ],
         sideATitle: 'حالات التشوه الجارية', sideACount: '0 حالة',
+        sideAEmptyText: 'لا توجد حالات تشوه تشغيلية موثوقة للعرض حالياً.',
         sideA: [],
         sideBTitle: 'المراقبون في الميدان', sideBCount: '',
+        sideBEmptyText: 'لا توجد بيانات مراقبين ميدانية موثوقة للعرض حالياً.',
         sideB: []
       };
     }
