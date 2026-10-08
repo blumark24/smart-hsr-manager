@@ -4140,7 +4140,19 @@ function resolveLandsFirebaseConfig() {
   return isProductionHost() ? LANDS_PRODUCTION_FIREBASE_CONFIG : LANDS_STAGING_FIREBASE_CONFIG;
 }
 const UNIFIED_LOGIN_URL = "/login.html";
-function goToUnifiedLogin() { window.location.href = UNIFIED_LOGIN_URL; }
+let landsBootFailsafeTimer = null;
+function clearLandsBootFailsafe() {
+  if (landsBootFailsafeTimer) {
+    window.clearTimeout(landsBootFailsafeTimer);
+    landsBootFailsafeTimer = null;
+  }
+}
+function goToUnifiedLogin() {
+  clearLandsBootFailsafe();
+  window.SmartHSRCompanySplash?.dismiss();
+  document.body.classList.remove("secure-handoff-active");
+  window.location.replace(UNIFIED_LOGIN_URL);
+}
 // In Production there is no standalone Lands login to fall back to at all —
 // every path that would otherwise show it instead leaves for the unified
 // employee gateway. Preview/local keeps the exact previous behavior.
@@ -4331,6 +4343,7 @@ function showScreen(name) {
     app.hidden = true;
     document.body.classList.add("secure-handoff-active");
   } else {
+    clearLandsBootFailsafe();
     if (name === "app") {
       app.hidden = false;
       bootStatus("جاهز");
@@ -6768,6 +6781,15 @@ async function boot() {
     }
     return;
   }
+  // Hard fail-safe: the branded splash must never become a dead-end.
+  // If module/auth restoration stalls beyond the normal bounded steps,
+  // return to the unified employee gateway instead of leaving a frozen screen.
+  clearLandsBootFailsafe();
+  landsBootFailsafeTimer = window.setTimeout(() => {
+    if (!document.body.classList.contains("secure-handoff-active")) return;
+    goToUnifiedLogin();
+  }, BOOT_STEP_TIMEOUT_MS + 3500);
+
   await withBootTimeout(loadModules(), "modules");
   // Normal authenticated flow continues unchanged below.
   const hasSsoHandoffCode = new URLSearchParams(location.search).has("code");
