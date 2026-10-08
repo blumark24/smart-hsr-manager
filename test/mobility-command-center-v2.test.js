@@ -113,3 +113,11 @@ test('Incident navigation preserves the authenticated UI role', () => {
   assert.match(page, /goIncidents: \(\) => this\.setState\(\{ screen: 'incidents' \}\)/);
   assert.doesNotMatch(page, /goIncidents: \(\) => this\.setState\(\{ role: 'mobility'/);
 });
+
+
+test('Stale drawer ids fail closed instead of falling back to another mission or vehicle', () => {
+  assert.match(page, /const m = M\.find\(x => x\.id === id\) \|\| null/);
+  assert.match(page, /const v = V\.find\(x => x\.id === id\) \|\| null/);
+  assert.doesNotMatch(page, /M\.filter\(x => x\.id === id\)\[0\] \|\| M\[0\]/);
+  assert.doesNotMatch(page, /V\.filter\(x => x\.id === id\)\[0\] \|\| V\[0\]/);
+});
