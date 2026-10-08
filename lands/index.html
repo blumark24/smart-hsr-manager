@@ -33,6 +33,17 @@
      body{font-family:"Cairo",sans-serif}.theme-toggle{font-family:"Cairo",sans-serif}.btn.primary{background:#145A3A;border-color:#145A3A;box-shadow:0 1px 2px rgba(11,61,46,.18)}.btn.primary:hover{background:#0B3D2E;box-shadow:0 4px 10px rgba(11,61,46,.28);transform:translateY(-1px)}.map-wrap,.side-map{background:#edf5ef}.selection{border-right-color:#2E8B57}.progress span{background:#2E8B57}
      body.dark{--navy:#dff4e6;--navy-2:#b8e1c7;--ink:#e5f3e9;--muted:#a9c0b1;--line:#2b5541;--canvas:#071A12;--surface:#0d2a1d;--surface-tint:#112f21;--surface-elevated:#153a28;--teal:#6bc58e;--teal-soft:#153f2a;--green:#74c99a;--green-soft:#153c29;--amber:#f0bb62;--amber-soft:#49351a;--red:#f07d75;--red-soft:#4a2523;--critical:#ff9b8f;--critical-soft:#4a1f1f;--gray:#a9b8ae;--gray-soft:#263a30;--shadow:0 18px 50px rgba(0,0,0,.3)}
      body.dark .topbar{background:#071A12;border-bottom:1px solid #2b5541}body.dark .side,body.dark .panel,body.dark .metric,body.dark .file-head,body.dark .record-section,body.dark .btn,body.dark .search,body.dark .table-wrap,body.dark .modal,body.dark .drawer,body.dark .auth-card{background:var(--surface);color:var(--ink)}body.dark .side{border-color:var(--line)}body.dark .btn{color:var(--ink)}body.dark .btn:hover,body.dark .nav button:hover{background:#153f2a}body.dark .nav button{color:#b8cfc0}body.dark .nav button.active{color:#8be0a7;background:#153f2a}body.dark .panel-head,body.dark .data-table th{background:#123422}body.dark .data-table td,body.dark .doc,body.dark .check{border-color:#224735}body.dark .data-table tbody tr:hover,body.dark .data-table tbody tr.selected-row{background:#153f2a}body.dark .select,body.dark .text-input{background:#102f20;color:var(--ink);border-color:var(--line)}body.dark .map-wrap,body.dark .side-map{background:#102d20}body.dark .map-wrap:after{opacity:.18}body.dark .map-note{background:rgba(13,42,29,.9);color:#b8cfc0}body.dark .selection{background:#123422}body.dark .upload{background:#102f20;border-color:#47765a}body.dark .drawer-backdrop,body.dark .modal-backdrop{background:rgba(0,10,6,.7)}body.dark .theme-toggle{border-color:#47765a}body.dark .auth-screen{background:var(--canvas)}
+body.dark .insight{
+  background:var(--surface-elevated)!important;
+  border-right-color:var(--amber)!important;
+  border:1px solid var(--line);
+  border-right-width:3px;
+  color:var(--ink)!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.18)!important;
+}
+body.dark .insight-title{color:var(--ink)!important}
+body.dark .insight p{color:var(--muted)!important}
+body.dark .insight a{color:var(--teal)!important}
      /* ---- V3: dark-mode coverage for every Golden V2 component (decision registry/workspace, tabs, AI panel, completion intelligence) — none of these had explicit dark styling when V2 first shipped them ---- */
      body.dark .decision-record,body.dark .summary-strip,body.dark .completion-intel-ring .decision-hero-ring b,body.dark .decision-attn-panel{background:var(--surface-tint);color:var(--ink)}
      body.dark .decision-record{border-color:var(--line)}
