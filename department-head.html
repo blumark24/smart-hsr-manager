@@ -974,8 +974,8 @@
                   <span class="dh-map-product-name">الخريطة البلدية التشغيلية</span>
                 </button>
                 <button class="dh-map-product-btn" onClick="{{ setTwin }}" data-f="1" aria-pressed="{{ twinActive }}" data-map-product="twin" style="color:{{ twinTx }};background:{{ twinBg }};border:1px solid {{ twinBd }}">
-                  <span class="dh-map-product-code">SMART HSR TWIN</span>
-                  <span class="dh-map-product-name">التوأم البلدي الرقمي</span>
+                  <span class="dh-map-product-code">SMART HSR SATELLITE</span>
+                  <span class="dh-map-product-name">عرض جوي تشغيلي</span>
                 </button>
               </div>
 
@@ -1013,7 +1013,7 @@
 
                 <div class="dh-map-hud" style="display:flex;align-items:center;gap:8px;height:32px;padding:0 11px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px))">
                   <span style="width:6px;height:6px;border-radius:50%;background:var(--ok,#22c55e);animation:mBreathe 2.6s ease-in-out infinite"></span>
-                  <span style="font-size:10.5px;color:var(--glassTx,#a9c0d8);font-variant-numeric:tabular-nums">{{ liveCount }} مراقب في الميدان</span>
+                  <span style="font-size:10.5px;color:var(--glassTx,#a9c0d8);font-variant-numeric:tabular-nums">{{ liveLabel }}</span>
                 </div>
 
                 <button class="dh-map-control dh-map-reset-control" onClick="{{ locateUser }}" data-f="1" aria-label="تحديد موقعي" title="تحديد موقعي" style="width:32px;height:32px;border-radius:9px;background:var(--glass,rgba(8,14,26,0.72));border:1px solid var(--glassBd,rgba(122,164,224,0.2));backdrop-filter:var(--blur,blur(14px));color:var(--glassTx,#a9c0d8);display:flex;align-items:center;justify-content:center;cursor:pointer">
@@ -1865,7 +1865,7 @@ class Component extends DCLogic {
   state = {
     theme: this.props.theme === 'day' ? 'day' : 'night',
     role: 'dept', screen: 'deptops', authPending: false, orgName: 'معاينة تصميم', sessionName: 'رئيس قسم الحصر الميداني', department: 'إدارة الحصر الميداني',
-    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [], workflowPolicy: 'FULL',
+    liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [], liveTelemetry: [], mapContext: null, workflowPolicy: 'FULL',
     sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
     geoPanelOpen: false, mapSearchOpen: false,
     twin3D: false, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
@@ -1945,7 +1945,7 @@ class Component extends DCLogic {
     clearInterval(this._iv); if (this._ro) this._ro.disconnect();
     try { if (this._realMap) this._realMap.remove(); } catch (_) {}
   }
-  componentDidUpdate() { this.bindCanvas(); this.bindRealMap(); this.applyRealMapMode(); this.draw(); this.drawMini(); }
+  componentDidUpdate() { this.bindCanvas(); this.bindRealMap(); this.applyRealMapMode(); this.syncMobilityRealMap(); this.draw(); this.drawMini(); }
 
 
   bindRealMap() {
@@ -1979,11 +1979,15 @@ class Component extends DCLogic {
         { id: 'satellite', type: 'raster', source: 'satellite', layout: { visibility: 'none' } }
       ]
     };
+    const ctx = this.state.mapContext || {};
+    const center = ctx.mapCenter && Number.isFinite(Number(ctx.mapCenter.lng)) && Number.isFinite(Number(ctx.mapCenter.lat))
+      ? [Number(ctx.mapCenter.lng), Number(ctx.mapCenter.lat)] : [0, 20];
+    const zoom = Number.isFinite(Number(ctx.mapDefaultZoom)) ? Number(ctx.mapDefaultZoom) : 2;
     this._realMap = new maplibregl.Map({
       container: el,
       style,
-      center: [41.07889, 19.12639],
-      zoom: 13,
+      center,
+      zoom,
       pitch: 0,
       bearing: 0,
       attributionControl: false
@@ -1992,7 +1996,11 @@ class Component extends DCLogic {
     this._realMap.addControl(new maplibregl.FullscreenControl(), 'bottom-right');
     this._realMap.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
     this._realMap.addControl(new maplibregl.AttributionControl({ compact: true }));
-    this._realMap.on('load', () => this.applyRealMapMode(true));
+    this._realMap.on('load', () => {
+      this.applyRealMapMode(true);
+      this.applyMunicipalMapContext(true);
+      this.syncMobilityRealMap(true);
+    });
   }
 
   applyRealMapMode(immediate=false) {
@@ -2011,19 +2019,144 @@ class Component extends DCLogic {
     } catch (_) {}
   }
 
-  focusRealMap() {
-    const map = this._realMap;
-    if (!map) return;
-    const marker = Array.isArray(this._fieldObservationMarkers) ? this._fieldObservationMarkers[0] : null;
+  applyMunicipalMapContext(force=false) {
+    const map=this._realMap;
+    if(!map || this.state.runtimeMode!=='mobility') return;
+    const ctx=this.state.mapContext || {};
+    const center=ctx.mapCenter;
+    const bounds=ctx.mapBounds;
+    const sig=JSON.stringify([center||null,ctx.mapDefaultZoom||null,bounds||null]);
+    if(!force && this._municipalMapSig===sig) return;
+    this._municipalMapSig=sig;
+
     try {
-      const ll = marker && typeof marker.getLngLat === 'function' ? marker.getLngLat() : null;
-      map.easeTo({
-        center: ll ? [ll.lng, ll.lat] : [41.07889, 19.12639],
-        zoom: ll ? 15 : 13,
-        pitch: this.state.twin3D ? 48 : 0,
-        bearing: this.state.twin3D ? -14 : 0,
-        duration: 480
-      });
+      if(Array.isArray(bounds)&&bounds.length===2){
+        const sw=bounds[0],ne=bounds[1];
+        const swLat=Number(sw?.[0]),swLng=Number(sw?.[1]),neLat=Number(ne?.[0]),neLng=Number(ne?.[1]);
+        if([swLat,swLng,neLat,neLng].every(Number.isFinite)){
+          map.fitBounds([[swLng,swLat],[neLng,neLat]],{padding:42,maxZoom:15,duration:force?0:450});
+          return;
+        }
+      }
+      const lat=Number(center?.lat),lng=Number(center?.lng);
+      if(Number.isFinite(lat)&&Number.isFinite(lng)){
+        map.easeTo({center:[lng,lat],zoom:Number.isFinite(Number(ctx.mapDefaultZoom))?Number(ctx.mapDefaultZoom):13,duration:force?0:450});
+      }
+    } catch (_) {}
+  }
+
+  mobilityIncidentCoordinate(i){
+    const loc=i&&i.location;
+    if(!loc||typeof loc!=='object') return null;
+    const lat=Number(loc.lat ?? loc.latitude),lng=Number(loc.lng ?? loc.longitude);
+    return Number.isFinite(lat)&&Number.isFinite(lng)?{lat,lng}:null;
+  }
+
+  syncMobilityRealMap(force=false) {
+    const map=this._realMap;
+    if(!map || this.state.runtimeMode!=='mobility') return;
+    try { if(typeof map.isStyleLoaded==='function'&&!map.isStyleLoaded()) return; } catch(_){ return; }
+
+    this.applyMunicipalMapContext(force);
+    const ctx=this.state.mapContext || {};
+    const bounds=ctx.mapBounds;
+
+    // Municipality operating extent — only drawn when a trusted mapBounds
+    // value exists. No synthetic polygon is ever invented.
+    try {
+      const sourceId='smart-hsr-municipal-extent';
+      let data={type:'FeatureCollection',features:[]};
+      if(Array.isArray(bounds)&&bounds.length===2){
+        const sw=bounds[0],ne=bounds[1];
+        const swLat=Number(sw?.[0]),swLng=Number(sw?.[1]),neLat=Number(ne?.[0]),neLng=Number(ne?.[1]);
+        if([swLat,swLng,neLat,neLng].every(Number.isFinite)){
+          data={type:'FeatureCollection',features:[{type:'Feature',properties:{label:'نطاق البلدية المعتمد'},geometry:{type:'Polygon',coordinates:[[
+            [swLng,swLat],[neLng,swLat],[neLng,neLat],[swLng,neLat],[swLng,swLat]
+          ]]}}]};
+        }
+      }
+      const existing=map.getSource(sourceId);
+      if(existing && typeof existing.setData==='function') existing.setData(data);
+      else {
+        map.addSource(sourceId,{type:'geojson',data});
+        map.addLayer({id:'smart-hsr-municipal-extent-fill',type:'fill',source:sourceId,paint:{'fill-color':'#22c55e','fill-opacity':0.045}});
+        map.addLayer({id:'smart-hsr-municipal-extent-line',type:'line',source:sourceId,paint:{'line-color':'#22c55e','line-width':2,'line-opacity':0.72,'line-dasharray':[3,2]}});
+      }
+    } catch (_) {}
+
+    const telemetry=Array.isArray(this.state.liveTelemetry)?this.state.liveTelemetry:[];
+    const incidents=Array.isArray(this.state.liveIncidents)?this.state.liveIncidents:[];
+    const sig=JSON.stringify([
+      telemetry.map(t=>[t.missionId,t.vehicleId,t.lat,t.lng,t.freshness,t.reportedAt]),
+      incidents.map(i=>[i.id,i.rawStatus,i.location])
+    ]);
+    if(!force && this._mobilityMarkerSig===sig) return;
+    this._mobilityMarkerSig=sig;
+
+    if(Array.isArray(this._mobilityRealMarkers)){
+      this._mobilityRealMarkers.forEach(m=>{try{m.remove();}catch(_){}});
+    }
+    this._mobilityRealMarkers=[];
+
+    const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const vehicles=Array.isArray(this.state.liveVehicles)?this.state.liveVehicles:[];
+    const missions=Array.isArray(this.state.liveMissions)?this.state.liveMissions:[];
+
+    telemetry.forEach(t=>{
+      const lat=Number(t.lat),lng=Number(t.lng);
+      if(!Number.isFinite(lat)||!Number.isFinite(lng)) return;
+      const vehicle=vehicles.find(v=>v.id===t.vehicleId);
+      const mission=missions.find(m=>m.id===t.missionId);
+      const col=t.freshness==='LIVE'?'#22c55e':t.freshness==='STALE'?'#f5a524':'#7d8ea6';
+      const freshness=t.freshness==='LIVE'?'مباشر':t.freshness==='STALE'?'متأخر':'غير مباشر';
+      const el=document.createElement('button');
+      el.type='button';
+      el.setAttribute('aria-label','موقع المركبة '+(vehicle?.no||t.vehicleId||''));
+      el.style.cssText='width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px '+col+',0 8px 18px rgba(0,0,0,.32);background:'+col+';cursor:pointer;padding:0';
+      const accuracy=Number.isFinite(Number(t.accuracyMeters))?Math.round(Number(t.accuracyMeters))+' م':'—';
+      const popup=new maplibregl.Popup({offset:18,closeButton:true,maxWidth:'290px'}).setHTML(
+        '<div dir="rtl" style="font-family:inherit;min-width:220px;padding:2px 0">'+
+        '<div style="font-weight:800;font-size:13px;margin-bottom:7px">'+esc(vehicle?.no||'مركبة')+' · '+esc(vehicle?.plate||'')+'</div>'+
+        '<div style="font-size:11px;line-height:1.9;color:#44554f">'+
+        'الحالة: <b>'+esc(freshness)+'</b><br>'+
+        'الموظف: '+esc(t.employeeName||mission?.emp||'—')+'<br>'+
+        'المهمة: '+esc(mission?.no||t.missionId||'—')+'<br>'+
+        'الدقة: '+esc(accuracy)+'<br>'+
+        'آخر تحديث: '+esc(t.reportedAt||'—')+
+        '</div></div>'
+      );
+      const marker=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([lng,lat]).setPopup(popup).addTo(map);
+      this._mobilityRealMarkers.push(marker);
+    });
+
+    incidents.forEach(i=>{
+      const p=this.mobilityIncidentCoordinate(i);
+      if(!p || i.rawStatus==='RESOLVED') return;
+      const el=document.createElement('button');
+      el.type='button'; el.setAttribute('aria-label','حادث تشغيلي');
+      el.style.cssText='width:17px;height:17px;transform:rotate(45deg);border-radius:4px;border:2px solid #fff;background:#ef4444;box-shadow:0 0 0 2px #ef4444,0 8px 18px rgba(0,0,0,.28);cursor:pointer;padding:0';
+      const popup=new maplibregl.Popup({offset:18,maxWidth:'280px'}).setHTML(
+        '<div dir="rtl" style="font-family:inherit;min-width:210px">'+
+        '<b>'+esc(i.cat||'حالة تشغيلية')+'</b><div style="font-size:11px;line-height:1.9;margin-top:6px">'+
+        'الموظف: '+esc(i.emp||'—')+'<br>المهمة: '+esc(i.mis||'—')+'<br>الحالة: '+esc(i.status||'—')+
+        '</div></div>'
+      );
+      const marker=new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([p.lng,p.lat]).setPopup(popup).addTo(map);
+      this._mobilityRealMarkers.push(marker);
+    });
+  }
+
+  focusRealMap() {
+    const map=this._realMap;
+    if(!map) return;
+    const telemetry=Array.isArray(this.state.liveTelemetry)?this.state.liveTelemetry:[];
+    const live=telemetry.find(t=>t.freshness==='LIVE')||telemetry.find(t=>t.freshness==='STALE');
+    try {
+      if(live&&Number.isFinite(Number(live.lng))&&Number.isFinite(Number(live.lat))){
+        map.easeTo({center:[Number(live.lng),Number(live.lat)],zoom:15,pitch:this.state.twin3D?48:0,bearing:this.state.twin3D?-14:0,duration:480});
+      } else {
+        this.applyMunicipalMapContext(true);
+      }
     } catch (_) {}
   }
 
@@ -2776,7 +2909,12 @@ class Component extends DCLogic {
         on: () => n.soon ? this.flash(n.label + ' — قريباً') : this.setState({ screen: n.id, sel: null, mobNavOpen: false }) };
     });
 
-    const layerList = [
+    const trustedMobilityLayers = [
+      { id:'veh', name:'المركبات ذات الموقع الموثوق', n:String((st.liveTelemetry||[]).length), col:'#22c55e' },
+      { id:'inc', name:'الحوادث ذات الموقع', n:String(I.filter(i=>this.mobilityIncidentCoordinate(i)).length), col:'#ef4444' },
+      { id:'bound', name:'نطاق البلدية المعتمد', n:st.mapContext?.mapBounds ? '1' : '0', col:'#f5a524' }
+    ];
+    const layerSource = mobilityMode ? trustedMobilityLayers : [
       { id: 'veh', name: 'المركبات', n: String(V.length), col: '#22c55e' },
       { id: 'mis', name: 'المهام', n: String(M.length), col: '#38bdf8' },
       { id: 'route', name: 'المسارات', n: '5', col: '#38bdf8' },
@@ -2784,10 +2922,14 @@ class Component extends DCLogic {
       { id: 'zone', name: 'المناطق التشغيلية', n: '4', col: '#a78bfa' },
       { id: 'bound', name: 'الحدود', n: '4', col: '#f5a524' },
       { id: 'dest', name: 'الوجهات', n: String(this.DEST.length), col: '#a78bfa' }
-    ].map(l => ({ name: l.name, n: l.n, mark: L[l.id] ? '✓' : '',
+    ];
+    const layerList = layerSource.map(l => ({ name: l.name, n: l.n, mark: L[l.id] ? '✓' : '',
       bd: L[l.id] ? l.col : (day ? 'rgba(17,54,40,0.25)' : 'rgba(122,164,224,0.3)'),
       bg: L[l.id] ? l.col : 'transparent',
-      on: () => this.setState(s => { const n = Object.assign({}, s.layers); n[l.id] = !n[l.id]; return { layers: n, sel: null }; }) }));
+      on: () => {
+        this.setState(x => { const n=Object.assign({},x.layers); n[l.id]=!n[l.id]; return {layers:n,sel:null}; });
+        setTimeout(()=>this.syncMobilityRealMap(true),0);
+      } }));
 
     const pins = [];
     // Vehicles are placed at a fixed, deterministic schematic position
@@ -2890,11 +3032,16 @@ class Component extends DCLogic {
       notifOpen: st.notifOpen, notifs: notifs, notifCount: String(notifs.length),
       readAll: () => this.flash('تم تعليم التنبيهات كمقروءة'),
       layersOpen: st.layersOpen, layerList: layerList,
-      layerCount: Object.keys(L).filter(k => L[k]).length + '/7',
-      mapPins: pins, zoneLabels: zoneLabels, mapQ: st.mapQ,
+      layerCount: mobilityMode
+        ? trustedMobilityLayers.filter(l=>L[l.id]).length + '/' + trustedMobilityLayers.length
+        : Object.keys(L).filter(k => L[k]).length + '/7',
+      mapPins: mobilityMode ? [] : pins, zoneLabels: mobilityMode ? [] : zoneLabels, mapQ: st.mapQ,
       setMapQ: e => { const v = e.target.value; this.setState({ mapQ: v }); },
       zoomLbl: Math.round(st.zoom * 100) + '%',
-      liveCount: String(V.filter(v => v.status === 'في مهمة').length),
+      liveCount: String((st.liveTelemetry||[]).filter(t=>t.freshness==='LIVE').length),
+      liveLabel: mobilityMode
+        ? ((st.liveTelemetry||[]).filter(t=>t.freshness==='LIVE').length + ' مركبة مباشرة')
+        : (String(V.filter(v=>v.status==='في مهمة').length) + ' مراقب في الميدان'),
       legend: ['متاحة', 'محجوزة', 'في مهمة', 'عائدة', 'صيانة', 'خارج الخدمة'].map(s => ({ label: s, col: this.sc(s) })),
       opsTx: !st.twin3D ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
       opsBg: !st.twin3D ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
@@ -2903,7 +3050,7 @@ class Component extends DCLogic {
       twinBg: st.twin3D ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
       twinBd: st.twin3D ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)') : 'transparent',
       mapMode: st.twin3D ? 'twin' : 'maps',
-      mapAriaLabel: st.twin3D ? 'SMART HSR TWIN — التوأم البلدي الرقمي' : 'SMART HSR MAPS — الخريطة البلدية التشغيلية',
+      mapAriaLabel: st.twin3D ? 'SMART HSR SATELLITE — العرض الجوي التشغيلي' : 'SMART HSR MAPS — الخريطة البلدية التشغيلية',
       opsActive: !st.twin3D,
       twinActive: !!st.twin3D,
       setOps: () => this.setState({ twin3D: false }, () => this.applyRealMapMode()),
@@ -2950,7 +3097,12 @@ class Component extends DCLogic {
       zOut: () => { try { this._realMap?.zoomOut({duration:220}); } catch (_) {} },
       resetView: () => { this.setState({ zoom: 1, panX: 0, panY: 0, sel: null }); this.focusRealMap(); },
       locateUser: () => this.locateUserOnMap(),
-      allLayers: () => this.setState({ layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true } }),
+      allLayers: () => {
+        this.setState({ layers: mobilityMode
+          ? { veh:true, mis:false, route:false, inc:true, zone:false, bound:true, dest:false }
+          : { veh:true, mis:true, route:true, inc:true, zone:true, bound:true, dest:true } });
+        setTimeout(()=>this.syncMobilityRealMap(true),0);
+      },
       setDay: () => this.setState({ theme: 'day' }), setNight: () => this.setState({ theme: 'night' }),
       stop: e => { if (e && e.stopPropagation) e.stopPropagation(); },
       proto: () => this.proto(),
