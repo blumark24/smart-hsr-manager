@@ -96,6 +96,26 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('empty').style.display='block';
     return;
   }
+
+  // Institutional routing rule: a workforce identity with exactly one
+  // authorized workspace must never stop at the chooser. Go straight to the
+  // authorized service and remove the chooser from browser history.
+  if(res.workspaces.length===1){
+    const ws=res.workspaces[0];
+    try{
+      if(ws.id==='lands'){
+        await openLands(user);
+        return;
+      }
+      if(typeof ws.route==='string'&&SAFE_ROUTE.test(ws.route)){
+        location.replace(ws.route);
+        return;
+      }
+    }catch(_){
+      // Fall through to the chooser only if the trusted handoff/route fails.
+    }
+  }
+
   document.getElementById('heroTitle').textContent='مساحات العمل';
   const host=document.getElementById('services');
   for(const ws of res.workspaces){
