@@ -107,3 +107,9 @@ test('Mobility side panels use real operational cards and context-aware empty st
   assert.match(page, /لا توجد مهام بانتظار تخصيص مركبة حالياً/);
   assert.match(page, /لا توجد حوادث تشغيلية مفتوحة حالياً/);
 });
+
+
+test('Incident navigation preserves the authenticated UI role', () => {
+  assert.match(page, /goIncidents: \(\) => this\.setState\(\{ screen: 'incidents' \}\)/);
+  assert.doesNotMatch(page, /goIncidents: \(\) => this\.setState\(\{ role: 'mobility'/);
+});
