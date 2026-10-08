@@ -114,6 +114,8 @@
       why:m.reason || '—',
       status:MISSION_STATUS[m.status] || m.status || '—',
       rawStatus:m.status || null,
+      requestedUid:m.requestedEmployeeUid || null,
+      assignedUid:m.assignedEmployeeUid || null,
       authorizationStatus:m.vehicleAuthorizationStatus || null,
       gps:false,
     };
@@ -200,7 +202,7 @@
   }
 
   function activeTelemetryMission() {
-    if (workspace.role !== 'employee' || !Array.isArray(workspace.capabilities)
+    if (!Array.isArray(workspace.capabilities)
         || !workspace.capabilities.includes('vehicle.drive')) return null;
     return (workspace.missions || []).find(m =>
       m && m.assignedEmployeeUid === currentUser?.uid
@@ -261,6 +263,7 @@
     component.setState({
       runtimeMode:'mobility',
       workflowPolicy:workspace.workflowPolicy || 'FULL',
+      mobilityCapabilities:Array.isArray(workspace.capabilities) ? workspace.capabilities.slice() : [],
       mapContext:workspace.mapContext || null,
       liveTelemetry:(workspace.telemetry || []).map(telemetryView),
       liveMissions:(workspace.missions || []).map(missionView),
@@ -321,11 +324,29 @@
         }
         if (instance.state.role === 'dept' && instance.state.runtimeMode === 'mobility') {
           if (instance.state.screen === 'deptops') {
+            const canDrive=(instance.state.mobilityCapabilities||[]).includes('vehicle.drive');
+            const ownMission=(instance.state.liveMissions||[]).find(m =>
+              (m.assignedUid===instance.state.sessionUid || m.requestedUid===instance.state.sessionUid)
+              && !['CLOSED','REJECTED'].includes(m.rawStatus)
+            );
+            const actions=[
+              {label:'+ طلب مهمة',on:()=>instance.setState(x=>({drawer:'create',form:{...(x.form||{}),cSelf:false,cEmpId:''}})),tx:'var(--btnTx,#fff)',bg:'var(--btn)',bd:'var(--btnBd)'}
+            ];
+            if(canDrive) actions.push({
+              label:'طلب مركبة لي',
+              on:()=>instance.setState(x=>({drawer:'create',form:{...(x.form||{}),cSelf:true,cEmpId:''}})),
+              tx:'var(--tx2,#c3d6ea)',bg:'var(--ctl,rgba(20,32,54,0.6))',bd:'var(--ctlBd,rgba(122,164,224,0.16))'
+            });
+            if(canDrive && ownMission) actions.push({
+              label:'مركبتي ومهمتي',
+              on:()=>instance.setState({screen:'myvehicle'}),
+              tx:'var(--tx2,#c3d6ea)',bg:'var(--ctl,rgba(20,32,54,0.6))',bd:'var(--ctlBd,rgba(122,164,224,0.16))'
+            });
             return {
               ops:true,bottom:false,
               title:'الحركة الذكية — ' + (instance.state.department || 'القسم'),
               sub:'طلبات المركبات ومهام موظفي القسم',
-              actions:[{label:'+ طلب مهمة',on:()=>instance.openDrawer('create',null),tx:'var(--btnTx,#fff)',bg:'var(--btn)',bd:'var(--btnBd)'}],
+              actions,
               kpis:[
                 {label:'إجمالي المهام',value:String(instance.missions().length),delta:'',col:'#38bdf8',on:()=>instance.setState({screen:'missions'})},
                 {label:'بانتظار الاعتماد',value:String(instance.missions().filter(m=>instance.missionStatus(m.id)==='بانتظار الاعتماد').length),delta:'',col:'#f5a524',on:()=>instance.setState({screen:'missions'})},
@@ -349,10 +370,14 @@
     if (originalNavFor) {
       instance.navFor = role => {
         if (role === 'dept' && instance.state.runtimeMode === 'mobility') {
-          return [
+          const out=[
             {id:'deptops',label:'الحركة الذكية'},
             {id:'missions',label:'طلبات ومهام القسم'},
           ];
+          if((instance.state.mobilityCapabilities||[]).includes('vehicle.drive')){
+            out.push({id:'myvehicle',label:'مركبتي ومهمتي'});
+          }
+          return out;
         }
         return originalNavFor(role);
       };
@@ -410,6 +435,7 @@
           screen:component.homeOf(uiRole),
           orgName:data.organizationName || 'المؤسسة المسجلة',
           sessionName:data.name || user.email || 'مستخدم الحركة الذكية',
+          sessionUid:user.uid,
           department,
           orgId:data.organizationId,
         });
