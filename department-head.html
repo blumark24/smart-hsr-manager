@@ -2066,7 +2066,7 @@ class Component extends DCLogic {
     try {
       const sourceId='smart-hsr-municipal-extent';
       let data={type:'FeatureCollection',features:[]};
-      if(Array.isArray(bounds)&&bounds.length===2){
+      if(this.state.layers.bound && Array.isArray(bounds)&&bounds.length===2){
         const sw=bounds[0],ne=bounds[1];
         const swLat=Number(sw?.[0]),swLng=Number(sw?.[1]),neLat=Number(ne?.[0]),neLng=Number(ne?.[1]);
         if([swLat,swLng,neLat,neLng].every(Number.isFinite)){
@@ -2088,7 +2088,8 @@ class Component extends DCLogic {
     const incidents=Array.isArray(this.state.liveIncidents)?this.state.liveIncidents:[];
     const sig=JSON.stringify([
       telemetry.map(t=>[t.missionId,t.vehicleId,t.lat,t.lng,t.freshness,t.reportedAt]),
-      incidents.map(i=>[i.id,i.rawStatus,i.location])
+      incidents.map(i=>[i.id,i.rawStatus,i.location]),
+      {veh:!!this.state.layers.veh,inc:!!this.state.layers.inc,bound:!!this.state.layers.bound,q:String(this.state.mapQ||'').trim().toLowerCase()}
     ]);
     if(!force && this._mobilityMarkerSig===sig) return;
     this._mobilityMarkerSig=sig;
@@ -2101,12 +2102,15 @@ class Component extends DCLogic {
     const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     const vehicles=Array.isArray(this.state.liveVehicles)?this.state.liveVehicles:[];
     const missions=Array.isArray(this.state.liveMissions)?this.state.liveMissions:[];
+    const q=String(this.state.mapQ||'').trim().toLowerCase();
+    const matches=(...vals)=>!q || vals.some(v=>String(v??'').toLowerCase().includes(q));
 
-    telemetry.forEach(t=>{
+    (this.state.layers.veh ? telemetry : []).forEach(t=>{
       const lat=Number(t.lat),lng=Number(t.lng);
       if(!Number.isFinite(lat)||!Number.isFinite(lng)) return;
       const vehicle=vehicles.find(v=>v.id===t.vehicleId);
       const mission=missions.find(m=>m.id===t.missionId);
+      if(!matches(vehicle?.no,vehicle?.plate,vehicle?.type,t.employeeName,mission?.no,t.missionId,t.vehicleId)) return;
       const col=t.freshness==='LIVE'?'#22c55e':t.freshness==='STALE'?'#f5a524':'#7d8ea6';
       const freshness=t.freshness==='LIVE'?'مباشر':t.freshness==='STALE'?'متأخر':'غير مباشر';
       const el=document.createElement('button');
@@ -2129,9 +2133,10 @@ class Component extends DCLogic {
       this._mobilityRealMarkers.push(marker);
     });
 
-    incidents.forEach(i=>{
+    (this.state.layers.inc ? incidents : []).forEach(i=>{
       const p=this.mobilityIncidentCoordinate(i);
       if(!p || i.rawStatus==='RESOLVED') return;
+      if(!matches(i.id,i.cat,i.emp,i.mis,i.veh,i.loc,i.status)) return;
       const el=document.createElement('button');
       el.type='button'; el.setAttribute('aria-label','حادث تشغيلي');
       el.style.cssText='width:17px;height:17px;transform:rotate(45deg);border-radius:4px;border:2px solid #fff;background:#ef4444;box-shadow:0 0 0 2px #ef4444,0 8px 18px rgba(0,0,0,.28);cursor:pointer;padding:0';
@@ -2599,16 +2604,32 @@ class Component extends DCLogic {
         ph = 'رقم الطلب، موظف، قسم...';
         cols = [{ label: 'رقم الطلب', flex: '0 0 78px', align: 'right' }, { label: 'النوع', flex: '1.1', align: 'right' },
           { label: 'القسم', flex: '1', align: 'right' }, { label: 'الموظف', flex: '1', align: 'right' },
-          { label: 'التوفر التشغيلي', flex: '0 0 96px', align: 'right' }, { label: 'النطاق', flex: '1', align: 'right' },
-          { label: 'التوقيت', flex: '0 0 92px', align: 'left' }, { label: 'الحالة', flex: '0 0 116px', align: 'left' }];
-        filters = ['الكل', 'بانتظار الاعتماد', 'بانتظار المركبة', 'ملغاة'].map(x => pill(x, f === x, () => setF(x)));
-        rows = M.filter(m => (f === 'الكل' ? ['بانتظار الاعتماد', 'بانتظار المركبة', 'ملغاة', 'مسودة'].indexOf(this.missionStatus(m.id)) >= 0 : this.missionStatus(m.id) === f) && (!q || (m.no + m.emp + m.dept).indexOf(q) >= 0)).map(m => {
-          const stt = this.missionStatus(m.id), c = this.chipOf(stt);
-          return { chip: stt, chipCol: c.col, chipBg: c.bg, chipBd: c.bd, on: () => this.openDrawer('approve', m.id),
-            cells: [cell(m.no, '0 0 78px', { weight: '600', col: 'var(--tx,#e9f1fb)' }), cell(m.type, '1.1'), cell(m.dept, '1', { size: '11px' }),
-              cell(m.emp, '1', { size: '11px' }), cell('—', '0 0 96px', { size: '11px', col: 'var(--tx2,#a9bdd4)' }),
+          { label: 'المرحلة المطلوبة', flex: '0 0 126px', align: 'right' }, { label: 'النطاق', flex: '1', align: 'right' },
+          { label: 'التوقيت', flex: '0 0 92px', align: 'left' }, { label: 'الحالة', flex: '0 0 126px', align: 'left' }];
+        filters = ['الكل', 'اعتماد المهمة', 'اعتماد تشغيل المركبة'].map(x => pill(x, f === x, () => setF(x)));
+        rows = M.filter(m => {
+          const missionApproval = m.rawStatus === 'PENDING_APPROVAL';
+          const vehicleAuthorization = m.rawStatus === 'VEHICLE_ALLOCATED' && m.authorizationStatus === 'PENDING_AUTHORIZATION';
+          if (f === 'اعتماد المهمة') return missionApproval;
+          if (f === 'اعتماد تشغيل المركبة') return vehicleAuthorization;
+          return missionApproval || vehicleAuthorization;
+        }).filter(m => !q || (m.no + m.emp + m.dept + m.type).indexOf(q) >= 0).map(m => {
+          const vehicleAuthorization = m.rawStatus === 'VEHICLE_ALLOCATED' && m.authorizationStatus === 'PENDING_AUTHORIZATION';
+          const stateLabel = vehicleAuthorization ? 'بانتظار اعتماد المركبة' : 'بانتظار اعتماد المهمة';
+          const c = vehicleAuthorization ? this.chipOf('تم تخصيص المركبة') : this.chipOf('بانتظار الاعتماد');
+          return {
+            chip: stateLabel, chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
+            on: () => this.openDrawer(vehicleAuthorization ? 'vehicleauth' : 'approve', m.id),
+            cells: [
+              cell(m.no, '0 0 78px', { weight: '600', col: 'var(--tx,#e9f1fb)' }),
+              cell(m.type, '1.1'),
+              cell(m.dept, '1', { size: '11px' }),
+              cell(m.emp, '1', { size: '11px' }),
+              cell(vehicleAuthorization ? 'اعتماد تشغيل المركبة' : 'اعتماد المهمة', '0 0 126px', { size: '11px' }),
               cell(m.scope, '1', { size: '11px', col: m.scope.indexOf('خارج') >= 0 ? this.sc('محجوزة') : 'var(--tx2,#a9bdd4)' }),
-              cell(m.when, '0 0 92px', { align: 'left', size: '11px' })] };
+              cell(m.when, '0 0 92px', { align: 'left', size: '11px' })
+            ]
+          };
         });
       } else {
         ph = 'حدث، مهمة، منفّذ...';
@@ -2694,7 +2715,7 @@ class Component extends DCLogic {
           bd: active ? (day ? 'rgba(18,133,90,0.3)' : 'rgba(76,201,240,0.35)') : 'var(--div,rgba(122,164,224,0.12))' };
       };
       out.policies = [
-        mkPol('FULL', 'السياسة الكاملة', ['رئيس القسم', 'الشؤون الإدارية', 'حركة السير', 'تخصيص المركبة', 'الموظف']),
+        mkPol('FULL', 'السياسة الكاملة', ['رئيس القسم', 'اعتماد المهمة — الشؤون الإدارية', 'حركة السير', 'تخصيص المركبة', 'اعتماد تشغيل المركبة — الشؤون الإدارية', 'التسليم للموظف']),
         mkPol('SHORT', 'السياسة المختصرة', ['رئيس القسم', 'حركة السير', 'تخصيص المركبة', 'الموظف']),
         mkPol('DIRECT', 'المهمة التنفيذية المباشرة', ['مركز حركة السير', 'تخصيص المركبة', 'الموظف'])
       ];
@@ -3047,7 +3068,9 @@ class Component extends DCLogic {
       mapSearchExpanded: !!st.mapSearchOpen,
       toggleMapSearch: () => this.setState(x => ({mapSearchOpen:!x.mapSearchOpen})),
       sideAEmpty: !!sd.sideA && sd.sideA.length === 0, sideBEmpty: !!sd.sideB && sd.sideB.length === 0,
-      showMapEmpty: V.length === 0 && M.length === 0 && I.length === 0,
+      showMapEmpty: mobilityMode
+        ? ((st.liveTelemetry || []).length === 0 && I.filter(i=>this.mobilityIncidentCoordinate(i)).length === 0)
+        : (V.length === 0 && M.length === 0 && I.length === 0),
       sideATitle: sd.sideATitle || '', sideACount: sd.sideACount || '', sideA: sd.sideA || [],
       sideBTitle: sd.sideBTitle || '', sideBCount: sd.sideBCount || '', sideB: sd.sideB || [],
 
@@ -3064,7 +3087,13 @@ class Component extends DCLogic {
       liveLabel: mobilityMode
         ? ((st.liveTelemetry||[]).filter(t=>t.freshness==='LIVE').length + ' مركبة مباشرة')
         : (String(V.filter(v=>v.status==='في مهمة').length) + ' مراقب في الميدان'),
-      legend: ['متاحة', 'محجوزة', 'في مهمة', 'عائدة', 'صيانة', 'خارج الخدمة'].map(s => ({ label: s, col: this.sc(s) })),
+      legend: mobilityMode ? [
+        {label:'موقع مباشر',col:'#22c55e'},
+        {label:'موقع متأخر',col:'#f5a524'},
+        {label:'غير مباشر',col:'#7d8ea6'},
+        {label:'حادث مفتوح',col:'#ef4444'},
+        {label:'نطاق البلدية',col:'#22c55e'}
+      ] : ['متاحة', 'محجوزة', 'في مهمة', 'عائدة', 'صيانة', 'خارج الخدمة'].map(s => ({ label: s, col: this.sc(s) })),
       opsTx: !st.twin3D ? '#ffffff' : 'var(--glassTx,#a9c0d8)',
       opsBg: !st.twin3D ? (day ? '#12855a' : 'rgba(34,197,94,0.75)') : 'transparent',
       opsBd: !st.twin3D ? (day ? 'rgba(9,80,52,0.5)' : 'rgba(34,197,94,0.5)') : 'transparent',
@@ -3209,7 +3238,7 @@ class Component extends DCLogic {
           K('المتأخرة في العودة', mcnt('في انتظار إعادة المركبة'), 'في انتظار إعادة المركبة'), K('الحوادث المفتوحة', I.filter(i => i.status !== 'مغلق' && i.status !== 'تم الحل').length, 'جديد')
         ],
         sideATitle: 'طابور تخصيص المركبات', sideACount: mcnt('بانتظار المركبة') + ' طلب',
-        sideA: M.filter(m => ['بانتظار المركبة', 'معتمدة', 'بانتظار الاعتماد'].indexOf(this.missionStatus(m.id)) >= 0).map(m => {
+        sideA: M.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة').map(m => {
           const c = this.chipOf(this.missionStatus(m.id));
           return { badge: this.missionBadge(m.no), title: m.type + ' · ' + m.dept, meta: m.emp + ' · ' + m.when, tag: this.missionStatus(m.id),
             col: c.col, chipBg: c.bg, bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.12))',
@@ -3285,7 +3314,12 @@ class Component extends DCLogic {
       label:'تحديث البيانات',
       on:()=>window.SmartHSRMobilityAdapter?.refresh().then(()=>this.flash('تم تحديث التقرير من البيانات التشغيلية')).catch(()=>this.flash('تعذر تحديث البيانات'))
     },ghost));
-    const titleMap = { missions: st.role === 'dept' ? 'التشوه البصري' : 'المهام والطلبات', incidents: st.role === 'dept' ? 'البلاغات والملاحظات' : 'الحوادث والطوارئ', audit: st.role === 'dept' ? 'سجل القسم' : (st.role === 'admin' ? 'سجل الاعتمادات' : 'السجل التشغيلي'), settings: st.role === 'admin' ? 'سياسة الاعتماد' : 'الإعدادات والسياسات' };
+    const titleMap = {
+      missions: st.role === 'dept' ? (st.runtimeMode === 'mobility' ? 'طلبات ومهام القسم' : 'التشوه البصري') : 'المهام والطلبات',
+      incidents: st.role === 'dept' ? (st.runtimeMode === 'mobility' ? 'حوادث القسم' : 'البلاغات والملاحظات') : 'الحوادث والطوارئ',
+      audit: st.role === 'dept' ? 'سجل القسم' : (st.role === 'admin' ? 'سجل الاعتمادات' : 'السجل التشغيلي'),
+      settings: st.role === 'admin' ? 'سياسة الاعتماد' : 'الإعدادات والسياسات'
+    };
     return { ops: false, title: titleMap[st.screen] || this.titleOf(st.screen), sub: this.subOf(st.screen), actions: acts };
   }
 
@@ -3383,7 +3417,7 @@ class Component extends DCLogic {
     const ghost = { tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' };
     const danger = { tx: 'var(--bad,#ef4444)', bg: this.tint('#ef4444', 0.1), bd: this.tint('#ef4444', 0.3) };
 
-    if (k === 'mission' || k === 'alloc' || k === 'handover' || k === 'ret' || k === 'approve') {
+    if (k === 'mission' || k === 'alloc' || k === 'handover' || k === 'ret' || k === 'approve' || k === 'vehicleauth') {
       const m = M.filter(x => x.id === id)[0] || M[0];
       const stt = this.missionStatus(m.id), c = this.chipOf(stt);
       const v = V.filter(x => x.id === m.veh)[0];
@@ -3423,6 +3457,18 @@ class Component extends DCLogic {
             this.setState({ drawer: null }); this.flash('تمت إعادة المركبة · تم إغلاق المهمة');
           }).catch(() => this.flash('تعذر تأكيد الإعادة'));
         }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+      } else if (k === 'vehicleauth') {
+        acts.push({ label: 'اعتماد تشغيل المركبة', on: () => {
+          window.SmartHSRMobilityAdapter.decideVehicleAuthorization(m.id, 'AUTHORIZED').then(() => {
+            this.setState({ drawer: null }); this.flash('تم اعتماد تشغيل المركبة — أصبحت جاهزة للتسليم من حركة السير');
+          }).catch(() => this.flash('تعذر اعتماد تشغيل المركبة'));
+        }, tx: btn.tx, bg: btn.bg, bd: btn.bd });
+        acts.push({ label: 'رفض اعتماد المركبة', on: () => {
+          window.SmartHSRMobilityAdapter.decideVehicleAuthorization(m.id, 'REJECTED').then(() => {
+            this.setState({ drawer: null }); this.flash('تم رفض اعتماد تشغيل المركبة وإعادتها للمسار التشغيلي');
+          }).catch(() => this.flash('تعذر رفض اعتماد المركبة'));
+        }, tx: danger.tx, bg: danger.bg, bd: danger.bd });
+        acts.push({ label: 'إغلاق', on: () => this.setState({ drawer: null }), tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
       } else if (k === 'approve') {
         acts.push({ label: 'اعتماد', on: () => {
           window.SmartHSRMobilityAdapter.decideMission(m.id, 'APPROVED').then(() => {
@@ -3445,8 +3491,8 @@ class Component extends DCLogic {
         if (stt === 'في انتظار إعادة المركبة') acts.push({ label: 'استلام المركبة', on: () => this.setState({ drawer: 'ret' }), tx: btn.tx, bg: btn.bg, bd: btn.bd });
         acts.push({ label: 'عرض في الخريطة', on: () => { const vv = V.filter(x => x.id === m.veh)[0]; this.setState({ drawer: null, screen: 'map', sel: vv ? { t: 'v', id: vv.id } : null }); }, tx: ghost.tx, bg: ghost.bg, bd: ghost.bd });
       }
-      const titles = { mission: 'المهمة ' + m.no, alloc: 'تخصيص مركبة · ' + m.no, handover: 'تسليم المركبة · ' + m.no, ret: 'استلام المركبة · ' + m.no, approve: 'اعتماد الطلب · ' + m.no };
-      const forms = { alloc: 'اختيار المركبة', handover: 'بيانات التسليم', ret: 'بيانات الاستلام', approve: 'ملاحظة الاعتماد' };
+      const titles = { mission: 'المهمة ' + m.no, alloc: 'تخصيص مركبة · ' + m.no, handover: 'تسليم المركبة · ' + m.no, ret: 'استلام المركبة · ' + m.no, approve: 'اعتماد الطلب · ' + m.no, vehicleauth: 'اعتماد تشغيل المركبة · ' + m.no };
+      const forms = { alloc: 'اختيار المركبة', handover: 'بيانات التسليم', ret: 'بيانات الاستلام', approve: 'ملاحظة الاعتماد', vehicleauth: 'اعتماد تشغيل المركبة' };
       const d = { title: titles[k], sub: m.type + ' · ' + m.dept + ' · ' + m.emp, chip: stt, chipCol: c.col, chipBg: c.bg, chipBd: c.bd,
         rows: rows, timeline: k === 'mission' ? this.timelineFor(m.id) : null, actions: acts };
       if (k === 'alloc') {
