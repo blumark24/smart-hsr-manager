@@ -4338,7 +4338,9 @@ function showScreen(name) {
   const login = document.getElementById("loginScreen");
   const denied = document.getElementById("deniedScreen");
   const app = document.getElementById("appShell");
+  const boot = document.getElementById("bootScreen");
   if (name === "boot") {
+    if (boot) boot.hidden = false;
     window.SmartHSRCompanySplash?.show();
     app.hidden = true;
     document.body.classList.add("secure-handoff-active");
@@ -4351,6 +4353,7 @@ function showScreen(name) {
       app.hidden = true;
     }
     window.SmartHSRCompanySplash?.dismiss();
+    if (boot) boot.hidden = true;
     window.setTimeout(() => document.body.classList.remove("secure-handoff-active"), 300);
   }
   login.hidden = name !== "login";
@@ -6786,7 +6789,8 @@ async function boot() {
   // return to the unified employee gateway instead of leaving a frozen screen.
   clearLandsBootFailsafe();
   landsBootFailsafeTimer = window.setTimeout(() => {
-    if (!document.body.classList.contains("secure-handoff-active")) return;
+    const boot = document.getElementById("bootScreen");
+    if (!boot || boot.hidden) return;
     goToUnifiedLogin();
   }, BOOT_STEP_TIMEOUT_MS + 3500);
 
