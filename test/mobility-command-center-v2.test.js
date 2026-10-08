@@ -95,3 +95,15 @@ test('Trusted incident coordinates survive the runtime view model and can render
   assert.match(page, /mobilityIncidentCoordinate\(i\)/);
   assert.match(page, /const loc=i&&i\.location/);
 });
+
+
+test('Mobility side panels use real operational cards and context-aware empty states', () => {
+  assert.match(runtime, /sideAEmptyText:'لا توجد مهام جارية في القسم حالياً.'/);
+  assert.match(runtime, /sideA:instance\.missions\(\)[\s\S]{0,900}openDrawer\('mission',m\.id\)/);
+  assert.match(runtime, /sideBEmptyText:'لا يوجد موظفون مؤهلون لاستلام مركبة في هذا القسم حالياً.'/);
+  assert.match(runtime, /cEmpId:e\.employeeId/);
+  assert.match(page, /\{\{ sideAEmptyText \}\}/);
+  assert.match(page, /\{\{ sideBEmptyText \}\}/);
+  assert.match(page, /لا توجد مهام بانتظار تخصيص مركبة حالياً/);
+  assert.match(page, /لا توجد حوادث تشغيلية مفتوحة حالياً/);
+});
