@@ -2337,7 +2337,7 @@ async function handler(req, res) {
         db.collection('incidents').where('organizationId', '==', actor.organizationId).get(),
         db.collection('vehicleAuthorizations').where('organizationId', '==', actor.organizationId).get(),
         db.collection('employees').where('organizationId', '==', actor.organizationId).get(),
-        actor.role === 'administrative_affairs'
+        ['administrative_affairs','mobility_head'].includes(actor.role)
           ? db.collection('auditEvents').where('organizationId', '==', actor.organizationId).get()
           : Promise.resolve({ docs: [] }),
         actor.role === 'mobility_head'
@@ -2418,6 +2418,31 @@ async function handler(req, res) {
         }
       }
 
+      const mobilityAuditResourceTypes = new Set(['mission','vehicle','incident','vehicleAuthorization']);
+      const operationalAudit = actor.role === 'mobility_head'
+        ? auditSnap.docs.map(doc => {
+            const d = doc.data() || {};
+            return {
+              auditId: doc.id,
+              resourceType: cleanString(d.resourceType),
+              resourceId: cleanString(d.resourceId),
+              action: cleanString(d.action),
+              actorId: cleanString(d.actorId),
+              actorRole: cleanString(d.actorRole),
+              department: cleanString(d.department),
+              fromStatus: cleanString(d.fromStatus) || null,
+              toStatus: cleanString(d.toStatus) || null,
+              missionId: cleanString(d.missionId) || null,
+              vehicleId: cleanString(d.vehicleId) || null,
+              note: cleanString(d.note) || null,
+              timestamp: timestampToIso(d.timestamp || d.createdAt),
+            };
+          })
+          .filter(row => mobilityAuditResourceTypes.has(row.resourceType))
+          .sort((a,b)=>String(b.timestamp||'').localeCompare(String(a.timestamp||'')))
+          .slice(0,250)
+        : [];
+
       const workflowPolicy = await getMunicipalityMobilityWorkflowPolicy(db, actor.organizationId);
       return sendJson(res, 200, {
         role: actor.role,
@@ -2427,6 +2452,7 @@ async function handler(req, res) {
         workflowPolicy,
         mapContext,
         telemetry,
+        operationalAudit,
         missions: missions.map(row => safeMission(row.id, row.data)),
         vehicles: vehicles.map(row => safeMobilityVehicle(row.id, row.data)),
         incidents: incidents.map(row => safeMobilityIncident(row.id, row.data)),
