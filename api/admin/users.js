@@ -150,7 +150,7 @@ async function getMunicipalityMobilityWorkflowPolicy(db, organizationId) {
 // Only business input and the retry key belong to the client. Reject all
 // other keys, including protected fields supplied with null/false values.
 const TRUSTED_CREATE_INPUT_FIELDS = {
-  createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
+  createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel', 'assignSelf'],
   createDirectMobilityMission: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
   createIncident: ['action', 'clientRequestId', 'missionId', 'vehicleId', 'category', 'severity', 'note'],
 };
@@ -1677,6 +1677,23 @@ async function handler(req, res) {
 
     const clientRequestId = body.clientRequestId;
     const requestedEmployeeId = cleanString(body.requestedEmployeeId);
+    const assignSelf = body.assignSelf === true;
+    if (body.assignSelf !== undefined && typeof body.assignSelf !== 'boolean') {
+      return sendJson(res, 400, { error:'invalid_request', reason:'assignSelf_boolean_required' });
+    }
+    if (assignSelf && requestedEmployeeId) {
+      return sendJson(res, 400, { error:'invalid_request', reason:'assignSelf_conflicts_with_requestedEmployeeId' });
+    }
+    let selfOperator = null;
+    if (assignSelf) {
+      selfOperator = await getMobilityAssignedOperatorCallerContext(decoded.uid);
+      if (!selfOperator.isAssignedOperatorEligible
+          || selfOperator.role !== 'department_head'
+          || selfOperator.organizationId !== caller.organizationId
+          || !selfOperator.capabilities.includes('vehicle.drive')) {
+        return sendJson(res, 403, { error:'forbidden', reason:'department_head_vehicle_eligibility_required' });
+      }
+    }
     const missionInput = {
       type: cleanString(body.type),
       destination: cleanString(body.destination),
@@ -1692,7 +1709,8 @@ async function handler(req, res) {
 
     const hash = payloadHash(action, [
       missionInput.type, missionInput.destination, missionInput.reason, missionInput.scope,
-      requestedEmployeeId, missionInput.requestedEmployeeName, missionInput.whenLabel, missionInput.durationLabel,
+      requestedEmployeeId, assignSelf ? 'SELF' : 'EMPLOYEE', missionInput.requestedEmployeeName,
+      missionInput.whenLabel, missionInput.durationLabel,
     ]);
     const requestRef = trustedCreateRequestRef(db, action, caller.uid, clientRequestId);
     const missionRef = db.collection('missions').doc();
@@ -1716,7 +1734,11 @@ async function handler(req, res) {
           return { ok: true, missionId: prior.resourceId, idempotent: true };
         }
 
-        let requestedEmployee = null;
+        let requestedEmployee = assignSelf ? {
+          employeeId: null,
+          uid: selfOperator.uid,
+          name: selfOperator.name || caller.name || 'رئيس القسم',
+        } : null;
         if (employeeRef) {
           const employeeSnap = snapshots[1];
           if (!employeeSnap.exists) return { ok: false, statusCode: 404, reason: 'employee_not_found' };
@@ -1758,9 +1780,10 @@ async function handler(req, res) {
           status: 'DRAFT',
           ...missionInput,
           ...(requestedEmployee ? {
-            requestedEmployeeId: requestedEmployee.employeeId,
+            ...(requestedEmployee.employeeId ? { requestedEmployeeId: requestedEmployee.employeeId } : {}),
             requestedEmployeeUid: requestedEmployee.uid,
             requestedEmployeeName: requestedEmployee.name,
+            ...(assignSelf ? { requestedBySelf: true } : {}),
           } : {}),
           createdAt: now,
           updatedAt: now,
