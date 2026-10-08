@@ -268,6 +268,73 @@ function timestampToIso(value) {
   return Number.isFinite(seconds) ? new Date(seconds * 1000).toISOString() : null;
 }
 
+const ALQUNFUDHAH_ORGANIZATION_ID = 'CnlVlKC7UcDMp2NZzjjT';
+const ALQUNFUDHAH_APPROXIMATE_CENTER = Object.freeze({ lat: 19.12639, lng: 41.07889 });
+const ALQUNFUDHAH_DEFAULT_ZOOM = 13;
+const MOBILITY_TELEMETRY_ACTIVE_STATUSES = Object.freeze(['HANDED_OVER','READY','IN_PROGRESS','INCIDENT_HOLD']);
+
+function finiteCoordinate(value, min, max) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= min && n <= max ? n : null;
+}
+
+function cleanMobilityMapCenter(value) {
+  if (!value || typeof value !== 'object') return null;
+  const lat = finiteCoordinate(value.lat, -90, 90);
+  const lng = finiteCoordinate(value.lng, -180, 180);
+  return lat === null || lng === null ? null : { lat, lng };
+}
+
+function cleanMobilityMapBounds(value) {
+  if (!Array.isArray(value) || value.length !== 2) return null;
+  const swRaw = Array.isArray(value[0]) ? { lat:value[0][0], lng:value[0][1] } : value[0];
+  const neRaw = Array.isArray(value[1]) ? { lat:value[1][0], lng:value[1][1] } : value[1];
+  const southWest = cleanMobilityMapCenter(swRaw);
+  const northEast = cleanMobilityMapCenter(neRaw);
+  if (!southWest || !northEast || southWest.lat > northEast.lat || southWest.lng > northEast.lng) return null;
+  return [[southWest.lat, southWest.lng], [northEast.lat, northEast.lng]];
+}
+
+function safeMobilityMapContext(organizationId, organizationData) {
+  const data = organizationData && typeof organizationData === 'object' ? organizationData : {};
+  const configuredCenter = cleanMobilityMapCenter(data.mapCenter);
+  const configuredZoom = Number.isInteger(data.mapDefaultZoom) && data.mapDefaultZoom >= 4 && data.mapDefaultZoom <= 19
+    ? data.mapDefaultZoom : null;
+  const label = [cleanString(data.name), cleanString(data.organizationName)].filter(Boolean).join(' ').toLowerCase();
+  const fallbackEligible = organizationId === ALQUNFUDHAH_ORGANIZATION_ID
+    || label.includes('القنفذة') || /al[\s-]*qunfudhah/.test(label);
+  return {
+    mapCenter: configuredCenter || (fallbackEligible ? ALQUNFUDHAH_APPROXIMATE_CENTER : null),
+    mapDefaultZoom: configuredZoom || (fallbackEligible ? ALQUNFUDHAH_DEFAULT_ZOOM : null),
+    mapBounds: cleanMobilityMapBounds(data.mapBounds),
+    serviceArea: cleanString(data.serviceArea) || null,
+    configured: Boolean(configuredCenter && configuredZoom),
+  };
+}
+
+function safeMobilityTelemetry(id, data) {
+  const lat = finiteCoordinate(data && data.lat, -90, 90);
+  const lng = finiteCoordinate(data && data.lng, -180, 180);
+  if (lat === null || lng === null) return null;
+  const accuracy = Number(data.accuracyMeters);
+  const heading = Number(data.headingDegrees);
+  const speed = Number(data.speedMps);
+  return {
+    telemetryId: id,
+    missionId: cleanString(data.missionId),
+    vehicleId: cleanString(data.vehicleId),
+    employeeUid: cleanString(data.employeeUid),
+    employeeName: cleanString(data.employeeName),
+    department: cleanString(data.department),
+    lat,
+    lng,
+    accuracyMeters: Number.isFinite(accuracy) && accuracy >= 0 ? accuracy : null,
+    headingDegrees: Number.isFinite(heading) && heading >= 0 && heading <= 360 ? heading : null,
+    speedMps: Number.isFinite(speed) && speed >= 0 ? speed : null,
+    reportedAt: timestampToIso(data.reportedAt),
+  };
+}
+
 const MISSION_STATUS_LABELS = Object.freeze({
   DRAFT: 'مسودة',
   PENDING_APPROVAL: 'بانتظار اعتماد الشؤون الإدارية',
@@ -2159,6 +2226,79 @@ async function handler(req, res) {
     }
   }
 
+  // SMART MOBILITY LIVE MAP — privacy-bounded last-known telemetry.
+  // Only the currently assigned vehicle operator may publish a fix, and only
+  // while the mission is in an active driving phase. No route history is
+  // stored here; the document is overwritten with the latest trusted fix.
+  if (action === 'reportMobilityTelemetry') {
+    const actor = await getMobilityAssignedOperatorCallerContext(decoded.uid);
+    if (!actor.isAssignedOperatorEligible) {
+      return sendJson(res, 403, { error:'forbidden', reason:'assigned_vehicle_operator_required' });
+    }
+    if (!actor.capabilities.includes('vehicle.drive')) {
+      return sendJson(res, 403, { error:'forbidden', reason:'capability_required', capability:'vehicle.drive' });
+    }
+
+    const missionId = cleanString(body.missionId);
+    const lat = finiteCoordinate(body.lat, -90, 90);
+    const lng = finiteCoordinate(body.lng, -180, 180);
+    const accuracyMeters = Number(body.accuracyMeters);
+    const headingDegrees = Number(body.headingDegrees);
+    const speedMps = Number(body.speedMps);
+    if (!missionId || lat === null || lng === null
+        || (body.accuracyMeters !== undefined && (!Number.isFinite(accuracyMeters) || accuracyMeters < 0 || accuracyMeters > 5000))
+        || (body.headingDegrees !== undefined && body.headingDegrees !== null && (!Number.isFinite(headingDegrees) || headingDegrees < 0 || headingDegrees > 360))
+        || (body.speedMps !== undefined && body.speedMps !== null && (!Number.isFinite(speedMps) || speedMps < 0 || speedMps > 100))) {
+      return sendJson(res, 400, { error:'invalid_request', reason:'invalid_mobility_telemetry' });
+    }
+
+    try {
+      const missionRef = db.collection('missions').doc(missionId);
+      const missionSnap = await missionRef.get();
+      if (!missionSnap.exists) return sendJson(res, 404, { error:'request_failed', reason:'mission_not_found' });
+      const mission = missionSnap.data() || {};
+      if (mission.organizationId !== actor.organizationId) {
+        return sendJson(res, 403, { error:'forbidden', reason:'cross_organization_denied' });
+      }
+      if (mission.assignedEmployeeUid !== actor.uid || !isNonEmptyString(mission.vehicleId)) {
+        return sendJson(res, 403, { error:'forbidden', reason:'operator_not_assigned' });
+      }
+      if (!MOBILITY_TELEMETRY_ACTIVE_STATUSES.includes(mission.status)) {
+        return sendJson(res, 409, { error:'request_failed', reason:'mission_not_tracking_active' });
+      }
+
+      const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
+      const vehicleSnap = await vehicleRef.get();
+      if (!vehicleSnap.exists) return sendJson(res, 404, { error:'request_failed', reason:'vehicle_not_found' });
+      const vehicle = vehicleSnap.data() || {};
+      if (vehicle.organizationId !== actor.organizationId
+          || vehicle.currentMissionId !== missionId
+          || vehicle.assignedEmployeeUid !== actor.uid
+          || vehicle.status !== 'IN_MISSION') {
+        return sendJson(res, 409, { error:'request_failed', reason:'mission_vehicle_relationship_invalid' });
+      }
+
+      await db.collection('mobilityTelemetry').doc(missionId).set({
+        organizationId: actor.organizationId,
+        missionId,
+        vehicleId: mission.vehicleId,
+        employeeUid: actor.uid,
+        employeeName: actor.name || mission.assignedEmployeeName || '',
+        department: actor.department || mission.department || '',
+        lat,
+        lng,
+        accuracyMeters: Number.isFinite(accuracyMeters) ? accuracyMeters : null,
+        headingDegrees: Number.isFinite(headingDegrees) ? headingDegrees : null,
+        speedMps: Number.isFinite(speedMps) ? speedMps : null,
+        reportedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      return sendJson(res, 200, { missionId, vehicleId: mission.vehicleId, accepted:true });
+    } catch (_) {
+      return sendJson(res, 500, { error:'request_failed', reason:'temporary_failure' });
+    }
+  }
+
   // PHASE15 — one trusted workspace read for all Smart Mobility operational
   // roles. Mobility is municipality-wide and independent from Field/Lands;
   // scope is derived exclusively from the authenticated live Mobility role.
@@ -2168,7 +2308,7 @@ async function handler(req, res) {
     );
     if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
     try {
-      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap, userSnap] = await Promise.all([
+      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap, userSnap, organizationSnap, telemetrySnap] = await Promise.all([
         db.collection('missions').where('organizationId', '==', actor.organizationId).get(),
         db.collection('vehicles').where('organizationId', '==', actor.organizationId).get(),
         db.collection('incidents').where('organizationId', '==', actor.organizationId).get(),
@@ -2179,6 +2319,10 @@ async function handler(req, res) {
           : Promise.resolve({ docs: [] }),
         actor.role === 'mobility_head'
           ? db.collection('users').where('organizationId', '==', actor.organizationId).get()
+          : Promise.resolve({ docs: [] }),
+        db.collection('organizations').doc(actor.organizationId).get(),
+        ['mobility_head','department_head','employee'].includes(actor.role)
+          ? db.collection('mobilityTelemetry').where('organizationId', '==', actor.organizationId).get()
           : Promise.resolve({ docs: [] }),
       ]);
 
@@ -2209,6 +2353,19 @@ async function handler(req, res) {
       if (actor.role === 'department_head' || actor.role === 'employee') {
         vehicles = vehicles.filter(row => vehicleIds.has(row.id));
       }
+
+      const activeMissionIds = new Set(missions
+        .filter(row => MOBILITY_TELEMETRY_ACTIVE_STATUSES.includes(cleanString(row.data.status)))
+        .map(row => row.id));
+      const telemetry = telemetrySnap.docs
+        .map(doc => ({ id:doc.id, data:doc.data() || {} }))
+        .filter(row => activeMissionIds.has(cleanString(row.data.missionId)))
+        .map(row => safeMobilityTelemetry(row.id, row.data))
+        .filter(Boolean);
+      const mapContext = safeMobilityMapContext(
+        actor.organizationId,
+        organizationSnap.exists ? (organizationSnap.data() || {}) : {}
+      );
 
       const employees = [];
       if (actor.role === 'department_head' || actor.role === 'mobility_head' || actor.role === 'administrative_affairs' || actor.role === 'administrative_affairs_employee') {
@@ -2244,6 +2401,8 @@ async function handler(req, res) {
         organizationId: actor.organizationId,
         department: actor.department || null,
         workflowPolicy,
+        mapContext,
+        telemetry,
         missions: missions.map(row => safeMission(row.id, row.data)),
         vehicles: vehicles.map(row => safeMobilityVehicle(row.id, row.data)),
         incidents: incidents.map(row => safeMobilityIncident(row.id, row.data)),
