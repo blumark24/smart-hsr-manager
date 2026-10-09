@@ -53,10 +53,34 @@ const sendJson = (res, status, data) => {
   res.setHeader('Cache-Control', 'no-store');
   res.end(JSON.stringify(data));
 };
-const apiReady = () => process.env.PREVIEW_API_ENABLED === 'true'
-  && process.env.SMART_HSR_PREVIEW_MODE === 'staging'
-  && !!process.env.FIREBASE_SERVICE_ACCOUNT
-  && !!process.env.FIREBASE_WEB_CONFIG;
+const STAGING_PROJECT_ID = 'smart-hsr-staging-blumark24';
+const apiReady = () => {
+  if (process.env.PREVIEW_API_ENABLED !== 'true'
+      || process.env.SMART_HSR_PREVIEW_MODE !== 'staging') return false;
+  try {
+    const account = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || 'null');
+    const web = JSON.parse(process.env.FIREBASE_WEB_CONFIG || 'null');
+    return account?.project_id === STAGING_PROJECT_ID
+      && web?.projectId === STAGING_PROJECT_ID
+      && web?.authDomain === STAGING_PROJECT_ID + '.firebaseapp.com'
+      && typeof account.private_key === 'string'
+      && typeof account.client_email === 'string'
+      && typeof web.apiKey === 'string';
+  } catch {
+    return false;
+  }
+};
+
+function previewContentSecurityPolicy() {
+  const connectSrc = apiReady()
+    ? "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com wss://*.firebaseio.com;"
+    : "connect-src 'self';";
+  return "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
+    + "form-action 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com; "
+    + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    + "font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; "
+    + connectSrc + " frame-src 'none'; worker-src 'self' blob:; media-src 'self' blob:;";
+}
 
 function safeStaticPath(pathname) {
   let decoded;
@@ -94,7 +118,9 @@ async function handleStatic(req, res, parsed) {
     if (!real.startsWith(ROOT + path.sep)) return sendJson(res,404,{error:'not_found'});
     res.statusCode = 200;
     res.setHeader('Content-Type', item.mime);
-    res.setHeader('Cache-Control', item.ext === '.html' ? 'no-store' : 'public, max-age=120');
+    res.setHeader('Cache-Control',
+      item.ext === '.html' || parsed.pathname.endsWith('/firebase-runtime-config.js')
+        ? 'no-store' : 'public, max-age=120');
     if (req.method === 'HEAD') return res.end();
     const file = fs.createReadStream(real);
     file.on('error', () => { if (!res.headersSent) sendJson(res,500,{error:'asset_error'}); else res.destroy(); });
@@ -153,6 +179,8 @@ function createPreviewServer() {
     res.setHeader('X-Content-Type-Options','nosniff');
     res.setHeader('X-Frame-Options','DENY');
     res.setHeader('Referrer-Policy','no-referrer');
+    res.setHeader('X-Robots-Tag','noindex, nofollow, noarchive');
+    res.setHeader('Content-Security-Policy',previewContentSecurityPolicy());
     let parsed;
     try { parsed = new URL(req.url, 'http://localhost'); }
     catch { return sendJson(res,400,{error:'invalid_url'}); }
@@ -169,4 +197,4 @@ if (require.main === module) {
     process.stdout.write('SMART HSR safe preview listening on port ' + port + '\n');
   });
 }
-module.exports = { createPreviewServer, safeStaticPath, apiReady, ROUTES, API_REWRITES };
+module.exports = { createPreviewServer, safeStaticPath, apiReady, previewContentSecurityPolicy, ROUTES, API_REWRITES };
