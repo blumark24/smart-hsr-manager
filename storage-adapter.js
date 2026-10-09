@@ -154,7 +154,12 @@ async function resolveServerObjectImageUncached({ key, getIdToken }) {
 
 export async function getConnectorConfiguration(organizationId) {
   const id = requiredText(organizationId, 'organization');
-  return (await transact(CONNECTOR_STORE, 'readonly', store => store.get(id))) || null;
+  const connector = (await transact(CONNECTOR_STORE, 'readonly', store => store.get(id))) || null;
+  // A legacy browser may still contain an old LOCAL_DEMO connector. Hosted
+  // SMART HSR must behave as if it does not exist so all evidence goes through
+  // the real authenticated server upload path.
+  if (connector?.type === LOCAL_DEMO_TYPE && !localDemoRuntimeAllowed()) return null;
+  return connector;
 }
 
 export async function saveConnectorConfiguration(configuration, ownerContext) {
