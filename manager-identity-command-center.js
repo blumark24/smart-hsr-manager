@@ -131,16 +131,20 @@
     state.page=Math.min(state.page,Math.max(1,Math.ceil(filtered.length/25)));
     const page=filtered.slice((state.page-1)*25,state.page*25);
     return `<section class="icc-archive-area" aria-label="مركز الأرشفة">
-      <div class="icc-registry-head"><div><b>مركز الأرشفة</b><span>${filtered.length} سجلات مؤرشفة</span></div></div>
-      <p class="icc-archive-note">الأرشفة تحفظ الهوية والتكليفات والتدقيق. الاستعادة لا تُفعّل تسجيل الدخول تلقائيًا. الحذف النهائي متاح فقط لسجل غير مرتبط بحساب أو أعمال بلدية.</p>
-      <label class="icc-search icc-archive-search"><span class="sr-only">بحث الأرشيف</span><input type="search" data-archive-search value="${esc(state.search)}" placeholder="بحث في الأرشيف بالاسم أو الرقم الوظيفي" aria-label="بحث الأرشيف"></label>
-      <div class="icc-table-wrap"><table class="icc-table"><thead><tr><th>الموظف</th><th>التعيين المؤسسي</th><th>تاريخ الأرشفة</th><th>السبب</th><th>الإجراءات</th></tr></thead><tbody>
-      ${page.map(e=>`<tr><td><span class="icc-name-copy"><b>${esc(e.name||'—')}</b><small>${esc(e.employeeRef||'—')}</small></span></td>
+      <div class="icc-registry-head icc-archive-head">
+        <div><b>سجل الموظفين المؤرشفين</b><span aria-live="polite">${filtered.length} من ${rows.length} سجل</span></div>
+      </div>
+      <div class="icc-registry-controls icc-archive-controls">
+        <label class="icc-search icc-archive-search"><span class="sr-only">بحث الأرشيف</span><input type="search" data-archive-search value="${esc(state.search)}" placeholder="بحث بالاسم أو الرقم الوظيفي" aria-label="بحث الأرشيف" autocomplete="off"></label>
+        <details class="icc-archive-policy"><summary>سياسة الأرشفة</summary><p>الأرشفة تحفظ الهوية والتكليفات والتدقيق. الاستعادة لا تُفعّل تسجيل الدخول تلقائيًا. الحذف النهائي متاح فقط للسجلات غير المرتبطة بحساب أو أعمال بلدية.</p></details>
+      </div>
+      <div class="icc-table-wrap"><table class="icc-table icc-archive-table"><thead><tr><th scope="col">الموظف</th><th scope="col">التعيين المؤسسي</th><th scope="col">الدور / المسمى</th><th scope="col">الأرشفة</th><th scope="col">الإجراءات</th></tr></thead><tbody>
+      ${page.map(e=>`<tr><td><div class="icc-archive-person"><span class="icc-avatar-mini" aria-hidden="true">${esc((e.name||'م').slice(0,2))}</span><span class="icc-name-copy"><b>${esc(e.name||'—')}</b><small>${esc(e.employeeRef||'—')}</small></span></div></td>
       <td><span class="icc-assignment"><b>${esc(canonicalAdministration(e.administration)||'—')}</b><small>${esc(e.department||'—')}</small></span></td>
-      <td>${esc(e.archivedAt ? new Date(e.archivedAt).toLocaleDateString('ar-SA') : '—')}</td>
-      <td>${esc(e.archivedReason||'لم يُذكر سبب')}</td>
-      <td><div class="icc-archive-actions">${button('استعادة',`data-restore="${esc(e.employeeId)}" class="primary"`)}
-      ${(!e.authUid && e.accountStatus==='NO_ACCOUNT') ? button('حذف نهائي',`data-purge="${esc(e.employeeId)}" class="icc-purge"`) : '<span class="icc-muted" title="سجل مرتبط بحساب أو بتاريخ بلدي">محفوظ للتدقيق</span>'}</div></td></tr>`).join('')||'<tr><td colspan="5">لا توجد سجلات مؤرشفة مطابقة.</td></tr>'}
+      <td><span class="icc-role-title">${esc(e.jobTitle||roles[U.inst(e)]||'—')}</span><small>${esc(roles[U.inst(e)]||'—')}</small></td>
+      <td class="icc-archive-meta"><span class="icc-account is-muted"><i></i>مؤرشف</span><small class="icc-archive-date">${esc(e.archivedAt && !Number.isNaN(new Date(e.archivedAt).getTime()) ? new Date(e.archivedAt).toLocaleDateString('ar-SA') : 'تاريخ غير متاح')}</small><small class="icc-archive-reason" title="${esc(e.archivedReason||'لم يُذكر سبب')}">${esc(e.archivedReason||'لم يُذكر سبب')}</small></td>
+      <td><div class="icc-archive-actions">${button('استعادة',`data-restore="${esc(e.employeeId)}" class="icc-archive-restore"`)}
+      ${(!e.authUid && e.accountStatus==='NO_ACCOUNT') ? button('حذف نهائي',`data-purge="${esc(e.employeeId)}" class="icc-purge"`) : '<span class="icc-archive-retained" title="سجل مرتبط بحساب أو بتاريخ بلدي">محفوظ للتدقيق</span>'}</div></td></tr>`).join('')||'<tr><td colspan="5">لا توجد سجلات مؤرشفة مطابقة.</td></tr>'}
       </tbody></table></div>
       <footer class="icc-between icc-registry-footer"><span class="icc-muted">${filtered.length} سجل · صفحة ${state.page}</span><div>${button('السابق',`data-page="-1" ${state.page===1?'disabled':''}`)} ${button('التالي',`data-page="1" ${state.page*25>=filtered.length?'disabled':''}`)}</div></footer>
     </section>`;
