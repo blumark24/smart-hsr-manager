@@ -107,17 +107,19 @@ test('command-center embedded map empty state follows the same trusted observati
 });
 
 
-test('SMART HSR branded MAPS and TWIN modes are real map products', () => {
+test('SMART HSR branded MAPS and SATELLITE modes are real operational map products', () => {
   assert.match(page, /SMART HSR MAPS/);
   assert.match(page, /الخريطة البلدية التشغيلية/);
-  assert.match(page, /SMART HSR TWIN/);
-  assert.match(page, /التوأم البلدي الرقمي/);
+  assert.match(page, /SMART HSR SATELLITE/);
+  assert.match(page, /عرض جوي تشغيلي/);
   assert.match(page, /data-map-mode="{{ mapMode }}"/);
+  assert.doesNotMatch(page, /SMART HSR TWIN/);
 });
 
-test('MAPS uses street basemap while TWIN uses satellite with real 2.5D camera', () => {
-  assert.match(page, /tile\.openstreetmap\.org/);
-  assert.match(page, /server\.arcgisonline\.com/);
+test('MAPS uses hosted street basemap while SATELLITE uses imagery with real 2.5D camera', () => {
+  assert.match(page, /World_Street_Map\/MapServer\/tile/);
+  assert.match(page, /World_Imagery\/MapServer\/tile/);
+  assert.doesNotMatch(page, /tile\.openstreetmap\.org/);
   assert.match(page, /map\.setLayoutProperty\('street', 'visibility'/);
   assert.match(page, /map\.setLayoutProperty\('satellite', 'visibility'/);
   assert.match(page, /pitch: twin \? 48 : 0/);
@@ -151,11 +153,11 @@ test('mobile GEO turns KPIs into a horizontal rail and cases into an on-demand s
   assert.match(page, /max-height:66dvh/);
 });
 
-test('MAPS and TWIN mode switching uses style-ready basemap toggling', () => {
+test('MAPS and SATELLITE mode switching uses style-ready basemap toggling', () => {
   assert.match(page, /isStyleLoaded/);
   assert.match(page, /setOps: \(\) => this\.setState\(\{ twin3D: false \}, \(\) => this\.applyRealMapMode\(\)\)/);
   assert.match(page, /setTwin: \(\) => this\.setState\(\{ twin3D: true \}, \(\) => this\.applyRealMapMode\(\)\)/);
-  assert.match(page, /SMART HSR TWIN — التوأم البلدي الرقمي/);
+  assert.match(page, /SMART HSR SATELLITE — العرض الجوي التشغيلي/);
   assert.match(page, /SMART HSR MAPS — الخريطة البلدية التشغيلية/);
 });
 
