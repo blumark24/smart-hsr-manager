@@ -1,0 +1,144 @@
+/* SMART HSR Unified Municipal Shell v1
+   Shared visual shell for municipal workspaces.
+   Scope: header, identity switcher, right navigation shell and platform footer.
+   It intentionally does not alter business workflows, RBAC, maps or data contracts. */
+
+.smart-hsr-shell-v1{
+  --hsr-shell-green:#26b778;
+  --hsr-shell-green-strong:#16955e;
+  --hsr-shell-navy:#071b2b;
+  --hsr-shell-navy-2:#0a2234;
+  --hsr-shell-line:rgba(142,196,179,.16);
+  --hsr-shell-text:#edf7f3;
+  --hsr-shell-muted:#91a9a1;
+  --hsr-shell-panel:rgba(7,30,43,.90);
+  --hsr-shell-panel-2:rgba(10,38,51,.82);
+  --hsr-shell-shadow:0 24px 60px -36px rgba(0,0,0,.88);
+}
+
+.smart-hsr-shell-v1[data-theme="day"]{
+  --hsr-shell-navy:#153f33;
+  --hsr-shell-navy-2:#1c4a3c;
+  --hsr-shell-line:rgba(25,86,65,.14);
+  --hsr-shell-text:#17382e;
+  --hsr-shell-muted:#667d74;
+  --hsr-shell-panel:rgba(240,247,243,.94);
+  --hsr-shell-panel-2:rgba(231,241,235,.92);
+  --hsr-shell-shadow:0 22px 50px -34px rgba(31,73,55,.38);
+}
+
+/* Command header */
+.smart-hsr-shell-v1 .dh-command-bar{
+  min-height:76px!important;
+  padding:10px 12px!important;
+  border-radius:20px!important;
+  background:linear-gradient(135deg,var(--hsr-shell-panel),var(--hsr-shell-panel-2))!important;
+  border:1px solid var(--hsr-shell-line)!important;
+  box-shadow:var(--hsr-shell-shadow),inset 0 1px 0 rgba(255,255,255,.045)!important;
+  backdrop-filter:blur(22px) saturate(135%)!important;
+}
+
+.hsr-shell-identity-zone{display:flex;align-items:center;gap:8px;position:relative;min-width:0}
+.hsr-identity-wrap{position:relative;min-width:0}
+.hsr-identity-card{
+  min-width:260px;max-width:330px;height:54px;padding:7px 10px 7px 9px;border-radius:16px;
+  border:1px solid var(--hsr-shell-line);background:rgba(255,255,255,.025);
+  color:var(--hsr-shell-text);display:flex;align-items:center;gap:10px;cursor:pointer;text-align:right;
+  transition:border-color .18s ease,background .18s ease,transform .18s ease;
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-card{background:rgba(255,255,255,.54)}
+.hsr-identity-card:hover{border-color:rgba(57,203,145,.38);background:rgba(57,203,145,.055)}
+.hsr-identity-card:focus-visible{outline:3px solid rgba(57,203,145,.16);outline-offset:2px}
+.hsr-identity-avatar{
+  width:38px;height:38px;flex:none;border-radius:13px;display:grid;place-items:center;
+  background:linear-gradient(150deg,rgba(38,183,120,.24),rgba(38,183,120,.08));
+  border:1px solid rgba(57,203,145,.26);color:#6ee7ad;font-weight:800;font-size:14px;
+  position:relative;
+}
+.hsr-identity-avatar::after{
+  content:"";position:absolute;right:-2px;bottom:-2px;width:9px;height:9px;border-radius:50%;
+  background:#35cf89;border:2px solid var(--hsr-shell-navy);
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-avatar::after{border-color:#edf5f0}
+.hsr-identity-copy{min-width:0;flex:1}
+.hsr-identity-org{font-size:9px;font-weight:700;color:#5bdca0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsr-identity-name{margin-top:2px;font-size:12px;font-weight:750;color:var(--hsr-shell-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsr-identity-role{margin-top:1px;font-size:9.5px;color:var(--hsr-shell-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsr-identity-chevron{width:20px;height:20px;flex:none;color:var(--hsr-shell-muted);display:grid;place-items:center;transition:transform .18s ease}
+.hsr-identity-card[aria-expanded="true"] .hsr-identity-chevron{transform:rotate(180deg)}
+
+.hsr-identity-menu{
+  position:absolute;top:62px;right:0;width:340px;z-index:90;padding:8px;
+  border-radius:20px;border:1px solid var(--hsr-shell-line);
+  background:rgba(6,25,36,.985);box-shadow:0 28px 72px -28px rgba(0,0,0,.92);
+  backdrop-filter:blur(24px) saturate(140%);
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu{background:rgba(244,249,246,.985)}
+.hsr-id-head{padding:13px 13px 12px;border-bottom:1px solid var(--hsr-shell-line)}
+.hsr-id-verified{font:700 9px/1.2 "SFMono-Regular",Consolas,monospace;letter-spacing:.13em;color:#43d98b}
+.hsr-id-person{display:flex;align-items:center;gap:10px;margin-top:10px}
+.hsr-id-person b{display:block;font-size:14px;color:var(--hsr-shell-text)}
+.hsr-id-person span{display:block;margin-top:2px;font-size:10px;color:var(--hsr-shell-muted)}
+.hsr-id-context{margin:8px 6px 6px;padding:10px;border-radius:13px;background:rgba(57,203,145,.055);border:1px solid rgba(57,203,145,.11)}
+.hsr-id-context-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:4px 1px;font-size:10px}
+.hsr-id-context-row span:first-child{color:var(--hsr-shell-muted)}
+.hsr-id-context-row span:last-child{color:var(--hsr-shell-text);font-weight:600;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsr-id-actions{padding:5px}
+.hsr-id-action{
+  width:100%;min-height:42px;border:0;border-radius:12px;background:transparent;color:var(--hsr-shell-text);
+  display:flex;align-items:center;gap:10px;padding:0 10px;font:600 11.5px/1.4 inherit;cursor:pointer;text-align:right;
+}
+.hsr-id-action:hover{background:rgba(57,203,145,.075)}
+.hsr-id-action svg{width:16px;height:16px;color:var(--hsr-shell-muted);flex:none}
+.hsr-id-action small{margin-inline-start:auto;color:var(--hsr-shell-muted);font-size:9px;font-weight:500}
+.hsr-id-sep{height:1px;background:var(--hsr-shell-line);margin:5px 8px}
+.hsr-id-logout{color:#f0a4a4}
+.hsr-id-logout:hover{background:rgba(239,68,68,.075)}
+[data-smart-hsr-workspace-trigger]{display:none}
+
+/* Sidebar */
+.smart-hsr-shell-v1 .dh-sidebar{width:var(--sbW,244px)!important;gap:10px!important}
+.smart-hsr-shell-v1 .dh-sidebar-panel{
+  flex:1!important;padding:12px 10px!important;border-radius:20px!important;
+  background:linear-gradient(180deg,var(--hsr-shell-panel),var(--hsr-shell-panel-2))!important;
+  border:1px solid var(--hsr-shell-line)!important;box-shadow:var(--hsr-shell-shadow)!important;
+}
+.smart-hsr-shell-v1 .dh-nav-item{
+  min-height:46px!important;border-radius:13px!important;padding:9px 11px!important;
+  transition:background .16s ease,border-color .16s ease,transform .16s ease!important;
+}
+.smart-hsr-shell-v1 .dh-nav-item:hover{transform:translateX(-1px)}
+.smart-hsr-shell-v1 .dh-nav-item[aria-current="page"],
+.smart-hsr-shell-v1 .dh-nav-item[aria-current="true"]{
+  box-shadow:inset -3px 0 0 #38d18d,0 8px 20px -18px rgba(38,183,120,.75)!important;
+}
+.smart-hsr-shell-v1 .dh-product-panel{display:none!important}
+.hsr-platform-footer{
+  padding:12px 11px 10px;border-radius:17px;border:1px solid var(--hsr-shell-line);
+  background:linear-gradient(180deg,var(--hsr-shell-panel-2),var(--hsr-shell-panel));
+  box-shadow:var(--hsr-shell-shadow);
+}
+.hsr-platform-footer-brand{display:flex;align-items:center;gap:8px}
+.hsr-platform-mark{
+  width:29px;height:29px;border-radius:10px;display:grid;place-items:center;color:#49d998;
+  border:1px solid rgba(57,203,145,.18);background:rgba(57,203,145,.07);font-weight:900;font-size:11px
+}
+.hsr-platform-footer strong{display:block;color:var(--hsr-shell-text);font-size:10.5px;letter-spacing:.04em}
+.hsr-platform-footer span{display:block;color:var(--hsr-shell-muted);font-size:8.5px;margin-top:2px;letter-spacing:.08em}
+.hsr-platform-status{display:flex!important;align-items:center;gap:6px!important;margin-top:9px!important;color:var(--hsr-shell-muted)!important;font-size:8.5px!important}
+.hsr-platform-status i{width:6px;height:6px;border-radius:50%;background:#35cf89;box-shadow:0 0 0 4px rgba(53,207,137,.08)}
+
+@media(max-width:980px){
+  .hsr-identity-card{min-width:210px;max-width:250px}
+  .hsr-identity-org{display:none}
+}
+@media(max-width:760px){
+  .smart-hsr-shell-v1 .dh-command-bar{min-height:64px!important;padding:7px 8px!important;border-radius:16px!important}
+  .hsr-identity-card{min-width:0;width:190px;height:48px}
+  .hsr-identity-avatar{width:34px;height:34px;border-radius:11px}
+  .hsr-identity-role{display:none}
+  .hsr-identity-menu{position:fixed;top:74px;right:10px;left:10px;width:auto;max-width:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .hsr-identity-card,.hsr-identity-chevron,.smart-hsr-shell-v1 .dh-nav-item{transition:none!important}
+}
