@@ -136,8 +136,8 @@ test('every admin activation and HR edit path respects the archive lifecycle', (
 });
 
 test('preview-only deep link enters existing manager user center without exposing arbitrary routes', () => {
-  assert.match(manager, /location\\.hostname\\.endsWith\\('\\.vercel\\.app'\\)/);
-  assert.match(manager, /get\\('view'\\) === 'users'/);
-  assert.match(frontend, /const previewArchive = window\\.location\\?\\.hostname\\?\\.endsWith/);
-  assert.match(frontend, /get\\('tab'\\) === 'archive'/);
+  assert.ok(manager.includes("location.hostname.endsWith('.vercel.app')"));
+  assert.ok(manager.includes("get('view') === 'users'"));
+  assert.ok(frontend.includes("const previewArchive = window.location?.hostname?.endsWith('.vercel.app')"));
+  assert.ok(frontend.includes("get('tab') === 'archive'"));
 });
