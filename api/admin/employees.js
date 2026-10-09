@@ -762,6 +762,14 @@ async function handler(req, res) {
           if (linked && employee.data.authUid === caller.uid) {
             return sendJson(res, 403, { error: 'forbidden', reason: 'cannot_archive_self' });
           }
+          if (institutionalRoleOf(employee.data) === 'manager') {
+            return sendJson(res, 403, { error: 'forbidden', reason: 'municipal_manager_record_protected' });
+          }
+          const activeDependents = await db.collection('employees')
+            .where('directManagerEmployeeId', '==', employeeId).limit(1).get();
+          if (!activeDependents.empty) {
+            return sendJson(res, 409, { error: 'reassign_direct_reports_first' });
+          }
           const reason = isNonEmptyString(body.reason) ? body.reason.trim() : null;
           if (reason && reason.length > 300) {
             return sendJson(res, 400, { error: 'invalid_request', reason: 'archive_reason_too_long' });
@@ -842,12 +850,12 @@ async function handler(req, res) {
         if (!assignmentsSnap.empty || !missionsSnap.empty || !directReportsSnap.empty) {
           return sendJson(res, 409, { error: 'municipal_history_retention_required' });
         }
+        await employee.ref.delete();
         await recordAdminAudit(db, {
           caller, organizationId: employee.data.organizationId,
           targetEmployeeId: employeeId, action: 'employee_delete_unused',
           detail: { archived: true, employeeRef: employee.data.employeeRef || null },
         });
-        await employee.ref.delete();
         return sendJson(res, 200, { employeeId, mode: 'deleted' });
       }
 
@@ -958,6 +966,9 @@ async function handler(req, res) {
         if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
 
         const linked = isNonEmptyString(employee.data.authUid);
+        if (employmentStatus !== undefined && employmentStatus !== (employee.data.employmentStatus || 'active')) {
+          return sendJson(res, 409, { error: 'employee_lifecycle_action_required' });
+        }
         if (email !== undefined && linked) {
           return sendJson(res, 403, { error: 'forbidden', reason: 'linked_account_email_change_requires_account_flow' });
         }
