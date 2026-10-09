@@ -1964,9 +1964,14 @@ class Component extends DCLogic {
       sources: {
         street: {
           type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          // Do not use OpenStreetMap's public volunteer tile endpoint as an
+          // application basemap. The municipal Preview was correctly blocked
+          // with HTTP 403 under OSM's tile-usage policy. Use Esri's hosted
+          // street basemap here; operational geometry/telemetry remains our
+          // own trusted data and is not sourced from the basemap.
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'],
           tileSize: 256,
-          attribution: '© OpenStreetMap contributors'
+          attribution: 'Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC, © OpenStreetMap contributors, and the GIS User Community'
         },
         satellite: {
           type: 'raster',
