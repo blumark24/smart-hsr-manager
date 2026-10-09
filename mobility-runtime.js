@@ -68,6 +68,19 @@
     return data && ALLOWED_ROLES.includes(data.role) ? data.role : null;
   }
 
+  function institutionalIdentity(data) {
+    const orgId = String((data && data.organizationId) || '').trim();
+    const organizationName = String(
+      (data && (data.organizationName || data.municipalityName || data.organizationLabel)) || ''
+    ).trim() || (orgId === 'CnlVlKC7UcDMp2NZzjjT' ? 'بلدية القنفذة' : 'المؤسسة المسجلة');
+
+    const department = String(
+      (data && (data.department || data.administration || data.departmentName || data.administrationName)) || ''
+    ).trim() || 'إدارة حركة السير';
+
+    return { organizationName, department };
+  }
+
   function requestId(prefix) {
     if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') return globalThis.crypto.randomUUID();
     if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function') {
@@ -445,7 +458,8 @@
       const snap = await getDoc(doc(db,'users',user.uid));
       if (!snap.exists()) { await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
       const data = snap.data() || {};
-      const department = String(data.department || '').trim();
+      const identity = institutionalIdentity(data);
+      const department = identity.department;
 
       // Establish the authenticated runtime identity before calling the
       // authoritative workspace resolver. The API helper requires currentUser
@@ -477,7 +491,7 @@
           runtimeMode:'mobility',
           role:uiRole,
           screen:component.homeOf(uiRole),
-          orgName:data.organizationName || 'المؤسسة المسجلة',
+          orgName:identity.organizationName,
           sessionName:data.name || user.email || 'مستخدم الحركة الذكية',
           sessionUid:user.uid,
           department,
