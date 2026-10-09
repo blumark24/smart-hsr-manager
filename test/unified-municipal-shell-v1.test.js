@@ -83,3 +83,19 @@ test('Crisp brand lockup uses vector mark and rendered SMART HSR wordmark', () =
   assert.match(css, /\.hsr-platform-footer-copy/);
   assert.doesNotMatch(page, /hsr-shell-brand-logo" src="\/smart-hsr-signature-transparent\.png"/);
 });
+
+
+test('Final rail polish keeps only navigation scrollable and hides scrollbar chrome', () => {
+  assert.match(page, /hsr-side-nav-scroll/);
+  assert.match(css, /\.hsr-side-nav-scroll/);
+  assert.match(css, /scrollbar-width:none!important/);
+  assert.match(css, /\.hsr-side-nav-scroll::-webkit-scrollbar/);
+});
+
+test('Mobility identity resolves municipality and department labels for the shell', () => {
+  const runtime = fs.readFileSync(path.join(root, 'mobility-runtime.js'), 'utf8');
+  assert.match(runtime, /function institutionalIdentity\(data\)/);
+  assert.match(runtime, /بلدية القنفذة/);
+  assert.match(runtime, /data\.department \|\| data\.administration/);
+  assert.match(runtime, /orgName:identity\.organizationName/);
+});
