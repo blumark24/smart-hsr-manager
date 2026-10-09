@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const { createPreviewServer, safeStaticPath, apiReady, ROUTES, API_REWRITES } =
+const { createPreviewServer, safeStaticPath, apiReady, previewContentSecurityPolicy, ROUTES, API_REWRITES } =
   require('../portable-preview-server.js');
 
 function request(port, pathName, method='GET') {
@@ -68,6 +68,44 @@ test('API remains off until explicitly staged, with no fallback to production da
   }
 });
 
+test('staging API refuses production or mismatched credentials even when explicitly enabled', () => {
+  const keys=['PREVIEW_API_ENABLED','SMART_HSR_PREVIEW_MODE','FIREBASE_SERVICE_ACCOUNT','FIREBASE_WEB_CONFIG'];
+  const prior=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
+  try {
+    process.env.PREVIEW_API_ENABLED='true';
+    process.env.SMART_HSR_PREVIEW_MODE='staging';
+    process.env.FIREBASE_SERVICE_ACCOUNT=JSON.stringify({
+      project_id:'smart-hsr-manager',client_email:'fake@example.org',private_key:'test-only'
+    });
+    process.env.FIREBASE_WEB_CONFIG=JSON.stringify({
+      projectId:'smart-hsr-staging-blumark24',
+      authDomain:'smart-hsr-staging-blumark24.firebaseapp.com',apiKey:'test-only',
+    });
+    assert.equal(apiReady(),false,'production service account was accepted');
+    process.env.FIREBASE_SERVICE_ACCOUNT=JSON.stringify({
+      project_id:'smart-hsr-staging-blumark24',client_email:'fake@example.org',private_key:'test-only'
+    });
+    process.env.FIREBASE_WEB_CONFIG=JSON.stringify({
+      projectId:'smart-hsr-manager',authDomain:'smart-hsr-manager.firebaseapp.com',apiKey:'test-only',
+    });
+    assert.equal(apiReady(),false,'production web configuration was accepted');
+    process.env.FIREBASE_WEB_CONFIG=JSON.stringify({
+      projectId:'smart-hsr-staging-blumark24',authDomain:'smart-hsr-staging-blumark24.firebaseapp.com',apiKey:'test-only'
+    });
+    assert.equal(apiReady(),true,'valid isolated staging configuration was unexpectedly rejected');
+  } finally {
+    for(const [k,v] of Object.entries(prior)) {
+      if(v===undefined) delete process.env[k]; else process.env[k]=v;
+    }
+  }
+});
+
+test('unauthenticated UI preview CSP blocks outgoing Firebase and Google API connections',()=>{
+  assert.match(previewContentSecurityPolicy(), /connect-src 'self';/);
+  assert.doesNotMatch(previewContentSecurityPolicy(), /connect-src[^;]*googleapis/);
+  assert.match(previewContentSecurityPolicy(), /frame-ancestors 'none'/);
+});
+
 test('static file policy blocks hidden, server, config, and test paths', () => {
   for (const p of [
     '/api/admin/users.js','/.github/workflows/test.yml','/.env',
@@ -90,10 +128,17 @@ test('live Node HTTP smoke: previews work, municipal API disabled, secrets unava
     assert.equal(health.status,200);
     assert.equal(JSON.parse(health.body).mode,'preview');
     assert.equal(JSON.parse(health.body).apiEnabled,false);
+    assert.match(health.headers['content-security-policy'], /connect-src 'self';/);
+    assert.match(health.headers['x-robots-tag'], /noindex/);
     const manager=await request(port,'/manager.html');
     assert.equal(manager.status,200);
     assert.match(manager.body,/SMART HSR/);
     assert.match(manager.headers['content-type'],/text\/html/);
+    assert.equal(manager.headers['cache-control'],'no-store');
+    assert.match(manager.headers['content-security-policy'], /connect-src 'self';/);
+    const configJs=await request(port,'/firebase-runtime-config.js');
+    assert.equal(configJs.status,200);
+    assert.equal(configJs.headers['cache-control'],'no-store');
     const lands=await request(port,'/lands');
     assert.equal(lands.status,200);
     const archiveCSS=await request(port,'/manager-identity-command-center.css');
