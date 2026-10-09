@@ -1,21 +1,11 @@
 // AI Command Center module for the Owner Command Center (#/ai).
 //
-// Sprint 6.6.3: builds the AI Command Center as an honest, static
-// architecture-status experience. No live AI backend is connected to
-// this application — platform/ai/* is server-only CommonJS code that is
-// explicitly designed to fail closed outside a local/Node evaluation
-// context (see local-ai-runtime-guard.js / real-provider-activation-guard.js),
-// and no real Gemini/OpenRouter call has ever been made from inside this
-// application (see the Sprint 5 evaluation reports). This module
-// therefore renders fixed, accurate descriptions of what exists and its
-// current (inactive) connection state — it does not fetch, poll, or
-// simulate any live status, and it performs no image analysis.
-//
-// getAIStatus()/getVisionStatus()/getEvaluationStatus() are deliberately
-// NOT implemented — there is no real backend status source yet. Only
-// navigate/showNotif are accepted, matching what other owner modules
-// already use, and kept for forward-compatibility once a real status
-// source exists.
+// Final delivery: this screen displays architecture facts only.
+// The authenticated Inspector path performs real analysis through
+// /api/ai/analyze, which resolves Gemini or OpenAI server-side and fails
+// closed when provider/storage/configuration is unavailable. This Owner
+// module intentionally does not invent a "connected/disconnected" status
+// because no provider-health telemetry endpoint exists for this screen.
 export function initAIModule({ navigate, showNotif } = {}) {
   const capabilityCardsRoot = document.getElementById('aiCapabilityCards');
   const imageAnalysisRoot = document.getElementById('aiImageAnalysisCenter');
@@ -24,34 +14,35 @@ export function initAIModule({ navigate, showNotif } = {}) {
   const CAPABILITY_CARDS = [
     {
       title: 'الرؤية الاصطناعية (Vision AI)',
-      status: 'غير متصل', statusTone: 'pending',
+      status: 'مزود حقيقي عند الطلب', statusTone: 'ok',
       lines: [
-        'المزوّدون جاهزون في الكود: Gemini، OpenRouter',
-        'لم يتم تفعيل أي مزود داخل التطبيق الفعلي بعد',
+        'المسار الفعلي: /api/ai/analyze',
+        'المزوّد الخادمي: Gemini أو OpenAI حسب إعداد SMART_HSR_AI_PROVIDER',
+        'أي فشل في المزود أو التخزين يعاد كفشل صريح — لا توجد نتيجة بديلة مصطنعة',
       ],
     },
     {
       title: 'بوابة الذكاء الاصطناعي (AI Gateway)',
-      status: 'معطّلة افتراضيًا', statusTone: 'pending',
+      status: 'Fail-closed', statusTone: 'ok',
       lines: [
-        'محمية بسياسة أمان تتحقق من كل مدخل ومخرج',
-        'مصمَّمة للعمل محليًا فقط، ولا تتصل بالشبكة العامة',
+        'تتطلب Firebase ID Token ودور مراقب فعلي ونطاق مؤسسة مطابق',
+        'تقرأ الدليل من التخزين الخاص على الخادم قبل استدعاء المزود',
       ],
     },
     {
-      title: 'الذكاء العربي (Arabic Intelligence)',
-      status: 'نشطة كسياسة تحقق', statusTone: 'ok',
+      title: 'الذكاء البلدي العربي',
+      status: 'مراجعة بشرية إلزامية', statusTone: 'ok',
       lines: [
-        'تتحقق تلقائيًا من صياغة الملخصات البلدية القصيرة',
-        'العربية الفصحى فقط، جملة واحدة، دون رموز أو تخمين',
+        'التحليل استرشادي ولا يغيّر حالة البلاغ تلقائيًا',
+        'الحفظ والاعتماد والإسناد تبقى إجراءات بشرية صريحة',
       ],
     },
     {
-      title: 'محرك التقييم (Evaluation Engine)',
-      status: 'بيئة اختبار آلية', statusTone: 'ok',
+      title: 'اختبارات الجودة',
+      status: 'QA فقط', statusTone: 'pending',
       lines: [
-        'بيئة اختبار شاملة (١٨٠+ اختبار آلي ناجح)',
-        'التقييم الميداني الحقيقي محدود جدًا (عيّنة واحدة) ولم يُعتمد بعد',
+        'Fixtures والمحاكاة محصورة في الاختبارات وlocalhost',
+        'لا تدخل بيانات الاختبار إلى Runtime المستضاف أو سجلات البلدية',
       ],
     },
   ];
@@ -125,15 +116,15 @@ export function initAIModule({ navigate, showNotif } = {}) {
 
     const note = document.createElement('p');
     note.className = 'empty-state-desc mt-4';
-    note.textContent = 'سيتم تفعيل التحليل الآلي للصور بعد ربط مزود الرؤية الاصطناعية.';
+    note.textContent = 'التحليل الفعلي يتم من مساحة عمل المراقب على صورة حقيقية عبر البوابة الخادمية. شاشة المالك لا تنفذ تحليلًا تجريبيًا ولا تختلق حالة مزود.';
     imageAnalysisRoot.appendChild(note);
   }
 
   const GOVERNANCE_ITEMS = [
-    { label: 'سياسة أمان الذكاء الاصطناعي', value: 'نشطة — تتحقق من كل مدخل ومخرج وتمنع تسرب البيانات الحساسة', tone: 'ok' },
-    { label: 'سياسة الملخص العربي', value: 'نشطة — تفرض صياغة بلدية رسمية دون رموز أو تخمين', tone: 'ok' },
-    { label: 'عزل بيئة التشغيل', value: 'مفعّل — يمنع أي اتصال بالسحابة أو الشبكة العامة افتراضيًا', tone: 'ok' },
-    { label: 'جاهزية التقييم الميداني', value: 'تجريبية محليًا فقط — لا تتوفر بيانات كافية للاعتماد', tone: 'pending' },
+    { label: 'الهوية والصلاحيات', value: 'Firebase Auth + دور مراقب + عزل organizationId قبل أي تحليل', tone: 'ok' },
+    { label: 'المزوّد الخارجي', value: 'اتصال HTTPS خادمي فقط إلى مزود مسموح؛ لا مفاتيح أو Prompt داخل المتصفح', tone: 'ok' },
+    { label: 'القرار البشري', value: 'إلزامي — التحليل لا يسند ولا يغلق ولا يغيّر Workflow تلقائيًا', tone: 'ok' },
+    { label: 'بيانات الاختبار', value: 'محصورة في QA/localhost ولا تستخدم كبيانات تشغيلية', tone: 'ok' },
   ];
 
   function renderGovernance(){
