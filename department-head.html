@@ -1210,7 +1210,7 @@
               <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                 <div style="display:flex;align-items:center;gap:8px">
                   <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">{{ bottomCTitle }}</span>
-                  <span onClick="{{ goIncidents }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">عرض الكل</span>
+                  <span onClick="{{ goAttention }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">عرض الكل</span>
                 </div>
                 <div style="flex:1;display:flex;flex-direction:column;gap:7px;margin-top:8px;min-height:104px;overflow:auto">
                   <sc-if value="{{ criticalEmpty }}">
@@ -3238,7 +3238,12 @@ class Component extends DCLogic {
       // already derives authority from the token; keeping the UI role stable
       // also prevents Manager/Department views from visually jumping into a
       // Mobility Head surface when opening the incidents list.
-      goIncidents: () => this.setState({ screen: st.runtimeMode === 'mobility' ? 'missions' : 'incidents' }),
+      goAttention: () => this.setState({
+        screen: mobilityMode && M.some(m => ['بانتظار المركبة','في انتظار إعادة المركبة'].includes(this.missionStatus(m.id)))
+          ? 'missions'
+          : 'incidents'
+      }),
+      goIncidents: () => this.setState({ screen: 'incidents' }),
 
       demoNo: pinned ? pinned.no : 'لا توجد مهمة', demoStatus: pinned ? demoSt : '—', demoCol: demoChip.col, demoBg: demoChip.bg,
       demoMeta: pinned ? (pinned.emp + ' · ' + pinned.dept + (pinnedVeh ? ' · ' + pinnedVeh.no : '')) : 'لا توجد مهمة نشطة حالياً',
