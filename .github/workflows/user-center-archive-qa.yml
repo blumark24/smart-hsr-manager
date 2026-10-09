@@ -18,6 +18,7 @@ jobs:
       - name: Syntax guard
         run: |
           node --check api/admin/employees.js
+          node --check api/admin/users.js
           node --check manager-identity-command-center.js
           node --check manager-phase11d-user-center-enhancements.js
       - name: User Center archive and regression contracts
