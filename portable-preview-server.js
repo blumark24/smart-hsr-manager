@@ -67,6 +67,8 @@ function safeStaticPath(pathname) {
   if (parts.some(x => DENY_FOLDERS.has(x.toLowerCase()))) return null;
   let rel = parts.join('/');
   if (!rel) rel = 'Home.html';
+  // The portable Node bridge is server-only and must never be downloadable.
+  if (rel === 'portable-preview-server.js') return null;
   if (rel === 'lands') rel = 'lands/index.html';
   if (rel.endsWith('/')) rel += 'index.html';
   const ext = path.extname(rel).toLowerCase();
