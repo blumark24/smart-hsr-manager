@@ -2508,6 +2508,11 @@ async function handler(req, res) {
       if (body.employmentStatus !== undefined) {
         const status = cleanString(body.employmentStatus);
         if (!['active','inactive'].includes(status)) return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_employment_status' });
+        // The dedicated municipal User Center lifecycle must disable Auth
+        // and write its audit before the HR status can change.
+        if (status !== (employee.employmentStatus || 'active')) {
+          return sendJson(res, 409, { error: 'employee_lifecycle_action_required' });
+        }
         update.employmentStatus = status;
       }
       if (body.vehicleEligible !== undefined) {
@@ -4224,6 +4229,19 @@ async function handler(req, res) {
           targetRole: record.data.role, targetOrganizationId: record.data.organizationId,
         });
         if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+        if (active) {
+          // An archived employee cannot regain login through the generic
+          // user-account enable action before HR restoration is approved.
+          const employeesSnap = await db.collection('employees')
+            .where('authUid', '==', uid).limit(10).get();
+          if (employeesSnap.docs.some(doc => {
+            const employee = doc.data() || {};
+            return employee.organizationId === record.data.organizationId
+              && employee.employmentStatus === 'inactive';
+          })) {
+            return sendJson(res, 409, { error: 'employee_archived_restore_required' });
+          }
+        }
 
         await auth.updateUser(uid, { disabled: !active });
         await record.ref.set({ active, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
