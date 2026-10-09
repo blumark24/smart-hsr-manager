@@ -2925,16 +2925,7 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
       </p>
       <textarea id="rawObservationInput" rows="5" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-[--color-teal] focus:border-[--color-teal] text-gray-700 shadow-sm" placeholder="وصف اختياري — اتركه فارغًا ليقترح AI مسودة من الصورة" oninput="checkSmartInputState()"></textarea>
 
-      <section id="inspectorAiPreviewRoot" class="inspector-ai-preview hidden" aria-live="polite" aria-label="اقتراحات التحليل الذكي التجريبية">
-        <p id="inspectorAiWarning" class="hidden text-sm font-bold text-amber-700"></p>
-        <div id="inspectorAiSuggestionPanel" class="hidden">
-          <p class="text-xs font-bold">اقتراح وصف — للمراجعة فقط</p>
-          <p id="inspectorAiSuggestionText" class="mt-1 text-sm"></p>
-          <div class="inspector-ai-actions"><button id="inspectorAiUseBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">استخدام</button><button id="inspectorAiEditBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">تعديل</button><button id="inspectorAiIgnoreBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">تجاهل</button></div>
-        </div>
-        <div id="inspectorAiChips" class="inspector-ai-chips"></div>
-        <div id="inspectorAiMultiIssue" class="inspector-ai-multi hidden"></div>
-      </section>
+      <section id="inspectorAiPreviewRoot" class="inspector-ai-preview hidden" aria-live="polite" aria-label="مسودة التحليل الذكي"></section>
 
       <div class="mt-4 input-group-wrapper">
         <div class="input-group p-4 border-2 border-dashed border-gray-300 rounded-xl bg-white hover:border-teal-500 transition-colors">
@@ -2946,15 +2937,6 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
             <button id="getLocationBtn" class="ai-button-primary rounded-full px-4 py-2 text-sm font-bold flex items-center justify-center" onclick="getLocation()" type="button">
               <i data-lucide="map-pin" class="w-4 h-4 ml-2"></i> تحديد الموقع الحالي
             </button>
-            <button id="manualAddressBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button" aria-controls="inspectorManualLocationPanel" aria-expanded="false">إدخال يدوي</button>
-          </div>
-          <div id="inspectorManualLocationPanel" class="inspector-manual-location hidden" aria-label="إدخال الموقع يدوياً">
-            <label>الحي<input id="manualDistrict" autocomplete="address-level3"></label>
-            <label>الشارع<input id="manualStreet" autocomplete="street-address"></label>
-            <label class="wide">معلم قريب<input id="manualLandmark"></label>
-            <label>خط العرض<input id="manualLatitude" inputmode="decimal"></label>
-            <label>خط الطول<input id="manualLongitude" inputmode="decimal"></label>
-            <div class="inspector-manual-location-actions"><button id="manualLocationCancelBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">إلغاء</button><button id="manualLocationApplyBtn" class="ai-button-secondary rounded-full px-3 py-1" type="button">اعتماد المسودة</button></div>
           </div>
           <div class="location-actions">
             <button id="retryLocationBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold hidden" type="button">إعادة المحاولة</button>
@@ -2976,7 +2958,6 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
           <button class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold mt-2 flex items-center justify-center mx-auto" onclick="document.getElementById('fileUploadInput').click()" type="button">
             <i data-lucide="upload" class="w-4 h-4 ml-2"></i> اختيار ملف
           </button>
-          <button id="inspectorAiAnalyzeBtn" class="ai-button-secondary rounded-full px-4 py-2 text-sm font-bold mt-2 hidden" type="button" disabled>تحليل ذكي</button>
         </div>
       </div>
 
