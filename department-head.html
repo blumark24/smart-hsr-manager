@@ -865,7 +865,7 @@
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:8px">
+    <div class="hsr-shell-center-zone">
       <div class="dh-weather-chip" aria-label="حالة الطقس">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
           <path d="M17.5 19H7a4 4 0 0 1-.6-7.96A6 6 0 0 1 18 9.5 4.5 4.5 0 0 1 17.5 19Z"></path>
@@ -912,25 +912,11 @@
         </sc-if>
       </div>
 
-      <div style="display:flex;align-items:center;gap:11px">
-        <div style="text-align:right;display:var(--brandTxt,block);padding-right:11px;border-right:1px solid var(--div,rgba(122,164,224,0.14))">
-          <div style="font-size:13px;font-weight:700;color:var(--hdrTx,#ffffff)">{{ productAreaTitle }}</div>
-          <div style="font-size:9.5px;color:var(--hdrTx3,#c7e0d4);margin-top:2px">{{ orgName }}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:9px">
-          <div style="text-align:left;display:var(--brandTxt,block)">
-            <div dir="ltr" style="display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:700;letter-spacing:2.5px;line-height:1">
-              <span style="color:var(--logoNavyH,#e9f1fb)">SMART</span><span style="color:var(--logoGreenH,#149c2b)">HSR</span>
-            </div>
-            <div dir="ltr" style="font-size:7px;letter-spacing:1.6px;color:var(--hdrTx3,#c7e0d4);margin-top:3px">SMART MUNICIPAL PLATFORM</div>
-          </div>
-          <svg width="38" height="42" viewBox="0 0 76 84" fill="none" style="flex:none">
-            <path d="M38 4a30 30 0 1 0 0 60 30 30 0 0 0 0-60z" fill="none" stroke="var(--logoNavy,#dbe6f5)" stroke-width="7"></path>
-            <rect x="26" y="30" width="7.5" height="22" rx="1.5" fill="var(--logoNavy,#dbe6f5)"></rect>
-            <rect x="35.5" y="20" width="7.5" height="32" rx="1.5" fill="var(--logoNavy,#dbe6f5)"></rect>
-            <rect x="45" y="26" width="7.5" height="26" rx="1.5" fill="var(--logoGreen,#2aa84a)"></rect>
-            <path d="M12 46 38 80 64 46 51 46 38 63 25 46z" fill="var(--logoGreen,#2aa84a)"></path>
-          </svg>
+      <div class="hsr-shell-brand-zone">
+        <img class="hsr-shell-brand-logo" src="/smart-hsr-signature-transparent.png" alt="SMART HSR — سمارت حصر">
+        <div class="hsr-shell-brand-copy">
+          <strong>{{ productAreaTitle }}</strong>
+          <span>SMART MOBILITY CENTER</span>
         </div>
       </div>
     </div>
@@ -940,18 +926,18 @@
 
     <aside class="dh-sidebar" style="display:var(--sbDisp,flex);width:var(--sbW,224px);flex:none;flex-direction:column;gap:12px">
       <div class="dh-glass dh-sidebar-panel" style="padding:12px 10px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--sbSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:3px">
-        <div style="display:flex;align-items:center;gap:9px;padding:2px 3px 11px;margin-bottom:5px;border-bottom:1px solid var(--sbDiv,rgba(122,164,224,0.12))">
-          <div style="flex:1;text-align:right;display:var(--sbLabel,block);min-width:0">
-            <div style="font-size:11.5px;font-weight:600;color:var(--sbTx2,#cfe0f2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleTitle }}</div>
-            <div style="font-size:9.5px;color:var(--sbTx3,#6f8299);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ roleSub }}</div>
+        <div class="hsr-side-identity">
+          <div class="hsr-side-identity-copy" style="display:var(--sbLabel,flex)">
+            <strong>{{ productAreaTitle }}</strong>
+            <span>SMART HSR · MUNICIPAL OPERATIONS</span>
           </div>
-          <button onClick="{{ tSb }}" data-f="1" aria-label="طي القائمة" aria-expanded="{{ sidebarExpanded }}" style="width:26px;height:26px;flex:none;border-radius:8px;background:var(--sbCtl,rgba(20,32,54,0.6));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14));color:var(--sbTx3,#7d8ea6);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <button class="hsr-side-rail-toggle" onClick="{{ tSb }}" data-f="1" aria-label="فتح أو طي القائمة الجانبية" aria-expanded="{{ sidebarExpanded }}" title="فتح أو طي القائمة">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
         </div>
         <sc-for list="{{ nav }}" as="n" hint-placeholder-count="9">
           <button type="button" class="dh-nav-item" onClick="{{ n.on }}" data-f="1" aria-label="{{ n.label }}" aria-current="{{ n.current }}" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;font-size:12px;cursor:pointer;color:{{ n.tx }};background:{{ n.bg }};border:1px solid {{ n.bd }}">
-            <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ n.dot }}"></span>
+            <svg class="hsr-nav-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="{{ n.iconPath }}"></path></svg>
             <span style="flex:1;display:var(--sbLabel,block);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.label }}</span>
             <span style="display:var(--sbLabel,block);font-size:9px;font-weight:600;color:{{ n.tagTx }};background:{{ n.tagBg }};padding:2px 6px;border-radius:5px">{{ n.tag }}</span>
           </button>
@@ -2979,7 +2965,7 @@ class Component extends DCLogic {
     const productCode = mobilityMode ? 'SMART HSR · SMART MOBILITY' : 'SMART HSR · FIELD SURVEY';
     const gateMsg = st.authPending ? 'جارٍ التحقق من صلاحية الدخول…' : ('لا تملك صلاحية للوصول إلى ' + productAreaTitle + '.');
     const vars = Object.assign({}, day ? this.DAY : this.NIGHT, this.BP[st.bp] || {});
-    if (st.sb && st.bp !== 'tabP' && st.bp !== 'mob') { vars['--sbW'] = '64px'; vars['--sbLabel'] = 'none'; }
+    if (st.sb && st.bp !== 'tabP' && st.bp !== 'mob') { vars['--sbW'] = '72px'; vars['--sbLabel'] = 'none'; }
     if (st.role === 'employee') {
       vars['--sbDisp'] = 'none';
       vars['--mobNav'] = st.bp === 'mob' ? 'flex' : 'none';
@@ -2995,7 +2981,7 @@ class Component extends DCLogic {
     const navDefs = this.navFor(st.role);
     const nav = navDefs.map(n => {
       const a = st.screen === n.id;
-      return { label: n.label, tag: n.tag || '', current: a ? 'page' : '', dot: a ? (day ? '#8df0b7' : '#43d98b') : (day ? 'rgba(226,248,236,0.40)' : 'rgba(122,164,224,0.25)'),
+      return { label: n.label, tag: n.tag || '', current: a ? 'page' : '', iconPath: this.navIconPath(n.id), dot: a ? (day ? '#8df0b7' : '#43d98b') : (day ? 'rgba(226,248,236,0.40)' : 'rgba(122,164,224,0.25)'),
         tx: a ? 'var(--navTx,#eaf4ff)' : (day ? 'var(--sbTx2,#e4f4eb)' : 'var(--tx2,#9db2cc)'),
         bg: a ? 'var(--navBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)))' : 'transparent',
         bd: a ? 'var(--accBd,rgba(76,201,240,0.4))' : 'transparent',
@@ -3287,6 +3273,26 @@ class Component extends DCLogic {
     if (r === 'dept') return [{ id: 'deptops', label: 'مركز قيادة القسم' }, { id: 'missions', label: 'التشوه البصري' }, { id: 'incidents', label: 'البلاغات العامة' }, { id: 'audit', label: 'سجل القسم' }];
     if (r === 'admin') return [{ id: 'approvals', label: 'طلبات الاعتماد' }, { id: 'audit', label: 'سجل الاعتمادات' }, { id: 'settings', label: 'سياسة الاعتماد' }];
     return [{ id: 'emp', label: 'عملياتي' }];
+  }
+
+  navIconPath(id) {
+    const icons = {
+      exec:'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',
+      ops:'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',
+      deptops:'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',
+      missions:'M8 6h12 M8 12h12 M8 18h12 M4 6h.01 M4 12h.01 M4 18h.01',
+      fleet:'M3 15V9l2-4h12l4 4v6 M5 15h14 M6 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4 M18 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4',
+      handover:'M7 8h10 M7 8l3-3 M7 8l3 3 M17 16H7 M17 16l-3-3 M17 16l-3 3',
+      map:'M9 18 3 21V6l6-3 6 3 6-3v15l-6 3-6-3z M9 3v15 M15 6v15',
+      incidents:'M12 3 2 20h20L12 3z M12 9v4 M12 17h.01',
+      reports:'M5 20V10 M12 20V4 M19 20v-7',
+      audit:'M12 8v5l3 2 M3 12a9 9 0 1 0 3-6.7 M3 4v5h5',
+      settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M4 12h2 M18 12h2 M12 4v2 M12 18v2',
+      committees:'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6 M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6 M3 20c0-4 2-6 5-6s5 2 5 6 M11 20c0-4 2-6 5-6s5 2 5 6',
+      approvals:'M9 11l2 2 4-4 M5 3h14v18H5z',
+      emp:'M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M4 21c.8-4.4 3.5-7 8-7s7.2 2.6 8 7'
+    };
+    return icons[id] || icons.ops;
   }
 
   screenDef() {
