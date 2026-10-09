@@ -15,7 +15,8 @@ test('Mobility uses SMART HSR Unified Municipal Shell v1', () => {
   assert.match(page, /smart-hsr-unified-shell\.css/);
   assert.match(page, /SMART HSR VERIFIED IDENTITY/);
   assert.match(page, /data-smart-hsr-workspace-trigger/);
-  assert.match(page, /Municipal Operations System · Connected/);
+  assert.match(page, /SMART MUNICIPAL PLATFORM/);
+  assert.match(page, /النظام متصل/);
 });
 
 test('Unified identity menu carries institutional context and logout', () => {
