@@ -72,7 +72,7 @@ test('static file policy blocks hidden, server, config, and test paths', () => {
   for (const p of [
     '/api/admin/users.js','/.github/workflows/test.yml','/.env',
     '/package.json','/firebase.json','/firestore.rules','/test/suite.js',
-    '/node_modules/dependency.js','/portable-preview-server.js.map',
+    '/node_modules/dependency.js','/portable-preview-server.js','/portable-preview-server.js.map',
     '/server.py','/%00/private.js','/../../api/_lib/firebaseAdmin.js',
   ]) assert.equal(safeStaticPath(p),null,p);
   assert.ok(safeStaticPath('/manager.html'));
