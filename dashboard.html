@@ -3159,7 +3159,6 @@ main button:not(.ai-button-primary):not(.personal-map-open):not(.mini-twin-open)
 </div>
 
 <script src="modal-script.js"></script>
-<script src="preview-only/inspector-human-review-preview.js"></script>
 
 <!-- GEO STATUS -->
 <script>
@@ -6383,15 +6382,9 @@ function startApp(){
   lucide.createIcons();
 }
 
-// Explicit localhost/Preview opt-in only. The controller uses a deterministic
-// local fixture and cannot call a provider, Firebase, or the observation save path.
-const inspectorHumanReviewPreview=window.SmartHsrInspectorPreview?.createController({
-  document,
-  location:window.location,
-  confirmReplace:message=>window.confirm(message),
-  applyManualLocation:draft=>window.applyInspectorManualLocationPreview(draft)
-});
-inspectorHumanReviewPreview?.bind();
+// Final delivery runtime is real-provider only. Local fixture controllers
+// live exclusively in the isolated test/browser harness and are never loaded
+// by the authenticated Inspector workspace.
 </script>
 
 
