@@ -1,0 +1,71 @@
+name: SMART HSR Delivery Closure Gate
+
+on:
+  push:
+    branches:
+      - design/unified-municipal-shell-v1
+  workflow_dispatch:
+
+jobs:
+  closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax integrity
+        run: |
+          node --check field-head-runtime.js
+          node --check mobility-runtime.js
+          node --check manager-mobility-adapter.js
+          node --check workspace-access.js
+          node --check service-switcher.js
+
+      - name: Unified shell and responsive contract
+        run: |
+          node --test test/unified-municipal-shell-v1.test.js
+          node --test test/final-release-responsive-contract.test.js
+
+      - name: Mobility command center delivery closure
+        run: |
+          node --test test/mobility-command-center-delivery-closure.test.js
+          node --test test/mobility-command-center-v2.test.js
+          node --test test/mobility-role-runtime.test.js
+          node --test test/mobility-integration-regression.test.js
+          node --test test/mobility-workflow-policies.test.js
+          node --test test/mobility-workflow-server-bridge.test.js
+          node --test test/manager-mobility-adapter.test.js
+
+      - name: Field routing and workspace contract
+        run: |
+          node --test test/field-head-auth-contract.test.js
+          node --test test/unified-workspace-access.test.js
+          node --test test/field-head-operational-map.test.js
+          node --test test/field-head-user-center-provisioning.test.js
+          node --test test/department-head-framework.test.js
+
+      - name: Lands regression guard
+        run: |
+          node --test test/manager-lands-sso.test.js
+          node --test test/embedded-lands-preview.test.js
+
+      - name: Security and tenant isolation contract
+        run: |
+          npm run test:rules
+          node --test test/portal-session-isolation.test.js
+
+      - name: Final integration contract
+        run: node --test test/final-full-project-integration-contract.test.js
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
