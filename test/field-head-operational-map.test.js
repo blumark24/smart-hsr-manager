@@ -80,7 +80,17 @@ test('department map suppresses fleet schematic semantics and fake pins', () => 
 
 
 test('refresh repaints trusted markers after live command payload arrives', () => {
-  assert.match(runtime, /requestAnimationFrame\(\(\) => renderObservationMarkers\(component\)\)/);
+  assert.match(runtime, /requestAnimationFrame\(\(\) => \{/);
+  assert.match(runtime, /renderObservationMarkers\(component\)/);
+});
+
+test('Field Department Head receives and applies trusted municipality map context', () => {
+  assert.match(usersApi, /mapContext: safeMobilityMapContext\(/);
+  assert.match(usersApi, /organizationSnap\.exists \? \(organizationSnap\.data\(\) \|\| \{\}\) : \{\}/);
+  assert.match(runtime, /mapContext: visual && visual\.mapContext \? visual\.mapContext : null/);
+  assert.match(runtime, /component\.applyMunicipalMapContext\?\.\(true\)/);
+  assert.match(page, /this\.state\.runtimeMode!=='mobility' && this\.state\.role!=='dept'/);
+  assert.match(page, /componentDidUpdate\(\) \{ this\.bindCanvas\(\); this\.bindRealMap\(\); this\.applyRealMapMode\(\); this\.applyMunicipalMapContext\(\);/);
 });
 
 test('map supports read-only recovery for legacy swapped Saudi coordinates without mutating observations', () => {
