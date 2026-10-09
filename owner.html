@@ -600,8 +600,8 @@
           <h2 class="text-xl font-extrabold title">Smart HSR — مركز قيادة الذكاء الاصطناعي</h2>
           <p class="muted text-xs mt-1">حالة الأنظمة الذكية ومزوّدي الرؤية الاصطناعية داخل المنصة.</p>
           <div class="flex items-center gap-3 mt-2 flex-wrap">
-            <span class="status-chip"><span class="status-dot pending"></span> غير متصل بمزود ذكاء اصطناعي حقيقي</span>
-            <span class="muted text-xs">آخر تقييم: لا تتوفر بيانات حية</span>
+            <span class="status-chip">المزود يُحسم خادميًا عند الطلب</span>
+            <span class="muted text-xs">لا توجد Telemetry حية للمزود في شاشة المالك؛ لا يتم اختلاق حالة اتصال.</span>
           </div>
         </div>
 
@@ -788,7 +788,8 @@
       navigate: (route) => router.navigate(route),
     });
 
-    // وحدة مركز قيادة الذكاء الاصطناعي (AI) — محتوى ثابت وصادق، بلا اتصال حقيقي بأي مزود بعد.
+    // وحدة مركز قيادة الذكاء الاصطناعي (AI) — تعرض حقائق البنية فقط؛
+    // حالة المزود الحية لا تُختلق داخل المتصفح وتُحسم في /api/ai/analyze.
     const aiModule = initAIModule({
       navigate: (route) => router.navigate(route),
       showNotif: (text) => showNotif(text),
