@@ -1,0 +1,205 @@
+name: SMART HSR Final Candidate Full Acceptance (Preview Only)
+on:
+  push:
+    branches:
+      - feat/user-center-archive-v1-20261010
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  municipality-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax integrity
+        run: |
+          node --check api/admin/users.js
+          node --check api/admin/employees.js
+          node --check api/_lib/authz.js
+          node --check api/_lib/embeddedLandsRuntime.js
+          node --check field-head-runtime.js
+          node --check manager-lands-adapter.js
+          node --check manager-mobility-adapter.js
+          node --check admin-affairs-runtime.js
+          node --check contractors-registry-runtime.js
+          node --check manager-phase11c-user-center-core.js
+          node --check manager-phase11c-user-center-dialogs.js
+          node --check manager-phase11d-user-center-enhancements.js
+          node --check owner-users.js
+          node --check owner-invoices.js
+          node --check api/_lib/ownerOpsSupport.js
+          node --check public-enhancements.js
+
+      - name: Final responsive contract
+        run: node --test test/final-release-responsive-contract.test.js
+
+      - name: Institutional identity and user center
+        run: |
+          node --test test/institutional-path-foundation.test.js
+          node --test test/unified-identity-service-switcher.test.js
+          node --test test/user-center-compact-grid-email-performance.test.js
+          node --test test/user-center-edit-window-layout.test.js
+          node --test test/user-center-employee-profile-email-endpoint-regression.test.js
+          node --test test/user-center-runtime-hang-regression.test.js
+          node --test test/user-center-canonical-field-head-regression.test.js
+          node --test test/municipality-admin-polish-regression.test.js
+          node --test test/phase19-1-institutional-structure-closure.test.js
+          node --test test/phase19-2-field-role-matrix.test.js
+          node --test test/phase19-2-lands-role-matrix.test.js
+          node --test test/phase19-2-mobility-role-matrix.test.js
+          node --test test/phase19-2-admin-affairs-role-matrix.test.js
+          node --test test/phase19-2-contracts-role-matrix.test.js
+
+      - name: Owner operations closure
+        run: |
+          node --test test/firebase-runtime-config.test.js
+          node --test test/owner-operations-closure.test.js
+
+      - name: Field Survey acceptance
+        run: |
+          node --test test/department-head-framework.test.js
+          node --test test/visual-distortion-department-head.test.js
+          node --test test/visual-distortion-lifecycle.integration.test.js
+          node --test test/field-head-evidence-access.test.js
+          node --test test/field-head-operational-map.test.js
+          node --test test/field-head-user-center-provisioning.test.js
+          node --test test/phase19-3-inspector-record.test.js
+
+      - name: Smart Lands acceptance
+        run: |
+          node --test test/lands-bootstrap.test.js
+          node --test test/lands-bridge.test.js
+          node --test test/lands-manager-auto-bootstrap.test.js
+          node --test test/lands-sync-reconciliation.test.js
+          node --test test/manager-lands-digital-record.test.js
+          node --test test/manager-lands-gis.test.js
+          node --test test/manager-lands-bridge-integration.test.js
+          node --test test/manager-lands-sso.test.js
+          node --test test/embedded-lands-preview.test.js
+          node --test test/manager-service-entitlements.test.js
+
+      - name: Smart Mobility acceptance
+        run: |
+          node --test test/field-head-mobility-integration.test.js
+          node --test test/shared-mobility-workflow.test.js
+          node --test test/mobility-workflow-server-bridge.test.js
+          node --test test/vehicle-authorization-workflow.test.js
+          node --test test/mobility-integration-regression.test.js
+          node --test test/mobility-role-runtime.test.js
+          node --test test/manager-mobility-adapter.test.js
+          node --test test/mobility-workflow-policies.test.js
+          node --test test/unified-workspace-access.test.js
+
+      - name: Administrative Affairs acceptance
+        run: node --test test/administrative-affairs-v1.test.js
+
+      - name: Contractors registry acceptance
+        run: node --test test/contractors-registry-v1.test.js
+
+      - name: Municipality Manager current architecture
+        run: |
+          node --test test/municipality-manager-current-architecture.test.js
+          node --test test/manager-component-did-update-regression.test.js
+          node --test test/phase13d1-manager-shell-navigation-stability.test.js
+
+      - name: Portal and multi-tenant isolation
+        run: |
+          node --test test/portal-session-isolation.test.js
+          npx firebase emulators:exec --project demo-smart-hsr-tests --only firestore "node --test test/phase25-multi-org-isolation.test.js"
+
+      - name: Security rules regression
+        run: npm run test:rules
+
+      - name: New archive center and guarded lifecycle
+        run: |
+          node --test test/user-center-archive-v1.test.js
+          node --test test/identity-command-center.test.js
+
+      - name: Final full-project integration contract
+        run: node --test test/final-full-project-integration-contract.test.js
+
+      - name: Spatial closure acceptance
+        run: |
+          node --test test/geo-provider-contract.test.js
+          node --test test/geo-core-browser-bundle.test.js
+          node --test test/phase6-spatial-restoration.test.js
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+
+  delivery-closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax integrity
+        run: |
+          node --check field-head-runtime.js
+          node --check mobility-runtime.js
+          node --check manager-mobility-adapter.js
+          node --check workspace-access.js
+          node --check service-switcher.js
+
+      - name: Unified shell and responsive contract
+        run: |
+          node --test test/unified-municipal-shell-v1.test.js
+          node --test test/final-release-responsive-contract.test.js
+
+      - name: Mobility command center delivery closure
+        run: |
+          node --test test/mobility-command-center-delivery-closure.test.js
+          node --test test/mobility-command-center-v2.test.js
+          node --test test/mobility-role-runtime.test.js
+          node --test test/mobility-integration-regression.test.js
+          node --test test/mobility-workflow-policies.test.js
+          node --test test/mobility-workflow-server-bridge.test.js
+          node --test test/manager-mobility-adapter.test.js
+
+      - name: Field routing and workspace contract
+        run: |
+          node --test test/field-head-auth-contract.test.js
+          node --test test/unified-workspace-access.test.js
+          node --test test/field-head-operational-map.test.js
+          node --test test/field-head-user-center-provisioning.test.js
+          node --test test/department-head-framework.test.js
+
+      - name: Lands regression guard
+        run: |
+          node --test test/manager-lands-sso.test.js
+          node --test test/embedded-lands-preview.test.js
+
+      - name: Security and tenant isolation contract
+        run: |
+          npm run test:rules
+          node --test test/portal-session-isolation.test.js
+
+      - name: Final integration contract
+        run: node --test test/final-full-project-integration-contract.test.js
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
