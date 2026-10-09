@@ -1,0 +1,26 @@
+# Isolated, free, preview-only host for the exact SMART HSR repository.
+# No Production, DNS, Firebase credentials, or live employee data changes.
+services:
+  - type: web
+    name: smart-hsr-sandbox-preview
+    runtime: node
+    plan: free
+    repo: https://github.com/blumark24/smart-hsr-manager
+    branch: deploy/render-free-preview-v1
+    autoDeployTrigger: off
+    buildCommand: npm ci --omit=dev
+    startCommand: node portable-preview-server.js
+    healthCheckPath: /__preview/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VERCEL_ENV
+        value: preview
+      - key: SMART_HSR_PREVIEW_MODE
+        value: staging
+      - key: PREVIEW_API_ENABLED
+        value: "false"
+# For real staged UAT, set PREVIEW_API_ENABLED=true ONLY after provisioning
+# a separate nonproduction Firebase project, then set FIREBASE_WEB_CONFIG and
+# FIREBASE_SERVICE_ACCOUNT exclusively in Render Secrets. Never commit keys,
+# and never reuse the Production Firebase service account here.
