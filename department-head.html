@@ -893,7 +893,7 @@
         <sc-if value="{{ notifOpen }}">
           <div style="position:absolute;top:44px;left:0;width:316px;z-index:60;border-radius:14px;background:var(--pop,rgba(12,20,36,0.98));border:1px solid var(--drawerBd,rgba(122,164,224,0.18));box-shadow:0 26px 56px -20px rgba(0,0,0,0.8);overflow:hidden;animation:mRise .16s ease-out">
             <div style="display:flex;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--thBd,rgba(122,164,224,0.13))">
-              <span style="flex:1;font-size:12px;font-weight:600;color:var(--hdrTx,#e9f1fb)">تنبيهات الحصر الميداني</span>
+              <span style="flex:1;font-size:12px;font-weight:600;color:var(--hdrTx,#e9f1fb)">تنبيهات {{ productAreaTitle }}</span>
               <span onClick="{{ readAll }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">تعليم الكل</span>
             </div>
             <div style="max-height:330px;overflow:auto">
@@ -911,13 +911,13 @@
           </div>
         </sc-if>
       </div>
+    </div>
 
-      <div class="hsr-shell-brand-zone">
-        <img class="hsr-shell-brand-logo" src="/smart-hsr-signature-transparent.png" alt="SMART HSR — سمارت حصر">
-        <div class="hsr-shell-brand-copy">
-          <strong>{{ productAreaTitle }}</strong>
-          <span>SMART MOBILITY CENTER</span>
-        </div>
+    <div class="hsr-shell-brand-zone">
+      <img class="hsr-shell-brand-logo" src="/smart-hsr-signature-transparent.png" alt="SMART HSR — سمارت حصر">
+      <div class="hsr-shell-brand-copy">
+        <strong>{{ productAreaTitle }}</strong>
+        <span>SMART MOBILITY CENTER</span>
       </div>
     </div>
   </header>
