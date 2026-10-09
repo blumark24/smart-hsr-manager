@@ -1,0 +1,38 @@
+name: SMART HSR Portable Preview Acceptance
+on:
+  push:
+    branches:
+      - deploy/render-free-preview-v1
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout isolated preview branch
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Clean installation
+        run: npm ci
+      - name: Parse preview adapter and preserved API
+        run: |
+          node --check portable-preview-server.js
+          node --check api/admin/users.js
+          node --check api/admin/employees.js
+          node --check api/organization/context.js
+      - name: Safe preview HTTP and routing tests
+        run: node --test test/portable-preview-server.test.js
+      - name: Existing archive center acceptance
+        run: node --test test/user-center-archive-v1.test.js
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: No Production deployment or DNS changes
+        run: |
+          test "$GITHUB_REF_NAME" = "deploy/render-free-preview-v1"
+          ! grep -Eq 'target: production|plan: (starter|standard|pro)' render.yaml
