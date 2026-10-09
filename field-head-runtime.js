@@ -69,18 +69,23 @@
     const db = getFirestore(app);
     onAuthStateChanged(auth, async user => {
       if (!user) { location.replace('login.html'); return; }
+      try {
       const snap = await getDoc(doc(db,'users',user.uid));
       if (!snap.exists()) { await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
       const data = snap.data() || {};
       const mobilityRole = data?.mobilityAccess?.enabled === true ? data.mobilityAccess.role : null;
       const institutionalRole = String(data.institutionalRole || '');
-      const administration = String(data.administration || '');
-      const dept = String(data.department || '');
-      const legacyFieldHead = mobilityRole === 'department_head' && /الحصر|ميداني|field/i.test(administration || dept);
-      const institutionalFieldHead = institutionalRole === 'department_head' && /الحصر|ميداني|field/i.test(administration || dept);
-      if (data.active === false || (!institutionalFieldHead && !legacyFieldHead) || !dept || !data.organizationId) {
-        // Unified identity: only an invalid account ends the session. A valid
-        // account that lacks THIS workspace goes to the workspace chooser.
+      const administration = String(data.administration || '').trim();
+      const dept = String(data.department || '').trim();
+      const fieldScope = dept || administration;
+      const legacyFieldHead = mobilityRole === 'department_head' && /الحصر|ميداني|field/i.test(fieldScope);
+      const institutionalFieldHead = institutionalRole === 'department_head' && /الحصر|ميداني|field/i.test(fieldScope);
+      if (data.active === false || (!institutionalFieldHead && !legacyFieldHead) || !fieldScope || !data.organizationId) {
+        // Keep the exact same authorization contract as workspace-access.js:
+        // a canonical department head may derive the Field workspace from
+        // administration OR department. Requiring department alone here caused
+        // an authorized Field Head to bounce workspace -> department-head ->
+        // workspace when HR stored only administration.
         if (data.active !== false && String(data.organizationId || '').trim()) { location.replace('workspace.html'); return; }
         await signOut(auth).catch(()=>{});
         location.replace('login.html');
@@ -88,7 +93,7 @@
       }
       currentUser = user;
       state.organizationId = data.organizationId;
-      state.department = dept;
+      state.department = fieldScope;
       if (component) {
         component.setState({
           authPending:false,
@@ -96,10 +101,14 @@
           screen:'deptops',
           orgName:data.organizationName || 'المؤسسة المسجلة',
           sessionName:data.name || user.email || 'رئيس قسم الحصر الميداني',
-          department:dept,
+          department:fieldScope,
           orgId:data.organizationId
         });
         await refresh();
+      }
+      } catch (error) {
+        console.error('[SMART HSR][FIELD_AUTH]', error);
+        if (component) component.setState({authPending:false, role:null});
       }
     });
   }
