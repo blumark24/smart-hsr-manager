@@ -18,6 +18,11 @@ const authz = read('api/_lib/authz.js');
 const workspaceAccess = read('workspace-access.js');
 const productContract = read('platform/contracts/product-entitlement-contract.js');
 const landsContext = read('api/organization/context.js');
+const landsPage = read('lands/index.html');
+const inspectorDashboard = read('dashboard.html');
+const storageAdapter = read('storage-adapter.js');
+const operationalMap = read('operational-map.html');
+const activeVisionProvider = read('platform/ai/server/active-vision-provider-selector.js');
 
 test('public site enters SMART HSR only through the hardened gateway', () => {
   assert.match(publicEnhancements, /location\.href\s*=\s*['"]Home\.html['"]/);
@@ -112,4 +117,35 @@ test('disabled or malformed Mobility entitlement fails closed', () => {
   assert.match(workspaceAccess, /hasOwn\(d, ['"]mobilityAccess['"]\)/);
   assert.match(workspaceAccess, /a\.enabled === true/);
   assert.match(workspaceAccess, /return enabled && MOBILITY_ROLES\.includes\(a\.role\) \? a\.role : null/);
+});
+
+
+test('final delivery runtime is real-data only and keeps fixtures outside authenticated surfaces', () => {
+  // Inspector uses the real authenticated AI gateway; the local fixture
+  // controller is not loaded by dashboard.html.
+  assert.match(inspectorDashboard, /input:'\/api\/ai\/analyze'/);
+  assert.doesNotMatch(inspectorDashboard, /preview-only\/inspector-human-review-preview\.js/);
+  assert.doesNotMatch(inspectorDashboard, /id="inspectorAiAnalyzeBtn"/);
+  assert.doesNotMatch(inspectorDashboard, /id="manualAddressBtn"/);
+
+  // Lands Review Mode can only be activated on explicit localhost
+  // development, never on Vercel Preview or Production.
+  assert.match(landsPage, /const localOnly = host === 'localhost' \|\| host === '127\.0\.0\.1' \|\| host === '::1'/);
+  assert.match(landsPage, /return localOnly && params\.get\("review"\) === "1"/);
+
+  // Legacy LOCAL_DEMO connector state is ignored on hosted browser runtime,
+  // forcing the real authenticated server upload fallback instead.
+  assert.match(storageAdapter, /function localDemoRuntimeAllowed\(\)/);
+  assert.match(storageAdapter, /if \(connector\?\.type === LOCAL_DEMO_TYPE && !localDemoRuntimeAllowed\(\)\) return null/);
+  assert.match(storageAdapter, /if \(connector\.type === LOCAL_DEMO_TYPE && !localDemoRuntimeAllowed\(\)\) \{/);
+  assert.match(storageAdapter, /return fallbackUpload\(blob\)/);
+
+  // Procedural sandbox basemap remains localhost-only; hosted maps use real
+  // street/satellite providers.
+  assert.match(operationalMap, /const useLocalBasemap = isLocalHost && new URLSearchParams\(location\.search\)\.get\('localBasemap'\) === '1'/);
+
+  // The application-facing selector registers only real external providers.
+  assert.match(activeVisionProvider, /gemini: Object\.freeze\(\{ kind: 'GEMINI_COMPATIBLE'/);
+  assert.match(activeVisionProvider, /openai: Object\.freeze\(\{ kind: 'OPENAI_COMPATIBLE'/);
+  assert.doesNotMatch(activeVisionProvider, /mock-ai-provider|kind:\s*'MOCK'/);
 });
