@@ -930,7 +930,7 @@
 
   <div style="display:flex;gap:14px;align-items:stretch;flex:1;min-height:0">
 
-    <aside class="dh-sidebar" style="display:var(--sbDisp,flex);width:var(--sbW,224px);flex:none;flex-direction:column;gap:12px">
+    <aside class="dh-sidebar" data-collapsed="{{ sidebarCollapsed }}" style="display:var(--sbDisp,flex);width:var(--sbW,224px);flex:none;flex-direction:column;gap:12px">
       <div class="dh-glass dh-sidebar-panel" style="padding:12px 10px;border-radius:16px;background:var(--sbBg,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13));box-shadow:var(--sbSh,0 20px 44px -26px rgba(0,0,0,0.95));display:flex;flex-direction:column;gap:3px">
         <div class="hsr-side-identity">
           <div class="hsr-side-identity-copy" style="display:var(--sbLabel,flex)">
@@ -1991,7 +1991,7 @@ class Component extends DCLogic {
     clearInterval(this._iv); if (this._ro) this._ro.disconnect();
     try { if (this._realMap) this._realMap.remove(); } catch (_) {}
   }
-  componentDidUpdate() { this.bindCanvas(); this.bindRealMap(); this.applyRealMapMode(); this.syncMobilityRealMap(); this.draw(); this.drawMini(); }
+  componentDidUpdate() { this.bindCanvas(); this.bindRealMap(); this.applyRealMapMode(); this.applyMunicipalMapContext(); this.syncMobilityRealMap(); this.draw(); this.drawMini(); }
 
 
   bindRealMap() {
@@ -2072,7 +2072,7 @@ class Component extends DCLogic {
 
   applyMunicipalMapContext(force=false) {
     const map=this._realMap;
-    if(!map || this.state.runtimeMode!=='mobility') return;
+    if(!map || (this.state.runtimeMode!=='mobility' && this.state.role!=='dept')) return;
     const ctx=this.state.mapContext || {};
     const center=ctx.mapCenter;
     const bounds=ctx.mapBounds;
@@ -2571,8 +2571,8 @@ class Component extends DCLogic {
   BP = {
     xl: { '--pgMaxW': '1600px', '--kpiCols': 'repeat(5,1fr)' },
     lg: { '--pgMaxW': '100%', '--sbW': '212px', '--sideW': '262px', '--kpiCols': 'repeat(5,1fr)' },
-    md: { '--pgMaxW': '100%', '--sbW': '64px', '--sbLabel': 'none', '--sideW': '244px', '--kpiCols': 'repeat(5,1fr)', '--metaDisp': 'none', '--botCols': 'repeat(3,1fr)', '--repCols': 'repeat(4,1fr)', '--repCols2': 'repeat(3,1fr)' },
-    tabL: { '--pgMaxW': '100%', '--sbW': '64px', '--sbLabel': 'none', '--sideW': '236px', '--kpiCols': 'repeat(4,1fr)', '--metaDisp': 'none', '--midH': '400px', '--twinH': '400px', '--botCols': 'repeat(3,1fr)', '--brandTxt': 'none', '--repCols': 'repeat(4,1fr)', '--repCols2': 'repeat(2,1fr)', '--tSearch': '190px' },
+    md: { '--pgMaxW': '100%', '--sbW': '212px', '--sideW': '244px', '--kpiCols': 'repeat(5,1fr)', '--metaDisp': 'none', '--botCols': 'repeat(3,1fr)', '--repCols': 'repeat(4,1fr)', '--repCols2': 'repeat(3,1fr)' },
+    tabL: { '--pgMaxW': '100%', '--sbW': '196px', '--sideW': '236px', '--kpiCols': 'repeat(4,1fr)', '--metaDisp': 'none', '--midH': '400px', '--twinH': '400px', '--botCols': 'repeat(3,1fr)', '--brandTxt': 'none', '--repCols': 'repeat(4,1fr)', '--repCols2': 'repeat(2,1fr)', '--tSearch': '190px' },
     tabP: { '--pgMaxW': '100%', '--sbDisp': 'none', '--mobNav': 'flex', '--metaDisp': 'none', '--kpiCols': 'repeat(3,1fr)',
       '--midWrap': 'wrap', '--twinBasis': '100%', '--twinH': '380px', '--midH': 'auto', '--sideW': '100%', '--botCols': 'repeat(2,1fr)', '--brandTxt': 'none',
       '--repCols': 'repeat(2,1fr)', '--repCols2': 'repeat(2,1fr)', '--hoCols': '1fr', '--setCols': '1fr', '--tSearch': '100%', '--thead': 'none', '--rowWrap': 'wrap' },
@@ -3104,7 +3104,7 @@ class Component extends DCLogic {
       rootRef: el => { this.root = el; }, cvRef: el => { this.cv = el; },
       gateShow, gateMsg,
       themeVars: vars, themeName: st.theme, dayActive: day, nightActive: !day,
-      mobileNavExpanded: !!st.mobNavOpen, notificationsExpanded: !!st.notifOpen, layersExpanded: !!st.layersOpen, sidebarExpanded: !st.sb,
+      mobileNavExpanded: !!st.mobNavOpen, notificationsExpanded: !!st.notifOpen, layersExpanded: !!st.layersOpen, sidebarExpanded: !st.sb, sidebarCollapsed: !!st.sb,
       orgName: st.orgName || 'اسم البلدية', orgMono: (st.orgName || 'ب').trim().charAt(0) || 'ب',
       productAreaTitle, activeProductName, activeProductArea, productCode,
       nav: nav, roleTitle: this.roleTitle(), roleSub: this.roleSub(),
