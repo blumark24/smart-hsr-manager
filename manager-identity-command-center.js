@@ -462,7 +462,13 @@
   function render(root,app,directory,reload){
     current=directory;refresh=reload;host=root;surface=app;root.classList.add('icc-host');app.classList.add('icc-app');
     root.setAttribute('role','region');root.setAttribute('aria-label','مركز المستخدمين');
-    if(!root.dataset.iccOpened){root.dataset.iccOpened='true';Object.assign(state,{view:'registry',selected:null,search:'',page:1});}
+    if(!root.dataset.iccOpened){
+      root.dataset.iccOpened='true';
+      const previewArchive = window.location?.hostname?.endsWith('.vercel.app')
+        && new URLSearchParams(window.location.search).get('view') === 'users'
+        && new URLSearchParams(window.location.search).get('tab') === 'archive';
+      Object.assign(state,{view:previewArchive?'archive':'registry',selected:null,search:'',page:1});
+    }
     paint();
   }
   document.addEventListener('keydown',event=>{
