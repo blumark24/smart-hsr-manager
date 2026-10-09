@@ -1213,6 +1213,9 @@
                   <span onClick="{{ goIncidents }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">عرض الكل</span>
                 </div>
                 <div style="flex:1;display:flex;flex-direction:column;gap:7px;margin-top:8px;min-height:104px;overflow:auto">
+                  <sc-if value="{{ criticalEmpty }}">
+                    <div class="dh-empty-state" role="status">لا توجد عناصر تتطلب تدخلاً تشغيليًا الآن.</div>
+                  </sc-if>
                   <sc-for list="{{ critical }}" as="c" hint-placeholder-count="3">
                     <div onClick="{{ c.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;cursor:pointer;background:{{ c.bg }};border:1px solid {{ c.bd }}">
                       <span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ c.col }}"></span>
@@ -3185,7 +3188,7 @@ class Component extends DCLogic {
         const max = Math.max(1, ...Array.from(new Set(M.map(x=>x.dept).filter(Boolean))).map(name=>M.filter(x=>x.dept===name).length));
         return { name:d, v:String(n), w:Math.round((n/max)*100)+'%', on:()=>this.setState({screen:'missions',tq:d}) };
       }),
-      critical: (() => {
+      critical: mobilityMode ? (() => {
         const rows = [];
         const waitingAllocation = M.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة');
         const waitingReturn = M.filter(m => this.missionStatus(m.id) === 'في انتظار إعادة المركبة');
@@ -3222,7 +3225,15 @@ class Component extends DCLogic {
           });
         });
         return rows.slice(0, 3);
-      })(),
+      })() : I.slice(0, 3).map(i => {
+        const c = this.chipOf(i.status === 'تم الحل' ? 'تم الحل' : 'جديد');
+        return { title: i.cat + ' · ' + i.id, meta: i.emp + ' · ' + i.loc, time: i.time.split(' ')[1],
+          col: c.col, bg: c.bg, bd: c.bd, on: () => this.openDrawer('inc', i.id) };
+      }),
+      criticalEmpty: mobilityMode
+        ? (M.filter(m => ['بانتظار المركبة','في انتظار إعادة المركبة'].includes(this.missionStatus(m.id))).length === 0
+          && I.filter(i => !['مغلق','تم الحل'].includes(i.status)).length === 0)
+        : I.length === 0,
       // Navigation must never mutate the authenticated role. Server authz
       // already derives authority from the token; keeping the UI role stable
       // also prevents Manager/Department views from visually jumping into a
