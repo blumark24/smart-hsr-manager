@@ -13,8 +13,10 @@ const PRODUCTION_HOSTNAMES = Object.freeze([
 ]);
 
 export async function resolveFirebaseConfig() {
-  const hostname = location.hostname;
-  if (!hostname.endsWith('.vercel.app') || PRODUCTION_HOSTNAMES.includes(hostname)) {
+  const hostname = String(location.hostname || '').toLowerCase();
+  // Fail closed on all unknown hosts, including Render and future custom domains.
+  // Production is never inferred from "not a Vercel preview".
+  if (PRODUCTION_HOSTNAMES.includes(hostname)) {
     return PRODUCTION_FIREBASE_CONFIG;
   }
   const response = await fetch('/api/firebase-config', { cache: 'no-store', credentials: 'same-origin' });
