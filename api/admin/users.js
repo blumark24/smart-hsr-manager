@@ -1189,10 +1189,11 @@ async function handler(req, res) {
       return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
     }
     try {
-      const [obsSnap, contractorSnap, profileSnap] = await Promise.all([
+      const [obsSnap, contractorSnap, profileSnap, organizationSnap] = await Promise.all([
         db.collection('observations').where('organizationId', '==', caller.organizationId).get(),
         db.collection('users').where('organizationId', '==', caller.organizationId).get(),
         db.collection('contractorProfiles').where('organizationId', '==', caller.organizationId).get(),
+        db.collection('organizations').doc(caller.organizationId).get(),
       ]);
 
       const observations = obsSnap.docs.map(doc => safeFieldObservation(doc.id, doc.data() || {}));
@@ -1217,6 +1218,10 @@ async function handler(req, res) {
 
       return sendJson(res, 200, {
         product: 'visual_distortion',
+        mapContext: safeMobilityMapContext(
+          caller.organizationId,
+          organizationSnap.exists ? (organizationSnap.data() || {}) : {}
+        ),
         observations: observations.slice(0, 250),
         contractors,
       });
