@@ -24,11 +24,11 @@ function request(port, pathName, method='GET') {
   });
 }
 
-test('Render blueprint is free, isolated, opt-in API and manually deployed', () => {
+test('Render blueprint is free and gated on passing acceptance checks', () => {
   const yaml = fs.readFileSync(path.join(__dirname,'../render.yaml'),'utf8');
   assert.match(yaml,/plan: free/);
   assert.match(yaml,/branch: deploy\/render-free-preview-v1/);
-  assert.match(yaml,/autoDeployTrigger: off/);
+  assert.match(yaml,/autoDeployTrigger: checksPass/);
   assert.match(yaml,/PREVIEW_API_ENABLED\s*\n\s*value: "false"/);
   assert.doesNotMatch(yaml,/PRIVATE_KEY|BEGIN PRIVATE KEY/);
   assert.doesNotMatch(yaml,/target: production/);
