@@ -53,7 +53,7 @@ test('Header is locked to Lands-style three-zone system geometry', () => {
   assert.match(page, /hsr-shell-brand-zone/);
   assert.match(page, /hsr-shell-center-zone/);
   assert.match(page, /hsr-shell-identity-zone/);
-  assert.match(page, /smart-hsr-signature-transparent\.png/);
+  assert.match(page, /smart-hsr-mark\.svg/);
   assert.match(css, /grid-template-areas:"brand center identity"/);
   assert.match(css, /z-index:1600!important/);
   assert.match(css, /overflow:visible!important/);
@@ -73,4 +73,13 @@ test('Open surfaces have an explicit layer hierarchy above maps and cards', () =
   assert.match(css, /\.dh-evidence-lightbox\{z-index:2500!important\}/);
   assert.match(css, /\.hsr-identity-menu[\s\S]*z-index:1900!important/);
   assert.match(css, /\.dh-map-frame\{isolation:isolate!important;z-index:1!important\}/);
+});
+
+
+test('Crisp brand lockup uses vector mark and rendered SMART HSR wordmark', () => {
+  assert.match(page, /hsr-shell-wordmark/);
+  assert.match(page, /smart-hsr-mark\.svg/);
+  assert.match(css, /\.hsr-shell-wordmark-name/);
+  assert.match(css, /\.hsr-platform-footer-copy/);
+  assert.doesNotMatch(page, /hsr-shell-brand-logo" src="\/smart-hsr-signature-transparent\.png"/);
 });
