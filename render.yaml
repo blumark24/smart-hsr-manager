@@ -7,9 +7,10 @@ services:
     plan: free
     repo: https://github.com/blumark24/smart-hsr-manager
     branch: deploy/render-free-preview-v1
-    autoDeployTrigger: off
+    autoDeployTrigger: checksPass
     buildCommand: npm ci --omit=dev
     startCommand: node portable-preview-server.js
+    # Only roll out a GitHub commit after all acceptance checks have passed.
     healthCheckPath: /__preview/health
     envVars:
       - key: NODE_ENV
