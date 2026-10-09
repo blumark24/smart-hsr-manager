@@ -51,11 +51,34 @@ test('production alias smart-hsr-manager-blumark24-os.vercel.app resolves the ha
   assert.equal(calls.length, 0);
 });
 
-test('non-vercel.app hostnames (custom domain / local dev) resolve the hardcoded production config without calling fetch', async () => {
-  const { exportsObj, calls } = loadModule({ hostname: 'localhost', fetchImpl: neverCalledFetch });
-  const config = await exportsObj.resolveFirebaseConfig();
-  assert.equal(config.projectId, 'smart-hsr-manager');
-  assert.equal(calls.length, 0);
+test('unknown and custom hostnames cannot fall back to production Firebase', async () => {
+  for (const hostname of ['smart-hsr-sandbox-preview.onrender.com', 'localhost', 'smart.blumark24.com']) {
+    const { exportsObj, calls } = loadModule({
+      hostname,
+      fetchImpl: async () => ({ ok: false, status: 503, json: async () => ({}) })
+    });
+    await assert.rejects(exportsObj.resolveFirebaseConfig(), /FIREBASE_PREVIEW_CONFIG_UNAVAILABLE/, hostname);
+    assert.equal(calls.length, 1, hostname);
+    assert.equal(calls[0][0], '/api/firebase-config', hostname);
+  }
+});
+
+test('Render preview accepts only the staging project and rejects a production API response', async () => {
+  const hostname = 'smart-hsr-sandbox-preview.onrender.com';
+  const stagingConfig = { projectId: 'smart-hsr-staging-blumark24', apiKey: 'safe-test-key' };
+  const good = loadModule({ hostname,
+    fetchImpl: async () => ({ ok: true, json: async () => stagingConfig }) });
+  assert.equal((await good.exportsObj.resolveFirebaseConfig()).projectId,'smart-hsr-staging-blumark24');
+  const bad = loadModule({ hostname,
+    fetchImpl: async () => ({ ok: true, json: async () => ({projectId:'smart-hsr-manager'}) }) });
+  await assert.rejects(bad.exportsObj.resolveFirebaseConfig(), /FIREBASE_PREVIEW_PROJECT_DENIED/);
+});
+
+test('embedded lands never treats Render or an unknown hostname as production', () => {
+  const lands = fs.readFileSync(path.join(__dirname, '..', 'lands/index.html'), 'utf8');
+  assert.match(lands, /function isProductionHost\(\)/);
+  assert.match(lands, /return LANDS_PRODUCTION_HOSTNAMES\.includes\(hostname\)/);
+  assert.doesNotMatch(lands, /return !hostname\.endsWith\("\.vercel\.app"\)/);
 });
 
 test('other *.vercel.app preview hostnames still fetch /api/firebase-config and return the staging config', async () => {
