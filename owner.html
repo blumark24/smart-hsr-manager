@@ -402,20 +402,19 @@
         <h2 class="text-xl font-extrabold title">Smart HSR — مركز القيادة التنفيذي</h2>
         <p class="muted text-xs mt-1">مرحباً بك مالك النظام. نظرة تنفيذية على أداء المنصة وحالة الأنظمة الفرعية.</p>
         <div class="flex items-center gap-3 mt-2 flex-wrap">
-          <span class="status-chip"><span class="status-dot ok"></span> جميع الأنظمة الأساسية تعمل</span>
+          <span class="status-chip">المؤشرات المعروضة مشتقة من السجلات الفعلية المتاحة</span>
           <span class="muted text-xs" id="overviewLastUpdated">آخر تحديث: —</span>
         </div>
       </div>
 
-      <!-- Platform Health Center (static architecture summary, not a live health check) -->
+      <!-- Architecture facts only — never a fabricated live-health panel. -->
       <div class="card p-4">
-        <h3 class="text-sm font-bold muted mb-3">حالة المنصة</h3>
+        <h3 class="text-sm font-bold muted mb-3">البنية التشغيلية</h3>
         <div class="status-strip">
-          <span class="status-chip"><span class="status-dot ok"></span> Firebase: متصلة</span>
-          <span class="status-chip"><span class="status-dot pending"></span> الذكاء الاصطناعي: جاهز وغير متصل</span>
-          <span class="status-chip"><span class="status-dot ok"></span> الأمان: نشط</span>
-          <span class="status-chip"><span class="status-dot pending"></span> سجل التدقيق: غير مفعّل</span>
+          <span class="status-chip">Firebase Auth / Firestore — مسار البيانات الفعلي</span>
+          <span class="status-chip">AI Gateway — يتحقق من المزود الفعلي عند كل طلب</span>
         </div>
+        <p class="muted text-xs mt-2">لا تعرض هذه البطاقة حالة اتصال حية ما لم تكن مقاسة من الخادم.</p>
       </div>
 
       <!-- Attention Center -->
