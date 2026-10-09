@@ -730,3 +730,163 @@
   .hsr-shell-brand-logo{width:124px!important;max-width:124px!important}
   .hsr-identity-card{min-width:210px!important}
 }
+
+
+
+/* ============================================================
+   SMART HSR UNIFIED MUNICIPAL SHELL — BRAND LOCK R4
+   Crisp vector mark + rendered wordmark. Avoids raster blur/darkness.
+   ============================================================ */
+
+.hsr-shell-brand-zone{
+  gap:15px!important;
+}
+.hsr-shell-wordmark{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  flex:none!important;
+}
+.hsr-shell-brand-mark{
+  width:44px!important;
+  height:46px!important;
+  object-fit:contain!important;
+  flex:none!important;
+}
+.hsr-shell-wordmark-copy{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:4px!important;
+  min-width:0!important;
+}
+.hsr-shell-wordmark-name{
+  display:flex!important;
+  align-items:baseline!important;
+  gap:6px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  font-family:Inter,"SF Pro Display","Segoe UI",Arial,sans-serif!important;
+  letter-spacing:.16em!important;
+}
+.hsr-shell-wordmark-name span{
+  color:#eef8f4!important;
+  font-size:15px!important;
+  font-weight:750!important;
+}
+.hsr-shell-wordmark-name b{
+  color:#47d98d!important;
+  font-size:18px!important;
+  font-weight:850!important;
+}
+.hsr-shell-wordmark-sub{
+  color:#8ead9f!important;
+  font:650 6.9px/1.15 "IBM Plex Mono",Consolas,monospace!important;
+  letter-spacing:.16em!important;
+  white-space:nowrap!important;
+}
+.hsr-shell-brand-copy{
+  padding-left:15px!important;
+  border-left:1px solid rgba(255,255,255,.15)!important;
+}
+.hsr-shell-brand-copy strong{
+  font-family:"Cairo","Segoe UI",Tahoma,sans-serif!important;
+  font-size:14px!important;
+  line-height:1.35!important;
+  font-weight:800!important;
+  letter-spacing:0!important;
+}
+.hsr-shell-brand-copy span{
+  font-size:8px!important;
+  line-height:1.25!important;
+  letter-spacing:.13em!important;
+  color:#9ab9aa!important;
+}
+
+/* Hide obsolete raster sizing rule if cached markup persists during preview. */
+.hsr-shell-brand-logo{display:none!important}
+
+/* Compact sidebar corporate lockup: one row, two brand lines, one status. */
+.hsr-platform-footer{
+  margin-top:9px!important;
+  padding:10px 3px 2px!important;
+}
+.hsr-platform-footer-brand{
+  display:grid!important;
+  grid-template-columns:34px minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+.hsr-platform-mark-img{
+  display:block!important;
+  width:30px!important;
+  height:34px!important;
+  object-fit:contain!important;
+}
+.hsr-platform-footer-copy{
+  min-width:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:3px!important;
+  text-align:left!important;
+  direction:ltr!important;
+}
+.hsr-platform-footer-copy strong{
+  margin:0!important;
+  color:#eef9f3!important;
+  font-family:Inter,"SF Pro Display","Segoe UI",Arial,sans-serif!important;
+  font-size:10.5px!important;
+  line-height:1!important;
+  font-weight:780!important;
+  letter-spacing:.08em!important;
+  white-space:nowrap!important;
+}
+.hsr-platform-footer-copy strong b{
+  color:#4ad98e!important;
+  font-weight:850!important;
+}
+.hsr-platform-footer-copy span{
+  margin:0!important;
+  color:#779a88!important;
+  font:650 6.2px/1.1 "IBM Plex Mono",Consolas,monospace!important;
+  letter-spacing:.10em!important;
+  white-space:nowrap!important;
+}
+.hsr-platform-connection{
+  display:flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  color:#8eb29f!important;
+  font-size:8.5px!important;
+  font-weight:650!important;
+  white-space:nowrap!important;
+}
+.hsr-platform-connection i{
+  width:6px!important;
+  height:6px!important;
+  flex:none!important;
+  border-radius:50%!important;
+  background:#39cf88!important;
+  box-shadow:0 0 0 4px rgba(57,207,136,.08)!important;
+}
+
+/* Day and night share the same branded chrome, matching Manager/Lands. */
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-wordmark-name span,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-shell-wordmark-name span{color:#eef8f4!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-wordmark-name b,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-shell-wordmark-name b{color:#47d98d!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-wordmark-sub{color:#9bc5ae!important}
+
+@media(max-width:1280px){
+  .hsr-shell-brand-mark{width:40px!important;height:42px!important}
+  .hsr-shell-wordmark-name span{font-size:13px!important}
+  .hsr-shell-wordmark-name b{font-size:16px!important}
+  .hsr-shell-brand-copy strong{font-size:13px!important}
+}
+@media(max-width:1100px){
+  .hsr-shell-wordmark-copy{display:none!important}
+  .hsr-shell-brand-copy{padding-left:11px!important}
+}
+@media(max-width:760px){
+  .hsr-shell-brand-mark{width:36px!important;height:38px!important}
+  .hsr-shell-brand-copy{display:none!important}
+}
