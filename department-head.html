@@ -2995,7 +2995,7 @@ class Component extends DCLogic {
     const navDefs = this.navFor(st.role);
     const nav = navDefs.map(n => {
       const a = st.screen === n.id;
-      return { label: n.label, tag: n.tag || '', current: a ? 'page' : '', iconPath: this.navIconPath(n.id), dot: a ? (day ? '#8df0b7' : '#43d98b') : (day ? 'rgba(226,248,236,0.40)' : 'rgba(122,164,224,0.25)'),
+      return { label: n.label, section: n.section || '', tag: n.tag || '', current: a ? 'page' : '', iconPath: this.navIconPath(n.id), dot: a ? (day ? '#8df0b7' : '#43d98b') : (day ? 'rgba(226,248,236,0.40)' : 'rgba(122,164,224,0.25)'),
         tx: a ? 'var(--navTx,#eaf4ff)' : (day ? 'var(--sbTx2,#e4f4eb)' : 'var(--tx2,#9db2cc)'),
         bg: a ? 'var(--navBg,linear-gradient(90deg,rgba(56,132,220,0.42),rgba(30,72,140,0.22)))' : 'transparent',
         bd: a ? 'var(--accBd,rgba(76,201,240,0.4))' : 'transparent',
@@ -3378,7 +3378,7 @@ class Component extends DCLogic {
           K('المركبات المتاحة', cnt('متاحة'), 'متاحة'),
           K('في مهمة الآن', cnt('في مهمة'), 'في مهمة'),
           K('بانتظار التخصيص', mcnt('بانتظار المركبة'), 'بانتظار المركبة'),
-          K('بانتظار التسليم', mcnt('تم تخصيص المركبة'), 'تم تخصيص المركبة'),
+          K('بانتظار التسليم', M.filter(m => this.missionStatus(m.id) === 'تم تخصيص المركبة' && m.authorizationStatus === 'AUTHORIZED').length, 'تم تخصيص المركبة'),
           K('متأخرة في العودة', mcnt('في انتظار إعادة المركبة'), 'في انتظار إعادة المركبة'),
           K('الحوادث المفتوحة', I.filter(i => i.status !== 'مغلق' && i.status !== 'تم الحل').length, 'جديد')
         ],
