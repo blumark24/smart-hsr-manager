@@ -1052,3 +1052,46 @@
     min-width:240px!important;
   }
 }
+
+
+/* ============================================================
+   SMART MOBILITY COMMAND CENTER — DELIVERY CLOSURE
+   Decision-first hierarchy: six KPIs + grouped navigation.
+   ============================================================ */
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-kpi-grid{
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:10px!important;
+}
+.hsr-nav-section{
+  margin:12px 10px 5px!important;
+  padding-top:8px!important;
+  border-top:1px solid rgba(255,255,255,.06)!important;
+  color:#6f9d88!important;
+  font-size:8px!important;
+  font-weight:800!important;
+  letter-spacing:.08em!important;
+  text-align:right!important;
+}
+.hsr-side-nav-scroll .hsr-nav-section:first-child{
+  margin-top:2px!important;
+  padding-top:0!important;
+  border-top:0!important;
+}
+.smart-hsr-shell-v1[data-theme="night"] .hsr-nav-section{color:#6f91a8!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-nav-section{color:#91b6a3!important}
+
+@media(max-width:1450px){
+  .smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-kpi-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:760px){
+  .smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:430px){
+  .smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-kpi-grid{
+    grid-template-columns:1fr!important;
+  }
+}
