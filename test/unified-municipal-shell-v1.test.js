@@ -47,3 +47,30 @@ test('Unified shell CSS defines header, identity, sidebar and platform footer su
   assert.match(css, /\.hsr-platform-footer/);
   assert.match(css, /prefers-reduced-motion/);
 });
+
+
+test('Header is locked to Lands-style three-zone system geometry', () => {
+  assert.match(page, /hsr-shell-brand-zone/);
+  assert.match(page, /hsr-shell-center-zone/);
+  assert.match(page, /hsr-shell-identity-zone/);
+  assert.match(page, /smart-hsr-signature-transparent\.png/);
+  assert.match(css, /grid-template-areas:"brand center identity"/);
+  assert.match(css, /z-index:1600!important/);
+  assert.match(css, /overflow:visible!important/);
+});
+
+test('Right rail is a solid manager-like system rail, not a translucent overlay', () => {
+  assert.match(page, /hsr-side-identity/);
+  assert.match(page, /hsr-nav-icon/);
+  assert.match(css, /--hsr-shell-rail-day/);
+  assert.match(css, /position:sticky!important/);
+  assert.match(css, /height:calc\(100vh - 106px\)!important/);
+  assert.match(css, /background:var\(--hsr-shell-rail-day\)!important/);
+});
+
+test('Open surfaces have an explicit layer hierarchy above maps and cards', () => {
+  assert.match(css, /\.dh-smart-modal-scrim\{z-index:2400!important\}/);
+  assert.match(css, /\.dh-evidence-lightbox\{z-index:2500!important\}/);
+  assert.match(css, /\.hsr-identity-menu[\s\S]*z-index:1900!important/);
+  assert.match(css, /\.dh-map-frame\{isolation:isolate!important;z-index:1!important\}/);
+});
