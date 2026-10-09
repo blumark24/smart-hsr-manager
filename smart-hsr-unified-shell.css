@@ -342,6 +342,7 @@
 .smart-hsr-shell-v1 .dh-sidebar,
 .smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-sidebar{
   position:sticky!important;
+  transition:width .18s ease,min-width .18s ease!important;
   top:90px!important;
   z-index:30!important;
   align-self:flex-start!important;
@@ -475,10 +476,10 @@
 .smart-hsr-shell-v1 .dh-map-frame{isolation:isolate!important;z-index:1!important}
 
 /* Collapsed rail — manager-like icon rail. */
-.smart-hsr-shell-v1 .dh-sidebar[style*="72px"] .hsr-side-identity{justify-content:center!important}
-.smart-hsr-shell-v1 .dh-sidebar[style*="72px"] .hsr-side-rail-toggle{margin:auto!important}
-.smart-hsr-shell-v1 .dh-sidebar[style*="72px"] .dh-nav-item{justify-content:center!important;padding-inline:8px!important}
-.smart-hsr-shell-v1 .dh-sidebar[style*="72px"] .hsr-nav-icon{margin:0!important}
+.smart-hsr-shell-v1 .dh-sidebar[data-collapsed="true"] .hsr-side-identity{justify-content:center!important}
+.smart-hsr-shell-v1 .dh-sidebar[data-collapsed="true"] .hsr-side-rail-toggle{margin:auto!important}
+.smart-hsr-shell-v1 .dh-sidebar[data-collapsed="true"] .dh-nav-item{justify-content:center!important;padding-inline:8px!important}
+.smart-hsr-shell-v1 .dh-sidebar[data-collapsed="true"] .hsr-nav-icon{margin:0!important}
 
 /* Responsive parity with Lands. */
 @media(max-width:1100px){
@@ -1049,7 +1050,7 @@
    collapsing into an icon strip unless the user explicitly toggles it. */
 @media(min-width:1180px){
   .smart-hsr-shell-v1 .dh-sidebar{
-    min-width:240px!important;
+    min-width:var(--sbW,240px)!important;
   }
 }
 
