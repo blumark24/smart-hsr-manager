@@ -141,3 +141,38 @@ test('preview-only deep link enters existing manager user center without exposin
   assert.ok(frontend.includes("const previewArchive = window.location?.hostname?.endsWith('.vercel.app')"));
   assert.ok(frontend.includes("get('tab') === 'archive'"));
 });
+
+test('archive roster mirrors the live users table and preserves real archive metadata', () => {
+  const h = harness([active, archived]);
+  h.views[2].onclick();
+  const html = h.surface.innerHTML;
+  assert.match(html, /class="icc-table icc-archive-table"/);
+  assert.deepEqual(
+    [...html.matchAll(/<th scope="col">([^<]+)<\/th>/g)].map(m => m[1]),
+    ['الموظف', 'التعيين المؤسسي', 'الدور / المسمى', 'الأرشفة', 'الإجراءات']
+  );
+  assert.match(html, /class="icc-archive-person"/);
+  assert.match(html, /class="icc-avatar-mini"/);
+  assert.match(html, /class="icc-role-title"/);
+  assert.match(html, /icc-archive-date/);
+  assert.match(html, /icc-archive-reason/);
+  assert.match(html, /انتهاء التكليف/);
+  assert.match(html, /data-restore="e-archive"/);
+  assert.match(html, /class="icc-registry-controls icc-archive-controls"/);
+  assert.match(html, /data-archive-search/);
+  assert.match(html, /<details class="icc-archive-policy">/);
+  assert.doesNotMatch(html, /icc-archive-note/);
+});
+
+test('archive search is constrained to one compact toolbar row, including mobile', () => {
+  assert.match(css, /\.icc-archive-area \.icc-archive-controls\{/);
+  assert.match(css, /\.icc-archive-area \.icc-archive-controls \.icc-archive-search\{/);
+  assert.match(css, /flex:0 1 320px!important/);
+  assert.match(css, /height:42px!important/);
+  assert.match(css, /min-height:42px!important/);
+  assert.match(css, /max-height:42px!important/);
+  assert.match(css, /@media\(max-width:700px\)/);
+  assert.match(css, /font-size:16px!important/);
+  assert.match(css, /\.icc-archive-table th:nth-child\(5\)/);
+  assert.match(css, /html\[data-theme="light"\] \.icc-archive-actions/);
+});
