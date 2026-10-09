@@ -156,5 +156,6 @@ test('final delivery runtime is real-data only and keeps fixtures outside authen
 test('owner runtime exposes no Local Demo storage surface', () => {
   assert.doesNotMatch(ownerPage, /LOCAL_DEMO|Local Demo Storage|ownerLocalDemoBadge|وضع تجريبي محلي|بيانات العرض التجريبي/);
   assert.doesNotMatch(ownerPage, /data-route-link="\/integrations"|data-route="\/integrations"/);
+  assert.doesNotMatch(ownerPage, /populateConnectorOrganizations|loadConnector\(|setConnectorMessage/);
   assert.doesNotMatch(ownerRouter, /['"]\/integrations['"]/);
 });
