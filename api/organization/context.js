@@ -1,5 +1,6 @@
 'use strict';
-const { getDb } = require('../_lib/firebaseAdmin');
+const { getAuth, getDb } = require('../_lib/firebaseAdmin');
+const WorkspaceAccess = require('../../workspace-access.js');
 const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 const { callLandsSsoRegister, bridgeConfigured } = require('../_lib/landsBridge');
 
@@ -193,7 +194,66 @@ function sanitizedMapContext(organizationId, organizationName, organizationData)
   };
 }
 
+async function handleTemporaryUatDiagnostic(req, res) {
+  // PREVIEW-ONLY, READ-ONLY. This branch exists solely to close u6/u7 UAT
+  // without adding a 13th Vercel Function on the Hobby plan. Remove after UAT.
+  if (process.env.VERCEL_ENV !== 'preview' || process.env.VERCEL_GIT_COMMIT_REF !== 'design/unified-municipal-shell-v1') {
+    return sendJson(res, 404, { error:'not_found' });
+  }
+  const query = req.query || {};
+  const token = typeof query.token === 'string' ? query.token : '';
+  if (!token || token !== process.env.UAT_DIAGNOSTIC_TOKEN) {
+    return sendJson(res, 401, { error:'unauthorized' });
+  }
+  const email = cleanText(query.email).toLowerCase();
+  if (!['u6@smart-hsr.local','u7@smart-hsr.local'].includes(email)) {
+    return sendJson(res, 400, { error:'unsupported_account' });
+  }
+
+  const auth = getAuth();
+  const db = getDb();
+  let authUser;
+  try {
+    authUser = await auth.getUserByEmail(email);
+  } catch (error) {
+    if (error && error.code === 'auth/user-not-found') {
+      return sendJson(res, 200, { email, auth:{exists:false}, firestore:{exists:false}, resolution:null });
+    }
+    throw error;
+  }
+
+  const snap = await db.collection('users').doc(authUser.uid).get();
+  const data = snap.exists ? (snap.data() || {}) : null;
+  const resolution = data ? WorkspaceAccess.resolveWorkspaces(data) : null;
+  return sendJson(res, 200, {
+    email,
+    auth:{ exists:true, disabled:!!authUser.disabled },
+    firestore:data ? {
+      exists:true,
+      active:data.active !== false,
+      organizationId:data.organizationId || null,
+      role:data.role || null,
+      institutionalRole:data.institutionalRole || null,
+      administration:data.administration || null,
+      department:data.department || null,
+      mobilityAccess:data.mobilityAccess || null,
+      landsAccess:data.landsAccess || null,
+      entitlements:data.entitlements || null,
+    } : { exists:false },
+    resolution:resolution ? {
+      valid:resolution.valid,
+      reason:resolution.reason,
+      primary:resolution.primary,
+      mobilityRole:resolution.mobilityRole,
+      capabilities:resolution.capabilities,
+      workspaces:resolution.workspaces.map(w => ({id:w.id, route:w.route, primary:w.primary, handoff:w.handoff}))
+    } : null
+  });
+}
+
 async function handler(req, res) {
+  const uatDiagnostic = (req.query && req.query.uatDiagnostic) || '';
+  if (uatDiagnostic === '1') return handleTemporaryUatDiagnostic(req, res);
   const embeddedLandsAction = (req.query && typeof req.query.embeddedLandsAction === 'string' ? req.query.embeddedLandsAction : (() => { try { return new URL(req.url || '/', 'http://localhost').searchParams.get('embeddedLandsAction') || ''; } catch (_) { return ''; } })()).trim();
   if (embeddedLandsAction) {
     const { handleEmbeddedLandsHttp } = require('../_lib/embeddedLandsRuntime');
