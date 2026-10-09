@@ -10,6 +10,7 @@ const frontend = fs.readFileSync(path.join(root, 'manager-identity-command-cente
 const api = fs.readFileSync(path.join(root, 'api/admin/employees.js'), 'utf8');
 const usersApi = fs.readFileSync(path.join(root, 'api/admin/users.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'manager-identity-command-center.css'), 'utf8');
+const manager = fs.readFileSync(path.join(root, 'manager.html'), 'utf8');
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function harness(employees) {
@@ -132,4 +133,11 @@ test('every admin activation and HR edit path respects the archive lifecycle', (
   const hr=usersApi.slice(usersApi.indexOf("if (action === 'administrativeUpdateEmployee')"),usersApi.indexOf("if (action === 'listMobilityMissions')"));
   assert.match(hr, /employee_lifecycle_action_required/);
   assert.match(hr, /status !== \(employee\.employmentStatus \|\| 'active'\)/);
+});
+
+test('preview-only deep link enters existing manager user center without exposing arbitrary routes', () => {
+  assert.match(manager, /location\\.hostname\\.endsWith\\('\\.vercel\\.app'\\)/);
+  assert.match(manager, /get\\('view'\\) === 'users'/);
+  assert.match(frontend, /const previewArchive = window\\.location\\?\\.hostname\\?\\.endsWith/);
+  assert.match(frontend, /get\\('tab'\\) === 'archive'/);
 });
