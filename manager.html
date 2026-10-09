@@ -3382,7 +3382,10 @@ class Component extends DCLogic {
     fs: false, mapMode: 'map', mapFilter: 'ALL', mapBasemap: 'street',
     sel: null,
     quick: true, toast: '', bp: 'xl',
-    view: 'home', search: '', dataState: 'loading', dataError: '', observationAttentionFilter: 'ALL',
+    // Preview-only entry for deep-linking to the existing protected User Center.
+    // This selects presentation state, never bypasses the manager auth guard.
+    view: (location.hostname.endsWith('.vercel.app') && new URLSearchParams(location.search).get('view') === 'users')
+      ? 'users' : 'home', search: '', dataState: 'loading', dataError: '', observationAttentionFilter: 'ALL',
     // PHASE21 closure — Manager-only institutional oversight views. These
     // reuse the existing trusted Admin API and never open department-head
     // operational pages or create a second authentication surface.
