@@ -23,6 +23,8 @@ const inspectorDashboard = read('dashboard.html');
 const storageAdapter = read('storage-adapter.js');
 const operationalMap = read('operational-map.html');
 const activeVisionProvider = read('platform/ai/server/active-vision-provider-selector.js');
+const ownerPage = read('owner.html');
+const ownerRouter = read('owner-router.js');
 
 test('public site enters SMART HSR only through the hardened gateway', () => {
   assert.match(publicEnhancements, /location\.href\s*=\s*['"]Home\.html['"]/);
@@ -148,4 +150,11 @@ test('final delivery runtime is real-data only and keeps fixtures outside authen
   assert.match(activeVisionProvider, /gemini: Object\.freeze\(\{ kind: 'GEMINI_COMPATIBLE'/);
   assert.match(activeVisionProvider, /openai: Object\.freeze\(\{ kind: 'OPENAI_COMPATIBLE'/);
   assert.doesNotMatch(activeVisionProvider, /mock-ai-provider|kind:\s*'MOCK'/);
+});
+
+
+test('owner runtime exposes no Local Demo storage surface', () => {
+  assert.doesNotMatch(ownerPage, /LOCAL_DEMO|Local Demo Storage|ownerLocalDemoBadge|وضع تجريبي محلي|بيانات العرض التجريبي/);
+  assert.doesNotMatch(ownerPage, /data-route-link="\/integrations"|data-route="\/integrations"/);
+  assert.doesNotMatch(ownerRouter, /['"]\/integrations['"]/);
 });
