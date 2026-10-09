@@ -8,6 +8,7 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const frontend = fs.readFileSync(path.join(root, 'manager-identity-command-center.js'), 'utf8');
 const api = fs.readFileSync(path.join(root, 'api/admin/employees.js'), 'utf8');
+const usersApi = fs.readFileSync(path.join(root, 'api/admin/users.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'manager-identity-command-center.css'), 'utf8');
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -62,6 +63,7 @@ const archived = {
 test('archive and API JavaScript parse, with no runtime imports added', () => {
   assert.doesNotThrow(() => new vm.Script(frontend));
   assert.doesNotThrow(() => new vm.Script(api));
+  assert.doesNotThrow(() => new vm.Script(usersApi));
 });
 
 test('archived employee is excluded from active registry and counts', () => {
@@ -118,4 +120,16 @@ test('archive styling respects both themes and mobile viewport', () => {
   assert.match(css, /\.icc-archive-area/);
   assert.match(css, /html\[data-theme="light"\] \.icc-archive-actions/);
   assert.match(css, /@media\(max-width:700px\)/);
+});
+
+test('every admin activation and HR edit path respects the archive lifecycle', () => {
+  assert.match(api, /employee_lifecycle_action_required/);
+  assert.match(api, /reassign_direct_reports_first/);
+  assert.match(api, /municipal_manager_record_protected/);
+  const activation=usersApi.slice(usersApi.indexOf("case 'setActive':"),usersApi.indexOf("case 'revokeSessions':"));
+  assert.match(activation, /employee_archived_restore_required/);
+  assert.match(activation, /\.where\('authUid', '==', uid\)/);
+  const hr=usersApi.slice(usersApi.indexOf("if (action === 'administrativeUpdateEmployee')"),usersApi.indexOf("if (action === 'listMobilityMissions')"));
+  assert.match(hr, /employee_lifecycle_action_required/);
+  assert.match(hr, /status !== \(employee\.employmentStatus \|\| 'active'\)/);
 });
