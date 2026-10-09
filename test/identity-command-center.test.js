@@ -108,10 +108,10 @@ test('access tab preserves the service-only save path and hides broad save there
 });
 
 
-test('pending Lands sync exposes readback-only reconciliation using authoritative authUid',()=>{
+test('pending Lands sync uses scoped membership repair with authoritative authUid',()=>{
   const source=fs.readFileSync(path.join(root,'manager-identity-command-center.js'),'utf8');
   assert.match(source,/sync\.syncStatus==='pending_trusted_sync'/);
-  assert.match(source,/action:'reconcileLandsAccess',uid:employee\.authUid/);
+  assert.match(source,/action:'repairLandsAccess',uid:employee\.authUid/);
   assert.match(source,/تحقق ومزامنة آمنة/);
   assert.match(source,/جاري التحقق/);
   assert.doesNotMatch(source,/reconcile[^\n]{0,400}setServices/);
