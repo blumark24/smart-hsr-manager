@@ -943,6 +943,9 @@
         </div>
         <div class="hsr-side-nav-scroll" aria-label="تنقل الخدمة">
         <sc-for list="{{ nav }}" as="n" hint-placeholder-count="9">
+          <sc-if value="{{ n.section }}">
+            <div class="hsr-nav-section" style="display:var(--sbLabel,block)">{{ n.section }}</div>
+          </sc-if>
           <button type="button" class="dh-nav-item" onClick="{{ n.on }}" data-f="1" aria-label="{{ n.label }}" aria-current="{{ n.current }}" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;font-size:12px;cursor:pointer;color:{{ n.tx }};background:{{ n.bg }};border:1px solid {{ n.bd }}">
             <svg class="hsr-nav-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="{{ n.iconPath }}"></path></svg>
             <span style="flex:1;display:var(--sbLabel,block);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.label }}</span>
@@ -1171,7 +1174,7 @@
           <sc-if value="{{ hasBottom }}" hint-placeholder-val="{{ true }}">
             <section style="flex:none;display:grid;grid-template-columns:var(--botCols,1.1fr 1.2fr 1.3fr);gap:14px">
               <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
-                <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">كفاءة استخدام الأسطول</div>
+                <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">{{ bottomATitle }}</div>
                 <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:8px;min-height:104px">
                   <div style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0">
                     <sc-for list="{{ utilRows }}" as="u" hint-placeholder-count="4">
@@ -1192,7 +1195,7 @@
               </div>
 
               <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
-                <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">الطلب حسب الأقسام</div>
+                <div style="font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5);text-align:right">{{ bottomBTitle }}</div>
                 <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;margin-top:6px;min-height:104px">
                   <sc-for list="{{ deptRows }}" as="d" hint-placeholder-count="5">
                     <div onClick="{{ d.on }}" data-f="1" style="display:flex;align-items:center;gap:9px;cursor:pointer">
@@ -1206,7 +1209,7 @@
 
               <div style="padding:13px 14px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--l2Bd,rgba(122,164,224,0.13));box-shadow:var(--l2Sh,0 20px 44px -26px rgba(0,0,0,0.95));backdrop-filter:var(--srfBlur,none);display:flex;flex-direction:column">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">التنبيهات الحرجة</span>
+                  <span style="flex:1;text-align:right;font-size:12.5px;font-weight:600;color:var(--tx,#dbe6f5)">{{ bottomCTitle }}</span>
                   <span onClick="{{ goIncidents }}" data-f="1" style="font-size:10px;color:var(--acc,#4cc9f0);cursor:pointer">عرض الكل</span>
                 </div>
                 <div style="flex:1;display:flex;flex-direction:column;gap:7px;margin-top:8px;min-height:104px;overflow:auto">
@@ -3111,6 +3114,9 @@ class Component extends DCLogic {
       openProfile: () => this.setState({ identityOpen: false, drawer: 'profile', drawerId: null }),
       openPreferences: () => this.setState({ identityOpen: false, screen: st.role === 'emp' ? 'emp' : 'settings', empScreen: st.role === 'emp' ? 'account' : st.empScreen }),
       screenTitle: sd.title, screenSub: sd.sub, screenActions: sd.actions || [],
+      bottomATitle: sd.bottomATitle || 'كفاءة استخدام الأسطول',
+      bottomBTitle: sd.bottomBTitle || 'الطلب حسب الأقسام',
+      bottomCTitle: sd.bottomCTitle || 'التنبيهات الحرجة',
       isOpsLayout: sd.ops === true, hasKpis: !!(sd.kpis && sd.kpis.length), kpis: sd.kpis || [],
       hasSide: geoWorkspace ? (!!sd.sideA && !!st.geoPanelOpen) : !!sd.sideA, hasBottom: sd.bottom === true,
       geoPanelAvailable: geoWorkspace && !!sd.sideA,
@@ -3179,16 +3185,49 @@ class Component extends DCLogic {
         const max = Math.max(1, ...Array.from(new Set(M.map(x=>x.dept).filter(Boolean))).map(name=>M.filter(x=>x.dept===name).length));
         return { name:d, v:String(n), w:Math.round((n/max)*100)+'%', on:()=>this.setState({screen:'missions',tq:d}) };
       }),
-      critical: I.slice(0, 3).map(i => {
-        const c = this.chipOf(i.status === 'تم الحل' ? 'تم الحل' : 'جديد');
-        return { title: i.cat + ' · ' + i.id, meta: i.emp + ' · ' + i.loc, time: i.time.split(' ')[1],
-          col: c.col, bg: c.bg, bd: c.bd, on: () => this.openDrawer('inc', i.id) };
-      }),
+      critical: (() => {
+        const rows = [];
+        const waitingAllocation = M.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة');
+        const waitingReturn = M.filter(m => this.missionStatus(m.id) === 'في انتظار إعادة المركبة');
+        const openIncidents = I.filter(i => !['مغلق','تم الحل'].includes(i.status));
+
+        waitingAllocation.slice(0, 2).forEach(m => {
+          const c = this.chipOf('بانتظار المركبة');
+          rows.push({
+            title: 'مهمة بانتظار مركبة · ' + m.no,
+            meta: m.type + ' · ' + m.dept,
+            time: 'تخصيص',
+            col: c.col, bg: c.bg, bd: c.bd,
+            on: () => this.openDrawer('alloc', m.id)
+          });
+        });
+        waitingReturn.slice(0, 2).forEach(m => {
+          const c = this.chipOf('في انتظار إعادة المركبة');
+          rows.push({
+            title: 'مركبة بانتظار الإعادة · ' + m.no,
+            meta: m.emp + ' · ' + (m.veh || '—'),
+            time: 'متابعة',
+            col: c.col, bg: c.bg, bd: c.bd,
+            on: () => this.openDrawer('mission', m.id)
+          });
+        });
+        openIncidents.slice(0, 2).forEach(i => {
+          const c = this.chipOf('جديد');
+          rows.push({
+            title: i.cat + ' · ' + i.id,
+            meta: i.emp + ' · ' + i.loc,
+            time: 'حادث',
+            col: c.col, bg: c.bg, bd: c.bd,
+            on: () => this.openDrawer('inc', i.id)
+          });
+        });
+        return rows.slice(0, 3);
+      })(),
       // Navigation must never mutate the authenticated role. Server authz
       // already derives authority from the token; keeping the UI role stable
       // also prevents Manager/Department views from visually jumping into a
       // Mobility Head surface when opening the incidents list.
-      goIncidents: () => this.setState({ screen: 'incidents' }),
+      goIncidents: () => this.setState({ screen: st.runtimeMode === 'mobility' ? 'missions' : 'incidents' }),
 
       demoNo: pinned ? pinned.no : 'لا توجد مهمة', demoStatus: pinned ? demoSt : '—', demoCol: demoChip.col, demoBg: demoChip.bg,
       demoMeta: pinned ? (pinned.emp + ' · ' + pinned.dept + (pinnedVeh ? ' · ' + pinnedVeh.no : '')) : 'لا توجد مهمة نشطة حالياً',
@@ -3257,7 +3296,7 @@ class Component extends DCLogic {
   homeOf(r) { return r === 'manager' ? 'exec' : r === 'mobility' ? 'ops' : r === 'dept' ? 'deptops' : r === 'admin' ? 'approvals' : 'emp'; }
   roleTitle() {
     const r = this.state.role;
-    return r === 'manager' ? 'مدير البلدية' : r === 'mobility' ? 'مركز عمليات حركة السير' : r === 'dept' ? 'مركز قيادة القسم' : r === 'admin' ? 'مركز الاعتماد الإداري' : 'عملياتي';
+    return r === 'manager' ? 'مدير البلدية' : r === 'mobility' ? 'مركز عمليات الحركة الذكية' : r === 'dept' ? 'مركز قيادة القسم' : r === 'admin' ? 'مركز الاعتماد الإداري' : 'عملياتي';
   }
   roleSub() {
     const r = this.state.role;
@@ -3266,7 +3305,7 @@ class Component extends DCLogic {
   identityRoleTitle() {
     const r = this.state.role;
     return r === 'manager' ? 'مدير البلدية'
-      : r === 'mobility' ? 'رئيس حركة السير'
+      : r === 'mobility' ? 'رئيس قسم الحركة'
       : r === 'dept' ? 'رئيس قسم'
       : r === 'admin' ? 'الشؤون الإدارية'
       : 'موظف حركة';
@@ -3274,10 +3313,16 @@ class Component extends DCLogic {
   navFor(r) {
     if (r === 'manager') return [{ id: 'exec', label: 'نظرة تنفيذية' }, { id: 'reports', label: 'التقارير التنفيذية' }, { id: 'incidents', label: 'الحوادث' }, { id: 'audit', label: 'السجل التشغيلي' }];
     if (r === 'mobility') return [
-      { id: 'ops', label: 'مركز العمليات' }, { id: 'missions', label: 'المهام والطلبات' }, { id: 'fleet', label: 'الأسطول' },
-      { id: 'handover', label: 'التسليم والاستلام' }, { id: 'map', label: 'الخريطة التشغيلية' }, { id: 'incidents', label: 'الحوادث والطوارئ' },
-      { id: 'reports', label: 'التقارير' }, { id: 'audit', label: 'السجل التشغيلي' }, { id: 'settings', label: 'الإعدادات والسياسات' },
-      { id: 'committees', label: 'اللجان', tag: 'قريباً', soon: true }];
+      { id: 'ops', label: 'مركز العمليات', section: 'التشغيل' },
+      { id: 'missions', label: 'المهام والطلبات' },
+      { id: 'fleet', label: 'الأسطول' },
+      { id: 'handover', label: 'التسليم والاستلام' },
+      { id: 'map', label: 'الخريطة التشغيلية', section: 'المتابعة' },
+      { id: 'incidents', label: 'الحوادث والطوارئ' },
+      { id: 'reports', label: 'التقارير' },
+      { id: 'audit', label: 'السجل التشغيلي', section: 'النظام' },
+      { id: 'settings', label: 'الإعدادات والسياسات' }
+    ];
     if (r === 'dept') return [{ id: 'deptops', label: 'مركز قيادة القسم' }, { id: 'missions', label: 'التشوه البصري' }, { id: 'incidents', label: 'البلاغات العامة' }, { id: 'audit', label: 'سجل القسم' }];
     if (r === 'admin') return [{ id: 'approvals', label: 'طلبات الاعتماد' }, { id: 'audit', label: 'سجل الاعتمادات' }, { id: 'settings', label: 'سياسة الاعتماد' }];
     return [{ id: 'emp', label: 'عملياتي' }];
@@ -3313,17 +3358,22 @@ class Component extends DCLogic {
       // A real mission awaiting allocation, if any — the toolbar shortcut
       // below must open a real mission's drawer, never a fake demo id.
       const pendingAlloc = M.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة')[0];
-      return { ops: true, bottom: true, title: 'مركز عمليات إدارة الحصر الميداني', sub: 'التشغيل المباشر للأسطول والمهام والحوادث',
+      return { ops: true, bottom: true, title: 'مركز عمليات الحركة الذكية', sub: 'إدارة الأسطول والمهام والتخصيص والتتبع التشغيلي',
         actions: [
           ...(pendingAlloc ? [{ label: 'تخصيص مركبة', on: () => this.openDrawer('alloc', pendingAlloc.id), tx: 'var(--btnTx,#eaf4ff)', bg: 'var(--btn,linear-gradient(180deg,rgba(76,131,236,0.5),rgba(40,72,150,0.45)))', bd: 'var(--btnBd,rgba(120,170,255,0.35))' }] : []),
           { label: 'الخريطة التشغيلية', on: () => this.setState({ screen: 'map' }), tx: 'var(--tx2,#c3d6ea)', bg: 'var(--ctl,rgba(20,32,54,0.6))', bd: 'var(--ctlBd,rgba(122,164,224,0.16))' }
         ],
         kpis: [
-          K('إجمالي المركبات', V.length, 'مغلقة'), K('المتاحة الآن', cnt('متاحة'), 'متاحة'), K('في مهمة', cnt('في مهمة'), 'في مهمة'),
-          K('محجوزة', cnt('محجوزة'), 'محجوزة'), K('في الصيانة', cnt('صيانة'), 'صيانة'), K('خارج الخدمة', cnt('خارج الخدمة'), 'خارج الخدمة'),
-          K('المهام النشطة', mcnt('قيد التنفيذ') + mcnt('تم التسليم'), 'قيد التنفيذ'), K('بانتظار المركبة', mcnt('بانتظار المركبة'), 'بانتظار المركبة'),
-          K('المتأخرة في العودة', mcnt('في انتظار إعادة المركبة'), 'في انتظار إعادة المركبة'), K('الحوادث المفتوحة', I.filter(i => i.status !== 'مغلق' && i.status !== 'تم الحل').length, 'جديد')
+          K('المركبات المتاحة', cnt('متاحة'), 'متاحة'),
+          K('في مهمة الآن', cnt('في مهمة'), 'في مهمة'),
+          K('بانتظار التخصيص', mcnt('بانتظار المركبة'), 'بانتظار المركبة'),
+          K('بانتظار التسليم', mcnt('تم تخصيص المركبة'), 'تم تخصيص المركبة'),
+          K('متأخرة في العودة', mcnt('في انتظار إعادة المركبة'), 'في انتظار إعادة المركبة'),
+          K('الحوادث المفتوحة', I.filter(i => i.status !== 'مغلق' && i.status !== 'تم الحل').length, 'جديد')
         ],
+        bottomATitle: 'صحة الأسطول',
+        bottomBTitle: 'توزيع الطلبات حسب الأقسام',
+        bottomCTitle: 'يتطلب الانتباه',
         sideATitle: 'طابور تخصيص المركبات', sideACount: mcnt('بانتظار المركبة') + ' طلب',
         sideAEmptyText: 'لا توجد مهام بانتظار تخصيص مركبة حالياً.',
         sideA: M.filter(m => this.missionStatus(m.id) === 'بانتظار المركبة').map(m => {
