@@ -9,6 +9,15 @@ export const SUPPORTED_IMAGE_TYPES = Object.freeze(['image/jpeg', 'image/png', '
 export const DEMO_NOTICE = 'بيئة عرض تجريبية — الصور محفوظة على هذا الجهاز فقط ولم تُرفع إلى خادم البلدية.';
 export const MAYOR_NOTICE = 'تدعم المنصة ربط بيانات ومرفقات كل مؤسسة بخادمها الخاص. يعمل العرض الحالي في وضع تخزين محلي تجريبي، ويُفعّل الربط الفعلي بعد اعتماد مواصفات الخادم من تقنية معلومات المؤسسة.';
 
+function localDemoRuntimeAllowed() {
+  // Test/localhost compatibility only. Any browser-hosted SMART HSR runtime
+  // (Vercel Preview, staging, custom domain, Production) must use the real
+  // authenticated server upload path and may never persist evidence locally.
+  const host = String(globalThis.location?.hostname || '').toLowerCase();
+  if (!host) return true; // Node/unit-test environment only.
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.preview.local');
+}
+
 const objectUrls = new Set();
 const evidenceRequests = new Map();
 const resolvedEvidence = new Map();
@@ -153,6 +162,7 @@ export async function saveConnectorConfiguration(configuration, ownerContext) {
   const organizationId = requiredText(configuration?.organizationId, 'organization');
   const type = requiredText(configuration?.type, 'connector-type');
   if (!['S3_COMPATIBLE', 'MINIO', 'GOVERNMENT_HTTPS_API', LOCAL_DEMO_TYPE].includes(type)) throw new Error('invalid-connector-type');
+  if (type === LOCAL_DEMO_TYPE && !localDemoRuntimeAllowed()) throw new Error('local-demo-runtime-disabled');
   let serverUrl = String(configuration.serverUrl || '').trim();
   if (type !== LOCAL_DEMO_TYPE && serverUrl) {
     let parsed;
@@ -183,6 +193,7 @@ export async function testStorageConnection({ organizationId, ownerContext }) {
   const connector = await getConnectorConfiguration(organizationId);
   if (!connector) return { ok: false, status: 'not-configured' };
   if (connector.type !== LOCAL_DEMO_TYPE) return { ok: false, status: 'requires-secure-server-api' };
+  if (!localDemoRuntimeAllowed()) return { ok: false, status: 'local-demo-runtime-disabled' };
   await openDatabase().then(db => db.close());
   return { ok: true, status: 'local-demo-ready', testedAt: new Date().toISOString() };
 }
@@ -196,6 +207,10 @@ export async function uploadObservationImage({ blob, observationId = null, conte
   if (!connector?.active) {
     if (typeof fallbackUpload === 'function') return fallbackUpload(blob);
     throw new Error('storage-not-configured');
+  }
+  if (connector.type === LOCAL_DEMO_TYPE && !localDemoRuntimeAllowed()) {
+    if (typeof fallbackUpload === 'function') return fallbackUpload(blob);
+    throw new Error('local-demo-runtime-disabled');
   }
   if (connector.type !== LOCAL_DEMO_TYPE) throw new Error('server-connector-unavailable');
   const digest = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
@@ -223,6 +238,7 @@ export async function uploadObservationImage({ blob, observationId = null, conte
 //   observations/…        -> private object key, fetched via the read endpoint
 export async function resolveObservationImage({ reference, context }) {
   const parsed = parseLocalReference(reference);
+  if (parsed && !localDemoRuntimeAllowed()) return { kind: 'local-demo', available: false, url: null, reason: 'local-demo-runtime-disabled' };
   if (!parsed) {
     const raw = typeof reference === 'string' ? reference.trim() : '';
     if (/^https:\/\//i.test(raw) || /^data:image\//i.test(raw)) {
@@ -265,6 +281,7 @@ export function revokeAllObservationImageUrls() {
 }
 
 export async function deleteObservationImage({ reference, context }) {
+  if (!localDemoRuntimeAllowed()) throw new Error('local-demo-runtime-disabled');
   const parsed = parseLocalReference(reference);
   const verified = verifiedAssetContext(context);
   if (!parsed || parsed.organizationId !== verified.organizationId) throw new Error('delete-scope-denied');
@@ -273,6 +290,7 @@ export async function deleteObservationImage({ reference, context }) {
 }
 
 export async function clearLocalDemoStorage({ organizationId, ownerContext, confirmed }) {
+  if (!localDemoRuntimeAllowed()) throw new Error('local-demo-runtime-disabled');
   if (ownerContext?.role !== 'owner' || !ownerContext?.uid || confirmed !== true) throw new Error('owner-confirmation-required');
   const id = requiredText(organizationId, 'organization');
   await transact(ASSET_STORE, 'readwrite', (store, resolve, reject) => {
