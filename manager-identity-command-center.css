@@ -420,3 +420,21 @@ html[data-theme="light"] .icc-org-canvas,html[data-theme="light"] .icc-spatial-v
  .icc-spatial-stage{min-height:420px}.icc-assignment-preview{grid-template-columns:1fr}
  body .icc-sheet .icc-sheet-tabs{justify-content:flex-start;overflow:auto}body .icc-sheet .icc-sheet-tabs button{min-width:max-content}
 }
+
+/* Archive tab: same municipal identity surface and day/night tokens. */
+.icc-archive-area{display:flex;flex-direction:column;gap:13px;min-height:0;height:100%}
+.icc-archive-note{border:1px solid var(--icc-line);background:var(--icc-panel);color:var(--icc-muted);padding:12px 14px;border-radius:12px;line-height:1.8;font-size:12px;margin:0}
+.icc-archive-search{display:flex;width:100%;min-width:0}
+.icc-archive-search input{width:100%;min-width:0}
+.icc-archive-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.icc-archive-actions button{white-space:nowrap;padding:7px 10px;border-radius:9px}
+.icc-archive-actions .icc-purge{color:#ff9a9a;border-color:#a9515166}
+.icc-archive-label{display:flex;flex-direction:column;gap:8px;margin:12px 0;color:var(--icc-text);font-size:12px}
+.icc-archive-label input{width:100%;max-width:470px;min-height:43px;border:1px solid var(--icc-line);border-radius:10px;background:var(--icc-panel);color:var(--icc-text);padding:8px 12px;font:inherit}
+.icc-archive-label input:focus-visible{outline:2px solid var(--icc-green);outline-offset:2px}
+html[data-theme="light"] .icc-archive-actions .icc-purge{color:#9c2929;border-color:#a9515180}
+@media(max-width:700px){
+ .icc-archive-area .icc-table-wrap{overflow-x:auto}
+ .icc-archive-area .icc-table{min-width:660px}
+ .icc-archive-actions{min-width:124px}
+}
