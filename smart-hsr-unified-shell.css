@@ -934,3 +934,121 @@
 @media(max-width:760px){
   .hsr-shell-wordmark-copy{display:none!important}
 }
+
+
+
+/* ============================================================
+   SMART HSR UNIFIED MUNICIPAL SHELL — FINAL POLISH R5
+   Keep service identity/footer fixed; scroll only navigation.
+   Tighten employee popover and equalize day/night typography.
+   ============================================================ */
+
+.smart-hsr-shell-v1 .dh-sidebar-panel,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-sidebar-panel{
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+
+.hsr-side-nav-scroll{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding-inline:1px!important;
+  scrollbar-width:none!important;
+  overscroll-behavior:contain!important;
+}
+.hsr-side-nav-scroll::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+
+.hsr-side-identity{
+  flex:none!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:2!important;
+  background:inherit!important;
+}
+
+.hsr-platform-footer{
+  flex:none!important;
+}
+
+.hsr-identity-menu{
+  width:328px!important;
+  padding:7px!important;
+  border-radius:16px!important;
+}
+.hsr-id-head{
+  padding:11px 11px 10px!important;
+}
+.hsr-id-person{
+  margin-top:8px!important;
+}
+.hsr-id-context{
+  margin:7px 4px 5px!important;
+  padding:9px!important;
+}
+.hsr-id-context-row{
+  padding:4px 1px!important;
+  font-size:10px!important;
+}
+.hsr-id-actions{
+  padding:4px!important;
+}
+.hsr-id-action{
+  min-height:40px!important;
+  padding-inline:9px!important;
+  font-size:11.5px!important;
+}
+.hsr-id-action small{
+  font-size:9px!important;
+}
+
+/* Same hierarchy in both themes. */
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-brand-copy strong,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-shell-brand-copy strong,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-side-identity-copy strong,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-side-identity-copy strong{
+  font-size:12px!important;
+  font-weight:800!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .dh-nav-item,
+.smart-hsr-shell-v1[data-theme="night"] .dh-nav-item{
+  font-size:12.5px!important;
+  font-weight:650!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-name,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-identity-name{
+  font-size:12.5px!important;
+  font-weight:800!important;
+}
+
+/* Avoid the rail feeling like an overlay: reserve its full column and keep
+   the main workspace clipped to its own column. */
+.smart-hsr-shell-v1 .dh-sidebar + main{
+  overflow:hidden!important;
+  max-width:calc(100% - 0px)!important;
+}
+
+/* Footer remains brand-first and short. */
+.hsr-platform-footer-copy strong{
+  font-size:11px!important;
+}
+.hsr-platform-footer-copy span{
+  font-size:6.4px!important;
+}
+.hsr-platform-connection{
+  font-size:8.3px!important;
+}
+
+/* At common laptop widths, keep a readable expanded rail instead of
+   collapsing into an icon strip unless the user explicitly toggles it. */
+@media(min-width:1180px){
+  .smart-hsr-shell-v1 .dh-sidebar{
+    min-width:240px!important;
+  }
+}
