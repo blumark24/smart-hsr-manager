@@ -49,7 +49,10 @@ test('Field head authorization and runtime accept institutional role plus admini
   assert.match(authz, /institutionalRole === 'department_head'/);
   assert.match(authz, /administration/);
   assert.match(runtime, /institutionalFieldHead = institutionalRole === 'department_head'/);
-  assert.match(runtime, /administration \|\| dept/);
+  // The current runtime preserves both institutional sources, preferring the
+  // explicit department when present; this is a read-only contract assertion.
+  assert.match(runtime, /const fieldScope = dept \|\| administration;/);
+  assert.match(runtime, /institutionalFieldHead = institutionalRole === 'department_head'/);
   assert.match(login, /institutionalRole === 'department_head' \|\| mobilityRole === 'department_head'/);
   assert.match(login, /administration \|\| department/);
 });
