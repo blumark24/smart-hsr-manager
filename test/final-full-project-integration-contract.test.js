@@ -25,6 +25,7 @@ const operationalMap = read('operational-map.html');
 const activeVisionProvider = read('platform/ai/server/active-vision-provider-selector.js');
 const ownerPage = read('owner.html');
 const ownerRouter = read('owner-router.js');
+const ownerAi = read('owner-ai.js');
 
 test('public site enters SMART HSR only through the hardened gateway', () => {
   assert.match(publicEnhancements, /location\.href\s*=\s*['"]Home\.html['"]/);
@@ -158,4 +159,15 @@ test('owner runtime exposes no Local Demo storage surface', () => {
   assert.doesNotMatch(ownerPage, /data-route-link="\/integrations"|data-route="\/integrations"/);
   assert.doesNotMatch(ownerPage, /populateConnectorOrganizations|loadConnector\(|setConnectorMessage/);
   assert.doesNotMatch(ownerRouter, /['"]\/integrations['"]/);
+});
+
+test('owner AI center reports architecture truth and never fabricates provider health', () => {
+  assert.match(ownerPage, /AI Gateway — يتحقق من المزود الفعلي عند كل طلب/);
+  assert.match(ownerPage, /لا توجد Telemetry حية للمزود/);
+  assert.doesNotMatch(ownerPage, /Firebase: متصلة|الذكاء الاصطناعي: جاهز وغير متصل|غير متصل بمزود ذكاء اصطناعي حقيقي/);
+  assert.match(ownerAi, /\/api\/ai\/analyze/);
+  assert.match(ownerAi, /Gemini أو OpenAI/);
+  assert.match(ownerAi, /لا توجد نتيجة بديلة مصطنعة/);
+  assert.match(ownerAi, /محصورة في QA\/localhost/);
+  assert.doesNotMatch(ownerAi, /لم يتم تفعيل أي مزود داخل التطبيق الفعلي بعد|مصمَّمة للعمل محليًا فقط/);
 });
