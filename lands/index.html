@@ -4118,19 +4118,17 @@ const LANDS_STAGING_FIREBASE_CONFIG = { projectId: "smart-hsr-staging-blumark24"
 // the actual security boundary), not a new project and not a secret.
 const LANDS_PRODUCTION_FIREBASE_CONFIG = Object.freeze({ apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM", authDomain: "smart-hsr-manager.firebaseapp.com", projectId: "smart-hsr-manager", storageBucket: "smart-hsr-manager.firebasestorage.app", messagingSenderId: "38965508031", appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a" });
 const LANDS_PRODUCTION_HOSTNAMES = Object.freeze(["lands-smart.vercel.app", "lands-smart-blumark24-os.vercel.app", "smart-hsr-manager.vercel.app", "smart-hsr-manager-blumark24-os.vercel.app"]);
-// Same decision rule smart-hsr-manager's own firebase-runtime-config.js
-// uses: any hostname that isn't a recognized *.vercel.app Preview/staging
-// host is treated as Production by default (a real custom domain, for
-// instance) — never the reverse, so a genuine Production hostname can never
-// silently fall back to the staging project.
+// Portable Preview security: production identity is allowed ONLY on the
+// explicit existing Production aliases. Render, preview, and unknown domains
+// remain on staging; this does not change the municipal Production branch.
 // The SAME Production/Preview decision this file already uses to pick a
 // Firebase project also gates the standalone login form: Production is
 // SSO-only (see UNIFIED_LOGIN_URL below) — the standalone email/password/
 // municipality form only ever renders on Preview/local, where it remains
 // useful for direct testing.
 function isProductionHost() {
-  const hostname = location.hostname;
-  return !hostname.endsWith(".vercel.app") || LANDS_PRODUCTION_HOSTNAMES.includes(hostname);
+  const hostname = String(location.hostname || '').toLowerCase();
+  return LANDS_PRODUCTION_HOSTNAMES.includes(hostname);
 }
 // Golden Preview Review Mode — design/lands-golden-preview branch ONLY, for
 // rapid visual/product review: skips auth/SSO/Firestore entirely and shows
