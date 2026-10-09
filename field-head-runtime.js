@@ -44,15 +44,20 @@
     ]);
     component.setState({
       liveEmployees: employees,
+      mapContext: visual && visual.mapContext ? visual.mapContext : null,
       liveObservations: Array.isArray(visual.observations) ? visual.observations : [],
       liveContractors: Array.isArray(visual.contractors) ? visual.contractors : [],
       liveMissions: Array.isArray(missions.missions) ? missions.missions : [],
       liveDepartmentAudit: Array.isArray(audit.events) ? audit.events : []
     }, () => {
-      // Live Visual Distortion data can arrive after the real map has already
-      // completed its initial load. Repaint the same trusted state here so the
-      // KPI/empty-state and marker layer cannot remain stuck at the pre-fetch 0.
-      requestAnimationFrame(() => renderObservationMarkers(component));
+      // Map context and live observations can arrive after MapLibre's initial
+      // load. Re-apply the authoritative municipality extent first, then paint
+      // the trusted observation layer. This prevents a stable world-view
+      // fallback on an authenticated Field Department Head workspace.
+      requestAnimationFrame(() => {
+        component.applyMunicipalMapContext?.(true);
+        renderObservationMarkers(component);
+      });
     });
   };
 
