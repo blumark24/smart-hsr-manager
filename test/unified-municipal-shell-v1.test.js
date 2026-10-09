@@ -94,6 +94,17 @@ test('Final rail polish keeps only navigation scrollable and hides scrollbar chr
   assert.match(css, /\.hsr-side-nav-scroll::-webkit-scrollbar/);
 });
 
+test('Desktop right rail expands by default and collapses only from explicit state', () => {
+  assert.match(page, /data-collapsed="{{ sidebarCollapsed }}"/);
+  assert.match(page, /sidebarCollapsed: !!st\.sb/);
+  assert.match(page, /md: \{ '--pgMaxW': '100%', '--sbW': '212px'/);
+  assert.match(page, /tabL: \{ '--pgMaxW': '100%', '--sbW': '196px'/);
+  assert.doesNotMatch(page, /md: \{[^\n]*'--sbLabel': 'none'/);
+  assert.doesNotMatch(page, /tabL: \{[^\n]*'--sbLabel': 'none'/);
+  assert.match(css, /\.dh-sidebar\[data-collapsed="true"\]/);
+  assert.match(css, /min-width:var\(--sbW,240px\)!important/);
+});
+
 test('Mobility identity resolves municipality and department labels for the shell', () => {
   const runtime = fs.readFileSync(path.join(root, 'mobility-runtime.js'), 'utf8');
   assert.match(runtime, /function institutionalIdentity\(data\)/);
