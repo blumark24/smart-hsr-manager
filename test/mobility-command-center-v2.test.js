@@ -130,3 +130,10 @@ test('Mission lifecycle UI does not fabricate audit timestamps or actors', () =>
   assert.doesNotMatch(page, /const times = \['08:02'/);
   assert.doesNotMatch(page, /27\/05 · /);
 });
+
+
+test('Mobility basemap does not use OpenStreetMap public volunteer tile servers', () => {
+  assert.doesNotMatch(page, /https:\/\/tile\.openstreetmap\.org/);
+  assert.match(page, /World_Street_Map\/MapServer\/tile\/\{z\}\/\{y\}\/\{x\}/);
+  assert.match(page, /World_Imagery\/MapServer\/tile\/\{z\}\/\{y\}\/\{x\}/);
+});
