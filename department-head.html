@@ -793,6 +793,7 @@
   }
 /* /SMART HSR Day — glare-safe municipal surface hierarchy v2 */
 </style>
+<link rel="stylesheet" href="./smart-hsr-unified-shell.css">
 </helmet>
 
 <sc-if value="{{ gateShow }}">
@@ -802,21 +803,66 @@
   </div>
 </sc-if>
 
-<div class="dh-app" data-theme="{{ themeName }}" data-product="{{ activeProductName }}" dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
+<div class="dh-app smart-hsr-shell-v1" data-theme="{{ themeName }}" data-product="{{ activeProductName }}" dir="rtl" lang="ar" ref="{{ rootRef }}" style="{{ themeVars }}">
 <div class="dh-shell" style="width:100%;max-width:var(--pgMaxW,1600px);min-height:990px;margin:0 auto;padding:var(--pgPad,14px);display:flex;flex-direction:column;gap:14px;background:var(--pgBg,radial-gradient(1200px 700px at 50% -10%,rgba(18,52,102,0.32),transparent 70%));color:var(--tx,#e9f1fb);font-size:13px;line-height:1.5">
 
   <header class="dh-command-bar" style="min-height:62px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-radius:16px;background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,0.82),rgba(9,15,28,0.86)));border:1px solid var(--hdrBd,rgba(122,164,224,0.15));box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,0.06),0 18px 40px -26px rgba(0,0,0,0.95));backdrop-filter:var(--hdrBlur,blur(22px))">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0">
+    <div class="hsr-shell-identity-zone">
       <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" aria-expanded="{{ mobileNavExpanded }}" style="display:var(--mobNav,none);width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
 
-      <div class="sm-xscroll" style="display:var(--roleDisp,flex);align-items:center;gap:3px;padding:3px;border-radius:12px;background:var(--hdrSunk,rgba(12,20,36,0.6));border:1px solid var(--hdrDiv,rgba(122,164,224,0.14));flex-wrap:nowrap;min-width:0">
-        <span style="height:30px;display:flex;align-items:center;font-size:11px;font-weight:600;white-space:nowrap;color:var(--hdrTx,#eaf4ff)">{{ roleTitle }}</span>
+      <div class="hsr-identity-wrap" data-f="1">
+        <button class="hsr-identity-card" type="button" onClick="{{ tIdentity }}" data-f="1" aria-haspopup="menu" aria-expanded="{{ identityExpanded }}">
+          <span class="hsr-identity-avatar">{{ identityInitial }}</span>
+          <span class="hsr-identity-copy">
+            <span class="hsr-identity-org">{{ orgName }}</span>
+            <span class="hsr-identity-name">{{ sessionName }}</span>
+            <span class="hsr-identity-role">{{ identityRole }} · {{ department }}</span>
+          </span>
+          <span class="hsr-identity-chevron" aria-hidden="true">⌄</span>
+        </button>
+
+        <div class="hsr-identity-menu" role="menu" aria-label="ملف الموظف" style="display:{{ identityMenuDisplay }}">
+          <div class="hsr-id-head">
+            <div class="hsr-id-verified">SMART HSR VERIFIED IDENTITY</div>
+            <div class="hsr-id-person">
+              <span class="hsr-identity-avatar">{{ identityInitial }}</span>
+              <div>
+                <b>{{ sessionName }}</b>
+                <span>{{ identityRole }} · {{ activeProductName }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hsr-id-context" aria-label="الهوية المؤسسية">
+            <div class="hsr-id-context-row"><span>البلدية / الجهة</span><span>{{ orgName }}</span></div>
+            <div class="hsr-id-context-row"><span>الإدارة / القسم</span><span>{{ department }}</span></div>
+            <div class="hsr-id-context-row"><span>الدور</span><span>{{ identityRole }}</span></div>
+            <div class="hsr-id-context-row"><span>الخدمة الحالية</span><span>{{ activeProductName }}</span></div>
+          </div>
+
+          <div class="hsr-id-actions">
+            <button class="hsr-id-action" type="button" onClick="{{ openProfile }}" data-f="1" role="menuitem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20c.8-4 3.2-6 7.5-6s6.7 2 7.5 6"></path></svg>
+              <span>ملفي التعريفي</span><small>هوية مؤسسية</small>
+            </button>
+            <button class="hsr-id-action" type="button" data-smart-hsr-workspace-trigger data-f="1" role="menuitem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="7" height="7" rx="1"></rect><rect x="14" y="4" width="7" height="7" rx="1"></rect><rect x="3" y="15" width="7" height="6" rx="1"></rect><rect x="14" y="15" width="7" height="6" rx="1"></rect></svg>
+              <span>مساحة العمل</span><small>تغيير الخدمة</small>
+            </button>
+            <button class="hsr-id-action" type="button" onClick="{{ openPreferences }}" data-f="1" role="menuitem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1V21H10v-.09a1.7 1.7 0 0 0-1.1-1.51 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4H3V10h.09A1.7 1.7 0 0 0 4.6 8.9 1.7 1.7 0 0 0 4.26 7l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1V3H14v.09A1.7 1.7 0 0 0 15.1 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.15.38.36.72.6 1 .28.31.64.49 1 .5h.09V14H21a1.7 1.7 0 0 0-1.6 1Z"></path></svg>
+              <span>التفضيلات</span><small>المظهر والإشعارات</small>
+            </button>
+            <div class="hsr-id-sep"></div>
+            <button class="hsr-id-action hsr-id-logout" type="button" onClick="{{ logout }}" data-f="1" role="menuitem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path><path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"></path></svg>
+              <span>تسجيل الخروج</span>
+            </button>
+          </div>
+        </div>
       </div>
-
-      <button onClick="{{ logout }}" data-f="1" aria-label="تسجيل الخروج" style="height:34px;padding:0 12px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--hdrTx2,#9db2cc);background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16))">تسجيل الخروج</button>
-
     </div>
 
     <div style="display:flex;align-items:center;gap:8px">
@@ -912,20 +958,16 @@
         </sc-for>
       </div>
 
-      <div class="dh-glass dh-product-panel" style="display:var(--sbLabel,block);padding:11px;border-radius:16px;background:var(--l2,linear-gradient(180deg,rgba(17,26,44,0.72),rgba(10,16,29,0.78)));border:1px solid var(--sbBd,rgba(122,164,224,0.13))">
-        <div style="font-size:10.5px;color:var(--thTx,#7d8ea6);text-align:center;margin-bottom:9px">المنتج النشط</div>
-        <div class="dh-product-card" style="padding:10px;border-radius:11px;background:var(--sbSunk,rgba(11,18,32,0.55));border:1px solid var(--sbDiv,rgba(122,164,224,0.13))">
-          <div style="display:flex;align-items:center;gap:7px">
-            <span style="flex:1;font-size:11.5px;font-weight:600;color:var(--sbTx,#e9f1fb)">{{ activeProductName }}</span>
-            <span style="font-size:9px;padding:2px 7px;border-radius:6px;color:{{ demoCol }};background:{{ demoBg }}">مفعّل</span>
-          </div>
-          <div style="font-size:10px;color:var(--thTx,#7d8ea6);margin-top:5px">{{ activeProductArea }}</div>
-        </div>
-      </div>
-
       <div style="display:var(--sbLabel,block);flex:1;min-height:20px"></div>
-      <div style="display:var(--sbLabel,block);text-align:center;padding-bottom:4px;opacity:.6">
-        <div style="font-size:8.5px;color:var(--tx3,#5f7d9c);letter-spacing:1.3px">{{ productCode }}</div>
+      <div class="hsr-platform-footer" style="display:var(--sbLabel,block)">
+        <div class="hsr-platform-footer-brand">
+          <div class="hsr-platform-mark">HSR</div>
+          <div>
+            <strong>SMART HSR</strong>
+            <span>SMART MUNICIPAL PLATFORM</span>
+          </div>
+        </div>
+        <span class="hsr-platform-status"><i></i>Municipal Operations System · Connected</span>
       </div>
     </aside>
 
@@ -1867,7 +1909,7 @@ class Component extends DCLogic {
     theme: this.props.theme === 'day' ? 'day' : 'night',
     role: 'dept', screen: 'deptops', authPending: false, orgName: 'معاينة تصميم', sessionName: 'رئيس قسم الحصر الميداني', department: 'إدارة الحصر الميداني',
     liveMissions: [], liveVehicles: [], liveEmployees: [], liveIncidents: [], liveTelemetry: [], mapContext: null, mobilityCapabilities: [], sessionUid: null, workflowPolicy: 'FULL',
-    sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false,
+    sb: false, mobNavOpen: false, notifOpen: false, layersOpen: false, identityOpen: false,
     geoPanelOpen: false, mapSearchOpen: false,
     twin3D: false, zoom: 1, panX: 0, panY: 0, fs: false, mapQ: '',
     layers: { veh: true, mis: true, route: true, inc: true, zone: true, bound: true, dest: true },
@@ -1931,6 +1973,9 @@ class Component extends DCLogic {
       const t = e.target;
       if ((this.state.notifOpen || this.state.layersOpen) && t && t.closest && !t.closest('[data-f]')) {
         this.setState({ notifOpen: false, layersOpen: false });
+      }
+      if (this.state.identityOpen && t && t.closest && !t.closest('.hsr-identity-wrap')) {
+        this.setState({ identityOpen: false });
       }
     };
     document.addEventListener('mousedown', this.onDoc);
@@ -3063,6 +3108,14 @@ class Component extends DCLogic {
       orgName: st.orgName || 'اسم البلدية', orgMono: (st.orgName || 'ب').trim().charAt(0) || 'ب',
       productAreaTitle, activeProductName, activeProductArea, productCode,
       nav: nav, roleTitle: this.roleTitle(), roleSub: this.roleSub(),
+      sessionName: st.sessionName || 'مستخدم SMART HSR',
+      identityInitial: ((st.sessionName || 'م').trim().charAt(0) || 'م').toUpperCase(),
+      identityRole: this.identityRoleTitle(),
+      identityExpanded: !!st.identityOpen,
+      identityMenuDisplay: st.identityOpen ? 'block' : 'none',
+      tIdentity: () => this.setState(x => ({ identityOpen: !x.identityOpen, notifOpen: false, layersOpen: false })),
+      openProfile: () => this.setState({ identityOpen: false, drawer: 'profile', drawerId: null }),
+      openPreferences: () => this.setState({ identityOpen: false, screen: st.role === 'emp' ? 'emp' : 'settings', empScreen: st.role === 'emp' ? 'account' : st.empScreen }),
       screenTitle: sd.title, screenSub: sd.sub, screenActions: sd.actions || [],
       isOpsLayout: sd.ops === true, hasKpis: !!(sd.kpis && sd.kpis.length), kpis: sd.kpis || [],
       hasSide: geoWorkspace ? (!!sd.sideA && !!st.geoPanelOpen) : !!sd.sideA, hasBottom: sd.bottom === true,
@@ -3215,6 +3268,14 @@ class Component extends DCLogic {
   roleSub() {
     const r = this.state.role;
     return r === 'manager' ? 'إشراف تنفيذي' : r === 'mobility' ? 'التشغيل اليومي للأسطول' : r === 'dept' ? 'الرقابة البلدية' : r === 'admin' ? 'الشؤون الإدارية' : (this.state.sessionName || 'الموظف');
+  }
+  identityRoleTitle() {
+    const r = this.state.role;
+    return r === 'manager' ? 'مدير البلدية'
+      : r === 'mobility' ? 'رئيس حركة السير'
+      : r === 'dept' ? 'رئيس قسم'
+      : r === 'admin' ? 'الشؤون الإدارية'
+      : 'موظف حركة';
   }
   navFor(r) {
     if (r === 'manager') return [{ id: 'exec', label: 'نظرة تنفيذية' }, { id: 'reports', label: 'التقارير التنفيذية' }, { id: 'incidents', label: 'الحوادث' }, { id: 'audit', label: 'السجل التشغيلي' }];
@@ -3599,6 +3660,30 @@ class Component extends DCLogic {
           {label:editing?'حفظ التعديلات':'إضافة المركبة',on:save,tx:btn.tx,bg:btn.bg,bd:btn.bd},
           {label:'إلغاء',on:()=>this.setState({drawer:null,form:{}}),tx:ghost.tx,bg:ghost.bg,bd:ghost.bd}
         ]
+      };
+    }
+
+    if (k === 'profile') {
+      const roleLabel = this.identityRoleTitle();
+      return {
+        title: 'ملفي التعريفي',
+        sub: 'الهوية المؤسسية المعتمدة في SMART HSR',
+        chip: 'موثّق',
+        chipCol: '#43d98b',
+        chipBg: this.tint('#22c55e', 0.12),
+        chipBd: this.tint('#22c55e', 0.3),
+        banner: 'بيانات البلدية والإدارة والدور للعرض فقط وتُدار من مركز إدارة المستخدمين.',
+        bannerCol: '#43d98b',
+        bannerBg: this.tint('#22c55e', 0.08),
+        bannerBd: this.tint('#22c55e', 0.2),
+        rows: [
+          { k: 'الاسم', v: this.state.sessionName || 'غير متاح' },
+          { k: 'الجهة', v: this.state.orgName || 'المؤسسة المسجلة' },
+          { k: 'الإدارة / القسم', v: this.state.department || 'غير محدد' },
+          { k: 'الدور', v: roleLabel },
+          { k: 'الخدمة الحالية', v: this.state.runtimeMode === 'mobility' ? 'الحركة الذكية' : 'الحصر الميداني' }
+        ],
+        actions: []
       };
     }
 
