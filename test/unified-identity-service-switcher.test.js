@@ -41,7 +41,9 @@ test('workspace chooser is resolver-driven and shows the safe empty state',()=>{
   assert.match(workspace,/action:'resolveWorkspaces'/);
   assert.match(workspace,/WA\.resolveWorkspaces/);
   assert.match(workspace,/openLands\(user\)/);
-  assert.match(workspace,/لم يتم تعيين مساحة عمل لهذا الحساب بعد/);
+  // The visual copy was refined; keep asserting the safe, explicit empty state.
+  assert.match(workspace,/class="empty" id="empty">لا توجد وجهة تشغيلية مفعّلة لهذا الحساب حاليًا/);
+  assert.match(workspace,/document\.getElementById\('empty'\)\.style\.display='block'/);
   // only an invalid account/session ends the session
   assert.match(workspace,/if\(!res\.valid\)\{ await signOut\(auth\)/);
 });

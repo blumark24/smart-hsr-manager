@@ -136,6 +136,9 @@ function safeEmployee(id, data) {
     jobTitle: data.jobTitle || null,
     institutionalRole: data.institutionalRole || 'employee',
     employmentStatus: data.employmentStatus || 'active',
+    archivedAt: timestampToIso(data.archivedAt),
+    archivedReason: data.archivedReason || null,
+    restoredAt: timestampToIso(data.restoredAt),
     directManagerEmployeeId: data.directManagerEmployeeId || null,
     accountStatus: data.accountStatus || ACCOUNT_STATUS.NO_ACCOUNT,
     authUid: data.authUid || null,
@@ -369,6 +372,9 @@ async function handler(req, res) {
           targetOrganizationId: employee.data.organizationId, targetDepartment: employee.data.department,
         });
         if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+        if (employee.data.employmentStatus === 'inactive') {
+          return sendJson(res, 409, { error: 'employee_archived_restore_required' });
+        }
 
         const currentStatus = employee.data.accountStatus || ACCOUNT_STATUS.NO_ACCOUNT;
         if (!canTransitionAccountStatus(currentStatus, ACCOUNT_STATUS.PENDING_ACTIVATION)) {
@@ -493,6 +499,9 @@ async function handler(req, res) {
           targetOrganizationId: employee.data.organizationId, targetDepartment: employee.data.department, targetAuthUid: employee.data.authUid,
         });
         if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+        if (status === ACCOUNT_STATUS.ACTIVE && employee.data.employmentStatus === 'inactive') {
+          return sendJson(res, 409, { error: 'employee_archived_restore_required' });
+        }
 
         const currentStatus = employee.data.accountStatus || ACCOUNT_STATUS.NO_ACCOUNT;
         if (!canTransitionAccountStatus(currentStatus, status)) {
@@ -724,6 +733,132 @@ async function handler(req, res) {
         return sendJson(res, 200, { employeeId, administration: update.administration, department: update.department, directManagerEmployeeId: update.directManagerEmployeeId });
       }
 
+      // Archive and restoration are distinct from deletion. Manager-only,
+      // organization-scoped, audit-trailed, and never auto-enable an Auth login.
+      case 'archiveEmployee':
+      case 'restoreEmployee':
+      case 'deleteArchivedEmployee': {
+        const { employeeId } = body;
+        if (!isNonEmptyString(employeeId)) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'employeeId_required' });
+        }
+        if (!caller.isManager) {
+          return sendJson(res, 403, { error: 'forbidden', reason: 'municipal_manager_required' });
+        }
+        const employee = await findEmployee(db, employeeId);
+        if (!employee) return sendJson(res, 404, { error: 'employee_not_found' });
+        const decision = assertCanManageEmployee(caller, {
+          targetOrganizationId: employee.data.organizationId,
+          targetDepartment: employee.data.department,
+          targetAuthUid: employee.data.authUid,
+        });
+        if (!decision.allowed) {
+          return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+        }
+        const archived = employee.data.employmentStatus === 'inactive';
+        const linked = isNonEmptyString(employee.data.authUid);
+        if (action === 'archiveEmployee') {
+          if (archived) return sendJson(res, 409, { error: 'employee_already_archived' });
+          if (linked && employee.data.authUid === caller.uid) {
+            return sendJson(res, 403, { error: 'forbidden', reason: 'cannot_archive_self' });
+          }
+          if (institutionalRoleOf(employee.data) === 'manager') {
+            return sendJson(res, 403, { error: 'forbidden', reason: 'municipal_manager_record_protected' });
+          }
+          const activeDependents = await db.collection('employees')
+            .where('directManagerEmployeeId', '==', employeeId).limit(1).get();
+          if (!activeDependents.empty) {
+            return sendJson(res, 409, { error: 'reassign_direct_reports_first' });
+          }
+          const reason = isNonEmptyString(body.reason) ? body.reason.trim() : null;
+          if (reason && reason.length > 300) {
+            return sendJson(res, 400, { error: 'invalid_request', reason: 'archive_reason_too_long' });
+          }
+          if (linked) {
+            await auth.updateUser(employee.data.authUid, { disabled: true });
+            if (typeof auth.revokeRefreshTokens === 'function') {
+              await auth.revokeRefreshTokens(employee.data.authUid);
+            }
+            await db.collection('users').doc(employee.data.authUid).set({
+              active: false, updatedAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+          }
+          await employee.ref.set({
+            employmentStatus: 'inactive',
+            ...(linked ? { accountStatus: ACCOUNT_STATUS.SUSPENDED } : {}),
+            archivedAt: FieldValue.serverTimestamp(),
+            archivedBy: caller.uid,
+            archivedReason: reason,
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+          await recordAdminAudit(db, {
+            caller, organizationId: employee.data.organizationId,
+            targetEmployeeId: employeeId, action: 'employee_archive',
+            detail: { hadLinkedAccount: linked, reason: reason || null },
+          });
+          return sendJson(res, 200, { employeeId, mode: 'archived' });
+        }
+
+        if (!archived) {
+          return sendJson(res, 409, { error: 'employee_not_archived' });
+        }
+        if (action === 'restoreEmployee') {
+          // Restoring the HR roster never restores login access. A separate
+          // explicit setAccountStatus(ACTIVE) must be authorized afterward.
+          if (linked) {
+            await auth.updateUser(employee.data.authUid, { disabled: true });
+            await db.collection('users').doc(employee.data.authUid).set({
+              active: false, updatedAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+          }
+          await employee.ref.set({
+            employmentStatus: 'active',
+            ...(linked ? { accountStatus: ACCOUNT_STATUS.SUSPENDED } : {}),
+            archivedAt: FieldValue.delete(),
+            archivedBy: FieldValue.delete(),
+            archivedReason: FieldValue.delete(),
+            restoredAt: FieldValue.serverTimestamp(),
+            restoredBy: caller.uid,
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+          await recordAdminAudit(db, {
+            caller, organizationId: employee.data.organizationId,
+            targetEmployeeId: employeeId, action: 'employee_restore',
+            detail: { loginRemainsDisabled: linked },
+          });
+          return sendJson(res, 200, {
+            employeeId, mode: 'restored',
+            accountStatus: linked ? ACCOUNT_STATUS.SUSPENDED
+              : (employee.data.accountStatus || ACCOUNT_STATUS.NO_ACCOUNT),
+          });
+        }
+
+        // Permanent deletion is restricted to previously archived registry
+        // rows that were NEVER linked to Auth and have no known history.
+        // An associated Auth account or municipal record requires retention.
+        if (!isNonEmptyString(body.confirmName) || body.confirmName.trim() !== employee.data.name) {
+          return sendJson(res, 400, { error: 'invalid_request', reason: 'delete_confirmation_mismatch' });
+        }
+        if (linked || (employee.data.accountStatus || ACCOUNT_STATUS.NO_ACCOUNT) !== ACCOUNT_STATUS.NO_ACCOUNT) {
+          return sendJson(res, 409, { error: 'archived_account_retention_required' });
+        }
+        const [assignmentsSnap, missionsSnap, directReportsSnap] = await Promise.all([
+          db.collection('employeeAssignments').where('employeeId', '==', employeeId).limit(1).get(),
+          db.collection('missions').where('requestedEmployeeId', '==', employeeId).limit(1).get(),
+          db.collection('employees').where('directManagerEmployeeId', '==', employeeId).limit(1).get(),
+        ]);
+        if (!assignmentsSnap.empty || !missionsSnap.empty || !directReportsSnap.empty) {
+          return sendJson(res, 409, { error: 'municipal_history_retention_required' });
+        }
+        await employee.ref.delete();
+        await recordAdminAudit(db, {
+          caller, organizationId: employee.data.organizationId,
+          targetEmployeeId: employeeId, action: 'employee_delete_unused',
+          detail: { archived: true, employeeRef: employee.data.employeeRef || null },
+        });
+        return sendJson(res, 200, { employeeId, mode: 'deleted' });
+      }
+
       // ---- RC1: safe employee removal.
       // Hard-delete is allowed ONLY for a never-activated, unreferenced
       // registry row. Any identity with an Auth account or municipal history
@@ -831,6 +966,9 @@ async function handler(req, res) {
         if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
 
         const linked = isNonEmptyString(employee.data.authUid);
+        if (employmentStatus !== undefined && employmentStatus !== (employee.data.employmentStatus || 'active')) {
+          return sendJson(res, 409, { error: 'employee_lifecycle_action_required' });
+        }
         if (email !== undefined && linked) {
           return sendJson(res, 403, { error: 'forbidden', reason: 'linked_account_email_change_requires_account_flow' });
         }

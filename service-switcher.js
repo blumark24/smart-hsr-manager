@@ -42,6 +42,18 @@
   }
 
   function mount(user, workspaces) {
+    // Unified Municipal Shell v1: when a page exposes an Identity Switcher
+    // workspace action, integrate workspace switching there instead of
+    // rendering a separate floating control. The action is shown only for
+    // identities with 2+ trusted workspaces; authorization remains server-side.
+    const integratedTrigger = document.querySelector('[data-smart-hsr-workspace-trigger]');
+    if (integratedTrigger) {
+      integratedTrigger.style.display = 'flex';
+      integratedTrigger.dataset.workspaceCount = String(workspaces.length);
+      integratedTrigger.setAttribute('aria-label', 'تغيير مساحة العمل');
+      integratedTrigger.onclick = () => { location.href = 'workspace.html'; };
+      return;
+    }
     if (document.getElementById('smart-hsr-service-switcher')) return;
     const here = currentWorkspace();
     const wrap = document.createElement('div');

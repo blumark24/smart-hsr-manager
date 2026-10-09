@@ -150,7 +150,7 @@ async function getMunicipalityMobilityWorkflowPolicy(db, organizationId) {
 // Only business input and the retry key belong to the client. Reject all
 // other keys, including protected fields supplied with null/false values.
 const TRUSTED_CREATE_INPUT_FIELDS = {
-  createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
+  createMissionRequest: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel', 'assignSelf'],
   createDirectMobilityMission: ['action', 'clientRequestId', 'type', 'destination', 'reason', 'scope', 'requestedEmployeeId', 'requestedEmployeeName', 'whenLabel', 'durationLabel'],
   createIncident: ['action', 'clientRequestId', 'missionId', 'vehicleId', 'category', 'severity', 'note'],
 };
@@ -266,6 +266,73 @@ function timestampToIso(value) {
   if (typeof value === 'string') return value;
   const seconds = Number.isFinite(value.seconds) ? value.seconds : value._seconds;
   return Number.isFinite(seconds) ? new Date(seconds * 1000).toISOString() : null;
+}
+
+const ALQUNFUDHAH_ORGANIZATION_ID = 'CnlVlKC7UcDMp2NZzjjT';
+const ALQUNFUDHAH_APPROXIMATE_CENTER = Object.freeze({ lat: 19.12639, lng: 41.07889 });
+const ALQUNFUDHAH_DEFAULT_ZOOM = 13;
+const MOBILITY_TELEMETRY_ACTIVE_STATUSES = Object.freeze(['HANDED_OVER','READY','IN_PROGRESS','INCIDENT_HOLD']);
+
+function finiteCoordinate(value, min, max) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= min && n <= max ? n : null;
+}
+
+function cleanMobilityMapCenter(value) {
+  if (!value || typeof value !== 'object') return null;
+  const lat = finiteCoordinate(value.lat, -90, 90);
+  const lng = finiteCoordinate(value.lng, -180, 180);
+  return lat === null || lng === null ? null : { lat, lng };
+}
+
+function cleanMobilityMapBounds(value) {
+  if (!Array.isArray(value) || value.length !== 2) return null;
+  const swRaw = Array.isArray(value[0]) ? { lat:value[0][0], lng:value[0][1] } : value[0];
+  const neRaw = Array.isArray(value[1]) ? { lat:value[1][0], lng:value[1][1] } : value[1];
+  const southWest = cleanMobilityMapCenter(swRaw);
+  const northEast = cleanMobilityMapCenter(neRaw);
+  if (!southWest || !northEast || southWest.lat > northEast.lat || southWest.lng > northEast.lng) return null;
+  return [[southWest.lat, southWest.lng], [northEast.lat, northEast.lng]];
+}
+
+function safeMobilityMapContext(organizationId, organizationData) {
+  const data = organizationData && typeof organizationData === 'object' ? organizationData : {};
+  const configuredCenter = cleanMobilityMapCenter(data.mapCenter);
+  const configuredZoom = Number.isInteger(data.mapDefaultZoom) && data.mapDefaultZoom >= 4 && data.mapDefaultZoom <= 19
+    ? data.mapDefaultZoom : null;
+  const label = [cleanString(data.name), cleanString(data.organizationName)].filter(Boolean).join(' ').toLowerCase();
+  const fallbackEligible = organizationId === ALQUNFUDHAH_ORGANIZATION_ID
+    || label.includes('القنفذة') || /al[\s-]*qunfudhah/.test(label);
+  return {
+    mapCenter: configuredCenter || (fallbackEligible ? ALQUNFUDHAH_APPROXIMATE_CENTER : null),
+    mapDefaultZoom: configuredZoom || (fallbackEligible ? ALQUNFUDHAH_DEFAULT_ZOOM : null),
+    mapBounds: cleanMobilityMapBounds(data.mapBounds),
+    serviceArea: cleanString(data.serviceArea) || null,
+    configured: Boolean(configuredCenter && configuredZoom),
+  };
+}
+
+function safeMobilityTelemetry(id, data) {
+  const lat = finiteCoordinate(data && data.lat, -90, 90);
+  const lng = finiteCoordinate(data && data.lng, -180, 180);
+  if (lat === null || lng === null) return null;
+  const accuracy = Number(data.accuracyMeters);
+  const heading = Number(data.headingDegrees);
+  const speed = Number(data.speedMps);
+  return {
+    telemetryId: id,
+    missionId: cleanString(data.missionId),
+    vehicleId: cleanString(data.vehicleId),
+    employeeUid: cleanString(data.employeeUid),
+    employeeName: cleanString(data.employeeName),
+    department: cleanString(data.department),
+    lat,
+    lng,
+    accuracyMeters: Number.isFinite(accuracy) && accuracy >= 0 ? accuracy : null,
+    headingDegrees: Number.isFinite(heading) && heading >= 0 && heading <= 360 ? heading : null,
+    speedMps: Number.isFinite(speed) && speed >= 0 ? speed : null,
+    reportedAt: timestampToIso(data.reportedAt),
+  };
 }
 
 const MISSION_STATUS_LABELS = Object.freeze({
@@ -1122,10 +1189,11 @@ async function handler(req, res) {
       return sendJson(res, 403, { error: 'forbidden', reason: 'field_department_head_required' });
     }
     try {
-      const [obsSnap, contractorSnap, profileSnap] = await Promise.all([
+      const [obsSnap, contractorSnap, profileSnap, organizationSnap] = await Promise.all([
         db.collection('observations').where('organizationId', '==', caller.organizationId).get(),
         db.collection('users').where('organizationId', '==', caller.organizationId).get(),
         db.collection('contractorProfiles').where('organizationId', '==', caller.organizationId).get(),
+        db.collection('organizations').doc(caller.organizationId).get(),
       ]);
 
       const observations = obsSnap.docs.map(doc => safeFieldObservation(doc.id, doc.data() || {}));
@@ -1150,6 +1218,10 @@ async function handler(req, res) {
 
       return sendJson(res, 200, {
         product: 'visual_distortion',
+        mapContext: safeMobilityMapContext(
+          caller.organizationId,
+          organizationSnap.exists ? (organizationSnap.data() || {}) : {}
+        ),
         observations: observations.slice(0, 250),
         contractors,
       });
@@ -1610,6 +1682,23 @@ async function handler(req, res) {
 
     const clientRequestId = body.clientRequestId;
     const requestedEmployeeId = cleanString(body.requestedEmployeeId);
+    const assignSelf = body.assignSelf === true;
+    if (body.assignSelf !== undefined && typeof body.assignSelf !== 'boolean') {
+      return sendJson(res, 400, { error:'invalid_request', reason:'assignSelf_boolean_required' });
+    }
+    if (assignSelf && requestedEmployeeId) {
+      return sendJson(res, 400, { error:'invalid_request', reason:'assignSelf_conflicts_with_requestedEmployeeId' });
+    }
+    let selfOperator = null;
+    if (assignSelf) {
+      selfOperator = await getMobilityAssignedOperatorCallerContext(decoded.uid);
+      if (!selfOperator.isAssignedOperatorEligible
+          || selfOperator.role !== 'department_head'
+          || selfOperator.organizationId !== caller.organizationId
+          || !selfOperator.capabilities.includes('vehicle.drive')) {
+        return sendJson(res, 403, { error:'forbidden', reason:'department_head_vehicle_eligibility_required' });
+      }
+    }
     const missionInput = {
       type: cleanString(body.type),
       destination: cleanString(body.destination),
@@ -1625,7 +1714,8 @@ async function handler(req, res) {
 
     const hash = payloadHash(action, [
       missionInput.type, missionInput.destination, missionInput.reason, missionInput.scope,
-      requestedEmployeeId, missionInput.requestedEmployeeName, missionInput.whenLabel, missionInput.durationLabel,
+      requestedEmployeeId, assignSelf ? 'SELF' : 'EMPLOYEE', missionInput.requestedEmployeeName,
+      missionInput.whenLabel, missionInput.durationLabel,
     ]);
     const requestRef = trustedCreateRequestRef(db, action, caller.uid, clientRequestId);
     const missionRef = db.collection('missions').doc();
@@ -1649,7 +1739,11 @@ async function handler(req, res) {
           return { ok: true, missionId: prior.resourceId, idempotent: true };
         }
 
-        let requestedEmployee = null;
+        let requestedEmployee = assignSelf ? {
+          employeeId: null,
+          uid: selfOperator.uid,
+          name: selfOperator.name || caller.name || 'رئيس القسم',
+        } : null;
         if (employeeRef) {
           const employeeSnap = snapshots[1];
           if (!employeeSnap.exists) return { ok: false, statusCode: 404, reason: 'employee_not_found' };
@@ -1691,9 +1785,10 @@ async function handler(req, res) {
           status: 'DRAFT',
           ...missionInput,
           ...(requestedEmployee ? {
-            requestedEmployeeId: requestedEmployee.employeeId,
+            ...(requestedEmployee.employeeId ? { requestedEmployeeId: requestedEmployee.employeeId } : {}),
             requestedEmployeeUid: requestedEmployee.uid,
             requestedEmployeeName: requestedEmployee.name,
+            ...(assignSelf ? { requestedBySelf: true } : {}),
           } : {}),
           createdAt: now,
           updatedAt: now,
@@ -2159,6 +2254,79 @@ async function handler(req, res) {
     }
   }
 
+  // SMART MOBILITY LIVE MAP — privacy-bounded last-known telemetry.
+  // Only the currently assigned vehicle operator may publish a fix, and only
+  // while the mission is in an active driving phase. No route history is
+  // stored here; the document is overwritten with the latest trusted fix.
+  if (action === 'reportMobilityTelemetry') {
+    const actor = await getMobilityAssignedOperatorCallerContext(decoded.uid);
+    if (!actor.isAssignedOperatorEligible) {
+      return sendJson(res, 403, { error:'forbidden', reason:'assigned_vehicle_operator_required' });
+    }
+    if (!actor.capabilities.includes('vehicle.drive')) {
+      return sendJson(res, 403, { error:'forbidden', reason:'capability_required', capability:'vehicle.drive' });
+    }
+
+    const missionId = cleanString(body.missionId);
+    const lat = finiteCoordinate(body.lat, -90, 90);
+    const lng = finiteCoordinate(body.lng, -180, 180);
+    const accuracyMeters = Number(body.accuracyMeters);
+    const headingDegrees = Number(body.headingDegrees);
+    const speedMps = Number(body.speedMps);
+    if (!missionId || lat === null || lng === null
+        || (body.accuracyMeters !== undefined && (!Number.isFinite(accuracyMeters) || accuracyMeters < 0 || accuracyMeters > 5000))
+        || (body.headingDegrees !== undefined && body.headingDegrees !== null && (!Number.isFinite(headingDegrees) || headingDegrees < 0 || headingDegrees > 360))
+        || (body.speedMps !== undefined && body.speedMps !== null && (!Number.isFinite(speedMps) || speedMps < 0 || speedMps > 100))) {
+      return sendJson(res, 400, { error:'invalid_request', reason:'invalid_mobility_telemetry' });
+    }
+
+    try {
+      const missionRef = db.collection('missions').doc(missionId);
+      const missionSnap = await missionRef.get();
+      if (!missionSnap.exists) return sendJson(res, 404, { error:'request_failed', reason:'mission_not_found' });
+      const mission = missionSnap.data() || {};
+      if (mission.organizationId !== actor.organizationId) {
+        return sendJson(res, 403, { error:'forbidden', reason:'cross_organization_denied' });
+      }
+      if (mission.assignedEmployeeUid !== actor.uid || !isNonEmptyString(mission.vehicleId)) {
+        return sendJson(res, 403, { error:'forbidden', reason:'operator_not_assigned' });
+      }
+      if (!MOBILITY_TELEMETRY_ACTIVE_STATUSES.includes(mission.status)) {
+        return sendJson(res, 409, { error:'request_failed', reason:'mission_not_tracking_active' });
+      }
+
+      const vehicleRef = db.collection('vehicles').doc(mission.vehicleId);
+      const vehicleSnap = await vehicleRef.get();
+      if (!vehicleSnap.exists) return sendJson(res, 404, { error:'request_failed', reason:'vehicle_not_found' });
+      const vehicle = vehicleSnap.data() || {};
+      if (vehicle.organizationId !== actor.organizationId
+          || vehicle.currentMissionId !== missionId
+          || vehicle.assignedEmployeeUid !== actor.uid
+          || vehicle.status !== 'IN_MISSION') {
+        return sendJson(res, 409, { error:'request_failed', reason:'mission_vehicle_relationship_invalid' });
+      }
+
+      await db.collection('mobilityTelemetry').doc(missionId).set({
+        organizationId: actor.organizationId,
+        missionId,
+        vehicleId: mission.vehicleId,
+        employeeUid: actor.uid,
+        employeeName: actor.name || mission.assignedEmployeeName || '',
+        department: actor.department || mission.department || '',
+        lat,
+        lng,
+        accuracyMeters: Number.isFinite(accuracyMeters) ? accuracyMeters : null,
+        headingDegrees: Number.isFinite(headingDegrees) ? headingDegrees : null,
+        speedMps: Number.isFinite(speedMps) ? speedMps : null,
+        reportedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      return sendJson(res, 200, { missionId, vehicleId: mission.vehicleId, accepted:true });
+    } catch (_) {
+      return sendJson(res, 500, { error:'request_failed', reason:'temporary_failure' });
+    }
+  }
+
   // PHASE15 — one trusted workspace read for all Smart Mobility operational
   // roles. Mobility is municipality-wide and independent from Field/Lands;
   // scope is derived exclusively from the authenticated live Mobility role.
@@ -2168,17 +2336,21 @@ async function handler(req, res) {
     );
     if (!actor) return sendJson(res, 403, { error: 'forbidden', reason: 'mobility_role_required' });
     try {
-      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap, userSnap] = await Promise.all([
+      const [missionSnap, vehicleSnap, incidentSnap, authorizationSnap, employeeSnap, auditSnap, userSnap, organizationSnap, telemetrySnap] = await Promise.all([
         db.collection('missions').where('organizationId', '==', actor.organizationId).get(),
         db.collection('vehicles').where('organizationId', '==', actor.organizationId).get(),
         db.collection('incidents').where('organizationId', '==', actor.organizationId).get(),
         db.collection('vehicleAuthorizations').where('organizationId', '==', actor.organizationId).get(),
         db.collection('employees').where('organizationId', '==', actor.organizationId).get(),
-        actor.role === 'administrative_affairs'
+        ['administrative_affairs','mobility_head'].includes(actor.role)
           ? db.collection('auditEvents').where('organizationId', '==', actor.organizationId).get()
           : Promise.resolve({ docs: [] }),
         actor.role === 'mobility_head'
           ? db.collection('users').where('organizationId', '==', actor.organizationId).get()
+          : Promise.resolve({ docs: [] }),
+        db.collection('organizations').doc(actor.organizationId).get(),
+        ['mobility_head','department_head','employee'].includes(actor.role)
+          ? db.collection('mobilityTelemetry').where('organizationId', '==', actor.organizationId).get()
           : Promise.resolve({ docs: [] }),
       ]);
 
@@ -2210,6 +2382,19 @@ async function handler(req, res) {
         vehicles = vehicles.filter(row => vehicleIds.has(row.id));
       }
 
+      const activeMissionIds = new Set(missions
+        .filter(row => MOBILITY_TELEMETRY_ACTIVE_STATUSES.includes(cleanString(row.data.status)))
+        .map(row => row.id));
+      const telemetry = telemetrySnap.docs
+        .map(doc => ({ id:doc.id, data:doc.data() || {} }))
+        .filter(row => activeMissionIds.has(cleanString(row.data.missionId)))
+        .map(row => safeMobilityTelemetry(row.id, row.data))
+        .filter(Boolean);
+      const mapContext = safeMobilityMapContext(
+        actor.organizationId,
+        organizationSnap.exists ? (organizationSnap.data() || {}) : {}
+      );
+
       const employees = [];
       if (actor.role === 'department_head' || actor.role === 'mobility_head' || actor.role === 'administrative_affairs' || actor.role === 'administrative_affairs_employee') {
         for (const doc of employeeSnap.docs) {
@@ -2223,6 +2408,12 @@ async function handler(req, res) {
             if (d.accountStatus !== 'ACTIVE' || !isNonEmptyString(d.authUid)) continue;
             if (!mobility || mobility.enabled !== true) continue;
           }
+          // Department heads must only see/select vehicle-eligible people
+          // inside their own department. The API already rejects cross-
+          // department mission creation; filtering the workspace prevents
+          // presenting a choice that can never succeed.
+          if (actor.role === 'department_head'
+              && cleanString(d.department) !== cleanString(actor.department)) continue;
           employees.push({
             employeeId: doc.id,
             uid: isNonEmptyString(d.authUid) ? d.authUid : null,
@@ -2238,12 +2429,41 @@ async function handler(req, res) {
         }
       }
 
+      const mobilityAuditResourceTypes = new Set(['mission','vehicle','incident','vehicleAuthorization']);
+      const operationalAudit = actor.role === 'mobility_head'
+        ? auditSnap.docs.map(doc => {
+            const d = doc.data() || {};
+            return {
+              auditId: doc.id,
+              resourceType: cleanString(d.resourceType),
+              resourceId: cleanString(d.resourceId),
+              action: cleanString(d.action),
+              actorId: cleanString(d.actorId),
+              actorRole: cleanString(d.actorRole),
+              department: cleanString(d.department),
+              fromStatus: cleanString(d.fromStatus) || null,
+              toStatus: cleanString(d.toStatus) || null,
+              missionId: cleanString(d.missionId) || null,
+              vehicleId: cleanString(d.vehicleId) || null,
+              note: cleanString(d.note) || null,
+              timestamp: timestampToIso(d.timestamp || d.createdAt),
+            };
+          })
+          .filter(row => mobilityAuditResourceTypes.has(row.resourceType))
+          .sort((a,b)=>String(b.timestamp||'').localeCompare(String(a.timestamp||'')))
+          .slice(0,250)
+        : [];
+
       const workflowPolicy = await getMunicipalityMobilityWorkflowPolicy(db, actor.organizationId);
       return sendJson(res, 200, {
         role: actor.role,
         organizationId: actor.organizationId,
         department: actor.department || null,
+        capabilities: Array.isArray(actor.capabilities) ? actor.capabilities : [],
         workflowPolicy,
+        mapContext,
+        telemetry,
+        operationalAudit,
         missions: missions.map(row => safeMission(row.id, row.data)),
         vehicles: vehicles.map(row => safeMobilityVehicle(row.id, row.data)),
         incidents: incidents.map(row => safeMobilityIncident(row.id, row.data)),
@@ -2288,13 +2508,37 @@ async function handler(req, res) {
       if (body.employmentStatus !== undefined) {
         const status = cleanString(body.employmentStatus);
         if (!['active','inactive'].includes(status)) return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_employment_status' });
+        // The dedicated municipal User Center lifecycle must disable Auth
+        // and write its audit before the HR status can change.
+        if (status !== (employee.employmentStatus || 'active')) {
+          return sendJson(res, 409, { error: 'employee_lifecycle_action_required' });
+        }
         update.employmentStatus = status;
       }
       if (body.vehicleEligible !== undefined) {
         if (typeof body.vehicleEligible !== 'boolean') return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_vehicle_eligible' });
         update['products.mobility.vehicleEligible'] = body.vehicleEligible;
         if (isNonEmptyString(employee.authUid)) {
-          await db.collection('users').doc(employee.authUid).set({ vehicleEligible: body.vehicleEligible, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+          const userRef = db.collection('users').doc(employee.authUid);
+          const userUpdate = { vehicleEligible: body.vehicleEligible, updatedAt: FieldValue.serverTimestamp() };
+          // Accounts that already carry capability entitlements treat them
+          // as authoritative. Keep that layer coherent with the
+          // Administrative Affairs eligibility decision; legacy accounts
+          // continue to derive capabilities from vehicleEligible exactly as
+          // before.
+          const userSnap = await userRef.get();
+          const syncedCapabilities = syncEntitlementsForLegacyChange(
+            userSnap && userSnap.exists ? userSnap.data() : null,
+            { vehicleEligible: body.vehicleEligible }
+          );
+          if (syncedCapabilities) {
+            userUpdate.entitlements = {
+              capabilities: syncedCapabilities,
+              updatedBy: actor.uid,
+              updatedAt: FieldValue.serverTimestamp(),
+            };
+          }
+          await userRef.set(userUpdate, { merge: true });
         }
       }
       await ref.update(update);
@@ -2327,6 +2571,138 @@ async function handler(req, res) {
     } catch (_) {
       return sendJson(res, 500, { error: 'request_failed', reason: 'temporary_failure' });
     }
+  }
+
+  // SMART MOBILITY FLEET REGISTRY — Mobility Head is the operational owner.
+  // These mutations stay inside the existing trusted users API to avoid a new
+  // serverless surface. Organization/status/audit identity are server-derived.
+  if (action === 'createMobilityVehicle') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res, 403, { error:'forbidden', reason:'mobility_head_required' });
+    const allowed = new Set(['action','internalNumber','plate','type','make','model','year','department','odometer','fuelLevel','note','lastMaintenance','nextMaintenance']);
+    if (Object.keys(body).some(k=>!allowed.has(k))) return sendJson(res,400,{error:'invalid_request',reason:'protected_or_unknown_field'});
+    const internalNumber=cleanString(body.internalNumber).slice(0,40);
+    const plate=cleanString(body.plate).slice(0,40);
+    const type=cleanString(body.type).slice(0,80);
+    if(!internalNumber||!plate||!type) return sendJson(res,400,{error:'invalid_request',reason:'internalNumber_plate_type_required'});
+    const year=body.year==null||body.year===''?null:Number(body.year);
+    const odometer=body.odometer==null||body.odometer===''?null:Number(body.odometer);
+    const fuelLevel=body.fuelLevel==null||body.fuelLevel===''?null:Number(body.fuelLevel);
+    if((year!==null&&(!Number.isInteger(year)||year<1950||year>2100))
+      ||(odometer!==null&&(!Number.isFinite(odometer)||odometer<0||odometer>10000000))
+      ||(fuelLevel!==null&&(!Number.isFinite(fuelLevel)||fuelLevel<0||fuelLevel>100))){
+      return sendJson(res,400,{error:'invalid_request',reason:'invalid_vehicle_numeric_field'});
+    }
+    try{
+      const existing=await db.collection('vehicles').where('organizationId','==',actor.organizationId).get();
+      if(existing.docs.some(d=>{
+        const x=d.data()||{};
+        return cleanString(x.internalNumber).toLowerCase()===internalNumber.toLowerCase()
+          || cleanString(x.plate).toLowerCase()===plate.toLowerCase();
+      })) return sendJson(res,409,{error:'request_failed',reason:'vehicle_identifier_exists'});
+      const ref=db.collection('vehicles').doc();
+      const now=FieldValue.serverTimestamp();
+      const doc={
+        organizationId:actor.organizationId, internalNumber, plate, type,
+        make:cleanString(body.make).slice(0,80)||null,
+        model:cleanString(body.model).slice(0,80)||null,
+        year,
+        department:cleanString(body.department).slice(0,120)||null,
+        odometer, fuelLevel,
+        note:cleanString(body.note).slice(0,500)||null,
+        lastMaintenance:cleanString(body.lastMaintenance).slice(0,40)||null,
+        nextMaintenance:cleanString(body.nextMaintenance).slice(0,40)||null,
+        status:'AVAILABLE', createdAt:now, updatedAt:now, createdByUid:actor.uid, updatedByUid:actor.uid,
+      };
+      await db.runTransaction(async tx=>{
+        tx.set(ref,doc);
+        tx.set(db.collection('auditEvents').doc(),{
+          organizationId:actor.organizationId, actorId:actor.uid, actorRole:actor.role,
+          resourceType:'vehicle', resourceId:ref.id, action:'create_vehicle', toStatus:'AVAILABLE', timestamp:now,
+        });
+      });
+      return sendJson(res,200,{vehicle:safeMobilityVehicle(ref.id,doc)});
+    }catch(_){return sendJson(res,500,{error:'request_failed',reason:'temporary_failure'});}
+  }
+
+  if (action === 'updateMobilityVehicle') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res,403,{error:'forbidden',reason:'mobility_head_required'});
+    const allowed=new Set(['action','vehicleId','internalNumber','plate','type','make','model','year','department','odometer','fuelLevel','note','lastMaintenance','nextMaintenance']);
+    if(Object.keys(body).some(k=>!allowed.has(k))) return sendJson(res,400,{error:'invalid_request',reason:'protected_or_unknown_field'});
+    const vehicleId=cleanString(body.vehicleId);
+    if(!vehicleId) return sendJson(res,400,{error:'invalid_request',reason:'vehicleId_required'});
+    try{
+      const ref=db.collection('vehicles').doc(vehicleId);
+      const snap=await ref.get();
+      if(!snap.exists) return sendJson(res,404,{error:'request_failed',reason:'vehicle_not_found'});
+      const vehicle=snap.data()||{};
+      if(vehicle.organizationId!==actor.organizationId) return sendJson(res,403,{error:'forbidden',reason:'cross_organization_denied'});
+      if(['RESERVED','IN_MISSION','RETURN_PENDING'].includes(vehicle.status)){
+        return sendJson(res,409,{error:'request_failed',reason:'vehicle_committed_cannot_edit'});
+      }
+      const update={updatedAt:FieldValue.serverTimestamp(),updatedByUid:actor.uid};
+      const stringFields=['internalNumber','plate','type','make','model','department','note','lastMaintenance','nextMaintenance'];
+      for(const key of stringFields){
+        if(body[key]!==undefined) update[key]=cleanString(body[key]).slice(0,key==='note'?500:120)||null;
+      }
+      for(const key of ['year','odometer','fuelLevel']){
+        if(body[key]===undefined) continue;
+        const raw=body[key], value=raw===''||raw===null?null:Number(raw);
+        const ok=value===null || (key==='year'
+          ? Number.isInteger(value)&&value>=1950&&value<=2100
+          : Number.isFinite(value)&&value>=0&&(key!=='fuelLevel'||value<=100)&&(key!=='odometer'||value<=10000000));
+        if(!ok) return sendJson(res,400,{error:'invalid_request',reason:'invalid_vehicle_numeric_field'});
+        update[key]=value;
+      }
+      if(update.internalNumber===null||update.plate===null||update.type===null) return sendJson(res,400,{error:'invalid_request',reason:'vehicle_required_field_cannot_be_empty'});
+      if(update.internalNumber||update.plate){
+        const existing=await db.collection('vehicles').where('organizationId','==',actor.organizationId).get();
+        const nextNo=cleanString(update.internalNumber||vehicle.internalNumber).toLowerCase();
+        const nextPlate=cleanString(update.plate||vehicle.plate).toLowerCase();
+        if(existing.docs.some(d=>d.id!==vehicleId&&(()=>{
+          const x=d.data()||{}; return cleanString(x.internalNumber).toLowerCase()===nextNo||cleanString(x.plate).toLowerCase()===nextPlate;
+        })())) return sendJson(res,409,{error:'request_failed',reason:'vehicle_identifier_exists'});
+      }
+      await ref.update(update);
+      await db.collection('auditEvents').add({
+        organizationId:actor.organizationId,actorId:actor.uid,actorRole:actor.role,
+        resourceType:'vehicle',resourceId:vehicleId,action:'update_vehicle',timestamp:FieldValue.serverTimestamp(),
+      });
+      const next=Object.assign({},vehicle,update);
+      return sendJson(res,200,{vehicle:safeMobilityVehicle(vehicleId,next)});
+    }catch(_){return sendJson(res,500,{error:'request_failed',reason:'temporary_failure'});}
+  }
+
+  if (action === 'setMobilityVehicleStatus') {
+    const actor = await getMobilityOperationalCaller(db, decoded.uid, ['mobility_head']);
+    if (!actor) return sendJson(res,403,{error:'forbidden',reason:'mobility_head_required'});
+    const vehicleId=cleanString(body.vehicleId);
+    const toStatus=cleanString(body.toStatus);
+    if(!vehicleId||!['AVAILABLE','MAINTENANCE','OUT_OF_SERVICE'].includes(toStatus)){
+      return sendJson(res,400,{error:'invalid_request',reason:'vehicleId_and_valid_status_required'});
+    }
+    try{
+      const outcome=await db.runTransaction(async tx=>{
+        const ref=db.collection('vehicles').doc(vehicleId);
+        const snap=await tx.get(ref);
+        if(!snap.exists) return {ok:false,statusCode:404,reason:'vehicle_not_found'};
+        const vehicle=snap.data()||{};
+        if(vehicle.organizationId!==actor.organizationId) return {ok:false,statusCode:403,reason:'cross_organization_denied'};
+        const decision=evaluateVehicleTransition({actor,vehicle,toStatus});
+        if(!decision.allowed) return {ok:false,statusCode:409,reason:decision.code};
+        const now=FieldValue.serverTimestamp();
+        tx.update(ref,{status:toStatus,updatedAt:now,updatedByUid:actor.uid});
+        tx.set(db.collection('auditEvents').doc(),{
+          organizationId:actor.organizationId,actorId:actor.uid,actorRole:actor.role,
+          resourceType:'vehicle',resourceId:vehicleId,action:'vehicle_status_transition',
+          fromStatus:vehicle.status,toStatus,timestamp:now,
+        });
+        return {ok:true};
+      });
+      if(!outcome.ok) return sendJson(res,outcome.statusCode,{error:'request_failed',reason:outcome.reason});
+      return sendJson(res,200,{vehicleId,status:toStatus});
+    }catch(_){return sendJson(res,500,{error:'request_failed',reason:'temporary_failure'});}
   }
 
   if (action === 'listAvailableVehicles') {
@@ -2657,9 +3033,11 @@ async function handler(req, res) {
     try {
       const outcome = await db.runTransaction(async (transaction) => {
         const missionRef = db.collection('missions').doc(incident.missionId);
+        const telemetryRef = db.collection('mobilityTelemetry').doc(incident.missionId);
         const reads = [transaction.get(requestRef), transaction.get(missionRef)];
         const vehicleRef = incident.vehicleId ? db.collection('vehicles').doc(incident.vehicleId) : null;
         if (vehicleRef) reads.push(transaction.get(vehicleRef));
+        reads.push(transaction.get(telemetryRef));
         const snapshots = await Promise.all(reads);
         const priorSnap = snapshots[0];
         if (priorSnap.exists) {
@@ -2689,6 +3067,27 @@ async function handler(req, res) {
             && vehicleData.status === 'IN_MISSION';
           if (!validRelationship) return { ok: false, statusCode: 409, reason: 'vehicle_relationship_invalid' };
         }
+        const telemetrySnap = snapshots[vehicleRef ? 3 : 2];
+        const telemetryData = telemetrySnap && telemetrySnap.exists ? (telemetrySnap.data() || {}) : {};
+        const telemetryLat = finiteCoordinate(telemetryData.lat, -90, 90);
+        const telemetryLng = finiteCoordinate(telemetryData.lng, -180, 180);
+        const telemetryMillis = telemetryData.reportedAt && typeof telemetryData.reportedAt.toMillis === 'function'
+          ? telemetryData.reportedAt.toMillis() : null;
+        const telemetryFresh = Number.isFinite(telemetryMillis) && Date.now() - telemetryMillis <= 5 * 60 * 1000;
+        const trustedLocation = telemetryFresh
+          && telemetryData.organizationId === caller.organizationId
+          && telemetryData.missionId === incident.missionId
+          && telemetryData.employeeUid === caller.uid
+          && (!incident.vehicleId || telemetryData.vehicleId === incident.vehicleId)
+          && telemetryLat !== null && telemetryLng !== null
+          ? {
+              lat: telemetryLat,
+              lng: telemetryLng,
+              accuracyMeters: Number.isFinite(Number(telemetryData.accuracyMeters)) ? Number(telemetryData.accuracyMeters) : null,
+              source: 'mobilityTelemetry',
+              capturedAt: telemetryData.reportedAt,
+            }
+          : null;
         const now = FieldValue.serverTimestamp();
         transaction.set(incidentRef, {
           clientRequestId,
@@ -2701,6 +3100,7 @@ async function handler(req, res) {
           category: incident.category,
           severity: incident.severity,
           note: incident.note,
+          ...(trustedLocation ? { location: trustedLocation } : {}),
           status: 'NEW',
           createdAt: now,
           updatedAt: now,
@@ -3673,17 +4073,46 @@ async function handler(req, res) {
         }
         await record.ref.set(update, { merge: true });
 
-        // Mirror the Mobility capability state into the linked employee
-        // registry entry (selection lists read it). Best-effort and
-        // non-authoritative: users/{uid} stays the single authority.
-        if (nextCapabilities) {
+        // Mirror the EFFECTIVE Mobility state into the linked employee
+        // registry entry (selection/allocation pickers read it). Legacy
+        // accounts may not have an entitlements object yet, so nextCapabilities
+        // can legitimately be null even though vehicleEligible/mobilityAccess
+        // just changed. Compute the requested effective state explicitly
+        // instead of skipping the mirror in that case.
+        if (mobilitySel.present || vehicleEligible !== undefined || nextCapabilities) {
           try {
             const linked = await db.collection('employees').where('authUid', '==', uid).limit(1).get();
             const employeeDoc = linked && linked.docs && linked.docs[0];
             if (employeeDoc && (employeeDoc.data() || {}).organizationId === municipalityId) {
               const existingProducts = (employeeDoc.data() || {}).products || {};
+              const currentMobility = existingProducts.mobility || {};
+              const effectiveCapabilities = nextCapabilities || (() => {
+                const caps = new Set(WorkspaceAccess.resolveCapabilities(record.data));
+                if (mobilitySel.present) {
+                  if (mobilitySel.enabled) caps.add('mobility.access');
+                  else WorkspaceAccess.CAPABILITIES.forEach(cap => caps.delete(cap));
+                }
+                if (vehicleEligible !== undefined) {
+                  WorkspaceAccess.VEHICLE_CAPABILITIES.forEach(cap => (
+                    vehicleEligible === true ? caps.add(cap) : caps.delete(cap)
+                  ));
+                }
+                return WorkspaceAccess.normalizeCapabilities(Array.from(caps));
+              })();
+              const mobilityEnabled = effectiveCapabilities.includes('mobility.access');
+              const effectiveRole = mobilitySel.present
+                ? mobilitySel.role
+                : (currentMobility.role || WorkspaceAccess.resolveMobilityRole(record.data) || 'employee');
               await employeeDoc.ref.set({
-                products: { ...existingProducts, mobility: mobilityProductMirror(nextCapabilities, existingProducts.mobility) },
+                products: {
+                  ...existingProducts,
+                  mobility: {
+                    ...currentMobility,
+                    enabled: mobilityEnabled,
+                    role: mobilityEnabled ? effectiveRole : null,
+                    vehicleEligible: mobilityEnabled && effectiveCapabilities.includes('vehicle.drive'),
+                  },
+                },
                 updatedAt: FieldValue.serverTimestamp(),
               }, { merge: true });
             }
@@ -3800,6 +4229,19 @@ async function handler(req, res) {
           targetRole: record.data.role, targetOrganizationId: record.data.organizationId,
         });
         if (!decision.allowed) return sendJson(res, 403, { error: 'forbidden', reason: decision.reason });
+        if (active) {
+          // An archived employee cannot regain login through the generic
+          // user-account enable action before HR restoration is approved.
+          const employeesSnap = await db.collection('employees')
+            .where('authUid', '==', uid).limit(10).get();
+          if (employeesSnap.docs.some(doc => {
+            const employee = doc.data() || {};
+            return employee.organizationId === record.data.organizationId
+              && employee.employmentStatus === 'inactive';
+          })) {
+            return sendJson(res, 409, { error: 'employee_archived_restore_required' });
+          }
+        }
 
         await auth.updateUser(uid, { disabled: !active });
         await record.ref.set({ active, updatedAt: FieldValue.serverTimestamp() }, { merge: true });

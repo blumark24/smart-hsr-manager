@@ -15,7 +15,6 @@ export const ROUTES = Object.freeze([
   '/audit',
   '/security',
   '/reports',
-  '/integrations',
   '/health',
 ]);
 

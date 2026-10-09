@@ -5,19 +5,86 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SMART HSR — مساحات العمل</title>
   <style>
-    :root{color-scheme:light;--bg:#f4f7f6;--card:#fff;--tx:#10251f;--muted:#667a73;--line:#dfe8e4;--green:#11865d;--navy:#102a3b}
-    @media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#081724;--card:#0d2130;--tx:#eef7f4;--muted:#9db0aa;--line:#203b48;--green:#2bc083;--navy:#07131e}}
-    *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Arabic",Tahoma,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
-    .shell{max-width:1060px;margin:auto;padding:34px 22px 48px}.top{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:30px}
-    .brand{display:flex;gap:12px;align-items:center}.mark{width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,var(--navy),var(--green));box-shadow:0 10px 30px rgba(16,42,59,.16)}
-    h1{font-size:22px;margin:0}.sub,.meta{color:var(--muted);font-size:13px;margin-top:4px}.logout{border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:12px;padding:10px 14px;cursor:pointer}
-    .hero{padding:24px;border:1px solid var(--line);background:var(--card);border-radius:22px;margin-bottom:18px}.hero h2{margin:0 0 6px;font-size:26px}.hero p{margin:0;color:var(--muted)}
-    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.svc{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:20px;text-align:right;cursor:pointer;min-height:180px;transition:.18s transform,.18s box-shadow,.18s border-color}
-    .svc:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(16,42,59,.10);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
-    .icon{width:40px;height:40px;border-radius:12px;background:color-mix(in srgb,var(--green) 14%,transparent);display:grid;place-items:center;margin-bottom:28px;font-weight:800;color:var(--green)}
-    .svc h3{margin:0 0 6px;font-size:18px}.svc p{margin:0;color:var(--muted);font-size:13px;line-height:1.8}.tag{display:inline-block;margin-top:13px;font-size:11px;color:var(--green);font-weight:700}
-    .empty{display:none;padding:28px;border:1px dashed var(--line);border-radius:18px;color:var(--muted);text-align:center}
-    @media(max-width:760px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.hero h2{font-size:22px}}
+    :root{
+      color-scheme:light;
+      --bg:#edf4f1;--tx:#10251f;--muted:#65766f;--line:rgba(25,78,62,.14);
+      --glass:rgba(255,255,255,.72);--glass-strong:rgba(255,255,255,.88);
+      --green:#0f8a60;--green-2:#18a873;--navy:#0b2935;--shadow:0 28px 90px rgba(13,49,39,.16);
+      --grid:rgba(17,134,93,.07);--chip:rgba(17,134,93,.08);
+    }
+    @media(prefers-color-scheme:dark){
+      :root{
+        color-scheme:dark;--bg:#06131d;--tx:#edf7f3;--muted:#9bb0a8;--line:rgba(151,211,190,.14);
+        --glass:rgba(8,29,38,.76);--glass-strong:rgba(10,35,45,.9);
+        --green:#39cb91;--green-2:#24b67f;--navy:#06111a;--shadow:0 30px 100px rgba(0,0,0,.38);
+        --grid:rgba(57,203,145,.07);--chip:rgba(57,203,145,.09);
+      }
+    }
+    *{box-sizing:border-box}
+    html,body{min-height:100%}
+    body{
+      margin:0;min-height:100vh;overflow-x:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Arabic",Tahoma,sans-serif;
+      background:
+        radial-gradient(circle at 74% 18%,rgba(22,166,111,.14),transparent 29rem),
+        radial-gradient(circle at 15% 82%,rgba(13,77,101,.12),transparent 28rem),
+        var(--bg);
+      color:var(--tx);
+    }
+    body::before{
+      content:"";position:fixed;inset:0;pointer-events:none;opacity:.75;
+      background-image:
+        linear-gradient(var(--grid) 1px,transparent 1px),
+        linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+      background-size:42px 42px;
+      mask-image:linear-gradient(to bottom,rgba(0,0,0,.76),transparent 90%);
+    }
+    body::after{
+      content:"";position:fixed;inset:-18%;pointer-events:none;
+      background:conic-gradient(from 215deg at 55% 48%,transparent,rgba(17,134,93,.05),transparent 28%);
+      filter:blur(18px);
+    }
+    .shell{position:relative;z-index:1;min-height:100vh;display:grid;place-items:center;padding:28px}
+    .workspace-modal{
+      width:min(920px,100%);border:1px solid var(--line);border-radius:32px;overflow:hidden;
+      background:var(--glass);box-shadow:var(--shadow);
+      -webkit-backdrop-filter:blur(28px) saturate(145%);backdrop-filter:blur(28px) saturate(145%);
+    }
+    .top{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 24px;border-bottom:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:14px;min-width:0}.brand img{width:116px;height:auto;display:block}
+    .brand-copy{min-width:0}.eyebrow{display:block;font-size:10px;letter-spacing:.16em;color:var(--green);font-weight:800}
+    .brand-copy b{display:block;margin-top:4px;font-size:13px;font-weight:700}.identity{color:var(--muted);font-size:12px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .logout{border:1px solid var(--line);background:var(--glass-strong);color:var(--tx);border-radius:13px;padding:10px 14px;cursor:pointer;font:inherit;transition:.18s ease}
+    .logout:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--green) 38%,var(--line))}
+    .content{padding:34px 34px 28px}
+    .hero{display:flex;justify-content:space-between;gap:22px;align-items:flex-end;margin-bottom:24px}
+    .hero-copy{max-width:620px}.hero-kicker{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--chip);color:var(--green);font-size:10px;font-weight:800;letter-spacing:.06em}
+    .hero-kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px color-mix(in srgb,var(--green) 12%,transparent)}
+    .hero h1{font-size:clamp(25px,4vw,38px);line-height:1.25;margin:14px 0 7px;letter-spacing:-.03em}
+    .hero p{margin:0;color:var(--muted);font-size:14px;line-height:1.9}
+    .route-status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px;white-space:nowrap}.route-status i{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .svc{
+      position:relative;overflow:hidden;border:1px solid var(--line);background:var(--glass-strong);color:var(--tx);
+      border-radius:22px;padding:20px;text-align:right;cursor:pointer;min-height:178px;
+      transition:.2s transform,.2s box-shadow,.2s border-color;font:inherit;
+    }
+    .svc::after{content:"";position:absolute;inset:auto -18% -58% 35%;height:130px;background:radial-gradient(circle,color-mix(in srgb,var(--green) 15%,transparent),transparent 68%);pointer-events:none}
+    .svc:hover{transform:translateY(-3px);box-shadow:0 18px 42px rgba(10,52,39,.12);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+    .svc:focus-visible,.logout:focus-visible{outline:3px solid color-mix(in srgb,var(--green) 34%,transparent);outline-offset:3px}
+    .svc-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:27px}
+    .icon{width:44px;height:44px;border:1px solid color-mix(in srgb,var(--green) 24%,var(--line));border-radius:14px;background:var(--chip);display:grid;place-items:center;color:var(--green);font-size:18px;font-weight:900}
+    .svc-index{font:600 10px/1 "SFMono-Regular",Consolas,monospace;color:var(--muted);letter-spacing:.1em}
+    .svc h3{margin:0 0 7px;font-size:18px}.svc p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.8;max-width:36rem}
+    .tag{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:11px;color:var(--green);font-weight:800}.tag::after{content:"←";font-size:13px}
+    .empty{display:none;padding:34px;border:1px dashed var(--line);border-radius:20px;color:var(--muted);text-align:center;background:var(--glass-strong)}
+    .footer{display:flex;justify-content:space-between;gap:16px;align-items:center;border-top:1px solid var(--line);padding:16px 24px;color:var(--muted);font-size:10.5px}
+    .secure{display:flex;align-items:center;gap:7px}.secure i{width:7px;height:7px;border-radius:50%;background:var(--green)}
+    @media(max-width:720px){
+      .shell{padding:14px}.workspace-modal{border-radius:24px}.top{padding:18px}.brand img{width:96px}.content{padding:26px 18px 22px}
+      .hero{display:block}.route-status{margin-top:14px}.grid{grid-template-columns:1fr}.svc{min-height:158px}.footer{padding:14px 18px;align-items:flex-start;flex-direction:column}
+    }
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
   </style>
 
 <link rel="stylesheet" href="./smart-hsr-company-splash.css">
@@ -25,17 +92,35 @@
 </head>
 <body>
   <main class="shell">
-    <div class="top">
-      <div class="brand"><div class="mark"></div><div><h1>SMART HSR</h1><div class="sub">مساحات العمل المصرّح بها</div></div></div>
-      <button class="logout" id="logout">تسجيل الخروج</button>
-    </div>
-    <section class="hero">
-      <h2 id="heroTitle">مساحات العمل</h2>
-      <p id="welcome">يتم التحقق من الصلاحيات قبل التوجيه…</p>
-      <div class="meta" id="identity"></div>
+    <section class="workspace-modal" aria-labelledby="heroTitle">
+      <div class="top">
+        <div class="brand">
+          <img src="smart-hsr-logo-r2.png" alt="SMART HSR">
+          <div class="brand-copy">
+            <span class="eyebrow">SMART ACCESS · DIGITAL TWIN</span>
+            <b>بوابة المسارات المصرّح بها</b>
+            <div class="identity" id="identity"></div>
+          </div>
+        </div>
+        <button class="logout" id="logout">تسجيل الخروج</button>
+      </div>
+      <div class="content">
+        <section class="hero">
+          <div class="hero-copy">
+            <span class="hero-kicker">وصول مؤسسي آمن</span>
+            <h1 id="heroTitle">اختر وجهتك</h1>
+            <p id="welcome">يتم التحقق من المسارات المرتبطة بحسابك…</p>
+          </div>
+          <div class="route-status"><i></i><span>الصلاحيات الفعلية فقط</span></div>
+        </section>
+        <section class="grid" id="services"></section>
+        <div class="empty" id="empty">لا توجد وجهة تشغيلية مفعّلة لهذا الحساب حاليًا.</div>
+      </div>
+      <div class="footer">
+        <span class="secure"><i></i>الجلسة محمية ويعاد التحقق داخل كل خدمة</span>
+        <span>SMART HSR · MUNICIPAL OPERATIONS</span>
+      </div>
     </section>
-    <section class="grid" id="services"></section>
-    <div class="empty" id="empty">لم يتم تعيين مساحة عمل لهذا الحساب بعد</div>
   </main>
 <script src="workspace-access.js"></script>
 <script type="module">
@@ -86,25 +171,66 @@ onAuthStateChanged(auth,async user=>{
   let res;
   try{ res=await resolveFor(user,db); }catch(_){ location.replace('login.html'); return; }
   if(res.kind==='manager'){ location.replace('manager.html'); return; }
+
+  // The Mobility Head is an operational destination, not a chooser use-case.
+  // Even if future entitlements add another path, u3-style mobility leadership
+  // opens its command center directly and never stops at this selector.
+  try{
+    const localSnap=await getDoc(doc(db,'users',user.uid));
+    const localData=localSnap.exists()?(localSnap.data()||{}):null;
+    const mobilityRole=WA.resolveMobilityRole(localData);
+    const mobilityWs=Array.isArray(res.workspaces)?res.workspaces.find(ws=>ws.id==='mobility'):null;
+    if(mobilityRole==='mobility_head'&&mobilityWs&&typeof mobilityWs.route==='string'&&SAFE_ROUTE.test(mobilityWs.route)){
+      location.replace(mobilityWs.route);
+      return;
+    }
+  }catch(_){}
+
   // Only an invalid account/session (no record, inactive, no organization) ends the session.
   if(!res.valid){ await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
   const profile=res.profile||{};
-  document.getElementById('welcome').textContent='مرحبًا '+(profile.name||user.email||'');
+  document.getElementById('welcome').textContent='مرحبًا '+(profile.name||user.email||'')+' — اختر المسار الذي تريد فتحه الآن.';
   document.getElementById('identity').textContent=[profile.department,profile.jobTitle].filter(Boolean).join(' · ');
   if(!res.workspaces.length){
     document.getElementById('heroTitle').textContent='SMART HSR';
     document.getElementById('empty').style.display='block';
     return;
   }
-  document.getElementById('heroTitle').textContent='مساحات العمل';
+
+  // Institutional routing rule: a workforce identity with exactly one
+  // authorized workspace must never stop at the chooser. Go straight to the
+  // authorized service and remove the chooser from browser history.
+  if(res.workspaces.length===1){
+    const ws=res.workspaces[0];
+    try{
+      if(ws.id==='lands'){
+        await openLands(user);
+        return;
+      }
+      if(typeof ws.route==='string'&&SAFE_ROUTE.test(ws.route)){
+        location.replace(ws.route);
+        return;
+      }
+    }catch(_){
+      // Fall through to the chooser only if the trusted handoff/route fails.
+    }
+  }
+
+  document.getElementById('heroTitle').textContent='اختر وجهتك';
   const host=document.getElementById('services');
+  const icons={field:'⌖',lands:'◇',admin_affairs:'◫',mobility:'↗'};
+  let index=0;
   for(const ws of res.workspaces){
+    index+=1;
     const b=document.createElement('button'); b.type='button'; b.className='svc'; b.dataset.workspace=ws.id;
-    const icon=document.createElement('div'); icon.className='icon'; icon.textContent='✓';
+    const head=document.createElement('div'); head.className='svc-head';
+    const icon=document.createElement('div'); icon.className='icon'; icon.textContent=icons[ws.id]||'•';
+    const no=document.createElement('span'); no.className='svc-index'; no.textContent=String(index).padStart(2,'0')+' / '+String(res.workspaces.length).padStart(2,'0');
+    head.append(icon,no);
     const h=document.createElement('h3'); h.textContent=ws.title;
     const p=document.createElement('p'); p.textContent=ws.desc;
-    const tag=document.createElement('span'); tag.className='tag'; tag.textContent=ws.primary?'المساحة الأساسية · دخول':'دخول الخدمة';
-    b.append(icon,h,p,tag);
+    const tag=document.createElement('span'); tag.className='tag'; tag.textContent=ws.primary?'مسارك الأساسي':'خدمة إضافية';
+    b.append(head,h,p,tag);
     b.onclick=async()=>{b.disabled=true; try{
       if(ws.id==='lands') await openLands(user);
       else if(typeof ws.route==='string'&&SAFE_ROUTE.test(ws.route)) location.href=ws.route;

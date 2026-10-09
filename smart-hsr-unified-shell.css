@@ -1,0 +1,1098 @@
+/* SMART HSR Unified Municipal Shell v1
+   Shared visual shell for municipal workspaces.
+   Scope: header, identity switcher, right navigation shell and platform footer.
+   It intentionally does not alter business workflows, RBAC, maps or data contracts. */
+
+.smart-hsr-shell-v1{
+  --hsr-shell-green:#26b778;
+  --hsr-shell-green-strong:#16955e;
+  --hsr-shell-navy:#071b2b;
+  --hsr-shell-navy-2:#0a2234;
+  --hsr-shell-line:rgba(142,196,179,.16);
+  --hsr-shell-text:#edf7f3;
+  --hsr-shell-muted:#91a9a1;
+  --hsr-shell-panel:rgba(7,30,43,.90);
+  --hsr-shell-panel-2:rgba(10,38,51,.82);
+  --hsr-shell-shadow:0 24px 60px -36px rgba(0,0,0,.88);
+}
+
+.smart-hsr-shell-v1[data-theme="day"]{
+  --hsr-shell-navy:#153f33;
+  --hsr-shell-navy-2:#1c4a3c;
+  --hsr-shell-line:rgba(25,86,65,.14);
+  --hsr-shell-text:#17382e;
+  --hsr-shell-muted:#667d74;
+  --hsr-shell-panel:rgba(240,247,243,.94);
+  --hsr-shell-panel-2:rgba(231,241,235,.92);
+  --hsr-shell-shadow:0 22px 50px -34px rgba(31,73,55,.38);
+}
+
+/* Command header */
+.smart-hsr-shell-v1 .dh-command-bar,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-command-bar{
+  min-height:76px!important;
+  padding:10px 12px!important;
+  border-radius:20px!important;
+  background:linear-gradient(135deg,var(--hsr-shell-panel),var(--hsr-shell-panel-2))!important;
+  border:1px solid var(--hsr-shell-line)!important;
+  box-shadow:var(--hsr-shell-shadow),inset 0 1px 0 rgba(255,255,255,.045)!important;
+  backdrop-filter:blur(22px) saturate(135%)!important;
+}
+
+.hsr-shell-identity-zone{display:flex;align-items:center;gap:8px;position:relative;min-width:0}
+.hsr-identity-wrap{position:relative;min-width:0}
+.hsr-identity-card{
+  min-width:260px;max-width:330px;height:54px;padding:7px 10px 7px 9px;border-radius:16px;
+  border:1px solid var(--hsr-shell-line);background:rgba(255,255,255,.025);
+  color:var(--hsr-shell-text);display:flex;align-items:center;gap:10px;cursor:pointer;text-align:right;
+  transition:border-color .18s ease,background .18s ease,transform .18s ease;
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-card{background:rgba(255,255,255,.54)}
+.hsr-identity-card:hover{border-color:rgba(57,203,145,.38);background:rgba(57,203,145,.055)}
+.hsr-identity-card:focus-visible{outline:3px solid rgba(57,203,145,.16);outline-offset:2px}
+.hsr-identity-avatar{
+  width:38px;height:38px;flex:none;border-radius:13px;display:grid;place-items:center;
+  background:linear-gradient(150deg,rgba(38,183,120,.24),rgba(38,183,120,.08));
+  border:1px solid rgba(57,203,145,.26);color:#6ee7ad;font-weight:800;font-size:14px;
+  position:relative;
+}
+.hsr-identity-avatar::after{
+  content:"";position:absolute;right:-2px;bottom:-2px;width:9px;height:9px;border-radius:50%;
+  background:#35cf89;border:2px solid var(--hsr-shell-navy);
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-avatar::after{border-color:#edf5f0}
+.hsr-identity-copy{min-width:0;flex:1}
+.hsr-identity-org{font-size:9px;font-weight:700;color:#5bdca0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsr-identity-name{margin-top:2px;font-size:12px;font-weight:750;color:var(--hsr-shell-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsr-identity-role{margin-top:1px;font-size:9.5px;color:var(--hsr-shell-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsr-identity-chevron{width:20px;height:20px;flex:none;color:var(--hsr-shell-muted);display:grid;place-items:center;transition:transform .18s ease}
+.hsr-identity-card[aria-expanded="true"] .hsr-identity-chevron{transform:rotate(180deg)}
+
+.hsr-identity-menu{
+  position:absolute;top:62px;right:0;width:340px;z-index:90;padding:8px;
+  border-radius:20px;border:1px solid var(--hsr-shell-line);
+  background:rgba(6,25,36,.985);box-shadow:0 28px 72px -28px rgba(0,0,0,.92);
+  backdrop-filter:blur(24px) saturate(140%);
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu{background:rgba(244,249,246,.985)}
+.hsr-id-head{padding:13px 13px 12px;border-bottom:1px solid var(--hsr-shell-line)}
+.hsr-id-verified{font:700 9px/1.2 "SFMono-Regular",Consolas,monospace;letter-spacing:.13em;color:#43d98b}
+.hsr-id-person{display:flex;align-items:center;gap:10px;margin-top:10px}
+.hsr-id-person b{display:block;font-size:14px;color:var(--hsr-shell-text)}
+.hsr-id-person span{display:block;margin-top:2px;font-size:10px;color:var(--hsr-shell-muted)}
+.hsr-id-context{margin:8px 6px 6px;padding:10px;border-radius:13px;background:rgba(57,203,145,.055);border:1px solid rgba(57,203,145,.11)}
+.hsr-id-context-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:4px 1px;font-size:10px}
+.hsr-id-context-row span:first-child{color:var(--hsr-shell-muted)}
+.hsr-id-context-row span:last-child{color:var(--hsr-shell-text);font-weight:600;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsr-id-actions{padding:5px}
+.hsr-id-action{
+  width:100%;min-height:42px;border:0;border-radius:12px;background:transparent;color:var(--hsr-shell-text);
+  display:flex;align-items:center;gap:10px;padding:0 10px;font:600 11.5px/1.4 inherit;cursor:pointer;text-align:right;
+}
+.hsr-id-action:hover{background:rgba(57,203,145,.075)}
+.hsr-id-action svg{width:16px;height:16px;color:var(--hsr-shell-muted);flex:none}
+.hsr-id-action small{margin-inline-start:auto;color:var(--hsr-shell-muted);font-size:9px;font-weight:500}
+.hsr-id-sep{height:1px;background:var(--hsr-shell-line);margin:5px 8px}
+.hsr-id-logout{color:#f0a4a4}
+.hsr-id-logout:hover{background:rgba(239,68,68,.075)}
+[data-smart-hsr-workspace-trigger]{display:none}
+
+/* Sidebar */
+.smart-hsr-shell-v1 .dh-sidebar,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-sidebar{width:var(--sbW,244px)!important;gap:10px!important}
+.smart-hsr-shell-v1 .dh-sidebar-panel,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-sidebar-panel{
+  flex:1!important;padding:12px 10px!important;border-radius:20px!important;
+  background:linear-gradient(180deg,var(--hsr-shell-panel),var(--hsr-shell-panel-2))!important;
+  border:1px solid var(--hsr-shell-line)!important;box-shadow:var(--hsr-shell-shadow)!important;
+}
+.smart-hsr-shell-v1 .dh-nav-item,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-nav-item{
+  min-height:46px!important;border-radius:13px!important;padding:9px 11px!important;
+  transition:background .16s ease,border-color .16s ease,transform .16s ease!important;
+}
+.smart-hsr-shell-v1 .dh-nav-item:hover{transform:translateX(-1px)}
+.smart-hsr-shell-v1 .dh-nav-item[aria-current="page"],
+.smart-hsr-shell-v1 .dh-nav-item[aria-current="true"]{
+  box-shadow:inset -3px 0 0 #38d18d,0 8px 20px -18px rgba(38,183,120,.75)!important;
+}
+.smart-hsr-shell-v1 .dh-product-panel{display:none!important}
+.hsr-platform-footer{
+  padding:12px 11px 10px;border-radius:17px;border:1px solid var(--hsr-shell-line);
+  background:linear-gradient(180deg,var(--hsr-shell-panel-2),var(--hsr-shell-panel));
+  box-shadow:var(--hsr-shell-shadow);
+}
+.hsr-platform-footer-brand{display:flex;align-items:center;gap:8px}
+.hsr-platform-mark{
+  width:29px;height:29px;border-radius:10px;display:grid;place-items:center;color:#49d998;
+  border:1px solid rgba(57,203,145,.18);background:rgba(57,203,145,.07);font-weight:900;font-size:11px
+}
+.hsr-platform-footer strong{display:block;color:var(--hsr-shell-text);font-size:10.5px;letter-spacing:.04em}
+.hsr-platform-footer span{display:block;color:var(--hsr-shell-muted);font-size:8.5px;margin-top:2px;letter-spacing:.08em}
+.hsr-platform-status{display:flex!important;align-items:center;gap:6px!important;margin-top:9px!important;color:var(--hsr-shell-muted)!important;font-size:8.5px!important}
+.hsr-platform-status i{width:6px;height:6px;border-radius:50%;background:#35cf89;box-shadow:0 0 0 4px rgba(53,207,137,.08)}
+
+@media(max-width:980px){
+  .hsr-identity-card{min-width:210px;max-width:250px}
+  .hsr-identity-org{display:none}
+}
+@media(max-width:760px){
+  .smart-hsr-shell-v1 .dh-command-bar{min-height:64px!important;padding:7px 8px!important;border-radius:16px!important}
+  .hsr-identity-card{min-width:0;width:190px;height:48px}
+  .hsr-identity-avatar{width:34px;height:34px;border-radius:11px}
+  .hsr-identity-role{display:none}
+  .hsr-identity-menu{position:fixed;top:74px;right:10px;left:10px;width:auto;max-width:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .hsr-identity-card,.hsr-identity-chevron,.smart-hsr-shell-v1 .dh-nav-item{transition:none!important}
+}
+
+
+/* ============================================================
+   SMART HSR UNIFIED MUNICIPAL SHELL — PRESENTATION LOCK R2
+   Reference contract:
+   - Header geometry / service identity: Lands
+   - Right rail behavior: Municipality Manager
+   - All open surfaces must render above cards/maps.
+   Presentation only: no auth/RBAC/workflow/data changes.
+   ============================================================ */
+
+.smart-hsr-shell-v1{
+  --hsr-shell-header-day:linear-gradient(152deg,rgba(8,67,48,.98),rgba(6,80,58,.98) 58%,rgba(7,70,55,.98));
+  --hsr-shell-header-night:linear-gradient(180deg,rgba(12,31,51,.98),rgba(6,22,39,.99));
+  --hsr-shell-rail-day:linear-gradient(180deg,rgba(7,61,44,.995),rgba(4,42,31,.998));
+  --hsr-shell-rail-night:linear-gradient(180deg,rgba(7,29,49,.995),rgba(4,20,36,.998));
+}
+
+/* Exact three-zone header: BRAND | UTILITIES | EMPLOYEE. */
+.smart-hsr-shell-v1 .dh-command-bar,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-command-bar{
+  position:sticky!important;
+  top:8px!important;
+  z-index:1600!important;
+  isolation:isolate!important;
+  overflow:visible!important;
+  min-height:64px!important;
+  height:auto!important;
+  display:grid!important;
+  grid-template-columns:minmax(230px,auto) minmax(250px,1fr) minmax(250px,auto)!important;
+  grid-template-areas:"brand center identity"!important;
+  align-items:center!important;
+  gap:12px!important;
+  padding:8px 14px!important;
+  border-radius:16px!important;
+  direction:ltr!important;
+  background:var(--hsr-shell-header-night)!important;
+  border:1px solid rgba(113,174,218,.20)!important;
+  border-bottom:2px solid rgba(47,202,124,.38)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.075),0 4px 12px -7px rgba(0,0,0,.42),0 26px 58px -34px rgba(0,0,0,.84)!important;
+  backdrop-filter:blur(22px) saturate(145%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(145%)!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .dh-command-bar{
+  background:var(--hsr-shell-header-day)!important;
+  border-color:rgba(147,224,182,.20)!important;
+  border-bottom-color:rgba(84,213,141,.42)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 12px -7px rgba(5,57,38,.26),0 24px 52px -34px rgba(5,57,38,.42)!important;
+}
+
+.hsr-shell-brand-zone{
+  grid-area:brand;
+  justify-self:start;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  direction:ltr;
+}
+.hsr-shell-brand-logo{
+  display:block;
+  width:132px;
+  max-width:132px;
+  height:46px;
+  object-fit:contain;
+  object-position:left center;
+  flex:none;
+  filter:none;
+}
+.hsr-shell-brand-copy{
+  min-width:0;
+  padding-left:11px;
+  border-left:1px solid rgba(255,255,255,.13);
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  text-align:left;
+  direction:rtl;
+}
+.hsr-shell-brand-copy strong{
+  color:#f1fbf6;
+  font-size:12.5px;
+  font-weight:800;
+  line-height:1.25;
+  white-space:nowrap;
+}
+.hsr-shell-brand-copy span{
+  color:#91b2a3;
+  font:700 7px/1.2 "IBM Plex Mono",monospace;
+  letter-spacing:.14em;
+  direction:ltr;
+  white-space:nowrap;
+}
+
+.hsr-shell-center-zone{
+  grid-area:center;
+  justify-self:center;
+  min-width:0;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  direction:rtl;
+}
+.hsr-shell-center-zone .dh-weather-chip,
+.hsr-shell-center-zone>div{
+  border-color:rgba(255,255,255,.11)!important;
+}
+.hsr-shell-center-zone .dh-weather-chip{
+  background:rgba(255,255,255,.045)!important;
+  color:#d9ebe3!important;
+}
+.hsr-shell-center-zone button{
+  color:#c1d8ce!important;
+}
+.hsr-shell-center-zone button[aria-pressed="true"]{
+  background:rgba(62,190,126,.18)!important;
+  border-color:rgba(92,222,156,.30)!important;
+  color:#f2fff8!important;
+}
+
+.hsr-shell-identity-zone{
+  grid-area:identity;
+  justify-self:end;
+  direction:rtl;
+  z-index:2;
+}
+.hsr-identity-wrap{z-index:3}
+.hsr-identity-card{
+  min-width:250px!important;
+  max-width:330px!important;
+  height:46px!important;
+  padding:5px 8px 5px 9px!important;
+  border-radius:13px!important;
+  border:1px solid rgba(151,220,185,.18)!important;
+  background:rgba(255,255,255,.055)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045)!important;
+  color:#f3fff8!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-card{
+  background:rgba(255,255,255,.075)!important;
+  border-color:rgba(176,231,201,.22)!important;
+}
+.hsr-identity-card:hover,
+.hsr-identity-card[aria-expanded="true"]{
+  background:rgba(255,255,255,.10)!important;
+  border-color:rgba(111,224,164,.34)!important;
+}
+.hsr-identity-avatar{
+  width:34px!important;height:34px!important;flex-basis:34px!important;border-radius:10px!important;
+  background:linear-gradient(145deg,rgba(42,162,103,.38),rgba(15,106,76,.62))!important;
+  border-color:rgba(142,232,184,.26)!important;color:#eafff1!important;font-size:11px!important;
+}
+.hsr-identity-avatar::after{border-color:#07503a!important}
+.smart-hsr-shell-v1[data-theme="night"] .hsr-identity-avatar::after{border-color:#071c31!important}
+.hsr-identity-org{color:#77e2a8!important;font-size:8.5px!important}
+.hsr-identity-name{color:#f4fbf7!important;font-size:11px!important}
+.hsr-identity-role{color:#9db9ad!important;font-size:8.8px!important}
+.hsr-identity-chevron{color:#9db9ad!important}
+
+.hsr-identity-menu{
+  top:54px!important;
+  right:0!important;
+  width:340px!important;
+  z-index:1900!important;
+  border-radius:17px!important;
+  border:1px solid rgba(143,224,176,.18)!important;
+  background:rgba(5,34,25,.992)!important;
+  box-shadow:0 34px 82px -30px rgba(0,0,0,.95),0 0 0 1px rgba(67,217,139,.035)!important;
+  backdrop-filter:blur(24px) saturate(145%)!important;
+}
+.smart-hsr-shell-v1[data-theme="night"] .hsr-identity-menu{
+  background:rgba(6,24,42,.994)!important;
+  border-color:rgba(107,173,224,.18)!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu{
+  background:rgba(247,251,248,.995)!important;
+  border-color:rgba(24,104,73,.16)!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu .hsr-id-person b,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu .hsr-id-context-row span:last-child,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu .hsr-id-action{color:#183a2e!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu .hsr-id-person span,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu .hsr-id-context-row span:first-child,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu .hsr-id-action small,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu .hsr-id-action svg{color:#63796f!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-menu .hsr-id-context{background:rgba(18,133,90,.055)!important;border-color:rgba(18,133,90,.10)!important}
+
+/* Any header popover must stay above every map/card stacking context. */
+.smart-hsr-shell-v1 .dh-command-bar [style*="position:absolute"]{z-index:1850!important}
+
+/* Right system rail — same visual contract as Manager/Lands, never translucent
+   over page content. It remains a normal flex sibling, not an overlay. */
+.smart-hsr-shell-v1 .dh-sidebar,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-sidebar{
+  position:sticky!important;
+  transition:width .18s ease,min-width .18s ease!important;
+  top:90px!important;
+  z-index:30!important;
+  align-self:flex-start!important;
+  width:var(--sbW,244px)!important;
+  height:calc(100vh - 106px)!important;
+  max-height:calc(100vh - 106px)!important;
+  min-height:620px!important;
+  gap:0!important;
+  padding:10px!important;
+  border-radius:18px!important;
+  background:var(--hsr-shell-rail-night)!important;
+  border:1px solid rgba(104,172,224,.14)!important;
+  box-shadow:inset -1px 0 0 rgba(255,255,255,.025),-12px 20px 38px -34px rgba(0,0,0,.72)!important;
+  overflow:hidden!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .dh-sidebar{
+  background:var(--hsr-shell-rail-day)!important;
+  border-color:rgba(143,224,176,.14)!important;
+  box-shadow:inset -1px 0 0 rgba(255,255,255,.03),-12px 20px 38px -34px rgba(2,42,27,.42)!important;
+}
+.smart-hsr-shell-v1 .dh-sidebar-panel,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-sidebar-panel{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  scrollbar-width:thin;
+}
+.hsr-side-identity{
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px;
+  padding:6px 3px 10px;
+  margin-bottom:8px;
+  border-bottom:1px solid rgba(255,255,255,.075);
+}
+.hsr-side-identity-copy{
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+  text-align:right;
+}
+.hsr-side-identity-copy strong{
+  color:#edf9f2;
+  font-size:10.5px;
+  font-weight:750;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.hsr-side-identity-copy span{
+  color:#6f9d88;
+  font:650 6.2px/1.15 "IBM Plex Mono",monospace;
+  letter-spacing:.12em;
+  direction:ltr;
+  white-space:nowrap;
+}
+.smart-hsr-shell-v1[data-theme="night"] .hsr-side-identity-copy span{color:#7496ae}
+.hsr-side-rail-toggle{
+  width:28px;height:28px;flex:none;border-radius:8px;
+  border:1px solid rgba(143,224,176,.16);
+  background:rgba(255,255,255,.045);
+  color:#9bc5ae;display:grid;place-items:center;padding:0;cursor:pointer;
+}
+.smart-hsr-shell-v1[data-theme="night"] .hsr-side-rail-toggle{border-color:rgba(112,180,230,.16);color:#86a7bf}
+.hsr-side-rail-toggle:hover{background:rgba(255,255,255,.08);color:#f1fff7}
+
+.smart-hsr-shell-v1 .dh-nav-item,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-nav-item{
+  min-height:43px!important;
+  padding:9px 10px!important;
+  margin:2px 0!important;
+  border-radius:11px!important;
+  gap:10px!important;
+  color:#bdd2c6!important;
+  background:transparent!important;
+  border:1px solid transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.smart-hsr-shell-v1[data-theme="night"] .dh-nav-item{color:#a8bfd3!important}
+.smart-hsr-shell-v1 .dh-nav-item:hover{
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(255,255,255,.045)!important;
+  color:#f0faf4!important;
+}
+.smart-hsr-shell-v1 .dh-nav-item[aria-current="page"],
+.smart-hsr-shell-v1 .dh-nav-item[aria-current="true"]{
+  background:linear-gradient(90deg,rgba(52,176,109,.16),rgba(255,255,255,.025))!important;
+  border-color:rgba(84,213,141,.13)!important;
+  color:#fff!important;
+  box-shadow:inset -3px 0 #54d58d!important;
+}
+.hsr-nav-icon{width:17px!important;height:17px!important;flex:none!important;color:#80a28f!important}
+.smart-hsr-shell-v1[data-theme="night"] .hsr-nav-icon{color:#789bb6!important}
+.smart-hsr-shell-v1 .dh-nav-item[aria-current="page"] .hsr-nav-icon{color:#75e4a6!important}
+
+.hsr-platform-footer{
+  flex:none!important;
+  margin-top:8px!important;
+  padding:11px 3px 2px!important;
+  border:0!important;
+  border-top:1px solid rgba(255,255,255,.075)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.hsr-platform-footer strong{color:#eaf7f0!important}
+.hsr-platform-footer span,.hsr-platform-status{color:#739985!important}
+.smart-hsr-shell-v1[data-theme="night"] .hsr-platform-footer span,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-platform-status{color:#7896ac!important}
+
+/* Keep the main canvas in its own lower layer so the rail/header are never
+   visually swallowed by cards or map panes. */
+.smart-hsr-shell-v1 .dh-sidebar + main{position:relative!important;z-index:1!important;min-width:0!important}
+
+/* Overlay hierarchy: dialogs > mobile rail > header menus > header > rail > canvas. */
+.smart-hsr-shell-v1 .dh-smart-modal-scrim{z-index:2400!important}
+.smart-hsr-shell-v1 .dh-evidence-lightbox{z-index:2500!important}
+.smart-hsr-shell-v1 .dh-mobile-scrim{z-index:2200!important}
+.smart-hsr-shell-v1 [role="dialog"]{isolation:isolate}
+.smart-hsr-shell-v1 .maplibregl-map,
+.smart-hsr-shell-v1 .dh-map-frame{isolation:isolate!important;z-index:1!important}
+
+/* Collapsed rail — manager-like icon rail. */
+.smart-hsr-shell-v1 .dh-sidebar[data-collapsed="true"] .hsr-side-identity{justify-content:center!important}
+.smart-hsr-shell-v1 .dh-sidebar[data-collapsed="true"] .hsr-side-rail-toggle{margin:auto!important}
+.smart-hsr-shell-v1 .dh-sidebar[data-collapsed="true"] .dh-nav-item{justify-content:center!important;padding-inline:8px!important}
+.smart-hsr-shell-v1 .dh-sidebar[data-collapsed="true"] .hsr-nav-icon{margin:0!important}
+
+/* Responsive parity with Lands. */
+@media(max-width:1100px){
+  .smart-hsr-shell-v1 .dh-command-bar{
+    grid-template-columns:minmax(180px,auto) minmax(170px,1fr) auto!important;
+    gap:8px!important;
+  }
+  .hsr-shell-brand-logo{width:112px;max-width:112px}
+  .hsr-shell-brand-copy{display:none}
+  .hsr-identity-card{min-width:210px!important;max-width:240px!important}
+  .dh-weather-chip{display:none!important}
+}
+@media(max-width:760px){
+  .smart-hsr-shell-v1 .dh-command-bar{
+    top:6px!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-areas:"brand identity" "center center"!important;
+    padding:7px 9px!important;
+    gap:7px!important;
+    border-radius:14px!important;
+  }
+  .hsr-shell-brand-logo{width:104px;max-width:104px;height:38px}
+  .hsr-shell-center-zone{width:100%;justify-self:stretch;justify-content:flex-start!important;overflow-x:auto;scrollbar-width:none}
+  .hsr-shell-center-zone::-webkit-scrollbar{display:none}
+  .hsr-identity-card{min-width:0!important;width:42px!important;height:42px!important;padding:4px!important;justify-content:center!important}
+  .hsr-identity-copy,.hsr-identity-chevron{display:none!important}
+  .hsr-identity-avatar{width:32px!important;height:32px!important;flex-basis:32px!important}
+  .hsr-identity-menu{position:fixed!important;top:64px!important;right:8px!important;left:8px!important;width:auto!important;z-index:2500!important}
+  .smart-hsr-shell-v1 .dh-sidebar{position:static!important;height:auto!important;min-height:0!important;max-height:none!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .smart-hsr-shell-v1 .dh-command-bar,
+  .smart-hsr-shell-v1 .dh-sidebar,
+  .hsr-identity-card,
+  .dh-nav-item{transition:none!important}
+}
+
+
+/* ============================================================
+   SMART HSR UNIFIED MUNICIPAL SHELL — TYPOGRAPHY + BRAND LOCK R3
+   Owner review: match Manager/Lands perceived scale and hierarchy.
+   ============================================================ */
+
+/* Header scale: same perceived weight as Lands/Manager, no micro typography. */
+.smart-hsr-shell-v1 .dh-command-bar,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-command-bar{
+  min-height:72px!important;
+  grid-template-columns:minmax(300px,auto) minmax(320px,1fr) minmax(300px,auto)!important;
+  padding:9px 16px!important;
+  gap:16px!important;
+}
+
+.hsr-shell-brand-zone{gap:14px!important}
+.hsr-shell-brand-logo{
+  width:174px!important;
+  max-width:174px!important;
+  height:52px!important;
+  object-fit:contain!important;
+  object-position:left center!important;
+}
+.hsr-shell-brand-copy{
+  padding-left:14px!important;
+  gap:4px!important;
+  border-left-color:rgba(255,255,255,.16)!important;
+}
+.hsr-shell-brand-copy strong{
+  font-size:14px!important;
+  font-weight:800!important;
+  letter-spacing:-.01em!important;
+}
+.hsr-shell-brand-copy span{
+  font-size:8.2px!important;
+  line-height:1.25!important;
+  letter-spacing:.13em!important;
+  color:#a3bdb1!important;
+}
+
+.hsr-shell-center-zone{gap:10px!important}
+.hsr-shell-center-zone .dh-weather-chip{
+  min-height:38px!important;
+  padding-inline:12px!important;
+  border-radius:11px!important;
+}
+.hsr-shell-center-zone .dh-weather-title{font-size:11.5px!important;font-weight:750!important}
+.hsr-shell-center-zone .dh-weather-state{font-size:9.5px!important}
+.hsr-shell-center-zone>div{min-height:38px!important}
+.hsr-shell-center-zone button{
+  min-height:30px!important;
+  font-size:11px!important;
+  font-weight:700!important;
+}
+
+.hsr-identity-card{
+  min-width:292px!important;
+  max-width:350px!important;
+  height:52px!important;
+  padding:6px 10px!important;
+  border-radius:14px!important;
+  gap:11px!important;
+}
+.hsr-identity-avatar{
+  width:38px!important;height:38px!important;flex-basis:38px!important;
+  border-radius:11px!important;font-size:12px!important;
+}
+.hsr-identity-org{
+  font-size:9.6px!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+}
+.hsr-identity-name{
+  margin-top:3px!important;
+  font-size:12.5px!important;
+  line-height:1.25!important;
+  font-weight:800!important;
+}
+.hsr-identity-role{
+  margin-top:2px!important;
+  font-size:10px!important;
+  line-height:1.25!important;
+  font-weight:650!important;
+}
+.hsr-identity-chevron{width:22px!important;height:22px!important;font-size:14px!important}
+
+.hsr-identity-menu{
+  top:60px!important;
+  width:356px!important;
+}
+.hsr-id-verified{font-size:9.5px!important}
+.hsr-id-person b{font-size:14.5px!important}
+.hsr-id-person span{font-size:10.5px!important}
+.hsr-id-context-row{font-size:10.5px!important;padding:5px 1px!important}
+.hsr-id-action{min-height:44px!important;font-size:12px!important}
+.hsr-id-action small{font-size:9.5px!important}
+
+/* Right rail: readable system navigation, not a miniature toolbar. */
+.smart-hsr-shell-v1 .dh-sidebar,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-sidebar{
+  width:var(--sbW,258px)!important;
+  padding:12px 11px!important;
+  border-radius:19px!important;
+}
+.hsr-side-identity{
+  min-height:64px!important;
+  padding:8px 4px 12px!important;
+  margin-bottom:10px!important;
+}
+.hsr-side-identity-copy{gap:5px!important}
+.hsr-side-identity-copy strong{
+  font-size:12px!important;
+  line-height:1.25!important;
+  font-weight:800!important;
+}
+.hsr-side-identity-copy span{
+  font-size:7.4px!important;
+  line-height:1.25!important;
+  letter-spacing:.11em!important;
+}
+.hsr-side-rail-toggle{
+  width:31px!important;height:31px!important;border-radius:9px!important;
+}
+.smart-hsr-shell-v1 .dh-nav-item,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-nav-item{
+  min-height:47px!important;
+  padding:10px 11px!important;
+  margin:2px 0!important;
+  border-radius:12px!important;
+  gap:11px!important;
+  font-size:12.5px!important;
+  font-weight:650!important;
+}
+.hsr-nav-icon{width:18px!important;height:18px!important}
+.smart-hsr-shell-v1 .dh-nav-item>span:not(:last-child){
+  font-size:12.5px!important;
+  line-height:1.35!important;
+}
+
+/* Compact, legible corporate brand lockup at the rail footer. */
+.hsr-platform-footer{
+  margin-top:10px!important;
+  padding:12px 4px 4px!important;
+}
+.hsr-platform-footer-brand{
+  display:grid!important;
+  grid-template-columns:38px 1fr!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+.hsr-platform-mark{
+  width:38px!important;height:38px!important;
+  border-radius:11px!important;
+  font-size:0!important;
+  background:rgba(255,255,255,.03) url('/smart-hsr-mark.svg') center/27px 30px no-repeat!important;
+  border-color:rgba(126,221,169,.14)!important;
+}
+.hsr-platform-footer strong{
+  font-size:12px!important;
+  line-height:1.15!important;
+  font-weight:850!important;
+  letter-spacing:.08em!important;
+}
+.hsr-platform-footer span{
+  margin-top:4px!important;
+  font-size:7.5px!important;
+  line-height:1.25!important;
+  letter-spacing:.12em!important;
+}
+.hsr-platform-status{
+  margin-top:8px!important;
+  font-size:9px!important;
+  line-height:1.3!important;
+  letter-spacing:0!important;
+}
+.hsr-platform-status i{
+  width:7px!important;height:7px!important;
+  box-shadow:0 0 0 4px rgba(53,207,137,.08)!important;
+}
+
+/* Day mode keeps the system shell branded (not pale/translucent), while
+   content cards remain calm light surfaces. */
+.smart-hsr-shell-v1[data-theme="day"] .dh-command-bar{
+  color:#f3fff8!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-brand-copy strong,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-name,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-role{
+  color:#f4fff9!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-brand-copy span{color:#a6cdb9!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-org{color:#8df0b7!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-role{color:#bed8cb!important}
+
+/* Keep footer always readable in both modes. */
+.smart-hsr-shell-v1[data-theme="day"] .hsr-platform-footer strong{color:#f0fbf4!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-platform-footer span,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-platform-status{color:#8ab29d!important}
+
+@media(max-width:1280px){
+  .smart-hsr-shell-v1 .dh-command-bar{
+    grid-template-columns:minmax(240px,auto) minmax(220px,1fr) minmax(250px,auto)!important;
+  }
+  .hsr-shell-brand-logo{width:148px!important;max-width:148px!important}
+  .hsr-shell-brand-copy strong{font-size:13px!important}
+  .hsr-identity-card{min-width:250px!important}
+}
+@media(max-width:1100px){
+  .smart-hsr-shell-v1 .dh-command-bar{
+    grid-template-columns:minmax(180px,auto) minmax(160px,1fr) auto!important;
+  }
+  .hsr-shell-brand-logo{width:124px!important;max-width:124px!important}
+  .hsr-identity-card{min-width:210px!important}
+}
+
+
+
+/* ============================================================
+   SMART HSR UNIFIED MUNICIPAL SHELL — BRAND LOCK R4
+   Crisp vector mark + rendered wordmark. Avoids raster blur/darkness.
+   ============================================================ */
+
+.hsr-shell-brand-zone{
+  gap:15px!important;
+}
+.hsr-shell-wordmark{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  flex:none!important;
+}
+.hsr-shell-brand-mark{
+  width:44px!important;
+  height:46px!important;
+  object-fit:contain!important;
+  flex:none!important;
+}
+.hsr-shell-wordmark-copy{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:4px!important;
+  min-width:0!important;
+}
+.hsr-shell-wordmark-name{
+  display:flex!important;
+  align-items:baseline!important;
+  gap:6px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  font-family:Inter,"SF Pro Display","Segoe UI",Arial,sans-serif!important;
+  letter-spacing:.16em!important;
+}
+.hsr-shell-wordmark-name span{
+  color:#eef8f4!important;
+  font-size:15px!important;
+  font-weight:750!important;
+}
+.hsr-shell-wordmark-name b{
+  color:#47d98d!important;
+  font-size:18px!important;
+  font-weight:850!important;
+}
+.hsr-shell-wordmark-sub{
+  color:#8ead9f!important;
+  font:650 6.9px/1.15 "IBM Plex Mono",Consolas,monospace!important;
+  letter-spacing:.16em!important;
+  white-space:nowrap!important;
+}
+.hsr-shell-brand-copy{
+  padding-left:15px!important;
+  border-left:1px solid rgba(255,255,255,.15)!important;
+}
+.hsr-shell-brand-copy strong{
+  font-family:"Cairo","Segoe UI",Tahoma,sans-serif!important;
+  font-size:14px!important;
+  line-height:1.35!important;
+  font-weight:800!important;
+  letter-spacing:0!important;
+}
+.hsr-shell-brand-copy span{
+  font-size:8px!important;
+  line-height:1.25!important;
+  letter-spacing:.13em!important;
+  color:#9ab9aa!important;
+}
+
+/* Hide obsolete raster sizing rule if cached markup persists during preview. */
+.hsr-shell-brand-logo{display:none!important}
+
+/* Compact sidebar corporate lockup: one row, two brand lines, one status. */
+.hsr-platform-footer{
+  margin-top:9px!important;
+  padding:10px 3px 2px!important;
+}
+.hsr-platform-footer-brand{
+  display:grid!important;
+  grid-template-columns:34px minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+.hsr-platform-mark-img{
+  display:block!important;
+  width:30px!important;
+  height:34px!important;
+  object-fit:contain!important;
+}
+.hsr-platform-footer-copy{
+  min-width:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:3px!important;
+  text-align:left!important;
+  direction:ltr!important;
+}
+.hsr-platform-footer-copy strong{
+  margin:0!important;
+  color:#eef9f3!important;
+  font-family:Inter,"SF Pro Display","Segoe UI",Arial,sans-serif!important;
+  font-size:10.5px!important;
+  line-height:1!important;
+  font-weight:780!important;
+  letter-spacing:.08em!important;
+  white-space:nowrap!important;
+}
+.hsr-platform-footer-copy strong b{
+  color:#4ad98e!important;
+  font-weight:850!important;
+}
+.hsr-platform-footer-copy span{
+  margin:0!important;
+  color:#779a88!important;
+  font:650 6.2px/1.1 "IBM Plex Mono",Consolas,monospace!important;
+  letter-spacing:.10em!important;
+  white-space:nowrap!important;
+}
+.hsr-platform-connection{
+  display:flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  color:#8eb29f!important;
+  font-size:8.5px!important;
+  font-weight:650!important;
+  white-space:nowrap!important;
+}
+.hsr-platform-connection i{
+  width:6px!important;
+  height:6px!important;
+  flex:none!important;
+  border-radius:50%!important;
+  background:#39cf88!important;
+  box-shadow:0 0 0 4px rgba(57,207,136,.08)!important;
+}
+
+/* Day and night share the same branded chrome, matching Manager/Lands. */
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-wordmark-name span,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-shell-wordmark-name span{color:#eef8f4!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-wordmark-name b,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-shell-wordmark-name b{color:#47d98d!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-wordmark-sub{color:#9bc5ae!important}
+
+@media(max-width:1280px){
+  .hsr-shell-brand-mark{width:40px!important;height:42px!important}
+  .hsr-shell-wordmark-name span{font-size:13px!important}
+  .hsr-shell-wordmark-name b{font-size:16px!important}
+  .hsr-shell-brand-copy strong{font-size:13px!important}
+}
+@media(max-width:1100px){
+  .hsr-shell-wordmark-copy{display:none!important}
+  .hsr-shell-brand-copy{padding-left:11px!important}
+}
+@media(max-width:760px){
+  .hsr-shell-brand-mark{width:36px!important;height:38px!important}
+  .hsr-shell-brand-copy{display:none!important}
+}
+
+
+
+/* BRAND LOCK R4.1 — keep platform wordmark readable on desktop/tablet. */
+@media(max-width:1100px) and (min-width:761px){
+  .smart-hsr-shell-v1 .dh-command-bar{
+    grid-template-columns:minmax(240px,auto) minmax(150px,1fr) minmax(205px,auto)!important;
+    gap:8px!important;
+  }
+  .hsr-shell-wordmark-copy{
+    display:flex!important;
+  }
+  .hsr-shell-brand-mark{
+    width:38px!important;
+    height:40px!important;
+  }
+  .hsr-shell-wordmark-name span{font-size:12.5px!important}
+  .hsr-shell-wordmark-name b{font-size:15px!important}
+  .hsr-shell-wordmark-sub{font-size:5.8px!important;letter-spacing:.12em!important}
+  .hsr-shell-brand-copy{
+    display:flex!important;
+    padding-left:10px!important;
+  }
+  .hsr-shell-brand-copy strong{font-size:11.5px!important}
+  .hsr-shell-brand-copy span{font-size:6.7px!important}
+  .hsr-identity-card{
+    min-width:205px!important;
+    max-width:230px!important;
+  }
+  .hsr-identity-org{font-size:8.2px!important}
+  .hsr-identity-name{font-size:10.5px!important}
+  .hsr-identity-role{font-size:8.5px!important}
+}
+@media(max-width:900px) and (min-width:761px){
+  .smart-hsr-shell-v1 .dh-command-bar{
+    grid-template-columns:minmax(180px,auto) minmax(120px,1fr) minmax(170px,auto)!important;
+  }
+  .hsr-shell-brand-copy{display:none!important}
+  .hsr-shell-wordmark-sub{display:none!important}
+  .hsr-identity-card{min-width:170px!important;max-width:190px!important}
+}
+@media(max-width:760px){
+  .hsr-shell-wordmark-copy{display:none!important}
+}
+
+
+
+/* ============================================================
+   SMART HSR UNIFIED MUNICIPAL SHELL — FINAL POLISH R5
+   Keep service identity/footer fixed; scroll only navigation.
+   Tighten employee popover and equalize day/night typography.
+   ============================================================ */
+
+.smart-hsr-shell-v1 .dh-sidebar-panel,
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-sidebar-panel{
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+
+.hsr-side-nav-scroll{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding-inline:1px!important;
+  scrollbar-width:none!important;
+  overscroll-behavior:contain!important;
+}
+.hsr-side-nav-scroll::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+
+.hsr-side-identity{
+  flex:none!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:2!important;
+  background:inherit!important;
+}
+
+.hsr-platform-footer{
+  flex:none!important;
+}
+
+.hsr-identity-menu{
+  width:328px!important;
+  padding:7px!important;
+  border-radius:16px!important;
+}
+.hsr-id-head{
+  padding:11px 11px 10px!important;
+}
+.hsr-id-person{
+  margin-top:8px!important;
+}
+.hsr-id-context{
+  margin:7px 4px 5px!important;
+  padding:9px!important;
+}
+.hsr-id-context-row{
+  padding:4px 1px!important;
+  font-size:10px!important;
+}
+.hsr-id-actions{
+  padding:4px!important;
+}
+.hsr-id-action{
+  min-height:40px!important;
+  padding-inline:9px!important;
+  font-size:11.5px!important;
+}
+.hsr-id-action small{
+  font-size:9px!important;
+}
+
+/* Same hierarchy in both themes. */
+.smart-hsr-shell-v1[data-theme="day"] .hsr-shell-brand-copy strong,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-shell-brand-copy strong,
+.smart-hsr-shell-v1[data-theme="day"] .hsr-side-identity-copy strong,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-side-identity-copy strong{
+  font-size:12px!important;
+  font-weight:800!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .dh-nav-item,
+.smart-hsr-shell-v1[data-theme="night"] .dh-nav-item{
+  font-size:12.5px!important;
+  font-weight:650!important;
+}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-identity-name,
+.smart-hsr-shell-v1[data-theme="night"] .hsr-identity-name{
+  font-size:12.5px!important;
+  font-weight:800!important;
+}
+
+/* Avoid the rail feeling like an overlay: reserve its full column and keep
+   the main workspace clipped to its own column. */
+.smart-hsr-shell-v1 .dh-sidebar + main{
+  overflow:hidden!important;
+  max-width:calc(100% - 0px)!important;
+}
+
+/* Footer remains brand-first and short. */
+.hsr-platform-footer-copy strong{
+  font-size:11px!important;
+}
+.hsr-platform-footer-copy span{
+  font-size:6.4px!important;
+}
+.hsr-platform-connection{
+  font-size:8.3px!important;
+}
+
+/* At common laptop widths, keep a readable expanded rail instead of
+   collapsing into an icon strip unless the user explicitly toggles it. */
+@media(min-width:1180px){
+  .smart-hsr-shell-v1 .dh-sidebar{
+    min-width:var(--sbW,240px)!important;
+  }
+}
+
+
+/* ============================================================
+   SMART MOBILITY COMMAND CENTER — DELIVERY CLOSURE
+   Decision-first hierarchy: six KPIs + grouped navigation.
+   ============================================================ */
+.smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-kpi-grid{
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:10px!important;
+}
+.hsr-nav-section{
+  margin:12px 10px 5px!important;
+  padding-top:8px!important;
+  border-top:1px solid rgba(255,255,255,.06)!important;
+  color:#6f9d88!important;
+  font-size:8px!important;
+  font-weight:800!important;
+  letter-spacing:.08em!important;
+  text-align:right!important;
+}
+.hsr-side-nav-scroll .hsr-nav-section:first-child{
+  margin-top:2px!important;
+  padding-top:0!important;
+  border-top:0!important;
+}
+.smart-hsr-shell-v1[data-theme="night"] .hsr-nav-section{color:#6f91a8!important}
+.smart-hsr-shell-v1[data-theme="day"] .hsr-nav-section{color:#91b6a3!important}
+
+@media(max-width:1450px){
+  .smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-kpi-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:760px){
+  .smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:430px){
+  .smart-hsr-shell-v1[data-product="الحركة الذكية"] .dh-kpi-grid{
+    grid-template-columns:1fr!important;
+  }
+}

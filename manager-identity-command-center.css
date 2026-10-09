@@ -420,3 +420,98 @@ html[data-theme="light"] .icc-org-canvas,html[data-theme="light"] .icc-spatial-v
  .icc-spatial-stage{min-height:420px}.icc-assignment-preview{grid-template-columns:1fr}
  body .icc-sheet .icc-sheet-tabs{justify-content:flex-start;overflow:auto}body .icc-sheet .icc-sheet-tabs button{min-width:max-content}
 }
+
+/* Archive roster — follows the same five-column visual contract as users.
+   Search is deliberately NOT a flex-grow child on a column parent:
+   the previous .icc-search rule gave it a 320px vertical flex-basis. */
+.icc-archive-area{display:flex;flex-direction:column;gap:12px;min-height:0;height:100%;min-width:0}
+.icc-archive-head{flex:0 0 auto!important}
+.icc-archive-head>div{align-items:baseline}
+.icc-archive-area .icc-archive-controls{
+  display:flex;align-items:center;justify-content:space-between;
+  flex:0 0 auto!important;height:auto!important;min-height:42px;
+  min-width:0;gap:12px
+}
+.icc-archive-area .icc-archive-controls .icc-archive-search{
+  display:block!important;flex:0 1 320px!important;
+  width:min(320px,100%)!important;min-width:0!important;
+  max-width:320px!important;height:42px!important;
+  min-height:42px!important;align-self:center!important;
+  margin:0!important
+}
+.icc-archive-area .icc-archive-search input{
+  display:block!important;width:100%!important;height:42px!important;
+  min-height:42px!important;max-height:42px!important;
+  font-size:12px!important;padding-inline:14px!important;
+  line-height:normal!important
+}
+.icc-archive-policy{position:relative;flex:0 0 auto;align-self:center}
+.icc-archive-policy summary{
+  list-style:none;cursor:pointer;color:var(--icc-muted);font-size:11px;
+  white-space:nowrap;padding:10px 12px;border:1px solid var(--icc-line);
+  border-radius:10px;background:var(--icc-panel);min-height:42px
+}
+.icc-archive-policy summary::-webkit-details-marker{display:none}
+.icc-archive-policy summary:before{content:'ⓘ';color:var(--icc-green);margin-inline-end:7px}
+.icc-archive-policy[open] summary{border-color:var(--icc-green)}
+.icc-archive-policy p{
+  position:absolute;inset-inline-end:0;top:43px;z-index:20;
+  width:min(360px,calc(100vw - 60px));max-width:calc(100vw - 60px);
+  margin:0;padding:13px 14px;line-height:1.9;
+  border:1px solid var(--icc-line);border-radius:12px;
+  background:var(--icc-panel-2);color:var(--icc-muted);font-size:11px;
+  box-shadow:0 12px 28px rgba(0,0,0,.2)
+}
+.icc-archive-area>.icc-table-wrap{flex:1 1 auto;min-height:140px;overflow:auto}
+.icc-archive-table{table-layout:fixed;width:100%;min-width:760px!important}
+.icc-archive-table th:nth-child(1){width:22%}
+.icc-archive-table th:nth-child(2){width:25%}
+.icc-archive-table th:nth-child(3){width:20%}
+.icc-archive-table th:nth-child(4){width:17%}
+.icc-archive-table th:nth-child(5){width:16%}
+.icc-archive-table td{vertical-align:middle;overflow-wrap:anywhere}
+.icc-archive-person{display:flex;align-items:center;gap:9px;min-width:0}
+.icc-archive-person .icc-avatar-mini{flex:0 0 34px}
+.icc-archive-person .icc-name-copy{min-width:0}
+.icc-archive-person .icc-name-copy b{font-size:12px;font-weight:650}
+.icc-archive-meta .icc-account{font-size:10px;white-space:nowrap}
+.icc-archive-date,.icc-archive-reason{
+  display:block;margin-top:5px;font-size:10px;line-height:1.5;color:var(--icc-muted)
+}
+.icc-archive-reason{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%}
+.icc-archive-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.icc-archive-area .icc-archive-actions button{
+  width:auto;min-width:0;min-height:34px!important;
+  padding:6px 11px!important;white-space:nowrap;
+  border-radius:9px;font-size:11px;font-weight:650
+}
+.icc-archive-restore{
+  color:var(--icc-green)!important;
+  background:color-mix(in srgb,var(--icc-green) 9%,var(--icc-panel))!important;
+  border:1px solid color-mix(in srgb,var(--icc-green) 40%,var(--icc-line))!important
+}
+.icc-archive-actions .icc-purge{
+  color:#ff9a9a!important;border:1px solid rgba(231,95,104,.36)!important;
+  background:rgba(231,95,104,.065)!important
+}
+.icc-archive-retained{font-size:10px;color:var(--icc-muted);line-height:1.5}
+.icc-archive-label{display:flex;flex-direction:column;gap:8px;margin:12px 0;color:var(--icc-text);font-size:12px}
+.icc-archive-label input{width:100%;max-width:470px;min-height:43px;border:1px solid var(--icc-line);border-radius:10px;background:var(--icc-panel);color:var(--icc-text);padding:8px 12px;font:inherit}
+.icc-archive-label input:focus-visible{outline:2px solid var(--icc-green);outline-offset:2px}
+html[data-theme="light"] .icc-archive-actions .icc-purge{
+  color:#9c2929!important;border-color:#a9515180!important;
+  background:#fff4f2!important
+}
+@media(max-width:700px){
+ .icc-archive-area .icc-archive-controls{align-items:stretch;gap:8px}
+ .icc-archive-area .icc-archive-controls .icc-archive-search{
+   flex:1 1 auto!important;width:100%!important;max-width:none!important;
+   height:44px!important;min-height:44px!important
+ }
+ .icc-archive-area .icc-archive-search input{font-size:16px!important;height:44px!important;min-height:44px!important;max-height:44px!important}
+ .icc-archive-policy{flex:0 0 auto;align-self:flex-start}
+ .icc-archive-policy summary{min-height:44px}
+ .icc-archive-area .icc-table-wrap{overflow-x:auto}
+ .icc-archive-table{min-width:780px!important}
+ .icc-archive-area .icc-archive-actions button{min-height:44px!important}
+}

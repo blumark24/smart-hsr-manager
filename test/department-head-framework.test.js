@@ -26,7 +26,8 @@ test('canonical premium board delegates authentication to a fail-closed field ru
   assert.match(runtime, /data\.active === false/);
   assert.match(runtime, /institutionalFieldHead = institutionalRole === 'department_head'/);
   assert.match(runtime, /legacyFieldHead = mobilityRole === 'department_head'/);
-  assert.match(runtime, /\/الحصر\|ميداني\|field\/i\.test\(administration \|\| dept\)/);
+  assert.match(runtime, /const fieldScope = dept \|\| administration;/);
+  assert.match(runtime, /\/الحصر\|ميداني\|field\/i\.test\(fieldScope\)/);
   assert.match(runtime, /!data\.organizationId/);
   assert.match(runtime, /location\.replace\('login\.html'\)/);
 });

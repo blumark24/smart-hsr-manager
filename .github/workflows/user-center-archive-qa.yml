@@ -1,0 +1,31 @@
+name: SMART HSR User Center Archive QA
+on:
+  push:
+    branches:
+      - feat/user-center-archive-v1-20261010
+  workflow_dispatch:
+jobs:
+  user-center-archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax guard
+        run: |
+          node --check api/admin/employees.js
+          node --check api/admin/users.js
+          node --check manager-identity-command-center.js
+          node --check manager-phase11d-user-center-enhancements.js
+      - name: User Center archive and regression contracts
+        run: |
+          node --test test/user-center-archive-v1.test.js
+          node --test test/user-center-redesign-v2.test.js
+          node --test test/manager-user-center-ui.test.js
+      - name: No Production or main mutation
+        run: |
+          test "${GITHUB_REF_NAME}" = "feat/user-center-archive-v1-20261010"
