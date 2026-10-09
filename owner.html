@@ -873,8 +873,7 @@
       ownerBooted = true;
       ownerContext.uid = user.uid;
       await refreshAll();
-      try{ usersModule.populateOrgSelects(); }catch(_){}
-      try{ populateConnectorOrganizations(); await loadConnector(); }catch(_){ setConnectorMessage('تعذر تحميل إعداد الربط المحلي.'); }
+      try{ usersModule.populateOrgSelects(); }catch(_){};
     });
 
   </script>
