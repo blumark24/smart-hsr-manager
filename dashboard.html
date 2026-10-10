@@ -6234,13 +6234,38 @@ function smartCaptureAiErrorHTML(message){
       </button>
     </div>`;
 }
+// Only allowlisted server error codes are translated. Never expose upstream
+// exception messages, provider payloads, configuration values or credentials.
+// This is diagnostic UX only; it does not bypass tenant gates or invoke AI.
+const SMART_CAPTURE_AI_FAILURE_MESSAGES = Object.freeze({
+  AI_APPLICATION_ORGANIZATION_NOT_ENABLED:'خدمة تحليل الصور غير مفعّلة لهذه البلدية. يرجى التواصل مع مسؤول المنصة لتفعيلها.',
+  AI_APPLICATION_INTEGRATION_DISABLED:'ربط الذكاء الاصطناعي غير مفعّل في إعدادات الخادم. يرجى التواصل مع مسؤول المنصة.',
+  AI_APPLICATION_PROVIDER_SELECTION_REQUIRED:'يلزم ضبط مزوّد التحليل المعتمد في إعدادات الخادم.',
+  AI_APPLICATION_API_KEY_REQUIRED:'تعذّر تشغيل مزوّد الذكاء الاصطناعي بسبب إعدادات الربط. يرجى مراجعة المسؤول الفني.',
+  AI_PROVIDER_NOT_CONFIGURED:'مزوّد التحليل المختار غير مدعوم حاليًا. يرجى مراجعة المسؤول الفني.',
+  AI_PROVIDER_UNAVAILABLE:'تعذّر الاتصال بمزوّد تحليل الصور حاليًا. يمكن إعادة المحاولة لاحقًا.',
+  AI_PROVIDER_REQUEST_INVALID:'رفض مزوّد التحليل طلب الصورة. يرجى مراجعة المسؤول الفني.',
+  AI_PROVIDER_OUTPUT_INVALID:'أعاد مزوّد التحليل نتيجة غير صالحة للاعتماد. لم تُنشأ أي مسودة.',
+  AI_RATE_LIMITED:'تم بلوغ حد طلبات التحليل مؤقتًا. انتظر قليلًا قبل إعادة المحاولة.',
+  AI_GUARD_UNAVAILABLE:'خدمة حماية طلبات التحليل غير متاحة مؤقتًا. يرجى المحاولة لاحقًا.',
+  AI_GUARD_FINALIZATION_FAILED:'تعذّر تأكيد نتيجة التحليل على الخادم. يرجى إعادة المحاولة لاحقًا.',
+  AI_STORAGE_READ_FAILED:'تعذّر قراءة صورة الملاحظة من المخزن الآمن. الصورة المرفوعة محفوظة.',
+  AI_STORAGE_NOT_CONFIGURED:'إعدادات المخزن الآمن غير مكتملة. يرجى التواصل مع المسؤول الفني.',
+  AI_IMAGE_MIME_DENIED:'صيغة الصورة غير مدعومة للتحليل. يرجى اختيار JPEG أو PNG أو WebP.',
+  AI_INSPECTOR_ROLE_REQUIRED:'هذا التحليل متاح لحساب المراقب المصرّح له فقط.',
+  AI_CROSS_ORGANIZATION_DENIED:'تم رفض العملية لحماية بيانات البلديات وفصل المؤسسات.',
+  AI_REPORT_OWNER_DENIED:'هذا التحليل متاح لمنشئ الملاحظة فقط.',
+  AI_DRAFT_OWNERSHIP_NOT_PROVEN:'تعذّر التحقق من ارتباط الصورة بحساب المراقب. يرجى مراجعة المسؤول الفني.',
+  AI_DRAFT_OWNERSHIP_LOOKUP_FAILED:'تعذّر التحقق من ملكية الصورة على الخادم. يرجى المحاولة لاحقًا.',
+});
 function showSmartCaptureAiFailure(error){
-  const code=[error?.code,error?.message].filter(v=>typeof v==='string'&&v.trim()).join(' ');
+  const errorCode=typeof error?.code==='string'&&/^[A-Z0-9_]{3,80}$/.test(error.code)?error.code:'';
   const message=error?.code===REAUTHENTICATION_REQUIRED
     ? 'تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى ثم أعد التحليل.'
-    : /AbortError|aborted|timeout/i.test(code)
-      ? 'استغرق التحليل وقتاً أطول من المسموح. أعد محاولة التحليل.'
-      : 'الصورة محفوظة، لكن خدمة التحليل غير متاحة حالياً. أعد محاولة التحليل.';
+    : SMART_CAPTURE_AI_FAILURE_MESSAGES[errorCode]
+      || (/AbortError|aborted|timeout/i.test([error?.code,error?.message].filter(v=>typeof v==='string').join(' '))
+        ? 'استغرق التحليل وقتاً أطول من المسموح. أعد محاولة التحليل.'
+        : 'الصورة محفوظة، لكن خدمة التحليل غير متاحة حالياً. أعد محاولة التحليل.');
   setHTML('modalResultContent',smartCaptureAiErrorHTML(message));
   hide('modalResultReviewAction');
   lucide.createIcons();
