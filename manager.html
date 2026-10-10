@@ -2459,6 +2459,23 @@ const firebaseConfig = await resolveFirebaseConfig();
         organizationId: managerContext.organizationId
       };
       appStarted = true;
+      // Display-only, tenant-scoped live identity from the owner's authoritative organization.
+      // Authentication, role and organizationId remain exclusively from verified staff access.
+      const linkedOrganizationId = managerContext.organizationId;
+      onSnapshot(doc(db, 'organizations', linkedOrganizationId), { includeMetadataChanges: true }, snapshot => {
+        if(snapshot.metadata.fromCache || !snapshot.exists() || managerContext.organizationId !== linkedOrganizationId) return;
+        const organization = snapshot.data() || {};
+        const currentName = typeof organization.name === 'string' ? organization.name.trim() : '';
+        const currentManager = typeof organization.manager === 'string' ? organization.manager.trim() : '';
+        if(currentName) managerContext.organizationName = currentName;
+        renderOrgBadge();
+        if(managerContext.role === 'manager' && currentManager){
+          const userBadge = document.getElementById('userBadge');
+          const settingsUserName = document.getElementById('settingsUserName');
+          if(userBadge) userBadge.textContent = currentManager;
+          if(settingsUserName) settingsUserName.textContent = currentManager;
+        }
+      }, err => console.warn('Organization display sync unavailable', err?.code || 'unknown'));
       renderPasswordProviderState();
       document.getElementById('secureDot')?.classList.remove('pending','offline');
       const secureLabel=document.getElementById('secureLabel');if(secureLabel)secureLabel.textContent='اتصال آمن';
