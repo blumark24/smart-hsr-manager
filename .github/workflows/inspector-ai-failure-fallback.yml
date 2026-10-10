@@ -1,0 +1,30 @@
+name: Inspector AI failure safe-fallback regression
+on:
+  push:
+    branches:
+      - fix/inspector-ai-failure-safe-manual-20261010
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inspector-ai-fallback-\${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Inspector AI and evidence isolation
+        run: |
+          node --test test/inspector-ai-manual-fallback.test.js
+          node --test test/inspector-smart-input-orchestration-regression.test.js
+          node --test test/inspector-acceptance-golden-observation.test.js
+          node --test test/sprint6-8-ai-vision-integration.test.js
+      - name: Server syntax
+        run: node --check api/ai/analyze.js
