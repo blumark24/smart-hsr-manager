@@ -24,6 +24,14 @@ service cloud.firestore {
         && ownerRecord().data.active != false;
     }
 
+    // Archived organizations cannot read/write tenant operational data.
+    // Legacy role-only tenants without an organizations document are left
+    // compatible here; remove that fallback only after identity migration.
+    function tenantNotArchived(orgId) {
+      return !exists(/databases/$(database)/documents/organizations/$(orgId))
+        || get(/databases/$(database)/documents/organizations/$(orgId)).data.status != 'archived';
+    }
+
     // --- Manager ---
     function managerRecord() {
       return get(/databases/$(database)/documents/managers/$(request.auth.uid));
@@ -34,7 +42,8 @@ service cloud.firestore {
         && managerRecord().data.role == 'manager'
         && managerRecord().data.active != false
         && managerRecord().data.organizationId is string
-        && managerRecord().data.organizationId.size() > 0;
+        && managerRecord().data.organizationId.size() > 0
+        && tenantNotArchived(managerRecord().data.organizationId);
     }
     function managerOrgId() {
       return isActiveManager() ? managerRecord().data.organizationId : null;
@@ -50,7 +59,8 @@ service cloud.firestore {
         && userRecord().data.role in ['supervisor', 'inspector', 'contractor']
         && userRecord().data.active != false
         && userRecord().data.organizationId is string
-        && userRecord().data.organizationId.size() > 0;
+        && userRecord().data.organizationId.size() > 0
+        && tenantNotArchived(userRecord().data.organizationId);
     }
     function orgUserOrgId() {
       return isActiveOrgUser() ? userRecord().data.organizationId : null;
