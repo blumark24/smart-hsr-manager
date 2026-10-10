@@ -1,0 +1,26 @@
+name: Inspector AI diagnostics (validation only)
+on:
+  push:
+    branches:
+      - fix/inspector-ai-vision-error-visibility-20261011
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inspector-ai-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Inspector AI failure handling
+        run: node --test test/inspector-ai-failure-visibility.test.js test/inspector-smart-input-orchestration-regression.test.js
+      - name: Backend syntax
+        run: node --check api/ai/analyze.js
