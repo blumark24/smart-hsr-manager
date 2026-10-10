@@ -197,6 +197,57 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
   // مودال المؤسسة
   addOrgBtn.addEventListener('click', ()=> openOrgModal());
 
+  // A one-click Owner SaaS audit above the horizontally-scrollable org table;
+  // mobile operators can reconcile ALL existing tenants without touching users.
+  const identityAuditBtn = document.createElement('button');
+  identityAuditBtn.type = 'button';
+  identityAuditBtn.className = 'btn btn-outline';
+  identityAuditBtn.textContent = 'فحص حسابات المؤسسات';
+  addOrgBtn.parentNode.insertBefore(identityAuditBtn, addOrgBtn);
+  identityAuditBtn.addEventListener('click', async () => {
+    const orgs = getOrgs().slice(0, 20);
+    if (!orgs.length) { showNotif('لا توجد مؤسسات لفحصها.'); return; }
+    identityAuditBtn.disabled = true;
+    identityAuditBtn.textContent = 'جاري فحص الربط...';
+    try {
+      const report = ['فحص دخول المؤسسات — قراءة فقط'];
+      for (const organization of orgs) {
+        try {
+          const audit = await ownerAdminCall({
+            action:'ownerAuditTenantIdentity', organizationId:organization.id,
+          });
+          const manager = audit.manager || {};
+          const staff = audit.workforce || {};
+          const stateName = ({
+            present:'موجود', disabled:'معطل', missing:'مفقود',
+            unlinked:'غير مربوط', lookup_failed:'تعذر التحقق',
+          })[manager.auth?.state] || 'غير مؤكد';
+          report.push(
+            '\nالمؤسسة: ' + (audit.organization?.name || organization.name || '—'),
+            'حساب المدير: ' + stateName,
+            'ربط المدير: ' + (manager.managerRecordLinked ? 'صحيح' : 'غير مكتمل'),
+            'بريد الدخول الحقيقي: ' + (manager.auth?.email || 'غير متاح'),
+            'تطابق بريد المؤسسة: ' + (manager.displayEmailMatchesAuth === true
+              ? 'نعم' : manager.displayEmailMatchesAuth === false ? 'لا' : 'غير مؤكد'),
+            'حسابات الموظفين المفقودة: ' + (staff.missingAuth ?? 0),
+            'حسابات الموظفين المعطلة: ' + (staff.disabledAuth ?? 0),
+            'أخطاء التحقق: ' + (staff.lookupFailed ?? 0)
+          );
+        } catch (error) {
+          report.push('\nالمؤسسة: ' + (organization.name || '—'),
+            'فشل الفحص: ' + (error.message || 'غير معروف'));
+        }
+      }
+      if (getOrgs().length > 20) report.push('تنبيه: تم فحص أول 20 مؤسسة فقط.');
+      report.push('\nلم تُعدّل أي حسابات.');
+      window.alert(report.join('\n'));
+    } finally {
+      identityAuditBtn.disabled = false;
+      identityAuditBtn.textContent = 'فحص حسابات المؤسسات';
+    }
+  });
+
+
   orgForm.addEventListener('submit', async (e)=>{
     e.preventDefault(); const f = orgForm.elements;
     const organization = {
