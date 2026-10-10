@@ -79,6 +79,7 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
       };
       wrap.appendChild(mkBtn('تعديل','edit','btn btn-outline'));
       if(o.managerUid) wrap.appendChild(mkBtn('كلمة مرور المدير','manager-password','btn btn-outline'));
+      else wrap.appendChild(mkBtn('إصلاح حساب المدير','repair-manager','btn btn-outline'));
       wrap.appendChild(mkBtn('فحص ربط الدخول','identity-audit','btn btn-outline'));
       wrap.appendChild(mkBtn('ترقية','upgrade','btn btn-primary'));
       wrap.appendChild(mkBtn(o.status==='archived'?'استعادة':'أرشفة',o.status==='archived'?'restore':'archive',o.status==='archived'?'btn btn-primary':'btn btn-outline'));
@@ -88,16 +89,23 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
     });
   }
 
-  function openOrgModal(org=null){
+  let forceProvision = false;
+  function openOrgModal(org=null, { provision=false }={}){
+    forceProvision = Boolean(org && provision);
     orgForm.reset();
     document.getElementById('modalTitle').textContent = org? 'تعديل مؤسسة' : 'إضافة مؤسسة';
     const f = orgForm.elements;
     f.name.value = org?.name||''; f.manager.value = org?.manager||''; f.email.value = org?.email||''; f.phone.value = org?.phone||'';
+    // Manager identity belongs to Firebase/manager records, not editable org metadata.
+    f.manager.readOnly = Boolean(org);
+    f.email.readOnly = Boolean(org);
+    f.manager.title = org ? 'هوية المدير تتغير فقط بإجراء آمن منفصل' : '';
+    f.email.title = org ? 'بريد دخول المدير غير قابل للتعديل من بيانات المؤسسة' : '';
     f.managerPassword.value = '';
-    f.managerPassword.required = !org;
-    f.managerPassword.disabled = Boolean(org);
+    f.managerPassword.required = !org || forceProvision;
+    f.managerPassword.disabled = Boolean(org && !forceProvision);
     const passwordField = document.getElementById('managerPasswordField');
-    if(passwordField) passwordField.classList.toggle('hidden', Boolean(org));
+    if(passwordField) passwordField.classList.toggle('hidden', Boolean(org && !forceProvision));
     f.plan.value = org?.plan||'Trial'; f.billingCycle.value = org?.billingCycle||'monthly'; f.status.value = org?.status|| (org?.plan==='Trial'?'trial':'active');
     f.expiresAt.value = org?.expiresAt? new Date(org.expiresAt).toISOString().slice(0,10): '';
     f.notes.value = org?.notes||'';
@@ -114,6 +122,47 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
     const btn = e.target.closest('button'); if(!btn) return;
     const act = btn.dataset.act; const id = btn.dataset.id; const org = getOrgs().find(o=>o.id===id);
     if(act==='edit'){ openOrgModal(org); }
+
+    if(act==='repair-manager'){
+      if(!org || org.managerUid) return;
+      try{
+        const audit = await ownerAdminCall({
+          action:'ownerAuditTenantIdentity', organizationId:id,
+        });
+        const m = audit.manager || {};
+        const candidates = m.managerCandidates || [];
+        const canonicalEmail = String(audit.organization?.displayManagerEmail || '').trim().toLowerCase();
+        const valid = candidates.filter(c =>
+          c.roleValid && c.authState === 'present' &&
+          c.emailMatchesRecord === true &&
+          String(c.authEmail || '').trim().toLowerCase() === canonicalEmail
+        );
+        if(candidates.length === 1 && valid.length === 1 &&
+           !m.displayEmailLookup?.registeredAsOwner &&
+           !m.displayEmailLookup?.registeredAsStaff &&
+           m.displayEmailLookup?.uid === valid[0].uid &&
+           m.displayEmailLookup?.matchingManagerRecord){
+          if(!confirm('تأكيد ربط حساب المدير الحالي بهذه المؤسسة فقط؟ لا تُغيّر كلمة المرور.')) return;
+          await ownerAdminCall({
+            action:'ownerRestoreTenantManager', organizationId:id,
+            mode:'linkExisting', managerUid:valid[0].uid, confirmation:true,
+          });
+          showNotif('تم ربط المدير الموجود بالمؤسسة بعد التحقق من Firebase.');
+          await refreshAll();
+          return;
+        }
+        if(candidates.length === 0 && m.displayEmailLookup?.state === 'missing'){
+          if(!confirm('لا يوجد حساب مدير مسجل لهذا البريد. هل تريد إنشاء حساب إنتاجي جديد للمؤسسة الحالية دون حذف بياناتها؟')) return;
+          openOrgModal(org, {provision:true});
+          showNotif('أدخل كلمة مرور جديدة وفريدة لمدير المؤسسة ثم احفظ. لا تستخدم كلمة مرور تجريبية قديمة.');
+          return;
+        }
+        showNotif('تم إيقاف الإصلاح الآلي: هوية المدير غير مؤكدة أو توجد سجلات متعارضة. راجع نتيجة فحص ربط الدخول أولًا.');
+      }catch(error){
+        showNotif('تعذّر إصلاح ربط المدير: '+(error.message || 'خطأ غير معروف'));
+      }
+      return;
+    }
 
     if(act==='identity-audit'){
       try {
@@ -297,11 +346,19 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
     const id = f.docId.value;
     try{
       if(id){
-        await updateDoc(doc(db,'organizations', id), {
-          ...organization,
-          manager:manager.name,
-          email:manager.email,
-          updatedAt:serverTimestamp()
+        if(forceProvision){
+          await ownerAdminCall({
+            action:'ownerRestoreTenantManager',
+            organizationId:id, mode:'createMissing',
+            confirmation:true, password:manager.password,
+          });
+          showNotif('تم إنشاء حساب المدير وربطه بالمؤسسة الحالية. لم تتغير بقية بيانات المؤسسة.');
+          orgModal.close();
+          await refreshAll();
+          return;
+        }
+        await ownerAdminCall({
+          action:'ownerUpdateOrganizationDetails', organizationId:id, organization,
         });
         if(Object.keys(spatialPatch).length){
           await ownerAdminCall({

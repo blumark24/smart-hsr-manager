@@ -9,6 +9,8 @@ const { passwordPolicyReason } = require('./serviceEntitlements');
 const OWNER_ACTIONS = new Set([
   'ownerOpsSnapshot',
   'ownerAuditTenantIdentity',
+  'ownerRestoreTenantManager',
+  'ownerUpdateOrganizationDetails',
   'ownerCreateOrganizationWithManager',
   'ownerSetManagerPassword',
   'ownerSupportList',
@@ -760,6 +762,184 @@ async function handleOwnerSupport({ action, body, decoded, db, FieldValue, sendJ
 }
 
 
+
+async function handleOwnerOrganizationDetails({ body, decoded, db, FieldValue, sendJson, res }) {
+  // Owner-only service: ordinary metadata must never overwrite managerUid/email.
+  const organizationId = cleanText(body.organizationId, 160);
+  const organization = body.organization && typeof body.organization === 'object' ? body.organization : {};
+  const name = cleanText(organization.name, 180);
+  const phone = cleanText(organization.phone, 80);
+  const plan = cleanText(organization.plan, 80);
+  const billingCycle = cleanText(organization.billingCycle, 40);
+  const status = cleanText(organization.status, 40);
+  const expiresAt = cleanText(organization.expiresAt, 40);
+  const notes = cleanText(organization.notes, 1200);
+  if (!organizationId || !name || !phone || !expiresAt ||
+      !['Trial','Basic','Pro','Enterprise'].includes(plan) ||
+      !['monthly','yearly'].includes(billingCycle) ||
+      !['active','expired','trial'].includes(status) ||
+      !Number.isFinite(Date.parse(expiresAt))) {
+    return sendJson(res, 400, { error:'invalid_request', reason:'organization_metadata_invalid' });
+  }
+  const orgRef = db.collection('organizations').doc(organizationId);
+  const snap = await orgRef.get();
+  if (!snap.exists) return sendJson(res, 404, { error:'organization_not_found' });
+  if (snap.data().status === 'archived') {
+    return sendJson(res, 409, { error:'conflict', reason:'archived_organization_restore_first' });
+  }
+  const now = FieldValue.serverTimestamp();
+  const batch = db.batch();
+  batch.update(orgRef, { name, phone, plan, billingCycle, status, expiresAt, notes, updatedAt:now });
+  batch.set(db.collection('platformAdminAuditEvents').doc(), {
+    actorUid:decoded.uid, actorRole:'owner', action:'organization_metadata_update',
+    organizationId, targetUid:null, resourceType:'organization', resourceId:organizationId,
+    detail:{ managerIdentityChanged:false }, createdAt:now,
+  });
+  await batch.commit();
+  return sendJson(res, 200, { ok:true, organizationId, managerIdentityChanged:false });
+}
+
+async function handleOwnerRestoreTenantManager({ body, decoded, db, auth, FieldValue, sendJson, res }) {
+  // Owner-only explicit repair of an EXISTING tenant. No tenant replacement,
+  // cross-tenant manager reassignment or automatic password reset.
+  const organizationId = cleanText(body.organizationId, 160);
+  const mode = cleanText(body.mode, 30);
+  if (!organizationId || body.confirmation !== true || !['linkExisting','createMissing'].includes(mode)) {
+    return sendJson(res, 400, { error:'invalid_request', reason:'explicit_owner_confirmation_required' });
+  }
+  const orgRef = db.collection('organizations').doc(organizationId);
+  const orgSnap = await orgRef.get();
+  if (!orgSnap.exists) return sendJson(res, 404, { error:'organization_not_found' });
+  const org = orgSnap.data() || {};
+  if (cleanText(org.managerUid, 160) || org.status === 'archived') {
+    return sendJson(res, 409, { error:'conflict', reason:'organization_already_linked_or_archived' });
+  }
+  const expectedEmail = cleanText(org.email, 240).toLowerCase();
+  if (!expectedEmail) return sendJson(res, 409, { error:'conflict', reason:'organization_manager_email_missing' });
+
+  const existingSnap = await db.collection('managers')
+    .where('organizationId', '==', organizationId).limit(2).get();
+  const existing = existingSnap.docs;
+
+  if (mode === 'linkExisting') {
+    const managerUid = cleanText(body.managerUid, 160);
+    if (existing.length !== 1 || !managerUid || existing[0].id !== managerUid) {
+      return sendJson(res, 409, { error:'conflict', reason:'manager_candidate_not_unique' });
+    }
+    const record = existing[0].data() || {};
+    if (record.role !== 'manager' || record.active === false ||
+        record.organizationId !== organizationId ||
+        cleanText(record.email, 240).toLowerCase() !== expectedEmail) {
+      return sendJson(res, 409, { error:'conflict', reason:'manager_candidate_not_verified' });
+    }
+    const [identity, ownerSnap, staffSnap] = await Promise.all([
+      auth.getUser(managerUid),
+      db.collection('owners').doc(managerUid).get(),
+      db.collection('users').doc(managerUid).get(),
+    ]);
+    if (identity.disabled || ownerSnap.exists || staffSnap.exists ||
+        cleanText(identity.email, 240).toLowerCase() !== expectedEmail) {
+      return sendJson(res, 409, { error:'conflict', reason:'manager_identity_mismatch' });
+    }
+    const now = FieldValue.serverTimestamp();
+    const outcome = await db.runTransaction(async transaction => {
+      const currentOrg = await transaction.get(orgRef);
+      const managerRef = db.collection('managers').doc(managerUid);
+      const currentManager = await transaction.get(managerRef);
+      if (!currentOrg.exists || cleanText(currentOrg.data().managerUid,160) ||
+          currentOrg.data().status === 'archived' || !currentManager.exists ||
+          currentManager.data().organizationId !== organizationId ||
+          currentManager.data().role !== 'manager' || currentManager.data().active === false ||
+          cleanText(currentManager.data().email,240).toLowerCase() !== expectedEmail) {
+        return false;
+      }
+      transaction.update(orgRef, {
+        managerUid, manager:cleanText(currentManager.data().name,180) || cleanText(org.manager,180),
+        email:expectedEmail, updatedAt:now,
+      });
+      transaction.create(db.collection('platformAdminAuditEvents').doc(), {
+        actorUid:decoded.uid, actorRole:'owner', action:'organization_manager_relinked',
+        organizationId, targetUid:managerUid, resourceType:'organization',
+        resourceId:organizationId, detail:{ existingIdentity:true }, createdAt:now,
+      });
+      return true;
+    });
+    return outcome
+      ? sendJson(res, 200, { ok:true, organizationId, managerUid, mode:'linkExisting' })
+      : sendJson(res, 409, { error:'conflict', reason:'organization_changed_during_repair' });
+  }
+
+  // createMissing is allowed ONLY when there is no manager document for this
+  // tenant, no existing Auth user for the tenant's registered email, and the
+  // owner explicitly supplied a NEW, strong, non-reused password.
+  if (existing.length !== 0) {
+    return sendJson(res, 409, { error:'conflict', reason:'existing_manager_record_requires_review' });
+  }
+  const managerName = cleanText(org.manager, 180);
+  const password = typeof body.password === 'string' ? body.password : '';
+  const passwordFailure = passwordPolicyReason(password, { email:expectedEmail, name:managerName });
+  if (!managerName || passwordFailure) {
+    return sendJson(res, 400, { error:'invalid_request', reason:passwordFailure || 'manager_name_required' });
+  }
+  try {
+    await auth.getUserByEmail(expectedEmail);
+    return sendJson(res, 409, { error:'conflict', reason:'auth_account_already_exists_manual_review' });
+  } catch (error) {
+    if (!error || error.code !== 'auth/user-not-found') throw error;
+  }
+
+  let created = null;
+  try {
+    created = await auth.createUser({
+      email:expectedEmail, displayName:managerName, password, disabled:false,
+    });
+    const now = FieldValue.serverTimestamp();
+    const managerRef = db.collection('managers').doc(created.uid);
+    const result = await db.runTransaction(async transaction => {
+      const currentOrg = await transaction.get(orgRef);
+      if (!currentOrg.exists || cleanText(currentOrg.data().managerUid,160) ||
+          currentOrg.data().status === 'archived' ||
+          cleanText(currentOrg.data().email,240).toLowerCase() !== expectedEmail) {
+        return false;
+      }
+      transaction.create(managerRef, {
+        uid:created.uid, email:expectedEmail, name:managerName,
+        role:'manager', organizationId, active:true, mustChangePassword:false,
+        createdBy:decoded.uid, createdAt:now, updatedAt:now,
+      });
+      transaction.update(orgRef, { managerUid:created.uid, updatedAt:now });
+      transaction.create(db.collection('platformAdminAuditEvents').doc(), {
+        actorUid:decoded.uid, actorRole:'owner', action:'organization_manager_missing_identity_created',
+        organizationId, targetUid:created.uid, resourceType:'organization',
+        resourceId:organizationId, detail:{ recovery:true }, createdAt:now,
+      });
+      return true;
+    });
+    if (!result) {
+      await auth.deleteUser(created.uid);
+      return sendJson(res, 409, { error:'conflict', reason:'organization_changed_during_repair' });
+    }
+    return sendJson(res, 200, {
+      ok:true, organizationId, managerUid:created.uid, mode:'createMissing',
+    });
+  } catch (error) {
+    if (created && created.uid) {
+      // Best-effort cleanup only for the identity created in this invocation.
+      // Do not delete it after a verified Firestore link exists.
+      try {
+        const current = await orgRef.get();
+        if (!current.exists || current.data().managerUid !== created.uid) {
+          await auth.deleteUser(created.uid);
+        }
+      } catch (_) { /* preserve uncertain state for owner review */ }
+    }
+    if (error && error.code === 'auth/email-already-exists') {
+      return sendJson(res, 409, { error:'conflict', reason:'auth_account_already_exists_manual_review' });
+    }
+    throw error;
+  }
+}
+
 async function handleOwnerTenantIdentityAudit({ body, db, auth, sendJson, res }) {
   // Read-only identity reconciliation for an existing tenant. The owner guard
   // is enforced by handleOwnerOpsSupport BEFORE entering this function.
@@ -918,6 +1098,14 @@ async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldVal
   try {
     if (action === 'ownerAuditTenantIdentity') {
       await handleOwnerTenantIdentityAudit({ body, db, auth, sendJson, res });
+      return true;
+    }
+    if (action === 'ownerRestoreTenantManager') {
+      await handleOwnerRestoreTenantManager({ body, decoded, db, auth, FieldValue, sendJson, res });
+      return true;
+    }
+    if (action === 'ownerUpdateOrganizationDetails') {
+      await handleOwnerOrganizationDetails({ body, decoded, db, FieldValue, sendJson, res });
       return true;
     }
     if (action === 'ownerOpsSnapshot') {

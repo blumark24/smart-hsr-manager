@@ -221,6 +221,10 @@ async function getMobilityOperationalCaller(db, uid, allowedRoles) {
       : WorkspaceAccess.resolveMobilityRole(data);
   if (!Array.isArray(allowedRoles) || !allowedRoles.includes(role)
       || data.active === false || !organizationId) return null;
+  // This direct Mobility workflow caller bypasses getCallerContext():
+  // enforce the same archived-tenant suspension before Admin SDK mutations.
+  const orgSnap = await db.collection('organizations').doc(organizationId).get();
+  if (orgSnap.exists && (orgSnap.data() || {}).status === 'archived') return null;
   return {
     uid,
     role,

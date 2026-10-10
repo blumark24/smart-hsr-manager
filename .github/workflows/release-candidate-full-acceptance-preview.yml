@@ -7,6 +7,7 @@ on:
       - fix/role-isolated-auth-gate-v1
       - fix/auth-rate-limit-diagnostics-v1
       - fix/owner-readonly-tenant-identity-audit
+      - fix/saas-tenant-manager-identity-closure-v1
   workflow_dispatch:
 
 permissions:
@@ -72,6 +73,7 @@ jobs:
         run: |
           node --test test/firebase-runtime-config.test.js
           node --test test/owner-operations-closure.test.js
+          node --test test/saas-tenant-manager-reconciliation.test.js
 
       - name: Field Survey acceptance
         run: |
