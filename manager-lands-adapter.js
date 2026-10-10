@@ -397,8 +397,8 @@ async function start(component) {
   await ensureBootstrap(idToken);
 
   const [appApi, firestoreApi] = await Promise.all([
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js')
   ]);
   const app = appApi.getApps().find(item => item.name === 'smart-hsr-manager-session');
   if (!app) { fail(component, 'لا توجد جلسة Firebase نشطة.'); return; }
