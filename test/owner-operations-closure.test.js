@@ -100,6 +100,7 @@ test('Owner spatial context is saved only through the trusted owner API and audi
 
 
 test('Owner tenant identity audit is authenticated, scoped and read-only',()=>{
+  assert.match(ownerOrganizations,/فحص حسابات المؤسسات/);
   assert.match(ownerOrganizations,/فحص ربط الدخول/);
   assert.match(ownerOrganizations,/action:'ownerAuditTenantIdentity', organizationId:id/);
   assert.match(ownerOps,/'ownerAuditTenantIdentity'/);
