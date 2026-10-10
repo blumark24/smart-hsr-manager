@@ -18,7 +18,8 @@ test('successful evidence upload is persisted before AI analysis starts', () => 
 });
 
 test('AI failure has dedicated messaging and does not render upload failure', () => {
-  const aiStart = flow.indexOf('if(!aiDraft)');
+  const aiStart = flow.indexOf('if(!aiDraft && !manualMode)');
+  assert.ok(aiStart > -1, 'AI must run unless manual mode was explicitly selected');
   const aiEnd = flow.indexOf('const nextDisplayId', aiStart);
   const aiStage = flow.slice(aiStart, aiEnd);
   assert.match(aiStage, /showSmartCaptureAiFailure\(aiError\)/);
