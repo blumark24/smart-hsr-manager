@@ -19,7 +19,10 @@ test('workforce errors distinguish credentials from authorization/network outage
   assert.match(source, /classifyManagerLoginError as classifyFirebaseLoginError/);
   assert.match(source, /let credentialsValidated = false/);
   assert.match(source, /credentialsValidated = true/);
-  assert.match(source, /!credentialsValidated && classifyFirebaseLoginError\(e\) === 'credential-failed'/);
+  assert.match(source, /const errorKind = classifyFirebaseLoginError\(e\)/);
+  assert.match(source, /!credentialsValidated && errorKind === 'credential-failed'/);
+  assert.match(source, /errorKind === 'rate-limited'/);
+  assert.equal(classifyManagerLoginError({ code: 'auth/too-many-requests' }), 'rate-limited');
   assert.match(source, /تعذر التحقق من الصلاحيات أو الاتصال بخدمة المصادقة/);
 });
 
