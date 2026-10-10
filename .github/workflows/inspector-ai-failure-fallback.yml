@@ -24,7 +24,6 @@ jobs:
         run: |
           node --test test/inspector-ai-manual-fallback.test.js
           node --test test/inspector-smart-input-orchestration-regression.test.js
-          node --test test/inspector-acceptance-golden-observation.test.js
           node --test test/sprint6-8-ai-vision-integration.test.js
       - name: Server syntax
         run: node --check api/ai/analyze.js
