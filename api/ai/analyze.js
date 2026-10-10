@@ -76,6 +76,11 @@ function sendJson(res, statusCode, payload) {
 // returns ok:true without a real, validated provider result — a denial is
 // always an honest denial, never a fabricated analysis.
 function fail(res, statusCode, errorCode, reason) {
+  // Report only the stable non-secret error code. Never log caller identity,
+  // tenant IDs, image keys, provider credentials, or raw provider messages.
+  if (/^AI_[A-Z0-9_]{1,64}$/.test(errorCode)) {
+    console.warn('smart hsr ai analysis failed', { statusCode, errorCode });
+  }
   return sendJson(res, statusCode, { ok: false, advisoryOnly: true, requiresExplicitHumanAction: true, errorCode, reason });
 }
 
