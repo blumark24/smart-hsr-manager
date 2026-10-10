@@ -68,6 +68,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
+import { classifyManagerLoginError as classifyFirebaseLoginError } from './manager-login-error-classification.js';
 
 // إعدادات Firebase
 const firebaseConfig = await resolveFirebaseConfig();
@@ -129,8 +130,10 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   loginButton.disabled = true;
   loginButton.innerHTML = `<div class="loading-spinner"></div> جاري الدخول...`;
 
+  let credentialsValidated = false;
   try {
     const cred = await signInWithEmailAndPassword(probeAuth, email, password);
+    credentialsValidated = true;
     const user = cred.user;
     // Credential probing is memory-only. A workforce login must never sign out
     // or overwrite the separate municipal leadership session.
@@ -270,8 +273,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
   } catch (e) {
     await signOut(probeAuth).catch(() => {});
-    console.error(e);
-    showMsg('❌ البريد الإلكتروني أو كلمة المرور غير صحيحة.', 'error');
+    console.error('workforce-login: authentication or authorization failed', e);
+    // A successful credential probe means any subsequent failure is NOT a wrong
+    // password. Preserve other portals and the existing persisted workforce
+    // session; the memory-only probe is the only session cleared above.
+    const isCredentialFailure = !credentialsValidated && classifyFirebaseLoginError(e) === 'credential-failed';
+    showMsg(isCredentialFailure
+      ? '❌ البريد الإلكتروني أو كلمة المرور غير صحيحة.'
+      : 'تعذر التحقق من الصلاحيات أو الاتصال بخدمة المصادقة. حاول لاحقًا أو تواصل مع مسؤول النظام.', 'error');
     loginButton.disabled = false;
     loginButton.textContent = 'تسجيل الدخول';
   }
