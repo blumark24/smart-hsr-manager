@@ -106,6 +106,20 @@ test('unauthenticated UI preview CSP blocks outgoing Firebase and Google API con
   assert.match(previewContentSecurityPolicy(), /frame-ancestors 'none'/);
 });
 
+test('trusted municipal component pages alone receive the required compiler CSP exception', () => {
+  for (const page of ['/manager.html', '/department-head.html']) {
+    const policy=previewContentSecurityPolicy(page);
+    assert.match(policy,/script-src[^;]*'unsafe-eval'/,page);
+    assert.match(policy,/connect-src 'self';/,page);
+    assert.match(policy,/frame-ancestors 'none'/,page);
+  }
+  for (const page of ['', '/', '/login.html', '/manager-login.html',
+    '/dashboard.html', '/lands/index.html', '/api/admin/users',
+    '/support.js', '/firebase-runtime-config.js']) {
+    assert.doesNotMatch(previewContentSecurityPolicy(page), /'unsafe-eval'/,page);
+  }
+});
+
 test('static file policy blocks hidden, server, config, and test paths', () => {
   for (const p of [
     '/api/admin/users.js','/.github/workflows/test.yml','/.env',
@@ -136,9 +150,14 @@ test('live Node HTTP smoke: previews work, municipal API disabled, secrets unava
     assert.match(manager.headers['content-type'],/text\/html/);
     assert.equal(manager.headers['cache-control'],'no-store');
     assert.match(manager.headers['content-security-policy'], /connect-src 'self';/);
+    assert.match(manager.headers['content-security-policy'], /script-src[^;]*'unsafe-eval'/);
+    const departmentHead=await request(port,'/department-head.html');
+    assert.equal(departmentHead.status,200);
+    assert.match(departmentHead.headers['content-security-policy'], /script-src[^;]*'unsafe-eval'/);
     const configJs=await request(port,'/firebase-runtime-config.js');
     assert.equal(configJs.status,200);
     assert.equal(configJs.headers['cache-control'],'no-store');
+    assert.doesNotMatch(configJs.headers['content-security-policy'], /'unsafe-eval'/);
     const lands=await request(port,'/lands');
     assert.equal(lands.status,200);
     const archiveCSS=await request(port,'/manager-identity-command-center.css');
