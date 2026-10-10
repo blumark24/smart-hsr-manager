@@ -138,6 +138,7 @@ function sanitizedMapContext(organizationId, organizationName, organizationData)
   return {
     organizationId,
     organizationName: cleanText(organizationData.organizationName, cleanText(organizationData.name, cleanText(organizationName, organizationId))),
+    managerName: cleanText(organizationData.manager),
     mapCenter: configured ? configuredCenter : (fallbackEligible ? ALQUNFUDHAH_APPROXIMATE_CENTER : null),
     mapDefaultZoom: configured ? configuredZoom : (fallbackEligible ? ALQUNFUDHAH_DEFAULT_ZOOM : null),
     mapBounds: configured ? cleanBounds(organizationData.mapBounds) : null,
