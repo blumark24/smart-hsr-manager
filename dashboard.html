@@ -5158,6 +5158,7 @@ window.processSmartInput = async function(){
     const clientRequestId = pendingSmartCapture?.clientRequestId || newClientRequestId();
     let uploadedUrl = pendingSmartCapture?.uploadedUrl || null;
     let aiDraft = pendingSmartCapture?.aiDraft || null;
+    const manualMode = pendingSmartCapture?.manualMode === true;
     if(!pendingSmartCapture){
       try {
         const compressedFile = await compressImage(currentFile);
@@ -5181,7 +5182,13 @@ window.processSmartInput = async function(){
       showUploadFailure('لم يُرجع مخزن الصور مرجعاً صالحاً للصورة. أعد المحاولة.');
       return;
     }
-    if(!aiDraft){
+    if(manualMode && !rawText){
+      returnToSmartInputStep1();
+      showToast('اكتب وصفاً ميدانياً للملاحظة قبل حفظها يدوياً.');
+      document.getElementById('rawObservationInput')?.focus();
+      return;
+    }
+    if(!aiDraft && !manualMode){
       try {
         aiDraft = await analyzeSmartCaptureDraft({observationId:clientRequestId,imageObjectKey:uploadedUrl,existingDescription:rawText});
         pendingSmartCapture.aiDraft=aiDraft;
@@ -5203,7 +5210,9 @@ window.processSmartInput = async function(){
       date: newDate,
       title: rawText.substring(0,50) + (rawText.length>50?'...':''),
       status: "PENDING",
-      details: `**تم توليد هذا التقرير آلياً.**\nالوصف الأولي: "${rawText || 'لا يوجد'}"\nالموقع: (${lat}, ${lon})`,
+      details: manualMode
+        ? `**ملاحظة ميدانية كتبها المراقب؛ لم يُجرَ تحليل AI.**\nالوصف: "${rawText}"\nالموقع: (${lat}, ${lon})`
+        : `**تم توليد مسودة هذا التقرير بمساعدة AI ومراجعة المراقب.**\nالوصف: "${rawText || 'لا يوجد'}"\nالموقع: (${lat}, ${lon})`,
       imagePath: uploadedUrl,
       // مفتاح الكائن في الحاوية الخاصة. لا يُحفظ رابط عام دائم لأن الحاوية خاصة
       // ولا يُسمح بالوصول إليها إلا عبر الخادم.
@@ -5305,6 +5314,7 @@ async function commitPendingSmartInput(){
 
 // نجاح مؤكد من الخادم: setDoc لا تُحلّ إلا بعد إقرار الخادم بالكتابة.
 async function finishSmartInputSuccess(docId, payload, nextDisplayId){
+  const savedManually = pendingSmartCapture?.manualMode === true;
   pendingSmartInput = null;
   pendingSmartCapture = null;
   smartInputSaveInFlight = false;
@@ -5327,7 +5337,9 @@ async function finishSmartInputSuccess(docId, payload, nextDisplayId){
   renderPersonalLifecycle();
   showObservationDetail(docId);
 
-  setHTML('modalResultContent', successHTML('تمت معالجة الملاحظة وإضافتها بنجاح.'));
+  setHTML('modalResultContent', successHTML(savedManually
+    ? 'تم حفظ الملاحظة يدويًا دون تحليل AI، وهي بانتظار مراجعة رئيس القسم.'
+    : 'تمت معالجة الملاحظة وإضافتها بنجاح.'));
   unhide('modalResultReviewAction');
   lucide.createIcons();
 
@@ -5348,6 +5360,7 @@ async function finishSmartInputSuccess(docId, payload, nextDisplayId){
   // ربط تحليل الرؤية المخزَّن مؤقتاً (cache-only) بالملاحظة الجديدة. لا يُعيد
   // تشغيل الرؤية أبداً. فشل هذا الربط لا يُبطل نجاح الحفظ أعلاه؛ يظهر تحذيراً
   // صريحاً مع خيار إعادة محاولة الربط وحده، بدل ترك الفشل صامتاً.
+  if(savedManually) return true;
   const bindOutcome = await bindCachedVisionAnalysis(docId);
   if(!bindOutcome.ok){
     setHTML('modalResultContent', successHTML('تمت معالجة الملاحظة وإضافتها بنجاح.') + visionBindWarningHTML(docId));
@@ -6228,6 +6241,11 @@ function smartCaptureAiErrorHTML(message){
         class="ai-button-primary rounded-full px-6 py-3 text-base font-bold flex items-center justify-center mx-auto mt-5">
         <i data-lucide="rotate-ccw" class="w-4 h-4 ml-2"></i> إعادة محاولة التحليل
       </button>
+      <button type="button" onclick="useManualSmartCaptureFallback()"
+        class="ai-button-secondary rounded-full px-5 py-2 text-sm font-bold flex items-center justify-center mx-auto mt-3">
+        متابعة حفظ الملاحظة يدويًا
+      </button>
+      <p class="text-xs text-amber-800 mt-2">يتطلب وصفًا يكتبه المراقب وموقعًا معتمدًا. لن تُستخدم نتيجة AI غير متاحة، ولن تُنشأ الملاحظة إلا بعد اختيار الحفظ صراحة.</p>
       <button type="button" onclick="returnToSmartInputStep1()"
         class="ai-button-secondary rounded-full px-5 py-2 text-sm font-bold flex items-center justify-center mx-auto mt-3">
         العودة لمراجعة البيانات
@@ -6236,15 +6254,47 @@ function smartCaptureAiErrorHTML(message){
 }
 function showSmartCaptureAiFailure(error){
   const code=[error?.code,error?.message].filter(v=>typeof v==='string'&&v.trim()).join(' ');
+  const known = {
+    AI_APPLICATION_ORGANIZATION_NOT_ENABLED:'تحليل الصور غير مفعل لهذه المؤسسة. يمكن حفظ الملاحظة يدويًا وإبلاغ مالك النظام لتفعيل الخدمة.',
+    AI_APPLICATION_INTEGRATION_DISABLED:'تكامل التحليل الذكي غير مفعّل حاليًا. يمكنك إكمال البلاغ يدويًا.',
+    AI_APPLICATION_PROVIDER_SELECTION_REQUIRED:'لم يكتمل إعداد مزود التحليل. يمكنك إكمال البلاغ يدويًا.',
+    AI_APPLICATION_API_KEY_REQUIRED:'مزود التحليل غير جاهز حاليًا. يمكنك إكمال البلاغ يدويًا.',
+    AI_PROVIDER_NOT_CONFIGURED:'مزود التحليل غير مضبوط على الخادم. يمكنك إكمال البلاغ يدويًا.',
+    AI_STORAGE_READ_FAILED:'تعذر قراءة الصورة المحفوظة للتحليل. يمكنك إكمال البلاغ يدويًا.',
+    AI_RATE_LIMITED:'تم بلوغ حد طلبات التحليل مؤقتًا. حاول لاحقًا أو احفظ الملاحظة يدويًا.',
+    AI_PROVIDER_UNAVAILABLE:'مزود التحليل غير متاح حاليًا. يمكنك إكمال البلاغ يدويًا.'
+  };
   const message=error?.code===REAUTHENTICATION_REQUIRED
     ? 'تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى ثم أعد التحليل.'
-    : /AbortError|aborted|timeout/i.test(code)
-      ? 'استغرق التحليل وقتاً أطول من المسموح. أعد محاولة التحليل.'
-      : 'الصورة محفوظة، لكن خدمة التحليل غير متاحة حالياً. أعد محاولة التحليل.';
+    : known[error?.code] || (/AbortError|aborted|timeout/i.test(code)
+      ? 'استغرق التحليل وقتاً أطول من المسموح. أعد المحاولة أو احفظ الملاحظة يدويًا.'
+      : 'الصورة محفوظة، لكن خدمة التحليل غير متاحة حاليًا. يمكنك إكمال البلاغ يدويًا.');
   setHTML('modalResultContent',smartCaptureAiErrorHTML(message));
   hide('modalResultReviewAction');
   lucide.createIcons();
 }
+// Explicit manual opt-in: reuse the already-uploaded private evidence; never
+// fabricate an AI result and never change tenant, auth, GPS or Firestore rules.
+window.useManualSmartCaptureFallback=function(){
+  if(!pendingSmartCapture?.uploadedUrl || pendingSmartCapture.aiDraft || imageUploadInFlight || smartInputSaveInFlight)return;
+  const description=document.getElementById('rawObservationInput')?.value.trim()||'';
+  if(!description){
+    returnToSmartInputStep1();
+    showToast('اكتب وصف الملاحظة أولًا، ثم اختر حفظها يدويًا.');
+    document.getElementById('rawObservationInput')?.focus();
+    return;
+  }
+  pendingSmartCapture.manualMode=true;
+  hide('modalResult');unhide('modalStep1');
+  const preview=document.getElementById('inspectorAiPreviewRoot');
+  if(preview){
+    preview.classList.remove('hidden');
+    setHTML('inspectorAiPreviewRoot','<div class="p-4 border rounded-xl" style="background:#fff7ed;border-color:#e7bd74;color:#713f12;">الملاحظة ستُحفظ بوصفك الميداني وصورتك وموقعك دون تحليل AI. راجع المعلومات واضغط حفظ الملاحظة يدويًا لتأكيد الإنشاء. التصنيف والأولوية يحتاجان مراجعة بشرية.</div>');
+  }
+  const button=document.getElementById('processSmartInputBtn');
+  if(button)button.innerHTML='<i data-lucide="save" class="w-5 h-5 ml-2"></i> حفظ الملاحظة يدويًا';
+  checkSmartInputState();lucide.createIcons();
+};
 window.retrySmartCaptureAnalysis=function(){
   if(!pendingSmartCapture?.uploadedUrl||pendingSmartCapture.aiDraft||imageUploadInFlight||smartInputSaveInFlight)return;
   processSmartInput();
