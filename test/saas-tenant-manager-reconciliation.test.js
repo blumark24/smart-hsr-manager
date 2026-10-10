@@ -201,3 +201,70 @@ test('Firestore client writes cannot change SaaS tenant identity or create tenan
   assert.match(body,/affectedKeys\(\)\.hasOnly/);
   assert.doesNotMatch(body,/'managerUid'|'email'|'manager'/);
 });
+
+
+test('archived tenant cannot authorize manager API context; restore regains normal same-tenant access',async()=>{
+  const authz = fs.readFileSync(path.join(__dirname,'../api/_lib/authz.js'),'utf8');
+  const h0 = authz.indexOf('async function tenantNotArchived(');
+  const h1 = authz.indexOf('function collectionForRole(',h0);
+  const g0 = authz.indexOf('async function getCallerContext(');
+  const g1 = authz.indexOf('// PHASE 06A.2',g0);
+  assert.ok(h0>0 && g0>h0 && g1>g0);
+  const helperSource=authz.slice(h0,authz.indexOf('\n}',h0)+2);
+  const ctxSource=authz.slice(g0,g1);
+  const createCtx=vm.runInNewContext('(getDb, tenantNotArchived)=>{' +
+    'const activeIsNotFalse = d => !(d && d.active === false);' +
+    'const resolveMobilityRole=()=>null;' +
+    helperSource + ctxSource +
+    'return getCallerContext;' +
+    '}',{});
+  const store = {
+    owners:{},
+    managers:{'mgr-A':{role:'manager',organizationId:'org-A',active:true}},
+    organizations:{'org-A':{status:'archived'}},users:{},
+  };
+  const db = {collection:name=>({
+    doc:uid=>({get:async()=>({
+      exists:Object.hasOwn(store[name]||{},uid),
+      data:()=>store[name]?.[uid] || {},
+    })}),
+  })};
+  const managerContext=createCtx(()=>db, async(_db,id)=>{
+    const record=store.organizations[id];
+    return !record || record.status!=='archived';
+  });
+  let role=await managerContext('mgr-A');
+  assert.equal(role.isManager,false);
+  store.organizations['org-A'].status='active';
+  role=await managerContext('mgr-A');
+  assert.equal(role.isManager,true);
+  assert.equal(role.organizationId,'org-A');
+});
+
+test('trusted server role gates reject archived organization for all managed staff roles',()=>{
+  const authz=fs.readFileSync(path.join(__dirname,'../api/_lib/authz.js'),'utf8');
+  const roleGuards=[
+    "d.role === 'manager' && activeIsNotFalse(d) && orgId && await tenantNotArchived(db, orgId)",
+    "d.role === 'supervisor' && activeIsNotFalse(d) && orgId && await tenantNotArchived(db, orgId)",
+    "isLegacyDepartmentHead) && activeIsNotFalse(d) && orgId && dept && await tenantNotArchived(db, orgId)",
+    "resolveMobilityRole(d) === 'mobility_head' && activeIsNotFalse(d) && orgId && await tenantNotArchived(db, orgId)",
+    "hasVehicleCapability && await tenantNotArchived(db, orgId)",
+    "d.role === 'contractor' && activeIsNotFalse(d) && orgId && await tenantNotArchived(db, orgId)",
+  ];
+  for(const guard of roleGuards)assert.ok(authz.includes(guard),guard);
+  assert.match(authz,/async function tenantNotArchived\(db, organizationId\)/);
+  assert.match(authz,/\.status !== 'archived'/);
+});
+
+test('Firestore rules deny operational role when tenant is archived',()=>{
+  const rules=fs.readFileSync(path.join(__dirname,'../firestore.rules'),'utf8');
+  assert.match(rules,/function tenantNotArchived\(orgId\)/);
+  assert.match(rules,/\.data\.status != 'archived'/);
+  assert.match(rules,/managerRecord\(\)\.data\.organizationId\.size\(\) > 0\s+&& tenantNotArchived\(managerRecord\(\)\.data\.organizationId\)/);
+  assert.match(rules,/userRecord\(\)\.data\.organizationId\.size\(\) > 0\s+&& tenantNotArchived\(userRecord\(\)\.data\.organizationId\)/);
+  const start=rules.indexOf('match /organizations/{orgId}');
+  const end=rules.indexOf('match /invoices/{invoiceId}',start);
+  const ownerRules=rules.slice(start,end);
+  assert.match(ownerRules,/resource\.data\.status != 'archived'/);
+  assert.match(ownerRules,/request\.resource\.data\.status != 'archived'/);
+});
