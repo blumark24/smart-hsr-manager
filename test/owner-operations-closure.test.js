@@ -115,6 +115,14 @@ test('Owner tenant identity audit is authenticated, scoped and read-only',()=>{
   assert.match(readOnly,/db\.collection\('managers'\)\.doc\(managerUid\)\.get\(\)/);
   assert.match(readOnly,/\.where\('organizationId', '==', organizationId\)\.limit\(50\)\.get\(\)/);
   assert.match(readOnly,/await auth\.getUser\(uid\)/);
+
+  assert.match(readOnly,/await auth\.getUserByEmail\(displayManagerEmail\)/);
+  assert.match(readOnly,/db\.collection\('managers'\)\s*\.where\('organizationId', '==', organizationId\)\.limit\(5\)\.get\(\)/);
+  assert.match(readOnly,/db\.collection\('owners'\)\.doc\(emailUser\.uid\)\.get\(\)/);
+  assert.match(readOnly,/displayEmailLookup/);
+  assert.match(readOnly,/managerCandidates/);
+  assert.match(ownerOrganizations,/الموظفون المفحوصون/);
+
   assert.doesNotMatch(readOnly,/auth\.(createUser|updateUser|deleteUser|revokeRefreshTokens)/);
   assert.doesNotMatch(readOnly,/\.(set|update|delete|create)\(/);
   assert.match(readOnly,/readOnly: true/);
