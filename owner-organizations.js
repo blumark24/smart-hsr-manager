@@ -226,9 +226,24 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
             '\nالمؤسسة: ' + (audit.organization?.name || organization.name || '—'),
             'حساب المدير: ' + stateName,
             'ربط المدير: ' + (manager.managerRecordLinked ? 'صحيح' : 'غير مكتمل'),
-            'بريد الدخول الحقيقي: ' + (manager.auth?.email || 'غير متاح'),
-            'تطابق بريد المؤسسة: ' + (manager.displayEmailMatchesAuth === true
-              ? 'نعم' : manager.displayEmailMatchesAuth === false ? 'لا' : 'غير مؤكد'),
+            'بريد المدير المربوط: ' + (manager.auth?.email || 'غير متاح'),
+            'البحث ببريد المؤسسة: ' + (manager.displayEmailLookup?.state === 'present'
+              ? 'هوية Firebase موجودة' : manager.displayEmailLookup?.state === 'disabled'
+              ? 'هوية Firebase معطلة' : manager.displayEmailLookup?.state === 'missing'
+              ? 'لا يوجد حساب بهذا البريد' : 'تعذر التحقق'),
+            'معرف الحساب الموجود بالبريد: ' + (manager.displayEmailLookup?.uid || 'غير متاح'),
+            'دور المدير لهذا الحساب: ' + (manager.displayEmailLookup?.matchingManagerRecord
+              ? 'سجل مدير مطابق للمؤسسة' : manager.displayEmailLookup?.managerOtherTenant
+              ? 'مسجل كمدير لمؤسسة أخرى — لا تربطه' : 'لا يوجد ربط مدير مطابق مؤكد'),
+            'سجل هوية مالك أو موظف: ' +
+              (manager.displayEmailLookup?.registeredAsOwner || manager.displayEmailLookup?.registeredAsStaff
+                ? 'تعارض أدوار — يحتاج مراجعة' : 'لا يوجد تعارض مثبت'),
+            'سجلات مديري المؤسسة الموجودة: ' + (manager.managerCandidates?.length ?? 0),
+            ...(manager.managerCandidates || []).map(c =>
+              'مرشح مدير: ' + (c.authEmail || c.recordEmail || c.uid)
+              + ' — الحساب: ' + c.authState
+              + ' — الدور: ' + (c.roleValid ? 'صحيح' : 'يحتاج مراجعة')),
+            'الموظفون المفحوصون: ' + (staff.scanned ?? 0),
             'حسابات الموظفين المفقودة: ' + (staff.missingAuth ?? 0),
             'حسابات الموظفين المعطلة: ' + (staff.disabledAuth ?? 0),
             'أخطاء التحقق: ' + (staff.lookupFailed ?? 0)
