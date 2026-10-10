@@ -800,8 +800,61 @@ async function handleOwnerTenantIdentityAudit({ body, db, auth, sendJson, res })
     managerDoc && managerDoc.organizationId === organizationId &&
     managerDoc.role === 'manager' && managerDoc.active !== false
   );
-  // A missing managerUid MUST NOT be guessed from matching display names or
-  // emails; a tenant may have a legitimately distinct manager identity.
+
+  // Legacy tenants may have no managerUid even though a Production Auth identity
+  // exists. Look up ONLY the email already saved on the selected organization.
+  // This is an owner-authorized read, not an identity claim or a relink.
+  let displayEmailLookup = {
+    state: displayManagerEmail ? 'not_checked' : 'no_email',
+    uid: null, email: null, disabled: null,
+    matchingManagerRecord: false, managerOtherTenant: false,
+    registeredAsOwner: false, registeredAsStaff: false,
+  };
+  if (displayManagerEmail) {
+    try {
+      const emailUser = await auth.getUserByEmail(displayManagerEmail);
+      const [candidateManager, candidateOwner, candidateStaff] = await Promise.all([
+        db.collection('managers').doc(emailUser.uid).get(),
+        db.collection('owners').doc(emailUser.uid).get(),
+        db.collection('users').doc(emailUser.uid).get(),
+      ]);
+      const cm = candidateManager.exists ? candidateManager.data() || {} : null;
+      displayEmailLookup = {
+        state: emailUser.disabled === true ? 'disabled' : 'present',
+        uid: emailUser.uid, email: cleanText(emailUser.email, 240).toLowerCase(),
+        disabled: emailUser.disabled === true,
+        matchingManagerRecord: Boolean(cm && cm.organizationId === organizationId
+          && cm.role === 'manager' && cm.active !== false),
+        managerOtherTenant: Boolean(cm && cm.organizationId
+          && cm.organizationId !== organizationId),
+        registeredAsOwner: candidateOwner.exists,
+        registeredAsStaff: candidateStaff.exists,
+      };
+    } catch (error) {
+      displayEmailLookup.state = error && error.code === 'auth/user-not-found'
+        ? 'missing' : 'lookup_failed';
+    }
+  }
+
+  // Legacy manager records may exist for this tenant under a different email.
+  // Never infer ownership from the manager's display name.
+  const candidateSnap = await db.collection('managers')
+    .where('organizationId', '==', organizationId).limit(5).get();
+  const managerCandidates = [];
+  for (const candidate of candidateSnap.docs) {
+    const d = candidate.data() || {};
+    const state = await authState(candidate.id, cleanText(d.email, 240).toLowerCase());
+    managerCandidates.push({
+      uid: candidate.id,
+      recordEmail: cleanText(d.email, 240).toLowerCase(),
+      roleValid: d.role === 'manager' && d.active !== false,
+      authState: state.state,
+      authEmail: state.email,
+      emailMatchesRecord: state.emailMatchesRecord,
+    });
+  }
+
+  // Read-only report: no manager/tenant identity is changed automatically.
   const workforceSnap = await db.collection('users')
     .where('organizationId', '==', organizationId).limit(50).get();
   const workforce = { scanned: workforceSnap.docs.length, scanLimit: 50,
@@ -836,6 +889,9 @@ async function handleOwnerTenantIdentityAudit({ body, db, auth, sendJson, res })
       auth: managerAuth,
       displayEmailMatchesAuth: managerAuth.email && displayManagerEmail
         ? displayManagerEmail === managerAuth.email : null,
+      displayEmailLookup,
+      managerCandidates,
+      managerCandidateScanLimit: 5,
     },
     workforce,
   });
