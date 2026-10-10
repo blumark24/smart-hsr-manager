@@ -71,12 +71,18 @@ const apiReady = () => {
   }
 };
 
-function previewContentSecurityPolicy() {
+// The bundled x-dc renderer uses new Function to compile trusted, checked-in
+// component definitions. Grant its minimum CSP exception only to the two
+// pages that load that renderer, never globally or on API/asset responses.
+const TRUSTED_COMPONENT_PAGES = new Set(['/manager.html', '/department-head.html']);
+function previewContentSecurityPolicy(pathname = '') {
   const connectSrc = apiReady()
     ? "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com wss://*.firebaseio.com;"
     : "connect-src 'self';";
+  const evalSrc = TRUSTED_COMPONENT_PAGES.has(pathname) ? " 'unsafe-eval'" : "";
   return "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
-    + "form-action 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com; "
+    + "form-action 'self'; script-src 'self' 'unsafe-inline'" + evalSrc
+    + " https://www.gstatic.com https://unpkg.com; "
     + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     + "font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; "
     + connectSrc + " frame-src 'none'; worker-src 'self' blob:; media-src 'self' blob:;";
@@ -180,10 +186,10 @@ function createPreviewServer() {
     res.setHeader('X-Frame-Options','DENY');
     res.setHeader('Referrer-Policy','no-referrer');
     res.setHeader('X-Robots-Tag','noindex, nofollow, noarchive');
-    res.setHeader('Content-Security-Policy',previewContentSecurityPolicy());
     let parsed;
     try { parsed = new URL(req.url, 'http://localhost'); }
     catch { return sendJson(res,400,{error:'invalid_url'}); }
+    res.setHeader('Content-Security-Policy',previewContentSecurityPolicy(parsed.pathname));
     if (parsed.pathname === '/__preview/health') {
       return sendJson(res,200,{status:'ok',mode:'preview',apiEnabled:apiReady()});
     }
