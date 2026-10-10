@@ -277,10 +277,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // A successful credential probe means any subsequent failure is NOT a wrong
     // password. Preserve other portals and the existing persisted workforce
     // session; the memory-only probe is the only session cleared above.
-    const isCredentialFailure = !credentialsValidated && classifyFirebaseLoginError(e) === 'credential-failed';
-    showMsg(isCredentialFailure
-      ? '❌ البريد الإلكتروني أو كلمة المرور غير صحيحة.'
-      : 'تعذر التحقق من الصلاحيات أو الاتصال بخدمة المصادقة. حاول لاحقًا أو تواصل مع مسؤول النظام.', 'error');
+    const errorKind = classifyFirebaseLoginError(e);
+    const isCredentialFailure = !credentialsValidated && errorKind === 'credential-failed';
+    showMsg(errorKind === 'rate-limited'
+      ? 'تم تقييد محاولات الدخول مؤقتًا. لا تكرر المحاولة الآن؛ حاول لاحقًا أو تواصل مع مسؤول النظام.'
+      : isCredentialFailure
+        ? '❌ البريد الإلكتروني أو كلمة المرور غير صحيحة.'
+        : 'تعذر التحقق من الصلاحيات أو الاتصال بخدمة المصادقة. حاول لاحقًا أو تواصل مع مسؤول النظام.', 'error');
     loginButton.disabled = false;
     loginButton.textContent = 'تسجيل الدخول';
   }
