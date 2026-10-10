@@ -323,7 +323,7 @@
     <section class="executive-intro" aria-labelledby="commandTitle">
       <div>
         <p class="section-label">المشهد التشغيلي الموحّد</p>
-        <h1 id="commandTitle">بلدية القنفذة — القرار الميداني في صورة واحدة</h1>
+        <h1 id="commandTitle">المشهد البلدي — القرار الميداني في صورة واحدة</h1>
         <p class="text-sm mt-2 max-w-3xl" style="color:var(--muted)">متابعة البلاغات والفرق والتكليفات لحظياً ضمن نطاق المؤسسة الموثّق.</p>
       </div>
       <div class="text-sm text-left" style="color:var(--muted)">
@@ -2382,7 +2382,10 @@ const firebaseConfig = await resolveFirebaseConfig();
       const el = document.getElementById('orgBadge');
       if(!el) return;
       if(managerContext.organizationName){
-        el.textContent = 'المؤسسة: ' + managerContext.organizationName;
+        const verifiedOrganizationName = managerContext.organizationName.trim();
+        const commandTitle = document.getElementById('commandTitle');
+        if(commandTitle) commandTitle.textContent = verifiedOrganizationName + ' — القرار الميداني في صورة واحدة';
+        el.textContent = 'المؤسسة: ' + verifiedOrganizationName;
         el.classList.remove('hidden');
       }else{
         el.classList.add('hidden');
