@@ -6,6 +6,7 @@ on:
       - release/municipality-domain-final-v7
       - fix/role-isolated-auth-gate-v1
       - fix/auth-rate-limit-diagnostics-v1
+      - fix/owner-readonly-tenant-identity-audit
   workflow_dispatch:
 
 permissions:

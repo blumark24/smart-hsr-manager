@@ -97,3 +97,33 @@ test('Owner spatial context is saved only through the trusted owner API and audi
   assert.match(ownerOps,/mapCenter:\s*\{\s*lat,\s*lng\s*\}/);
   assert.match(ownerOps,/mapDefaultZoom:\s*zoom/);
 });
+
+
+test('Owner tenant identity audit is authenticated, scoped and read-only',()=>{
+  assert.match(ownerOrganizations,/فحص حسابات المؤسسات/);
+  assert.match(ownerOrganizations,/فحص ربط الدخول/);
+  assert.match(ownerOrganizations,/action:'ownerAuditTenantIdentity', organizationId:id/);
+  assert.match(ownerOps,/'ownerAuditTenantIdentity'/);
+  const gate = ownerOps.slice(ownerOps.indexOf('async function handleOwnerOpsSupport('));
+  assert.match(gate,/const owner = await requireOwner\(decoded, getCallerContext, sendJson, res\)/);
+  assert.match(gate,/if \(action === 'ownerAuditTenantIdentity'\)/);
+  const start = ownerOps.indexOf('async function handleOwnerTenantIdentityAudit(');
+  const end = ownerOps.indexOf('async function handleOwnerOpsSupport(', start);
+  assert.ok(start>0 && end>start, 'Owner-only audit handler exists');
+  const readOnly = ownerOps.slice(start,end);
+  assert.match(readOnly,/db\.collection\('organizations'\)\.doc\(organizationId\)\.get\(\)/);
+  assert.match(readOnly,/db\.collection\('managers'\)\.doc\(managerUid\)\.get\(\)/);
+  assert.match(readOnly,/\.where\('organizationId', '==', organizationId\)\.limit\(50\)\.get\(\)/);
+  assert.match(readOnly,/await auth\.getUser\(uid\)/);
+
+  assert.match(readOnly,/await auth\.getUserByEmail\(displayManagerEmail\)/);
+  assert.match(readOnly,/db\.collection\('managers'\)\s*\.where\('organizationId', '==', organizationId\)\.limit\(5\)\.get\(\)/);
+  assert.match(readOnly,/db\.collection\('owners'\)\.doc\(emailUser\.uid\)\.get\(\)/);
+  assert.match(readOnly,/displayEmailLookup/);
+  assert.match(readOnly,/managerCandidates/);
+  assert.match(ownerOrganizations,/الموظفون المفحوصون/);
+
+  assert.doesNotMatch(readOnly,/auth\.(createUser|updateUser|deleteUser|revokeRefreshTokens)/);
+  assert.doesNotMatch(readOnly,/\.(set|update|delete|create)\(/);
+  assert.match(readOnly,/readOnly: true/);
+});
