@@ -188,3 +188,41 @@ test('owner has no cross-collection access to any of the 7 organizations users/o
     await assertFails(getDoc(doc(db, 'observations', `obs-${org}`)));
   }
 });
+
+
+test('archived municipality loses manager/inspector operational access while other municipalities remain functional',async()=>{
+  const suspended=ORGS[0];
+  const unaffected=ORGS[1];
+  await testEnv.withSecurityRulesDisabled(async ctx=>{
+    await setDoc(doc(ctx.firestore(),'organizations',suspended),{status:'archived'});
+  });
+  const suspendedManager=ctxFor(orgUid('mgr',suspended));
+  const suspendedInspector=ctxFor(orgUid('insp',suspended));
+  const activeManager=ctxFor(orgUid('mgr',unaffected));
+  await assertFails(getDoc(doc(suspendedManager,'users',orgUid('insp',suspended))));
+  await assertFails(getDoc(doc(suspendedManager,'observations','obs-'+suspended)));
+  await assertFails(getDoc(doc(suspendedInspector,'observations','obs-'+suspended)));
+  await assertSucceeds(getDoc(doc(activeManager,'users',orgUid('insp',unaffected))));
+  await assertSucceeds(getDoc(doc(activeManager,'observations','obs-'+unaffected)));
+  // The backend restores status through a privileged audited operation.
+  // Simulate that status change using rules-disabled emulator seeding only.
+  await testEnv.withSecurityRulesDisabled(async ctx=>{
+    await updateDoc(doc(ctx.firestore(),'organizations',suspended),{status:'active'});
+  });
+  await assertSucceeds(getDoc(doc(suspendedManager,'users',orgUid('insp',suspended))));
+  await assertSucceeds(getDoc(doc(suspendedInspector,'observations','obs-'+suspended)));
+});
+
+test('owner browser cannot bypass audited tenant archive or restore action',async()=>{
+  await testEnv.withSecurityRulesDisabled(async ctx=>{
+    await setDoc(doc(ctx.firestore(),'owners','owner-active'),{active:true});
+    await setDoc(doc(ctx.firestore(),'organizations',ORGS[0]),{status:'active',name:'Test'});
+  });
+  const owner=ctxFor('owner-active');
+  await assertSucceeds(getDoc(doc(owner,'organizations',ORGS[0])));
+  await assertFails(updateDoc(doc(owner,'organizations',ORGS[0]),{status:'archived'}));
+  await testEnv.withSecurityRulesDisabled(async ctx=>{
+    await updateDoc(doc(ctx.firestore(),'organizations',ORGS[0]),{status:'archived'});
+  });
+  await assertFails(updateDoc(doc(owner,'organizations',ORGS[0]),{status:'active'}));
+});
