@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feat/user-center-archive-v1-20261010
+      - release/municipality-domain-final-v7
   workflow_dispatch:
 
 permissions:
