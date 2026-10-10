@@ -1,0 +1,21 @@
+name: Inspector AI safe diagnostics
+on:
+  push:
+    branches:
+      - 'fix/inspector-ai-diagnostic-ui-20261010'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspector-ai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify AI failure handling and upload preservation
+        run: node --test test/inspector-ai-frontend-diagnostics.test.js test/inspector-smart-input-orchestration-regression.test.js
+      - name: Verify server syntax
+        run: node --check api/ai/analyze.js
