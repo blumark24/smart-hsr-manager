@@ -44,3 +44,17 @@ test('Manager Lands presentation no longer depends on legacy nested grant fields
   assert.doesNotMatch(adapter, /g\.royal_order\?\.number/);
   assert.doesNotMatch(adapter, /g\.allocation_decision\?\.number/);
 });
+
+
+test('Lands uses the same Firebase SDK registry as manager shell', () => {
+  const dashboardAdapter = fs.readFileSync(path.join(root, 'manager-dashboard-adapter.js'), 'utf8');
+  const sdk = (content, moduleName) => {
+    const url = content.match(new RegExp('firebasejs/([0-9]+\\.[0-9]+\\.[0-9]+)/firebase-' + moduleName + '\\.js'));
+    assert.ok(url, 'Firebase module import missing: ' + moduleName);
+    return url[1];
+  };
+  const managerSdk = sdk(dashboardAdapter, 'app');
+  assert.equal(sdk(adapter, 'app'), managerSdk, 'Lands app registry must share Manager Firebase version');
+  assert.equal(sdk(adapter, 'firestore'), managerSdk, 'Lands Firestore client must share Manager Firebase version');
+  assert.match(adapter, /getApps\(\)\.find\(item => item\.name === 'smart-hsr-manager-session'\)/);
+});
