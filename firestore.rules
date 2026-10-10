@@ -225,10 +225,19 @@ service cloud.firestore {
     }
 
     // ==========================================================
-    // organizations/{orgId} — active owner only
+    // organizations/{orgId} — Owner SaaS identity is server-owned.
+    // The browser may edit ordinary tenant metadata for legacy compatibility,
+    // but cannot create/delete tenants or change managerUid/email/manager.
+    // Server-side Owner API writes use Firebase Admin SDK and audited actions.
     // ==========================================================
     match /organizations/{orgId} {
-      allow read, write: if isActiveOwner();
+      allow read: if isActiveOwner();
+      allow create, delete: if false;
+      allow update: if isActiveOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'phone', 'plan', 'billingCycle', 'status',
+          'expiresAt', 'notes', 'updatedAt'
+        ]);
     }
 
     // ==========================================================
