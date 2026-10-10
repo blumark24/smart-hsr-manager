@@ -34,6 +34,22 @@ jobs:
           node --test test/manager-login-preview-config.test.js
       - name: Existing archive center acceptance
         run: node --test test/user-center-archive-v1.test.js
+      - name: Canonical roles and institutional workspace regression
+        run: |
+          node --test \
+            test/phase19-2-field-role-matrix.test.js \
+            test/phase19-2-lands-role-matrix.test.js \
+            test/phase19-2-mobility-role-matrix.test.js \
+            test/phase19-2-admin-affairs-role-matrix.test.js \
+            test/phase19-2-contracts-role-matrix.test.js \
+            test/unified-workspace-access.test.js \
+            test/portal-session-isolation.test.js
+      - name: Lands SSO and municipal workflow regression
+        run: |
+          node --test \
+            test/manager-lands-sso.test.js \
+            test/administrative-affairs-v1.test.js \
+            test/vehicle-authorization-workflow.test.js
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
       - name: No Production deployment or DNS changes
