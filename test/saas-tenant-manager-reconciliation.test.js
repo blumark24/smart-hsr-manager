@@ -268,3 +268,15 @@ test('Firestore rules deny operational role when tenant is archived',()=>{
   assert.match(ownerRules,/resource\.data\.status != 'archived'/);
   assert.match(ownerRules,/request\.resource\.data\.status != 'archived'/);
 });
+
+
+test('direct Mobility workflow caller is also blocked for an archived municipality',()=>{
+  const trustedApi=fs.readFileSync(path.join(__dirname,'../api/admin/users.js'),'utf8');
+  const start=trustedApi.indexOf('async function getMobilityOperationalCaller(');
+  const end=trustedApi.indexOf('\nfunction resolvedActorCapability(',start);
+  assert.ok(start>0 && end>start);
+  const caller=trustedApi.slice(start,end);
+  assert.match(caller,/collection\('organizations'\)\.doc\(organizationId\)\.get\(\)/);
+  assert.match(caller,/orgSnap\.exists && \(orgSnap\.data\(\) \|\| \{\}\)\.status === 'archived'/);
+  assert.match(caller,/return null/);
+});
