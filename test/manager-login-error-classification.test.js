@@ -23,9 +23,20 @@ const classificationPromise = import(pathToFileURL(path.join(root, 'manager-logi
 
 test('a real Firebase Auth credentials failure classifies as credential-failed', async () => {
   const { classifyManagerLoginError } = await classificationPromise;
-  for (const code of ['auth/invalid-credential', 'auth/wrong-password', 'auth/user-not-found', 'auth/invalid-email', 'auth/user-disabled', 'auth/too-many-requests']) {
+  for (const code of ['auth/invalid-credential', 'auth/wrong-password', 'auth/user-not-found', 'auth/invalid-email', 'auth/user-disabled']) {
     assert.equal(classifyManagerLoginError({ code }), 'credential-failed', code);
   }
+});
+
+test('Firebase throttling is not misreported as a wrong password', async () => {
+  const { classifyManagerLoginError } = await classificationPromise;
+  assert.equal(classifyManagerLoginError({ code: 'auth/too-many-requests' }), 'rate-limited');
+  const leadership = read('manager-login.html');
+  const workforce = read('login.html');
+  assert.match(leadership, /kind === 'rate-limited'/);
+  assert.match(workforce, /errorKind === 'rate-limited'/);
+  assert.match(leadership, /تم تقييد محاولات الدخول مؤقتًا/);
+  assert.match(workforce, /تم تقييد محاولات الدخول مؤقتًا/);
 });
 
 test('a non-credential Firebase Auth error (wrong project, invalid API key, network) classifies as system-error, never credential-failed', async () => {
@@ -50,7 +61,7 @@ test('CREDENTIAL_ERROR_CODES is exactly the credentials-shaped Auth codes, not a
   const { CREDENTIAL_ERROR_CODES } = await classificationPromise;
   assert.deepEqual([...CREDENTIAL_ERROR_CODES].sort(), [
     'auth/invalid-credential', 'auth/invalid-email', 'auth/missing-password',
-    'auth/too-many-requests', 'auth/user-disabled', 'auth/user-not-found', 'auth/wrong-password',
+    'auth/user-disabled', 'auth/user-not-found', 'auth/wrong-password',
   ].sort());
 });
 
