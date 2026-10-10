@@ -5,6 +5,7 @@ on:
       - feat/user-center-archive-v1-20261010
       - release/municipality-domain-final-v7
       - fix/role-isolated-auth-gate-v1
+      - fix/auth-rate-limit-diagnostics-v1
   workflow_dispatch:
 
 permissions:
