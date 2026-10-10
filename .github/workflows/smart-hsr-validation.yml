@@ -1,0 +1,34 @@
+name: Smart HSR validation (no deployment)
+on:
+  push:
+    branches:
+      - 'fix/**'
+      - 'feature/**'
+      - 'release/**'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: smart-hsr-validate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Security and tenant regression tests
+        run: |
+          node --test test/manager-lands-sso.test.js test/manager-service-entitlements.test.js test/manager-users-list-state.test.js test/lands-bootstrap.test.js test/lands-sync-reconciliation.test.js test/firebase-runtime-config.test.js
+      - name: Validate backend JavaScript syntax
+        run: |
+          node --check api/organization/context.js
+          node --check owner-organizations.js
+      - name: Check display synchronization invariants
+        run: node --test test/manager-owner-identity-sync.test.js
