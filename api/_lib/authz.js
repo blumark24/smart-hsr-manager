@@ -88,6 +88,15 @@ function activeIsNotFalse(data) {
   return !(data && data.active === false);
 }
 
+async function tenantNotArchived(db, organizationId) {
+  // Legacy tenants may have role records predating an organizations document.
+  // Preserve that historical behavior, but an explicitly archived tenant
+  // must immediately lose trusted manager/employee API authorization.
+  if (!organizationId) return false;
+  const snap = await db.collection('organizations').doc(organizationId).get();
+  return !snap.exists || (snap.data() || {}).status !== 'archived';
+}
+
 // Verify the Firebase ID token from the Authorization header.
 // checkRevoked=true so revoked sessions (disabled/rotated) are rejected.
 async function verifyRequestToken(req, verifyIdToken = (token, checkRevoked) => getAuth().verifyIdToken(token, checkRevoked)) {
@@ -141,7 +150,7 @@ async function getCallerContext(uid) {
     const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
     // Fail closed: a manager record without a non-empty organizationId is
     // never treated as an authorized manager.
-    if (d.role === 'manager' && activeIsNotFalse(d) && orgId) {
+    if (d.role === 'manager' && activeIsNotFalse(d) && orgId && await tenantNotArchived(db, orgId)) {
       return { uid, isOwner: false, isManager: true, isDepartmentHead: false, role: 'manager', organizationId: orgId, department: null };
     }
   }
@@ -163,7 +172,7 @@ async function getCallerContext(uid) {
     // literal string 'supervisor'). Fails closed exactly like the
     // manager check above: inactive or missing organizationId is never
     // treated as an authorized supervisor.
-    if (d.role === 'supervisor' && activeIsNotFalse(d) && orgId) {
+    if (d.role === 'supervisor' && activeIsNotFalse(d) && orgId && await tenantNotArchived(db, orgId)) {
       return { uid, isOwner: false, isManager: true, isDepartmentHead: false, role: 'supervisor', organizationId: orgId, department: null };
     }
     const dept = typeof d.department === 'string' ? d.department.trim() : '';
@@ -173,7 +182,7 @@ async function getCallerContext(uid) {
     // Legacy Mobility department_head remains a compatibility fallback only.
     const isInstitutionalDepartmentHead = institutionalRole === 'department_head';
     const isLegacyDepartmentHead = resolveMobilityRole(d) === 'department_head';
-    if ((isInstitutionalDepartmentHead || isLegacyDepartmentHead) && activeIsNotFalse(d) && orgId && dept) {
+    if ((isInstitutionalDepartmentHead || isLegacyDepartmentHead) && activeIsNotFalse(d) && orgId && dept && await tenantNotArchived(db, orgId)) {
       const name = typeof d.name === 'string' ? d.name.trim() : '';
       return { uid, isOwner: false, isManager: false, isDepartmentHead: true, role: 'department_head', institutionalRole: 'department_head', organizationId: orgId, administration, department: dept, name };
     }
@@ -244,7 +253,7 @@ async function getMobilityHeadCallerContext(uid) {
     // Fail closed: an inactive record, or one missing a non-empty
     // organizationId, is never treated as an authorized mobility_head —
     // mirrors the manager/department_head checks in getCallerContext above.
-    if (resolveMobilityRole(d) === 'mobility_head' && activeIsNotFalse(d) && orgId) {
+    if (resolveMobilityRole(d) === 'mobility_head' && activeIsNotFalse(d) && orgId && await tenantNotArchived(db, orgId)) {
       return { uid, isMobilityHead: true, organizationId: orgId };
     }
   }
@@ -270,7 +279,7 @@ async function getMobilityAssignedOperatorCallerContext(uid) {
     const capabilities = WorkspaceAccess.resolveCapabilities(d);
     const role = WorkspaceAccess.resolveMobilityRole(d);
     const hasVehicleCapability = WorkspaceAccess.VEHICLE_CAPABILITIES.some(c => capabilities.includes(c));
-    if (MOBILITY_MANAGEABLE_ROLES.includes(role) && activeIsNotFalse(d) && orgId && hasVehicleCapability) {
+    if (MOBILITY_MANAGEABLE_ROLES.includes(role) && activeIsNotFalse(d) && orgId && hasVehicleCapability && await tenantNotArchived(db, orgId)) {
       return {
         uid,
         isEmployee: role === 'employee',
@@ -311,7 +320,7 @@ async function getContractorCallerContext(uid) {
   if (usrSnap.exists) {
     const d = usrSnap.data() || {};
     const orgId = typeof d.organizationId === 'string' ? d.organizationId.trim() : '';
-    if (d.role === 'contractor' && activeIsNotFalse(d) && orgId) {
+    if (d.role === 'contractor' && activeIsNotFalse(d) && orgId && await tenantNotArchived(db, orgId)) {
       return { uid, isContractor: true, organizationId: orgId };
     }
   }
