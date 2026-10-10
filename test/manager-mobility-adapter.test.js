@@ -40,3 +40,17 @@ test('Manager Mobility KPIs use canonical operational status vocabulary', () => 
     'NEW','ACKNOWLEDGED','RESOLVED'
   ]) assert.ok(adapter.includes(status), 'missing canonical status: ' + status);
 });
+
+
+test('Manager Mobility uses the same SDK registry as the Manager dashboard', () => {
+  const dashboardAdapter = fs.readFileSync(path.join(root, 'manager-dashboard-adapter.js'), 'utf8');
+  const sdkVersion = (src, moduleName) => {
+    const found = src.match(new RegExp('firebasejs/([0-9]+\\.[0-9]+\\.[0-9]+)/firebase-' + moduleName + '\\.js'));
+    assert.ok(found, 'Missing Firebase ' + moduleName + ' import');
+    return found[1];
+  };
+  const managerAppSdk = sdkVersion(dashboardAdapter, 'app');
+  assert.equal(sdkVersion(adapter, 'app'), managerAppSdk, 'Mobility must find Manager Firebase app in the same SDK registry');
+  assert.equal(sdkVersion(adapter, 'firestore'), managerAppSdk, 'Mobility Firestore SDK must match Manager SDK');
+  assert.match(adapter, /getApps\(\)\.find\(item => item\.name === 'smart-hsr-manager-session'\)/);
+});
