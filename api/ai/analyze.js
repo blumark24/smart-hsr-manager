@@ -76,6 +76,12 @@ function sendJson(res, statusCode, payload) {
 // returns ok:true without a real, validated provider result — a denial is
 // always an honest denial, never a fabricated analysis.
 function fail(res, statusCode, errorCode, reason) {
+  // Provider adapters may return advisory failures with HTTP 200. Emit a
+  // safe, structured signal so monitoring can distinguish them from success.
+  // Never log evidence, request bodies, identity, provider responses or keys.
+  if (typeof errorCode === 'string' && /^AI_[A-Z0-9_]{3,80}$/.test(errorCode)) {
+    console.warn('smart_hsr_ai_unavailable', { statusCode, errorCode });
+  }
   return sendJson(res, statusCode, { ok: false, advisoryOnly: true, requiresExplicitHumanAction: true, errorCode, reason });
 }
 
