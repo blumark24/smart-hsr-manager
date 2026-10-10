@@ -6217,12 +6217,13 @@ function showUploadFailure(message){
   hide('modalResultReviewAction');
   lucide.createIcons();
 }
-function smartCaptureAiErrorHTML(message){
+function smartCaptureAiErrorHTML(message, diagnosticCode=''){
   return `
     <div class="p-6 bg-amber-50 rounded-xl border-4 border-amber-200 text-center">
       <i data-lucide="sparkles" class="w-10 h-10 mx-auto text-amber-700 mb-3"></i>
       <h4 class="text-xl font-extrabold text-amber-800">تعذر إنشاء مسودة AI</h4>
       <p class="text-base font-bold text-amber-900 mt-3 leading-relaxed">${escapeHTML(message)}</p>
+      ${diagnosticCode ? `<p class="text-xs text-amber-900 mt-2" role="status">رمز التشخيص: ${escapeHTML(diagnosticCode)}</p>` : ''}
       <p class="text-sm text-amber-800 mt-3">تم رفع صورة الملاحظة بنجاح، ولن يُعاد رفعها. لم يتم إنشاء أي بلاغ.</p>
       <button id="retryAiDraftBtn" type="button" onclick="retrySmartCaptureAnalysis()"
         class="ai-button-primary rounded-full px-6 py-3 text-base font-bold flex items-center justify-center mx-auto mt-5">
@@ -6234,14 +6235,33 @@ function smartCaptureAiErrorHTML(message){
       </button>
     </div>`;
 }
+const SMART_CAPTURE_AI_ERROR_MESSAGES = Object.freeze({
+  AI_APPLICATION_ORGANIZATION_NOT_ENABLED:'التحليل الذكي غير مفعّل لهذه المؤسسة. اطلب من مسؤول النظام التحقق من ربط المؤسسة بالخدمة.',
+  AI_APPLICATION_INTEGRATION_DISABLED:'خدمة التحليل الذكي غير مفعّلة على الخادم. تواصل مع مسؤول النظام.',
+  AI_APPLICATION_API_KEY_REQUIRED:'لم تُهيّأ بيانات اعتماد مزوّد الذكاء الاصطناعي على الخادم.',
+  AI_APPLICATION_PROVIDER_SELECTION_REQUIRED:'إعداد مزوّد الذكاء الاصطناعي يحتاج مراجعة من مسؤول النظام.',
+  AI_PROVIDER_NOT_CONFIGURED:'إعداد مزوّد الذكاء الاصطناعي غير معتمد.',
+  AI_PROVIDER_UNAVAILABLE:'مزوّد التحليل الذكي لا يستجيب حاليًا. يلزم فحص حالة الخدمة والحصة والفوترة لدى المزوّد.',
+  AI_PROVIDER_OUTPUT_INVALID:'استجاب مزوّد الذكاء الاصطناعي بنتيجة غير قابلة للاعتماد. أعد المحاولة أو اطلب فحص المزوّد.',
+  AI_RATE_LIMITED:'تم بلوغ الحد المؤقت لطلبات التحليل. انتظر قليلًا قبل إعادة المحاولة.',
+  AI_GUARD_UNAVAILABLE:'تعذر التحقق من حماية طلبات التحليل. أعد المحاولة لاحقًا.',
+  AI_STORAGE_READ_FAILED:'تعذر قراءة الصورة المحفوظة لتحليلها. لم تُفقد الصورة.',
+  AI_DRAFT_OWNERSHIP_NOT_PROVEN:'تعذر إثبات ملكية صورة الملاحظة. راجع تسجيل الدخول والملاحظة.',
+  AI_DRAFT_OWNER_DENIED:'طلب التحليل لا يطابق مالك صورة الملاحظة.',
+  AI_CROSS_ORGANIZATION_DENIED:'هذه الملاحظة لا تتبع المؤسسة الحالية.',
+  AI_TIMEOUT:'انتهت مهلة استجابة التحليل الذكي. أعد المحاولة لاحقًا.'
+});
 function showSmartCaptureAiFailure(error){
-  const code=[error?.code,error?.message].filter(v=>typeof v==='string'&&v.trim()).join(' ');
-  const message=error?.code===REAUTHENTICATION_REQUIRED
+  const rawCode = typeof error?.code==='string' ? error.code : '';
+  const diagnosticCode=/^AI_[A-Z0-9_]{1,64}$/.test(rawCode) ? rawCode : '';
+  const details=[rawCode,error?.message].filter(v=>typeof v==='string'&&v.trim()).join(' ');
+  const message=rawCode===REAUTHENTICATION_REQUIRED
     ? 'تعذر تجديد جلسة الدخول. سجّل الدخول مرة أخرى ثم أعد التحليل.'
-    : /AbortError|aborted|timeout/i.test(code)
-      ? 'استغرق التحليل وقتاً أطول من المسموح. أعد محاولة التحليل.'
-      : 'الصورة محفوظة، لكن خدمة التحليل غير متاحة حالياً. أعد محاولة التحليل.';
-  setHTML('modalResultContent',smartCaptureAiErrorHTML(message));
+    : SMART_CAPTURE_AI_ERROR_MESSAGES[rawCode]
+      || (/AbortError|aborted|timeout/i.test(details)
+        ? 'استغرق التحليل وقتاً أطول من المسموح. أعد محاولة التحليل.'
+        : 'الصورة محفوظة، لكن خدمة التحليل غير متاحة حالياً. أعد محاولة التحليل.');
+  setHTML('modalResultContent',smartCaptureAiErrorHTML(message,diagnosticCode));
   hide('modalResultReviewAction');
   lucide.createIcons();
 }
