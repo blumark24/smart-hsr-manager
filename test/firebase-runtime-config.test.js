@@ -51,8 +51,15 @@ test('production alias smart-hsr-manager-blumark24-os.vercel.app resolves the ha
   assert.equal(calls.length, 0);
 });
 
-test('unknown and custom hostnames cannot fall back to production Firebase', async () => {
-  for (const hostname of ['smart-hsr-sandbox-preview.onrender.com', 'localhost', 'smart.blumark24.com']) {
+test('custom production hostname uses production Firebase without a staging fallback', async () => {
+  const { exportsObj, calls } = loadModule({ hostname: 'smart.blumark24.com', fetchImpl: neverCalledFetch });
+  const config = await exportsObj.resolveFirebaseConfig();
+  assert.equal(config.projectId, 'smart-hsr-manager');
+  assert.equal(calls.length, 0);
+});
+
+test('unknown hostnames cannot fall back to production Firebase', async () => {
+  for (const hostname of ['smart-hsr-sandbox-preview.onrender.com', 'localhost', 'unknown.blumark24.com']) {
     const { exportsObj, calls } = loadModule({
       hostname,
       fetchImpl: async () => ({ ok: false, status: 503, json: async () => ({}) })
@@ -78,6 +85,7 @@ test('embedded lands never treats Render or an unknown hostname as production', 
   const lands = fs.readFileSync(path.join(__dirname, '..', 'lands/index.html'), 'utf8');
   assert.match(lands, /function isProductionHost\(\)/);
   assert.match(lands, /return LANDS_PRODUCTION_HOSTNAMES\.includes\(hostname\)/);
+  assert.match(lands, /"smart\.blumark24\.com"/);
   assert.doesNotMatch(lands, /return !hostname\.endsWith\("\.vercel\.app"\)/);
 });
 
