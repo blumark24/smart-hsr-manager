@@ -325,7 +325,17 @@ async function start(component) {
   await authApi.setPersistence(auth, authApi.browserLocalPersistence);
 
   stopAuth = authApi.onAuthStateChanged(auth, async user => {
-    const context = await verifyManagerAccess(firestoreApi, db, user).catch(() => null);
+    let context;
+    try {
+      context = await verifyManagerAccess(firestoreApi, db, user);
+    } catch (error) {
+      // A temporary Firestore/network failure cannot prove the user lost
+      // authorization. Fail closed visually, but preserve this portal's
+      // persisted Auth session and every other portal session for retry.
+      console.error('manager: authorization lookup unavailable', error);
+      location.replace(portalLoginTarget(requestedPortal));
+      return;
+    }
     const expectedRole = requestedPortal === 'workforce' ? 'supervisor' : 'manager';
     const markerUid = typeof portalContext.uid === 'string' ? portalContext.uid : '';
     const markerOrg = typeof portalContext.organizationId === 'string' ? portalContext.organizationId.trim() : '';
