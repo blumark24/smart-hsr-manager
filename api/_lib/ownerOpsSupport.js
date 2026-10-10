@@ -8,6 +8,7 @@ const { passwordPolicyReason } = require('./serviceEntitlements');
 
 const OWNER_ACTIONS = new Set([
   'ownerOpsSnapshot',
+  'ownerAuditTenantIdentity',
   'ownerCreateOrganizationWithManager',
   'ownerSetManagerPassword',
   'ownerSupportList',
@@ -758,6 +759,88 @@ async function handleOwnerSupport({ action, body, decoded, db, FieldValue, sendJ
   return sendJson(res, 400, { error: 'unknown_action' });
 }
 
+
+async function handleOwnerTenantIdentityAudit({ body, db, auth, sendJson, res }) {
+  // Read-only identity reconciliation for an existing tenant. The owner guard
+  // is enforced by handleOwnerOpsSupport BEFORE entering this function.
+  const organizationId = cleanText(body.organizationId, 160);
+  if (!organizationId) return sendJson(res, 400, { error: 'organization_id_required' });
+  const orgSnap = await db.collection('organizations').doc(organizationId).get();
+  if (!orgSnap.exists) return sendJson(res, 404, { error: 'organization_not_found' });
+  const organization = orgSnap.data() || {};
+  const managerUid = cleanText(organization.managerUid, 160);
+  const displayManagerEmail = cleanText(organization.email, 240).toLowerCase();
+  const managerSnap = managerUid
+    ? await db.collection('managers').doc(managerUid).get()
+    : null;
+  const managerDoc = managerSnap && managerSnap.exists ? managerSnap.data() || {} : null;
+  const managerEmail = cleanText(managerDoc && managerDoc.email, 240).toLowerCase();
+
+  async function authState(uid, recordEmail) {
+    if (!uid) return { state: 'unlinked', email: null, disabled: null, emailMatchesRecord: null };
+    try {
+      const u = await auth.getUser(uid);
+      const email = cleanText(u.email, 240).toLowerCase();
+      return {
+        state: u.disabled === true ? 'disabled' : 'present',
+        email,
+        disabled: u.disabled === true,
+        emailMatchesRecord: recordEmail ? email === recordEmail : null,
+      };
+    } catch (error) {
+      if (error && error.code === 'auth/user-not-found') {
+        return { state: 'missing', email: null, disabled: null, emailMatchesRecord: null };
+      }
+      return { state: 'lookup_failed', email: null, disabled: null, emailMatchesRecord: null };
+    }
+  }
+
+  const managerAuth = await authState(managerUid, managerEmail);
+  const managerRecordLinked = Boolean(
+    managerDoc && managerDoc.organizationId === organizationId &&
+    managerDoc.role === 'manager' && managerDoc.active !== false
+  );
+  // A missing managerUid MUST NOT be guessed from matching display names or
+  // emails; a tenant may have a legitimately distinct manager identity.
+  const workforceSnap = await db.collection('users')
+    .where('organizationId', '==', organizationId).limit(50).get();
+  const workforce = { scanned: workforceSnap.docs.length, scanLimit: 50,
+    missingAuth: 0, disabledAuth: 0, emailMismatch: 0, lookupFailed: 0,
+    missingAccounts: [], scannedAccounts: [] };
+  for (const record of workforceSnap.docs) {
+    const data = record.data() || {};
+    const state = await authState(record.id, cleanText(data.email, 240).toLowerCase());
+    if (state.state === 'missing') {
+      workforce.missingAuth++;
+      workforce.missingAccounts.push(cleanText(data.email, 240) || record.id);
+    } else if (state.state === 'disabled') workforce.disabledAuth++;
+    else if (state.state === 'lookup_failed') workforce.lookupFailed++;
+    if (state.emailMatchesRecord === false) workforce.emailMismatch++;
+    workforce.scannedAccounts.push({
+      uid: record.id, email: cleanText(data.email, 240),
+      authState: state.state, linkedOrganization: data.organizationId === organizationId,
+      emailMatchesAuth: state.emailMatchesRecord,
+    });
+  }
+
+  return sendJson(res, 200, {
+    ok: true, readOnly: true,
+    organization: {
+      id: organizationId, name: cleanText(organization.name, 180),
+      status: cleanText(organization.status, 40),
+      managerUid, displayManagerEmail,
+    },
+    manager: {
+      uid: managerUid, firestoreRecordExists: Boolean(managerDoc),
+      managerRecordLinked, recordEmail: managerEmail,
+      auth: managerAuth,
+      displayEmailMatchesAuth: managerAuth.email && displayManagerEmail
+        ? displayManagerEmail === managerAuth.email : null,
+    },
+    workforce,
+  });
+}
+
 async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldValue, getCallerContext, sendJson, res }) {
   if (!OWNER_ACTIONS.has(action) && !MANAGER_SUPPORT_ACTIONS.has(action)) return false;
 
@@ -777,6 +860,10 @@ async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldVal
   if (!owner) return true;
 
   try {
+    if (action === 'ownerAuditTenantIdentity') {
+      await handleOwnerTenantIdentityAudit({ body, db, auth, sendJson, res });
+      return true;
+    }
     if (action === 'ownerOpsSnapshot') {
       const snapshot = await buildOwnerOpsSnapshot({ db, auth, decoded, FieldValue });
       sendJson(res, 200, snapshot);
