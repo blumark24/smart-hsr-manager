@@ -24,15 +24,15 @@ export const CREDENTIAL_ERROR_CODES = new Set([
   'auth/invalid-email',
   'auth/user-disabled',
   'auth/missing-password',
-  'auth/too-many-requests',
 ]);
 
 /**
  * @param {{code?: string, message?: string}} error
- * @returns {'unauthorized' | 'credential-failed' | 'system-error'}
+ * @returns {'unauthorized' | 'credential-failed' | 'rate-limited' | 'system-error'}
  */
 export function classifyManagerLoginError(error) {
   if (error && error.message === 'unauthorized-manager') return 'unauthorized';
+  if (error && error.code === 'auth/too-many-requests') return 'rate-limited';
   if (error && CREDENTIAL_ERROR_CODES.has(error.code)) return 'credential-failed';
   return 'system-error';
 }
