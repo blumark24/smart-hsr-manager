@@ -4,6 +4,7 @@ on:
     branches:
       - feat/user-center-archive-v1-20261010
       - release/municipality-domain-final-v7
+      - fix/role-isolated-auth-gate-v1
   workflow_dispatch:
 
 permissions:
@@ -120,6 +121,8 @@ jobs:
       - name: Portal and multi-tenant isolation
         run: |
           node --test test/portal-session-isolation.test.js
+          node --test test/role-isolated-login-error-regression.test.js
+          node --test test/manager-login-error-classification.test.js
           npx firebase emulators:exec --project demo-smart-hsr-tests --only firestore "node --test test/phase25-multi-org-isolation.test.js"
 
       - name: Security rules regression
@@ -138,6 +141,12 @@ jobs:
           node --test test/geo-provider-contract.test.js
           node --test test/geo-core-browser-bundle.test.js
           node --test test/phase6-spatial-restoration.test.js
+
+      - name: AI Vision provider and guard regression
+        run: |
+          node --test test/sprint6.11-openai-provider.test.js
+          node --test test/sprint5a-ai-gateway.test.js
+          node --test test/ai-allowed-organization-entitlement.test.js
 
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
@@ -198,6 +207,7 @@ jobs:
         run: |
           npm run test:rules
           node --test test/portal-session-isolation.test.js
+          node --test test/role-isolated-login-error-regression.test.js
 
       - name: Final integration contract
         run: node --test test/final-full-project-integration-contract.test.js
