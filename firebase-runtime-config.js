@@ -9,7 +9,8 @@ const PRODUCTION_FIREBASE_CONFIG = Object.freeze({
 
 const PRODUCTION_HOSTNAMES = Object.freeze([
   'smart-hsr-manager.vercel.app',
-  'smart-hsr-manager-blumark24-os.vercel.app'
+  'smart-hsr-manager-blumark24-os.vercel.app',
+  'smart.blumark24.com'
 ]);
 
 export async function resolveFirebaseConfig() {
