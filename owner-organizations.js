@@ -79,6 +79,7 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
       };
       wrap.appendChild(mkBtn('تعديل','edit','btn btn-outline'));
       if(o.managerUid) wrap.appendChild(mkBtn('كلمة مرور المدير','manager-password','btn btn-outline'));
+      wrap.appendChild(mkBtn('فحص ربط الدخول','identity-audit','btn btn-outline'));
       wrap.appendChild(mkBtn('ترقية','upgrade','btn btn-primary'));
       wrap.appendChild(mkBtn(o.status==='archived'?'استعادة':'أرشفة',o.status==='archived'?'restore':'archive',o.status==='archived'?'btn btn-primary':'btn btn-outline'));
       tdActions.appendChild(wrap); tr.appendChild(tdActions);
@@ -113,6 +114,44 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
     const btn = e.target.closest('button'); if(!btn) return;
     const act = btn.dataset.act; const id = btn.dataset.id; const org = getOrgs().find(o=>o.id===id);
     if(act==='edit'){ openOrgModal(org); }
+
+    if(act==='identity-audit'){
+      try {
+        const audit = await ownerAdminCall({
+          action:'ownerAuditTenantIdentity', organizationId:id,
+        });
+        const statusName = state => ({
+          present:'موجود ومفعّل', disabled:'موجود لكنه معطّل',
+          missing:'غير موجود في Firebase', unlinked:'غير مربوط',
+          lookup_failed:'تعذّر التحقق',
+        }[state] || 'غير معروف');
+        const manager = audit.manager || {};
+        const workforce = audit.workforce || {};
+        const summary = [
+          'فحص حسابات المؤسسة (قراءة فقط)',
+          'المؤسسة: ' + (audit.organization?.name || '—'),
+          'معرف مدير المؤسسة: ' + (manager.uid || 'غير مربوط'),
+          'حساب المدير في Firebase: ' + statusName(manager.auth?.state),
+          'ربط المدير بالمؤسسة: ' + (manager.managerRecordLinked ? 'صحيح' : 'يحتاج مراجعة'),
+          'البريد المسجل في Firebase: ' + (manager.auth?.email || 'غير متاح'),
+          'تطابق بريد المؤسسة مع تسجيل الدخول: ' +
+            (manager.displayEmailMatchesAuth === true ? 'متطابق'
+             : manager.displayEmailMatchesAuth === false ? 'مختلف — يحتاج تصحيحًا'
+             : 'غير مؤكد'),
+          'الموظفون المفحوصون: ' + (workforce.scanned ?? 0),
+          'حسابات الموظفين غير الموجودة في Firebase: ' + (workforce.missingAuth ?? 0),
+          'حسابات الموظفين المعطلة: ' + (workforce.disabledAuth ?? 0),
+          'عدم تطابق بريد الموظف: ' + (workforce.emailMismatch ?? 0),
+          'تعذر فحص الحساب: ' + (workforce.lookupFailed ?? 0),
+          (workforce.scanned >= workforce.scanLimit ? 'تنبيه: تم فحص أول 50 موظفًا فقط.' : ''),
+          'لم يتم تعديل أي حساب أو كلمة مرور.',
+        ].filter(Boolean).join('\n');
+        window.alert(summary);
+      } catch(error) {
+        showNotif('تعذّر فحص الربط: '+(error.message || 'خطأ غير معروف'));
+      }
+      return;
+    }
     if(act==='manager-password'){
       if(!org?.managerUid) return;
       const password = prompt('أدخل كلمة مرور جديدة قوية لمدير البلدية:');
