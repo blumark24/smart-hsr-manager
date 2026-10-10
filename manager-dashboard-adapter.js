@@ -336,7 +336,12 @@ async function start(component) {
       && (!markerOrg || markerOrg === context.organizationId)
     );
     if (!portalContextMatches) {
-      await authApi.signOut(auth).catch(() => undefined);
+      // A valid session must NOT be revoked just because another portal
+      // overwrote the shared, tab-scoped navigation marker. Only sign out
+      // an identity that fails the authoritative role/organization check
+      // for this specific Firebase Auth namespace.
+      const identityAuthorizedHere = Boolean(context && context.role === expectedRole);
+      if (!identityAuthorizedHere) await authApi.signOut(auth).catch(() => undefined);
       location.replace(portalLoginTarget(requestedPortal));
       return;
     }
