@@ -123,9 +123,11 @@ form.addEventListener("submit", async (e) => {
   } catch (authErr) {
     console.error('manager-login: authentication failed', authErr);
     const kind = classifyManagerLoginError(authErr);
-    showLoginMessage(kind === 'credential-failed'
-      ? "البريد الإلكتروني أو كلمة المرور غير صحيحة."
-      : "تعذر الاتصال بخدمة المصادقة حاليًا. حاول لاحقًا.");
+    showLoginMessage(kind === 'rate-limited'
+      ? "تم تقييد محاولات الدخول مؤقتًا. لا تكرر المحاولة الآن؛ حاول لاحقًا أو تواصل مع الدعم الفني."
+      : kind === 'credential-failed'
+        ? "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+        : "تعذر الاتصال بخدمة المصادقة حاليًا. حاول لاحقًا.");
     submitBtn.disabled = false;
     submitBtn.textContent = "دخول مركز القيادة";
     return;
