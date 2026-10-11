@@ -27,6 +27,7 @@ let stopObservations = null;
 let stopUsers = null;
 let stopIncidents = null;
 let stopEmployees = null;
+let stopIdentityRefresh = null;
 let activeAuth = null;
 let activeAuthApi = null;
 let activePortal = 'leadership';
@@ -263,7 +264,7 @@ async function verifyManagerAccess(api, db, user) {
     const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
     if (data.role === 'manager' && data.active !== false && organizationId) {
       const name = typeof data.name === 'string' ? data.name.trim() : '';
-      return { role: 'manager', organizationId, organizationName: data.organizationName?.trim() || organizationId, name };
+      return { role: 'manager', organizationId, organizationName: data.organizationName?.trim() || '', name };
     }
   }
   const supervisor = await api.getDoc(api.doc(db, 'users', user.uid));
@@ -272,7 +273,45 @@ async function verifyManagerAccess(api, db, user) {
   const organizationId = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
   if (data.role !== 'supervisor' || data.active === false || !organizationId) return null;
   const name = typeof data.name === 'string' ? data.name.trim() : '';
-  return { role: 'supervisor', organizationId, organizationName: data.organizationName?.trim() || organizationId, name };
+  return { role: 'supervisor', organizationId, organizationName: data.organizationName?.trim() || '', name };
+}
+
+// Only labels come from the Owner's verified organization registry. Tenant
+// identification and RBAC remain tied to the authenticated Firestore user.
+function identityLabel(value, identifier = '') {
+  if (typeof value !== 'string') return '';
+  const label = value.trim();
+  return label && label !== identifier && !/^[A-Za-z0-9_-]{18,}$/.test(label) ? label : '';
+}
+
+async function syncManagerDisplayIdentity(component, user, context) {
+  const token = await user.getIdToken();
+  const response = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ action: 'resolveWorkspaces' }),
+    cache: 'no-store'
+  });
+  if (!response.ok) return;
+  const verified = await response.json();
+  if (component !== activeComponent || activeAuth?.currentUser?.uid !== user.uid
+      || component.state?.orgId !== context.organizationId
+      || verified?.organizationId !== context.organizationId) return;
+  const expectedKind = context.role === 'manager' ? 'manager' : 'workforce';
+  if (verified?.kind !== expectedKind || verified?.valid !== true) return;
+  const profile = verified.profile || {};
+  const orgName = identityLabel(profile.organizationName, context.organizationId)
+    || identityLabel(context.organizationName, context.organizationId) || 'البلدية';
+  const sessionName = identityLabel(profile.name, user.uid)
+    || identityLabel(context.name, user.uid) || 'الحساب الموثق';
+  const sessionRole = context.role === 'manager' ? 'مدير البلدية'
+    : identityLabel(profile.jobTitle) || 'مشرف البلدية';
+  // Avoid needless React state changes; the operational map is state-sensitive.
+  const state = component.state || {};
+  if (state.orgName !== orgName || state.sessionName !== sessionName
+      || state.sessionRole !== sessionRole) {
+    component.setState({ orgName, sessionName, sessionRole });
+  }
 }
 
 async function start(component) {
@@ -364,8 +403,10 @@ async function start(component) {
     // observations/users/incidents arrays, so a stale event from the older
     // listener could overwrite newer data from the new one.
     stopObservations?.(); stopUsers?.(); stopIncidents?.(); stopEmployees?.();
+    stopIdentityRefresh?.();
+    stopIdentityRefresh = null;
     component.setState({
-      orgName: context.organizationName,
+      orgName: identityLabel(context.organizationName, context.organizationId) || 'البلدية',
       // The manager/supervisor's own approved Firestore name is the
       // authoritative identity — Firebase Auth's displayName (self-set,
       // never reviewed) and email are fallbacks only, never the primary
@@ -377,6 +418,22 @@ async function start(component) {
       dataState: 'loading',
       dataError: ''
     });
+    // Reflect owner-side edits at login, when the tab resumes, and periodically
+    // without mutating the organization or forcing a new authentication.
+    const refreshIdentity = () => {
+      if (document.visibilityState !== 'hidden') {
+        syncManagerDisplayIdentity(component, user, context).catch(() => undefined);
+      }
+    };
+    refreshIdentity();
+    window.addEventListener('focus', refreshIdentity);
+    document.addEventListener('visibilitychange', refreshIdentity);
+    const identityTimer = window.setInterval(refreshIdentity, 60000);
+    stopIdentityRefresh = () => {
+      window.removeEventListener('focus', refreshIdentity);
+      document.removeEventListener('visibilitychange', refreshIdentity);
+      window.clearInterval(identityTimer);
+    };
     // Real, on-demand (never eager) authenticated evidence image
     // resolution — reuses storage-adapter.js's resolveObservationImage
     // unchanged, the same private-object-key + Firebase-auth path
@@ -469,7 +526,8 @@ function disconnect(component) {
   stopUsers?.();
   stopIncidents?.();
   stopEmployees?.();
-  stopAuth = stopObservations = stopUsers = stopIncidents = stopEmployees = null;
+  stopIdentityRefresh?.();
+  stopAuth = stopObservations = stopUsers = stopIncidents = stopEmployees = stopIdentityRefresh = null;
   activeAuth = null;
   activeAuthApi = null;
   activePortal = 'leadership';
