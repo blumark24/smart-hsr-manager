@@ -3901,6 +3901,75 @@ body.dark .digital-file-next-action strong{color:var(--ink)}
   .digital-file-upload .btn{width:100%;justify-content:center}
 }
 </style>
+
+<style id="lands-identity-header-ipad-v1">
+/* Municipality manager parity: show verified tenant, person and role; keep
+   operational search inside Registry rather than overcrowding the header. */
+.command-header.manager-parity-header .lands-header-search,
+.command-header.manager-parity-header .lands-header-date{display:none!important}
+.command-header.manager-parity-header .lands-municipality-identity{
+  min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:4px 14px;border-inline:1px solid rgba(152,208,183,.17);line-height:1.35;text-align:center
+}
+.command-header.manager-parity-header .lands-municipality-identity small{
+  color:#91aaba;font-size:9.5px;font-weight:650
+}
+.command-header.manager-parity-header .lands-municipality-identity strong{
+  color:#effbf5;font-size:12.5px;font-weight:800;max-width:29ch;
+  text-overflow:ellipsis;overflow:hidden;white-space:nowrap
+}
+.command-header.manager-parity-header .manager-profile-copy{
+  min-width:0;max-width:230px;display:flex!important
+}
+.command-header.manager-parity-header .manager-profile-copy strong,
+.command-header.manager-parity-header .manager-profile-copy small{
+  display:block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis
+}
+.command-header.manager-parity-header .manager-profile-copy strong{font-size:12px!important}
+.command-header.manager-parity-header .manager-profile-copy small{font-size:10px!important}
+.command-header.manager-parity-header .manager-profile-button{
+  max-width:245px!important;min-width:0!important;width:auto!important
+}
+.command-header.manager-parity-header .profile-sep,
+.command-header.manager-parity-header #headerOrgLabel{display:none!important}
+body:not(.dark) .command-header.manager-parity-header .lands-municipality-identity{border-color:rgba(18,133,90,.16)}
+body:not(.dark) .command-header.manager-parity-header .lands-municipality-identity small{color:#687c74}
+body:not(.dark) .command-header.manager-parity-header .lands-municipality-identity strong{color:#17392d}
+@media(max-width:760px){
+  .command-header.manager-parity-header{padding:7px 10px!important;min-height:92px!important}
+  .command-header.manager-parity-header .lands-manager-header{
+    display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-areas:"brand profile" "center center"!important;
+    gap:5px 10px!important;padding:0!important
+  }
+  .command-header.manager-parity-header .manager-brand-zone{grid-area:brand!important;justify-self:start!important}
+  .command-header.manager-parity-header .manager-brand-logo-full{
+    width:min(120px,30vw)!important;max-width:120px!important;height:37px!important;object-position:left center
+  }
+  .command-header.manager-parity-header .manager-profile-zone{
+    grid-area:profile!important;display:flex!important;justify-self:end!important;min-width:0!important
+  }
+  .command-header.manager-parity-header .manager-profile-button{
+    width:min(175px,47vw)!important;min-width:0!important;max-width:175px!important;padding:4px 7px!important
+  }
+  .command-header.manager-parity-header .manager-profile-copy{
+    display:flex!important;min-width:0!important;max-width:130px!important
+  }
+  .command-header.manager-parity-header .manager-profile-chevron{display:none!important}
+  .command-header.manager-parity-header .manager-profile-avatar{width:27px;height:27px;flex:0 0 27px}
+  .command-header.manager-parity-header .lands-header-center{
+    grid-area:center!important;justify-content:space-between!important;align-items:center!important;
+    width:100%!important;min-width:0!important;padding-top:5px;border-top:1px solid rgba(180,214,196,.13)
+  }
+  .command-header.manager-parity-header .lands-municipality-identity{
+    align-items:flex-start!important;text-align:right!important;border:0!important;padding:0!important;flex:1
+  }
+  .command-header.manager-parity-header .lands-municipality-identity strong{
+    max-width:min(260px,62vw)!important;font-size:11.5px!important
+  }
+  .command-header.manager-parity-header .lands-theme-segment{flex:none!important}
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -3948,6 +4017,10 @@ body.dark .digital-file-next-action strong{color:var(--ink)}
           <span id="headerGregorianDate">—</span>
           <span class="date-sep">·</span>
           <span id="headerHijriDate">—</span>
+        </div>
+        <div class="lands-municipality-identity" aria-label="البلدية الحالية" aria-live="polite">
+          <small>الجهة البلدية</small>
+          <strong id="headerMunicipalityName">البلدية</strong>
         </div>
         <div class="lands-theme-segment" aria-label="اختيار المظهر">
           <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
@@ -4051,7 +4124,7 @@ function presentDecision(doc) {
   return { _id: doc.id, number: doc.reference_id, year, date, authority: doc.name || null, notes, status: doc.status || "active", archived_reason: doc.archived_reason || null };
 }
 
-const ROLE_LABELS = { municipal_manager: "مدير المؤسسة", lands_department_manager: "مدير قسم الأراضي", lands_employee: "موظف الأراضي" };
+const ROLE_LABELS = { municipal_manager: "مدير البلدية", lands_department_manager: "رئيس قسم الأراضي والممتلكات", lands_employee: "موظف الأراضي والممتلكات" };
 // Gate 3: "incomplete" relabeled from "غير مكتمل" to "تحتاج استكمال" — the
 // old label read as a completeness descriptor, ambiguous with the separate,
 // unrelated five-axis completeness percentage. It is, and was always, a
@@ -4583,7 +4656,10 @@ function showDenied(message, { returnToUnified = false } = {}) {
 // login flow already uses for entitlement denial), never the plain login
 // form. Only a genuine standalone visit with NO code at all ever reaches
 // that form (see the boot sequence below).
-const BOOT_STEP_TIMEOUT_MS = 8000;
+// iPadOS Safari may restore IndexedDB + several Firestore collections slowly.
+// Bound each step, but never treat slow workspace data as invalid credentials.
+const BOOT_STEP_TIMEOUT_MS = 25000;
+const BOOT_TOTAL_TIMEOUT_MS = 105000;
 function bootStatus(label) {
   if (window.SmartHSRCompanySplash?.setStatus) {
     window.SmartHSRCompanySplash.setStatus(label, label === "جاهز");
@@ -4628,9 +4704,14 @@ async function consumeSsoHandoff() {
     bootStatus("تحميل مساحة العمل");
     await withBootTimeout(loadWorkspace(), "workspace");
     showScreen("app"); currentView = "center"; renderShellChrome(); render();
+    void syncLandsIdentity();
     return true;
   } catch (error) {
     console.error("[LANDS_BOOT]", error && error.message ? error.message : "unknown");
+    if (session && String(error?.message || "").includes("LANDS_BOOT_TIMEOUT:workspace")) {
+      showRecoverableWorkspaceFailure();
+      return true;
+    }
     showDenied(error && String(error.message || "").startsWith("LANDS_BOOT_TIMEOUT:")
       ? "استغرق تجهيز مساحة العمل وقتًا أطول من المتوقع. أعد الدخول من البوابة الموحدة."
       : ssoFailureMessage, { returnToUnified: true });
@@ -4671,11 +4752,15 @@ function runHeaderSearch() {
   syncRouteToUrl();
 }
 function renderShellChrome() {
-  const roleLabel = ROLE_LABELS[session.role] || session.role;
+  const roleLabel = ROLE_LABELS[session.role] || "موظف الأراضي والممتلكات";
   const profileRole = document.getElementById("headerProfileRole");
   const profileAvatar = document.getElementById("headerProfileAvatar");
   const profileName = document.getElementById("headerProfileName");
-  const displayName = session?.displayName || session?.name || session?.employeeName || roleLabel;
+  const rawName = session?.displayName || session?.name || session?.employeeName || "";
+  const displayName = typeof rawName === "string"
+    && rawName.trim() !== session.firebaseUid
+    && !/^[A-Za-z0-9_-]{18,}$/.test(rawName.trim())
+    ? (rawName.trim() || "الموظف") : "الموظف";
   if (profileName) profileName.textContent = displayName;
   if (profileRole) profileRole.textContent = roleLabel;
   if (profileAvatar) profileAvatar.textContent = (displayName || roleLabel || "م").trim().charAt(0) || "م";
@@ -4683,18 +4768,24 @@ function renderShellChrome() {
   const canAdmin = mod.canManageEntitlements(session.role);
   document.body.classList.toggle("lands-reviewer", canReview);
   document.body.classList.toggle("lands-admin", canAdmin);
-  document.getElementById("userInfo").innerHTML = `<span class="account-avatar">${esc((roleLabel || "?")[0])}</span><span class="account-copy"><strong>${esc(roleLabel)}</strong><small>${reviewMode ? "بيانات معاينة" : "الأراضي الذكية"}</small></span>`;
+  document.getElementById("userInfo").innerHTML = `<span class="account-avatar">${esc((displayName || "?")[0])}</span><span class="account-copy"><strong>${esc(displayName)}</strong><small>${esc(roleLabel)}</small></span>`;
   const roleEl = document.getElementById("headerRoleLabel");
   const orgEl = document.getElementById("headerOrgLabel");
   if (roleEl) roleEl.textContent = roleLabel;
   if (orgEl) {
-    const municipalityLabel = session?.municipalityName || session?.organizationName || session?.orgName || session?.municipalityId || "الجهة البلدية";
+    const rawMunicipality = session?.municipalityName || session?.organizationName || session?.orgName || "";
+    const municipalityLabel = typeof rawMunicipality === "string"
+      && rawMunicipality.trim() !== session.municipalityId
+      && !/^[A-Za-z0-9_-]{18,}$/.test(rawMunicipality.trim())
+      ? (rawMunicipality.trim() || "البلدية") : "البلدية";
     orgEl.textContent = municipalityLabel;
-    if (session?.municipalityId) orgEl.title = session.municipalityId;
+    orgEl.title = municipalityLabel;
+    const municipalityHeader = document.getElementById("headerMunicipalityName");
+    if (municipalityHeader) municipalityHeader.textContent = municipalityLabel;
   }
   updateHeaderDates();
   const accountButton = document.getElementById("accountButton");
-  if (accountButton) accountButton.title = roleLabel;
+  if (accountButton) accountButton.title = displayName + " — " + roleLabel;
   document.querySelectorAll("[data-review-only]").forEach(el => { el.hidden = !canReview; });
   document.querySelectorAll("[data-admin-only]").forEach(el => { el.hidden = !canAdmin; });
   const managerModeToggle = document.getElementById("managerModeMenuItem");
@@ -4702,6 +4793,66 @@ function renderShellChrome() {
   if (!canReview && managerMode) managerMode = false;
   const sideFoot = document.getElementById("sideFoot");
   if (sideFoot) sideFoot.innerHTML = "";
+}
+
+// Profile display is populated from the same trusted users/{uid} and
+// organizations/{organizationId} records used by the municipal manager.
+// No identity is sourced from URL params, localStorage or a tenant id.
+async function syncLandsIdentity() {
+  if (reviewMode || !session || !client?.auth?.currentUser) return;
+  const uid = session.firebaseUid;
+  const municipalityId = session.municipalityId;
+  try {
+    const token = await client.auth.currentUser.getIdToken();
+    const response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ action: "resolveWorkspaces", workspace: "lands" }),
+      cache: "no-store"
+    });
+    if (!response.ok) return;
+    const identity = await response.json();
+    const authorized = identity?.kind === "manager"
+      ? session?.role === "municipal_manager"
+      : identity?.kind === "workforce" && identity.valid === true && identity.allowed === true;
+    if (!authorized || !session || session.firebaseUid !== uid || session.municipalityId !== municipalityId) return;
+    const profile = identity.profile || {};
+    if (typeof profile.name === "string" && profile.name.trim() && profile.name.trim() !== uid) {
+      session.displayName = profile.name.trim();
+    }
+    if (typeof profile.organizationName === "string" && profile.organizationName.trim()
+        && profile.organizationName.trim() !== municipalityId) {
+      session.municipalityName = profile.organizationName.trim();
+    }
+    renderShellChrome();
+  } catch (error) {
+    console.warn("[LANDS_IDENTITY] label lookup unavailable; existing role permissions unchanged");
+  }
+}
+
+// A verified Lands session is not a login failure if the data collections
+// are slow on Safari. Retry in-place, without consuming a new SSO code.
+function showRecoverableWorkspaceFailure() {
+  showDenied("تعذر تحميل بيانات مساحة العمل حاليًا. يمكنك إعادة تحميلها دون تسجيل الدخول من جديد.", { returnToUnified: true });
+  const action = document.getElementById("deniedAction");
+  action.textContent = "إعادة تحميل مساحة العمل";
+  action.onclick = async () => {
+    if (!session || !client?.auth?.currentUser) { goToUnifiedLogin(); return; }
+    action.disabled = true;
+    showScreen("boot");
+    bootStatus("إعادة تحميل بيانات الأراضي");
+    try {
+      await withBootTimeout(loadWorkspace(), "retry-workspace");
+      applyRouteFromUrl();
+      showScreen("app");
+      renderShellChrome();
+      render();
+      void syncLandsIdentity();
+    } catch (error) {
+      console.error("[LANDS_RETRY]", error?.message || "workspace-error");
+      showRecoverableWorkspaceFailure();
+    } finally { action.disabled = false; }
+  };
 }
 
 // ---- main render dispatch ----
@@ -6804,7 +6955,7 @@ async function boot() {
     const boot = document.getElementById("bootScreen");
     if (!boot || boot.hidden) return;
     goToUnifiedLogin();
-  }, BOOT_STEP_TIMEOUT_MS + 3500);
+  }, BOOT_TOTAL_TIMEOUT_MS);
 
   await withBootTimeout(loadModules(), "modules");
   // Normal authenticated flow continues unchanged below.
@@ -6849,8 +7000,13 @@ async function boot() {
         await withBootTimeout(loadWorkspace(), "restore-workspace");
         applyRouteFromUrl();
         showScreen("app"); renderShellChrome(); render();
+        void syncLandsIdentity();
       } catch (error) {
         console.error("[LANDS_RESTORE]", error && error.message ? error.message : "unknown");
+        if (session && String(error?.message || "").includes("LANDS_BOOT_TIMEOUT:restore-workspace")) {
+          showRecoverableWorkspaceFailure();
+          return;
+        }
         showDenied(
           error && String(error.message || "").startsWith("LANDS_BOOT_TIMEOUT:")
             ? "استغرق استعادة مساحة العمل وقتًا أطول من المتوقع. أعد الدخول من بوابة الموظفين."
