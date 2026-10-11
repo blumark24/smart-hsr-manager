@@ -687,8 +687,19 @@ async function handler(req, res) {
       if (managerSnap.exists) {
         const m = managerSnap.data() || {};
         if (m.role === 'manager' && m.active !== false && cleanString(m.organizationId)) {
+          // Read-only display identity. The organization document is the same
+          // canonical source used by the owner and municipality dashboards.
+          let organizationName = cleanString(m.organizationName);
+          try {
+            const orgSnap = await db.collection('organizations').doc(cleanString(m.organizationId)).get();
+            if (orgSnap.exists) {
+              const org = orgSnap.data() || {};
+              organizationName = cleanString(org.organizationName) || cleanString(org.name) || organizationName;
+            }
+          } catch (_) { /* A label lookup must not block a valid login. */ }
           return sendJson(res, 200, {
             kind: 'manager', valid: true, reason: null, primary: null, workspaces: [], capabilities: [],
+            profile: { name: cleanString(m.name), organizationName, jobTitle: 'مدير البلدية' },
             ...(requested ? { allowed: true } : {}),
           });
         }
@@ -696,6 +707,18 @@ async function handler(req, res) {
       const userSnap = await db.collection('users').doc(decoded.uid).get();
       const data = userSnap.exists ? (userSnap.data() || {}) : null;
       const resolution = WorkspaceAccess.resolveWorkspaces(data);
+      // Organization name is sourced from the verified user's own tenant.
+      // It is presentation data only; never a substitute for RBAC/membership.
+      let organizationName = cleanString(data && data.organizationName);
+      if (resolution.valid && cleanString(data && data.organizationId)) {
+        try {
+          const orgSnap = await db.collection('organizations').doc(cleanString(data.organizationId)).get();
+          if (orgSnap.exists) {
+            const org = orgSnap.data() || {};
+            organizationName = cleanString(org.organizationName) || cleanString(org.name) || organizationName;
+          }
+        } catch (_) { /* A label lookup must not block authorized workspaces. */ }
+      }
       const payload = {
         kind: 'workforce',
         valid: resolution.valid,
@@ -704,7 +727,8 @@ async function handler(req, res) {
         workspaces: resolution.workspaces,
         capabilities: resolution.capabilities,
         profile: resolution.valid ? {
-          name: cleanString(data.name), department: cleanString(data.department), jobTitle: cleanString(data.jobTitle),
+          name: cleanString(data.name), department: cleanString(data.department),
+          jobTitle: cleanString(data.jobTitle), organizationName,
         } : null,
       };
       if (requested) payload.allowed = WorkspaceAccess.isWorkspaceAllowed(resolution, requested);
