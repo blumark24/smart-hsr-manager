@@ -4999,8 +4999,10 @@ function renderShellChrome() {
 // Profile display is populated from the same trusted users/{uid} and
 // organizations/{organizationId} records used by the municipal manager.
 // No identity is sourced from URL params, localStorage or a tenant id.
+let landsIdentityRefreshPending = false;
 async function syncLandsIdentity() {
-  if (reviewMode || !session || !client?.auth?.currentUser) return;
+  if (reviewMode || !session || !client?.auth?.currentUser || landsIdentityRefreshPending) return;
+  landsIdentityRefreshPending = true;
   const uid = session.firebaseUid;
   const municipalityId = session.municipalityId;
   try {
@@ -5032,8 +5034,23 @@ async function syncLandsIdentity() {
     renderShellChrome();
   } catch (error) {
     console.warn("[LANDS_IDENTITY] label lookup unavailable; existing role permissions unchanged");
+  } finally {
+    landsIdentityRefreshPending = false;
   }
 }
+
+// A renamed employee or manager should not have to sign out and sign back in
+// to see a trusted identity update. Only the signed-in user's verified labels
+// are refreshed; no membership or permissions are changed here.
+window.addEventListener("focus", () => {
+  if (!document.hidden) void syncLandsIdentity();
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) void syncLandsIdentity();
+});
+window.setInterval(() => {
+  if (!document.hidden) void syncLandsIdentity();
+}, 60000);
 
 // A verified Lands session is not a login failure if the data collections
 // are slow on Safari. Retry in-place, without consuming a new SSO code.
