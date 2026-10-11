@@ -717,6 +717,37 @@ async function handler(req, res) {
       const userSnap = await db.collection('users').doc(decoded.uid).get();
       const data = userSnap.exists ? (userSnap.data() || {}) : null;
       const resolution = WorkspaceAccess.resolveWorkspaces(data);
+      // Existing user-center renames may predate the atomic profile-save fix.
+      // Reconcile the caller's OWN display identity from the HR master record
+      // when its employeeId, tenant and linked authUid all match. Never accept
+      // a target UID from the request; never touch role, active or entitlements.
+      let effectiveName = cleanString(data && data.name);
+      let effectiveJobTitle = cleanString(data && data.jobTitle);
+      if (resolution.valid && cleanString(data && data.employeeId)
+          && cleanString(data && data.organizationId)) {
+        try {
+          const employeeSnap = await db.collection('employees').doc(cleanString(data.employeeId)).get();
+          const employee = employeeSnap.exists ? (employeeSnap.data() || {}) : null;
+          if (employee && cleanString(employee.authUid) === decoded.uid
+              && cleanString(employee.organizationId) === cleanString(data.organizationId)) {
+            const linkedName = cleanString(employee.name);
+            const linkedTitle = cleanString(employee.jobTitle);
+            const identityPatch = {};
+            if (linkedName) {
+              effectiveName = linkedName;
+              if (linkedName !== cleanString(data.name)) identityPatch.name = linkedName;
+            }
+            if (Object.prototype.hasOwnProperty.call(employee, 'jobTitle')) {
+              effectiveJobTitle = linkedTitle;
+              if (linkedTitle !== cleanString(data.jobTitle)) identityPatch.jobTitle = linkedTitle || null;
+            }
+            if (Object.keys(identityPatch).length) {
+              identityPatch.updatedAt = FieldValue.serverTimestamp();
+              await db.collection('users').doc(decoded.uid).set(identityPatch, { merge: true });
+            }
+          }
+        } catch (_) { /* Profile refresh is best-effort; never changes access decisions. */ }
+      }
       // Organization name is sourced from the verified user's own tenant.
       // It is presentation data only; never a substitute for RBAC/membership.
       let organizationName = cleanString(data && data.organizationName);
@@ -738,8 +769,8 @@ async function handler(req, res) {
         workspaces: resolution.workspaces,
         capabilities: resolution.capabilities,
         profile: resolution.valid ? {
-          name: cleanString(data.name), department: cleanString(data.department),
-          jobTitle: cleanString(data.jobTitle), organizationName,
+          name: effectiveName, department: cleanString(data.department),
+          jobTitle: effectiveJobTitle, organizationName,
         } : null,
       };
       if (requested) payload.allowed = WorkspaceAccess.isWorkspaceAllowed(resolution, requested);
