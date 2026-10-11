@@ -981,13 +981,45 @@ async function handler(req, res) {
         if (employmentStatus !== undefined) update.employmentStatus = employmentStatus;
         if (email !== undefined && !linked) update.email = isNonEmptyString(email) ? email.trim() : null;
 
-        await employee.ref.set(update, { merge: true });
-        if (institutionalRole !== undefined && isNonEmptyString(employee.data.authUid)) {
-          await db.collection('users').doc(employee.data.authUid).set({
-            institutionalRole,
-            updatedAt: FieldValue.serverTimestamp(),
-          }, { merge: true });
-        }
+        // Keep the HR registry and signed-in display identity consistent.
+        // The verified employee record is the name/job-title authority; the
+        // linked users/{authUid} profile is its login-facing projection.
+        // One transaction prevents either surface from reporting a successful
+        // rename while the other still retains an old name.
+        const linkedUserRef = linked ? db.collection('users').doc(employee.data.authUid) : null;
+        const saveResult = await db.runTransaction(async (tx) => {
+          const freshEmployeeSnap = await tx.get(employee.ref);
+          if (!freshEmployeeSnap.exists) return { ok: false, statusCode: 404, reason: 'employee_not_found' };
+          const freshEmployee = freshEmployeeSnap.data() || {};
+          const freshDecision = assertCanManageEmployee(caller, {
+            targetOrganizationId: freshEmployee.organizationId,
+            targetDepartment: freshEmployee.department,
+          });
+          if (!freshDecision.allowed) return { ok: false, statusCode: 403, reason: freshDecision.reason };
+          if (freshEmployee.organizationId !== employee.data.organizationId
+              || (freshEmployee.authUid || null) !== (employee.data.authUid || null)) {
+            return { ok: false, statusCode: 409, reason: 'employee_link_changed_retry' };
+          }
+          if (linkedUserRef) {
+            const linkedSnap = await tx.get(linkedUserRef);
+            const linkedData = linkedSnap.exists ? (linkedSnap.data() || {}) : null;
+            if (!linkedData || linkedData.organizationId !== freshEmployee.organizationId
+                || (linkedData.employeeId && linkedData.employeeId !== employeeId)) {
+              return { ok: false, statusCode: 409, reason: 'linked_account_identity_mismatch' };
+            }
+          }
+          tx.set(employee.ref, update, { merge: true });
+          if (linkedUserRef) {
+            const identityPatch = { name: name.trim(), updatedAt: FieldValue.serverTimestamp() };
+            if (jobTitle !== undefined) identityPatch.jobTitle = update.jobTitle;
+            if (institutionalRole !== undefined) identityPatch.institutionalRole = institutionalRole;
+            tx.set(linkedUserRef, identityPatch, { merge: true });
+          }
+          return { ok: true, identitySynchronized: Boolean(linkedUserRef) };
+        });
+        if (!saveResult.ok) return sendJson(res, saveResult.statusCode, {
+          error: 'profile_sync_failed', reason: saveResult.reason,
+        });
 
         const changedFields = Object.keys(update).filter(k => k !== 'updatedAt');
         await recordAdminAudit(db, { caller, organizationId: employee.data.organizationId, targetEmployeeId: employeeId, action: 'employee_profile_update', detail: { changedFields } });
