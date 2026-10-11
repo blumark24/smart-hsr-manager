@@ -3971,39 +3971,215 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
 }
 </style>
 
-<style id="lands-brand-mark-left-20261011">
-/* Brand-only correction: original SMART HSR mark to the LEFT of the same
-   manager-header wordmark. Do not alter auth, identity, routing or layout. */
-.command-header.manager-parity-header .lands-brand-lockup{
-  display:inline-flex;align-items:center;gap:8px;direction:ltr;
-  min-width:0;flex:none;white-space:nowrap;line-height:1;
+<style id="lands-header-isolated-v2">
+/* Lands header, isolated from legacy manager-brand-zone/header-inner selectors.
+   Header only: no changes to sessions, routes, page content, or permissions. */
+#appShell > header.command-header.manager-parity-header{
+  display:block!important;
+  min-height:0!important;
+  height:auto!important;
+  padding:0!important;
+  overflow:visible!important;
 }
-.command-header.manager-parity-header .lands-brand-lockup .lands-logo-mark{
-  display:block;width:auto;height:42px;max-width:none;flex:none;
-  object-fit:contain;background:transparent;border:0;padding:0;
+#appShell .lands-head-v2{
+  display:grid!important;
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  padding:10px 14px!important;
+  margin:0!important;
+  align-items:center!important;
+  grid-template-columns:minmax(175px,1fr) auto minmax(200px,1fr) minmax(185px,auto)!important;
+  grid-template-areas:"brand theme municipality profile"!important;
+  column-gap:14px!important;
+  row-gap:8px!important;
+  direction:ltr!important;
 }
-.command-header.manager-parity-header .lands-brand-lockup .lands-logo-wordmark{
-  display:block;min-width:0;text-align:left;direction:ltr;
+#appShell .lands-head-v2 > *{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+#appShell .lands-head-v2 .lands-head-brand{
+  grid-area:brand!important;
+  display:inline-flex!important;
+  justify-self:start!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  direction:ltr!important;
 }
-.command-header.manager-parity-header .lands-brand-lockup .lands-logo-name{
-  display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:800;
-  letter-spacing:2.5px;line-height:1.15;
+#appShell .lands-head-v2 .lands-head-mark{
+  display:block!important;
+  width:35px!important;
+  height:40px!important;
+  min-width:35px!important;
+  max-width:35px!important;
+  flex:0 0 35px!important;
+  object-fit:contain!important;
+  border:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border-radius:0!important;
 }
-.command-header.manager-parity-header .lands-brand-lockup .lands-logo-smart{color:#e9f1fb}
-.command-header.manager-parity-header .lands-brand-lockup .lands-logo-hsr{color:#2aa84a}
-.command-header.manager-parity-header .lands-brand-lockup .lands-logo-caption{
-  color:#8da2b6;font-size:7px;font-weight:500;letter-spacing:1.35px;
-  margin-top:5px;line-height:1.2;
+#appShell .lands-head-v2 .lands-head-wordmark{
+  display:flex!important;
+  flex-direction:column!important;
+  min-width:0!important;
+  max-width:100%!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  direction:ltr!important;
+  text-align:left!important;
+  overflow:hidden!important;
 }
-@media(max-width:760px){
-  .command-header.manager-parity-header .lands-brand-lockup{gap:6px}
-  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-mark{height:38px}
-  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-name{
-    font-size:13px;letter-spacing:2px;gap:4px
+#appShell .lands-head-v2 .lands-head-brand-name{
+  display:flex!important;
+  align-items:baseline!important;
+  gap:5px!important;
+  font:800 16px/1.1 "IBM Plex Mono",sans-serif!important;
+  letter-spacing:1.5px!important;
+  white-space:nowrap!important;
+  direction:ltr!important;
+}
+#appShell .lands-head-v2 .lands-head-brand-name .smart{color:#e9f1fb!important}
+#appShell .lands-head-v2 .lands-head-brand-name .hsr{color:#45c86c!important}
+#appShell .lands-head-v2 .lands-head-brand-sub{
+  display:block!important;
+  max-width:100%!important;
+  margin-top:5px!important;
+  color:#9db4c1!important;
+  font:500 7px/1.15 "IBM Plex Mono",sans-serif!important;
+  letter-spacing:.55px!important;
+  white-space:nowrap!important;
+}
+#appShell .lands-head-v2 .lands-head-theme{
+  grid-area:theme!important;
+  justify-self:center!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  direction:rtl!important;
+}
+#appShell .lands-head-v2 .lands-head-theme button{
+  display:grid!important;
+  place-items:center!important;
+  padding:6px!important;
+  min-width:34px!important;
+  width:34px!important;
+  min-height:34px!important;
+  height:34px!important;
+}
+#appShell .lands-head-v2 .lands-head-theme button span{display:none!important}
+#appShell .lands-head-v2 .lands-head-municipality{
+  grid-area:municipality!important;
+  min-width:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-end!important;
+  text-align:right!important;
+  justify-content:center!important;
+  padding:0 10px!important;
+  direction:rtl!important;
+  overflow:hidden!important;
+}
+#appShell .lands-head-v2 .lands-head-municipality small{
+  display:block!important;
+  color:#9fb8c1!important;
+  font-size:10px!important;
+  font-weight:650!important;
+  white-space:nowrap!important;
+}
+#appShell .lands-head-v2 .lands-head-municipality strong{
+  display:block!important;
+  max-width:100%!important;
+  color:#f4fff8!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#appShell .lands-head-v2 .lands-head-profile{
+  grid-area:profile!important;
+  justify-self:end!important;
+  width:auto!important;
+  max-width:100%!important;
+  min-width:0!important;
+  direction:rtl!important;
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-button{
+  display:flex!important;
+  flex-direction:row!important;
+  direction:rtl!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:7px!important;
+  box-sizing:border-box!important;
+  width:auto!important;
+  max-width:270px!important;
+  min-width:0!important;
+  min-height:42px!important;
+  height:auto!important;
+  padding:6px 9px!important;
+  overflow:hidden!important;
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-copy{
+  display:flex!important;
+  flex:1 1 auto!important;
+  flex-direction:column!important;
+  min-width:0!important;
+  max-width:205px!important;
+  overflow:hidden!important;
+  text-align:right!important;
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-copy strong,
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-copy small{
+  display:block!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-avatar{
+  flex:0 0 30px!important;
+  min-width:30px!important;
+  width:30px!important;
+  height:30px!important;
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-chevron{display:none!important}
+#appShell .lands-head-v2 .lands-head-profile .account-menu{right:0!important;left:auto!important}
+@media(max-width:1150px){
+  #appShell .lands-head-v2{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-template-areas:"brand profile" "theme municipality"!important;
+    gap:9px 12px!important;
+    padding:9px 12px!important;
   }
-  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-caption{
-    font-size:6px;letter-spacing:1.1px
+  #appShell .lands-head-v2 .lands-head-theme{
+    justify-self:start!important;
+    padding-top:6px!important;
+    border-top:1px solid rgba(180,214,196,.10)!important;
   }
+  #appShell .lands-head-v2 .lands-head-municipality{
+    justify-self:end!important;
+    width:100%!important;
+    padding:5px 0 0!important;
+    border-top:1px solid rgba(180,214,196,.10)!important;
+  }
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-button{max-width:100%!important}
+}
+@media(max-width:530px){
+  #appShell .lands-head-v2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;column-gap:8px!important;padding:8px 10px!important}
+  #appShell .lands-head-v2 .lands-head-brand{gap:5px!important}
+  #appShell .lands-head-v2 .lands-head-mark{width:27px!important;height:34px!important;min-width:27px!important;max-width:27px!important;flex-basis:27px!important}
+  #appShell .lands-head-v2 .lands-head-brand-name{font-size:12px!important;letter-spacing:.6px!important;gap:3px!important}
+  #appShell .lands-head-v2 .lands-head-brand-sub{font-size:5px!important;letter-spacing:.1px!important;margin-top:4px!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-button{padding:4px 6px!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-copy{max-width:calc(100% - 32px)!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-copy strong{font-size:10px!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-copy small{font-size:9px!important}
+  #appShell .lands-head-v2 .lands-head-municipality strong{font-size:11px!important}
 }
 </style>
 </head>
@@ -4024,14 +4200,29 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
 </div>
 <div class="app" id="appShell" hidden>
   <header class="topbar command-header manager-parity-header" aria-label="رأس مركز إدارة الأراضي والممتلكات">
-    <div class="header-inner manager-header-inner lands-manager-header">
-      <div class="manager-profile-zone">
+    <div class="lands-head-v2">
+      <div class="lands-head-brand" dir="ltr" role="img" aria-label="SMART HSR — سمارت حصر">
+        <img class="lands-head-mark" src="/smart-hsr-mark.svg" alt="" aria-hidden="true" width="35" height="40">
+        <div class="lands-head-wordmark" aria-hidden="true">
+          <div class="lands-head-brand-name"><span class="smart">SMART</span><span class="hsr">HSR</span></div>
+          <span class="lands-head-brand-sub">SMART MUNICIPAL PLATFORM</span>
+        </div>
+      </div>
+      <div class="lands-head-theme lands-theme-segment" aria-label="اختيار المظهر">
+        <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
+        <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
+      </div>
+      <div class="lands-head-municipality" aria-label="البلدية الحالية">
+        <small>الجهة البلدية</small>
+        <strong id="headerMunicipalityName">البلدية</strong>
+      </div>
+      <div class="lands-head-profile">
         <div class="account-menu-wrap">
           <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف" aria-haspopup="menu" aria-expanded="false" title="ملف الموظف" onclick="toggleAccountMenu(event)">
             <span id="headerProfileAvatar" class="manager-profile-avatar">م</span>
             <span class="manager-profile-copy">
               <strong id="headerProfileName">ملف الموظف</strong>
-              <small><span id="headerProfileRole">مساحة عمل الأراضي</span><span class="profile-sep"> · </span><span id="headerOrgLabel">الجهة البلدية</span></small>
+              <small><span id="headerProfileRole">مساحة عمل الأراضي</span><span id="headerOrgLabel" hidden></span></small>
             </span>
             <i data-lucide="chevron-down" class="manager-profile-chevron"></i>
           </button>
@@ -4040,41 +4231,6 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
             <button id="managerModeMenuItem" type="button" role="menuitem" onclick="toggleManagerMode();closeAccountMenu()"><i data-lucide="presentation"></i><span>وضع المدير</span></button>
             <button type="button" role="menuitem" onclick="closeAccountMenu();handleLogout()"><i data-lucide="log-out"></i><span>تسجيل الخروج</span></button>
           </div>
-        </div>
-      </div>
-
-      <div class="lands-header-center">
-        <div class="lands-header-search" role="search">
-          <input id="headerSearchInput" type="search" placeholder="بحث في الأراضي والممتلكات…" aria-label="بحث في الأراضي والممتلكات" onkeydown="if(event.key==='Enter')runHeaderSearch()">
-          <button type="button" aria-label="بحث" title="بحث" onclick="runHeaderSearch()"><i data-lucide="search"></i></button>
-        </div>
-        <div class="lands-header-date" aria-label="التاريخ الهجري والميلادي">
-          <i data-lucide="calendar-days"></i>
-          <span id="headerGregorianDate">—</span>
-          <span class="date-sep">·</span>
-          <span id="headerHijriDate">—</span>
-        </div>
-        <div class="lands-municipality-identity" aria-label="البلدية الحالية" aria-live="polite">
-          <small>الجهة البلدية</small>
-          <strong id="headerMunicipalityName">البلدية</strong>
-        </div>
-        <div class="lands-theme-segment" aria-label="اختيار المظهر">
-          <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
-          <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
-        </div>
-      </div>
-
-      <div class="manager-brand-zone">
-        <div class="lands-brand-lockup" dir="ltr" role="img" aria-label="SMART HSR — سمارت حصر">
-          <img class="lands-logo-mark" src="/smart-hsr-mark.svg" alt="" aria-hidden="true">
-          <div class="lands-logo-wordmark" aria-hidden="true">
-            <div class="lands-logo-name"><span class="lands-logo-smart">SMART</span><span class="lands-logo-hsr">HSR</span></div>
-            <div class="lands-logo-caption">SMART MUNICIPAL PLATFORM</div>
-          </div>
-        </div>
-        <div class="brand-copy">
-          <p class="manager-header-title">مركز إدارة الأراضي والممتلكات</p>
-          <p class="manager-header-subtitle">LANDS &amp; PROPERTIES CENTER</p>
         </div>
       </div>
     </div>
