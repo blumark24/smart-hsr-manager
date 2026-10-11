@@ -4006,6 +4006,64 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
   }
 }
 </style>
+<style id="lands-single-brand-mobile-20261011">
+/* Emergency header containment: exactly one SMART HSR lockup.
+   Legacy full-signature logos must not coexist with the approved SVG mark. */
+.command-header.manager-parity-header .manager-brand-zone > img,
+.command-header.manager-parity-header .manager-brand-zone > picture,
+.command-header.manager-parity-header .manager-brand-zone .manager-brand-logo-full,
+.command-header.manager-parity-header .manager-brand-zone .manager-header-logo{
+  display:none!important;
+}
+.command-header.manager-parity-header .manager-brand-zone{
+  min-width:0!important;max-width:100%!important;overflow:hidden!important;
+  flex-wrap:nowrap!important;
+}
+.command-header.manager-parity-header .lands-brand-lockup{
+  display:inline-flex!important;direction:ltr!important;align-items:center!important;
+  flex:0 1 auto!important;min-width:0!important;max-width:100%!important;
+  overflow:hidden!important;gap:7px!important;
+}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-mark{
+  width:38px!important;max-width:38px!important;height:42px!important;
+  flex:0 0 38px!important;object-fit:contain!important;
+}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-wordmark{
+  flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;
+}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-name,
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-caption{
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;
+}
+.command-header.manager-parity-header .manager-profile-zone{
+  position:relative!important;z-index:1!important;min-width:0!important;
+}
+@media(max-width:760px){
+  .command-header.manager-parity-header .lands-manager-header{
+    grid-template-columns:minmax(0,1fr) minmax(0,auto)!important;
+    column-gap:6px!important;
+  }
+  .command-header.manager-parity-header .manager-brand-zone{
+    width:100%!important;gap:0!important;
+  }
+  .command-header.manager-parity-header .lands-brand-lockup{
+    gap:5px!important;width:auto!important;
+  }
+  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-mark{
+    width:32px!important;max-width:32px!important;height:36px!important;
+    flex-basis:32px!important;
+  }
+  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-name{
+    font-size:12px!important;letter-spacing:1.3px!important;gap:3px!important;
+  }
+  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-caption{
+    font-size:5.6px!important;letter-spacing:.5px!important;margin-top:3px!important;
+  }
+  .command-header.manager-parity-header .manager-profile-button{
+    max-width:min(175px,46vw)!important;overflow:hidden!important;
+  }
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
