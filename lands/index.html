@@ -3971,38 +3971,75 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
 }
 </style>
 
-<style id="lands-brand-mark-left-20261011">
-/* Brand-only correction: original SMART HSR mark to the LEFT of the same
-   manager-header wordmark. Do not alter auth, identity, routing or layout. */
+<style id="lands-single-logo-responsive-20261011">
+/* One original SVG mark + one English wordmark. The SVG path is inlined from
+   /smart-hsr-mark.svg to avoid stale browser asset variants. Keep other UI intact. */
+.command-header.manager-parity-header .manager-brand-zone{
+  min-width:0!important;max-width:100%!important;overflow:hidden!important;
+}
 .command-header.manager-parity-header .lands-brand-lockup{
-  display:inline-flex;align-items:center;gap:8px;direction:ltr;
-  min-width:0;flex:none;white-space:nowrap;line-height:1;
+  display:inline-flex!important;align-items:center!important;gap:7px!important;
+  direction:ltr!important;min-width:0!important;max-width:100%!important;
+  flex:0 0 auto!important;white-space:nowrap!important;overflow:hidden!important;
+  line-height:1!important;
 }
 .command-header.manager-parity-header .lands-brand-lockup .lands-logo-mark{
-  display:block;width:auto;height:42px;max-width:none;flex:none;
-  object-fit:contain;background:transparent;border:0;padding:0;
+  display:block!important;width:38px!important;height:42px!important;
+  flex:0 0 38px!important;object-fit:contain!important;background:none!important;
+  border:0!important;padding:0!important;
 }
 .command-header.manager-parity-header .lands-brand-lockup .lands-logo-wordmark{
-  display:block;min-width:0;text-align:left;direction:ltr;
+  display:flex!important;flex-direction:column!important;min-width:0!important;
+  text-align:left!important;direction:ltr!important;overflow:hidden!important;
 }
 .command-header.manager-parity-header .lands-brand-lockup .lands-logo-name{
-  display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:800;
-  letter-spacing:2.5px;line-height:1.15;
+  display:flex!important;align-items:baseline!important;gap:4px!important;
+  font-size:15px!important;font-weight:800!important;letter-spacing:2px!important;
+  line-height:1.15!important;white-space:nowrap!important;
 }
-.command-header.manager-parity-header .lands-brand-lockup .lands-logo-smart{color:#e9f1fb}
-.command-header.manager-parity-header .lands-brand-lockup .lands-logo-hsr{color:#2aa84a}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-smart{color:#e9f1fb!important}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-hsr{color:#2aa84a!important}
 .command-header.manager-parity-header .lands-brand-lockup .lands-logo-caption{
-  color:#8da2b6;font-size:7px;font-weight:500;letter-spacing:1.35px;
-  margin-top:5px;line-height:1.2;
+  color:#8da2b6!important;font-size:7px!important;font-weight:500!important;
+  letter-spacing:1px!important;margin-top:5px!important;line-height:1.2!important;
+  white-space:nowrap!important;
+}
+.command-header.manager-parity-header .manager-brand-zone .brand-copy{
+  min-width:0!important;max-width:240px!important;overflow:hidden!important;
+}
+@media(max-width:1120px){
+  .command-header.manager-parity-header .lands-manager-header{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,auto)!important;
+  }
+  .command-header.manager-parity-header .manager-brand-zone .brand-copy{display:none!important}
 }
 @media(max-width:760px){
-  .command-header.manager-parity-header .lands-brand-lockup{gap:6px}
-  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-mark{height:38px}
+  .command-header.manager-parity-header .lands-manager-header{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-template-areas:"brand profile" "center center"!important;
+    gap:6px 8px!important;
+  }
+  .command-header.manager-parity-header .manager-brand-zone{
+    width:100%!important;justify-self:start!important;gap:0!important;
+  }
+  .command-header.manager-parity-header .lands-brand-lockup{gap:5px!important}
+  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-mark{
+    width:30px!important;height:36px!important;flex-basis:30px!important;
+  }
   .command-header.manager-parity-header .lands-brand-lockup .lands-logo-name{
-    font-size:13px;letter-spacing:2px;gap:4px
+    font-size:12px!important;letter-spacing:1.2px!important;gap:3px!important;
   }
   .command-header.manager-parity-header .lands-brand-lockup .lands-logo-caption{
-    font-size:6px;letter-spacing:1.1px
+    font-size:5.5px!important;letter-spacing:.55px!important;margin-top:4px!important;
+  }
+  .command-header.manager-parity-header .manager-profile-zone{
+    justify-self:end!important;width:100%!important;min-width:0!important;
+  }
+  .command-header.manager-parity-header .manager-profile-button{
+    width:100%!important;max-width:175px!important;margin-inline-start:auto!important;
+  }
+  .command-header.manager-parity-header .manager-profile-copy{
+    max-width:calc(100% - 37px)!important;min-width:0!important;
   }
 }
 </style>
@@ -4066,7 +4103,13 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
 
       <div class="manager-brand-zone">
         <div class="lands-brand-lockup" dir="ltr" role="img" aria-label="SMART HSR — سمارت حصر">
-          <img class="lands-logo-mark" src="/smart-hsr-mark.svg" alt="" aria-hidden="true">
+          <svg class="lands-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 84" fill="none" aria-hidden="true" focusable="false">
+            <path d="M38 4a30 30 0 1 0 0 60 30 30 0 0 0 0-60z" fill="none" stroke="#dbe6f5" stroke-width="7"/>
+            <rect x="26" y="30" width="7.5" height="22" rx="1.5" fill="#dbe6f5"/>
+            <rect x="35.5" y="20" width="7.5" height="32" rx="1.5" fill="#dbe6f5"/>
+            <rect x="45" y="26" width="7.5" height="26" rx="1.5" fill="#2aa84a"/>
+            <path d="M12 46 38 80 64 46 51 46 38 63 25 46z" fill="#2aa84a"/>
+          </svg>
           <div class="lands-logo-wordmark" aria-hidden="true">
             <div class="lands-logo-name"><span class="lands-logo-smart">SMART</span><span class="lands-logo-hsr">HSR</span></div>
             <div class="lands-logo-caption">SMART MUNICIPAL PLATFORM</div>
