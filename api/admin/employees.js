@@ -1012,7 +1012,7 @@ async function handler(req, res) {
           if (linkedUserRef) {
             const identityPatch = { name: name.trim(), updatedAt: FieldValue.serverTimestamp() };
             if (jobTitle !== undefined) identityPatch.jobTitle = update.jobTitle;
-            if (institutionalRole !== undefined) identityPatch.institutionalRole = institutionalRole;
+            // Identity synchronization must not mutate institutional roles or permissions.
             tx.set(linkedUserRef, identityPatch, { merge: true });
           }
           return { ok: true, identitySynchronized: Boolean(linkedUserRef) };
