@@ -4122,6 +4122,35 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
       </div>
     </div>
   </header>
+  <!-- Lands brand invariant: only the approved mark+wordmark may render.
+       Defensive against old branding markup left by session/DOM restoration. -->
+  <style id="lands-brand-single-guard-20261011">
+    .command-header.manager-parity-header .manager-brand-zone img,
+    .command-header.manager-parity-header .lands-brand-lockup img{display:none!important}
+    .command-header.manager-parity-header .manager-brand-zone>.lands-brand-lockup{order:0!important}
+    @media(max-width:1120px){
+      .command-header.manager-parity-header .manager-brand-zone>.brand-copy{display:none!important}
+    }
+  </style>
+  <script id="lands-brand-single-guard-script">
+  (function(){
+    'use strict';
+    const zone=document.querySelector('#appShell > header.manager-parity-header .manager-brand-zone');
+    if(!zone)return;
+    const approved=zone.querySelector('.lands-brand-lockup');
+    if(!approved)return;
+    for(const child of [...zone.children]){
+      if(child!==approved && !child.classList.contains('brand-copy'))child.remove();
+    }
+    for(const el of [...zone.querySelectorAll('img')])el.remove();
+    for(const duplicate of [...zone.querySelectorAll('.lands-brand-lockup')].slice(1))duplicate.remove();
+    for(const child of [...approved.children]){
+      if(!child.classList.contains('lands-logo-mark') && !child.classList.contains('lands-logo-wordmark'))child.remove();
+    }
+    for(const duplicate of [...approved.querySelectorAll('.lands-logo-mark')].slice(1))duplicate.remove();
+    for(const duplicate of [...approved.querySelectorAll('.lands-logo-wordmark')].slice(1))duplicate.remove();
+  })();
+  </script>
   <div class="shell">
     <aside class="side"><div class="side-identity"><div class="side-identity-copy"><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav manager-like-nav">
       <button class="active" data-view="center"><i data-lucide="layout-dashboard"></i><span>لوحة المعلومات</span></button>
