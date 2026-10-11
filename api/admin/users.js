@@ -690,16 +690,26 @@ async function handler(req, res) {
           // Read-only display identity. The organization document is the same
           // canonical source used by the owner and municipality dashboards.
           let organizationName = cleanString(m.organizationName);
+          let managerDisplayName = cleanString(m.name);
           try {
             const orgSnap = await db.collection('organizations').doc(cleanString(m.organizationId)).get();
             if (orgSnap.exists) {
               const org = orgSnap.data() || {};
-              organizationName = cleanString(org.organizationName) || cleanString(org.name) || organizationName;
+              // Owner's organization registry writes its display label to "name".
+              organizationName = cleanString(org.name) || cleanString(org.organizationName) || organizationName;
+              // Owner's registered manager name is a display label, never an RBAC input.
+              // If the legacy organization has no managerUid, its one registered
+              // municipal manager can still inherit the owner-managed label.
+              const registeredManagerUid = cleanString(org.managerUid);
+              if (cleanString(org.manager) && (!registeredManagerUid || registeredManagerUid === decoded.uid)) {
+                managerDisplayName = cleanString(org.manager);
+              }
             }
-          } catch (_) { /* A label lookup must not block a valid login. */ }
+          } catch (_) { /* An optional display lookup must never block a valid login. */ }
           return sendJson(res, 200, {
             kind: 'manager', valid: true, reason: null, primary: null, workspaces: [], capabilities: [],
-            profile: { name: cleanString(m.name), organizationName, jobTitle: 'مدير البلدية' },
+            organizationId: cleanString(m.organizationId),
+            profile: { name: managerDisplayName, organizationName, jobTitle: 'مدير البلدية' },
             ...(requested ? { allowed: true } : {}),
           });
         }
@@ -715,12 +725,13 @@ async function handler(req, res) {
           const orgSnap = await db.collection('organizations').doc(cleanString(data.organizationId)).get();
           if (orgSnap.exists) {
             const org = orgSnap.data() || {};
-            organizationName = cleanString(org.organizationName) || cleanString(org.name) || organizationName;
+            organizationName = cleanString(org.name) || cleanString(org.organizationName) || organizationName;
           }
         } catch (_) { /* A label lookup must not block authorized workspaces. */ }
       }
       const payload = {
         kind: 'workforce',
+        organizationId: cleanString(data && data.organizationId),
         valid: resolution.valid,
         reason: resolution.reason,
         primary: resolution.primary,
