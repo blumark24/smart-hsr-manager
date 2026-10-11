@@ -183,7 +183,9 @@ function sanitizedMapContext(organizationId, organizationName, organizationData)
   const fallbackEligible = isAlQunfudhahPilotOrganization(organizationId, organizationName, organizationData);
   return {
     organizationId,
-    organizationName: cleanText(organizationData.organizationName, cleanText(organizationData.name, cleanText(organizationName, organizationId))),
+    // The Owner organization editor updates "name" (not legacy "organizationName").
+    // Prefer the Owner-managed label, matching /api/admin/users.resolveWorkspaces.
+    organizationName: cleanText(organizationData.name, cleanText(organizationData.organizationName, cleanText(organizationName, organizationId))),
     mapCenter: configured ? configuredCenter : (fallbackEligible ? ALQUNFUDHAH_APPROXIMATE_CENTER : null),
     mapDefaultZoom: configured ? configuredZoom : (fallbackEligible ? ALQUNFUDHAH_DEFAULT_ZOOM : null),
     mapBounds: configured ? cleanBounds(organizationData.mapBounds) : null,
