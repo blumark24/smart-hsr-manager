@@ -3970,6 +3970,42 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
   .command-header.manager-parity-header .lands-theme-segment{flex:none!important}
 }
 </style>
+
+<style id="lands-brand-mark-left-20261011">
+/* Brand-only correction: original SMART HSR mark to the LEFT of the same
+   manager-header wordmark. Do not alter auth, identity, routing or layout. */
+.command-header.manager-parity-header .lands-brand-lockup{
+  display:inline-flex;align-items:center;gap:8px;direction:ltr;
+  min-width:0;flex:none;white-space:nowrap;line-height:1;
+}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-mark{
+  display:block;width:auto;height:42px;max-width:none;flex:none;
+  object-fit:contain;background:transparent;border:0;padding:0;
+}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-wordmark{
+  display:block;min-width:0;text-align:left;direction:ltr;
+}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-name{
+  display:flex;align-items:baseline;gap:5px;font-size:15px;font-weight:800;
+  letter-spacing:2.5px;line-height:1.15;
+}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-smart{color:#e9f1fb}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-hsr{color:#2aa84a}
+.command-header.manager-parity-header .lands-brand-lockup .lands-logo-caption{
+  color:#8da2b6;font-size:7px;font-weight:500;letter-spacing:1.35px;
+  margin-top:5px;line-height:1.2;
+}
+@media(max-width:760px){
+  .command-header.manager-parity-header .lands-brand-lockup{gap:6px}
+  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-mark{height:38px}
+  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-name{
+    font-size:13px;letter-spacing:2px;gap:4px
+  }
+  .command-header.manager-parity-header .lands-brand-lockup .lands-logo-caption{
+    font-size:6px;letter-spacing:1.1px
+  }
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -4029,7 +4065,13 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
       </div>
 
       <div class="manager-brand-zone">
-        <img class="manager-brand-logo manager-brand-logo-full" src="/smart-hsr-signature-transparent.png" alt="SMART HSR — سمارت حصر">
+        <div class="lands-brand-lockup" dir="ltr" role="img" aria-label="SMART HSR — سمارت حصر">
+          <img class="lands-logo-mark" src="/smart-hsr-mark.svg" alt="" aria-hidden="true">
+          <div class="lands-logo-wordmark" aria-hidden="true">
+            <div class="lands-logo-name"><span class="lands-logo-smart">SMART</span><span class="lands-logo-hsr">HSR</span></div>
+            <div class="lands-logo-caption">SMART MUNICIPAL PLATFORM</div>
+          </div>
+        </div>
         <div class="brand-copy">
           <p class="manager-header-title">مركز إدارة الأراضي والممتلكات</p>
           <p class="manager-header-subtitle">LANDS &amp; PROPERTIES CENTER</p>
