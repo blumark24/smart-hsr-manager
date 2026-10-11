@@ -4951,6 +4951,9 @@ function runHeaderSearch() {
 }
 function renderShellChrome() {
   const roleLabel = ROLE_LABELS[session.role] || "موظف الأراضي والممتلكات";
+  // Owner-managed job titles change only the display label, never Lands RBAC.
+  const displayRole = typeof session?.identityRoleLabel === "string"
+    && session.identityRoleLabel.trim() ? session.identityRoleLabel.trim() : roleLabel;
   const profileRole = document.getElementById("headerProfileRole");
   const profileAvatar = document.getElementById("headerProfileAvatar");
   const profileName = document.getElementById("headerProfileName");
@@ -4960,16 +4963,16 @@ function renderShellChrome() {
     && !/^[A-Za-z0-9_-]{18,}$/.test(rawName.trim())
     ? (rawName.trim() || "الموظف") : "الموظف";
   if (profileName) profileName.textContent = displayName;
-  if (profileRole) profileRole.textContent = roleLabel;
+  if (profileRole) profileRole.textContent = displayRole;
   if (profileAvatar) profileAvatar.textContent = (displayName || roleLabel || "م").trim().charAt(0) || "م";
   const canReview = mod.canReviewGrant(session.role);
   const canAdmin = mod.canManageEntitlements(session.role);
   document.body.classList.toggle("lands-reviewer", canReview);
   document.body.classList.toggle("lands-admin", canAdmin);
-  document.getElementById("userInfo").innerHTML = `<span class="account-avatar">${esc((displayName || "?")[0])}</span><span class="account-copy"><strong>${esc(displayName)}</strong><small>${esc(roleLabel)}</small></span>`;
+  document.getElementById("userInfo").innerHTML = `<span class="account-avatar">${esc((displayName || "?")[0])}</span><span class="account-copy"><strong>${esc(displayName)}</strong><small>${esc(displayRole)}</small></span>`;
   const roleEl = document.getElementById("headerRoleLabel");
   const orgEl = document.getElementById("headerOrgLabel");
-  if (roleEl) roleEl.textContent = roleLabel;
+  if (roleEl) roleEl.textContent = displayRole;
   if (orgEl) {
     const rawMunicipality = session?.municipalityName || session?.organizationName || session?.orgName || "";
     const municipalityLabel = typeof rawMunicipality === "string"
@@ -4983,7 +4986,7 @@ function renderShellChrome() {
   }
   updateHeaderDates();
   const accountButton = document.getElementById("accountButton");
-  if (accountButton) accountButton.title = displayName + " — " + roleLabel;
+  if (accountButton) accountButton.title = displayName + " — " + displayRole;
   document.querySelectorAll("[data-review-only]").forEach(el => { el.hidden = !canReview; });
   document.querySelectorAll("[data-admin-only]").forEach(el => { el.hidden = !canAdmin; });
   const managerModeToggle = document.getElementById("managerModeMenuItem");
@@ -4996,8 +4999,10 @@ function renderShellChrome() {
 // Profile display is populated from the same trusted users/{uid} and
 // organizations/{organizationId} records used by the municipal manager.
 // No identity is sourced from URL params, localStorage or a tenant id.
+let landsIdentityRefreshPending = false;
 async function syncLandsIdentity() {
-  if (reviewMode || !session || !client?.auth?.currentUser) return;
+  if (reviewMode || !session || !client?.auth?.currentUser || landsIdentityRefreshPending) return;
+  landsIdentityRefreshPending = true;
   const uid = session.firebaseUid;
   const municipalityId = session.municipalityId;
   try {
@@ -5013,7 +5018,8 @@ async function syncLandsIdentity() {
     const authorized = identity?.kind === "manager"
       ? session?.role === "municipal_manager"
       : identity?.kind === "workforce" && identity.valid === true && identity.allowed === true;
-    if (!authorized || !session || session.firebaseUid !== uid || session.municipalityId !== municipalityId) return;
+    if (!authorized || !session || session.firebaseUid !== uid || session.municipalityId !== municipalityId
+        || identity.organizationId !== municipalityId) return;
     const profile = identity.profile || {};
     if (typeof profile.name === "string" && profile.name.trim() && profile.name.trim() !== uid) {
       session.displayName = profile.name.trim();
@@ -5022,11 +5028,29 @@ async function syncLandsIdentity() {
         && profile.organizationName.trim() !== municipalityId) {
       session.municipalityName = profile.organizationName.trim();
     }
+    if (typeof profile.jobTitle === "string" && profile.jobTitle.trim()) {
+      session.identityRoleLabel = profile.jobTitle.trim();
+    }
     renderShellChrome();
   } catch (error) {
     console.warn("[LANDS_IDENTITY] label lookup unavailable; existing role permissions unchanged");
+  } finally {
+    landsIdentityRefreshPending = false;
   }
 }
+
+// A renamed employee or manager should not have to sign out and sign back in
+// to see a trusted identity update. Only the signed-in user's verified labels
+// are refreshed; no membership or permissions are changed here.
+window.addEventListener("focus", () => {
+  if (!document.hidden) void syncLandsIdentity();
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) void syncLandsIdentity();
+});
+window.setInterval(() => {
+  if (!document.hidden) void syncLandsIdentity();
+}, 60000);
 
 // A verified Lands session is not a login failure if the data collections
 // are slow on Safari. Retry in-place, without consuming a new SSO code.

@@ -168,6 +168,16 @@ function buildFakeDb(seed) {
         }),
       };
     },
+    // Mirror atomic Firestore writes for profile synchronization coverage.
+    async runTransaction(fn) {
+      const writes = [];
+      const result = await fn({
+        get: ref => ref.get(),
+        set: (ref, data, opts) => { writes.push([ref, data, opts]); },
+      });
+      for (const [ref, data, opts] of writes) await ref.set(data, opts);
+      return result;
+    },
     _dump: () => Object.fromEntries(store),
   };
 }

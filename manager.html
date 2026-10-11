@@ -3794,12 +3794,17 @@ class Component extends DCLogic {
           })
         });
         marker.bindPopup(() => this.buildObservationPopup(item), {
-          maxWidth: 228,
+          // The unchanged popup card requires >=246px internally; the old
+          // maxWidth:228 forced Leaflet to clip its labels and actions.
+          maxWidth: 300,
+          // Scroll only if the map viewport is too short to fit the full card.
+          // The popup's colors, border, typography and buttons stay untouched.
+          maxHeight: Math.max(190, Math.min(440, (this.mapEl?.clientHeight || window.innerHeight) - 64)),
           className: 'hsr-map-popup',
           autoPan: true,
           keepInView: true,
-          autoPanPaddingTopLeft: [64, 116],
-          autoPanPaddingBottomRight: [64, 88]
+          autoPanPaddingTopLeft: [32, 44],
+          autoPanPaddingBottomRight: [32, 44]
         });
         // Selection is tracked OUTSIDE React state (a plain instance field)
         // and applied imperatively via applyMapSelectionStyle() — this

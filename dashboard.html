@@ -3287,6 +3287,53 @@ function renderOrgBadge() {
   }
 }
 
+// Keep INSPECTOR DISPLAY labels aligned with Owner/User Center changes.
+// Identity remains scoped to the current verified Firebase user/tenant; RBAC,
+// routing, inspector responsibilities and existing header markup are untouched.
+let inspectorDisplaySyncPending = false;
+async function refreshInspectorDisplayIdentity() {
+  const user = auth.currentUser;
+  const uid = user?.uid;
+  const orgId = inspectorContext.organizationId;
+  if (!user || !uid || inspectorContext.uid !== uid || !orgId
+      || inspectorDisplaySyncPending || document.hidden) return;
+  inspectorDisplaySyncPending = true;
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'resolveWorkspaces', workspace: 'field' }),
+      cache: 'no-store'
+    });
+    if (!response.ok) return;
+    const identity = await response.json();
+    if (auth.currentUser?.uid !== uid || inspectorContext.uid !== uid
+        || inspectorContext.organizationId !== orgId
+        || identity?.kind !== 'workforce' || identity?.valid !== true
+        || identity?.allowed !== true || identity?.organizationId !== orgId) return;
+    const name = cleanDisplayText(identity.profile?.name);
+    const municipality = cleanDisplayText(identity.profile?.organizationName);
+    if (name && name !== uid && !/^[A-Za-z0-9_-]{18,}$/.test(name)) {
+      userName.textContent = name;
+    }
+    if (municipality && municipality !== orgId && !/^[A-Za-z0-9_-]{18,}$/.test(municipality)
+        && municipality !== inspectorContext.organizationName) {
+      inspectorContext.organizationName = municipality;
+      renderOrgBadge();
+    }
+  } catch (_) {
+    // Offline/expired display lookup never changes access state or logs out.
+  } finally {
+    inspectorDisplaySyncPending = false;
+  }
+}
+window.addEventListener('focus', () => { void refreshInspectorDisplayIdentity(); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) void refreshInspectorDisplayIdentity();
+});
+window.setInterval(() => { if (!document.hidden) void refreshInspectorDisplayIdentity(); }, 60000);
+
 function renderConnectionState() {
   const online = navigator.onLine;
   const text = document.getElementById('connectionText');
@@ -3411,6 +3458,7 @@ onAuthStateChanged(auth, async (user) => {
   userRole.className = 'user-role-inspector';
   userRole.textContent = 'مراقب ميداني';
   renderOrgBadge();
+  void refreshInspectorDisplayIdentity();
   lucide.createIcons();
 
   if (!appStarted) {
