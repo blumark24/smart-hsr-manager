@@ -4951,6 +4951,9 @@ function runHeaderSearch() {
 }
 function renderShellChrome() {
   const roleLabel = ROLE_LABELS[session.role] || "موظف الأراضي والممتلكات";
+  // Owner-managed job titles change only the display label, never Lands RBAC.
+  const displayRole = typeof session?.identityRoleLabel === "string"
+    && session.identityRoleLabel.trim() ? session.identityRoleLabel.trim() : roleLabel;
   const profileRole = document.getElementById("headerProfileRole");
   const profileAvatar = document.getElementById("headerProfileAvatar");
   const profileName = document.getElementById("headerProfileName");
@@ -4960,16 +4963,16 @@ function renderShellChrome() {
     && !/^[A-Za-z0-9_-]{18,}$/.test(rawName.trim())
     ? (rawName.trim() || "الموظف") : "الموظف";
   if (profileName) profileName.textContent = displayName;
-  if (profileRole) profileRole.textContent = roleLabel;
+  if (profileRole) profileRole.textContent = displayRole;
   if (profileAvatar) profileAvatar.textContent = (displayName || roleLabel || "م").trim().charAt(0) || "م";
   const canReview = mod.canReviewGrant(session.role);
   const canAdmin = mod.canManageEntitlements(session.role);
   document.body.classList.toggle("lands-reviewer", canReview);
   document.body.classList.toggle("lands-admin", canAdmin);
-  document.getElementById("userInfo").innerHTML = `<span class="account-avatar">${esc((displayName || "?")[0])}</span><span class="account-copy"><strong>${esc(displayName)}</strong><small>${esc(roleLabel)}</small></span>`;
+  document.getElementById("userInfo").innerHTML = `<span class="account-avatar">${esc((displayName || "?")[0])}</span><span class="account-copy"><strong>${esc(displayName)}</strong><small>${esc(displayRole)}</small></span>`;
   const roleEl = document.getElementById("headerRoleLabel");
   const orgEl = document.getElementById("headerOrgLabel");
-  if (roleEl) roleEl.textContent = roleLabel;
+  if (roleEl) roleEl.textContent = displayRole;
   if (orgEl) {
     const rawMunicipality = session?.municipalityName || session?.organizationName || session?.orgName || "";
     const municipalityLabel = typeof rawMunicipality === "string"
@@ -4983,7 +4986,7 @@ function renderShellChrome() {
   }
   updateHeaderDates();
   const accountButton = document.getElementById("accountButton");
-  if (accountButton) accountButton.title = displayName + " — " + roleLabel;
+  if (accountButton) accountButton.title = displayName + " — " + displayRole;
   document.querySelectorAll("[data-review-only]").forEach(el => { el.hidden = !canReview; });
   document.querySelectorAll("[data-admin-only]").forEach(el => { el.hidden = !canAdmin; });
   const managerModeToggle = document.getElementById("managerModeMenuItem");
@@ -5013,7 +5016,8 @@ async function syncLandsIdentity() {
     const authorized = identity?.kind === "manager"
       ? session?.role === "municipal_manager"
       : identity?.kind === "workforce" && identity.valid === true && identity.allowed === true;
-    if (!authorized || !session || session.firebaseUid !== uid || session.municipalityId !== municipalityId) return;
+    if (!authorized || !session || session.firebaseUid !== uid || session.municipalityId !== municipalityId
+        || identity.organizationId !== municipalityId) return;
     const profile = identity.profile || {};
     if (typeof profile.name === "string" && profile.name.trim() && profile.name.trim() !== uid) {
       session.displayName = profile.name.trim();
@@ -5021,6 +5025,9 @@ async function syncLandsIdentity() {
     if (typeof profile.organizationName === "string" && profile.organizationName.trim()
         && profile.organizationName.trim() !== municipalityId) {
       session.municipalityName = profile.organizationName.trim();
+    }
+    if (typeof profile.jobTitle === "string" && profile.jobTitle.trim()) {
+      session.identityRoleLabel = profile.jobTitle.trim();
     }
     renderShellChrome();
   } catch (error) {
