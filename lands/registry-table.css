@@ -168,3 +168,27 @@ body .decision-mobile-card:focus-within{outline:2px solid var(--teal);outline-of
 @media(prefers-reduced-motion:reduce){
   body .grant-view-controls button,body .grant-register-table *{transition:none!important}
 }
+
+/* Progressive disclosure keeps the scan card compact while preserving all fields. */
+body .decision-mobile-quickfacts{
+  display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;
+  gap:8px;font-size:12px;color:var(--muted);padding:9px 0;
+  border-top:1px solid var(--line);font-variant-numeric:tabular-nums
+}
+body .decision-mobile-quickfacts span{display:inline-flex;align-items:center;gap:5px}
+body .decision-mobile-quickfacts b{font-weight:750;color:var(--ink)}
+body .decision-mobile-extra{border-top:1px solid var(--line)}
+body .decision-mobile-extra summary{
+  min-height:44px;display:flex;align-items:center;gap:7px;
+  color:var(--teal);font-size:12px;font-weight:650;cursor:pointer;
+  list-style:none;user-select:none
+}
+body .decision-mobile-extra summary::-webkit-details-marker{display:none}
+body .decision-mobile-extra summary svg{width:15px;height:15px;flex:none}
+body .decision-mobile-extra[open] summary svg{transform:rotate(180deg)}
+body .decision-mobile-extra summary:focus-visible{
+  outline:2px solid var(--teal);outline-offset:2px;border-radius:7px
+}
+body .decision-mobile-extra .decision-mobile-evidence,
+body .decision-mobile-extra .decision-mobile-progress{padding:8px 0}
+@media(prefers-reduced-motion:reduce){body .decision-mobile-extra summary svg{transition:none!important}}
