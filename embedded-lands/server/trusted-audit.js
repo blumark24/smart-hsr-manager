@@ -63,6 +63,8 @@ export const TRUSTED_AUDIT_ACTIONS = Object.freeze({
   // (a real Firestore delete). Same role gate as approve/reject: a manager
   // or department manager, never a plain employee.
   'land_grant.archived': action('landGrants', MANAGERS),
+  // A creator may discard ONLY their own still-draft grant; no hard delete.
+  'land_grant.draft_discarded': action('landGrants', TRUSTED_AUDIT_ROLES),
   ...domainActions('royal_order', 'royalOrders'),
   ...domainActions('allocation_decision', 'allocationDecisions'),
   // Soft archive for a Decision — same reasoning as land_grant.archived
