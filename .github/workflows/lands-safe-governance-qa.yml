@@ -28,3 +28,5 @@ jobs:
           node --check test/lands-safe-draft-discard.test.js
       - name: Draft cancellation and role tests
         run: node --test test/lands-safe-draft-discard.test.js test/lands-grant-number.test.js test/phase19-2-lands-role-matrix.test.js
+      - name: Existing Lands regression suite
+        run: npm run test:lands
