@@ -1,4 +1,5 @@
 import { TrustedAuditError } from './trusted-audit.js';
+import { computeGrantCompleteness } from '../../lands/client/lands-domain.js';
 
 const DOMAIN_COLLECTION = {
   userAccess: 'userAccess',
@@ -171,10 +172,20 @@ export function createLandsMutationExecutor({ db, documentStorage }) {
           write = { ...changes, updated_at: now };
           break;
         }
-        case 'land_grant.approve':
+        case 'land_grant.approve': {
           if (record.status !== 'under_review') fail('MUTATION_EXECUTION_FAILED');
+          // Server-side readiness gate: a client may not bypass required
+          // business fields by calling the trusted mutation endpoint directly.
+          // No user name or particular incumbent is encoded here; the
+          // authorization layer checks the current trusted membership role.
+          // Documentary coverage requires a separate, typed evidence policy.
+          const dataComplete = computeGrantCompleteness(record).status === 'complete';
+          const hasOfficialNumber = typeof record.grant_number === 'string'
+            && record.grant_number.trim().length > 0;
+          if (!dataComplete || !hasOfficialNumber) fail('LAND_GRANT_NOT_READY_FOR_APPROVAL');
           write = { status: 'approved', updated_at: now };
           break;
+        }
         case 'land_grant.reject':
           if (record.status !== 'under_review') fail('MUTATION_EXECUTION_FAILED');
           write = { status: 'rejected', updated_at: now };
