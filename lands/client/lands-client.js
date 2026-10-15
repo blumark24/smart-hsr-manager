@@ -98,6 +98,10 @@ export function createLandsClient({ firebaseConfig, useEmulators = false, emulat
     // Soft archive for a grant. Same reasoning as archiveEntity above; kept
     // separate because it targets the landGrants domain, not a regular
     // domain entity.
+    async discardDraftGrant(municipalityId, grantId, reason) {
+      await session(municipalityId);
+      await callTrustedMutation(municipalityId, { operation: 'land_grant.discard_draft', record_id: grantId, record_changes: { reason } });
+    },
     async archiveGrant(municipalityId, grantId, reason) {
       await session(municipalityId);
       await callTrustedMutation(municipalityId, { operation: 'land_grant.archive', record_id: grantId, record_changes: { reason } });

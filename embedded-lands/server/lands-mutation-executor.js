@@ -1,4 +1,5 @@
 import { TrustedAuditError } from './trusted-audit.js';
+import { computeGrantCompleteness } from '../../lands/client/lands-domain.js';
 
 const DOMAIN_COLLECTION = {
   userAccess: 'userAccess',
@@ -171,10 +172,20 @@ export function createLandsMutationExecutor({ db, documentStorage }) {
           write = { ...changes, updated_at: now };
           break;
         }
-        case 'land_grant.approve':
+        case 'land_grant.approve': {
           if (record.status !== 'under_review') fail('MUTATION_EXECUTION_FAILED');
+          // Server-side readiness gate: a client may not bypass required
+          // business fields by calling the trusted mutation endpoint directly.
+          // No user name or particular incumbent is encoded here; the
+          // authorization layer checks the current trusted membership role.
+          // Documentary coverage requires a separate, typed evidence policy.
+          const dataComplete = computeGrantCompleteness(record).status === 'complete';
+          const hasOfficialNumber = typeof record.grant_number === 'string'
+            && record.grant_number.trim().length > 0;
+          if (!dataComplete || !hasOfficialNumber) fail('LAND_GRANT_NOT_READY_FOR_APPROVAL');
           write = { status: 'approved', updated_at: now };
           break;
+        }
         case 'land_grant.reject':
           if (record.status !== 'under_review') fail('MUTATION_EXECUTION_FAILED');
           write = { status: 'rejected', updated_at: now };
@@ -210,6 +221,12 @@ export function createLandsMutationExecutor({ db, documentStorage }) {
         // Soft archive — never a Firestore delete. Idempotency guard (fails
         // rather than silently re-archiving) matches every other status
         // transition above.
+        case 'land_grant.discard_draft': {
+          if (record.created_by !== context.actor_uid || record.status !== 'draft' || record.archived === true) fail('DRAFT_DISCARD_DENIED');
+          const reason = validateArchiveReason(recordChanges);
+          write = { archived: true, archived_reason: reason, archived_by: context.actor_uid, archived_at: now, updated_at: now };
+          break;
+        }
         case 'land_grant.archive': {
           if (record.archived === true) fail('MUTATION_EXECUTION_FAILED');
           const reason = validateArchiveReason(recordChanges);
