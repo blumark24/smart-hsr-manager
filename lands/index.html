@@ -5278,14 +5278,15 @@ function auditEventRow(e) { return `<div class="event"><span class="event-icon">
 
 // ---- registry ----
 function registryView() {
-  const shown = grants.filter(g => `${g.beneficiary?.name || ""}${g.beneficiary?.national_id || ""}${g.royal_order?.number || ""}${g.grant_number || ""}`.includes(query))
+  const shown = grants.filter(g => !g.archived && (session.role !== "lands_employee" || g.created_by === session.firebaseUid))
+    .filter(g => `${g.beneficiary?.name || ""}${g.beneficiary?.national_id || ""}${g.royal_order?.number || ""}${g.grant_number || ""}`.includes(query))
     .filter(g => statusFilter === "all" || g.status === statusFilter)
     .filter(g => completenessFilter === "all" || g.completeness.status === completenessFilter);
   const actions = mod.canCreateGrant(session.role) ? `<button class='btn primary' onclick='openAdd()'>${icon("plus")} إضافة منحة</button>` : "";
   const statusOptions = ["all", ...Object.keys(STATUS_LABELS)].map(s => `<option value="${s}" ${statusFilter === s ? "selected" : ""}>${s === "all" ? "كل الحالات" : esc(STATUS_LABELS[s])}</option>`).join("");
   const completenessOptions = [["all", "الاكتمال: الكل"], ["complete", "مكتمل"], ["incomplete", "غير مكتمل"]].map(([v, l]) => `<option value="${v}" ${completenessFilter === v ? "selected" : ""}>${esc(l)}</option>`).join("");
   return shellHead("سجل محكوم وقابل للبحث", "سجل منح الأراضي", `السجل قابل للبحث والقياس والحوكمة · ${shown.length} نتائج`, actions) +
-    `<div class="registry-tools"><label class="search">${icon("search")}<input id="query" value="${esc(query)}" oninput="filterRegistry(this.value)" placeholder="ابحث باسم المستفيد أو رقم الأمر أو رقم المنحة"></label><select class="select" id="statusFilterSelect" onchange="filterByStatus(this.value)">${statusOptions}</select><select class="select" id="completenessFilterSelect" onchange="filterByCompleteness(this.value)">${completenessOptions}</select></div><div class="count">عرض <b class="mono">${shown.length}</b> من ${grants.length} سجلات</div><div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>الحالة</th><th>المستفيد</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>قرار التخصيص</th><th>المخطط</th><th>القطعة</th><th>نسبة الاكتمال</th><th>إجراء</th></tr></thead><tbody>${shown.length ? shown.map(g => `<tr class="${selectedGrantId === g.id ? "selected-row" : ""}" onclick="selectGrantRow('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td>${statusBadge(g)}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${esc(g.beneficiary?.national_id || "—")}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(g.allocation_decision?.number || "—")}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}</td><td class="mono">${completenessPercent(g)}%</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(g.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="10"><div class="empty">${icon("search-x")}<br>لا توجد نتائج مطابقة للبحث</div></td></tr>`}</tbody></table></div>`;
+    `<div class="registry-tools"><label class="search">${icon("search")}<input id="query" value="${esc(query)}" oninput="filterRegistry(this.value)" placeholder="ابحث باسم المستفيد أو رقم الأمر أو رقم المنحة"></label><select class="select" id="statusFilterSelect" onchange="filterByStatus(this.value)">${statusOptions}</select><select class="select" id="completenessFilterSelect" onchange="filterByCompleteness(this.value)">${completenessOptions}</select></div><div class="count">عرض <b class="mono">${shown.length}</b> من ${grants.length} سجلات</div><div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>الحالة</th><th>المستفيد</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>قرار التخصيص</th><th>المخطط</th><th>القطعة</th><th>نسبة الاكتمال</th><th>إجراء</th></tr></thead><tbody>${shown.length ? shown.map(g => `<tr class="${selectedGrantId === g.id ? "selected-row" : ""}" onclick="selectGrantRow('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td>${statusBadge(g)}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${esc(maskNationalId(g.beneficiary?.national_id))}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(g.allocation_decision?.number || "—")}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}</td><td class="mono">${completenessPercent(g)}%</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(g.id)}')">${icon("arrow-left")} الملف</button>${g.status === "draft" && g.created_by === session.firebaseUid ? `<button class="btn small ghost" onclick="event.stopPropagation();discardDraftGrant(\'${esc(g.id)}\')">${icon("archive")} إلغاء مسودتي</button>` : ""}</td></tr>`).join("") : `<tr><td colspan="10"><div class="empty">${icon("search-x")}<br>لا توجد نتائج مطابقة للبحث</div></td></tr>`}</tbody></table></div>`;
 }
 function rerenderRegistry(focusQuery) { const main = document.getElementById("main"); main.innerHTML = registryView(); normalizeDigits(main); lucide.createIcons(); if (focusQuery) document.getElementById("query")?.focus(); }
 function filterRegistry(v) { query = v; rerenderRegistry(true); }
@@ -6092,6 +6093,24 @@ function createFixtureGrant({ beneficiaryName, nationalId, royalOrderNumber, roy
   grants = [...grants, grant];
   auditEvents = [{ record_id: id, action: "land_grant.created", actor_role: session.role, occurred_at: new Date() }, ...auditEvents];
   return grant;
+}
+function discardDraftGrant(grantId) {
+  const g = grantById(grantId);
+  if (!g || g.archived || g.status !== "draft" || g.created_by !== session.firebaseUid) return;
+  openConfirmArchive({
+    title: "إلغاء مسودتي",
+    message: "سيتم إخفاء المسودة من السجل النشط مع الاحتفاظ بها وبسبب الإلغاء في سجل التدقيق. لا يمكن إلغاء منحة وصلت للمراجعة أو الاعتماد.",
+    onConfirm: async (reason) => {
+      if (reviewMode) {
+        grants = grants.map(x => x.id === grantId ? { ...x, archived: true, archived_reason: reason } : x);
+        showToast("تم إلغاء المسودة في وضع المعاينة"); setView("registry"); return;
+      }
+      await client.discardDraftGrant(session.municipalityId, grantId, reason);
+      await refreshWorkspace();
+      showToast("تم إلغاء المسودة وحفظ سبب الإلغاء");
+      setView("registry");
+    }
+  });
 }
 function archiveGrant(grantId) {
   const g = grantById(grantId); if (!g) return;
