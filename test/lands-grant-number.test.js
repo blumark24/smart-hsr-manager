@@ -14,7 +14,7 @@ test('decision registry displays the business number and routes with the unchang
   const mod = await import('../lands/client/lands-domain.js');
   const source = fs.readFileSync('lands/index.html', 'utf8');
   const fn = source.slice(source.indexOf('function grantAttachmentsCell('), source.indexOf('// Decision Twin —'));
-  const context = { mod, domains: { documents: [] }, decisionMeta: () => ({}), AXIS_LABELS: {}, completenessPill: () => '80%', session: { role: 'lands_employee', firebaseUid: 'employee' }, esc: x => String(x).replaceAll('<', '&lt;').replaceAll('>', '&gt;'), statusBadge: () => '', maskNationalId: () => '', planLabel: () => '', parcelLabel: () => '', documentsForGrant: () => [], completenessPill: () => '', fmtDate: () => '', icon: () => '' };
+  const context = { grantMobileMode: 'table', grantViewControls: () => '', mod, domains: { documents: [] }, decisionMeta: () => ({}), AXIS_LABELS: {}, completenessPill: () => '80%', completenessPercent: () => 80, session: { role: 'lands_employee', firebaseUid: 'employee' }, esc: x => String(x).replaceAll('<', '&lt;').replaceAll('>', '&gt;'), statusBadge: () => '', maskNationalId: () => '', planLabel: () => '', parcelLabel: () => '', documentsForGrant: () => [], completenessPill: () => '', fmtDate: () => '', icon: () => '' };
   vm.createContext(context); vm.runInContext(fn, context);
   const record = { id: 'internal-key', grant_number: '0012/1448', completeness: { missing: [] } };
   const html = context.decisionGrantsTab([record]);
