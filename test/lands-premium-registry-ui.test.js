@@ -16,7 +16,8 @@ test('mobile defaults to the scrollable table and provides optional cards withou
   assert.match(html,/setAttribute\("aria-pressed"/);
   for(const source of [registry,decision]){
     assert.match(source,/class="grant-display" data-view="\$\{grantMobileMode\}"/);
-    assert.match(source,/grantViewControls\(\)/);
+    assert.match(source,/class="registry-row-help"/);
+    assert.match(source,/grantRowActions\(g,/);
     assert.match(source,/class="decision-mobile-grant-list"/);
   }
   assert.match(registry,/class="table-wrap grant-register-scroll"/);
