@@ -44,7 +44,7 @@ test('RTL and responsive behavior retain desktop tables and mobile horizontal sw
   assert.match(css,/\.grant-display\[data-view="table"\] \.grant-registry-scroll/);
   assert.match(css,/\.grant-display\[data-view="cards"\] \.grant-registry-scroll/);
   assert.match(css,/\.grant-display\[data-view="table"\] \.decision-mobile-grant-list/);
-  assert.match(css,/\.grant-view-controls\{display:none\}/);
+  assert.match(css,/\.grant-view-controls,\.grant-swipe-hint\{display:none\}/);
   assert.match(css,/@media\(max-width:720px\)/);
   assert.match(css,/overflow-x:auto!important/);
   assert.match(css,/position:sticky;right:0/);
