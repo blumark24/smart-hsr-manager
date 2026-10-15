@@ -33,3 +33,12 @@ test('Desktop grant table remains, and mobile discard is creator-and-draft gated
   assert.match(lands,/function discardDraftGrant\(grantId\)/);
   assert.match(lands,/await client\.discardDraftGrant\(/);
 });
+
+test('Lands inline classic script parses with no JavaScript syntax regression',()=>{
+  const vm = require('node:vm');
+  const at = lands.indexOf('function decisionGrantMobileCard(');
+  const start = lands.lastIndexOf('<script>',at);
+  const end = lands.indexOf('</script>',at);
+  assert.ok(start>=0 && end>start);
+  assert.doesNotThrow(()=>new vm.Script(lands.slice(start+'<script>'.length,end), {filename:'lands-inline.js'}));
+});
