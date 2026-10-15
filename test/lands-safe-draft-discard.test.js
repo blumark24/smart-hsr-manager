@@ -20,6 +20,31 @@ test('draft discard is an audited closed operation, not a hard delete', async ()
   }
 });
 
+
+test('archived grants cannot be edited, submitted or approved through direct mutation API', async () => {
+  const { createLandsMutationExecutor } = await import('../embedded-lands/server/lands-mutation-executor.js');
+  for (const operation of ['land_grant.update', 'land_grant.transition', 'land_grant.approve', 'land_grant.archive']) {
+    const writes = [];
+    const db = {
+      doc: path => path,
+      runTransaction: async fn => fn({
+        get: async path => path.includes('/auditLogs/') ? { exists:false } :
+          { exists:true, data:()=>({ municipality_id:'org-a', created_by:'employee-a',
+            archived:true, status: operation==='land_grant.approve'?'under_review':'draft' }) },
+        update:()=>writes.push('update'), set:()=>writes.push('set'), delete:()=>writes.push('delete')
+      })
+    };
+    const run = () => createLandsMutationExecutor({db})(
+      { municipality_id:'org-a', actor_uid:'employee-a' },
+      { operation, record_id:'grant-a', audit_command:{domain:'landGrants'} },
+      { event_id:'event-a', occurred_at:'2026-10-15T00:00:00Z' },
+      { reason:'test', grant_number:'test' }
+    );
+    await assert.rejects(run(), error => error.code === 'LAND_GRANT_ARCHIVED');
+    assert.deepEqual(writes, []);
+  }
+});
+
 test('other employees, another tenant, and successor managers cannot discard a creators draft', async()=>{
   const { createLandsAuthorizer }=await import('../embedded-lands/server/lands-authorization.js');
   const db={doc:path=>({get:async()=>({exists:true,data:()=>({municipality_id:'org-a',created_by:'employee-a',status:'draft'})})})};
