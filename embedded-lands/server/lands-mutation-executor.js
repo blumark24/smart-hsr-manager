@@ -78,12 +78,13 @@ function validateArchiveReason(changes) {
 // allocation_decision/conveyance) are intentionally not deep-validated
 // here, matching the existing precedent already documented in
 // firebase/firestore.rules' validLandGrant().
-const LAND_GRANT_CONTENT_KEYS = ['beneficiary', 'royal_order', 'allocation_decision', 'conveyance', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'plan_reference_number', 'parcel_reference_number', 'document_ids'];
+const LAND_GRANT_CONTENT_KEYS = ['grant_number', 'beneficiary', 'royal_order', 'allocation_decision', 'conveyance', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'plan_reference_number', 'parcel_reference_number', 'document_ids'];
 
 function validateLandGrantContentChanges(changes) {
   if (!isPlainObject(changes)) fail('INVALID_RECORD_CHANGES');
   const keys = Object.keys(changes);
   if (keys.length < 1 || keys.some((key) => !LAND_GRANT_CONTENT_KEYS.includes(key))) fail('INVALID_RECORD_CHANGES');
+  if ('grant_number' in changes && changes.grant_number !== null && (typeof changes.grant_number !== 'string' || !changes.grant_number.trim() || changes.grant_number.length > 80)) fail('INVALID_RECORD_CHANGES');
   return changes;
 }
 

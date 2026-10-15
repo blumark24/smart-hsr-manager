@@ -60,7 +60,7 @@ export function createLandsClient({ firebaseConfig, useEmulators = false, emulat
     if (!snapshot.exists() || !data.enabled || data.firebase_uid !== user.uid || data.municipality_id !== municipalityId || !LANDS_ROLES.includes(data.lands_role)) throw new Error('LANDS_ACCESS_DENIED');
     return { firebaseUid: user.uid, municipalityId, role: data.lands_role };
   }
-  const DRAFT_GRANT_EDITABLE_KEYS = ['beneficiary', 'royal_order', 'allocation_decision', 'conveyance', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'plan_reference_number', 'parcel_reference_number', 'document_ids'];
+  const DRAFT_GRANT_EDITABLE_KEYS = ['grant_number', 'beneficiary', 'royal_order', 'allocation_decision', 'conveyance', 'beneficiary_id', 'royal_order_id', 'allocation_decision_id', 'plan_id', 'parcel_id', 'plan_reference_number', 'parcel_reference_number', 'document_ids'];
 
   return {
     auth, storage, session,

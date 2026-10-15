@@ -59,3 +59,9 @@ export function computeGrantCompleteness(grant) {
 export function presentGrant(id, grant) {
   return { id, ...grant, completeness: computeGrantCompleteness(grant) };
 }
+
+// Official business number; document IDs remain internal routing keys.
+export function grantNumberLabel(grant) {
+  const value = grant?.grant_number;
+  return typeof value === 'string' && value.trim() ? value.trim() : 'غير مسجّل';
+}

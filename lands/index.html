@@ -5277,14 +5277,14 @@ function auditEventRow(e) { return `<div class="event"><span class="event-icon">
 
 // ---- registry ----
 function registryView() {
-  const shown = grants.filter(g => `${g.beneficiary?.name || ""}${g.beneficiary?.national_id || ""}${g.royal_order?.number || ""}${g.id}`.includes(query))
+  const shown = grants.filter(g => `${g.beneficiary?.name || ""}${g.beneficiary?.national_id || ""}${g.royal_order?.number || ""}${g.grant_number || ""}`.includes(query))
     .filter(g => statusFilter === "all" || g.status === statusFilter)
     .filter(g => completenessFilter === "all" || g.completeness.status === completenessFilter);
   const actions = mod.canCreateGrant(session.role) ? `<button class='btn primary' onclick='openAdd()'>${icon("plus")} إضافة منحة</button>` : "";
   const statusOptions = ["all", ...Object.keys(STATUS_LABELS)].map(s => `<option value="${s}" ${statusFilter === s ? "selected" : ""}>${s === "all" ? "كل الحالات" : esc(STATUS_LABELS[s])}</option>`).join("");
   const completenessOptions = [["all", "الاكتمال: الكل"], ["complete", "مكتمل"], ["incomplete", "غير مكتمل"]].map(([v, l]) => `<option value="${v}" ${completenessFilter === v ? "selected" : ""}>${esc(l)}</option>`).join("");
   return shellHead("سجل محكوم وقابل للبحث", "سجل منح الأراضي", `السجل قابل للبحث والقياس والحوكمة · ${shown.length} نتائج`, actions) +
-    `<div class="registry-tools"><label class="search">${icon("search")}<input id="query" value="${esc(query)}" oninput="filterRegistry(this.value)" placeholder="ابحث باسم المستفيد أو رقم الأمر أو رقم المنحة"></label><select class="select" id="statusFilterSelect" onchange="filterByStatus(this.value)">${statusOptions}</select><select class="select" id="completenessFilterSelect" onchange="filterByCompleteness(this.value)">${completenessOptions}</select></div><div class="count">عرض <b class="mono">${shown.length}</b> من ${grants.length} سجلات</div><div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>الحالة</th><th>المستفيد</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>قرار التخصيص</th><th>المخطط</th><th>القطعة</th><th>نسبة الاكتمال</th><th>إجراء</th></tr></thead><tbody>${shown.length ? shown.map(g => `<tr class="${selectedGrantId === g.id ? "selected-row" : ""}" onclick="selectGrantRow('${esc(g.id)}')"><td><b class="mono">${esc(g.id)}</b></td><td>${statusBadge(g)}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${esc(g.beneficiary?.national_id || "—")}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(g.allocation_decision?.number || "—")}</td><td class="mono">${esc(planLabel(g.plan_id) || "—")}</td><td class="mono">${esc(parcelLabel(g.parcel_id) || "—")}</td><td class="mono">${completenessPercent(g)}%</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(g.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="10"><div class="empty">${icon("search-x")}<br>لا توجد نتائج مطابقة للبحث</div></td></tr>`}</tbody></table></div>`;
+    `<div class="registry-tools"><label class="search">${icon("search")}<input id="query" value="${esc(query)}" oninput="filterRegistry(this.value)" placeholder="ابحث باسم المستفيد أو رقم الأمر أو رقم المنحة"></label><select class="select" id="statusFilterSelect" onchange="filterByStatus(this.value)">${statusOptions}</select><select class="select" id="completenessFilterSelect" onchange="filterByCompleteness(this.value)">${completenessOptions}</select></div><div class="count">عرض <b class="mono">${shown.length}</b> من ${grants.length} سجلات</div><div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>الحالة</th><th>المستفيد</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>قرار التخصيص</th><th>المخطط</th><th>القطعة</th><th>نسبة الاكتمال</th><th>إجراء</th></tr></thead><tbody>${shown.length ? shown.map(g => `<tr class="${selectedGrantId === g.id ? "selected-row" : ""}" onclick="selectGrantRow('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td>${statusBadge(g)}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${esc(g.beneficiary?.national_id || "—")}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(g.allocation_decision?.number || "—")}</td><td class="mono">${esc(planLabel(g.plan_id) || "—")}</td><td class="mono">${esc(parcelLabel(g.parcel_id) || "—")}</td><td class="mono">${completenessPercent(g)}%</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(g.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="10"><div class="empty">${icon("search-x")}<br>لا توجد نتائج مطابقة للبحث</div></td></tr>`}</tbody></table></div>`;
 }
 function rerenderRegistry(focusQuery) { const main = document.getElementById("main"); main.innerHTML = registryView(); normalizeDigits(main); lucide.createIcons(); if (focusQuery) document.getElementById("query")?.focus(); }
 function filterRegistry(v) { query = v; rerenderRegistry(true); }
@@ -5452,7 +5452,7 @@ function decisionGrantsTab(scoped) {
   // server/trusted-audit.js) — hide the row action for anyone the real
   // mutation would deny, instead of showing a button that always 403s.
   const canArchiveGrant = mod.canReviewGrant(session.role);
-  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>الحالة</th><th>المستفيد</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>المخطط</th><th>القطعة</th><th>المستندات</th><th>رقم خطاب الإفراغ</th><th>نسبة الاكتمال</th><th>آخر تحديث</th><th>الإجراءات</th></tr></thead><tbody>${scoped.length ? scoped.map(g => `<tr onclick="openFile('${esc(g.id)}')"><td><b class="mono">${esc(g.id)}</b></td><td>${statusBadge(g)}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${esc(maskNationalId(g.beneficiary?.national_id))}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(planLabel(g.plan_id) || "—")}</td><td class="mono">${esc(parcelLabel(g.parcel_id) || "—")}</td><td>${documentsForGrant(g.id).length ? `<span class="chip complete">${icon("check")} مكتملة</span>` : `<span class="chip incomplete">${icon("x")} ناقصة</span>`}</td><td class="mono"><span class="axis-dot ${g.completeness.missing.includes("conveyance") ? "pending" : "ok"}" aria-hidden="true"></span>${esc(g.conveyance?.letter_number || "—")}</td><td>${completenessPill(g)}</td><td class="mono">${fmtDate(g.updated_at)}</td><td><div class="row-actions" onclick="event.stopPropagation()"><button class="btn small ghost" onclick="openFile('${esc(g.id)}')" aria-label="فتح الملف">${icon("arrow-left")}</button>${(g.status === "draft" || g.status === "incomplete") && g.created_by === session.firebaseUid ? `<button class="btn small ghost" onclick="openEditDraft('${esc(g.id)}')" aria-label="تعديل">${icon("pencil")}</button>` : ""}${g.status === "under_review" && mod.canReviewGrant(session.role) ? `<button class="btn small ghost" onclick="openReviewGrant('${esc(g.id)}')" aria-label="مراجعة">${icon("clipboard-check")}</button>` : ""}${canArchiveGrant ? `<button class="btn small ghost" onclick="archiveGrant('${esc(g.id)}')" aria-label="أرشفة">${icon("archive")}</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="12"><div class="empty">${icon("search-x")}<br>لا توجد منح مرتبطة بهذا القرار</div></td></tr>`}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>الحالة</th><th>المستفيد</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>المخطط</th><th>القطعة</th><th>المستندات</th><th>رقم خطاب الإفراغ</th><th>نسبة الاكتمال</th><th>آخر تحديث</th><th>الإجراءات</th></tr></thead><tbody>${scoped.length ? scoped.map(g => `<tr onclick="openFile('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td>${statusBadge(g)}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${esc(maskNationalId(g.beneficiary?.national_id))}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(planLabel(g.plan_id) || "—")}</td><td class="mono">${esc(parcelLabel(g.parcel_id) || "—")}</td><td>${documentsForGrant(g.id).length ? `<span class="chip complete">${icon("check")} مكتملة</span>` : `<span class="chip incomplete">${icon("x")} ناقصة</span>`}</td><td class="mono"><span class="axis-dot ${g.completeness.missing.includes("conveyance") ? "pending" : "ok"}" aria-hidden="true"></span>${esc(g.conveyance?.letter_number || "—")}</td><td>${completenessPill(g)}</td><td class="mono">${fmtDate(g.updated_at)}</td><td><div class="row-actions" onclick="event.stopPropagation()"><button class="btn small ghost" onclick="openFile('${esc(g.id)}')" aria-label="فتح الملف">${icon("arrow-left")}</button>${(g.status === "draft" || g.status === "incomplete") && g.created_by === session.firebaseUid ? `<button class="btn small ghost" onclick="openEditDraft('${esc(g.id)}')" aria-label="تعديل">${icon("pencil")}</button>` : ""}${g.status === "under_review" && mod.canReviewGrant(session.role) ? `<button class="btn small ghost" onclick="openReviewGrant('${esc(g.id)}')" aria-label="مراجعة">${icon("clipboard-check")}</button>` : ""}${canArchiveGrant ? `<button class="btn small ghost" onclick="archiveGrant('${esc(g.id)}')" aria-label="أرشفة">${icon("archive")}</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="12"><div class="empty">${icon("search-x")}<br>لا توجد منح مرتبطة بهذا القرار</div></td></tr>`}</tbody></table></div>`;
 }
 // Decision Twin — DECISION level of the 3-level Digital Twin. Shares the
 // same layer-filter state (twinLayerFilter) as the Global Twin so "متأخر"/
@@ -5481,7 +5481,7 @@ function decisionTwinTab(scoped) {
 }
 function decisionDocumentsTab(scoped) {
   const docs = scoped.flatMap(g => documentsForGrant(g.id).map(d => ({ ...d, grant: g })));
-  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>الملف</th><th>المنحة</th><th>المستفيد</th><th>النوع</th></tr></thead><tbody>${docs.length ? docs.map(d => `<tr><td>${esc(d.filename || d.id)}</td><td class="mono">${esc(d.grant.id)}</td><td>${esc(d.grant.beneficiary?.name || "—")}</td><td class="mono">${esc(d.mime_type || "—")}</td></tr>`).join("") : `<tr><td colspan="4"><div class="empty">${icon("folder-open")}<br>لا توجد مستندات مرفوعة ضمن هذا القرار</div></td></tr>`}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>الملف</th><th>المنحة</th><th>المستفيد</th><th>النوع</th></tr></thead><tbody>${docs.length ? docs.map(d => `<tr><td>${esc(d.filename || d.id)}</td><td class="mono">${esc(mod.grantNumberLabel(d.grant))}</td><td>${esc(d.grant.beneficiary?.name || "—")}</td><td class="mono">${esc(d.mime_type || "—")}</td></tr>`).join("") : `<tr><td colspan="4"><div class="empty">${icon("folder-open")}<br>لا توجد مستندات مرفوعة ضمن هذا القرار</div></td></tr>`}</tbody></table></div>`;
 }
 function decisionMetricsTab(scoped, number) {
   const statusOrder = ["draft", "under_review", "incomplete", "approved", "rejected"];
@@ -5807,8 +5807,8 @@ function fileView() {
     <section class="file-head digital-file-command">
       <div class="digital-file-command-main">
         <div class="digital-file-identity">
-          <div class="file-id">GRANT-${esc(g.id)}</div>
-          <h1>المنحة رقم ${esc(g.id)} — ${esc(g.beneficiary?.name || "—")}</h1>
+          <div class="file-id">رقم المنحة: ${esc(mod.grantNumberLabel(g))}</div>
+          <h1>المنحة رقم ${esc(mod.grantNumberLabel(g))} — ${esc(g.beneficiary?.name || "—")}</h1>
           <div class="file-meta">
             <span>${icon("clock")} آخر تحديث: ${fmtDate(g.updated_at)}</span>
             <span>${icon("calendar-plus")} أُنشئت: ${fmtDate(g.created_at)}</span>
@@ -6013,10 +6013,11 @@ function openAdd() { openAddGrant(null); }
 // never asked to pick the decision again (requirement: add-grant inside a
 // decision always binds to that exact decision, never a re-selection).
 function openAddGrant(decisionNumber) {
-  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>إضافة منحة${decisionNumber ? ` — قرار رقم ${esc(decisionNumber)}` : ""}</h2><p class="drawer-sub">${decisionNumber ? "سترتبط هذه المنحة تلقائيًا بالقرار الحالي." : "أدخل بيانات المسودة الأساسية؛ يمكن استكمال باقي البيانات لاحقًا."}</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div><div class="form-row"><label class="input-label">اسم المستفيد<input class="text-input" id="addBeneficiaryName" required></label><label class="input-label">رقم السجل المدني<input class="text-input" id="addNationalId"></label><label class="input-label">رقم الأمر السامي<input class="text-input" id="addOrderNumber"></label><label class="input-label">تاريخ الأمر<input class="text-input" id="addOrderDate" placeholder="1446/01/01"></label></div>${decisionNumber ? `<input type="hidden" id="addDecisionNumber" value="${esc(decisionNumber)}">` : ""}<div class="auth-error" id="addError" role="alert" hidden></div><div class="drawer-foot"><button class="btn primary" id="addSubmit" onclick="submitAddGrant()">حفظ كمسودة</button><button class="btn" onclick="closeModal()">إلغاء</button></div>`;
+  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>إضافة منحة${decisionNumber ? ` — قرار رقم ${esc(decisionNumber)}` : ""}</h2><p class="drawer-sub">${decisionNumber ? "سترتبط هذه المنحة تلقائيًا بالقرار الحالي." : "أدخل بيانات المسودة الأساسية؛ يمكن استكمال باقي البيانات لاحقًا."}</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div><div class="form-row"><label class="input-label">رقم المنحة<input class="text-input" id="addGrantNumber" maxlength="80" dir="auto" placeholder="الرقم الوارد في مستند المنحة"></label><label class="input-label">اسم المستفيد<input class="text-input" id="addBeneficiaryName" required></label><label class="input-label">رقم السجل المدني<input class="text-input" id="addNationalId"></label><label class="input-label">رقم الأمر السامي<input class="text-input" id="addOrderNumber"></label><label class="input-label">تاريخ الأمر<input class="text-input" id="addOrderDate" placeholder="1446/01/01"></label></div>${decisionNumber ? `<input type="hidden" id="addDecisionNumber" value="${esc(decisionNumber)}">` : ""}<div class="auth-error" id="addError" role="alert" hidden></div><div class="drawer-foot"><button class="btn primary" id="addSubmit" onclick="submitAddGrant()">حفظ كمسودة</button><button class="btn" onclick="closeModal()">إلغاء</button></div>`;
   document.getElementById("modalBackdrop").classList.add("open"); lucide.createIcons();
 }
 async function submitAddGrant() {
+  const grantNumber = document.getElementById("addGrantNumber").value.trim() || null;
   const beneficiaryName = document.getElementById("addBeneficiaryName").value.trim();
   const nationalId = document.getElementById("addNationalId").value.trim() || null;
   const royalOrderNumber = document.getElementById("addOrderNumber").value.trim() || null;
@@ -6028,25 +6029,25 @@ async function submitAddGrant() {
   if (reviewMode) {
     // Fixture-only: no createLandsClient() exists on this path at all, so
     // this can never reach real Firestore, staging or Production.
-    const grant = createFixtureGrant({ beneficiaryName, nationalId, royalOrderNumber, royalOrderDate, decisionNumber });
+    const grant = createFixtureGrant({ beneficiaryName, nationalId, royalOrderNumber, royalOrderDate, decisionNumber, grantNumber });
     closeModal(); showToast(`تم حفظ المنحة كمسودة (بيانات معاينة)${decisionNumber ? ` — مرتبطة بقرار رقم ${decisionNumber}` : ""}`);
     openFile(grant.id); btn.disabled = false; return;
   }
   try {
     const id = await client.createGrant(session.municipalityId, { beneficiaryName, nationalId, royalOrderNumber, royalOrderDate });
-    // createGrant's real contract has no decision parameter at all — the
-    // decision binding this modal promised (the field is locked, never
-    // re-asked) is completed here as a second, explicit step against the
-    // grant's own draft-edit path. If this step fails, the grant still
-    // exists but is NOT bound — that is reported honestly, never as a
-    // silent drop or a false "تم حفظ المنحة" success.
-    if (decisionNumber) {
+    // Persist business metadata through the existing audited draft mutation.
+    // Keep direct-create Rules and internal document IDs unchanged.
+    if (decisionNumber || grantNumber) {
       try {
-        const meta = decisionMeta(decisionNumber);
-        await client.updateDraftGrant(session.municipalityId, id, { allocation_decision: { number: decisionNumber, date: meta.date || null, authority: meta.authority || null } });
+        const changes = { grant_number: grantNumber };
+        if (decisionNumber) {
+          const meta = decisionMeta(decisionNumber);
+          changes.allocation_decision = { number: decisionNumber, date: meta.date || null, authority: meta.authority || null };
+        }
+        await client.updateDraftGrant(session.municipalityId, id, changes);
       } catch (bindError) {
         await refreshWorkspace(); closeModal();
-        showToast(`تم إنشاء المنحة ${id} لكن تعذّر ربطها بقرار رقم ${decisionNumber} تلقائيًا — يرجى ربطها يدويًا من تعديل المسودة.`, true);
+        showToast("تم إنشاء المسودة، لكن تعذر حفظ رقم المنحة أو ربط القرار. أكمل البيانات من تعديل المسودة دون إنشاء منحة أخرى.", true);
         openFile(id);
         return;
       }
@@ -6064,11 +6065,11 @@ function nextFixtureGrantId() {
   const nums = grants.map(g => parseInt(g.id, 10)).filter(n => !Number.isNaN(n));
   return String((nums.length ? Math.max(...nums) : 17) + 1).padStart(4, "0");
 }
-function createFixtureGrant({ beneficiaryName, nationalId, royalOrderNumber, royalOrderDate, decisionNumber }) {
+function createFixtureGrant({ beneficiaryName, nationalId, royalOrderNumber, royalOrderDate, decisionNumber, grantNumber }) {
   const id = nextFixtureGrantId();
   const meta = decisionNumber ? decisionMeta(decisionNumber) : {};
   const base = {
-    id, status: "draft", created_by: session.firebaseUid, created_at: new Date(), updated_at: new Date(),
+    id, grant_number: grantNumber || null, status: "draft", created_by: session.firebaseUid, created_at: new Date(), updated_at: new Date(),
     beneficiary: { name: beneficiaryName, national_id: nationalId },
     royal_order: { number: royalOrderNumber, date: royalOrderDate },
     allocation_decision: decisionNumber ? { number: decisionNumber, date: meta.date || null, authority: meta.authority || null } : null,
@@ -6086,7 +6087,7 @@ function archiveGrant(grantId) {
   const g = grantById(grantId); if (!g) return;
   openConfirmArchive({
     title: "أرشفة المنحة",
-    message: `أرشفة المنحة ${g.id} — ${g.beneficiary?.name || "—"}. هذا إجراء عكسي وليس حذفًا نهائيًا؛ يتطلب سببًا ويُسجَّل في سجل التدقيق.`,
+    message: `أرشفة المنحة ${mod.grantNumberLabel(g)} — ${g.beneficiary?.name || "—"}. هذا إجراء عكسي وليس حذفًا نهائيًا؛ يتطلب سببًا ويُسجَّل في سجل التدقيق.`,
     // Throws on real failure — submitConfirmArchive() catches it, keeps the
     // modal open, and shows the exact error inline. It only ever shows a
     // success toast / closes / re-renders after this resolves, so a real
@@ -6114,7 +6115,7 @@ function archiveGrant(grantId) {
 function openReviewGrant(grantId) {
   const g = grantById(grantId); if (!g) return;
   const missing = g.completeness.missing;
-  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>مراجعة المنحة ${esc(g.id)}</h2><p class="drawer-sub">${esc(g.beneficiary?.name || "—")}</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div>
+  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>مراجعة المنحة ${esc(mod.grantNumberLabel(g))}</h2><p class="drawer-sub">${esc(g.beneficiary?.name || "—")}</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div>
   <div class="detail-grid" style="padding:0 0 16px">${detail("الحالة", STATUS_LABELS[g.status] || g.status)}${detail("نسبة الاكتمال", completenessPercent(g) + "%")}</div>
   <div class="check-list" style="padding:0 0 4px">${Object.keys(AXIS_LABELS).map(axis => check(AXIS_LABELS[axis], !missing.includes(axis))).join("")}</div>
   <div class="drawer-foot">
@@ -6129,7 +6130,8 @@ function openReviewGrant(grantId) {
 // ---- edit draft drawer ----
 function openEditDraft(grantId) {
   const g = grantById(grantId); if (!g) return;
-  document.getElementById("drawer").innerHTML = `<div class="drawer-head"><div><h2>تعديل المسودة</h2><div class="drawer-sub">المنحة ${esc(g.id)} · ${completenessPercent(g)}%</div></div><button class="close" onclick="closeDrawer()">${icon("x")}</button></div>
+  document.getElementById("drawer").innerHTML = `<div class="drawer-head"><div><h2>تعديل المسودة</h2><div class="drawer-sub">المنحة ${esc(mod.grantNumberLabel(g))} · ${completenessPercent(g)}%</div></div><button class="close" onclick="closeDrawer()">${icon("x")}</button></div>
+  <label class="input-label">رقم المنحة<input class="text-input" id="editGrantNumber" maxlength="80" dir="auto" value="${esc(g.grant_number || "")}" placeholder="الرقم الوارد في مستند المنحة"></label>
   <div class="missing-item"><h3>${icon("user-round")} المستفيد</h3><div class="form-row"><label class="input-label">الاسم<input class="text-input" id="editBeneficiaryName" value="${esc(g.beneficiary?.name || "")}"></label><label class="input-label">السجل المدني<input class="text-input" id="editNationalId" value="${esc(g.beneficiary?.national_id || "")}"></label></div></div>
   <div class="missing-item"><h3>${icon("scroll-text")} الأمر السامي</h3><div class="form-row"><label class="input-label">رقم الأمر<input class="text-input" id="editOrderNumber" value="${esc(g.royal_order?.number || "")}"></label><label class="input-label">التاريخ<input class="text-input" id="editOrderDate" value="${esc(g.royal_order?.date || "")}"></label></div></div>
   <div class="missing-item"><h3>${icon("file-check-2")} قرار التخصيص</h3><div class="form-row"><label class="input-label">رقم القرار<input class="text-input" id="editDecisionNumber" value="${esc(g.allocation_decision?.number || "")}"></label><label class="input-label">التاريخ<input class="text-input" id="editDecisionDate" value="${esc(g.allocation_decision?.date || "")}"></label></div></div>
@@ -6141,6 +6143,7 @@ function openEditDraft(grantId) {
 }
 async function submitEditDraft(grantId) {
   const changes = {
+    grant_number: document.getElementById("editGrantNumber").value.trim() || null,
     beneficiary: { name: document.getElementById("editBeneficiaryName").value.trim(), national_id: document.getElementById("editNationalId").value.trim() || null },
     royal_order: { number: document.getElementById("editOrderNumber").value.trim() || null, date: document.getElementById("editOrderDate").value.trim() || null },
     allocation_decision: (document.getElementById("editDecisionNumber").value.trim() ? { number: document.getElementById("editDecisionNumber").value.trim(), date: document.getElementById("editDecisionDate").value.trim() || null } : null),
@@ -6339,7 +6342,7 @@ function openApproveConfirm(grantId) {
   // Informational only — this task does not add a completeness gate on
   // approval; the manager sees the same percentage/missing axes the
   // Digital File itself already shows, right before confirming.
-  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>اعتماد المنحة</h2><p class="drawer-sub">هل أنت متأكد من اعتماد المنحة ${esc(g.id)} — ${esc(g.beneficiary?.name || "—")}؟</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div>
+  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>اعتماد المنحة</h2><p class="drawer-sub">هل أنت متأكد من اعتماد المنحة ${esc(mod.grantNumberLabel(g))} — ${esc(g.beneficiary?.name || "—")}؟</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div>
   <div class="detail-grid" style="padding:0 0 14px"><div><span class="field-label">نسبة اكتمال البيانات</span><div class="detail-value">${percent}%</div></div></div>
   ${missing.length ? `<div class="notice">البيانات الناقصة:<br>${missing.map(m => `- ${esc(m)}`).join("<br>")}</div>` : ""}
   <div class="auth-error" id="approveError" role="alert" hidden></div>
@@ -6360,7 +6363,7 @@ let pendingReturnGrantId = null;
 function openReturnForCompletion(grantId) {
   const g = grantById(grantId); if (!g) return;
   pendingReturnGrantId = grantId;
-  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>إعادة المنحة للاستكمال</h2><p class="drawer-sub">المنحة ${esc(g.id)} — ${esc(g.beneficiary?.name || "—")}</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div>
+  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>إعادة المنحة للاستكمال</h2><p class="drawer-sub">المنحة ${esc(mod.grantNumberLabel(g))} — ${esc(g.beneficiary?.name || "—")}</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div>
   <label class="input-label">سبب الإعادة (مطلوب)<textarea class="text-input" id="returnReason" rows="3" required placeholder="اكتب الملاحظات المطلوب استكمالها..."></textarea></label>
   <div class="auth-error" id="returnError" role="alert" hidden></div>
   <div class="drawer-foot"><button class="btn primary" id="returnConfirmBtn" onclick="submitReturnConfirm()">${icon("rotate-ccw")} إعادة للاستكمال</button><button class="btn" onclick="closeModal()">إلغاء</button></div>`;
@@ -6387,7 +6390,7 @@ let pendingReopenGrantId = null;
 function openReopenConfirm(grantId) {
   const g = grantById(grantId); if (!g) return;
   pendingReopenGrantId = grantId;
-  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>إعادة فتح المنحة للتعديل</h2><p class="drawer-sub">المنحة ${esc(g.id)} — ${esc(g.beneficiary?.name || "—")}</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div>
+  document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2>إعادة فتح المنحة للتعديل</h2><p class="drawer-sub">المنحة ${esc(mod.grantNumberLabel(g))} — ${esc(g.beneficiary?.name || "—")}</p></div><button class="close" onclick="closeModal()">${icon("x")}</button></div>
   <p class="muted" style="font-size:12px;padding:0 0 14px;line-height:1.7">عند المتابعة: لن يعود الاعتماد الحالي هو الحالة النهائية الفعّالة لهذه المنحة، وسيتوجب أن تمر مجددًا بدورة المراجعة الكاملة (استكمال ثم إعادة إرسال ثم مراجعة)، وسيتم تسجيل هذا الإجراء في سجل التدقيق (Trusted Audit).</p>
   <label class="input-label">سبب إعادة الفتح (مطلوب)<textarea class="text-input" id="reopenReason" rows="3" required placeholder="اكتب سبب إعادة فتح المنحة بعد اعتمادها..."></textarea></label>
   <div class="auth-error" id="reopenError" role="alert" hidden></div>
@@ -6537,7 +6540,7 @@ function mapView() {
 function documentsView() {
   const rows = grants.flatMap(g => documentsForGrant(g.id).map(d => ({ ...d, grant: g })));
   return shellHead("المستندات", "المستندات", "كل المستندات المرفوعة عبر جميع قرارات الأراضي") +
-    `<div class="table-wrap"><table class="data-table"><thead><tr><th>الملف</th><th>القرار</th><th>رقم المنحة</th><th>المستفيد</th><th>النوع</th><th>إجراء</th></tr></thead><tbody>${rows.length ? rows.map(d => `<tr onclick="openFile('${esc(d.grant.id)}')"><td>${icon("file-check-2")} ${esc(d.filename || d.id)}</td><td class="mono">${esc(d.grant.allocation_decision?.number || "—")}</td><td class="mono">${esc(d.grant.id)}</td><td>${esc(d.grant.beneficiary?.name || "—")}</td><td class="mono">${esc(d.mime_type || "—")}</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(d.grant.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="6"><div class="empty">${icon("folder-open")}<br>لا توجد مستندات مرفوعة بعد</div></td></tr>`}</tbody></table></div>`;
+    `<div class="table-wrap"><table class="data-table"><thead><tr><th>الملف</th><th>القرار</th><th>رقم المنحة</th><th>المستفيد</th><th>النوع</th><th>إجراء</th></tr></thead><tbody>${rows.length ? rows.map(d => `<tr onclick="openFile('${esc(d.grant.id)}')"><td>${icon("file-check-2")} ${esc(d.filename || d.id)}</td><td class="mono">${esc(d.grant.allocation_decision?.number || "—")}</td><td class="mono">${esc(mod.grantNumberLabel(d.grant))}</td><td>${esc(d.grant.beneficiary?.name || "—")}</td><td class="mono">${esc(d.mime_type || "—")}</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(d.grant.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="6"><div class="empty">${icon("folder-open")}<br>لا توجد مستندات مرفوعة بعد</div></td></tr>`}</tbody></table></div>`;
 }
 
 // ---- المراجعات (كل السجلات تحت المراجعة) ----
@@ -6547,7 +6550,7 @@ function reviewsView() {
   }
   const rows = grants.filter(g => g.status === "under_review");
   return shellHead("المراجعات", "المراجعات", "السجلات التي تنتظر قرار المراجع عبر جميع القرارات") +
-    `<div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>القرار</th><th>المستفيد</th><th>نسبة الاكتمال</th><th>إجراء</th></tr></thead><tbody>${rows.length ? rows.map(g => `<tr onclick="openFile('${esc(g.id)}')"><td><b class="mono">${esc(g.id)}</b></td><td class="mono">${esc(g.allocation_decision?.number || "—")}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${completenessPercent(g)}%</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(g.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="5"><div class="empty">${icon("circle-check")}<br>لا توجد سجلات قيد المراجعة حاليًا</div></td></tr>`}</tbody></table></div>`;
+    `<div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>القرار</th><th>المستفيد</th><th>نسبة الاكتمال</th><th>إجراء</th></tr></thead><tbody>${rows.length ? rows.map(g => `<tr onclick="openFile('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td class="mono">${esc(g.allocation_decision?.number || "—")}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${completenessPercent(g)}%</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(g.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="5"><div class="empty">${icon("circle-check")}<br>لا توجد سجلات قيد المراجعة حاليًا</div></td></tr>`}</tbody></table></div>`;
 }
 
 // ---- التقارير (ملخص تنفيذي عبر القرارات) ----
