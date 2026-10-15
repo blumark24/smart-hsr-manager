@@ -55,6 +55,11 @@ export function createLandsAuthorizer({ db }) {
       // manager/reviewer must not gain arbitrary content-edit capability
       // merely because incomplete editing is now supported.
       if ((mutationCommand.operation === 'land_grant.transition' || mutationCommand.operation === 'land_grant.update') && record.created_by !== context.actor_uid) return false;
+      // Discarding is creator-only for every role, and applies only to a live
+      // draft. A transferred manager gets review powers, not ownership of
+      // another employee's drafts; server executor checks state again.
+      if (mutationCommand.operation === 'land_grant.discard_draft' &&
+          (record.created_by !== context.actor_uid || record.status !== 'draft' || record.archived === true)) return false;
       return true;
     }
   };
