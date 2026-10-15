@@ -35,7 +35,7 @@ test('creator can edit and cancel own draft; cannot change others grants',()=>{
  const other=renderActions({owner:'employee-b'});
  assert.doesNotMatch(other,/openEditDraft|discardDraftGrant|archiveGrant/);
  assert.match(other,/disabled/);
- assert.match(other,/فتح ملف المنحة/);
+ assert.match(other,/aria-label="فتح الملف"/);
 });
 test('reviewer sees authorized review and non-destructive archive, not unauthorized edit',()=>{
  const rev=renderActions({owner:'employee-a',actor:'manager',status:'under_review',manager:true});
