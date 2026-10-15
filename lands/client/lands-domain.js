@@ -65,3 +65,15 @@ export function grantNumberLabel(grant) {
   const value = grant?.grant_number;
   return typeof value === 'string' && value.trim() ? value.trim() : 'غير مسجّل';
 }
+
+// Manual business references are independent of optional GIS entity links.
+export function grantReferenceLabel(grant, kind, linkedLabel = '') {
+  const value = grant?.[`${kind}_reference_number`];
+  return (typeof value === 'string' && value.trim()) || linkedLabel || 'غير مسجّل';
+}
+export function grantDocumentCounts(grant, documents, decisionId = '') {
+  return {
+    grant: documents.filter(d => d.record_domain === 'landGrants' && d.record_id === grant.id).length,
+    decision: decisionId ? documents.filter(d => d.record_domain === 'allocationDecisions' && d.record_id === decisionId).length : 0,
+  };
+}

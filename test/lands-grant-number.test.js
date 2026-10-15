@@ -13,8 +13,8 @@ test('official number preserves leading zeros and never falls back to a document
 test('decision registry displays the business number and routes with the unchanged internal ID', async () => {
   const mod = await import('../lands/client/lands-domain.js');
   const source = fs.readFileSync('lands/index.html', 'utf8');
-  const fn = source.slice(source.indexOf('function decisionGrantsTab('), source.indexOf('// Decision Twin —'));
-  const context = { mod, session: { role: 'lands_employee', firebaseUid: 'employee' }, esc: x => String(x).replaceAll('<', '&lt;').replaceAll('>', '&gt;'), statusBadge: () => '', maskNationalId: () => '', planLabel: () => '', parcelLabel: () => '', documentsForGrant: () => [], completenessPill: () => '', fmtDate: () => '', icon: () => '' };
+  const fn = source.slice(source.indexOf('function grantAttachmentsCell('), source.indexOf('// Decision Twin —'));
+  const context = { mod, domains: { documents: [] }, decisionMeta: () => ({}), AXIS_LABELS: {}, completenessPill: () => '80%', session: { role: 'lands_employee', firebaseUid: 'employee' }, esc: x => String(x).replaceAll('<', '&lt;').replaceAll('>', '&gt;'), statusBadge: () => '', maskNationalId: () => '', planLabel: () => '', parcelLabel: () => '', documentsForGrant: () => [], completenessPill: () => '', fmtDate: () => '', icon: () => '' };
   vm.createContext(context); vm.runInContext(fn, context);
   const record = { id: 'internal-key', grant_number: '0012/1448', completeness: { missing: [] } };
   const html = context.decisionGrantsTab([record]);
@@ -35,4 +35,13 @@ test('trusted edit persists grant number with audit and rejects invalid values a
     if (!allowed) { await assert.rejects(request()); assert.equal(writes.length, 0); }
     else { await request(); assert.equal(writes[0].value.grant_number, number); assert.match(writes[0].path, /org-a\/landGrants\/internal-key$/); assert.equal(writes.length, 2); }
   }
+});
+
+test('registry references prefer entered numbers and document counts keep scopes separate', async () => {
+  const mod = await import('../lands/client/lands-domain.js');
+  assert.equal(mod.grantReferenceLabel({ plan_reference_number: '0012' }, 'plan', 'GIS label'), '0012');
+  assert.equal(mod.grantReferenceLabel({}, 'parcel', 'Linked parcel'), 'Linked parcel');
+  const docs = [{ record_domain: 'landGrants', record_id: 'g1' }, { record_domain: 'allocationDecisions', record_id: 'd1' }, { record_domain: 'landGrants', record_id: 'g2' }];
+  assert.deepEqual(mod.grantDocumentCounts({ id: 'g1' }, docs, 'd1'), { grant: 1, decision: 1 });
+  assert.deepEqual(mod.grantDocumentCounts({ id: 'g1' }, docs), { grant: 1, decision: 0 });
 });
