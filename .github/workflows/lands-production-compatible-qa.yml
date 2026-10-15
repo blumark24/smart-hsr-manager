@@ -26,5 +26,6 @@ jobs:
       - name: Lands focused regression
         run: |
           node --test test/lands-production-mobile-regression.test.js
+          node --test test/lands-safe-draft-discard.test.js
           node --test test/lands-grant-number.test.js
           node --test test/phase19-2-lands-role-matrix.test.js
