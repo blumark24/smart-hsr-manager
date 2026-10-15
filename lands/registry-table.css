@@ -192,3 +192,71 @@ body .decision-mobile-extra summary:focus-visible{
 body .decision-mobile-extra .decision-mobile-evidence,
 body .decision-mobile-extra .decision-mobile-progress{padding:8px 0}
 @media(prefers-reduced-motion:reduce){body .decision-mobile-extra summary svg{transition:none!important}}
+
+/* CLASSIC LANDS ROW REGISTER (mobile): prefer the original row workflow.
+   Presentation only: same grant records, official reference labels and trusted actions. */
+body .grant-register-table .grant-row-actions-cell,
+body .grant-registry-table .grant-row-actions-cell{vertical-align:middle}
+body .grant-row-actions-cell .row-actions{display:flex;align-items:center;flex-wrap:wrap;gap:5px}
+body .grant-row-actions-cell .btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  min-height:40px;padding:7px 9px;border-radius:9px;font-size:12px;
+  font-weight:650;line-height:1.3;white-space:nowrap
+}
+body .grant-row-actions-cell .btn svg{height:15px;width:15px;flex-shrink:0}
+body .grant-register-table td,body .grant-registry-table td{font-variant-numeric:tabular-nums}
+@media(max-width:720px){
+  body .grant-display .grant-view-controls,
+  body .grant-display .grant-swipe-hint,
+  body .grant-display .decision-mobile-grant-list{display:none!important}
+  body .grant-display .grant-register-scroll,
+  body .grant-display .grant-registry-scroll{
+    display:block!important;overflow-x:auto!important;overflow-y:auto!important;
+    max-width:100%;-webkit-overflow-scrolling:touch
+  }
+  body .grant-register-table{min-width:1220px!important}
+  body .grant-registry-table{min-width:1510px!important}
+  body .grant-register-table th,body .grant-register-table td,
+  body .grant-registry-table th,body .grant-registry-table td{
+    padding:12px 10px!important;white-space:nowrap;font-size:12px
+  }
+  body .grant-register-table th:first-child,body .grant-register-table td:first-child,
+  body .grant-registry-table th:first-child,body .grant-registry-table td:first-child{
+    width:105px!important;min-width:105px!important;max-width:105px!important;
+    position:sticky!important;right:0!important;z-index:2;
+    border-left:1px solid var(--line)
+  }
+  body .grant-register-table th:nth-child(2),body .grant-register-table td:nth-child(2),
+  body .grant-registry-table th:nth-child(2),body .grant-registry-table td:nth-child(2){
+    width:195px!important;min-width:195px!important;max-width:195px!important;
+    position:sticky!important;right:105px!important;z-index:2;
+    border-left:1px solid var(--line)
+  }
+  body .grant-register-table td:nth-child(-n+2){
+    background:var(--surface);background-clip:padding-box
+  }
+  body .grant-register-table th:nth-child(-n+2){
+    background:var(--surface-tint,var(--surface));z-index:3
+  }
+  body.dark .grant-register-table td:nth-child(-n+2),
+  body.dark .grant-registry-table td:nth-child(-n+2){background:#102536}
+  body.dark .grant-register-table th:nth-child(-n+2),
+  body.dark .grant-registry-table th:nth-child(-n+2){background:#142d3e}
+  body .grant-registry-table td:nth-child(-n+2){background:var(--row)}
+  body .grant-registry-table th:nth-child(-n+2){background:var(--head);z-index:3}
+  body .grant-row-actions-cell .row-actions{gap:4px;flex-wrap:wrap}
+  body .grant-row-actions-cell .btn{
+    min-height:40px;min-width:40px;padding:7px 9px;
+    font-size:12px;white-space:normal;line-height:1.25
+  }
+}
+@media(max-width:359px){
+  body .grant-register-table th:first-child,body .grant-register-table td:first-child,
+  body .grant-registry-table th:first-child,body .grant-registry-table td:first-child{
+    width:94px!important;min-width:94px!important;max-width:94px!important
+  }
+  body .grant-register-table th:nth-child(2),body .grant-register-table td:nth-child(2),
+  body .grant-registry-table th:nth-child(2),body .grant-registry-table td:nth-child(2){
+    right:94px!important;width:160px!important;min-width:160px!important;max-width:160px!important
+  }
+}
