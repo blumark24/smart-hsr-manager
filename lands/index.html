@@ -5495,13 +5495,18 @@ function decisionGrantMobileCard(g, canArchiveGrant) {
     <div class="decision-mobile-card-head"><div><span class="decision-mobile-eyebrow">رقم المنحة</span><strong class="decision-mobile-grant-num mono">${number}</strong></div>${statusBadge(g)}</div>
     <div class="decision-mobile-beneficiary"><span>المستفيد</span><strong>${beneficiary}</strong></div>
     <div class="decision-mobile-fields">
-      ${detail("رقم الأمر السامي", g.royal_order?.number)}
       ${detail("المخطط", mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}
       ${detail("القطعة", mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}
-      ${detail("خطاب الإفراغ", g.conveyance?.letter_number)}
     </div>
-    <div class="decision-mobile-evidence">${grantAttachmentsCell(g)}</div>
-    <div class="decision-mobile-progress"><span>اكتمال البيانات</span>${grantCompletenessCell(g)}</div>
+    <div class="decision-mobile-quickfacts"><span>${icon("paperclip")} ${mod.grantDocumentCounts(g, domains.documents, g.allocation_decision_id || decisionMeta(g.allocation_decision?.number)._id).grant} مرفقات</span><span>اكتمال البيانات <b class="mono">${completenessPercent(g)}%</b></span></div>
+    <details class="decision-mobile-extra"><summary>${icon("chevron-down")} تفاصيل إضافية</summary>
+      <div class="decision-mobile-fields">
+        ${detail("رقم الأمر السامي", g.royal_order?.number)}
+        ${detail("خطاب الإفراغ", g.conveyance?.letter_number)}
+      </div>
+      <div class="decision-mobile-evidence">${grantAttachmentsCell(g)}</div>
+      <div class="decision-mobile-progress"><span>محاور اكتمال البيانات</span>${grantCompletenessCell(g)}</div>
+    </details>
     ${actions}
   </article>`;
 }
