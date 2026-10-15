@@ -62,7 +62,9 @@ test('registry displays masked identifiers and official plan and parcel referenc
   assert.match(registry,/maskNationalId\(g\.beneficiary\?\.national_id\)/);
   assert.match(registry,/mod\.grantReferenceLabel\(g, "plan"/);
   assert.match(registry,/mod\.grantReferenceLabel\(g, "parcel"/);
-  assert.match(registry,/discardDraftGrant/);
+  assert.match(registry,/grantRowActions\(g,/);
+  assert.match(source,/function grantRowActions\(g, canArchiveGrant\)/);
+  assert.match(source,/discardDraftGrant/);
 });
 
 test('all employee workspace routes use only own active records', () => {
