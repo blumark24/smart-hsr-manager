@@ -28,6 +28,7 @@ export const TRUSTED_LANDS_MUTATIONS = Object.freeze({
   'land_grant.reopen': mutation('land_grant.reopened', 'landGrants'),
   'land_grant.delete': mutation('land_grant.deleted', 'landGrants'),
   'land_grant.archive': mutation('land_grant.archived', 'landGrants'),
+  'land_grant.discard_draft': mutation('land_grant.draft_discarded', 'landGrants'),
   'royal_order.update': mutation('royal_order.updated', 'royalOrders'),
   'royal_order.delete': mutation('royal_order.deleted', 'royalOrders'),
   'allocation_decision.update': mutation('allocation_decision.updated', 'allocationDecisions'),
