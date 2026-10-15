@@ -1,0 +1,30 @@
+name: Lands Safe Governance QA
+on:
+  push:
+    branches:
+      - fix/lands-production-compatible-20261015
+  pull_request:
+    branches:
+      - fix/lands-registry-clarity-20261015
+  workflow_dispatch:
+jobs:
+  safe-lands:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: JavaScript syntax
+        run: |
+          node --check embedded-lands/server/lands-authorization.js
+          node --check embedded-lands/server/lands-mutation-executor.js
+          node --check embedded-lands/server/trusted-audit.js
+          node --check embedded-lands/server/trusted-lands-mutations.js
+          node --check lands/client/lands-client.js
+          node --check test/lands-safe-draft-discard.test.js
+      - name: Draft cancellation and role tests
+        run: node --test test/lands-safe-draft-discard.test.js test/lands-grant-number.test.js test/phase19-2-lands-role-matrix.test.js
