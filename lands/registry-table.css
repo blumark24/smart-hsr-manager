@@ -277,3 +277,93 @@ body .grant-register-table td,body .grant-registry-table td{
 @media(prefers-reduced-motion:reduce){
   body .grant-classic-actions .btn.small{transition:none!important}
 }
+
+/* LANDS MOBILE ROW REGISTER R3 — full horizontal scroll; compact row tools.
+   Presentation only. No grants are created, removed or mutated here. */
+body .grant-display .grant-mobile-tools-head,
+body .grant-display .grant-mobile-tools-cell{display:none}
+@media (max-width:720px) {
+  /* All cells travel together; no column may overlap its neighbor on iPhone. */
+  body .grant-display .grant-register-scroll,
+  body .grant-display .grant-registry-scroll{
+    display:block!important;width:100%!important;max-width:100%!important;
+    overflow-x:auto!important;overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain;
+    touch-action:auto;scrollbar-width:thin;position:relative;isolation:isolate
+  }
+  body .grant-display .grant-register-table,
+  body .grant-display .grant-registry-table{
+    table-layout:auto!important;width:max-content!important;
+    min-width:100%!important;max-width:none!important;
+    border-collapse:separate!important;border-spacing:0!important
+  }
+  body .grant-display .grant-register-table th,
+  body .grant-display .grant-register-table td,
+  body .grant-display .grant-registry-table th,
+  body .grant-display .grant-registry-table td{
+    position:static!important;left:auto!important;right:auto!important;
+    z-index:auto!important;min-width:0!important;max-width:none!important;
+    width:auto!important;white-space:nowrap!important;
+    overflow-wrap:normal!important;overflow:visible!important;
+    text-overflow:clip!important;vertical-align:middle!important;
+    line-height:1.4!important;padding:9px 11px!important;
+    font-size:12px!important
+  }
+  body .grant-display .grant-register-table th,
+  body .grant-display .grant-registry-table th{
+    font-weight:650!important;font-size:11px!important;
+    white-space:nowrap!important;line-height:1.5!important
+  }
+  /* On mobile a compact icon-only toolbar follows the grant number.
+     The full-size desktop actions remain in the source and work unchanged. */
+  body .grant-display .grant-mobile-tools-head,
+  body .grant-display .grant-mobile-tools-cell{
+    display:table-cell!important;white-space:nowrap!important;
+    padding:7px 8px!important
+  }
+  body .grant-display .grant-register-table th:last-child,
+  body .grant-display .grant-register-table td:last-child,
+  body .grant-display .grant-registry-table th:last-child,
+  body .grant-display .grant-registry-table td:last-child{
+    display:none!important
+  }
+  body .grant-display .grant-mobile-tools-cell .grant-classic-actions{
+    display:inline-flex!important;flex-direction:row!important;
+    flex-wrap:nowrap!important;align-items:center!important;
+    justify-content:flex-start!important;gap:4px!important;
+    width:max-content!important;max-width:none!important
+  }
+  body .grant-display .grant-mobile-tools-cell .grant-classic-actions .btn.small{
+    display:inline-flex!important;flex:0 0 44px!important;
+    width:44px!important;height:44px!important;
+    min-width:44px!important;min-height:44px!important;
+    max-width:44px!important;max-height:44px!important;
+    padding:0!important;margin:0!important;gap:0!important;
+    align-items:center!important;justify-content:center!important;
+    border-radius:10px!important;line-height:1!important;
+    box-shadow:none!important;position:static!important
+  }
+  body .grant-display .grant-mobile-tools-cell .grant-classic-actions .btn.small svg{
+    width:19px!important;height:19px!important;
+    flex:0 0 19px!important;margin:0!important;display:block!important
+  }
+  body .grant-display .grant-mobile-tools-cell .grant-classic-actions .btn.small span{
+    display:none!important
+  }
+  body .grant-display .grant-mobile-tools-cell .btn:focus-visible{
+    outline:2px solid var(--teal,#58c6a5)!important;outline-offset:2px!important
+  }
+  body .grant-display .grant-register-table .person,
+  body .grant-display .grant-registry-table .person{
+    display:inline-block!important;max-width:235px!important;
+    overflow:hidden!important;text-overflow:ellipsis!important;
+    white-space:nowrap!important;vertical-align:middle!important
+  }
+  body .grant-display .grant-register-table tbody tr,
+  body .grant-display .grant-registry-table tbody tr{
+    height:62px
+  }
+}
+@media (prefers-reduced-motion: reduce){
+  body .grant-display .grant-mobile-tools-cell .btn{transition:none!important}
+}
