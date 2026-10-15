@@ -64,3 +64,11 @@ test('registry displays masked identifiers and official plan and parcel referenc
   assert.match(registry,/mod\.grantReferenceLabel\(g, "parcel"/);
   assert.match(registry,/discardDraftGrant/);
 });
+
+test('all employee workspace routes use only own active records', () => {
+  const source = fs.readFileSync('lands/index.html', 'utf8');
+  const workspace = source.slice(source.indexOf('async function loadWorkspace()'), source.indexOf('async function refreshWorkspace()'));
+  assert.match(workspace, /grants = grantList\.filter\(g => !g\.archived/);
+  assert.match(workspace, /session\.role !== "lands_employee" \|\| g\.created_by === session\.firebaseUid/);
+  assert.match(source, /function fileView\(\) \{\s*const g = grantById\(selectedGrantId\)/);
+});
