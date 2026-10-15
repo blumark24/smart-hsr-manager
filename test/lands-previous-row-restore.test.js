@@ -11,9 +11,9 @@ const decision=get('function decisionGrantsTab(scoped)','// Decision Twin');
 const actions=get('function grantClassicRowActions(', 'function registryView()');
 
 test('restores exact previous-day column order with actions at row end',()=>{
- assert.match(registry,/<thead><tr><th>رقم المنحة<\/th><th>الحالة<\/th><th>المستفيد<\/th>/);
+ assert.match(registry,/<thead><tr><th>رقم المنحة<\/th><th class="grant-mobile-tools-head" scope="col">أدوات<\/th><th>الحالة<\/th><th>المستفيد<\/th>/);
  assert.match(registry,/<th>الإجراءات<\/th><\/tr><\/thead>/);
- assert.match(decision,/<thead><tr><th scope="col">رقم المنحة<\/th><th scope="col">المستفيد<\/th><th scope="col">حالة الإجراء<\/th>/);
+ assert.match(decision,/<thead><tr><th scope="col">رقم المنحة<\/th><th class="grant-mobile-tools-head" scope="col">أدوات<\/th><th scope="col">المستفيد<\/th><th scope="col">حالة الإجراء<\/th>/);
  assert.match(decision,/<th>الإجراءات<\/th><\/tr><\/thead>/);
  for(const source of [registry,decision]) {
   assert.match(source,/data-view="table"/);

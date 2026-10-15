@@ -1,0 +1,20 @@
+name: Lands Mobile Inline Actions R3 QA
+on:
+  push:
+    branches:
+      - fix/lands-mobile-inline-row-actions-20261016
+  workflow_dispatch:
+jobs:
+  lands-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Row display, edit and archive security regression
+        run: |
+          node --test test/lands-mobile-inline-actions-r3.test.js test/lands-previous-row-restore.test.js test/lands-grant-number.test.js test/lands-safe-draft-discard.test.js test/phase19-2-lands-role-matrix.test.js
