@@ -1,0 +1,31 @@
+name: Lands Production-Compatible QA
+on:
+  push:
+    branches:
+      - fix/lands-production-compatible-20261015
+  workflow_dispatch:
+jobs:
+  lands-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: JavaScript syntax
+        run: |
+          node --check embedded-lands/server/lands-authorization.js
+          node --check embedded-lands/server/lands-mutation-executor.js
+          node --check embedded-lands/server/trusted-audit.js
+          node --check embedded-lands/server/trusted-lands-mutations.js
+          node --check lands/client/lands-client.js
+          node --check test/lands-production-mobile-regression.test.js
+      - name: Lands focused regression
+        run: |
+          node --test test/lands-production-mobile-regression.test.js
+          node --test test/lands-safe-draft-discard.test.js
+          node --test test/lands-grant-number.test.js
+          node --test test/phase19-2-lands-role-matrix.test.js

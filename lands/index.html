@@ -4925,7 +4925,12 @@ async function handleLogout() {
 async function loadWorkspace() {
   const domainKeys = ["royalOrders", "allocationDecisions", "beneficiaries", "plans", "parcels", "documents"];
   const [grantList, ...domainResults] = await Promise.all([client.listGrants(session.municipalityId), ...domainKeys.map(d => client.listEntities(session.municipalityId, d))]);
-  grants = grantList;
+  // Only active records belong in the operational workspace. Keep archived
+  // records stored for trusted audit; employee pages are owner-scoped in all
+  // sections, not only the registry table. Server authorization remains
+  // independently required for every mutation.
+  grants = grantList.filter(g => !g.archived
+    && (session.role !== "lands_employee" || g.created_by === session.firebaseUid));
   domains = Object.fromEntries(domainKeys.map((d, i) => [d, domainResults[i]]));
   realDecisions = domains.allocationDecisions.map(presentDecision);
   users = mod.canManageEntitlements(session.role) ? await client.listLandsUsers(session.municipalityId) : [];
@@ -5278,14 +5283,15 @@ function auditEventRow(e) { return `<div class="event"><span class="event-icon">
 
 // ---- registry ----
 function registryView() {
-  const shown = grants.filter(g => `${g.beneficiary?.name || ""}${g.beneficiary?.national_id || ""}${g.royal_order?.number || ""}${g.grant_number || ""}`.includes(query))
+  const shown = grants.filter(g => !g.archived && (session.role !== "lands_employee" || g.created_by === session.firebaseUid))
+    .filter(g => `${g.beneficiary?.name || ""}${g.beneficiary?.national_id || ""}${g.royal_order?.number || ""}${g.grant_number || ""}`.includes(query))
     .filter(g => statusFilter === "all" || g.status === statusFilter)
     .filter(g => completenessFilter === "all" || g.completeness.status === completenessFilter);
   const actions = mod.canCreateGrant(session.role) ? `<button class='btn primary' onclick='openAdd()'>${icon("plus")} إضافة منحة</button>` : "";
   const statusOptions = ["all", ...Object.keys(STATUS_LABELS)].map(s => `<option value="${s}" ${statusFilter === s ? "selected" : ""}>${s === "all" ? "كل الحالات" : esc(STATUS_LABELS[s])}</option>`).join("");
   const completenessOptions = [["all", "الاكتمال: الكل"], ["complete", "مكتمل"], ["incomplete", "غير مكتمل"]].map(([v, l]) => `<option value="${v}" ${completenessFilter === v ? "selected" : ""}>${esc(l)}</option>`).join("");
   return shellHead("سجل محكوم وقابل للبحث", "سجل منح الأراضي", `السجل قابل للبحث والقياس والحوكمة · ${shown.length} نتائج`, actions) +
-    `<div class="registry-tools"><label class="search">${icon("search")}<input id="query" value="${esc(query)}" oninput="filterRegistry(this.value)" placeholder="ابحث باسم المستفيد أو رقم الأمر أو رقم المنحة"></label><select class="select" id="statusFilterSelect" onchange="filterByStatus(this.value)">${statusOptions}</select><select class="select" id="completenessFilterSelect" onchange="filterByCompleteness(this.value)">${completenessOptions}</select></div><div class="count">عرض <b class="mono">${shown.length}</b> من ${grants.length} سجلات</div><div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>الحالة</th><th>المستفيد</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>قرار التخصيص</th><th>المخطط</th><th>القطعة</th><th>نسبة الاكتمال</th><th>إجراء</th></tr></thead><tbody>${shown.length ? shown.map(g => `<tr class="${selectedGrantId === g.id ? "selected-row" : ""}" onclick="selectGrantRow('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td>${statusBadge(g)}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${esc(g.beneficiary?.national_id || "—")}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(g.allocation_decision?.number || "—")}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}</td><td class="mono">${completenessPercent(g)}%</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(g.id)}')">${icon("arrow-left")} الملف</button></td></tr>`).join("") : `<tr><td colspan="10"><div class="empty">${icon("search-x")}<br>لا توجد نتائج مطابقة للبحث</div></td></tr>`}</tbody></table></div>`;
+    `<div class="registry-tools"><label class="search">${icon("search")}<input id="query" value="${esc(query)}" oninput="filterRegistry(this.value)" placeholder="ابحث باسم المستفيد أو رقم الأمر أو رقم المنحة"></label><select class="select" id="statusFilterSelect" onchange="filterByStatus(this.value)">${statusOptions}</select><select class="select" id="completenessFilterSelect" onchange="filterByCompleteness(this.value)">${completenessOptions}</select></div><div class="count">عرض <b class="mono">${shown.length}</b> من ${grants.length} سجلات</div><div class="table-wrap"><table class="data-table"><thead><tr><th>رقم المنحة</th><th>الحالة</th><th>المستفيد</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>قرار التخصيص</th><th>المخطط</th><th>القطعة</th><th>نسبة الاكتمال</th><th>إجراء</th></tr></thead><tbody>${shown.length ? shown.map(g => `<tr class="${selectedGrantId === g.id ? "selected-row" : ""}" onclick="selectGrantRow('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td>${statusBadge(g)}</td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td class="mono">${esc(maskNationalId(g.beneficiary?.national_id))}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(g.allocation_decision?.number || "—")}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}</td><td class="mono">${completenessPercent(g)}%</td><td><button class="btn small" onclick="event.stopPropagation();openFile('${esc(g.id)}')">${icon("arrow-left")} الملف</button>${g.status === "draft" && g.created_by === session.firebaseUid ? `<button class="btn small ghost" onclick="event.stopPropagation();discardDraftGrant(\'${esc(g.id)}\')">${icon("archive")} إلغاء مسودتي</button>` : ""}</td></tr>`).join("") : `<tr><td colspan="10"><div class="empty">${icon("search-x")}<br>لا توجد نتائج مطابقة للبحث</div></td></tr>`}</tbody></table></div>`;
 }
 function rerenderRegistry(focusQuery) { const main = document.getElementById("main"); main.innerHTML = registryView(); normalizeDigits(main); lucide.createIcons(); if (focusQuery) document.getElementById("query")?.focus(); }
 function filterRegistry(v) { query = v; rerenderRegistry(true); }
@@ -5444,7 +5450,7 @@ function decisionDetailView() {
   <div class="decision-hero-ring-block"><div class="decision-hero-ring" style="--pct:${avgPercent}"><b class="mono">${avgPercent}%</b></div><div class="decision-hero-ring-caption"><strong>نسبة الاكتمال</strong><span>مبنية على 5 محاور أساسية<br>كل محور بنسبة 20%</span></div></div>
   <div class="decision-hero-edge-ornament" aria-hidden="true">${HERO_EDGE_ORNAMENT_SVG}</div>
 </section>
-<div class="summary-strip"><div class="summary-seg"><span class="summary-seg-icon">${icon("users-round")}</span><b class="mono">${total}</b><span>مستفيد</span></div><div class="summary-seg"><span class="summary-seg-icon ok">${icon("circle-check")}</span><b class="mono">${complete}</b><span>مكتمل</span></div><div class="summary-seg"><span class="summary-seg-icon warn">${icon("alert-circle")}</span><b class="mono">${needsWork}</b><span>يحتاج استكمال</span></div><div class="summary-seg"><span class="summary-seg-icon review">${icon("clock")}</span><b class="mono">${review}</b><span>تحت المراجعة</span></div><div class="summary-seg"><span class="summary-seg-icon accent">${icon("percent")}</span><b class="mono">${avgPercent}%</b><span>إنجاز القرار</span></div></div>
+<div class="summary-strip decision-grant-kpis"><div class="summary-seg"><span class="summary-seg-icon">${icon("users-round")}</span><b class="mono">${total}</b><span>سجل منحة</span></div><div class="summary-seg"><span class="summary-seg-icon ok">${icon("circle-check")}</span><b class="mono">${complete}</b><span>مكتمل بيانات</span></div><div class="summary-seg"><span class="summary-seg-icon warn">${icon("alert-circle")}</span><b class="mono">${needsWork}</b><span>يحتاج استكمال</span></div><div class="summary-seg"><span class="summary-seg-icon review">${icon("clock")}</span><b class="mono">${review}</b><span>تحت المراجعة</span></div><div class="summary-seg"><span class="summary-seg-icon accent">${icon("percent")}</span><b class="mono">${avgPercent}%</b><span>متوسط اكتمال البيانات</span></div></div>
 <div class="tabs">${tabs.map(([id, label2, ic]) => `<button class="tab-btn${decisionDetailTab === id ? " active" : ""}" onclick="setDecisionTab('${id}')">${icon(ic)} ${esc(label2)}</button>`).join("")}</div>
 ${tabBody}`;
 }
@@ -5457,12 +5463,37 @@ function grantCompletenessCell(g) {
   if (!g.grant_number) missing.unshift("رقم المنحة (خارج النسبة)");
   return `<details class="registry-completion" onclick="event.stopPropagation()"><summary aria-label="عرض تفاصيل اكتمال البيانات">${completenessPill(g)}<span>التفاصيل</span></summary><div>${missing.length ? `بيانات غير مكتملة: ${esc(missing.join("، "))}` : "المحاور الخمسة مكتملة"}<small>النسبة لا تشمل المرفقات أو اعتماد المنحة.</small></div></details>`;
 }
+function decisionGrantMobileCard(g, canArchiveGrant) {
+  const number = esc(mod.grantNumberLabel(g));
+  const beneficiary = esc(g.beneficiary?.name || "—");
+  const detail = (label, value) => `<div class="decision-mobile-field"><span>${label}</span><strong class="mono">${esc(value || "—")}</strong></div>`;
+  const actions = `<div class="decision-mobile-actions">
+    <button type="button" class="btn small" onclick="openFile('${esc(g.id)}')">${icon("folder-open")} فتح الملف</button>
+    ${(g.status === "draft" || g.status === "incomplete") && g.created_by === session.firebaseUid ? `<button type="button" class="btn small ghost" onclick="openEditDraft('${esc(g.id)}')">${icon("pencil")} تعديل</button>` : ""}
+    ${g.status === "draft" && g.created_by === session.firebaseUid ? `<button type="button" class="btn small ghost" onclick="discardDraftGrant('${esc(g.id)}')">${icon("archive")} إلغاء مسودتي</button>` : ""}
+    ${g.status === "under_review" && canArchiveGrant ? `<button type="button" class="btn small ghost" onclick="openReviewGrant('${esc(g.id)}')">${icon("clipboard-check")} مراجعة</button>` : ""}
+    ${canArchiveGrant ? `<button type="button" class="btn small ghost" onclick="archiveGrant('${esc(g.id)}')">${icon("archive")} أرشفة</button>` : ""}
+  </div>`;
+  return `<article class="decision-mobile-card" aria-label="ملف منحة ${number}">
+    <div class="decision-mobile-card-head"><div><span class="decision-mobile-eyebrow">رقم المنحة</span><strong class="decision-mobile-grant-num mono">${number}</strong></div>${statusBadge(g)}</div>
+    <div class="decision-mobile-beneficiary"><span>المستفيد</span><strong>${beneficiary}</strong></div>
+    <div class="decision-mobile-fields">
+      ${detail("رقم الأمر السامي", g.royal_order?.number)}
+      ${detail("المخطط", mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}
+      ${detail("القطعة", mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}
+      ${detail("خطاب الإفراغ", g.conveyance?.letter_number)}
+    </div>
+    <div class="decision-mobile-evidence">${grantAttachmentsCell(g)}</div>
+    <div class="decision-mobile-progress"><span>اكتمال البيانات</span>${grantCompletenessCell(g)}</div>
+    ${actions}
+  </article>`;
+}
 function decisionGrantsTab(scoped) {
   // land_grant.archived is MANAGERS-only server-side (see
   // server/trusted-audit.js) — hide the row action for anyone the real
   // mutation would deny, instead of showing a button that always 403s.
   const canArchiveGrant = mod.canReviewGrant(session.role);
-  return `<div class="registry-note">الأرقام حسب البيانات المسجّلة · نسبة اكتمال البيانات منفصلة عن الاعتماد والمرفقات</div><div class="table-wrap grant-registry-scroll" tabindex="0" role="region" aria-label="سجل المنح، مرّر أفقيًا لعرض التفاصيل"><table class="data-table grant-registry-table"><thead><tr><th scope="col">رقم المنحة</th><th scope="col">المستفيد</th><th scope="col">حالة الإجراء</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>المخطط</th><th>القطعة</th><th>المستندات</th><th>رقم خطاب الإفراغ</th><th>اكتمال البيانات</th><th>آخر تحديث</th><th>الإجراءات</th></tr></thead><tbody>${scoped.length ? scoped.map(g => `<tr onclick="openFile('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td>${statusBadge(g)}</td><td class="mono">${esc(maskNationalId(g.beneficiary?.national_id))}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}</td><td>${grantAttachmentsCell(g)}</td><td class="mono"><span class="axis-dot ${g.completeness.missing.includes("conveyance") ? "pending" : "ok"}" aria-hidden="true"></span>${esc(g.conveyance?.letter_number || "—")}</td><td>${grantCompletenessCell(g)}</td><td class="mono">${fmtDate(g.updated_at)}</td><td><div class="row-actions" onclick="event.stopPropagation()"><button class="btn small ghost" onclick="openFile('${esc(g.id)}')" aria-label="فتح الملف">${icon("arrow-left")}</button>${(g.status === "draft" || g.status === "incomplete") && g.created_by === session.firebaseUid ? `<button class="btn small ghost" onclick="openEditDraft('${esc(g.id)}')" aria-label="تعديل">${icon("pencil")}</button>` : ""}${g.status === "under_review" && mod.canReviewGrant(session.role) ? `<button class="btn small ghost" onclick="openReviewGrant('${esc(g.id)}')" aria-label="مراجعة">${icon("clipboard-check")}</button>` : ""}${canArchiveGrant ? `<button class="btn small ghost" onclick="archiveGrant('${esc(g.id)}')" aria-label="أرشفة">${icon("archive")}</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="12"><div class="empty">${icon("search-x")}<br>لا توجد منح مرتبطة بهذا القرار</div></td></tr>`}</tbody></table></div>`;
+  return `<div class="registry-note">الأرقام حسب البيانات المسجّلة · نسبة اكتمال البيانات منفصلة عن الاعتماد والمرفقات</div><div class="table-wrap grant-registry-scroll" tabindex="0" role="region" aria-label="سجل المنح، مرّر أفقيًا لعرض التفاصيل"><table class="data-table grant-registry-table"><thead><tr><th scope="col">رقم المنحة</th><th scope="col">المستفيد</th><th scope="col">حالة الإجراء</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>المخطط</th><th>القطعة</th><th>المستندات</th><th>رقم خطاب الإفراغ</th><th>اكتمال البيانات</th><th>آخر تحديث</th><th>الإجراءات</th></tr></thead><tbody>${scoped.length ? scoped.map(g => `<tr onclick="openFile('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td>${statusBadge(g)}</td><td class="mono">${esc(maskNationalId(g.beneficiary?.national_id))}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}</td><td>${grantAttachmentsCell(g)}</td><td class="mono"><span class="axis-dot ${g.completeness.missing.includes("conveyance") ? "pending" : "ok"}" aria-hidden="true"></span>${esc(g.conveyance?.letter_number || "—")}</td><td>${grantCompletenessCell(g)}</td><td class="mono">${fmtDate(g.updated_at)}</td><td><div class="row-actions" onclick="event.stopPropagation()"><button class="btn small ghost" onclick="openFile('${esc(g.id)}')" aria-label="فتح الملف">${icon("arrow-left")}</button>${(g.status === "draft" || g.status === "incomplete") && g.created_by === session.firebaseUid ? `<button class="btn small ghost" onclick="openEditDraft('${esc(g.id)}')" aria-label="تعديل">${icon("pencil")}</button>` : ""}${g.status === "under_review" && mod.canReviewGrant(session.role) ? `<button class="btn small ghost" onclick="openReviewGrant('${esc(g.id)}')" aria-label="مراجعة">${icon("clipboard-check")}</button>` : ""}${canArchiveGrant ? `<button class="btn small ghost" onclick="archiveGrant('${esc(g.id)}')" aria-label="أرشفة">${icon("archive")}</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="12"><div class="empty">${icon("search-x")}<br>لا توجد منح مرتبطة بهذا القرار</div></td></tr>`}</tbody></table></div><div class="decision-mobile-grant-list" aria-label="سجل المنح على الجوال">${scoped.length ? scoped.map(g => decisionGrantMobileCard(g, canArchiveGrant)).join("") : `<div class="empty">لا توجد منح مرتبطة بهذا القرار</div>`}</div>`;
 }
 // Decision Twin — DECISION level of the 3-level Digital Twin. Shares the
 // same layer-filter state (twinLayerFilter) as the Global Twin so "متأخر"/
@@ -6092,6 +6123,26 @@ function createFixtureGrant({ beneficiaryName, nationalId, royalOrderNumber, roy
   grants = [...grants, grant];
   auditEvents = [{ record_id: id, action: "land_grant.created", actor_role: session.role, occurred_at: new Date() }, ...auditEvents];
   return grant;
+}
+function discardDraftGrant(grantId) {
+  const grant = grantById(grantId);
+  if (!grant || grant.archived || grant.status !== "draft" || grant.created_by !== session.firebaseUid) return;
+  openConfirmArchive({
+    title: "إلغاء مسودتي",
+    message: "هذا الإجراء يخفي المسودة من السجل النشط، مع الاحتفاظ بها وسبب الإلغاء للتدقيق. لا يشمل المنح المرسلة للمراجعة أو المعتمدة.",
+    onConfirm: async (reason) => {
+      if (reviewMode) {
+        grants = grants.map(item => item.id === grantId ? { ...item, archived: true, archived_reason: reason } : item);
+        showToast("تم إلغاء المسودة في وضع المعاينة");
+        setView("registry");
+        return;
+      }
+      await client.discardDraftGrant(session.municipalityId, grantId, reason);
+      await refreshWorkspace();
+      showToast("تم إلغاء المسودة وحفظ سبب الإلغاء");
+      setView("registry");
+    }
+  });
 }
 function archiveGrant(grantId) {
   const g = grantById(grantId); if (!g) return;
