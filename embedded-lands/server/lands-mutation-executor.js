@@ -221,6 +221,12 @@ export function createLandsMutationExecutor({ db, documentStorage }) {
         // Soft archive — never a Firestore delete. Idempotency guard (fails
         // rather than silently re-archiving) matches every other status
         // transition above.
+        case 'land_grant.discard_draft': {
+          if (record.created_by !== context.actor_uid || record.status !== 'draft' || record.archived === true) fail('DRAFT_DISCARD_DENIED');
+          const reason = validateArchiveReason(recordChanges);
+          write = { archived: true, archived_reason: reason, archived_by: context.actor_uid, archived_at: now, updated_at: now };
+          break;
+        }
         case 'land_grant.archive': {
           if (record.archived === true) fail('MUTATION_EXECUTION_FAILED');
           const reason = validateArchiveReason(recordChanges);
