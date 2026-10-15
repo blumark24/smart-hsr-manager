@@ -4925,7 +4925,12 @@ async function handleLogout() {
 async function loadWorkspace() {
   const domainKeys = ["royalOrders", "allocationDecisions", "beneficiaries", "plans", "parcels", "documents"];
   const [grantList, ...domainResults] = await Promise.all([client.listGrants(session.municipalityId), ...domainKeys.map(d => client.listEntities(session.municipalityId, d))]);
-  grants = grantList;
+  // Only active records belong in the operational workspace. Keep archived
+  // records stored for trusted audit; employee pages are owner-scoped in all
+  // sections, not only the registry table. Server authorization remains
+  // independently required for every mutation.
+  grants = grantList.filter(g => !g.archived
+    && (session.role !== "lands_employee" || g.created_by === session.firebaseUid));
   domains = Object.fromEntries(domainKeys.map((d, i) => [d, domainResults[i]]));
   realDecisions = domains.allocationDecisions.map(presentDecision);
   users = mod.canManageEntitlements(session.role) ? await client.listLandsUsers(session.municipalityId) : [];
