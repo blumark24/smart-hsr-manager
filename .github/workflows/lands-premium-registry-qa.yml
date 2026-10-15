@@ -1,0 +1,20 @@
+name: Lands Premium Registry QA
+on:
+  push:
+    branches:
+      - design/lands-premium-registry-v1-20261015
+  workflow_dispatch:
+jobs:
+  lands-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Premium registry and operational regressions
+        run: |
+          node --test test/lands-premium-registry-ui.test.js test/lands-production-mobile-regression.test.js test/lands-safe-draft-discard.test.js test/lands-grant-number.test.js test/phase19-2-lands-role-matrix.test.js
