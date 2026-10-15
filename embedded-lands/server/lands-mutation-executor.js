@@ -126,6 +126,11 @@ export function createLandsMutationExecutor({ db, documentStorage }) {
       const record = recordSnap.exists ? recordSnap.data() : null;
       if (record && record.municipality_id !== municipalityId) fail('MUTATION_EXECUTION_FAILED');
       if (!record && operation !== 'entitlement.enable') fail('MUTATION_EXECUTION_FAILED');
+      // A discarded/archived grant must be terminal for normal mutations,
+      // including direct API calls that bypass the registry UI.
+      // Explicit municipal-manager hard deletion remains governed separately.
+      if (record && collectionName === 'landGrants' && record.archived === true
+          && operation !== 'land_grant.delete') fail('LAND_GRANT_ARCHIVED');
 
       const now = event.occurred_at;
       let write = null;
