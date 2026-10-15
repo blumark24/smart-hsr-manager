@@ -1,0 +1,35 @@
+name: Lands governance scoped release gate
+on:
+  push:
+    branches:
+      - fix/lands-safeguarded-prod-20261015
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  land-governance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Clean install
+        run: npm ci
+      - name: Syntax - trusted Lands layers
+        run: |
+          node --check embedded-lands/server/lands-authorization.js
+          node --check embedded-lands/server/lands-mutation-executor.js
+          node --check embedded-lands/server/trusted-audit.js
+          node --check embedded-lands/server/trusted-lands-mutations.js
+          node --check lands/client/lands-client.js
+      - name: Grant number, creator/manager authorization, and no-hard-delete
+        run: |
+          node --test test/lands-safe-draft-discard.test.js
+          node --test test/lands-grant-number.test.js
+          node --test test/phase19-2-lands-role-matrix.test.js
+      - name: Existing Lands UI, login and integration regression
+        run: npm run test:lands
