@@ -1,0 +1,18 @@
+name: Lands Mobile Action Layout QA
+on:
+  push:
+    branches:
+      - fix/lands-mobile-row-actions-no-overlap-20261016
+  workflow_dispatch:
+jobs:
+  mobile-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify focused action layout and baseline registry behaviors
+        run: |
+          node --test test/lands-mobile-action-layout.test.js test/lands-classic-row-register.test.js test/lands-grant-number.test.js
