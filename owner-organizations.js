@@ -80,6 +80,9 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
       wrap.appendChild(mkBtn('تعديل','edit','btn btn-outline'));
       if(o.managerUid) wrap.appendChild(mkBtn('كلمة مرور المدير','manager-password','btn btn-outline'));
       wrap.appendChild(mkBtn('فحص ربط الدخول','identity-audit','btn btn-outline'));
+      if(o.managerUid && (o.status === 'active' || o.status === 'trial')) {
+        wrap.appendChild(mkBtn('تصحيح بريد الدخول','reconcile-email','btn btn-outline'));
+      }
       wrap.appendChild(mkBtn('ترقية','upgrade','btn btn-primary'));
       wrap.appendChild(mkBtn(o.status==='archived'?'استعادة':'أرشفة',o.status==='archived'?'restore':'archive',o.status==='archived'?'btn btn-primary':'btn btn-outline'));
       tdActions.appendChild(wrap); tr.appendChild(tdActions);
@@ -149,6 +152,54 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
         window.alert(summary);
       } catch(error) {
         showNotif('تعذّر فحص الربط: '+(error.message || 'خطأ غير معروف'));
+      }
+      return;
+    }
+    if(act==='reconcile-email'){
+      if (!org?.managerUid || !org?.email) {
+        showNotif('لا يوجد مدير مرتبط أو بريد مؤسسة صالح لهذا الحساب.');
+        return;
+      }
+      try {
+        // Only the read-only trusted identity audit may supply the actual
+        // Firebase login email. Display names are never used to select users.
+        const audit = await ownerAdminCall({
+          action: 'ownerAuditTenantIdentity', organizationId: id,
+        });
+        const manager = audit.manager || {};
+        if (audit.organization?.id !== id
+          || manager.uid !== org.managerUid
+          || manager.auth?.state !== 'present'
+          || manager.managerRecordLinked !== true) {
+          throw new Error('manager_identity_not_verified');
+        }
+        const desiredEmail = String(org.email).trim().toLowerCase();
+        const actualEmail = String(manager.auth.email || '').trim().toLowerCase();
+        if (desiredEmail === actualEmail) {
+          showNotif('بريد دخول المدير مطابق بالفعل لبريد المؤسسة؛ لم يتم أي تعديل.');
+          return;
+        }
+        const confirmation = window.confirm(
+          'المؤسسة: ' + org.name
+          + '\\nالبريد الحالي لتسجيل الدخول: ' + actualEmail
+          + '\\nالبريد الجديد: ' + desiredEmail
+          + '\\nسيتم تحديث بريد دخول المدير المرتبط بهذه المؤسسة فقط، وقد يحتاج تسجيل الدخول مجددًا. هل تؤكد؟'
+        );
+        if (!confirmation) return;
+        const result = await ownerAdminCall({
+          action: 'ownerUpdateManagerLoginEmail',
+          organizationId: id,
+          requestedEmail: desiredEmail,
+        });
+        if (!result?.ok || result.managerUid !== manager.uid || result.email !== desiredEmail) {
+          throw new Error('manager_login_email_sync_unverified');
+        }
+        await refreshAll();
+        showNotif(result.warning
+          ? 'تم تحديث البريد. تحذير: تعذّر إلغاء الجلسات السابقة؛ يلزم فحص لاحق.'
+          : 'تم تحديث بريد دخول المدير في Firebase وربطه بالمؤسسة دون تغيير كلمة المرور.');
+      } catch(error) {
+        showNotif('لم يُعدَّل بريد الدخول: ' + (error.message || 'فشل التحقق'));
       }
       return;
     }
@@ -290,7 +341,8 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
         // sign-in email. Reconcile by the verified manager UID before saving
         // unrelated organization fields. Never write organizations.email
         // directly: this would create a misleading login mismatch.
-        if (current?.managerUid || requestedLoginEmail !== oldDisplayEmail) {
+        if (requestedLoginEmail !== oldDisplayEmail) {
+          if (!window.confirm('سيُحدَّث بريد تسجيل دخول مدير هذه المؤسسة إلى ' + requestedLoginEmail + ' دون تغيير كلمة المرور. هل تؤكد؟')) return;
           emailResult = await ownerAdminCall({
             action: 'ownerUpdateManagerLoginEmail',
             organizationId: id,
@@ -316,7 +368,9 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
             mapDefaultZoom:spatialPatch.mapDefaultZoom
           });
         }
-        showNotif('تم تحديث بيانات المؤسسة.');
+        showNotif(emailResult?.warning
+          ? 'تم حفظ المؤسسة وبريد الدخول؛ تعذّر إلغاء الجلسات السابقة ويحتاج مراجعة.'
+          : 'تم تحديث بيانات المؤسسة' + (emailResult?.changed ? ' وبريد تسجيل دخول المدير.' : '.'));
       }else{
         if(!manager.password){
           showNotif('حدد كلمة مرور مدير البلدية قبل إنشاء المؤسسة.');
