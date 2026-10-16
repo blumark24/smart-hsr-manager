@@ -29,6 +29,7 @@ jobs:
           node --test test/manager-lands-digital-record.test.js
           node --test test/manager-lands-gis.test.js
           node --test test/lands-grant-number.test.js
+          node --test test/lands-approval-business-readiness-gate.test.cjs
 
   cross-service-regression:
     runs-on: ubuntu-latest
