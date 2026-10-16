@@ -240,44 +240,19 @@ body .grant-register-table .person,body .grant-registry-table .person{
 }
 body .grant-register-table tbody tr:last-child td,
 body .grant-registry-table tbody tr:last-child td{border-bottom:0!important}
-/* Exactly ONE frozen column (the business grant number). Never freeze
-   a variable-width set of action buttons: that created iPhone collisions. */
-body .grant-register-table th:nth-child(2),body .grant-register-table td:nth-child(2),
-body .grant-registry-table th:nth-child(2),body .grant-registry-table td:nth-child(2),
-body .grant-register-table th:last-child,body .grant-register-table td:last-child,
-body .grant-registry-table th:last-child,body .grant-registry-table td:last-child{
+/* All columns are part of ONE horizontally scrollable table.
+   No frozen grant number, action column, or sticky header. */
+body .grant-register-table th,body .grant-register-table td,
+body .grant-registry-table th,body .grant-registry-table td{
   position:static!important;right:auto!important;left:auto!important;
-  z-index:auto!important;width:auto!important;min-width:0!important;
-  max-width:none!important;border-left:0!important
+  top:auto!important;z-index:auto!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  box-shadow:none!important;
 }
 body .grant-register-table th:first-child,body .grant-register-table td:first-child,
 body .grant-registry-table th:first-child,body .grant-registry-table td:first-child{
-  position:sticky!important;right:0!important;left:auto!important;
-  width:112px!important;min-width:112px!important;max-width:112px!important;
-  white-space:normal!important;overflow-wrap:anywhere!important;
-  vertical-align:middle!important;z-index:3!important;
-  box-shadow:-1px 0 0 var(--line);
-}
-body .grant-register-table th:first-child,body .grant-registry-table th:first-child{
-  z-index:5!important
-}
-body .grant-register-table tbody td:first-child{
-  background:var(--surface,#fff)!important
-}
-body .grant-registry-table tbody td:first-child{
-  background:var(--row,var(--surface,#fff))!important
-}
-body.dark .grant-register-table tbody td:first-child,
-body.dark .grant-registry-table tbody td:first-child{
-  background:#102536!important
-}
-body .grant-register-table tbody tr:hover td:first-child,
-body .grant-registry-table tbody tr:hover td:first-child{
-  background:var(--hover,var(--surface-tint,var(--surface,#f2f5f4)))!important
-}
-body.dark .grant-register-table tbody tr:hover td:first-child,
-body.dark .grant-registry-table tbody tr:hover td:first-child{
-  background:#183344!important
+  white-space:nowrap!important;overflow-wrap:normal!important;
+  border-inline:0!important;font-weight:700;
 }
 /* Actions live in the actual <td> inside the single table row, not in an
    overlay or second independently scrolling grid. */
@@ -332,18 +307,8 @@ body .grant-register-table .status,body .grant-registry-table .status{
   body .grant-registry-table th,body .grant-registry-table td{
     padding:9px 12px!important;height:58px!important;max-height:58px!important
   }
-  body .grant-register-table th:first-child,body .grant-register-table td:first-child,
-  body .grant-registry-table th:first-child,body .grant-registry-table td:first-child{
-    width:100px!important;min-width:100px!important;max-width:100px!important
-  }
   body .grant-register-scroll,body .grant-registry-scroll{
     touch-action:pan-x pan-y;scrollbar-width:thin
-  }
-}
-@media(max-width:359px){
-  body .grant-register-table th:first-child,body .grant-register-table td:first-child,
-  body .grant-registry-table th:first-child,body .grant-registry-table td:first-child{
-    width:88px!important;min-width:88px!important;max-width:88px!important
   }
 }
 @media(prefers-reduced-motion:reduce){
