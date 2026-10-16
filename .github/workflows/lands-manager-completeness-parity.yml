@@ -29,3 +29,38 @@ jobs:
           node --test test/manager-lands-digital-record.test.js
           node --test test/manager-lands-gis.test.js
           node --test test/lands-grant-number.test.js
+
+  cross-service-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Sessions, roles and multi-service routing
+        run: |
+          node --test test/portal-session-isolation.test.js
+          node --test test/role-isolated-login-error-regression.test.js
+          node --test test/unified-workspace-access.test.js
+      - name: Field survey operational contract
+        run: |
+          node --test test/visual-distortion-lifecycle.integration.test.js
+          node --test test/field-head-operational-map.test.js
+      - name: Lands SSO and manager bridges
+        run: |
+          node --test test/manager-lands-sso.test.js
+          node --test test/manager-lands-bridge-integration.test.js
+          node --test test/embedded-lands-preview.test.js
+      - name: Mobility workflow regression
+        run: |
+          node --test test/mobility-command-center-delivery-closure.test.js
+          node --test test/mobility-workflow-policies.test.js
+      - name: AI provider and safety contract
+        run: |
+          node --test test/sprint6.11-openai-provider.test.js
+          node --test test/ai-allowed-organization-entitlement.test.js
+      - name: Tenant access / Firestore rules regression
+        run: npm run test:rules
