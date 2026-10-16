@@ -95,6 +95,67 @@ test('manager KPI uses canonical 100% while missing documents and unverified GIS
   assert.equal(data.kpi.noLocation, '1');
 });
 
+test('manager digital record displays current Lands embedded values without requiring foreign-key links', () => {
+  const { buildViewData } = managerFunctions();
+  const grant = {
+    id: 'internal-opaque-id',
+    status: 'approved',
+    grant_number: ' 0012/1448 ',
+    beneficiary: { name: 'Synthetic beneficiary', national_id: 'SYNTHETIC' },
+    royal_order: { number: 'ROYAL-123', date: '1448-01-01' },
+    allocation_decision: { number: 'DECISION-123', date: '1448-01-02' },
+    plan_reference_number: 'PLAN-007',
+    parcel_reference_number: 'PARCEL-009',
+    conveyance: { letter_number: 'LETTER-123', letter_date: '1448-01-03' }
+  };
+  const view = buildViewData([grant], [], {}, [], 'unavailable');
+  const row = view.registry[0];
+  assert.equal(row.reference, '0012/1448');
+  assert.equal(row.beneficiary, 'Synthetic beneficiary');
+  assert.equal(row.royalOrder, 'ROYAL-123');
+  assert.equal(row.allocationDecision, 'DECISION-123');
+  assert.equal(row.plan, 'PLAN-007');
+  assert.equal(row.parcel, 'PARCEL-009');
+  assert.equal(row.completion, '100%');
+  assert.equal(view.kpi.missingDocs, '1');
+  assert.equal(view.kpi.noLocation, '1');
+  assert.equal(row.id, 'internal-opaque-id');
+});
+
+test('legacy related-record details still display when embedded business fields are absent', () => {
+  const { buildViewData } = managerFunctions();
+  const grant = {
+    id: 'internal-old-record', status: 'draft',
+    beneficiary_id: 'b-1', royal_order_id: 'r-1', allocation_decision_id: 'a-1',
+    plan_id: 'p-1', parcel_id: 'pc-1'
+  };
+  const related = {
+    beneficiaries: [{ id: 'b-1', name: 'Legacy beneficiary' }],
+    royalOrders: [{ id: 'r-1', reference_id: 'ROYAL-LEGACY' }],
+    allocationDecisions: [{ id: 'a-1', reference_id: 'DECISION-LEGACY' }],
+    plans: [{ id: 'p-1', reference_id: 'PLAN-LEGACY' }],
+    parcels: [{ id: 'pc-1', reference_id: 'PARCEL-LEGACY' }]
+  };
+  const view = buildViewData([grant], [], related, [], 'unavailable');
+  const row = view.registry[0];
+  assert.equal(row.reference, 'ROYAL-LEGACY');
+  assert.equal(row.beneficiary, 'Legacy beneficiary');
+  assert.equal(row.royalOrder, 'ROYAL-LEGACY');
+  assert.equal(row.allocationDecision, 'DECISION-LEGACY');
+  assert.equal(row.plan, 'PLAN-LEGACY');
+  assert.equal(row.parcel, 'PARCEL-LEGACY');
+  assert.equal(row.completion, '0%', 'business completeness is not guessed from legacy links');
+  assert.equal(view.priorities[0].beneficiary, 'Legacy beneficiary');
+  assert.equal(view.priorities[0].reference, 'ROYAL-LEGACY');
+});
+
+test('missing business grant number never displays internal record identifier', () => {
+  const { buildViewData } = managerFunctions();
+  const view = buildViewData([{ id: 'internal-private-key', status: 'draft' }], [], {}, [], 'unavailable');
+  assert.equal(view.registry[0].reference, 'غير مسجّل');
+  assert.equal(view.priorities[0].reference, 'غير مسجّل');
+});
+
 test('digital file labels the same five canonical missing axes', () => {
   assert.match(managerSource, /plan_parcel: 'رقما المخطط والقطعة'/);
   assert.match(managerSource, /conveyance: 'خطاب الإفراغ'/);
