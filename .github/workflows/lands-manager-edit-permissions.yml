@@ -1,0 +1,20 @@
+name: Lands Manager Edit Permissions QA
+on:
+  push:
+    branches:
+      - fix/lands-manager-edit-own-tenant-20261016
+  workflow_dispatch:
+jobs:
+  permissions-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Tenant authorization, audit contract and row actions
+        run: |
+          node --test test/lands-manager-edit-authority.test.js test/lands-all-columns-scroll-ui.test.js test/lands-safe-draft-discard.test.js
