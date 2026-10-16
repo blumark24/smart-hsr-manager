@@ -1,0 +1,20 @@
+name: Lands All-Column Mobile Scroll QA
+on:
+  push:
+    branches:
+      - fix/lands-apple-row-mobile-final-20261016
+  workflow_dispatch:
+jobs:
+  row-register:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: One-row scroll + role matrix regression
+        run: |
+          node --test test/lands-all-columns-scroll-ui.test.js test/lands-safe-draft-discard.test.js test/phase19-2-lands-role-matrix.test.js test/lands-grant-number.test.js

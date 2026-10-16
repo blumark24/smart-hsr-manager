@@ -4182,7 +4182,7 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
   #appShell .lands-head-v2 .lands-head-municipality strong{font-size:11px!important}
 }
 </style>
-<link rel="stylesheet" href="./registry-table.css?v=classic-rows-20261016">
+<link rel="stylesheet" href="./registry-table.css?v=apple-row-20261016-r2">
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -5305,13 +5305,23 @@ function grantClassicRowActions(g, canArchive) {
   const ownEditable = g.created_by === session.firebaseUid && (g.status === "draft" || g.status === "incomplete");
   const ownDraft = g.created_by === session.firebaseUid && g.status === "draft";
   const canReview = canArchive && g.status === "under_review";
-  return `<div class="grant-classic-actions" onclick="event.stopPropagation()">
-    <button type="button" class="btn small ghost" onclick="openFile('${esc(g.id)}')" aria-label="فتح ملف المنحة">${icon("folder-open")}<span>الملف</span></button>
-    ${ownEditable ? `<button type="button" class="btn small ghost" onclick="openEditDraft('${esc(g.id)}')" aria-label="تعديل المنحة">${icon("pencil")}<span>تعديل</span></button>` : ""}
-    ${ownDraft ? `<button type="button" class="btn small ghost" onclick="discardDraftGrant('${esc(g.id)}')" aria-label="إلغاء المسودة مع الاحتفاظ بسجل التدقيق">${icon("archive")}<span>إلغاء المسودة</span></button>` : ""}
-    ${canReview ? `<button type="button" class="btn small ghost" onclick="openReviewGrant('${esc(g.id)}')" aria-label="مراجعة المنحة">${icon("clipboard-check")}<span>مراجعة</span></button>` : ""}
-    ${canArchive ? `<button type="button" class="btn small ghost" onclick="archiveGrant('${esc(g.id)}')" aria-label="أرشفة المنحة دون حذف نهائي">${icon("archive")}<span>أرشفة</span></button>` : ""}
-  </div>`;
+  const action = (label, symbol, command, kind = "") =>
+    `<button type="button" class="btn small ghost grant-icon-action ${kind}" title="${label}" aria-label="${label}"
+      onclick="${command}">${icon(symbol)}</button>`;
+  const file = action("فتح الملف", "folder-open", `openFile('${esc(g.id)}')`, "open");
+  const edit = ownEditable
+    ? action("تعديل المنحة", "pencil", `openEditDraft('${esc(g.id)}')`, "edit")
+    : `<button type="button" class="btn small ghost grant-icon-action is-unavailable" disabled
+         title="التعديل متاح فقط لمنشئ المنحة عند السماح بتعديلها"
+         aria-label="تعديل غير متاح لهذا السجل">${icon("pencil")}</button>`;
+  const discard = ownDraft ? action("إلغاء المسودة مع الاحتفاظ بسجل التدقيق", "trash-2",
+      `discardDraftGrant('${esc(g.id)}')`, "discard") : "";
+  const review = canReview ? action("مراجعة المنحة", "clipboard-check",
+      `openReviewGrant('${esc(g.id)}')`, "review") : "";
+  const archive = canArchive ? action("أرشفة المنحة دون حذف نهائي", "archive",
+      `archiveGrant('${esc(g.id)}')`, "archive") : "";
+  return `<div class="grant-classic-actions" role="group" aria-label="إجراءات المنحة"
+    onclick="event.stopPropagation()">${file}${edit}${discard}${review}${archive}</div>`;
 }
 function registryView() {
   const shown = grants.filter(g => !g.archived && (session.role !== "lands_employee" || g.created_by === session.firebaseUid))
@@ -5529,7 +5539,7 @@ function decisionGrantsTab(scoped) {
   // server/trusted-audit.js) — hide the row action for anyone the real
   // mutation would deny, instead of showing a button that always 403s.
   const canArchiveGrant = mod.canReviewGrant(session.role);
-  return `<section class="grant-display" data-view="table"><div class="registry-note">الأرقام حسب البيانات المسجّلة · نسبة اكتمال البيانات منفصلة عن الاعتماد والمرفقات</div><div class="table-wrap grant-registry-scroll" tabindex="0" role="region" aria-label="سجل المنح، مرّر أفقيًا لعرض التفاصيل"><table class="data-table grant-registry-table"><thead><tr><th scope="col">رقم المنحة</th><th scope="col">المستفيد</th><th scope="col">حالة الإجراء</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>المخطط</th><th>القطعة</th><th>المستندات</th><th>رقم خطاب الإفراغ</th><th>اكتمال البيانات</th><th>آخر تحديث</th><th>الإجراءات</th></tr></thead><tbody>${scoped.length ? scoped.map(g => `<tr onclick="openFile('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td>${statusBadge(g)}</td><td class="mono">${esc(maskNationalId(g.beneficiary?.national_id))}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}</td><td>${grantAttachmentsCell(g)}</td><td class="mono"><span class="axis-dot ${g.completeness.missing.includes("conveyance") ? "pending" : "ok"}" aria-hidden="true"></span>${esc(g.conveyance?.letter_number || "—")}</td><td>${grantCompletenessCell(g)}</td><td class="mono">${fmtDate(g.updated_at)}</td><td class="grant-classic-actions-cell">${grantClassicRowActions(g,canArchiveGrant)}</td></tr>`).join("") : `<tr><td colspan="12"><div class="empty">${icon("search-x")}<br>لا توجد منح مرتبطة بهذا القرار</div></td></tr>`}</tbody></table></div><div class="decision-mobile-grant-list" aria-label="سجل المنح على الجوال">${scoped.length ? scoped.map(g => decisionGrantMobileCard(g, canArchiveGrant)).join("") : `<div class="empty">لا توجد منح مرتبطة بهذا القرار</div>`}</div></section>`;
+  return `<section class="grant-display" data-view="table"><div class="registry-note">الأرقام حسب البيانات المسجّلة · نسبة اكتمال البيانات منفصلة عن الاعتماد والمرفقات</div><div class="table-wrap grant-registry-scroll" tabindex="0" role="region" aria-label="سجل المنح، مرّر أفقيًا لعرض التفاصيل"><table class="data-table grant-registry-table"><thead><tr><th scope="col">رقم المنحة</th><th scope="col">المستفيد</th><th scope="col">حالة الإجراء</th><th>السجل المدني</th><th>رقم الأمر السامي</th><th>المخطط</th><th>القطعة</th><th>المستندات</th><th>رقم خطاب الإفراغ</th><th>اكتمال البيانات</th><th>آخر تحديث</th><th scope="col">الإجراءات</th></tr></thead><tbody>${scoped.length ? scoped.map(g => `<tr onclick="openFile('${esc(g.id)}')"><td><b class="mono">${esc(mod.grantNumberLabel(g))}</b></td><td><span class="person">${esc(g.beneficiary?.name || "—")}</span></td><td>${statusBadge(g)}</td><td class="mono">${esc(maskNationalId(g.beneficiary?.national_id))}</td><td class="mono">${esc(g.royal_order?.number || "—")}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "plan", planLabel(g.plan_id)))}</td><td class="mono">${esc(mod.grantReferenceLabel(g, "parcel", parcelLabel(g.parcel_id)))}</td><td>${grantAttachmentsCell(g)}</td><td class="mono"><span class="axis-dot ${g.completeness.missing.includes("conveyance") ? "pending" : "ok"}" aria-hidden="true"></span>${esc(g.conveyance?.letter_number || "—")}</td><td>${grantCompletenessCell(g)}</td><td class="mono">${fmtDate(g.updated_at)}</td><td class="grant-classic-actions-cell">${grantClassicRowActions(g,canArchiveGrant)}</td></tr>`).join("") : `<tr><td colspan="12"><div class="empty">${icon("search-x")}<br>لا توجد منح مرتبطة بهذا القرار</div></td></tr>`}</tbody></table></div><div class="decision-mobile-grant-list" aria-label="سجل المنح على الجوال">${scoped.length ? scoped.map(g => decisionGrantMobileCard(g, canArchiveGrant)).join("") : `<div class="empty">لا توجد منح مرتبطة بهذا القرار</div>`}</div></section>`;
 }
 // Decision Twin — DECISION level of the 3-level Digital Twin. Shares the
 // same layer-filter state (twinLayerFilter) as the Global Twin so "متأخر"/
