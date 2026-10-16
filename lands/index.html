@@ -5302,7 +5302,7 @@ function setGrantMobileMode(mode) {
 // Presentation only: all edit/review/discard/archive permissions are still
 // enforced by existing trusted mutations on the server. Never hard-delete here.
 function grantClassicRowActions(g, canArchive) {
-  const ownEditable = g.created_by === session.firebaseUid && (g.status === "draft" || g.status === "incomplete");
+  const ownEditable = canEditGrantContent(g);
   const ownDraft = g.created_by === session.firebaseUid && g.status === "draft";
   const canReview = canArchive && g.status === "under_review";
   const action = (label, symbol, command, kind = "") =>
@@ -5312,7 +5312,7 @@ function grantClassicRowActions(g, canArchive) {
   const edit = ownEditable
     ? action("تعديل المنحة", "pencil", `openEditDraft('${esc(g.id)}')`, "edit")
     : `<button type="button" class="btn small ghost grant-icon-action is-unavailable" disabled
-         title="التعديل متاح فقط لمنشئ المنحة عند السماح بتعديلها"
+         title="التعديل متاح للمنشئ أو المدير على السجلات القابلة للتعديل"
          aria-label="تعديل غير متاح لهذا السجل">${icon("pencil")}</button>`;
   const discard = ownDraft ? action("إلغاء المسودة مع الاحتفاظ بسجل التدقيق", "trash-2",
       `discardDraftGrant('${esc(g.id)}')`, "discard") : "";
@@ -5322,6 +5322,14 @@ function grantClassicRowActions(g, canArchive) {
       `archiveGrant('${esc(g.id)}')`, "archive") : "";
   return `<div class="grant-classic-actions" role="group" aria-label="إجراءات المنحة"
     onclick="event.stopPropagation()">${file}${edit}${discard}${review}${archive}</div>`;
+}
+// Real edit capability: creators can edit their own drafts/returns; both verified
+// municipal Lands manager roles may correct any draft/returned grant within the
+// current tenant. The trusted mutation endpoint enforces this again.
+function canEditGrantContent(g) {
+  const isManager = session.role === "municipal_manager" || session.role === "lands_department_manager";
+  return Boolean(g && !g.archived && (g.status === "draft" || g.status === "incomplete")
+    && (g.created_by === session.firebaseUid || isManager));
 }
 function registryView() {
   const shown = grants.filter(g => !g.archived && (session.role !== "lands_employee" || g.created_by === session.firebaseUid))
@@ -5510,7 +5518,7 @@ function decisionGrantMobileCard(g, canArchiveGrant) {
   const detail = (label, value) => `<div class="decision-mobile-field"><span>${label}</span><strong class="mono">${esc(value || "—")}</strong></div>`;
   const actions = `<div class="decision-mobile-actions">
     <button type="button" class="btn small" onclick="openFile('${esc(g.id)}')">${icon("folder-open")} فتح الملف</button>
-    ${(g.status === "draft" || g.status === "incomplete") && g.created_by === session.firebaseUid ? `<button type="button" class="btn small ghost" onclick="openEditDraft('${esc(g.id)}')">${icon("pencil")} تعديل</button>` : ""}
+    ${canEditGrantContent(g) ? `<button type="button" class="btn small ghost" onclick="openEditDraft('${esc(g.id)}')">${icon("pencil")} تعديل</button>` : ""}
     ${g.status === "draft" && g.created_by === session.firebaseUid ? `<button type="button" class="btn small ghost" onclick="discardDraftGrant('${esc(g.id)}')">${icon("archive")} إلغاء مسودتي</button>` : ""}
     ${g.status === "under_review" && canArchiveGrant ? `<button type="button" class="btn small ghost" onclick="openReviewGrant('${esc(g.id)}')">${icon("clipboard-check")} مراجعة</button>` : ""}
     ${canArchiveGrant ? `<button type="button" class="btn small ghost" onclick="archiveGrant('${esc(g.id)}')">${icon("archive")} أرشفة</button>` : ""}
@@ -5825,10 +5833,10 @@ function livePathContextMarkup(g) {
 // authorization, which this task explicitly forbids doing silently.
 function livePathActionsMarkup(g, canEditDraft, canSubmit, canDecide, canReopenNow) {
   if (g.status === "draft" || g.status === "incomplete") {
-    if (canEditDraft && canSubmit) {
+    if (canEditDraft) {
       return `<div class="decision-path-actions">
         <button class="btn" onclick="openEditDraft('${esc(g.id)}')">${icon("pencil")} ${g.status === "incomplete" ? "تعديل البيانات" : "تعديل المسودة"}</button>
-        <button class="btn primary" onclick="submitForReview('${esc(g.id)}')">${icon("send")} ${g.status === "incomplete" ? "إعادة إرسال للمراجعة" : "إرسال للمراجعة"}</button>
+        ${canSubmit ? `<button class="btn primary" onclick="submitForReview('${esc(g.id)}')">${icon("send")} ${g.status === "incomplete" ? "إعادة إرسال للمراجعة" : "إرسال للمراجعة"}</button>` : ""}
       </div>`;
     }
     const waiting = g.status === "incomplete" ? "بانتظار استكمال البيانات وإعادة الإرسال." : "لا يوجد إجراء متاح لك في هذه المرحلة.";
@@ -5860,7 +5868,7 @@ function fileView() {
   if (!g) return shellHead("الملف الرقمي للمنحة", "الملف الرقمي للمنحة", "لا توجد منحة محددة حاليًا") + `<div class="empty">${icon("file-search")}<br>اختر منحة من سجل منح الأراضي لعرض ملفها الرقمي</div>`;
   const percent = completenessPercent(g);
   const isOwner = g.created_by === session.firebaseUid;
-  const canEditDraft = (g.status === "draft" || g.status === "incomplete") && isOwner;
+  const canEditDraft = canEditGrantContent(g);
   const canSubmit = (g.status === "draft" || g.status === "incomplete") && isOwner && mod.canTransitionGrant(session.role, g.status, "under_review");
   const canDecide = g.status === "under_review" && mod.canReviewGrant(session.role);
   const docs = documentsForGrant(g.id);
@@ -6236,7 +6244,8 @@ function openReviewGrant(grantId) {
 
 // ---- edit draft drawer ----
 function openEditDraft(grantId) {
-  const g = grantById(grantId); if (!g) return;
+  const g = grantById(grantId);
+  if (!canEditGrantContent(g)) { showToast("التعديل غير متاح لهذا السجل", true); return; }
   document.getElementById("drawer").innerHTML = `<div class="drawer-head"><div><h2>تعديل المسودة</h2><div class="drawer-sub">المنحة ${esc(mod.grantNumberLabel(g))} · ${completenessPercent(g)}%</div></div><button class="close" onclick="closeDrawer()">${icon("x")}</button></div>
   <label class="input-label">رقم المنحة<input class="text-input" id="editGrantNumber" maxlength="80" dir="auto" value="${esc(g.grant_number || "")}" placeholder="الرقم الوارد في مستند المنحة"></label>
   <div class="missing-item"><h3>${icon("user-round")} المستفيد</h3><div class="form-row"><label class="input-label">الاسم<input class="text-input" id="editBeneficiaryName" value="${esc(g.beneficiary?.name || "")}"></label><label class="input-label">السجل المدني<input class="text-input" id="editNationalId" value="${esc(g.beneficiary?.national_id || "")}"></label></div></div>
@@ -6249,6 +6258,7 @@ function openEditDraft(grantId) {
   document.getElementById("drawerBackdrop").classList.add("open"); lucide.createIcons();
 }
 async function submitEditDraft(grantId) {
+  if (!canEditGrantContent(grantById(grantId))) { showToast("انتهت صلاحية تعديل هذا السجل", true); return; }
   const changes = {
     grant_number: document.getElementById("editGrantNumber").value.trim() || null,
     beneficiary: { name: document.getElementById("editBeneficiaryName").value.trim(), national_id: document.getElementById("editNationalId").value.trim() || null },
