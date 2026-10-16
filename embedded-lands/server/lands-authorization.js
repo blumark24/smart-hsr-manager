@@ -50,11 +50,15 @@ export function createLandsAuthorizer({ db }) {
       // the grant's own author may advance it into review. This does NOT
       // apply to approve/reject/return_for_completion, which are reviewer
       // actions over any grant in the tenant (no ownership restriction).
-      // Gate 3 P0 fix: land_grant.update (real content edits to a draft or
-      // returned/incomplete grant) is the same kind of creator action — a
-      // manager/reviewer must not gain arbitrary content-edit capability
-      // merely because incomplete editing is now supported.
-      if ((mutationCommand.operation === 'land_grant.transition' || mutationCommand.operation === 'land_grant.update') && record.created_by !== context.actor_uid) return false;
+      // Submitting/resubmitting stays creator-only, even for managers.
+      if (mutationCommand.operation === 'land_grant.transition' && record.created_by !== context.actor_uid) return false;
+      // Municipal/department Lands managers may correct draft/incomplete content
+      // from other creators only within the verified municipality. Employees
+      // remain creator-only. The executor independently rejects other states,
+      // archived grants, and fields outside the trusted allowlist.
+      if (mutationCommand.operation === 'land_grant.update' && record.created_by !== context.actor_uid
+          && context.lands_role !== 'municipal_manager'
+          && context.lands_role !== 'lands_department_manager') return false;
       // Discarding is creator-only for every role, and applies only to a live
       // draft. A transferred manager gets review powers, not ownership of
       // another employee's drafts; server executor checks state again.
