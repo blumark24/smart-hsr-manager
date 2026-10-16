@@ -226,7 +226,7 @@ body .grant-registry-table th,body .grant-registry-table td{
   white-space:nowrap!important;overflow-wrap:normal!important;
   word-break:normal!important;text-align:right!important;
   padding:11px 14px!important;font-size:12.5px;line-height:1.45;
-  height:62px!important;max-height:62px!important;
+  height:auto!important;max-height:none!important;
   border-bottom:1px solid var(--line)!important
 }
 body .grant-register-table thead th,body .grant-registry-table thead th{
@@ -305,7 +305,7 @@ body .grant-register-table .status,body .grant-registry-table .status{
 @media(max-width:720px){
   body .grant-register-table th,body .grant-register-table td,
   body .grant-registry-table th,body .grant-registry-table td{
-    padding:9px 12px!important;height:58px!important;max-height:58px!important
+    padding:9px 12px!important;height:auto!important;max-height:none!important
   }
   body .grant-register-scroll,body .grant-registry-scroll{
     touch-action:pan-x pan-y;scrollbar-width:thin
