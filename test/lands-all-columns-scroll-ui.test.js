@@ -102,3 +102,18 @@ test('iOS-inspired edit/delete/archive icons are distinct and touch-accessible',
  assert.match(patch,/grant-icon-action\.archive\{\s*color:/);
  assert.match(patch,/grant-icon-action\.edit\{\s*color:/);
 });
+
+test('both complete RTL grant tables place all real action controls in the LAST column',()=>{
+  for (const source of [reg, decision]) {
+    const headings=source.match(/<thead><tr>([\\s\\S]*?)<\\/tr><\\/thead>/);
+    assert.ok(headings,'expected table header');
+    const labels=[...headings[1].matchAll(/<th[^>]*>([^<]+)<\\/th>/g)].map(m=>m[1]);
+    assert.equal(labels[0],'رقم المنحة');
+    assert.equal(labels.at(-1),'الإجراءات');
+  }
+  assert.ok(reg.lastIndexOf('class="grant-classic-actions-cell"')>reg.lastIndexOf('${completenessPercent(g)}%'));
+  assert.ok(decision.lastIndexOf('class="grant-classic-actions-cell"')>decision.lastIndexOf('${fmtDate(g.updated_at)}'));
+  assert.match(css,/--grant-row-odd:#f1f8f5/);
+  assert.match(css,/--grant-row-even:#e8f3ef/);
+  assert.match(css,/body.dark \\.grant-register-scroll/);
+});
