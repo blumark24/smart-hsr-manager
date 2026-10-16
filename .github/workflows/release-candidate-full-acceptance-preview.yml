@@ -7,6 +7,7 @@ on:
       - fix/role-isolated-auth-gate-v1
       - fix/auth-rate-limit-diagnostics-v1
       - fix/owner-readonly-tenant-identity-audit
+      - fix/lands-manager-completeness-parity-20261016
   workflow_dispatch:
 
 permissions:
