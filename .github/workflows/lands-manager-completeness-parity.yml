@@ -1,0 +1,31 @@
+name: Lands Manager Completeness Parity QA
+
+on:
+  push:
+    branches:
+      - fix/lands-manager-completeness-parity-20261016
+  pull_request:
+    branches:
+      - fix/lands-manager-edit-own-tenant-20261016
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lands-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: node --check manager-lands-adapter.js
+      - name: Pure parity and existing manager regressions
+        run: |
+          node --test test/manager-lands-completeness-parity.test.cjs
+          node --test test/manager-lands-digital-record.test.js
+          node --test test/manager-lands-gis.test.js
+          node --test test/lands-grant-number.test.js
