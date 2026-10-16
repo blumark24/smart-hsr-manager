@@ -85,3 +85,20 @@ test('inline application script parses and audited record actions remain availab
  assert.match(html,/function discardDraftGrant\(grantId\)/);
  assert.match(html,/function openEditDraft\(grantId\)/);
 });
+
+test('iOS-inspired edit/delete/archive icons are distinct and touch-accessible',()=>{
+ const own=controls();
+ assert.match(own,/title="تعديل المنحة"/);
+ assert.match(own,/title="إلغاء المسودة مع الاحتفاظ بسجل التدقيق"/);
+ assert.match(own,/grant-icon-action edit/);
+ assert.match(own,/grant-icon-action discard/);
+ const manager=controls({status:'under_review',created_by:'other',actor:'manager',manager:true});
+ assert.match(manager,/grant-icon-action archive/);
+ assert.match(manager,/grant-icon-action review/);
+ assert.match(patch,/border-radius:13px!important/);
+ assert.match(patch,/height:44px!important/);
+ assert.match(patch,/touch-action:manipulation/);
+ assert.match(patch,/grant-icon-action\.discard\{\s*color:/);
+ assert.match(patch,/grant-icon-action\.archive\{\s*color:/);
+ assert.match(patch,/grant-icon-action\.edit\{\s*color:/);
+});
