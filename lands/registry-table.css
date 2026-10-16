@@ -267,31 +267,53 @@ body .grant-classic-actions{
   align-items:center!important;justify-content:flex-start!important;
   gap:6px!important;vertical-align:middle;white-space:nowrap!important
 }
+/* iOS-inspired control geometry, but using existing Lucide icons.
+   The semantic action labels stay in aria-label/title for accessibility. */
 body .grant-classic-actions .grant-icon-action{
-  appearance:none;display:inline-flex!important;flex:0 0 44px!important;
+  -webkit-appearance:none;appearance:none;
+  display:inline-flex!important;flex:0 0 44px!important;
   width:44px!important;height:44px!important;
   min-width:44px!important;min-height:44px!important;
   max-width:44px!important;max-height:44px!important;
-  padding:0!important;align-items:center;justify-content:center;
-  border:1px solid var(--line)!important;border-radius:12px!important;
-  background:var(--surface-tint,var(--surface))!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10)!important;
-  color:var(--ink)!important;transition:background .15s ease,transform .15s ease
+  padding:0!important;align-items:center!important;justify-content:center!important;
+  border:1px solid rgba(125,159,157,.22)!important;border-radius:13px!important;
+  background:rgba(130,157,154,.10)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 1px 3px rgba(0,0,0,.04)!important;
+  color:var(--ink)!important;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  cursor:pointer;
+  transition:background .16s ease,transform .16s ease,box-shadow .16s ease
+}
+body.dark .grant-classic-actions .grant-icon-action{
+  background:rgba(174,221,212,.075)!important;
+  border-color:rgba(174,221,212,.18)!important
 }
 body .grant-classic-actions .grant-icon-action svg{
-  display:block;width:18px!important;height:18px!important;
-  margin:0!important;flex:0 0 18px!important
+  display:block;width:19px!important;height:19px!important;
+  stroke-width:1.9!important;stroke-linecap:round;stroke-linejoin:round;
+  margin:0!important;flex:0 0 19px!important
 }
 body .grant-classic-actions .grant-icon-action:hover{
   background:var(--surface)!important;transform:translateY(-1px)
 }
-body .grant-classic-actions .grant-icon-action:active{transform:scale(.96)}
-body .grant-classic-actions .grant-icon-action.edit{
-  color:var(--teal,#56c6a0)!important
+body .grant-classic-actions .grant-icon-action:active{
+  transform:scale(.94);box-shadow:inset 0 1px 3px rgba(0,0,0,.08)!important
 }
-body .grant-classic-actions .grant-icon-action.discard,
+body .grant-classic-actions .grant-icon-action.edit{
+  color:#29ac90!important;background:rgba(42,171,144,.10)!important
+}
+body .grant-classic-actions .grant-icon-action.discard{
+  color:#de776d!important;background:rgba(222,119,109,.095)!important
+}
 body .grant-classic-actions .grant-icon-action.archive{
-  color:var(--warning,#d5a56a)!important
+  color:#d09d54!important;background:rgba(208,157,84,.095)!important
+}
+body .grant-classic-actions .grant-icon-action.review{
+  color:#6f9ed8!important;background:rgba(111,158,216,.10)!important
+}
+body .grant-classic-actions .grant-icon-action.open{
+  color:var(--ink)!important
 }
 body .grant-classic-actions .grant-icon-action[disabled]{
   opacity:.3;cursor:not-allowed;pointer-events:none
