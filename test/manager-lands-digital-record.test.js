@@ -39,10 +39,14 @@ test('Manager Lands adapter resolves related records from authoritative collecti
   assert.match(adapter, /parcelsById\.get\(g\.parcel_id\)/);
 });
 
-test('Manager Lands presentation no longer depends on legacy nested grant fields', () => {
-  assert.doesNotMatch(adapter, /g\.beneficiary\?\.name/);
-  assert.doesNotMatch(adapter, /g\.royal_order\?\.number/);
-  assert.doesNotMatch(adapter, /g\.allocation_decision\?\.number/);
+test('Manager Lands presentation prefers canonical business fields while keeping legacy references', () => {
+  assert.match(adapter, /preferBusinessLabel\(g\.beneficiary\?\.name/);
+  assert.match(adapter, /preferBusinessLabel\(g\.royal_order\?\.number/);
+  assert.match(adapter, /preferBusinessLabel\(g\.allocation_decision\?\.number/);
+  assert.match(adapter, /preferBusinessLabel\(g\.plan_reference_number/);
+  assert.match(adapter, /preferBusinessLabel\(g\.parcel_reference_number/);
+  assert.match(adapter, /relatedLabel\(royalOrder/);
+  assert.match(adapter, /relatedLabel\(allocationDecision/);
 });
 
 
