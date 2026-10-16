@@ -282,12 +282,32 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
     const id = f.docId.value;
     try{
       if(id){
+        const current = getOrgs().find(org => org.id === id);
+        const oldDisplayEmail = String(current?.email || '').trim().toLowerCase();
+        const requestedLoginEmail = String(manager.email || '').trim().toLowerCase();
+        let emailResult = null;
+        // An organization's display email is NOT the manager's Firebase
+        // sign-in email. Reconcile by the verified manager UID before saving
+        // unrelated organization fields. Never write organizations.email
+        // directly: this would create a misleading login mismatch.
+        if (current?.managerUid || requestedLoginEmail !== oldDisplayEmail) {
+          emailResult = await ownerAdminCall({
+            action: 'ownerUpdateManagerLoginEmail',
+            organizationId: id,
+            requestedEmail: manager.email,
+          });
+          if (!emailResult?.ok || emailResult.email !== requestedLoginEmail) {
+            throw new Error('manager_login_email_sync_unverified');
+          }
+        }
         await updateDoc(doc(db,'organizations', id), {
           ...organization,
           manager:manager.name,
-          email:manager.email,
           updatedAt:serverTimestamp()
         });
+        if (emailResult?.warning) {
+          showNotif('تم حفظ البيانات وتحديث بريد الدخول، لكن إلغاء الجلسات السابقة يحتاج مراجعة.');
+        }
         if(Object.keys(spatialPatch).length){
           await ownerAdminCall({
             action:'ownerSetOrganizationSpatialContext',
