@@ -211,6 +211,11 @@ function relatedLabel(entity, fallback = '—') {
 function unresolvedReference(id, fallback = '—') {
   return id ? `مرجع غير متاح · ${id}` : fallback;
 }
+// Prefer the active Lands grant's embedded business fields; retain related-
+// collection labels for older grants without embedded values. Read only.
+function preferBusinessLabel(value, fallback) {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
 
 function buildViewData(grants, documents, related, auditEvents, auditState) {
   const royalOrders = Array.isArray(related?.royalOrders) ? related.royalOrders : [];
@@ -262,16 +267,16 @@ function buildViewData(grants, documents, related, auditEvents, auditState) {
       const grantDocuments = documentsForGrant(g.id, documents);
       return {
         id: g.id,
-        reference: relatedLabel(royalOrder, relatedLabel(allocationDecision, g.id)),
-        beneficiary: beneficiary?.name || unresolvedReference(g.beneficiary_id, 'غير متاح'),
+        reference: preferBusinessLabel(g.grant_number, relatedLabel(royalOrder, relatedLabel(allocationDecision, 'غير مسجّل'))),
+        beneficiary: preferBusinessLabel(g.beneficiary?.name, beneficiary?.name || unresolvedReference(g.beneficiary_id, 'غير متاح')),
         beneficiaryId: g.beneficiary_id || null,
-        royalOrder: relatedLabel(royalOrder, unresolvedReference(g.royal_order_id)),
+        royalOrder: preferBusinessLabel(g.royal_order?.number, relatedLabel(royalOrder, unresolvedReference(g.royal_order_id))),
         royalOrderId: g.royal_order_id || null,
-        allocationDecision: relatedLabel(allocationDecision, unresolvedReference(g.allocation_decision_id)),
+        allocationDecision: preferBusinessLabel(g.allocation_decision?.number, relatedLabel(allocationDecision, unresolvedReference(g.allocation_decision_id))),
         allocationDecisionId: g.allocation_decision_id || null,
-        plan: relatedLabel(plan, unresolvedReference(g.plan_id)),
+        plan: preferBusinessLabel(g.plan_reference_number, relatedLabel(plan, unresolvedReference(g.plan_id))),
         planId: g.plan_id || null,
-        parcel: relatedLabel(parcel, unresolvedReference(g.parcel_id)),
+        parcel: preferBusinessLabel(g.parcel_reference_number, relatedLabel(parcel, unresolvedReference(g.parcel_id))),
         parcelId: g.parcel_id || null,
         parcelSpatial: parcel?.spatial || null,
         status: STATUS_LABELS[g.status] || g.status || 'غير معروف',
@@ -296,8 +301,8 @@ function buildViewData(grants, documents, related, auditEvents, auditState) {
     })),
     priorities: lowestCompletion.map(g => ({
       id: g.id,
-      reference: relatedLabel(royalOrdersById.get(g.royal_order_id), relatedLabel(allocationDecisionsById.get(g.allocation_decision_id), g.id)),
-      beneficiary: beneficiariesById.get(g.beneficiary_id)?.name || unresolvedReference(g.beneficiary_id, 'غير متاح'),
+      reference: preferBusinessLabel(g.grant_number, relatedLabel(royalOrdersById.get(g.royal_order_id), relatedLabel(allocationDecisionsById.get(g.allocation_decision_id), 'غير مسجّل'))),
+      beneficiary: preferBusinessLabel(g.beneficiary?.name, beneficiariesById.get(g.beneficiary_id)?.name || unresolvedReference(g.beneficiary_id, 'غير متاح')),
       percentage: Math.round(g.completeness.percentage)
     })),
     issueFocus: [
