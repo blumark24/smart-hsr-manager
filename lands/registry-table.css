@@ -336,3 +336,46 @@ body .grant-register-table .status,body .grant-registry-table .status{
 @media(prefers-reduced-motion:reduce){
   body .grant-icon-action{transition:none!important}
 }
+
+/* GOVERNMENT REGISTER FINISH R2 — complete row tint and last-column actions.
+   Visual only: no record, authorization, persistence, or routing changes. */
+body .grant-register-scroll,body .grant-registry-scroll{
+  --grant-row-odd:#f1f8f5;
+  --grant-row-even:#e8f3ef;
+  --grant-row-hover:#dcefe7;
+  --grant-row-line:#d2e5dc;
+  --grant-head-bg:#145e4c;
+  --grant-head-text:#f7fffc;
+}
+body.dark .grant-register-scroll,body.dark .grant-registry-scroll{
+  --grant-row-odd:#122c32;
+  --grant-row-even:#16343a;
+  --grant-row-hover:#20464a;
+  --grant-row-line:#2a4b4d;
+  --grant-head-bg:#19493e;
+  --grant-head-text:#ebfff6;
+}
+body .grant-register-table thead th,body .grant-registry-table thead th{
+  background:var(--grant-head-bg)!important;
+  color:var(--grant-head-text)!important;
+  border-bottom:1px solid var(--grant-row-line)!important;
+}
+body .grant-register-table tbody tr:nth-child(odd)>td,
+body .grant-registry-table tbody tr:nth-child(odd)>td{
+  background:var(--grant-row-odd)!important;
+  border-bottom-color:var(--grant-row-line)!important;
+}
+body .grant-register-table tbody tr:nth-child(even)>td,
+body .grant-registry-table tbody tr:nth-child(even)>td{
+  background:var(--grant-row-even)!important;
+  border-bottom-color:var(--grant-row-line)!important;
+}
+body .grant-register-table tbody tr:hover>td,
+body .grant-registry-table tbody tr:hover>td,
+body .grant-register-table tbody tr.selected-row>td{
+  background:var(--grant-row-hover)!important;
+}
+body .grant-register-table th:last-child,body .grant-register-table td:last-child,
+body .grant-registry-table th:last-child,body .grant-registry-table td:last-child{
+  border-inline-start:1px solid var(--grant-row-line)!important;
+}
