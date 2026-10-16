@@ -2190,7 +2190,7 @@ body{min-height:100svh!important;min-height:100dvh!important}
                     <section style="padding:15px;border-radius:16px;background:var(--l2Grain,none),var(--l2,linear-gradient(180deg,rgba(17,26,44,.74),rgba(10,16,29,.8)));border:1px solid var(--l2Bd,rgba(122,164,224,.13))">
                       <div style="font-size:12px;font-weight:700;color:var(--tx,#f0f6ff);margin-bottom:10px">Smart Completeness Engine</div>
                       <sc-if value="{{ landsRecordComplete }}">
-                        <div style="padding:12px;border-radius:11px;background:rgba(34,197,94,.09);border:1px solid rgba(34,197,94,.22);color:var(--ok,#22c55e);font-size:11px;line-height:1.7">السجل مكتمل وفق عناصر التحقق الستة.</div>
+                        <div style="padding:12px;border-radius:11px;background:rgba(34,197,94,.09);border:1px solid rgba(34,197,94,.22);color:var(--ok,#22c55e);font-size:11px;line-height:1.7">السجل مكتمل وفق محاور الاكتمال الخمسة.</div>
                       </sc-if>
                       <sc-if value="{{ landsRecordIncomplete }}">
                         <div style="font-size:10px;color:var(--tx3,#7d8ea6);margin-bottom:8px">المطلوب للوصول إلى 100%</div>
@@ -4426,6 +4426,8 @@ class Component extends DCLogic {
       beneficiary: 'المستفيد',
       royal_order: 'الأمر السامي',
       allocation_decision: 'قرار التخصيص',
+      plan_parcel: 'رقما المخطط والقطعة',
+      conveyance: 'خطاب الإفراغ',
       plan: 'المخطط',
       parcel: 'القطعة',
       documents: 'المستندات'
