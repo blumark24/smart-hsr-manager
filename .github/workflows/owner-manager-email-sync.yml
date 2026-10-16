@@ -1,0 +1,22 @@
+name: Owner Manager Email Sync QA
+on:
+  push:
+    branches:
+      - fix/owner-manager-login-email-sync-20261016
+  workflow_dispatch:
+jobs:
+  identity-email-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test verified UID, email collision, auditing, rollback and UI
+        run: node --test test/owner-manager-email-sync.test.cjs
+      - name: Check owner management source syntax
+        run: |
+          node --check api/_lib/ownerManagerEmailSync.js
+          node --check api/_lib/ownerOpsSupport.js
+          node --check owner-organizations.js
