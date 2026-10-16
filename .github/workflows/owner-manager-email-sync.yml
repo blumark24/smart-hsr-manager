@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - fix/owner-manager-login-email-sync-20261016
+  pull_request:
+    branches:
+      - fix/lands-apple-row-mobile-final-20261016
   workflow_dispatch:
 jobs:
   identity-email-gate:
