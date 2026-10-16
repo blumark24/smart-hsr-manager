@@ -5,10 +5,12 @@
 // All reads/writes execute through api/admin/users.js after Firebase token verification.
 
 const { passwordPolicyReason } = require('./serviceEntitlements');
+const { syncManagerLoginEmail, ManagerEmailSyncError } = require('./ownerManagerEmailSync');
 
 const OWNER_ACTIONS = new Set([
   'ownerOpsSnapshot',
   'ownerAuditTenantIdentity',
+  'ownerUpdateManagerLoginEmail',
   'ownerCreateOrganizationWithManager',
   'ownerSetManagerPassword',
   'ownerSupportList',
@@ -862,6 +864,20 @@ async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldVal
   try {
     if (action === 'ownerAuditTenantIdentity') {
       await handleOwnerTenantIdentityAudit({ body, db, auth, sendJson, res });
+      return true;
+    }
+    if (action === 'ownerUpdateManagerLoginEmail') {
+      try {
+        const result = await syncManagerLoginEmail({
+          db, auth, FieldValue, ownerUid: decoded.uid,
+          organizationId: body.organizationId,
+          requestedEmail: body.requestedEmail,
+        });
+        sendJson(res, 200, result);
+      } catch (error) {
+        if (!(error instanceof ManagerEmailSyncError)) throw error;
+        sendJson(res, error.status, { error: 'manager_login_email_sync_denied', reason: error.reason });
+      }
       return true;
     }
     if (action === 'ownerOpsSnapshot') {
