@@ -107,7 +107,7 @@ test('both complete RTL grant tables place all real action controls in the LAST 
   for (const source of [reg, decision]) {
     const headings=source.split('<thead><tr>')[1]?.split('</tr></thead>')[0];
     assert.ok(headings,'expected table header');
-    const labels=headings.split('<th').slice(1).map(chunk=>chunk.split('>')[1]?.split('</th>')[0]);
+    const labels=headings.split('<th').slice(1).map(chunk=>chunk.split('>')[1]?.split('<')[0]);
     assert.equal(labels[0],'رقم المنحة');
     assert.equal(labels.at(-1),'الإجراءات');
   }
