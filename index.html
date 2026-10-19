@@ -5,6 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="/public-r3-assets/runtime/d0b7d0d4-2c3b-4c2e-9e1f-fc9040c7addb.js"></script>
 
+
+<!-- SMART HSR assistant UI guard: outer widget only; Chatbase response content remains provider-controlled. -->
+<style id="smart-hsr-assistant-ui">
+  #chatbase-bubble-window {
+    width: min(420px, calc(100vw - 32px)) !important;
+    height: min(680px, calc(100dvh - 112px)) !important;
+    max-height: calc(100dvh - 112px) !important;
+    border: 1px solid rgba(13, 115, 119, .22) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 18px 56px rgba(4, 20, 35, .24) !important;
+    overflow: hidden !important;
+    z-index: 2147483000 !important;
+  }
+  #chatbase-bubble-button {
+    z-index: 2147483001 !important;
+    bottom: max(22px, env(safe-area-inset-bottom)) !important;
+    inset-inline-end: max(22px, env(safe-area-inset-right)) !important;
+  }
+  @media (max-width: 600px) {
+    #chatbase-bubble-window {
+      width: calc(100vw - 20px) !important;
+      height: min(76dvh, 680px) !important;
+      max-height: calc(100dvh - 96px - env(safe-area-inset-bottom)) !important;
+      inset-inline: 10px !important;
+      bottom: calc(82px + env(safe-area-inset-bottom)) !important;
+      border-radius: 18px !important;
+    }
+    #chatbase-bubble-button {
+      bottom: max(16px, env(safe-area-inset-bottom)) !important;
+      inset-inline-end: 16px !important;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #chatbase-bubble-window, #chatbase-bubble-button { scroll-behavior: auto !important; }
+  }
+</style>
+
 </head>
 <body>
 <x-dc>
@@ -1392,4 +1429,55 @@ class Component extends DCLogic {
 
 
 <script src="/public-enhancements.js"></script>
+
+<!-- Smart HSR Assistant (Chatbase) -->
+<script>
+(function () {
+  const CHATBOT_ID = "55P9LCwiBxOhS1khs3-VT";
+  if (document.getElementById("smart-hsr-chatbase-loader")) return;
+
+  if (!window.chatbase || window.chatbase("getState") !== "initialized") {
+    window.chatbase = (...args) => {
+      if (!window.chatbase.q) window.chatbase.q = [];
+      window.chatbase.q.push(args);
+    };
+    window.chatbase = new Proxy(window.chatbase, {
+      get(target, prop) {
+        if (prop === "q") return target.q;
+        return (...args) => target(prop, ...args);
+      }
+    });
+  }
+
+  function loadSmartHSRAssistant() {
+    if (document.getElementById("smart-hsr-chatbase-loader")) return;
+    const script = document.createElement("script");
+    script.id = "smart-hsr-chatbase-loader";
+    script.src = "https://www.chatbase.co/embed.min.js";
+    script.dataset.chatbotId = CHATBOT_ID;
+    script.setAttribute("data-domain", "www.chatbase.co");
+    // Chatbase expects its chatbot ID on the script element.
+    script.id = CHATBOT_ID;
+    document.body.appendChild(script);
+
+    window.setTimeout(() => {
+      try {
+        window.chatbase("config", {
+          color: "#0D7377",
+          backgroundColor: "#0B1F3A",
+          title: "Smart HSR",
+          subtitle: "المساعد الذكي للمنصة البلدية",
+          showWelcomeMessage: true
+        });
+      } catch (error) {
+        // The widget still loads if provider-side configuration is pending.
+      }
+    }, 1200);
+  }
+
+  if (document.readyState === "complete") loadSmartHSRAssistant();
+  else window.addEventListener("load", loadSmartHSRAssistant, { once: true });
+})();
+</script>
+
 </body></html>
