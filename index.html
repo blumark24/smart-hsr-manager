@@ -1434,7 +1434,8 @@ class Component extends DCLogic {
 <script>
 (function () {
   const CHATBOT_ID = "55P9LCwiBxOhS1khs3-VT";
-  if (document.getElementById("smart-hsr-chatbase-loader")) return;
+  if (window.__smartHsrChatbaseLoaderStarted) return;
+  window.__smartHsrChatbaseLoaderStarted = true;
 
   if (!window.chatbase || window.chatbase("getState") !== "initialized") {
     window.chatbase = (...args) => {
@@ -1452,12 +1453,9 @@ class Component extends DCLogic {
   function loadSmartHSRAssistant() {
     if (document.getElementById("smart-hsr-chatbase-loader")) return;
     const script = document.createElement("script");
-    script.id = "smart-hsr-chatbase-loader";
     script.src = "https://www.chatbase.co/embed.min.js";
-    script.dataset.chatbotId = CHATBOT_ID;
-    script.setAttribute("data-domain", "www.chatbase.co");
-    // Chatbase expects its chatbot ID on the script element.
     script.id = CHATBOT_ID;
+    script.domain = "www.chatbase.co";
     document.body.appendChild(script);
 
     window.setTimeout(() => {
