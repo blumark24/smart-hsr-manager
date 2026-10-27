@@ -134,3 +134,13 @@ test('Header services preserve guarded routes, accessible feedback and current-w
   assert.match(switcher, /if \(event\.key === 'Escape'\) setOpen\(false\)/);
   assert.doesNotMatch(switcher, /createUserWithEmailAndPassword|\.signOut\(/);
 });
+
+test('Service switcher discards stale users and removes old event handlers', () => {
+  assert.match(switcher, /sessionGeneration = 0/);
+  assert.match(switcher, /generation !== sessionGeneration \|\| auth\.currentUser\?\.uid !== user\.uid/);
+  assert.match(switcher, /if \(unmountSwitcher\) \{ unmountSwitcher\(\); unmountSwitcher = null; \}/);
+  assert.match(switcher, /document\.removeEventListener\('keydown', dismissOnEscape\)/);
+  assert.match(switcher, /document\.removeEventListener\('click', dismissOnOutside\)/);
+  assert.match(switcher, /services\.remove\(\)/);
+  assert.match(switcher, /integratedTrigger\.onclick = null/);
+});
