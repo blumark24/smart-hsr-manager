@@ -121,16 +121,29 @@
       integratedTrigger.setAttribute('aria-expanded', 'false');
       integratedTrigger.onclick = event => {
         event.stopPropagation();
-        setOpen(services.hidden);
+        // A React re-render may have detached the menu; treat that as closed.
+        setOpen(!services.isConnected || services.hidden);
       };
       integratedTrigger.after(services);
-      document.addEventListener('keydown', event => {
+      const dismissOnEscape = event => {
         if (event.key === 'Escape') setOpen(false);
-      });
-      document.addEventListener('click', event => {
+      };
+      const dismissOnOutside = event => {
         if (!services.contains(event.target) && !integratedTrigger.contains(event.target)) setOpen(false);
-      });
-      return;
+      };
+      document.addEventListener('keydown', dismissOnEscape);
+      document.addEventListener('click', dismissOnOutside);
+      return () => {
+        document.removeEventListener('keydown', dismissOnEscape);
+        document.removeEventListener('click', dismissOnOutside);
+        services.remove();
+        integratedTrigger.onclick = null;
+        integratedTrigger.removeAttribute('aria-expanded');
+        integratedTrigger.removeAttribute('aria-haspopup');
+        delete integratedTrigger.dataset.workspaceCount;
+        if (mainLabel) mainLabel.textContent = 'مساحة العمل';
+        if (secondaryLabel) secondaryLabel.textContent = 'تغيير الخدمة';
+      };
     }
     if (document.getElementById('smart-hsr-service-switcher')) return;
     const here = currentWorkspace();
@@ -186,14 +199,21 @@
       menu.hidden = !menu.hidden;
       button.setAttribute('aria-expanded', String(!menu.hidden));
     };
-    document.addEventListener('click', e => {
+    const dismissFloatingOutside = e => {
       if (!wrap.contains(e.target)) { menu.hidden = true; button.setAttribute('aria-expanded', 'false'); }
-    });
-    document.addEventListener('keydown', e => {
+    };
+    const dismissFloatingEscape = e => {
       if (e.key === 'Escape') { menu.hidden = true; button.setAttribute('aria-expanded', 'false'); }
-    });
+    };
+    document.addEventListener('click', dismissFloatingOutside);
+    document.addEventListener('keydown', dismissFloatingEscape);
     wrap.append(button, menu);
     document.body.appendChild(wrap);
+    return () => {
+      document.removeEventListener('click', dismissFloatingOutside);
+      document.removeEventListener('keydown', dismissFloatingEscape);
+      wrap.remove();
+    };
   }
 
   async function boot() {
@@ -205,11 +225,17 @@
     const cfg = await resolveFirebaseConfig();
     const app = getApps().find(a => a.name === '[DEFAULT]') || initializeApp(cfg);
     const auth = getAuth(app);
+    let sessionGeneration = 0;
+    let unmountSwitcher = null;
     onAuthStateChanged(auth, async user => {
+      const generation = ++sessionGeneration;
+      if (unmountSwitcher) { unmountSwitcher(); unmountSwitcher = null; }
       if (!user) return;
       const workspaces = await fetchWorkspaces(user).catch(() => []);
+      // Never mount a menu resolved for a previous account/session.
+      if (generation !== sessionGeneration || auth.currentUser?.uid !== user.uid) return;
       if (workspaces.length < 2) return;
-      mount(user, workspaces);
+      unmountSwitcher = mount(user, workspaces) || null;
     });
   }
   boot().catch(() => {});
