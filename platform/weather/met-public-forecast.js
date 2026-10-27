@@ -29,8 +29,8 @@ function descriptionFor(code) {
   if (key.includes('snow')) return 'ثلوج';
   if (key.includes('rain') || key.includes('sleet') || key.includes('drizzle')) return 'أمطار';
   if (key.includes('fog')) return 'ضباب';
-  if (key.includes('cloudy')) return 'غائم';
   if (key.includes('partlycloudy')) return 'غائم جزئيًا';
+  if (key.includes('cloudy')) return 'غائم';
   if (key.includes('clearsky') || key.includes('fair')) return 'صافٍ';
   return 'توقع جوي';
 }
