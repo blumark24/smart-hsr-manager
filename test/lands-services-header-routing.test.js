@@ -128,3 +128,13 @@ test('Lands retains its approved header and profile layout unchanged', () => {
   assert.match(lands, /id="accountMenu" class="account-menu" role="menu"/);
   assert.match(lands, /id="managerModeMenuItem"/);
 });
+
+test('Embedded Lands primary script still parses without changing its approved shell', () => {
+  const open = lands.indexOf('<script>\n// ---- module bindings');
+  assert.ok(open >= 0, 'expected Lands original inline module-binding script');
+  const startAt = open + '<script>'.length;
+  const endAt = lands.indexOf('</script>', startAt);
+  assert.ok(endAt > startAt, 'expected closing main-script tag');
+  const inline = lands.slice(startAt, endAt);
+  assert.doesNotThrow(() => new vm.Script(inline, { filename: 'lands/index.html primary script' }));
+});
