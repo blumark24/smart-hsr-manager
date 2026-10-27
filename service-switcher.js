@@ -48,10 +48,88 @@
     // identities with 2+ trusted workspaces; authorization remains server-side.
     const integratedTrigger = document.querySelector('[data-smart-hsr-workspace-trigger]');
     if (integratedTrigger) {
+      // Keep the approved institutional identity menu. Expand its own
+      // authorized services in place: no second floating switcher/header.
+      const here = currentWorkspace();
+      const servicesId = 'smart-hsr-header-services';
+      let services = document.getElementById(servicesId);
+      if (services) services.remove();
+      services = document.createElement('div');
+      services.id = servicesId;
+      services.hidden = true;
+      services.setAttribute('role', 'group');
+      services.setAttribute('aria-label', 'الخدمات المفعّلة لهذا الحساب');
+      Object.assign(services.style, {
+        padding: '5px 8px 8px',
+        borderTop: '1px solid var(--hdrDiv,rgba(122,164,224,.14))',
+      });
+
+      const status = document.createElement('div');
+      status.setAttribute('role', 'status');
+      status.setAttribute('aria-live', 'polite');
+      Object.assign(status.style, { padding: '4px 8px', fontSize: '11px' });
+      status.hidden = true;
+
+      const setOpen = open => {
+        services.hidden = !open;
+        integratedTrigger.setAttribute('aria-expanded', String(open));
+        if (open && !services.isConnected) integratedTrigger.after(services);
+      };
+
+      for (const ws of workspaces) {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'hsr-id-action';
+        item.setAttribute('role', 'menuitem');
+        item.dataset.workspace = ws.id;
+        item.style.width = '100%';
+        if (ws.id === here) item.setAttribute('aria-current', 'page');
+
+        const title = document.createElement('span');
+        title.textContent = ws.title;
+        const hint = document.createElement('small');
+        hint.textContent = ws.id === here ? 'مساحة العمل الحالية' : 'فتح الخدمة';
+        item.append(title, hint);
+        item.onclick = async event => {
+          event.stopPropagation();
+          if (ws.id === here) { setOpen(false); return; }
+          status.hidden = true;
+          item.disabled = true;
+          try {
+            // Destinations are server-resolved. Protected pages and Lands'
+            // one-time SSO independently verify entitlement on arrival.
+            if (ws.id === 'lands') await openLands(user);
+            else if (typeof ws.route === 'string' && SAFE_ROUTE.test(ws.route)) location.href = ws.route;
+            else throw new Error('unsafe_workspace_route');
+          } catch (_) {
+            status.textContent = 'تعذر فتح الخدمة بأمان. حاول مرة أخرى.';
+            status.hidden = false;
+            item.disabled = false;
+          }
+        };
+        services.appendChild(item);
+      }
+      services.appendChild(status);
+      const mainLabel = integratedTrigger.querySelector('span');
+      const secondaryLabel = integratedTrigger.querySelector('small');
+      if (mainLabel) mainLabel.textContent = 'خدماتي';
+      if (secondaryLabel) secondaryLabel.textContent = 'التنقل بين الخدمات';
       integratedTrigger.style.display = 'flex';
       integratedTrigger.dataset.workspaceCount = String(workspaces.length);
-      integratedTrigger.setAttribute('aria-label', 'تغيير مساحة العمل');
-      integratedTrigger.onclick = () => { location.href = 'workspace.html'; };
+      integratedTrigger.setAttribute('aria-label', 'خدماتي — تغيير الخدمة');
+      integratedTrigger.setAttribute('aria-haspopup', 'true');
+      integratedTrigger.setAttribute('aria-expanded', 'false');
+      integratedTrigger.onclick = event => {
+        event.stopPropagation();
+        setOpen(services.hidden);
+      };
+      integratedTrigger.after(services);
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') setOpen(false);
+      });
+      document.addEventListener('click', event => {
+        if (!services.contains(event.target) && !integratedTrigger.contains(event.target)) setOpen(false);
+      });
       return;
     }
     if (document.getElementById('smart-hsr-service-switcher')) return;
