@@ -144,3 +144,18 @@ test('Service switcher discards stale users and removes old event handlers', () 
   assert.match(switcher, /services\.remove\(\)/);
   assert.match(switcher, /integratedTrigger\.onclick = null/);
 });
+
+test('All employee Lands entrypoints use the embedded same-origin SSO route', () => {
+  const chooser = read('workspace.html');
+  const login = read('login.html');
+  const vconf = read('vercel.json');
+  for (const [name, source] of [['header', switcher], ['chooser', chooser]]) {
+    assert.match(source, /new URL\('\/lands\/', location\.origin\)/, name + ' must target embedded Lands on the same origin');
+    assert.match(source, /\/api\/organization\/context/, name + ' must register a trusted one-time handoff');
+    assert.doesNotMatch(source, /https:\/\/lands-smart(?:-git-[a-z-]+)?\.vercel\.app\//, name + ' must not cross Lands projects');
+  }
+  assert.match(login, /location\.origin\.replace\(\/\\\/\$\/, ''\) \+ '\/lands\/'/);
+  assert.match(vconf, /"source": "\/lands\/"/);
+  assert.match(vconf, /"destination": "\/lands\/index.html"/);
+  assert.match(vconf, /"source": "\/api\/lands-sso-consume"/);
+});
