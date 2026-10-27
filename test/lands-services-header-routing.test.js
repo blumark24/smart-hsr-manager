@@ -138,3 +138,72 @@ test('Embedded Lands primary script still parses without changing its approved s
   const inline = lands.slice(startAt, endAt);
   assert.doesNotThrow(() => new vm.Script(inline, { filename: 'lands/index.html primary script' }));
 });
+
+test('Staff profile is an expandable read-only section of the existing right-side Lands account menu', () => {
+  const htmlStart = lands.indexOf('<div id="accountMenu" class="account-menu"');
+  const htmlEnd = lands.indexOf('</header>', htmlStart);
+  assert.ok(htmlStart >= 0 && htmlEnd > htmlStart);
+  const menuMarkup = lands.slice(htmlStart, htmlEnd);
+  assert.match(menuMarkup, /id="landsReadOnlyProfileToggle"/);
+  assert.match(menuMarkup, /aria-controls="landsReadOnlyProfileDetails"/);
+  assert.match(menuMarkup, /id="landsReadOnlyProfileDetails"[^>]*hidden/);
+  for (const id of [
+    'landsReadOnlyName', 'landsReadOnlyMunicipality',
+    'landsReadOnlyDepartment', 'landsReadOnlyJobTitle', 'landsReadOnlyLandsRole'
+  ]) assert.ok(menuMarkup.includes('id="' + id + '"'), id + ' missing');
+  assert.match(menuMarkup, /للعرض فقط/);
+  assert.match(menuMarkup, /مركز المستخدمين/);
+  const detailsMarkup = menuMarkup.slice(
+    menuMarkup.indexOf('id="landsReadOnlyProfileDetails"'),
+    menuMarkup.indexOf('id="managerModeMenuItem"')
+  );
+  assert.doesNotMatch(detailsMarkup, /<input\b|<textarea\b|<select\b|<form\b|contenteditable|حفظ التعديلات|\/api\/admin/);
+  assert.match(lands, /\.lands-readonly-profile\[hidden\]\{display:none!important\}/);
+});
+
+test('Read-only profile disclosure opens and closes without writing data', () => {
+  const from = lands.indexOf('function toggleReadOnlyLandsProfile(event) {');
+  const to = lands.indexOf('// وضع المدير', from);
+  assert.ok(from >= 0 && to > from);
+  const fns = lands.slice(from, to);
+  assert.doesNotMatch(fns, /fetch\s*\(|\.setDoc\s*\(|\.updateDoc\s*\(|localStorage|sessionStorage|\.post\s*\(/);
+  const attributes = {};
+  const menu = { classList: { remove(name) { assert.equal(name, 'open'); } } };
+  const btn = { setAttribute(k,v) { assert.equal(k, 'aria-expanded'); attributes.button=v; } };
+  const panel = { hidden:true };
+  const toggler = { setAttribute(k,v) { assert.equal(k, 'aria-expanded'); attributes.toggler=v; } };
+  const nodes = {
+    accountMenu:menu, accountButton:btn,
+    landsReadOnlyProfileDetails:panel, landsReadOnlyProfileToggle:toggler
+  };
+  const sandbox = { document:{getElementById(id){return nodes[id]??null;}} };
+  vm.runInNewContext(fns, sandbox, {filename:'Lands profile disclosure'});
+  let stopped=false;
+  sandbox.toggleReadOnlyLandsProfile({stopPropagation(){stopped=true;}});
+  assert.equal(stopped,true);
+  assert.equal(panel.hidden,false);
+  assert.equal(attributes.toggler,'true');
+  sandbox.closeAccountMenu();
+  assert.equal(panel.hidden,true);
+  assert.equal(attributes.toggler,'false');
+  assert.equal(attributes.button,'false');
+});
+
+test('Lands profile labels are read from verified identity and never update identity grants', () => {
+  const start = lands.indexOf('function renderShellChrome() {');
+  const end = lands.indexOf('function clearAuthorizedLandsServices()', start);
+  const shell=lands.slice(start,end);
+  assert.match(shell, /landsReadOnlyName:\s*displayName/);
+  assert.match(shell, /landsReadOnlyJobTitle:\s*displayRole/);
+  assert.match(shell, /landsReadOnlyLandsRole:\s*roleLabel/);
+  assert.match(shell, /if \(el\) el\.textContent = value/);
+  const syncStart = lands.indexOf('async function syncLandsIdentity() {');
+  const syncEnd = lands.indexOf('window.addEventListener("focus"', syncStart);
+  const sync = lands.slice(syncStart,syncEnd);
+  assert.match(sync, /identity\.kind === "workforce"/);
+  assert.match(sync, /identity\.organizationId !== municipalityId/);
+  assert.match(sync, /client\.auth\.currentUser\?\.uid !== uid/);
+  assert.match(sync, /session\.identityDepartment = profile\.department\.trim\(\)/);
+  assert.match(sync, /if \(!response\.ok\) \{ clearAuthorizedLandsServices\(\); return; \}/);
+  assert.doesNotMatch(shell,/fetch\s*\(|\.setDoc\s*\(|\.updateDoc\s*\(/);
+});
