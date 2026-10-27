@@ -2986,6 +2986,13 @@ body.dark .account-copy small{color:#8eacc8!important}
 }
 .account-menu>button:hover,.account-menu>button.active{background:rgba(255,255,255,.09)!important;color:#fff!important}
 .account-menu>button i{width:15px!important;height:15px!important}
+.account-menu{max-height:min(78dvh,560px)!important;overflow-y:auto!important;overscroll-behavior:contain}
+.lands-readonly-profile[hidden]{display:none!important}
+.lands-readonly-profile{padding:7px 8px 9px;margin:3px 0 5px;border-radius:10px;background:rgba(255,255,255,.055);border:1px solid rgba(194,229,206,.12)}
+.lands-readonly-row{display:grid;grid-template-columns:75px minmax(0,1fr);align-items:start;gap:8px;padding:5px 0;font:500 10px/1.6 "Cairo",sans-serif}
+.lands-readonly-row span{color:rgba(223,240,230,.68)}
+.lands-readonly-row strong{min-width:0;overflow-wrap:anywhere;color:#f6fff9;font-weight:650}
+.lands-readonly-note{margin-top:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,.10);font:500 9.5px/1.7 "Cairo",sans-serif;color:rgba(223,240,230,.76)}
 .side-brand{display:none!important}
 .side{padding-top:12px!important}
 .side .nav{padding-top:0!important;padding-bottom:24px!important}
@@ -4229,6 +4236,15 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
           </button>
           <div id="accountMenu" class="account-menu" role="menu" aria-label="قائمة الحساب">
             <div class="account-menu-summary" id="userInfo"></div>
+            <button id="landsReadOnlyProfileToggle" type="button" role="menuitem" aria-expanded="false" aria-controls="landsReadOnlyProfileDetails" onclick="toggleReadOnlyLandsProfile(event)"><i data-lucide="contact-round"></i><span>ملفي التعريفي</span></button>
+            <div id="landsReadOnlyProfileDetails" class="lands-readonly-profile" role="group" aria-label="بيانات الهوية المؤسسية للعرض فقط" hidden>
+              <div class="lands-readonly-row"><span>الاسم</span><strong id="landsReadOnlyName">—</strong></div>
+              <div class="lands-readonly-row"><span>الجهة</span><strong id="landsReadOnlyMunicipality">—</strong></div>
+              <div class="lands-readonly-row"><span>الإدارة / القسم</span><strong id="landsReadOnlyDepartment">—</strong></div>
+              <div class="lands-readonly-row"><span>المسمى الوظيفي</span><strong id="landsReadOnlyJobTitle">—</strong></div>
+              <div class="lands-readonly-row"><span>صلاحية الأراضي</span><strong id="landsReadOnlyLandsRole">—</strong></div>
+              <div class="lands-readonly-note">للعرض فقط · يقتصر تعديل بيانات الموظف وصلاحياته على المسؤول المخوّل عبر مركز المستخدمين.</div>
+            </div>
             <button id="managerModeMenuItem" type="button" role="menuitem" onclick="toggleManagerMode();closeAccountMenu()"><i data-lucide="presentation"></i><span>وضع المدير</span></button>
             <button type="button" role="menuitem" onclick="closeAccountMenu();handleLogout()"><i data-lucide="log-out"></i><span>تسجيل الخروج</span></button>
           </div>
@@ -4711,11 +4727,23 @@ function toggleAccountMenu(event) {
   menu.classList.toggle("open", open);
   btn.setAttribute("aria-expanded", String(open));
 }
+function toggleReadOnlyLandsProfile(event) {
+  if (event) event.stopPropagation();
+  const panel = document.getElementById("landsReadOnlyProfileDetails");
+  const trigger = document.getElementById("landsReadOnlyProfileToggle");
+  if (!panel || !trigger) return;
+  panel.hidden = !panel.hidden;
+  trigger.setAttribute("aria-expanded", String(!panel.hidden));
+}
 function closeAccountMenu() {
   const menu = document.getElementById("accountMenu");
   const btn = document.getElementById("accountButton");
+  const panel = document.getElementById("landsReadOnlyProfileDetails");
+  const profileTrigger = document.getElementById("landsReadOnlyProfileToggle");
   if (menu) menu.classList.remove("open");
   if (btn) btn.setAttribute("aria-expanded", "false");
+  if (panel) panel.hidden = true;
+  if (profileTrigger) profileTrigger.setAttribute("aria-expanded", "false");
 }
 // وضع المدير — a concise, opt-in Executive GIS View. Toggling it only
 // changes how centerView() renders (see managerModeView()); it reads
@@ -4991,6 +5019,17 @@ function renderShellChrome() {
     const municipalityHeader = document.getElementById("headerMunicipalityName");
     if (municipalityHeader) municipalityHeader.textContent = municipalityLabel;
   }
+  const readonlyFields = {
+    landsReadOnlyName: displayName,
+    landsReadOnlyMunicipality: document.getElementById("headerMunicipalityName")?.textContent || "البلدية",
+    landsReadOnlyDepartment: session?.identityDepartment || session?.department || "غير محددة",
+    landsReadOnlyJobTitle: displayRole,
+    landsReadOnlyLandsRole: roleLabel
+  };
+  for (const [id, value] of Object.entries(readonlyFields)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
   updateHeaderDates();
   const accountButton = document.getElementById("accountButton");
   if (accountButton) accountButton.title = displayName + " — " + displayRole;
@@ -5066,7 +5105,7 @@ async function syncLandsIdentity() {
       body: JSON.stringify({ action: "resolveWorkspaces", workspace: "lands" }),
       cache: "no-store"
     });
-    if (!response.ok) return;
+    if (!response.ok) { clearAuthorizedLandsServices(); return; }
     const identity = await response.json();
     const authorized = identity?.kind === "manager"
       ? session?.role === "municipal_manager"
@@ -5094,8 +5133,12 @@ async function syncLandsIdentity() {
     if (typeof profile.jobTitle === "string" && profile.jobTitle.trim()) {
       session.identityRoleLabel = profile.jobTitle.trim();
     }
+    if (typeof profile.department === "string") {
+      session.identityDepartment = profile.department.trim();
+    }
     renderShellChrome();
   } catch (error) {
+    clearAuthorizedLandsServices();
     console.warn("[LANDS_IDENTITY] label lookup unavailable; existing role permissions unchanged");
   } finally {
     landsIdentityRefreshPending = false;
