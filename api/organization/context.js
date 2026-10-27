@@ -201,6 +201,29 @@ async function handler(req, res) {
     const { handleEmbeddedLandsHttp } = require('../_lib/embeddedLandsRuntime');
     return handleEmbeddedLandsHttp(req, res, embeddedLandsAction);
   }
+  // PUBLIC PREVIEW PILOT ONLY: No new function, license fee, employee lookup,
+  // coordinates from the browser, authentication token, or Production traffic.
+  // Return forecast data, not an observed measurement or emergency warning.
+  const weatherRequested = (req.query && typeof req.query.weather === 'string'
+    ? req.query.weather
+    : (() => { try { return new URL(req.url || '/', 'http://localhost').searchParams.get('weather') || ''; } catch (_) { return ''; } })()).trim();
+  if (weatherRequested) {
+    if (req.method !== 'GET') return sendJson(res, 405, { error: 'method_not_allowed' });
+    if (process.env.VERCEL_ENV === 'production') return sendJson(res, 404, { error: 'weather_not_enabled_in_production' });
+    if (weatherRequested !== 'alqunfudhah') return sendJson(res, 400, { error: 'unsupported_weather_location' });
+    try {
+      const { getPublicForecast } = require('../../platform/weather/met-public-forecast');
+      const forecast = await getPublicForecast();
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=1800');
+      res.end(JSON.stringify(forecast));
+      return;
+    } catch (_) {
+      // Never expose upstream errors, and never fabricate a weather reading.
+      return sendJson(res, 503, { error: 'weather_temporarily_unavailable' });
+    }
+  }
   if (req.method === 'POST') return handleLandsSsoHandoff(req, res);
   if (req.method !== 'GET') return sendJson(res, 405, { error:'method_not_allowed' });
   let decoded;
