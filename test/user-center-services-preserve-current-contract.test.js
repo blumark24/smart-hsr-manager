@@ -159,3 +159,27 @@ test('All employee Lands entrypoints use the embedded same-origin SSO route', ()
   assert.match(vconf, /"destination": "\/lands\/index.html"/);
   assert.match(vconf, /"source": "\/api\/lands-sso-consume"/);
 });
+
+test('Employee self-service stays read-only: HR edits require trusted manager authority', () => {
+  const employeesApi = read('api/admin/employees.js');
+  const departmentUi = read('department-head.html');
+  // The shared HR API denies all ordinary employees before action dispatch.
+  assert.match(employeesApi, /if \(!caller\.isOwner && !caller\.isManager && !caller\.isDepartmentHead\)/);
+  assert.match(employeesApi, /owner_manager_or_department_head_required/);
+  // Editing institutional employee profile is narrower still: owner/manager.
+  const updateStart=employeesApi.indexOf("case 'updateProfile': {");
+  const updateEnd=employeesApi.indexOf("case '", updateStart+10);
+  assert.ok(updateStart>=0);
+  const update=employeesApi.slice(updateStart, updateEnd>updateStart?updateEnd:updateStart+3500);
+  assert.match(update, /if \(!caller\.isOwner && !caller\.isManager\)/);
+  assert.match(update, /update_profile_requires_manager_or_owner/);
+  assert.match(update, /assertCanManageEmployee\(caller/);
+  const ownProfile=departmentUi.slice(
+    departmentUi.indexOf("if (k === 'profile') {"),
+    departmentUi.indexOf("if (k === 'veh') {", departmentUi.indexOf("if (k === 'profile') {"))
+  );
+  assert.match(ownProfile, /title: 'ملفي التعريفي'/);
+  assert.match(ownProfile, /للعرض فقط/);
+  assert.match(ownProfile, /actions: \[\]/);
+  assert.doesNotMatch(ownProfile, /تعديل|حفظ التعديلات|fetch\(/);
+});
