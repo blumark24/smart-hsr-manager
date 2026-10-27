@@ -6,9 +6,9 @@
   // Authorization is never decided here: the API resolves the list, and each
   // workspace page re-verifies server-side before it renders.
   if (location.pathname.endsWith('/login.html') || location.pathname.endsWith('/workspace.html')) return;
-  const PROD_HOSTS = ['smart-hsr-manager.vercel.app', 'smart-hsr-manager-blumark24-os.vercel.app'];
-  const LANDS_PROD = 'https://lands-smart.vercel.app/';
-  const LANDS_PREVIEW = 'https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/';
+  // Lands is embedded under /lands/ in this application. Keep every
+  // workspace handoff on the SAME deployment and Firebase environment.
+  // External Lands origins can consume a different one-time SSO registry.
   const SAFE_ROUTE = /^[a-z0-9-]+\.html(\?mode=mobility)?$/;
 
   function currentWorkspace() {
@@ -19,7 +19,7 @@
     return 'field';
   }
   function landsBase() {
-    return (!location.hostname.endsWith('.vercel.app') || PROD_HOSTS.includes(location.hostname)) ? LANDS_PROD : LANDS_PREVIEW;
+    return new URL('/lands/', location.origin).toString();
   }
   async function openLands(user) {
     const token = await user.getIdToken();
