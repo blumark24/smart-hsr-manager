@@ -1,0 +1,40 @@
+name: Safe User Center + Services Preview Gate
+
+on:
+  push:
+    branches:
+      - plan/user-center-services-preserve-ui-20261027
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    name: Preserve approved User Center and services behavior
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check service-switcher.js
+          node --check workspace-access.js
+          node --check manager-phase11c-user-center-core.js
+          node --check manager-phase11c-user-center-dialogs.js
+          node --check manager-phase11d-user-center-enhancements.js
+          node --check manager-phase11f-reference-ui.js
+          node --check manager-phase11g-user-center-approved-skin.js
+          node --check mobility-runtime.js
+      - name: Existing regression + new baseline guard
+        run: |
+          node --test \
+            test/user-center-services-preserve-current-contract.test.js \
+            test/user-center-edit-window-layout.test.js \
+            test/user-center-compact-grid-email-performance.test.js \
+            test/user-center-redesign-v2.test.js \
+            test/unified-identity-service-switcher.test.js \
+            test/mobility-role-runtime.test.js
