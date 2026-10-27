@@ -114,3 +114,23 @@ test('Current mission creation stays department-head only; do not grant ordinary
   // This is a guard, not a requester-feature test. A separate audited
   // request capability/action must be implemented later for Lands/Field users.
 });
+
+test('Approved field/mobility header exposes an integrated, trusted services menu', () => {
+  const departmentHead = read('department-head.html');
+  assert.match(departmentHead, /data-smart-hsr-workspace-trigger/);
+  assert.match(switcher, /const integratedTrigger = document\.querySelector/);
+  assert.match(switcher, /services\.setAttribute\('role', 'group'\)/);
+  assert.match(switcher, /integratedTrigger\.after\(services\)/);
+  assert.match(switcher, /mainLabel\.textContent = 'خدماتي'/);
+  assert.match(switcher, /for \(const ws of workspaces\)/);
+  assert.doesNotMatch(switcher, /integratedTrigger\.onclick = \(\) => \{ location\.href = 'workspace\.html'; \}/);
+});
+
+test('Header services preserve guarded routes, accessible feedback and current-workspace status', () => {
+  assert.match(switcher, /SAFE_ROUTE\.test\(ws\.route\)/);
+  assert.match(switcher, /if \(ws\.id === 'lands'\) await openLands\(user\)/);
+  assert.match(switcher, /item\.setAttribute\('aria-current', 'page'\)/);
+  assert.match(switcher, /status\.setAttribute\('aria-live', 'polite'\)/);
+  assert.match(switcher, /if \(event\.key === 'Escape'\) setOpen\(false\)/);
+  assert.doesNotMatch(switcher, /createUserWithEmailAndPassword|\.signOut\(/);
+});
