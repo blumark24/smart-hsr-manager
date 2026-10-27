@@ -4918,6 +4918,7 @@ async function consumeSsoHandoff() {
   }
 }
 async function handleLogout() {
+  clearAuthorizedLandsServices();
   try { if (client) await client.signOutUser(); } catch { /* best-effort */ }
   session = null; grants = []; domains = { royalOrders: [], allocationDecisions: [], beneficiaries: [], plans: [], parcels: [], documents: [] }; users = []; auditEvents = []; selectedGrantId = null;
   showLoginOrRedirect();
@@ -5002,6 +5003,52 @@ function renderShellChrome() {
   if (sideFoot) sideFoot.innerHTML = "";
 }
 
+// Shared municipal services appear INSIDE the approved Lands account menu.
+// Server-resolved workspaces only: no changes to Lands RBAC, shell, or login.
+function clearAuthorizedLandsServices() {
+  document.querySelectorAll("#accountMenu [data-hsr-lands-shared]").forEach(el => el.remove());
+}
+function showAuthorizedLandsServices(workspaces) {
+  clearAuthorizedLandsServices();
+  const menu = document.getElementById("accountMenu");
+  const before = document.getElementById("managerModeMenuItem");
+  if (!menu || !before || !Array.isArray(workspaces)) return;
+  const safeRoute = /^[a-z0-9-]+\.html(\?mode=mobility)?$/;
+  const approvedServices = new Set(["field", "mobility", "admin_affairs"]);
+  const unique = new Set();
+  const destinations = workspaces.filter(ws =>
+    ws && approvedServices.has(ws.id) && !unique.has(ws.id)
+    && typeof ws.route === "string" && safeRoute.test(ws.route)
+    && (unique.add(ws.id), true)
+  );
+  if (!destinations.length || !workspaces.some(ws => ws && ws.id === "lands")) return;
+  const label = document.createElement("div");
+  label.dataset.hsrLandsShared = "label";
+  label.textContent = "خدماتي";
+  Object.assign(label.style, {
+    padding: "9px 9px 4px", fontSize: "10px",
+    fontWeight: "700", color: "rgba(220,240,228,.78)"
+  });
+  menu.insertBefore(label, before);
+  for (const ws of destinations) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.dataset.hsrLandsShared = "service";
+    btn.dataset.workspace = ws.id;
+    btn.setAttribute("role", "menuitem");
+    btn.textContent = ws.title;
+    btn.setAttribute("aria-label", "فتح " + ws.title);
+    btn.onclick = event => {
+      event.stopPropagation();
+      closeAccountMenu();
+      // The root route is guarded on arrival and shares this origin;
+      // never route to an external app or accept a URL from user input.
+      location.assign(new URL("/" + ws.route, location.origin).toString());
+    };
+    menu.insertBefore(btn, before);
+  }
+}
+
 // Profile display is populated from the same trusted users/{uid} and
 // organizations/{organizationId} records used by the municipal manager.
 // No identity is sourced from URL params, localStorage or a tenant id.
@@ -5025,7 +5072,17 @@ async function syncLandsIdentity() {
       ? session?.role === "municipal_manager"
       : identity?.kind === "workforce" && identity.valid === true && identity.allowed === true;
     if (!authorized || !session || session.firebaseUid !== uid || session.municipalityId !== municipalityId
-        || identity.organizationId !== municipalityId) return;
+        || client.auth.currentUser?.uid !== uid || identity.organizationId !== municipalityId) {
+      clearAuthorizedLandsServices();
+      return;
+    }
+    // Only a current, verified workforce identity may expose extra routes.
+    // A manager or single-product employee retains the existing Lands menu.
+    if (identity.kind === "workforce" && Array.isArray(identity.workspaces)) {
+      showAuthorizedLandsServices(identity.workspaces);
+    } else {
+      clearAuthorizedLandsServices();
+    }
     const profile = identity.profile || {};
     if (typeof profile.name === "string" && profile.name.trim() && profile.name.trim() !== uid) {
       session.displayName = profile.name.trim();
