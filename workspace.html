@@ -132,14 +132,13 @@ import { resolveFirebaseConfig } from "./firebase-runtime-config.js";
 // UNIFIED IDENTITY — workspace chooser / safe landing. Display and navigation
 // only: the trusted API decides which workspaces are authorized, and every
 // workspace page re-verifies server-side before it renders anything.
-const PROD_HOSTS=['smart-hsr-manager.vercel.app','smart-hsr-manager-blumark24-os.vercel.app'];
-const LANDS_PROD='https://lands-smart.vercel.app/';
-const LANDS_PREVIEW='https://lands-smart-git-staging-lands-trusted-audit-blumark24-os.vercel.app/';
+// One-time Lands SSO must stay on this application's embedded /lands/
+ // endpoint, in both Preview and Production. Never cross environments.
 const SAFE_ROUTE=/^[a-z0-9-]+\.html(\?mode=mobility)?$/;
 const WA=window.SmartHSRWorkspaceAccess;
 
 function landsBase(){
-  return (!location.hostname.endsWith('.vercel.app') || PROD_HOSTS.includes(location.hostname)) ? LANDS_PROD : LANDS_PREVIEW;
+  return new URL('/lands/', location.origin).toString();
 }
 async function openLands(user){
   const token=await user.getIdToken();
