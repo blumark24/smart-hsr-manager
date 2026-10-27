@@ -4078,6 +4078,26 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
   height:34px!important;
 }
 #appShell .lands-head-v2 .lands-head-theme button span{display:none!important}
+/* Existing theme cluster: one small, optional, attributed weather forecast.
+   No global header changes, no new row and no location permission. */
+#appShell .lands-head-v2 .lands-head-weather{
+  display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:3px 7px;
+  border-radius:10px;background:rgba(255,255,255,.045);border:1px solid rgba(165,209,192,.14);
+  direction:rtl;max-width:170px;min-width:0;overflow:hidden
+}
+#appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-status]{
+  display:inline-block;min-width:0;max-width:115px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:600 10px/1.4 "Cairo",sans-serif;color:#d9f2e7
+}
+#appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-credit]{
+  white-space:nowrap;color:#a6cfbb;font:500 8px/1.4 "Cairo",sans-serif
+}
+#appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-credit][hidden]{display:none!important}
+@media(max-width:530px){
+  #appShell .lands-head-v2 .lands-head-weather{max-width:115px;padding:3px 4px}
+  #appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-status]{max-width:72px;font-size:9px}
+  #appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-credit]{font-size:7px}
+}
 #appShell .lands-head-v2 .lands-head-municipality{
   grid-area:municipality!important;
   min-width:0!important;
@@ -4216,7 +4236,11 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
           <span class="lands-head-brand-sub">SMART MUNICIPAL PLATFORM</span>
         </div>
       </div>
-      <div class="lands-head-theme lands-theme-segment" aria-label="اختيار المظهر">
+      <div class="lands-head-theme lands-theme-segment" aria-label="الطقس والمظهر">
+        <div class="lands-head-weather" data-hsr-weather data-hsr-weather-org-selector="#headerMunicipalityName" aria-label="توقع الطقس">
+          <span data-hsr-weather-status>غير متاح</span>
+          <a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" data-hsr-weather-credit hidden>MET Norway</a>
+        </div>
         <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
         <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
       </div>
@@ -7454,6 +7478,7 @@ async function boot() {
 boot().catch(() => { showLoginOrRedirect(); });
 lucide.createIcons();
 </script>
+<script defer src="../smart-hsr-weather.js"></script>
 <!-- LANDS UI CLOSURE CANDIDATE: premium role-aware preview -->
 </body>
 </html>
