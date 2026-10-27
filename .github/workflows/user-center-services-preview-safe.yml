@@ -29,6 +29,9 @@ jobs:
           node --check manager-phase11f-reference-ui.js
           node --check manager-phase11g-user-center-approved-skin.js
           node --check mobility-runtime.js
+          node --check api/organization/context.js
+          node --check platform/weather/met-public-forecast.js
+          node --check smart-hsr-weather.js
       # lands-shell-ui.test.js is a legacy snapshot test (six old titles/UI
       # shapes already fail on the unchanged custom-domain baseline SHA).
       # The new focused Lands suite verifies current header preservation and
@@ -43,4 +46,5 @@ jobs:
             test/unified-identity-service-switcher.test.js \
             test/mobility-role-runtime.test.js \
             test/lands-services-header-routing.test.js \
-            test/embedded-lands-preview.test.js
+            test/embedded-lands-preview.test.js \
+            test/municipal-weather-zero-cost-preview.test.js
