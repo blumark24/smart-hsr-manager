@@ -37,4 +37,7 @@ jobs:
             test/user-center-compact-grid-email-performance.test.js \
             test/user-center-redesign-v2.test.js \
             test/unified-identity-service-switcher.test.js \
-            test/mobility-role-runtime.test.js
+            test/mobility-role-runtime.test.js \
+            test/lands-services-header-routing.test.js \
+            test/embedded-lands-preview.test.js \
+            test/lands-shell-ui.test.js
