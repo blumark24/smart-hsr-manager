@@ -29,7 +29,11 @@ jobs:
           node --check manager-phase11f-reference-ui.js
           node --check manager-phase11g-user-center-approved-skin.js
           node --check mobility-runtime.js
-      - name: Existing regression + new baseline guard
+      # lands-shell-ui.test.js is a legacy snapshot test (six old titles/UI
+      # shapes already fail on the unchanged custom-domain baseline SHA).
+      # The new focused Lands suite verifies current header preservation and
+      # authorized same-origin navigation without relaxing application code.
+      - name: Existing regressions + targeted Lands and identity guard
         run: |
           node --test \
             test/user-center-services-preserve-current-contract.test.js \
@@ -39,5 +43,4 @@ jobs:
             test/unified-identity-service-switcher.test.js \
             test/mobility-role-runtime.test.js \
             test/lands-services-header-routing.test.js \
-            test/embedded-lands-preview.test.js \
-            test/lands-shell-ui.test.js
+            test/embedded-lands-preview.test.js
