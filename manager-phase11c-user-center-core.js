@@ -10,7 +10,7 @@ U.cache={org:'',at:0,employees:[],users:[]}; let sessionUid='';
 // REQUEST_TIMEOUT_MS bounds every request so the existing error+retry UI is
 // always reachable.
 U.REQUEST_TIMEOUT_MS=20000;
-window.addEventListener('smart-hsr:manager-view-change',event=>{let org=U.clean(event.detail?.organizationId);if(event.detail?.view==='users'&&org)U.cache.org=org});
+window.addEventListener('smart-hsr:manager-view-change',event=>{let org=U.clean(event.detail?.organizationId);if(event.detail?.view==='users'&&org&&org!==U.cache.org){directoryRequestGeneration++;U.cache={org,at:0,employees:[],users:[]}}});
 window.addEventListener('smart-hsr:user-center-lifecycle',event=>{if(event.detail?.active!==false)return;document.querySelectorAll('.iuc').forEach(modal=>{delete modal.dataset.busy;let close=modal.querySelector('.ix');if(close)close.click();else modal.remove()})});
 U.center=()=>[...document.querySelectorAll('section[role="dialog"]')].find(e=>/مركز (إدارة )?المستخدمين/.test(e.getAttribute('aria-label')||'')||/مركز (إدارة )?المستخدمين/.test(U.txt(e.querySelector('h2'))));
 U.session=async()=>{const user=window.SmartHSRManagerSession?.getCurrentUser?.();if(!user?.uid){if(sessionUid){sessionUid='';directoryRequestGeneration++;U.cache={org:'',at:0,employees:[],users:[]}}throw Error('no_session')}if(user.uid!==sessionUid){sessionUid=user.uid;directoryRequestGeneration++;U.cache={org:'',at:0,employees:[],users:[]}}return user};
