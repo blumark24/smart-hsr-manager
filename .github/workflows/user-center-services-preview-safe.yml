@@ -32,6 +32,7 @@ jobs:
           node --check manager-phase11f-reference-ui.js
           node --check manager-phase11g-user-center-approved-skin.js
           node --check mobility-runtime.js
+          node --check field-head-runtime.js
           node --check api/organization/context.js
           node --check platform/weather/met-public-forecast.js
           node --check smart-hsr-weather.js
