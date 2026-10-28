@@ -281,6 +281,20 @@ async function getDirectory(force=false) {
   directoryCache={...base,employees,users,contractors};
   return directoryCache;
 }
+// A missing Firebase session is an authorization loss, not an offline refresh.
+// Any such condition must clear previously rendered personnel information.
+function isUserCenterAccessDenied(error) {
+  if (error?.status === 401 || error?.status === 403) return true;
+  const reasons = [error?.reason, error?.code, error?.message].map(value => String(value || '').trim());
+  const denied = new Set([
+    'owner_or_manager_required', 'forbidden', 'cross_organization_denied',
+    'manager_required', 'unauthenticated', 'invalid_token', 'not_authenticated',
+    'no_session', 'permission-denied', 'auth/user-token-expired',
+    'auth/invalid-user-token', 'auth/user-disabled', 'auth/user-not-found',
+  ]);
+  return reasons.some(reason => denied.has(reason));
+}
+
 // Keep the last successful directory visible on a temporary refresh failure.
 // A denied/expired session must never retain cached personal records on screen.
 function showUserCenterLoadFailure(app, error, denied, retry) {
@@ -381,8 +395,8 @@ async function renderCenter(force=false) {
     console.error('[UC:init:error]', error);
     const root=lastRoot||findCenterRoot();
     if(root){ let app=root.querySelector('.ucv2-app'); if(!app){app=document.createElement('section');app.className='ucv2-app';root.appendChild(app);} delete app.dataset.routeGuardLoading; app.removeAttribute('aria-busy');
-      const deniedReasons=['owner_or_manager_required','forbidden','cross_organization_denied','manager_required','unauthenticated','invalid_token','not_authenticated'];
-      const isPermissionDenied=error.status===401||error.status===403||deniedReasons.includes(error.reason);
+      const isPermissionDenied = isUserCenterAccessDenied(error);
+      if (isPermissionDenied) directoryCache=null; // fail closed on auth/tenant loss
       showUserCenterLoadFailure(app,error,isPermissionDenied,()=>{directoryCache=null;renderCenter(true);}); }
   } finally {
     renderQueued=false;
