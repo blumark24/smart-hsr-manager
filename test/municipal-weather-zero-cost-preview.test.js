@@ -191,3 +191,27 @@ test('Manager forecast appears in the header only, with the integration strip un
   assert.ok(manager.includes('data-hsr-weather-org-selector="[data-hsr-weather-org]"'));
   assert.ok(manager.includes('smart-hsr-weather.js'));
 });
+
+
+test('Manager weather remains visible across responsive breakpoints without redesigning the header', () => {
+  const manager = read('manager.html');
+  const header = manager.match(/<header class="hsr-manager-header"[\s\S]*?<\/header>/);
+  assert.ok(header, 'approved Manager header remains intact');
+  assert.match(header[0], /class="hsr-manager-weather-meta" style="display:flex;/,
+    'weather must no longer inherit --metaDisp:none at compact breakpoints');
+  assert.doesNotMatch(header[0], /display:var\(--metaDisp,flex\)/,
+    'responsive visibility must not hide the weather with the clock');
+  assert.match(header[0], /data-hsr-weather-org-selector="\[data-hsr-weather-org\]"/);
+  assert.match(header[0], /data-hsr-weather-credit[^>]*hidden/,
+    'MET Norway attribution is retained');
+  assert.equal((header[0].match(/class="hsr-manager-clock-detail"/g) || []).length, 3,
+    'only secondary separator, time and date are hidden on compact layouts');
+  const css = manager.match(/<style id="manager-weather-meta-responsive">([\s\S]*?)<\/style>/);
+  assert.ok(css, 'responsive visibility rules exist and are scoped');
+  assert.match(css[1], /@media \(max-width:1179px\)/);
+  assert.match(css[1], /\.hsr-manager-header \.hsr-manager-clock-detail \{ display:none!important; \}/);
+  assert.match(css[1], /\.hsr-manager-header \.hsr-manager-weather-meta/);
+  assert.match(css[1], /@media \(max-width:430px\)/);
+  assert.doesNotMatch(css[1], /display:none!important;[^}]*data-hsr-weather/,
+    'weather itself must never be hidden');
+});
