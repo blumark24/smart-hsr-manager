@@ -8,6 +8,7 @@ on:
       - fix/preview-weather-header-only-20261028
       - fix/preview-municipality-identity-display-20261028
       - fix/preview-user-center-directory-race-20261028
+      - fix/preview-manager-weather-responsive-20261028
   workflow_dispatch:
 
 permissions:
