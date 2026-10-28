@@ -54,8 +54,8 @@ test('Invalid, stale or unsupported weather data never produces a fake temperatu
 
 test('Free public forecast uses a fixed city, a clear identity, and proper upstream cache', () => {
   const source = read('platform/weather/met-public-forecast.js');
-  assert.match(source, /19\.12639/);
-  assert.match(source, /41\.07889/);
+  assert.match(source, /19\.1264/);
+  assert.match(source, /41\.0789/);
   assert.match(source, /'User-Agent': 'SMART-HSR-Weather\/1\.0 /);
   assert.match(source, /'If-Modified-Since'/);
   assert.match(source, /response\.status === 304/);
