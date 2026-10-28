@@ -181,3 +181,13 @@ test('Cached time series exhaustion fails closed rather than seeking an early re
   await assert.rejects(fresh.getPublicForecast({fetchImpl,clock:()=>current}),/cached_forecast_outdated/);
   assert.equal(requests,1,'do not query MET before Expires just for a new hour');
 });
+
+test('Manager forecast appears in the header only, with the integration strip unchanged otherwise', () => {
+  const manager = read('manager.html');
+  const strip = manager.match(/<section class="hsr-integration-strip"[\s\S]*?<\/section>/);
+  assert.ok(strip, 'existing integrations strip must remain visible');
+  assert.doesNotMatch(strip[0], /الطقس\s*[·•]\s*غير متصل/, 'remove only the stale duplicate weather label');
+  assert.match(strip[0], /الاتجاه الزمني · بيانات غير كافية/, 'preserve unrelated integration status');
+  assert.match(manager, /data-hsr-weather-org-selector="\\[data-hsr-weather-org\\]"/);
+  assert.match(manager, /smart-hsr-weather\\.js/);
+});
