@@ -12,7 +12,7 @@
   let request = null;
   let lastResult = null;
   let lastLoaded = 0;
-  let scanTimer = null;
+
 
   function pilotCity(label) {
     return typeof label === 'string' && CITY_PATTERN.test(label);
@@ -122,22 +122,16 @@
   }
 
   function start() {
-    let tries = 0;
-    const probe = () => {
-      tries++;
-      void refresh();
-      if (tries >= 20 || Array.from(document.querySelectorAll('[data-hsr-weather]')).some(eligible)) {
-        clearInterval(scanTimer);
-        scanTimer = null;
-      }
-    };
-    probe();
-    scanTimer = setInterval(probe, 500);
+    // The municipal identity can load after initial render. A low-cost DOM
+    // probe keeps the city label and weather chip synchronized on re-login
+    // or page restoration; refresh() only calls the API once per cache window.
+    void refresh();
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) void refresh();
     });
-    // Respect provider cache and avoid polling the backend each minute.
-    setInterval(() => { if (!document.hidden) void refresh(); }, CACHE_MS);
+    setInterval(() => {
+      if (!document.hidden) void refresh();
+    }, 15 * 1000);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
