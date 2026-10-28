@@ -6,7 +6,43 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
-const { _test: { previewLandsSsoGate } } = require('../api/organization/context');
+const vm = require('node:vm');
+
+// This focused gate must run on the existing no-install CI job. Load the
+// actual context.js in a VM with inert dependency stubs (no Firebase SDK,
+// credentials, external services or network calls).
+const source = read('api/organization/context.js');
+const mocks = {
+  '../_lib/firebaseAdmin': {
+    getDb() { throw new Error('unexpected DB access'); },
+    getAdmin() { return { app: { options: { projectId: 'smart-hsr-manager' } } }; }
+  },
+  '../_lib/authz': {
+    verifyRequestToken() { throw new Error('unexpected authentication'); },
+    activeIsNotFalse() { return false; }
+  },
+  '../_lib/landsBridge': {
+    bridgeConfigured() { return false; },
+    callLandsSsoRegister() { throw new Error('unexpected SSO registration'); },
+  },
+  '../../platform/geo/geo-policy': { evaluateReferenceLayerAccess() { throw new Error('unexpected geo query'); } },
+  '../../platform/geo/geo-provider-contract': {
+    createStaticReferenceExtractProvider() { throw new Error('unexpected geo provider'); },
+    validateBbox() { throw new Error('unexpected geo bbox'); },
+    slugForOrganization() { throw new Error('unexpected geo slug'); },
+  },
+  '../../platform/geo/geo-attribution-registry': { getAttribution() { throw new Error('unexpected attribution'); } },
+};
+const context = { module: { exports: {} }, URL, console, process: {env: {VERCEL_ENV:'production'}},
+  require(specifier) {
+    if (!(specifier in mocks)) throw new Error('Unexpected module: '+specifier);
+    return mocks[specifier];
+  }
+};
+vm.runInNewContext(source, context, {filename:'api/organization/context.js'});
+const handler = context.module.exports;
+const { previewLandsSsoGate } = handler._test;
+
 
 const staging = 'smart-hsr-staging-blumark24';
 const env = overrides => ({
@@ -23,7 +59,7 @@ const run = (overrides, id = staging) =>
 test('Preview handoff gate passes only when both Firebase projects and embedded mode match staging', () => {
   const ok = run({});
   assert.equal(ok.ready, true);
-  assert.deepEqual(ok.checks, { preview:true, webStaging:true, adminStaging:true, embedded:true });
+  assert.deepEqual(JSON.parse(JSON.stringify(ok.checks)), { preview:true, webStaging:true, adminStaging:true, embedded:true });
 });
 
 test('Preview gate fails closed when frontend, backend, or embedded mode diverges', () => {
@@ -72,9 +108,8 @@ test('Same-origin embedded actions and SSO registration must fail closed on mism
 });
 
 test('Production preflight remains inaccessible without mutating live identities', async () => {
-  const handler = require('../api/organization/context');
-  const old = process.env.VERCEL_ENV;
-  process.env.VERCEL_ENV = 'production';
+  const old = context.process.env.VERCEL_ENV;
+  context.process.env.VERCEL_ENV = 'production';
   try {
     let status = null, payload = null;
     const res = {
@@ -84,9 +119,9 @@ test('Production preflight remains inaccessible without mutating live identities
     };
     await handler({method:'GET',query:{previewGate:'lands-sso'},url:'/?previewGate=lands-sso'},res);
     assert.equal(status,404);
-    assert.deepEqual(payload,{error:'not_found'});
+    assert.deepEqual(JSON.parse(JSON.stringify(payload)),{error:'not_found'});
   } finally {
-    if (old === undefined) delete process.env.VERCEL_ENV;
-    else process.env.VERCEL_ENV = old;
+    if (old === undefined) delete context.process.env.VERCEL_ENV;
+    else context.process.env.VERCEL_ENV = old;
   }
 });
