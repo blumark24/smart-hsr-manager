@@ -103,7 +103,11 @@ test('Browser weather code never uses device position or employees, and fails wi
   assert.match(source, /data-hsr-weather-org-selector/);
   assert.match(source, /localStorage\.setItem\(CACHE_KEY/);
   assert.match(source, /CACHE_MS = 30 \* 60 \* 1000/);
-  assert.match(source, /credentials: 'omit'/);
+  assert.match(source, /credentials: 'same-origin'/, 'protected Preview same-origin weather API needs its deployment session');
+  assert.doesNotMatch(source, /credentials: 'include'|credentials: 'omit'/,
+    'never send cross-origin cookies or strip Preview same-origin session');
+  assert.match(source, /const API_URL = '\/api\/organization\/context\?weather=alqunfudhah'/,
+    'weather fetch stays same-origin and fixed-location');
   assert.match(source, /https:\/\/creativecommons\.org\/licenses\/by\/4\.0\//);
   assert.match(source, /data-hsr-weather-license/);
   assert.match(source, /تم تقريب الحرارة وترجمة الوصف/);
