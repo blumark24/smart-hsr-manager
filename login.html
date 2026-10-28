@@ -117,6 +117,17 @@ function showMsg(text, type='') {
   msgBox.className = 'message ' + type;
 }
 
+// An authenticated Preview identity may be missing its users/{uid} record,
+// disabled, or not yet linked to a municipality. Distinguish those cases
+// AFTER successful credential verification, without disclosing a UID,
+// tenant identifier, email, password, or Firebase internals.
+function missingWorkforceAccessMessage(reason) {
+  if (reason === 'no_record') return 'تم التحقق من بيانات الدخول، لكن سجل الموظف غير موجود في بيئة الاختبار. يلزم مسؤول النظام مراجعة ربط الحساب بسجل الموظفين.';
+  if (reason === 'inactive') return 'تم التحقق من بيانات الدخول، لكن حساب الموظف موقوف. يلزم مسؤول النظام مراجعة حالة الحساب.';
+  if (reason === 'no_organization') return 'تم التحقق من بيانات الدخول، لكن الحساب غير مرتبط ببلدية فعالة. يلزم مسؤول النظام مراجعة ارتباط الجهة.';
+  return 'تعذر تحديد صلاحيات هذا الحساب. يلزم مسؤول النظام مراجعة سجل الموظف في بيئة الاختبار.';
+}
+
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value.trim();
@@ -185,7 +196,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // an invalid account at the door. Everything else is a valid identity.
     if (!resolution.valid) {
       await signOut(probeAuth);
-      showMsg('🚫 لا توجد صلاحية فعالة أو مؤسسة محددة لهذا المستخدم.', 'error');
+      showMsg(missingWorkforceAccessMessage(resolution.reason), 'error');
       loginButton.disabled = false;
       loginButton.textContent = 'تسجيل الدخول';
       return;
