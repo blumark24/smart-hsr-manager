@@ -66,7 +66,7 @@ function normalizeForecast(data, currentMs) {
 function providerTtl(headers, currentMs) {
   const expiry = Date.parse(headers?.get?.('expires') || '');
   const requested = Number.isFinite(expiry) && expiry > currentMs ? expiry - currentMs : FALLBACK_TTL_MS;
-  return Math.max(MIN_TTL_MS, Math.min(MAX_TTL_MS, requested));
+  return requested;
 }
 
 async function getPublicForecast({ fetchImpl = fetch, clock = nowUtc } = {}) {
