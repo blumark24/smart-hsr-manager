@@ -110,3 +110,74 @@ test('Browser weather code never uses device position or employees, and fails wi
   assert.match(source, /'غير متاح'/);
   assert.doesNotMatch(source, /navigator\.geolocation|watchPosition|getCurrentPosition|firebase|user\.uid|Bearer |api\.met\.no/);
 });
+
+test('MET cache respects long Expires, short Expires and missing Expires', () => {
+  const now = Date.parse('2026-10-27T18:00:00Z');
+  const headers = expiry => ({get(name){return name==='expires'?expiry:null;}});
+  assert.equal(weather.providerTtl(headers('Wed, 28 Oct 2026 06:00:00 GMT'),now),12*60*60*1000);
+  assert.equal(weather.providerTtl(headers('Tue, 27 Oct 2026 18:15:00 GMT'),now),15*60*1000);
+  assert.equal(weather.providerTtl(headers(null),now),60*60*1000);
+  assert.equal(weather.providerTtl(headers('invalid'),now),60*60*1000);
+});
+
+test('MET provider forecast is refreshed from cached raw timeseries, 304 preserves raw data', async () => {
+  const start = Date.parse('2026-10-27T18:00:00Z');
+  let current = start;
+  const times = ['2026-10-27T18:00:00Z','2026-10-28T00:00:00Z','2026-10-28T06:00:00Z'];
+  const expiresFirst = 'Wed, 28 Oct 2026 02:00:00 GMT';
+  const expiresSecond = 'Wed, 28 Oct 2026 10:00:00 GMT';
+  const lastModified = 'Tue, 27 Oct 2026 17:30:00 GMT';
+  const received = [];
+  const headers = fields => ({get(k){return fields[k.toLowerCase()]??null;}});
+  const fetchImpl = async (url,opts) => {
+    received.push({url,opts});
+    if (received.length === 1) return {
+      ok:true,status:200,
+      headers:headers({'expires':expiresFirst,'last-modified':lastModified}),
+      async json(){return {properties:{timeseries:times.map((time,i)=>({
+        time,data:{instant:{details:{air_temperature:34-3*i}},
+          next_1_hours:{summary:{symbol_code:'clearsky_day'}}}
+      }))}};}
+    };
+    if (received.length===2) return {
+      ok:false,status:304,headers:headers({'expires':expiresSecond})
+    };
+    throw new Error('unexpected extra upstream request');
+  };
+  const args={fetchImpl,clock:()=>current};
+  const a=await weather.getPublicForecast(args);
+  assert.equal(a.forecastTemperatureC,34);
+  current = start + 6*60*60*1000;
+  const b=await weather.getPublicForecast(args);
+  assert.equal(b.forecastTemperatureC,31);
+  assert.equal(received.length,1,'must not re-fetch before Expires');
+  current = start + 9*60*60*1000;
+  const c=await weather.getPublicForecast(args);
+  assert.equal(c.forecastTemperatureC,28);
+  assert.equal(received.length,2);
+  assert.equal(received[1].opts.headers['If-Modified-Since'],lastModified);
+  current = start + 10*60*60*1000;
+  const d=await weather.getPublicForecast(args);
+  assert.equal(d.forecastTemperatureC,28);
+  assert.equal(received.length,2,'304 must extend local cache lifetime');
+  assert.match(received[0].url,/^https:\/\/api\.met\.no\/weatherapi\/locationforecast/);
+  assert.equal(received[0].opts.method,'GET');
+});
+
+test('Cached time series exhaustion fails closed rather than seeking an early refresh', async () => {
+  // The Node test loader resets the module cache to isolate module state.
+  const modulePath=require.resolve('../platform/weather/met-public-forecast');
+  delete require.cache[modulePath];
+  const fresh=require(modulePath);
+  const start=Date.parse('2026-10-27T18:00:00Z');
+  let current=start;
+  let requests=0;
+  const fetchImpl=async()=>{requests++;return {
+    ok:true,status:200,headers:{get(n){return n==='expires'?'Wed, 28 Oct 2026 06:00:00 GMT':null;}},
+    async json(){return {properties:{timeseries:[{time:'2026-10-27T18:00:00Z',data:{instant:{details:{air_temperature:31}}}}]}}}
+  }};
+  await fresh.getPublicForecast({fetchImpl,clock:()=>current});
+  current+=5*60*60*1000;
+  await assert.rejects(fresh.getPublicForecast({fetchImpl,clock:()=>current}),/cached_forecast_outdated/);
+  assert.equal(requests,1,'do not query MET before Expires just for a new hour');
+});
