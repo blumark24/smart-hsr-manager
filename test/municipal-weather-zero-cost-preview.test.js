@@ -104,6 +104,9 @@ test('Browser weather code never uses device position or employees, and fails wi
   assert.match(source, /localStorage\.setItem\(CACHE_KEY/);
   assert.match(source, /CACHE_MS = 30 \* 60 \* 1000/);
   assert.match(source, /credentials: 'omit'/);
+  assert.match(source, /https:\/\/creativecommons\.org\/licenses\/by\/4\.0\//);
+  assert.match(source, /data-hsr-weather-license/);
+  assert.match(source, /تم تقريب الحرارة وترجمة الوصف/);
   assert.match(source, /'غير متاح'/);
   assert.doesNotMatch(source, /navigator\.geolocation|watchPosition|getCurrentPosition|firebase|user\.uid|Bearer |api\.met\.no/);
 });
