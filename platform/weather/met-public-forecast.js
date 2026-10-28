@@ -76,7 +76,7 @@ async function getPublicForecast({ fetchImpl = fetch, clock = nowUtc } = {}) {
     const headers = {
       // MET requires identifiable clients. This public company address is
       // included only in the SERVER request; no employee identity is sent.
-      'User-Agent': 'SMART-HSR-Weather/1.0 (https://blumark24.com; info@blumark24.com)',
+      'User-Agent': 'SMART-HSR-Weather/1.0 (https://blumark24.com)',
       'Accept': 'application/json'
     };
     if (lastModified) headers['If-Modified-Since'] = lastModified;
