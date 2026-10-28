@@ -8,10 +8,10 @@
 const CITY = Object.freeze({
   key: 'alqunfudhah',
   label: 'القنفذة',
-  latitude: 19.12639,
-  longitude: 41.07889
+  latitude: 19.1264,
+  longitude: 41.0789
 });
-const PROVIDER_URL = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=19.12639&lon=41.07889';
+const PROVIDER_URL = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=19.1264&lon=41.0789';
 const CREDIT_URL = 'https://www.met.no/en';
 const FALLBACK_TTL_MS = 60 * 60 * 1000;
 const MIN_TTL_MS = 30 * 60 * 1000;
