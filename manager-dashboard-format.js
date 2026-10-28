@@ -24,7 +24,7 @@
     date(value) {
       const date = value instanceof Date ? value : new Date(value);
       return Number.isFinite(date.getTime())
-        ? new Intl.DateTimeFormat('ar-SA-u-nu-latn', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Riyadh' }).format(date)
+        ? new Intl.DateTimeFormat('ar-SA-u-nu-latn', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Riyadh' }).format(date)
         : 'غير متاح';
     },
     time(value = Date.now()) {
