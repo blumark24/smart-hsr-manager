@@ -48,4 +48,5 @@ jobs:
             test/lands-services-header-routing.test.js \
             test/embedded-lands-preview.test.js \
             test/municipal-weather-zero-cost-preview.test.js \
-            test/preview-lands-sso-gate.test.js
+            test/preview-lands-sso-gate.test.js \
+            test/preview-login-account-reason.test.js
