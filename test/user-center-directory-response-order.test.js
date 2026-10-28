@@ -10,7 +10,7 @@ assert.ok(start>=0&&end>start,'isolated directory logic must be found');
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b});return {promise,resolve,reject}};
 function setup(){
   const requests=[];
-  const U={cache:{org:'tenant-A',at:0,employees:[],users:[]},org:async()=> 'tenant-A',
+  const U={cache:{org:'tenant-A',at:0,employees:[],users:[]},session:async()=>({uid:'u-1'}),org:async()=> 'tenant-A',
     post:async(url)=>{const d=deferred();requests.push({url,d});return d.promise;}};
   vm.runInNewContext(src.slice(start,end),{U,Date});
   return {U,requests};
@@ -96,4 +96,46 @@ test('first-load network error shows retry state, not an empty apparent success'
   const {app,handler}=buildFailureSurface(false);
   assert.equal(handler(app,{message:'offline'},false,()=>{}),'replaced');
   assert.match(app.innerHTML,/إعادة المحاولة/);
+});
+
+const classifierStart=enhancements.indexOf('function isUserCenterAccessDenied(error)');
+const classifierEnd=enhancements.indexOf('\n// Keep the last successful directory visible',classifierStart);
+assert.ok(classifierStart>-1&&classifierEnd>classifierStart,'auth denial classifier must exist');
+const isDenied=vm.runInNewContext('('+enhancements.slice(classifierStart,classifierEnd)+')');
+test('expired Firebase auth, missing manager session, tenant denial and 401/403 are fail-closed',()=>{
+  for(const error of [
+    {message:'no_session'}, {reason:'not_authenticated'}, {reason:'cross_organization_denied'},
+    {code:'auth/user-token-expired'}, {code:'auth/user-disabled'},
+    {status:401,message:'expired'}, {status:403,message:'forbidden'}
+  ])assert.equal(isDenied(error),true,JSON.stringify(error));
+  for(const error of [{status:503,message:'server'}, {reason:'request_timeout'},{message:'offline'}])
+    assert.equal(isDenied(error),false,JSON.stringify(error));
+});
+const coreSessionStart=src.indexOf('U.session=async()=>{');
+const coreSessionEnd=src.indexOf('\nU.fetchTimed=',coreSessionStart);
+assert.ok(coreSessionStart>-1&&coreSessionEnd>coreSessionStart);
+test('Manager UID switch or logout invalidates cached personnel records, without reusing old session',async()=>{
+  const window={SmartHSRManagerSession:{getCurrentUser:()=>window.current}};
+  const U={cache:{org:'tenant-A',at:123,employees:[{name:'A'}],users:[{uid:'u-a'}]}};
+  const source='let sessionUid=\'\';let directoryRequestGeneration=0;'
+    +src.slice(coreSessionStart,coreSessionEnd)+';this.expose=U.session;';
+  vm.runInNewContext(source,{window,U});
+  window.current={uid:'u-a'};
+  await U.session();
+  U.cache={org:'tenant-A',at:123,employees:[{name:'A'}],users:[]};
+  window.current={uid:'u-b'};
+  assert.equal((await U.session()).uid,'u-b');
+  assert.equal(U.cache.employees.length,0);
+  assert.equal(U.cache.at,0);
+  U.cache={org:'tenant-B',at:99,employees:[{name:'B'}],users:[]};
+  window.current=null;
+  await assert.rejects(U.session(),/no_session/);
+  assert.equal(U.cache.employees.length,0);
+});
+test('successful User Center cache is tied to user UID and tenant, even on cache-hit path',()=>{
+  assert.match(enhancements,/const user=await U\.session\(\)/);
+  assert.match(enhancements,/directoryCacheUid!==uid \|\| directoryCache\.org!==U\.cache\.org/);
+  assert.match(enhancements,/currentUser\.uid!==uid \|\| base\.org!==U\.cache\.org/);
+  assert.match(enhancements,/directoryCacheUid=uid/);
+  assert.match(src,/await U\.session\(\);if\(!force&&U\.cache\.at/);
 });
