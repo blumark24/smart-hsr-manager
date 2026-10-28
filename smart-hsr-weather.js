@@ -86,7 +86,8 @@
     if (request) return request;
     request = (async () => {
       const response = await fetch(API_URL, {
-        method: 'GET', credentials: 'omit', cache: 'default'
+        // Vercel-protected Preview requires its same-origin session cookie; never send credentials cross-origin.
+        method: 'GET', credentials: 'same-origin', cache: 'default'
       });
       if (!response.ok) throw new Error('weather_unavailable');
       const result = await response.json();
