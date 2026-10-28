@@ -24,13 +24,13 @@
     date(value) {
       const date = value instanceof Date ? value : new Date(value);
       return Number.isFinite(date.getTime())
-        ? new Intl.DateTimeFormat('ar-SA-u-nu-latn', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date)
+        ? new Intl.DateTimeFormat('ar-SA-u-nu-latn', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Riyadh' }).format(date)
         : 'غير متاح';
     },
     time(value = Date.now()) {
       const date = value instanceof Date ? value : new Date(value);
       return Number.isFinite(date.getTime())
-        ? new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).format(date)
+        ? new Intl.DateTimeFormat('ar-SA-u-nu-latn', { timeZone: 'Asia/Riyadh', hour: 'numeric', minute: '2-digit', hour12: true }).format(date).replace(/\bAM\b/gi, 'صباحًا').replace(/\bPM\b/gi, 'مساءً')
         : '—';
     },
     dateTime(value) {
