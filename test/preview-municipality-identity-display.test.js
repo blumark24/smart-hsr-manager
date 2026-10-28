@@ -62,3 +62,40 @@ test('Approved department head displays the runtime identity in header and read-
   assert.match(fieldHead, /class="hsr-identity-org">\{\{ orgName \}\}/);
   assert.match(fieldHead, /\{ k: 'الجهة', v: this\.state\.orgName/);
 });
+
+const fieldRuntime = fs.readFileSync(path.join(root, 'field-head-runtime.js'), 'utf8');
+const fieldStart = fieldRuntime.indexOf('function verifiedFieldDisplay(data, resolution = null)');
+const fieldEnd = fieldRuntime.indexOf('\n  function startIdentityRefresh(user, organizationId)', fieldStart);
+assert.ok(fieldStart > -1 && fieldEnd > fieldStart, 'Field identity resolver must be defined');
+const resolveFieldDisplay = vm.runInNewContext('(() => { ' + fieldRuntime.slice(fieldStart, fieldEnd) +
+  '; return verifiedFieldDisplay; })()', {});
+
+test('Field head uses canonical Owner label and current HR display name for matching tenant', () => {
+  const profile = resolveFieldDisplay({ organizationId:'tenant-A', organizationName:'اسم قديم' }, verified);
+  assert.equal(profile.organizationName, 'بلدية محدثة');
+  assert.equal(profile.name, 'الاسم الجديد');
+  assert.match(fieldRuntime, /orgName:identity\.organizationName/);
+  assert.match(fieldRuntime, /sessionName:identity\.name \|\| data\.name/);
+  assert.doesNotMatch(fieldRuntime, /orgName:data\.organizationName \|\| 'المؤسسة المسجلة'/);
+});
+
+test('Field head does not display a municipality from foreign or unauthorized workspace', () => {
+  for (const patch of [{ organizationId:'tenant-B' }, { allowed:false }, { valid:false },
+    {kind:'manager'}, {profile:null}]) {
+    const display = resolveFieldDisplay({organizationId:'tenant-A'}, {...verified,...patch});
+    assert.equal(display.organizationName, 'اسم البلدية غير متاح');
+    assert.equal(display.name, '');
+  }
+  assert.match(fieldRuntime, /resolved\?\.organizationId !== organizationId/);
+  assert.match(fieldRuntime, /auth\?\.currentUser\?\.uid !== user\.uid/);
+});
+
+test('Field display refresh cannot change role, UID, permissions or authentication, and disposes listeners', () => {
+  assert.match(fieldRuntime, /api\('resolveWorkspaces', \{ workspace:'field' \}\)/);
+  assert.match(fieldRuntime, /window\.addEventListener\('focus', refreshIdentity\)/);
+  assert.match(fieldRuntime, /document\.addEventListener\('visibilitychange', refreshIdentity\)/);
+  assert.match(fieldRuntime, /window\.setInterval\(refreshIdentity, 60000\)/);
+  assert.match(fieldRuntime, /window\.clearInterval\(timer\)/);
+  assert.match(fieldRuntime, /if \(stopIdentityRefresh\) stopIdentityRefresh\(\)/);
+  assert.doesNotMatch(fieldRuntime, /setDoc\(|updateDoc\(|revokeRefreshTokens/);
+});
