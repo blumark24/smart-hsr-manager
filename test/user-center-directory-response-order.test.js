@@ -90,7 +90,7 @@ test('403 or expired 401 session clears prior personal records instead of preser
     assert.match(app.innerHTML,/ucv2-state-denied/);
     assert.equal(app.warning,null);
   }
-  assert.match(enhancements,/error.status===401\|\|error.status===403/);
+  assert.match(enhancements,/isUserCenterAccessDenied\(error\)/);
 });
 test('first-load network error shows retry state, not an empty apparent success',()=>{
   const {app,handler}=buildFailureSurface(false);
