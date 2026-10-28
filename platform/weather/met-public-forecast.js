@@ -68,7 +68,7 @@ function providerTtl(headers, currentMs) {
 }
 
 async function getPublicForecast({ fetchImpl = fetch, clock = nowUtc } = {}) {
-  if (cached && clock() < cached.expiresAt) return cached.value;
+  if (cached && clock() < cached.expiresAt) return normalizeForecast(cached.raw, clock());
   if (pending) return pending;
   const task = async () => {
     const headers = {
@@ -87,15 +87,18 @@ async function getPublicForecast({ fetchImpl = fetch, clock = nowUtc } = {}) {
     const now = clock();
     const expiresAt = now + providerTtl(response.headers, now);
     if (response.status === 304 && cached) {
-      cached = { value: cached.value, expiresAt };
-      return cached.value;
+      cached = { ...cached, expiresAt };
+      const updated = normalizeForecast(cached.raw, now);
+      if (!updated) throw new Error('cached_forecast_outdated');
+      return updated;
     }
     if (!response.ok) throw new Error('provider_unavailable');
-    const parsed = normalizeForecast(await response.json(), now);
+    const raw = await response.json();
+    const parsed = normalizeForecast(raw, now);
     if (!parsed) throw new Error('invalid_forecast');
     const m = response.headers?.get?.('last-modified');
     if (m && !Number.isNaN(Date.parse(m))) lastModified = m;
-    cached = { value: parsed, expiresAt };
+    cached = { raw, expiresAt };
     return parsed;
   };
   pending = task().finally(() => { pending = null; });
