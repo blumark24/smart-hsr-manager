@@ -106,6 +106,32 @@ function extractBearerToken(req) {
   return m ? m[1] : null;
 }
 
+const STAGING_FIREBASE_PROJECT_ID = 'smart-hsr-staging-blumark24';
+
+// Read-only Preview release gate. Never expose Firebase credentials, raw
+// project IDs, tenant information, tokens or trusted Lands endpoint URLs.
+// Registration and same-origin consumption MUST use the same embedded runtime
+// and verified staging Firebase backend or fail closed before any handoff.
+function previewLandsSsoGate({ env = process.env, appFactory } = {}) {
+  if (env.VERCEL_ENV !== 'preview') {
+    return { ready: false, checks: { preview: false, webStaging: false, adminStaging: false, embedded: false } };
+  }
+  let webStaging = false;
+  try {
+    webStaging = JSON.parse(env.FIREBASE_WEB_CONFIG || 'null')?.projectId === STAGING_FIREBASE_PROJECT_ID;
+  } catch (_) { /* invalid web config is never accepted */ }
+  let adminStaging = false;
+  try {
+    const app = appFactory ? appFactory() : require('../_lib/firebaseAdmin').getAdmin().app;
+    adminStaging = app?.options?.projectId === STAGING_FIREBASE_PROJECT_ID;
+  } catch (_) { /* invalid/unavailable Firebase Admin is never accepted */ }
+  const embedded = env.LANDS_EMBEDDED_RUNTIME === '1';
+  return {
+    ready: webStaging && adminStaging && embedded,
+    checks: { preview: true, webStaging, adminStaging, embedded },
+  };
+}
+
 const SSO_ALLOWED_LANDS_ROLES = ['lands_employee', 'lands_department_manager'];
 
 function isSsoEligible(data) {
@@ -122,6 +148,11 @@ function isSsoEligible(data) {
 }
 
 async function handleLandsSsoHandoff(req, res) {
+  // Do not generate an external one-time code that embedded /lands/ cannot
+  // consume. On Preview, both sides must share the verified staging backend.
+  if (process.env.VERCEL_ENV === 'preview' && !previewLandsSsoGate().ready) {
+    return sendJson(res, 503, { error: 'staging_lands_sso_gate_not_ready' });
+  }
   let decoded;
   try {
     decoded = await verifyRequestToken(req);
@@ -196,8 +227,29 @@ function sanitizedMapContext(organizationId, organizationName, organizationData)
 }
 
 async function handler(req, res) {
+  // Public, non-secret diagnostics only on protected Preview; no user data.
+  // Useful for release verification without decrypting env values or running
+  // an authenticated municipality workflow.
+  const gateRequested = (req.query && typeof req.query.previewGate === 'string'
+    ? req.query.previewGate
+    : (() => { try { return new URL(req.url || '/', 'http://localhost').searchParams.get('previewGate') || ''; } catch (_) { return ''; } })()).trim();
+  if (gateRequested) {
+    if (req.method !== 'GET') return sendJson(res, 405, { error: 'method_not_allowed' });
+    if (process.env.VERCEL_ENV !== 'preview') return sendJson(res, 404, { error: 'not_found' });
+    if (gateRequested !== 'lands-sso') return sendJson(res, 400, { error: 'invalid_preview_gate' });
+    const gate = previewLandsSsoGate();
+    return sendJson(res, gate.ready ? 200 : 503, {
+      service: 'lands-sso', ready: gate.ready, checks: gate.checks,
+    });
+  }
   const embeddedLandsAction = (req.query && typeof req.query.embeddedLandsAction === 'string' ? req.query.embeddedLandsAction : (() => { try { return new URL(req.url || '/', 'http://localhost').searchParams.get('embeddedLandsAction') || ''; } catch (_) { return ''; } })()).trim();
   if (embeddedLandsAction) {
+    // Health is a static probe only. All protected embedded operations are
+    // disabled for Preview unless the staging/SSO release gate is satisfied.
+    if (process.env.VERCEL_ENV === 'preview'
+        && embeddedLandsAction !== 'health' && !previewLandsSsoGate().ready) {
+      return sendJson(res, 503, { error: 'staging_lands_sso_gate_not_ready' });
+    }
     const { handleEmbeddedLandsHttp } = require('../_lib/embeddedLandsRuntime');
     return handleEmbeddedLandsHttp(req, res, embeddedLandsAction);
   }
@@ -249,4 +301,4 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
-module.exports._test = { resolveRoleContext, sanitizedMapContext, requestedOrganizationId, cleanCenter, cleanBounds, ALQUNFUDHAH_ORGANIZATION_ID, ALQUNFUDHAH_APPROXIMATE_CENTER, ALQUNFUDHAH_DEFAULT_ZOOM, isSsoEligible, requestedGeoLayer, requestedBboxParam, handleGeoLayerQuery, GEO_LAYER_QUERY };
+module.exports._test = { previewLandsSsoGate, resolveRoleContext, sanitizedMapContext, requestedOrganizationId, cleanCenter, cleanBounds, ALQUNFUDHAH_ORGANIZATION_ID, ALQUNFUDHAH_APPROXIMATE_CENTER, ALQUNFUDHAH_DEFAULT_ZOOM, isSsoEligible, requestedGeoLayer, requestedBboxParam, handleGeoLayerQuery, GEO_LAYER_QUERY };
