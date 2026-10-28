@@ -361,7 +361,13 @@ async function start(component) {
   component.getAuthToken = () => (activeAuth && activeAuth.currentUser)
     ? activeAuth.currentUser.getIdToken()
     : Promise.resolve(null);
-  await authApi.setPersistence(auth, authApi.browserLocalPersistence);
+  // Supervisor opens this same manager dashboard through the workforce
+  // default Auth namespace. Keep its Preview identity tab-scoped, while
+  // preserving the separate leadership namespace and Production policy.
+  const isolatedWorkforceTab = requestedPortal === 'workforce'
+    && firebaseConfig.projectId === 'smart-hsr-staging-blumark24';
+  await authApi.setPersistence(auth, isolatedWorkforceTab
+    ? authApi.browserSessionPersistence : authApi.browserLocalPersistence);
 
   stopAuth = authApi.onAuthStateChanged(auth, async user => {
     let context;

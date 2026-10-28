@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - plan/user-center-services-preserve-ui-20261027
+      - fix/preview-workforce-tab-isolation-20261028
   workflow_dispatch:
 
 permissions:
@@ -32,6 +33,8 @@ jobs:
           node --check api/organization/context.js
           node --check platform/weather/met-public-forecast.js
           node --check smart-hsr-weather.js
+          node --input-type=module --check < manager-dashboard-adapter.js
+          node --input-type=module --check < lands/client/lands-client.js
       # lands-shell-ui.test.js is a legacy snapshot test (six old titles/UI
       # shapes already fail on the unchanged custom-domain baseline SHA).
       # The new focused Lands suite verifies current header preservation and
@@ -49,4 +52,5 @@ jobs:
             test/embedded-lands-preview.test.js \
             test/municipal-weather-zero-cost-preview.test.js \
             test/preview-lands-sso-gate.test.js \
-            test/preview-login-account-reason.test.js
+            test/preview-login-account-reason.test.js \
+            test/preview-workforce-tab-isolation.test.js

@@ -65,7 +65,7 @@ form?.addEventListener('submit',e=>{if(window.__smartHSRLoginReady===true)return
 <script src="workspace-access.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 import { classifyManagerLoginError as classifyFirebaseLoginError } from './manager-login-error-classification.js';
@@ -84,7 +84,11 @@ function resolveLandsRedirectBase() {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-await setPersistence(auth, browserLocalPersistence);
+// Preview UAT must allow different workforce identities in separate tabs.
+// Never share the default Firebase Auth identity across browser tabs in
+// the isolated staging environment. Production retains its existing policy.
+await setPersistence(auth, firebaseConfig.projectId === 'smart-hsr-staging-blumark24'
+  ? browserSessionPersistence : browserLocalPersistence);
 // The probe never persists credentials. It determines the authoritative role
 // before the workforce session is touched.
 const probeApp = initializeApp(firebaseConfig, 'smart-hsr-role-probe');
