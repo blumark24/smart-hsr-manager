@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
-import { getAuth, connectAuthEmulator, onAuthStateChanged, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, signInWithCustomToken, signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+import { getAuth, connectAuthEmulator, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence, signInWithEmailAndPassword, signInWithCustomToken, signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
 import { getFirestore, connectFirestoreEmulator, collection, doc, getDoc, getDocs, setDoc, query, orderBy, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 import { getStorage, connectStorageEmulator, ref, uploadBytes, getBytes } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js';
 import { sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
@@ -33,7 +33,17 @@ export function createLandsClient({ firebaseConfig, useEmulators = false, emulat
   // immediately on client creation, well before any sign-in call that would
   // actually establish a session (network round-trips to the SSO/mutation
   // endpoints give this ample time to resolve first).
-  if (!useEmulators) setPersistence(auth, browserLocalPersistence).catch(() => {});
+  // Lands consumes a one-time SSO code and then owns the same tab's default
+  // Auth instance. Using LOCAL here would re-share that identity across
+  // other Preview workforce tabs, undoing the isolation from login.html.
+  // Fail closed in staging if session storage cannot be established; keep
+  // the existing production best-effort behavior and emulator semantics.
+  const isolatedPreviewSession = !useEmulators && firebaseConfig.projectId === STAGING_PROJECT_ID;
+  const persistenceReady = useEmulators ? Promise.resolve()
+    : setPersistence(auth, isolatedPreviewSession ? browserSessionPersistence : browserLocalPersistence)
+      .catch(() => {
+        if (isolatedPreviewSession) throw new Error('LANDS_PREVIEW_SESSION_UNAVAILABLE');
+      });
   if (useEmulators) { connectAuthEmulator(auth, `http://${emulatorHost}:${authPort}`, { disableWarnings: true }); connectFirestoreEmulator(db, emulatorHost, firestorePort); connectStorageEmulator(storage, emulatorHost, storagePort); }
   const requireUser = () => { if (!auth.currentUser) throw new Error('LANDS_AUTH_REQUIRED'); return auth.currentUser; };
   const requireId = (municipalityId) => { if (typeof municipalityId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(municipalityId)) throw new Error('INVALID_MUNICIPALITY_ID'); };
@@ -64,13 +74,13 @@ export function createLandsClient({ firebaseConfig, useEmulators = false, emulat
 
   return {
     auth, storage, session,
-    async signIn(email, password) { await signInWithEmailAndPassword(auth, email, password); },
+    async signIn(email, password) { await persistenceReady; await signInWithEmailAndPassword(auth, email, password); },
     // Used ONLY by the unified SSO handoff (see index.html's boot-time
     // consumeSsoHandoff()): the short-lived custom token minted by Lands'
     // own /api/lands-sso-consume, after it independently re-verified the
     // employee's real membership record server-side. No password ever
     // touches this path.
-    async signInWithHandoffToken(customToken) { await signInWithCustomToken(auth, customToken); },
+    async signInWithHandoffToken(customToken) { await persistenceReady; await signInWithCustomToken(auth, customToken); },
     async signOutUser() { await signOut(auth); },
     // The correct way to observe Firebase's own async, persistence-backed
     // auth-state restoration (e.g. on a page refresh) — never a synchronous
