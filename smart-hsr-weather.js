@@ -39,9 +39,30 @@
     const label = good ? 'توقع ' + data.forecastTemperatureC + '°م · ' + data.description : 'غير متاح';
     if (target.textContent !== label) target.textContent = label;
     const credit = chip.querySelector('[data-hsr-weather-credit]');
-    if (credit) credit.hidden = !good;
+    if (credit) {
+      credit.hidden = !good;
+      // CC BY 4.0 requires a license link and notice of adaptations.
+      // Reuse the original source link and attach one discreet license link.
+      let license = chip.querySelector('[data-hsr-weather-license]');
+      if (!license) {
+        license = document.createElement('a');
+        license.dataset.hsrWeatherLicense = '1';
+        license.href = 'https://creativecommons.org/licenses/by/4.0/';
+        license.target = '_blank';
+        license.rel = 'noopener noreferrer';
+        license.textContent = 'CC BY 4.0';
+        license.setAttribute('aria-label', 'رخصة بيانات الطقس CC BY 4.0');
+        Object.assign(license.style, {
+          fontSize: '8px', whiteSpace: 'nowrap', color: 'inherit',
+          textDecoration: 'underline', textUnderlineOffset: '2px'
+        });
+        credit.insertAdjacentElement('afterend', license);
+      }
+      license.hidden = !good;
+    }
     const title = good
-      ? 'توقع الطقس في القنفذة · MET Norway · ' + data.forecastAt + ' · ليس قياسًا مباشرًا أو تحذيرًا رسميًا'
+      ? 'توقع الطقس في القنفذة · MET Norway · ' + data.forecastAt
+        + ' · تم تقريب الحرارة وترجمة الوصف إلى العربية · ليس قياسًا مباشرًا أو تحذيرًا رسميًا'
       : 'لا تتوفر توقعات موثوقة حاليًا لهذه الجهة';
     if (chip.title !== title) chip.title = title;
     if (chip.getAttribute('aria-label') !== title) chip.setAttribute('aria-label', title);
