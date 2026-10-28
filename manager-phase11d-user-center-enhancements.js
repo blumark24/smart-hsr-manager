@@ -35,6 +35,7 @@ const state = {
   quick:null, page:1, pageSize:25, sort:'name',
 };
 let directoryCache = null;
+let directoryCacheUid = '';
 let renderQueued = false;
 let renderRequested = false;
 let renderGeneration = 0;
@@ -254,6 +255,10 @@ function selectOptions(values, current, allLabel='الكل') {
 }
 
 async function getDirectory(force=false) {
+  const user=await U.session();
+  const uid=String(user?.uid || '');
+  if (!uid) throw Error('no_session');
+  if (directoryCache && (directoryCacheUid!==uid || directoryCache.org!==U.cache.org)) directoryCache=null;
   if (directoryCache && !force) return directoryCache;
   const base=await U.dir(force);
   const users=Array.isArray(base.users)?base.users:[];
@@ -278,7 +283,10 @@ async function getDirectory(force=false) {
   } catch (error) {
     if(error?.status!==403) console.warn('[UC:contractors]',error?.reason||error?.message);
   }
+  const currentUser=await U.session();
+  if (currentUser.uid!==uid || base.org!==U.cache.org) throw Error('no_session');
   directoryCache={...base,employees,users,contractors};
+  directoryCacheUid=uid;
   return directoryCache;
 }
 // A missing Firebase session is an authorization loss, not an offline refresh.
