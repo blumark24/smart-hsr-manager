@@ -7,6 +7,7 @@ on:
       - fix/preview-workforce-tab-isolation-20261028
       - fix/preview-weather-header-only-20261028
       - fix/preview-municipality-identity-display-20261028
+      - fix/preview-user-center-directory-race-20261028
   workflow_dispatch:
 
 permissions:
@@ -57,4 +58,5 @@ jobs:
             test/preview-lands-sso-gate.test.js \
             test/preview-login-account-reason.test.js \
             test/preview-workforce-tab-isolation.test.js \
-            test/preview-municipality-identity-display.test.js
+            test/preview-municipality-identity-display.test.js \
+            test/user-center-directory-response-order.test.js
