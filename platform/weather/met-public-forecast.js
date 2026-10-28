@@ -68,7 +68,11 @@ function providerTtl(headers, currentMs) {
 }
 
 async function getPublicForecast({ fetchImpl = fetch, clock = nowUtc } = {}) {
-  if (cached && clock() < cached.expiresAt) return normalizeForecast(cached.raw, clock());
+  if (cached && clock() < cached.expiresAt) {
+    const forecast = normalizeForecast(cached.raw, clock());
+    if (!forecast) throw new Error('cached_forecast_outdated');
+    return forecast;
+  }
   if (pending) return pending;
   const task = async () => {
     const headers = {
