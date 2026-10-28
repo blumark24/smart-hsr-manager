@@ -3,6 +3,7 @@
   let component = null;
   let auth = null;
   let currentUser = null;
+  let stopIdentityRefresh = null;
   let state = { organizationId:null, department:null };
 
   const api = async (action, payload = {}) => {
@@ -21,6 +22,52 @@
     }
     return data;
   };
+
+  // Read display identity from the existing verified UID-and-tenant workspace API.
+  // Never infer a municipality from a tenant ID or change account permissions.
+  function verifiedFieldDisplay(data, resolution = null) {
+    const orgId = String(data?.organizationId || '').trim();
+    const valid = resolution?.kind === 'workforce' && resolution.valid === true
+      && resolution.allowed === true && String(resolution.organizationId || '').trim() === orgId;
+    const profile = valid && resolution.profile && typeof resolution.profile === 'object'
+      ? resolution.profile : {};
+    return {
+      organizationName: String(profile.organizationName || '').trim() || 'اسم البلدية غير متاح',
+      name: String(profile.name || '').trim(),
+    };
+  }
+
+  function startIdentityRefresh(user, organizationId) {
+    if (stopIdentityRefresh) stopIdentityRefresh();
+    let stopped = false;
+    const refreshIdentity = async () => {
+      if (stopped || !component || document.visibilityState === 'hidden'
+          || currentUser?.uid !== user.uid || auth?.currentUser?.uid !== user.uid) return;
+      const active = component;
+      try {
+        const resolved = await api('resolveWorkspaces', { workspace:'field' });
+        if (stopped || component !== active || currentUser?.uid !== user.uid
+            || auth?.currentUser?.uid !== user.uid || state.organizationId !== organizationId
+            || active.state?.orgId !== organizationId || resolved?.organizationId !== organizationId
+            || resolved?.valid !== true || resolved?.allowed !== true
+            || resolved?.kind !== 'workforce') return;
+        const identity = verifiedFieldDisplay({ organizationId }, resolved);
+        const changes = {};
+        if (identity.organizationName !== active.state.orgName) changes.orgName = identity.organizationName;
+        if (identity.name && identity.name !== active.state.sessionName) changes.sessionName = identity.name;
+        if (Object.keys(changes).length) active.setState(changes);
+      } catch (_) { /* Display refresh cannot interrupt authorized field work. */ }
+    };
+    window.addEventListener('focus', refreshIdentity);
+    document.addEventListener('visibilitychange', refreshIdentity);
+    const timer = window.setInterval(refreshIdentity, 60000);
+    stopIdentityRefresh = () => {
+      stopped = true;
+      window.removeEventListener('focus', refreshIdentity);
+      document.removeEventListener('visibilitychange', refreshIdentity);
+      window.clearInterval(timer);
+    };
+  }
 
   const employeeApi = async () => {
     const token = await currentUser.getIdToken();
@@ -73,7 +120,7 @@
     auth = getAuth(app);
     const db = getFirestore(app);
     onAuthStateChanged(auth, async user => {
-      if (!user) { location.replace('login.html'); return; }
+      if (!user) { if (stopIdentityRefresh) stopIdentityRefresh(); currentUser = null; location.replace('login.html'); return; }
       try {
       const snap = await getDoc(doc(db,'users',user.uid));
       if (!snap.exists()) { await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
@@ -99,16 +146,20 @@
       currentUser = user;
       state.organizationId = data.organizationId;
       state.department = fieldScope;
+      const resolution = await api('resolveWorkspaces', { workspace:'field' }).catch(() => null);
+      if (!currentUser || currentUser.uid !== user.uid || auth?.currentUser?.uid !== user.uid) return;
+      const identity = verifiedFieldDisplay(data, resolution);
       if (component) {
         component.setState({
           authPending:false,
           role:'dept',
           screen:'deptops',
-          orgName:data.organizationName || 'المؤسسة المسجلة',
-          sessionName:data.name || user.email || 'رئيس قسم الحصر الميداني',
+          orgName:identity.organizationName,
+          sessionName:identity.name || data.name || user.email || 'رئيس قسم الحصر الميداني',
           department:fieldScope,
           orgId:data.organizationId
         });
+        startIdentityRefresh(user, data.organizationId);
         await refresh();
       }
       } catch (error) {
@@ -875,9 +926,13 @@
       initAuth().catch(() => location.replace('login.html'));
     },
     disconnect(instance) {
-      if (!instance || instance === component) component = null;
+      if (!instance || instance === component) {
+        component = null;
+        if (stopIdentityRefresh) stopIdentityRefresh();
+      }
     },
     logout: async () => {
+      if (stopIdentityRefresh) stopIdentityRefresh();
       if (auth) {
         const {signOut} = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
         await signOut(auth).catch(()=>{});

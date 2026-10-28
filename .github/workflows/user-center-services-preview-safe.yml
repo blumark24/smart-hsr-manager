@@ -6,6 +6,7 @@ on:
       - plan/user-center-services-preserve-ui-20261027
       - fix/preview-workforce-tab-isolation-20261028
       - fix/preview-weather-header-only-20261028
+      - fix/preview-municipality-identity-display-20261028
   workflow_dispatch:
 
 permissions:
@@ -31,6 +32,7 @@ jobs:
           node --check manager-phase11f-reference-ui.js
           node --check manager-phase11g-user-center-approved-skin.js
           node --check mobility-runtime.js
+          node --check field-head-runtime.js
           node --check api/organization/context.js
           node --check platform/weather/met-public-forecast.js
           node --check smart-hsr-weather.js
@@ -54,4 +56,5 @@ jobs:
             test/municipal-weather-zero-cost-preview.test.js \
             test/preview-lands-sso-gate.test.js \
             test/preview-login-account-reason.test.js \
-            test/preview-workforce-tab-isolation.test.js
+            test/preview-workforce-tab-isolation.test.js \
+            test/preview-municipality-identity-display.test.js

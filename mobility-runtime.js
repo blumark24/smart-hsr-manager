@@ -45,6 +45,7 @@
   let component = null;
   let auth = null;
   let currentUser = null;
+  let stopIdentityRefresh = null;
   let refreshTimer = null;
   let geoWatchId = null;
   let trackedMissionId = null;
@@ -68,17 +69,21 @@
     return data && ALLOWED_ROLES.includes(data.role) ? data.role : null;
   }
 
-  function institutionalIdentity(data) {
+  // Display identity comes only from the trusted, UID-scoped workspace resolver.
+  // Do not infer a municipal label from an organization ID or an old user record.
+  function institutionalIdentity(data, resolution = null) {
     const orgId = String((data && data.organizationId) || '').trim();
-    const organizationName = String(
-      (data && (data.organizationName || data.municipalityName || data.organizationLabel)) || ''
-    ).trim() || (orgId === 'CnlVlKC7UcDMp2NZzjjT' ? 'بلدية القنفذة' : 'المؤسسة المسجلة');
-
+    const verified = resolution && resolution.kind === 'workforce'
+      && resolution.valid === true && resolution.allowed === true
+      && String(resolution.organizationId || '').trim() === orgId;
+    const profile = verified && resolution.profile && typeof resolution.profile === 'object'
+      ? resolution.profile : {};
+    const organizationName = String(profile.organizationName || '').trim() || 'اسم البلدية غير متاح';
+    const displayName = String(profile.name || '').trim();
     const department = String(
       (data && (data.department || data.administration || data.departmentName || data.administrationName)) || ''
     ).trim() || 'إدارة حركة السير';
-
-    return { organizationName, department };
+    return { organizationName, displayName, department };
   }
 
   function requestId(prefix) {
@@ -109,6 +114,42 @@
       throw err;
     }
     return data;
+  }
+
+
+  // Refresh display labels without ever changing the authenticated UID, tenant or RBAC.
+  // Re-reads the existing trusted endpoint on tab focus, visibility and every minute.
+  function startIdentityRefresh(user, organizationId) {
+    if (stopIdentityRefresh) stopIdentityRefresh();
+    let stopped = false;
+    const refreshIdentity = async () => {
+      if (stopped || !component || document.visibilityState === 'hidden'
+          || currentUser?.uid !== user.uid || auth?.currentUser?.uid !== user.uid) return;
+      const active = component;
+      try {
+        const resolved = await api('resolveWorkspaces', { workspace:'mobility' });
+        if (stopped || component !== active || currentUser?.uid !== user.uid
+            || auth?.currentUser?.uid !== user.uid || active.state?.orgId !== organizationId
+            || resolved?.organizationId !== organizationId
+            || resolved?.kind !== 'workforce' || resolved?.valid !== true
+            || resolved?.allowed !== true) return;
+        const identity = institutionalIdentity({ organizationId }, resolved);
+        const changes = {};
+        if (identity.organizationName !== active.state.orgName) changes.orgName = identity.organizationName;
+        if (identity.displayName && identity.displayName !== active.state.sessionName)
+          changes.sessionName = identity.displayName;
+        if (Object.keys(changes).length) active.setState(changes);
+      } catch (_) { /* Identity refresh is display-only and cannot affect permissions. */ }
+    };
+    window.addEventListener('focus', refreshIdentity);
+    document.addEventListener('visibilitychange', refreshIdentity);
+    const timer = window.setInterval(refreshIdentity, 60000);
+    stopIdentityRefresh = () => {
+      stopped = true;
+      window.removeEventListener('focus', refreshIdentity);
+      document.removeEventListener('visibilitychange', refreshIdentity);
+      window.clearInterval(timer);
+    };
   }
 
   function missionView(m) {
@@ -454,12 +495,11 @@
     const db = getFirestore(app);
 
     onAuthStateChanged(auth, async user => {
-      if (!user) { location.replace('login.html'); return; }
+      if (!user) { if (stopIdentityRefresh) stopIdentityRefresh(); currentUser = null; location.replace('login.html'); return; }
       const snap = await getDoc(doc(db,'users',user.uid));
       if (!snap.exists()) { await signOut(auth).catch(()=>{}); location.replace('login.html'); return; }
       const data = snap.data() || {};
-      const identity = institutionalIdentity(data);
-      const department = identity.department;
+      const department = institutionalIdentity(data).department;
 
       // Establish the authenticated runtime identity before calling the
       // authoritative workspace resolver. The API helper requires currentUser
@@ -474,7 +514,8 @@
         location.replace('login.html');
         return;
       }
-      if (!resolution || resolution.allowed !== true) {
+      if (!resolution || resolution.kind !== 'workforce' || resolution.valid !== true
+          || resolution.allowed !== true || resolution.organizationId !== data.organizationId) {
         location.replace('workspace.html');
         return;
       }
@@ -483,6 +524,7 @@
         location.replace('workspace.html');
         return;
       }
+      const identity = institutionalIdentity(data, resolution);
       const uiRole = UI_ROLE[role];
       if (component) {
         patchBoard(component);
@@ -492,12 +534,13 @@
           role:uiRole,
           screen:component.homeOf(uiRole),
           orgName:identity.organizationName,
-          sessionName:data.name || user.email || 'مستخدم الحركة الذكية',
+          sessionName:identity.displayName || data.name || user.email || 'مستخدم الحركة الذكية',
           sessionUid:user.uid,
           department,
           orgId:data.organizationId,
         });
         document.title = 'SMART HSR - الحركة الذكية';
+        startIdentityRefresh(user, data.organizationId);
         await refresh();
         restartRefreshLoop();
       }
@@ -518,11 +561,13 @@
     disconnect(instance) {
       if (!instance || instance === component) {
         component = null;
+        if (stopIdentityRefresh) stopIdentityRefresh();
         stopTelemetryWatch();
         if (refreshTimer) { window.clearInterval(refreshTimer); refreshTimer = null; }
       }
     },
     logout: async () => {
+      if (stopIdentityRefresh) stopIdentityRefresh();
       stopTelemetryWatch();
       if (refreshTimer) { window.clearInterval(refreshTimer); refreshTimer = null; }
       if (auth) {
