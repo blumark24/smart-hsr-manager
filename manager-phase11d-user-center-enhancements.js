@@ -281,6 +281,33 @@ async function getDirectory(force=false) {
   directoryCache={...base,employees,users,contractors};
   return directoryCache;
 }
+// Keep the last successful directory visible on a temporary refresh failure.
+// A denied/expired session must never retain cached personal records on screen.
+function showUserCenterLoadFailure(app, error, denied, retry) {
+  const title = denied ? 'لا تملك صلاحية الوصول لمركز المستخدمين' : 'تعذر تحميل سجل المستخدمين';
+  const stateClass = denied ? 'ucv2-state error ucv2-state-denied' : 'ucv2-state error ucv2-state-transient';
+  const message = esc(U.why ? U.why(error.reason || error.message) : error.message);
+  const retryButton = denied ? '' : '<button type="button" class="ucv2-btn ghost" data-retry>إعادة المحاولة</button>';
+  const content = `<b>${title}</b><span>${message}</span>${retryButton}`;
+  const status = Number(error?.status);
+  const temporary = !denied && (!Number.isInteger(status) || !status || status === 408 || status === 429 || status >= 500);
+  const previous = app.querySelector('[data-ucv2-refresh-warning]');
+  const hadLoadedContent = !!app.querySelector('.ucv2-header, .ucv2-grid-head, .ucv2-table-wrap');
+  if (temporary && hadLoadedContent) {
+    const warning = previous || document.createElement('div');
+    warning.dataset.ucv2RefreshWarning = 'true';
+    warning.className = stateClass;
+    warning.setAttribute('role', 'status');
+    warning.innerHTML = `<b>تعذر تحديث البيانات — يتم عرض آخر نسخة محمّلة</b><span>${message}</span>${retryButton}`;
+    if (!previous) app.prepend(warning);
+    warning.querySelector('[data-retry]')?.addEventListener('click', retry);
+    return 'preserved';
+  }
+  app.innerHTML = `<div class="${stateClass}" role="alert">${content}</div>`;
+  app.querySelector('[data-retry]')?.addEventListener('click', retry);
+  return 'replaced';
+}
+
 async function renderCenter(force=false) {
   if (document.documentElement.dataset.smartHsrManagerView !== 'users') return;
   if (renderQueued) { renderRequested = true; return; }
@@ -354,12 +381,9 @@ async function renderCenter(force=false) {
     console.error('[UC:init:error]', error);
     const root=lastRoot||findCenterRoot();
     if(root){ let app=root.querySelector('.ucv2-app'); if(!app){app=document.createElement('section');app.className='ucv2-app';root.appendChild(app);} delete app.dataset.routeGuardLoading; app.removeAttribute('aria-busy');
-      const deniedReasons=['owner_or_manager_required','forbidden','cross_organization_denied','manager_required'];
-      const isPermissionDenied=error.status===403||deniedReasons.includes(error.reason);
-      const stateClass=isPermissionDenied?'ucv2-state error ucv2-state-denied':'ucv2-state error ucv2-state-transient';
-      const title=isPermissionDenied?'لا تملك صلاحية الوصول لمركز المستخدمين':'تعذر تحميل سجل المستخدمين';
-      const retryButton=isPermissionDenied?'':'<button class="ucv2-btn ghost" data-retry>إعادة المحاولة</button>';
-      app.innerHTML=`<div class="${stateClass}"><b>${title}</b><span>${esc(U.why?U.why(error.reason||error.message):error.message)}</span>${retryButton}</div>`; app.querySelector('[data-retry]')?.addEventListener('click',()=>{directoryCache=null;renderCenter(true);}); }
+      const deniedReasons=['owner_or_manager_required','forbidden','cross_organization_denied','manager_required','unauthenticated','invalid_token','not_authenticated'];
+      const isPermissionDenied=error.status===401||error.status===403||deniedReasons.includes(error.reason);
+      showUserCenterLoadFailure(app,error,isPermissionDenied,()=>{directoryCache=null;renderCenter(true);}); }
   } finally {
     renderQueued=false;
     if (renderRequested && document.documentElement.dataset.smartHsrManagerView === 'users') {
