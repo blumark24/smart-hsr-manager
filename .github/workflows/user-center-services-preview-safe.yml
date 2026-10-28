@@ -6,6 +6,7 @@ on:
       - plan/user-center-services-preserve-ui-20261027
       - fix/preview-workforce-tab-isolation-20261028
       - fix/preview-weather-header-only-20261028
+      - fix/preview-municipality-identity-display-20261028
   workflow_dispatch:
 
 permissions:
@@ -54,4 +55,5 @@ jobs:
             test/municipal-weather-zero-cost-preview.test.js \
             test/preview-lands-sso-gate.test.js \
             test/preview-login-account-reason.test.js \
-            test/preview-workforce-tab-isolation.test.js
+            test/preview-workforce-tab-isolation.test.js \
+            test/preview-municipality-identity-display.test.js
