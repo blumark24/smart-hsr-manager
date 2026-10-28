@@ -36,7 +36,7 @@
     const target = chip.querySelector('[data-hsr-weather-status]');
     if (!target) return;
     const good = valid(data);
-    const label = good ? 'توقع ' + data.forecastTemperatureC + '°م · ' + data.description : 'غير متاح';
+    const label = good ? data.city + ' · ' + data.forecastTemperatureC + '°م · ' + data.description : 'غير متاح';
     if (target.textContent !== label) target.textContent = label;
     const credit = chip.querySelector('[data-hsr-weather-credit]');
     if (credit) {
@@ -59,6 +59,8 @@
         credit.insertAdjacentElement('afterend', license);
       }
       license.hidden = !good;
+      credit.style.display = 'none';
+      license.style.display = 'none';
     }
     const title = good
       ? 'توقع الطقس في القنفذة · MET Norway · ' + data.forecastAt
