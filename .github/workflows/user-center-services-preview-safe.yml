@@ -5,6 +5,7 @@ on:
     branches:
       - plan/user-center-services-preserve-ui-20261027
       - fix/preview-workforce-tab-isolation-20261028
+      - fix/preview-weather-header-only-20261028
   workflow_dispatch:
 
 permissions:
