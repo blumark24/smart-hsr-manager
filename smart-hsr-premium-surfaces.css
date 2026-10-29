@@ -330,7 +330,7 @@ html[data-theme="light"] .hsr-manager-root.theme-day{
   --hsr-card-muted:#586e60;
   --tx:#18382b!important;
   --tx2:#375c4b!important;
-  --tx3:#5a7264!important;
+  --tx3:#506b5b!important;
 }
 html[data-theme="dark"] .hsr-manager-root.theme-night,
 html[data-theme="dark"] .hsr-manager-root.theme-night .hsr-manager-page{
