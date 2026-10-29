@@ -1,0 +1,289 @@
+/* SMART HSR Executive Surface System — additive visual layer.
+ * Scope is deliberately limited to the existing Manager and Owner surfaces.
+ * No basemap filter, overlay stacking, business state, routing or dimensions of
+ * the accepted User Center register are modified. */
+.hsr-manager-root{
+ --es-radius:19px;--es-gap:clamp(10px,1.1vw,15px);
+}
+.hsr-manager-root .hsr-exec-kpis,
+.hsr-manager-root .hsr-command-row,
+.hsr-manager-root .hsr-analytics-grid{
+ gap:var(--es-gap)!important;min-width:0;
+}
+.hsr-manager-root .hsr-exec-kpis>div,
+.hsr-manager-root .hsr-decision-card,
+.hsr-manager-root .hsr-priority-card,
+.hsr-manager-root .hsr-completion-card,
+.hsr-manager-root .hsr-analytics-grid>div,
+.hsr-manager-root .hsr-admin-view>div,
+.hsr-manager-root .hsr-contracts-view>div{
+ position:relative;min-width:0;
+ border-radius:var(--es-radius)!important;
+ overflow:hidden;
+ transition:border-color .17s ease,box-shadow .17s ease!important;
+}
+/* Premium, restrained reflective edge. Pure decoration; never intercept clicks. */
+.hsr-manager-root .hsr-exec-kpis>div::after,
+.hsr-manager-root .hsr-decision-card::after,
+.hsr-manager-root .hsr-priority-card::after,
+.hsr-manager-root .hsr-completion-card::after,
+.hsr-manager-root .hsr-analytics-grid>div::after{
+ content:"";position:absolute;inset:0 0 auto;height:1px;z-index:1;pointer-events:none;
+ background:linear-gradient(90deg,transparent 5%,var(--es-topline) 45%,transparent 95%);
+ opacity:.9;
+}
+html[data-theme="dark"] .hsr-manager-root{
+ --es-topline:rgba(185,226,255,.38);
+ --es-edge:rgba(106,181,246,.29);
+ --es-map-edge:rgba(105,192,252,.52);
+}
+html[data-theme="dark"] .hsr-manager-root .hsr-exec-kpis>div,
+html[data-theme="dark"] .hsr-manager-root .hsr-decision-card,
+html[data-theme="dark"] .hsr-manager-root .hsr-priority-card,
+html[data-theme="dark"] .hsr-manager-root .hsr-completion-card,
+html[data-theme="dark"] .hsr-manager-root .hsr-analytics-grid>div,
+html[data-theme="dark"] .hsr-manager-root .hsr-admin-view>div,
+html[data-theme="dark"] .hsr-manager-root .hsr-contracts-view>div{
+ background:linear-gradient(155deg,#143758 0%,#0b2744 56%,#091f38 100%)!important;
+ border:1px solid var(--es-edge)!important;
+ box-shadow:inset 0 1px rgba(182,222,255,.10),inset 0 -1px rgba(2,12,24,.24),0 3px 7px rgba(1,15,32,.22),0 24px 44px -30px rgba(3,76,144,.68)!important;
+}
+html[data-theme="light"] .hsr-manager-root{
+ --es-topline:rgba(255,255,255,.84);
+ --es-edge:rgba(44,117,97,.24);
+ --es-map-edge:rgba(20,121,93,.42);
+}
+html[data-theme="light"] .hsr-manager-root .hsr-exec-kpis>div,
+html[data-theme="light"] .hsr-manager-root .hsr-decision-card,
+html[data-theme="light"] .hsr-manager-root .hsr-priority-card,
+html[data-theme="light"] .hsr-manager-root .hsr-completion-card,
+html[data-theme="light"] .hsr-manager-root .hsr-analytics-grid>div,
+html[data-theme="light"] .hsr-manager-root .hsr-admin-view>div,
+html[data-theme="light"] .hsr-manager-root .hsr-contracts-view>div{
+ background:linear-gradient(155deg,#f0f6f1 0%,#e5f0e8 56%,#dfece5 100%)!important;
+ border:1px solid var(--es-edge)!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.92),inset 0 -1px rgba(25,89,63,.06),0 2px 5px rgba(14,64,44,.06),0 22px 38px -29px rgba(13,90,68,.4)!important;
+}
+.hsr-manager-root .hsr-exec-kpis>div:hover,
+.hsr-manager-root .hsr-decision-card:hover,
+.hsr-manager-root .hsr-priority-card:hover,
+.hsr-manager-root .hsr-completion-card:hover,
+.hsr-manager-root .hsr-analytics-grid>div:hover{
+ border-color:var(--accBd,var(--es-edge))!important;
+}
+/* Map as an inset framed display. The actual Leaflet tile pane and hit targets
+ * are explicitly excluded to preserve pan, pinch and zoom functionality. */
+.hsr-manager-root .hsr-manager-map-shell{
+ border:2px solid var(--es-map-edge,var(--mapShellBd))!important;
+ border-radius:22px!important;
+ outline:1px solid var(--es-map-edge)!important;
+ outline-offset:3px;
+ overflow:hidden;
+ isolation:isolate;
+}
+html[data-theme="dark"] .hsr-manager-root .hsr-manager-map-shell{
+ background:#091e33!important;
+ box-shadow:inset 0 0 0 3px rgba(145,216,255,.05),0 0 0 7px rgba(54,139,206,.06),0 28px 66px -34px rgba(0,61,135,.75)!important;
+}
+html[data-theme="light"] .hsr-manager-root .hsr-manager-map-shell{
+ background:#e2eee8!important;
+ box-shadow:inset 0 0 0 3px rgba(255,255,255,.45),0 0 0 7px rgba(20,124,90,.035),0 23px 48px -29px rgba(19,88,66,.45)!important;
+}
+.hsr-manager-root .hsr-analytics-grid>div{min-height:158px;}
+.hsr-manager-root .hsr-map-kpi{border-radius:13px!important;box-shadow:inset 0 1px rgba(255,255,255,.07),0 7px 19px -12px rgba(0,0,0,.28)!important;}
+html[data-theme="light"] .hsr-manager-root .hsr-map-kpi{background:linear-gradient(150deg,#f3f7f3,#e8f1eb)!important;}
+html[data-theme="dark"] .hsr-manager-root .hsr-map-kpi{background:linear-gradient(145deg,#173d60,#0d2a49)!important;}
+@media(min-width:1180px){
+ .hsr-manager-root .hsr-analytics-grid{
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important;
+  align-items:stretch;
+ }
+}
+@media(min-width:700px) and (max-width:1179px){
+ .hsr-manager-root .hsr-analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+}
+@media(max-width:699px){
+ .hsr-manager-root{--es-radius:15px;--es-gap:9px;}
+ .hsr-manager-root .hsr-analytics-grid{grid-template-columns:minmax(0,1fr)!important;}
+ .hsr-manager-root .hsr-analytics-grid>div{min-height:130px;}
+ .hsr-manager-root .hsr-manager-map-shell{border-radius:17px!important;outline-offset:1px;}
+}
+/* Owner Command Center: a distinct palette tuned to the same HSR language.
+ * Use mineral-green surfaces in day mode, not pure-white cards. */
+html[data-theme="light"] body.owner-premium{
+ --owner-bg:#dfe9e4;
+ --owner-surface:linear-gradient(154deg,#f0f5f1,#e5efe8 65%,#e0ebe6);
+ --owner-surface-strong:#edf4ef;
+ --owner-line:rgba(30,104,82,.23);
+ --owner-shadow:0 2px 5px rgba(10,65,46,.05),0 23px 44px -31px rgba(12,79,57,.38);
+ background:radial-gradient(780px 460px at 78% -8%,rgba(28,140,100,.11),transparent 70%),radial-gradient(660px 410px at 8% 108%,rgba(32,98,141,.065),transparent 68%),#dfe9e4!important;
+}
+html[data-theme="dark"] body.owner-premium{
+ --owner-bg:#061727;
+ --owner-surface:linear-gradient(152deg,#143852,#0c2c43 58%,#082136);
+ --owner-surface-strong:#0d2940;
+ --owner-line:rgba(121,193,228,.24);
+ --owner-shadow:inset 0 1px rgba(210,242,255,.08),0 2px 6px rgba(1,9,22,.24),0 26px 50px -32px rgba(0,64,111,.8);
+ background:radial-gradient(900px 520px at 79% -12%,rgba(31,112,161,.16),transparent 67%),#061727!important;
+}
+body.owner-premium>.grid>main .card{
+ border:1px solid var(--owner-line)!important;
+ border-radius:20px!important;
+ background:var(--owner-surface)!important;
+ box-shadow:var(--owner-shadow)!important;
+ backdrop-filter:none!important;
+ -webkit-backdrop-filter:none!important;
+ transition:border-color .17s ease,box-shadow .17s ease!important;
+}
+body.owner-premium>.grid>main .card:hover{border-color:color-mix(in srgb,var(--owner-accent) 40%,var(--owner-line))!important;}
+body.owner-premium #dashboard .kpi{
+ min-width:0;
+ border-radius:19px!important;
+ overflow:hidden;
+ padding:clamp(14px,1.2vw,19px)!important;
+}
+body.owner-premium #dashboard .kpi h3{font-variant-numeric:tabular-nums;}
+body.owner-premium #dashboard{gap:clamp(10px,1vw,15px)!important;min-width:0;}
+body.owner-premium>.grid>main>header{
+ border-radius:21px!important;
+ box-shadow:var(--owner-shadow)!important;
+}
+html[data-theme="light"] body.owner-premium>.grid>main>header{
+ background:linear-gradient(150deg,#eef5f0,#e5efe9)!important;
+}
+html[data-theme="dark"] body.owner-premium>.grid>main>header{
+ background:linear-gradient(145deg,#12354f,#092439)!important;
+}
+@media(max-width:860px){
+ body.owner-premium>.grid>main .card{border-radius:16px!important;}
+ body.owner-premium #dashboard .kpi{min-height:110px;}
+}
+/* No ambient perpetual motion; avoid synthetic GPU load on map-heavy pages. */
+@media(prefers-reduced-motion:reduce){
+ .hsr-manager-root .hsr-exec-kpis>div,.hsr-manager-root .hsr-decision-card,
+ .hsr-manager-root .hsr-priority-card,.hsr-manager-root .hsr-completion-card,
+ .hsr-manager-root .hsr-analytics-grid>div,body.owner-premium>.grid>main .card{transition:none!important;}
+}
+
+
+/* Shared identity surface: same vocabulary as executive cards, but retain
+ * accepted KPI metrics, tab structure, ten columns, permissions and actions. */
+html[data-theme="dark"] .icc-host,
+html[data-theme="dark"] body .icc-sheet-overlay{
+ --icc-panel:#10283f;--icc-panel-2:#143149;--icc-panel-3:#17374e;
+ --icc-line:#315269;--icc-soft:#193448;
+}
+html[data-theme="light"] .icc-host,
+html[data-theme="light"] body .icc-sheet-overlay{
+ --icc-bg:#e8f0eb;--icc-panel:#eef5f0;--icc-panel-2:#e2eee6;
+ --icc-panel-3:#dce9e2;--icc-line:#b9d1c4;--icc-soft:#e0ece5;
+ --icc-text:#153327;--icc-muted:#536e63;
+}
+html[data-theme="dark"] .icc-host .icc-smart-card{
+ border-color:rgba(111,190,222,.28)!important;
+ background:linear-gradient(145deg,#14354b,#102a3d 60%,#0e2538)!important;
+ box-shadow:inset 0 1px rgba(193,236,255,.13),0 19px 36px -28px rgba(1,61,118,.8)!important;
+}
+html[data-theme="light"] .icc-host .icc-smart-card{
+ border-color:rgba(27,120,86,.29)!important;
+ background:linear-gradient(145deg,#eef5ef,#dfeee4 65%,#d8e9df)!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.95),0 18px 34px -27px rgba(17,90,67,.42)!important;
+}
+.icc-host .icc-smart-card:hover{transform:translateY(-1px)!important}
+.icc-host .icc-smart-card-shine{filter:none!important;opacity:.08!important}
+.icc-host .icc-registry-table-wrap,
+.icc-host .icc-table-wrap,
+.icc-host .icc-inspector,
+.icc-host .icc-org-unit,
+.icc-host .icc-org-canvas,
+.icc-host .icc-spatial-v4{
+ border:1px solid var(--icc-line)!important;
+ border-radius:16px!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.045),0 16px 34px -27px rgba(0,47,88,.44)!important;
+}
+html[data-theme="light"] .icc-host .icc-registry-table-wrap,
+html[data-theme="light"] .icc-host .icc-table-wrap,
+html[data-theme="light"] .icc-host .icc-inspector,
+html[data-theme="light"] .icc-host .icc-org-unit,
+html[data-theme="light"] .icc-host .icc-org-canvas,
+html[data-theme="light"] .icc-host .icc-spatial-v4{
+ background:linear-gradient(152deg,#f1f6f2,#e4eee7)!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.93),0 16px 32px -27px rgba(19,91,65,.31)!important;
+}
+html[data-theme="dark"] .icc-host .icc-registry-table-wrap,
+html[data-theme="dark"] .icc-host .icc-table-wrap,
+html[data-theme="dark"] .icc-host .icc-inspector,
+html[data-theme="dark"] .icc-host .icc-org-unit,
+html[data-theme="dark"] .icc-host .icc-org-canvas,
+html[data-theme="dark"] .icc-host .icc-spatial-v4{
+ background:linear-gradient(155deg,#132f46,#0d253a)!important;
+}
+/* Dense table: exactly ten columns. CSS-only vertical compression keeps
+ * names/roles/employee IDs intact and horizontal scrolling accessible. */
+.icc-host .icc-registry-table{
+ min-width:1380px!important;
+}
+.icc-host .icc-registry-table thead th{
+ height:45px!important;
+ padding:10px 11px!important;
+ background:var(--icc-panel-2)!important;
+ font-weight:750!important;
+}
+.icc-host .icc-registry-table tbody td{
+ padding:9px 11px!important;
+ line-height:1.45!important;
+}
+.icc-host .icc-registry-table tbody tr{height:54px}
+.icc-host .icc-registry-table th:first-child,
+.icc-host .icc-registry-table td:first-child,
+.icc-host .icc-registry-table th:last-child,
+.icc-host .icc-registry-table td:last-child{
+ background:var(--icc-panel)!important;
+}
+.icc-host .icc-registry-table thead th:first-child,
+.icc-host .icc-registry-table thead th:last-child{
+ background:var(--icc-panel-2)!important;
+}
+.icc-host .icc-registry-table :is(.icc-role-label,.icc-service-badge,.icc-vehicle){
+ min-height:22px;padding:3px 6px;font-size:9.5px;
+}
+.icc-host .icc-registry-table tbody tr:hover :is(td:first-child,td:last-child){
+ background:color-mix(in srgb,var(--icc-green) 6%,var(--icc-panel))!important;
+}
+.icc-host .icc-registry-table-wrap{scrollbar-width:thin;scrollbar-color:var(--icc-line) transparent;overscroll-behavior-inline:contain}
+.icc-host .icc-filter-panel,
+body .icc-sheet-overlay>.icc-sheet{
+ border-color:var(--icc-line)!important;
+ box-shadow:0 27px 52px -29px rgba(0,28,51,.55)!important;
+}
+html[data-theme="light"] body .icc-sheet-overlay>.icc-sheet{
+ background:linear-gradient(150deg,#eff5f0,#e5eee8)!important;
+}
+html[data-theme="dark"] body .icc-sheet-overlay>.icc-sheet{
+ background:linear-gradient(150deg,#102b40,#0a2032)!important;
+}
+/* The newer standalone municipal chart is visually part of the same system. */
+html[data-theme="dark"] .moc-mount .moc-root,
+html[data-theme="dark"] .moc-mount .moc-administration,
+html[data-theme="dark"] .moc-mount .moc-summary>span{
+ background:linear-gradient(155deg,#14384f,#0c273d)!important;
+ border-color:rgba(106,184,221,.3)!important;
+ box-shadow:inset 0 1px rgba(191,235,255,.09),0 17px 34px -27px rgba(0,61,115,.75)!important;
+}
+html[data-theme="light"] .moc-mount .moc-root,
+html[data-theme="light"] .moc-mount .moc-administration,
+html[data-theme="light"] .moc-mount .moc-summary>span{
+ background:linear-gradient(150deg,#f0f6f1,#e0ede4)!important;
+ border-color:rgba(30,118,89,.26)!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.95),0 15px 30px -25px rgba(17,87,61,.38)!important;
+}
+.moc-mount .moc-stage{border-radius:20px!important;box-shadow:inset 0 1px rgba(255,255,255,.06),0 17px 35px -28px rgba(0,55,90,.45)!important}
+/* Reduced motion and responsive table remain operational at all sizes. */
+@media(max-width:700px){
+ .icc-host .icc-registry-table{min-width:1380px!important}
+ .icc-host .icc-registry-table tbody tr{height:auto}
+ .icc-host .icc-registry-table tbody td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .icc-host .icc-smart-card,.icc-host .icc-registry-table tbody tr{transition:none!important}
+}
