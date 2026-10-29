@@ -1434,6 +1434,28 @@ function injectApprovedSkin() {
   }
 
 
+  /* MUNICIPAL EMPLOYEE REGISTRY V2 — scoped table and headings ONLY.
+     Keep KPI cards, profile actions, account status and role logic untouched. */
+  .ucv2-host .ucv2-header { position:relative!important; padding:20px 20px 22px!important; border-radius:18px!important; background:linear-gradient(135deg,rgba(35,76,125,.17),rgba(18,93,76,.07))!important; border:1px solid rgba(115,158,200,.19)!important; margin-bottom:16px!important; }
+  .ucv2-host .ucv2-header h1 {font-size:clamp(23px,2.3vw,30px)!important;letter-spacing:-.025em!important;line-height:1.3!important;}
+  .ucv2-host .ucv2-header p {font-size:12.5px!important;line-height:1.8!important;max-width:640px!important;}
+  .ucv2-host .ucv2-table-wrap {border-radius:18px!important;overflow-x:auto!important;isolation:isolate;box-shadow:0 14px 44px -29px rgba(0,0,0,.65)!important;border:1px solid rgba(103,151,205,.23)!important;}
+  .ucv2-host .ucv2-table {width:100%!important;min-width:860px!important;border-collapse:separate!important;border-spacing:0!important;table-layout:auto!important;}
+  .ucv2-host .ucv2-table thead th {font-size:12px!important;font-weight:780!important;padding:17px 18px!important;line-height:1.4!important;white-space:nowrap!important;letter-spacing:0!important;background:rgba(27,54,88,.32)!important;border-bottom:1px solid rgba(111,157,214,.21)!important;}
+  .ucv2-host .ucv2-table tbody td {padding:17px 18px!important;font-size:12.5px!important;line-height:1.65!important;border-bottom:1px solid rgba(114,149,193,.12)!important;vertical-align:middle!important;}
+  .ucv2-host .ucv2-table tbody tr:last-child td {border-bottom:0!important;}
+  .ucv2-host .ucv2-table tbody tr {transition:background .18s ease,box-shadow .18s ease!important;}
+  .ucv2-host .ucv2-table tbody tr:hover,.ucv2-host .ucv2-table tbody tr:focus-within {background:rgba(70,121,184,.15)!important;box-shadow:inset 3px 0 0 rgba(65,198,146,.72)!important;}
+  .ucv2-host .ucv2-person {min-width:195px!important;gap:11px!important;}
+  .ucv2-host .ucv2-person b {font-size:13px!important;font-weight:750!important;line-height:1.5!important;}
+  .ucv2-host .ucv2-person small {font-size:11px!important;line-height:1.5!important;opacity:.82;}
+  .ucv2-host .ucv2-toolbar {padding:14px 16px!important;border-radius:15px!important;gap:12px!important;margin-bottom:14px!important;}
+  .hsr-manager-root.theme-day .ucv2-host .ucv2-header,[data-theme="light"] .ucv2-host .ucv2-header {background:linear-gradient(135deg,#f0f8f5,#f6f9fc)!important;border-color:rgba(19,117,91,.17)!important;}
+  .hsr-manager-root.theme-day .ucv2-host .ucv2-table thead th,[data-theme="light"] .ucv2-host .ucv2-table thead th {background:#edf4f1!important;border-bottom-color:rgba(21,110,81,.17)!important;color:#164333!important;}
+  .hsr-manager-root.theme-day .ucv2-host .ucv2-table tbody tr:hover,[data-theme="light"] .ucv2-host .ucv2-table tbody tr:hover {background:rgba(16,122,84,.07)!important;}
+  @media(max-width:850px){.ucv2-host .ucv2-header {padding:15px!important}.ucv2-host .ucv2-table {min-width:860px!important}.ucv2-host .ucv2-table td {padding:13px 14px!important}}
+  @media(prefers-reduced-motion:reduce){.ucv2-host .ucv2-table tbody tr{transition:none!important}}
+
   /* USER CENTER REGISTRY REFINEMENT — presentation only; KPI cards untouched. */
   .ucv2-host .ucv2-header{min-height:94px!important;align-items:flex-start!important;padding:12px 4px 19px!important;gap:14px!important;border-bottom:1px solid rgba(109,151,205,.17)!important}
   .ucv2-host .ucv2-header>div:first-child{align-items:flex-start!important;gap:16px!important;min-width:0!important}
