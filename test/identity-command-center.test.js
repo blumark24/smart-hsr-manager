@@ -48,7 +48,7 @@ test('accepted header is vertically structured and employee controls survive the
   assert.match(h.surface.innerHTML,/icc-filter-details/);
   assert.match(h.surface.innerHTML,/class="icc-service-badge field"/);
   assert.match(h.surface.innerHTML,/data-person="e1" class="icc-profile-open"/);
-  assert.match(h.surface.innerHTML,/colspan="10"/);
+  assert.match(h.surface.innerHTML,/aria-label="سجل الموظفين — مرر أفقيًا لعرض جميع الأعمدة"/);
   assert.match(h.surface.innerHTML,/dir="rtl"/);
   const css=fs.readFileSync(path.join(root,'manager-identity-command-center.css'),'utf8');
   assert.match(css,/\.icc-host \.icc-registry-table\{[^}]*min-width:1510px!important/s);
