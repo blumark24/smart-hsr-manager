@@ -164,3 +164,126 @@ html[data-theme="dark"] body.owner-premium>.grid>main>header{
  .hsr-manager-root .hsr-priority-card,.hsr-manager-root .hsr-completion-card,
  .hsr-manager-root .hsr-analytics-grid>div,body.owner-premium>.grid>main .card{transition:none!important;}
 }
+
+
+/* Shared identity surface: same vocabulary as executive cards, but retain
+ * accepted KPI metrics, tab structure, ten columns, permissions and actions. */
+html[data-theme="dark"] .icc-host,
+html[data-theme="dark"] body .icc-sheet-overlay{
+ --icc-panel:#10283f;--icc-panel-2:#143149;--icc-panel-3:#17374e;
+ --icc-line:#315269;--icc-soft:#193448;
+}
+html[data-theme="light"] .icc-host,
+html[data-theme="light"] body .icc-sheet-overlay{
+ --icc-bg:#e8f0eb;--icc-panel:#eef5f0;--icc-panel-2:#e2eee6;
+ --icc-panel-3:#dce9e2;--icc-line:#b9d1c4;--icc-soft:#e0ece5;
+ --icc-text:#153327;--icc-muted:#536e63;
+}
+html[data-theme="dark"] .icc-host .icc-smart-card{
+ border-color:rgba(111,190,222,.28)!important;
+ background:linear-gradient(145deg,#14354b,#102a3d 60%,#0e2538)!important;
+ box-shadow:inset 0 1px rgba(193,236,255,.13),0 19px 36px -28px rgba(1,61,118,.8)!important;
+}
+html[data-theme="light"] .icc-host .icc-smart-card{
+ border-color:rgba(27,120,86,.29)!important;
+ background:linear-gradient(145deg,#eef5ef,#dfeee4 65%,#d8e9df)!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.95),0 18px 34px -27px rgba(17,90,67,.42)!important;
+}
+.icc-host .icc-smart-card:hover{transform:translateY(-1px)!important}
+.icc-host .icc-smart-card-shine{filter:none!important;opacity:.08!important}
+.icc-host .icc-registry-table-wrap,
+.icc-host .icc-table-wrap,
+.icc-host .icc-inspector,
+.icc-host .icc-org-unit,
+.icc-host .icc-org-canvas,
+.icc-host .icc-spatial-v4{
+ border:1px solid var(--icc-line)!important;
+ border-radius:16px!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.045),0 16px 34px -27px rgba(0,47,88,.44)!important;
+}
+html[data-theme="light"] .icc-host .icc-registry-table-wrap,
+html[data-theme="light"] .icc-host .icc-table-wrap,
+html[data-theme="light"] .icc-host .icc-inspector,
+html[data-theme="light"] .icc-host .icc-org-unit,
+html[data-theme="light"] .icc-host .icc-org-canvas,
+html[data-theme="light"] .icc-host .icc-spatial-v4{
+ background:linear-gradient(152deg,#f1f6f2,#e4eee7)!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.93),0 16px 32px -27px rgba(19,91,65,.31)!important;
+}
+html[data-theme="dark"] .icc-host .icc-registry-table-wrap,
+html[data-theme="dark"] .icc-host .icc-table-wrap,
+html[data-theme="dark"] .icc-host .icc-inspector,
+html[data-theme="dark"] .icc-host .icc-org-unit,
+html[data-theme="dark"] .icc-host .icc-org-canvas,
+html[data-theme="dark"] .icc-host .icc-spatial-v4{
+ background:linear-gradient(155deg,#132f46,#0d253a)!important;
+}
+/* Dense table: exactly ten columns. CSS-only vertical compression keeps
+ * names/roles/employee IDs intact and horizontal scrolling accessible. */
+.icc-host .icc-registry-table{
+ min-width:1380px!important;
+}
+.icc-host .icc-registry-table thead th{
+ height:45px!important;
+ padding:10px 11px!important;
+ background:var(--icc-panel-2)!important;
+ font-weight:750!important;
+}
+.icc-host .icc-registry-table tbody td{
+ padding:9px 11px!important;
+ line-height:1.45!important;
+}
+.icc-host .icc-registry-table tbody tr{height:54px}
+.icc-host .icc-registry-table th:first-child,
+.icc-host .icc-registry-table td:first-child,
+.icc-host .icc-registry-table th:last-child,
+.icc-host .icc-registry-table td:last-child{
+ background:var(--icc-panel)!important;
+}
+.icc-host .icc-registry-table thead th:first-child,
+.icc-host .icc-registry-table thead th:last-child{
+ background:var(--icc-panel-2)!important;
+}
+.icc-host .icc-registry-table :is(.icc-role-label,.icc-service-badge,.icc-vehicle){
+ min-height:22px;padding:3px 6px;font-size:9.5px;
+}
+.icc-host .icc-registry-table tbody tr:hover :is(td:first-child,td:last-child){
+ background:color-mix(in srgb,var(--icc-green) 6%,var(--icc-panel))!important;
+}
+.icc-host .icc-registry-table-wrap{scrollbar-width:thin;scrollbar-color:var(--icc-line) transparent;overscroll-behavior-inline:contain}
+.icc-host .icc-filter-panel,
+body .icc-sheet-overlay>.icc-sheet{
+ border-color:var(--icc-line)!important;
+ box-shadow:0 27px 52px -29px rgba(0,28,51,.55)!important;
+}
+html[data-theme="light"] body .icc-sheet-overlay>.icc-sheet{
+ background:linear-gradient(150deg,#eff5f0,#e5eee8)!important;
+}
+html[data-theme="dark"] body .icc-sheet-overlay>.icc-sheet{
+ background:linear-gradient(150deg,#102b40,#0a2032)!important;
+}
+/* The newer standalone municipal chart is visually part of the same system. */
+html[data-theme="dark"] .moc-mount .moc-root,
+html[data-theme="dark"] .moc-mount .moc-administration,
+html[data-theme="dark"] .moc-mount .moc-summary>span{
+ background:linear-gradient(155deg,#14384f,#0c273d)!important;
+ border-color:rgba(106,184,221,.3)!important;
+ box-shadow:inset 0 1px rgba(191,235,255,.09),0 17px 34px -27px rgba(0,61,115,.75)!important;
+}
+html[data-theme="light"] .moc-mount .moc-root,
+html[data-theme="light"] .moc-mount .moc-administration,
+html[data-theme="light"] .moc-mount .moc-summary>span{
+ background:linear-gradient(150deg,#f0f6f1,#e0ede4)!important;
+ border-color:rgba(30,118,89,.26)!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.95),0 15px 30px -25px rgba(17,87,61,.38)!important;
+}
+.moc-mount .moc-stage{border-radius:20px!important;box-shadow:inset 0 1px rgba(255,255,255,.06),0 17px 35px -28px rgba(0,55,90,.45)!important}
+/* Reduced motion and responsive table remain operational at all sizes. */
+@media(max-width:700px){
+ .icc-host .icc-registry-table{min-width:1380px!important}
+ .icc-host .icc-registry-table tbody tr{height:auto}
+ .icc-host .icc-registry-table tbody td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .icc-host .icc-smart-card,.icc-host .icc-registry-table tbody tr{transition:none!important}
+}
