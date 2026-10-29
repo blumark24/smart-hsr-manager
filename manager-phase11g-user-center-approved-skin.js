@@ -1481,6 +1481,64 @@ function injectApprovedSkin() {
   @media(max-width:520px){.ucv2-host .ucv2-header{padding:8px 2px 14px!important}.ucv2-host .ucv2-toolbar{grid-template-columns:1fr!important}.ucv2-host .ucv2-header h1{font-size:21px!important}}
   @media(prefers-reduced-motion:reduce){.ucv2-host .ucv2-table tbody tr{transition:none!important}}
 
+
+  /* USER CENTER EMPLOYEE REGISTRY — column-preserving enterprise table.
+     Preserve KPIs and event handlers; no hidden employee fields on desktop.
+     Narrow screens retain the complete data grid with horizontal scrolling. */
+  .ucv2-host .ucv2-header{
+    display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+    justify-content:space-between!important;gap:16px!important;
+    min-height:94px!important;padding:18px 20px!important;
+    border:1px solid var(--r-border)!important;border-radius:16px!important;
+    background:var(--r-surface)!important;margin-bottom:10px!important;
+  }
+  .ucv2-host .ucv2-header>div:first-child{flex:1 1 340px!important;min-width:0!important;align-items:center!important}
+  .ucv2-host .ucv2-header>div:first-child>div{min-width:0!important;display:flex!important;flex-direction:column!important;gap:4px!important}
+  .ucv2-host .ucv2-header .ucv2-eyebrow{display:block!important;order:-1!important;color:var(--r-green)!important;font-size:10px!important}
+  .ucv2-host .ucv2-header h1{font-size:clamp(20px,1.65vw,25px)!important;line-height:1.35!important;margin:0!important}
+  .ucv2-host .ucv2-header p{font-size:12px!important;line-height:1.65!important;margin:0!important}
+  .ucv2-host .ucv2-header-actions{flex:0 0 auto!important;display:flex!important;flex-wrap:wrap!important;gap:8px!important}
+  .ucv2-host .ucv2-table-wrap{
+    display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;
+    overflow-x:auto!important;overflow-y:visible!important;border:1px solid var(--r-border)!important;
+    border-radius:14px!important;scrollbar-width:thin;
+  }
+  .ucv2-host .ucv2-table{
+    display:table!important;width:100%!important;min-width:1170px!important;
+    table-layout:auto!important;border-collapse:separate!important;border-spacing:0!important;
+    white-space:nowrap!important;direction:rtl!important;
+  }
+  .ucv2-host .ucv2-table th,.ucv2-host .ucv2-table td{
+    display:table-cell!important;visibility:visible!important;
+    padding:12px 14px!important;vertical-align:middle!important;
+    text-align:start!important;font-size:12px!important;line-height:1.55!important;
+  }
+  .ucv2-host .ucv2-table thead th{font-size:11px!important;font-weight:750!important;white-space:nowrap!important}
+  .ucv2-host .ucv2-table .ucv2-edit-head,.ucv2-host .ucv2-table .ucv2-edit-cell{text-align:center!important}
+  .ucv2-host .ucv2-person{min-width:172px!important}
+  .ucv2-host .ucv2-person b{font-size:12px!important}
+  .ucv2-host .ucv2-person small{font-size:10px!important}
+  .ucv2-host .ucv2-toolbar{margin-bottom:0!important;border-radius:14px 14px 0 0!important}
+  .ucv2-host .ucv2-quick,.ucv2-host .ucv2-grid-head{border-inline:1px solid var(--r-border)!important}
+  .ucv2-host .ucv2-mobile-list{display:none!important}
+  .hsr-manager-root.theme-day .ucv2-host .ucv2-header{background:#f6faf8!important;border-color:rgba(18,133,90,.18)!important}
+  .hsr-manager-root.theme-night .ucv2-host .ucv2-header{background:#0a1b30!important;border-color:rgba(86,157,232,.18)!important}
+  @media(max-width:900px){
+    .ucv2-host .ucv2-header{padding:14px!important;align-items:stretch!important}
+    .ucv2-host .ucv2-header-actions{width:100%!important}
+    .ucv2-host .ucv2-header-actions .ucv2-btn{flex:1 1 155px!important}
+    .ucv2-host .ucv2-table{min-width:1170px!important}
+    .ucv2-host .ucv2-table th,.ucv2-host .ucv2-table td{display:table-cell!important}
+  }
+  @media(max-width:620px){
+    .ucv2-host .ucv2-header h1{font-size:21px!important}
+    .ucv2-host .ucv2-table-wrap{display:block!important}
+    .ucv2-host .ucv2-mobile-list{display:none!important}
+    .ucv2-host .ucv2-toolbar{grid-template-columns:1fr!important}
+    .ucv2-host .ucv2-toolbar [data-reset-filters]{width:100%!important}
+  }
+  @media(prefers-reduced-motion:reduce){.ucv2-host .ucv2-table tbody tr{transition:none!important}}
+
   `;
   document.head.appendChild(style);
 }
