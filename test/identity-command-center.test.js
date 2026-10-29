@@ -22,9 +22,9 @@ function harness(directory){
 const employee={employeeId:'e1',name:'<img src=x onerror=alert(1)>',employeeRef:'REF-1',administration:'إدارة الحصر الميداني',department:'قسم الحصر',institutionalRole:'department_head',employmentStatus:'active',authUid:'u1',accountStatus:'ACTIVE',products:{field:{enabled:true,role:'inspector'}}};
 const user={uid:'u1',organizationId:'org-test',active:true,role:'inspector',institutionalRole:'department_head',administration:employee.administration,department:employee.department};
 
-test('registry is default, premium five-column table, and escapes employee content',()=>{
+test('registry is default, ten-column accessible grid and escapes employee content',()=>{
   const h=harness({org:'org-test',employees:[employee],users:[user]});
-  assert.equal((h.surface.innerHTML.match(/<th>/g)||[]).length,5);
+  assert.equal((h.surface.innerHTML.match(/<th scope="col">/g)||[]).length,10);
   assert.match(h.surface.innerHTML,/&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.match(h.surface.innerHTML,/icc-smart-cards/);
   assert.match(h.surface.innerHTML,/فلترة متقدمة/);
@@ -34,8 +34,26 @@ test('registry is default, premium five-column table, and escapes employee conte
 
 test('registry uses assignment-first enterprise columns',()=>{
   const h=harness({org:'org-test',employees:[employee],users:[user]});
-  assert.match(h.surface.innerHTML,/<th>الموظف<\/th><th>التعيين المؤسسي<\/th><th>الدور \/ المسمى<\/th><th>الحساب<\/th><th>الإجراءات<\/th>/);
+  assert.match(h.surface.innerHTML,/<th scope="col">الموظف<\/th><th scope="col">الرقم الوظيفي<\/th><th scope="col">الإدارة<\/th><th scope="col">القسم<\/th><th scope="col">المسمى<\/th><th scope="col">الدور المؤسسي<\/th><th scope="col">الخدمات المفعّلة<\/th><th scope="col">أهلية المركبة<\/th><th scope="col">حالة الحساب<\/th><th scope="col">الإجراءات<\/th>/);
   assert.match(h.surface.innerHTML,/SMART HSR · USER CENTER/);
+});
+
+test('accepted header is vertically structured and employee controls survive the registry redesign',()=>{
+  const h=harness({org:'org-test',employees:[employee],users:[user]});
+  assert.match(h.surface.innerHTML,/class="icc-header-main"/);
+  assert.match(h.surface.innerHTML,/<h1>مركز المستخدمين<\/h1><div class="icc-header-support">/);
+  assert.match(h.surface.innerHTML,/class="icc-smart-cards"/);
+  assert.match(h.surface.innerHTML,/class="icc-table icc-registry-table"/);
+  assert.match(h.surface.innerHTML,/data-search/);
+  assert.match(h.surface.innerHTML,/icc-filter-details/);
+  assert.match(h.surface.innerHTML,/class="icc-service-badge field"/);
+  assert.match(h.surface.innerHTML,/data-person="e1" class="icc-profile-open"/);
+  assert.match(h.surface.innerHTML,/aria-label="سجل الموظفين — مرر أفقيًا لعرض جميع الأعمدة"/);
+  assert.match(h.surface.innerHTML,/dir="rtl"/);
+  const css=fs.readFileSync(path.join(root,'manager-identity-command-center.css'),'utf8');
+  assert.match(css,/\.icc-host \.icc-registry-table\{[^}]*min-width:1510px!important/s);
+  assert.match(css,/\.icc-host \.icc-registry-table th:first-child/);
+  assert.match(css,/\.icc-host \.icc-registry-table th:last-child/);
 });
 
 test('hierarchy remains available and employee nodes stay actionable',()=>{

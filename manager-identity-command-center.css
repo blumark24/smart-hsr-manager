@@ -515,3 +515,48 @@ html[data-theme="light"] .icc-archive-actions .icc-purge{
  .icc-archive-table{min-width:780px!important}
  .icc-archive-area .icc-archive-actions button{min-height:44px!important}
 }
+
+/* ACCEPTED USER CENTER — registry and heading refinement (CSS-only scope). */
+.icc-host .icc-header-main{min-width:0;width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.icc-host .icc-kicker{order:0;font-size:10px!important;font-weight:700!important;letter-spacing:.08em!important;color:var(--icc-green)!important}
+.icc-host .icc-header-main h1{order:1;display:block;font-size:clamp(23px,2vw,28px)!important;font-weight:750!important;line-height:1.3!important;margin:9px 0 0!important;letter-spacing:-.02em!important}
+.icc-host .icc-header-support{order:2;display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-width:680px;margin-top:9px}
+.icc-host .icc-header-support .icc-context{align-self:flex-start!important;font-size:10.5px!important;font-weight:650!important;line-height:1.5!important;border-color:color-mix(in srgb,var(--icc-green) 26%,var(--icc-line))!important;color:var(--icc-green)!important;background:color-mix(in srgb,var(--icc-green) 7%,var(--icc-panel))!important}
+.icc-host .icc-header-support .icc-header-copy{display:block;margin:0!important;font-size:11.5px!important;line-height:1.7!important;color:var(--icc-muted)!important}
+.icc-host .icc-registry-table-wrap{width:100%;max-width:100%;min-width:0;min-height:160px;overflow:auto!important;border-radius:15px!important;border:1px solid var(--icc-line)!important;scrollbar-width:thin;scrollbar-color:var(--icc-line) transparent;overscroll-behavior-inline:contain}
+.icc-host .icc-registry-table{width:100%!important;min-width:1510px!important;table-layout:fixed!important;border-collapse:separate!important;border-spacing:0!important;direction:rtl!important;font-size:12px!important}
+.icc-host .icc-registry-table th,.icc-host .icc-registry-table td{display:table-cell!important;visibility:visible!important;vertical-align:middle!important;text-align:right!important;padding:15px 13px!important;white-space:normal!important;overflow-wrap:anywhere!important;border-bottom:1px solid var(--icc-line)!important;line-height:1.55!important}
+.icc-host .icc-registry-table thead th{position:sticky!important;top:0!important;z-index:3!important;height:54px!important;font-size:11px!important;font-weight:700!important;white-space:nowrap!important;background:var(--icc-panel-2)!important;color:var(--icc-muted)!important}
+.icc-host .icc-registry-table td{font-size:11.5px!important;color:var(--icc-text)!important}
+.icc-host .icc-registry-table th:nth-child(1){width:185px}
+.icc-host .icc-registry-table th:nth-child(2){width:110px}
+.icc-host .icc-registry-table th:nth-child(3){width:168px}
+.icc-host .icc-registry-table th:nth-child(4){width:148px}
+.icc-host .icc-registry-table th:nth-child(5){width:155px}
+.icc-host .icc-registry-table th:nth-child(6){width:110px}
+.icc-host .icc-registry-table th:nth-child(7){width:205px}
+.icc-host .icc-registry-table th:nth-child(8){width:110px}
+.icc-host .icc-registry-table th:nth-child(9){width:120px}
+.icc-host .icc-registry-table th:nth-child(10){width:115px}
+.icc-host .icc-registry-table th:first-child,.icc-host .icc-registry-table td:first-child{position:sticky!important;right:0!important;z-index:4!important;background:var(--icc-panel)!important;border-left:1px solid var(--icc-line)!important}
+.icc-host .icc-registry-table thead th:first-child{z-index:6!important;background:var(--icc-panel-2)!important}
+.icc-host .icc-registry-table th:last-child,.icc-host .icc-registry-table td:last-child{position:sticky!important;left:0!important;z-index:4!important;background:var(--icc-panel)!important;border-right:1px solid var(--icc-line)!important}
+.icc-host .icc-registry-table thead th:last-child{z-index:6!important;background:var(--icc-panel-2)!important}
+.icc-host .icc-registry-table tbody tr:hover td{background:color-mix(in srgb,var(--icc-green) 6%,var(--icc-panel))!important}
+.icc-host .icc-registry-table tbody tr:last-child td{border-bottom:none!important}
+.icc-host .icc-registry-table .icc-name{min-width:0!important;max-width:100%!important;gap:8px!important}
+.icc-host .icc-registry-table .icc-name-copy b{white-space:normal!important;overflow:visible!important;line-height:1.5!important;font-size:11.5px!important}
+.icc-host .icc-registry-ref{font-variant-numeric:tabular-nums;color:var(--icc-muted)!important}
+.icc-host .icc-registry-admin,.icc-host .icc-registry-title{font-weight:600}
+.icc-host .icc-registry-dept,.icc-host .icc-empty{color:var(--icc-muted)!important}
+.icc-host .icc-registry-services{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.icc-host .icc-service-badge,.icc-host .icc-vehicle,.icc-host .icc-role-label{display:inline-flex;align-items:center;min-height:25px;padding:4px 8px;border:1px solid var(--icc-line);border-radius:8px;background:var(--icc-panel-2);font-size:10px;font-weight:650;line-height:1.35;white-space:nowrap}
+.icc-host .icc-service-badge.field{color:var(--icc-green);border-color:color-mix(in srgb,var(--icc-green) 36%,var(--icc-line))}
+.icc-host .icc-service-badge.lands{color:var(--icc-text)}
+.icc-host .icc-service-badge.mobility{color:var(--icc-text)}
+.icc-host .icc-vehicle.yes{color:var(--icc-green);border-color:color-mix(in srgb,var(--icc-green) 30%,var(--icc-line))}
+.icc-host .icc-registry-actions{text-align:center!important}
+.icc-host .icc-registry-actions .icc-profile-open{min-height:34px!important;padding:6px 10px!important;border-radius:9px!important;font-size:10.5px!important;font-weight:650!important;white-space:nowrap!important;color:var(--icc-green)!important;border-color:color-mix(in srgb,var(--icc-green) 26%,var(--icc-line))!important;background:color-mix(in srgb,var(--icc-green) 6%,var(--icc-panel))!important}
+.icc-host .icc-no-results{text-align:center!important;padding:25px!important;color:var(--icc-muted)!important}
+@media(max-width:700px){.icc-host .icc-header-main h1{font-size:22px!important}.icc-host .icc-header-support{gap:5px}.icc-host .icc-registry-table{min-width:1510px!important}.icc-host .icc-registry-table-wrap{min-height:160px;touch-action:pan-x pan-y}}
+@media(prefers-reduced-motion:reduce){.icc-host .icc-registry-table tbody tr{transition:none!important}}
