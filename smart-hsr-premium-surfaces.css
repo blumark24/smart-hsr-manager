@@ -20,7 +20,6 @@
  position:relative;min-width:0;
  border-radius:var(--es-radius)!important;
  overflow:hidden;
- transform:translateZ(0);
  transition:border-color .17s ease,box-shadow .17s ease!important;
 }
 /* Premium, restrained reflective edge. Pure decoration; never intercept clicks. */
