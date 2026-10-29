@@ -4,7 +4,7 @@
   'use strict';
   if (window.__smartHsrMunicipalOrgChart) return;
   window.__smartHsrMunicipalOrgChart = true;
-  const S = { generation:0, zoom:1, groups:[], employees:[], users:[], openAdmins:new Set(), openDepts:new Set(), selected:null, loaded:false, orgName:'', notice:'' };
+  const S = { generation:0, zoom:1, groups:[], employees:[], users:[], openAdmins:new Set(), openDepts:new Set(), selected:null, loaded:false, orgName:'', requestedOrgId:'', notice:'' };
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
   const key = (a,d) => JSON.stringify([a,d]);
   const title = role => ({ manager:'مدير البلدية',general_supervisor:'مشرف عام',department_head:'رئيس قسم',employee:'موظف' })[role] || role || 'موظف';
@@ -145,21 +145,23 @@
       if(!U?.dir) throw new Error('directory_not_ready');
       const directory=await U.dir(force);
       if(generation!==S.generation||!mount())return;
+      // Fail closed rather than reusing a previous municipality's directory after an org switch.
+      if(S.requestedOrgId && directory.org !== S.requestedOrgId) throw Object.assign(new Error('organization_mismatch'),{reason:'organization_mismatch'});
       compile(directory);
       paint();
     } catch (error) {
       if(generation!==S.generation||!mount())return;
-      root.innerHTML='<div class="moc-error" role="alert"><h2>تعذر عرض الهيكل الإداري</h2><p>'+esc(error?.reason==='request_timeout'?'انتهت مهلة الاتصال، ولم تتغير أي بيانات.':'تعذر تحميل دليل الموظفين المعتمد. لا نعرض أرقامًا صفرية بديلة عند فشل الاتصال.')+'</p><button type="button" data-retry>إعادة المحاولة</button></div>';
+      root.innerHTML='<div class="moc-error" role="alert"><h2>تعذر عرض الهيكل الإداري</h2><p>'+esc(error?.reason==='request_timeout'?'انتهت مهلة الاتصال، ولم تتغير أي بيانات.':error?.reason==='organization_mismatch'?'سياق البلدية لا يطابق بيانات الدليل؛ تم منع عرض بيانات جهة أخرى.':'تعذر تحميل دليل الموظفين المعتمد. لا نعرض أرقامًا صفرية بديلة عند فشل الاتصال.')+'</p><button type="button" data-retry>إعادة المحاولة</button></div>';
       root.querySelector('[data-retry]')?.addEventListener('click',()=>load(true));
     } finally {if(generation===S.generation)mount()?.removeAttribute('aria-busy')}
   }
   function activate() {
-    if(!activeView()){S.generation++;return}
+    if(!activeView()){S.generation++;S.loaded=false;return}
     const go=()=>{if(!mount())return;if(S.loaded)paint();else load()};
     if(window.SmartHSRInstitutionalUC?.dir) requestAnimationFrame(go);
     else window.addEventListener('smart-hsr:user-center-ready',()=>requestAnimationFrame(go),{once:true});
   }
-  window.addEventListener('smart-hsr:manager-view-change',()=>requestAnimationFrame(activate));
+  window.addEventListener('smart-hsr:manager-view-change',event=>{S.requestedOrgId=String(event.detail?.organizationId||'');requestAnimationFrame(activate)});
   document.addEventListener('keydown',e=>{if(e.key!=='Escape'||!activeView())return;const layer=mount()?.querySelector('.moc-inspector-layer');if(layer&&!layer.hidden){layer.hidden=true;layer.innerHTML=''}});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',activate,{once:true});else activate();
 })();
