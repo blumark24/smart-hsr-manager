@@ -113,7 +113,8 @@
     const themeRoot = () => document.querySelector('div[dir="rtl"][lang="ar"]') || document.documentElement;
     const isDayMode = () => { const shell = document.querySelector('.hsr-manager-root'); return shell ? shell.classList.contains('theme-day') : document.documentElement.dataset.theme === 'light'; };
     const syncTheme = () => {
-      document.documentElement.setAttribute('data-theme', isDayMode() ? 'light' : 'dark');
+      const nextTheme = isDayMode() ? 'light' : 'dark';
+      if (document.documentElement.getAttribute('data-theme') !== nextTheme) document.documentElement.setAttribute('data-theme', nextTheme);
     };
     syncTheme();
 
@@ -227,6 +228,9 @@
     const startObserver = () => {
       claim();
       const observer = new MutationObserver(() => {
+        // The manager map and other dashboards mutate heavily. The User Center
+        // route guard has nothing to reconcile while its view is inactive.
+        if (!activeView() && !closedRoot) return;
         syncTheme();
         // The panel is removed wholesale from the DOM on close (it lives
         // inside the same sc-if block as the rest of the legacy view), so
