@@ -115,15 +115,24 @@
           </div>
         </details>
       </div>
-      <div class="icc-table-wrap"><table class="icc-table"><thead><tr><th>الموظف</th><th>التعيين المؤسسي</th><th>الدور / المسمى</th><th>الحساب</th><th>الإجراءات</th></tr></thead><tbody>
-        ${page.map(e=>`<tr>
-          <td>${button(`<span class="icc-avatar-mini">${esc((e.name||'م').slice(0,2))}</span><span class="icc-name-copy"><b>${esc(e.name)}</b><small>${esc(e.employeeRef||'—')}</small></span>`,`data-person="${esc(e.employeeId)}" class="icc-name"`)}</td>
-          <td><span class="icc-assignment"><b>${esc(canonicalAdministration(e.administration)||'—')}</b><small>${esc(e.department||'—')}</small></span></td>
-          <td><span class="icc-role-title">${esc(e.jobTitle||roles[U.inst(e)]||'—')}</span><small>${esc(roles[U.inst(e)]||'—')}</small></td>
-          <td><span class="icc-account ${account(e)==='نشط'?'is-active':account(e)==='تحتاج مراجعة'?'is-review':'is-muted'}"><i></i>${account(e)}</span></td>
-          <td>${button('⋯',`data-person="${esc(e.employeeId)}" class="icc-more" aria-label="فتح ملف ${esc(e.name)}"`)}</td>
-        </tr>`).join('')||'<tr><td colspan="5">لا توجد نتائج مطابقة.</td></tr>'}
-      </tbody></table></div>
+
+      <div class="icc-table-wrap icc-registry-table-wrap" role="region" aria-label="سجل الموظفين — مرر أفقيًا لعرض جميع الأعمدة" tabindex="0" dir="rtl">
+        <table class="icc-table icc-registry-table" dir="rtl">
+          <thead><tr><th scope="col">الموظف</th><th scope="col">الرقم الوظيفي</th><th scope="col">الإدارة</th><th scope="col">القسم</th><th scope="col">المسمى</th><th scope="col">الدور المؤسسي</th><th scope="col">الخدمات المفعّلة</th><th scope="col">أهلية المركبة</th><th scope="col">حالة الحساب</th><th scope="col">الإجراءات</th></tr></thead>
+          <tbody>${page.map(e=>`<tr>
+            <td class="icc-registry-person">${button(`<span class="icc-avatar-mini">${esc((e.name||'م').slice(0,2))}</span><span class="icc-name-copy"><b>${esc(e.name)}</b></span>`,`data-person="${esc(e.employeeId)}" class="icc-name"`)}</td>
+            <td class="icc-registry-ref">${esc(e.employeeRef||'—')}</td>
+            <td class="icc-registry-admin">${esc(canonicalAdministration(e.administration)||'—')}</td>
+            <td class="icc-registry-dept">${esc(e.department||'—')}</td>
+            <td class="icc-registry-title">${esc(e.jobTitle||'—')}</td>
+            <td><span class="icc-role-label">${esc(roles[U.inst(e)]||'—')}</span></td>
+            <td><span class="icc-registry-services">${enabled(e).length?enabled(e).map(k=>`<span class="icc-service-badge ${k}">${esc(services[k])}</span>`).join(''):'<span class="icc-empty">غير مفعّلة</span>'}</span></td>
+            <td>${U.vehicleEligible(e)?'<span class="icc-vehicle yes">مؤهل</span>':'<span class="icc-empty">غير مؤهل</span>'}</td>
+            <td><span class="icc-account ${account(e)==='نشط'?'is-active':account(e)==='تحتاج مراجعة'?'is-review':'is-muted'}"><i></i>${account(e)}</span></td>
+            <td class="icc-registry-actions">${button('فتح الملف',`data-person="${esc(e.employeeId)}" class="icc-profile-open" aria-label="فتح ملف ${esc(e.name)}"`)}</td>
+          </tr>`).join('')||'<tr><td colspan="10" class="icc-no-results">لا توجد نتائج مطابقة للفلاتر.</td></tr>'}</tbody>
+        </table>
+      </div>
       <footer class="icc-between icc-registry-footer"><span class="icc-muted">${filtered.length} سجل · صفحة ${state.page}</span><div>${button('السابق',`data-page="-1" ${state.page===1?'disabled':''}`)} ${button('التالي',`data-page="1" ${state.page*25>=filtered.length?'disabled':''}`)}</div></footer>`;
   }
   function archiveRegistry(rows) {
@@ -227,7 +236,7 @@
     const total=rows.length+unlinkedAccounts().length;
     const active=rows.filter(e=>account(e)==='نشط').length;
     const needsAction=rows.filter(e=>exceptions(e).length).length+unlinkedAccounts().length;
-    surface.innerHTML=`<header class="icc-header"><div><span class="icc-kicker" dir="ltr"><i></i> SMART HSR · USER CENTER</span><div class="icc-title-line"><h1>مركز المستخدمين</h1><span class="icc-context">إدارة الهوية المؤسسية</span></div><p class="icc-header-copy">إدارة المستخدمين والتعيينات والحسابات من داخل لوحة مدير البلدية.</p></div></header>
+    surface.innerHTML=`<header class="icc-header"><div class="icc-header-main"><span class="icc-kicker" dir="ltr"><i></i> SMART HSR · USER CENTER</span><h1>مركز المستخدمين</h1><div class="icc-header-support"><span class="icc-context">إدارة الهوية المؤسسية</span><p class="icc-header-copy">إدارة الموظفين والتعيينات والحسابات من لوحة مدير البلدية.</p></div></div></header>
       <div class="icc-smart-cards" aria-label="ملخص المستخدمين">
         <button type="button" class="icc-smart-card total ${state.smartFilter==='all'?'is-selected':''}" data-smart="all"><span class="icc-smart-card-shine"></span><div><small>إجمالي المستخدمين</small><b>${total}</b><p>جميع السجلات المرتبطة بالمؤسسة</p></div><i class="icc-signal"><em></em><em></em><em></em></i></button>
         <button type="button" class="icc-smart-card active ${state.smartFilter==='active'?'is-selected':''}" data-smart="active"><span class="icc-smart-card-shine"></span><div><small>المستخدمون النشطون</small><b>${active}</b><p>حسابات جاهزة للاستخدام</p></div><span class="icc-live">LIVE</span></button>
