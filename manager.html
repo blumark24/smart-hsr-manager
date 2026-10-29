@@ -15,6 +15,7 @@
 <script src="geo-core.bundle.js"></script>
 <script src="./manager-dashboard-format.js"></script>
 <link rel="stylesheet" href="./manager-identity-command-center.css">
+<link rel="stylesheet" href="./manager-org-chart.css">
 <style id="manager-observations-reference-ui">
 .manager-view-overlay{background:rgba(2,7,16,.78)!important;backdrop-filter:blur(12px)!important}.manager-view-panel{width:min(1120px,100%)!important;border-radius:20px!important;background:linear-gradient(155deg,rgba(10,25,47,.99),rgba(6,16,31,.99))!important;border:1px solid rgba(76,139,224,.26)!important;box-shadow:0 34px 100px rgba(0,0,0,.58),0 0 40px rgba(34,116,255,.08)!important}.manager-observations-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.manager-observation-card{transition:border-color .16s ease,background .16s ease,transform .16s ease!important}.manager-observation-card:hover{transform:translateY(-1px);border-color:rgba(76,139,224,.45)!important;background:rgba(18,38,68,.82)!important}.manager-observation-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px}.manager-observation-meta span{padding:5px 7px;border-radius:7px;background:rgba(7,17,32,.7);border:1px solid rgba(93,146,214,.11);color:#8fa3bd;font-size:8.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:699px){.manager-observations-grid{grid-template-columns:1fr!important}.manager-view-panel{max-height:calc(100vh - 12px)!important;border-radius:14px!important}}
 </style>
@@ -1229,7 +1230,7 @@ body{min-height:100svh!important;min-height:100dvh!important}
 
         <sc-if value="{{ expAdmin }}">
           <div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 4px;margin-right:var(--subInd,13px);border-right:1px solid var(--sbDiv,rgba(122,164,224,0.14))">
-            <div aria-disabled="true" title="الهيكل الإداري قريباً" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx3,#7d8ea6);cursor:not-allowed"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span><span style="display:var(--sbLabel,block);font-size:8.5px;font-weight:600;color:var(--sbTx3,#7d8ea6);padding:2px 6px;border-radius:5px;background:var(--sbChip,rgba(122,164,224,0.1));border:1px solid var(--sbCtlBd,rgba(122,164,224,0.14))">قريباً</span></div>
+            <a href="#" data-manager-view="orgChart" data-f="1" aria-current="{{ navOrgChartCurrent }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:{{ navOrgChartTx }};background:{{ navOrgChartBg }};border:1px solid {{ navOrgChartBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهيكل الإداري</span></a>
             <a href="#" data-manager-view="users" data-f="1" aria-current="{{ navUsersCurrent }}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:{{ navUsersTx }};background:{{ navUsersBg }};border:1px solid {{ navUsersBd }}" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">مركز المستخدمين</span></a>
             <a href="#" onClick="{{ openSettings }}" data-f="1" style="display:flex;align-items:center;gap:9px;padding:8px 10px;margin-right:8px;border-radius:9px;font-size:11.5px;color:var(--sbTx2,#9db2cc)" style-hover="background:var(--sbCtl,rgba(30,44,70,0.5));color:var(--sbTx,#e4eefb)"><span style="flex:1;display:var(--sbLabel,block)">الهوية والشعار</span></a>
           </div>
@@ -2511,6 +2512,10 @@ body{min-height:100svh!important;min-height:100dvh!important}
            still finds it via manager-dashboard-format.js's route guard
            (also updated) and appends .ucv2-app into it exactly as before.
            No User Center business logic lives in this template. -->
+      <sc-if value="{{ viewIsOrgChart }}">
+        <div class="moc-mount" data-org-name="{{ orgName }}" role="region" aria-label="الهيكل الإداري" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
+      </sc-if>
+
       <sc-if value="{{ viewIsUsers }}">
         <div class="manager-users-mount" style="flex:1;min-height:0;display:flex;flex-direction:column"><button type="button" data-icc-original-close aria-label="إغلاق مركز المستخدمين" onClick="{{ closeView }}" hidden>إغلاق</button></div>
       </sc-if>
@@ -3633,6 +3638,7 @@ class Component extends DCLogic {
         reports: () => this.openView('reports'),
         observations: () => this.openView('observations'),
         users: () => this.openView('users'),
+        orgChart: () => this.openView('orgChart'),
         incidents: () => this.openView('incidents'),
       };
       routes[route]?.();
@@ -4974,6 +4980,7 @@ class Component extends DCLogic {
       ...navPrefixed('navAdminAffairs', !mobileNavigationAuthoritative && st.view === 'adminAffairs'),
       ...navPrefixed('navContracts', !mobileNavigationAuthoritative && st.view === 'contracts'),
       ...navPrefixed('navUsers', !mobileNavigationAuthoritative && st.view === 'users'),
+      ...navPrefixed('navOrgChart', !mobileNavigationAuthoritative && st.view === 'orgChart'),
       ...navPrefixed('navMap', !mobileNavigationAuthoritative && st.view === 'map'),
       ...navPrefixed('navObs', !mobileNavigationAuthoritative && st.view === 'observations'),
       ...navPrefixed('navReports', !mobileNavigationAuthoritative && st.view === 'reports'),
@@ -5000,7 +5007,7 @@ class Component extends DCLogic {
       // Map is now a first-class <main>-mounted view (viewIsMap below),
       // exactly like fieldSurvey/lands/mobility/users — it must not also
       // open the shared manager-view-overlay modal.
-      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'adminAffairs' && st.view !== 'contracts' && st.view !== 'observations' && st.view !== 'reports' && st.view !== 'users' && st.view !== 'map',
+      viewOpen: st.view !== 'home' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'adminAffairs' && st.view !== 'contracts' && st.view !== 'observations' && st.view !== 'reports' && st.view !== 'users' && st.view !== 'orgChart' && st.view !== 'map',
       // This template engine's {{ }} expressions resolve only a single
       // property/equality/negation — it has no && / || operator support
       // (see support.js's resolve()/resolvePath()). A compound
@@ -5018,8 +5025,8 @@ class Component extends DCLogic {
       // WAVE 2B — NAV-01: 'map' added — Home's own dashboard (KPIs, priority
       // list, etc.) must unmount while the dedicated Map view is open,
       // exactly like fieldSurvey/lands/mobility/users already do.
-      viewIsHomeContent: st.view !== 'users' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'adminAffairs' && st.view !== 'contracts' && st.view !== 'observations' && st.view !== 'reports' && st.view !== 'map',
-      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsAdminAffairs: st.view === 'adminAffairs', viewIsContracts: st.view === 'contracts', viewIsUsers: st.view === 'users', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands', viewIsMobility: st.view === 'mobility', viewIsMap: st.view === 'map',
+      viewIsHomeContent: st.view !== 'orgChart' && st.view !== 'users' && st.view !== 'fieldSurvey' && st.view !== 'lands' && st.view !== 'mobility' && st.view !== 'adminAffairs' && st.view !== 'contracts' && st.view !== 'observations' && st.view !== 'reports' && st.view !== 'map',
+      viewIsObservations: st.view === 'observations', viewIsReports: st.view === 'reports', viewIsAdminAffairs: st.view === 'adminAffairs', viewIsContracts: st.view === 'contracts', viewIsUsers: st.view === 'users', viewIsOrgChart: st.view === 'orgChart', viewIsIncidents: st.view === 'incidents', viewIsFieldSurvey: st.view === 'fieldSurvey', viewIsLands: st.view === 'lands', viewIsMobility: st.view === 'mobility', viewIsMap: st.view === 'map',
       viewTitle: st.view === 'reports' ? 'التقارير التشغيلية' : st.view === 'users' ? 'مركز المستخدمين' : st.view === 'incidents' ? 'الحوادث والطوارئ' : st.view === 'fieldSurvey' ? 'لوحة مدير إدارة الحصر الميداني' : st.view === 'lands' ? 'لوحة مدير إدارة الأراضي والممتلكات' : st.view === 'mobility' ? 'لوحة مدير إدارة حركة السير' : st.view === 'map' ? 'الخريطة التشغيلية' : 'البلاغات',
       viewIntro: st.view === 'reports' ? 'ملخص حي مُشتق من البلاغات والمستخدمين المقيدين بالمنظمة.' : st.view === 'users' ? 'سجل موظفي المنظمة الحالية، تفعيل الحسابات، وصلاحيات المنتجات — بيانات حية فقط.' :st.view === 'incidents' ? 'عرض للقراءة فقط للحوادث الميدانية المسجّلة؛ معالجة الحالة تتم عبر إدارة حركة السير.' : st.view === 'fieldSurvey' ? 'إشراف تنفيذي على أعمال إدارة الحصر الميداني — بيانات حية من المنظمة الحالية فقط.' : st.view === 'lands' ? 'إشراف تنفيذي للقراءة فقط على إدارة الأراضي والممتلكات — بيانات حية من نظام الأراضي الحقيقي لهذه المنظمة فقط.' : st.view === 'mobility' ? 'إشراف تنفيذي للقراءة فقط على إدارة حركة السير — بيانات حية من نظام الحركة الحقيقي لهذه المنظمة فقط.' : st.view === 'map' ? 'المشهد المكاني التنفيذي للبلاغات الموثّقة — نفس بيانات مركز القيادة، بعرض مخصص لإدارة الخريطة.' : 'عرض للقراءة فقط للبلاغات التي سمحت الصلاحيات بتحميلها.',
       viewObservations,
@@ -5161,7 +5168,7 @@ class Component extends DCLogic {
         { label: 'البلاغات', tag: metrics.inProgress || '—', view: 'observations', ...navLook(mobileNavigationAuthoritative && st.view === 'observations') },
         { label: 'الخريطة التشغيلية', tag: '', view: 'map', ...navLook(mobileNavigationAuthoritative && st.view === 'map') },
         { label: 'التقارير', tag: '', view: 'reports', ...navLook(mobileNavigationAuthoritative && st.view === 'reports') },
-        { label: 'الهيكل الإداري', tag: 'قريباً', disabled: true, ...navLook(false) },
+        { label: 'الهيكل الإداري', tag: '', view: 'orgChart', ...navLook(mobileNavigationAuthoritative && st.view === 'orgChart') },
         { label: 'مركز إدارة المستخدمين', tag: '', view: 'users', ...navLook(mobileNavigationAuthoritative && st.view === 'users') },
         { label: 'الحوادث والطوارئ', tag: '', view: 'incidents', ...navLook(mobileNavigationAuthoritative && st.view === 'incidents') },
         { label: 'الإعدادات والهوية', tag: '', on: () => this.openSettingsPanel(), ...navLook(false) },
@@ -6324,5 +6331,6 @@ class Component extends DCLogic {
 }
 </style>
 <script defer src="./smart-hsr-weather.js"></script>
+<script defer src="./manager-org-chart.js"></script>
 </body>
 </html>
