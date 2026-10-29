@@ -287,3 +287,179 @@ html[data-theme="light"] .moc-mount .moc-summary>span{
 @media(prefers-reduced-motion:reduce){
  .icc-host .icc-smart-card,.icc-host .icc-registry-table tbody tr{transition:none!important}
 }
+
+
+/* SMART HSR — calm enterprise surface contract / no ambient glow.
+   This is a reversible presentation layer: no data, map tile or JS changes.
+   The design reference is the accepted User Center, not a blue light effect.
+   Typography: five semantic steps, one Arabic UI font family per existing host. */
+.hsr-manager-root{
+  --hsr-type-caption:10px;
+  --hsr-type-small:11px;
+  --hsr-type-body:12px;
+  --hsr-type-section:14px;
+  --hsr-type-heading:18px;
+  --hsr-type-number:clamp(20px,1.9vw,27px);
+  --hsr-line-tight:1.3;
+  --hsr-line-normal:1.65;
+  --hsr-radius-card:16px;
+  --hsr-elevation-soft:0 2px 5px rgba(0,0,0,.12),0 13px 24px -18px rgba(0,0,0,.35);
+}
+/* Day: green + off-white / soft ivory. White remains a small reflective trim,
+   never the full-page background. Dark: keep the approved navy hierarchy. */
+html[data-theme="dark"] .hsr-manager-root.theme-night{
+  --pgBg:linear-gradient(168deg,#091c30 0%,#0b2335 48%,#091b2a 100%)!important;
+  --es-topline:rgba(182,220,235,.22);
+  --es-edge:rgba(98,161,174,.28);
+  --es-map-edge:rgba(111,175,188,.38);
+  --hsr-card-top:#173349;
+  --hsr-card-bottom:#10283b;
+  --hsr-card-border:rgba(118,172,183,.28);
+  --hsr-card-shadow:inset 0 1px rgba(201,234,233,.08),0 2px 6px rgba(1,10,20,.19),0 13px 24px -18px rgba(0,0,0,.64);
+  --hsr-card-muted:#aebfd0;
+}
+html[data-theme="light"] .hsr-manager-root.theme-day{
+  --pgBg:linear-gradient(160deg,#e2ece3 0%,#dce8df 50%,#e9efe8 100%)!important;
+  --es-topline:rgba(255,255,255,.64);
+  --es-edge:rgba(42,105,75,.24);
+  --es-map-edge:rgba(45,113,87,.37);
+  --hsr-card-top:#f1f5ee;
+  --hsr-card-bottom:#e5eee5;
+  --hsr-card-border:rgba(49,115,82,.24);
+  --hsr-card-shadow:inset 0 1px rgba(255,255,255,.75),0 2px 5px rgba(14,65,42,.075),0 13px 23px -18px rgba(15,74,49,.34);
+  --hsr-card-muted:#586e60;
+  --tx:#18382b!important;
+  --tx2:#375c4b!important;
+  --tx3:#5a7264!important;
+}
+html[data-theme="dark"] .hsr-manager-root.theme-night,
+html[data-theme="dark"] .hsr-manager-root.theme-night .hsr-manager-page{
+  background:linear-gradient(168deg,#091c30,#0b2335 48%,#091b2a)!important;
+}
+html[data-theme="light"] .hsr-manager-root.theme-day,
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-manager-page{
+  background:linear-gradient(160deg,#e2ece3,#dce8df 50%,#e9efe8)!important;
+}
+html[data-theme="dark"] .hsr-manager-root.theme-night .hsr-manager-page::before,
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-manager-page::before{
+  content:none!important;
+  background:none!important;
+}
+/* All executive surfaces use the same border depth; no blue blooms beneath cards. */
+html[data-theme="dark"] .hsr-manager-root.theme-night :is(
+  .hsr-exec-kpis>div,.hsr-completion-card,.hsr-decision-card,
+  .hsr-priority-card,.hsr-analytics-grid>div,.hsr-command-dock,
+  .hsr-integration-strip,.hsr-admin-view>div,.hsr-contracts-view>div
+){
+  background:linear-gradient(162deg,var(--hsr-card-top),var(--hsr-card-bottom))!important;
+  border:1px solid var(--hsr-card-border)!important;
+  box-shadow:var(--hsr-card-shadow)!important;
+}
+html[data-theme="light"] .hsr-manager-root.theme-day :is(
+  .hsr-exec-kpis>div,.hsr-completion-card,.hsr-decision-card,
+  .hsr-priority-card,.hsr-analytics-grid>div,.hsr-command-dock,
+  .hsr-integration-strip,.hsr-admin-view>div,.hsr-contracts-view>div
+){
+  background:linear-gradient(156deg,var(--hsr-card-top),var(--hsr-card-bottom))!important;
+  border:1px solid var(--hsr-card-border)!important;
+  box-shadow:var(--hsr-card-shadow)!important;
+}
+/* Digital services: scope to verified Manager view wrappers. This only
+   touches their surface containers; buttons, maps, tables and workflows stay. */
+.hsr-manager-root .hsr-digital-service-view :is(div,section)[style*="background:var(--l1"],
+.hsr-manager-root .hsr-digital-service-view :is(div,section)[style*="background:var(--l2"],
+.hsr-manager-root .hsr-digital-service-view :is(div,section)[style*="background:var(--l3"]{
+  border:1px solid var(--hsr-card-border)!important;
+  border-radius:var(--hsr-radius-card)!important;
+  box-shadow:var(--hsr-card-shadow)!important;
+}
+html[data-theme="dark"] .hsr-manager-root .hsr-digital-service-view :is(div,section)[style*="background:var(--l1"],
+html[data-theme="dark"] .hsr-manager-root .hsr-digital-service-view :is(div,section)[style*="background:var(--l2"],
+html[data-theme="dark"] .hsr-manager-root .hsr-digital-service-view :is(div,section)[style*="background:var(--l3"]{
+  background:linear-gradient(162deg,var(--hsr-card-top),var(--hsr-card-bottom))!important;
+}
+html[data-theme="light"] .hsr-manager-root .hsr-digital-service-view :is(div,section)[style*="background:var(--l1"],
+html[data-theme="light"] .hsr-manager-root .hsr-digital-service-view :is(div,section)[style*="background:var(--l2"],
+html[data-theme="light"] .hsr-manager-root .hsr-digital-service-view :is(div,section)[style*="background:var(--l3"]{
+  background:linear-gradient(156deg,var(--hsr-card-top),var(--hsr-card-bottom))!important;
+}
+/* A whole service page is a gentle step behind its cards, not the same
+   luminous surface. The headers remain exactly where they were. */
+.hsr-manager-root .hsr-digital-service-view>div:first-child{
+  border-radius:var(--hsr-radius-card)!important;
+  border:1px solid var(--hsr-card-border)!important;
+  box-shadow:var(--hsr-card-shadow)!important;
+}
+html[data-theme="dark"] .hsr-manager-root .hsr-digital-service-view>div:first-child{
+  background:linear-gradient(160deg,#152f41,#0d2536)!important;
+}
+html[data-theme="light"] .hsr-manager-root .hsr-digital-service-view>div:first-child{
+  background:linear-gradient(160deg,#f0f6f0,#e4ede5)!important;
+}
+/* Typography scale. Keep all existing UI labels and numbers, but reduce
+   visual variance without imposing a fixed size on specialized products. */
+.hsr-manager-root .hsr-manager-main :is(.hsr-decision-card,.hsr-priority-card,.hsr-completion-card,.hsr-analytics-grid>div,.hsr-digital-service-view,.hsr-admin-view,.hsr-contracts-view){
+  line-height:var(--hsr-line-normal);
+}
+.hsr-manager-root .hsr-manager-main :is(.hsr-decision-card,.hsr-priority-card,.hsr-analytics-grid>div,.hsr-digital-service-view)>h2{
+  font-size:var(--hsr-type-heading)!important;
+  font-weight:750!important;
+  line-height:var(--hsr-line-tight)!important;
+}
+.hsr-manager-root .hsr-manager-main :is(.hsr-decision-card,.hsr-priority-card,.hsr-analytics-grid>div,.hsr-digital-service-view) :is(svg){
+  flex-shrink:0;
+}
+.hsr-manager-root .hsr-map-kpi-label{
+  font-size:var(--hsr-type-caption)!important;
+  line-height:1.5!important;
+}
+.hsr-manager-root .hsr-map-kpi-value{
+  font-size:var(--hsr-type-number)!important;
+  line-height:var(--hsr-line-tight)!important;
+}
+.hsr-manager-root :is(.hsr-map-kpi,.hsr-digital-service-view [style*="background:var(--l1"]){
+  min-width:0;
+}
+/* Map: a single frame, not a halo around the map. */
+html[data-theme="dark"] .hsr-manager-root .hsr-manager-map-shell,
+html[data-theme="light"] .hsr-manager-root .hsr-manager-map-shell{
+  outline:none!important;
+  border:1px solid var(--hsr-card-border)!important;
+  box-shadow:var(--hsr-card-shadow)!important;
+}
+html[data-theme="dark"] .hsr-manager-root .hsr-map-kpi,
+html[data-theme="light"] .hsr-manager-root .hsr-map-kpi{
+  border:1px solid var(--hsr-card-border)!important;
+  box-shadow:var(--hsr-card-shadow)!important;
+}
+/* User Center remains the accepted reference. Only normalize the extra shine
+   introduced in our previous CSS pass. */
+html[data-theme="dark"] .icc-host .icc-smart-card,
+html[data-theme="light"] .icc-host .icc-smart-card{
+  box-shadow:var(--hsr-card-shadow,0 2px 4px rgba(0,0,0,.13),0 12px 22px -17px rgba(0,0,0,.3))!important;
+}
+.icc-host .icc-smart-card::after{display:none!important;}
+/* Owner: matching depth, not glowing shadows; existing Cairo identity retained. */
+html[data-theme="dark"] body.owner-premium{
+  --owner-shadow:inset 0 1px rgba(208,236,234,.075),0 3px 7px rgba(0,0,0,.16),0 13px 25px -17px rgba(0,0,0,.55);
+}
+html[data-theme="light"] body.owner-premium{
+  --owner-bg:#e2ebe4;
+  --owner-surface:linear-gradient(154deg,#f1f5ef,#e4eee5);
+  --owner-shadow:inset 0 1px rgba(255,255,255,.84),0 2px 6px rgba(10,59,38,.06),0 13px 24px -17px rgba(14,68,45,.32);
+}
+body.owner-premium>.grid>main .card{
+  box-shadow:var(--owner-shadow)!important;
+}
+body.owner-premium #dashboard .kpi h3{
+  font-variant-numeric:tabular-nums;
+  line-height:1.2!important;
+}
+@media(max-width:699px){
+  .hsr-manager-root{--hsr-type-heading:16px;--hsr-type-section:13px;--hsr-radius-card:14px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .hsr-manager-root .hsr-digital-service-view *,body.owner-premium>.grid>main .card{
+    animation:none!important;transition:none!important;
+  }
+}
