@@ -1111,7 +1111,7 @@ body{min-height:100svh!important;min-height:100dvh!important}
         </span>
         <span class="hsr-manager-clock-detail" style="width:1px;height:14px;background:var(--hdrDiv,rgba(122,164,224,0.16))"></span>
         <span class="hsr-manager-clock-detail" style="font-size:11.5px;color:var(--hdrTx2,#9db2cc);font-variant-numeric:tabular-nums">{{ currentTime }}</span>
-        <span class="hsr-manager-clock-detail" style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;font-size:10px;line-height:1.2;color:var(--hdrTx3,#7d8ea6)"><span>{{ currentHijriDate }}</span><span>{{ currentDate }}</span></span>
+        <span class="hsr-manager-clock-detail" style="display:inline-flex;align-items:center;font-size:13px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--hdrTx,#dbe6f5);white-space:nowrap"><span>{{ currentHijriDate }}</span></span>
       </div>
     </div>
 
@@ -6310,6 +6310,14 @@ class Component extends DCLogic {
 }
 </style>
 
+<!-- HEADER ALIGNMENT — Preview-only, desktop centered in available row space; smaller breakpoints naturally wrap. -->
+<style id="smart-hsr-header-weather-center-v2">
+@media (min-width:1180px){
+  .hsr-manager-header .hsr-manager-weather-meta { margin-inline-start:auto!important;margin-inline-end:auto!important;flex-shrink:0; }
+}
+.hsr-manager-header .hsr-manager-weather-meta { transition:margin .16s ease; }
+@media (prefers-reduced-motion:reduce){.hsr-manager-header .hsr-manager-weather-meta {transition:none}}
+</style>
 <!-- Preview-only responsive fix: preserve the approved header, weather and MET attribution.
      Hide secondary clock detail—not the weather indicator—on narrow layouts. -->
 <style id="manager-weather-meta-responsive">
