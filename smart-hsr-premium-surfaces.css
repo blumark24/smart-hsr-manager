@@ -459,53 +459,53 @@ body.owner-premium #dashboard .kpi h3{
    One calm canvas, raised glass-like cards, no ambient blue halo.
    Avoid backdrop-filter and transform: preserve map performance and scrolling. */
 html[data-theme="dark"] .hsr-manager-root.theme-night{
- --hsr-canvas:#091a29;
- --hsr-canvas-end:#0c2232;
- --hsr-glass-top:#203d50;
- --hsr-glass-bottom:#162e40;
- --hsr-glass-edge:rgba(144,191,191,.38);
- --hsr-glass-highlight:rgba(247,255,252,.19);
- --hsr-glass-drop:0 14px 25px -13px rgba(0,5,12,.70),0 3px 6px rgba(0,6,14,.29),inset 0 1px 0 rgba(247,255,252,.16),inset 0 -1px 0 rgba(0,8,17,.18);
+ --hsr-canvas:#071a2f;
+ --hsr-canvas-end:#09213b;
+ --hsr-glass-top:#194a72;
+ --hsr-glass-bottom:#0d3155;
+ --hsr-glass-edge:rgba(112,186,232,.40);
+ --hsr-glass-highlight:rgba(216,243,255,.38);
+ --hsr-glass-drop:0 14px 25px -13px rgba(0,10,27,.82),0 3px 6px rgba(0,9,24,.29),inset 0 1px 0 rgba(247,255,252,.16),inset 0 -1px 0 rgba(0,8,17,.18);
  --hsr-glass-muted:#b8cfda;
- --hsr-quiet-panel:#11283b;
- --pgBg:linear-gradient(152deg,#091b2b 0%,#0b1d2b 42%,#0b2230 100%)!important;
- --l1:linear-gradient(152deg,#203d50,#162e40)!important;
- --l2:linear-gradient(152deg,#1a3649,#142c3e)!important;
- --l3:linear-gradient(152deg,#193446,#132b3c)!important;
- --card:linear-gradient(152deg,#203d50,#162e40)!important;
+ --hsr-quiet-panel:#0e2b4d;
+ --pgBg:linear-gradient(155deg,#06172a 0%,#081c33 48%,#0a233d 100%)!important;
+ --l1:linear-gradient(152deg,#194a72,#0d3155)!important;
+ --l2:linear-gradient(152deg,#164366,#0b2b4d)!important;
+ --l3:linear-gradient(152deg,#153d61,#0b2949)!important;
+ --card:linear-gradient(152deg,#194a72,#0d3155)!important;
  --l1Grid:none!important;--l2Grain:none!important;
  --l1Sh:var(--hsr-glass-drop)!important;
  --l2Sh:var(--hsr-glass-drop)!important;
  --cardSh:var(--hsr-glass-drop)!important;
  --l1Bd:var(--hsr-glass-edge)!important;--l2Bd:var(--hsr-glass-edge)!important;
- --hsr-card-top:#203d50;--hsr-card-bottom:#162e40;
+ --hsr-card-top:#194a72;--hsr-card-bottom:#0d3155;
  --hsr-card-shadow:var(--hsr-glass-drop);
  --hsr-card-border:var(--hsr-glass-edge);
 }
 html[data-theme="light"] .hsr-manager-root.theme-day{
- --hsr-canvas:#d9e4d9;
- --hsr-canvas-end:#dfe9df;
- --hsr-glass-top:#f7f8f1;
- --hsr-glass-bottom:#e9f1e8;
- --hsr-glass-edge:rgba(63,114,85,.34);
+ --hsr-canvas:#e5ede6;
+ --hsr-canvas-end:#e8f1e9;
+ --hsr-glass-top:#fbfdf7;
+ --hsr-glass-bottom:#edf6eb;
+ --hsr-glass-edge:rgba(32,117,81,.32);
  --hsr-glass-highlight:rgba(255,255,255,.92);
- --hsr-glass-drop:0 13px 25px -15px rgba(29,76,48,.34),0 2px 5px rgba(30,77,50,.10),inset 0 1px 0 rgba(255,255,255,.93),inset 0 -1px 0 rgba(51,104,71,.06);
+ --hsr-glass-drop:0 13px 25px -15px rgba(14,81,54,.38),0 2px 5px rgba(14,80,50,.105),inset 0 1px 0 rgba(255,255,255,.93),inset 0 -1px 0 rgba(51,104,71,.06);
  --hsr-glass-muted:#4e695b;
- --hsr-quiet-panel:#e5ede4;
- --pgBg:linear-gradient(152deg,#d7e3d8 0%,#e0e9dc 56%,#d8e4da 100%)!important;
- --l1:linear-gradient(151deg,#f7f8f0,#e9f1e8)!important;
- --l2:linear-gradient(151deg,#f1f6ed,#e6eee6)!important;
- --l3:linear-gradient(151deg,#edf4ea,#e1ece2)!important;
- --card:linear-gradient(151deg,#f7f8f0,#e9f1e8)!important;
+ --hsr-quiet-panel:#e2eee5;
+ --pgBg:linear-gradient(155deg,#e6eee7 0%,#e1eee5 48%,#ecf2e9 100%)!important;
+ --l1:linear-gradient(151deg,#fbfdf7,#edf6eb)!important;
+ --l2:linear-gradient(151deg,#f7fbf4,#e8f3e9)!important;
+ --l3:linear-gradient(151deg,#f4faf1,#e5f0e6)!important;
+ --card:linear-gradient(151deg,#fbfdf7,#edf6eb)!important;
  --l1Grid:none!important;--l2Grain:none!important;
  --l1Sh:var(--hsr-glass-drop)!important;
  --l2Sh:var(--hsr-glass-drop)!important;
  --cardSh:var(--hsr-glass-drop)!important;
  --l1Bd:var(--hsr-glass-edge)!important;--l2Bd:var(--hsr-glass-edge)!important;
- --hsr-card-top:#f7f8f0;--hsr-card-bottom:#e9f1e8;
+ --hsr-card-top:#fbfdf7;--hsr-card-bottom:#edf6eb;
  --hsr-card-shadow:var(--hsr-glass-drop);
  --hsr-card-border:var(--hsr-glass-edge);
- --tx:#1b3b2e!important;--tx2:#395a49!important;--tx3:#4e6859!important;
+ --tx:#163c2b!important;--tx2:#315b43!important;--tx3:#4a6954!important;
 }
 html[data-theme="dark"] .hsr-manager-root.theme-night .hsr-manager-page,
 html[data-theme="light"] .hsr-manager-root.theme-day .hsr-manager-page{
@@ -606,9 +606,9 @@ html[data-theme="dark"] body.owner-premium{
  --owner-shadow:inset 0 1px rgba(242,255,249,.13),0 12px 24px -14px rgba(0,0,0,.55),0 3px 5px rgba(0,0,0,.23);
 }
 html[data-theme="light"] body.owner-premium{
- --owner-bg:#d9e4d9;
- --owner-surface:linear-gradient(151deg,#f7f8f0,#e9f1e8);
- --owner-line:rgba(63,114,85,.34);
+ --owner-bg:#e5ede6;
+ --owner-surface:linear-gradient(151deg,#fbfdf7,#edf6eb);
+ --owner-line:rgba(32,117,81,.32);
  --owner-shadow:inset 0 1px rgba(255,255,255,.93),0 12px 24px -15px rgba(29,76,48,.35),0 2px 5px rgba(30,77,50,.10);
 }
 body.owner-premium>.grid>main .card{box-shadow:var(--owner-shadow)!important;}
