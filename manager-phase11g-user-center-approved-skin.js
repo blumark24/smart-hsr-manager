@@ -1434,6 +1434,17 @@ function injectApprovedSkin() {
   }
 
 
+  /* User Center heading hierarchy; no KPI selectors. */
+  .ucv2-host .ucv2-header {display:flex!important;align-items:center!important;justify-content:space-between!important;gap:20px!important;min-height:108px!important;}
+  .ucv2-host .ucv2-header>div:first-child {display:flex!important;flex-direction:row!important;align-items:center!important;gap:14px!important;}
+  .ucv2-host .ucv2-header>div:first-child>div {display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;gap:6px!important;text-align:start!important;}
+  .ucv2-host .ucv2-header .ucv2-eyebrow {font-size:10px!important;line-height:1.45!important;letter-spacing:.075em!important;}
+  .ucv2-host .ucv2-header h1 {font-size:24px!important;line-height:1.28!important;letter-spacing:-.015em!important;margin:0!important;}
+  .ucv2-host .ucv2-header p {font-size:12px!important;line-height:1.65!important;max-width:680px!important;opacity:.86!important;margin:0!important;}
+  .ucv2-host .ucv2-table-wrap {width:100%!important;}
+  .ucv2-host .ucv2-table thead th {text-align:start!important;}
+  .ucv2-host .ucv2-table tbody td {text-align:start!important;}
+  @media(max-width:850px){.ucv2-host .ucv2-header {flex-direction:column!important;align-items:stretch!important}.ucv2-host .ucv2-header h1{font-size:22px!important}}
   /* MUNICIPAL EMPLOYEE REGISTRY V2 — scoped table and headings ONLY.
      Keep KPI cards, profile actions, account status and role logic untouched. */
   .ucv2-host .ucv2-header { position:relative!important; padding:20px 20px 22px!important; border-radius:18px!important; background:linear-gradient(135deg,rgba(35,76,125,.17),rgba(18,93,76,.07))!important; border:1px solid rgba(115,158,200,.19)!important; margin-bottom:16px!important; }
