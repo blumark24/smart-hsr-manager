@@ -615,3 +615,127 @@ body.owner-premium>.grid>main .card{box-shadow:var(--owner-shadow)!important;}
 @media(max-width:699px){
  .hsr-manager-root .hsr-manager-main :is(.hsr-decision-card,.hsr-priority-card,.hsr-analytics-grid>div){border-radius:15px!important;}
 }
+
+
+
+/* SMART HSR — DAY CONTRAST ACCEPTANCE V2 (Manager + Owner).
+   Contrast repair, not a redesign. No Night selectors, geometry, map layers,
+   data routes, identities, animations or business logic are touched.
+   Dark evergreen navigation anchors a sage/ivory work canvas. */
+html[data-theme="light"] .hsr-manager-root.theme-day{
+  --pgBg:linear-gradient(158deg,#dfe9df 0%,#e6eee4 52%,#edf2e9 100%)!important;
+  --hsr-canvas:#dfe9df;
+  --hsr-canvas-end:#edf2e9;
+  --hsr-glass-top:#f6f8f1;
+  --hsr-glass-bottom:#e5eee3;
+  --hsr-glass-edge:rgba(34,104,75,.31);
+  --hsr-glass-highlight:rgba(255,255,255,.72);
+  --hsr-glass-drop:inset 0 1px rgba(255,255,255,.89),inset 0 -1px rgba(41,91,60,.045),0 2px 5px rgba(22,76,51,.08),0 15px 27px -17px rgba(22,79,48,.36);
+  --hsr-card-top:#f6f8f1;
+  --hsr-card-bottom:#e5eee3;
+  --hsr-card-border:rgba(34,104,75,.31);
+  --hsr-card-shadow:var(--hsr-glass-drop);
+  --hsr-glass-muted:#476151;
+  --tx:#173c2b!important;
+  --tx2:#325640!important;
+  --tx3:#496550!important;
+
+  /* The original Day sidebar has pale text on deep forest green.
+     The previous shared-surface rule accidentally recolored only its panel
+     to near-white. Preserve the correct text/surface pairing together. */
+  --sbBg:linear-gradient(167deg,#164e3e 0%,#103e33 57%,#0a3029 100%)!important;
+  --sbBd:rgba(145,207,166,.33)!important;
+  --sbSh:inset 0 1px rgba(229,255,235,.16),0 2px 6px rgba(7,49,37,.14),0 18px 28px -17px rgba(8,58,43,.43)!important;
+  --sbTx:#f4faf5!important;
+  --sbTx2:#e1eee5!important;
+  --sbTx3:#b7d0c0!important;
+  --sbNavBg:linear-gradient(104deg,rgba(190,232,201,.23),rgba(148,203,170,.12))!important;
+  --sbNavBd:rgba(190,228,199,.43)!important;
+  --sbNavTx:#ffffff!important;
+  --sbDiv:rgba(196,225,203,.22)!important;
+  --sbCtl:rgba(203,240,213,.10)!important;
+  --sbCtlBd:rgba(194,231,206,.24)!important;
+  --sbSunk:rgba(5,34,28,.25)!important;
+  --sbChip:rgba(210,242,220,.14)!important;
+  --sbBlur:none!important;
+}
+/* Restore the Day navigation's darker surface while preserving the existing
+   responsive rail, scroll area, toggles, groups and identity header. */
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-sidebar-panel>div:first-child,
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-sidebar-panel>div[style*="background:var(--sbBg"]{
+  background:var(--sbBg)!important;
+  color:var(--sbTx)!important;
+  border:1px solid var(--sbBd)!important;
+  box-shadow:var(--sbSh)!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-sidebar-panel [data-manager-view][aria-current="page"]{
+  background:var(--sbNavBg)!important;
+  color:var(--sbNavTx)!important;
+  border-color:var(--sbNavBd)!important;
+  box-shadow:inset -3px 0 0 #a8e3bc!important;
+}
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-sidebar-panel [data-manager-view]:hover:not([aria-current="page"]),
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-sidebar-panel [role="button"]:hover{
+  background:var(--sbCtl)!important;
+  color:var(--sbTx)!important;
+}
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-sidebar-panel :is(a,button,[role="button"]):focus-visible{
+  outline:2px solid #c0f0ca!important;
+  outline-offset:2px!important;
+}
+/* A readable executive canvas; section cards retain space and elevations.
+   No general-purpose selectors target Leaflet tiles, modal content or tables. */
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-manager-page{
+  background:var(--pgBg)!important;
+}
+html[data-theme="light"] .hsr-manager-root.theme-day :is(
+  .hsr-exec-kpis>div,.hsr-completion-card,.hsr-decision-card,.hsr-priority-card,
+  .hsr-analytics-grid>div,.hsr-command-dock,.hsr-integration-strip,
+  .hsr-admin-view>div,.hsr-contracts-view>div
+){
+  background:linear-gradient(156deg,var(--hsr-glass-top),var(--hsr-glass-bottom))!important;
+  border-color:var(--hsr-glass-edge)!important;
+  box-shadow:var(--hsr-glass-drop)!important;
+}
+html[data-theme="light"] .hsr-manager-root.theme-day .hsr-manager-map-shell{
+  border-color:var(--hsr-glass-edge)!important;
+  box-shadow:var(--hsr-glass-drop)!important;
+  outline:none!important;
+}
+/* Owner day mode uses the same green navigation language.
+   The approved Owner layout and dark mode are untouched. */
+html[data-theme="light"] body.owner-premium{
+  --owner-bg:#e0eae1;
+  --owner-sidebar:#0b3029;
+  --owner-sidebar-2:#175040;
+  --owner-surface:linear-gradient(152deg,#f6f8f1,#e7efe5);
+  --owner-surface-strong:#f3f7ef;
+  --owner-line:rgba(33,106,75,.27);
+  --owner-shadow:inset 0 1px rgba(255,255,255,.88),0 2px 5px rgba(19,75,47,.07),0 14px 26px -17px rgba(23,78,51,.34);
+}
+html[data-theme="light"] body.owner-premium>.grid>aside{
+  border-color:rgba(145,207,166,.30)!important;
+  box-shadow:inset 0 1px rgba(229,255,235,.13),0 18px 35px -21px rgba(9,62,46,.43)!important;
+}
+html[data-theme="light"] body.owner-premium>.grid>aside .sidebar-group-label,
+html[data-theme="light"] body.owner-premium>.grid>aside .muted{
+  color:#b9d2c5!important;
+}
+html[data-theme="light"] body.owner-premium>.grid>aside .sidebar-link-active{
+  background:linear-gradient(108deg,rgba(187,236,199,.22),rgba(156,214,173,.11))!important;
+  border-color:rgba(186,231,197,.35)!important;
+  color:#fff!important;
+  box-shadow:inset -3px 0 0 #a8e3bc!important;
+}
+html[data-theme="light"] body.owner-premium>.grid>aside .sidebar-link:focus-visible{
+  outline:2px solid #c0f0ca!important;
+  outline-offset:2px!important;
+}
+@media(prefers-reduced-motion:reduce){
+  html[data-theme="light"] .hsr-manager-root.theme-day .hsr-sidebar-panel *,
+  html[data-theme="light"] body.owner-premium>.grid>aside .sidebar-link{
+    transition:none!important;animation:none!important;
+  }
+}
