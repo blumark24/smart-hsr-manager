@@ -144,16 +144,6 @@ body.owner-premium #dashboard .kpi{
 }
 body.owner-premium #dashboard .kpi h3{font-variant-numeric:tabular-nums;}
 body.owner-premium #dashboard{gap:clamp(10px,1vw,15px)!important;min-width:0;}
-body.owner-premium>.grid>main>header{
- border-radius:21px!important;
- box-shadow:var(--owner-shadow)!important;
-}
-html[data-theme="light"] body.owner-premium>.grid>main>header{
- background:linear-gradient(150deg,#eef5f0,#e5efe9)!important;
-}
-html[data-theme="dark"] body.owner-premium>.grid>main>header{
- background:linear-gradient(145deg,#12354f,#092439)!important;
-}
 @media(max-width:860px){
  body.owner-premium>.grid>main .card{border-radius:16px!important;}
  body.owner-premium #dashboard .kpi{min-height:110px;}
@@ -567,15 +557,7 @@ html[data-theme="light"] .hsr-manager-root.theme-day .hsr-manager-main :is(div,s
 html[data-theme="light"] .hsr-manager-root.theme-day .hsr-manager-main :is(div,section,article)[style*="background:var(--l3"]{
  background:linear-gradient(153deg,var(--hsr-glass-top),var(--hsr-glass-bottom))!important;
 }
-/* Navigation: header and right rail are one design language; selected
- * navigation styles, roles and the collapse behavior stay untouched. */
-html[data-theme="dark"] .hsr-manager-root.theme-night .hsr-manager-header,
-html[data-theme="light"] .hsr-manager-root.theme-day .hsr-manager-header{
- background:linear-gradient(145deg,var(--hsr-glass-top),var(--hsr-glass-bottom))!important;
- border:1px solid var(--hsr-glass-edge)!important;
- border-bottom:2px solid var(--ok,#1a8c65)!important;
- box-shadow:var(--hsr-glass-drop)!important;
-}
+/* Header is immutable: do not override its original day/night styles. */
 html[data-theme="dark"] .hsr-manager-root.theme-night .hsr-sidebar-panel>div:first-child,
 html[data-theme="light"] .hsr-manager-root.theme-day .hsr-sidebar-panel>div:first-child,
 html[data-theme="dark"] .hsr-manager-root.theme-night .hsr-sidebar-panel>div[style*="background:var(--sbBg"],
@@ -588,8 +570,7 @@ html[data-theme="light"] .hsr-manager-root.theme-day .hsr-sidebar-panel>div[styl
 .hsr-manager-root .hsr-sidebar-panel [data-manager-view][aria-current="page"]{
  box-shadow:inset -2px 0 0 var(--ok,#1a956d)!important;
 }
-.hsr-manager-root .hsr-manager-main :is(h1,h2,h3),
-.hsr-manager-root .hsr-manager-header :is(h1,h2,h3){
+.hsr-manager-root .hsr-manager-main :is(h1,h2,h3){
  font-family:inherit;
  letter-spacing:0!important;
 }
@@ -633,5 +614,4 @@ html[data-theme="light"] body.owner-premium{
 body.owner-premium>.grid>main .card{box-shadow:var(--owner-shadow)!important;}
 @media(max-width:699px){
  .hsr-manager-root .hsr-manager-main :is(.hsr-decision-card,.hsr-priority-card,.hsr-analytics-grid>div){border-radius:15px!important;}
- .hsr-manager-root .hsr-manager-header{border-radius:14px!important;}
 }
