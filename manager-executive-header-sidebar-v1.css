@@ -213,3 +213,57 @@ html[data-theme="light"] body{background:#cedbd5!important}
  :is(.hsr-exec-kpis>div,.hsr-decision-card,.hsr-priority-card,.hsr-completion-card,
      .hsr-analytics-grid>div){transition:none!important}
 }
+
+/* RTL order / original header — 2026-10-30
+   Keep the original mark at the far left; no functional changes. */
+.hsr-manager-header{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important}
+.hsr-manager-header>div:first-child{
+ display:flex!important;align-items:center!important;gap:8px!important;
+ flex:1 1 auto;min-width:0;flex-wrap:nowrap!important;
+}
+.hsr-manager-header>div:last-child{
+ display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto;min-width:0;flex-wrap:nowrap!important;
+}
+.hsr-manager-header .hsr-manager-profile-frame{flex:0 0 auto}
+.hsr-manager-header .hsr-manager-org-left{flex:0 1 190px;max-width:205px;min-width:0}
+.hsr-manager-header .hsr-manager-org-left [data-hsr-weather-org]{max-width:154px}
+.hsr-manager-header div:has(> input[aria-label="ابحث في البلاغات"]){
+ width:clamp(110px,11vw,170px)!important;flex:0 1 170px;min-width:102px
+}
+.hsr-manager-header .hsr-manager-environment-cluster{
+ display:flex;align-items:center;gap:7px;flex:0 0 auto;
+ margin-inline-start:auto;padding:4px 8px;border-radius:11px;
+ background:var(--hdrSunk,rgba(12,20,36,.55));
+ border:1px solid var(--hdrDiv,rgba(122,164,224,.18));
+}
+.hsr-manager-header .hsr-manager-environment-cluster .hsr-manager-weather-meta{
+ height:auto!important;padding:0!important;background:transparent!important;border:0!important;gap:5px!important
+}
+.hsr-manager-header .hsr-manager-environment-cluster .hsr-manager-clock-meta{
+ display:flex!important;align-items:center;gap:6px;padding-inline-start:8px;
+ border-inline-start:1px solid var(--hdrDiv,rgba(122,164,224,.18))
+}
+.hsr-manager-header .hsr-manager-environment-cluster .hsr-manager-clock-detail{display:inline-flex!important}
+@media(max-width:1399px){
+ .hsr-manager-header{flex-wrap:wrap!important;row-gap:7px!important}
+ .hsr-manager-header>div:first-child{flex:1 1 100%;width:100%}
+ .hsr-manager-header>div:last-child{width:100%;justify-content:space-between}
+}
+@media(max-width:1000px){
+ .hsr-manager-header>div:first-child{flex-wrap:wrap!important;gap:7px!important}
+ .hsr-manager-header .hsr-manager-environment-cluster{margin-inline-start:auto}
+}
+@media(max-width:740px){
+ .hsr-manager-header{padding:8px!important}
+ .hsr-manager-header .hsr-manager-org-left{flex:0 0 auto;max-width:42px}
+ .hsr-manager-header .hsr-manager-org-left>div:last-child{display:none!important}
+ .hsr-manager-header .hsr-manager-environment-cluster{flex:1 1 100%;width:100%;justify-content:space-between;margin-inline-start:0}
+ .hsr-manager-header .hsr-manager-profile-frame{gap:5px!important;padding:4px 6px!important}
+ .hsr-manager-header>div:last-child{justify-content:space-between}
+}
+@media(max-width:440px){
+ .hsr-manager-header>div:first-child{gap:5px!important}
+ .hsr-manager-header .hsr-manager-environment-cluster{padding:4px 6px;gap:4px}
+ .hsr-manager-header .hsr-manager-environment-cluster .hsr-manager-clock-meta{gap:4px;padding-inline-start:5px}
+ .hsr-manager-header div:has(>input[aria-label="ابحث في البلاغات"]){min-width:85px;flex:1 1 115px}
+}
