@@ -73,38 +73,29 @@ let stopDocuments = null;
 let stopAudit = null;
 let bootstrapAttempted = false;
 
-// PHASE 09 GATE 1 — re-ported from Lands' CURRENT authoritative source,
-// smart-hsr-lands/client/lands-core.js's computeCompleteness(). The
-// previous port (from an earlier lands-domain.js on the
-// design/lands-vision2030-final-ui branch) checked fields Lands' real,
-// Rules-enforced landGrant schema never populates — nested
-// beneficiary/royal_order/allocation_decision objects, denormalized
-// plan_reference_number/parcel_reference_number strings, and a
-// conveyance{letter_number,letter_date} object that does not exist
-// anywhere in Lands' schema, Rules, or trusted server code. Every grant
-// was silently scored far below its real completeness. The real schema
-// (confirmed against landsMunicipalities/{id}/landGrants' Rules
-// validLandGrant() allowlist) only ever carries the *_id foreign keys
-// and document_ids below. Lands' function also accepts a `related` map
-// (whether each referenced record still exists) that this read-only,
-// single-document adapter does not fetch; omitting it defaults every
-// related-record check to true, matching Lands' own default semantics
-// for "no evidence the referenced record was deleted."
-// Pure function, no I/O — safe to port for read-only rendering since a
-// direct ESM import is not possible from manager.html's non-module inline
-// Designer script (the same constraint manager-dashboard-adapter.js's own
-// header comment documents for window.SmartHSRFormat).
+// Lands Manager must report the same five-axis business completeness percentage
+// as the canonical Lands registry (lands/client/lands-domain.js).
+// This is a read-only projection: linked records, document availability and GIS
+// verification remain separate indicators and never alter this percentage.
+// The focused parity test guards future source and behavior drift.
 function computeGrantCompleteness(grant) {
-  const checks = [
-    ['beneficiary', Boolean(grant.beneficiary_id)],
-    ['royal_order', Boolean(grant.royal_order_id)],
-    ['allocation_decision', Boolean(grant.allocation_decision_id)],
-    ['plan', Boolean(grant.plan_id)],
-    ['parcel', Boolean(grant.parcel_id)],
-    ['documents', Array.isArray(grant.document_ids) && grant.document_ids.length > 0]
-  ];
-  const missing = checks.filter(([, ok]) => !ok).map(([name]) => name);
-  const percentage = Math.round(((checks.length - missing.length) / checks.length) * 100);
+  const axisOrder = ['beneficiary', 'royal_order', 'allocation_decision', 'plan_parcel', 'conveyance'];
+  const axisOk = {
+    beneficiary: Boolean(grant.beneficiary?.name && grant.beneficiary?.national_id),
+    royal_order: Boolean(grant.royal_order?.number && grant.royal_order?.date),
+    allocation_decision: Boolean(grant.allocation_decision?.number && grant.allocation_decision?.date),
+    // Plan/Parcel stay optional for draft creation/editing — this axis
+    // only contributes its 20% once BOTH manual reference numbers are
+    // entered. No geometry, no GIS verification, no entity linkage
+    // (plan_id/parcel_id) is required or implied.
+    plan_parcel: Boolean(grant.plan_reference_number && grant.parcel_reference_number),
+    // Complete once BOTH manual business fields are entered — letter_number
+    // and letter_date. No stage/status field is required, read, or
+    // considered here, even if an old record happens to still carry one.
+    conveyance: Boolean(grant.conveyance?.letter_number && grant.conveyance?.letter_date)
+  };
+  const missing = axisOrder.filter((axis) => !axisOk[axis]);
+  const percentage = (axisOrder.length - missing.length) * (100 / axisOrder.length);
   return { status: missing.length ? 'incomplete' : 'complete', missing, percentage };
 }
 
@@ -220,6 +211,11 @@ function relatedLabel(entity, fallback = '—') {
 function unresolvedReference(id, fallback = '—') {
   return id ? `مرجع غير متاح · ${id}` : fallback;
 }
+// Prefer the active Lands grant's embedded business fields; retain related-
+// collection labels for older grants without embedded values. Read only.
+function preferBusinessLabel(value, fallback) {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
 
 function buildViewData(grants, documents, related, auditEvents, auditState) {
   const royalOrders = Array.isArray(related?.royalOrders) ? related.royalOrders : [];
@@ -233,18 +229,11 @@ function buildViewData(grants, documents, related, auditEvents, auditState) {
   const plansById = byId(plans);
   const parcelsById = byId(parcels);
 
-  // Completeness must reflect the existence of the referenced authoritative
-  // record, not merely the presence of an *_id string on the grant.
+  // The municipality dashboard mirrors the authoritative Lands five-axis rule.
+  // Missing documents, broken links, and absent GIS remain separately visible.
   const resolvedGrants = grants.map(g => ({
     ...g,
-    completeness: computeGrantCompleteness({
-      ...g,
-      beneficiary_id: g.beneficiary_id && beneficiariesById.has(g.beneficiary_id) ? g.beneficiary_id : null,
-      royal_order_id: g.royal_order_id && royalOrdersById.has(g.royal_order_id) ? g.royal_order_id : null,
-      allocation_decision_id: g.allocation_decision_id && allocationDecisionsById.has(g.allocation_decision_id) ? g.allocation_decision_id : null,
-      plan_id: g.plan_id && plansById.has(g.plan_id) ? g.plan_id : null,
-      parcel_id: g.parcel_id && parcelsById.has(g.parcel_id) ? g.parcel_id : null
-    })
+    completeness: computeGrantCompleteness(g)
   }));
 
   const stats = decisionStats(resolvedGrants);
@@ -278,16 +267,16 @@ function buildViewData(grants, documents, related, auditEvents, auditState) {
       const grantDocuments = documentsForGrant(g.id, documents);
       return {
         id: g.id,
-        reference: relatedLabel(royalOrder, relatedLabel(allocationDecision, g.id)),
-        beneficiary: beneficiary?.name || unresolvedReference(g.beneficiary_id, 'غير متاح'),
+        reference: preferBusinessLabel(g.grant_number, relatedLabel(royalOrder, relatedLabel(allocationDecision, 'غير مسجّل'))),
+        beneficiary: preferBusinessLabel(g.beneficiary?.name, beneficiary?.name || unresolvedReference(g.beneficiary_id, 'غير متاح')),
         beneficiaryId: g.beneficiary_id || null,
-        royalOrder: relatedLabel(royalOrder, unresolvedReference(g.royal_order_id)),
+        royalOrder: preferBusinessLabel(g.royal_order?.number, relatedLabel(royalOrder, unresolvedReference(g.royal_order_id))),
         royalOrderId: g.royal_order_id || null,
-        allocationDecision: relatedLabel(allocationDecision, unresolvedReference(g.allocation_decision_id)),
+        allocationDecision: preferBusinessLabel(g.allocation_decision?.number, relatedLabel(allocationDecision, unresolvedReference(g.allocation_decision_id))),
         allocationDecisionId: g.allocation_decision_id || null,
-        plan: relatedLabel(plan, unresolvedReference(g.plan_id)),
+        plan: preferBusinessLabel(g.plan_reference_number, relatedLabel(plan, unresolvedReference(g.plan_id))),
         planId: g.plan_id || null,
-        parcel: relatedLabel(parcel, unresolvedReference(g.parcel_id)),
+        parcel: preferBusinessLabel(g.parcel_reference_number, relatedLabel(parcel, unresolvedReference(g.parcel_id))),
         parcelId: g.parcel_id || null,
         parcelSpatial: parcel?.spatial || null,
         status: STATUS_LABELS[g.status] || g.status || 'غير معروف',
@@ -312,8 +301,8 @@ function buildViewData(grants, documents, related, auditEvents, auditState) {
     })),
     priorities: lowestCompletion.map(g => ({
       id: g.id,
-      reference: relatedLabel(royalOrdersById.get(g.royal_order_id), relatedLabel(allocationDecisionsById.get(g.allocation_decision_id), g.id)),
-      beneficiary: beneficiariesById.get(g.beneficiary_id)?.name || unresolvedReference(g.beneficiary_id, 'غير متاح'),
+      reference: preferBusinessLabel(g.grant_number, relatedLabel(royalOrdersById.get(g.royal_order_id), relatedLabel(allocationDecisionsById.get(g.allocation_decision_id), 'غير مسجّل'))),
+      beneficiary: preferBusinessLabel(g.beneficiary?.name, beneficiariesById.get(g.beneficiary_id)?.name || unresolvedReference(g.beneficiary_id, 'غير متاح')),
       percentage: Math.round(g.completeness.percentage)
     })),
     issueFocus: [
