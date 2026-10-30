@@ -1,51 +1,6 @@
-/* SMART HSR · Municipality Manager Executive Shell
-   Scope: manager.html only. Presentation changes; no Auth/RBAC or operational data changes.
-   Source of truth: the approved Manager surface on affd18547e38bdb115d053674e7c5a816058751c.
-*/
-.hsr-manager-header{
-  --hsr-head-line:var(--hdrDiv,rgba(122,164,224,.16));
-  --hsr-head-card:var(--hdrSunk,rgba(12,20,36,.55));
-  display:flex!important;align-items:center!important;justify-content:space-between!important;
-  gap:12px!important;row-gap:10px!important;min-height:74px!important;
-  border-bottom-color:var(--hdrAccentBd,rgba(34,197,94,.4))!important;
-}
-.hsr-manager-header-primary{display:flex!important;align-items:center;flex:1 1 auto;gap:12px;min-width:0;flex-wrap:nowrap!important}
-.hsr-manager-header-secondary{display:flex!important;align-items:center;gap:10px;flex:0 0 auto;min-width:0;margin-inline-start:auto}
-.hsr-manager-profile-area{display:flex;align-items:center;gap:10px;min-width:0;flex:none}
-.hsr-manager-org-summary{display:flex;align-items:center;min-width:0;max-width:225px}
-.hsr-manager-action-tools{display:flex;align-items:center;flex:none;gap:6px;padding-inline:10px;border-inline:1px solid var(--hsr-head-line)}
-.hsr-manager-search{flex:0 1 208px!important;width:208px!important;min-width:125px;display:block!important}
-.hsr-manager-datetime-group{
- display:flex;align-items:center;gap:9px;min-width:0;flex:0 0 auto;
- padding:5px 10px;border:1px solid var(--hsr-head-line);border-radius:12px;
- background:var(--hsr-head-card);font-variant-numeric:tabular-nums;
-}
-.hsr-manager-datetime-group .hsr-manager-weather-meta{
- display:flex!important;align-items:center;gap:6px!important;flex:none;
- padding:0!important;height:auto!important;background:transparent!important;border:0!important;
-}
-.hsr-manager-datetime-group .hsr-manager-clock-meta{
- display:flex!important;align-items:center;gap:7px;padding-inline-start:9px;
- border-inline-start:1px solid var(--hsr-head-line);white-space:nowrap;
-}
-html body .hsr-manager-header .hsr-manager-clock-meta .hsr-manager-clock-detail{
- display:inline-flex!important;align-items:flex-start;flex:none;
-}
-.hsr-manager-header [data-hsr-weather-status]{font-size:10px;font-weight:650;white-space:nowrap}
-.hsr-manager-theme-toggle{
- display:flex;align-items:center;gap:2px;padding:3px;border-radius:12px;
- background:var(--hsr-head-card);border:1px solid var(--hsr-head-line);flex:none;
-}
-.hsr-manager-theme-toggle button{min-width:34px;min-height:31px;justify-content:center}
-.hsr-manager-theme-toggle button svg{width:15px;height:15px}
-.hsr-manager-brand{display:flex;align-items:center;gap:10px;min-width:0;flex:none}
-.hsr-manager-header-primary button,.hsr-manager-header-secondary button{
- transition:background-color .16s ease,border-color .16s ease;
-}
-.hsr-manager-header-primary button:focus-visible,
-.hsr-manager-header-secondary button:focus-visible{
- outline:2px solid var(--hdrAcc,#8ee6ff);outline-offset:2px;
-}
+/* SMART HSR Manager visual refinement; restore original header composition.
+   Sidebar elements retain PR #87 digital signature and command typography.
+   Manager-only: preserves role/security code and dark theme behavior. */
 .hsr-manager-sidebar-premium .hsr-command-label{
  position:relative;min-width:0;padding:3px 2px 4px;
 }
@@ -90,112 +45,48 @@ html body .hsr-manager-header .hsr-manager-clock-meta .hsr-manager-clock-detail{
  content:"";display:block;width:6px;height:6px;border-radius:50%;
  background:var(--ok,#22c55e);box-shadow:0 0 0 3px rgba(34,197,94,.08);
 }
-/* Calm daylight: preserve the approved green-ivory palette. */
-html[data-theme="light"] .hsr-manager-datetime-group,
-.hsr-manager-root[data-theme="light"] .hsr-manager-datetime-group{
- background:var(--hdrSunk,rgba(225,238,230,.85));
-}
 
-/* Manager shell compact pass — match the historic one-line desktop header.
-   Retain manager-only scope; no auth, routing or operational logic changes. */
-.hsr-manager-header{
-  flex-wrap:nowrap!important;
-  min-height:58px!important;
-  padding:6px 10px!important;
+/* Historic manager header is restored as source markup; no global header reflow.
+   Only profile framing and moving the original municipality identity to left. */
+.hsr-manager-header .hsr-manager-profile-frame{
+  padding:4px 8px!important;
+  border:1px solid var(--hdrDiv,rgba(122,164,224,.2))!important;
+  border-radius:11px;
+  background:var(--hdrSunk,rgba(12,20,36,.48));
   gap:8px!important;
-  row-gap:6px!important;
 }
-.hsr-manager-header-primary{gap:8px!important;flex:1 1 auto;min-width:0}
-.hsr-manager-header-secondary{gap:7px!important;flex:0 0 auto}
-.hsr-manager-profile-area{gap:6px}
-.hsr-manager-profile-area [aria-label="قائمة الحساب"]{width:34px!important;height:34px!important;border-radius:10px!important}
-.hsr-manager-org-summary{max-width:175px;min-width:0}
-.hsr-manager-org-summary [aria-label="هوية البلدية"]{width:32px!important;height:32px!important;border-radius:9px!important}
-.hsr-manager-org-summary [data-hsr-weather-org]{max-width:145px;overflow:hidden;text-overflow:ellipsis}
-.hsr-manager-action-tools{gap:4px;padding-inline:6px}
-.hsr-manager-action-tools button{width:34px!important;height:34px!important;min-width:34px;border-radius:9px!important}
-.hsr-manager-search{flex:0 1 140px!important;width:140px!important;min-width:100px}
-.hsr-manager-search input{height:32px!important;border-radius:9px!important}
-.hsr-manager-search svg{top:9px!important}
-.hsr-manager-datetime-group{gap:6px;padding:3px 7px;border-radius:10px}
-.hsr-manager-datetime-group .hsr-manager-clock-meta{gap:5px;padding-inline-start:7px}
-.hsr-manager-datetime-group .hsr-manager-clock-detail{font-size:10px!important}
-.hsr-manager-theme-toggle{padding:2px!important;border-radius:9px!important}
-.hsr-manager-theme-toggle button{height:30px!important;min-width:32px!important;padding-inline:6px!important;gap:4px!important}
-.hsr-manager-brand{gap:6px;padding-right:8px!important}
-.hsr-manager-brand img{height:34px!important;width:auto!important}
-
-/* Match the *actual* sidebar surface to the header's theme-dependent tokens.
-   Existing nav selection states remain independent of the shell material. */
-.hsr-manager-sidebar-premium .hsr-sidebar-panel > div,
+.hsr-manager-header .hsr-manager-org-left{
+  min-width:0;
+  flex:0 1 auto;
+  max-width:235px;
+  padding-inline-start:10px!important;
+  border-inline-start:1px solid var(--hdrDiv,rgba(122,164,224,.17));
+}
+.hsr-manager-header .hsr-manager-org-left [data-hsr-weather-org]{
+  max-width:185px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+@media(max-width:940px){
+ .hsr-manager-header .hsr-manager-org-left>div:last-child{display:none!important}
+ .hsr-manager-header .hsr-manager-org-left{padding-inline-start:6px!important;max-width:42px}
+}
+@media(max-width:600px){
+ .hsr-manager-header .hsr-manager-profile-frame{padding:3px 5px!important;gap:5px!important}
+ .hsr-manager-header .hsr-manager-org-left{padding-inline-start:4px!important}
+}
+/* Same exact header material for both day/night sidebars, without changing
+   the header's approved original palette or the sidebar navigation states. */
+.hsr-manager-sidebar-premium .hsr-sidebar-panel>div,
 .hsr-manager-sidebar-premium .hsr-manager-sidebar-signature{
   background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,.82),rgba(9,15,28,.86)))!important;
   border:1px solid var(--hdrBd,rgba(122,164,224,.22))!important;
   box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.3),0 4px 12px -6px rgba(0,0,0,.6),0 26px 54px -22px rgba(0,0,0,.98))!important;
   backdrop-filter:var(--blur,blur(22px));
 }
-.hsr-manager-sidebar-premium .hsr-sidebar-panel > div{
+.hsr-manager-sidebar-premium .hsr-sidebar-panel>div{
   border-right:2px solid var(--hdrAccentBd,rgba(34,197,94,.4))!important;
 }
-.hsr-manager-sidebar-premium .hsr-manager-sidebar-signature{border-radius:14px!important}
-
-@media(min-width:1180px) and (max-width:1350px){
- .hsr-manager-header-primary{gap:6px!important}
- .hsr-manager-org-summary{max-width:150px}
- .hsr-manager-org-summary [data-hsr-weather-org]{max-width:118px}
- .hsr-manager-search{flex:0 1 115px!important;width:115px!important}
- .hsr-manager-brand div[dir="ltr"]{letter-spacing:0!important}
- .hsr-manager-brand img{height:31px!important}
- .hsr-manager-action-tools{padding-inline:4px}
-}
-@media(max-width:1179px){
- .hsr-manager-header{flex-wrap:wrap!important}
- .hsr-manager-header-primary{flex:1 1 100%;width:100%;flex-wrap:wrap!important;gap:7px!important}
- .hsr-manager-header-secondary{flex:1 1 100%;width:100%;justify-content:space-between!important;margin-inline-start:0}
- .hsr-manager-search{flex:0 1 140px!important;width:140px!important}
- .hsr-manager-datetime-group{margin-inline-start:auto}
-}
-@media(max-width:760px){
- .hsr-manager-header{padding:7px 8px!important;gap:6px!important}
- .hsr-manager-header-primary{gap:7px!important}
- .hsr-manager-profile-area{order:0;max-width:100%}
- .hsr-manager-org-summary{order:1;max-width:170px}
- .hsr-manager-action-tools{order:2;padding-inline:4px}
- .hsr-manager-search{order:3;flex:0 1 130px!important;width:130px!important;min-width:98px}
- .hsr-manager-datetime-group{order:4;flex:1 1 auto;min-width:0;margin-inline-start:auto}
- .hsr-manager-header-secondary{gap:5px!important;flex-wrap:nowrap!important}
- .hsr-manager-theme-toggle button span{display:none!important}
- .hsr-manager-theme-toggle button{padding-inline:6px!important}
- .hsr-manager-brand{margin-inline-start:auto}
- .hsr-manager-brand div[dir="ltr"] > div:last-child{display:none!important}
- .hsr-manager-datetime-group .hsr-manager-clock-meta{gap:4px}
-}
-@media(max-width:560px){
- .hsr-manager-org-summary{display:none!important}
- .hsr-manager-header-primary{justify-content:space-between}
- .hsr-manager-profile-area{flex:0 1 auto}
- .hsr-manager-search{flex:1 1 105px!important;width:auto!important;min-width:90px}
- .hsr-manager-datetime-group{flex:1 1 100%;width:100%;justify-content:space-between;margin-inline-start:0}
- .hsr-manager-header [data-hsr-weather]{max-width:48vw!important}
- .hsr-manager-brand img{height:30px!important}
-}
-@media(max-width:390px){
- .hsr-manager-header-primary{gap:5px!important}
- .hsr-manager-action-tools{padding-inline:2px;gap:2px}
- .hsr-manager-action-tools button{width:32px!important;height:32px!important;min-width:32px}
- .hsr-manager-profile-area [aria-label="قائمة الحساب"]{width:32px!important;height:32px!important}
- .hsr-manager-search{min-width:75px}
- .hsr-manager-datetime-group{padding:4px 6px;gap:5px}
- .hsr-manager-datetime-group .hsr-manager-clock-meta{padding-inline-start:5px}
- .hsr-manager-header .hsr-manager-clock-detail{font-size:9px!important}
- .hsr-manager-header [data-hsr-weather-status]{font-size:9px}
- .hsr-manager-sidebar-signature{padding:10px}
-}
-@media(prefers-reduced-motion:reduce){
- .hsr-manager-header-primary button,.hsr-manager-header-secondary button{transition:none}
-}
-
-
 /* SMART HSR · Executive Day Surface System
    Manager-only, daylight-only. Structured depth, not white-on-white.
    A standalone token layer ensures every manager view inherits the palette;
@@ -248,20 +139,7 @@ html[data-theme="light"] .hsr-manager-datetime-group,
   --btn:linear-gradient(160deg,#0c7265,#075648)!important;
   --btnTx:#f7fffa!important;
   --btnBd:rgba(3,76,59,.48)!important;
-  --hdrBg:linear-gradient(160deg,#11333d 0%,#092733 58%,#061f2e 100%)!important;
-  --hdrBd:rgba(124,177,164,.45)!important;
-  --hdrAccentBd:#2aa378!important;
-  --hdrSh:inset 0 1px 0 rgba(210,248,235,.12),0 18px 42px -24px rgba(2,27,36,.74),0 3px 12px -7px rgba(3,21,30,.45)!important;
-  --hdrDiv:rgba(191,225,215,.22)!important;
-  --hdrTx:#edf7f4!important;
-  --hdrTx2:#c3d9d3!important;
-  --hdrTx3:#a3c2ba!important;
-  --hdrCtl:rgba(181,222,209,.11)!important;
-  --hdrCtlBd:rgba(176,221,205,.23)!important;
-  --hdrField:rgba(8,33,42,.8)!important;
-  --hdrSunk:rgba(5,26,36,.62)!important;
-  --hdrAcc:#a7e6cd!important;
-  --logoNavyH:#f0faf6!important;
+
   --sbBg:var(--hdrBg)!important;
   --sbBd:var(--hdrBd)!important;
   --sbSh:var(--hdrSh)!important;
@@ -302,21 +180,6 @@ html[data-theme="light"] body{background:#cedbd5!important}
 :is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
 .hsr-integration-strip{
   background:linear-gradient(155deg,#dbe9e1,#cfded5)!important;
-}
-/* The dark executive chrome stays equally deep in day and night;
-   preserve original navigation selection and icon semantics. */
-:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
-:is(.hsr-manager-header,.hsr-manager-sidebar-premium .hsr-sidebar-panel>div,
-    .hsr-manager-sidebar-premium .hsr-manager-sidebar-signature){
-  background:var(--hdrBg)!important;
-  border-color:var(--hdrBd)!important;
-  box-shadow:var(--hdrSh)!important;
-}
-:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
-.hsr-manager-header{border-bottom-color:var(--hdrAccentBd)!important}
-:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
-.hsr-manager-sidebar-premium .hsr-sidebar-panel>div{
-  border-right-color:var(--hdrAccentBd)!important;
 }
 /* The source data, popup behavior and map tiles are unchanged. */
 :is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
