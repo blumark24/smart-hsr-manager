@@ -244,7 +244,7 @@ html[data-theme="light"] body{background:#cedbd5!important}
  border-inline-start:1px solid var(--hdrDiv,rgba(122,164,224,.18))
 }
 .hsr-manager-header .hsr-manager-environment-cluster .hsr-manager-clock-detail{display:inline-flex!important}
-@media(max-width:1399px){
+@media(max-width:1199px){
  .hsr-manager-header{flex-wrap:wrap!important;row-gap:7px!important}
  .hsr-manager-header>div:first-child{flex:1 1 100%;width:100%}
  .hsr-manager-header>div:last-child{width:100%;justify-content:space-between}
