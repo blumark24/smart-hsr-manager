@@ -1054,6 +1054,16 @@ body{min-height:100svh!important;min-height:100dvh!important}
           </div>
         </sc-if>
       </div>
+<div class="hsr-manager-org-left" style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
+        <div onClick="{{ openSettings }}" data-f="1" role="button" aria-label="هوية البلدية" title="{{ orgName }}" style="width:36px;height:36px;flex:none;border-radius:11px;background:var(--orgBgH,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBdH,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden">
+          <span style="font-size:12px;font-weight:700;color:var(--hdrAcc,#8ee6ff);letter-spacing:.5px">{{ orgMono }}</span>
+        </div>
+        <div style="display:var(--brandTxt,block);min-width:0">
+          <div data-hsr-weather-org style="font-size:13px;font-weight:700;color:var(--hdrTx,#f0f6ff);white-space:nowrap">{{ orgName }}</div>
+          <div style="font-size:9.5px;font-weight:550;color:var(--hdrTx3,#7d8ea6);margin-top:2px;white-space:nowrap">الإدارة التنفيذية</div>
+        </div>
+      </div>
+
 
       <div style="display:flex;align-items:center;gap:6px">
         <button onClick="{{ soon }}" data-f="1" aria-label="المحادثات" style="width:34px;height:34px;border-radius:10px;background:var(--hdrCtl,rgba(30,44,70,0.5));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx2,#9db2cc);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--ctlH,rgba(44,64,100,0.7))">
@@ -1093,26 +1103,30 @@ body{min-height:100svh!important;min-height:100dvh!important}
         </div>
       </div>
 
-      <div class="hsr-manager-clock-meta" aria-label="الوقت والتاريخ" style="display:flex;align-items:center;gap:8px;white-space:nowrap;color:var(--hdrTx2,#9db2cc);font-variant-numeric:tabular-nums">
-        <span class="hsr-manager-clock-detail" style="font-size:11.5px;color:var(--hdrTx2,#9db2cc);font-variant-numeric:tabular-nums">{{ currentTime }}</span>
-                <span class="hsr-manager-clock-detail" style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;font-size:10px;line-height:1.2;color:var(--hdrTx3,#7d8ea6)"><span>{{ currentHijriDate }}</span><span>{{ currentDate }}</span></span>
-      </div>
+      
 
       <div style="position:relative;width:var(--searchW,212px);display:var(--searchDisp,block)">
         <input aria-label="ابحث في البلاغات" value="{{ search }}" onChange="{{ setSearch }}" placeholder="ابحث في البلاغات..." style="width:100%;height:36px;border-radius:10px;background:var(--hdrField,rgba(12,20,36,0.75));border:1px solid var(--hdrCtlBd,rgba(122,164,224,0.16));color:var(--hdrTx,#dbe6f5);font-size:11.5px;padding:0 12px 0 34px;outline:none">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:11px;top:11px;color:var(--hdrTx3,#7d8ea6)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
       </div>
-
-
-    </div>
-
-      <div class="hsr-manager-weather-meta" style="display:flex;align-items:center;gap:10px;padding:0 12px;height:36px;border-radius:10px;background:var(--hdrSunk,rgba(12,20,36,0.55));border:1px solid var(--hdrDiv,rgba(122,164,224,0.11))">
+<div class="hsr-manager-weather-meta" style="display:flex;align-items:center;gap:10px;padding:0 12px;height:36px;border-radius:10px;background:var(--hdrSunk,rgba(12,20,36,0.55));border:1px solid var(--hdrDiv,rgba(122,164,224,0.11))">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn,#f5a524)" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
         <span data-hsr-weather data-hsr-weather-org-selector="[data-hsr-weather-org]" style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--hdrTx2,#9db2cc);font-weight:500;white-space:nowrap">
           <span data-hsr-weather-status>غير متاح</span>
           <a data-hsr-weather-credit href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" hidden style="font-size:8px;color:var(--hdrTx3,#7d8ea6);text-decoration:underline;text-underline-offset:2px">MET Norway</a>
         </span>
       </div>
+
+<div class="hsr-manager-clock-meta" aria-label="الوقت والتاريخ" style="display:flex;align-items:center;gap:8px;white-space:nowrap;color:var(--hdrTx2,#9db2cc);font-variant-numeric:tabular-nums">
+        <span class="hsr-manager-clock-detail" style="font-size:11.5px;color:var(--hdrTx2,#9db2cc);font-variant-numeric:tabular-nums">{{ currentTime }}</span>
+                <span class="hsr-manager-clock-detail" style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;font-size:10px;line-height:1.2;color:var(--hdrTx3,#7d8ea6)"><span>{{ currentHijriDate }}</span><span>{{ currentDate }}</span></span>
+      </div>
+
+
+
+    </div>
+
+      
 
     <div style="display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:var(--hdrWrap,nowrap)">
       <button onClick="{{ tMobNav }}" data-f="1" aria-label="القائمة" style="display:var(--mobNav,none);width:36px;height:36px;flex:none;border-radius:10px;background:var(--ctl,rgba(30,44,70,0.5));border:1px solid var(--ctlBd,rgba(122,164,224,0.16));color:var(--tx2,#9db2cc);align-items:center;justify-content:center;cursor:pointer">
@@ -1139,15 +1153,7 @@ body{min-height:100svh!important;min-height:100dvh!important}
         </div>
         <img src="smart-hsr-mark.svg" alt="سمارت حصر" width="30" height="42" style="flex:none;display:block;height:42px;width:auto;object-fit:contain">
       </div>
-      <div class="hsr-manager-org-left" style="display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--hdrDiv,rgba(122,164,224,0.14))">
-        <div onClick="{{ openSettings }}" data-f="1" role="button" aria-label="هوية البلدية" title="{{ orgName }}" style="width:36px;height:36px;flex:none;border-radius:11px;background:var(--orgBgH,radial-gradient(circle at 35% 30%,rgba(76,201,240,0.2),rgba(12,20,36,0.95)));border:1px solid var(--orgBdH,rgba(122,164,224,0.35));display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden">
-          <span style="font-size:12px;font-weight:700;color:var(--hdrAcc,#8ee6ff);letter-spacing:.5px">{{ orgMono }}</span>
-        </div>
-        <div style="display:var(--brandTxt,block);min-width:0">
-          <div data-hsr-weather-org style="font-size:13px;font-weight:700;color:var(--hdrTx,#f0f6ff);white-space:nowrap">{{ orgName }}</div>
-          <div style="font-size:9.5px;font-weight:550;color:var(--hdrTx3,#7d8ea6);margin-top:2px;white-space:nowrap">الإدارة التنفيذية</div>
-        </div>
-      </div>
+      
     </div>
   </header>
 
