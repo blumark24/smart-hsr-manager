@@ -1,0 +1,137 @@
+/* SMART HSR · Municipality Manager Executive Shell
+   Scope: manager.html only. Presentation changes; no Auth/RBAC or operational data changes.
+   Source of truth: the approved Manager surface on affd18547e38bdb115d053674e7c5a816058751c.
+*/
+.hsr-manager-header{
+  --hsr-head-line:var(--hdrDiv,rgba(122,164,224,.16));
+  --hsr-head-card:var(--hdrSunk,rgba(12,20,36,.55));
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  gap:12px!important;row-gap:10px!important;min-height:74px!important;
+  border-bottom-color:var(--hdrAccentBd,rgba(34,197,94,.4))!important;
+}
+.hsr-manager-header-primary{display:flex!important;align-items:center;flex:1 1 auto;gap:12px;min-width:0;flex-wrap:nowrap!important}
+.hsr-manager-header-secondary{display:flex!important;align-items:center;gap:10px;flex:0 0 auto;min-width:0;margin-inline-start:auto}
+.hsr-manager-profile-area{display:flex;align-items:center;gap:10px;min-width:0;flex:none}
+.hsr-manager-org-summary{display:flex;align-items:center;min-width:0;max-width:225px}
+.hsr-manager-action-tools{display:flex;align-items:center;flex:none;gap:6px;padding-inline:10px;border-inline:1px solid var(--hsr-head-line)}
+.hsr-manager-search{flex:0 1 208px!important;width:208px!important;min-width:125px;display:block!important}
+.hsr-manager-datetime-group{
+ display:flex;align-items:center;gap:9px;min-width:0;flex:0 0 auto;
+ padding:5px 10px;border:1px solid var(--hsr-head-line);border-radius:12px;
+ background:var(--hsr-head-card);font-variant-numeric:tabular-nums;
+}
+.hsr-manager-datetime-group .hsr-manager-weather-meta{
+ display:flex!important;align-items:center;gap:6px!important;flex:none;
+ padding:0!important;height:auto!important;background:transparent!important;border:0!important;
+}
+.hsr-manager-datetime-group .hsr-manager-clock-meta{
+ display:flex!important;align-items:center;gap:7px;padding-inline-start:9px;
+ border-inline-start:1px solid var(--hsr-head-line);white-space:nowrap;
+}
+html body .hsr-manager-header .hsr-manager-clock-meta .hsr-manager-clock-detail{
+ display:inline-flex!important;align-items:flex-start;flex:none;
+}
+.hsr-manager-header [data-hsr-weather-status]{font-size:10px;font-weight:650;white-space:nowrap}
+.hsr-manager-theme-toggle{
+ display:flex;align-items:center;gap:2px;padding:3px;border-radius:12px;
+ background:var(--hsr-head-card);border:1px solid var(--hsr-head-line);flex:none;
+}
+.hsr-manager-theme-toggle button{min-width:34px;min-height:31px;justify-content:center}
+.hsr-manager-theme-toggle button svg{width:15px;height:15px}
+.hsr-manager-brand{display:flex;align-items:center;gap:10px;min-width:0;flex:none}
+.hsr-manager-header-primary button,.hsr-manager-header-secondary button{
+ transition:background-color .16s ease,border-color .16s ease;
+}
+.hsr-manager-header-primary button:focus-visible,
+.hsr-manager-header-secondary button:focus-visible{
+ outline:2px solid var(--hdrAcc,#8ee6ff);outline-offset:2px;
+}
+.hsr-manager-sidebar-premium .hsr-command-label{
+ position:relative;min-width:0;padding:3px 2px 4px;
+}
+.hsr-manager-sidebar-premium .hsr-command-kicker{
+ color:var(--sbTx3,#9db2cc);font-size:9px;font-weight:800;
+ letter-spacing:.15em;text-transform:uppercase;
+}
+.hsr-manager-sidebar-premium .hsr-command-heading{
+ color:var(--sbTx,#edf7f3);font-size:17px;font-weight:800;
+ line-height:1.6;letter-spacing:.02em;text-shadow:none;
+}
+.hsr-manager-sidebar-premium .hsr-command-caption{
+ font-size:10px;line-height:1.55;color:var(--sbTx2,#a9bdd4);
+}
+.hsr-manager-sidebar-premium .hsr-sidebar-panel{
+ border-inline-start:1px solid var(--sbBd,rgba(122,164,224,.16));
+}
+.hsr-manager-sidebar-signature{
+ position:relative;isolation:isolate;overflow:hidden;
+ display:var(--sbLabel,block);
+ padding:12px;border-radius:16px;
+ background:var(--sbBg,linear-gradient(155deg,rgba(15,50,70,.95),rgba(7,23,41,.98)));
+ border:1px solid var(--sbBd,rgba(122,164,224,.21));
+ box-shadow:var(--sbSh,0 16px 36px -28px rgba(0,0,0,.85));
+}
+.hsr-manager-sidebar-signature:before{
+ content:"";position:absolute;inset:0;z-index:-1;opacity:.35;pointer-events:none;
+ background:repeating-linear-gradient(90deg,transparent 0,transparent 19px,var(--sbDiv,rgba(122,164,224,.08)) 20px);
+}
+.hsr-manager-sidebar-signature-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.hsr-manager-sidebar-signature-brand img{display:block;flex:none;width:30px;height:38px;object-fit:contain}
+.hsr-manager-sidebar-signature-copy{min-width:0}
+.hsr-manager-sidebar-signature-copy strong{display:block;direction:ltr;text-align:right;font-size:12px;letter-spacing:.13em;color:var(--sbTx,#edf7f3);font-weight:850}
+.hsr-manager-sidebar-signature-copy strong em{font-style:normal;color:var(--ok,#22c55e)}
+.hsr-manager-sidebar-signature-copy span{display:block;font-size:10px;color:var(--sbTx2,#a9bdd4);margin-top:2px}
+.hsr-manager-sidebar-signature-meta{
+ display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:8px;
+ border-top:1px solid var(--sbDiv,rgba(122,164,224,.15));
+ font-size:9px;letter-spacing:.02em;color:var(--sbTx3,#8b9db5)
+}
+.hsr-manager-sidebar-signature-meta:before{
+ content:"";display:block;width:6px;height:6px;border-radius:50%;
+ background:var(--ok,#22c55e);box-shadow:0 0 0 3px rgba(34,197,94,.08);
+}
+/* Calm daylight: preserve the approved green-ivory palette. */
+html[data-theme="light"] .hsr-manager-datetime-group,
+.hsr-manager-root[data-theme="light"] .hsr-manager-datetime-group{
+ background:var(--hdrSunk,rgba(225,238,230,.85));
+}
+@media(max-width:1500px){
+ .hsr-manager-header{flex-wrap:wrap!important}
+ .hsr-manager-header-primary{flex:1 1 100%;width:100%;flex-wrap:wrap!important}
+ .hsr-manager-header-secondary{flex:1 1 100%;width:100%;justify-content:flex-end!important;margin-inline-start:0}
+ .hsr-manager-search{flex:1 1 170px!important;width:auto!important}
+ .hsr-manager-datetime-group{margin-inline-start:auto}
+}
+@media(max-width:1179px){
+ .hsr-manager-header .hsr-manager-clock-detail{display:inline-flex!important}
+ .hsr-manager-datetime-group{flex:0 1 auto;min-width:0}
+ .hsr-manager-header-secondary{width:100%!important;max-width:100%!important}
+}
+@media(max-width:760px){
+ .hsr-manager-header{gap:8px!important;padding:9px!important}
+ .hsr-manager-header-primary{gap:8px!important;width:100%!important}
+ .hsr-manager-profile-area{order:0;max-width:100%}
+ .hsr-manager-org-summary{order:1;max-width:200px}
+ .hsr-manager-action-tools{order:2;padding-inline:5px}
+ .hsr-manager-search{order:3;flex:1 1 135px!important;width:auto!important}
+ .hsr-manager-datetime-group{order:4;flex:1 1 100%;width:100%;margin-inline-start:0;justify-content:space-between}
+ .hsr-manager-header-secondary{justify-content:space-between!important;flex-wrap:wrap!important;gap:6px}
+ .hsr-manager-brand{margin-inline-start:auto}
+ .hsr-manager-datetime-group .hsr-manager-clock-meta{gap:5px}
+}
+@media(max-width:430px){
+ .hsr-manager-org-summary{display:none!important}
+ .hsr-manager-header-primary{gap:7px!important}
+ .hsr-manager-profile-area{flex:1 1 100%;justify-content:flex-start}
+ .hsr-manager-action-tools{padding-inline:4px}
+ .hsr-manager-search{min-width:110px}
+ .hsr-manager-datetime-group{padding:5px 7px;gap:5px}
+ .hsr-manager-datetime-group .hsr-manager-clock-meta{padding-inline-start:6px;gap:4px}
+ .hsr-manager-header .hsr-manager-clock-detail{font-size:9px!important}
+ .hsr-manager-header [data-hsr-weather-status]{font-size:9px}
+ .hsr-manager-header [data-hsr-weather]{max-width:47vw!important}
+ .hsr-manager-sidebar-signature{padding:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .hsr-manager-header-primary button,.hsr-manager-header-secondary button{transition:none}
+}
