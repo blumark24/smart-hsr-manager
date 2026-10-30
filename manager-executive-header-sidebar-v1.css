@@ -95,41 +95,100 @@ html[data-theme="light"] .hsr-manager-datetime-group,
 .hsr-manager-root[data-theme="light"] .hsr-manager-datetime-group{
  background:var(--hdrSunk,rgba(225,238,230,.85));
 }
-@media(max-width:1500px){
- .hsr-manager-header{flex-wrap:wrap!important}
- .hsr-manager-header-primary{flex:1 1 100%;width:100%;flex-wrap:wrap!important}
- .hsr-manager-header-secondary{flex:1 1 100%;width:100%;justify-content:flex-end!important;margin-inline-start:0}
- .hsr-manager-search{flex:1 1 170px!important;width:auto!important}
- .hsr-manager-datetime-group{margin-inline-start:auto}
+
+/* Manager shell compact pass — match the historic one-line desktop header.
+   Retain manager-only scope; no auth, routing or operational logic changes. */
+.hsr-manager-header{
+  flex-wrap:nowrap!important;
+  min-height:58px!important;
+  padding:6px 10px!important;
+  gap:8px!important;
+  row-gap:6px!important;
+}
+.hsr-manager-header-primary{gap:8px!important;flex:1 1 auto;min-width:0}
+.hsr-manager-header-secondary{gap:7px!important;flex:0 0 auto}
+.hsr-manager-profile-area{gap:6px}
+.hsr-manager-profile-area [aria-label="قائمة الحساب"]{width:34px!important;height:34px!important;border-radius:10px!important}
+.hsr-manager-org-summary{max-width:175px;min-width:0}
+.hsr-manager-org-summary [aria-label="هوية البلدية"]{width:32px!important;height:32px!important;border-radius:9px!important}
+.hsr-manager-org-summary [data-hsr-weather-org]{max-width:145px;overflow:hidden;text-overflow:ellipsis}
+.hsr-manager-action-tools{gap:4px;padding-inline:6px}
+.hsr-manager-action-tools button{width:34px!important;height:34px!important;min-width:34px;border-radius:9px!important}
+.hsr-manager-search{flex:0 1 140px!important;width:140px!important;min-width:100px}
+.hsr-manager-search input{height:32px!important;border-radius:9px!important}
+.hsr-manager-search svg{top:9px!important}
+.hsr-manager-datetime-group{gap:6px;padding:3px 7px;border-radius:10px}
+.hsr-manager-datetime-group .hsr-manager-clock-meta{gap:5px;padding-inline-start:7px}
+.hsr-manager-datetime-group .hsr-manager-clock-detail{font-size:10px!important}
+.hsr-manager-theme-toggle{padding:2px!important;border-radius:9px!important}
+.hsr-manager-theme-toggle button{height:30px!important;min-width:32px!important;padding-inline:6px!important;gap:4px!important}
+.hsr-manager-brand{gap:6px;padding-right:8px!important}
+.hsr-manager-brand img{height:34px!important;width:auto!important}
+
+/* Match the *actual* sidebar surface to the header's theme-dependent tokens.
+   Existing nav selection states remain independent of the shell material. */
+.hsr-manager-sidebar-premium .hsr-sidebar-panel > div,
+.hsr-manager-sidebar-premium .hsr-manager-sidebar-signature{
+  background:var(--hdrBg,linear-gradient(180deg,rgba(17,26,44,.82),rgba(9,15,28,.86)))!important;
+  border:1px solid var(--hdrBd,rgba(122,164,224,.22))!important;
+  box-shadow:var(--hdrSh,inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.3),0 4px 12px -6px rgba(0,0,0,.6),0 26px 54px -22px rgba(0,0,0,.98))!important;
+  backdrop-filter:var(--blur,blur(22px));
+}
+.hsr-manager-sidebar-premium .hsr-sidebar-panel > div{
+  border-right:2px solid var(--hdrAccentBd,rgba(34,197,94,.4))!important;
+}
+.hsr-manager-sidebar-premium .hsr-manager-sidebar-signature{border-radius:14px!important}
+
+@media(min-width:1180px) and (max-width:1350px){
+ .hsr-manager-header-primary{gap:6px!important}
+ .hsr-manager-org-summary{max-width:150px}
+ .hsr-manager-org-summary [data-hsr-weather-org]{max-width:118px}
+ .hsr-manager-search{flex:0 1 115px!important;width:115px!important}
+ .hsr-manager-brand div[dir="ltr"]{letter-spacing:0!important}
+ .hsr-manager-brand img{height:31px!important}
+ .hsr-manager-action-tools{padding-inline:4px}
 }
 @media(max-width:1179px){
- .hsr-manager-header .hsr-manager-clock-detail{display:inline-flex!important}
- .hsr-manager-datetime-group{flex:0 1 auto;min-width:0}
- .hsr-manager-header-secondary{width:100%!important;max-width:100%!important}
+ .hsr-manager-header{flex-wrap:wrap!important}
+ .hsr-manager-header-primary{flex:1 1 100%;width:100%;flex-wrap:wrap!important;gap:7px!important}
+ .hsr-manager-header-secondary{flex:1 1 100%;width:100%;justify-content:space-between!important;margin-inline-start:0}
+ .hsr-manager-search{flex:0 1 140px!important;width:140px!important}
+ .hsr-manager-datetime-group{margin-inline-start:auto}
 }
 @media(max-width:760px){
- .hsr-manager-header{gap:8px!important;padding:9px!important}
- .hsr-manager-header-primary{gap:8px!important;width:100%!important}
- .hsr-manager-profile-area{order:0;max-width:100%}
- .hsr-manager-org-summary{order:1;max-width:200px}
- .hsr-manager-action-tools{order:2;padding-inline:5px}
- .hsr-manager-search{order:3;flex:1 1 135px!important;width:auto!important}
- .hsr-manager-datetime-group{order:4;flex:1 1 100%;width:100%;margin-inline-start:0;justify-content:space-between}
- .hsr-manager-header-secondary{justify-content:space-between!important;flex-wrap:wrap!important;gap:6px}
- .hsr-manager-brand{margin-inline-start:auto}
- .hsr-manager-datetime-group .hsr-manager-clock-meta{gap:5px}
-}
-@media(max-width:430px){
- .hsr-manager-org-summary{display:none!important}
+ .hsr-manager-header{padding:7px 8px!important;gap:6px!important}
  .hsr-manager-header-primary{gap:7px!important}
- .hsr-manager-profile-area{flex:1 1 100%;justify-content:flex-start}
- .hsr-manager-action-tools{padding-inline:4px}
- .hsr-manager-search{min-width:110px}
- .hsr-manager-datetime-group{padding:5px 7px;gap:5px}
- .hsr-manager-datetime-group .hsr-manager-clock-meta{padding-inline-start:6px;gap:4px}
+ .hsr-manager-profile-area{order:0;max-width:100%}
+ .hsr-manager-org-summary{order:1;max-width:170px}
+ .hsr-manager-action-tools{order:2;padding-inline:4px}
+ .hsr-manager-search{order:3;flex:0 1 130px!important;width:130px!important;min-width:98px}
+ .hsr-manager-datetime-group{order:4;flex:1 1 auto;min-width:0;margin-inline-start:auto}
+ .hsr-manager-header-secondary{gap:5px!important;flex-wrap:nowrap!important}
+ .hsr-manager-theme-toggle button span{display:none!important}
+ .hsr-manager-theme-toggle button{padding-inline:6px!important}
+ .hsr-manager-brand{margin-inline-start:auto}
+ .hsr-manager-brand div[dir="ltr"] > div:last-child{display:none!important}
+ .hsr-manager-datetime-group .hsr-manager-clock-meta{gap:4px}
+}
+@media(max-width:560px){
+ .hsr-manager-org-summary{display:none!important}
+ .hsr-manager-header-primary{justify-content:space-between}
+ .hsr-manager-profile-area{flex:0 1 auto}
+ .hsr-manager-search{flex:1 1 105px!important;width:auto!important;min-width:90px}
+ .hsr-manager-datetime-group{flex:1 1 100%;width:100%;justify-content:space-between;margin-inline-start:0}
+ .hsr-manager-header [data-hsr-weather]{max-width:48vw!important}
+ .hsr-manager-brand img{height:30px!important}
+}
+@media(max-width:390px){
+ .hsr-manager-header-primary{gap:5px!important}
+ .hsr-manager-action-tools{padding-inline:2px;gap:2px}
+ .hsr-manager-action-tools button{width:32px!important;height:32px!important;min-width:32px}
+ .hsr-manager-profile-area [aria-label="قائمة الحساب"]{width:32px!important;height:32px!important}
+ .hsr-manager-search{min-width:75px}
+ .hsr-manager-datetime-group{padding:4px 6px;gap:5px}
+ .hsr-manager-datetime-group .hsr-manager-clock-meta{padding-inline-start:5px}
  .hsr-manager-header .hsr-manager-clock-detail{font-size:9px!important}
  .hsr-manager-header [data-hsr-weather-status]{font-size:9px}
- .hsr-manager-header [data-hsr-weather]{max-width:47vw!important}
  .hsr-manager-sidebar-signature{padding:10px}
 }
 @media(prefers-reduced-motion:reduce){
