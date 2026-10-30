@@ -194,3 +194,159 @@ html[data-theme="light"] .hsr-manager-datetime-group,
 @media(prefers-reduced-motion:reduce){
  .hsr-manager-header-primary button,.hsr-manager-header-secondary button{transition:none}
 }
+
+
+/* SMART HSR · Executive Day Surface System
+   Manager-only, daylight-only. Structured depth, not white-on-white.
+   A standalone token layer ensures every manager view inherits the palette;
+   existing route, role, map and interaction contracts remain untouched.
+*/
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day){
+  --hsr-day-canvas:#d1dcda;
+  --hsr-day-card:#ecf2ef;
+  --hsr-day-card-raised:#f1f5f2;
+  --hsr-day-card-recessed:#dbe6e1;
+  --hsr-day-outline:#b0c5bd;
+  --hsr-day-depth:0 20px 42px -28px rgba(12,45,44,.52),0 5px 15px -9px rgba(17,49,49,.25),inset 0 1px 0 rgba(255,255,255,.67);
+  --pgBg:radial-gradient(840px 540px at 78% -8%,rgba(153,193,177,.37),transparent 76%),linear-gradient(160deg,#c7d4d2 0%,#d8e2de 48%,#cbdad3 100%)!important;
+  --l1:linear-gradient(153deg,#f1f6f2 0%,#e4ece6 100%)!important;
+  --l2:linear-gradient(155deg,#eaf2ed 0%,#dce8e1 100%)!important;
+  --l3:linear-gradient(155deg,#e3ede8 0%,#d3e2d9 100%)!important;
+  --card:linear-gradient(155deg,#f1f5f2 0%,#e4ede7 100%)!important;
+  --card2:linear-gradient(155deg,#e6efe9,#d9e7df)!important;
+  --sect:linear-gradient(155deg,#e5eee8,#dbe9e1)!important;
+  --sunk:#d6e4dc!important;
+  --sunk2:#cddfd5!important;
+  --ctl:#dce9e1!important;
+  --ctlH:#cbded3!important;
+  --field:#e6eee9!important;
+  --l1Bd:#afc4ba!important;
+  --l2Bd:#b6c9c0!important;
+  --l3Bd:#b4c8bf!important;
+  --cardBd:#a9c2b7!important;
+  --cardSh:var(--hsr-day-depth)!important;
+  --l1Sh:var(--hsr-day-depth)!important;
+  --l2Sh:var(--hsr-day-depth)!important;
+  --l3Sh:var(--hsr-day-depth)!important;
+  --div:rgba(28,78,66,.21)!important;
+  --track:rgba(19,94,75,.2)!important;
+  --tx:#142e32!important;
+  --tx2:#3c5855!important;
+  --tx3:#526b66!important;
+  --thTx:#294841!important;
+  --ctlBd:#aec5ba!important;
+  --chipBg:#d2e5d9!important;
+  --acc:#075f55!important;
+  --accBg:rgba(7,107,87,.13)!important;
+  --accBd:rgba(7,107,87,.33)!important;
+  --ok:#08784e!important;
+  --okTx:#075a3f!important;
+  --warn:#966116!important;
+  --warnTx:#82551b!important;
+  --bad:#b63641!important;
+  --badTx:#a12633!important;
+  --btn:linear-gradient(160deg,#0c7265,#075648)!important;
+  --btnTx:#f7fffa!important;
+  --btnBd:rgba(3,76,59,.48)!important;
+  --hdrBg:linear-gradient(160deg,#11333d 0%,#092733 58%,#061f2e 100%)!important;
+  --hdrBd:rgba(124,177,164,.45)!important;
+  --hdrAccentBd:#2aa378!important;
+  --hdrSh:inset 0 1px 0 rgba(210,248,235,.12),0 18px 42px -24px rgba(2,27,36,.74),0 3px 12px -7px rgba(3,21,30,.45)!important;
+  --hdrDiv:rgba(191,225,215,.22)!important;
+  --hdrTx:#edf7f4!important;
+  --hdrTx2:#c3d9d3!important;
+  --hdrTx3:#a3c2ba!important;
+  --hdrCtl:rgba(181,222,209,.11)!important;
+  --hdrCtlBd:rgba(176,221,205,.23)!important;
+  --hdrField:rgba(8,33,42,.8)!important;
+  --hdrSunk:rgba(5,26,36,.62)!important;
+  --hdrAcc:#a7e6cd!important;
+  --logoNavyH:#f0faf6!important;
+  --sbBg:var(--hdrBg)!important;
+  --sbBd:var(--hdrBd)!important;
+  --sbSh:var(--hdrSh)!important;
+  --sbDiv:rgba(196,227,217,.2)!important;
+  --sbTx:#eaf6f1!important;
+  --sbTx2:#bfd6cd!important;
+  --sbTx3:#a4c2b6!important;
+  --sbCtl:rgba(178,216,204,.12)!important;
+  --sbCtlBd:rgba(177,217,204,.23)!important;
+  --sbSunk:rgba(5,28,37,.61)!important;
+}
+html[data-theme="light"] body{background:#cedbd5!important}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day) .hsr-manager-page{
+  background:var(--pgBg)!important;
+}
+/* One consistent, substantial frame across the entire executive surface. */
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+:is(.hsr-exec-kpis>div,.hsr-decision-card,.hsr-priority-card,.hsr-completion-card,
+    .hsr-analytics-grid>div,.hsr-command-dock,.hsr-integration-strip,
+    .hsr-admin-view>div,.hsr-contracts-view>div,
+    .hsr-digital-service-view>div:first-child){
+  background:var(--card)!important;
+  border-color:var(--hsr-day-outline)!important;
+  box-shadow:var(--hsr-day-depth)!important;
+  color:var(--tx)!important;
+}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+:is(.hsr-priority-card,.hsr-digital-service-view>div:first-child){
+  background:var(--l2)!important;
+}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+.hsr-exec-kpis>div:first-child{
+  background:
+    linear-gradient(90deg,rgba(7,112,87,.045) 1px,transparent 1px) 0 0/22px 22px,
+    linear-gradient(rgba(7,112,87,.045) 1px,transparent 1px) 0 0/22px 22px,
+    var(--card)!important;
+}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+.hsr-integration-strip{
+  background:linear-gradient(155deg,#dbe9e1,#cfded5)!important;
+}
+/* The dark executive chrome stays equally deep in day and night;
+   preserve original navigation selection and icon semantics. */
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+:is(.hsr-manager-header,.hsr-manager-sidebar-premium .hsr-sidebar-panel>div,
+    .hsr-manager-sidebar-premium .hsr-manager-sidebar-signature){
+  background:var(--hdrBg)!important;
+  border-color:var(--hdrBd)!important;
+  box-shadow:var(--hdrSh)!important;
+}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+.hsr-manager-header{border-bottom-color:var(--hdrAccentBd)!important}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+.hsr-manager-sidebar-premium .hsr-sidebar-panel>div{
+  border-right-color:var(--hdrAccentBd)!important;
+}
+/* The source data, popup behavior and map tiles are unchanged. */
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+.manager-view-panel:not(.ucv2-host):not(.ucv2-route-guard-host){
+  background:linear-gradient(165deg,#e8f0e9,#d5e4db)!important;
+  border-color:#a2bcb1!important;
+  box-shadow:0 32px 85px -27px rgba(7,42,39,.65)!important;
+}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+.manager-observation-card{
+  background:#dce9e1!important;
+  border-color:#adc6b8!important;
+  box-shadow:0 8px 22px -19px rgba(5,57,44,.5)!important;
+}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+.manager-observation-card:hover{background:#cddfd4!important}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+.manager-observation-meta span{
+  background:#cbded3!important;border-color:#a9c3b5!important;color:#284b41!important;
+}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+:is(.hsr-admin-view .hsr-table-row,.hsr-contracts-view .hsr-table-row){
+  border-color:rgba(17,91,70,.2)!important;
+}
+:is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+:where(button,input,select,textarea):focus-visible{
+  outline:2px solid #087d6a;outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce){
+ :is(html[data-theme="light"] .hsr-manager-root,.hsr-manager-root.theme-day)
+ :is(.hsr-exec-kpis>div,.hsr-decision-card,.hsr-priority-card,.hsr-completion-card,
+     .hsr-analytics-grid>div){transition:none!important}
+}
