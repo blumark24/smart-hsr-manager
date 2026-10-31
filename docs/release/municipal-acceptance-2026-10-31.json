@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "project": "SMART HSR — Smart Municipal Platform",
+  "assessedOn": "2026-10-31",
+  "candidateSha": "11edb272ca8637cfd8667f9854eb399930d82da3",
+  "intendedTarget": "separate explicitly authorized municipal Production release",
+  "productionChangeAuthorized": false,
+  "overallStatus": "NO-GO",
+  "evidenceSources": [
+    "https://github.com/blumark24/smart-hsr-manager/issues/73",
+    "https://github.com/blumark24/smart-hsr-manager/issues/75",
+    "https://github.com/blumark24/smart-hsr-manager/issues/92",
+    "https://github.com/blumark24/smart-hsr-manager/pull/88"
+  ],
+  "gates": [
+    {
+      "id": "security-session-rbac",
+      "phase": 1,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Authenticated tab isolation, role and cross-tenant negative UAT not verified on exact candidate"
+    },
+    {
+      "id": "lands-one-time-sso",
+      "phase": 1,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "4/4 config preflight is PASS, but live U5 single-use and replay tests remain unverified"
+    },
+    {
+      "id": "pdpl-data-classification",
+      "phase": 1,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Real data inventory, lawful basis, sensitivity and retention not approved by municipal data owner"
+    },
+    {
+      "id": "pdpl-data-flow-transfer",
+      "phase": 1,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Vercel iad1 observed; actual Firebase regions, backups, logs, outbound data and Article 29 applicability not established"
+    },
+    {
+      "id": "privacy-impact-ai-ethics",
+      "phase": 1,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "PIA applicability and SDAIA AI ethics assessment require scoped documented review"
+    },
+    {
+      "id": "nca-controls-applicability",
+      "phase": 1,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Municipal NCA ECC/CCC applicability and control evidence not independently reviewed"
+    },
+    {
+      "id": "manager-header-and-responsive",
+      "phase": 2,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Manager-first Day/Night, RTL, iPad/mobile, identity and weather visual UAT outstanding"
+    },
+    {
+      "id": "user-center-and-identity-sync",
+      "phase": 3,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Owner/manager/department employee synced identity and stale refresh cases not live-accepted"
+    },
+    {
+      "id": "lands-parity-and-masking",
+      "phase": 3,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Focused 17/17 and stage SSO 4/4 passed but same synthetic grant authenticated Manager↔Lands parity and masking not independently verified"
+    },
+    {
+      "id": "field-single-source-workflow",
+      "phase": 4,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Visual distortion vs general incidents taxonomy, workflow, before/after and map/twin UAT not accepted"
+    },
+    {
+      "id": "mobility-role-and-vehicle",
+      "phase": 5,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Authorized employee vs head, vehicle request/approval/return tests outstanding"
+    },
+    {
+      "id": "ai-provider-and-data-boundary",
+      "phase": 5,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "External LLM not approved; rules-based assistant must be honestly labeled, role-scoped and tested"
+    },
+    {
+      "id": "final-cross-device-and-release",
+      "phase": 5,
+      "status": "HOLD",
+      "evidence": [],
+      "reason": "Full exact-SHA regression, authenticated UAT, independent reviewers, rollback and signed GO missing"
+    }
+  ],
+  "approvals": {
+    "municipalDataOwner": false,
+    "privacyLegalReviewer": false,
+    "cybersecurityReviewer": false,
+    "executiveReleaseOwner": false
+  }
+}
