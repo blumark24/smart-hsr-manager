@@ -1,0 +1,23 @@
+name: SMART HSR Municipal Release Evidence Gate — Preview only
+on:
+  push:
+    branches:
+      - governance/smart-hsr-sdaia-gate-20261031
+  pull_request:
+    branches:
+      - fix/preview-manager-lands-business-parity-20261030
+permissions:
+  contents: read
+jobs:
+  governance-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Evidence-gate unit tests
+        run: node --test test/municipal-release-gate.test.cjs
+      - name: Report current release disposition (not a sign-off)
+        run: node scripts/municipal-release-gate.cjs --report-only
