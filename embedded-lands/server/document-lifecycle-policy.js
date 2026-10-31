@@ -142,7 +142,8 @@ export function markDocumentReady({document, context, expectedRevision, proof, n
   const oci = proof?.provider === 'oci';
   const gcs = proof?.provider === undefined || proof?.provider === 'gcs';
   const versionValid = oci
-    ? typeof proof.version_id === 'string' && OCI_VERSION.test(proof.version_id) && proof.generation === undefined
+    ? typeof proof.version_id === 'string' && OCI_VERSION.test(proof.version_id) &&
+      !['null','undefined'].includes(proof.version_id.toLowerCase()) && proof.generation === undefined
     : gcs && typeof proof?.generation === 'string' && GENERATION.test(proof.generation) && proof.version_id === undefined;
   if (!proof || proof.storage_path !== document.storage_path ||
       proof.mime_type !== document.mime_type ||

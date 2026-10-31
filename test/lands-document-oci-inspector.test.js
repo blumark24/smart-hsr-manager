@@ -49,7 +49,7 @@ test('cross tenant, path traversal, modified documentId and attempt rejected pre
  {...scope,attempt:4}])assert.deepEqual(await rejects({},req),[]);
 });
 test('missing or changed OCI object version denied',async()=>{
- for(const cfg of [{headVersion:null},{headVersion:'../escape'},
+ for(const cfg of [{headVersion:null},{headVersion:'../escape'},{headVersion:'null'},{headVersion:'undefined'},
  {getVersion:'wrong-version'}])await rejects(cfg);
 });
 test('MIME, bytes, size mismatch and oversized metadata denied',async()=>{

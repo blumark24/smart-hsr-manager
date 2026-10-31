@@ -165,6 +165,7 @@ test('OCI and GCS version proofs cannot be mixed, forged or omitted',()=>{
  const doc=pending();
  for(const bad of [{provider:'oci',generation:undefined,version_id:null},
  {provider:'oci',generation:undefined,version_id:'../bad'},
+ {provider:'oci',generation:undefined,version_id:'null'},
  {provider:'oci',version_id:'123'},{provider:'untrusted',generation:undefined,version_id:'valid-id'},
  {provider:'gcs',version_id:'valid-id'}]){
   assert.throws(()=>markDocumentReady({document:doc,context:actor,expectedRevision:1,

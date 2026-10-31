@@ -9,6 +9,10 @@
  */
 const error=()=>{const e=new Error('DOCUMENT_STORAGE_VERIFICATION_FAILED');e.code=e.message;throw e;};
 const VERSION=/^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$/;
+// S3 returns the literal VersionId "null" for non-versioned writes.
+// Never treat that as immutable evidence even if a stale config claims Enabled.
+const validVersion=(x)=>typeof x==='string'&&VERSION.test(x)&&
+ x.toLowerCase()!=='null'&&x.toLowerCase()!=='undefined';
 const BUCKET=/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const PATH=/^[a-zA-Z0-9_./-]{1,520}$/;
 function safeBucketKey(bucket,key){
@@ -16,7 +20,7 @@ function safeBucketKey(bucket,key){
     !PATH.test(key)||key.includes('..')||key.startsWith('/')||key.endsWith('/'))error();
 }
 function normalizeMetadata(source){
- if(!source||typeof source.VersionId!=='string'||!VERSION.test(source.VersionId)||
+ if(!source||!validVersion(source.VersionId)||
     !Number.isSafeInteger(source.ContentLength)||source.ContentLength<1||
     typeof source.ContentType!=='string')error();
  return {versionId:source.VersionId,contentType:source.ContentType,
@@ -35,7 +39,7 @@ export function createOciS3SdkReadAdapter({client,HeadObjectCommand,GetObjectCom
    },
    async getObject({bucket,key,versionId}={}){
      safeBucketKey(bucket,key);
-     if(typeof versionId!=='string'||!VERSION.test(versionId))error();
+     if(!validVersion(versionId))error();
      try{
        const raw=await client.send(new GetObjectCommand({
          Bucket:bucket,Key:key,VersionId:versionId

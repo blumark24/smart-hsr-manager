@@ -49,7 +49,7 @@ test('AWS SDK v3 PascalCase responses are normalized; GET is pinned to HEAD Vers
 });
 test('missing uppercase SDK metadata is denied; no unpinned GET proceeds',async()=>{
  for(const headOverride of [{VersionId:undefined},{VersionId:'null'},
-   {VersionId:'../escape'},{ContentLength:undefined},{ContentType:undefined}]){
+   {VersionId:'../escape'},{VersionId:'undefined'},{ContentLength:undefined},{ContentType:undefined}]){
    const h=harness({headOverride});await denied(h);
    assert.equal(h.calls.some(x=>x.kind==='GetObjectCommand'),false);
  }

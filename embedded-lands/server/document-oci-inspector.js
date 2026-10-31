@@ -8,6 +8,8 @@ import {assertMunicipalityId,assertLandsStorageId,assertDocumentRecordDomain,
  buildLandsStoragePath,LANDS_DOCUMENT_MAX_BYTES} from '../../lands/client/lands-core.js';
 const ALLOWED=new Set(['me-jeddah-1','me-riyadh-1']);
 const VERSION=/^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$/;
+const validVersion=(v)=>typeof v==='string'&&VERSION.test(v)&&
+ v.toLowerCase()!=='null'&&v.toLowerCase()!=='undefined';
 const TYPES=new Set(['application/pdf','image/jpeg','image/png']);
 const deny=()=>{const e=new Error('DOCUMENT_STORAGE_VERIFICATION_FAILED');e.code=e.message;throw e;};
 function validPath({municipalityId,documentId,storagePath,attempt}={}) {
@@ -49,7 +51,7 @@ export function createOciSaudiDocumentInspector({region,namespace,bucket,endpoin
       info.bucket!==bucket||info.publicAccessType!=='NoPublicAccess'||
       info.versioning!=='Enabled')deny();
    const head=await s3.headObject({bucket,key:scope.storagePath});
-   if(typeof head?.versionId!=='string'||!VERSION.test(head.versionId)||
+   if(!validVersion(head?.versionId)||
       !TYPES.has(head.contentType)||!Number.isSafeInteger(head.contentLength)||
       head.contentLength<1||head.contentLength>LANDS_DOCUMENT_MAX_BYTES)deny();
    // OCI S3 VersionId is not a GCS numeric generation. ETag is not SHA-256.
