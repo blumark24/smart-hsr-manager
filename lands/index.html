@@ -4518,7 +4518,7 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
       <button data-view="audit" data-review-only><i data-lucide="history"></i><span>سجل العمليات</span></button>
       <button data-view="users" data-admin-only><i data-lucide="users-round"></i><span>مستخدمو الأراضي</span></button>
       <button data-view="assistant"><i data-lucide="sparkles"></i><span>المساعد الذكي</span></button>
-    </nav><div class="hsr-blumark-os-signature" aria-label="نظام BLUMARK OS"><span class="hsr-blumark-os-mark" aria-hidden="true"></span><div><strong>BLUMARK <em>OS</em></strong><small>نظام تشغيل الأعمال الذكي</small></div></div><div class="side-foot" id="sideFoot"></div></aside>
+    <div class="lands-side-mobility" id="landsMobilitySection" hidden><button type="button" class="lands-side-mobility-toggle" id="landsMobilityToggle" aria-expanded="false" aria-controls="landsMobilityLinks" onclick="toggleLandsMobility(event)"><i data-lucide="car-front"></i><span>المركبات والحركة</span><i class="lands-menu-caret" data-lucide="chevron-down"></i></button><div class="lands-side-mobility-links" id="landsMobilityLinks" hidden></div></div></nav><div class="lands-sidebar-signature" aria-label="نظام سمارت حصر"><img src="/smart-hsr-mark.svg" alt="" aria-hidden="true"><div><strong>SMART <em>HSR</em></strong><small>منصة الخدمات البلدية الذكية</small></div></div><div class="side-foot" id="sideFoot"></div></aside>
     <main class="main" id="main"></main>
   </div>
   <div class="mobile-nav-backdrop" id="mobileNavBackdrop" onclick="closeMobileNav()"></div>
@@ -4532,8 +4532,9 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
 </div>
 <button class="ai-trigger" id="aiTrigger" type="button" data-state="idle" aria-label="فتح المساعد الإداري الذكي" onclick="toggleAiPanel()"><span class="ai-face" aria-hidden="true"></span><span class="ai-attention-badge" id="aiAttentionBadge" hidden></span></button>
 <div class="ai-panel glass" id="aiPanel" role="dialog" aria-label="المساعد الإداري الذكي">
-  <div class="ai-panel-head">
-    <div><b>المساعد الذكي</b><small>مساعد تحليلي تشغيلي — دون تنفيذ تلقائي</small></div>
+  <div class="ai-panel-head" id="aiPanelHandle">
+    <div><b>المساعد الذكي</b><small>تحليل سجلات البلدية · قراءة فقط</small></div>
+    <span class="ai-drag-hint" aria-hidden="true">⋮⋮</span>
     <button class="close" onclick="toggleAiPanel()"><i data-lucide="x"></i></button>
   </div>
   <div class="ai-attention-summary" id="aiAttentionSummary" hidden></div>
@@ -5321,6 +5322,21 @@ function renderShellChrome() {
 // Server-resolved workspaces only: no changes to Lands RBAC, shell, or login.
 function clearAuthorizedLandsServices() {
   document.querySelectorAll("#accountMenu [data-hsr-lands-shared]").forEach(el => el.remove());
+  const section=document.getElementById("landsMobilitySection");
+  const links=document.getElementById("landsMobilityLinks");
+  const toggle=document.getElementById("landsMobilityToggle");
+  if(section)section.hidden=true;
+  if(links){links.hidden=true;links.replaceChildren();}
+  if(toggle)toggle.setAttribute("aria-expanded","false");
+}
+function toggleLandsMobility(event) {
+  if(event)event.stopPropagation();
+  const panel=document.getElementById("landsMobilityLinks");
+  const trigger=document.getElementById("landsMobilityToggle");
+  const section=document.getElementById("landsMobilitySection");
+  if(!session||!panel||!trigger||!section||section.hidden||!panel.children.length)return;
+  panel.hidden=!panel.hidden;
+  trigger.setAttribute("aria-expanded",String(!panel.hidden));
 }
 function showAuthorizedLandsServices(workspaces) {
   clearAuthorizedLandsServices();
@@ -5352,6 +5368,17 @@ function showAuthorizedLandsServices(workspaces) {
     };
     btn.className = "lands-authorized-tool";
     workspaceGroup.appendChild(btn);
+    if(ws.id==="mobility") {
+      const section=document.getElementById("landsMobilitySection");
+      const links=document.getElementById("landsMobilityLinks");
+      if(section&&links) {
+        const sub=document.createElement("button");
+        sub.type="button";sub.className="lands-mobility-link";
+        sub.textContent=ws.title;
+        sub.onclick=()=>location.assign(new URL("/"+ws.route,location.origin).toString());
+        links.appendChild(sub);section.hidden=false;
+      }
+    }
   }
 }
 
@@ -7428,10 +7455,42 @@ function renderAiThread() {
 }
 function toggleAiPanel(forceOpen) {
   const panel = document.getElementById("aiPanel");
+  if (!panel) return;
   const open = forceOpen !== undefined ? forceOpen : !panel.classList.contains("open");
   panel.classList.toggle("open", open);
   if (open) { renderAiContext(); renderAiThread(); renderAiAttention(); lucide.createIcons(); }
 }
+// Keyboard-friendly and pointer draggable executive assistant; never stores location.
+(function enableAiWindowDrag(){
+  let dragging=false,px=0,py=0,startLeft=0,startTop=0;
+  function clamp(v,min,max){return Math.min(Math.max(v,min),max);}
+  function init(){
+    const panel=document.getElementById("aiPanel"),handle=document.getElementById("aiPanelHandle");
+    if(!panel||!handle)return;
+    handle.addEventListener("pointerdown",e=>{
+      if(e.target.closest("button,a,input"))return;
+      if(window.matchMedia("(max-width:700px)").matches)return;
+      const rect=panel.getBoundingClientRect();
+      startLeft=rect.left;startTop=rect.top;px=e.clientX;py=e.clientY;
+      dragging=true;
+      handle.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    handle.addEventListener("pointermove",e=>{
+      if(!dragging)return;
+      const x=clamp(startLeft+e.clientX-px,8,Math.max(8,innerWidth-panel.offsetWidth-8));
+      const y=clamp(startTop+e.clientY-py,Math.max(8,document.querySelector("#appShell header")?.getBoundingClientRect().bottom||8)+8,Math.max(8,innerHeight-panel.offsetHeight-8));
+      panel.style.setProperty("left",x+"px","important");
+      panel.style.setProperty("top",y+"px","important");
+      panel.style.setProperty("right","auto","important");
+      panel.style.setProperty("bottom","auto","important");
+    });
+    const stop=()=>dragging=false;
+    handle.addEventListener("pointerup",stop);
+    handle.addEventListener("pointercancel",stop);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+})();
 // ---- AI Face states (idle/listening/thinking/done/attention) — a subtle,
 // abstract institutional identity, never a chat-bot mascot. Attention is
 // driven purely by AutomationEngine.attentionItems(), never by the language
