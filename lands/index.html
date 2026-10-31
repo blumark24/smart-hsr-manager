@@ -4477,7 +4477,7 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
       <div class="lands-head-profile">
         <button id="mobileNavToggle" class="lands-mobile-nav-toggle" type="button" aria-label="فتح القائمة الجانبية اليمنى" aria-controls="landsSidebar" aria-expanded="false" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
         <div class="account-menu-wrap">
-          <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف ومساحة العمل والأدوات" aria-haspopup="menu" aria-controls="accountMenu" aria-expanded="false" title="ملف الموظف ومساحة العمل" onclick="toggleAccountMenu(event)">
+          <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف ومساحات العمل" aria-haspopup="menu" aria-controls="accountMenu" aria-expanded="false" title="ملف الموظف ومساحة العمل" onclick="toggleAccountMenu(event)">
             <span id="headerProfileAvatar" class="manager-profile-avatar">م</span>
             <span class="manager-profile-copy">
               <strong id="headerProfileName">ملف الموظف</strong>
@@ -4487,9 +4487,11 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
           </button>
           <div id="accountMenu" class="account-menu" role="menu" aria-label="قائمة الحساب">
             <div class="account-menu-summary" id="userInfo"></div>
-            <button id="landsWorkspaceMenuItem" type="button" role="menuitem" onclick="closeAccountMenu();setView('center')"><i data-lucide="layout-dashboard"></i><span>مساحة العمل</span></button>
-            <button id="landsToolsMenuToggle" type="button" role="menuitem" aria-expanded="false" aria-controls="landsAuthorizedTools" onclick="toggleAuthorizedLandsTools(event)"><i data-lucide="grid-2x2"></i><span>أدواتي</span><i class="lands-menu-caret" data-lucide="chevron-down"></i></button>
-            <div id="landsAuthorizedTools" class="lands-account-tools" role="group" aria-label="أدوات العمل المصرح بها" hidden></div>
+            <button id="landsToolsMenuToggle" type="button" role="menuitem" aria-expanded="false" aria-controls="landsAuthorizedTools" onclick="toggleAuthorizedLandsTools(event)"><i data-lucide="layout-dashboard"></i><span>مساحة العمل</span><i class="lands-menu-caret" data-lucide="chevron-down"></i></button>
+            <div id="landsAuthorizedTools" class="lands-account-tools" role="group" aria-label="مساحات العمل المصرح بها" hidden>
+              <button class="lands-authorized-tool" type="button" role="menuitem" onclick="closeAccountMenu();setView('center')"><span>الأراضي والممتلكات</span></button>
+              <button id="managerModeMenuItem" class="lands-authorized-tool" type="button" role="menuitem" onclick="toggleManagerMode();closeAccountMenu()"><span>وضع المدير للأراضي</span></button>
+            </div>
             <button id="landsReadOnlyProfileToggle" type="button" role="menuitem" aria-expanded="false" aria-controls="landsReadOnlyProfileDetails" onclick="toggleReadOnlyLandsProfile(event)"><i data-lucide="contact-round"></i><span>ملفي التعريفي</span></button>
             <div id="landsReadOnlyProfileDetails" class="lands-readonly-profile" role="group" aria-label="بيانات الهوية المؤسسية للعرض فقط" hidden>
               <div class="lands-readonly-row"><span>الاسم</span><strong id="landsReadOnlyName">—</strong></div>
@@ -4499,7 +4501,6 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
               <div class="lands-readonly-row"><span>صلاحية الأراضي</span><strong id="landsReadOnlyLandsRole">—</strong></div>
               <div class="lands-readonly-note">للعرض فقط · يقتصر تعديل بيانات الموظف وصلاحياته على المسؤول المخوّل عبر مركز المستخدمين.</div>
             </div>
-            <button id="managerModeMenuItem" type="button" role="menuitem" onclick="toggleManagerMode();closeAccountMenu()"><i data-lucide="presentation"></i><span>وضع المدير</span></button>
             <button type="button" role="menuitem" onclick="closeAccountMenu();handleLogout()"><i data-lucide="log-out"></i><span>تسجيل الخروج</span></button>
           </div>
         </div>
@@ -4986,33 +4987,12 @@ function toggleAccountMenu(event) {
   menu.classList.add("open");
   btn.setAttribute("aria-expanded", "true");
 }
-// Role-aware account tools are cloned from existing visible, trusted Lands nav actions.
- // Clicking a tool delegates to its original button; no new route or permission is created.
-function renderAuthorizedLandsTools() {
-  const host = document.getElementById("landsAuthorizedTools");
-  if (!host) return;
-  host.replaceChildren();
-  if (!session) return;
-  const allowed = Array.from(document.querySelectorAll("#landsSidebar .nav button[data-view]"))
-    .filter(button => !button.hidden && !button.closest("[hidden]"))
-    .filter(button => !button.hasAttribute("data-admin-only") || mod.canManageEntitlements(session.role))
-    .filter(button => !button.hasAttribute("data-review-only") || mod.canReviewGrant(session.role));
-  for (const original of allowed) {
-    const option = document.createElement("button");
-    option.type = "button";
-    option.className = "lands-authorized-tool";
-    option.setAttribute("role", "menuitem");
-    option.textContent = original.querySelector("span")?.textContent?.trim() || original.textContent.trim();
-    option.onclick = event => { event.stopPropagation(); closeAccountMenu(); original.click(); };
-    host.appendChild(option);
-  }
-}
+// Workspaces are supplied by the approved municipal resolver, not duplicated Lands nav tools.
 function toggleAuthorizedLandsTools(event) {
   if (event) event.stopPropagation();
   const panel = document.getElementById("landsAuthorizedTools");
   const trigger = document.getElementById("landsToolsMenuToggle");
   if (!panel || !trigger || !session) return;
-  if (panel.hidden) renderAuthorizedLandsTools();
   panel.hidden = !panel.hidden;
   trigger.setAttribute("aria-expanded", String(!panel.hidden));
 }
@@ -5035,7 +5015,7 @@ function closeAccountMenu() {
   if (profileTrigger) profileTrigger.setAttribute("aria-expanded", "false");
   const tools = document.getElementById("landsAuthorizedTools");
   const toolsToggle = document.getElementById("landsToolsMenuToggle");
-  if (tools) { tools.hidden = true; tools.replaceChildren(); }
+  if (tools) tools.hidden = true;
   if (toolsToggle) toolsToggle.setAttribute("aria-expanded", "false");
 }
 // وضع المدير — a concise, opt-in Executive GIS View. Toggling it only
@@ -5344,9 +5324,8 @@ function clearAuthorizedLandsServices() {
 }
 function showAuthorizedLandsServices(workspaces) {
   clearAuthorizedLandsServices();
-  const menu = document.getElementById("accountMenu");
-  const before = document.getElementById("managerModeMenuItem");
-  if (!menu || !before || !Array.isArray(workspaces)) return;
+  const workspaceGroup = document.getElementById("landsAuthorizedTools");
+  if (!workspaceGroup || !Array.isArray(workspaces)) return;
   const safeRoute = /^[a-z0-9-]+\.html(\?mode=mobility)?$/;
   const approvedServices = new Set(["field", "mobility", "admin_affairs"]);
   const unique = new Set();
@@ -5356,14 +5335,6 @@ function showAuthorizedLandsServices(workspaces) {
     && (unique.add(ws.id), true)
   );
   if (!destinations.length || !workspaces.some(ws => ws && ws.id === "lands")) return;
-  const label = document.createElement("div");
-  label.dataset.hsrLandsShared = "label";
-  label.textContent = "خدماتي";
-  Object.assign(label.style, {
-    padding: "9px 9px 4px", fontSize: "10px",
-    fontWeight: "700", color: "rgba(220,240,228,.78)"
-  });
-  menu.insertBefore(label, before);
   for (const ws of destinations) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -5379,7 +5350,8 @@ function showAuthorizedLandsServices(workspaces) {
       // never route to an external app or accept a URL from user input.
       location.assign(new URL("/" + ws.route, location.origin).toString());
     };
-    menu.insertBefore(btn, before);
+    btn.className = "lands-authorized-tool";
+    workspaceGroup.appendChild(btn);
   }
 }
 
