@@ -173,5 +173,10 @@
       "source": "/api/report/work-order",
       "destination": "/api/report?kind=work-order"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "security/preview-isolation-no-deploy-20261031": false
+    }
+  }
 }

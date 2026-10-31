@@ -1,0 +1,31 @@
+name: SMART HSR Preview Isolation — synthetic offline checks
+on:
+  pull_request:
+    paths:
+      - 'api/_lib/previewIsolationGuard.js'
+      - 'api/_lib/firebaseAdmin.js'
+      - 'api/_lib/b2Client.js'
+      - 'api/storage/upload.js'
+      - 'test/preview-isolation-guard.test.cjs'
+      - '.github/workflows/preview-isolation-offline.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks (no credentials or backend calls)
+        run: |
+          node --check api/_lib/previewIsolationGuard.js
+          node --check api/_lib/firebaseAdmin.js
+          node --check api/_lib/b2Client.js
+          node --check api/storage/upload.js
+      - name: Offline negative security tests
+        run: node --test test/preview-isolation-guard.test.cjs

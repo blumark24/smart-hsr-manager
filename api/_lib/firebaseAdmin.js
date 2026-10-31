@@ -22,10 +22,12 @@ const {
 } = require('firebase-admin/app');
 const { getAuth: getFirebaseAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { assertPreviewFirebaseIsolation } = require('./previewIsolationGuard');
 
 let app = null;
 
 function initAdmin() {
+  assertPreviewFirebaseIsolation(process.env, getApps());
   if (app) return app;
 
   const apps = getApps();
