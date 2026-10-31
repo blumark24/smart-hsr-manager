@@ -6437,7 +6437,7 @@ function fileView() {
           <small>${esc(nextAction)}</small>
         </div>
       </div>
-      <div class="spine digital-file-spine">${spineStep("الأمر السامي", Boolean(g.royal_order?.number))}${spineStep("قرار التخصيص", Boolean(g.allocation_decision?.number))}${spineStep("المستفيد", Boolean(g.beneficiary?.name))}${spineStep("المخطط والقطعة", Boolean(g.plan_reference_number && g.parcel_reference_number))}${spineStep("المستندات", docs.length > 0)}${spineStep("الاعتماد", g.status === "approved", g.status === "rejected")}</div>
+      <div class="spine digital-file-spine">${spineStep("الأمر السامي", Boolean(g.royal_order?.number))}${spineStep("قرار التخصيص", Boolean(g.allocation_decision?.number))}${spineStep("المستفيد", Boolean(g.beneficiary?.name))}${spineStep("المخطط والقطعة", Boolean(g.plan_reference_number && g.parcel_reference_number))}${spineStep("سجلات المستندات", docs.length > 0)}${spineStep("الاعتماد", g.status === "approved", g.status === "rejected")}</div>
       <div class="digital-file-workflow">${decisionPathFrame}</div>
     </section>
 
@@ -6506,11 +6506,12 @@ function fileView() {
       <section class="record-section digital-file-documents">
         <div class="digital-file-section-head">
           <div><span class="eyebrow">DOCUMENTS</span><h2>${icon("folder-open")} المستندات</h2></div>
-          <span class="chip">${docs.length} ملف</span>
+          <span class="chip">${docs.length} سجل مستند</span>
         </div>
         <div class="digital-file-doc-list">
-          ${docs.length ? docs.map(d => docRow(d, g)).join("") : `<div class="empty">لا توجد مستندات مرفوعة لهذا السجل</div>`}
+          ${docs.length ? docs.map(d => docRow(d, g)).join("") : `<div class="empty">لا توجد سجلات مستندات لهذا السجل</div>`}
         </div>
+        <p class="digital-file-spatial-note">عدد السجلات لا يثبت اكتمال رفع الملفات أو استيفاء متطلبات الاعتماد؛ يلزم التحقق من محتوى كل مستند.</p>
         ${mod.canCreateGrant(session.role) ? `<div class="digital-file-upload"><input type="file" id="uploadInput-${esc(g.id)}" accept=".pdf,.jpg,.jpeg,.png"><button class="btn small primary" onclick="uploadDocumentFor('${esc(g.id)}')">${icon("upload-cloud")} رفع مستند جديد</button></div>` : ""}
       </section>
 
@@ -6608,8 +6609,9 @@ function landsDocumentFailureMessage(error, operation = "رفع") {
   if (reason.includes("invalid_document_mime_type")) return "صيغة المستند غير مدعومة؛ اختر PDF أو JPG أو PNG.";
   if (/lands_auth_required|auth\/user-token-expired|auth\/invalid-user-token|unauthenticated/.test(reason)) return "انتهت جلسة الدخول. سجّل الدخول مجددًا ثم أعد المحاولة.";
   if (/lands_access_denied|document_replace_denied|permission-denied|storage\/unauthorized|lands_mutation_denied/.test(reason)) return `ليس لديك صلاحية ${verb} هذا المستند.`;
+  if (/document_storage_unavailable|document_gateway_required|lands_client_sdk_only/.test(reason)) return `خدمة ${verb} المستندات غير متاحة في هذا الإصدار؛ لم تكتمل العملية. راجع مسؤول النظام.`;
   if (/storage\/canceled|storage\/cancelled/.test(reason)) return `تم إلغاء ${verb} المستند.`;
-  if (/storage\/retry-limit-exceeded|network-request-failed|storage\/quota-exceeded|unavailable/.test(reason)) return `تعذر الاتصال أثناء ${verb} المستند. حاول لاحقًا.`;
+  if (/storage\/retry-limit-exceeded|network-request-failed|storage\/quota-exceeded|unavailable/.test(reason)) return `تعذر الاتصال أو إكمال ${verb} المستند. لا تفترض نجاح الرفع؛ قد يتطلب سجل المستند تحققًا من مسؤول النظام قبل إعادة المحاولة.`;
   return `تعذر ${verb} المستند. تحقق من الاتصال والصلاحيات، ثم أعد المحاولة.`;
 }
 async function refreshDocumentViewAfterMutation(grantId, operation) {

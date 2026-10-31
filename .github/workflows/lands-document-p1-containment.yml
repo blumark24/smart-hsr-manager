@@ -1,0 +1,41 @@
+name: SMART HSR Lands document P1 containment — Preview only
+on:
+  push:
+    branches:
+      - fix/lands-document-truthful-failclosed-preview-20261031
+  pull_request:
+    branches:
+      - release-candidate/option-b-one-sha-preview-20261031
+permissions:
+  contents: read
+jobs:
+  synthetic-document-repro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Lock production, IAM, Firebase, SSO and backend unchanged
+        shell: bash
+        run: |
+          git diff --name-only 900ad89bf45ac29a6f4a240df7b64c1685415cc4 HEAD >/tmp/lands-doc-p1-scope
+          cat /tmp/lands-doc-p1-scope
+          if grep -Ev '^(lands/index\.html|test/lands-document-failure-injection-hold\.test\.cjs|\.github/workflows/lands-document-p1-containment\.yml)$' /tmp/lands-doc-p1-scope; then
+            echo 'Unexpected production, backend or security mutation'; exit 1
+          fi
+      - name: Reproduce P1 in isolated test doubles and validate safe UX
+        run: |
+          node --test \
+            test/lands-document-failure-injection-hold.test.cjs \
+            test/lands-document-feedback-preview.test.cjs \
+            test/manager-lands-digital-record.test.js \
+            test/manager-lands-completeness-parity.test.cjs \
+            test/lands-executive-header-profile-ai.test.cjs
+      - name: Never confuse UI containment with storage recovery
+        run: |
+          echo 'P1 stays OPEN: metadata-first upload risk and embedded document.replace documentStorage:null remain.'
+          echo 'No Firebase rule/credential/bucket adjustments, no production publishing, no role elevation.'
