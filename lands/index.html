@@ -7485,6 +7485,8 @@ document.addEventListener("keydown", event => {
   closeMobileNav();
 });
 applyTheme(localStorage.getItem("slgr-theme") || "light");
+// Keep the executive clock current without changing application state.
+window.setInterval(() => { if (!document.hidden) updateHeaderDates(); }, 60000);
 sidebarCollapsed = localStorage.getItem("slgr-sidebar-collapsed") === "1";
 applySidebarState();
 bindLoginScreen();
