@@ -15,7 +15,7 @@ Source branch is stacked on Draft PR #105, not the frozen municipal Release Cand
 ## Required production adapters — NOT included
 
 1. Verified Firebase Admin identity and current tenant/role membership. No direct client-supplied UID, tenant or role.
-2. Firestore transactional repository with atomic request idempotency uniqueness, parent relationship checks, revision CAS and trusted actor-sourced audit. A transaction callback may retry; never call Storage inside it.
+2. Firestore transactional repository with atomic request idempotency uniqueness, parent relationship checks, revision CAS and trusted actor-sourced audit. A fresh membership/account/tenant check must also be performed inside EACH Firestore transaction, particularly after inspecting Storage bytes, to deny a permission-revocation race. A transaction callback may retry; never call Storage inside it.
 3. Server-only Storage adapter which inspects a pinned immutable object generation, independently hashes actual file bytes, verifies MIME and length, and returns trustworthy proof. Never accept a browser-supplied proof.
 4. Approved short-lived single-object upload allocation constrained to tenant, actor, record, size, format and attempt, with rate limits and replay handling. No Firebase Admin secrets in the browser.
 5. Versioned replacement retaining the old good object on failure, read/download generation pinning, expired pending reconciler, cleanup and retention/legal-hold policy.
