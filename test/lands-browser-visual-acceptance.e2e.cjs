@@ -90,6 +90,27 @@ async function runViewport(browser,base,v){
       mainLeft:main.left,mainRight:main.right,mainWidth:main.width,
       direction:getComputedStyle(document.querySelector('#appShell .shell')).direction};
   });
+  async function requireUnobstructed(label) {
+    for(let attempt=0;attempt<36;attempt++){
+      if(await visuallyUnobstructed())return;
+      await page.waitForTimeout(250);
+    }
+    const diagnostic=await page.evaluate(()=>{
+      const boot=document.getElementById('bootScreen');
+      const app=document.getElementById('appShell');
+      const main=document.getElementById('main');
+      const rect=main?.getBoundingClientRect();
+      const x=rect?Math.max(0,Math.min(innerWidth-1,rect.left+rect.width*.5)):0;
+      const y=rect?Math.max(0,Math.min(innerHeight-1,rect.top+Math.min(180,rect.height*.5))):0;
+      const top=document.elementFromPoint(x,y);
+      return {bootHidden:boot?.hidden,bootDisplay:boot&&getComputedStyle(boot).display,
+        appHidden:app?.hidden,appDisplay:app&&getComputedStyle(app).display,
+        hitTag:top?.tagName,hitId:top?.id,hitClass:typeof top?.className==='string'?top.className.slice(0,130):'',
+        mainTop:rect?.top,mainWidth:rect?.width,
+        mainHeight:rect?.height,bodyClass:document.body.className};
+    });
+    throw Error(label+': app still obscured after 9s; '+JSON.stringify(diagnostic));
+  }
   const initial=await layout();
   assert.ok(initial,v.name+': missing Lands layout');
   if(v.width>700){
@@ -106,7 +127,7 @@ async function runViewport(browser,base,v){
       v.name+': collapsed navigation rail not compact: '+JSON.stringify(collapsed));
     assert.ok(collapsed.mainWidth>Math.min(370,v.width*.45),
       v.name+': collapsed state squeezed main content');
-    assert.equal(await visuallyUnobstructed(),true,v.name+': splash/overlay obscures app screenshot');
+    await requireUnobstructed(v.name);
     await page.screenshot({path:path.join(out,v.name+'-sidebar-collapsed.png'),fullPage:false});
     await page.evaluate(()=>document.body.classList.remove('sidebar-collapsed'));
     await page.waitForTimeout(270);
@@ -116,7 +137,7 @@ async function runViewport(browser,base,v){
     const opened=await layout();
     assert.ok(Math.abs(opened.sideRight-v.width)<=5,
       v.name+': mobile drawer is not on right edge: '+JSON.stringify(opened));
-    assert.equal(await visuallyUnobstructed(),true,v.name+': splash/overlay obscures app screenshot');
+    await requireUnobstructed(v.name);
     await page.screenshot({path:path.join(out,v.name+'-sidebar-right.png'),fullPage:false});
     await page.evaluate(()=>document.body.classList.remove('mobile-nav-open'));
   }
@@ -135,7 +156,7 @@ async function runViewport(browser,base,v){
    for(const id of ['landsReadOnlyName','landsReadOnlyMunicipality','landsReadOnlyDepartment','landsReadOnlyJobTitle','landsReadOnlyLandsRole'])
     assert.ok((await page.locator('#'+id).textContent()).trim(),v.name+': '+id);
    assert.equal(await page.locator('#accountButton').getAttribute('aria-expanded'),'true');
-   assert.equal(await visuallyUnobstructed(),true,v.name+': splash/overlay obscures app screenshot');
+   await requireUnobstructed(v.name);
    await page.screenshot({path:path.join(out,v.name+'-'+theme+'-profile.png'),fullPage:false});
    await page.keyboard.press('Escape');
    assert.equal(await page.locator('#accountButton').getAttribute('aria-expanded'),'false');
@@ -162,7 +183,7 @@ async function runViewport(browser,base,v){
   await page.locator('#aiInput').press('Enter');
   await page.waitForFunction(()=>/منح|منحة/.test(document.querySelector('#aiThread .ai-msg.bot')?.textContent||''),null,{timeout:7000});
   assert.match(await page.locator('#aiThread .ai-msg.bot').last().innerText(),/منح|منحة/);
-  assert.equal(await visuallyUnobstructed(),true,v.name+': splash/overlay obscures app screenshot');
+  await requireUnobstructed(v.name);
   await page.screenshot({path:path.join(out,v.name+'-assistant.png'),fullPage:false});
   // Only mutate in-memory synthetic localhost fixtures to test privacy reset.
   await page.evaluate(()=>{session={...session,firebaseUid:'synthetic-other',municipalityId:'synthetic-other',role:'lands_employee'};renderShellChrome();});
