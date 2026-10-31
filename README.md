@@ -65,6 +65,8 @@ node --test test/lands-executive-header-profile-ai.test.cjs
 
 [مصفوفة أدلة الجاهزية الداخلية — من 100 نقطة](docs/acceptance/SMART_HSR_EVIDENCE_SCORECARD.md) توثق ما ثبت وما لم يُختبر، دون تضخيم النسب.
 
+[بطاقة سلوك مساعد الأراضي ومخاطره](docs/acceptance/LANDS_ASSISTANT_BEHAVIOR_CARD.md) توثق صراحة أنه محرك قواعد، وحدود النطاق والخصوصية والمراجعة البشرية.
+
 ---
 
 **الجهة المطورة:** Blumark24 · **آخر مراجعة توثيقية:** 31 أكتوبر 2026 · **الإنتاج البلدي والبيانات الحقيقية:** خارج نطاق هذا التحديث.
