@@ -18,6 +18,12 @@ The working branch now includes `embedded-lands/server/document-firestore-store.
 
 The adapter is covered by `test/lands-document-firestore-store.test.js`, using a copy-on-write transaction fake that enforces Firestore's read-before-write rule, duplicate create checks and rollback on audit failure. These tests still do **not** prove production IAM, actual Firebase rule deployment, live Storage, emulator-level concurrency, or an HTTP upload.
 
+## New isolated Storage object verifier (no upload or release activation)
+
+The branch also now includes `embedded-lands/server/document-gcs-inspector.js` with a trusted, dependency-injected Google Cloud Storage bucket: it checks a canonical tenant-specific attempt object path, pins the exact object generation, downloads those bytes, confirms the metadata size and actual PDF/JPEG/PNG magic signature, hashes bytes with SHA-256, and returns only the minimal proof expected by the coordinator. Provider errors are sanitized and the bucket itself is never chosen by an HTTP caller. The byte verifier is covered by `test/lands-document-gcs-inspector.test.js` with synthetic provider doubles for corrupted content, MIME mismatch, generation mismatch, cross-tenant paths, size limit and failures.
+
+This still requires security/data-controller approval of the actual Storage bucket and residency, Firebase project identity, signed upload issuance and application roles. It does not create files, enable uploads, replace existing versions, or import any module into a live API. Real GCS emulator and Staging integration remain outstanding.
+
 ## Required production adapters — NOT included
 
 1. Verified Firebase Admin identity and current tenant/role membership. No direct client-supplied UID, tenant or role.
