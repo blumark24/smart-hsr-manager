@@ -4610,7 +4610,7 @@ body.dark #appShell > header.lands-manager-source-header .lands-readonly-profile
     <form class="lands-manager-search" role="search" onsubmit="event.preventDefault();runHeaderSearch()"><label class="sr-only-lands" for="headerSearchInput">البحث في سجلات المنح</label><input id="headerSearchInput" type="search" autocomplete="off" placeholder="ابحث في المنح..." aria-label="البحث في سجلات المنح"><button type="submit" aria-label="بحث"><i data-lucide="search"></i></button></form>
   </div>
   <div class="lands-manager-secondary">
-    <button id="mobileNavToggle" class="lands-mobile-nav-toggle" type="button" aria-label="فتح القائمة الجانبية اليسرى" aria-controls="landsSidebar" aria-expanded="false" onclick="toggleSidebar()"><i data-lucide="panel-left"></i></button>
+    <button id="mobileNavToggle" class="lands-mobile-nav-toggle" type="button" aria-label="فتح القائمة الجانبية اليمنى" aria-controls="landsSidebar" aria-expanded="false" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
     <div class="lands-manager-theme" aria-label="اختيار النمط">
       <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
       <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
@@ -4621,7 +4621,7 @@ body.dark #appShell > header.lands-manager-source-header .lands-readonly-profile
   </div>
 </header>
   <div class="shell">
-    <aside class="side" id="landsSidebar" aria-label="القائمة الجانبية اليسرى لإدارة الأراضي"><div class="side-identity"><div class="side-identity-copy"><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية اليسرى" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav manager-like-nav">
+    <aside class="side" id="landsSidebar" aria-label="القائمة الجانبية اليمنى لإدارة الأراضي"><div class="side-identity"><div class="side-identity-copy"><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية اليمنى" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav manager-like-nav">
       <button class="active" data-view="center"><i data-lucide="layout-dashboard"></i><span>لوحة المعلومات</span></button>
       <button data-view="decisions"><i data-lucide="gavel"></i><span>القرارات</span></button>
       <button data-view="documents"><i data-lucide="folder-open"></i><span>المستندات</span></button>
@@ -7439,7 +7439,7 @@ function answerGroundedLandsQuestion(raw,scope) {
     const fields=scope.grant.completeness.missing;
     return `اكتمال المنحة ${completenessPercent(scope.grant)}%. ${fields.length?"الحقول الناقصة: "+fields.map(x=>AXIS_LABELS[x]||x).join("، "):"المحاور الأساسية مكتملة"}. المرفقات والموقع منفصلان.`;
   }
-  if(/مستند|وثائق|وثيقه|مرفق/.test(q))return records.length?`المنح بلا مرفقات في ${where}: ${AutomationEngine.missingDocuments(records).length} من ${records.length}. المرفقات مستقلة عن اكتمال البيانات.`:empty;
+  if(/مستند|وثائق|وثيقه|مرفق/.test(q))return records.length?`المنح بلا سجلات مرفقات في ${where}: ${AutomationEngine.missingDocuments(records).length} من ${records.length}. وجود سجل لا يثبت وجود الملف المخزن أو صلاحيته.`:empty;
   if(/بدون موقع|بلا موقع|المواقع|الاحداثيات|موقع جغرافي/.test(q))return records.length?`المنح بلا موقع موثّق في ${where}: ${AutomationEngine.noLocationRecords(records).length} من ${records.length}. لا أستنتج إحداثيات غير موثقة.`:empty;
   if(/مراجعه|مراجعات|المراجعه|قيد المراجعه/.test(q)){
     if(!session||!mod.canReviewGrant(session.role))return "تفاصيل المراجعات تتطلب صلاحية المراجعة.";
@@ -7539,12 +7539,12 @@ function aiAnswer(action, scope) {
       return `يوجد ${groups.length} قرار ضمن بيانات البلدية المتاحة. الإجمالي ${total} منحة، ${complete} مكتملة البيانات خارج المراجعة، ${review} تحت المراجعة، ومتوسط اكتمال البيانات ${avgPercent}%. اكتمال البيانات لا يعني اعتماد المنحة.`;
     }
     case "overview.priority": {
-      const top = AutomationEngine.missingDocuments(grants.filter(x => !x.archived)).slice(0, 3);
-      return top.length ? `أهم الملفات التي تحتاج متابعة: ${top.map(x => `${x.id} (${x.beneficiary?.name || "—"})`).join("، ")}.` : "لا توجد ملفات ناقصة حاليًا.";
+      const top = AutomationEngine.missingDocuments(g.filter(x => !x.archived)).slice(0, 3);
+      return top.length ? `سجلات منح بلا قيود مستندات ضمن النطاق الحالي: ${top.map(x => x.id).join("، ")}. وجود قيد مستند لا يثبت اكتمال رفع الملف.` : "لا توجد منح بلا قيود مستندات ضمن النطاق الحالي. هذا لا يثبت سلامة الملفات المرفوعة.";
     }
     case "overview.late": {
       const late = AutomationEngine.attentionItems().filter(item => item.overdueCount > 0);
-      return late.length ? `القرارات التي لديها ملفات متأخرة: ${late.map(item => `قرار ${item.number} (${item.overdueCount})`).join("، ")}.` : "لا توجد ملفات متأخرة في أي قرار حاليًا.";
+      return late.length ? `قرارات بها ملفات تستلزم متابعة لاستكمال البيانات: ${late.map(item => `قرار ${item.number} (${item.overdueCount})`).join("، ")}. لا تتوفر هنا مدة تأخير مثبتة.` : "لا توجد ملفات تستلزم متابعة لنواقص البيانات وفق القواعد الحالية. لم يُفحص تأخر زمني.";
     }
     case "overview.opentwin":
       setView("map");
@@ -7556,14 +7556,14 @@ function aiAnswer(action, scope) {
     }
     case "map.worst": {
       const worst = AutomationEngine.attentionItems()[0];
-      return worst ? `الأكثر احتياجًا للتدخل: قرار رقم ${worst.number} — ${worst.needsWork} يحتاج استكمال بيانات، ${worst.review} تحت المراجعة (${worst.avgPercent}% اكتمال بيانات).` : "لا توجد قرارات تحتاج تدخلًا عاجلًا حاليًا.";
+      return worst ? `الأكثر احتياجًا للمتابعة: قرار رقم ${worst.number} — ${aiAttentionRowText(worst)}.` : "لا توجد قرارات تحتاج متابعة وفق القواعد الحالية.";
     }
     case "map.concentration": {
-      const missing = AutomationEngine.missingDocuments(grants.filter(x => !x.archived));
+      const missing = AutomationEngine.missingDocuments(g.filter(x => !x.archived));
       const byDecision = {};
       missing.forEach(x => { const n = x.allocation_decision?.number || "بدون قرار"; byDecision[n] = (byDecision[n] || 0) + 1; });
       const entries = Object.entries(byDecision).sort((a, b) => b[1] - a[1]);
-      return entries.length ? `الملفات الناقصة المستندات تتركز في: ${entries.map(([n, c]) => `${n === "بدون قرار" ? n : "قرار " + n} (${c})`).join("، ")}.` : "لا توجد ملفات ناقصة المستندات حاليًا.";
+      return entries.length ? `سجلات المنح بلا قيود مستندات تتوزع على: ${entries.map(([n, c]) => `${n === "بدون قرار" ? n : "قرار " + n} (${c})`).join("، ")}. لا يثبت هذا اكتمال الملفات المخزنة.` : "لا توجد منح بلا قيود مستندات في هذا العرض؛ سلامة الملفات المخزنة غير مثبتة.";
     }
     case "decision.summary":
       return `قرار رقم ${scope.number}: ${total} مستفيد، ${complete} مكتملة البيانات خارج المراجعة، ${review} تحت المراجعة، بمتوسط اكتمال بيانات ${avgPercent}%. الحقول الناقصة الأكثر تكرارًا: ${missingText}. اكتمال البيانات منفصل عن الاعتماد.`;
@@ -7577,7 +7577,7 @@ function aiAnswer(action, scope) {
     }
     case "decision.overdue": {
       const overdue = AutomationEngine.overdueRecords(g);
-      return overdue.length ? `الملفات المتأخرة ضمن هذا القرار: ${overdue.map(x => `${x.id} — ${x.beneficiary?.name || "—"}`).join("، ")}.` : "لا توجد ملفات متأخرة ضمن هذا القرار حاليًا.";
+      return overdue.length ? `ملفات تستلزم متابعة لاستكمال البيانات ضمن هذا القرار: ${overdue.map(x => x.id).join("، ")}. لا أصفها بمتأخرة زمنيًا دون موعد نهائي موثّق.` : "لا توجد ملفات تستلزم متابعة لنواقص البيانات ضمن هذا القرار حاليًا. لم يُفحص تأخر زمني.";
     }
     case "review.summary": {
       const q = AutomationEngine.reviewQueue();
@@ -7697,6 +7697,13 @@ function updateAiIdleState() {
 }
 // ---- Proactive attention summary — surfaces per-decision issues inside
 // the AI panel without requiring the manager to type anything first. ----
+function aiAttentionRowText(item) {
+  const parts = [];
+  if (item.needsWork > 0) parts.push(item.needsWork + " تحتاج استكمال بيانات");
+  if (item.review > 0) parts.push(item.review + " تحت المراجعة");
+  if (!parts.length) parts.push("لا توجد نواقص أو مراجعات مسجلة");
+  return parts.join("، ") + " (" + item.avgPercent + "% اكتمال بيانات)";
+}
 function renderAiAttention() {
   const el = document.getElementById("aiAttentionSummary");
   if (!el) return;
@@ -7704,7 +7711,7 @@ function renderAiAttention() {
   if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
   el.hidden = false;
   el.innerHTML = `<h4>${icon("alert-triangle")} ${items.length} ${items.length === 1 ? "عنصر يحتاج انتباهك" : "عناصر تحتاج انتباهك"}<button onclick="createDailyBriefing()" style="margin-inline-start:auto">${icon("file-text")} ملخص اليوم</button></h4>`
-    + items.map(item => `<div class="ai-attention-row"><span>قرار ${esc(item.number)} — ${item.needsWork} يحتاج استكمال${item.overdueCount ? `، ${item.overdueCount} متأخر` : ""} (${item.avgPercent}%)</span><span style="display:flex;gap:6px"><button onclick="attentionShowMissing('${esc(item.number)}')">عرض النواقص</button><button onclick="openDecisionFromAttention('${esc(item.number)}')">فتح القرار</button></span></div>`).join("");
+    + items.map(item => `<div class="ai-attention-row"><span>قرار ${esc(item.number)} — ${aiAttentionRowText(item)}</span><span style="display:flex;gap:6px"><button onclick="attentionShowMissing('${esc(item.number)}')">عرض النواقص</button><button onclick="openDecisionFromAttention('${esc(item.number)}')">فتح القرار</button></span></div>`).join("");
 }
 function attentionShowMissing(number) {
   const scopedGrants = grants.filter(g => g.allocation_decision?.number === number && !g.archived);
@@ -7716,7 +7723,7 @@ function openDecisionFromAttention(number) { activeWhatIfScenario = null; select
 function createDailyBriefing() {
   const items = AutomationEngine.attentionItems();
   const text = items.length
-    ? `ملخص اليوم: ${items.length} ${items.length === 1 ? "قرار يحتاج متابعة" : "قرارات تحتاج متابعة"} — ${items.map(i => `قرار ${i.number} (${i.avgPercent}%)`).join("، ")}.`
+    ? `ملخص المتابعة: ${items.length} ${items.length === 1 ? "قرار يحتاج متابعة" : "قرارات تحتاج متابعة"} — ${items.map(i => `قرار ${i.number}: ${aiAttentionRowText(i)}`).join("؛ ")}. لا يتضمن هذا قياس التأخر الزمني أو اعتماد المنح.`
     : "ملخص اليوم: لا توجد عناصر تحتاج انتباهًا عاجلًا حاليًا.";
   aiThread.push({ role: "user", text: "إنشاء ملخص اليوم" });
   aiThread.push({ role: "bot", text });

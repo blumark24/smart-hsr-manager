@@ -44,9 +44,105 @@ async function runViewport(browser,base,v){
   await page.waitForFunction(()=>document.getElementById('appShell')?.hidden===false&&
    document.getElementById('headerProfileName')?.textContent?.trim(),null,{timeout:30000});
   await page.locator('#landsReviewLoader').waitFor({state:'detached',timeout:30000});
+  // Regression: screenshots must show the application, not a branded splash
+  // still covering the viewport. Earlier geometry assertions passed even
+  // while the splash overlay was visible in captured screenshot artifacts.
+  const visuallyUnobstructed=()=>page.evaluate(()=>{
+    const boot=document.getElementById('bootScreen');
+    const center=document.body.classList.contains('mobile-nav-open')?document.getElementById('landsSidebar'):document.getElementById('main');
+    if(!center)return false;
+    const bootStyle=boot?getComputedStyle(boot):null;
+    if(boot && !boot.hidden && bootStyle.display!=='none' && bootStyle.visibility!=='hidden')
+      return false;
+    const r=center.getBoundingClientRect();
+    if(r.width<200||r.height<100)return false;
+    const p=document.elementFromPoint(
+      Math.max(0,Math.min(innerWidth-1,r.left+r.width*.5)),
+      Math.max(0,Math.min(innerHeight-1,r.top+Math.min(180,r.height*.5)))
+    );
+    return Boolean(p&&[center,document.getElementById('landsSidebar'),document.getElementById('landsReadOnlyProfileDetails'),document.getElementById('aiPanel')].some(el=>el&&(el===p||el.contains(p))));
+  });
+  await page.waitForFunction(()=>{
+    const boot=document.getElementById('bootScreen');
+    const main=document.getElementById('main');
+    if(!main)return false;
+    const style=boot?getComputedStyle(boot):null;
+    if(boot && !boot.hidden && style.display!=='none'&&style.visibility!=='hidden')return false;
+    const r=main.getBoundingClientRect();
+    if(r.width<200||r.height<100)return false;
+    const element=document.elementFromPoint(
+      Math.max(0,Math.min(innerWidth-1,r.left+r.width*.5)),
+      Math.max(0,Math.min(innerHeight-1,r.top+Math.min(180,r.height*.5)))
+    );
+    return element&&(element===main||main.contains(element));
+  },null,{timeout:15000});
+
   assert.equal(await page.locator('header.lands-manager-source-header').count(),1);
   assert.equal(await page.locator('header.lands-manager-source-header img[src="/smart-hsr-mark.svg"]').count(),1);
   assert.equal(await page.locator('#headerMunicipalityName').count(),1);
+  // Physical layout must match the approved municipal right-side rail.
+  // Fixtures are local-only: never load or interact with municipal Production.
+  const layout=async()=>page.evaluate(()=>{
+    const side=document.getElementById('landsSidebar')?.getBoundingClientRect();
+    const main=document.getElementById('main')?.getBoundingClientRect();
+    if(!side||!main) return null;
+    return {sideLeft:side.left,sideRight:side.right,sideWidth:side.width,
+      mainLeft:main.left,mainRight:main.right,mainWidth:main.width,
+      direction:getComputedStyle(document.querySelector('#appShell .shell')).direction};
+  });
+  async function requireUnobstructed(label) {
+    for(let attempt=0;attempt<36;attempt++){
+      if(await visuallyUnobstructed())return;
+      await page.waitForTimeout(250);
+    }
+    const diagnostic=await page.evaluate(()=>{
+      const boot=document.getElementById('bootScreen');
+      const app=document.getElementById('appShell');
+      const main=document.getElementById('main');
+      const rect=main?.getBoundingClientRect();
+      const x=rect?Math.max(0,Math.min(innerWidth-1,rect.left+rect.width*.5)):0;
+      const y=rect?Math.max(0,Math.min(innerHeight-1,rect.top+Math.min(180,rect.height*.5))):0;
+      const top=document.elementFromPoint(x,y);
+      return {bootHidden:boot?.hidden,bootDisplay:boot&&getComputedStyle(boot).display,
+        appHidden:app?.hidden,appDisplay:app&&getComputedStyle(app).display,
+        hitTag:top?.tagName,hitId:top?.id,hitClass:typeof top?.className==='string'?top.className.slice(0,130):'',
+        mainTop:rect?.top,mainWidth:rect?.width,
+        mainHeight:rect?.height,bodyClass:document.body.className};
+    });
+    throw Error(label+': app still obscured after 9s; '+JSON.stringify(diagnostic));
+  }
+  const initial=await layout();
+  assert.ok(initial,v.name+': missing Lands layout');
+  if(v.width>700){
+    assert.ok(initial.sideLeft>=initial.mainRight-4,
+      v.name+': navigation rail is NOT physically to the right of main content: '+JSON.stringify(initial));
+    assert.ok(initial.mainWidth>Math.min(370,v.width*.45),
+      v.name+': main content unexpectedly cramped');
+    await page.evaluate(()=>document.body.classList.add('sidebar-collapsed'));
+    await page.waitForTimeout(270);
+    const collapsed=await layout();
+    assert.ok(collapsed.sideLeft>=collapsed.mainRight-4,
+      v.name+': collapsed navigation moved to the left: '+JSON.stringify(collapsed));
+    assert.ok(collapsed.sideWidth<=110,
+      v.name+': collapsed navigation rail not compact: '+JSON.stringify(collapsed));
+    assert.ok(collapsed.mainWidth>Math.min(370,v.width*.45),
+      v.name+': collapsed state squeezed main content');
+    await requireUnobstructed(v.name);
+    await page.screenshot({path:path.join(out,v.name+'-sidebar-collapsed.png'),fullPage:false});
+    await page.evaluate(()=>document.body.classList.remove('sidebar-collapsed'));
+    await page.waitForTimeout(270);
+  }else{
+    await page.evaluate(()=>document.body.classList.add('mobile-nav-open'));
+    await page.waitForTimeout(270);
+    const opened=await layout();
+    assert.ok(Math.abs(opened.sideRight-v.width)<=5,
+      v.name+': mobile drawer is not on right edge: '+JSON.stringify(opened));
+    await requireUnobstructed(v.name);
+    await page.screenshot({path:path.join(out,v.name+'-sidebar-right.png'),fullPage:false});
+    await page.evaluate(()=>document.body.classList.remove('mobile-nav-open'));
+  }
+  assert.match(await page.locator('#landsSidebar').getAttribute('aria-label'),/اليمنى/);
+  assert.match(await page.locator('#mobileNavToggle').getAttribute('aria-label'),/اليمنى/);
   const overflow=async()=>page.evaluate(()=>({
    html:document.documentElement.scrollWidth-innerWidth,
    header:(()=>{const r=document.querySelector('#appShell > header.lands-manager-source-header').getBoundingClientRect();return {left:r.left,right:r.right};})()
@@ -60,6 +156,7 @@ async function runViewport(browser,base,v){
    for(const id of ['landsReadOnlyName','landsReadOnlyMunicipality','landsReadOnlyDepartment','landsReadOnlyJobTitle','landsReadOnlyLandsRole'])
     assert.ok((await page.locator('#'+id).textContent()).trim(),v.name+': '+id);
    assert.equal(await page.locator('#accountButton').getAttribute('aria-expanded'),'true');
+   await requireUnobstructed(v.name);
    await page.screenshot({path:path.join(out,v.name+'-'+theme+'-profile.png'),fullPage:false});
    await page.keyboard.press('Escape');
    assert.equal(await page.locator('#accountButton').getAttribute('aria-expanded'),'false');
@@ -86,6 +183,7 @@ async function runViewport(browser,base,v){
   await page.locator('#aiInput').press('Enter');
   await page.waitForFunction(()=>/منح|منحة/.test(document.querySelector('#aiThread .ai-msg.bot')?.textContent||''),null,{timeout:7000});
   assert.match(await page.locator('#aiThread .ai-msg.bot').last().innerText(),/منح|منحة/);
+  await requireUnobstructed(v.name);
   await page.screenshot({path:path.join(out,v.name+'-assistant.png'),fullPage:false});
   // Only mutate in-memory synthetic localhost fixtures to test privacy reset.
   await page.evaluate(()=>{session={...session,firebaseUid:'synthetic-other',municipalityId:'synthetic-other',role:'lands_employee'};renderShellChrome();});
