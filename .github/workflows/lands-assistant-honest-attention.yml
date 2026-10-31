@@ -1,0 +1,47 @@
+name: SMART HSR Lands Assistant — Truthful Alerts and Scoped Read-only QA
+on:
+  push:
+    branches:
+      - fix/lands-assistant-honest-attention-20261031
+  pull_request:
+    branches:
+      - release-candidate/option-b-one-sha-preview-20261031
+permissions:
+  contents: read
+jobs:
+  assistant-maintenance-synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Block Production, Firebase, API and branded shell mutations
+        shell: bash
+        run: |
+          git diff --name-only 900ad89bf45ac29a6f4a240df7b64c1685415cc4 HEAD > /tmp/assistant-change-scope.txt
+          cat /tmp/assistant-change-scope.txt
+          if grep -Ev '^(lands/index\.html|test/lands-assistant-honest-attention\.test\.cjs|\.github/workflows/lands-assistant-honest-attention\.yml)$' /tmp/assistant-change-scope.txt; then
+            echo 'BLOCK: unexpected file change'; exit 1
+          fi
+          git diff --unified=0 900ad89bf45ac29a6f4a240df7b64c1685415cc4 HEAD -- lands/index.html > /tmp/assistant-only.diff
+          if grep -E '^[+-][^+-]' /tmp/assistant-only.diff | grep -E '<header|<aside|class="shell"|firebase|LANDS_EMBEDDED_RUNTIME|/api/|smart-hsr-mark|documentStorage' ; then
+            echo 'BLOCK: visual shell, API, Auth or storage mutation'; exit 1
+          fi
+      - name: Assistant real-function fixture tests and established Lands regression contracts
+        run: |
+          node --test \
+            test/lands-assistant-honest-attention.test.cjs \
+            test/lands-executive-header-profile-ai.test.cjs \
+            test/manager-lands-completeness-parity.test.cjs \
+            test/manager-lands-gis.test.js \
+            test/lands-document-feedback-preview.test.cjs \
+            test/preview-lands-sso-gate.test.js
+      - name: Hold all merge/deployment authorization
+        run: |
+          echo 'Passing synthetic tests != real municipal consent, credentialed UAT, AI service integration or Production acceptance.'
+          echo 'The official municipal data and Production deployment are strictly OUT OF SCOPE.'
+          echo 'Lands right sidebar parity is a separate acceptance blocker; do not merge or publish.'
