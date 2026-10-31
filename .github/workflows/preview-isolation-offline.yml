@@ -10,6 +10,8 @@ on:
       - 'test/preview-firebase-isolation-http.test.cjs'
       - 'api/_lib/b2Client.js'
       - 'api/storage/upload.js'
+      - 'lands/client/lands-client.js'
+      - 'test/lands-client-app-isolation.test.cjs'
       - 'test/preview-isolation-guard.test.cjs'
       - 'test/preview-isolation-module-contract.test.cjs'
       - '.github/workflows/preview-isolation-offline.yml'
@@ -38,8 +40,9 @@ jobs:
           node --check api/ai/analyze.js
           node --check api/_lib/authz.js
           node --check test/preview-isolation-module-contract.test.cjs
+          node --check test/lands-client-app-isolation.test.cjs
       - name: Offline negative security and module integration tests
-        run: node --test test/preview-isolation-guard.test.cjs test/preview-isolation-module-contract.test.cjs test/preview-firebase-isolation-http.test.cjs
+        run: node --test test/preview-isolation-guard.test.cjs test/preview-isolation-module-contract.test.cjs test/preview-firebase-isolation-http.test.cjs test/lands-client-app-isolation.test.cjs
 
   firestore-emulator:
     name: Local Firestore Emulator rules and seven municipality isolation
@@ -108,4 +111,6 @@ jobs:
         run: |
           node --test test/field-command-center-honest-kpis.test.cjs
           node --test test/lands-document-feedback-preview.test.cjs
+          node --test test/lands-shell-ui.test.js
+          node --test test/lands-bootstrap.test.js
           node --test test/manager-mobility-adapter.test.js
