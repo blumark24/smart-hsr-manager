@@ -70,7 +70,7 @@ test('review-only complete grant does not trigger fake missing or overdue claims
 });
 
 test('incomplete and review counts use mutually exclusive categories and do not invent deadlines',()=>{
-  const r=run([fake('review','under_review',100),fake('incomplete','draft',40,['identity'])]);
+  const r=run([fake('review','under_review',100),fake('incomplete','draft',40,['identity'])],{role:'lands_department_manager'});
   const item=r.eval('AutomationEngine.attentionItems()[0]');
   assert.equal(item.needsWork,1);assert.equal(item.review,1);
   assert.match(r.ctx.aiAttentionRowText(item),/1 تحتاج استكمال بيانات، 1 تحت المراجعة/);
