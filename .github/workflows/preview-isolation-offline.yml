@@ -7,6 +7,7 @@ on:
       - 'api/_lib/b2Client.js'
       - 'api/storage/upload.js'
       - 'test/preview-isolation-guard.test.cjs'
+      - 'test/preview-isolation-module-contract.test.cjs'
       - '.github/workflows/preview-isolation-offline.yml'
 permissions:
   contents: read
@@ -27,5 +28,6 @@ jobs:
           node --check api/_lib/firebaseAdmin.js
           node --check api/_lib/b2Client.js
           node --check api/storage/upload.js
-      - name: Offline negative security tests
-        run: node --test test/preview-isolation-guard.test.cjs
+          node --check test/preview-isolation-module-contract.test.cjs
+      - name: Offline negative security and module integration tests
+        run: node --test test/preview-isolation-guard.test.cjs test/preview-isolation-module-contract.test.cjs
