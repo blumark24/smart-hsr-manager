@@ -10,11 +10,14 @@
 // it onto this module is a follow-up, not a demo-night change.
 // ============================================================================
 
+const { assertPreviewStorageClientConfig, isPreviewStorageIsolationConfigured } = require('./previewIsolationGuard');
+
 const REQUIRED_ENV = ['B2_KEY_ID', 'B2_APPLICATION_KEY', 'B2_BUCKET_NAME', 'B2_S3_ENDPOINT', 'B2_REGION'];
 
 let cachedClient = null;
 
 function b2Configuration() {
+  if (!isPreviewStorageIsolationConfigured()) return null;
   const missing = REQUIRED_ENV.filter(name => !String(process.env[name] || '').trim());
   if (missing.length) return null; // names only; values never leave process.env
   return {
@@ -25,6 +28,7 @@ function b2Configuration() {
 }
 
 function getS3Client(config) {
+  assertPreviewStorageClientConfig(config);
   if (cachedClient) return cachedClient;
   const { S3Client } = require('@aws-sdk/client-s3');
   const endpoint = /^https?:\/\//i.test(config.endpoint) ? config.endpoint : `https://${config.endpoint}`;

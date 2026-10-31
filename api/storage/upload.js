@@ -24,6 +24,7 @@ const crypto = require('crypto');
 const { getDb, FieldValue } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 const { validateImage } = require('../_lib/imageValidation');
+const { assertPreviewStorageClientConfig, isPreviewStorageIsolationConfigured } = require('../_lib/previewIsolationGuard');
 
 const MAX_UPLOAD_BYTES = 700 * 1024;
 // Base64 of the byte cap, plus a small allowance for padding/whitespace, so an
@@ -159,6 +160,7 @@ async function readJsonBody(req) {
 let cachedClient = null;
 
 function b2Configuration() {
+  if (!isPreviewStorageIsolationConfigured()) return null;
   const missing = REQUIRED_ENV.filter(name => !String(process.env[name] || '').trim());
   if (missing.length) return null; // names only are known here; values never leave env
   return {
@@ -170,6 +172,7 @@ function b2Configuration() {
 }
 
 function getS3Client(config) {
+  assertPreviewStorageClientConfig(config);
   if (cachedClient) return cachedClient;
   const { S3Client } = require('@aws-sdk/client-s3');
   const endpoint = /^https?:\/\//i.test(config.endpoint) ? config.endpoint : `https://${config.endpoint}`;
@@ -217,6 +220,9 @@ async function handler(req, res) {
   try {
     decoded = await verifyRequestToken(req);
   } catch (error) {
+    if (error && error.code === 'PREVIEW_FIREBASE_ISOLATION_DENIED' && error.statusCode === 503) {
+      return sendJson(res, 503, { error: 'backend_unavailable' });
+    }
     return sendJson(res, error.statusCode || 401, { error: 'unauthenticated' });
   }
 

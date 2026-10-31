@@ -24,7 +24,14 @@ const ALLOWED_PROJECT_IDS = Object.freeze([STAGING_PROJECT_ID, PRODUCTION_PROJEC
  */
 export function createLandsClient({ firebaseConfig, useEmulators = false, emulatorHost = '127.0.0.1', authPort = 9100, firestorePort = 8085, storagePort = 9199, apiBaseUrl = '/api', fetchImpl = fetch }) {
   if (!useEmulators && !ALLOWED_PROJECT_IDS.includes(firebaseConfig?.projectId)) throw new Error('LANDS_ALLOWED_PROJECT_REQUIRED');
-  const app = getApps()[0] ?? initializeApp(firebaseConfig);
+  // A named Manager app may be initialized first on the same page. Never
+  // adopt the first Firebase app blindly: it may target a different project,
+  // silently redirecting Lands Auth/Firestore/Storage away from this session.
+  const defaultApp = getApps().find(candidate => candidate.name === '[DEFAULT]');
+  if (defaultApp && defaultApp.options?.projectId !== firebaseConfig.projectId) {
+    throw new Error('LANDS_FIREBASE_APP_PROJECT_MISMATCH');
+  }
+  const app = defaultApp ?? initializeApp(firebaseConfig);
   const auth = getAuth(app); const db = getFirestore(app); const storage = getStorage(app);
   // Explicit, not relied-on-as-default: a real browser employee session
   // (from either the standalone form or the unified SSO handoff) must
