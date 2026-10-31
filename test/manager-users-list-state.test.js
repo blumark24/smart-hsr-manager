@@ -208,8 +208,15 @@ test("16. any previous users/observations/incidents listeners are torn down befo
     ? source.indexOf('onAuthStateChanged(auth, async user =>')
     : source.indexOf('onAuthStateChanged(auth,');
   assert.notEqual(authHandlerStart, -1, 'onAuthStateChanged wiring not found');
-  const fn = source.slice(authHandlerStart, authHandlerStart + 900);
-  assert.match(fn, /stopObservations\?\.\(\); stopUsers\?\.\(\); stopIncidents\?\.\(\);/);
+  // Do not use a hardcoded character window: the access verification
+  // preceding teardown legitimately grows with additional RBAC checks.
+  // Assert the cleanup is in this auth callback and occurs before any
+  // replacement users listener is subscribed.
+  const listenerStart = source.indexOf('stopUsers = firestoreApi.onSnapshot(userFilter', authHandlerStart);
+  assert.ok(listenerStart > authHandlerStart, 'users listener subscription not found after auth callback');
+  const fn = source.slice(authHandlerStart, listenerStart);
+  assert.match(fn, /stopObservations\?\.\(\);\s*stopUsers\?\.\(\);\s*stopIncidents\?\.\(\);/,
+    'previous listeners must be stopped before replacement subscriptions');
   // and the subscription setup itself never happens anywhere except inside
   // this one auth-state handler.
   const setupCount = (source.match(/stopUsers = firestoreApi\.onSnapshot\(userFilter/g) || []).length;
