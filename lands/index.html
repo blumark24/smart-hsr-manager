@@ -6611,7 +6611,7 @@ function landsDocumentFailureMessage(error, operation = "رفع") {
   if (/lands_access_denied|document_replace_denied|permission-denied|storage\/unauthorized|lands_mutation_denied/.test(reason)) return `ليس لديك صلاحية ${verb} هذا المستند.`;
   if (/document_storage_unavailable|document_gateway_required|lands_client_sdk_only/.test(reason)) return `خدمة ${verb} المستندات غير متاحة في هذا الإصدار؛ لم تكتمل العملية. راجع مسؤول النظام.`;
   if (/storage\/canceled|storage\/cancelled/.test(reason)) return `تم إلغاء ${verb} المستند.`;
-  if (/storage\/retry-limit-exceeded|network-request-failed|storage\/quota-exceeded|unavailable/.test(reason)) return `تعذر إكمال ${verb} المستند. لا تفترض نجاح الرفع؛ قد يتطلب سجل المستند تحققًا من مسؤول النظام قبل إعادة المحاولة.`;
+  if (/storage\/retry-limit-exceeded|network-request-failed|storage\/quota-exceeded|unavailable/.test(reason)) return `تعذر الاتصال أو إكمال ${verb} المستند. لا تفترض نجاح الرفع؛ قد يتطلب سجل المستند تحققًا من مسؤول النظام قبل إعادة المحاولة.`;
   return `تعذر ${verb} المستند. تحقق من الاتصال والصلاحيات، ثم أعد المحاولة.`;
 }
 async function refreshDocumentViewAfterMutation(grantId, operation) {
