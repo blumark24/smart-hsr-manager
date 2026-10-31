@@ -1,0 +1,29 @@
+name: SMART HSR Manager Lands Parity - Preview
+on:
+  push:
+    branches:
+      - fix/preview-manager-lands-business-parity-20261030
+  pull_request:
+    branches:
+      - design/manager-executive-header-sidebar-v1-20261030
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lands-business-parity:
+    name: Five-axis grant completeness and digital record parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Manager Lands adapter syntax
+        run: node --input-type=module --check < manager-lands-adapter.js
+      - name: Regression tests on the exact branch SHA
+        run: |
+          node --test \
+            test/manager-lands-completeness-parity.test.cjs \
+            test/manager-lands-digital-record.test.js \
+            test/manager-lands-gis.test.js
