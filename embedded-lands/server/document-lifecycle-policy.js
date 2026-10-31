@@ -77,6 +77,14 @@ function assertRevision(doc, expectedRevision) {
 function ensurePending(doc) {
   if (doc.status !== DOCUMENT_PHASE.PENDING) fail('DOCUMENT_INVALID_TRANSITION');
 }
+
+// Read-only gate for trusted adapters BEFORE invoking Storage or returning
+// document state. A verified Firebase identity is required from the host.
+export function assertDocumentOperationScope(document, context, expectedRevision) {
+  assertScopedDocument(document, context);
+  assertRevision(document, expectedRevision);
+  return document;
+}
 function seal(record) { return Object.freeze(record); }
 
 /**
