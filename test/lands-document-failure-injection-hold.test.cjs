@@ -22,6 +22,7 @@ function extract(source,start,end) {
 function uploadHarness({failUpload=false,failMetadata=false}={}) {
   const trace=[],docs=new Map();
   const ctx={
+    db:{},
     session:async()=>({firebaseUid:'synthetic-person'}),
     assertLandsDocumentUpload(file){assert.equal(file.type,'application/pdf');},
     doc(){return{id:'synthetic-file'};},collection(){return{};},root(){return{};},
