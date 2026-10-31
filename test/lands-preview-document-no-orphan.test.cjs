@@ -36,6 +36,7 @@ function makeUpload({ isolatedPreviewSession }) {
     async setDoc() { calls.metadata++; },
     ref() { return 'synthetic-only'; },
     storage: {},
+    db: {},
     async uploadBytes() { calls.upload++; },
     documentStorageMetadata() { return {}; },
     Object
