@@ -7530,7 +7530,7 @@ function aiAnswer(action, scope) {
   switch (action) {
     case "overview.summary": {
       const groups = decisionGroups().filter(x => x.number);
-      return `يوجد ${groups.length} قرار ضمن بيانات البلدية المتاحة. الإجمالي ${total} منحة، ${complete} مكتملة، ${review} تحت المراجعة، ومتوسط اكتمال ${avgPercent}%.`;
+      return `يوجد ${groups.length} قرار ضمن بيانات البلدية المتاحة. الإجمالي ${total} منحة، ${complete} مكتملة البيانات خارج المراجعة، ${review} تحت المراجعة، ومتوسط اكتمال البيانات ${avgPercent}%. اكتمال البيانات لا يعني اعتماد المنحة.`;
     }
     case "overview.priority": {
       const top = AutomationEngine.missingDocuments(grants.filter(x => !x.archived)).slice(0, 3);
@@ -7546,11 +7546,11 @@ function aiAnswer(action, scope) {
     case "map.summary": {
       const groups = decisionGroups().filter(x => x.number);
       const worst = AutomationEngine.attentionItems()[0];
-      return `ملخص الخريطة الحالية: ${groups.length} قرار، ${total} منحة${twinLayerFilter !== "all" ? ` (مصفّاة حاليًا على طبقة "${TWIN_LAYERS.find(l => l[0] === twinLayerFilter)?.[1] || twinLayerFilter}")` : ""}، بمتوسط إنجاز ${avgPercent}%. ${worst ? `الأكثر احتياجًا للتدخل: قرار ${worst.number} (${worst.avgPercent}%).` : "لا توجد قرارات تحتاج تدخلًا عاجلًا حاليًا."}`;
+      return `ملخص الخريطة الحالية: ${groups.length} قرار، ${total} منحة${twinLayerFilter !== "all" ? ` (مصفّاة حاليًا على طبقة "${TWIN_LAYERS.find(l => l[0] === twinLayerFilter)?.[1] || twinLayerFilter}")` : ""}، بمتوسط اكتمال البيانات ${avgPercent}%. ${worst ? `الأكثر احتياجًا للتدخل: قرار ${worst.number} (${worst.avgPercent}% اكتمال بيانات).` : "لا توجد قرارات تحتاج تدخلًا عاجلًا حاليًا."}`;
     }
     case "map.worst": {
       const worst = AutomationEngine.attentionItems()[0];
-      return worst ? `الأكثر احتياجًا للتدخل: قرار رقم ${worst.number} — ${worst.needsWork} يحتاج استكمال، ${worst.review} تحت المراجعة (${worst.avgPercent}% إنجاز).` : "لا توجد قرارات تحتاج تدخلًا عاجلًا حاليًا.";
+      return worst ? `الأكثر احتياجًا للتدخل: قرار رقم ${worst.number} — ${worst.needsWork} يحتاج استكمال بيانات، ${worst.review} تحت المراجعة (${worst.avgPercent}% اكتمال بيانات).` : "لا توجد قرارات تحتاج تدخلًا عاجلًا حاليًا.";
     }
     case "map.concentration": {
       const missing = AutomationEngine.missingDocuments(grants.filter(x => !x.archived));
@@ -7560,11 +7560,11 @@ function aiAnswer(action, scope) {
       return entries.length ? `الملفات الناقصة المستندات تتركز في: ${entries.map(([n, c]) => `${n === "بدون قرار" ? n : "قرار " + n} (${c})`).join("، ")}.` : "لا توجد ملفات ناقصة المستندات حاليًا.";
     }
     case "decision.summary":
-      return `قرار رقم ${scope.number}: ${total} مستفيد، ${complete} مكتمل، ${review} تحت المراجعة، بنسبة إنجاز ${avgPercent}%. الحقول الناقصة الأكثر تكرارًا: ${missingText}.`;
+      return `قرار رقم ${scope.number}: ${total} مستفيد، ${complete} مكتملة البيانات خارج المراجعة، ${review} تحت المراجعة، بمتوسط اكتمال بيانات ${avgPercent}%. الحقول الناقصة الأكثر تكرارًا: ${missingText}. اكتمال البيانات منفصل عن الاعتماد.`;
     case "decision.missing":
       return `الملفات الناقصة ضمن هذا القرار: ${missingText}.`;
     case "decision.percent":
-      return `نسبة إنجاز قرار رقم ${scope.number} هي ${avgPercent}% (${complete} من أصل ${total} مكتملة رسميًا).`;
+      return `متوسط اكتمال بيانات قرار رقم ${scope.number} هو ${avgPercent}% (${complete} من أصل ${total} مكتملة البيانات خارج المراجعة). هذا ليس عدد المنح المعتمدة رسميًا.`;
     case "decision.review": {
       const rv = g.filter(x => x.status === "under_review");
       return rv.length ? `الحالات تحت المراجعة: ${rv.map(x => `${x.id} — ${x.beneficiary?.name || "—"}`).join("، ")}.` : "لا توجد حالات تحت المراجعة ضمن هذا القرار حاليًا.";
