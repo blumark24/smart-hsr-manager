@@ -1,0 +1,21 @@
+name: SMART HSR Field Honest KPI Gate — Preview only
+on:
+  push:
+    branches:
+      - fix/field-command-center-honest-kpis-20261031
+  pull_request:
+    branches:
+      - fix/preview-manager-lands-business-parity-20261030
+permissions:
+  contents: read
+jobs:
+  field-no-fake-zero:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-aware Field regressions
+        run: node --test test/field-command-center-honest-kpis.test.cjs
