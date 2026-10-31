@@ -153,3 +153,21 @@ test('failure codes are allowlisted and never include raw server secrets',()=>{
   assert.deepEqual(Object.keys(f).filter(k=>/secret|token|password/i.test(k)),[]);
   assert.equal(f.failure_code,'UPLOAD_FAILED');
 });
+
+test('OCI immutable version ID is kept separate from GCS numeric generation',()=>{
+ const doc=pending(), result=markDocumentReady({document:doc,context:actor,expectedRevision:1,
+  proof:{...proof(doc),generation:undefined,provider:'oci',version_id:'2d528a44-5b15-40dc-b303-20993d1ade66'},now:at});
+ assert.equal(result.storage_provider,'oci');
+ assert.equal(result.storage_generation,null);
+ assert.equal(result.storage_version_id,'2d528a44-5b15-40dc-b303-20993d1ade66');
+});
+test('OCI and GCS version proofs cannot be mixed, forged or omitted',()=>{
+ const doc=pending();
+ for(const bad of [{provider:'oci',generation:undefined,version_id:null},
+ {provider:'oci',generation:undefined,version_id:'../bad'},
+ {provider:'oci',version_id:'123'},{provider:'untrusted',generation:undefined,version_id:'valid-id'},
+ {provider:'gcs',version_id:'valid-id'}]){
+  assert.throws(()=>markDocumentReady({document:doc,context:actor,expectedRevision:1,
+   proof:{...proof(doc),...bad},now:at}),/DOCUMENT_STORAGE_PROOF_MISMATCH/);
+ }
+});

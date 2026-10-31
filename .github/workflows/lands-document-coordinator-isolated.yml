@@ -24,7 +24,7 @@ jobs:
         run: |
           git diff --name-only a395b62eaa86c69cbbb7e65ac53f18fe30a1116d HEAD >/tmp/lands-document-coordinator-scope
           cat /tmp/lands-document-coordinator-scope
-          if grep -Ev '^(embedded-lands/server/document-lifecycle-policy\.js|embedded-lands/server/document-lifecycle-coordinator\.js|embedded-lands/server/document-firestore-store\.js|embedded-lands/server/document-gcs-inspector\.js|test/lands-document-coordinator-isolated\.test\.js|test/lands-document-gcs-inspector\.test\.js|test/lands-document-firestore-store\.test\.js|test/lands-document-firestore-emulator\.test\.js|docs/release/LANDS-DOCUMENT-SERVER-COORDINATOR-REVIEW-2026-10-31\.md|\.github/workflows/lands-document-coordinator-isolated\.yml|vercel\.json)$' /tmp/lands-document-coordinator-scope; then
+          if grep -Ev '^(embedded-lands/server/document-lifecycle-policy\.js|embedded-lands/server/document-lifecycle-coordinator\.js|embedded-lands/server/document-firestore-store\.js|embedded-lands/server/document-gcs-inspector\.js|embedded-lands/server/document-oci-inspector\.js|test/lands-document-coordinator-isolated\.test\.js|test/lands-document-gcs-inspector\.test\.js|test/lands-document-oci-inspector\.test\.js|test/lands-document-firestore-store\.test\.js|test/lands-document-firestore-emulator\.test\.js|docs/release/LANDS-DOCUMENT-SERVER-COORDINATOR-REVIEW-2026-10-31\.md|\.github/workflows/lands-document-coordinator-isolated\.yml|vercel\.json)$' /tmp/lands-document-coordinator-scope; then
             echo 'FAIL: out-of-scope runtime, Auth, Firebase or Production change'; exit 1
           fi
       - name: Vercel no-deploy gate — only disable this exact review branch
@@ -50,10 +50,12 @@ jobs:
         run: |
           node --check embedded-lands/server/document-lifecycle-coordinator.js
           node --check embedded-lands/server/document-lifecycle-policy.js
+          node --check embedded-lands/server/document-oci-inspector.js
           node --test \
             test/lands-document-coordinator-isolated.test.js \
             test/lands-document-firestore-store.test.js \
             test/lands-document-gcs-inspector.test.js \
+            test/lands-document-oci-inspector.test.js \
             test/lands-document-lifecycle-contract.test.js \
             test/lands-document-failure-injection-hold.test.cjs \
             test/lands-document-feedback-preview.test.cjs
