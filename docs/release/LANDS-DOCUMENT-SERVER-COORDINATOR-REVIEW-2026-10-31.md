@@ -12,6 +12,12 @@ Source branch is stacked on Draft PR #105, not the frozen municipal Release Cand
 - retry: bounded to three attempts, new server-derived object key on each attempt, revision CAS and typed audit.
 - status: role/actor/tenant filtered public fields; no object path, person identifier, signed URL, token or generation disclosure.
 
+## New isolated Firestore adapter (source-level only)
+
+The working branch now includes `embedded-lands/server/document-firestore-store.js`, a concrete Admin Firestore **transaction adapter not imported by any production API**. It binds each path to the verified municipality, uses a nested actor/request key to avoid concatenation collisions, reads the **current** enabled Lands membership and exact role INSIDE every transaction, reserves the upload request using a Firestore `create` precondition, and creates pending metadata and the typed audit record in the same transaction. Finalization and failure updates require an existing document path and a fresh membership read.
+
+The adapter is covered by `test/lands-document-firestore-store.test.js`, using a copy-on-write transaction fake that enforces Firestore's read-before-write rule, duplicate create checks and rollback on audit failure. These tests still do **not** prove production IAM, actual Firebase rule deployment, live Storage, emulator-level concurrency, or an HTTP upload.
+
 ## Required production adapters — NOT included
 
 1. Verified Firebase Admin identity and current tenant/role membership. No direct client-supplied UID, tenant or role.
