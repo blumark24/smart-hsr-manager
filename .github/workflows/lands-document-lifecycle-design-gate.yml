@@ -1,0 +1,41 @@
+name: SMART HSR Lands document verified lifecycle design — NO runtime activation
+on:
+  push:
+    branches:
+      - design/lands-document-verified-lifecycle-20261031
+  pull_request:
+    branches:
+      - fix/lands-document-truthful-failclosed-preview-20261031
+permissions:
+  contents: read
+jobs:
+  pure-document-lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed if any HTTP/API, Firebase, Storage, UI, permission or Production changes
+        shell: bash
+        run: |
+          git diff --name-only 37b4fa71384592f491a85722a617aff2d13c46b7 HEAD >/tmp/document-design-scope
+          cat /tmp/document-design-scope
+          if grep -Ev '^(embedded-lands/server/document-lifecycle-policy\.js|test/lands-document-lifecycle-contract\.test\.js|docs/release/LANDS-DOCUMENT-LIFECYCLE-SECURITY-DESIGN-2026-10-31\.md|\.github/workflows/lands-document-lifecycle-design-gate\.yml)$' /tmp/document-design-scope; then
+            echo 'UNAUTHORIZED CHANGE: this is a pure isolated design only'; exit 1
+          fi
+      - name: Pure server-policy transition/security tests and prior document failure injection
+        run: |
+          node --test \
+            test/lands-document-lifecycle-contract.test.js \
+            test/lands-document-failure-injection-hold.test.cjs \
+            test/lands-document-feedback-preview.test.cjs \
+            test/manager-lands-digital-record.test.js
+      - name: Unresolved backend and privacy/security release hold
+        run: |
+          echo 'PASS means deterministic pure policy tested, NOT deployed server Gateway.'
+          echo 'P1 remains OPEN: direct SDK metadata-before-Storage and embedded documentStorage:null.'
+          echo 'No Production, Firebase rules, roles, secrets or municipal data changes.'
