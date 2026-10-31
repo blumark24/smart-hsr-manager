@@ -44,6 +44,39 @@ async function runViewport(browser,base,v){
   await page.waitForFunction(()=>document.getElementById('appShell')?.hidden===false&&
    document.getElementById('headerProfileName')?.textContent?.trim(),null,{timeout:30000});
   await page.locator('#landsReviewLoader').waitFor({state:'detached',timeout:30000});
+  // Regression: screenshots must show the application, not a branded splash
+  // still covering the viewport. Earlier geometry assertions passed even
+  // while the splash overlay was visible in captured screenshot artifacts.
+  const visuallyUnobstructed=()=>page.evaluate(()=>{
+    const boot=document.getElementById('bootScreen');
+    const center=document.getElementById('main');
+    if(!boot||!center)return false;
+    const bootStyle=getComputedStyle(boot);
+    if(!boot.hidden && bootStyle.display!=='none' && bootStyle.visibility!=='hidden')
+      return false;
+    const r=center.getBoundingClientRect();
+    if(r.width<200||r.height<100)return false;
+    const p=document.elementFromPoint(
+      Math.max(0,Math.min(innerWidth-1,r.left+r.width*.5)),
+      Math.max(0,Math.min(innerHeight-1,r.top+Math.min(180,r.height*.5)))
+    );
+    return Boolean(p&&(center.contains(p)||p===center));
+  });
+  await page.waitForFunction(()=>{
+    const boot=document.getElementById('bootScreen');
+    const main=document.getElementById('main');
+    if(!boot||!main)return false;
+    const style=getComputedStyle(boot);
+    if(!boot.hidden && style.display!=='none'&&style.visibility!=='hidden')return false;
+    const r=main.getBoundingClientRect();
+    if(r.width<200||r.height<100)return false;
+    const element=document.elementFromPoint(
+      Math.max(0,Math.min(innerWidth-1,r.left+r.width*.5)),
+      Math.max(0,Math.min(innerHeight-1,r.top+Math.min(180,r.height*.5)))
+    );
+    return element&&(element===main||main.contains(element));
+  },null,{timeout:15000});
+
   assert.equal(await page.locator('header.lands-manager-source-header').count(),1);
   assert.equal(await page.locator('header.lands-manager-source-header img[src="/smart-hsr-mark.svg"]').count(),1);
   assert.equal(await page.locator('#headerMunicipalityName').count(),1);
@@ -73,6 +106,7 @@ async function runViewport(browser,base,v){
       v.name+': collapsed navigation rail not compact: '+JSON.stringify(collapsed));
     assert.ok(collapsed.mainWidth>Math.min(370,v.width*.45),
       v.name+': collapsed state squeezed main content');
+    assert.equal(await visuallyUnobstructed(),true,v.name+': splash/overlay obscures app screenshot');
     await page.screenshot({path:path.join(out,v.name+'-sidebar-collapsed.png'),fullPage:false});
     await page.evaluate(()=>document.body.classList.remove('sidebar-collapsed'));
     await page.waitForTimeout(270);
@@ -82,6 +116,7 @@ async function runViewport(browser,base,v){
     const opened=await layout();
     assert.ok(Math.abs(opened.sideRight-v.width)<=5,
       v.name+': mobile drawer is not on right edge: '+JSON.stringify(opened));
+    assert.equal(await visuallyUnobstructed(),true,v.name+': splash/overlay obscures app screenshot');
     await page.screenshot({path:path.join(out,v.name+'-sidebar-right.png'),fullPage:false});
     await page.evaluate(()=>document.body.classList.remove('mobile-nav-open'));
   }
@@ -100,6 +135,7 @@ async function runViewport(browser,base,v){
    for(const id of ['landsReadOnlyName','landsReadOnlyMunicipality','landsReadOnlyDepartment','landsReadOnlyJobTitle','landsReadOnlyLandsRole'])
     assert.ok((await page.locator('#'+id).textContent()).trim(),v.name+': '+id);
    assert.equal(await page.locator('#accountButton').getAttribute('aria-expanded'),'true');
+   assert.equal(await visuallyUnobstructed(),true,v.name+': splash/overlay obscures app screenshot');
    await page.screenshot({path:path.join(out,v.name+'-'+theme+'-profile.png'),fullPage:false});
    await page.keyboard.press('Escape');
    assert.equal(await page.locator('#accountButton').getAttribute('aria-expanded'),'false');
@@ -126,6 +162,7 @@ async function runViewport(browser,base,v){
   await page.locator('#aiInput').press('Enter');
   await page.waitForFunction(()=>/منح|منحة/.test(document.querySelector('#aiThread .ai-msg.bot')?.textContent||''),null,{timeout:7000});
   assert.match(await page.locator('#aiThread .ai-msg.bot').last().innerText(),/منح|منحة/);
+  assert.equal(await visuallyUnobstructed(),true,v.name+': splash/overlay obscures app screenshot');
   await page.screenshot({path:path.join(out,v.name+'-assistant.png'),fullPage:false});
   // Only mutate in-memory synthetic localhost fixtures to test privacy reset.
   await page.evaluate(()=>{session={...session,firebaseUid:'synthetic-other',municipalityId:'synthetic-other',role:'lands_employee'};renderShellChrome();});
