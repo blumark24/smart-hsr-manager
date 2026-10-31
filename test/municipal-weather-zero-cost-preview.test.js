@@ -87,9 +87,14 @@ test('Existing SMART HSR headers are retained; only the weather indicator is reu
   assert.match(head, /data-smart-hsr-workspace-trigger/);
   assert.match(manager, /class="hsr-manager-header"/);
   assert.match(manager, /data-hsr-weather-org-selector="\[data-hsr-weather-org\]"/);
-  assert.match(lands, /class="lands-head-weather" data-hsr-weather/);
-  assert.match(lands, /data-hsr-weather-org-selector="#headerMunicipalityName"/);
-  assert.match(lands, /id="accountMenu" class="account-menu"/);
+  // PR #93 reuses the Manager executive weather cluster on Lands.
+  // Require the *new approved* DOM and reject the obsolete duplicate chip.
+  assert.match(lands, /class="hsr-manager-weather-meta" data-hsr-weather data-hsr-weather-org-selector="#headerMunicipalityName"/);
+  assert.equal((lands.match(/class="hsr-manager-weather-meta" data-hsr-weather/g) || []).length, 1,
+    'Lands executive header displays one forecast only');
+  assert.doesNotMatch(lands, /<div class="lands-head-weather" data-hsr-weather/,
+    'obsolete Lands weather widget must not duplicate Manager header weather');
+  assert.match(lands, /id="accountMenu" class="account-menu" role="menu"/);
   for (const source of [head,manager,lands]) {
     assert.match(source, /smart-hsr-weather\.js/);
     assert.match(source, /data-hsr-weather-credit[^>]*hidden|data-hsr-weather-credit hidden/);
@@ -208,8 +213,12 @@ test('Manager weather remains visible across responsive breakpoints without rede
   assert.match(header[0], /data-hsr-weather-org-selector="\[data-hsr-weather-org\]"/);
   assert.match(header[0], /data-hsr-weather-credit[^>]*hidden/,
     'MET Norway attribution is retained');
-  assert.equal((header[0].match(/class="hsr-manager-clock-detail"/g) || []).length, 3,
-    'only secondary separator, time and date are hidden on compact layouts');
+  assert.equal((header[0].match(/class="hsr-manager-clock-detail"/g) || []).length, 2,
+    'executive header contains time and date details, both hidden on compact layouts');
+  assert.equal((header[0].match(/data-hsr-weather-status/g) || []).length, 1,
+    'Manager executive header has only one live forecast status');
+  assert.match(header[0], /class="hsr-manager-environment-cluster"/,
+    'weather and time remain in their approved executive cluster');
   const css = manager.match(/<style id="manager-weather-meta-responsive">([\s\S]*?)<\/style>/);
   assert.ok(css, 'responsive visibility rules exist and are scoped');
   assert.match(css[1], /@media \(max-width:1179px\)/);
