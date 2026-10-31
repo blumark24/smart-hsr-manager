@@ -6460,20 +6460,54 @@ async function submitReturnForCompletion(grantId, reason) {
     catch (error) { showToast(error.message || "تعذر إعادة المنحة للاستكمال", true); }
   });
 }
+// Display only mapped public errors; never surface Firebase/server messages,
+// tenant IDs or storage paths. A failed refresh is not a failed document write.
+function landsDocumentFailureMessage(error, operation = "رفع") {
+  const verb = operation === "استبدال" ? "استبدال" : "رفع";
+  const reason = [error?.code, error?.message]
+    .filter(value => typeof value === "string")
+    .join(" ").toLowerCase().slice(0, 300);
+  if (reason.includes("invalid_document_size")) return "حجم المستند غير صالح؛ الحد الأقصى 10 ميجابايت.";
+  if (reason.includes("invalid_document_mime_type")) return "صيغة المستند غير مدعومة؛ اختر PDF أو JPG أو PNG.";
+  if (/lands_auth_required|auth\/user-token-expired|auth\/invalid-user-token|unauthenticated/.test(reason)) return "انتهت جلسة الدخول. سجّل الدخول مجددًا ثم أعد المحاولة.";
+  if (/lands_access_denied|document_replace_denied|permission-denied|storage\/unauthorized|lands_mutation_denied/.test(reason)) return `ليس لديك صلاحية ${verb} هذا المستند.`;
+  if (/storage\/canceled|storage\/cancelled/.test(reason)) return `تم إلغاء ${verb} المستند.`;
+  if (/storage\/retry-limit-exceeded|network-request-failed|storage\/quota-exceeded|unavailable/.test(reason)) return `تعذر الاتصال أثناء ${verb} المستند. حاول لاحقًا.`;
+  return `تعذر ${verb} المستند. تحقق من الاتصال والصلاحيات، ثم أعد المحاولة.`;
+}
+async function refreshDocumentViewAfterMutation(grantId, operation) {
+  try {
+    await refreshWorkspace();
+    openFile(grantId);
+    showToast(`تم ${operation} المستند`);
+  } catch (_) {
+    showToast(`اكتمل ${operation} المستند لكن تعذر تحديث العرض؛ افتح الملف مجددًا للتحقق.`, true);
+  }
+}
 async function uploadDocumentFor(grantId) {
   const input = document.getElementById(`uploadInput-${grantId}`); const file = input?.files?.[0];
   if (!file) return showToast("اختر ملفًا أولًا", true);
   await withBusyButton("جارٍ الرفع…", async () => {
-    try { await client.uploadDocument(session.municipalityId, { recordDomain: "landGrants", recordId: grantId, file }); await refreshWorkspace(); openFile(grantId); showToast("تم رفع المستند"); }
-    catch (error) { showToast("تعذر رفع المستند — التخزين السحابي لهذه البيئة غير مهيأ حاليًا", true); }
+    try {
+      await client.uploadDocument(session.municipalityId, { recordDomain: "landGrants", recordId: grantId, file });
+    } catch (error) {
+      showToast(landsDocumentFailureMessage(error, "رفع"), true);
+      return;
+    }
+    await refreshDocumentViewAfterMutation(grantId, "رفع");
   });
 }
 async function replaceDocumentFor(grantId, documentId) {
   const inputEl = document.createElement("input"); inputEl.type = "file"; inputEl.accept = ".pdf,.jpg,.jpeg,.png";
   inputEl.onchange = async () => {
     const file = inputEl.files?.[0]; if (!file) return;
-    try { await client.replaceDocument(session.municipalityId, documentId, file); await refreshWorkspace(); openFile(grantId); showToast("تم استبدال المستند"); }
-    catch (error) { showToast("تعذر استبدال المستند — التخزين السحابي لهذه البيئة غير مهيأ حاليًا", true); }
+    try {
+      await client.replaceDocument(session.municipalityId, documentId, file);
+    } catch (error) {
+      showToast(landsDocumentFailureMessage(error, "استبدال"), true);
+      return;
+    }
+    await refreshDocumentViewAfterMutation(grantId, "استبدال");
   };
   inputEl.click();
 }
