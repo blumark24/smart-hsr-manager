@@ -220,6 +220,9 @@ async function handler(req, res) {
   try {
     decoded = await verifyRequestToken(req);
   } catch (error) {
+    if (error && error.code === 'PREVIEW_FIREBASE_ISOLATION_DENIED' && error.statusCode === 503) {
+      return sendJson(res, 503, { error: 'backend_unavailable' });
+    }
     return sendJson(res, error.statusCode || 401, { error: 'unauthenticated' });
   }
 

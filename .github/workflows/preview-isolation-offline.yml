@@ -4,6 +4,10 @@ on:
     paths:
       - 'api/_lib/previewIsolationGuard.js'
       - 'api/_lib/firebaseAdmin.js'
+      - 'api/_lib/authz.js'
+      - 'api/ai/analyze.js'
+      - 'api/storage/read.js'
+      - 'test/preview-firebase-isolation-http.test.cjs'
       - 'api/_lib/b2Client.js'
       - 'api/storage/upload.js'
       - 'test/preview-isolation-guard.test.cjs'
@@ -30,9 +34,12 @@ jobs:
           node --check api/_lib/firebaseAdmin.js
           node --check api/_lib/b2Client.js
           node --check api/storage/upload.js
+          node --check api/storage/read.js
+          node --check api/ai/analyze.js
+          node --check api/_lib/authz.js
           node --check test/preview-isolation-module-contract.test.cjs
       - name: Offline negative security and module integration tests
-        run: node --test test/preview-isolation-guard.test.cjs test/preview-isolation-module-contract.test.cjs
+        run: node --test test/preview-isolation-guard.test.cjs test/preview-isolation-module-contract.test.cjs test/preview-firebase-isolation-http.test.cjs
 
   firestore-emulator:
     name: Local Firestore Emulator rules and seven municipality isolation

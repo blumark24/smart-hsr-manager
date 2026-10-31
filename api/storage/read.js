@@ -158,6 +158,9 @@ async function handler(req, res) {
   try {
     decoded = await verifyRequestToken(req);
   } catch (error) {
+    if (error && error.code === 'PREVIEW_FIREBASE_ISOLATION_DENIED' && error.statusCode === 503) {
+      return sendJson(res, 503, { error: 'BACKEND_UNAVAILABLE' });
+    }
     return sendJson(res, error.statusCode || 401, { error: error.code || 'AUTH_TOKEN_INVALID' });
   }
 

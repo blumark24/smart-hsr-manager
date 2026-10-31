@@ -102,6 +102,10 @@ async function verifyRequestToken(req, verifyIdToken = (token, checkRevoked) => 
     // Vercel Preview and reject a token that Admin can verify correctly.
     return await verifyIdToken(m[1], true);
   } catch (e) {
+    // Configuration rejection is a server-side Preview isolation failure,
+    // never an invalid user password or token. Preserve only this reviewed,
+    // non-secret status; all untrusted Firebase errors still map to 401.
+    if (e && e.code === 'PREVIEW_FIREBASE_ISOLATION_DENIED' && e.statusCode === 503) throw e;
     if (e && e.code === 'auth/id-token-expired') throw authError(AUTH_CODES.TOKEN_EXPIRED);
     throw authError(AUTH_CODES.TOKEN_INVALID);
   }

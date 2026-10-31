@@ -157,6 +157,9 @@ async function handler(req, res) {
   try {
     decoded = await verifyRequestToken(req);
   } catch (error) {
+    if (error && error.code === 'PREVIEW_FIREBASE_ISOLATION_DENIED' && error.statusCode === 503) {
+      return fail(res, 503, 'AI_BACKEND_UNAVAILABLE', 'The Preview backend is not available.');
+    }
     return fail(res, error.statusCode || 401, 'unauthenticated', 'Authentication is required.');
   }
 
