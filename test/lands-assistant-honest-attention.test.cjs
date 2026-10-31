@@ -93,6 +93,16 @@ test('assistant priority never widens a restricted scope to all grants or expose
   assert.doesNotMatch(scoped,/allowed|SYNTHETIC_BENEFICIARY/);
 });
 
+test('map document-gap explanation cannot leak records outside the current scope',()=>{
+  const r=run([fake('allowed'),fake('other')],{storedIds:['allowed']});
+  const output=messages(r).answer('map.concentration',{kind:'overview',grants:[r.ctx.grants[0]]});
+  assert.doesNotMatch(output,/other|SYNTHETIC_BENEFICIARY/);
+  assert.match(output,/لا توجد منح بلا قيود مستندات/);
+  const output2=messages(r).answer('map.concentration',{kind:'overview',grants:[r.ctx.grants[1]]});
+  assert.match(output2,/سجلات المنح بلا قيود مستندات/);
+  assert.doesNotMatch(output2,/SYNTHETIC_BENEFICIARY/);
+});
+
 test('document answers explicitly distinguish metadata records from actual uploaded bytes',()=>{
   const r=run([fake('withDoc'),fake('withoutDoc')],{storedIds:['withDoc']});
   const out=r.ctx.answerGroundedLandsQuestion('المستندات',{kind:'overview',grants:r.ctx.grants});
