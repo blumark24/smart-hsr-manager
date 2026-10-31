@@ -11,6 +11,8 @@ on:
       - 'api/_lib/b2Client.js'
       - 'api/storage/upload.js'
       - 'lands/client/lands-client.js'
+      - 'lands/index.html'
+      - 'test/lands-preview-document-no-orphan.test.cjs'
       - 'test/lands-client-app-isolation.test.cjs'
       - 'test/preview-isolation-guard.test.cjs'
       - 'test/preview-isolation-module-contract.test.cjs'
@@ -41,8 +43,9 @@ jobs:
           node --check api/_lib/authz.js
           node --check test/preview-isolation-module-contract.test.cjs
           node --check test/lands-client-app-isolation.test.cjs
+          node --check test/lands-preview-document-no-orphan.test.cjs
       - name: Offline negative security and module integration tests
-        run: node --test test/preview-isolation-guard.test.cjs test/preview-isolation-module-contract.test.cjs test/preview-firebase-isolation-http.test.cjs test/lands-client-app-isolation.test.cjs
+        run: node --test test/preview-isolation-guard.test.cjs test/preview-isolation-module-contract.test.cjs test/preview-firebase-isolation-http.test.cjs test/lands-client-app-isolation.test.cjs test/lands-preview-document-no-orphan.test.cjs
 
   firestore-emulator:
     name: Local Firestore Emulator rules and seven municipality isolation

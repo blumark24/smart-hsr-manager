@@ -6606,6 +6606,7 @@ function landsDocumentFailureMessage(error, operation = "رفع") {
     .join(" ").toLowerCase().slice(0, 300);
   if (reason.includes("invalid_document_size")) return "حجم المستند غير صالح؛ الحد الأقصى 10 ميجابايت.";
   if (reason.includes("invalid_document_mime_type")) return "صيغة المستند غير مدعومة؛ اختر PDF أو JPG أو PNG.";
+  if (reason.includes("lands_preview_document_gateway_required")) return "رفع المستندات غير متاح في بيئة الاختبار حتى اعتماد التخزين الآمن. لم يتم إنشاء سجل مستند.";
   if (/lands_auth_required|auth\/user-token-expired|auth\/invalid-user-token|unauthenticated/.test(reason)) return "انتهت جلسة الدخول. سجّل الدخول مجددًا ثم أعد المحاولة.";
   if (/lands_access_denied|document_replace_denied|permission-denied|storage\/unauthorized|lands_mutation_denied/.test(reason)) return `ليس لديك صلاحية ${verb} هذا المستند.`;
   if (/storage\/canceled|storage\/cancelled/.test(reason)) return `تم إلغاء ${verb} المستند.`;

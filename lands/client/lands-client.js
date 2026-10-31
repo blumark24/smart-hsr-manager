@@ -182,7 +182,13 @@ export function createLandsClient({ firebaseConfig, useEmulators = false, emulat
       await callTrustedMutation(municipalityId, { operation: 'land_grant.reopen', record_id: grantId, record_changes: { reason }, safe_metadata: { previous_status: 'approved', new_status: 'incomplete', changed_fields: ['status', 'return_reason'], source: 'web' } });
     },
     async uploadDocument(municipalityId, { recordDomain, recordId, file }) {
-      const identity = await session(municipalityId); assertLandsDocumentUpload(file);
+      assertLandsDocumentUpload(file);
+      // Staging Firebase Storage is not an approved verified Lands document
+      // backend. Never persist a Firestore document record before a trusted
+      // server gateway can prove the corresponding object bytes exist.
+      // Production and local emulator paths retain their existing behavior.
+      if (isolatedPreviewSession) throw new Error('LANDS_PREVIEW_DOCUMENT_GATEWAY_REQUIRED');
+      const identity = await session(municipalityId);
       const metadataRef = doc(collection(root(db, municipalityId), 'documents'));
       const metadata = createLandsDocumentMetadata({ municipalityId, actorUid: identity.firebaseUid, recordDomain, recordId, fileId: metadataRef.id, filename: `document-${metadataRef.id}`, file });
       await setDoc(metadataRef, { ...metadata, created_at: serverTimestamp(), updated_at: serverTimestamp() });
