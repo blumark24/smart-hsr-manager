@@ -93,6 +93,11 @@ test('AI conversation, input and panel are purged on context reset; button ARIA 
   assert.equal(vm.runInNewContext('aiThread.length', context), 0);
   assert.equal(objects.aiInput.value, '');
   assert.equal(objects.aiThread.textContent, '');
+  assert.equal(objects.aiContext.textContent, '');
+  assert.equal(objects.aiQuickActions.textContent, '');
+  assert.equal(objects.aiAttentionSummary.textContent, '');
+  assert.equal(objects.aiAttentionSummary.hidden, true);
+  assert.equal(objects.aiAttentionBadge.hidden, true);
   assert.equal(objects.aiPanel.attrs['aria-hidden'], 'true');
   assert.equal(objects.aiTrigger.attrs['aria-expanded'], 'false');
   assert.equal(objects.aiTrigger.dataset?.state ?? 'idle', 'idle');
@@ -105,6 +110,7 @@ test('auth transition and switching UID/tenant force assistant scrub without mod
   const identityRender = excerpt('function renderShellChrome() {', 'const roleLabel');
   assert.match(identityRender, /session\.firebaseUid/);
   assert.match(identityRender, /session\.municipalityId/);
+  assert.match(identityRender, /session\.role/);
   assert.match(identityRender, /identity !== lastLandsAssistantIdentity[\s\S]*resetLandsAssistantContext\(\)/);
   const logout = excerpt('async function handleLogout() {', 'async function loadWorkspace() {');
   assert.match(logout, /resetLandsAssistantContext\(\)/);
