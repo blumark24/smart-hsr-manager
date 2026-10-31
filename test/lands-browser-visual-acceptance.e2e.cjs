@@ -47,6 +47,46 @@ async function runViewport(browser,base,v){
   assert.equal(await page.locator('header.lands-manager-source-header').count(),1);
   assert.equal(await page.locator('header.lands-manager-source-header img[src="/smart-hsr-mark.svg"]').count(),1);
   assert.equal(await page.locator('#headerMunicipalityName').count(),1);
+  // Physical layout must match the approved municipal right-side rail.
+  // Fixtures are local-only: never load or interact with municipal Production.
+  const layout=async()=>page.evaluate(()=>{
+    const side=document.getElementById('landsSidebar')?.getBoundingClientRect();
+    const main=document.getElementById('main')?.getBoundingClientRect();
+    if(!side||!main) return null;
+    return {sideLeft:side.left,sideRight:side.right,sideWidth:side.width,
+      mainLeft:main.left,mainRight:main.right,mainWidth:main.width,
+      direction:getComputedStyle(document.querySelector('#appShell .shell')).direction};
+  });
+  const initial=await layout();
+  assert.ok(initial,v.name+': missing Lands layout');
+  if(v.width>700){
+    assert.ok(initial.sideLeft>=initial.mainRight-4,
+      v.name+': navigation rail is NOT physically to the right of main content: '+JSON.stringify(initial));
+    assert.ok(initial.mainWidth>Math.min(370,v.width*.45),
+      v.name+': main content unexpectedly cramped');
+    await page.evaluate(()=>document.body.classList.add('sidebar-collapsed'));
+    await page.waitForTimeout(270);
+    const collapsed=await layout();
+    assert.ok(collapsed.sideLeft>=collapsed.mainRight-4,
+      v.name+': collapsed navigation moved to the left: '+JSON.stringify(collapsed));
+    assert.ok(collapsed.sideWidth<=110,
+      v.name+': collapsed navigation rail not compact: '+JSON.stringify(collapsed));
+    assert.ok(collapsed.mainWidth>Math.min(370,v.width*.45),
+      v.name+': collapsed state squeezed main content');
+    await page.screenshot({path:path.join(out,v.name+'-sidebar-collapsed.png'),fullPage:false});
+    await page.evaluate(()=>document.body.classList.remove('sidebar-collapsed'));
+    await page.waitForTimeout(270);
+  }else{
+    await page.evaluate(()=>document.body.classList.add('mobile-nav-open'));
+    await page.waitForTimeout(270);
+    const opened=await layout();
+    assert.ok(Math.abs(opened.sideRight-v.width)<=5,
+      v.name+': mobile drawer is not on right edge: '+JSON.stringify(opened));
+    await page.screenshot({path:path.join(out,v.name+'-sidebar-right.png'),fullPage:false});
+    await page.evaluate(()=>document.body.classList.remove('mobile-nav-open'));
+  }
+  assert.match(await page.locator('#landsSidebar').getAttribute('aria-label'),/اليمنى/);
+  assert.match(await page.locator('#mobileNavToggle').getAttribute('aria-label'),/اليمنى/);
   const overflow=async()=>page.evaluate(()=>({
    html:document.documentElement.scrollWidth-innerWidth,
    header:(()=>{const r=document.querySelector('#appShell > header.lands-manager-source-header').getBoundingClientRect();return {left:r.left,right:r.right};})()
