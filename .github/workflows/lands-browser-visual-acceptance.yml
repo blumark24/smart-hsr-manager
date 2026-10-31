@@ -1,0 +1,44 @@
+name: SMART HSR Lands real Chromium visual acceptance — synthetic local only
+on:
+  push:
+    branches:
+      - test/lands-browser-visual-acceptance-20261031
+  pull_request:
+    branches:
+      - ops/preview-lands-sso-live-gate-20261031
+permissions:
+  contents: read
+jobs:
+  browser-acceptance:
+    name: Desktop/iPad/Mobile light-dark profile assistant
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed if API, auth, rules, UI source or Production configuration changed
+        shell: bash
+        run: |
+          git diff --name-only 07358d66b038a540317ca81b1cbcab568c4223e6 HEAD > /tmp/lands-browser-scope.txt
+          cat /tmp/lands-browser-scope.txt
+          if grep -Ev '^(test/lands-browser-visual-acceptance\.e2e\.cjs|\.github/workflows/lands-browser-visual-acceptance\.yml)$' /tmp/lands-browser-scope.txt; then
+            echo 'Unexpected runtime or configuration change; stopping'; exit 1
+          fi
+      - name: Install isolated browser test dependencies in CI only
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps --only-shell chromium
+      - name: Real Chromium local synthetic visual interaction
+        run: node --test test/lands-browser-visual-acceptance.e2e.cjs
+      - name: Upload local fixture screenshots, never real municipality data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-hsr-lands-local-fixture-visual-evidence
+          path: test-artifacts/lands-browser/
+          if-no-files-found: ignore
+          retention-days: 7
