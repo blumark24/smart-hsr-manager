@@ -121,3 +121,14 @@ test('assistant stays deterministic, no external model and disabled when no veri
   assert.match(src, /aiThread\.map\(m => `<div class="ai-msg \$\{m\.role\}">\$\{esc\(m\.text\)\}/);
   assert.match(src, /async function submitAiPrompt\(message\) \{ return submitAiQuestion\(message\); \}/);
 });
+
+test('assistant never describes five-axis data completeness as official grant approval', () => {
+  const ai = excerpt('function aiAnswer(action, scope) {', 'function submitAiQuestion(rawText, presetAction) {');
+  assert.match(ai, /اكتمال البيانات لا يعني اعتماد المنحة/);
+  assert.match(ai, /هذا ليس عدد المنح المعتمدة رسميًا/);
+  assert.match(ai, /اكتمال البيانات منفصل عن الاعتماد/);
+  assert.match(ai, /مكتملة البيانات خارج المراجعة/);
+  assert.doesNotMatch(ai, /مكتملة رسميًا|نسبة إنجاز قرار رقم/);
+  assert.match(ai, /if \(!session \|\| !mod\.canReviewGrant\(session\.role\)\) return "الملخص التنفيذي يتطلب صلاحية المراجعة/);
+  assert.match(src, /لا يوجد نموذج لغوي خارجي مفعّل في هذه النسخة/);
+});
