@@ -5390,7 +5390,7 @@ function runHeaderSearch() {
 function renderShellChrome() {
   // Never carry grant/beneficiary text in the assistant across a UID or
   // municipality change, including same-tab sign-out/sign-in transitions.
-  const identity = session ? String(session.firebaseUid || "review") + ":" + String(session.municipalityId || "demo") : null;
+  const identity = session ? [session.firebaseUid || "review", session.municipalityId || "demo", session.role || "unknown"].map(String).join(":") : null;
   if (identity !== lastLandsAssistantIdentity) {
     resetLandsAssistantContext();
     lastLandsAssistantIdentity = identity;
@@ -7257,8 +7257,14 @@ function resetLandsAssistantContext() {
   aiThread = [];
   const input = document.getElementById("aiInput");
   if (input) input.value = "";
-  const thread = document.getElementById("aiThread");
-  if (thread) thread.textContent = "";
+  for (const id of ["aiThread", "aiContext", "aiQuickActions", "aiAttentionSummary"]) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = "";
+  }
+  const attentionSummary = document.getElementById("aiAttentionSummary");
+  if (attentionSummary) attentionSummary.hidden = true;
+  const badge = document.getElementById("aiAttentionBadge");
+  if (badge) badge.hidden = true;
   const panel = document.getElementById("aiPanel");
   if (panel) { panel.classList.remove("open"); panel.setAttribute("aria-hidden", "true"); }
   const trigger = document.getElementById("aiTrigger");
