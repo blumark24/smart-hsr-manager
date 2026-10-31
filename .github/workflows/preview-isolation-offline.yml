@@ -1,4 +1,4 @@
-name: SMART HSR Preview Isolation — synthetic offline checks
+name: SMART HSR Preview Isolation — offline security and emulator gates
 on:
   pull_request:
     paths:
@@ -11,8 +11,10 @@ on:
       - '.github/workflows/preview-isolation-offline.yml'
 permissions:
   contents: read
+
 jobs:
   offline:
+    name: Firebase/B2 module boundary (no network or credentials)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -22,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Syntax checks (no credentials or backend calls)
+      - name: Syntax checks
         run: |
           node --check api/_lib/previewIsolationGuard.js
           node --check api/_lib/firebaseAdmin.js
@@ -31,3 +33,72 @@ jobs:
           node --check test/preview-isolation-module-contract.test.cjs
       - name: Offline negative security and module integration tests
         run: node --test test/preview-isolation-guard.test.cjs test/preview-isolation-module-contract.test.cjs
+
+  firestore-emulator:
+    name: Local Firestore Emulator rules and seven municipality isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+      FIREBASE_CLI_DISABLE_UPDATE_CHECK: 'true'
+      GCLOUD_PROJECT: demo-smart-hsr-tests
+      FIREBASE_PROJECT_ID: demo-smart-hsr-tests
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Assert synthetic Firebase project and no real credentials
+        shell: bash
+        run: |
+          test "$FIREBASE_PROJECT_ID" = "demo-smart-hsr-tests"
+          test "$GCLOUD_PROJECT" = "demo-smart-hsr-tests"
+          test -z "$GOOGLE_APPLICATION_CREDENTIALS"
+          test -z "$FIREBASE_TOKEN"
+          test -z "$FIREBASE_SERVICE_ACCOUNT"
+          test -z "$B2_APPLICATION_KEY"
+          test -z "$OPENAI_API_KEY"
+      - name: Actual Firestore Security Rules against demo project Emulator
+        run: npm run test:rules
+      - name: Seven-municipality cross-tenant isolation (separate emulator run)
+        run: npx --no-install firebase emulators:exec --project demo-smart-hsr-tests --only firestore "node --test test/phase25-multi-org-isolation.test.js"
+
+  product-contracts:
+    name: Sessions, manager user center, lands, field and mobility (synthetic)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Workforce tabs and Manager/SSO contracts
+        run: |
+          node --test test/portal-session-isolation.test.js
+          node --test test/manager-lands-sso.test.js
+          node --test test/manager-login-preview-config.test.js
+      - name: User Center and identity propagation regression contracts
+        run: |
+          node --test test/manager-users-list-state.test.js
+          node --test test/identity-display-sync-regression.test.js
+      - name: Field, Lands and Mobility regression contracts
+        run: |
+          node --test test/field-command-center-honest-kpis.test.cjs
+          node --test test/lands-document-feedback-preview.test.cjs
+          node --test test/manager-mobility-adapter.test.js
