@@ -50,9 +50,9 @@ async function runViewport(browser,base,v){
   const visuallyUnobstructed=()=>page.evaluate(()=>{
     const boot=document.getElementById('bootScreen');
     const center=document.getElementById('main');
-    if(!boot||!center)return false;
-    const bootStyle=getComputedStyle(boot);
-    if(!boot.hidden && bootStyle.display!=='none' && bootStyle.visibility!=='hidden')
+    if(!center)return false;
+    const bootStyle=boot?getComputedStyle(boot):null;
+    if(boot && !boot.hidden && bootStyle.display!=='none' && bootStyle.visibility!=='hidden')
       return false;
     const r=center.getBoundingClientRect();
     if(r.width<200||r.height<100)return false;
@@ -65,9 +65,9 @@ async function runViewport(browser,base,v){
   await page.waitForFunction(()=>{
     const boot=document.getElementById('bootScreen');
     const main=document.getElementById('main');
-    if(!boot||!main)return false;
-    const style=getComputedStyle(boot);
-    if(!boot.hidden && style.display!=='none'&&style.visibility!=='hidden')return false;
+    if(!main)return false;
+    const style=boot?getComputedStyle(boot):null;
+    if(boot && !boot.hidden && style.display!=='none'&&style.visibility!=='hidden')return false;
     const r=main.getBoundingClientRect();
     if(r.width<200||r.height<100)return false;
     const element=document.elementFromPoint(
