@@ -24,7 +24,7 @@ jobs:
         run: |
           git diff --name-only 900ad89bf45ac29a6f4a240df7b64c1685415cc4 HEAD > /tmp/assistant-change-scope.txt
           cat /tmp/assistant-change-scope.txt
-          if grep -Ev '^(lands/index\.html|test/lands-assistant-honest-attention\.test\.cjs|\.github/workflows/lands-assistant-honest-attention\.yml)$' /tmp/assistant-change-scope.txt; then
+          if grep -Ev '^(lands/index\.html|test/lands-assistant-honest-attention\.test\.cjs|test/lands-browser-visual-acceptance\.e2e\.cjs|\.github/workflows/lands-assistant-honest-attention\.yml)$' /tmp/assistant-change-scope.txt; then
             echo 'BLOCK: unexpected file change'; exit 1
           fi
           git diff --unified=0 900ad89bf45ac29a6f4a240df7b64c1685415cc4 HEAD -- lands/index.html > /tmp/assistant-only.diff
@@ -45,3 +45,35 @@ jobs:
           echo 'Passing synthetic tests != real municipal consent, credentialed UAT, AI service integration or Production acceptance.'
           echo 'The official municipal data and Production deployment are strictly OUT OF SCOPE.'
           echo 'Lands right sidebar parity is a separate acceptance blocker; do not merge or publish.'
+
+
+  browser-visual-safe:
+    name: Synthetic Chromium RTL desktop/iPad/mobile + assistant regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: assistant-maintenance-synthetic
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Playwright for local fixture runner only
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps --only-shell chromium
+      - name: Real Chromium — local synthetic fixtures, no hosted municipality
+        env:
+          CI: 'true'
+          FIREBASE_SERVICE_ACCOUNT: ''
+          GOOGLE_APPLICATION_CREDENTIALS: ''
+        run: node --test test/lands-browser-visual-acceptance.e2e.cjs
+      - name: Upload synthetic browser evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lands-assistant-right-sidebar-synthetic-review
+          path: test-artifacts/lands-browser/
+          if-no-files-found: ignore
+          retention-days: 7
