@@ -69,12 +69,23 @@ function descriptorMatches(existing,{recordDomain,recordId,file}) {
  * tx.findByRequest({municipalityId,actorUid,requestId}) -> doc/null
  * tx.readParent({municipalityId,recordDomain,recordId}) -> doc/null
  * tx.readDocument({municipalityId,documentId}) -> doc/null
+ * tx.assertActiveMembership(verifiedPrincipal) -> true ONLY if the real
+ *    account and tenant membership remain enabled inside this transaction.
  * tx.insertDocument(doc), tx.reserveRequest({municipalityId,actorUid,
  *    requestId,documentId}), tx.updateDocument(doc), tx.appendAudit(event).
  *
  * Unique request registration must be protected transactionally. No generic
  * client-initiated methods to set status or overwrite an object are allowed.
  */
+async function requireActiveMembership(tx, principal) {
+  // A fresh Firestore transaction read closes the permission-revocation
+  // window between Storage byte verification and document finalization.
+  if(typeof tx.assertActiveMembership!=='function')
+    throw error('DOCUMENT_MEMBERSHIP_GATE_REQUIRED');
+  if((await tx.assertActiveMembership(principal))!==true)
+    throw error('DOCUMENT_ROLE_DENIED');
+}
+
 export function createTrustedDocumentCoordinator(dependencies) {
   validateDependencies(dependencies);
   const {verifyPrincipal,store,objectStore,ids,clock}=dependencies;
@@ -92,6 +103,7 @@ export function createTrustedDocumentCoordinator(dependencies) {
       // Once per request, OUTSIDE a transaction callback that may retry.
       const documentId=checkedId(ids.documentId());
       return store.transaction(async tx=>{
+        await requireActiveMembership(tx,principal);
         const scope={municipalityId:principal.municipality_id,
           actorUid:principal.actor_uid,requestId};
         const previous=await tx.findByRequest(scope);
@@ -133,6 +145,7 @@ export function createTrustedDocumentCoordinator(dependencies) {
       }));
       const now=clock.nowIso();
       return store.transaction(async tx=>{
+        await requireActiveMembership(tx,principal);
         // Compare-and-set AGAIN after the external read, to defeat stale
         // results from a previous attempt or concurrent retry/finalization.
         const latest=assertCurrent(
@@ -155,6 +168,7 @@ export function createTrustedDocumentCoordinator(dependencies) {
       checkedId(documentId);checkedRevision(expectedRevision);
       const now=clock.nowIso();
       return store.transaction(async tx=>{
+        await requireActiveMembership(tx,principal);
         const current=assertCurrent(
           await tx.readDocument({municipalityId:principal.municipality_id,documentId}),
           principal,documentId,expectedRevision
@@ -173,6 +187,7 @@ export function createTrustedDocumentCoordinator(dependencies) {
       checkedId(documentId);checkedRevision(expectedRevision);
       const now=clock.nowIso();
       return store.transaction(async tx=>{
+        await requireActiveMembership(tx,principal);
         const current=assertCurrent(
           await tx.readDocument({municipalityId:principal.municipality_id,documentId}),
           principal,documentId,expectedRevision
