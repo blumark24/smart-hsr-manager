@@ -486,3 +486,8 @@ body.dark #appShell .shell>.side{
  #appShell .lands-head-v2 .lands-head-profile .account-menu{top:calc(100% + 8px)!important;right:0!important;left:auto!important}
 }
 @media(prefers-reduced-motion:reduce){#appShell .lands-head-v2 .lands-head-profile .manager-profile-button,#appShell .account-menu.open{transition:none!important;animation:none!important}}
+
+/* Hidden controls must remain hidden even inside the authorized workspace flyout. */
+#appShell .lands-account-tools .lands-authorized-tool[hidden]{display:none!important}
+#appShell .lands-account-tools .lands-authorized-tool:focus-visible{outline:2px solid #53ca91!important;outline-offset:2px!important}
+#appShell .lands-account-tools .lands-authorized-tool{width:100%!important;display:flex!important;align-items:center!important;gap:8px!important;min-height:38px!important}
