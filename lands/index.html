@@ -7559,7 +7559,7 @@ function aiAnswer(action, scope) {
       return worst ? `الأكثر احتياجًا للمتابعة: قرار رقم ${worst.number} — ${aiAttentionRowText(worst)}.` : "لا توجد قرارات تحتاج متابعة وفق القواعد الحالية.";
     }
     case "map.concentration": {
-      const missing = AutomationEngine.missingDocuments(grants.filter(x => !x.archived));
+      const missing = AutomationEngine.missingDocuments(g.filter(x => !x.archived));
       const byDecision = {};
       missing.forEach(x => { const n = x.allocation_decision?.number || "بدون قرار"; byDecision[n] = (byDecision[n] || 0) + 1; });
       const entries = Object.entries(byDecision).sort((a, b) => b[1] - a[1]);
