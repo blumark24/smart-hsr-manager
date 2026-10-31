@@ -4209,6 +4209,230 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
   #appShell .lands-head-v2 .lands-head-municipality strong{font-size:11px!important}
 }
 </style>
+
+<style id="lands-executive-shell-parity-20261031">
+/* Manager-equivalent executive chrome. Only header, right rail and account
+   dropdown are scoped. Lands data cards, maps, RBAC, SSO and AI stay intact. */
+#appShell .command-header.manager-parity-header {
+  --execInk:#e9f6f2;--execSecondary:#a9c8bc;--execBorder:rgba(122,192,170,.2);
+  --execSurface:linear-gradient(165deg,rgba(15,42,51,.97),rgba(7,27,42,.98));
+  position:sticky!important;top:8px!important;z-index:95!important;
+  background:var(--execSurface)!important;
+  border:1px solid var(--execBorder)!important;
+  border-bottom:2px solid rgba(34,197,94,.4)!important;
+  border-radius:16px!important;
+  color:var(--execInk)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 7px 18px -9px rgba(7,43,36,.42),0 26px 54px -28px rgba(6,33,41,.65)!important;
+  backdrop-filter:blur(22px) saturate(135%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(135%)!important;
+  overflow:visible!important;
+}
+body.dark #appShell .command-header.manager-parity-header {
+  --execSurface:linear-gradient(170deg,rgba(11,26,49,.98),rgba(5,15,33,.99));
+  --execBorder:rgba(122,164,224,.24);
+  --execSecondary:#9bb6cf;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.075),0 7px 18px -9px rgba(0,0,0,.72),0 28px 57px -26px rgba(0,0,0,.85)!important;
+}
+#appShell .lands-head-v2 {
+  display:grid!important;direction:ltr!important;
+  grid-template-columns:minmax(125px,1fr) minmax(110px,auto) minmax(165px,245px) minmax(125px,1fr) minmax(155px,auto)!important;
+  grid-template-areas:"brand theme search municipality profile"!important;
+  align-items:center!important;column-gap:12px!important;row-gap:8px!important;
+  padding:10px 14px!important;
+}
+#appShell .lands-head-v2 .lands-head-brand{grid-area:brand!important;justify-self:start!important}
+#appShell .lands-head-v2 .lands-head-theme{
+  grid-area:theme!important;display:flex!important;justify-self:start!important;
+  align-items:center!important;gap:5px!important;padding:4px 6px!important;
+  border-radius:11px!important;border:1px solid var(--execBorder)!important;
+  background:rgba(4,24,35,.35)!important;color:var(--execInk)!important;
+}
+#appShell .lands-head-v2 .lands-head-theme button{
+  width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;
+  border-radius:9px!important;color:var(--execSecondary)!important;
+}
+#appShell .lands-head-v2 .lands-head-theme button.active {
+  color:#ecfff5!important;background:rgba(36,147,101,.22)!important;
+  box-shadow:inset 0 0 0 1px rgba(100,223,155,.24)!important;
+}
+#appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-status]{color:var(--execInk)!important}
+#appShell .lands-head-v2 .lands-head-clock{
+  display:flex!important;align-items:center!important;gap:6px!important;
+  color:var(--execSecondary)!important;font-size:9.5px!important;direction:rtl!important;
+  white-space:nowrap!important;
+}
+#appShell .lands-head-v2 .lands-head-clock time{font-weight:750;color:var(--execInk)}
+#appShell .lands-head-v2 .lands-head-clock span{border-inline-start:1px solid var(--execBorder);padding-inline-start:6px}
+#appShell .lands-head-v2 .lands-head-search {
+  grid-area:search!important;display:flex!important;align-items:center!important;
+  min-width:0!important;height:36px!important;
+  background:rgba(5,28,37,.46)!important;border:1px solid var(--execBorder)!important;
+  border-radius:10px!important;direction:rtl!important;overflow:hidden!important;
+}
+#appShell .lands-head-v2 .lands-head-search input{
+  flex:1 1 auto;min-width:0;width:100%;height:100%;border:0!important;outline:0;
+  padding:0 10px;background:transparent!important;color:var(--execInk)!important;
+  font-size:10.5px;
+}
+#appShell .lands-head-v2 .lands-head-search input::placeholder{color:var(--execSecondary)}
+#appShell .lands-head-v2 .lands-head-search button{
+  flex:0 0 35px;width:35px;height:34px;display:grid;place-items:center;
+  background:transparent;border:0;color:var(--execInk);
+}
+#appShell .lands-head-v2 .lands-head-search svg{width:16px;height:16px}
+#appShell .lands-head-v2 .lands-head-municipality{
+  grid-area:municipality!important;justify-self:end!important;align-items:flex-end!important;
+  padding:2px 10px!important;border-inline-start:1px solid var(--execBorder)!important;
+}
+#appShell .lands-head-v2 .lands-head-municipality small{color:var(--execSecondary)!important}
+#appShell .lands-head-v2 .lands-head-municipality strong{color:var(--execInk)!important;font-size:12px!important}
+#appShell .lands-head-v2 .lands-head-profile{
+  grid-area:profile!important;justify-self:end!important;display:flex!important;
+  align-items:center!important;gap:8px!important;min-width:0!important;
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-button{
+  background:rgba(7,29,42,.45)!important;border:1px solid var(--execBorder)!important;
+  border-radius:11px!important;min-height:42px!important;max-width:235px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045)!important;color:var(--execInk)!important;
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-copy strong{color:var(--execInk)!important}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-copy small{color:var(--execSecondary)!important}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-button:hover,
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-button[aria-expanded="true"]{
+  background:rgba(61,130,118,.24)!important;border-color:rgba(131,212,180,.38)!important
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-chevron{display:block!important}
+#appShell .lands-head-v2 .lands-head-profile .account-menu{
+  right:0!important;left:auto!important;top:calc(100% + 9px)!important;
+  width:min(335px,calc(100vw - 20px))!important;max-height:min(72dvh,590px)!important;
+  background:linear-gradient(150deg,rgba(9,42,41,.98),rgba(6,32,48,.98))!important;
+  border:1px solid rgba(129,217,178,.22)!important;border-radius:16px!important;
+  box-shadow:0 24px 60px -18px rgba(0,0,0,.68)!important;
+  direction:rtl!important;overflow-y:auto!important;
+}
+body.dark #appShell .lands-head-v2 .lands-head-profile .account-menu{
+  background:linear-gradient(150deg,rgba(8,29,52,.99),rgba(5,18,38,.99))!important;
+  border-color:rgba(116,177,239,.2)!important;
+}
+#appShell .account-menu>button{min-height:42px!important;font-size:12px!important}
+#appShell .account-menu .lands-menu-caret{margin-inline-start:auto}
+#appShell .lands-account-tools[hidden],#appShell .lands-readonly-profile[hidden]{display:none!important}
+#appShell .lands-account-tools{padding:5px 6px!important;margin:4px 3px 8px!important;max-height:210px;overflow:auto;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(194,229,206,.12)}
+#appShell .lands-account-tools .lands-authorized-tool{
+  display:block!important;width:100%!important;text-align:right!important;min-height:36px!important;
+  padding:8px 10px!important;border-radius:8px!important;background:transparent!important;
+  border:0!important;color:#e5f7ee!important;font:600 11px/1.5 "Cairo",sans-serif!important;
+}
+#appShell .lands-account-tools .lands-authorized-tool:hover{background:rgba(255,255,255,.09)!important}
+#appShell .sr-only-lands{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}
+#appShell .lands-mobile-nav-toggle{display:none!important}
+@media(min-width:701px){
+  #appShell .shell{
+    display:grid!important;direction:rtl!important;
+    grid-template-columns:254px minmax(0,1fr)!important;
+    max-width:1600px!important;
+  }
+  #appShell .shell>.side{grid-column:1!important;grid-row:1!important}
+  #appShell .shell>.main{grid-column:2!important;grid-row:1!important;min-width:0!important}
+  body.sidebar-collapsed #appShell .shell{grid-template-columns:72px minmax(0,1fr)!important}
+  #appShell .shell>.side{display:flex!important;flex-direction:column!important;overflow-x:hidden!important}
+  #appShell .shell>.side>.nav{flex:0 1 auto!important;overflow-y:auto!important;min-height:0!important}
+}
+#appShell .shell>.side{
+  background:linear-gradient(180deg,rgba(9,47,41,.985),rgba(5,35,29,.995))!important;
+  border-left:1px solid rgba(123,201,160,.2)!important;
+  box-shadow:-12px 20px 38px -34px rgba(2,26,18,.72)!important;
+}
+body.dark #appShell .shell>.side{
+  background:linear-gradient(180deg,rgba(7,27,49,.99),rgba(5,19,38,.99))!important;
+  border-left-color:rgba(122,164,224,.18)!important;
+}
+#appShell .shell>.side .manager-like-nav button.active{
+  background:linear-gradient(100deg,rgba(52,176,109,.17),rgba(255,255,255,.025))!important;
+  box-shadow:inset -3px 0 #54d58d!important;
+}
+#appShell .hsr-blumark-os-signature{
+  display:flex;align-items:center;gap:9px;flex:none;
+  margin-top:auto;padding:12px 10px;border-radius:13px;
+  background:linear-gradient(150deg,rgba(9,77,49,.8),rgba(5,49,39,.84));
+  border:1px solid rgba(112,230,156,.23);color:#eafff3;
+  box-shadow:0 12px 30px -21px rgba(0,0,0,.8);
+}
+#appShell .hsr-blumark-os-mark{
+  flex:none;width:9px;height:9px;border-radius:50%;background:#4ade80;
+  box-shadow:0 0 0 4px rgba(74,222,128,.09);
+}
+#appShell .hsr-blumark-os-signature strong{display:block;direction:ltr;text-align:right;font-size:11.5px;letter-spacing:.09em}
+#appShell .hsr-blumark-os-signature em{font-style:normal;color:#5eef9a}
+#appShell .hsr-blumark-os-signature small{display:block;color:#a9d6bc;font-size:9px;margin-top:3px}
+body.sidebar-collapsed #appShell .hsr-blumark-os-signature{justify-content:center;padding:12px 0}
+body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
+@media(max-width:1250px){
+  #appShell .lands-head-v2{
+    grid-template-columns:minmax(115px,1fr) minmax(190px,auto) minmax(130px,1fr) minmax(150px,auto)!important;
+    grid-template-areas:"brand theme municipality profile" "search search search search"!important;
+  }
+  #appShell .lands-head-v2 .lands-head-search{width:min(440px,100%)!important;justify-self:center!important}
+  #appShell .lands-head-v2 .lands-head-clock .lands-clock-hijri{display:none}
+}
+@media(min-width:701px) and (max-width:1024px){
+  #appShell .shell{grid-template-columns:205px minmax(0,1fr)!important}
+  body.sidebar-collapsed #appShell .shell{grid-template-columns:72px minmax(0,1fr)!important}
+  #appShell .lands-head-v2{
+    grid-template-columns:minmax(90px,1fr) minmax(145px,auto) minmax(110px,1fr) minmax(125px,auto)!important;
+    column-gap:7px!important;padding:8px 9px!important
+  }
+  #appShell .lands-head-v2 .lands-head-clock span{display:none}
+  #appShell .lands-head-v2 .lands-head-weather{max-width:110px!important}
+  #appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-status]{max-width:70px!important}
+  #appShell .lands-head-v2 .lands-head-municipality{padding:2px 5px!important}
+}
+@media(max-width:700px){
+  #appShell .shell{display:block!important;direction:rtl!important}
+  #appShell .shell>.side{
+    display:flex!important;flex-direction:column!important;
+    position:fixed!important;right:0!important;left:auto!important;top:0!important;
+    bottom:0!important;height:100dvh!important;width:min(82vw,310px)!important;
+    z-index:100!important;transform:translateX(102%)!important;
+    overflow-y:auto!important;padding-bottom:max(14px,env(safe-area-inset-bottom))!important;
+  }
+  body.mobile-nav-open #appShell .shell>.side{transform:translateX(0)!important}
+  #appShell .shell>.main{width:100%!important;min-width:0!important}
+  #appShell .lands-head-v2{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-template-areas:"brand profile" "municipality theme" "search search"!important;
+    padding:8px 10px!important;gap:7px 8px!important;
+  }
+  #appShell .lands-head-v2 .lands-head-municipality{justify-self:start!important;align-items:flex-start!important;padding:0!important;border:0!important}
+  #appShell .lands-head-v2 .lands-head-theme{justify-self:end!important;gap:3px!important;padding:3px!important}
+  #appShell .lands-head-v2 .lands-head-clock{display:none!important}
+  #appShell .lands-head-v2 .lands-head-search{width:100%!important;justify-self:stretch!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-button{min-width:0!important;width:auto!important;max-width:175px!important;padding:4px 6px!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-copy{display:flex!important;max-width:95px!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-copy strong{font-size:10px!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-copy small{font-size:8.5px!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-chevron{display:none!important}
+  #appShell .lands-mobile-nav-toggle{
+    display:grid!important;place-items:center!important;flex:none;width:38px;height:38px;
+    border-radius:10px;border:1px solid var(--execBorder);background:rgba(7,29,42,.45);color:var(--execInk)
+  }
+  #appShell .lands-mobile-nav-toggle svg{width:19px;height:19px}
+  #appShell .lands-head-v2 .lands-head-profile .account-menu{
+    position:fixed!important;top:64px!important;right:10px!important;left:auto!important;
+    width:min(335px,calc(100vw - 20px))!important;max-height:calc(100dvh - 86px)!important
+  }
+  #appShell .hsr-blumark-os-signature{margin-top:auto}
+}
+@media(max-width:390px){
+  #appShell .lands-head-v2 .lands-head-brand-name{font-size:11px!important}
+  #appShell .lands-head-v2 .lands-head-profile .manager-profile-copy{display:none!important}
+  #appShell .lands-head-v2 .lands-head-weather{max-width:95px!important}
+  #appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-status]{max-width:62px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #appShell .lands-head-v2,#appShell .shell>.side,#appShell .account-menu{transition:none!important}
+}
+</style>
 <link rel="stylesheet" href="./registry-table.css?v=apple-row-20261016-r2">
 </head>
 <body class="secure-handoff-active">
@@ -4227,30 +4451,11 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
   </section>
 </div>
 <div class="app" id="appShell" hidden>
-  <header class="topbar command-header manager-parity-header" aria-label="رأس مركز إدارة الأراضي والممتلكات">
-    <div class="lands-head-v2">
-      <div class="lands-head-brand" dir="ltr" role="img" aria-label="SMART HSR — سمارت حصر">
-        <img class="lands-head-mark" src="/smart-hsr-mark.svg" alt="" aria-hidden="true" width="35" height="40">
-        <div class="lands-head-wordmark" aria-hidden="true">
-          <div class="lands-head-brand-name"><span class="smart">SMART</span><span class="hsr">HSR</span></div>
-          <span class="lands-head-brand-sub">SMART MUNICIPAL PLATFORM</span>
-        </div>
-      </div>
-      <div class="lands-head-theme lands-theme-segment" aria-label="الطقس والمظهر">
-        <div class="lands-head-weather" data-hsr-weather data-hsr-weather-org-selector="#headerMunicipalityName" aria-label="توقع الطقس">
-          <span data-hsr-weather-status>غير متاح</span>
-          <a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" data-hsr-weather-credit hidden>MET Norway</a>
-        </div>
-        <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
-        <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
-      </div>
-      <div class="lands-head-municipality" aria-label="البلدية الحالية">
-        <small>الجهة البلدية</small>
-        <strong id="headerMunicipalityName">البلدية</strong>
-      </div>
-      <div class="lands-head-profile">
-        <div class="account-menu-wrap">
-          <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف" aria-haspopup="menu" aria-expanded="false" title="ملف الموظف" onclick="toggleAccountMenu(event)">
+  <header class="hsr-manager-header lands-manager-source-header" aria-label="رأس مركز إدارة الأراضي والممتلكات" style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg);border:1px solid var(--hdrBd);border-bottom:2px solid var(--hdrAccentBd);box-shadow:var(--hdrSh);backdrop-filter:blur(22px)">
+  <div class="lands-manager-primary">
+    <div class="hsr-manager-profile-frame lands-head-profile">
+      <div class="account-menu-wrap">
+          <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف ومساحات العمل" aria-haspopup="menu" aria-controls="accountMenu" aria-expanded="false" title="ملف الموظف ومساحة العمل" onclick="toggleAccountMenu(event)">
             <span id="headerProfileAvatar" class="manager-profile-avatar">م</span>
             <span class="manager-profile-copy">
               <strong id="headerProfileName">ملف الموظف</strong>
@@ -4260,6 +4465,11 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
           </button>
           <div id="accountMenu" class="account-menu" role="menu" aria-label="قائمة الحساب">
             <div class="account-menu-summary" id="userInfo"></div>
+            <button id="landsToolsMenuToggle" type="button" role="menuitem" aria-expanded="false" aria-controls="landsAuthorizedTools" onclick="toggleAuthorizedLandsTools(event)"><i data-lucide="layout-dashboard"></i><span>مساحة العمل</span><i class="lands-menu-caret" data-lucide="chevron-down"></i></button>
+            <div id="landsAuthorizedTools" class="lands-account-tools" role="group" aria-label="مساحات العمل المصرح بها" hidden>
+              <button class="lands-authorized-tool" type="button" role="menuitem" onclick="closeAccountMenu();setView('center')"><span>الأراضي والممتلكات</span></button>
+              <button id="managerModeMenuItem" class="lands-authorized-tool" type="button" role="menuitem" onclick="toggleManagerMode();closeAccountMenu()"><span>وضع المدير للأراضي</span></button>
+            </div>
             <button id="landsReadOnlyProfileToggle" type="button" role="menuitem" aria-expanded="false" aria-controls="landsReadOnlyProfileDetails" onclick="toggleReadOnlyLandsProfile(event)"><i data-lucide="contact-round"></i><span>ملفي التعريفي</span></button>
             <div id="landsReadOnlyProfileDetails" class="lands-readonly-profile" role="group" aria-label="بيانات الهوية المؤسسية للعرض فقط" hidden>
               <div class="lands-readonly-row"><span>الاسم</span><strong id="landsReadOnlyName">—</strong></div>
@@ -4269,15 +4479,33 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
               <div class="lands-readonly-row"><span>صلاحية الأراضي</span><strong id="landsReadOnlyLandsRole">—</strong></div>
               <div class="lands-readonly-note">للعرض فقط · يقتصر تعديل بيانات الموظف وصلاحياته على المسؤول المخوّل عبر مركز المستخدمين.</div>
             </div>
-            <button id="managerModeMenuItem" type="button" role="menuitem" onclick="toggleManagerMode();closeAccountMenu()"><i data-lucide="presentation"></i><span>وضع المدير</span></button>
             <button type="button" role="menuitem" onclick="closeAccountMenu();handleLogout()"><i data-lucide="log-out"></i><span>تسجيل الخروج</span></button>
           </div>
         </div>
-      </div>
     </div>
-  </header>
+    <div class="hsr-manager-org-left lands-head-municipality" aria-label="البلدية الحالية">
+      <span class="lands-org-mono" aria-hidden="true">بل</span>
+      <div><strong id="headerMunicipalityName" data-hsr-weather-org>البلدية</strong><small>الجهة البلدية</small></div>
+    </div>
+    <div class="hsr-manager-environment-cluster" aria-label="الطقس والساعة والتاريخ">
+      <div class="hsr-manager-weather-meta" data-hsr-weather data-hsr-weather-org-selector="#headerMunicipalityName" aria-label="حالة الطقس"><i data-lucide="sun-cloud" aria-hidden="true"></i><span data-hsr-weather-status>غير متاح</span><a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" data-hsr-weather-credit hidden>MET Norway</a></div>
+      <div class="hsr-manager-clock-meta" aria-label="الوقت والتاريخ"><time id="headerClockTime">—</time><span class="hsr-manager-clock-detail"><span id="headerHijriDate">—</span><span id="headerGregorianDate">—</span></span></div>
+    </div>
+    <form class="lands-manager-search" role="search" onsubmit="event.preventDefault();runHeaderSearch()"><label class="sr-only-lands" for="headerSearchInput">البحث في سجلات المنح</label><input id="headerSearchInput" type="search" autocomplete="off" placeholder="ابحث في المنح..." aria-label="البحث في سجلات المنح"><button type="submit" aria-label="بحث"><i data-lucide="search"></i></button></form>
+  </div>
+  <div class="lands-manager-secondary">
+    <button id="mobileNavToggle" class="lands-mobile-nav-toggle" type="button" aria-label="فتح القائمة الجانبية اليسرى" aria-controls="landsSidebar" aria-expanded="false" onclick="toggleSidebar()"><i data-lucide="panel-left"></i></button>
+    <div class="lands-manager-theme" aria-label="اختيار النمط">
+      <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
+      <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
+    </div>
+    <div class="lands-head-brand" dir="ltr" role="img" aria-label="SMART HSR — سمارت حصر">
+      <span class="lands-manager-wordmark"><strong>SMART</strong><em>HSR</em><small>SMART MUNICIPAL PLATFORM</small></span><img src="/smart-hsr-mark.svg" alt="" aria-hidden="true" width="30" height="42">
+    </div>
+  </div>
+</header>
   <div class="shell">
-    <aside class="side"><div class="side-identity"><div class="side-identity-copy"><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav manager-like-nav">
+    <aside class="side" id="landsSidebar" aria-label="القائمة الجانبية اليسرى لإدارة الأراضي"><div class="side-identity"><div class="side-identity-copy"><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية اليسرى" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav manager-like-nav">
       <button class="active" data-view="center"><i data-lucide="layout-dashboard"></i><span>لوحة المعلومات</span></button>
       <button data-view="decisions"><i data-lucide="gavel"></i><span>القرارات</span></button>
       <button data-view="documents"><i data-lucide="folder-open"></i><span>المستندات</span></button>
@@ -4287,7 +4515,7 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
       <button data-view="audit" data-review-only><i data-lucide="history"></i><span>سجل العمليات</span></button>
       <button data-view="users" data-admin-only><i data-lucide="users-round"></i><span>مستخدمو الأراضي</span></button>
       <button data-view="assistant"><i data-lucide="sparkles"></i><span>المساعد الذكي</span></button>
-    </nav><div class="side-foot" id="sideFoot"></div></aside>
+    <div class="lands-side-mobility" id="landsMobilitySection" hidden><button type="button" class="lands-side-mobility-toggle" id="landsMobilityToggle" aria-expanded="false" aria-controls="landsMobilityLinks" onclick="toggleLandsMobility(event)"><i data-lucide="car-front"></i><span>المركبات والحركة</span><i class="lands-menu-caret" data-lucide="chevron-down"></i></button><div class="lands-side-mobility-links" id="landsMobilityLinks" hidden></div></div></nav><div class="lands-sidebar-signature" aria-label="نظام سمارت حصر"><img src="/smart-hsr-mark.svg" alt="" aria-hidden="true"><div><strong>SMART <em>HSR</em></strong><small>منصة الخدمات البلدية الذكية</small></div></div><div class="side-foot" id="sideFoot"></div></aside>
     <main class="main" id="main"></main>
   </div>
   <div class="mobile-nav-backdrop" id="mobileNavBackdrop" onclick="closeMobileNav()"></div>
@@ -4301,14 +4529,15 @@ body:not(.dark) .command-header.manager-parity-header .lands-municipality-identi
 </div>
 <button class="ai-trigger" id="aiTrigger" type="button" data-state="idle" aria-label="فتح المساعد الإداري الذكي" onclick="toggleAiPanel()"><span class="ai-face" aria-hidden="true"></span><span class="ai-attention-badge" id="aiAttentionBadge" hidden></span></button>
 <div class="ai-panel glass" id="aiPanel" role="dialog" aria-label="المساعد الإداري الذكي">
-  <div class="ai-panel-head">
-    <div><b>المساعد الذكي</b><small>مساعد تحليلي تشغيلي — دون تنفيذ تلقائي</small></div>
+  <div class="ai-panel-head" id="aiPanelHandle">
+    <div><b>المساعد الذكي</b><small>تحليل سجلات البلدية · قراءة فقط</small></div>
+    <span class="ai-drag-hint" aria-hidden="true">⋮⋮</span>
     <button class="close" onclick="toggleAiPanel()"><i data-lucide="x"></i></button>
   </div>
   <div class="ai-attention-summary" id="aiAttentionSummary" hidden></div>
   <div class="ai-context" id="aiContext"></div>
   <div class="ai-quick-actions" id="aiQuickActions"></div>
-  <div class="ai-thread" id="aiThread"></div>
+  <div class="ai-thread" id="aiThread" role="log" aria-live="polite" aria-relevant="additions text"></div>
   <div class="ai-input-row">
     <input id="aiInput" placeholder="اسأل عن هذا القرار…" oninput="setAiFaceState('listening')" onblur="updateAiIdleState()" onkeydown="if(event.key==='Enter')submitAiQuestion()">
     <button onclick="submitAiQuestion()" aria-label="إرسال"><i data-lucide="send"></i></button>
@@ -4730,6 +4959,8 @@ function toggleSidebar() {
     document.body.classList.toggle("mobile-nav-open");
     const btn = document.getElementById("sidebarToggle");
     if (btn) btn.setAttribute("aria-expanded", String(document.body.classList.contains("mobile-nav-open")));
+    const mobileToggle = document.getElementById("mobileNavToggle");
+    if (mobileToggle) mobileToggle.setAttribute("aria-expanded", String(document.body.classList.contains("mobile-nav-open")));
     return;
   }
   sidebarCollapsed = !sidebarCollapsed;
@@ -4741,6 +4972,8 @@ function closeMobileNav() {
   document.body.classList.remove("mobile-nav-open");
   const btn = document.getElementById("sidebarToggle");
   if (btn && window.matchMedia("(max-width:700px)").matches) btn.setAttribute("aria-expanded", "false");
+  const mobileToggle = document.getElementById("mobileNavToggle");
+  if (mobileToggle) mobileToggle.setAttribute("aria-expanded", "false");
 }
 function toggleAccountMenu(event) {
   if (event) event.stopPropagation();
@@ -4748,8 +4981,18 @@ function toggleAccountMenu(event) {
   const btn = document.getElementById("accountButton");
   if (!menu || !btn) return;
   const open = !menu.classList.contains("open");
-  menu.classList.toggle("open", open);
-  btn.setAttribute("aria-expanded", String(open));
+  if (!open) { closeAccountMenu(); return; }
+  menu.classList.add("open");
+  btn.setAttribute("aria-expanded", "true");
+}
+// Workspaces are supplied by the approved municipal resolver, not duplicated Lands nav tools.
+function toggleAuthorizedLandsTools(event) {
+  if (event) event.stopPropagation();
+  const panel = document.getElementById("landsAuthorizedTools");
+  const trigger = document.getElementById("landsToolsMenuToggle");
+  if (!panel || !trigger || !session) return;
+  panel.hidden = !panel.hidden;
+  trigger.setAttribute("aria-expanded", String(!panel.hidden));
 }
 function toggleReadOnlyLandsProfile(event) {
   if (event) event.stopPropagation();
@@ -4768,6 +5011,10 @@ function closeAccountMenu() {
   if (btn) btn.setAttribute("aria-expanded", "false");
   if (panel) panel.hidden = true;
   if (profileTrigger) profileTrigger.setAttribute("aria-expanded", "false");
+  const tools = document.getElementById("landsAuthorizedTools");
+  const toolsToggle = document.getElementById("landsToolsMenuToggle");
+  if (tools) tools.hidden = true;
+  if (toolsToggle) toolsToggle.setAttribute("aria-expanded", "false");
 }
 // وضع المدير — a concise, opt-in Executive GIS View. Toggling it only
 // changes how centerView() renders (see managerModeView()); it reads
@@ -4993,6 +5240,8 @@ async function loadWorkspace() {
 async function refreshWorkspace() { await loadWorkspace(); render(); }
 function updateHeaderDates() {
   const now = new Date();
+  const clockEl = document.getElementById("headerClockTime");
+  if (clockEl) clockEl.textContent = new Intl.DateTimeFormat("ar-SA", { hour:"2-digit", minute:"2-digit", hour12:true }).format(now);
   const gregorian = new Intl.DateTimeFormat("ar-SA-u-ca-gregory", { day:"2-digit", month:"long", year:"numeric" }).format(now);
   const hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", { day:"2-digit", month:"long", year:"numeric" }).format(now);
   const g = document.getElementById("headerGregorianDate");
@@ -5070,12 +5319,26 @@ function renderShellChrome() {
 // Server-resolved workspaces only: no changes to Lands RBAC, shell, or login.
 function clearAuthorizedLandsServices() {
   document.querySelectorAll("#accountMenu [data-hsr-lands-shared]").forEach(el => el.remove());
+  const section=document.getElementById("landsMobilitySection");
+  const links=document.getElementById("landsMobilityLinks");
+  const toggle=document.getElementById("landsMobilityToggle");
+  if(section)section.hidden=true;
+  if(links){links.hidden=true;links.replaceChildren();}
+  if(toggle)toggle.setAttribute("aria-expanded","false");
+}
+function toggleLandsMobility(event) {
+  if(event)event.stopPropagation();
+  const panel=document.getElementById("landsMobilityLinks");
+  const trigger=document.getElementById("landsMobilityToggle");
+  const section=document.getElementById("landsMobilitySection");
+  if(!session||!panel||!trigger||!section||section.hidden||!panel.children.length)return;
+  panel.hidden=!panel.hidden;
+  trigger.setAttribute("aria-expanded",String(!panel.hidden));
 }
 function showAuthorizedLandsServices(workspaces) {
   clearAuthorizedLandsServices();
-  const menu = document.getElementById("accountMenu");
-  const before = document.getElementById("managerModeMenuItem");
-  if (!menu || !before || !Array.isArray(workspaces)) return;
+  const workspaceGroup = document.getElementById("landsAuthorizedTools");
+  if (!workspaceGroup || !Array.isArray(workspaces)) return;
   const safeRoute = /^[a-z0-9-]+\.html(\?mode=mobility)?$/;
   const approvedServices = new Set(["field", "mobility", "admin_affairs"]);
   const unique = new Set();
@@ -5085,14 +5348,6 @@ function showAuthorizedLandsServices(workspaces) {
     && (unique.add(ws.id), true)
   );
   if (!destinations.length || !workspaces.some(ws => ws && ws.id === "lands")) return;
-  const label = document.createElement("div");
-  label.dataset.hsrLandsShared = "label";
-  label.textContent = "خدماتي";
-  Object.assign(label.style, {
-    padding: "9px 9px 4px", fontSize: "10px",
-    fontWeight: "700", color: "rgba(220,240,228,.78)"
-  });
-  menu.insertBefore(label, before);
   for (const ws of destinations) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -5108,7 +5363,19 @@ function showAuthorizedLandsServices(workspaces) {
       // never route to an external app or accept a URL from user input.
       location.assign(new URL("/" + ws.route, location.origin).toString());
     };
-    menu.insertBefore(btn, before);
+    btn.className = "lands-authorized-tool";
+    workspaceGroup.appendChild(btn);
+    if(ws.id==="mobility") {
+      const section=document.getElementById("landsMobilitySection");
+      const links=document.getElementById("landsMobilityLinks");
+      if(section&&links) {
+        const sub=document.createElement("button");
+        sub.type="button";sub.className="lands-mobility-link";
+        sub.textContent=ws.title;
+        sub.onclick=()=>location.assign(new URL("/"+ws.route,location.origin).toString());
+        links.appendChild(sub);section.hidden=false;
+      }
+    }
   }
 }
 
@@ -6970,11 +7237,46 @@ const AutomationEngine = {
       .slice(0, 5);
   }
 };
+// Read-only grounded Lands answers; source: authenticated municipality workspace.
+function answerGroundedLandsQuestion(raw,scope) {
+  const q=String(raw||"").slice(0,400).trim().replace(/[\u064B-\u065F\u0670]/g,"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه");
+  if(!q || /^(افتح|اعرض|اظهر|لخص)\s+(قرار|قطعه|المخطط)/.test(q)) return null;
+  const records=(scope.grants||(scope.grant?[scope.grant]:[])).filter(g=>g&&!g.archived);
+  const st=AutomationEngine.decisionStats(records);
+  const where=scope.kind==="grant"?"المنحة الحالية":scope.kind==="decision"||scope.kind==="digital_twin"?"القرار الحالي":"مساحة العمل";
+  const empty="لا توجد منح في "+where+" حاليًا.";
+  if(scope.kind==="grant" && /ينقص|ناقص|نواقص|اكتمال/.test(q)) {
+    if(!scope.grant)return "لا يوجد ملف منحة محدد.";
+    const fields=scope.grant.completeness.missing;
+    return `اكتمال المنحة ${completenessPercent(scope.grant)}%. ${fields.length?"الحقول الناقصة: "+fields.map(x=>AXIS_LABELS[x]||x).join("، "):"المحاور الأساسية مكتملة"}. المرفقات والموقع منفصلان.`;
+  }
+  if(/مستند|وثائق|وثيقه|مرفق/.test(q))return records.length?`المنح بلا مرفقات في ${where}: ${AutomationEngine.missingDocuments(records).length} من ${records.length}. المرفقات مستقلة عن اكتمال البيانات.`:empty;
+  if(/بدون موقع|بلا موقع|المواقع|الاحداثيات|موقع جغرافي/.test(q))return records.length?`المنح بلا موقع موثّق في ${where}: ${AutomationEngine.noLocationRecords(records).length} من ${records.length}. لا أستنتج إحداثيات غير موثقة.`:empty;
+  if(/مراجعه|مراجعات|المراجعه|قيد المراجعه/.test(q)){
+    if(!session||!mod.canReviewGrant(session.role))return "تفاصيل المراجعات تتطلب صلاحية المراجعة.";
+    return `المنح تحت المراجعة في ${where}: ${records.filter(g=>g.status==="under_review").length}.`;
+  }
+  if(/متاخر|تاخير|اولويات|اولويه|تدخل/.test(q))return records.length?`الملفات المحتاجة للمتابعة وفق قواعد النظام في ${where}: ${AutomationEngine.overdueRecords(records).length} من ${records.length}. ليست مدة تأخير زمنية.`:empty;
+  if(/(كم|عدد|اجمالي|مجموع).*?(القرارات|قرار)/.test(q))return `عدد القرارات في ${where}: ${scope.kind==="overview"?decisionGroups().filter(d=>d.number).length:new Set(records.map(g=>g.allocation_decision?.number).filter(Boolean)).size}.`;
+  if(/(كم|عدد|اجمالي|مجموع).*?(منح|منحه|ملف|سجل)/.test(q))return `عدد المنح في ${where}: ${records.length}.`;
+  if(/(متوسط|نسبه|معدل|كم).*?(اكتمال|انجاز|مكتمل)/.test(q))return records.length?`متوسط اكتمال البيانات في ${where}: ${st.avgPercent}%. المكتملة خارج المراجعة ${st.complete} من ${st.total}. اكتمال البيانات لا يساوي الاعتماد الرسمي.`:empty;
+  if(/نواقص|ناقص|ينقص|استكمال|غير مكتمل|الحقول/.test(q)){
+    const fields=Object.entries(st.missingCounts).sort((a,b)=>b[1]-a[1]).map(([key,count])=>`${AXIS_LABELS[key]||key} (${count})`).join("، ")||"لا توجد نواقص مسجلة";
+    return records.length?`نواقص ${where}: ${fields}. ملفات تحتاج استكمالًا: ${st.needsWork}.`:empty;
+  }
+  if(/ملخص|لخص|تقرير|الوضع|الحاله|حاله|اعطني|احصائيات/.test(q)&&!/^لخص الخريطه/.test(q))
+    return records.length?`ملخص ${where}: ${st.total} منحة، ${st.complete} مكتملة خارج المراجعة، ${st.review} تحت المراجعة، ${st.needsWork} تحتاج استكمالًا؛ متوسط الاكتمال ${st.avgPercent}%. تحليل وصفي فقط.`:empty;
+  return null;
+}
 function aiAnswer(action, scope) {
   const g = scope.grants || (scope.grant ? [scope.grant] : []);
   const { total, complete, review, avgPercent, missingCounts } = AutomationEngine.decisionStats(g);
   const missingLabel = AXIS_LABELS;
   const missingText = Object.entries(missingCounts).map(([k, n]) => `${missingLabel[k] || k} (${n})`).join("، ") || "لا يوجد نقص مسجّل";
+  if ((action.startsWith("review.") || action==="decision.review" || action==="decision.overdue") && (!session || !mod.canReviewGrant(session.role)))
+    return "تفاصيل المراجعات تتطلب صلاحية المراجعة.";
+  const grounded = /^(overview\.|map\.|decision\.|grant\.|review\.|twin\.|report\.)/.test(action) ? null : answerGroundedLandsQuestion(action,scope);
+  if(grounded!==null)return grounded;
   // AI Spatial Brief / AI + GIS actions: free-text Arabic questions are
   // matched against a small set of literal phrasings and translated into
   // the exact same deterministic operations the quick-action buttons call
@@ -6986,7 +7288,7 @@ function aiAnswer(action, scope) {
     if (decisionMatch) {
       const number = decisionMatch[1];
       const exists = reviewModeDecisions.some(d => d.number === number) || grants.some(x => x.allocation_decision?.number === number);
-      if (!exists) return `لا يوجد قرار بالرقم ${number} في بيانات هذه المعاينة.`;
+      if (!exists) return `لا يوجد قرار بالرقم ${number} في البيانات المتاحة للحساب.`;
       openDecision(number);
       return `تم فتح قرار رقم ${number}.`;
     }
@@ -6997,21 +7299,21 @@ function aiAnswer(action, scope) {
     if (decisionTwinMatch) {
       const number = decisionTwinMatch[1];
       const exists = reviewModeDecisions.some(d => d.number === number) || grants.some(x => x.allocation_decision?.number === number);
-      if (!exists) return `لا يوجد قرار بالرقم ${number} في بيانات هذه المعاينة.`;
+      if (!exists) return `لا يوجد قرار بالرقم ${number} في البيانات المتاحة للحساب.`;
       openTwinForDecision(number);
       return `تم عرض منح قرار رقم ${number} على التوأم الرقمي.`;
     }
     const parcelMatch = text.match(/(?:افتح|اعرض)\s+قطعة\s*(?:رقم)?\s*(\d+)/);
     if (parcelMatch) {
       const parcel = domains.parcels.find(p => String(p.reference_id || p.name || "") === parcelMatch[1]);
-      if (!parcel || !parcel.land_grant_id) return `تعذر العثور على قطعة بالرقم ${parcelMatch[1]} مرتبطة بمنحة في بيانات هذه المعاينة.`;
+      if (!parcel || !parcel.land_grant_id) return `تعذر العثور على قطعة بالرقم ${parcelMatch[1]} مرتبطة بمنحة في البيانات المتاحة للحساب.`;
       selectParcelSlot(parcel.id);
       return `تم فتح قطعة ${parcelMatch[1]} على التوأم الرقمي.`;
     }
     const planMatch = text.match(/المخطط\s*(?:رقم)?\s*(\S+)/);
     if (planMatch) {
       const plan = (domains.plans || []).find(p => String(p.reference_id || p.name || "") === planMatch[1]);
-      if (!plan) return `تعذر العثور على مخطط بالرقم ${esc(planMatch[1])} في بيانات هذه المعاينة.`;
+      if (!plan) return `تعذر العثور على مخطط بالرقم ${esc(planMatch[1])} في البيانات المتاحة للحساب.`;
       setTwinPlanFilter(plan.id);
       return `تم تصفية التوأم الرقمي على المخطط ${esc(planMatch[1])}.`;
     }
@@ -7045,7 +7347,7 @@ function aiAnswer(action, scope) {
   switch (action) {
     case "overview.summary": {
       const groups = decisionGroups().filter(x => x.number);
-      return `يوجد ${groups.length} قرار في المعاينة. الإجمالي عبر كل القرارات: ${total} منحة، ${complete} مكتملة، ${review} تحت المراجعة، بمتوسط إنجاز ${avgPercent}%.`;
+      return `يوجد ${groups.length} قرار ضمن بيانات البلدية المتاحة. الإجمالي ${total} منحة، ${complete} مكتملة، ${review} تحت المراجعة، ومتوسط اكتمال ${avgPercent}%.`;
     }
     case "overview.priority": {
       const top = AutomationEngine.missingDocuments(grants.filter(x => !x.archived)).slice(0, 3);
@@ -7104,20 +7406,21 @@ function aiAnswer(action, scope) {
       return gr.completeness.missing.length ? `الحقول الناقصة في هذا الملف: ${gr.completeness.missing.map(m => missingLabel[m] || m).join("، ")}.` : "هذا الملف مكتمل من حيث الحقول الرسمية.";
     }
     case "report.generate":
-      return "هذا نموذج أولي للمعاينة — إنشاء التقارير الفعلي (قراءة وتحليل وتلخيص فقط، دون أي إجراء تلقائي) سيكون متاحًا في الإصدار الإنتاجي بعد اعتماد الصلاحيات المناسبة.";
+      if (!session || !mod.canReviewGrant(session.role)) return "الملخص التنفيذي يتطلب صلاحية المراجعة.";
+      return `ملخص تنفيذي: ${total} منحة، ${complete} مكتملة خارج المراجعة، ${review} تحت المراجعة، ${total-complete-review} تحتاج استكمالًا، ومتوسط اكتمال ${avgPercent}%. أهم المحاور الناقصة: ${missingText}. ملخص وصفي غير معتمد.`;
     default:
       // Genuinely honest fallback: reached only when neither a quick-action
       // id nor any of the literal Arabic phrasings above matched — i.e. this
       // is free-form natural language aiAnswer() has no deterministic
       // handling for. It must never fabricate an analysis-sounding reply.
-      return "خدمة الذكاء الاصطناعي غير مفعلة في هذه البيئة حاليًا.";
+      return "يمكنني تحليل سجلات الأراضي المصرح لك برؤيتها. جرّب: «كم عدد المنح؟»، «ما النواقص؟»، «ما متوسط الاكتمال؟»، «كم منحة بلا موقع؟»، أو «لخص الوضع». لا يوجد نموذج لغوي خارجي مفعّل في هذه النسخة.";
   }
 }
 function submitAiQuestion(rawText, presetAction) {
   const scope = currentAiScope();
   const input = document.getElementById("aiInput");
-  const text = presetAction ? (AI_QUICK_ACTIONS[scope.kind] || []).concat([["إنشاء تقرير تنفيذي", "report.generate"]]).find(([, a]) => a === presetAction)?.[0] || "سؤال" : (input?.value || "").trim();
-  if (!text) return;
+  const text = presetAction ? (AI_QUICK_ACTIONS[scope.kind] || []).concat([["إنشاء تقرير تنفيذي", "report.generate"]]).find(([, a]) => a === presetAction)?.[0] || "سؤال" : (typeof rawText === "string" ? rawText : (input?.value || "")).trim().slice(0,400);
+  if (!text || !session) return;
   aiThread.push({ role: "user", text });
   setAiFaceState("thinking");
   // For a preset quick action, the action id is the canonical string
@@ -7126,10 +7429,12 @@ function submitAiQuestion(rawText, presetAction) {
   // phrasing against it before falling through to the switch's default.
   const answer = aiAnswer(presetAction || text, scope);
   aiThread.push({ role: "bot", text: answer });
+  aiThread = aiThread.slice(-40);
   if (input) input.value = "";
   renderAiThread();
   setAiFaceState("done");
   setTimeout(updateAiIdleState, 1100);
+  return answer;
 }
 // ---- future real-AI integration boundary ----
 // submitAiPrompt(message) is the intended seam for a real AI backend: today
@@ -7142,15 +7447,47 @@ async function submitAiPrompt(message) { return submitAiQuestion(message); }
 function renderAiThread() {
   const el = document.getElementById("aiThread");
   if (!el) return;
-  el.innerHTML = aiThread.length ? aiThread.map(m => `<div class="ai-msg ${m.role}">${esc(m.text)}</div>`).join("") : `<div class="ai-msg bot">مرحبًا — اسأل عن القرار أو الملف الحالي، أو استخدم أحد الإجراءات السريعة أعلاه. الإجابات هنا تعتمد على بيانات معاينة تجريبية فقط.</div>`;
+  el.innerHTML = aiThread.length ? aiThread.map(m => `<div class="ai-msg ${m.role}">${esc(m.text)}</div>`).join("") : `<div class="ai-msg bot">مرحبًا — يمكنني تلخيص قرارات ومنح الأراضي ونواقصها من ${reviewMode ? "بيانات تجريبية محلية" : "سجلات البلدية التي يسمح دورك بعرضها"}. لا أنفذ أي تعديل أو اعتماد.</div>`;
   el.scrollTop = el.scrollHeight;
 }
 function toggleAiPanel(forceOpen) {
   const panel = document.getElementById("aiPanel");
+  if (!panel) return;
   const open = forceOpen !== undefined ? forceOpen : !panel.classList.contains("open");
   panel.classList.toggle("open", open);
   if (open) { renderAiContext(); renderAiThread(); renderAiAttention(); lucide.createIcons(); }
 }
+// Keyboard-friendly and pointer draggable executive assistant; never stores location.
+(function enableAiWindowDrag(){
+  let dragging=false,px=0,py=0,startLeft=0,startTop=0;
+  function clamp(v,min,max){return Math.min(Math.max(v,min),max);}
+  function init(){
+    const panel=document.getElementById("aiPanel"),handle=document.getElementById("aiPanelHandle");
+    if(!panel||!handle)return;
+    handle.addEventListener("pointerdown",e=>{
+      if(e.target.closest("button,a,input"))return;
+      if(window.matchMedia("(max-width:700px)").matches)return;
+      const rect=panel.getBoundingClientRect();
+      startLeft=rect.left;startTop=rect.top;px=e.clientX;py=e.clientY;
+      dragging=true;
+      handle.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    handle.addEventListener("pointermove",e=>{
+      if(!dragging)return;
+      const x=clamp(startLeft+e.clientX-px,8,Math.max(8,innerWidth-panel.offsetWidth-8));
+      const y=clamp(startTop+e.clientY-py,Math.max(8,document.querySelector("#appShell header")?.getBoundingClientRect().bottom||8)+8,Math.max(8,innerHeight-panel.offsetHeight-8));
+      panel.style.setProperty("left",x+"px","important");
+      panel.style.setProperty("top",y+"px","important");
+      panel.style.setProperty("right","auto","important");
+      panel.style.setProperty("bottom","auto","important");
+    });
+    const stop=()=>dragging=false;
+    handle.addEventListener("pointerup",stop);
+    handle.addEventListener("pointercancel",stop);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+})();
 // ---- AI Face states (idle/listening/thinking/done/attention) — a subtle,
 // abstract institutional identity, never a chat-bot mascot. Attention is
 // driven purely by AutomationEngine.attentionItems(), never by the language
@@ -7204,7 +7541,18 @@ document.getElementById("modalBackdrop").onclick = e => { if (e.target.id === "m
 document.addEventListener("click", e => {
   if (!e.target.closest(".account-menu-wrap")) closeAccountMenu();
 });
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  const button = document.getElementById("accountButton");
+  if (document.getElementById("accountMenu")?.classList.contains("open")) {
+    closeAccountMenu();
+    button?.focus();
+  }
+  closeMobileNav();
+});
 applyTheme(localStorage.getItem("slgr-theme") || "light");
+// Keep the executive clock current without changing application state.
+window.setInterval(() => { if (!document.hidden) updateHeaderDates(); }, 60000);
 sidebarCollapsed = localStorage.getItem("slgr-sidebar-collapsed") === "1";
 applySidebarState();
 bindLoginScreen();

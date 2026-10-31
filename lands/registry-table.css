@@ -379,3 +379,115 @@ body .grant-register-table th:last-child,body .grant-register-table td:last-chil
 body .grant-registry-table th:last-child,body .grant-registry-table td:last-child{
   border-inline-start:1px solid var(--grant-row-line)!important;
 }
+
+
+/* SMART HSR — Manager shell parity — 2026-10-31.
+   Scoped visual overrides: preserve municipal datasets, routing, and RBAC. */
+#appShell .command-header.manager-parity-header{
+  width:calc(100% - 24px)!important;max-width:1576px!important;
+  min-height:64px!important;height:auto!important;
+  margin:10px auto 0!important;top:8px!important;padding:0!important;
+  border-radius:16px!important;overflow:visible!important;
+  background:linear-gradient(180deg,#eef5f0,#d7e7db)!important;
+  border:1px solid rgba(30,101,72,.22)!important;border-bottom:2px solid rgba(31,152,83,.45)!important;
+  box-shadow:inset 0 1px 0 #ffffffbd,0 5px 14px -8px #173f2d55,0 24px 54px -27px #17453072!important;
+  backdrop-filter:blur(22px)!important;
+}
+body.dark #appShell .command-header.manager-parity-header{
+  background:linear-gradient(180deg,rgba(17,33,57,.97),rgba(8,20,41,.99))!important;
+  border-color:rgba(122,164,224,.24)!important;border-bottom-color:rgba(34,197,94,.45)!important;
+  box-shadow:inset 0 1px 0 #ffffff12,0 5px 14px -8px #0008,0 26px 54px -22px #000d!important;
+}
+#appShell .lands-head-v2{min-height:64px!important;align-items:center!important;padding:8px 16px!important}
+#appShell .lands-head-v2 .lands-head-clock{
+  display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+  gap:0!important;line-height:1.35!important;white-space:normal!important;color:#466a5c!important;
+}
+#appShell .lands-head-v2 .lands-head-clock time{font-size:11.5px!important;color:#214938!important}
+#appShell .lands-head-v2 .lands-head-clock span,
+#appShell .lands-head-v2 .lands-head-clock .lands-clock-hijri{
+  display:block!important;border:0!important;padding:0!important;white-space:nowrap!important;
+}
+body.dark #appShell .lands-head-v2 .lands-head-clock{color:#a4b8cd!important}
+body.dark #appShell .lands-head-v2 .lands-head-clock time{color:#f1f7ff!important}
+#appShell .lands-head-v2 .lands-head-theme{
+  flex-wrap:wrap!important;border-radius:11px!important;background:rgba(219,237,228,.58)!important;
+  border-color:rgba(25,102,73,.17)!important;
+}
+body.dark #appShell .lands-head-v2 .lands-head-theme{background:rgba(9,26,49,.6)!important;border-color:rgba(122,164,224,.15)!important}
+#appShell .lands-head-v2 .lands-head-weather{background:rgba(241,249,243,.53)!important;border-color:rgba(37,106,72,.16)!important}
+#appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-status]{color:#2e5d49!important}
+body.dark #appShell .lands-head-v2 .lands-head-weather{background:rgba(9,26,48,.8)!important;border-color:rgba(122,164,224,.18)!important}
+body.dark #appShell .lands-head-v2 .lands-head-weather [data-hsr-weather-status]{color:#dcecff!important}
+#appShell .lands-head-v2 .lands-head-municipality small{color:#53776a!important}
+#appShell .lands-head-v2 .lands-head-municipality strong{color:#1c4736!important}
+body.dark #appShell .lands-head-v2 .lands-head-municipality small{color:#a1b6ce!important}
+body.dark #appShell .lands-head-v2 .lands-head-municipality strong{color:#edf4fb!important}
+#appShell .lands-head-v2 .lands-head-brand-name .smart{color:#183d50!important}
+body.dark #appShell .lands-head-v2 .lands-head-brand-name .smart{color:#e9f1fb!important}
+#appShell .lands-head-v2 .lands-head-search{background:rgba(244,250,246,.68)!important;border-color:rgba(36,105,77,.18)!important}
+#appShell .lands-head-v2 .lands-head-search input{color:#244b3b!important}
+#appShell .lands-head-v2 .lands-head-search input::placeholder{color:#688577!important}
+body.dark #appShell .lands-head-v2 .lands-head-search{background:rgba(9,26,48,.76)!important;border-color:rgba(122,164,224,.17)!important}
+body.dark #appShell .lands-head-v2 .lands-head-search input{color:#f0f6ff!important}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-button{
+  min-height:44px!important;border:1px solid transparent!important;border-radius:999px!important;
+  padding:4px 9px!important;background:transparent!important;box-shadow:none!important;
+  transition:transform .18s ease,background .18s ease!important;
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-button:hover,
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-button[aria-expanded=true]{
+  background:rgba(41,137,92,.12)!important;transform:translateY(-1px)!important;
+}
+body.dark #appShell .lands-head-v2 .lands-head-profile .manager-profile-button:hover,
+body.dark #appShell .lands-head-v2 .lands-head-profile .manager-profile-button[aria-expanded=true]{background:rgba(79,145,210,.13)!important}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-avatar{
+  width:36px!important;height:36px!important;min-width:36px!important;flex-basis:36px!important;
+  border-radius:50%!important;background:linear-gradient(145deg,#d9f5e4,#b6e1ca)!important;
+  color:#145d39!important;border:1px solid rgba(28,123,74,.25)!important;
+  box-shadow:0 0 0 3px rgba(34,145,89,.075)!important;
+}
+body.dark #appShell .lands-head-v2 .lands-head-profile .manager-profile-avatar{
+  background:linear-gradient(150deg,#204771,#112c4c)!important;color:#d9edff!important;
+  border-color:rgba(122,164,224,.35)!important;
+}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-copy strong{color:#1e4839!important}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-copy small{color:#5a796d!important}
+body.dark #appShell .lands-head-v2 .lands-head-profile .manager-profile-copy strong{color:#edf4fb!important}
+body.dark #appShell .lands-head-v2 .lands-head-profile .manager-profile-copy small{color:#9db2cc!important}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-chevron{display:block!important}
+#appShell .lands-head-v2 .lands-head-profile .manager-profile-button[aria-expanded=true] .manager-profile-chevron{transform:rotate(180deg)!important}
+#appShell .lands-head-v2 .lands-head-profile .account-menu.open{animation:hsrMenuLift .18s ease-out both!important}
+@keyframes hsrMenuLift{from{opacity:.35;transform:translateY(-7px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+#appShell .shell>.side{
+  border-radius:16px!important;border:1px solid rgba(28,102,70,.19)!important;
+  background:linear-gradient(180deg,#e1f0e6,#cde1d5)!important;
+  box-shadow:inset 0 1px 0 #ffffffc4,-16px 22px 40px -30px #1e5f4760!important;
+}
+body.dark #appShell .shell>.side{
+  background:linear-gradient(180deg,rgba(16,39,66,.99),rgba(6,22,43,.99))!important;
+  border-color:rgba(122,164,224,.2)!important;
+  box-shadow:inset 0 1px 0 #ffffff10,-16px 22px 40px -29px #000a!important;
+}
+#appShell .shell>.side .manager-like-nav button.active{box-shadow:inset -3px 0 #39bc80!important}
+@media(max-width:1250px){#appShell .lands-head-v2 .lands-head-clock .lands-clock-hijri{display:block!important}}
+@media(min-width:701px) and (max-width:1024px){#appShell .lands-head-v2 .lands-head-clock span{display:block!important}}
+@media(max-width:700px){
+ #appShell .command-header.manager-parity-header{width:calc(100% - 12px)!important;margin:6px!important;top:6px!important}
+ #appShell .lands-head-v2{grid-template-columns:minmax(0,1fr) auto!important;
+   grid-template-areas:"brand profile" "municipality municipality" "theme theme" "search search"!important;
+   padding:8px 10px!important;gap:7px 9px!important}
+ #appShell .lands-head-v2 .lands-head-municipality{justify-self:start!important;align-items:flex-start!important;width:100%!important;padding:0 0 4px!important;border:0!important}
+ #appShell .lands-head-v2 .lands-head-theme{justify-self:stretch!important;justify-content:space-between!important;gap:5px!important}
+ #appShell .lands-head-v2 .lands-head-clock{display:flex!important;flex:1 1 100px!important}
+ #appShell .lands-head-v2 .lands-head-clock span{display:block!important}
+ #appShell .lands-head-v2 .lands-head-weather{flex:0 1 125px!important}
+ #appShell .lands-head-v2 .lands-head-profile .manager-profile-button{max-width:190px!important}
+ #appShell .lands-head-v2 .lands-head-profile .account-menu{top:calc(100% + 8px)!important;right:0!important;left:auto!important}
+}
+@media(prefers-reduced-motion:reduce){#appShell .lands-head-v2 .lands-head-profile .manager-profile-button,#appShell .account-menu.open{transition:none!important;animation:none!important}}
+
+/* Hidden controls must remain hidden even inside the authorized workspace flyout. */
+#appShell .lands-account-tools .lands-authorized-tool[hidden]{display:none!important}
+#appShell .lands-account-tools .lands-authorized-tool:focus-visible{outline:2px solid #53ca91!important;outline-offset:2px!important}
+#appShell .lands-account-tools .lands-authorized-tool{width:100%!important;display:flex!important;align-items:center!important;gap:8px!important;min-height:38px!important}
