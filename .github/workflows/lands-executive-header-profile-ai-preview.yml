@@ -1,0 +1,42 @@
+name: SMART HSR Lands Manager header/profile/assistant parity — Preview only
+on:
+  push:
+    branches:
+      - fix/lands-executive-header-profile-ai-safe-20261031
+  pull_request:
+    branches:
+      - test/preview-same-origin-api-gate-20261031
+permissions:
+  contents: read
+jobs:
+  preview-ui-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce a narrow, read-only UI change set
+        shell: bash
+        run: |
+          git diff --name-only 823d9bb218674f2772b8206e3be3e8041b6de3b9 HEAD > /tmp/executive-ui-scope.txt
+          cat /tmp/executive-ui-scope.txt
+          if grep -Ev '^(lands/index\.html|test/lands-executive-header-profile-ai\.test\.cjs|\.github/workflows/lands-executive-header-profile-ai-preview\.yml)$' /tmp/executive-ui-scope.txt; then
+            echo 'FAIL: unauthorized source/config change'; exit 1
+          fi
+      - name: Synthetic profile, theme and AI isolation + established regressions
+        run: |
+          node --test \
+            test/lands-executive-header-profile-ai.test.cjs \
+            test/municipal-weather-zero-cost-preview.test.js \
+            test/manager-lands-completeness-parity.test.cjs \
+            test/manager-lands-gis.test.js \
+            test/lands-document-feedback-preview.test.cjs \
+            test/preview-same-origin-api-contract.test.cjs \
+            test/preview-lands-sso-gate.test.js
+      - name: Security evidence boundary
+        run: |
+          echo "PASS is synthetic only. Final Manager/Lands Desktop/iPad/Mobile visual UAT, account sync and independent PDPL/NCA approvals remain outstanding."

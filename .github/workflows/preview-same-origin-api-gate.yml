@@ -1,0 +1,35 @@
+name: SMART HSR same-origin API security contract — Preview only
+on:
+  push:
+    branches:
+      - test/preview-same-origin-api-gate-20261031
+  pull_request:
+    branches:
+      - fix/lands-document-feedback-preview-20261031
+permissions:
+  contents: read
+jobs:
+  synthetic-api-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify no changes to auth, API, routing or Production
+        shell: bash
+        run: |
+          git diff --name-only be86a1cf681b281510bbac7cec335801fe34336b HEAD > /tmp/same-origin-changed.txt
+          cat /tmp/same-origin-changed.txt
+          if grep -Ev '^(test/preview-same-origin-api-contract\.test\.cjs|\.github/workflows/preview-same-origin-api-gate\.yml)$' /tmp/same-origin-changed.txt; then
+            echo 'FAIL: unexpected source/config mutation'; exit 1
+          fi
+      - name: Synthetic API route and negative authorization contracts
+        run: |
+          node --test test/preview-same-origin-api-contract.test.cjs test/preview-lands-sso-gate.test.js
+      - name: Evidence boundary
+        run: |
+          echo 'These tests use an in-memory handler and stubbed Firebase; they are NOT live HTTP/UAT or municipal approval.'

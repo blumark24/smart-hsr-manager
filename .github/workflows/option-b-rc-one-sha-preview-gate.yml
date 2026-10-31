@@ -1,0 +1,91 @@
+name: SMART HSR Option B — one-SHA municipal RC checks (Preview only)
+on:
+  push:
+    branches:
+      - release-candidate/option-b-one-sha-preview-20261031
+  pull_request:
+    branches:
+      - integration/lands-shell-ai-preview-20261031
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  one-sha-synthetic:
+    name: Integrated source, auth, field, lands, assistant & governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce reviewed source scope against PR #93 baseline
+        shell: bash
+        run: |
+          git diff --name-only aee4250acbe76aebdb1b0a96fff6dda74cee25cc HEAD > /tmp/option-b-rc-diff
+          cat /tmp/option-b-rc-diff
+          # The only runtime UI files added after PR #93 are Lands and Field;
+          # no auth/admin, API, Firebase rules, AI provider or Prod settings.
+          if grep -Ev '^(lands/index\.html|department-head\.html|test/[^/]+|scripts/municipal-release-gate\.cjs|scripts/preview-lands-sso-live-preflight\.cjs|docs/release/[^/]+|\.github/workflows/[^/]+)$' /tmp/option-b-rc-diff; then
+            echo "FAIL: unauthorized runtime/security/production change"; exit 1
+          fi
+          if grep -E '^(api/|firebase/|firestore\.rules|storage\.rules|owner\.html|manager\.html|login\.html|vercel\.json|package(-lock)?\.json|\.env)' /tmp/option-b-rc-diff; then
+            echo "FAIL: protected Auth, IAM, settings or Manager surface"; exit 1
+          fi
+      - name: Node compatibility and gate syntax
+        shell: bash
+        run: |
+          node --version
+          node --check scripts/municipal-release-gate.cjs
+          node --check scripts/preview-lands-sso-live-preflight.cjs
+      - name: Cross-branch comprehensive synthetic regressions (one exact SHA)
+        shell: bash
+        run: |
+          node --test \
+            test/preview-workforce-tab-isolation.test.js \
+            test/preview-lands-sso-gate.test.js \
+            test/preview-municipality-identity-display.test.js \
+            test/municipal-weather-zero-cost-preview.test.js \
+            test/user-center-directory-response-order.test.js \
+            test/manager-lands-completeness-parity.test.cjs \
+            test/manager-lands-digital-record.test.js \
+            test/manager-lands-gis.test.js \
+            test/field-command-center-honest-kpis.test.cjs \
+            test/municipal-release-gate.test.cjs \
+            test/lands-document-feedback-preview.test.cjs \
+            test/preview-same-origin-api-contract.test.cjs \
+            test/lands-executive-header-profile-ai.test.cjs \
+            test/preview-lands-sso-live-preflight.test.cjs
+      - name: Independently emit fail-closed municipal release decision
+        shell: bash
+        run: |
+          node scripts/municipal-release-gate.cjs --report-only
+          echo "Passing synthetic CI is NOT authenticated UAT, data residency clearance or regulator approval."
+
+  browser-local:
+    name: Real Chromium — local synthetic desktop, iPad and mobile
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    needs: one-sha-synthetic
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser tools (without updating repository lockfile)
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps --only-shell chromium
+      - name: Chromium local fixture acceptance — forbidden real API/network calls
+        run: node --test test/lands-browser-visual-acceptance.e2e.cjs
+      - name: Publish fixture-only screenshots for independent UI review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-hsr-option-b-rc-local-ui-screenshots
+          path: test-artifacts/lands-browser/
+          retention-days: 7
+          if-no-files-found: ignore

@@ -1,0 +1,51 @@
+name: SMART HSR Option B — integrated Preview-only regression
+on:
+  push:
+    branches:
+      - integration/option-b-safe-preview-20261031
+  pull_request:
+    branches:
+      - integration/lands-shell-ai-preview-20261031
+      - fix/preview-manager-lands-business-parity-20261030
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  option-b-integration:
+    name: Five-stage code-gate and fail-closed review (not live UAT)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Protect auth, rules, secrets and Production configuration
+        shell: bash
+        run: |
+          git diff --name-only aee4250acbe76aebdb1b0a96fff6dda74cee25cc HEAD > /tmp/option-b-changed-files.txt
+          cat /tmp/option-b-changed-files.txt
+          if grep -E '^(api/|embedded-lands/server/|firestore\.rules$|storage\.rules$|firebase\.json$|vercel\.json$|\.env|\.vercel/|lands/client/lands-client\.js$|owner\.html$|login\.html$)' /tmp/option-b-changed-files.txt; then
+            echo 'FAIL: integration touches auth/data rules or production-related surface'; exit 1
+          fi
+      - name: Validate Manager Lands module and governance tool syntax
+        run: |
+          node --input-type=module --check < manager-lands-adapter.js
+          node --check scripts/municipal-release-gate.cjs
+      - name: Five-phase focused synthetic regression set
+        run: |
+          node --test \
+            test/preview-workforce-tab-isolation.test.js \
+            test/preview-lands-sso-gate.test.js \
+            test/preview-municipality-identity-display.test.js \
+            test/municipal-weather-zero-cost-preview.test.js \
+            test/user-center-directory-response-order.test.js \
+            test/manager-lands-completeness-parity.test.cjs \
+            test/manager-lands-digital-record.test.js \
+            test/manager-lands-gis.test.js \
+            test/field-command-center-honest-kpis.test.cjs \
+            test/municipal-release-gate.test.cjs
+      - name: Record documented NO-GO without falsely failing Preview tests
+        run: node scripts/municipal-release-gate.cjs --report-only

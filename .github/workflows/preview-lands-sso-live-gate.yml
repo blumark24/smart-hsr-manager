@@ -1,0 +1,56 @@
+name: SMART HSR Preview Lands SSO live readiness — fail closed
+on:
+  push:
+    branches:
+      - ops/preview-lands-sso-live-gate-20261031
+  pull_request:
+    branches:
+      - fix/lands-executive-header-profile-ai-safe-20261031
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: 'Exact protected smart-hsr-manager-* Preview URL only (no path or tokens)'
+        type: string
+        required: true
+permissions:
+  contents: read
+jobs:
+  synthetic-readiness-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restrict changes to preview-only read-only gate
+        shell: bash
+        run: |
+          git diff --name-only 74d35cc091f07e23bf3d5c029e165075fc0ee22e HEAD > /tmp/preview-check-files
+          cat /tmp/preview-check-files
+          if grep -Ev '^(scripts/preview-lands-sso-live-preflight\.cjs|test/preview-lands-sso-live-preflight\.test\.cjs|\.github/workflows/preview-lands-sso-live-gate\.yml|docs/release/PREVIEW-SSO-RUNTIME-GATE-2026-10-31\.md)$' /tmp/preview-check-files; then
+            echo 'Unexpected API/Firebase/role/Production source change'; exit 1
+          fi
+      - name: Synthetic preflight verdict and no-credentials regression
+        run: node --test test/preview-lands-sso-live-preflight.test.cjs
+  live-anonymous-preview-check:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: synthetic-readiness-contract
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check exact Preview (NO credentials, no writes, NO Production)
+        env:
+          PREVIEW_URL: ${{ inputs.preview_url }}
+        shell: bash
+        run: |
+          node scripts/preview-lands-sso-live-preflight.cjs "$PREVIEW_URL"
+      - name: Release boundary
+        if: always()
+        run: echo 'Even green preflight never constitutes authenticated UAT or security/privacy approval.'

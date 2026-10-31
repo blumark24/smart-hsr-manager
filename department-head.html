@@ -3435,18 +3435,25 @@ class Component extends DCLogic {
 
     if (st.role === 'dept' && st.screen === 'deptops') {
       const team = this.state.liveEmployees || [];
-      const observations = [];
+      // This surface has no authorized, tenant-scoped Field observations feed
+      // yet. A hard-coded empty array + zero KPIs falsely claims there are no
+      // visual-distortion cases. Show unknown until a verified server contract
+      // and role-scoped live UAT prove an actual case count.
+      const unavailableCaseKpi = (label, status) => ({
+        label, value: '—', delta: 'بيانات الحصر غير متاحة',
+        col: this.sc(status), on: () => this.flash('لم يُربط مصدر حالات الحصر الميداني الموثوق بهذه اللوحة بعد')
+      });
       return { ops: true, bottom: false, title: 'مركز قيادة القسم — ' + (this.state.department || '—'), sub: 'إدارة الحصر الميداني · المنتج النشط: التشوه البصري',
         actions: [],
         kpis: [
-          K('حالات التشوه', observations.length, 'جديد'),
-          K('تحت المعالجة', 0, 'قيد التنفيذ'),
-          K('بانتظار التحقق', 0, 'بانتظار الاعتماد'),
-          K('مغلقة', 0, 'مغلقة'),
+          unavailableCaseKpi('حالات التشوه', 'جديد'),
+          unavailableCaseKpi('تحت المعالجة', 'قيد التنفيذ'),
+          unavailableCaseKpi('بانتظار التحقق', 'بانتظار الاعتماد'),
+          unavailableCaseKpi('مغلقة', 'مغلقة'),
           K('مراقبو القسم', team.length, 'متاحة')
         ],
-        sideATitle: 'حالات التشوه الجارية', sideACount: '0 حالة',
-        sideAEmptyText: 'لا توجد حالات تشوه تشغيلية موثوقة للعرض حالياً.',
+        sideATitle: 'حالات التشوه الجارية', sideACount: 'غير متاح',
+        sideAEmptyText: 'لا يتوفر مصدر موثوق لبيانات حالات التشوه البصري في هذه اللوحة. لا يعني ذلك عدم وجود بلاغات.',
         sideA: [],
         sideBTitle: 'المراقبون في الميدان', sideBCount: '',
         sideBEmptyText: 'لا توجد بيانات مراقبين ميدانية موثوقة للعرض حالياً.',
