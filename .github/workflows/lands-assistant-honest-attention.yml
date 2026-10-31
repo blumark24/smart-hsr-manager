@@ -28,9 +28,38 @@ jobs:
             echo 'BLOCK: unexpected file change'; exit 1
           fi
           git diff --unified=0 900ad89bf45ac29a6f4a240df7b64c1685415cc4 HEAD -- lands/index.html > /tmp/assistant-only.diff
-          if grep -E '^[+-][^+-]' /tmp/assistant-only.diff | grep -E '<header|<aside|class="shell"|firebase|LANDS_EMBEDDED_RUNTIME|/api/|smart-hsr-mark|documentStorage' ; then
+          if grep -E '^[+-][^+-]' /tmp/assistant-only.diff | grep -E 'class="shell"|firebase|LANDS_EMBEDDED_RUNTIME|/api/|smart-hsr-mark|documentStorage' ; then
             echo 'BLOCK: visual shell, API, Auth or storage mutation'; exit 1
           fi
+      - name: Confirm frozen header/sidebar markup byte-for-byte, apart from right-side labels
+        shell: bash
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const cp = require('node:child_process');
+          const original = cp.execFileSync('git', ['show', '900ad89bf45ac29a6f4a240df7b64c1685415cc4:lands/index.html'], {encoding:'utf8'});
+          const current = fs.readFileSync('lands/index.html', 'utf8');
+          function section(source, from, until) {
+            const a=source.indexOf(from),b=source.indexOf(until,a);
+            assert.ok(a>=0 && b>a,'Missing approved shell anchor: '+from);
+            return source.slice(a,b+until.length);
+          }
+          const headerStart='<header class="hsr-manager-header lands-manager-source-header';
+          const originalHeader=section(original,headerStart,'</header>');
+          const expectedHeader=originalHeader
+            .replace('فتح القائمة الجانبية اليسرى','فتح القائمة الجانبية اليمنى')
+            .replace('id="mobileNavToggle" class="lands-mobile-nav-toggle" type="button" aria-label="فتح القائمة الجانبية اليمنى" aria-controls="landsSidebar" aria-expanded="false" onclick="toggleSidebar()"><i data-lucide="panel-left"></i>',
+              'id="mobileNavToggle" class="lands-mobile-nav-toggle" type="button" aria-label="فتح القائمة الجانبية اليمنى" aria-controls="landsSidebar" aria-expanded="false" onclick="toggleSidebar()"><i data-lucide="panel-right"></i>');
+          assert.equal(section(current,headerStart,'</header>'),expectedHeader,'Header and logo must be unchanged');
+          const sideStart='<aside class="side" id="landsSidebar"';
+          const originalSide=section(original,sideStart,'</aside>');
+          const expectedSide=originalSide
+            .replace('القائمة الجانبية اليسرى لإدارة الأراضي','القائمة الجانبية اليمنى لإدارة الأراضي')
+            .replace('فتح أو طي القائمة الجانبية اليسرى','فتح أو طي القائمة الجانبية اليمنى');
+          assert.equal(section(current,sideStart,'</aside>'),expectedSide,'Approved sidebar must be unchanged');
+          console.log('PASS: exact frozen header/sidebar markup except approved right-label fixes');
+          NODE
       - name: Assistant real-function fixture tests and established Lands regression contracts
         run: |
           node --test \
