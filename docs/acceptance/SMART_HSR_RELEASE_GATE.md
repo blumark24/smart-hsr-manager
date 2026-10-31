@@ -11,7 +11,7 @@
 |---|---|---|
 | Production البلدي | `smart.blumark24.com` | SHA `c07ec531de800a405e2d168e97c3dc492a622bdc`، **ممنوع المساس به** |
 | RC دمج التطويرات | [Draft PR #103](https://github.com/blumark24/smart-hsr-manager/pull/103) | SHA `900ad89bf45ac29a6f4a240df7b64c1685415cc4`؛ بدون دمج |
-| تصحيح مساعد الأراضي | [Draft PR #107](https://github.com/blumark24/smart-hsr-manager/pull/107) | SHA `182e73d3ff3d437df8b06ef75c1ccc03f22b6641`، مبني فوق RC؛ اختبارات محلية فقط |
+| تصحيح مساعد الأراضي | [Draft PR #107](https://github.com/blumark24/smart-hsr-manager/pull/107) | SHA `4091aab6ef1fdfe44b2e0545021e026cef530ff5`، مبني فوق RC؛ اختبارات محلية فقط |
 | الأمن والقبول | [#73](https://github.com/blumark24/smart-hsr-manager/issues/73) و[#75](https://github.com/blumark24/smart-hsr-manager/issues/75) | العوائق موثقة |
 | نشر Preview جديد | Vercel | إنشاء مشروع منعته صلاحيات الفريق **403**؛ العزل لم يثبت |
 
@@ -69,7 +69,7 @@
 
 | Criterion | SHA | Environment | Test account/role (synthetic only) | Result | Evidence URL | P0/P1 | Reviewer | Date |
 |---|---|---|---|---|---|---|---|---|
-| LAND-SIDEBAR-RTL | pending | synthetic-local | synthetic | PASS source + browser | Actions #41210297407 | — | pending | 2026-10-31 |
+| LAND-SIDEBAR-RTL | pending | synthetic-local | synthetic | PASS source + browser | Actions #41214309310 | — | pending | 2026-10-31 |
 | AUTH-U1-U8 | pending | isolated-preview | pending | NOT EVALUATED | — | P0 | pending | — |
 | LANDS-STORAGE-LIFECYCLE | pending | isolated-preview | pending | NOT EVALUATED | — | P1 | pending | — |
 | ENV-DATA-SEPARATION | pending | isolated-preview | pending | BLOCKED | Vercel permissions / #73 | P0 | pending | — |
