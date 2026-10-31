@@ -5,6 +5,7 @@ on:
       - integration/option-b-safe-preview-20261031
   pull_request:
     branches:
+      - integration/lands-shell-ai-preview-20261031
       - fix/preview-manager-lands-business-parity-20261030
   workflow_dispatch:
 permissions:
