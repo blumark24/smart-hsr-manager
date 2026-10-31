@@ -71,7 +71,8 @@ async function runViewport(browser,base,v){
   assert.equal(await page.locator('#aiPanel').getAttribute('aria-hidden'),'false');
   await page.locator('#aiInput').fill('كم عدد المنح؟');
   await page.locator('#aiInput').press('Enter');
-  await page.waitForFunction(()=>document.querySelector('#aiThread')?.textContent?.includes('منحة'),null,{timeout:7000});
+  await page.waitForFunction(()=>/منح|منحة/.test(document.querySelector('#aiThread .ai-msg.bot')?.textContent||''),null,{timeout:7000});
+  assert.match(await page.locator('#aiThread .ai-msg.bot').last().innerText(),/منح|منحة/);
   await page.screenshot({path:path.join(out,v.name+'-assistant.png'),fullPage:false});
   // Only mutate in-memory synthetic localhost fixtures to test privacy reset.
   await page.evaluate(()=>{session={...session,firebaseUid:'synthetic-other',municipalityId:'synthetic-other',role:'lands_employee'};renderShellChrome();});
