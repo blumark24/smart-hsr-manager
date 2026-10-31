@@ -1,0 +1,42 @@
+name: SMART HSR Lands document coordinator — isolated contract tests
+on:
+  push:
+    branches:
+      - feature/lands-document-server-orchestrator-isolated-20261031
+  pull_request:
+    branches:
+      - design/lands-document-verified-lifecycle-20261031
+permissions:
+  contents: read
+jobs:
+  isolated-document-coordinator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scope guard — no active API, Firebase, Storage permissions, Production or UI changes
+        shell: bash
+        run: |
+          git diff --name-only a395b62eaa86c69cbbb7e65ac53f18fe30a1116d HEAD >/tmp/lands-document-coordinator-scope
+          cat /tmp/lands-document-coordinator-scope
+          if grep -Ev '^(embedded-lands/server/document-lifecycle-policy\.js|embedded-lands/server/document-lifecycle-coordinator\.js|test/lands-document-coordinator-isolated\.test\.js|docs/release/LANDS-DOCUMENT-SERVER-COORDINATOR-REVIEW-2026-10-31\.md|\.github/workflows/lands-document-coordinator-isolated\.yml)$' /tmp/lands-document-coordinator-scope; then
+            echo 'FAIL: out-of-scope runtime, Auth, Firebase or Production change'; exit 1
+          fi
+      - name: Node ESM syntax and isolated test suite
+        run: |
+          node --check embedded-lands/server/document-lifecycle-coordinator.js
+          node --check embedded-lands/server/document-lifecycle-policy.js
+          node --test \
+            test/lands-document-coordinator-isolated.test.js \
+            test/lands-document-lifecycle-contract.test.js \
+            test/lands-document-failure-injection-hold.test.cjs \
+            test/lands-document-feedback-preview.test.cjs
+      - name: Emit deployment hold
+        run: |
+          echo 'NO-GO: no actual Firebase/Storage adapters, HTTP endpoints or authorized live credentialed tests.'
+          echo 'DO NOT PROMOTE: PR #103 frozen, Production unchanged, P1 document create/replace open.'
