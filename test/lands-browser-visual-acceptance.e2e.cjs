@@ -67,7 +67,20 @@ async function runViewport(browser,base,v){
    assert.ok(b.html<=3,v.name+'/'+theme+': html overflow '+b.html);
    assert.ok(b.header.left>=-2&&b.header.right<=v.width+2,v.name+'/'+theme+': header exceeds viewport');
   }
-  await page.locator('#aiTrigger').click();
+  const triggerVisibility = await page.evaluate(() => {
+    const el=document.getElementById('aiTrigger'),style=getComputedStyle(el),box=el.getBoundingClientRect();
+    return { display:style.display, visibility:style.visibility, opacity:style.opacity,
+      width:box.width,height:box.height,x:box.x,y:box.y, body:document.body.className,
+      mobile:matchMedia('(max-width:700px)').matches };
+  });
+  process.stdout.write('AI_TRIGGER_VISIBILITY='+v.name+' '+JSON.stringify(triggerVisibility)+'\n');
+  if (triggerVisibility.mobile) {
+    // Mobile intentionally hides the floating trigger; use its real bottom navigation.
+    await page.locator('#mobileBottomNav button[onclick="openAiPanel()"]').click();
+  } else {
+    assert.equal(triggerVisibility.visibility,'visible',v.name+': assistant trigger unexpectedly hidden');
+    await page.locator('#aiTrigger').click();
+  }
   assert.equal(await page.locator('#aiPanel').getAttribute('aria-hidden'),'false');
   await page.locator('#aiInput').fill('كم عدد المنح؟');
   await page.locator('#aiInput').press('Enter');
