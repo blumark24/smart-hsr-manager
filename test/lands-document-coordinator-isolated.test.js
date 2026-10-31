@@ -19,13 +19,17 @@ function setup({onInspect}={}) {
   const state={
     docs:new Map(),requests:new Map(),
     parents:new Map([[tenant+'/landGrants/'+parentId,{id:parentId,municipality_id:tenant,created_by:employee}]]),
-    audit:[],objects:new Map(),inspections:0
+    audit:[],objects:new Map(),inspections:0,revokedActors:new Set()
   };
   const key=(m,id)=>m+'/'+id,reqKey=(m,u,r)=>m+'/'+u+'/'+r;
   const store={
     async transaction(callback){
       const docs=new Map(state.docs),requests=new Map(state.requests),audit=[...state.audit];
       const tx={
+        async assertActiveMembership(principal){
+          return principal.lands_entitled===true && principal.membership_enabled===true &&
+            !state.revokedActors.has(principal.actor_uid);
+        },
         async findByRequest({municipalityId,actorUid,requestId}){
           const id=requests.get(reqKey(municipalityId,actorUid,requestId));
           return id?docs.get(key(municipalityId,id))||null:null;
@@ -208,4 +212,28 @@ test('document metadata is accessible only to its creator inside the verified mu
   assert.equal((await x.coordinator.status({auth:'employee',documentId:a.documentId})).status,'pending');
   await assert.rejects(x.coordinator.status({auth:'other',documentId:a.documentId}),/DOCUMENT_ACTOR_DENIED/);
   await assert.rejects(x.coordinator.status({auth:'outside',documentId:a.documentId}),/DOCUMENT_NOT_FOUND/);
+});
+
+test('revoking membership DURING verified byte inspection prevents final READY transition',async()=>{
+  let x;
+  x=setup({onInspect:async()=>{x.state.revokedActors.add(employee);}});
+  const a=await x.coordinator.begin(x.beginArgs());
+  x.upload(x.document(a.documentId));
+  await assert.rejects(
+    x.coordinator.finish({auth:'employee',documentId:a.documentId,expectedRevision:1}),
+    /DOCUMENT_ROLE_DENIED/
+  );
+  assert.equal(x.document(a.documentId).status,'pending');
+  assert.equal(x.state.audit.length,1);
+});
+
+test('missing transaction-scoped membership gate is a hard error, not a silent bypass',async()=>{
+  const x=setup(),base=x.store.transaction.bind(x.store);
+  x.store.transaction=cb=>base(tx=>{
+    delete tx.assertActiveMembership;
+    return cb(tx);
+  });
+  await assert.rejects(x.coordinator.begin(x.beginArgs()),/DOCUMENT_MEMBERSHIP_GATE_REQUIRED/);
+  assert.equal(x.state.docs.size,0);
+  assert.equal(x.state.audit.length,0);
 });
