@@ -49,7 +49,7 @@ async function runViewport(browser,base,v){
   // while the splash overlay was visible in captured screenshot artifacts.
   const visuallyUnobstructed=()=>page.evaluate(()=>{
     const boot=document.getElementById('bootScreen');
-    const center=document.getElementById('main');
+    const center=document.body.classList.contains('mobile-nav-open')?document.getElementById('landsSidebar'):document.getElementById('main');
     if(!center)return false;
     const bootStyle=boot?getComputedStyle(boot):null;
     if(boot && !boot.hidden && bootStyle.display!=='none' && bootStyle.visibility!=='hidden')
