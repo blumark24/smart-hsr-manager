@@ -4434,6 +4434,122 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
 }
 </style>
 <link rel="stylesheet" href="./registry-table.css?v=apple-row-20261016-r2">
+<style id="lands-executive-parity-accessibility-20261031">
+/* Final, scoped layer for the Manager-sourced Lands executive header.
+   Preserve the approved logo, Manager-like hierarchy and right-side rail.
+   Does not change routes, tenancy, Firebase, business cards or map data. */
+#appShell > header.lands-manager-source-header {
+  box-sizing:border-box;isolation:isolate;width:calc(100% - 20px);margin:8px 10px 0;
+  position:relative;z-index:95;min-width:0;
+}
+#appShell > header.lands-manager-source-header .lands-manager-primary {
+  display:flex;align-items:center;gap:12px;flex:1 1 auto;min-width:0;direction:rtl;
+}
+#appShell > header.lands-manager-source-header .lands-manager-secondary {
+  display:flex;align-items:center;gap:10px;flex:none;min-width:0;
+}
+#appShell > header.lands-manager-source-header .lands-manager-search {
+  display:flex;align-items:center;min-width:120px;max-width:230px;flex:1 1 150px;
+  height:36px;border-radius:10px;overflow:hidden;direction:rtl;
+  background:var(--hdrField,rgba(13,37,52,.6));
+  border:1px solid var(--hdrDiv,rgba(122,164,224,.2));
+}
+#appShell > header.lands-manager-source-header .lands-manager-search input {
+  width:100%;min-width:0;flex:1;background:transparent;border:0;outline:0;
+  padding:6px 10px;color:var(--hdrTx,#eef7f5);font:600 11px "Cairo",sans-serif;
+}
+#appShell > header.lands-manager-source-header .lands-manager-search button {
+  flex:none;width:34px;height:34px;background:transparent;border:0;
+  color:var(--hdrTx2,#bfd3da);cursor:pointer;
+}
+#appShell > header.lands-manager-source-header .hsr-manager-profile-frame {
+  min-width:0;flex:none;padding:3px;border-radius:12px;
+  background:var(--hdrSunk,rgba(4,26,40,.22));
+  border:1px solid var(--hdrDiv,rgba(122,164,224,.2));
+}
+#appShell > header.lands-manager-source-header .manager-profile-button {
+  display:flex;align-items:center;gap:8px;max-width:205px;min-height:40px;
+  border-radius:10px;cursor:pointer;transition:background .16s ease,border-color .16s ease;
+}
+#appShell > header.lands-manager-source-header .manager-profile-button:focus-visible,
+#appShell > header.lands-manager-source-header .account-menu button:focus-visible,
+#appShell > header.lands-manager-source-header .lands-manager-theme button:focus-visible {
+  outline:2px solid #4ad39d!important;outline-offset:2px;
+}
+#appShell > header.lands-manager-source-header .manager-profile-copy {
+  min-width:0;max-width:155px;text-align:right;
+}
+#appShell > header.lands-manager-source-header .manager-profile-copy strong,
+#appShell > header.lands-manager-source-header .manager-profile-copy small {
+  display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#appShell > header.lands-manager-source-header .account-menu {
+  box-sizing:border-box;width:min(342px,calc(100vw - 22px))!important;
+  max-height:min(72dvh,590px)!important;overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+#appShell > header.lands-manager-source-header .lands-readonly-profile {
+  padding:12px!important;margin:7px 2px!important;border-radius:12px;
+}
+#appShell > header.lands-manager-source-header .lands-readonly-row {
+  display:grid;grid-template-columns:92px minmax(0,1fr);gap:9px;align-items:start;
+  font-size:11px;line-height:1.7;padding:6px 0;
+}
+#appShell > header.lands-manager-source-header .lands-readonly-row strong {overflow-wrap:anywhere}
+body:not(.dark) #appShell > header.lands-manager-source-header .account-menu {
+  background:linear-gradient(155deg,#e8f2ed,#dce9e3)!important;
+  border:1px solid #adc9bd!important;color:#17382f!important;
+  box-shadow:0 24px 56px -25px rgba(19,57,52,.42)!important;
+}
+body:not(.dark) #appShell > header.lands-manager-source-header .account-menu>button {
+  color:#21463c!important;
+}
+body:not(.dark) #appShell > header.lands-manager-source-header .account-menu>button:hover {
+  color:#133d30!important;background:rgba(18,116,85,.1)!important;
+}
+body:not(.dark) #appShell > header.lands-manager-source-header .account-menu-summary {
+  border-bottom-color:rgba(21,84,65,.17)!important;
+}
+body:not(.dark) #appShell > header.lands-manager-source-header .account-copy strong,
+body:not(.dark) #appShell > header.lands-manager-source-header .lands-readonly-row strong {color:#13382c!important}
+body:not(.dark) #appShell > header.lands-manager-source-header .account-copy small,
+body:not(.dark) #appShell > header.lands-manager-source-header .lands-readonly-row span,
+body:not(.dark) #appShell > header.lands-manager-source-header .lands-readonly-note {color:#47685a!important}
+body:not(.dark) #appShell > header.lands-manager-source-header .lands-readonly-profile {
+  background:rgba(255,255,255,.53)!important;border:1px solid #c0d6ca!important;
+}
+body.dark #appShell > header.lands-manager-source-header .account-menu {
+  background:linear-gradient(155deg,#0c2439,#08192b)!important;
+  border-color:rgba(142,192,222,.26)!important;
+}
+body.dark #appShell > header.lands-manager-source-header .lands-readonly-profile {
+  background:rgba(141,189,216,.07)!important;border-color:rgba(141,189,216,.2)!important;
+}
+#appShell > header.lands-manager-source-header .lands-manager-theme button[aria-pressed="true"] {
+  box-shadow:inset 0 0 0 1px rgba(80,218,152,.42)!important;
+}
+@media(max-width:1240px){
+  #appShell > header.lands-manager-source-header {flex-wrap:wrap!important;gap:9px!important}
+  #appShell > header.lands-manager-source-header .lands-manager-primary {flex:1 1 100%;justify-content:space-between}
+  #appShell > header.lands-manager-source-header .lands-manager-secondary {width:100%;justify-content:space-between}
+  #appShell > header.lands-manager-source-header .lands-manager-search {flex:1 1 160px;max-width:280px}
+}
+@media(max-width:700px){
+  #appShell > header.lands-manager-source-header {width:calc(100% - 12px);margin:6px;gap:7px!important}
+  #appShell > header.lands-manager-source-header .lands-manager-primary {gap:6px;flex-wrap:wrap}
+  #appShell > header.lands-manager-source-header .hsr-manager-environment-cluster {max-width:100%;min-width:0}
+  #appShell > header.lands-manager-source-header .hsr-manager-clock-detail {display:none!important}
+  #appShell > header.lands-manager-source-header .lands-manager-search {order:9;flex:1 1 100%;max-width:none}
+  #appShell > header.lands-manager-source-header .account-menu {
+    position:fixed!important;top:70px!important;right:10px!important;left:auto!important;
+    max-height:calc(100dvh - 88px)!important;
+  }
+  #appShell > header.lands-manager-source-header .lands-manager-secondary {gap:8px}
+}
+@media(prefers-reduced-motion:reduce) {
+  #appShell > header.lands-manager-source-header .manager-profile-button {transition:none}
+}
+</style>
 </head>
 <body class="secure-handoff-active">
 <div class="auth-screen" id="loginScreen" hidden>
@@ -4455,7 +4571,7 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
   <div class="lands-manager-primary">
     <div class="hsr-manager-profile-frame lands-head-profile">
       <div class="account-menu-wrap">
-          <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف ومساحات العمل" aria-haspopup="menu" aria-controls="accountMenu" aria-expanded="false" title="ملف الموظف ومساحة العمل" onclick="toggleAccountMenu(event)">
+          <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف ومساحات العمل" aria-haspopup="menu" aria-controls="accountMenu" aria-expanded="false" title="ملف الموظف ومساحة العمل" aria-keyshortcuts="ArrowDown" onclick="toggleAccountMenu(event)">
             <span id="headerProfileAvatar" class="manager-profile-avatar">م</span>
             <span class="manager-profile-copy">
               <strong id="headerProfileName">ملف الموظف</strong>
@@ -4463,7 +4579,7 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
             </span>
             <i data-lucide="chevron-down" class="manager-profile-chevron"></i>
           </button>
-          <div id="accountMenu" class="account-menu" role="menu" aria-label="قائمة الحساب">
+          <div id="accountMenu" class="account-menu" role="menu" aria-label="قائمة الحساب والملف الشخصي">
             <div class="account-menu-summary" id="userInfo"></div>
             <button id="landsToolsMenuToggle" type="button" role="menuitem" aria-expanded="false" aria-controls="landsAuthorizedTools" onclick="toggleAuthorizedLandsTools(event)"><i data-lucide="layout-dashboard"></i><span>مساحة العمل</span><i class="lands-menu-caret" data-lucide="chevron-down"></i></button>
             <div id="landsAuthorizedTools" class="lands-account-tools" role="group" aria-label="مساحات العمل المصرح بها" hidden>
@@ -4527,12 +4643,12 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
     <button data-view="reports" data-review-only><i data-lucide="bar-chart-3"></i>تقارير</button>
   </nav>
 </div>
-<button class="ai-trigger" id="aiTrigger" type="button" data-state="idle" aria-label="فتح المساعد الإداري الذكي" onclick="toggleAiPanel()"><span class="ai-face" aria-hidden="true"></span><span class="ai-attention-badge" id="aiAttentionBadge" hidden></span></button>
-<div class="ai-panel glass" id="aiPanel" role="dialog" aria-label="المساعد الإداري الذكي">
+<button class="ai-trigger" id="aiTrigger" type="button" data-state="idle" aria-label="فتح المساعد الإداري الذكي" aria-controls="aiPanel" aria-expanded="false" onclick="toggleAiPanel()"><span class="ai-face" aria-hidden="true"></span><span class="ai-attention-badge" id="aiAttentionBadge" hidden></span></button>
+<div class="ai-panel glass" id="aiPanel" role="dialog" aria-modal="false" aria-label="المساعد الإداري الذكي" aria-hidden="true">
   <div class="ai-panel-head" id="aiPanelHandle">
-    <div><b>المساعد الذكي</b><small>تحليل سجلات البلدية · قراءة فقط</small></div>
+    <div><b>المساعد الذكي</b><small>ملخصات من السجلات المصرح بها · قواعد محلية · قراءة فقط</small></div>
     <span class="ai-drag-hint" aria-hidden="true">⋮⋮</span>
-    <button class="close" onclick="toggleAiPanel()"><i data-lucide="x"></i></button>
+    <button class="close" type="button" aria-label="إغلاق المساعد الذكي" onclick="toggleAiPanel()"><i data-lucide="x"></i></button>
   </div>
   <div class="ai-attention-summary" id="aiAttentionSummary" hidden></div>
   <div class="ai-context" id="aiContext"></div>
@@ -4888,6 +5004,11 @@ async function loadModules() {
 
 // ---- screen management ----
 function showScreen(name) {
+  if (name !== "app") {
+    resetLandsAssistantContext();
+    lastLandsAssistantIdentity = null;
+    closeAccountMenu();
+  }
   const login = document.getElementById("loginScreen");
   const denied = document.getElementById("deniedScreen");
   const app = document.getElementById("appShell");
@@ -4980,8 +5101,15 @@ function toggleAccountMenu(event) {
   const menu = document.getElementById("accountMenu");
   const btn = document.getElementById("accountButton");
   if (!menu || !btn) return;
+  if (!session) return;
   const open = !menu.classList.contains("open");
   if (!open) { closeAccountMenu(); return; }
+  // Header profile opens the full verified identity by default, without a
+  // second hidden click. The user can still collapse the read-only section.
+  const details = document.getElementById("landsReadOnlyProfileDetails");
+  const detailsToggle = document.getElementById("landsReadOnlyProfileToggle");
+  if (details) details.hidden = false;
+  if (detailsToggle) detailsToggle.setAttribute("aria-expanded", "true");
   menu.classList.add("open");
   btn.setAttribute("aria-expanded", "true");
 }
@@ -5217,6 +5345,8 @@ async function consumeSsoHandoff() {
   }
 }
 async function handleLogout() {
+  resetLandsAssistantContext();
+  closeAccountMenu();
   clearAuthorizedLandsServices();
   try { if (client) await client.signOutUser(); } catch { /* best-effort */ }
   session = null; grants = []; domains = { royalOrders: [], allocationDecisions: [], beneficiaries: [], plans: [], parcels: [], documents: [] }; users = []; auditEvents = []; selectedGrantId = null;
@@ -5258,6 +5388,13 @@ function runHeaderSearch() {
   syncRouteToUrl();
 }
 function renderShellChrome() {
+  // Never carry grant/beneficiary text in the assistant across a UID or
+  // municipality change, including same-tab sign-out/sign-in transitions.
+  const identity = session ? String(session.firebaseUid || "review") + ":" + String(session.municipalityId || "demo") : null;
+  if (identity !== lastLandsAssistantIdentity) {
+    resetLandsAssistantContext();
+    lastLandsAssistantIdentity = identity;
+  }
   const roleLabel = ROLE_LABELS[session.role] || "موظف الأراضي والممتلكات";
   // Owner-managed job titles change only the display label, never Lands RBAC.
   const displayRole = typeof session?.identityRoleLabel === "string"
@@ -7115,6 +7252,18 @@ function auditView() {
 // is designed toward: read, analyze, summarize, recommend — never an
 // autonomous write (no approve/delete/status-change action exists here).
 let aiThread = [];
+let lastLandsAssistantIdentity = null;
+function resetLandsAssistantContext() {
+  aiThread = [];
+  const input = document.getElementById("aiInput");
+  if (input) input.value = "";
+  const thread = document.getElementById("aiThread");
+  if (thread) thread.textContent = "";
+  const panel = document.getElementById("aiPanel");
+  if (panel) { panel.classList.remove("open"); panel.setAttribute("aria-hidden", "true"); }
+  const trigger = document.getElementById("aiTrigger");
+  if (trigger) { trigger.dataset.state = "idle"; trigger.setAttribute("aria-expanded", "false"); }
+}
 function currentAiScope() {
   if (currentView === "decisionDetail" && selectedDecisionNumber) {
     const scopedGrants = grants.filter(g => g.allocation_decision?.number === selectedDecisionNumber && !g.archived);
@@ -7488,7 +7637,11 @@ function toggleAiPanel(forceOpen) {
   const panel = document.getElementById("aiPanel");
   if (!panel) return;
   const open = forceOpen !== undefined ? forceOpen : !panel.classList.contains("open");
+  if (open && !session) return;
   panel.classList.toggle("open", open);
+  panel.setAttribute("aria-hidden", String(!open));
+  const trigger = document.getElementById("aiTrigger");
+  if (trigger) trigger.setAttribute("aria-expanded", String(open));
   if (open) { renderAiContext(); renderAiThread(); renderAiAttention(); lucide.createIcons(); }
 }
 // Keyboard-friendly and pointer draggable executive assistant; never stores location.
