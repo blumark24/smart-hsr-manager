@@ -21,7 +21,7 @@
 |---|---|---:|---:|---:|---|---|
 | A | حوكمة AI ومتطلبات سدايا | **3** | 3 | 15 | ملف استعداد داخلي بتاريخ 30 أكتوبر يحدد مسار Blumark24 ومسار البلدية | تحقق الأهلية، مسؤول AI، سجلات المخاطر والمنتجات، النماذج والحوكمة وإثبات الخطوات الرسمية |
 | B | حماية البيانات PDPL | **2** | 2 | 15 | توزيع **مقترح** لمسؤوليات متحكم ومعالج البيانات في الملف | عقد موقّع، بيانات التدفق والغرض/الأساس، الاحتفاظ، الإجراءات وحقوق صاحب البيانات، تقييم أثر حسب النطاق |
-| C | الأمن السيبراني وضوابط NCA | **8** | 8 | 20 | Emulator: **66/66** لعزل Firestore في تقرير 30 أكتوبر؛ `npm audit --omit=dev` سجل Critical/High=0 وModerate=2 | مصفوفة ECC/CCC حسب تطبيقها الفعلي، مراجعة قواعد النشر، الاختبار المستقل، حادثة وتعافي وأدلة IAM |
+| C | الأمن السيبراني وضوابط NCA | **8** | 8 | 20 | Emulator: **66/66** على SHA PR #107 الحالي (57 قواعد + 9 عزل سبع بلديات)؛ والفحص السابق بتاريخ 30 أكتوبر؛ `npm audit --omit=dev` سجل Critical/High=0 وModerate=2 | مصفوفة ECC/CCC حسب تطبيقها الفعلي، مراجعة قواعد النشر، الاختبار المستقل، حادثة وتعافي وأدلة IAM |
 | D | عزل الجهات والدخول والأدوار | **8** | 8 | 15 | اختبارات عزل 7 بلديات محليًا + PR #74 جلسات منفصلة اختبارات 105/105 | Auth وU1–U8 الفعلي، جلسات التبويبات، SSO، منع tenant cross-access مع Firebase Staging منفصل |
 | E | سلامة وموثوقية AI | **5** | 5 | 10 | مساعد الأراضي PR #107: إجابات منضبطة، إخفاء أسماء في الملخصات، 36/36 اختبار محلي | اختبار Vision AI والمورّد الخارجي، سجل Model/Use-Case، الخصوصية وخيارات المراجعة البشرية والفشل |
 | F | القبول الوظيفي والبصري UAT | **3** | 3 | 15 | Chromium ببيانات اصطناعية على الكمبيوتر/الآيباد/الجوال وعرض المساعد | اختبار أدوار حقيقي ببيانات صناعية؛ المدير، الحصر، الأراضي، المستندات، الحركة، الخرائط، التقارير، قبول الجهة |
@@ -40,8 +40,8 @@
 | E03 | [Security / SSO issue #73](https://github.com/blumark24/smart-hsr-manager/issues/73) | أنظمة أدوار وعزل جلسات مرصودة مع فجوات U1 | UAT الحي لم يثبت |
 | E04 | [Acceptance issue #75](https://github.com/blumark24/smart-hsr-manager/issues/75) | مصدر ملاحظات القبول والتصميم | ملاحظات غير مغلقة |
 | E05 | [PR #103 — Integrated release candidate](https://github.com/blumark24/smart-hsr-manager/pull/103) | Draft SHA `900ad89bf45ac29a6f4a240df7b64c1685415cc4` | غير مدمج ولا منشور Preview مطابق |
-| E06 | [PR #107 — Lands assistant](https://github.com/blumark24/smart-hsr-manager/pull/107) | Draft SHA `182e73d3ff3d437df8b06ef75c1ccc03f22b6641` | ليس جزءًا من SHA #103 المنشور، ولم يدمج |
-| E07 | [Actions run #41210297407](https://github.com/blumark24/smart-hsr-manager/actions/runs/41210297407) | 36/36 tests + Chromium synthetic desktop/iPad/mobile PASS | لا اختبارات متصفح لبيانات أو حسابات البلدية الحقيقية |
+| E06 | [PR #107 — Lands assistant](https://github.com/blumark24/smart-hsr-manager/pull/107) | Draft SHA `4091aab6ef1fdfe44b2e0545021e026cef530ff5` | ليس جزءًا من SHA #103 المنشور، ولم يدمج |
+| E07 | [Actions run #41214309310](https://github.com/blumark24/smart-hsr-manager/actions/runs/41214309310) | 36/36 tests + 66/66 local Firestore Emulator rules/isolation tests + Chromium synthetic desktop/iPad/mobile PASS | لا اختبارات متصفح لبيانات أو حسابات البلدية الحقيقية |
 | E08 | Vercel `smart.blumark24.com` 31 أكتوبر | READY at `c07ec531de800a405e2d168e97c3dc492a622bdc` | لا يعني نشر PR #103 أو PR #107 |
 | E09 | Vercel Preview environment variable **metadata only** | وجود نطاق متغيرات Firebase وStorage حساسة في Preview | **لا إثبات فصل عن Production**، لم تُقرأ القيم |
 | E10 | محاولة إنشاء مشروع Preview منفصل في فريق Vercel | `403 Forbidden` | صلاحية مسؤول الفريق مطلوبة، لا إعادة المحاولة على المشروع البلدي |
