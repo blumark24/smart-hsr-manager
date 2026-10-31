@@ -10,6 +10,9 @@ import {
   buildLandsStoragePath,LANDS_DOCUMENT_MAX_BYTES
 } from '../../lands/client/lands-core.js';
 
+// Region validation is a candidate Saudi-resident technical guard,
+// not a substitute for legal, billing or governmental approval.
+const REQUIRED_REGION='ME-CENTRAL2';
 const GEN=/^[1-9][0-9]{0,30}$/;
 const MIME=new Set(['application/pdf','image/jpeg','image/png']);
 function fail() {
@@ -40,11 +43,17 @@ function exactPath({municipalityId,documentId,storagePath,attempt}) {
   } catch {return false;}
 }
 export function createGcsDocumentInspector({bucket}={}) {
-  if(typeof bucket?.file!=='function')fail();
+  if(typeof bucket?.file!=='function'||typeof bucket?.getMetadata!=='function')fail();
   return Object.freeze({
     async inspectAndHash(scope) {
       if(!exactPath(scope))fail();
       try {
+        // Firestore being in Dammam does NOT prove object Storage residency.
+        // Reject unknown/out-of-region buckets BEFORE reading object metadata.
+        const [bucketInfo]=await bucket.getMetadata();
+        if(!bucketInfo||
+           String(bucketInfo.location||'').trim().toUpperCase()!==REQUIRED_REGION||
+           String(bucketInfo.locationType||'').trim().toUpperCase()!=='REGION')fail();
         // First metadata lookup resolves the CURRENT immutable generation.
         const object=bucket.file(scope.storagePath);
         const [head]=await object.getMetadata();

@@ -22,6 +22,8 @@ The adapter is covered by `test/lands-document-firestore-store.test.js`, using a
 
 The branch also now includes `embedded-lands/server/document-gcs-inspector.js` with a trusted, dependency-injected Google Cloud Storage bucket: it checks a canonical tenant-specific attempt object path, pins the exact object generation, downloads those bytes, confirms the metadata size and actual PDF/JPEG/PNG magic signature, hashes bytes with SHA-256, and returns only the minimal proof expected by the coordinator. Provider errors are sanitized and the bucket itself is never chosen by an HTTP caller. The byte verifier is covered by `test/lands-document-gcs-inspector.test.js` with synthetic provider doubles for corrupted content, MIME mismatch, generation mismatch, cross-tenant paths, size limit and failures.
 
+**Saudi region gate (candidate design, not release):** the GCS inspector now reads the **actual bucket metadata** and refuses to access document object bytes unless `location = ME-CENTRAL2` (Dammam) and `locationType = REGION`. It fails closed when the location cannot be verified, is outside KSA, or is a multi-region bucket. Source-level synthetic tests cover incorrect region/missing metadata/unknown type, provider failure, and case variants. Cloud Firestore region is not evidence for a Storage bucket's region. Access to Google Cloud's Dammam region for KSA billing addresses is subject to CNTXT purchase requirements: https://docs.cloud.google.com/docs/dammam-region-access . This guard does not prove cross-region access/logging/backup policies, data classification or official municipal authorization.
+
 This still requires security/data-controller approval of the actual Storage bucket and residency, Firebase project identity, signed upload issuance and application roles. It does not create files, enable uploads, replace existing versions, or import any module into a live API. Real GCS emulator and Staging integration remain outstanding.
 
 ## Required production adapters — NOT included
@@ -39,4 +41,4 @@ This prototype does NOT change the legacy metadata-first client upload, fix the 
 
 Missing parent, unauthorized actor, disabled user, cross-tenant records, same request replay/conflicting file, interrupted upload, missing or tampered object, wrong MIME/generation, audit rollback, stale revision, competing fail/finalize, retry limit, and storage-success/Firestore-failure recovery. Existing policy tests and a synthetic failure-injection reproduction are included.
 
-**Release Candidate PR #103 remains unchanged. No Production or Vercel publishing changes are part of this review.**
+**Release Candidate PR #103 remains unchanged. No Production or Vercel publishing changes are part of this review.** The only `vercel.json` change sets Git auto-deploy to **false for this exact review branch**, with CI comparing all other Vercel settings against the base commit. No runtime routing or secret setting is changed.

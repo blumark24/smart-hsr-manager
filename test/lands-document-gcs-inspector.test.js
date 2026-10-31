@@ -15,9 +15,14 @@ const hex=buf=>createHash('sha256').update(buf).digest('hex');
 
 function fakeBucket({bytes=pdf,mime='application/pdf',generation='42',
   size=String(bytes.length),pinnedGeneration,failDownload=false,
-  failMetadata=false}={}) {
+  failMetadata=false,bucketLocation='ME-CENTRAL2',
+  bucketLocationType='region',failBucketMetadata=false}={}) {
   const calls=[];
   const bucket={
+    async getMetadata() {
+      if(failBucketMetadata)throw Error('SECRET_BUCKET_LOCATION_DETAIL');
+      return [{location:bucketLocation,locationType:bucketLocationType}];
+    },
     file(objectPath,options) {
       calls.push({path:objectPath,generation:options?.generation||null});
       return {
@@ -109,4 +114,27 @@ test('cloud errors are sanitized; no bucket or tenant content disclosed',async()
 
 test('no bucket means fail closed',()=>{
   assert.throws(()=>createGcsDocumentInspector({}),/DOCUMENT_STORAGE_VERIFICATION_FAILED/);
+});
+
+test('rejects non-Dammam, unknown, or non-regional GCS bucket BEFORE object access',async()=>{
+  for(const region of ['US-CENTRAL1','ME-CENTRAL1','EUROPE-WEST1','',null]) {
+    const calls=await denied({bucketLocation:region});
+    assert.equal(calls.length,0);
+  }
+  for(const type of ['multi-region','',null]) {
+    const calls=await denied({bucketLocationType:type});
+    assert.equal(calls.length,0);
+  }
+  const calls=await denied({failBucketMetadata:true});
+  assert.equal(calls.length,0);
+});
+
+test('Dammam metadata in lower or upper case passes regional proof gate',async()=>{
+  const {value}=await inspect({bucketLocation:'me-central2',bucketLocationType:'REGION'});
+  assert.equal(value.storage_path,path);
+});
+
+test('bucket without location read capability fails closed',()=>{
+  assert.throws(()=>createGcsDocumentInspector({bucket:{file(){}}}),
+    /DOCUMENT_STORAGE_VERIFICATION_FAILED/);
 });
