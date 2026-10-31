@@ -14,7 +14,7 @@ SMART HSR منتج متعدد الوحدات لدعم أعمال البلدية:
 |---|---|
 | Production — `smart.blumark24.com` | يعمل على SHA مستقل قديم `c07ec531de800a405e2d168e97c3dc492a622bdc`؛ **لا يُعد ممثلًا لتطويرات PR #103 / #107** |
 | إصدار التسليم المرشح | Draft PR #103 — SHA `900ad89bf45ac29a6f4a240df7b64c1685415cc4`؛ غير مدمج، ولا توجد له معاينة معتمدة على SHA مطابق |
-| صيانة مساعد الأراضي | Draft PR #107 — SHA `182e73d3ff3d437df8b06ef75c1ccc03f22b6641`؛ اختبارات محلية اصطناعية ناجحة، وليس إصدارًا منشورًا |
+| صيانة مساعد الأراضي | Draft PR #107 — SHA `4091aab6ef1fdfe44b2e0545021e026cef530ff5`؛ اختبارات محلية اصطناعية ناجحة، وليس إصدارًا منشورًا |
 | نسخة العمل الخاصة بالتوثيق | فرع منفصل، **وثائق فقط**، ولا يغير أي مصدر برمجي تشغيلي |
 
 هذه الحالة بتاريخ **31 أكتوبر 2026**، ويجب تحديثها من GitHub/Vercel قبل استخدامها في عرض أو تسليم لاحق.
@@ -44,7 +44,7 @@ node --test test/lands-executive-header-profile-ai.test.cjs
 
 ### أدلة الاختبارات السابقة
 
-- **PR #107:** [GitHub Actions — 41210297407](https://github.com/blumark24/smart-hsr-manager/actions/runs/41210297407): **36/36** اختبارًا موجهًا للمساعد وبعض العقود، واختبار Chromium اصطناعي على Desktop / iPad / Mobile نجح.
+- **PR #107:** [GitHub Actions — 41214309310](https://github.com/blumark24/smart-hsr-manager/actions/runs/41214309310): **36/36** اختبارًا موجهًا للمساعد، و**66/66** اختبارًا لقواعد Firestore وعزل سبع بلديات على Emulator تجريبي، واختبار Chromium اصطناعي على Desktop / iPad / Mobile نجح.
 - سجل الأمن والـSSO: [Issue #73](https://github.com/blumark24/smart-hsr-manager/issues/73).
 - سجل الجودة والتسليم: [Issue #75](https://github.com/blumark24/smart-hsr-manager/issues/75).
 - **لا تساوِ** نجاح Source/Emulator أو ظهور Vercel `READY` بنجاح UAT حقيقي أو بمراجعة أمنية مستقلة.
