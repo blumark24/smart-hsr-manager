@@ -1,0 +1,38 @@
+name: SMART HSR Lands document UX integrity — Preview only
+on:
+  push:
+    branches:
+      - fix/lands-document-feedback-preview-20261031
+  pull_request:
+    branches:
+      - integration/option-b-safe-preview-20261031
+permissions:
+  contents: read
+jobs:
+  safe-document-feedback:
+    name: Synthetic document outcome + Lands parity regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scope guard — no RBAC, API, Firebase or config changes
+        shell: bash
+        run: |
+          git diff --name-only bc09ab2274e92e6d28fe8b0ff19280cecc5667b9 HEAD > /tmp/lands-document-change-list
+          cat /tmp/lands-document-change-list
+          if grep -Ev '^(lands/index\.html|test/lands-document-feedback-preview\.test\.cjs|\.github/workflows/lands-document-feedback-preview\.yml)$' /tmp/lands-document-change-list; then
+            echo 'Unexpected modified file — fail closed'; exit 1
+          fi
+      - name: Synthetic document mutation UX cases + core Lands regressions
+        run: |
+          node --test \
+            test/lands-document-feedback-preview.test.cjs \
+            test/manager-lands-completeness-parity.test.cjs \
+            test/manager-lands-digital-record.test.js \
+            test/manager-lands-gis.test.js \
+            test/municipal-weather-zero-cost-preview.test.js
