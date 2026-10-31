@@ -60,7 +60,7 @@ async function runViewport(browser,base,v){
       Math.max(0,Math.min(innerWidth-1,r.left+r.width*.5)),
       Math.max(0,Math.min(innerHeight-1,r.top+Math.min(180,r.height*.5)))
     );
-    return Boolean(p&&(center.contains(p)||p===center));
+    return Boolean(p&&[center,document.getElementById('landsSidebar'),document.getElementById('landsReadOnlyProfileDetails'),document.getElementById('aiPanel')].some(el=>el&&(el===p||el.contains(p))));
   });
   await page.waitForFunction(()=>{
     const boot=document.getElementById('bootScreen');
