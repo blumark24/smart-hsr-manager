@@ -4538,7 +4538,7 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
   <div class="ai-attention-summary" id="aiAttentionSummary" hidden></div>
   <div class="ai-context" id="aiContext"></div>
   <div class="ai-quick-actions" id="aiQuickActions"></div>
-  <div class="ai-thread" id="aiThread"></div>
+  <div class="ai-thread" id="aiThread" role="log" aria-live="polite" aria-relevant="additions text"></div>
   <div class="ai-input-row">
     <input id="aiInput" placeholder="اسأل عن هذا القرار…" oninput="setAiFaceState('listening')" onblur="updateAiIdleState()" onkeydown="if(event.key==='Enter')submitAiQuestion()">
     <button onclick="submitAiQuestion()" aria-label="إرسال"><i data-lucide="send"></i></button>
@@ -7241,11 +7241,46 @@ const AutomationEngine = {
       .slice(0, 5);
   }
 };
+// Read-only grounded Lands answers; source: authenticated municipality workspace.
+function answerGroundedLandsQuestion(raw,scope) {
+  const q=String(raw||"").slice(0,400).trim().replace(/[\u064B-\u065F\u0670]/g,"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه");
+  if(!q || /^(افتح|اعرض|اظهر|لخص)\s+(قرار|قطعه|المخطط)/.test(q)) return null;
+  const records=(scope.grants||(scope.grant?[scope.grant]:[])).filter(g=>g&&!g.archived);
+  const st=AutomationEngine.decisionStats(records);
+  const where=scope.kind==="grant"?"المنحة الحالية":scope.kind==="decision"||scope.kind==="digital_twin"?"القرار الحالي":"مساحة العمل";
+  const empty="لا توجد منح في "+where+" حاليًا.";
+  if(scope.kind==="grant" && /ينقص|ناقص|نواقص|اكتمال/.test(q)) {
+    if(!scope.grant)return "لا يوجد ملف منحة محدد.";
+    const fields=scope.grant.completeness.missing;
+    return `اكتمال المنحة ${completenessPercent(scope.grant)}%. ${fields.length?"الحقول الناقصة: "+fields.map(x=>AXIS_LABELS[x]||x).join("، "):"المحاور الأساسية مكتملة"}. المرفقات والموقع منفصلان.`;
+  }
+  if(/مستند|وثائق|وثيقه|مرفق/.test(q))return records.length?`المنح بلا مرفقات في ${where}: ${AutomationEngine.missingDocuments(records).length} من ${records.length}. المرفقات مستقلة عن اكتمال البيانات.`:empty;
+  if(/بدون موقع|بلا موقع|المواقع|الاحداثيات|موقع جغرافي/.test(q))return records.length?`المنح بلا موقع موثّق في ${where}: ${AutomationEngine.noLocationRecords(records).length} من ${records.length}. لا أستنتج إحداثيات غير موثقة.`:empty;
+  if(/مراجعه|مراجعات|المراجعه|قيد المراجعه/.test(q)){
+    if(!session||!mod.canReviewGrant(session.role))return "تفاصيل المراجعات تتطلب صلاحية المراجعة.";
+    return `المنح تحت المراجعة في ${where}: ${records.filter(g=>g.status==="under_review").length}.`;
+  }
+  if(/متاخر|تاخير|اولويات|اولويه|تدخل/.test(q))return records.length?`الملفات المحتاجة للمتابعة وفق قواعد النظام في ${where}: ${AutomationEngine.overdueRecords(records).length} من ${records.length}. ليست مدة تأخير زمنية.`:empty;
+  if(/(كم|عدد|اجمالي|مجموع).*?(القرارات|قرار)/.test(q))return `عدد القرارات في ${where}: ${scope.kind==="overview"?decisionGroups().filter(d=>d.number).length:new Set(records.map(g=>g.allocation_decision?.number).filter(Boolean)).size}.`;
+  if(/(كم|عدد|اجمالي|مجموع).*?(منح|منحه|ملف|سجل)/.test(q))return `عدد المنح في ${where}: ${records.length}.`;
+  if(/(متوسط|نسبه|معدل|كم).*?(اكتمال|انجاز|مكتمل)/.test(q))return records.length?`متوسط اكتمال البيانات في ${where}: ${st.avgPercent}%. المكتملة خارج المراجعة ${st.complete} من ${st.total}. اكتمال البيانات لا يساوي الاعتماد الرسمي.`:empty;
+  if(/نواقص|ناقص|ينقص|استكمال|غير مكتمل|الحقول/.test(q)){
+    const fields=Object.entries(st.missingCounts).sort((a,b)=>b[1]-a[1]).map(([key,count])=>`${AXIS_LABELS[key]||key} (${count})`).join("، ")||"لا توجد نواقص مسجلة";
+    return records.length?`نواقص ${where}: ${fields}. ملفات تحتاج استكمالًا: ${st.needsWork}.`:empty;
+  }
+  if(/ملخص|لخص|تقرير|الوضع|الحاله|حاله|اعطني|احصائيات/.test(q)&&!/^لخص الخريطه/.test(q))
+    return records.length?`ملخص ${where}: ${st.total} منحة، ${st.complete} مكتملة خارج المراجعة، ${st.review} تحت المراجعة، ${st.needsWork} تحتاج استكمالًا؛ متوسط الاكتمال ${st.avgPercent}%. تحليل وصفي فقط.`:empty;
+  return null;
+}
 function aiAnswer(action, scope) {
   const g = scope.grants || (scope.grant ? [scope.grant] : []);
   const { total, complete, review, avgPercent, missingCounts } = AutomationEngine.decisionStats(g);
   const missingLabel = AXIS_LABELS;
   const missingText = Object.entries(missingCounts).map(([k, n]) => `${missingLabel[k] || k} (${n})`).join("، ") || "لا يوجد نقص مسجّل";
+  if ((action.startsWith("review.") || action==="decision.review" || action==="decision.overdue") && (!session || !mod.canReviewGrant(session.role)))
+    return "تفاصيل المراجعات تتطلب صلاحية المراجعة.";
+  const grounded = /^(overview\.|map\.|decision\.|grant\.|review\.|twin\.|report\.)/.test(action) ? null : answerGroundedLandsQuestion(action,scope);
+  if(grounded!==null)return grounded;
   // AI Spatial Brief / AI + GIS actions: free-text Arabic questions are
   // matched against a small set of literal phrasings and translated into
   // the exact same deterministic operations the quick-action buttons call
@@ -7257,7 +7292,7 @@ function aiAnswer(action, scope) {
     if (decisionMatch) {
       const number = decisionMatch[1];
       const exists = reviewModeDecisions.some(d => d.number === number) || grants.some(x => x.allocation_decision?.number === number);
-      if (!exists) return `لا يوجد قرار بالرقم ${number} في بيانات هذه المعاينة.`;
+      if (!exists) return `لا يوجد قرار بالرقم ${number} في البيانات المتاحة للحساب.`;
       openDecision(number);
       return `تم فتح قرار رقم ${number}.`;
     }
@@ -7268,21 +7303,21 @@ function aiAnswer(action, scope) {
     if (decisionTwinMatch) {
       const number = decisionTwinMatch[1];
       const exists = reviewModeDecisions.some(d => d.number === number) || grants.some(x => x.allocation_decision?.number === number);
-      if (!exists) return `لا يوجد قرار بالرقم ${number} في بيانات هذه المعاينة.`;
+      if (!exists) return `لا يوجد قرار بالرقم ${number} في البيانات المتاحة للحساب.`;
       openTwinForDecision(number);
       return `تم عرض منح قرار رقم ${number} على التوأم الرقمي.`;
     }
     const parcelMatch = text.match(/(?:افتح|اعرض)\s+قطعة\s*(?:رقم)?\s*(\d+)/);
     if (parcelMatch) {
       const parcel = domains.parcels.find(p => String(p.reference_id || p.name || "") === parcelMatch[1]);
-      if (!parcel || !parcel.land_grant_id) return `تعذر العثور على قطعة بالرقم ${parcelMatch[1]} مرتبطة بمنحة في بيانات هذه المعاينة.`;
+      if (!parcel || !parcel.land_grant_id) return `تعذر العثور على قطعة بالرقم ${parcelMatch[1]} مرتبطة بمنحة في البيانات المتاحة للحساب.`;
       selectParcelSlot(parcel.id);
       return `تم فتح قطعة ${parcelMatch[1]} على التوأم الرقمي.`;
     }
     const planMatch = text.match(/المخطط\s*(?:رقم)?\s*(\S+)/);
     if (planMatch) {
       const plan = (domains.plans || []).find(p => String(p.reference_id || p.name || "") === planMatch[1]);
-      if (!plan) return `تعذر العثور على مخطط بالرقم ${esc(planMatch[1])} في بيانات هذه المعاينة.`;
+      if (!plan) return `تعذر العثور على مخطط بالرقم ${esc(planMatch[1])} في البيانات المتاحة للحساب.`;
       setTwinPlanFilter(plan.id);
       return `تم تصفية التوأم الرقمي على المخطط ${esc(planMatch[1])}.`;
     }
@@ -7316,7 +7351,7 @@ function aiAnswer(action, scope) {
   switch (action) {
     case "overview.summary": {
       const groups = decisionGroups().filter(x => x.number);
-      return `يوجد ${groups.length} قرار في المعاينة. الإجمالي عبر كل القرارات: ${total} منحة، ${complete} مكتملة، ${review} تحت المراجعة، بمتوسط إنجاز ${avgPercent}%.`;
+      return `يوجد ${groups.length} قرار ضمن بيانات البلدية المتاحة. الإجمالي ${total} منحة، ${complete} مكتملة، ${review} تحت المراجعة، ومتوسط اكتمال ${avgPercent}%.`;
     }
     case "overview.priority": {
       const top = AutomationEngine.missingDocuments(grants.filter(x => !x.archived)).slice(0, 3);
@@ -7375,20 +7410,21 @@ function aiAnswer(action, scope) {
       return gr.completeness.missing.length ? `الحقول الناقصة في هذا الملف: ${gr.completeness.missing.map(m => missingLabel[m] || m).join("، ")}.` : "هذا الملف مكتمل من حيث الحقول الرسمية.";
     }
     case "report.generate":
-      return "هذا نموذج أولي للمعاينة — إنشاء التقارير الفعلي (قراءة وتحليل وتلخيص فقط، دون أي إجراء تلقائي) سيكون متاحًا في الإصدار الإنتاجي بعد اعتماد الصلاحيات المناسبة.";
+      if (!session || !mod.canReviewGrant(session.role)) return "الملخص التنفيذي يتطلب صلاحية المراجعة.";
+      return `ملخص تنفيذي: ${total} منحة، ${complete} مكتملة خارج المراجعة، ${review} تحت المراجعة، ${total-complete-review} تحتاج استكمالًا، ومتوسط اكتمال ${avgPercent}%. أهم المحاور الناقصة: ${missingText}. ملخص وصفي غير معتمد.`;
     default:
       // Genuinely honest fallback: reached only when neither a quick-action
       // id nor any of the literal Arabic phrasings above matched — i.e. this
       // is free-form natural language aiAnswer() has no deterministic
       // handling for. It must never fabricate an analysis-sounding reply.
-      return "خدمة الذكاء الاصطناعي غير مفعلة في هذه البيئة حاليًا.";
+      return "يمكنني تحليل سجلات الأراضي المصرح لك برؤيتها. جرّب: «كم عدد المنح؟»، «ما النواقص؟»، «ما متوسط الاكتمال؟»، «كم منحة بلا موقع؟»، أو «لخص الوضع». لا يوجد نموذج لغوي خارجي مفعّل في هذه النسخة.";
   }
 }
 function submitAiQuestion(rawText, presetAction) {
   const scope = currentAiScope();
   const input = document.getElementById("aiInput");
-  const text = presetAction ? (AI_QUICK_ACTIONS[scope.kind] || []).concat([["إنشاء تقرير تنفيذي", "report.generate"]]).find(([, a]) => a === presetAction)?.[0] || "سؤال" : (input?.value || "").trim();
-  if (!text) return;
+  const text = presetAction ? (AI_QUICK_ACTIONS[scope.kind] || []).concat([["إنشاء تقرير تنفيذي", "report.generate"]]).find(([, a]) => a === presetAction)?.[0] || "سؤال" : (typeof rawText === "string" ? rawText : (input?.value || "")).trim().slice(0,400);
+  if (!text || !session) return;
   aiThread.push({ role: "user", text });
   setAiFaceState("thinking");
   // For a preset quick action, the action id is the canonical string
@@ -7397,10 +7433,12 @@ function submitAiQuestion(rawText, presetAction) {
   // phrasing against it before falling through to the switch's default.
   const answer = aiAnswer(presetAction || text, scope);
   aiThread.push({ role: "bot", text: answer });
+  aiThread = aiThread.slice(-40);
   if (input) input.value = "";
   renderAiThread();
   setAiFaceState("done");
   setTimeout(updateAiIdleState, 1100);
+  return answer;
 }
 // ---- future real-AI integration boundary ----
 // submitAiPrompt(message) is the intended seam for a real AI backend: today
@@ -7413,7 +7451,7 @@ async function submitAiPrompt(message) { return submitAiQuestion(message); }
 function renderAiThread() {
   const el = document.getElementById("aiThread");
   if (!el) return;
-  el.innerHTML = aiThread.length ? aiThread.map(m => `<div class="ai-msg ${m.role}">${esc(m.text)}</div>`).join("") : `<div class="ai-msg bot">مرحبًا — اسأل عن القرار أو الملف الحالي، أو استخدم أحد الإجراءات السريعة أعلاه. الإجابات هنا تعتمد على بيانات معاينة تجريبية فقط.</div>`;
+  el.innerHTML = aiThread.length ? aiThread.map(m => `<div class="ai-msg ${m.role}">${esc(m.text)}</div>`).join("") : `<div class="ai-msg bot">مرحبًا — يمكنني تلخيص قرارات ومنح الأراضي ونواقصها من ${reviewMode ? "بيانات تجريبية محلية" : "سجلات البلدية التي يسمح دورك بعرضها"}. لا أنفذ أي تعديل أو اعتماد.</div>`;
   el.scrollTop = el.scrollHeight;
 }
 function toggleAiPanel(forceOpen) {
