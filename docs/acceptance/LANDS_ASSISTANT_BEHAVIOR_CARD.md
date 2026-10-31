@@ -1,6 +1,6 @@
 # SMART HSR — بطاقة سلوك مساعد الأراضي / AI Assistant Behavior Card
 
-**الإصدار المرجعي:** Draft [PR #107](https://github.com/blumark24/smart-hsr-manager/pull/107) — `182e73d3ff3d437df8b06ef75c1ccc03f22b6641`.  
+**الإصدار المرجعي:** Draft [PR #107](https://github.com/blumark24/smart-hsr-manager/pull/107) — `4091aab6ef1fdfe44b2e0545021e026cef530ff5`.  
 **حالة البطاقة:** مسودة ضبط سلوك **لمكوّن قائم على قواعد حتمية**، وليست Model Card لنموذج لغوي مدرّب أو إثبات اعتماد تنظيمي.
 
 ## 1. تعريف دقيق
@@ -46,7 +46,7 @@
 
 ## 5. الأدلة والقياس
 
-- [CI الاصطناعي للمساعد والواجهة](https://github.com/blumark24/smart-hsr-manager/actions/runs/41210297407): اختبارات Node **36/36 PASS**، ومتصفح Chromium للكمبيوتر والآيباد والجوال PASS.
+- [CI الاصطناعي للمساعد والواجهة](https://github.com/blumark24/smart-hsr-manager/actions/runs/41214309310): اختبارات Node **36/36 PASS**، واختبارات Firestore Emulator **66/66 PASS** (عزل سبع بلديات)، ومتصفح Chromium للكمبيوتر والآيباد والجوال PASS.
 - [ملف الاختبار](../../test/lands-assistant-honest-attention.test.cjs) يستخدم سجلات مصطنعة في ذاكرة Node ولا يستدعي Auth/Storage/AI خارجيًا.
 - [الواجهة المصدرية](../../lands/index.html) المرجع للمنطق المذكور.
 - **المقاييس المطلوبة لاحقًا:** دقة الإجابة على intent معلوم، حدود تغطية الأسئلة، منع الكشف خارج السياق، زمن الاستجابة، الأخطاء الكاذبة في «المتأخر»، وحالات الاشتباه/الرفض، موثقة بتاريخ وSHA وبيئة اختبار مستقلة.
