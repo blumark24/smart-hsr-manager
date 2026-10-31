@@ -46,7 +46,7 @@ function mockDom() {
   const objects = {};
   const make = id => ({
     id, value: 'stale', textContent: 'sensitive previous employee',
-    hidden: true, classList: {
+    hidden: true, dataset: { state: 'thinking' }, classList: {
       flags: new Set(['open']),
       add(t) { this.flags.add(t); }, remove(t) { this.flags.delete(t); },
       contains(t) { return this.flags.has(t); },
