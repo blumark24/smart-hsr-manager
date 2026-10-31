@@ -24,7 +24,7 @@ jobs:
         run: |
           git diff --name-only a395b62eaa86c69cbbb7e65ac53f18fe30a1116d HEAD >/tmp/lands-document-coordinator-scope
           cat /tmp/lands-document-coordinator-scope
-          if grep -Ev '^(embedded-lands/server/document-lifecycle-policy\.js|embedded-lands/server/document-lifecycle-coordinator\.js|embedded-lands/server/document-firestore-store\.js|embedded-lands/server/document-gcs-inspector\.js|test/lands-document-coordinator-isolated\.test\.js|test/lands-document-gcs-inspector\.test\.js|test/lands-document-firestore-store\.test\.js|docs/release/LANDS-DOCUMENT-SERVER-COORDINATOR-REVIEW-2026-10-31\.md|\.github/workflows/lands-document-coordinator-isolated\.yml)$' /tmp/lands-document-coordinator-scope; then
+          if grep -Ev '^(embedded-lands/server/document-lifecycle-policy\.js|embedded-lands/server/document-lifecycle-coordinator\.js|embedded-lands/server/document-firestore-store\.js|embedded-lands/server/document-gcs-inspector\.js|test/lands-document-coordinator-isolated\.test\.js|test/lands-document-gcs-inspector\.test\.js|test/lands-document-firestore-store\.test\.js|test/lands-document-firestore-emulator\.test\.js|docs/release/LANDS-DOCUMENT-SERVER-COORDINATOR-REVIEW-2026-10-31\.md|\.github/workflows/lands-document-coordinator-isolated\.yml)$' /tmp/lands-document-coordinator-scope; then
             echo 'FAIL: out-of-scope runtime, Auth, Firebase or Production change'; exit 1
           fi
       - name: Node ESM syntax and isolated test suite
@@ -42,3 +42,46 @@ jobs:
         run: |
           echo 'NO-GO: no actual Firebase/Storage adapters, HTTP endpoints or authorized live credentialed tests.'
           echo 'DO NOT PROMOTE: PR #103 frozen, Production unchanged, P1 document create/replace open.'
+
+
+  firestore-emulator:
+    name: Firebase Admin emulator idempotency and role-revocation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: isolated-document-coordinator
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install pinned dependencies without writing a lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Enforce synthetic Firebase target and no credentials
+        shell: bash
+        run: |
+          test -z "$FIREBASE_SERVICE_ACCOUNT"
+          test -z "$GOOGLE_APPLICATION_CREDENTIALS"
+          node --check test/lands-document-firestore-emulator.test.js
+      - name: Real Firestore Emulator — no live project or secret
+        env:
+          CI: 'true'
+          FIREBASE_CLI_DISABLE_UPDATE_CHECK: 'true'
+          XDG_CONFIG_HOME: /tmp/smart-hsr-document-emulator-config
+          FIREBASE_SERVICE_ACCOUNT: ''
+          GOOGLE_APPLICATION_CREDENTIALS: ''
+          GCLOUD_PROJECT: demo-smart-hsr-tests
+        run: |
+          node node_modules/firebase-tools/lib/bin/firebase emulators:exec \
+            --only firestore --project demo-smart-hsr-tests \
+            "node --test test/lands-document-firestore-emulator.test.js"
+      - name: Preserve release HOLD
+        run: |
+          echo 'Emulator pass is NOT signed municipal live UAT, external data compliance or GCS integration.'
+          echo 'NO-GO: no deployment, PR merge or Production modification.'
