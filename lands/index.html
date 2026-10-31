@@ -4451,32 +4451,10 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
   </section>
 </div>
 <div class="app" id="appShell" hidden>
-  <header class="topbar command-header manager-parity-header" aria-label="رأس مركز إدارة الأراضي والممتلكات">
-    <div class="lands-head-v2">
-      <div class="lands-head-brand" dir="ltr" role="img" aria-label="SMART HSR — سمارت حصر">
-        <img class="lands-head-mark" src="/smart-hsr-mark.svg" alt="" aria-hidden="true" width="35" height="40">
-        <div class="lands-head-wordmark" aria-hidden="true">
-          <div class="lands-head-brand-name"><span class="smart">SMART</span><span class="hsr">HSR</span></div>
-          <span class="lands-head-brand-sub">SMART MUNICIPAL PLATFORM</span>
-        </div>
-      </div>
-      <div class="lands-head-theme lands-theme-segment" aria-label="الطقس والوقت والمظهر">
-        <div class="lands-head-weather" data-hsr-weather data-hsr-weather-org-selector="#headerMunicipalityName" aria-label="توقع الطقس">
-          <span data-hsr-weather-status>غير متاح</span>
-          <a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" data-hsr-weather-credit hidden>MET Norway</a>
-        </div>
-        <div class="lands-head-clock" aria-label="الوقت والتاريخ"><time id="headerClockTime">—</time><span id="headerGregorianDate">—</span><span id="headerHijriDate" class="lands-clock-hijri">—</span></div>
-        <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
-        <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
-      </div>
-      <form class="lands-head-search" role="search" onsubmit="event.preventDefault();runHeaderSearch()"><label for="headerSearchInput" class="sr-only-lands">البحث في سجلات المنح</label><input id="headerSearchInput" type="search" autocomplete="off" placeholder="البحث في منح الأراضي…" aria-label="البحث في سجلات منح الأراضي"><button type="submit" aria-label="بحث"><i data-lucide="search"></i></button></form>
-      <div class="lands-head-municipality" aria-label="البلدية الحالية">
-        <small>الجهة البلدية</small>
-        <strong id="headerMunicipalityName">البلدية</strong>
-      </div>
-      <div class="lands-head-profile">
-        <button id="mobileNavToggle" class="lands-mobile-nav-toggle" type="button" aria-label="فتح القائمة الجانبية اليمنى" aria-controls="landsSidebar" aria-expanded="false" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button>
-        <div class="account-menu-wrap">
+  <header class="hsr-manager-header lands-manager-source-header" aria-label="رأس مركز إدارة الأراضي والممتلكات" style="position:relative;z-index:60;min-height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:12px;padding:8px 16px;border-radius:16px;background:var(--hdrBg);border:1px solid var(--hdrBd);border-bottom:2px solid var(--hdrAccentBd);box-shadow:var(--hdrSh);backdrop-filter:blur(22px)">
+  <div class="lands-manager-primary">
+    <div class="hsr-manager-profile-frame lands-head-profile">
+      <div class="account-menu-wrap">
           <button id="accountButton" class="manager-profile-button" type="button" aria-label="ملف الموظف ومساحات العمل" aria-haspopup="menu" aria-controls="accountMenu" aria-expanded="false" title="ملف الموظف ومساحة العمل" onclick="toggleAccountMenu(event)">
             <span id="headerProfileAvatar" class="manager-profile-avatar">م</span>
             <span class="manager-profile-copy">
@@ -4504,11 +4482,30 @@ body.sidebar-collapsed #appShell .hsr-blumark-os-signature>div{display:none}
             <button type="button" role="menuitem" onclick="closeAccountMenu();handleLogout()"><i data-lucide="log-out"></i><span>تسجيل الخروج</span></button>
           </div>
         </div>
-      </div>
     </div>
-  </header>
+    <div class="hsr-manager-org-left lands-head-municipality" aria-label="البلدية الحالية">
+      <span class="lands-org-mono" aria-hidden="true">بل</span>
+      <div><strong id="headerMunicipalityName" data-hsr-weather-org>البلدية</strong><small>الجهة البلدية</small></div>
+    </div>
+    <div class="hsr-manager-environment-cluster" aria-label="الطقس والساعة والتاريخ">
+      <div class="hsr-manager-weather-meta" data-hsr-weather data-hsr-weather-org-selector="#headerMunicipalityName" aria-label="حالة الطقس"><i data-lucide="sun-cloud" aria-hidden="true"></i><span data-hsr-weather-status>غير متاح</span><a href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" data-hsr-weather-credit hidden>MET Norway</a></div>
+      <div class="hsr-manager-clock-meta" aria-label="الوقت والتاريخ"><time id="headerClockTime">—</time><span class="hsr-manager-clock-detail"><span id="headerHijriDate">—</span><span id="headerGregorianDate">—</span></span></div>
+    </div>
+    <form class="lands-manager-search" role="search" onsubmit="event.preventDefault();runHeaderSearch()"><label class="sr-only-lands" for="headerSearchInput">البحث في سجلات المنح</label><input id="headerSearchInput" type="search" autocomplete="off" placeholder="ابحث في المنح..." aria-label="البحث في سجلات المنح"><button type="submit" aria-label="بحث"><i data-lucide="search"></i></button></form>
+  </div>
+  <div class="lands-manager-secondary">
+    <button id="mobileNavToggle" class="lands-mobile-nav-toggle" type="button" aria-label="فتح القائمة الجانبية اليسرى" aria-controls="landsSidebar" aria-expanded="false" onclick="toggleSidebar()"><i data-lucide="panel-left"></i></button>
+    <div class="lands-manager-theme" aria-label="اختيار النمط">
+      <button id="themeDayButton" type="button" aria-label="النمط النهاري" onclick="applyTheme('light')"><i data-lucide="sun"></i><span>نهاري</span></button>
+      <button id="themeNightButton" type="button" aria-label="النمط الليلي" onclick="applyTheme('dark')"><i data-lucide="moon"></i><span>ليلي</span></button>
+    </div>
+    <div class="lands-head-brand" dir="ltr" role="img" aria-label="SMART HSR — سمارت حصر">
+      <span class="lands-manager-wordmark"><strong>SMART</strong><em>HSR</em><small>SMART MUNICIPAL PLATFORM</small></span><img src="/smart-hsr-mark.svg" alt="" aria-hidden="true" width="30" height="42">
+    </div>
+  </div>
+</header>
   <div class="shell">
-    <aside class="side" id="landsSidebar" aria-label="القائمة الجانبية لإدارة الأراضي"><div class="side-identity"><div class="side-identity-copy"><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav manager-like-nav">
+    <aside class="side" id="landsSidebar" aria-label="القائمة الجانبية اليسرى لإدارة الأراضي"><div class="side-identity"><div class="side-identity-copy"><strong>مركز إدارة الأراضي والممتلكات</strong><span>SMART HSR</span></div><button id="sidebarToggle" class="side-rail-toggle" type="button" aria-label="فتح أو طي القائمة الجانبية اليسرى" aria-expanded="true" title="فتح أو طي القائمة" onclick="toggleSidebar()"><i data-lucide="panel-right"></i></button></div><nav class="nav manager-like-nav">
       <button class="active" data-view="center"><i data-lucide="layout-dashboard"></i><span>لوحة المعلومات</span></button>
       <button data-view="decisions"><i data-lucide="gavel"></i><span>القرارات</span></button>
       <button data-view="documents"><i data-lucide="folder-open"></i><span>المستندات</span></button>
