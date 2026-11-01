@@ -165,6 +165,38 @@ jobs:
           }
           if ((counts.critical || 0) + (counts.high || 0) > 0) process.exit(1);
           NODE
+      - name: Ephemeral dependency remediation feasibility (no commit, no deployment)
+        run: |
+          set -eu
+          cp package-lock.json /tmp/smart-hsr-original-package-lock.json
+          # NPM may update only this ephemeral CI checkout; never push or merge.
+          npm audit fix --package-lock-only --ignore-scripts --no-fund --audit-level=high > /tmp/smart-hsr-remediation.log 2>&1 || true
+          npm audit --omit=dev --json > /tmp/smart-hsr-audit-candidate.json || true
+          node <<'NODE'
+          const fs = require('node:fs');
+          const before = JSON.parse(fs.readFileSync('/tmp/smart-hsr-original-package-lock.json', 'utf8'));
+          const after = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          let report = null;
+          try { report = JSON.parse(fs.readFileSync('/tmp/smart-hsr-audit-candidate.json', 'utf8')); } catch {}
+          const changes = [];
+          const allPaths = new Set([...Object.keys(before.packages || {}), ...Object.keys(after.packages || {})]);
+          for (const p of allPaths) {
+            const v0 = before.packages?.[p]?.version || null;
+            const v1 = after.packages?.[p]?.version || null;
+            if (v0 !== v1) changes.push({ package: p || '(root)', from: v0, to: v1 });
+          }
+          const total = report?.metadata?.vulnerabilities;
+          console.log('REMEDIATION_CANDIDATE_AUDIT:', JSON.stringify(total ? {
+            critical: total.critical || 0, high: total.high || 0,
+            moderate: total.moderate || 0, low: total.low || 0
+          } : { inconclusive: true }));
+          console.log('REMEDIATION_LOCKFILE_CHANGED_PACKAGES:', changes.length);
+          for (const x of changes.slice(0, 65)) console.log('REMEDIATION_VERSION_CHANGE:', JSON.stringify(x));
+          if (changes.length > 65) console.log('REMEDIATION_MORE_CHANGES:', changes.length - 65);
+          NODE
+          cp /tmp/smart-hsr-original-package-lock.json package-lock.json
+          git diff --exit-code -- package-lock.json
+          echo "REMEDIATION_PREVIEW_ONLY: no package lockfile committed or deployed"
       - name: Preview Firebase B2 tenant authentication document boundaries
         run: |
           node --test \
