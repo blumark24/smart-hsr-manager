@@ -6184,7 +6184,13 @@ function decisionLogTab(number) {
   const events = auditEvents.filter(e => grantById(e.record_id)?.allocation_decision?.number === number);
   return `<section class="panel"><div class="panel-head"><h2>سجل القرار (Trusted Audit)</h2></div><div class="panel-body timeline">${events.length ? events.map(e => auditEventRow(e)).join("") : `<div class="empty">لا توجد أحداث مسجّلة بعد لهذا القرار</div>`}</div></section>`;
 }
-function maskNationalId(id) { return id ? String(id).replace(/^(\d{3}).*(\d{2})$/, "$1•••••$2") : "—"; }
+function maskNationalId(id) {
+  if (id === null || id === undefined || String(id).trim() === "") return "—";
+  // Display identifiers only as a masked 10-digit value; invalid/foreign
+  // formats must never fall back to rendering a sensitive raw identifier.
+  const value = String(id).trim();
+  return /^\d{10}$/.test(value) ? value.slice(0, 3) + "•••••" + value.slice(-2) : "••••••••••";
+}
 
 // ---- digital file ----
 // Gate 2: renders the SAME 5-axis result presentGrant() already attached
@@ -6461,7 +6467,7 @@ function fileView() {
 
         <div class="dossier-group">
           <div class="dossier-group-title">${icon("user-round")} المستفيد</div>
-          <div class="detail-grid">${detail("الاسم", g.beneficiary?.name || "—")}${detail("السجل المدني", g.beneficiary?.national_id || "—")}</div>
+          <div class="detail-grid">${detail("الاسم", g.beneficiary?.name || "—")}${detail("السجل المدني", maskNationalId(g.beneficiary?.national_id))}</div>
         </div>
 
         <div class="dossier-group">
