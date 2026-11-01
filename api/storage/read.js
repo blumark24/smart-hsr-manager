@@ -114,13 +114,23 @@ async function resolveViewerContext(db, uid) {
     if (['supervisor', 'inspector', 'contractor'].includes(d.role) && activeIsNotFalse(d) && org) {
       return { uid, role: d.role, organizationId: org };
     }
+    // Match the Field Head login contract: the institutional HR role is
+    // authoritative, with canonical Mobility as a legacy fallback. HR may
+    // store only administration; a populated department still takes priority
+    // so conflicting assignments cannot widen Field evidence access.
     const department = typeof d.department === 'string' ? d.department.trim() : '';
-    if (resolveMobilityRole(d) === 'department_head'
+    const administration = typeof d.administration === 'string' ? d.administration.trim() : '';
+    const fieldScope = department || administration;
+    const institutionalRole = typeof d.institutionalRole === 'string'
+      ? d.institutionalRole.trim() : '';
+    const fieldHeadRole = institutionalRole === 'department_head'
+      || resolveMobilityRole(d) === 'department_head';
+    if (fieldHeadRole
         && activeIsNotFalse(d)
         && org
-        && department
-        && isFieldSurveyDepartment(department)) {
-      return { uid, role: 'department_head', organizationId: org, department };
+        && fieldScope
+        && isFieldSurveyDepartment(fieldScope)) {
+      return { uid, role: 'department_head', organizationId: org, department: fieldScope };
     }
   }
   return null;
