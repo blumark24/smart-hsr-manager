@@ -666,6 +666,13 @@ async function handleOwnerInvoiceLifecycle({ action, body, decoded, db, FieldVal
         !Number.isFinite(amount) || amount < 0) {
       return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_invoice_update' });
     }
+    // Synthetic pending-billing records are NOT proof of payment. No owner
+    // status edit can convert them to 'paid' without verified payment evidence.
+    if (status === 'paid' &&
+        ['manual_pending_billing','subscription_upgrade_pending_billing'].includes(current.recordType) &&
+        current.paymentConfirmed !== true) {
+      return sendJson(res, 409, { error: 'payment_verification_required' });
+    }
     const vat = +(amount * 0.15).toFixed(2);
     const total = +(amount + vat).toFixed(2);
     await ref.set({
