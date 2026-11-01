@@ -98,7 +98,17 @@ async function runViewport(browser,base,v){
   assert.equal(await page.locator('#modal').getAttribute('role'),'dialog');
   assert.equal(await page.locator('#modal').getAttribute('aria-modal'),'true');
   assert.equal(await page.locator('#modal').getAttribute('aria-labelledby'),'landsModalTitle');
-  await page.waitForFunction(()=>document.activeElement?.id==='addGrantNumber');
+  await page.waitForFunction(()=>document.activeElement?.id==='addGrantNumber',null,{timeout:7000}).catch(async err => {
+    const state = await page.evaluate(() => ({
+      activeId: document.activeElement?.id,
+      activeTag: document.activeElement?.tagName,
+      modalOpen: document.getElementById('modalBackdrop')?.classList.contains('open'),
+      inputPresent: Boolean(document.getElementById('addGrantNumber')),
+      modalDisplay: getComputedStyle(document.getElementById('modalBackdrop')).display,
+      titlePresent: Boolean(document.getElementById('landsModalTitle'))
+    }));
+    throw new Error(v.name+': dialog autofocus failed '+JSON.stringify(state)+' / '+errors.join(', ')+' / '+err.message);
+  });
   await page.keyboard.press('Shift+Tab');
   assert.equal(await page.evaluate(()=>document.activeElement?.classList.contains('close')),true,
     v.name+': reverse tab from first input reaches the dialog close control');
