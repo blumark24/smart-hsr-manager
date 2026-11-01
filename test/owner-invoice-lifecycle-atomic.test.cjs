@@ -3,7 +3,21 @@
 // Pure synthetic Firestore transaction harness. Never contacts Firebase/B2.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { _test: { handleOwnerInvoiceLifecycle } } = require('../api/_lib/ownerOpsSupport');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+// Isolate the exact production function without importing live Firebase Admin
+// dependencies. Its only free identifier is the pure cleanText helper.
+const source = fs.readFileSync(path.join(__dirname, '../api/_lib/ownerOpsSupport.js'), 'utf8');
+const start = source.indexOf('async function handleOwnerInvoiceLifecycle(');
+const end = source.indexOf('\nasync function handleOwnerSupport(', start);
+assert.ok(start >= 0 && end > start, 'source lifecycle handler exists');
+const handleOwnerInvoiceLifecycle = vm.runInNewContext(
+  '(' + source.slice(start, end).trim() + ')',
+  { cleanText(value, max = 4000) { return typeof value === 'string' ? value.trim().slice(0, max) : ''; } },
+  { timeout: 1500 }
+);
 
 const INVOICE_ID = 'synthetic-invoice-a1';
 const PATH = 'invoices/' + INVOICE_ID;
