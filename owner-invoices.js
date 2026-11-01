@@ -13,7 +13,7 @@
 // handler — owner.html re-wires that injection to point here instead of
 // to a local function, avoiding a circular import between the two
 // extracted modules.
-import { addDoc, collection } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+// Creation is routed through the existing Owner-verified Admin API, not client Firestore writes.
 
 export function initInvoicesModule({ auth, db, getOrgs, getInvoices, showNotif, refreshAll } = {}) {
   const invoicesBody = document.getElementById('invoicesBody');
@@ -23,6 +23,7 @@ export function initInvoicesModule({ auth, db, getOrgs, getInvoices, showNotif, 
   const invoiceOrgSelect = document.getElementById('invoiceOrgId');
   const invoiceSaveBtn = document.getElementById('invoiceSaveBtn');
   const ADMIN_API = '/api/admin/users';
+  let pendingManualInvoiceRequestId = null;
 
   async function callAdminApi(payload){
     const user = auth && auth.currentUser;
@@ -99,9 +100,18 @@ export function initInvoicesModule({ auth, db, getOrgs, getInvoices, showNotif, 
     invoiceForm.elements.docId.value='';
     fillInvoiceOrgSelect();
     invoiceOrgSelect.disabled=false;
-    if(invoiceSaveBtn) invoiceSaveBtn.textContent='إصدار الفاتورة';
-    invoiceModal.querySelector('h3').textContent='إصدار فاتورة يدوية';
+    pendingManualInvoiceRequestId = globalThis.crypto?.randomUUID?.() || null;
+    invoiceForm.elements.status.value='pending';
+    invoiceForm.elements.status.disabled=true;
+    if(invoiceSaveBtn) invoiceSaveBtn.textContent='حفظ سجل فوترة بانتظار السداد';
+    invoiceModal.querySelector('h3').textContent='إنشاء سجل فوترة (غير مدفوع)';
     invoiceModal.showModal();
+  });
+  invoiceForm.addEventListener('input', ()=>{
+    if (!invoiceForm.elements.docId.value) pendingManualInvoiceRequestId = null;
+  });
+  invoiceForm.addEventListener('change', ()=>{
+    if (!invoiceForm.elements.docId.value) pendingManualInvoiceRequestId = null;
   });
   invoiceForm.addEventListener('submit', async (e)=>{
     e.preventDefault(); const f = invoiceForm.elements;
@@ -118,43 +128,26 @@ export function initInvoicesModule({ auth, db, getOrgs, getInvoices, showNotif, 
       const org = getOrgs().find(o=>o.id===f.orgId.value); if(!org) return;
       await createInvoice({
         org, plan:f.plan.value, billingCycle:f.billingCycle.value,
-        amount:Number(f.amount.value||0), status:f.status.value
+        amount:Number(f.amount.value||0), status:'pending'
       });
-      invoiceModal.close(); showNotif('تم إصدار الفاتورة وإضافتها إلى السجل.'); await refreshAll();
+      pendingManualInvoiceRequestId = null;
+      invoiceModal.close(); showNotif('تم حفظ سجل فوترة بانتظار السداد؛ لم يُثبت الدفع ولم تصدر فاتورة ضريبية.'); await refreshAll();
     }catch(error){
       showNotif('تعذّر حفظ الفاتورة: '+(error.message||'خطأ غير معروف'));
     }
   });
 
-  // إنشاء فاتورة + حفظ PDF
-  async function createInvoice({ org, plan, billingCycle, amount, status='paid' }){
-    // تسعير افتراضي في حال لم يُرسل مبلغ يدوي
-    const base = amount || (plan==='Basic'?249: plan==='Pro'?499: 1499);
-    const vat = +(base * 0.15).toFixed(2);
-    const total = +(base + vat).toFixed(2);
-    const invoiceId = 'INV-' + Math.random().toString(36).slice(2,7).toUpperCase();
-    const payload = {
-      invoiceId,
-      organization_id: org.id,
-      organization_name: org.name,
-      plan, billingCycle,
-      amount: base, vat, total,
-      status: ['paid','pending','overdue','cancelled','archived'].includes(status) ? status : 'paid',
-      createdAt: new Date().toISOString()
-    };
-    await addDoc(collection(db,'invoices'), payload);
-    // توليد PDF بسيط
-    const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
-    docPdf.setFont('helvetica','bold'); docPdf.setFontSize(16);
-    docPdf.text(`فاتورة اشتراك – ${invoiceId}` , 40, 40);
-    docPdf.setFontSize(12); docPdf.setFont('helvetica','normal');
-    docPdf.text(`المؤسسة: ${org.name||'-'}`, 40, 70);
-    docPdf.text(`الخطة: ${plan} (${billingCycle})`, 40, 90);
-    docPdf.text(`المبلغ: ${base} SAR`, 40, 110);
-    docPdf.text(`الضريبة 15%: ${vat} SAR`, 40, 130);
-    docPdf.text(`الإجمالي: ${total} SAR`, 40, 150);
-    docPdf.text(`التاريخ: ${(new Date()).toLocaleDateString('ar-SA')}`, 40, 170);
-    docPdf.save(`${invoiceId}.pdf`);
+  // Owner-only: create an idempotent PENDING billing record. A browser PDF
+  // must not be represented as a compliant tax invoice or payment receipt.
+  async function createInvoice({ org, plan, billingCycle, amount, status='pending' }){
+    if (!org?.id || status!=='pending') throw new Error('لا يمكن إنشاء سجل مدفوع قبل إثبات السداد.');
+    if (!Number.isFinite(amount) || amount<=0) throw new Error('أدخل مبلغًا صالحًا قبل الحفظ.');
+    pendingManualInvoiceRequestId ||= globalThis.crypto?.randomUUID?.() || null;
+    if (!pendingManualInvoiceRequestId) throw new Error('تعذّر إنشاء معرف آمن لطلب الفوترة.');
+    return callAdminApi({
+      action:'ownerInvoiceCreatePending', requestId:pendingManualInvoiceRequestId,
+      organizationId:org.id, plan, billingCycle, amount, status:'pending'
+    });
   }
 
   // تنزيل PDF من الجدول (إعادة توليد سريع)
@@ -171,7 +164,8 @@ export function initInvoicesModule({ auth, db, getOrgs, getInvoices, showNotif, 
         invoiceForm.elements.plan.value=inv.plan||'Basic';
         invoiceForm.elements.billingCycle.value=inv.billingCycle||'monthly';
         invoiceForm.elements.amount.value=Number(inv.amount||0);
-        invoiceForm.elements.status.value=inv.status||'paid';
+        invoiceForm.elements.status.disabled=false;
+        invoiceForm.elements.status.value=inv.status||'pending';
         if(invoiceSaveBtn) invoiceSaveBtn.textContent='حفظ التعديلات';
         invoiceModal.querySelector('h3').textContent='تعديل الفاتورة';
         invoiceModal.showModal();
@@ -191,7 +185,7 @@ export function initInvoicesModule({ auth, db, getOrgs, getInvoices, showNotif, 
       const inv = getInvoices().find(x=> x.id===id); if(!inv) return;
       const { jsPDF } = window.jspdf; const docPdf = new jsPDF({ unit:'pt', compress:true });
     docPdf.setFont('helvetica','bold'); docPdf.setFontSize(16);
-    docPdf.text(`فاتورة اشتراك – ${inv.invoiceId||id}` , 40, 40);
+    docPdf.text(`${inv.recordType?.includes('pending_billing') ? 'سجل فوترة — غير مدفوع' : 'فاتورة اشتراك'} – ${inv.invoiceId||id}` , 40, 40);
     docPdf.setFontSize(12); docPdf.setFont('helvetica','normal');
     docPdf.text(`المؤسسة: ${inv.organization_name||'-'}`, 40, 70);
     docPdf.text(`الخطة: ${inv.plan||'-'} (${inv.billingCycle||'-'})`, 40, 90);
