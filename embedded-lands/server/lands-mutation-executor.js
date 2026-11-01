@@ -116,6 +116,15 @@ export function createLandsMutationExecutor({ db, documentStorage }) {
     const collectionName = DOMAIN_COLLECTION[auditCommand.domain];
     if (!collectionName) fail('UNSUPPORTED_MUTATION_OPERATION');
 
+    // P0 Preview containment: the approved server-side Lands document
+    // evidence verifier is not yet wired and Preview file writes intentionally
+    // fail closed. Do not mark municipal grants approved based on the five
+    // data axes alone. This applies ONLY to hosted Vercel Preview; existing
+    // Production and offline/emulator behavior are deliberately unchanged.
+    if (operation === 'land_grant.approve' && process.env.VERCEL_ENV === 'preview') {
+      fail('LANDS_APPROVAL_EVIDENCE_GATEWAY_REQUIRED');
+    }
+
     return db.runTransaction(async (transaction) => {
       const recordRef = db.doc(`landsMunicipalities/${municipalityId}/${collectionName}/${recordId}`);
       const auditRef = db.doc(`landsMunicipalities/${municipalityId}/auditLogs/${event.event_id}`);
