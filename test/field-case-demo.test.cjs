@@ -148,3 +148,94 @@ test('Field live location display requires verified GPS and valid coordinates (s
   assert.equal(display.locationLabel({ location:'طريق الساحل', locationVerified:false }), 'طريق الساحل');
   assert.equal(display.locationLabel({ location:'', locationVerified:true }), 'الموقع غير موثق');
 });
+
+test('Field command center does not turn an unavailable response into zero cases', async () => {
+  const vm = require('node:vm');
+  const src = fs.readFileSync(path.resolve(__dirname, '../field-head-runtime.js'), 'utf8');
+  const start = src.indexOf('  let fieldRefreshGeneration = 0;');
+  const end = src.indexOf('  async function initAuth()',start);
+  assert.ok(start >= 0 && end > start, 'real Field refresh contract present');
+  const refreshSnippet = src.slice(start,end);
+  const create = (visualResponse) => {
+    const instance = {
+      state:{orgId:'tenant-one'},
+      updates:0,
+      setState(update,cb){this.updates++;this.state={...this.state,...update};if(cb)cb();},
+      applyMunicipalMapContext(){}
+    };
+    const ctx = {
+      component:instance,
+      currentUser:{uid:'user-one'},
+      auth:{currentUser:{uid:'user-one'}},
+      state:{organizationId:'tenant-one'},
+      employeeApi:async()=>[],
+      api:async(action)=>{
+        if(action==='getFieldVisualDistortionCommand') {
+          if(visualResponse instanceof Error) throw visualResponse;
+          return visualResponse;
+        }
+        return action==='listDepartmentMissions' ? {missions:[]} : {events:[]};
+      },
+      requestAnimationFrame(fn){fn();},
+      renderObservationMarkers(){},
+    };
+    const refresh=vm.runInNewContext('(function(){'+refreshSnippet+'\n return refresh;})()',ctx);
+    return {refresh,instance,ctx};
+  };
+  const failure=create(new Error('offline'));
+  await failure.refresh();
+  assert.equal(failure.instance.state.fieldVisualDataReady,false);
+  assert.equal(failure.instance.state.liveObservations.length,0);
+  assert.equal(failure.instance.state.mapContext,null);
+  const malformed=create({observations:null,contractors:[]});
+  await malformed.refresh();
+  assert.equal(malformed.instance.state.fieldVisualDataReady,false);
+  const emptySuccess=create({observations:[],contractors:[],mapContext:null});
+  await emptySuccess.refresh();
+  assert.equal(emptySuccess.instance.state.fieldVisualDataReady,true);
+  const loaded=create({observations:[{observationId:'SYN-1',status:'PENDING'}],contractors:[]});
+  await loaded.refresh();
+  assert.equal(loaded.instance.state.fieldVisualDataReady,true);
+  assert.equal(loaded.instance.state.liveObservations.length,1);
+});
+
+test('Field refresh rejects stale responses after a tenant or user switch', async () => {
+  const vm = require('node:vm');
+  const src = fs.readFileSync(path.resolve(__dirname, '../field-head-runtime.js'), 'utf8');
+  const start=src.indexOf('  let fieldRefreshGeneration = 0;');
+  const end=src.indexOf('  async function initAuth()',start);
+  const snippet=src.slice(start,end);
+  for(const changed of ['uid','tenant']) {
+    let release;
+    const pending=new Promise(resolve=>{release=resolve;});
+    const instance={
+      state:{orgId:'tenant-one'},updates:0,
+      setState(v,cb){this.updates++;this.state={...this.state,...v};cb?.();},
+      applyMunicipalMapContext(){}
+    };
+    const ctx={
+      component:instance,currentUser:{uid:'user-one'},
+      auth:{currentUser:{uid:'user-one'}},state:{organizationId:'tenant-one'},
+      employeeApi:async()=>[],
+      api:async action=>action==='getFieldVisualDistortionCommand'?pending
+        :action==='listDepartmentMissions'?{missions:[]}:{events:[]},
+      requestAnimationFrame(fn){fn();},renderObservationMarkers(){}
+    };
+    const refresh=vm.runInNewContext('(function(){'+snippet+'\n return refresh;})()',ctx);
+    const inFlight=refresh();
+    if(changed==='uid')ctx.currentUser={uid:'user-two'};
+    else ctx.state.organizationId='tenant-two';
+    release({observations:[{observationId:'SYN-1'}],contractors:[]});
+    await inFlight;
+    assert.equal(instance.updates,0,changed+' must not accept stale response');
+  }
+});
+
+test('Real Field KPI and case table expose unavailable state instead of false zero', () => {
+  const src=fs.readFileSync(path.resolve(__dirname, '../field-head-runtime.js'), 'utf8');
+  assert.match(src,/const caseFeedReady = instance\.state\.fieldVisualDataReady === true/);
+  assert.match(src,/caseFeedReady \? count : '—'/);
+  assert.match(src,/sideACount:caseFeedReady \? active\.length \+ ' حالة' : 'غير متاح'/);
+  assert.match(src,/tCount:instance\.state\.fieldVisualDataReady === true \? observations\.length\+' بلاغ معروض' : 'بيانات الحصر غير متاحة'/);
+  assert.match(src,/sourceNote = instance\.state\.fieldVisualDataReady === true \? '' : ' · بيانات الحصر غير متاحة'/);
+});
