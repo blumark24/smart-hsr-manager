@@ -4659,8 +4659,8 @@ body.dark #appShell > header.lands-manager-source-header .lands-readonly-profile
     <button onclick="submitAiQuestion()" aria-label="إرسال"><i data-lucide="send"></i></button>
   </div>
 </div>
-<div class="drawer-backdrop" id="drawerBackdrop"><section class="drawer" id="drawer"></section></div>
-<div class="modal-backdrop" id="modalBackdrop"><section class="modal" id="modal"></section></div>
+<div class="drawer-backdrop" id="drawerBackdrop"><section class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="لوحة تفاصيل الأراضي" tabindex="-1"></section></div>
+<div class="modal-backdrop" id="modalBackdrop"><section class="modal" id="modal" role="dialog" aria-modal="true" aria-label="نافذة إجراءات الأراضي" tabindex="-1"></section></div>
 <div class="toast" id="toast"></div>
 <script>
 // ---- module bindings (loaded once at boot; classic script + dynamic import keeps
@@ -7737,13 +7737,76 @@ function openAiPanel() { toggleAiPanel(true); }
 // see the raw HTML: loginScreen/deniedScreen/appShell all start hidden.
 // Never flash the standalone login form while auth state is still resolving.
 document.querySelectorAll(".nav button[data-view], .mobile-bottom-nav button[data-view]").forEach(b => b.onclick = () => { closeMobileNav(); setView(b.dataset.view); });
+// Modal keyboard/a11y lifecycle: does not alter roles, data, routes or the
+// approved glass-dialog styling. Handles every existing add/open code path.
+const landsDialogTriggers = new WeakMap();
+function setupLandsDialog(backdropId, panelId, titleId) {
+  const backdrop = document.getElementById(backdropId);
+  const panel = document.getElementById(panelId);
+  new MutationObserver(() => {
+    if (backdrop.classList.contains("open")) {
+      const opener = document.activeElement;
+      if (opener && !backdrop.contains(opener) && opener instanceof HTMLElement) {
+        landsDialogTriggers.set(backdrop, opener);
+      }
+      const title = panel.querySelector(".modal-head h2, .drawer-head h2");
+      if (title) {
+        title.id = titleId;
+        panel.setAttribute("aria-labelledby", titleId);
+      } else {
+        panel.removeAttribute("aria-labelledby");
+      }
+      queueMicrotask(() => {
+        if (!backdrop.classList.contains("open")) return;
+        const target = panel.querySelector("input:not([type=hidden]):not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled])");
+        (target || panel).focus({preventScroll:true});
+      });
+    } else {
+      const opener = landsDialogTriggers.get(backdrop);
+      landsDialogTriggers.delete(backdrop);
+      if (opener && opener.isConnected) opener.focus({preventScroll:true});
+    }
+  }).observe(backdrop, {attributes:true, attributeFilter:["class"]});
+}
+setupLandsDialog("modalBackdrop", "modal", "landsModalTitle");
+setupLandsDialog("drawerBackdrop", "drawer", "landsDrawerTitle");
+function topLandsDialog() {
+  for (const id of ["modalBackdrop", "drawerBackdrop"]) {
+    const backdrop = document.getElementById(id);
+    if (backdrop?.classList.contains("open")) return backdrop;
+  }
+  return null;
+}
+function focusableLandsDialogElements(panel) {
+  return [...panel.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+    .filter(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden");
+}
 document.getElementById("drawerBackdrop").onclick = e => { if (e.target.id === "drawerBackdrop") closeDrawer(); };
 document.getElementById("modalBackdrop").onclick = e => { if (e.target.id === "modalBackdrop") closeModal(); };
 document.addEventListener("click", e => {
   if (!e.target.closest(".account-menu-wrap")) closeAccountMenu();
 });
 document.addEventListener("keydown", event => {
+  const openDialog = topLandsDialog();
+  if (openDialog && event.key === "Tab") {
+    const panel = openDialog.querySelector('[role="dialog"]');
+    const items = focusableLandsDialogElements(panel);
+    const first = items[0], last = items[items.length - 1];
+    if (!first) { event.preventDefault(); panel.focus(); return; }
+    if (event.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) {
+      event.preventDefault(); last.focus(); return;
+    }
+    if (!event.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) {
+      event.preventDefault(); first.focus(); return;
+    }
+  }
   if (event.key !== "Escape") return;
+  if (openDialog) {
+    event.preventDefault();
+    if (openDialog.id === "modalBackdrop") closeModal();
+    else closeDrawer();
+    return;
+  }
   const button = document.getElementById("accountButton");
   if (document.getElementById("accountMenu")?.classList.contains("open")) {
     closeAccountMenu();
