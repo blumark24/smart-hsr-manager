@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - fix/owner-upgrade-ledger-no-deploy-20261101
+  pull_request:
+    branches:
+      - fix/lands-staging-no-orphan-metadata-20261031
   workflow_dispatch:
 permissions:
   contents: read
