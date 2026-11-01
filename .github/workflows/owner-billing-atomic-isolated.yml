@@ -1,0 +1,51 @@
+name: SMART HSR Owner billing upgrade — isolated atomic regression
+on:
+  push:
+    branches:
+      - fix/owner-upgrade-ledger-no-deploy-20261101
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owner-upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ''
+      GOOGLE_APPLICATION_CREDENTIALS: ''
+      B2_APPLICATION_KEY: ''
+      OPENAI_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: No Production or Preview deployment, limited review scope
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const assert=require('node:assert/strict');
+          const current=JSON.parse(fs.readFileSync('vercel.json','utf8'));
+          assert.equal(current.git?.deploymentEnabled?.['fix/owner-upgrade-ledger-no-deploy-20261101'],false);
+          NODE
+          git diff --name-only a1fbda58932d9d6568faa0c2e876e6630aed4108 HEAD > /tmp/owner-review-changes
+          if grep -Ev '^(api/_lib/ownerBillingUpgrade\.js|api/_lib/ownerOpsSupport\.js|owner-organizations\.js|test/owner-billing-upgrade-atomic\.test\.cjs|\.github/workflows/owner-billing-atomic-isolated\.yml)$' /tmp/owner-review-changes; then
+            echo 'FAIL: out-of-scope path modification'; exit 1
+          fi
+          test -z "$FIREBASE_SERVICE_ACCOUNT"
+          test -z "$GOOGLE_APPLICATION_CREDENTIALS"
+          test -z "$B2_APPLICATION_KEY"
+          test -z "$OPENAI_API_KEY"
+      - name: Syntax and source/transaction tests — synthetic only
+        run: |
+          node --check api/_lib/ownerBillingUpgrade.js
+          node --check api/_lib/ownerOpsSupport.js
+          node --check test/owner-billing-upgrade-atomic.test.cjs
+          node --test test/owner-billing-upgrade-atomic.test.cjs test/owner-operations-closure.test.js
+      - name: Hold release
+        run: |
+          echo 'CI SUCCESS IS NOT MUNICIPAL UAT. Draft only, NO DEPLOY OR MERGE.'
+          echo 'Owner billing is a pending draft, not paid and not a tax invoice.'
