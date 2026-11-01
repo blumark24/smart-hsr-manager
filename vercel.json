@@ -177,7 +177,8 @@
   "git": {
     "deploymentEnabled": {
       "security/preview-isolation-no-deploy-20261031": false,
-      "fix/lands-staging-no-orphan-metadata-20261031": false
+      "fix/lands-staging-no-orphan-metadata-20261031": false,
+      "fix/owner-upgrade-ledger-no-deploy-20261101": false
     }
   }
 }
