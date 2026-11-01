@@ -23,3 +23,39 @@ test('UI repair keeps live team count and does not introduce authorization logic
   assert.match(section, /const team = this\.state\.liveEmployees \|\| \[\]/);
   assert.doesNotMatch(section, /firebase|Firestore|setCustomUserClaims|collection\(/i);
 });
+
+
+test('Field Head chooser follows actual department-first runtime contract without granting staff management', () => {
+  const workspace=require('../workspace-access.js');
+  const base={organizationId:'synthetic-tenant',active:true,institutionalRole:'department_head'};
+  const resolve=(d)=>workspace.resolveWorkspaces({...base,...d});
+  const fieldRoute=(d)=>{
+    const result=resolve(d);
+    return result.workspaces.find(x=>x.id==='field')?.route??null;
+  };
+  assert.equal(fieldRoute({administration:'الحصر الميداني',department:''}),'department-head.html',
+    'HR administration-only Field Head must retain Field workspace');
+  assert.equal(fieldRoute({administration:'الحركة الذكية',department:'الحصر الميداني'}),'department-head.html',
+    'explicit Field department wins against unrelated HR administration');
+  assert.equal(fieldRoute({administration:'الحصر الميداني',department:'الحركة الذكية'}),null,
+    'conflicting explicit Mobility department must not receive Field Head link');
+  assert.equal(fieldRoute({administration:'الحصر الميداني',department:'الأراضي'}),null,
+    'conflicting explicit Lands department must not receive Field Head link');
+  assert.equal(fieldRoute({administration:'الحصر الميداني',department:'الحصر الميداني'}),'department-head.html');
+  assert.equal(fieldRoute({administration:'الحصر الميداني',department:'الحركة',
+    mobilityAccess:{enabled:true,role:'department_head'}}),null,
+    'legacy Mobility head is not a Field head when explicit department conflicts');
+  assert.equal(fieldRoute({administration:'الحصر الميداني',department:'',
+    active:false}),null,'inactive users receive no workspace');
+  assert.equal(workspace.resolveWorkspaces({...base,organizationId:'',administration:'الحصر الميداني'}).workspaces.length,0,
+    'users without tenant receive no workspace');
+  assert.equal(workspace.resolveWorkspaces({...base,institutionalRole:'employee',role:'employee',
+    administration:'الحصر الميداني',department:''}).workspaces.some(w=>w.id==='field'),false,
+    'canonical HR employee cannot inherit Field Head rights by department text');
+  assert.equal(workspace.resolveWorkspaces({...base,institutionalRole:'employee',role:'department_head',
+    mobilityAccess:{enabled:false,role:null},administration:'الحصر الميداني'}).workspaces.some(w=>w.id==='field'),false,
+    'disabled legacy Mobility head cannot recover Field through stale role');
+  const authz=fs.readFileSync(path.resolve(__dirname,'../api/_lib/authz.js'),'utf8');
+  assert.match(authz,/orgId && dept\)/,
+    'employee registry department-head authorization remains distinct and unchanged');
+});
