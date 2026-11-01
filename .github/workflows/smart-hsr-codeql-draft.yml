@@ -51,6 +51,71 @@ jobs:
           build-mode: none
           queries: security-extended
       - name: Analyze source and upload CodeQL results
+        id: codeql-analyze
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:javascript-typescript"
+      - name: Summarize actual SARIF alerts by rule and location (non-secret metadata only)
+        env:
+          CODEQL_SARIF_DIR: ${{ steps.codeql-analyze.outputs.sarif-output }}
+        run: |
+          node <<'NODE'
+          'use strict';
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const d = process.env.CODEQL_SARIF_DIR || path.resolve(process.env.GITHUB_WORKSPACE, '..', 'results');
+          if (!fs.existsSync(d) || !fs.statSync(d).isDirectory()) {
+            console.error('CODEQL_SARIF_UNAVAILABLE: unable to review actual alerts');
+            process.exit(1);
+          }
+          const files = fs.readdirSync(d).filter(f => f.endsWith('.sarif')).sort();
+          if (!files.length) {
+            console.error('CODEQL_SARIF_EMPTY: no results file available');
+            process.exit(1);
+          }
+          const byRule = new Map();
+          let total = 0;
+          for (const name of files) {
+            const sarif = JSON.parse(fs.readFileSync(path.join(d,name),'utf8'));
+            if (!Array.isArray(sarif.runs)) throw new Error('Invalid SARIF runs');
+            for (const run of sarif.runs) {
+              const rules = new Map((run.tool?.driver?.rules || []).map(r => [r.id, r]));
+              for (const result of run.results || []) {
+                if (result.kind === 'notApplicable') continue;
+                total++;
+                const id = result.ruleId || result.rule?.id || '(unknown)';
+                const rule = rules.get(id) || {};
+                const score = Number(result.properties?.['security-severity'] || rule.properties?.['security-severity']);
+                const severity = Number.isFinite(score) && score >= 9 ? 'critical' :
+                  Number.isFinite(score) && score >= 7 ? 'high' :
+                  Number.isFinite(score) && score >= 4 ? 'moderate' :
+                  result.level === 'error' ? 'error' : result.level === 'warning' ? 'warning' : 'note';
+                const p = result.locations?.[0]?.physicalLocation;
+                const loc = p?.artifactLocation?.uri || '(location unavailable)';
+                const line = p?.region?.startLine || 0;
+                const key = id + ':' + severity;
+                const rec = byRule.get(key) || { rule: id, severity, count: 0, examples: [] };
+                rec.count++;
+                if (rec.examples.length < 3) rec.examples.push(loc + ':' + line);
+                byRule.set(key,rec);
+              }
+            }
+          }
+          const sorted = [...byRule.values()].sort((a,b) => b.count-a.count || a.rule.localeCompare(b.rule));
+          console.log('CODEQL_SARIF_FINDING_COUNT:', total);
+          console.log('CODEQL_SARIF_DISTINCT_RULES:', sorted.length);
+          for (const rec of sorted.slice(0,80)) {
+            console.log('CODEQL_SARIF_RULE:', JSON.stringify(rec));
+          }
+          if (sorted.length > 80) console.log('CODEQL_SARIF_MORE_RULES:', sorted.length-80);
+          const md = [
+            '### SMART HSR — CodeQL findings (source static scan; NOT independent approval)',
+            'SARIF findings: **'+total+'**, distinct rules: **'+sorted.length+'**.',
+            '| Rule | Severity | Findings | Example locations |',
+            '| --- | --- | ---: | --- |',
+            ...sorted.slice(0,80).map(r => '| '+r.rule+' | '+r.severity+' | '+r.count+' | '+r.examples.join(', ')+' |'),
+            '',
+            'CI PASS only proves CodeQL completed. Each security result requires triage; do not infer release readiness.'
+          ].join('\\n');
+          if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md+'\\n');
+          NODE
