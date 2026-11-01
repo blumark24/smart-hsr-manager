@@ -90,3 +90,124 @@ jobs:
           NODE
           npm ci --ignore-scripts --no-audit --no-fund
           npm run test:rules
+      - name: Seven-tenant isolation in fresh synthetic Firestore Emulator
+        run: npx --no-install firebase emulators:exec --project demo-smart-hsr-tests --only firestore "node --test test/phase25-multi-org-isolation.test.js"
+
+  one-sha-platform-contracts:
+    name: One-SHA cross-product P0/P1 contract regression (synthetic)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      CI: 'true'
+      FIREBASE_SERVICE_ACCOUNT: ''
+      GOOGLE_APPLICATION_CREDENTIALS: ''
+      B2_APPLICATION_KEY: ''
+      OPENAI_API_KEY: ''
+      FIREBASE_TOKEN: ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Confirm branch cannot auto-deploy and no cloud credentials are used
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const cfg = JSON.parse(fs.readFileSync('vercel.json','utf8'));
+          assert.equal(cfg.git?.deploymentEnabled?.['fix/owner-upgrade-ledger-no-deploy-20261101'],false);
+          NODE
+          test -z "$FIREBASE_SERVICE_ACCOUNT"
+          test -z "$GOOGLE_APPLICATION_CREDENTIALS"
+          test -z "$B2_APPLICATION_KEY"
+          test -z "$OPENAI_API_KEY"
+          test -z "$FIREBASE_TOKEN"
+      - name: Locked dependency install, no deployment or cloud calls
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Preview Firebase B2 tenant authentication document boundaries
+        run: |
+          node --test \
+            test/preview-isolation-guard.test.cjs \
+            test/preview-isolation-module-contract.test.cjs \
+            test/preview-firebase-isolation-http.test.cjs \
+            test/lands-client-app-isolation.test.cjs \
+            test/lands-preview-document-no-orphan.test.cjs
+      - name: Core sessions Manager identity Mobility Field and Lands
+        run: |
+          node --test \
+            test/portal-session-isolation.test.js \
+            test/manager-lands-sso.test.js \
+            test/manager-login-preview-config.test.js \
+            test/manager-users-list-state.test.js \
+            test/identity-display-sync-regression.test.js \
+            test/manager-mobility-adapter.test.js \
+            test/lands-bootstrap.test.js \
+            test/field-command-center-honest-kpis.test.cjs \
+            test/lands-document-feedback-preview.test.cjs
+      - name: Integrated municipality release and visual data contracts
+        run: |
+          node --test \
+            test/preview-workforce-tab-isolation.test.js \
+            test/preview-lands-sso-gate.test.js \
+            test/preview-municipality-identity-display.test.js \
+            test/municipal-weather-zero-cost-preview.test.js \
+            test/user-center-directory-response-order.test.js \
+            test/manager-lands-completeness-parity.test.cjs \
+            test/manager-lands-digital-record.test.js \
+            test/manager-lands-gis.test.js \
+            test/municipal-release-gate.test.cjs \
+            test/preview-same-origin-api-contract.test.cjs \
+            test/lands-executive-header-profile-ai.test.cjs \
+            test/preview-lands-sso-live-preflight.test.cjs
+      - name: Release decision is always review-only NO-GO without human signoffs
+        run: |
+          node scripts/municipal-release-gate.cjs --report-only
+          echo 'Green code tests are not protected municipal UAT or production release approval.'
+
+  one-sha-chromium-local:
+    name: One-SHA local real Chromium light dark desktop iPad mobile
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      CI: 'true'
+      FIREBASE_SERVICE_ACCOUNT: ''
+      GOOGLE_APPLICATION_CREDENTIALS: ''
+      B2_APPLICATION_KEY: ''
+      OPENAI_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard against any deployment or real backend input
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const cfg = require('./vercel.json');
+          assert.equal(cfg.git?.deploymentEnabled?.['fix/owner-upgrade-ledger-no-deploy-20261101'],false);
+          NODE
+          test -z "$FIREBASE_SERVICE_ACCOUNT"
+          test -z "$B2_APPLICATION_KEY"
+      - name: Install isolated Playwright Chromium fixture-only tools
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps --only-shell chromium
+      - name: Synthetic localhost-only Lands header profile day night responsive UAT
+        run: node --test test/lands-browser-visual-acceptance.e2e.cjs
+      - name: Store synthetic screenshots for reviewer, never municipal data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-hsr-one-sha-draft-local-ui
+          path: test-artifacts/lands-browser/
+          retention-days: 7
+          if-no-files-found: ignore
