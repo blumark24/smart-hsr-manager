@@ -81,3 +81,83 @@ test('failure messages never include credentials or bucket identifiers', () => {
   try { gate.assertPreviewStorageIsolation(env); assert.fail('Expected denial'); }
   catch (e) { assert.equal(e.code,'PREVIEW_STORAGE_ISOLATION_DENIED'); assert.doesNotMatch(e.message,/private-do-not-print|top-secret-no-print/); }
 });
+
+test('Preview Web config rejects a mixed Production Auth or Storage endpoint', () => {
+  for (const patch of [
+    {authDomain:'smart-hsr-manager.firebaseapp.com'},
+    {storageBucket:'smart-hsr-manager.firebasestorage.app'},
+    {storageBucket:'smart-hsr-manager.appspot.com'},
+    {storageBucket:'custom-unknown.appspot.com'},
+    {authDomain:'unreviewed.firebaseapp.com'},
+    {databaseURL:'https://smart-hsr-manager-default-rtdb.firebaseio.com'},
+    {authDomain:''},
+    {storageBucket:null}
+  ]) {
+    const input={...firebase(),FIREBASE_WEB_CONFIG:JSON.stringify({projectId:project,...patch})};
+    denied(() => gate.assertPreviewFirebaseIsolation(input), 'FIREBASE');
+  }
+});
+test('Preview Web config allows same-project Firebase Auth and default Storage only', () => {
+  for (const bucket of [project+'.firebasestorage.app',project+'.appspot.com']) {
+    const input={...firebase(),FIREBASE_WEB_CONFIG:JSON.stringify({
+      projectId:project, authDomain:project+'.firebaseapp.com', storageBucket:bucket,
+    })};
+    assert.equal(gate.assertPreviewFirebaseIsolation(input),true);
+  }
+});
+test('Preview Firebase Admin rejects mismatched service-account principal despite matching claimed project', () => {
+  denied(() => gate.assertPreviewFirebaseIsolation({
+    ...firebase(),
+    FIREBASE_SERVICE_ACCOUNT:JSON.stringify({
+      project_id:project,client_email:'foreign@smart-hsr-manager.iam.gserviceaccount.com'
+    })
+  }), 'FIREBASE');
+  assert.equal(gate.assertPreviewFirebaseIsolation({
+    ...firebase(),
+    FIREBASE_SERVICE_ACCOUNT:JSON.stringify({
+      project_id:project,client_email:'reviewed@'+project+'.iam.gserviceaccount.com'
+    })
+  }),true);
+});
+test('actual /api/firebase-config Preview route rejects mixed resources before returning browser configuration', () => {
+  const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+  const source=fs.readFileSync(path.join(__dirname,'../api/firebase-config.js'),'utf8');
+  function invoke(method, env) {
+    const mod={exports:{}};
+    const fn=vm.runInNewContext('(function(module,require,process){'+source+'\n})',{});
+    fn(mod, name=>{
+      assert.equal(name,'./_lib/previewIsolationGuard');
+      return gate;
+    },{env});
+    const response={
+      statusCode:200, payload:null,
+      status(code){this.statusCode=code;return this;},
+      json(value){this.payload=JSON.parse(JSON.stringify(value));return this;}
+    };
+    mod.exports({method},response);
+    return response;
+  }
+  const valid={...firebase(),FIREBASE_WEB_CONFIG:JSON.stringify({
+    projectId:project, authDomain:project+'.firebaseapp.com',
+    storageBucket:project+'.firebasestorage.app'
+  })};
+  const ok=invoke('GET',valid);
+  assert.equal(ok.statusCode,200);
+  assert.equal(ok.payload.projectId,project);
+  for (const patch of [
+    {storageBucket:'smart-hsr-manager.firebasestorage.app'},
+    {authDomain:'smart-hsr-manager.firebaseapp.com'},
+    {databaseURL:'https://foreign.firebaseio.com'},
+  ]) {
+    const rejected=invoke('GET',{...valid,FIREBASE_WEB_CONFIG:JSON.stringify({
+      projectId:project,...patch
+    })});
+    assert.equal(rejected.statusCode,503);
+    assert.equal(rejected.payload.error,'FIREBASE_PREVIEW_RESOURCE_DENIED');
+    assert.doesNotMatch(JSON.stringify(rejected.payload),/smart-hsr-manager|private_key|apiKey/);
+  }
+  const production=invoke('GET',{VERCEL_ENV:'production'});
+  assert.equal(production.statusCode,404);
+  const method=invoke('POST',valid);
+  assert.equal(method.statusCode,405);
+});
