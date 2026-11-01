@@ -42,7 +42,7 @@ async function bytesOf(body){
   if(!(chunk instanceof Uint8Array))deny();
   total+=chunk.byteLength;
   if(total>LANDS_DOCUMENT_MAX_BYTES)deny();
-  chunks.push(Buffer.from(chunk));
+  chunks.push(Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk));
  }
  if(total<1)deny();
  return Buffer.concat(chunks,total);
