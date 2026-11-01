@@ -154,8 +154,13 @@ jobs:
             info: counts.info || 0, total: counts.total || 0
           }));
           for (const [name, record] of Object.entries(audit.vulnerabilities || {})) {
-            if (record.severity === 'critical' || record.severity === 'high') {
-              console.error('PRODUCTION_HIGH_OR_CRITICAL:', name, record.severity);
+            if (['critical', 'high', 'moderate'].includes(record.severity)) {
+              // Names and severities only; never emit credentials or source contents.
+              console.log('PRODUCTION_REVIEW_REQUIRED:', JSON.stringify({
+                package: name, severity: record.severity,
+                direct: Boolean(record.isDirect),
+                fixAvailable: Boolean(record.fixAvailable)
+              }));
             }
           }
           if ((counts.critical || 0) + (counts.high || 0) > 0) process.exit(1);
