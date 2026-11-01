@@ -6600,12 +6600,13 @@ async function submitReturnForCompletion(grantId, reason) {
 // Display only mapped public errors; never surface Firebase/server messages,
 // tenant IDs or storage paths. A failed refresh is not a failed document write.
 function landsDocumentFailureMessage(error, operation = "رفع") {
-  const verb = operation === "استبدال" ? "استبدال" : "رفع";
+  const verb = operation === "استبدال" ? "استبدال" : operation === "حذف" ? "حذف" : "رفع";
   const reason = [error?.code, error?.message]
     .filter(value => typeof value === "string")
     .join(" ").toLowerCase().slice(0, 300);
   if (reason.includes("invalid_document_size")) return "حجم المستند غير صالح؛ الحد الأقصى 10 ميجابايت.";
   if (reason.includes("invalid_document_mime_type")) return "صيغة المستند غير مدعومة؛ اختر PDF أو JPG أو PNG.";
+  if (reason.includes("lands_preview_document_mutation_gateway_required")) return "استبدال المستندات وحذفها غير متاحين في بيئة الاختبار حتى اعتماد التخزين الآمن. لم يتم إجراء أي تغيير على المستند."; 
   if (reason.includes("lands_preview_document_gateway_required")) return "رفع المستندات غير متاح في بيئة الاختبار حتى اعتماد التخزين الآمن. لم يتم إنشاء سجل مستند.";
   if (/lands_auth_required|auth\/user-token-expired|auth\/invalid-user-token|unauthenticated/.test(reason)) return "انتهت جلسة الدخول. سجّل الدخول مجددًا ثم أعد المحاولة.";
   if (/lands_access_denied|document_replace_denied|permission-denied|storage\/unauthorized|lands_mutation_denied/.test(reason)) return `ليس لديك صلاحية ${verb} هذا المستند.`;
@@ -6652,7 +6653,7 @@ async function replaceDocumentFor(grantId, documentId) {
 async function deleteDocumentFor(grantId, documentId) {
   await withBusyButton(icon("loader-2"), async () => {
   try { await client.deleteDocument(session.municipalityId, documentId); await refreshWorkspace(); openFile(grantId); showToast("تم حذف المستند"); }
-  catch (error) { showToast(error.message || "تعذر حذف المستند", true); }
+  catch (error) { showToast(landsDocumentFailureMessage(error, "حذف"), true); }
   });
 }
 
