@@ -239,7 +239,8 @@ service cloud.firestore {
       allow read: if isActiveOwner();
       // Billing records must be written by the verified server-side Owner API.
       // Direct SDK creation can forge paid status without payment evidence.
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update, delete: if false;
     }
 
     // ==========================================================
