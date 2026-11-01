@@ -57,6 +57,19 @@ function safeObjectKey(value) {
   return raw;
 }
 
+// A Firestore field pointing to an object is not proof that the object belongs
+// to the same municipality. Uploads are server-issued under observations/{org}/.
+// Require that exact tenant path before *any* evidence ownership lookup or B2
+// access, even if an inspector/contractor set an arbitrary evidence reference.
+function keyScopedToOrganization(key, organizationId) {
+  const org = typeof organizationId === 'string' ? organizationId.trim() : '';
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(org)) return false;
+  const validKey = safeObjectKey(key);
+  if (!validKey) return false;
+  const prefix = 'observations/' + org + '/';
+  return validKey.startsWith(prefix) && validKey.length > prefix.length;
+}
+
 function requestedKey(req) {
   const direct = req.query && req.query.key;
   if (typeof direct === 'string') return direct;
@@ -117,6 +130,8 @@ async function resolveViewerContext(db, uid) {
 // observation of the caller's own organization. Without this the endpoint
 // would happily read any object in the bucket for any signed-in user.
 async function keyBelongsToOrganization(db, key, organizationId) {
+  // Defense in depth for callers that use this helper without the HTTP route.
+  if (!keyScopedToOrganization(key, organizationId)) return false;
   for (const field of EVIDENCE_FIELDS) {
     const snap = await db.collection('observations')
       .where('organizationId', '==', organizationId)
@@ -170,6 +185,11 @@ async function handler(req, res) {
 
   const key = safeObjectKey(requestedKey(req));
   if (!key) return sendJson(res, 404, { error: 'EVIDENCE_NOT_FOUND' });
+  // This must precede Firestore queries and S3 client creation. Return the same
+  // denial used for an inaccessible observation, never reveal which key exists.
+  if (!keyScopedToOrganization(key, viewer.organizationId)) {
+    return sendJson(res, 403, { error: 'AUTH_ORGANIZATION_DENIED' });
+  }
 
   const contentType = extensionContentType(key);
   if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {
@@ -218,6 +238,7 @@ async function handler(req, res) {
 module.exports = handler;
 module.exports._test = {
   safeObjectKey,
+  keyScopedToOrganization,
   requestedKey,
   extensionContentType,
   isFieldSurveyDepartment,
