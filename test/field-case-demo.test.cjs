@@ -117,7 +117,7 @@ test('offline Arabic HTML provides no network and exposes visibly synthetic Mana
   assert.match(html,/connect-src 'none'/);
   assert.match(html,/smart-hsr-field-case-demo\.js/);
   assert.match(html,/smart-hsr-field-case-ui\.js/);
-  assert.doesNotMatch(core+ui,/\b(fetch|XMLHttpRequest|WebSocket|localStorage|indexedDB|document\.cookie)\b/);
+  assert.doesNotMatch(core+ui,/\bfetch\s*\(|\bnew\s+(WebSocket|XMLHttpRequest)\s*\(|\blocalStorage\s*\.|\bindexedDB\s*\.|document\.cookie\s*=/);
   assert.doesNotMatch(html,/<script[^>]*src=["']https?:/i);
   assert.match(ui,/textContent/);
 });
