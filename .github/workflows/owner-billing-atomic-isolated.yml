@@ -35,7 +35,7 @@ jobs:
           assert.equal(current.git?.deploymentEnabled?.['fix/owner-upgrade-ledger-no-deploy-20261101'],false);
           NODE
           git diff --name-only a1fbda58932d9d6568faa0c2e876e6630aed4108 HEAD > /tmp/owner-review-changes
-          if grep -Ev '^(api/_lib/ownerBillingUpgrade\.js|api/_lib/ownerManualBilling\.js|api/_lib/ownerOpsSupport\.js|owner-organizations\.js|owner-invoices\.js|test/owner-billing-upgrade-atomic\.test\.cjs|test/owner-manual-billing-pending\.test\.cjs|test/owner-invoice-lifecycle-atomic\.test\.cjs|firestore\.rules|test/firestore\.rules\.test\.js|\.github/workflows/owner-billing-atomic-isolated\.yml)$' /tmp/owner-review-changes; then
+          if grep -Ev '^(api/_lib/ownerBillingUpgrade\.js|api/_lib/ownerManualBilling\.js|api/_lib/ownerOpsSupport\.js|owner-organizations\.js|owner-invoices\.js|test/owner-billing-upgrade-atomic\.test\.cjs|test/owner-manual-billing-pending\.test\.cjs|test/owner-invoice-lifecycle-atomic\.test\.cjs|api/_lib/embeddedLandsRuntime\.js|embedded-lands/server/lands-mutation-executor\.js|test/lands-approval-preview-evidence-gate\.test\.cjs|firestore\.rules|test/firestore\.rules\.test\.js|\.github/workflows/owner-billing-atomic-isolated\.yml)$' /tmp/owner-review-changes; then
             echo 'FAIL: out-of-scope path modification'; exit 1
           fi
           test -z "$FIREBASE_SERVICE_ACCOUNT"
@@ -137,7 +137,8 @@ jobs:
             test/preview-isolation-module-contract.test.cjs \
             test/preview-firebase-isolation-http.test.cjs \
             test/lands-client-app-isolation.test.cjs \
-            test/lands-preview-document-no-orphan.test.cjs
+            test/lands-preview-document-no-orphan.test.cjs \
+            test/lands-approval-preview-evidence-gate.test.cjs
       - name: Core sessions Manager identity Mobility Field and Lands
         run: |
           node --test \
