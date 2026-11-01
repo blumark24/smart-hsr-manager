@@ -28,6 +28,7 @@ const ROLES = new Set(['lands_employee', 'lands_department_manager', 'municipal_
 const FAILURE_CODES = new Set(['UPLOAD_FAILED', 'STORAGE_VERIFICATION_FAILED', 'UPLOAD_EXPIRED']);
 const SHA256 = /^[0-9a-f]{64}$/;
 const GENERATION = /^[1-9][0-9]{0,30}$/;
+const OCI_VERSION = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$/;
 
 function fail(code) {
   const error = new Error(code);
@@ -77,6 +78,14 @@ function assertRevision(doc, expectedRevision) {
 function ensurePending(doc) {
   if (doc.status !== DOCUMENT_PHASE.PENDING) fail('DOCUMENT_INVALID_TRANSITION');
 }
+
+// Read-only gate for trusted adapters BEFORE invoking Storage or returning
+// document state. A verified Firebase identity is required from the host.
+export function assertDocumentOperationScope(document, context, expectedRevision) {
+  assertScopedDocument(document, context);
+  assertRevision(document, expectedRevision);
+  return document;
+}
 function seal(record) { return Object.freeze(record); }
 
 /**
@@ -110,6 +119,8 @@ export function createPendingDocument({context, sourceRecord, recordDomain, reco
     revision:1,
     storage_path:'',
     storage_generation:null,
+    storage_provider:null,
+    storage_version_id:null,
     failure_code:null,
     created_at:now,
     updated_at:now
@@ -128,17 +139,24 @@ export function markDocumentReady({document, context, expectedRevision, proof, n
   assertRevision(document, expectedRevision);
   ensurePending(document);
   assertTime(now);
+  const oci = proof?.provider === 'oci';
+  const gcs = proof?.provider === undefined || proof?.provider === 'gcs';
+  const versionValid = oci
+    ? typeof proof.version_id === 'string' && OCI_VERSION.test(proof.version_id) &&
+      !['null','undefined'].includes(proof.version_id.toLowerCase()) && proof.generation === undefined
+    : gcs && typeof proof?.generation === 'string' && GENERATION.test(proof.generation) && proof.version_id === undefined;
   if (!proof || proof.storage_path !== document.storage_path ||
       proof.mime_type !== document.mime_type ||
       proof.size_bytes !== document.size_bytes ||
-      proof.sha256 !== document.sha256 ||
-      typeof proof.generation !== 'string' || !GENERATION.test(proof.generation)) {
+      proof.sha256 !== document.sha256 || !versionValid) {
     fail('DOCUMENT_STORAGE_PROOF_MISMATCH');
   }
   return seal({
     ...document,
     status:DOCUMENT_PHASE.READY,
-    storage_generation:proof.generation,
+    storage_generation:gcs ? proof.generation : null,
+    storage_provider:oci ? 'oci' : 'gcs',
+    storage_version_id:oci ? proof.version_id : null,
     failure_code:null,
     revision:document.revision+1,
     updated_at:now
@@ -174,6 +192,8 @@ export function retryFailedDocument({document, context, expectedRevision, now}) 
     status:DOCUMENT_PHASE.PENDING,
     storage_path:attemptPath(document, attempt),
     storage_generation:null,
+    storage_provider:null,
+    storage_version_id:null,
     failure_code:null,
     revision:document.revision+1,
     updated_at:now
