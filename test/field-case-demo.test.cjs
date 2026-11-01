@@ -121,3 +121,30 @@ test('offline Arabic HTML provides no network and exposes visibly synthetic Mana
   assert.doesNotMatch(html,/<script[^>]*src=["']https?:/i);
   assert.match(ui,/textContent/);
 });
+
+test('Field live location display requires verified GPS and valid coordinates (source-backed, offline)', () => {
+  const vm = require('node:vm');
+  const src = fs.readFileSync(path.resolve(__dirname, '../field-head-runtime.js'), 'utf8');
+  const labelStart = src.indexOf('  function locationLabel(o) {');
+  const labelEnd = src.indexOf('  function firstEvidenceReference(', labelStart);
+  const pointStart = src.indexOf('  function observationMapPoint(o) {');
+  const pointEnd = src.indexOf('  function trustedObservations(instance) {', pointStart);
+  assert.ok(labelStart !== -1 && labelEnd > labelStart && pointStart > labelEnd && pointEnd > pointStart);
+  const extracted = src.slice(labelStart, labelEnd) + '\n' + src.slice(pointStart, pointEnd);
+  const display = vm.runInNewContext('(() => { ' + extracted +
+    '; return { locationLabel, verifiedCoordinatesLabel }; })()', {});
+  // Contract of the actual Field case window, not merely a demo helper.
+  assert.match(src, /\\{k:'الإحداثيات',v:verifiedCoordinatesLabel\\(o\\)\\}/);
+  const point = { location:'19.3300,41.1000', correctedLat:19.33, correctedLng:41.1 };
+  assert.equal(display.locationLabel({ ...point, locationVerified:false }), 'إحداثيات غير موثقة');
+  assert.equal(display.verifiedCoordinatesLabel({ ...point, locationVerified:false }), 'غير موثقة');
+  assert.equal(display.locationLabel({ ...point, locationVerified:true }), 'موقع GPS موثّق');
+  assert.equal(display.verifiedCoordinatesLabel({ ...point, locationVerified:true }), '19.330000، 41.100000');
+  const missing = { ...point, correctedLat:null, correctedLng:null, locationVerified:true };
+  assert.equal(display.locationLabel(missing), 'إحداثيات غير موثقة');
+  assert.equal(display.verifiedCoordinatesLabel(missing), 'غير موثقة');
+  assert.equal(display.verifiedCoordinatesLabel({ ...point, locationVerified:true, correctedLat:35, correctedLng:140 }), 'غير موثقة');
+  assert.equal(display.verifiedCoordinatesLabel({ ...point, locationVerified:true, correctedLat:41.1, correctedLng:19.33 }), '19.330000، 41.100000');
+  assert.equal(display.locationLabel({ location:'طريق الساحل', locationVerified:false }), 'طريق الساحل');
+  assert.equal(display.locationLabel({ location:'', locationVerified:true }), 'الموقع غير موثق');
+});
