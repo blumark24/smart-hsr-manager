@@ -267,3 +267,68 @@ test('evidence object read denies a foreign tenant key before Firestore or B2', 
   assert.ok(counters.observationQueries>0);
   assert.equal(counters.b2Client,0);
 });
+
+
+test('Field Head evidence viewer honors verified institutional administration-only role', async () => {
+  const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+  const source=fs.readFileSync(path.join(__dirname,'../api/storage/read.js'),'utf8');
+  const dependencies={
+    '../_lib/firebaseAdmin':{getDb(){throw Error('No actual Firebase calls permitted');}},
+    '../_lib/authz':{
+      async verifyRequestToken(){return {uid:'synthetic-head'};},
+      activeIsNotFalse(d){return d && d.active!==false;},
+      // Mirror the canonical mobilityAccess key's authority over stale legacy roles.
+      resolveMobilityRole(d){
+        if(Object.hasOwn(d,'mobilityAccess'))
+          return d.mobilityAccess?.enabled===true ? d.mobilityAccess.role : null;
+        return d.role==='department_head'?'department_head':null;
+      },
+    },
+    '../_lib/b2Client':{
+      b2Configuration(){throw Error('B2 is not used by the viewer resolver');},
+      getS3Client(){throw Error('B2 is not used by the viewer resolver');},
+      safeStorageFailure(){return {name:'synthetic'};},
+    },
+  };
+  const mod={exports:{}};
+  const fn=vm.runInNewContext('(function(require,module,process,Buffer){'+source+'\n})',{URL});
+  fn(name=>{assert.ok(Object.hasOwn(dependencies,name),'Unexpected dependency: '+name);return dependencies[name];},
+    mod,{env:{VERCEL_ENV:'preview'}},Buffer);
+  const resolve=mod.exports._test.resolveViewerContext;
+  async function check(user, exists=true) {
+    let calls=0;
+    const db={collection(name){
+      if(name==='managers')return {doc(){return {async get(){return {exists:false};}};}};
+      if(name==='users')return {doc(){return {async get(){
+        calls++;return {exists,data(){return user;}};
+      }};}};
+      throw Error('Unexpected data source: '+name);
+    }};
+    const result=await resolve(db,'synthetic-head');
+    assert.equal(calls,1);
+    return result;
+  }
+  const base={active:true,organizationId:'alpha-municipality'};
+  const canonical=await check({...base,institutionalRole:'department_head',administration:'إدارة الحصر الميداني'});
+  assert.equal(canonical.role,'department_head');
+  assert.equal(canonical.organizationId,'alpha-municipality');
+  assert.equal(canonical.department,'إدارة الحصر الميداني');
+  const legacy=await check({...base,mobilityAccess:{enabled:true,role:'department_head'},administration:'Field Survey'});
+  assert.equal(legacy.role,'department_head');
+  assert.equal(legacy.department,'Field Survey');
+  const canonicalDisabledMobility=await check({...base,institutionalRole:'department_head',
+    mobilityAccess:{enabled:false,role:null},administration:'الحصر الميداني'});
+  assert.equal(canonicalDisabledMobility.role,'department_head',
+    'institutional HR role is independent of Mobility fallback');
+  const denied=[
+    {...base,institutionalRole:'employee',administration:'الحصر الميداني'},
+    {...base,role:'department_head',mobilityAccess:{enabled:false,role:null},administration:'الحصر الميداني'},
+    {...base,institutionalRole:'department_head',administration:'إدارة الحركة'},
+    {...base,institutionalRole:'department_head',department:'الحركة',administration:'الحصر الميداني'},
+    {...base,institutionalRole:'department_head',administration:''},
+    {...base,institutionalRole:'department_head',administration:'الحصر الميداني',active:false},
+    {...base,institutionalRole:'department_head',administration:'الحصر الميداني',organizationId:''},
+  ];
+  for(const user of denied)assert.equal(await check(user),null,
+    'wrong/inactive/conflicting Field Head metadata must not grant evidence access');
+});
