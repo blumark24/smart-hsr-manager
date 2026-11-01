@@ -100,11 +100,17 @@ async function runViewport(browser,base,v){
   assert.equal(await page.locator('#modal').getAttribute('aria-labelledby'),'landsModalTitle');
   await page.waitForFunction(()=>document.activeElement?.id==='addGrantNumber');
   await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.classList.contains('close')),true,
+    v.name+': reverse tab from first input reaches the dialog close control');
+  await page.keyboard.press('Shift+Tab');
   assert.equal(await page.evaluate(()=>document.activeElement?.textContent?.trim()),'إلغاء',
-    v.name+': reverse tab must wrap to last modal action');
+    v.name+': reverse tab from first dialog control must wrap to last action');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.classList.contains('close')),true,
+    v.name+': tab from last action must wrap to first dialog control');
   await page.keyboard.press('Tab');
   assert.equal(await page.evaluate(()=>document.activeElement?.id),'addGrantNumber',
-    v.name+': tab must wrap to first field');
+    v.name+': first field remains keyboard reachable');
   const bounds=await page.locator('#modal').boundingBox();
   assert.ok(bounds && bounds.x>=-2 && bounds.y>=-2 &&
     bounds.x+bounds.width<=v.width+2 && bounds.y+bounds.height<=v.height+2,
