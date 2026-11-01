@@ -227,8 +227,8 @@ test('evidence object read denies a foreign tenant key before Firestore or B2', 
   };
   const mod={exports:{}};
   const fn=vm.runInNewContext('(function(require,module,process,Buffer){'+source+'\n})',{});
-  fn(mod,name=>{assert.ok(Object.hasOwn(dependencies,name),'unexpected dependency '+name);return dependencies[name];},
-    {env:{VERCEL_ENV:'preview'}},Buffer);
+  fn(name=>{assert.ok(Object.hasOwn(dependencies,name),'unexpected dependency '+name);return dependencies[name];},
+    mod,{env:{VERCEL_ENV:'preview'}},Buffer);
   const {keyScopedToOrganization,keyBelongsToOrganization}=mod.exports._test;
   const good='observations/alpha-municipality/obs-1/before/synthetic.jpg';
   const other='observations/bravo-municipality/obs-1/before/synthetic.jpg';
