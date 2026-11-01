@@ -130,6 +130,36 @@ jobs:
           test -z "$FIREBASE_TOKEN"
       - name: Locked dependency install, no deployment or cloud calls
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Zero-cost production dependency vulnerability audit (npm registry, no cloud credentials)
+        run: |
+          node <<'NODE'
+          const { spawnSync } = require('node:child_process');
+          const result = spawnSync('npm', ['audit', '--omit=dev', '--json'], {
+            encoding: 'utf8',
+            maxBuffer: 12 * 1024 * 1024,
+            timeout: 120000,
+            env: { ...process.env, FIREBASE_SERVICE_ACCOUNT: '', GOOGLE_APPLICATION_CREDENTIALS: '', B2_APPLICATION_KEY: '', OPENAI_API_KEY: '', FIREBASE_TOKEN: '' }
+          });
+          let audit;
+          try { audit = JSON.parse(result.stdout || ''); }
+          catch (_) { console.error('AUDIT_INCONCLUSIVE: npm did not return valid JSON'); process.exit(1); }
+          if (result.error || audit.error || !audit.metadata?.vulnerabilities || result.status === null) {
+            console.error('AUDIT_INCONCLUSIVE: dependency registry audit was not completed');
+            process.exit(1);
+          }
+          const counts = audit.metadata.vulnerabilities;
+          console.log('PRODUCTION_DEPENDENCY_AUDIT:', JSON.stringify({
+            critical: counts.critical || 0, high: counts.high || 0,
+            moderate: counts.moderate || 0, low: counts.low || 0,
+            info: counts.info || 0, total: counts.total || 0
+          }));
+          for (const [name, record] of Object.entries(audit.vulnerabilities || {})) {
+            if (record.severity === 'critical' || record.severity === 'high') {
+              console.error('PRODUCTION_HIGH_OR_CRITICAL:', name, record.severity);
+            }
+          }
+          if ((counts.critical || 0) + (counts.high || 0) > 0) process.exit(1);
+          NODE
       - name: Preview Firebase B2 tenant authentication document boundaries
         run: |
           node --test \
