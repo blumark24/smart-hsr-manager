@@ -52,3 +52,16 @@ test('Draft CI scope guard remains quoted, anchored and no-deploy', () => {
   assert.match(workflow,/echo 'FAIL: out-of-scope path modification'; exit 1/);
   assert.equal(vercel.git?.deploymentEnabled?.['fix/owner-upgrade-ledger-no-deploy-20261101'],false);
 });
+
+test('Protected Draft CI has each required job exactly once and no appended YAML tail', () => {
+  const source=fs.readFileSync(path.join(root,'.github/workflows/owner-billing-atomic-isolated.yml'),'utf8');
+  const jobs=['owner-upgrade','firestore-rules-emulator','one-sha-platform-contracts','one-sha-chromium-local'];
+  for(const job of jobs) {
+    const definition='\n  '+job+':\n';
+    assert.equal(source.split(definition).length-1,1,'duplicate or missing CI job: '+job);
+  }
+  assert.equal(source.split('\n /tmp/owner-review-changes; then').length,1,'duplicated shell tail in workflow');
+  assert.equal(source.split('\npermissions:\n').length-1,1,'duplicated workflow header');
+  assert.match(source,/retention-days: 7/);
+  assert.ok(source.trimEnd().endsWith('if-no-files-found: ignore'));
+});
