@@ -81,29 +81,47 @@
     return Array.isArray(data.employees) ? data.employees : [];
   };
 
+  let fieldRefreshGeneration = 0;
   const refresh = async () => {
-    if (!component || !currentUser) return;
-    const [employees, visual, missions, audit] = await Promise.all([
+    if (!component || !currentUser || !state.organizationId) return;
+    const active = component;
+    const uid = currentUser.uid;
+    const organizationId = state.organizationId;
+    const generation = ++fieldRefreshGeneration;
+    const [employees, visualResult, missions, audit] = await Promise.all([
       employeeApi().catch(() => []),
-      api('getFieldVisualDistortionCommand').catch(() => ({observations:[],contractors:[]})),
+      api('getFieldVisualDistortionCommand')
+        .then(value => ({ ok: true, value }))
+        .catch(() => ({ ok: false })),
       api('listDepartmentMissions').catch(() => ({missions:[]})),
       api('listFieldDepartmentAudit').catch(() => ({events:[]}))
     ]);
-    component.setState({
+    // An earlier request must never overwrite a newer refresh or a changed
+    // workforce session/tenant, including when the old request failed.
+    const stillCurrent = () =>
+      generation === fieldRefreshGeneration && component === active &&
+      currentUser?.uid === uid && auth?.currentUser?.uid === uid &&
+      state.organizationId === organizationId;
+    if (!stillCurrent()) return;
+    const visual = visualResult.ok ? visualResult.value : null;
+    // Empty verified arrays mean zero cases. Failed/malformed reads are
+    // unavailable, never an asserted zero count.
+    const fieldVisualDataReady = Array.isArray(visual?.observations) &&
+      Array.isArray(visual?.contractors);
+    active.setState({
       liveEmployees: employees,
-      mapContext: visual && visual.mapContext ? visual.mapContext : null,
-      liveObservations: Array.isArray(visual.observations) ? visual.observations : [],
-      liveContractors: Array.isArray(visual.contractors) ? visual.contractors : [],
+      fieldVisualDataReady,
+      mapContext: fieldVisualDataReady && visual.mapContext ? visual.mapContext : null,
+      liveObservations: fieldVisualDataReady ? visual.observations : [],
+      liveContractors: fieldVisualDataReady ? visual.contractors : [],
       liveMissions: Array.isArray(missions.missions) ? missions.missions : [],
       liveDepartmentAudit: Array.isArray(audit.events) ? audit.events : []
     }, () => {
-      // Map context and live observations can arrive after MapLibre's initial
-      // load. Re-apply the authoritative municipality extent first, then paint
-      // the trusted observation layer. This prevents a stable world-view
-      // fallback on an authenticated Field Department Head workspace.
+      // Repaint only for the active identity and most recent result.
       requestAnimationFrame(() => {
-        component.applyMunicipalMapContext?.(true);
-        renderObservationMarkers(component);
+        if (!stillCurrent()) return;
+        active.applyMunicipalMapContext?.(true);
+        renderObservationMarkers(active);
       });
     });
   };
@@ -330,7 +348,8 @@
       instance.screenDef = () => {
         const screen = instance.state.screen;
         if (instance.state.role === 'dept' && screen === 'missions') {
-          return {ops:false,title:'التشوه البصري',sub:'إدارة دورة البلاغ من الرصد حتى الإغلاق',actions:[]};
+          const sourceNote = instance.state.fieldVisualDataReady === true ? '' : ' · بيانات الحصر غير متاحة';
+          return {ops:false,title:'التشوه البصري',sub:'إدارة دورة البلاغ من الرصد حتى الإغلاق'+sourceNote,actions:[]};
         }
         if (instance.state.role === 'dept' && screen === 'incidents') {
           return {ops:false,title:'البلاغات العامة',sub:'بلاغات تشغيلية مستقلة لا تشمل حالات التشوه البصري، لمنع ازدواجية السجل والمسار',actions:[]};
@@ -346,11 +365,15 @@
         const base = originalScreenDef();
         if (instance.state.role !== 'dept' || screen !== 'deptops') return base;
         const observations = instance.state.liveObservations || [];
+        const caseFeedReady = instance.state.fieldVisualDataReady === true;
         const active = observations.filter(o => workflowPhase(o).key !== 'completed');
         const team = (instance.state.liveEmployees || []).filter(e => e?.products?.field?.enabled === true && e?.products?.field?.role === 'inspector');
         const countPhase = key => observations.filter(o=>workflowPhase(o).key===key).length;
         const K = (label,value,color,on) => ({label,value:String(value),delta:'',col:color,on:on||(()=>{})});
         const openPhase = label => instance.setState({screen:'missions',tfilter:label});
+        const caseKpi = (label,count,color,filter) =>
+          K(label,caseFeedReady ? count : '—',color,
+            () => caseFeedReady ? openPhase(filter) : instance.flash('بيانات الحصر غير متاحة، أعد المحاولة'));
         return Object.assign({}, base, {
           ops:true,
           bottom:false,
@@ -358,15 +381,15 @@
           sub:'إدارة الحصر الميداني · المنتج النشط: التشوه البصري',
           actions:[],
           kpis:[
-            K('إجمالي الحالات', observations.length, '#0f766e', ()=>openPhase('الكل')),
-            K('جديدة', countPhase('new'), '#ef4444', ()=>openPhase('جديدة')),
-            K('تم الإسناد', countPhase('assigned'), '#7c6cf2', ()=>openPhase('تم الإسناد')),
-            K('قيد التنفيذ', countPhase('progress'), '#f59e0b', ()=>openPhase('قيد التنفيذ')),
-            K('بانتظار التحقق', countPhase('review'), '#38bdf8', ()=>openPhase('بانتظار التحقق')),
-            K('تمت المعالجة', countPhase('completed'), '#22a06b', ()=>openPhase('تمت المعالجة'))
+            caseKpi('إجمالي الحالات', observations.length, '#0f766e', 'الكل'),
+            caseKpi('جديدة', countPhase('new'), '#ef4444', 'جديدة'),
+            caseKpi('تم الإسناد', countPhase('assigned'), '#7c6cf2', 'تم الإسناد'),
+            caseKpi('قيد التنفيذ', countPhase('progress'), '#f59e0b', 'قيد التنفيذ'),
+            caseKpi('بانتظار التحقق', countPhase('review'), '#38bdf8', 'بانتظار التحقق'),
+            caseKpi('تمت المعالجة', countPhase('completed'), '#22a06b', 'تمت المعالجة')
           ],
           sideATitle:'الحالات التشغيلية الجارية',
-          sideACount:active.length + ' حالة',
+          sideACount:caseFeedReady ? active.length + ' حالة' : 'غير متاح',
           sideA:active.slice(0,8).map(o => {
             const phase=workflowPhase(o);
             const company=(instance.state.liveContractors||[]).find(x=>x.uid===o.assignedContractorUid)?.profile?.companyName;
@@ -483,7 +506,7 @@
                 cell(o.inspectorVerification?.status==='VERIFIED'?'متحقق':o.inspectorVerification?.status==='RETURNED'?'معاد للمقاول':'—','0 0 100px',{align:'left',size:'10.5px'})
               ]
             },{chip:workflowPhase(o).label,chipCol:workflowPhase(o).color,chipBg:'rgba(122,164,224,.10)',chipBd:workflowPhase(o).color})),
-            tEmpty:observations.length===0,tCount:observations.length+' بلاغ معروض'
+            tEmpty:observations.length===0,tCount:instance.state.fieldVisualDataReady === true ? observations.length+' بلاغ معروض' : 'بيانات الحصر غير متاحة'
           };
         }
         if (st.role === 'dept' && screen === 'fieldmobility') {
