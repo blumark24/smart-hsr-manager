@@ -127,8 +127,13 @@
     const hasLands = Boolean(la && la.enabled === true && LANDS_ROLES.includes(la.role));
     const hasFieldRole = FIELD_ROLES.includes(d.role);
     const hasDepartmentHeadRole = institutionalRole === 'department_head' || mobilityRole === 'department_head';
+    // The Field Head runtime and evidence API resolve the narrower department
+    // first, then fall back to administration when department is empty.
+    // Routing must not offer Field from administration if an explicit,
+    // conflicting department belongs to another service.
+    const fieldScope = department || administration;
     const hasFieldDepartmentHeadRole = hasDepartmentHeadRole
-      && /الحصر|ميداني|field/i.test(administration || department);
+      && RE_FIELD.test(fieldScope);
 
     const canonical = CANONICAL_ROLES.includes(institutionalRole);
     const canonicalFieldPath = canonical && RE_FIELD.test(administration);
