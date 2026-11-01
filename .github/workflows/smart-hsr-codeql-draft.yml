@@ -1,0 +1,53 @@
+# Zero-new-spend static security analysis on an isolated draft branch.
+# CodeQL is supported at no license charge for this PUBLIC GitHub repository.
+# This workflow MUST NOT deploy, touch cloud resources, or use municipality data.
+name: SMART HSR zero-cost CodeQL Draft security scan
+
+on:
+  push:
+    branches:
+      - fix/owner-upgrade-ledger-no-deploy-20261101
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  static-security-analysis:
+    name: CodeQL JavaScript/TypeScript security-extended (source only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ''
+      GOOGLE_APPLICATION_CREDENTIALS: ''
+      B2_APPLICATION_KEY: ''
+      OPENAI_API_KEY: ''
+      FIREBASE_TOKEN: ''
+    steps:
+      - name: Checkout guarded Draft SHA (never persist credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Confirm Auto Deploy is disabled for the analyzed branch
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const assert=require('node:assert/strict');
+          const cfg=JSON.parse(fs.readFileSync('vercel.json','utf8'));
+          assert.equal(cfg.git?.deploymentEnabled?.['fix/owner-upgrade-ledger-no-deploy-20261101'],false);
+          for (const key of ['FIREBASE_SERVICE_ACCOUNT','GOOGLE_APPLICATION_CREDENTIALS','B2_APPLICATION_KEY','OPENAI_API_KEY','FIREBASE_TOKEN']) {
+            assert.equal(process.env[key], '');
+          }
+          console.log('READ_ONLY_CODEQL_GUARD_PASS: no credentials, no deployment');
+          NODE
+      - name: Initialize GitHub CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-extended
+      - name: Analyze source and upload CodeQL results
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:javascript-typescript"
