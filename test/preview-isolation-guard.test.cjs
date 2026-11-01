@@ -130,8 +130,9 @@ test('actual /api/firebase-config Preview route rejects mixed resources before r
       return gate;
     },{env});
     const response={
-      statusCode:200, payload:null,
+      statusCode:200, payload:null, headers:{},
       status(code){this.statusCode=code;return this;},
+      setHeader(name,value){this.headers[name]=value;},
       json(value){this.payload=JSON.parse(JSON.stringify(value));return this;}
     };
     mod.exports({method},response);
@@ -144,6 +145,34 @@ test('actual /api/firebase-config Preview route rejects mixed resources before r
   const ok=invoke('GET',valid);
   assert.equal(ok.statusCode,200);
   assert.equal(ok.payload.projectId,project);
+  assert.equal(ok.headers['Cache-Control'],'private, no-store');
+  const poisoned=invoke('GET',{...valid,FIREBASE_WEB_CONFIG:JSON.stringify({
+    projectId:project,
+    apiKey:'synthetic-public-firebase-web-key',
+    authDomain:project+'.firebaseapp.com',
+    storageBucket:project+'.firebasestorage.app',
+    messagingSenderId:'12345',
+    appId:'1:12345:web:synthetic',
+    private_key:'synthetic-private-value-must-not-leak',
+    client_secret:'synthetic-client-secret-must-not-leak',
+    serviceAccount:{private_key:'synthetic-nested-value-must-not-leak'},
+    __internal_admin_override:'synthetic-server-only-value',
+  })});
+  assert.equal(poisoned.statusCode,200);
+  assert.deepEqual(Object.keys(poisoned.payload).sort(),[
+    'apiKey','appId','authDomain','messagingSenderId','projectId','storageBucket'
+  ]);
+  assert.equal(poisoned.payload.apiKey,'synthetic-public-firebase-web-key');
+  assert.doesNotMatch(JSON.stringify(poisoned.payload),
+    /synthetic-private|synthetic-client-secret|synthetic-nested|synthetic-server-only/);
+  assert.equal(poisoned.headers['Cache-Control'],'private, no-store');
+  const typed=invoke('GET',{...valid,FIREBASE_WEB_CONFIG:JSON.stringify({
+    projectId:project, authDomain:project+'.firebaseapp.com',
+    storageBucket:project+'.firebasestorage.app',
+    appId:{private_key:'synthetic-nested-value-must-not-leak'}
+  })});
+  assert.equal(typed.statusCode,503);
+  assert.equal(typed.payload.error,'FIREBASE_PREVIEW_CONFIG_INVALID');
   for (const patch of [
     {storageBucket:'smart-hsr-manager.firebasestorage.app'},
     {authDomain:'smart-hsr-manager.firebaseapp.com'},
