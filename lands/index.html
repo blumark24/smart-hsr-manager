@@ -7756,7 +7756,9 @@ function setupLandsDialog(backdropId, panelId, titleId) {
       } else {
         panel.removeAttribute("aria-labelledby");
       }
-      queueMicrotask(() => {
+      // Focus after the backdrop has become layout-visible, not in the same
+      // microtask as its class mutation (Safari/Chromium may ignore that focus).
+      requestAnimationFrame(() => {
         if (!backdrop.classList.contains("open")) return;
         const target = panel.querySelector("input:not([type=hidden]):not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled])");
         (target || panel).focus({preventScroll:true});
