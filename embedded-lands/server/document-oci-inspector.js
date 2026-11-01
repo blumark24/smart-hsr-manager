@@ -28,11 +28,24 @@ function sniff(b) {
  if(b.length>=8&&b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return 'image/png';
  return null;
 }
+// OCI's SDK returns Node Readable streams. Never use transformToByteArray():
+// it can buffer an untrusted response in full before the declared size is
+// checked. Abort during iteration once the verified maximum is exceeded.
 async function bytesOf(body){
- if(Buffer.isBuffer(body))return body;
- if(typeof body?.transformToByteArray==='function')
-  return Buffer.from(await body.transformToByteArray());
- deny();
+ if(Buffer.isBuffer(body)){
+  if(body.length<1||body.length>LANDS_DOCUMENT_MAX_BYTES)deny();
+  return body;
+ }
+ if(typeof body?.[Symbol.asyncIterator]!=='function')deny();
+ const chunks=[];let total=0;
+ for await(const chunk of body){
+  if(!(chunk instanceof Uint8Array))deny();
+  total+=chunk.byteLength;
+  if(total>LANDS_DOCUMENT_MAX_BYTES)deny();
+  chunks.push(Buffer.from(chunk));
+ }
+ if(total<1)deny();
+ return Buffer.concat(chunks,total);
 }
 export function createOciSaudiDocumentInspector({region,namespace,bucket,endpoint,
  controlPlane,s3}={}){
