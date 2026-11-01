@@ -156,16 +156,22 @@ jobs:
           for (const [name, record] of Object.entries(audit.vulnerabilities || {})) {
             if (['critical', 'high', 'moderate'].includes(record.severity)) {
               // Names and severities only; never emit credentials or source contents.
+              const advisories = (record.via || [])
+                .filter(v => v && typeof v === 'object')
+                .slice(0, 3)
+                .map(v => ({ id: v.source, title: v.title, url: v.url, affectedRange: v.range }));
               console.log('PRODUCTION_REVIEW_REQUIRED:', JSON.stringify({
                 package: name, severity: record.severity,
                 direct: Boolean(record.isDirect),
-                fixAvailable: Boolean(record.fixAvailable)
+                fixAvailable: Boolean(record.fixAvailable),
+                advisories
               }));
             }
           }
           if ((counts.critical || 0) + (counts.high || 0) > 0) process.exit(1);
           NODE
-      - name: Ephemeral dependency remediation feasibility (no commit, no deployment)
+      - name: Ephemeral dependency remediation feasibility (manual dispatch only, no commit or deployment)
+        if: github.event_name == 'workflow_dispatch'
         run: |
           set -eu
           cp package-lock.json /tmp/smart-hsr-original-package-lock.json
