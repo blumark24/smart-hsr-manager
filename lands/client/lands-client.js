@@ -182,7 +182,13 @@ export function createLandsClient({ firebaseConfig, useEmulators = false, emulat
       await callTrustedMutation(municipalityId, { operation: 'land_grant.reopen', record_id: grantId, record_changes: { reason }, safe_metadata: { previous_status: 'approved', new_status: 'incomplete', changed_fields: ['status', 'return_reason'], source: 'web' } });
     },
     async uploadDocument(municipalityId, { recordDomain, recordId, file }) {
-      const identity = await session(municipalityId); assertLandsDocumentUpload(file);
+      assertLandsDocumentUpload(file);
+      // Staging Firebase Storage is not an approved verified Lands document
+      // backend. Never persist a Firestore document record before a trusted
+      // server gateway can prove the corresponding object bytes exist.
+      // Production and local emulator paths retain their existing behavior.
+      if (isolatedPreviewSession) throw new Error('LANDS_PREVIEW_DOCUMENT_GATEWAY_REQUIRED');
+      const identity = await session(municipalityId);
       const metadataRef = doc(collection(root(db, municipalityId), 'documents'));
       const metadata = createLandsDocumentMetadata({ municipalityId, actorUid: identity.firebaseUid, recordDomain, recordId, fileId: metadataRef.id, filename: `document-${metadataRef.id}`, file });
       await setDoc(metadataRef, { ...metadata, created_at: serverTimestamp(), updated_at: serverTimestamp() });
@@ -197,6 +203,9 @@ export function createLandsClient({ firebaseConfig, useEmulators = false, emulat
       return getBytes(ref(storage, path));
     },
     async replaceDocument(municipalityId, documentId, file) {
+      // A trusted document gateway has not been approved in isolated Preview.
+      // Block mutations before reading membership, document metadata or bytes.
+      if (isolatedPreviewSession) throw new Error('LANDS_PREVIEW_DOCUMENT_MUTATION_GATEWAY_REQUIRED');
       const identity = await session(municipalityId); if (!canReplaceLandsDocument(identity.role)) throw new Error('DOCUMENT_REPLACE_DENIED');
       assertLandsDocumentUpload(file); const metadataSnapshot = await getDoc(doc(root(db, municipalityId), 'documents', documentId));
       if (!metadataSnapshot.exists()) throw new Error('DOCUMENT_NOT_FOUND');
@@ -211,6 +220,8 @@ export function createLandsClient({ firebaseConfig, useEmulators = false, emulat
       });
     },
     async deleteDocument(municipalityId, documentId) {
+      // Deletion must obey the same Preview-only storage acceptance gate.
+      if (isolatedPreviewSession) throw new Error('LANDS_PREVIEW_DOCUMENT_MUTATION_GATEWAY_REQUIRED');
       const identity = await session(municipalityId); if (!canDeleteLandsDocument(identity.role)) throw new Error('DOCUMENT_DELETE_DENIED');
       await callTrustedMutation(municipalityId, { operation: 'document.delete', record_id: documentId });
     },
