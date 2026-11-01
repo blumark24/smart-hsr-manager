@@ -39,3 +39,16 @@ test('README documents Draft no-deploy guard and never portrays offline fixture 
   assert.match(readme, /بيانات \*\*اصطناعية فقط\*\*/);
   assert.match(readme, /npm test.*يفشل عمدًا/);
 });
+
+test('Draft CI scope guard remains quoted, anchored and no-deploy', () => {
+  const workflow=fs.readFileSync(path.join(root,'.github/workflows/owner-billing-atomic-isolated.yml'),'utf8');
+  const guard=workflow.split('\n').find(line=>line.trim().startsWith("if grep -Ev '^(api/_lib/ownerBillingUpgrade"));
+  assert.ok(guard, 'review scope gate required');
+  assert.ok(guard.trim().endsWith(")$' /tmp/owner-review-changes; then"),
+    'must end the quoted anchored allowlist and read the change list');
+  assert.ok(guard.includes("docs/release/SMART_HSR_INDEPENDENT_SECURITY_REVIEW_HANDOFF_2026-11-01\\.md"),
+    'review handoff must remain in docs-only scope');
+  assert.match(workflow,/git diff --name-only a1fbda58932d9d6568faa0c2e876e6630aed4108 HEAD > \/tmp\/owner-review-changes/);
+  assert.match(workflow,/echo 'FAIL: out-of-scope path modification'; exit 1/);
+  assert.equal(vercel.git?.deploymentEnabled?.['fix/owner-upgrade-ledger-no-deploy-20261101'],false);
+});
