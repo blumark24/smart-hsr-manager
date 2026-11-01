@@ -6,6 +6,7 @@
 
 const { passwordPolicyReason } = require('./serviceEntitlements');
 const { handleOwnerBillingUpgrade } = require('./ownerBillingUpgrade');
+const { handleOwnerManualBilling } = require('./ownerManualBilling');
 
 const OWNER_ACTIONS = new Set([
   'ownerOpsSnapshot',
@@ -20,6 +21,7 @@ const OWNER_ACTIONS = new Set([
   'ownerRestoreOrganization',
   'ownerSetOrganizationSpatialContext',
   'ownerUpgradeOrganizationWithInvoice',
+  'ownerInvoiceCreatePending',
   'ownerInvoiceUpdate',
   'ownerInvoiceArchive',
   'ownerInvoiceDelete',
@@ -885,6 +887,10 @@ async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldVal
     }
     if (action === 'ownerUpgradeOrganizationWithInvoice') {
       await handleOwnerBillingUpgrade({ body, decoded, db, FieldValue, sendJson, res });
+      return true;
+    }
+    if (action === 'ownerInvoiceCreatePending') {
+      await handleOwnerManualBilling({ body, decoded, db, FieldValue, sendJson, res });
       return true;
     }
     if (action === 'ownerInvoiceUpdate' || action === 'ownerInvoiceArchive' || action === 'ownerInvoiceDelete') {
