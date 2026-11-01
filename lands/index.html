@@ -7760,8 +7760,10 @@ function setupLandsDialog(backdropId, panelId, titleId) {
       // microtask as its class mutation (Safari/Chromium may ignore that focus).
       requestAnimationFrame(() => {
         if (!backdrop.classList.contains("open")) return;
-        const target = panel.querySelector("input:not([type=hidden]):not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled])");
-        (target || panel).focus({preventScroll:true});
+        // Prefer the form field over the close button, regardless of DOM order.
+        const field = panel.querySelector("input:not([type=hidden]):not([disabled]), textarea:not([disabled]), select:not([disabled])");
+        const button = panel.querySelector("button:not([disabled])");
+        (field || button || panel).focus({preventScroll:true});
       });
     } else {
       const opener = landsDialogTriggers.get(backdrop);
