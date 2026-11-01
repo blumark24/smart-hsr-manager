@@ -33,8 +33,8 @@ function isCandidateEvidenceUrl(link) {
     return url.protocol === 'https:' && !url.username && !url.password &&
       host !== 'localhost' && host !== '[::1]' &&
       !['example.com', 'example.net', 'example.org'].includes(host) &&
-      !/\\.(invalid|example|test|localhost)$/.test(host) &&
-      !/^(127\\.|10\\.|192\\.168\\.|169\\.254\\.)/.test(host);
+      !/\.(invalid|example|test|localhost)$/.test(host) &&
+      !/^(127\.|10\.|192\.168\.|169\.254\.)/.test(host);
   } catch (_) {
     return false;
   }
