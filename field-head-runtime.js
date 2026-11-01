@@ -207,8 +207,11 @@
   }
   function locationLabel(o) {
     const raw=String(o?.location||'').trim();
-    if (!raw) return o?.locationVerified===true ? 'موقع GPS موثّق' : 'الموقع غير موثق';
-    if (/^-?\d+(?:\.\d+)?\s*[,،]\s*-?\d+(?:\.\d+)?$/.test(raw)) return 'موقع GPS موثّق';
+    const verifiedPoint=trustedLocationPoint(o);
+    if (!raw) return verifiedPoint ? 'موقع GPS موثّق' : 'الموقع غير موثق';
+    if (/^-?\d+(?:\.\d+)?\s*[,،]\s*-?\d+(?:\.\d+)?$/.test(raw)) {
+      return verifiedPoint ? 'موقع GPS موثّق' : 'إحداثيات غير موثقة';
+    }
     return raw;
   }
   function firstEvidenceReference(...values) {
@@ -234,6 +237,15 @@
     // orientation.
     if (inSaudiEnvelope(rawLng,rawLat)) return {lat:rawLng,lng:rawLat,source:'swapped_read_recovery'};
     return null;
+  }
+  // A coordinate-looking string is not verified location evidence.
+  // Reuse the existing validated Saudi-envelope point, read-only.
+  function trustedLocationPoint(o) {
+    return o?.locationVerified === true ? observationMapPoint(o) : null;
+  }
+  function verifiedCoordinatesLabel(o) {
+    const point=trustedLocationPoint(o);
+    return point ? point.lat.toFixed(6)+'، '+point.lng.toFixed(6) : 'غير موثقة';
   }
   function trustedObservations(instance) {
     const allowed = new Set(['PENDING','IN_PROGRESS','PENDING_REVIEW','COMPLETED']);
@@ -702,7 +714,7 @@
               {k:'رقم الحالة',v:String(o.displayId || o.observationId || '—')},
               {k:'التصنيف',v:typeLabel(o.type || o.title)},
               {k:'الموقع',v:locationLabel(o)},
-              {k:'الإحداثيات',v:(Number.isFinite(Number(o.correctedLat))&&Number.isFinite(Number(o.correctedLng)))?(Number(o.correctedLat).toFixed(6)+'، '+Number(o.correctedLng).toFixed(6)):'—'},
+              {k:'الإحداثيات',v:verifiedCoordinatesLabel(o)},
               {k:'الحالة',v:statusLabel(o.status)},
               {k:'المراقب',v:o.createdByName || o.inspectorName || 'غير مسند'},
               {k:'الشركة المتعاقدة',v:assignedProfile.companyName || (o.assignedContractorUid ? 'شركة متعاقدة' : 'غير مسند')},
