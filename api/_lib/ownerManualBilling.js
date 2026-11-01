@@ -9,7 +9,7 @@ const CYCLES=new Set(['monthly','yearly']);
 function deny(status,error){return {status,payload:{ok:false,error}};}
 function amountInHalalas(value){
   if(typeof value!=='number'||!Number.isFinite(value)||value<=0||
-      value>1000000||Math.round(value*100)!==value*100)return null;
+      value>1000000||Math.abs(value*100-Math.round(value*100))>1e-7)return null;
   return Math.round(value*100);
 }
 async function handleOwnerManualBilling({body,decoded,db,FieldValue,sendJson,res}){
