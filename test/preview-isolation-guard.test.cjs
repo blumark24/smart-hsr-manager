@@ -190,3 +190,80 @@ test('actual /api/firebase-config Preview route rejects mixed resources before r
   const method=invoke('POST',valid);
   assert.equal(method.statusCode,405);
 });
+
+
+test('evidence object read denies a foreign tenant key before Firestore or B2', async () => {
+  const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+  const source=fs.readFileSync(path.join(__dirname,'../api/storage/read.js'),'utf8');
+  const counters={observationQueries:0,b2Config:0,b2Client:0};
+  const validOrg='alpha-municipality';
+  const db={
+    collection(name) {
+      if(name==='managers')return {doc(){return {async get(){
+        return {exists:true,data(){return {role:'manager',active:true,organizationId:validOrg};}};
+      }};}};
+      if(name==='users')return {doc(){throw Error('Unexpected user fallback');}};
+      if(name==='observations'){
+        counters.observationQueries++;
+        return {where(){return {where(){return {limit(){return {async get(){
+          return {empty:false};
+        }};}};}};}};
+      }
+      throw Error('Unexpected DB collection: '+name);
+    }
+  };
+  const dependencies={
+    '../_lib/firebaseAdmin':{getDb(){return db;}},
+    '../_lib/authz':{
+      async verifyRequestToken(){return {uid:'synthetic-manager'};},
+      activeIsNotFalse(d){return d?.active!==false;},
+      resolveMobilityRole(){return null;},
+    },
+    '../_lib/b2Client':{
+      b2Configuration(){counters.b2Config++;return null;},
+      getS3Client(){counters.b2Client++;throw Error('B2 access forbidden in synthetic test');},
+      safeStorageFailure(){return {name:'synthetic'};},
+    },
+  };
+  const mod={exports:{}};
+  const fn=vm.runInNewContext('(function(require,module,process,Buffer){'+source+'\n})',{});
+  fn(mod,name=>{assert.ok(Object.hasOwn(dependencies,name),'unexpected dependency '+name);return dependencies[name];},
+    {env:{VERCEL_ENV:'preview'}},Buffer);
+  const {keyScopedToOrganization,keyBelongsToOrganization}=mod.exports._test;
+  const good='observations/alpha-municipality/obs-1/before/synthetic.jpg';
+  const other='observations/bravo-municipality/obs-1/before/synthetic.jpg';
+  const spoofedPrefix='observations/alpha-municipality-extra/obs-1/before/synthetic.jpg';
+  assert.equal(keyScopedToOrganization(good,validOrg),true);
+  assert.equal(keyScopedToOrganization(other,validOrg),false);
+  assert.equal(keyScopedToOrganization(spoofedPrefix,validOrg),false);
+  assert.equal(keyScopedToOrganization(good,'other-tenant'),false);
+  assert.equal(keyScopedToOrganization(good,'alpha/municipality'),false);
+  assert.equal(keyScopedToOrganization('https://example.test/img.jpg',validOrg),false);
+  assert.equal(await keyBelongsToOrganization(db,other,validOrg),false);
+  assert.equal(counters.observationQueries,0,'no Firestore ownership query for foreign object');
+  async function invoke(key) {
+    const res={
+      statusCode:200,headers:{},body:null,
+      setHeader(name,value){this.headers[name]=value;},
+      end(value){this.body=JSON.parse(value);},
+    };
+    await mod.exports({method:'GET',url:'/?key='+encodeURIComponent(key)},res);
+    return res;
+  }
+  const denyForeign=await invoke(other);
+  assert.equal(denyForeign.statusCode,403);
+  assert.equal(denyForeign.body.error,'AUTH_ORGANIZATION_DENIED');
+  const denySpoof=await invoke(spoofedPrefix);
+  assert.equal(denySpoof.statusCode,403);
+  assert.equal(denySpoof.body.error,'AUTH_ORGANIZATION_DENIED');
+  assert.equal(counters.observationQueries,0,'no Firestore query for foreign keys');
+  assert.equal(counters.b2Config,0,'no storage config before tenant prefix validation');
+  assert.equal(counters.b2Client,0,'no S3 client before tenant prefix validation');
+  // The valid tenant path proceeds to real observation ownership verification,
+  // then safely stops because this test intentionally provides no B2 config.
+  const own=await invoke(good);
+  assert.equal(own.statusCode,502);
+  assert.equal(own.body.error,'B2_READ_FAILED');
+  assert.ok(counters.observationQueries>0);
+  assert.equal(counters.b2Client,0);
+});
