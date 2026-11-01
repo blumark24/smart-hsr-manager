@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'none'; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SMART HSR | عرض الحصر الميداني الاصطناعي — محلي فقط</title>
+<style>
+:root{color-scheme:light;--navy:#102641;--green:#167356;--bg:#edf3f1;--ink:#192d3e;--line:#ceddd6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:22px max(20px,calc((100vw - 1180px)/2));background:var(--navy);color:#fff}
+header strong{font-size:24px;letter-spacing:.03em}
+header small{color:#bde8d6;margin-inline-start:12px}
+header p{margin:8px 0 0;color:#e2efe8}
+main{width:min(1180px,calc(100% - 28px));margin:22px auto}
+.warning{background:#fff7e6;border:1px solid #d9ae55;border-radius:12px;padding:13px 17px;margin-bottom:17px;color:#704e10}
+.layout{display:grid;grid-template-columns:1.1fr 1fr;gap:16px}
+section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+h1{font-size:22px;margin:0 0 8px}h2{font-size:17px;margin:0 0 14px}
+small,.muted{color:#5b706a}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:17px}
+.kpi{background:#f0f5f3;border:1px solid var(--line);border-radius:9px;padding:12px 9px;text-align:center}
+.kpi strong{display:block;font-size:24px;color:var(--navy)}
+.trace{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:12px 0}
+.step{padding:9px 5px;background:#edf3f0;border-radius:9px;color:#5f6f6b;text-align:center;font-size:13px}
+.step.current{background:#e3f3eb;color:#075f42;border:2px solid var(--green);font-weight:700}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+button{border:0;background:var(--navy);color:white;padding:10px 14px;border-radius:8px;font:inherit;font-weight:650;cursor:pointer}
+button:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+button:disabled{background:#dce5e0;color:#6c7e78;cursor:not-allowed}
+#verify{background:var(--green)}
+#error{color:#af3c2b;min-height:28px;font-weight:650}
+.panel{min-height:158px;border:1px dashed #b7cec3;border-radius:11px;padding:14px;background:#f8fbf9}
+.panel strong{color:var(--navy)}.panel p{margin:8px 0 0}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f8f7;padding:12px;border-radius:8px;max-height:235px;overflow:auto;font:12px/1.6 ui-monospace,monospace;direction:ltr;text-align:left}
+dt{font-weight:700;display:inline}dd{display:inline;margin:0 0 0 20px}
+.row{margin:8px 0}
+footer{padding:20px;text-align:center;color:#5b706a}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:480px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.trace{grid-template-columns:repeat(5,1fr)}.step{font-size:11px}.actions button{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <strong>SMART <span style="color:#68d6a2">HSR</span></strong><small>Field Survey • Offline Acceptance Fixture</small>
+  <p>عرض عربي تجريبي لاختبار دورة حالة واحدة. لا يتصل بقاعدة بيانات أو حسابات أو خرائط حقيقية.</p>
+</header>
+<main>
+  <div class="warning" role="note"><strong>بيانات اصطناعية 100% — ليس منتجًا منشورًا أو إثبات قبول بلدي.</strong> الواجهة التالية تعمل محليًا دون إنترنت، ولا تُظهر مواقع جغرافية مختلقة أو مستندات مستفيدين.</div>
+  <section style="margin-bottom:16px">
+    <h1>مركز الحصر الميداني — تجربة حالة واحدة</h1>
+    <div class="row"><dt>رقم الحالة:</dt> <dd id="caseId"></dd> <dt>الحالة:</dt> <dd id="status"></dd></div>
+    <div class="row"><dt>آخر تحديث:</dt> <dd id="updatedAt"></dd></div>
+    <div id="kpis" class="kpis" aria-label="مؤشرات من مصدر الحقيقة نفسه"></div>
+    <h2>المسار التشغيلي</h2>
+    <div id="trace" class="trace"></div>
+    <div class="actions" aria-label="انتقالات بأدوار بشرية تجريبية">
+      <button type="button" id="assign" data-action="assign">إسناد الحالة (مشرف)</button>
+      <button type="button" id="start" data-action="start">بدء التنفيذ (الموظف)</button>
+      <button type="button" id="submit" data-action="submit">إرسال للتحقق (الموظف)</button>
+      <button type="button" id="verify" data-action="verify">اعتماد الإغلاق (محقق بشري)</button>
+    </div>
+    <p id="error" aria-live="polite"></p>
+    <button type="button" id="reset">إعادة التجربة</button>
+  </section>
+  <div class="layout">
+    <section>
+      <h2>SMART HSR MAPS — إسقاط الحالة</h2>
+      <div class="panel"><strong id="mapCase"></strong><p id="mapStatus"></p><p id="mapLocation" class="muted"></p></div>
+      <small>لا تُرسم نقطة دون GPS موثق. هذه ليست خريطة GIS تشغيلية.</small>
+    </section>
+    <section>
+      <h2>SMART HSR TWIN — إسقاط الحالة</h2>
+      <div class="panel"><strong id="twinCase"></strong><p id="twinStatus"></p><p class="muted">لا يوجد نموذج ثلاثي الأبعاد معتمد في هذه التجربة.</p></div>
+      <small>المعرّف والحالة والتوقيت متطابقة مع لوحة المدير والخريطة.</small>
+    </section>
+    <section>
+      <h2>الملف الرقمي — أدلة الحالة</h2>
+      <div class="panel"><p id="evidence"></p><p id="assignee"></p></div>
+      <small>عناصر الإثبات تجريبية، وليست صورًا أو ملفات بلدية حقيقية.</small>
+    </section>
+    <section>
+      <h2>Audit Trail — سجل الانتقالات</h2>
+      <pre id="audit" aria-label="سجل تدقيق اصطناعي"></pre>
+    </section>
+  </div>
+</main>
+<footer>SMART HSR • Acceptance Test Fixture • لا اتصالات خارجية • صفر بيانات شخصية</footer>
+<script src="./smart-hsr-field-case-demo.js"></script>
+<script src="./smart-hsr-field-case-ui.js"></script>
+</body>
+</html>
