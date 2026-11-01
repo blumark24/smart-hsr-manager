@@ -169,12 +169,30 @@ export function initOrganizationsModule({ auth, db, getOrgs, showNotif, refreshA
       }
       return;
     }
-    if(act==='upgrade'){ // ترقية الخطة → تحديث المؤسسة + إنشاء فاتورة
-      const newPlan = org.plan==='Pro' ? 'Enterprise' : (org.plan==='Basic' ? 'Pro' : 'Pro');
-      await updateDoc(doc(db,'organizations', id), { plan:newPlan, status:'active', updatedAt: serverTimestamp() });
-      await createInvoice({ org, plan:newPlan, billingCycle: org.billingCycle||'monthly' });
-      showNotif(`تمت ترقية خطة ${org.name} إلى ${newPlan} وإصدار فاتورة تلقائيًا.`);
-      await refreshAll();
+    if(act==='upgrade'){
+      // Owner-only server transaction: no client-side partial upgrade or
+      // auto-paid invoice. This request is safe to retry after network loss.
+      if (!org || !['Trial','Basic','Pro'].includes(org.plan)) {
+        showNotif('لا تتوفر ترقية تلقائية لهذه الباقة.'); return;
+      }
+      if (!globalThis.crypto?.randomUUID) {
+        showNotif('تعذّر إنشاء معرف آمن لطلب الترقية.'); return;
+      }
+      const requestId = globalThis.crypto.randomUUID();
+      btn.disabled = true;
+      try {
+        const result = await ownerAdminCall({
+          action:'ownerUpgradeOrganizationWithInvoice',
+          organizationId:id, expectedPlan:org.plan, requestId
+        });
+        showNotif(`تم تحديث باقة ${org.name} إلى ${result.plan}، وإنشاء سجل فوترة بانتظار السداد (غير مدفوع).`);
+        await refreshAll();
+      } catch(error) {
+        showNotif('تعذّر تأكيد الترقية؛ حدّث السجل قبل إعادة المحاولة. لم يتم إثبات السداد.');
+      } finally {
+        btn.disabled = false;
+      }
+      return;
     }
     if(act==='archive'){
       const label = org?.name || id;
