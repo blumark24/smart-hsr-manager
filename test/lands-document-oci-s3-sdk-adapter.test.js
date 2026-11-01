@@ -23,7 +23,7 @@ function harness({headOverride={},getOverride={},errorOn=null,controlOverride={}
    }
    if(cmd instanceof GetObjectCommand){
       return {VersionId:versionId,ContentLength:pdf.length,
-        ContentType:'application/pdf',Body:{async transformToByteArray(){return Uint8Array.from(pdf)}},...getOverride};
+        ContentType:'application/pdf',Body:{async *[Symbol.asyncIterator](){yield pdf.subarray(0,5);yield pdf.subarray(5)}},...getOverride};
    }
    throw Error('BAD_COMMAND');
  }};
@@ -86,5 +86,38 @@ test('region and public bucket control-plane failures short-circuit SDK calls',a
    {versioning:'Suspended'}]){
   const h=harness({controlOverride});await denied(h);
   assert.deepEqual(h.calls.map(x=>x.kind),['control']);
+ }
+});
+
+
+test('OCI reader refuses materialize-all SDK body helpers before allocating',async()=>{
+ let eagerCalled=false;
+ const h=harness({getOverride:{Body:{
+   async transformToByteArray(){eagerCalled=true;return Buffer.alloc(11*1024*1024);}
+ }}});
+ await denied(h);
+ assert.equal(eagerCalled,false,'must never call unbounded transformToByteArray');
+});
+
+test('OCI reader stops consuming an oversized async byte stream early',async()=>{
+ let emitted=0;
+ const h=harness({getOverride:{Body:{
+   async *[Symbol.asyncIterator](){
+     emitted++;yield Buffer.alloc(9*1024*1024,37);
+     emitted++;yield Buffer.alloc(2*1024*1024,37);
+     emitted++;yield Buffer.from('SHOULD_NOT_BE_READ');
+   }
+ }}});
+ await denied(h);
+ assert.equal(emitted,2,'must stop after the chunk exceeding the 10 MiB limit');
+});
+
+test('OCI reader rejects malformed or empty stream content without leaked errors',async()=>{
+ for(const Body of [
+   {async *[Symbol.asyncIterator](){ yield 'not raw bytes'; }},
+   {async *[Symbol.asyncIterator](){}},
+   {async *[Symbol.asyncIterator](){yield Uint8Array.of(0x01,0x02)}}
+ ]){
+   await denied(harness({getOverride:{Body}}));
  }
 });
