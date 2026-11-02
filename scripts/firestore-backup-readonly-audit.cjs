@@ -25,7 +25,9 @@ function parseList(value) {
   return data;
 }
 
-function inspectBackupMetadata(run = execFileSync) {
+function inspectBackupMetadata(run = execFileSync, { now = new Date() } = {}) {
+  const currentTime = now instanceof Date ? now.getTime() : Date.parse(now);
+  if (!Number.isFinite(currentTime)) throw new Error('INVALID_AUDIT_TIME');
   // Only read-only metadata listings with pinned project and location.
   const opts = { encoding: 'utf8', timeout: 45000, maxBuffer: 2 * 1024 * 1024 };
   const schedules = parseList(run('gcloud', [
@@ -41,13 +43,20 @@ function inspectBackupMetadata(run = execFileSync) {
     typeof x.name === 'string' &&
     x.name.startsWith(DATABASE_RESOURCE + '/backupSchedules/'));
 
+  // Only metadata for the pinned project/database/location is eligible.
+  // Backup names and expiry timestamps must also match documented API shape.
   const backupForDb = backups.filter(x => x && typeof x === 'object' &&
-    x.database === DATABASE_RESOURCE);
-  const verifiedTimestamps = backupForDb
-    .filter(x => x.state === 'READY' && typeof x.snapshotTime === 'string' &&
-      Number.isFinite(Date.parse(x.snapshotTime)))
+    x.database === DATABASE_RESOURCE && typeof x.name === 'string' &&
+    x.name.startsWith('projects/' + PROJECT + '/locations/' + LOCATION + '/backups/'));
+  const ready = backupForDb.filter(x => x.state === 'READY' &&
+    typeof x.snapshotTime === 'string' && Number.isFinite(Date.parse(x.snapshotTime)) &&
+    Date.parse(x.snapshotTime) <= currentTime);
+  const unexpired = ready.filter(x => typeof x.expireTime === 'string' &&
+    Number.isFinite(Date.parse(x.expireTime)) && Date.parse(x.expireTime) > currentTime);
+  const recent = unexpired
     .map(x => new Date(x.snapshotTime).toISOString())
     .sort();
+  const newest = recent.at(-1) || null;
 
   return Object.freeze({
     project: PROJECT,
@@ -56,9 +65,16 @@ function inspectBackupMetadata(run = execFileSync) {
     check: 'read_only_metadata',
     schedulesDiscovered: schedulesForDb.length,
     backupMetadataDiscovered: backupForDb.length,
-    readyBackupsWithValidTimestamp: verifiedTimestamps.length,
-    latestReadySnapshotUtc: verifiedTimestamps.at(-1) || null,
-    status: schedulesForDb.length > 0 && verifiedTimestamps.length > 0
+    readyBackupsWithValidTimestamp: ready.length,
+    unexpiredReadyBackups: unexpired.length,
+    readyBackupsWithoutVerifiedExpiry: ready.length - unexpired.length,
+    latestReadySnapshotUtc: newest,
+    latestReadySnapshotAgeHours: newest
+      ? Math.round(((currentTime - Date.parse(newest)) / 3600000) * 100) / 100 : null,
+    // Age is informational. RPO policy and acceptable freshness are NOT
+    // automatically presumed or approved by this code.
+    rpoThresholdApproved: false,
+    status: schedulesForDb.length > 0 && unexpired.length > 0
       ? 'BACKUP_METADATA_PRESENT_RESTORE_UNVERIFIED'
       : 'RECOVERY_METADATA_INCOMPLETE',
     restorationVerified: false,
