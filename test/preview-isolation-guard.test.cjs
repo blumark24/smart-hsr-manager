@@ -549,6 +549,21 @@ test('B2 v4 audit fails closed on old-format or malformed provider policies', ()
   }
 });
 
+test('B2 audit treats new and bucket-management capabilities as non-routine', () => {
+  const B = require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const stage='a'.repeat(24),prod='b'.repeat(24);
+  const result = B.evaluateAuthorization({apiInfo:{storageApi:{allowed:{
+    buckets:[{id:stage}], capabilities:['readFiles','writeFiles','shareFiles',
+      'writeBucketRetentions','unrecognizedFuturePower'],
+    namePrefix:null
+  }}}},stage,prod);
+  assert.equal(result.scopeStatus,'PRIVILEGED_CAPABILITIES_REQUIRE_REVIEW');
+  assert.deepEqual(result.privilegedCapabilitiesForReview,
+    ['shareFiles','writeBucketRetentions','unrecognizedFuturePower']);
+  assert.equal(result.releaseDecision,'HOLD');
+  assert.equal(result.independentReviewerApproved,false);
+});
+
 test('B2 audit makes zero provider calls without explicit staging-only operator authorization', async () => {
   const B=require('../scripts/b2-key-scope-readonly-audit.cjs');
   const env={
