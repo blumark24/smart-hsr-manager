@@ -5,6 +5,8 @@
 // All reads/writes execute through api/admin/users.js after Firebase token verification.
 
 const { passwordPolicyReason } = require('./serviceEntitlements');
+const { handleOwnerBillingUpgrade } = require('./ownerBillingUpgrade');
+const { handleOwnerManualBilling } = require('./ownerManualBilling');
 
 const OWNER_ACTIONS = new Set([
   'ownerOpsSnapshot',
@@ -18,6 +20,8 @@ const OWNER_ACTIONS = new Set([
   'ownerArchiveOrganization',
   'ownerRestoreOrganization',
   'ownerSetOrganizationSpatialContext',
+  'ownerUpgradeOrganizationWithInvoice',
+  'ownerInvoiceCreatePending',
   'ownerInvoiceUpdate',
   'ownerInvoiceArchive',
   'ownerInvoiceDelete',
@@ -645,66 +649,68 @@ async function handleOwnerOrganizationLifecycle({ action, body, decoded, db, Fie
 async function handleOwnerInvoiceLifecycle({ action, body, decoded, db, FieldValue, sendJson, res }) {
   const invoiceId = cleanText(body.invoiceId, 160);
   if (!invoiceId) return sendJson(res, 400, { error: 'invalid_request', reason: 'invoiceId_required' });
+  if (!['ownerInvoiceUpdate', 'ownerInvoiceArchive', 'ownerInvoiceDelete'].includes(action)) {
+    return sendJson(res, 400, { error: 'unknown_action' });
+  }
 
   const ref = db.collection('invoices').doc(invoiceId);
-  const snap = await ref.get();
-  if (!snap.exists) return sendJson(res, 404, { error: 'invoice_not_found' });
-  const current = snap.data() || {};
-  const now = FieldValue.serverTimestamp();
+  // A financial mutation and its audit trail must commit together. Reading
+  // inside the transaction also prevents concurrent stale-state transitions.
+  const result = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return { statusCode: 404, payload: { error: 'invoice_not_found' } };
+    const current = snap.data() || {};
+    const now = FieldValue.serverTimestamp();
+    const organizationId = cleanText(current.organization_id, 160) || null;
+    let mutation;
+    let audit;
+    let payload;
 
-  if (action === 'ownerInvoiceUpdate') {
-    const plan = cleanText(body.plan, 80);
-    const billingCycle = cleanText(body.billingCycle, 40);
-    const status = cleanText(body.status, 40);
-    const amount = Number(body.amount);
-    if (!plan || !['monthly','yearly'].includes(billingCycle) ||
-        !['paid','pending','overdue','cancelled','archived'].includes(status) ||
-        !Number.isFinite(amount) || amount < 0) {
-      return sendJson(res, 400, { error: 'invalid_request', reason: 'invalid_invoice_update' });
+    if (action === 'ownerInvoiceUpdate') {
+      const plan = cleanText(body.plan, 80);
+      const billingCycle = cleanText(body.billingCycle, 40);
+      const status = cleanText(body.status, 40);
+      const amount = Number(body.amount);
+      if (!plan || !['monthly', 'yearly'].includes(billingCycle) ||
+          !['paid', 'pending', 'overdue', 'cancelled', 'archived'].includes(status) ||
+          !Number.isFinite(amount) || amount < 0) {
+        return { statusCode: 400, payload: { error: 'invalid_request', reason: 'invalid_invoice_update' } };
+      }
+      // A pending manual or upgrade billing record is never payment proof.
+      if (status === 'paid' &&
+          ['manual_pending_billing', 'subscription_upgrade_pending_billing'].includes(current.recordType) &&
+          current.paymentConfirmed !== true) {
+        return { statusCode: 409, payload: { error: 'payment_verification_required' } };
+      }
+      const vat = +(amount * 0.15).toFixed(2);
+      const total = +(amount + vat).toFixed(2);
+      mutation = { plan, billingCycle, status, amount, vat, total,
+        updatedAt: now, updatedByUid: decoded.uid };
+      audit = { plan, billingCycle, status, amount, vat, total };
+      payload = { ok: true, invoiceId, plan, billingCycle, status, amount, vat, total };
+    } else if (action === 'ownerInvoiceArchive') {
+      mutation = { status: 'archived', archivedAt: now, archivedByUid: decoded.uid, updatedAt: now };
+      payload = { ok: true, invoiceId, status: 'archived' };
+    } else {
+      audit = { invoiceNumber: cleanText(current.invoiceId, 120) || null };
+      payload = { ok: true, invoiceId, deleted: true };
     }
-    const vat = +(amount * 0.15).toFixed(2);
-    const total = +(amount + vat).toFixed(2);
-    await ref.set({
-      plan, billingCycle, status, amount, vat, total,
-      updatedAt: now, updatedByUid: decoded.uid,
-    }, { merge: true });
-    await db.collection('platformAdminAuditEvents').add({
-      actorUid: decoded.uid, actorRole: 'owner', action: 'invoice_update',
-      organizationId: cleanText(current.organization_id, 160) || null,
-      resourceType: 'invoice', resourceId: invoiceId,
-      detail: { plan, billingCycle, status, amount, vat, total },
+
+    const auditAction = action === 'ownerInvoiceUpdate' ? 'invoice_update' :
+      action === 'ownerInvoiceArchive' ? 'invoice_archive' : 'invoice_delete';
+    const auditRef = db.collection('platformAdminAuditEvents').doc();
+    // Firestore requires all reads before any transactional writes.
+    if (action === 'ownerInvoiceDelete') tx.delete(ref);
+    else tx.set(ref, mutation, { merge: true });
+    tx.create(auditRef, {
+      actorUid: decoded.uid, actorRole: 'owner', action: auditAction,
+      organizationId, resourceType: 'invoice', resourceId: invoiceId,
+      ...(audit ? { detail: audit } : {}),
       createdAt: now,
     });
-    return sendJson(res, 200, { ok: true, invoiceId, plan, billingCycle, status, amount, vat, total });
-  }
-
-  if (action === 'ownerInvoiceArchive') {
-    await ref.set({
-      status: 'archived', archivedAt: now, archivedByUid: decoded.uid,
-      updatedAt: now,
-    }, { merge: true });
-    await db.collection('platformAdminAuditEvents').add({
-      actorUid: decoded.uid, actorRole: 'owner', action: 'invoice_archive',
-      organizationId: cleanText(current.organization_id, 160) || null,
-      resourceType: 'invoice', resourceId: invoiceId,
-      createdAt: now,
-    });
-    return sendJson(res, 200, { ok: true, invoiceId, status: 'archived' });
-  }
-
-  if (action === 'ownerInvoiceDelete') {
-    await ref.delete();
-    await db.collection('platformAdminAuditEvents').add({
-      actorUid: decoded.uid, actorRole: 'owner', action: 'invoice_delete',
-      organizationId: cleanText(current.organization_id, 160) || null,
-      resourceType: 'invoice', resourceId: invoiceId,
-      detail: { invoiceNumber: cleanText(current.invoiceId, 120) || null },
-      createdAt: now,
-    });
-    return sendJson(res, 200, { ok: true, invoiceId, deleted: true });
-  }
-
-  return sendJson(res, 400, { error: 'unknown_action' });
+    return { statusCode: 200, payload };
+  });
+  return sendJson(res, result.statusCode, result.payload);
 }
 
 async function handleOwnerSupport({ action, body, decoded, db, FieldValue, sendJson, res }) {
@@ -881,6 +887,14 @@ async function handleOwnerOpsSupport({ action, body, decoded, db, auth, FieldVal
       await handleOwnerSpatialContext({ body, decoded, db, FieldValue, sendJson, res });
       return true;
     }
+    if (action === 'ownerUpgradeOrganizationWithInvoice') {
+      await handleOwnerBillingUpgrade({ body, decoded, db, FieldValue, sendJson, res });
+      return true;
+    }
+    if (action === 'ownerInvoiceCreatePending') {
+      await handleOwnerManualBilling({ body, decoded, db, FieldValue, sendJson, res });
+      return true;
+    }
     if (action === 'ownerInvoiceUpdate' || action === 'ownerInvoiceArchive' || action === 'ownerInvoiceDelete') {
       await handleOwnerInvoiceLifecycle({ action, body, decoded, db, FieldValue, sendJson, res });
       return true;
@@ -901,5 +915,6 @@ module.exports = {
     safeEvent,
     safeThread,
     safeMessage,
+    handleOwnerInvoiceLifecycle,
   },
 };

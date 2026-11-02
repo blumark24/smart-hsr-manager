@@ -16,12 +16,33 @@ function objectFromJson(raw, resource) {
   } catch (_) { /* invalid configuration always denied */ }
   deny(resource);
 }
+// Preview Web config must never pair the staging projectId with Production
+// Auth/Storage resources. Custom resource domains require explicit review.
+function assertPreviewFirebaseWebResources(web) {
+  if (!web || typeof web !== 'object' || Array.isArray(web) ||
+      web.projectId !== STAGING_PROJECT_ID) deny('FIREBASE');
+  if (web.authDomain !== undefined &&
+      web.authDomain !== STAGING_PROJECT_ID + '.firebaseapp.com') deny('FIREBASE');
+  if (web.storageBucket !== undefined &&
+      ![STAGING_PROJECT_ID + '.firebasestorage.app',
+        STAGING_PROJECT_ID + '.appspot.com'].includes(web.storageBucket)) deny('FIREBASE');
+  // SMART HSR currently does not use Firebase Realtime Database. A supplied
+  // databaseURL is unreviewed and cannot be treated as staging by projectId.
+  if (web.databaseURL !== undefined) deny('FIREBASE');
+  return true;
+}
 function assertPreviewFirebaseIsolation(env = process.env, initializedApps = []) {
   if (env.VERCEL_ENV !== 'preview') return true;
   if (env.FIREBASE_AUTH_EMULATOR_HOST || env.FIRESTORE_EMULATOR_HOST) deny('FIREBASE');
   const web = objectFromJson(env.FIREBASE_WEB_CONFIG, 'FIREBASE');
   const account = objectFromJson(env.FIREBASE_SERVICE_ACCOUNT, 'FIREBASE');
-  if (web.projectId !== STAGING_PROJECT_ID || account.project_id !== STAGING_PROJECT_ID) deny('FIREBASE');
+  assertPreviewFirebaseWebResources(web);
+  if (account.project_id !== STAGING_PROJECT_ID) deny('FIREBASE');
+  if (account.client_email !== undefined &&
+      (typeof account.client_email !== 'string' ||
+       !account.client_email.endsWith('@' + STAGING_PROJECT_ID + '.iam.gserviceaccount.com'))) {
+    deny('FIREBASE');
+  }
   for (const name of ['FIREBASE_PROJECT_ID', 'GCLOUD_PROJECT', 'GOOGLE_CLOUD_PROJECT']) {
     if (env[name] && env[name] !== STAGING_PROJECT_ID) deny('FIREBASE');
   }
@@ -66,6 +87,7 @@ function assertPreviewStorageClientConfig(config, env = process.env) {
 }
 module.exports = {
   STAGING_PROJECT_ID,
+  assertPreviewFirebaseWebResources,
   assertPreviewFirebaseIsolation,
   assertPreviewStorageIsolation,
   isPreviewStorageIsolationConfigured,

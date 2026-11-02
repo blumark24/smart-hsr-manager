@@ -20,13 +20,49 @@ const approvalIds = Object.freeze([
   'cybersecurityReviewer', 'executiveReleaseOwner'
 ]);
 
-function evaluate(manifest) {
+// A real municipality is using Production with real records. Signed release
+// approval is insufficient without individually verified recovery evidence.
+// This file never connects to any cloud service or modifies records.
+const requiredRecoveryIds = Object.freeze([
+  'firestoreBackup', 'b2FileRecovery', 'isolatedRestore', 'rollbackRunbook'
+]);
+
+/**
+ * A syntactically plausible link does not establish reviewed evidence. Reject
+ * obvious placeholders and localhost links before a qualified reviewer can
+ * make the final evidence decision.
+ */
+function isCandidateEvidenceUrl(link) {
+  if (typeof link !== 'string') return false;
+  try {
+    const url = new URL(link);
+    const host = url.hostname.toLowerCase();
+    return url.protocol === 'https:' && !url.username && !url.password &&
+      host !== 'localhost' && host !== '[::1]' &&
+      !['example.com', 'example.net', 'example.org'].includes(host) &&
+      !/\.(invalid|example|test|localhost)$/.test(host) &&
+      !/^(127\.|10\.|192\.168\.|169\.254\.)/.test(host);
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
+ * expectedSha MUST come from the separately approved target deployment/build
+ * artifact, never inferred from the untrusted manifest itself.
+ */
+function evaluate(manifest, { expectedSha } = {}) {
   const blockers = [];
   if (!manifest || !Array.isArray(manifest.gates)) {
     return { decision: 'NO-GO', blockers: ['Missing/invalid gate manifest'] };
   }
   if (manifest.productionChangeAuthorized !== true) blockers.push('Production release authorization not granted');
   if (!/^[0-9a-f]{40}$/.test(manifest.candidateSha || '')) blockers.push('Unpinned candidate SHA');
+  if (!/^[0-9a-f]{40}$/.test(expectedSha || '')) {
+    blockers.push('An independently pinned expected target SHA is required');
+  } else if (manifest.candidateSha !== expectedSha) {
+    blockers.push('Manifest candidate SHA does not match the expected target SHA');
+  }
   const counts = new Map();
   for (const gate of manifest.gates) {
     if (gate && typeof gate.id === 'string') counts.set(gate.id, (counts.get(gate.id) || 0) + 1);
@@ -38,7 +74,7 @@ function evaluate(manifest) {
     }
     const gate = manifest.gates.find(item => item.id === id);
     if (gate.status !== 'PASS' || !Array.isArray(gate.evidence) || gate.evidence.length === 0 ||
-        gate.evidence.some(link => typeof link !== 'string' || !/^https:\/\//.test(link))) {
+        gate.evidence.some(link => !isCandidateEvidenceUrl(link))) {
       blockers.push(id + ': no reviewed PASS with evidence URLs');
     }
   }
@@ -46,14 +82,33 @@ function evaluate(manifest) {
   for (const id of approvalIds) {
     if (manifest.approvals?.[id] !== true) blockers.push(id + ': sign-off missing');
   }
+  // A separate fail-closed recovery gate is mandatory even if functional
+  // approvals are marked PASS. Syntactic evidence links are not independently
+  // checked here: human operations/security reviewers must attest their
+  // contents and the approved environment separately before any deployment.
+  for (const id of requiredRecoveryIds) {
+    const proof = manifest.operationalRecovery?.[id];
+    const reviewedAt = typeof proof?.reviewedAt === 'string' ? proof.reviewedAt : '';
+    const reviewer = typeof proof?.reviewedBy === 'string' ? proof.reviewedBy.trim() : '';
+    const isDated = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(reviewedAt) &&
+      Number.isFinite(Date.parse(reviewedAt));
+    const hasEvidence = Array.isArray(proof?.evidence) && proof.evidence.length > 0 &&
+      proof.evidence.every(isCandidateEvidenceUrl);
+    if (proof?.status !== 'PASS' || !isDated || reviewer.length < 3 ||
+        /^(?:tbd|pending|unknown|n\/?a|test)$/i.test(reviewer) || !hasEvidence) {
+      blockers.push(id + ': independently reviewed recovery evidence required');
+    }
+  }
   return { decision: blockers.length === 0 ? 'GO-CANDIDATE-REQUIRES-INDEPENDENT-VALIDATION' : 'NO-GO', blockers };
 }
 
 if (require.main === module) {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  const result = evaluate(manifest);
-  console.log(JSON.stringify({ candidateSha: manifest.candidateSha, ...result }, null, 2));
+  const shaArg = process.argv.indexOf('--expected-sha');
+  const expectedSha = shaArg >= 0 ? process.argv[shaArg + 1] : undefined;
+  const result = evaluate(manifest, { expectedSha });
+  console.log(JSON.stringify({ candidateSha: manifest.candidateSha, expectedSha: expectedSha || null, ...result }, null, 2));
   if (!process.argv.includes('--report-only') && result.decision === 'NO-GO') process.exitCode = 2;
 }
 
-module.exports = { evaluate, requiredIds, approvalIds };
+module.exports = { evaluate, requiredIds, approvalIds, requiredRecoveryIds, isCandidateEvidenceUrl };

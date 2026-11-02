@@ -91,6 +91,61 @@ async function runViewport(browser,base,v){
   await page.evaluate(()=>{session={...session,firebaseUid:'synthetic-other',municipalityId:'synthetic-other',role:'lands_employee'};renderShellChrome();});
   assert.equal((await page.locator('#aiThread').textContent()).trim(),'');
   assert.equal(await page.locator('#aiPanel').getAttribute('aria-hidden'),'true');
+  // Keyboard-accessible Lands dialogs: no off-screen controls or leaked focus.
+  await page.locator('#accountButton').focus();
+  await page.evaluate(() => openAdd());
+  await page.locator('#modalBackdrop.open').waitFor({state:'visible'});
+  assert.equal(await page.locator('#modal').getAttribute('role'),'dialog');
+  assert.equal(await page.locator('#modal').getAttribute('aria-modal'),'true');
+  assert.equal(await page.locator('#modal').getAttribute('aria-labelledby'),'landsModalTitle');
+  await page.waitForFunction(()=>document.activeElement?.id==='addGrantNumber',null,{timeout:7000}).catch(async err => {
+    const state = await page.evaluate(() => ({
+      activeId: document.activeElement?.id,
+      activeTag: document.activeElement?.tagName,
+      modalOpen: document.getElementById('modalBackdrop')?.classList.contains('open'),
+      inputPresent: Boolean(document.getElementById('addGrantNumber')),
+      modalDisplay: getComputedStyle(document.getElementById('modalBackdrop')).display,
+      titlePresent: Boolean(document.getElementById('landsModalTitle'))
+    }));
+    throw new Error(v.name+': dialog autofocus failed '+JSON.stringify(state)+' / '+errors.join(', ')+' / '+err.message);
+  });
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.classList.contains('close')),true,
+    v.name+': reverse tab from first input reaches the dialog close control');
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.textContent?.trim()),'إلغاء',
+    v.name+': reverse tab from first dialog control must wrap to last action');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.classList.contains('close')),true,
+    v.name+': tab from last action must wrap to first dialog control');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),'addGrantNumber',
+    v.name+': first field remains keyboard reachable');
+  const bounds=await page.locator('#modal').boundingBox();
+  assert.ok(bounds && bounds.x>=-2 && bounds.y>=-2 &&
+    bounds.x+bounds.width<=v.width+2 && bounds.y+bounds.height<=v.height+2,
+    v.name+': modal is clipped outside viewport '+JSON.stringify(bounds));
+  await page.keyboard.press('Escape');
+  await page.locator('#modalBackdrop.open').waitFor({state:'hidden'});
+  await page.waitForFunction(()=>document.activeElement?.id==='accountButton');
+  // An informational, input-free dialog must also keep keyboard focus inside.
+  await page.evaluate(()=>openDigitize());
+  await page.locator('#modalBackdrop.open').waitFor({state:'visible'});
+  await page.waitForFunction(()=>document.activeElement?.closest('#modal')!==null);
+  await page.keyboard.press('Escape');
+  await page.locator('#modalBackdrop.open').waitFor({state:'hidden'});
+  await page.waitForFunction(()=>document.activeElement?.id==='accountButton');
+  // Drawer shares the dialog focus lifecycle; only locally generated test text.
+  await page.evaluate(()=>{
+    document.getElementById('drawer').innerHTML='<div class="drawer-head"><h2>اختبار لوحة اصطناعية</h2></div><button id="drawerTestAction">إغلاق</button>';
+    document.getElementById('drawerBackdrop').classList.add('open');
+  });
+  await page.locator('#drawerBackdrop.open').waitFor({state:'visible'});
+  assert.equal(await page.locator('#drawer').getAttribute('aria-labelledby'),'landsDrawerTitle');
+  await page.waitForFunction(()=>document.activeElement?.id==='drawerTestAction');
+  await page.keyboard.press('Escape');
+  await page.locator('#drawerBackdrop.open').waitFor({state:'hidden'});
+  await page.waitForFunction(()=>document.activeElement?.id==='accountButton');
   assert.deepEqual(blockedData,[],v.name+': real network/API attempted');
   assert.deepEqual(errors,[],v.name+': uncaught browser error');
   return {viewport:v.name,result:'PASS'};

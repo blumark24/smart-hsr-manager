@@ -350,12 +350,17 @@ test('C4 manager writing another email document: deny', async () => {
 // D. owner
 // ============================================================
 
-test('D1 active owner access to organizations and invoices: allow', async () => {
+test('D1 active owner reads invoices; client invoice creation is denied', async () => {
   const db = ctx(UID.ownerActive);
   await assertSucceeds(getDoc(doc(db, 'organizations', 'org1')));
   await assertSucceeds(getDoc(doc(db, 'invoices', 'inv1')));
   await assertSucceeds(setDoc(doc(db, 'organizations', 'org2'), { name: 'Org Two' }));
-  await assertSucceeds(setDoc(doc(db, 'invoices', 'inv2'), { amount: 5 }));
+  // Only the verified Admin SDK backend can create a pending billing record.
+  await assertFails(setDoc(doc(db, 'invoices', 'inv2'), { amount: 5, status: 'pending' }));
+  // A browser must never bypass payment verification by forging a paid record.
+  await assertFails(setDoc(doc(db, 'invoices', 'forged-paid'), { amount: 100, status: 'paid', paymentConfirmed: true }));
+  await assertFails(updateDoc(doc(db, 'invoices', 'inv1'), { status: 'paid' }));
+  await assertFails(deleteDoc(doc(db, 'invoices', 'inv1')));
 });
 
 test('D2 inactive owner access: deny', async () => {

@@ -237,7 +237,9 @@ service cloud.firestore {
     // ==========================================================
     match /invoices/{invoiceId} {
       allow read: if isActiveOwner();
-      allow create: if isActiveOwner();
+      // Billing records must be written by the verified server-side Owner API.
+      // Direct SDK creation can forge paid status without payment evidence.
+      allow create: if false;
       allow update, delete: if false;
     }
 
