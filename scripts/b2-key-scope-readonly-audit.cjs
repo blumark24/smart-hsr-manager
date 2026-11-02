@@ -86,10 +86,20 @@ function evaluateAuthorization(body, expectedStage, expectedProduction) {
   const unrecognizedCapabilityCount = caps.filter(x => !KNOWN_CAPABILITIES.includes(x)).length;
   const keyHasExpiry = Number.isFinite(body.applicationKeyExpirationTimestamp) &&
     body.applicationKeyExpirationTimestamp > 0;
+  const filePrefixRestrictionDeclared = typeof allowed.namePrefix === 'string' &&
+    allowed.namePrefix.length > 0;
+  // Missing expiry may be allowed under a reviewed rotation policy, while a
+  // dedicated bucket may justify a missing prefix. Neither is silently green.
+  // Publish ONLY fixed policy codes, never the actual prefix or key metadata.
+  const policyGapsForReview = Object.freeze([
+    ...(!filePrefixRestrictionDeclared ? ['FILE_PREFIX_SCOPE_REVIEW_REQUIRED'] : []),
+    ...(!keyHasExpiry ? ['KEY_EXPIRY_OR_ROTATION_POLICY_REVIEW_REQUIRED'] : [])
+  ]);
   const status = !exact ? 'UNAPPROVED_OR_MULTIBUCKET_SCOPE' :
     !hasExpectedOperations ? 'REQUIRED_OPERATIONS_NOT_REPORTED' :
     privileged.length || unrecognizedCapabilityCount
       ? 'PRIVILEGED_CAPABILITIES_REQUIRE_REVIEW' :
+    policyGapsForReview.length ? 'STAGING_SCOPE_WITH_POLICY_GAPS' :
     'STAGING_ONLY_PROVIDER_SCOPE_REPORTED';
   // Do not return any identifiers, raw prefixes, tokens, service URLs or
   // account metadata. A reported single-bucket scope still needs signoff.
@@ -98,9 +108,9 @@ function evaluateAuthorization(body, expectedStage, expectedProduction) {
     expectedReadWriteCapabilitiesReported: hasExpectedOperations,
     privilegedCapabilitiesForReview: privileged,
     unrecognizedCapabilityCount,
-    filePrefixRestrictionDeclared: typeof allowed.namePrefix === 'string' &&
-      allowed.namePrefix.length > 0,
+    filePrefixRestrictionDeclared,
     applicationKeyExpirationConfigured: keyHasExpiry,
+    policyGapsForReview,
     providerReportedStageOnly: exact
   });
 }
