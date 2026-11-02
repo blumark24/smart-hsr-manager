@@ -26,6 +26,21 @@ const ROUTINE_CAPABILITIES = Object.freeze([
   'listBuckets', 'readBuckets', 'listFiles', 'readFiles', 'writeFiles'
 ]);
 const REQUIRED = Object.freeze(['readFiles', 'writeFiles']);
+// Only fixed provider-documented capability names are safe to surface. A
+// malformed/unrecognized capability is counted, NEVER copied into a report.
+const KNOWN_CAPABILITIES = Object.freeze([
+  ...ROUTINE_CAPABILITIES,
+  'listAllBucketNames', 'deleteFiles', 'deleteKeys', 'writeKeys',
+  'writeBuckets', 'deleteBuckets', 'bypassGovernance', 'shareFiles',
+  'readBucketEncryption', 'writeBucketEncryption',
+  'readBucketRetentions', 'writeBucketRetentions',
+  'readFileRetentions', 'writeFileRetentions',
+  'readFileLegalHolds', 'writeFileLegalHolds',
+  'readBucketReplications', 'writeBucketReplications',
+  'readBucketNotifications', 'writeBucketNotifications',
+  'readBucketLogging', 'writeBucketLogging',
+  'listKeys'
+]);
 
 function hold(scopeStatus, extra = {}) {
   return Object.freeze({
@@ -66,12 +81,15 @@ function evaluateAuthorization(body, expectedStage, expectedProduction) {
   const exact = buckets.length === 1 &&
     buckets[0].id === expectedStage && buckets[0].id !== expectedProduction;
   const hasExpectedOperations = REQUIRED.every(x => caps.includes(x));
-  const privileged = [...new Set(caps.filter(x => !ROUTINE_CAPABILITIES.includes(x)))];
+  const privileged = [...new Set(caps.filter(x =>
+    KNOWN_CAPABILITIES.includes(x) && !ROUTINE_CAPABILITIES.includes(x)))];
+  const unrecognizedCapabilityCount = caps.filter(x => !KNOWN_CAPABILITIES.includes(x)).length;
   const keyHasExpiry = Number.isFinite(body.applicationKeyExpirationTimestamp) &&
     body.applicationKeyExpirationTimestamp > 0;
   const status = !exact ? 'UNAPPROVED_OR_MULTIBUCKET_SCOPE' :
     !hasExpectedOperations ? 'REQUIRED_OPERATIONS_NOT_REPORTED' :
-    privileged.length ? 'PRIVILEGED_CAPABILITIES_REQUIRE_REVIEW' :
+    privileged.length || unrecognizedCapabilityCount
+      ? 'PRIVILEGED_CAPABILITIES_REQUIRE_REVIEW' :
     'STAGING_ONLY_PROVIDER_SCOPE_REPORTED';
   // Do not return any identifiers, raw prefixes, tokens, service URLs or
   // account metadata. A reported single-bucket scope still needs signoff.
@@ -79,6 +97,7 @@ function evaluateAuthorization(body, expectedStage, expectedProduction) {
     allowedBucketCount: buckets.length,
     expectedReadWriteCapabilitiesReported: hasExpectedOperations,
     privilegedCapabilitiesForReview: privileged,
+    unrecognizedCapabilityCount,
     filePrefixRestrictionDeclared: typeof allowed.namePrefix === 'string' &&
       allowed.namePrefix.length > 0,
     applicationKeyExpirationConfigured: keyHasExpiry,
@@ -120,4 +139,4 @@ async function main(argv = process.argv.slice(2)) {
 }
 
 if (require.main === module) main().then(code => { process.exitCode = code; });
-module.exports = { API_URL, ROUTINE_CAPABILITIES, REQUIRED, configured, evaluateAuthorization, audit, main };
+module.exports = { API_URL, ROUTINE_CAPABILITIES, KNOWN_CAPABILITIES, REQUIRED, configured, evaluateAuthorization, audit, main };
