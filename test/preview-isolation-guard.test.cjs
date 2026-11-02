@@ -411,3 +411,74 @@ test('preview env metadata audit refuses Production branch names', () => {
       /EXPLICIT_NON_PRODUCTION_BRANCH_REQUIRED/);
   }
 });
+
+
+test('primary SMART HSR page routes are backed by existing files', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.resolve(__dirname, '..');
+  const expected = [
+    'index.html', 'Home.html', 'login.html', 'manager-login.html',
+    'owner-login.html', 'owner.html', 'manager.html', 'workspace.html',
+    'dashboard.html', 'admin-affairs.html', 'department-head.html',
+    'mobile-map.html', 'operational-map.html', 'twin.html', 'lands/index.html'
+  ];
+  for (const route of expected) {
+    const full = path.join(root, route);
+    assert.ok(fs.existsSync(full) && fs.statSync(full).isFile(),
+      'missing primary page: ' + route);
+  }
+});
+
+test('every deployed SMART HSR lands and report rewrite resolves to a real same-origin handler', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.resolve(__dirname, '..');
+  const config = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+  const expected = new Map([
+    ['/lands', '/lands/index.html'],
+    ['/lands/', '/lands/index.html'],
+    ['/api/lands-health', '/api/organization/context?embeddedLandsAction=health'],
+    ['/api/lands-mutations', '/api/organization/context?embeddedLandsAction=mutation'],
+    ['/api/lands-membership-status', '/api/organization/context?embeddedLandsAction=membership'],
+    ['/api/lands-sso-register', '/api/organization/context?embeddedLandsAction=sso-register'],
+    ['/api/lands-sso-consume', '/api/organization/context?embeddedLandsAction=sso-consume'],
+    ['/api/report/root-cause', '/api/report?kind=root-cause'],
+    ['/api/report/work-order', '/api/report?kind=work-order']
+  ]);
+  assert.ok(Array.isArray(config.rewrites), 'rewrites must be an array');
+  assert.equal(config.rewrites.length, expected.size, 'unexpected route rewrite requires explicit review');
+  for (const [source, destination] of expected) {
+    const matching = config.rewrites.filter(item => item.source === source);
+    assert.equal(matching.length, 1, 'missing/duplicate rewrite: ' + source);
+    assert.equal(matching[0].destination, destination, 'unexpected rewrite target: ' + source);
+    const pathname = new URL(destination, 'https://synthetic.example.test').pathname;
+    const target = pathname.endsWith('.html') ? pathname : pathname + '.js';
+    assert.ok(fs.existsSync(path.join(root, target.slice(1))),
+      'missing deployed local target: ' + target);
+  }
+});
+
+test('main entry pages have no broken literal HTML href destinations', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.resolve(__dirname, '..');
+  const pages = [
+    'Home.html', 'login.html', 'manager-login.html', 'owner-login.html',
+    'owner.html', 'manager.html', 'workspace.html', 'department-head.html'
+  ];
+  for (const page of pages) {
+    const content = fs.readFileSync(path.join(root, page), 'utf8');
+    const urls = [...content.matchAll(/\bhref\s*=\s*["']([^"']+\.html(?:[?#][^"']*)?)["']/gi)]
+      .map(match => match[1]);
+    for (const url of urls) {
+      // No external resources are fetched; these checks cover local .html hrefs only.
+      if (/^(?:https?:|\/\/|data:|javascript:)/i.test(url)) continue;
+      const clean = url.split(/[?#]/, 1)[0];
+      const target = clean.startsWith('/') ? clean.slice(1) :
+        path.posix.join(path.posix.dirname(page), clean);
+      assert.ok(fs.existsSync(path.join(root, target)),
+        'broken literal HTML href in ' + page + ': ' + target);
+    }
+  }
+});
