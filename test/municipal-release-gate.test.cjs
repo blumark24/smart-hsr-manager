@@ -146,25 +146,31 @@ test('Firestore backups inspector never reads municipal collections or changes P
     ]);
     return JSON.stringify([
       { database: db, state: 'READY', snapshotTime: '2026-11-01T11:00:00Z',
-        name: 'synthetic-backup-name-never-exposed', nationalId: 'secret-must-never-appear' },
+        expireTime: '2026-11-08T11:00:00Z',
+        name: 'projects/smart-hsr-manager/locations/me-central2/backups/synthetic',
+        nationalId: 'secret-must-never-appear' },
       { database: db, state: 'CREATING', snapshotTime: '2026-11-02T11:00:00Z' },
       { database: 'projects/other-tenant/databases/(default)', state: 'READY',
         snapshotTime: '2026-11-02T20:00:00Z' }
     ]);
   }
-  const result = inspectBackupMetadata(mockRun);
+  const result = inspectBackupMetadata(mockRun, { now: '2026-11-02T11:00:00Z' });
   assert.equal(result.project, 'smart-hsr-manager');
   assert.equal(result.location, 'me-central2');
   assert.equal(result.schedulesDiscovered, 1);
   assert.equal(result.backupMetadataDiscovered, 2);
   assert.equal(result.readyBackupsWithValidTimestamp, 1);
+  assert.equal(result.unexpiredReadyBackups, 1);
+  assert.equal(result.readyBackupsWithoutVerifiedExpiry, 0);
   assert.equal(result.latestReadySnapshotUtc, '2026-11-01T11:00:00.000Z');
+  assert.equal(result.latestReadySnapshotAgeHours, 24);
+  assert.equal(result.rpoThresholdApproved, false);
   assert.equal(result.status, 'BACKUP_METADATA_PRESENT_RESTORE_UNVERIFIED');
   assert.equal(result.restorationVerified, false);
   assert.equal(result.complianceReviewed, false);
   assert.equal(result.productionChangeAuthorized, false);
   assert.equal(result.releaseDecision, 'HOLD');
-  assert.doesNotMatch(JSON.stringify(result), /synthetic-backup-name|secret-must-never-appear/);
+  assert.doesNotMatch(JSON.stringify(result), /\/backups\/synthetic|secret-must-never-appear/);
   assert.equal(calls.length, 2);
   for (const call of calls) {
     assert.equal(call.program, 'gcloud');
@@ -206,4 +212,42 @@ test('Firestore backup metadata inspector fails closed on missing evidence', () 
   assert.throws(() => inspectBackupMetadata(() => 'invalid-json'), SyntaxError);
   assert.throws(() => inspectBackupMetadata(() => { throw new Error('privileged CLI error'); }),
     /privileged CLI error/);
+});
+
+
+test('Firestore backup inspector never accepts expired or cross-project or missing-expiry backups', () => {
+  const db = 'projects/smart-hsr-manager/databases/(default)';
+  const base = {
+    database: db,
+    name: 'projects/smart-hsr-manager/locations/me-central2/backups/test-only',
+    state: 'READY', snapshotTime: '2026-11-01T11:00:00Z',
+    expireTime: '2026-11-08T11:00:00Z'
+  };
+  function check(backup, now) {
+    const mock = (_, args) => JSON.stringify(args.includes('schedules')
+      ? [{ name: db + '/backupSchedules/synthetic' }] : [backup]);
+    return inspectBackupMetadata(mock, { now });
+  }
+  assert.equal(check(base, '2026-11-02T11:00:00Z').unexpiredReadyBackups, 1);
+  for (const broken of [
+    { ...base, expireTime: '2026-11-01T10:00:00Z' },
+    { ...base, expireTime: undefined },
+    { ...base, expireTime: 'invalid' },
+    { ...base, database: 'projects/another-project/databases/(default)' },
+    { ...base, name: 'projects/another-project/locations/me-central2/backups/foreign' },
+    { ...base, name: 'projects/smart-hsr-manager/locations/us-east1/backups/wrong-location' },
+    { ...base, state: 'CREATING' },
+    { ...base, snapshotTime: '2026-11-04T00:00:00Z' }
+  ]) {
+    const r = check(broken, '2026-11-02T11:00:00Z');
+    assert.equal(r.unexpiredReadyBackups, 0);
+    assert.equal(r.releaseDecision, 'HOLD');
+    assert.equal(r.status, 'RECOVERY_METADATA_INCOMPLETE');
+    assert.equal(r.restorationVerified, false);
+  }
+  const staleButUnexpired = check(base, '2026-11-07T11:00:00Z');
+  assert.equal(staleButUnexpired.latestReadySnapshotAgeHours, 144);
+  assert.equal(staleButUnexpired.rpoThresholdApproved, false);
+  assert.equal(staleButUnexpired.releaseDecision, 'HOLD');
+  assert.throws(() => check(base, 'not-a-date'), /INVALID_AUDIT_TIME/);
 });
