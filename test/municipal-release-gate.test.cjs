@@ -132,3 +132,78 @@ test('operational recovery evidence is required independently of all functional 
   assert.equal(manifest.overallStatus, 'NO-GO');
   assert.equal(manifest.operationalRecovery, undefined);
 });
+
+
+const { inspectBackupMetadata, parseList } = require('../scripts/firestore-backup-readonly-audit.cjs');
+
+test('Firestore backups inspector never reads municipal collections or changes Production', () => {
+  const calls = [];
+  const db = 'projects/smart-hsr-manager/databases/(default)';
+  function mockRun(program, args, options) {
+    calls.push({ program, args, options });
+    if (args.includes('schedules')) return JSON.stringify([
+      { name: db + '/backupSchedules/synthetic-only', retention: '604800s' }
+    ]);
+    return JSON.stringify([
+      { database: db, state: 'READY', snapshotTime: '2026-11-01T11:00:00Z',
+        name: 'synthetic-backup-name-never-exposed', nationalId: 'secret-must-never-appear' },
+      { database: db, state: 'CREATING', snapshotTime: '2026-11-02T11:00:00Z' },
+      { database: 'projects/other-tenant/databases/(default)', state: 'READY',
+        snapshotTime: '2026-11-02T20:00:00Z' }
+    ]);
+  }
+  const result = inspectBackupMetadata(mockRun);
+  assert.equal(result.project, 'smart-hsr-manager');
+  assert.equal(result.location, 'me-central2');
+  assert.equal(result.schedulesDiscovered, 1);
+  assert.equal(result.backupMetadataDiscovered, 2);
+  assert.equal(result.readyBackupsWithValidTimestamp, 1);
+  assert.equal(result.latestReadySnapshotUtc, '2026-11-01T11:00:00.000Z');
+  assert.equal(result.status, 'BACKUP_METADATA_PRESENT_RESTORE_UNVERIFIED');
+  assert.equal(result.restorationVerified, false);
+  assert.equal(result.complianceReviewed, false);
+  assert.equal(result.productionChangeAuthorized, false);
+  assert.equal(result.releaseDecision, 'HOLD');
+  assert.doesNotMatch(JSON.stringify(result), /synthetic-backup-name|secret-must-never-appear/);
+  assert.equal(calls.length, 2);
+  for (const call of calls) {
+    assert.equal(call.program, 'gcloud');
+    assert.deepEqual(call.args.slice(0, 3), ['firestore', 'backups',
+      call.args.includes('schedules') ? 'schedules' : 'list']);
+    assert.ok(call.args.includes('--project=smart-hsr-manager'));
+    assert.ok(call.args.includes('--format=json'));
+    assert.ok(call.args.includes('--quiet'));
+    assert.doesNotMatch(call.args.join(' '), /\b(?:restore|delete|create|update|export|import)\b/);
+    assert.equal(call.options.encoding, 'utf8');
+  }
+  assert.ok(calls[0].args.includes('--database=(default)'));
+  assert.ok(calls[1].args.includes('--location=me-central2'));
+});
+
+test('Firestore backup metadata inspector fails closed on missing evidence', () => {
+  const db = 'projects/smart-hsr-manager/databases/(default)';
+  const dataSets = [
+    { schedule: [], backups: [] },
+    { schedule: [{ name: db + '/backupSchedules/synthetic' }], backups: [] },
+    { schedule: [], backups: [{ database: db, state: 'READY',
+      snapshotTime: '2026-11-01T11:00:00Z' }] },
+    { schedule: [{ name: 'projects/other-tenant/databases/(default)/backupSchedules/foreign' }],
+      backups: [{ database: 'projects/other-tenant/databases/(default)', state: 'READY',
+        snapshotTime: '2026-11-01T11:00:00Z' }] },
+    { schedule: [{ name: db + '/backupSchedules/synthetic' }],
+      backups: [{ database: db, state: 'CREATING', snapshotTime: '2026-11-01T11:00:00Z' }] },
+    { schedule: [{ name: db + '/backupSchedules/synthetic' }],
+      backups: [{ database: db, state: 'READY', snapshotTime: 'invalid' }] }
+  ];
+  for (const { schedule, backups } of dataSets) {
+    const report = inspectBackupMetadata((_, args) =>
+      JSON.stringify(args.includes('schedules') ? schedule : backups));
+    assert.equal(report.status, 'RECOVERY_METADATA_INCOMPLETE');
+    assert.equal(report.releaseDecision, 'HOLD');
+    assert.equal(report.restorationVerified, false);
+  }
+  assert.throws(() => parseList('{}'), /UNEXPECTED_METADATA_FORMAT/);
+  assert.throws(() => inspectBackupMetadata(() => 'invalid-json'), SyntaxError);
+  assert.throws(() => inspectBackupMetadata(() => { throw new Error('privileged CLI error'); }),
+    /privileged CLI error/);
+});
