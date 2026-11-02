@@ -651,3 +651,114 @@ test('B2 audit suppresses provider error messages and never prints tokens',async
   assert.equal(result.releaseDecision,'HOLD');
   assert.doesNotMatch(JSON.stringify(result),/SECRET|synthetic-/);
 });
+
+
+test('Firestore recovery inspector uses gcloud metadata-only list commands and never approves release', () => {
+  const { inspectBackupMetadata } = require('../scripts/firestore-backup-readonly-audit.cjs');
+  const database = 'projects/smart-hsr-manager/databases/(default)';
+  const calls = [];
+  const run = (binary, args, options) => {
+    calls.push({ binary, args });
+    assert.equal(binary, 'gcloud');
+    assert.deepEqual(args.slice(-3), ['--project=smart-hsr-manager', '--format=json', '--quiet']);
+    assert.equal(options.encoding, 'utf8');
+    assert.equal(options.timeout, 45000);
+    if (args.join(' ').startsWith('firestore backups schedules list ')) {
+      assert.ok(args.includes('--database=(default)'));
+      return JSON.stringify([{ name: database + '/backupSchedules/synthetic-confidential-id' }]);
+    }
+    if (args.join(' ').startsWith('firestore backups list ')) {
+      assert.ok(args.includes('--location=me-central2'));
+      return JSON.stringify([{
+        name: 'projects/smart-hsr-manager/locations/me-central2/backups/synthetic-confidential-id',
+        database, state: 'READY',
+        snapshotTime: '2026-11-01T12:00:00Z',
+        expireTime: '2026-11-09T12:00:00Z'
+      }]);
+    }
+    throw new Error('Unexpected gcloud command: only list metadata is permitted');
+  };
+  const report = inspectBackupMetadata(run, { now: new Date('2026-11-02T12:00:00Z') });
+  assert.equal(calls.length, 2);
+  assert.equal(report.schedulesDiscovered, 1);
+  assert.equal(report.unexpiredReadyBackups, 1);
+  assert.equal(report.latestReadySnapshotAgeHours, 24);
+  assert.equal(report.status, 'BACKUP_METADATA_PRESENT_RESTORE_UNVERIFIED');
+  assert.equal(report.restorationVerified, false);
+  assert.equal(report.rpoThresholdApproved, false);
+  assert.equal(report.complianceReviewed, false);
+  assert.equal(report.productionChangeAuthorized, false);
+  assert.equal(report.releaseDecision, 'HOLD');
+  assert.ok(Object.isFrozen(report));
+  assert.doesNotMatch(JSON.stringify(report), /synthetic-confidential-id|backupSchedules\//);
+});
+
+test('Firestore recovery inspector refuses foreign project or region metadata', () => {
+  const { inspectBackupMetadata } = require('../scripts/firestore-backup-readonly-audit.cjs');
+  const database = 'projects/smart-hsr-manager/databases/(default)';
+  const wrongProject = 'projects/other-municipality/databases/(default)';
+  const run = (_binary, args) => args.includes('--database=(default)')
+    ? JSON.stringify([{ name: wrongProject + '/backupSchedules/foreign' }])
+    : JSON.stringify([
+      { name: 'projects/other-municipality/locations/me-central2/backups/foreign',
+        database: wrongProject, state: 'READY',
+        snapshotTime: '2026-11-01T12:00:00Z', expireTime: '2026-11-10T12:00:00Z' },
+      { name: 'projects/smart-hsr-manager/locations/us-east1/backups/foreign-region',
+        database, state: 'READY',
+        snapshotTime: '2026-11-01T12:00:00Z', expireTime: '2026-11-10T12:00:00Z' }
+    ]);
+  const report = inspectBackupMetadata(run, { now: '2026-11-02T12:00:00Z' });
+  assert.equal(report.schedulesDiscovered, 0);
+  assert.equal(report.backupMetadataDiscovered, 0);
+  assert.equal(report.unexpiredReadyBackups, 0);
+  assert.equal(report.status, 'RECOVERY_METADATA_INCOMPLETE');
+  assert.equal(report.releaseDecision, 'HOLD');
+});
+
+test('Firestore recovery inspector excludes expired, future and expiry-unverified backups', () => {
+  const { inspectBackupMetadata } = require('../scripts/firestore-backup-readonly-audit.cjs');
+  const database = 'projects/smart-hsr-manager/databases/(default)';
+  const backups = [
+    { name: 'expired', state: 'READY', snapshotTime: '2026-11-01T12:00:00Z',
+      expireTime: '2026-11-02T11:59:59Z' },
+    { name: 'no-expiry', state: 'READY', snapshotTime: '2026-11-01T12:00:00Z' },
+    { name: 'future', state: 'READY', snapshotTime: '2026-11-03T12:00:00Z',
+      expireTime: '2026-11-09T12:00:00Z' },
+    { name: 'still-creating', state: 'CREATING', snapshotTime: '2026-11-01T12:00:00Z',
+      expireTime: '2026-11-09T12:00:00Z' }
+  ].map(x => ({ ...x, name: 'projects/smart-hsr-manager/locations/me-central2/backups/' + x.name,
+    database }));
+  const run = (_binary, args) => args.includes('--database=(default)')
+    ? JSON.stringify([{ name: database + '/backupSchedules/synthetic' }])
+    : JSON.stringify(backups);
+  const report = inspectBackupMetadata(run, { now: '2026-11-02T12:00:00Z' });
+  assert.equal(report.backupMetadataDiscovered, 4);
+  assert.equal(report.readyBackupsWithValidTimestamp, 2);
+  assert.equal(report.unexpiredReadyBackups, 0);
+  assert.equal(report.readyBackupsWithoutVerifiedExpiry, 2);
+  assert.equal(report.latestReadySnapshotUtc, null);
+  assert.equal(report.status, 'RECOVERY_METADATA_INCOMPLETE');
+  assert.equal(report.releaseDecision, 'HOLD');
+});
+
+test('Firestore recovery inspector fails closed on invalid metadata without gcloud writes', () => {
+  const { inspectBackupMetadata, parseList } = require('../scripts/firestore-backup-readonly-audit.cjs');
+  assert.throws(() => parseList('{}'), /UNEXPECTED_METADATA_FORMAT/);
+  assert.throws(() => parseList('{not json'), SyntaxError);
+  assert.throws(() => inspectBackupMetadata(() => '[]', { now: 'invalid-date' }),
+    /INVALID_AUDIT_TIME/);
+  const calls = [];
+  const run = (_binary, args) => {
+    calls.push(args);
+    return args.includes('--database=(default)') ? '[]' : '{}';
+  };
+  assert.throws(() => inspectBackupMetadata(run, { now: '2026-11-02T12:00:00Z' }),
+    /UNEXPECTED_METADATA_FORMAT/);
+  assert.equal(calls.length, 2);
+  for (const args of calls) {
+    assert.equal(args[0], 'firestore');
+    assert.equal(args[1], 'backups');
+    assert.ok(args.includes('list'));
+    assert.ok(!args.some(x => /^(create|restore|delete|export|import|update)$/.test(x)));
+  }
+});
