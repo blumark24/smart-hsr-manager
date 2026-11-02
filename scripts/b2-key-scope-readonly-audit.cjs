@@ -21,9 +21,9 @@
  * Production, independent verification, restore proof or release permission.
  */
 const API_URL = 'https://api.backblazeb2.com/b2api/v4/b2_authorize_account';
-const PRIVILEGED = Object.freeze([
-  'deleteFiles', 'writeKeys', 'deleteKeys', 'writeBuckets',
-  'deleteBuckets', 'bypassGovernance'
+// Treat unknown/future capabilities as elevated, not as silently safe.
+const ROUTINE_CAPABILITIES = Object.freeze([
+  'listBuckets', 'readBuckets', 'listFiles', 'readFiles', 'writeFiles'
 ]);
 const REQUIRED = Object.freeze(['readFiles', 'writeFiles']);
 
@@ -66,7 +66,7 @@ function evaluateAuthorization(body, expectedStage, expectedProduction) {
   const exact = buckets.length === 1 &&
     buckets[0].id === expectedStage && buckets[0].id !== expectedProduction;
   const hasExpectedOperations = REQUIRED.every(x => caps.includes(x));
-  const privileged = PRIVILEGED.filter(x => caps.includes(x));
+  const privileged = [...new Set(caps.filter(x => !ROUTINE_CAPABILITIES.includes(x)))];
   const keyHasExpiry = Number.isFinite(body.applicationKeyExpirationTimestamp) &&
     body.applicationKeyExpirationTimestamp > 0;
   const status = !exact ? 'UNAPPROVED_OR_MULTIBUCKET_SCOPE' :
@@ -120,4 +120,4 @@ async function main(argv = process.argv.slice(2)) {
 }
 
 if (require.main === module) main().then(code => { process.exitCode = code; });
-module.exports = { API_URL, PRIVILEGED, REQUIRED, configured, evaluateAuthorization, audit, main };
+module.exports = { API_URL, ROUTINE_CAPABILITIES, REQUIRED, configured, evaluateAuthorization, audit, main };
