@@ -559,9 +559,30 @@ test('B2 audit treats new and bucket-management capabilities as non-routine', ()
   }}}},stage,prod);
   assert.equal(result.scopeStatus,'PRIVILEGED_CAPABILITIES_REQUIRE_REVIEW');
   assert.deepEqual(result.privilegedCapabilitiesForReview,
-    ['shareFiles','writeBucketRetentions','unrecognizedFuturePower']);
+    ['shareFiles','writeBucketRetentions']);
+  assert.equal(result.unrecognizedCapabilityCount,1);
+  assert.doesNotMatch(JSON.stringify(result),/unrecognizedFuturePower/);
   assert.equal(result.releaseDecision,'HOLD');
   assert.equal(result.independentReviewerApproved,false);
+});
+
+test('B2 audit never echoes unknown provider capability text even if it resembles a secret', () => {
+  const B = require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const stagingId = 'a'.repeat(24), productionId = 'b'.repeat(24);
+  const marker = 'SECRET_NEVER_COPY_FROM_UNTRUSTED_PROVIDER_METADATA';
+  const report = B.evaluateAuthorization({
+    authorizationToken: 'SECRET_TOKEN_IN_PROVIDER_BODY',
+    apiInfo: { storageApi: { allowed: {
+      buckets: [{ id: stagingId }],
+      capabilities: ['readFiles', 'writeFiles', marker],
+      namePrefix: null
+    } } }
+  }, stagingId, productionId);
+  assert.equal(report.scopeStatus, 'PRIVILEGED_CAPABILITIES_REQUIRE_REVIEW');
+  assert.equal(report.unrecognizedCapabilityCount, 1);
+  assert.deepEqual(report.privilegedCapabilitiesForReview, []);
+  assert.equal(report.releaseDecision, 'HOLD');
+  assert.doesNotMatch(JSON.stringify(report), /SECRET_NEVER_COPY|SECRET_TOKEN|aaaaaaaa|bbbbbbbb/);
 });
 
 test('B2 audit makes zero provider calls without explicit staging-only operator authorization', async () => {
