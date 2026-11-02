@@ -149,7 +149,9 @@ test('Firestore backups inspector never reads municipal collections or changes P
         expireTime: '2026-11-08T11:00:00Z',
         name: 'projects/smart-hsr-manager/locations/me-central2/backups/synthetic',
         nationalId: 'secret-must-never-appear' },
-      { database: db, state: 'CREATING', snapshotTime: '2026-11-02T11:00:00Z' },
+      { database: db,
+        name: 'projects/smart-hsr-manager/locations/me-central2/backups/creating-synthetic',
+        state: 'CREATING', snapshotTime: '2026-11-02T11:00:00Z' },
       { database: 'projects/other-tenant/databases/(default)', state: 'READY',
         snapshotTime: '2026-11-02T20:00:00Z' }
     ]);
