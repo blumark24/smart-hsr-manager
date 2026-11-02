@@ -332,3 +332,17 @@ test('Field Head evidence viewer honors verified institutional administration-on
   for(const user of denied)assert.equal(await check(user),null,
     'wrong/inactive/conflicting Field Head metadata must not grant evidence access');
 });
+
+test('manager action in department-head resolves to the existing protected manager portal', () => {
+  // Regression for the historical broken manager-operations.html#users URL.
+  // This does not grant any role or bypass the manager portal auth guard.
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.resolve(__dirname, '..');
+  const source = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
+  const managerAction = /label:\s*'إدارة المستخدمين والصلاحيات',\s*on:\s*\(\)\s*=>\s*\{\s*window\.location\.href\s*=\s*'([^']+)'/m.exec(source);
+  assert.ok(managerAction, 'existing users-management toolbar action must remain present');
+  assert.equal(managerAction[1], 'manager.html', 'navigate only to the real protected manager portal');
+  assert.equal(fs.existsSync(path.join(root, managerAction[1])), true, 'navigation target must exist');
+  assert.doesNotMatch(source, /manager-operations\.html#users/, 'legacy broken link must not return');
+});
