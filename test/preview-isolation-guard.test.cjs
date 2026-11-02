@@ -484,6 +484,57 @@ test('main entry pages have no broken literal HTML href destinations', () => {
 });
 
 
+
+test('B2 staging key without expiry or prefix requires explicit reviewer disposition', () => {
+  const B=require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const stage='a'.repeat(24),prod='b'.repeat(24);
+  const make=(namePrefix,expiration)=>({
+    apiInfo:{storageApi:{allowed:{buckets:[{id:stage}],
+      capabilities:['listBuckets','listFiles','readFiles','writeFiles'],namePrefix}}},
+    applicationKeyExpirationTimestamp:expiration
+  });
+  const both=B.evaluateAuthorization(make(null,null),stage,prod);
+  assert.equal(both.scopeStatus,'STAGING_SCOPE_WITH_POLICY_GAPS');
+  assert.deepEqual(both.policyGapsForReview,[
+    'FILE_PREFIX_SCOPE_REVIEW_REQUIRED',
+    'KEY_EXPIRY_OR_ROTATION_POLICY_REVIEW_REQUIRED'
+  ]);
+  assert.equal(both.releaseDecision,'HOLD');
+  const noExpiry=B.evaluateAuthorization(make('observations/',null),stage,prod);
+  assert.deepEqual(noExpiry.policyGapsForReview,['KEY_EXPIRY_OR_ROTATION_POLICY_REVIEW_REQUIRED']);
+  assert.equal(noExpiry.scopeStatus,'STAGING_SCOPE_WITH_POLICY_GAPS');
+  const noPrefix=B.evaluateAuthorization(make(null,1900000000000),stage,prod);
+  assert.deepEqual(noPrefix.policyGapsForReview,['FILE_PREFIX_SCOPE_REVIEW_REQUIRED']);
+  assert.equal(noPrefix.scopeStatus,'STAGING_SCOPE_WITH_POLICY_GAPS');
+  const clear=B.evaluateAuthorization(make('observations/',1900000000000),stage,prod);
+  assert.equal(clear.scopeStatus,'STAGING_ONLY_PROVIDER_SCOPE_REPORTED');
+  assert.deepEqual(clear.policyGapsForReview,[]);
+  assert.equal(clear.releaseDecision,'HOLD','never treat metadata as live IAM or restore proof');
+  assert.ok(Object.isFrozen(clear.policyGapsForReview));
+});
+
+test('B2 observed-style broad bucket mutation rights are blocked from clean staging report', () => {
+  const B=require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const stage='a'.repeat(24),prod='b'.repeat(24);
+  // Synthetic capability vocabulary resembling the provider UI; no actual
+  // keys, bucket names, credentials, provider calls or municipal records.
+  const capabilities=['listBuckets','listFiles','readFiles','writeFiles',
+    'deleteFiles','shareFiles','readBucketEncryption','writeBucketEncryption',
+    'writeBucketLifecycleRules','writeBucketLogging','writeBucketNotifications',
+    'writeBucketReplications'];
+  const result=B.evaluateAuthorization({apiInfo:{storageApi:{allowed:{
+    buckets:[{id:stage,name:'synthetic-stage'}],capabilities,
+    namePrefix:'observations/'
+  }}},applicationKeyExpirationTimestamp:null},stage,prod);
+  assert.equal(result.scopeStatus,'PRIVILEGED_CAPABILITIES_REQUIRE_REVIEW');
+  assert.ok(result.privilegedCapabilitiesForReview.includes('deleteFiles'));
+  assert.ok(result.privilegedCapabilitiesForReview.includes('writeBuckets')===false);
+  assert.equal(result.unrecognizedCapabilityCount,1);
+  assert.deepEqual(result.policyGapsForReview,['KEY_EXPIRY_OR_ROTATION_POLICY_REVIEW_REQUIRED']);
+  assert.equal(result.releaseDecision,'HOLD');
+  assert.doesNotMatch(JSON.stringify(result),/synthetic-stage|observations\//);
+});
+
 test('B2 v4 audit only reports restricted staging scope and never authorizes release', () => {
   const B = require('../scripts/b2-key-scope-readonly-audit.cjs');
   const stage = 'a'.repeat(24), prod = 'b'.repeat(24);
@@ -495,12 +546,13 @@ test('B2 v4 audit only reports restricted staging scope and never authorizes rel
     }}},
     accountId:'secret-account-id',
     authorizationToken:'secret-provider-token',
-    applicationKeyExpirationTimestamp:null
+    applicationKeyExpirationTimestamp:1900000000000
   },stage,prod);
   assert.equal(r.scopeStatus,'STAGING_ONLY_PROVIDER_SCOPE_REPORTED');
   assert.equal(r.allowedBucketCount,1);
   assert.equal(r.providerReportedStageOnly,true);
   assert.equal(r.filePrefixRestrictionDeclared,true);
+  assert.deepEqual(r.policyGapsForReview,[]);
   assert.equal(r.releaseDecision,'HOLD');
   assert.equal(r.productionChangeAuthorized,false);
   assert.equal(r.actualProductionAccessTested,false);
@@ -629,7 +681,11 @@ test('B2 authorized staging metadata audit performs exactly one pinned read-only
   };
   const result=await B.audit({env,fetchImpl});
   assert.equal(calls,1);
-  assert.equal(result.scopeStatus,'STAGING_ONLY_PROVIDER_SCOPE_REPORTED');
+  assert.equal(result.scopeStatus,'STAGING_SCOPE_WITH_POLICY_GAPS');
+  assert.deepEqual(result.policyGapsForReview,[
+    'FILE_PREFIX_SCOPE_REVIEW_REQUIRED',
+    'KEY_EXPIRY_OR_ROTATION_POLICY_REVIEW_REQUIRED'
+  ]);
   assert.equal(result.releaseDecision,'HOLD');
   const clean=JSON.stringify(result);
   assert.doesNotMatch(clean,/synthetic-|aaaaaaaa|bbbbbbbb|Basic /);
