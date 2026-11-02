@@ -20,6 +20,13 @@ const approvalIds = Object.freeze([
   'cybersecurityReviewer', 'executiveReleaseOwner'
 ]);
 
+// A real municipality is using Production with real records. Signed release
+// approval is insufficient without individually verified recovery evidence.
+// This file never connects to any cloud service or modifies records.
+const requiredRecoveryIds = Object.freeze([
+  'firestoreBackup', 'b2FileRecovery', 'isolatedRestore', 'rollbackRunbook'
+]);
+
 /**
  * A syntactically plausible link does not establish reviewed evidence. Reject
  * obvious placeholders and localhost links before a qualified reviewer can
@@ -75,6 +82,23 @@ function evaluate(manifest, { expectedSha } = {}) {
   for (const id of approvalIds) {
     if (manifest.approvals?.[id] !== true) blockers.push(id + ': sign-off missing');
   }
+  // A separate fail-closed recovery gate is mandatory even if functional
+  // approvals are marked PASS. Syntactic evidence links are not independently
+  // checked here: human operations/security reviewers must attest their
+  // contents and the approved environment separately before any deployment.
+  for (const id of requiredRecoveryIds) {
+    const proof = manifest.operationalRecovery?.[id];
+    const reviewedAt = typeof proof?.reviewedAt === 'string' ? proof.reviewedAt : '';
+    const reviewer = typeof proof?.reviewedBy === 'string' ? proof.reviewedBy.trim() : '';
+    const isDated = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(reviewedAt) &&
+      Number.isFinite(Date.parse(reviewedAt));
+    const hasEvidence = Array.isArray(proof?.evidence) && proof.evidence.length > 0 &&
+      proof.evidence.every(isCandidateEvidenceUrl);
+    if (proof?.status !== 'PASS' || !isDated || reviewer.length < 3 ||
+        /^(?:tbd|pending|unknown|n\/?a|test)$/i.test(reviewer) || !hasEvidence) {
+      blockers.push(id + ': independently reviewed recovery evidence required');
+    }
+  }
   return { decision: blockers.length === 0 ? 'GO-CANDIDATE-REQUIRES-INDEPENDENT-VALIDATION' : 'NO-GO', blockers };
 }
 
@@ -87,4 +111,4 @@ if (require.main === module) {
   if (!process.argv.includes('--report-only') && result.decision === 'NO-GO') process.exitCode = 2;
 }
 
-module.exports = { evaluate, requiredIds, approvalIds, isCandidateEvidenceUrl };
+module.exports = { evaluate, requiredIds, approvalIds, requiredRecoveryIds, isCandidateEvidenceUrl };
