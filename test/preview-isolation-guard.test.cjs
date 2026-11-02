@@ -346,3 +346,68 @@ test('manager action in department-head resolves to the existing protected manag
   assert.equal(fs.existsSync(path.join(root, managerAction[1])), true, 'navigation target must exist');
   assert.doesNotMatch(source, /manager-operations\.html#users/, 'legacy broken link must not return');
 });
+
+
+test('preview env metadata audit remains HOLD even when all required names appear', () => {
+  const preflight = require('../scripts/preview-env-metadata-audit.cjs');
+  const branch = 'fix/owner-upgrade-ledger-no-deploy-20261101';
+  const rows = preflight.REQUIRED_KEYS.map(key => ({ key, target: ['preview'] }));
+  const report = preflight.evaluate(rows, branch);
+  assert.equal(report.configurationMetadata, 'KEY_NAMES_PRESENT_VALUES_UNVERIFIED');
+  assert.deepEqual(report.missingKeys, []);
+  assert.equal(report.decision, 'HOLD');
+  assert.equal(report.previewDeploymentAuthorized, false);
+  assert.equal(report.productionChangeAuthorized, false);
+  assert.equal(report.effectiveResourceIsolationVerified, false);
+  assert.equal(report.isolatedRestoreVerified, false);
+});
+
+test('preview env metadata audit catches missing B2 sentinels and an old-branch Lands runtime flag', () => {
+  const preflight = require('../scripts/preview-env-metadata-audit.cjs');
+  const branch = 'fix/owner-upgrade-ledger-no-deploy-20261101';
+  const missing = new Set(['SMART_HSR_PREVIEW_B2_BUCKET_NAME',
+    'SMART_HSR_PRODUCTION_B2_BUCKET_NAME', 'LANDS_EMBEDDED_RUNTIME']);
+  const rows = preflight.REQUIRED_KEYS.filter(key => !missing.has(key))
+    .map(key => ({ key, target: ['preview'] }));
+  rows.push({ key: 'LANDS_EMBEDDED_RUNTIME', target: ['preview'],
+    gitBranch: 'release/municipality-final-v6' });
+  const report = preflight.evaluate(rows, branch);
+  assert.deepEqual(report.missingKeys, [
+    'SMART_HSR_PREVIEW_B2_BUCKET_NAME',
+    'SMART_HSR_PRODUCTION_B2_BUCKET_NAME',
+    'LANDS_EMBEDDED_RUNTIME'
+  ]);
+  assert.deepEqual(report.wrongBranchOnly, ['LANDS_EMBEDDED_RUNTIME']);
+  assert.equal(report.configurationMetadata, 'MISSING_REQUIRED_PREVIEW_KEY_NAMES');
+  assert.equal(report.decision, 'HOLD');
+});
+
+test('preview env metadata audit excludes production, development, and wrong-branch keys', () => {
+  const preflight = require('../scripts/preview-env-metadata-audit.cjs');
+  const rows = preflight.REQUIRED_KEYS.map((key, i) => ({
+    key, target: [i % 2 ? 'production' : 'development'],
+    gitBranch: 'release/municipality-final-v6'
+  }));
+  const report = preflight.evaluate(rows, 'fix/owner-upgrade-ledger-no-deploy-20261101');
+  assert.equal(report.scopedKeysPresent, 0);
+  assert.equal(report.missingKeys.length, preflight.REQUIRED_KEYS.length);
+  assert.equal(report.decision, 'HOLD');
+});
+
+test('preview env metadata audit rejects unredacted values, never echoes secrets', () => {
+  const preflight = require('../scripts/preview-env-metadata-audit.cjs');
+  const syntheticSecret = 'FAKE_SECRET_NEVER_ECHO';
+  assert.throws(() => preflight.evaluate([
+    { key: 'B2_APPLICATION_KEY', target: ['preview'], value: syntheticSecret }
+  ], 'fix/owner-upgrade-ledger-no-deploy-20261101'), error =>
+    error.message === 'UNSANITIZED_OR_INVALID_METADATA' &&
+    !error.message.includes(syntheticSecret));
+});
+
+test('preview env metadata audit refuses Production branch names', () => {
+  const preflight = require('../scripts/preview-env-metadata-audit.cjs');
+  for (const branch of ['main', 'master', '', 'a/../b']) {
+    assert.throws(() => preflight.evaluate([], branch),
+      /EXPLICIT_NON_PRODUCTION_BRANCH_REQUIRED/);
+  }
+});
