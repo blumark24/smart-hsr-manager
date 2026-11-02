@@ -482,3 +482,136 @@ test('main entry pages have no broken literal HTML href destinations', () => {
     }
   }
 });
+
+
+test('B2 v4 audit only reports restricted staging scope and never authorizes release', () => {
+  const B = require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const stage = 'a'.repeat(24), prod = 'b'.repeat(24);
+  const r = B.evaluateAuthorization({
+    apiInfo: { storageApi: { allowed: {
+      buckets: [{id:stage,name:'secret-stage-bucket'}],
+      capabilities: ['readFiles','writeFiles','listFiles'],
+      namePrefix: 'secret-stage-prefix'
+    }}},
+    accountId:'secret-account-id',
+    authorizationToken:'secret-provider-token',
+    applicationKeyExpirationTimestamp:null
+  },stage,prod);
+  assert.equal(r.scopeStatus,'STAGING_ONLY_PROVIDER_SCOPE_REPORTED');
+  assert.equal(r.allowedBucketCount,1);
+  assert.equal(r.providerReportedStageOnly,true);
+  assert.equal(r.filePrefixRestrictionDeclared,true);
+  assert.equal(r.releaseDecision,'HOLD');
+  assert.equal(r.productionChangeAuthorized,false);
+  assert.equal(r.actualProductionAccessTested,false);
+  assert.equal(r.backupRestoreVerified,false);
+  assert.doesNotMatch(JSON.stringify(r),/secret|aaaaaaaa|bbbbbbbb/);
+});
+
+test('B2 v4 audit refuses unrestricted and multi-bucket keys including Production', () => {
+  const B = require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const stage='a'.repeat(24),prod='b'.repeat(24);
+  const policy = buckets => ({apiInfo:{storageApi:{allowed:{
+    buckets,capabilities:['readFiles','writeFiles'],namePrefix:null
+  }}}});
+  assert.equal(B.evaluateAuthorization(policy(null),stage,prod).scopeStatus,
+    'UNRESTRICTED_BUCKET_SCOPE_REPORTED');
+  const cross=B.evaluateAuthorization(policy([{id:stage},{id:prod}]),stage,prod);
+  assert.equal(cross.scopeStatus,'UNAPPROVED_OR_MULTIBUCKET_SCOPE');
+  assert.equal(cross.providerReportedStageOnly,false);
+  assert.equal(B.evaluateAuthorization(policy([{id:prod}]),stage,prod).scopeStatus,
+    'UNAPPROVED_OR_MULTIBUCKET_SCOPE');
+  assert.equal(cross.releaseDecision,'HOLD');
+});
+
+test('B2 v4 auditor flags privileged and insufficient file capabilities for manual review', () => {
+  const B = require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const stage='a'.repeat(24),prod='b'.repeat(24);
+  const result = caps => B.evaluateAuthorization({apiInfo:{storageApi:{allowed:{
+    buckets:[{id:stage}],capabilities:caps,namePrefix:null
+  }}}},stage,prod);
+  const privileged=result(['readFiles','writeFiles','deleteFiles','writeKeys']);
+  assert.equal(privileged.scopeStatus,'PRIVILEGED_CAPABILITIES_REQUIRE_REVIEW');
+  assert.deepEqual(privileged.privilegedCapabilitiesForReview,['deleteFiles','writeKeys']);
+  assert.equal(result(['readFiles']).scopeStatus,'REQUIRED_OPERATIONS_NOT_REPORTED');
+  assert.equal(privileged.productionChangeAuthorized,false);
+});
+
+test('B2 v4 audit fails closed on old-format or malformed provider policies', () => {
+  const B=require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const stage='a'.repeat(24),prod='b'.repeat(24);
+  for (const response of [null,{}, {apiInfo:{storageApi:{bucketId:stage,capabilities:['readFiles']}}},
+      {apiInfo:{storageApi:{allowed:{buckets:'all',capabilities:['readFiles']}}}},
+      {apiInfo:{storageApi:{allowed:{buckets:[{id:stage}],capabilities:[null]}}}}]) {
+    assert.equal(B.evaluateAuthorization(response,stage,prod).releaseDecision,'HOLD');
+    assert.equal(B.evaluateAuthorization(response,stage,prod).scopeStatus,
+      'INVALID_OR_INCOMPLETE_PROVIDER_METADATA');
+  }
+});
+
+test('B2 audit makes zero provider calls without explicit staging-only operator authorization', async () => {
+  const B=require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const env={
+    B2_KEY_ID:'synthetic-stage-key-id',B2_APPLICATION_KEY:'synthetic-do-not-print',
+    SMART_HSR_B2_STAGING_BUCKET_ID:'a'.repeat(24),
+    SMART_HSR_B2_PRODUCTION_BUCKET_ID:'b'.repeat(24),
+    SMART_HSR_B2_SCOPE_AUDIT_TARGET:'staging'
+  };
+  let calls=0;
+  const stub=async()=>{calls++;throw new Error('MUST_NOT_FETCH');};
+  const first=await B.audit({env,fetchImpl:stub});
+  assert.equal(first.scopeStatus,'AUTHORIZATION_OR_STAGING_INPUTS_MISSING');
+  assert.equal(calls,0);
+  const wrong=await B.audit({env:{...env,SMART_HSR_B2_SCOPE_AUDIT_APPROVED:'READ_ONLY_APPROVED',
+    SMART_HSR_B2_STAGING_BUCKET_ID:env.SMART_HSR_B2_PRODUCTION_BUCKET_ID},fetchImpl:stub});
+  assert.equal(wrong.scopeStatus,'AUTHORIZATION_OR_STAGING_INPUTS_MISSING');
+  assert.equal(calls,0);
+});
+
+test('B2 authorized staging metadata audit performs exactly one pinned read-only GET',async()=>{
+  const B=require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const stage='a'.repeat(24),prod='b'.repeat(24);
+  const env={
+    SMART_HSR_B2_SCOPE_AUDIT_APPROVED:'READ_ONLY_APPROVED',
+    SMART_HSR_B2_SCOPE_AUDIT_TARGET:'staging',
+    SMART_HSR_B2_STAGING_BUCKET_ID:stage,SMART_HSR_B2_PRODUCTION_BUCKET_ID:prod,
+    B2_KEY_ID:'synthetic-stage-key-id',B2_APPLICATION_KEY:'synthetic-secret-never-log'
+  };
+  let calls=0;
+  const fetchImpl=async(url,options)=>{
+    calls++;
+    assert.equal(url,'https://api.backblazeb2.com/b2api/v4/b2_authorize_account');
+    assert.equal(options.method,'GET');
+    assert.equal(options.redirect,'error');
+    assert.equal(options.cache,'no-store');
+    assert.match(options.headers.Authorization,/^Basic /);
+    return {status:200,async json(){return {
+      authorizationToken:'synthetic-returned-secret-never-log',
+      apiInfo:{storageApi:{allowed:{buckets:[{id:stage}],
+        capabilities:['readFiles','writeFiles'],namePrefix:null}}}
+    };}};
+  };
+  const result=await B.audit({env,fetchImpl});
+  assert.equal(calls,1);
+  assert.equal(result.scopeStatus,'STAGING_ONLY_PROVIDER_SCOPE_REPORTED');
+  assert.equal(result.releaseDecision,'HOLD');
+  const clean=JSON.stringify(result);
+  assert.doesNotMatch(clean,/synthetic-|aaaaaaaa|bbbbbbbb|Basic /);
+});
+
+test('B2 audit suppresses provider error messages and never prints tokens',async()=>{
+  const B=require('../scripts/b2-key-scope-readonly-audit.cjs');
+  const env={
+    SMART_HSR_B2_SCOPE_AUDIT_APPROVED:'READ_ONLY_APPROVED',
+    SMART_HSR_B2_SCOPE_AUDIT_TARGET:'staging',
+    SMART_HSR_B2_STAGING_BUCKET_ID:'a'.repeat(24),
+    SMART_HSR_B2_PRODUCTION_BUCKET_ID:'b'.repeat(24),
+    B2_KEY_ID:'synthetic-key',B2_APPLICATION_KEY:'synthetic-secret'
+  };
+  const result=await B.audit({env,fetchImpl:async()=>{
+    throw new Error('SECRET PROVIDER RESPONSE: synthetic-secret');
+  }});
+  assert.equal(result.scopeStatus,'INSPECTION_UNAVAILABLE');
+  assert.equal(result.releaseDecision,'HOLD');
+  assert.doesNotMatch(JSON.stringify(result),/SECRET|synthetic-/);
+});
