@@ -1,0 +1,20 @@
+{
+  "name": "SMART HSR — Inspector",
+  "short_name": "SMART HSR",
+  "description": "تطبيق المراقب الميداني لمنصة SMART HSR",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./inspector-v2.html",
+  "display": "standalone",
+  "background_color": "#020915",
+  "theme_color": "#04162f",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
