@@ -204,3 +204,17 @@ test('Wrong-surface inspector fallback returns to Inspector V2', () => {
   assert.doesNotMatch(mobileMap, /if \(data\.role === 'inspector'\) return 'dashboard\.html';/);
 });
 
+test('Inspector V2 capture returns only through the trusted modal close path after server-confirmed save', () => {
+  assert.match(dashboard, /return finishSmartInputSuccess\(clientRequestId, payload, nextDisplayId\);/);
+  assert.match(dashboard, /async function finishSmartInputSuccess\(docId, payload, nextDisplayId\)/);
+  assert.match(dashboard, /serverConfirmed: true/);
+  assert.match(dashboard, /onclick="closeModal\('smartInputModal'\)"/);
+  assert.match(dashboard, /if\(id === 'smartInputModal'\) setTimeout\(returnFromV2Capture, 0\)/);
+});
+
+test('Inspector V2 capture does not treat timeout or Firestore failure as success', () => {
+  assert.match(dashboard, /if \(outcome === 'timeout'\)[\s\S]*?return false;/);
+  assert.match(dashboard, /catch \(saveError\)[\s\S]*?return false;/);
+  assert.match(dashboard, /setDoc does not resolve|setDoc لا تُحلّ إلا بعد إقرار الخادم|نجاح مؤكد من الخادم/);
+});
+
