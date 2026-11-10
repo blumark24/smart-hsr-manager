@@ -14,7 +14,10 @@
     selectedMapObservation: null,
     detailObservation: null,
     locationWatchId: null,
-    liveLocationAuthorized: false
+    liveLocationAuthorized: false,
+    accuracyCircle: null,
+    locationAnimationFrame: null,
+    liveFollowEnabled: true
   };
 
   const $ = (id) => document.getElementById(id);
@@ -58,6 +61,92 @@
     });
   }
 
+  function prefersReducedMotion() {
+    return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function bearingBetween(from, to) {
+    if (!from || !to) return null;
+    const toRad = value => value * Math.PI / 180;
+    const toDeg = value => value * 180 / Math.PI;
+    const lat1 = toRad(from.lat);
+    const lat2 = toRad(to.lat);
+    const deltaLng = toRad(to.lng - from.lng);
+    const y = Math.sin(deltaLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLng);
+    const heading = (toDeg(Math.atan2(y, x)) + 360) % 360;
+    return Number.isFinite(heading) ? heading : null;
+  }
+
+  function resolveLocationHeading(previousPosition, currentPosition) {
+    const rawHeading = Number(currentPosition?.coords?.heading);
+    if (Number.isFinite(rawHeading) && rawHeading >= 0) return rawHeading;
+    if (!previousPosition?.coords || !currentPosition?.coords) return null;
+    const from = { lat: previousPosition.coords.latitude, lng: previousPosition.coords.longitude };
+    const to = { lat: currentPosition.coords.latitude, lng: currentPosition.coords.longitude };
+    return bearingBetween(from, to);
+  }
+
+  function applyLocationHeading(heading) {
+    if (!Number.isFinite(heading)) return;
+    const markerElement = state.locationMarker?.getElement?.();
+    const dot = markerElement?.querySelector?.('.user-location-marker');
+    if (dot) dot.style.setProperty('--heading', `${heading.toFixed(1)}deg`);
+  }
+
+  function moveLocationMarker(latlng, heading) {
+    if (!state.map || !window.L) return;
+    if (!state.locationMarker) {
+      state.locationMarker = L.marker(latlng, { icon: createLocationIcon(), keyboard: false }).addTo(state.map);
+      applyLocationHeading(heading);
+      return;
+    }
+
+    if (state.locationAnimationFrame !== null) {
+      cancelAnimationFrame(state.locationAnimationFrame);
+      state.locationAnimationFrame = null;
+    }
+
+    const start = state.locationMarker.getLatLng();
+    if (prefersReducedMotion()) {
+      state.locationMarker.setLatLng(latlng);
+      applyLocationHeading(heading);
+      return;
+    }
+
+    const startedAt = performance.now();
+    const durationMs = 420;
+    const animate = now => {
+      const progress = Math.min(1, Math.max(0, (now - startedAt) / durationMs));
+      const eased = 1 - Math.pow(1 - progress, 3);
+      state.locationMarker.setLatLng([
+        start.lat + (latlng[0] - start.lat) * eased,
+        start.lng + (latlng[1] - start.lng) * eased
+      ]);
+      applyLocationHeading(heading);
+      if (progress < 1) {
+        state.locationAnimationFrame = requestAnimationFrame(animate);
+      } else {
+        state.locationAnimationFrame = null;
+      }
+    };
+    state.locationAnimationFrame = requestAnimationFrame(animate);
+  }
+
+  function updateAccuracyCircle(latlng, accuracy) {
+    if (!state.map || !window.L || !Number.isFinite(accuracy) || accuracy <= 0) return;
+    if (!state.accuracyCircle) {
+      state.accuracyCircle = L.circle(latlng, {
+        radius: accuracy,
+        interactive: false,
+        className: 'user-location-accuracy'
+      }).addTo(state.map);
+      return;
+    }
+    state.accuracyCircle.setLatLng(latlng);
+    state.accuracyCircle.setRadius(accuracy);
+  }
+
   function initMap() {
     const root = $('inspectorLiveMap');
     if (!root || !window.L) {
@@ -79,6 +168,11 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(state.map);
 
+    state.map.on('dragstart', () => {
+      state.liveFollowEnabled = false;
+      if ($('mapNote')) $('mapNote').textContent = 'تم إيقاف التتبع التلقائي أثناء استعراض الخريطة. اضغط موقعي لاستئنافه.';
+    });
+
     if ($('gpsStateText')) $('gpsStateText').textContent = 'بانتظار التحقق';
     if ($('locationStateText')) $('locationStateText').textContent = 'بانتظار الجلسة';
   }
@@ -88,6 +182,10 @@
       try { navigator.geolocation.clearWatch(state.locationWatchId); } catch (_) {}
     }
     state.locationWatchId = null;
+    if (state.locationAnimationFrame !== null) {
+      cancelAnimationFrame(state.locationAnimationFrame);
+      state.locationAnimationFrame = null;
+    }
   }
 
   function requestLocation() {
@@ -113,20 +211,19 @@
   }
 
   function onPosition(position) {
+    const previousPosition = state.lastPosition;
     state.lastPosition = position;
     const { latitude, longitude, accuracy } = position.coords;
     const latlng = [latitude, longitude];
+    const heading = resolveLocationHeading(previousPosition, position);
 
     if ($('gpsStateText')) $('gpsStateText').textContent = accuracy ? `دقة ±${Math.round(accuracy)}م` : 'متصل';
     if ($('locationStateText')) $('locationStateText').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
     if ($('mapFeedState')) $('mapFeedState').textContent = 'GPS Live';
-    if ($('mapNote')) $('mapNote').textContent = 'الموقع الحالي حي. الحالات الموثوقة تظهر من المصدر التشغيلي عند توفر إحداثيات صالحة.';
+    if ($('mapNote') && state.liveFollowEnabled) $('mapNote').textContent = 'تتبع حي للموقع. الحالات الموثوقة تتحدث من المصدر التشغيلي.';
 
-    if (!state.locationMarker) {
-      state.locationMarker = L.marker(latlng, { icon: createLocationIcon(), keyboard: false }).addTo(state.map);
-    } else {
-      state.locationMarker.setLatLng(latlng);
-    }
+    moveLocationMarker(latlng, heading);
+    updateAccuracyCircle(latlng, accuracy);
 
     if (state.selectedMapObservation && $('mapMarkerDistance')) {
       $('mapMarkerDistance').textContent = formatDistance(observationDistance(state.selectedMapObservation));
@@ -135,6 +232,9 @@
     if (!state.hasCenteredOnce) {
       state.map.setView(latlng, 16, { animate: false });
       state.hasCenteredOnce = true;
+      state.liveFollowEnabled = true;
+    } else if (state.liveFollowEnabled) {
+      state.map.panTo(latlng, { animate: !prefersReducedMotion(), duration: .35 });
     }
   }
 
@@ -160,8 +260,10 @@
       requestLocation();
       return;
     }
+    state.liveFollowEnabled = true;
     const { latitude, longitude } = state.lastPosition.coords;
-    state.map.flyTo([latitude, longitude], Math.max(state.map.getZoom(), 16), { duration: .55 });
+    state.map.flyTo([latitude, longitude], Math.max(state.map.getZoom(), 16), { duration: prefersReducedMotion() ? 0 : .55 });
+    if ($('mapNote')) $('mapNote').textContent = 'تم استئناف التتبع الحي لموقعك.';
   }
 
   const OBS_STATUS_LABELS = Object.freeze({
@@ -208,6 +310,7 @@
     sheet.setAttribute('aria-hidden','false');
 
     if (observation.coords && state.map) {
+      state.liveFollowEnabled = false;
       const zoom = document.body.classList.contains('map-expanded') ? Math.max(state.map.getZoom(), 16) : Math.max(state.map.getZoom(), 15);
       state.map.flyTo([observation.coords.lat, observation.coords.lng], zoom, { duration: .45 });
     }
@@ -223,6 +326,7 @@
       showToast('لا توجد إحداثيات موثوقة لهذه الحالة.');
       return;
     }
+    state.liveFollowEnabled = false;
     state.map.flyTo([observation.coords.lat, observation.coords.lng], Math.max(state.map.getZoom(), 17), { duration: .45 });
   }
 
@@ -241,6 +345,7 @@
       showToast('لا توجد إحداثيات موثوقة لهذه المهمة.');
       return;
     }
+    state.liveFollowEnabled = false;
     const destination = [coords.lat, coords.lng];
     if (state.lastPosition) {
       const origin = [state.lastPosition.coords.latitude, state.lastPosition.coords.longitude];
