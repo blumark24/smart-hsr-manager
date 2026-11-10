@@ -267,3 +267,13 @@ test('Inspector V2 visible controls are real or explicitly disabled', () => {
   assert.match(js, /dockTasksBtn.*openUtilitySheet\('tasks'\)/);
   assert.doesNotMatch(html, /<button[^>]+data-action="toast"[^>]*>\s*<i data-lucide="(user-round|chart-no-axes-column|clipboard-list)"/);
 });
+
+
+test('same-origin capture framing remains security-bounded', () => {
+  const vercel = fs.readFileSync(path.join(root, 'vercel.json'), 'utf8');
+  assert.match(vercel, /"X-Frame-Options"\s*:\s*"SAMEORIGIN"/);
+  assert.match(vercel, /frame-ancestors 'self'/);
+  assert.match(vercel, /\/login\.html/);
+  assert.match(vercel, /frame-ancestors 'none'/);
+  assert.doesNotMatch(vercel, /"X-Frame-Options"\s*:\s*"ALLOWALL"/);
+});
