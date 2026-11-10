@@ -10,6 +10,8 @@ const css = fs.readFileSync(path.join(root, 'inspector-v2.css'), 'utf8');
 const js = fs.readFileSync(path.join(root, 'inspector-v2.js'), 'utf8');
 const runtime = fs.readFileSync(path.join(root, 'inspector-v2-runtime.js'), 'utf8');
 const dashboard = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+const workspaceAccess = fs.readFileSync(path.join(root, 'workspace-access.js'), 'utf8');
+const mobileMap = fs.readFileSync(path.join(root, 'mobile-map.html'), 'utf8');
 
 test('Inspector V2 stays isolated from legacy dashboard', () => {
   assert.match(html, /inspector-v2\.css/);
@@ -191,3 +193,14 @@ test('Inspector V2 resumes live GPS after app visibility returns, but only after
   assert.match(js, /if \(state\.liveLocationAuthorized\) requestLocation\(\)/);
   assert.match(js, /clearLiveLocationWatch\(\);[\s\S]*error\?\.code/);
 });
+
+test('Inspector V2 is the canonical field route for inspector identities', () => {
+  assert.match(workspaceAccess, /if \(d\.role === 'inspector'\) return 'inspector-v2\.html';/);
+  assert.match(workspaceAccess, /\['dashboard\.html', 'inspector-v2\.html', 'mobile-map\.html', 'manager\.html'\]\.includes\(file\)/);
+});
+
+test('Wrong-surface inspector fallback returns to Inspector V2', () => {
+  assert.match(mobileMap, /if \(data\.role === 'inspector'\) return 'inspector-v2\.html';/);
+  assert.doesNotMatch(mobileMap, /if \(data\.role === 'inspector'\) return 'dashboard\.html';/);
+});
+
