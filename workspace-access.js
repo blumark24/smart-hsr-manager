@@ -109,6 +109,7 @@
     if (flags.hasFieldDepartmentHeadRole) return 'department-head.html';
     if (d.role === 'contractor') return 'mobile-map.html';
     if (d.role === 'supervisor') return 'manager.html';
+    if (d.role === 'inspector') return 'inspector-v2.html';
     return 'dashboard.html';
   }
 
