@@ -1,0 +1,939 @@
+(() => {
+  'use strict';
+
+  const state = {
+    map: null,
+    locationMarker: null,
+    lastPosition: null,
+    hasCenteredOnce: false,
+    toastTimer: null,
+    theme: 'dark',
+    mapView: 'operational',
+    missionCoords: null,
+    activeMission: null,
+    selectedMapObservation: null,
+    detailObservation: null,
+    locationWatchId: null,
+    liveLocationAuthorized: false,
+    accuracyCircle: null,
+    locationAnimationFrame: null,
+    liveFollowEnabled: true
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  function showToast(message = 'سيتم ربط هذه الوظيفة في المرحلة التالية من Inspector V2.') {
+    const toast = $('inspectorToast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('is-visible');
+    clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 2300);
+  }
+
+  function preferredTheme() {
+    const saved = localStorage.getItem('smartHSRInspectorTheme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+
+  function applyTheme(theme, persist = true) {
+    state.theme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', state.theme);
+    const toggle = $('themeToggleBtn');
+    if (toggle) toggle.setAttribute('aria-pressed', String(state.theme === 'light'));
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', state.theme === 'light' ? '#f4f8f6' : '#04162f');
+    if (persist) localStorage.setItem('smartHSRInspectorTheme', state.theme);
+  }
+
+  function toggleTheme() {
+    applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+    if (state.map) setTimeout(() => state.map.invalidateSize({ animate: false }), 30);
+  }
+
+  function createLocationIcon() {
+    return L.divIcon({
+      className: '',
+      html: '<div class="user-location-marker" aria-label="موقعك الحالي"></div>',
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+  }
+
+  function prefersReducedMotion() {
+    return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function bearingBetween(from, to) {
+    if (!from || !to) return null;
+    const toRad = value => value * Math.PI / 180;
+    const toDeg = value => value * 180 / Math.PI;
+    const lat1 = toRad(from.lat);
+    const lat2 = toRad(to.lat);
+    const deltaLng = toRad(to.lng - from.lng);
+    const y = Math.sin(deltaLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLng);
+    const heading = (toDeg(Math.atan2(y, x)) + 360) % 360;
+    return Number.isFinite(heading) ? heading : null;
+  }
+
+  function resolveLocationHeading(previousPosition, currentPosition) {
+    const rawHeading = Number(currentPosition?.coords?.heading);
+    if (Number.isFinite(rawHeading) && rawHeading >= 0) return rawHeading;
+    if (!previousPosition?.coords || !currentPosition?.coords) return null;
+    const from = { lat: previousPosition.coords.latitude, lng: previousPosition.coords.longitude };
+    const to = { lat: currentPosition.coords.latitude, lng: currentPosition.coords.longitude };
+    return bearingBetween(from, to);
+  }
+
+  function applyLocationHeading(heading) {
+    if (!Number.isFinite(heading)) return;
+    const markerElement = state.locationMarker?.getElement?.();
+    const dot = markerElement?.querySelector?.('.user-location-marker');
+    if (dot) dot.style.setProperty('--heading', `${heading.toFixed(1)}deg`);
+  }
+
+  function moveLocationMarker(latlng, heading) {
+    if (!state.map || !window.L) return;
+    if (!state.locationMarker) {
+      state.locationMarker = L.marker(latlng, { icon: createLocationIcon(), keyboard: false }).addTo(state.map);
+      applyLocationHeading(heading);
+      return;
+    }
+
+    if (state.locationAnimationFrame !== null) {
+      cancelAnimationFrame(state.locationAnimationFrame);
+      state.locationAnimationFrame = null;
+    }
+
+    const start = state.locationMarker.getLatLng();
+    if (prefersReducedMotion()) {
+      state.locationMarker.setLatLng(latlng);
+      applyLocationHeading(heading);
+      return;
+    }
+
+    const startedAt = performance.now();
+    const durationMs = 420;
+    const animate = now => {
+      const progress = Math.min(1, Math.max(0, (now - startedAt) / durationMs));
+      const eased = 1 - Math.pow(1 - progress, 3);
+      state.locationMarker.setLatLng([
+        start.lat + (latlng[0] - start.lat) * eased,
+        start.lng + (latlng[1] - start.lng) * eased
+      ]);
+      applyLocationHeading(heading);
+      if (progress < 1) {
+        state.locationAnimationFrame = requestAnimationFrame(animate);
+      } else {
+        state.locationAnimationFrame = null;
+      }
+    };
+    state.locationAnimationFrame = requestAnimationFrame(animate);
+  }
+
+  function updateAccuracyCircle(latlng, accuracy) {
+    if (!state.map || !window.L || !Number.isFinite(accuracy) || accuracy <= 0) return;
+    if (!state.accuracyCircle) {
+      state.accuracyCircle = L.circle(latlng, {
+        radius: accuracy,
+        interactive: false,
+        className: 'user-location-accuracy'
+      }).addTo(state.map);
+      return;
+    }
+    state.accuracyCircle.setLatLng(latlng);
+    state.accuracyCircle.setRadius(accuracy);
+  }
+
+  function initMap() {
+    const root = $('inspectorLiveMap');
+    if (!root || !window.L) {
+      const note = $('mapNote');
+      if (note) note.textContent = 'تعذر تحميل محرك الخريطة.';
+      return;
+    }
+
+    state.map = L.map(root, {
+      zoomControl: false,
+      attributionControl: true,
+      preferCanvas: true,
+      minZoom: 3,
+      maxZoom: 20,
+      zoomAnimation: true,
+      fadeAnimation: true,
+      markerZoomAnimation: true,
+      wheelPxPerZoomLevel: 90,
+      zoomSnap: .5,
+      zoomDelta: .5
+    }).setView([23.8859, 45.0792], 5);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 20,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(state.map);
+
+    state.map.on('dragstart', () => {
+      state.liveFollowEnabled = false;
+      if ($('mapNote')) $('mapNote').textContent = 'تم إيقاف التتبع التلقائي أثناء استعراض الخريطة. اضغط موقعي لاستئنافه.';
+    });
+
+    if ($('gpsStateText')) $('gpsStateText').textContent = 'بانتظار التحقق';
+    if ($('locationStateText')) $('locationStateText').textContent = 'بانتظار الجلسة';
+  }
+
+  function clearLiveLocationWatch() {
+    if (state.locationWatchId !== null && navigator.geolocation) {
+      try { navigator.geolocation.clearWatch(state.locationWatchId); } catch (_) {}
+    }
+    state.locationWatchId = null;
+    if (state.locationAnimationFrame !== null) {
+      cancelAnimationFrame(state.locationAnimationFrame);
+      state.locationAnimationFrame = null;
+    }
+  }
+
+  function requestLocation() {
+    const gps = $('gpsStateText');
+    if (!state.liveLocationAuthorized) {
+      if (gps) gps.textContent = 'بانتظار التحقق';
+      return;
+    }
+    const loc = $('locationStateText');
+    if (!navigator.geolocation) {
+      if (gps) gps.textContent = 'غير مدعوم';
+      if (loc) loc.textContent = 'الموقع غير متاح';
+      return;
+    }
+
+    if (state.locationWatchId !== null) return;
+    if (gps) gps.textContent = 'جارٍ الاتصال';
+    state.locationWatchId = navigator.geolocation.watchPosition(
+      onPosition,
+      onPositionError,
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 14000 }
+    );
+  }
+
+  function onPosition(position) {
+    const previousPosition = state.lastPosition;
+    state.lastPosition = position;
+    const { latitude, longitude, accuracy } = position.coords;
+    const latlng = [latitude, longitude];
+    const heading = resolveLocationHeading(previousPosition, position);
+
+    if ($('gpsStateText')) $('gpsStateText').textContent = accuracy ? `دقة ±${Math.round(accuracy)}م` : 'متصل';
+    if ($('locationStateText')) $('locationStateText').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    if ($('mapFeedState')) $('mapFeedState').textContent = 'GPS Live';
+    if ($('mapNote') && state.liveFollowEnabled) $('mapNote').textContent = 'تتبع حي للموقع. الحالات الموثوقة تتحدث من المصدر التشغيلي.';
+
+    moveLocationMarker(latlng, heading);
+    updateAccuracyCircle(latlng, accuracy);
+
+    if (state.selectedMapObservation && $('mapMarkerDistance')) {
+      $('mapMarkerDistance').textContent = formatDistance(observationDistance(state.selectedMapObservation));
+    }
+
+    if (!state.hasCenteredOnce) {
+      state.map.setView(latlng, 16, { animate: false });
+      state.hasCenteredOnce = true;
+      state.liveFollowEnabled = true;
+    } else if (state.liveFollowEnabled) {
+      state.map.panTo(latlng, { animate: !prefersReducedMotion(), duration: .35 });
+    }
+  }
+
+  function onPositionError(error) {
+    clearLiveLocationWatch();
+    if ($('gpsStateText')) $('gpsStateText').textContent = error?.code === 1 ? 'بحاجة إذن' : 'غير متاح';
+    if ($('locationStateText')) $('locationStateText').textContent = 'لم يتم تحديد الموقع';
+    if ($('mapFeedState')) $('mapFeedState').textContent = 'Map Ready';
+    if ($('mapNote')) $('mapNote').textContent = error?.code === 1
+      ? 'اسمح بالوصول للموقع لتفعيل GPS الحي.'
+      : 'تعذر تحديث GPS مؤقتًا. يمكنك إعادة المحاولة من زر موقعي.';
+    if (error && error.code === 1) showToast('يلزم السماح بالوصول للموقع لتفعيل الخريطة الحية.');
+  }
+
+  function authorizeLiveLocation() {
+    state.liveLocationAuthorized = true;
+    requestLocation();
+  }
+
+  function centerOnUser() {
+    if (!state.map || !state.lastPosition) {
+      showToast('لم يتم الحصول على موقعك بعد.');
+      requestLocation();
+      return;
+    }
+    state.liveFollowEnabled = true;
+    const { latitude, longitude } = state.lastPosition.coords;
+    state.map.flyTo([latitude, longitude], Math.max(state.map.getZoom(), 16), { duration: prefersReducedMotion() ? 0 : .55 });
+    if ($('mapNote')) $('mapNote').textContent = 'تم استئناف التتبع الحي لموقعك.';
+  }
+
+  const OBS_STATUS_LABELS = Object.freeze({
+    PENDING:'قيد الانتظار',
+    IN_PROGRESS:'قيد المعالجة',
+    PENDING_REVIEW:'بانتظار المراجعة',
+    COMPLETED:'مغلقة'
+  });
+
+  function observationDistance(observation) {
+    if (!observation?.coords || !state.lastPosition) return null;
+    return haversineMeters(
+      { lat: state.lastPosition.coords.latitude, lng: state.lastPosition.coords.longitude },
+      observation.coords
+    );
+  }
+
+  function formatDistance(meters) {
+    if (!Number.isFinite(meters)) return '—';
+    return meters < 1000 ? Math.round(meters) + ' م' : (meters/1000).toFixed(1) + ' كم';
+  }
+
+  function setSelectedMapObservation(observation) {
+    state.selectedMapObservation = observation || null;
+    const sheet = $('mapMarkerSheet');
+    if (!sheet) return;
+
+    if (!observation) {
+      sheet.classList.remove('is-open');
+      sheet.setAttribute('aria-hidden','true');
+      return;
+    }
+
+    const status = observation.status || 'PENDING';
+    if ($('mapMarkerStatus')) {
+      $('mapMarkerStatus').textContent = OBS_STATUS_LABELS[status] || status;
+      $('mapMarkerStatus').dataset.status = status;
+    }
+    if ($('mapMarkerTitle')) $('mapMarkerTitle').textContent = observation.title || 'ملاحظة ميدانية';
+    if ($('mapMarkerLocation')) $('mapMarkerLocation').textContent = observation.location || 'موقع موثق';
+    if ($('mapMarkerId')) $('mapMarkerId').textContent = observation.displayId || observation.docId || '—';
+    if ($('mapMarkerDistance')) $('mapMarkerDistance').textContent = formatDistance(observationDistance(observation));
+    sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden','false');
+
+    if (observation.coords && state.map) {
+      state.liveFollowEnabled = false;
+      const zoom = document.body.classList.contains('map-expanded') ? Math.max(state.map.getZoom(), 16) : Math.max(state.map.getZoom(), 15);
+      state.map.flyTo([observation.coords.lat, observation.coords.lng], zoom, { duration: .45 });
+    }
+  }
+
+  function closeMapMarkerSheet() {
+    setSelectedMapObservation(null);
+  }
+
+  function focusSelectedMapObservation() {
+    const observation = state.selectedMapObservation;
+    if (!observation?.coords || !state.map) {
+      showToast('لا توجد إحداثيات موثوقة لهذه الحالة.');
+      return;
+    }
+    state.liveFollowEnabled = false;
+    state.map.flyTo([observation.coords.lat, observation.coords.lng], Math.max(state.map.getZoom(), 17), { duration: .45 });
+  }
+
+  function openSelectedMapObservation() {
+    const observation = state.selectedMapObservation;
+    if (!observation) {
+      showToast('اختر حالة من الخريطة أولاً.');
+      return;
+    }
+    openMissionDetail('evidence', observation);
+  }
+
+  function routeObservation(observation) {
+    const coords = observation?.coords || null;
+    if (!state.map || !coords) {
+      showToast('لا توجد إحداثيات موثوقة لهذه المهمة.');
+      return;
+    }
+    state.liveFollowEnabled = false;
+    const destination = [coords.lat, coords.lng];
+    if (state.lastPosition) {
+      const origin = [state.lastPosition.coords.latitude, state.lastPosition.coords.longitude];
+      state.map.fitBounds([origin, destination], { padding: [54,54], maxZoom: 17 });
+      showToast('تم عرض نطاق الحركة بين موقعك والمهمة.');
+    } else {
+      state.map.flyTo(destination, 17, { duration: .55 });
+      showToast('تم فتح موقع المهمة على الخريطة.');
+    }
+  }
+
+  function routeToMission() {
+    if (!state.missionCoords) {
+      showToast('لا توجد إحداثيات موثوقة للمهمة الحالية.');
+      return;
+    }
+    routeObservation({ coords: state.missionCoords });
+  }
+
+  function routeDetailObservation() {
+    const observation = state.detailObservation || state.activeMission;
+    if (!observation) {
+      showToast('لا توجد مهمة قابلة للتوجيه.');
+      return;
+    }
+    closeMissionDetail();
+    if (!document.body.classList.contains('map-expanded')) toggleMapExpanded();
+    setTimeout(() => {
+      setSelectedMapObservation(observation);
+      routeObservation(observation);
+    }, 140);
+  }
+
+  function syncBodyScrollLock() {
+    const locked = document.body.classList.contains('map-expanded')
+      || $('missionSheet')?.classList.contains('is-open')
+      || $('analysisSheet')?.classList.contains('is-open');
+    document.body.style.overflow = locked ? 'hidden' : '';
+  }
+
+  function toggleMapExpanded() {
+    document.body.classList.toggle('map-expanded');
+    const expanded = document.body.classList.contains('map-expanded');
+    const button = $('expandMapBtn');
+    if (button) button.setAttribute('aria-label', expanded ? 'تصغير الخريطة' : 'تكبير الخريطة');
+    syncBodyScrollLock();
+    setTimeout(() => {
+      if (state.map) state.map.invalidateSize({ animate: false });
+    }, 60);
+  }
+
+  function missionTab(name) {
+    document.querySelectorAll('[data-mission-tab]').forEach(button => {
+      button.classList.toggle('is-active', button.dataset.missionTab === name);
+    });
+    document.querySelectorAll('[data-mission-panel]').forEach(panel => {
+      panel.classList.toggle('is-active', panel.dataset.missionPanel === name);
+    });
+  }
+
+  function populateMissionSheet(observation) {
+    if (!observation) return;
+    const status = observation.status || 'PENDING';
+    if ($('missionSheetTaskTitle')) $('missionSheetTaskTitle').textContent = observation.title || 'ملاحظة ميدانية';
+    if ($('missionSheetStatus')) {
+      $('missionSheetStatus').textContent = OBS_STATUS_LABELS[status] || status;
+      $('missionSheetStatus').dataset.status = status;
+    }
+    if ($('missionSheetLocation')) $('missionSheetLocation').textContent = observation.location || 'موقع موثق';
+    if ($('missionTimelineStatus')) $('missionTimelineStatus').textContent = OBS_STATUS_LABELS[status] || status;
+    if ($('missionTimelineDate')) $('missionTimelineDate').textContent = observation.date || '—';
+    if ($('missionTimelineId')) $('missionTimelineId').textContent = observation.displayId || observation.docId || '—';
+  }
+
+  function openMissionDetail(tab = 'evidence', observation = state.activeMission) {
+    if (!observation) {
+      showToast('لا توجد مهمة نشطة لعرضها.');
+      return;
+    }
+    const sheet = $('missionSheet');
+    if (!sheet) return;
+    state.detailObservation = observation;
+    populateMissionSheet(observation);
+    if ($('missionAiResult')) $('missionAiResult').innerHTML = '<p>لم يتم تشغيل التحليل لهذه المهمة في هذه الجلسة بعد.</p>';
+    missionTab(tab);
+    sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden','false');
+    syncBodyScrollLock();
+    window.dispatchEvent(new CustomEvent('smart-hsr:mission-open', { detail: { observation } }));
+  }
+
+  function closeMissionDetail() {
+    const sheet = $('missionSheet');
+    if (!sheet) return;
+    sheet.classList.remove('is-open');
+    sheet.setAttribute('aria-hidden','true');
+    state.detailObservation = null;
+    syncBodyScrollLock();
+  }
+
+  function setMissionEvidence({ beforeUrl = null, afterUrl = null, message = '' } = {}) {
+    const paint = (id, url, fallback) => {
+      const root = $(id);
+      if (!root) return;
+      root.replaceChildren();
+      if (url) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = fallback;
+        root.appendChild(img);
+      } else {
+        const span = document.createElement('span');
+        span.textContent = fallback;
+        root.appendChild(span);
+      }
+    };
+    paint('missionBeforeImage', beforeUrl, 'لا يوجد دليل قبل متاح');
+    paint('missionAfterImage', afterUrl, 'لا يوجد دليل بعد متاح');
+    if ($('missionEvidenceHint')) $('missionEvidenceHint').textContent = message || 'تم تحميل الأدلة المصرح بها للمهمة.';
+  }
+
+  function setAiLoading(loading, message = '') {
+    for (const id of ['missionRunAiBtn','runVisionAnalysisBtn']) {
+      const btn = $(id);
+      if (btn) btn.disabled = Boolean(loading);
+    }
+    if (loading && $('missionAiResult')) $('missionAiResult').innerHTML = '<p>جارٍ تشغيل التحليل الآمن على الدليل الموثق…</p>';
+    if (!loading && message && $('missionAiResult')) $('missionAiResult').innerHTML = '<p></p>', $('missionAiResult').querySelector('p').textContent = message;
+  }
+
+  function setAiResult(payload) {
+    const root = $('missionAiResult');
+    if (!root) return;
+    const analysis = payload?.analysis || {};
+    const intelligence = payload?.intelligence || {};
+    root.replaceChildren();
+
+    const summary = document.createElement('p');
+    summary.textContent = analysis.shortSummaryAr || analysis.summaryAr || 'تم استلام تحليل استرشادي من النظام.';
+    root.appendChild(summary);
+
+    const grid = document.createElement('div');
+    grid.className = 'ai-result-grid';
+    const fields = [
+      ['التصنيف', analysis.categoryLabelAr || analysis.categoryCode || '—'],
+      ['الشدة', analysis.severity || '—'],
+      ['الأولوية', intelligence.prioritySuggestion?.prioritySuggestion || analysis.prioritySuggestion || '—'],
+      ['الإجراء', analysis.recommendedActionAr || intelligence.recommendedActionAr || '—']
+    ];
+    fields.forEach(([label,value]) => {
+      const item = document.createElement('div');
+      item.className = 'ai-result-item';
+      const small = document.createElement('small'); small.textContent = label;
+      const strong = document.createElement('strong'); strong.textContent = String(value);
+      item.append(small,strong); grid.appendChild(item);
+    });
+    root.appendChild(grid);
+
+    const rootCause = analysis.rootCauseAr || intelligence.rootCauseAr;
+    if (rootCause) {
+      const item = document.createElement('div'); item.className='ai-result-item'; item.style.marginTop='7px';
+      const small=document.createElement('small'); small.textContent='السبب المحتمل';
+      const strong=document.createElement('strong'); strong.textContent=String(rootCause);
+      item.append(small,strong); root.appendChild(item);
+    }
+
+    const notice=document.createElement('div');
+    notice.className='ai-review-notice';
+    notice.textContent='التحليل استرشادي ويتطلب مراجعة واعتماد المراقب. لا يغيّر الحالة أو الإسناد تلقائيًا.';
+    root.appendChild(notice);
+  }
+
+  function requestAiAnalysis() {
+    const observation = state.detailObservation || state.activeMission;
+    if (!observation) { showToast('لا توجد مهمة قابلة للتحليل.'); return; }
+    openMissionDetail('ai', observation);
+    window.dispatchEvent(new CustomEvent('smart-hsr:ai-analyze', { detail: { observation } }));
+  }
+
+  function printMission() {
+    const observation = state.detailObservation || state.activeMission;
+    if (!observation) { showToast('لا توجد مهمة للطباعة.'); return; }
+    openMissionDetail('timeline', observation);
+    setTimeout(() => window.print(), 120);
+  }
+
+  function openAnalysis() {
+    const sheet = $('analysisSheet');
+    if (!sheet) return;
+    sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden', 'false');
+    syncBodyScrollLock();
+  }
+
+  function closeAnalysis() {
+    const sheet = $('analysisSheet');
+    if (!sheet) return;
+    sheet.classList.remove('is-open');
+    sheet.setAttribute('aria-hidden', 'true');
+    syncBodyScrollLock();
+  }
+
+  function applyMapView(view) {
+    state.mapView = view === 'twin' ? 'twin' : 'operational';
+    const shell = $('urbanMapShell');
+    if (shell) shell.setAttribute('data-map-view', state.mapView);
+
+    document.querySelectorAll('[data-map-view]').forEach((button) => {
+      const active = button.getAttribute('data-map-view') === state.mapView;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+
+    if ($('urbanMapTitle')) {
+      $('urbanMapTitle').textContent = state.mapView === 'twin' ? 'التوأم التشغيلي المصغّر' : 'الخريطة التشغيلية الحية';
+    }
+    if ($('mapFeedState')) {
+      $('mapFeedState').textContent = state.mapView === 'twin' ? 'Twin View' : (state.lastPosition ? 'GPS Live' : 'Live Map');
+    }
+    if ($('mapNote')) {
+      $('mapNote').textContent = state.mapView === 'twin'
+        ? 'Operational Twin Lite — قراءة فقط من ملاحظاتك المؤكدة من الخادم، بلا أصول أو أضرار مُنشأة اصطناعيًا.'
+        : (state.lastPosition ? 'الموقع الحالي حي. الحالات تظهر فقط من المصدر التشغيلي الحقيقي.' : 'الموقع حي، وتظهر الحالات عند ربط المصدر التشغيلي الحقيقي.');
+    }
+  }
+
+  function bindMapMode() {
+    document.querySelectorAll('[data-map-mode]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const mode = button.getAttribute('data-map-mode');
+        if (mode === '3d') {
+          showToast('سيتم تفعيل 3D بمحرك خريطة حقيقي بعد تثبيت طبقة التوأم والبيانات التشغيلية.');
+          return;
+        }
+        document.querySelectorAll('[data-map-mode]').forEach((item) => item.classList.remove('is-active'));
+        button.classList.add('is-active');
+      });
+    });
+
+    document.querySelectorAll('[data-map-view]').forEach((button) => {
+      button.addEventListener('click', () => applyMapView(button.getAttribute('data-map-view')));
+    });
+  }
+
+  function closeTrustedCapture() {
+    const shell = $('captureFrameShell');
+    const frame = $('captureFrame');
+    if (shell) {
+      shell.classList.remove('is-open');
+      shell.setAttribute('aria-hidden','true');
+    }
+    document.body.classList.remove('capture-frame-open');
+    if (frame) frame.removeAttribute('src');
+  }
+
+  function handleCaptureFrameLoad() {
+    const frame = $('captureFrame');
+    if (!frame?.src) return;
+    try {
+      const childUrl = new URL(frame.contentWindow.location.href);
+      if (childUrl.origin !== window.location.origin) return;
+      if (childUrl.pathname.endsWith('/inspector-v2.html') || childUrl.pathname.endsWith('inspector-v2.html')) {
+        closeTrustedCapture();
+      }
+    } catch (_) {}
+  }
+
+  function openTrustedCapture() {
+    const shell = $('captureFrameShell');
+    const frame = $('captureFrame');
+    if (!shell || !frame) {
+      showToast('تعذر فتح نموذج الرصد داخل التطبيق.');
+      return;
+    }
+    const theme = state.theme === 'light' ? 'light' : 'dark';
+    shell.classList.add('is-open');
+    shell.setAttribute('aria-hidden','false');
+    document.body.classList.add('capture-frame-open');
+    frame.src = 'dashboard.html?capture=v2&theme=' + encodeURIComponent(theme);
+  }
+
+
+  function utilityRow(label, value) {
+    const row = document.createElement('div');
+    row.className = 'utility-row';
+    const key = document.createElement('span');
+    const val = document.createElement('strong');
+    key.textContent = label;
+    val.textContent = value || '—';
+    row.append(key, val);
+    return row;
+  }
+
+  function closeUtilitySheet() {
+    const sheet = $('utilitySheet');
+    if (!sheet) return;
+    sheet.classList.remove('is-open');
+    sheet.setAttribute('aria-hidden','true');
+  }
+
+  function openUtilitySheet(type) {
+    const sheet = $('utilitySheet');
+    const content = $('utilityContent');
+    const title = $('utilitySheetTitle');
+    const eyebrow = $('utilitySheetEyebrow');
+    if (!sheet || !content || !title || !eyebrow) return;
+    content.replaceChildren();
+
+    if (type === 'account') {
+      eyebrow.textContent = 'ACCOUNT';
+      title.textContent = 'الحساب';
+      content.append(
+        utilityRow('الاسم', $('inspectorDisplayName')?.textContent || 'المراقب'),
+        utilityRow('الدور', 'المراقب الميداني'),
+        utilityRow('الجهة', $('inspectorOrgName')?.textContent || 'المؤسسة المسجلة'),
+        utilityRow('الحالة', 'متصل الآن')
+      );
+    } else if (type === 'stats') {
+      eyebrow.textContent = 'LIVE STATS';
+      title.textContent = 'الإحصائيات';
+      content.append(
+        utilityRow('إجمالي الحالات', $('twinTotalCount')?.textContent || '—'),
+        utilityRow('مفتوحة', $('twinOpenCount')?.textContent || '—'),
+        utilityRow('قيد المعالجة', $('twinProgressCount')?.textContent || '—'),
+        utilityRow('مغلقة', $('twinClosedCount')?.textContent || '—')
+      );
+    } else {
+      eyebrow.textContent = 'TASKS';
+      title.textContent = 'مهامي';
+      if (!state.activeMission) {
+        const empty = document.createElement('div');
+        empty.className = 'utility-empty';
+        empty.textContent = 'لا توجد مهمة ميدانية نشطة ضمن حسابك حاليًا.';
+        content.append(empty);
+      } else {
+        content.append(
+          utilityRow('المهمة', $('missionTitleText')?.textContent || 'مهمة ميدانية'),
+          utilityRow('الحالة', $('missionStatusPill')?.textContent || '—'),
+          utilityRow('الموقع', $('missionLocationText')?.textContent || '—'),
+          utilityRow('التاريخ', $('missionDateText')?.textContent || '—')
+        );
+      }
+    }
+
+    sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden','false');
+  }
+
+  function scanCurrentLocation() {
+    if (!document.body.classList.contains('map-expanded')) toggleMapExpanded();
+    centerOnUser();
+  }
+
+  function bindActions() {
+    $('themeToggleBtn')?.addEventListener('click', toggleTheme);
+    $('quickNoteBtn')?.addEventListener('click', openTrustedCapture);
+    $('quickScanBtn')?.addEventListener('click', scanCurrentLocation);
+    $('viewAllTasksBtn')?.addEventListener('click', () => openUtilitySheet('tasks'));
+    $('dockAccountBtn')?.addEventListener('click', () => openUtilitySheet('account'));
+    $('dockStatsBtn')?.addEventListener('click', () => openUtilitySheet('stats'));
+    $('dockTasksBtn')?.addEventListener('click', () => openUtilitySheet('tasks'));
+    $('dockHomeBtn')?.addEventListener('click', () => window.scrollTo({ top:0, behavior:'smooth' }));
+    $('closeUtilityBtn')?.addEventListener('click', closeUtilitySheet);
+    $('utilityBackdrop')?.addEventListener('click', closeUtilitySheet);
+    $('captureFrame')?.addEventListener('load', handleCaptureFrameLoad);
+    $('quickCaptureBtn')?.addEventListener('click', openTrustedCapture);
+    $('quickObservationBtn')?.addEventListener('click', openTrustedCapture);
+    $('dockCaptureBtn')?.addEventListener('click', openTrustedCapture);
+    $('openMissionBtn')?.addEventListener('click', () => openMissionDetail('evidence'));
+    $('closeMissionBtn')?.addEventListener('click', closeMissionDetail);
+    $('missionBackdrop')?.addEventListener('click', closeMissionDetail);
+    $('missionSheetRouteBtn')?.addEventListener('click', routeDetailObservation);
+    $('missionRunAiBtn')?.addEventListener('click', requestAiAnalysis);
+    $('runVisionAnalysisBtn')?.addEventListener('click', requestAiAnalysis);
+    $('openMissionEvidenceBtn')?.addEventListener('click', () => { closeAnalysis(); openMissionDetail('evidence'); });
+    $('openMissionLifecycleBtn')?.addEventListener('click', () => { closeAnalysis(); openMissionDetail('timeline'); });
+    $('printMissionBtn')?.addEventListener('click', printMission);
+    document.querySelectorAll('[data-mission-tab]').forEach(button => button.addEventListener('click', () => missionTab(button.dataset.missionTab)));
+    $('centerMapBtn')?.addEventListener('click', centerOnUser);
+    $('expandMapBtn')?.addEventListener('click', toggleMapExpanded);
+    $('closeExpandedMapBtn')?.addEventListener('click', () => {
+      if (document.body.classList.contains('map-expanded')) toggleMapExpanded();
+    });
+    $('closeMapMarkerSheetBtn')?.addEventListener('click', closeMapMarkerSheet);
+    $('focusMapMarkerBtn')?.addEventListener('click', focusSelectedMapObservation);
+    $('openMapMarkerDetailBtn')?.addEventListener('click', openSelectedMapObservation);
+    $('routeMissionBtn')?.addEventListener('click', routeToMission);
+    $('openAnalysisBtn')?.addEventListener('click', openAnalysis);
+    $('quickAnalysisBtn')?.addEventListener('click', openAnalysis);
+    $('closeAnalysisBtn')?.addEventListener('click', closeAnalysis);
+    $('analysisBackdrop')?.addEventListener('click', closeAnalysis);
+
+    document.querySelectorAll('[data-action="toast"]').forEach((button) => {
+      button.addEventListener('click', () => showToast());
+    });
+
+    window.addEventListener('smart-hsr:map-observation-select', event => {
+      setSelectedMapObservation(event?.detail?.observation || null);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      if (document.body.classList.contains('capture-frame-open')) { closeTrustedCapture(); return; }
+      if ($('utilitySheet')?.classList.contains('is-open')) { closeUtilitySheet(); return; }
+      if ($('missionSheet')?.classList.contains('is-open')) { closeMissionDetail(); return; }
+      if ($('analysisSheet')?.classList.contains('is-open')) { closeAnalysis(); return; }
+      if ($('mapMarkerSheet')?.classList.contains('is-open')) { closeMapMarkerSheet(); return; }
+      if (document.body.classList.contains('map-expanded')) toggleMapExpanded();
+    });
+  }
+
+  function setRuntimeIdentity({ name, organizationName } = {}) {
+    if ($('inspectorDisplayName')) $('inspectorDisplayName').textContent = name || 'المراقب';
+    if ($('inspectorOrgName')) $('inspectorOrgName').textContent = organizationName || 'SMART HSR';
+  }
+
+  function setRuntimeMission(observation) {
+    state.activeMission = observation || null;
+    if (!observation) {
+      if ($('missionTitleText')) $('missionTitleText').textContent = 'لا توجد مهمة مفتوحة';
+      if ($('missionDescription')) $('missionDescription').textContent = 'لا توجد ملاحظة ميدانية نشطة ضمن حسابك حاليًا.';
+      if ($('missionStatusPill')) $('missionStatusPill').textContent = 'لا توجد مهمة';
+      if ($('missionLocationText')) $('missionLocationText').textContent = '—';
+      if ($('missionDateText')) $('missionDateText').textContent = '—';
+      return;
+    }
+    const statusLabels = {
+      PENDING:'قيد الانتظار',
+      IN_PROGRESS:'قيد المعالجة',
+      PENDING_REVIEW:'بانتظار المراجعة',
+      COMPLETED:'مغلقة'
+    };
+    if ($('missionTitleText')) $('missionTitleText').textContent = observation.title || observation.details || 'ملاحظة ميدانية';
+    if ($('missionDescription')) $('missionDescription').textContent = observation.details || 'ملاحظة ميدانية موثقة ضمن حسابك.';
+    if ($('missionStatusPill')) {
+      $('missionStatusPill').textContent = statusLabels[observation.status] || observation.status || '—';
+      $('missionStatusPill').dataset.status = observation.status || '';
+    }
+    if ($('missionLocationText')) $('missionLocationText').textContent = observation.location || 'موقع موثق';
+    if ($('missionDateText')) $('missionDateText').textContent = observation.date || '—';
+
+  }
+
+  function haversineMeters(a, b) {
+    if (!a || !b) return null;
+    const rad = value => value * Math.PI / 180;
+    const R = 6371000;
+    const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
+    const x = Math.sin(dLat/2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng/2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(x));
+  }
+
+  function setRuntimeDistance(coords) {
+    state.missionCoords = coords || null;
+    const position = state.lastPosition;
+    const el = $('missionDistance');
+    if (!el) return;
+    if (!coords || !position) { el.textContent = '—'; return; }
+    const meters = haversineMeters(
+      { lat: position.coords.latitude, lng: position.coords.longitude },
+      coords
+    );
+    if (!Number.isFinite(meters)) { el.textContent = '—'; return; }
+    el.textContent = meters < 1000 ? Math.round(meters) + ' م' : (meters/1000).toFixed(1) + ' كم';
+  }
+
+  function setMissionImage(url) {
+    const art = $('missionArt');
+    if (!art) return;
+    if (!url) {
+      art.className = 'mission-art is-empty';
+      art.innerHTML = '<span>لا توجد صورة موثقة متاحة على هذا الجهاز.</span>';
+      return;
+    }
+    art.className = 'mission-art is-runtime-image';
+    art.innerHTML = '';
+    const img = document.createElement('img');
+    img.alt = 'صورة الملاحظة الميدانية';
+    img.src = url;
+    img.loading = 'eager';
+    art.appendChild(img);
+  }
+
+  function setTwinStats(items = [], { serverConfirmed = false } = {}) {
+    const open = items.filter(item => item.status === 'PENDING').length;
+    const progress = items.filter(item => item.status === 'IN_PROGRESS' || item.status === 'PENDING_REVIEW').length;
+    const closed = items.filter(item => item.status === 'COMPLETED').length;
+    const beforeEvidence = items.filter(item => Boolean(item.imageReference)).length;
+    const afterEvidence = items.filter(item => Boolean(item.afterReference)).length;
+    if ($('twinTotalCount')) $('twinTotalCount').textContent = String(items.length);
+    if ($('twinOpenCount')) $('twinOpenCount').textContent = String(open);
+    if ($('twinProgressCount')) $('twinProgressCount').textContent = String(progress);
+    if ($('twinClosedCount')) $('twinClosedCount').textContent = String(closed);
+    if ($('twinBeforeEvidenceCount')) $('twinBeforeEvidenceCount').textContent = String(beforeEvidence);
+    if ($('twinAfterEvidenceCount')) $('twinAfterEvidenceCount').textContent = String(afterEvidence);
+    if ($('twinAuthorityText')) {
+      $('twinAuthorityText').textContent = serverConfirmed
+        ? 'Snapshot مؤكد من الخادم · نفس نطاق حساب المراقب'
+        : 'بانتظار Snapshot مؤكد من الخادم';
+    }
+  }
+
+  function setNearbyObservations(items = []) {
+    const root = $('nearbyList');
+    if (!root) return;
+    root.innerHTML = '';
+    const ownPosition = state.lastPosition ? { lat: state.lastPosition.coords.latitude, lng: state.lastPosition.coords.longitude } : null;
+    const rows = items.map(item => {
+      const distance = item.coords && ownPosition ? haversineMeters(ownPosition, item.coords) : null;
+      return { ...item, distance };
+    }).sort((a,b) => {
+      if (Number.isFinite(a.distance) && Number.isFinite(b.distance)) return a.distance - b.distance;
+      if (Number.isFinite(a.distance)) return -1;
+      if (Number.isFinite(b.distance)) return 1;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    }).slice(0,3);
+
+    rows.forEach(item => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'nearby-card';
+      const marker = document.createElement('span');
+      marker.className = 'nearby-card__marker';
+      marker.dataset.status = item.status || 'PENDING';
+      marker.textContent = item.status === 'COMPLETED' ? '✓' : item.status === 'PENDING' ? '!' : '↻';
+      const copy = document.createElement('span');
+      copy.className = 'nearby-card__copy';
+      const title = document.createElement('strong');
+      title.textContent = item.title || 'ملاحظة ميدانية';
+      const meta = document.createElement('small');
+      meta.textContent = [item.location, item.date].filter(Boolean).join(' · ') || 'بيانات موثقة';
+      copy.append(title, meta);
+      const distance = document.createElement('span');
+      distance.className = 'nearby-card__distance';
+      distance.textContent = Number.isFinite(item.distance) ? (item.distance < 1000 ? Math.round(item.distance) + ' م' : (item.distance/1000).toFixed(1) + ' كم') : '—';
+      card.append(marker, copy, distance);
+      card.addEventListener('click', () => {
+        setSelectedMapObservation(item);
+        if (!document.body.classList.contains('map-expanded')) toggleMapExpanded();
+      });
+      root.appendChild(card);
+    });
+  }
+
+  window.SmartHsrInspectorV2 = Object.freeze({
+    getMap: () => state.map,
+    getPosition: () => state.lastPosition,
+    startLiveLocation: authorizeLiveLocation,
+    setIdentity: setRuntimeIdentity,
+    setMission: setRuntimeMission,
+    setMissionDistance: setRuntimeDistance,
+    setMissionImage,
+    setMissionEvidence,
+    setAiLoading,
+    setAiResult,
+    setSelectedMapObservation,
+    setTwinStats,
+    setNearbyObservations,
+    showToast
+  });
+
+  window.addEventListener('pagehide', clearLiveLocationWatch);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      clearLiveLocationWatch();
+      return;
+    }
+    if (state.liveLocationAuthorized) requestLocation();
+  }, { passive:true });
+
+  function boot() {
+    applyTheme(preferredTheme(), false);
+    applyMapView('operational');
+    if (window.lucide) window.lucide.createIcons();
+    bindActions();
+    bindMapMode();
+    initMap();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+})();
