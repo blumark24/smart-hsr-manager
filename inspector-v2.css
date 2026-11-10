@@ -1713,3 +1713,16 @@ body.map-expanded .map-marker-actions .marker-primary span{display:inline!import
     max-height:136px!important;
   }
 }
+
+
+/* FINAL-VISUAL-QA: bottom dock content clearance */
+.inspector-app{
+  padding-bottom:calc(148px + var(--safe-bottom));
+  scroll-padding-bottom:calc(148px + var(--safe-bottom));
+}
+@media (min-width:900px){
+  .inspector-app{
+    padding-bottom:calc(132px + var(--safe-bottom));
+    scroll-padding-bottom:calc(132px + var(--safe-bottom));
+  }
+}
