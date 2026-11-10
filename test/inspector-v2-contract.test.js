@@ -49,7 +49,7 @@ test('Inspector V2 reference composition keeps map tools on the edge and twin st
   assert.match(html, /id="twinProgressCount"/);
   assert.match(html, /id="twinClosedCount"/);
   assert.match(js, /setTwinStats/);
-  assert.match(runtime, /ui\?\.setTwinStats\(observations\)/);
+  assert.match(runtime, /ui\?\.setTwinStats\(observations, \{ serverConfirmed: true \}\)/);
 });
 
 test('Inspector V2 exposes four compact field quick actions', () => {
@@ -164,7 +164,7 @@ test('Inspector V2 requests live GPS only after verified inspector authorization
   const requestStart = js.indexOf('function requestLocation()');
   const initMapSlice = js.slice(initMapStart, requestStart);
   assert.doesNotMatch(initMapSlice, /requestLocation\(\)/);
-  assert.match(js, /startLiveLocation: requestLocation/);
+  assert.match(js, /startLiveLocation: authorizeLiveLocation/);
   assert.match(runtime, /ui\?\.startLiveLocation\?\.\(\)/);
   assert.ok(runtime.indexOf('ui?.startLiveLocation?.()') > runtime.indexOf('if (!verified)'));
 });
