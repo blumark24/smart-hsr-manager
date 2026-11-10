@@ -1,0 +1,30 @@
+name: Inspector Aggregate Counts Safe Gate
+
+on:
+  push:
+    branches:
+      - fix/inspector-accurate-counts-25-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspector-counts:
+    name: Verify inspector totals beyond 25-item pagination
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Dashboard module syntax
+        run: node --experimental-vm-modules test/check-dashboard-module-syntax.js
+      - name: Aggregate-count regression gate
+        run: node --test test/inspector-aggregate-counts-regression.test.js
+      - name: Existing inspector static regressions
+        run: |
+          node --test \
+            test/dashboard-lazy-evidence-load.test.js \
+            test/inspector-smart-input-orchestration-regression.test.js

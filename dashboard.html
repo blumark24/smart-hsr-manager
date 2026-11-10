@@ -3197,6 +3197,7 @@ import {
   where,
   onSnapshot,
   getDocs,
+  getCountFromServer,
   orderBy,
   limit,
   startAfter,
@@ -3217,6 +3218,29 @@ const db = getFirestore(app);
 
 const COLLECTION = "observations";
 const OBSERVATIONS_PAGE_SIZE = 25;
+let inspectorServerCounts = null;
+let inspectorCountRequest = 0;
+async function refreshInspectorServerCounts() {
+  const organizationId = inspectorContext.organizationId;
+  const uid = inspectorContext.uid;
+  if (!organizationId || !uid) return;
+  const request = ++inspectorCountRequest;
+  const base = [where('organizationId', '==', organizationId), where('createdByUid', '==', uid)];
+  try {
+    const [total, pending, progress, completed] = await Promise.all([
+      getCountFromServer(query(collection(db, COLLECTION), ...base)),
+      getCountFromServer(query(collection(db, COLLECTION), ...base, where('status', '==', 'PENDING'))),
+      getCountFromServer(query(collection(db, COLLECTION), ...base, where('status', '==', 'IN_PROGRESS'))),
+      getCountFromServer(query(collection(db, COLLECTION), ...base, where('status', '==', 'COMPLETED')))
+    ]);
+    if (request !== inspectorCountRequest || inspectorContext.uid !== uid || inspectorContext.organizationId !== organizationId) return;
+    inspectorServerCounts = { total: total.data().count, pending: pending.data().count, progress: progress.data().count, completed: completed.data().count };
+  } catch (error) {
+    console.warn('Inspector aggregate counts unavailable', error);
+    inspectorServerCounts = null; // Do not mislabel a partial page as the complete total.
+  }
+  if (request === inspectorCountRequest) { renderInspectorCounts(); renderKPIs(); }
+}
 
 // HEADER ELEMENTS
 const logoutBtn = document.getElementById('logoutBtn');
@@ -3320,8 +3344,8 @@ function renderConnectionState() {
 
 function renderInspectorCounts() {
   const own = observationsData.filter(o => o.organizationId === inspectorContext.organizationId && o.createdByUid === inspectorContext.uid);
-  setText('inspectorOpenCount', String(own.filter(o => o.status !== 'COMPLETED').length));
-  setText('inspectorCompletedCount', String(own.filter(o => o.status === 'COMPLETED').length));
+  setText('inspectorOpenCount', inspectorServerCounts ? String(inspectorServerCounts.total - inspectorServerCounts.completed) : '—');
+  setText('inspectorCompletedCount', inspectorServerCounts ? String(inspectorServerCounts.completed) : '—');
   renderInspectorLightDashboard(own);
   renderReferenceInspectorDashboard(own);
 }
@@ -3329,10 +3353,10 @@ function renderInspectorCounts() {
 // Reuses the already-scoped `own` list (organizationId + createdByUid).
 // No extra Firestore query.
 function renderInspectorLightDashboard(own){
-  setText('inspectorTotalKpiValue', String(own.length));
-  setText('inspectorOpenKpiValue', String(own.filter(o => o.status === 'PENDING').length));
-  setText('inspectorProgressKpiValue', String(own.filter(o => o.status === 'IN_PROGRESS').length));
-  setText('inspectorCompletedKpiValue', String(own.filter(o => o.status === 'COMPLETED').length));
+  setText('inspectorTotalKpiValue', inspectorServerCounts ? String(inspectorServerCounts.total) : '—');
+  setText('inspectorOpenKpiValue', inspectorServerCounts ? String(inspectorServerCounts.pending) : '—');
+  setText('inspectorProgressKpiValue', inspectorServerCounts ? String(inspectorServerCounts.progress) : '—');
+  setText('inspectorCompletedKpiValue', inspectorServerCounts ? String(inspectorServerCounts.completed) : '—');
 }
 
 function renderReferenceInspectorDashboard(own) {
@@ -3344,7 +3368,7 @@ function renderReferenceInspectorDashboard(own) {
   const online=navigator.onLine;setText('refConnection',online?'متصل الآن':'غير متصل');document.getElementById('refConnectionDot')?.classList.toggle('online',online);
   const gps=document.getElementById('gpsText')?.textContent||'غير متاح';setText('refGpsQuality',cleanDisplayText(gps,'غير متاح',40));setText('refGpsAccuracy',cleanDisplayText(document.getElementById('locationAccuracyText')?.textContent||'الدقة حسب GPS','—',40));
   const progress=own.filter(o=>o.status==='IN_PROGRESS').length,completed=own.filter(o=>o.status==='COMPLETED').length,pending=own.filter(o=>o.status==='PENDING').length;
-  setText('refTotalCount',String(own.length));setText('refProgressCount',String(progress));setText('refCompletedCount',String(completed));setText('refPendingCount',String(pending));
+  setText('refTotalCount',inspectorServerCounts?String(inspectorServerCounts.total):'—');setText('refProgressCount',inspectorServerCounts?String(inspectorServerCounts.progress):'—');setText('refCompletedCount',inspectorServerCounts?String(inspectorServerCounts.completed):'—');setText('refPendingCount',inspectorServerCounts?String(inspectorServerCounts.pending):'—');
   const latest=own.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))[0];
   const latestEmpty=document.getElementById('refLatestEmpty'),latestBody=document.getElementById('refLatestBody');
   if(!observationsServerConfirmed||!latest){latestEmpty?.classList.remove('hidden');latestBody?.classList.add('hidden');setText('refLatestTime','—');return}
@@ -3693,9 +3717,10 @@ async function refreshDemoStorageBadge(){
 
 // ========= KPI HELPERS =========
 function kpis() {
-  const totalReports = observationsData.length;
-  const openReports  = observationsData.filter(o => o.status !== 'COMPLETED').length;
-  const closedReports = totalReports - openReports;
+  const totalReports = inspectorServerCounts?.total ?? '—';
+  const openReports = inspectorServerCounts ? inspectorServerCounts.total - inspectorServerCounts.completed : '—';
+  const closedReports = inspectorServerCounts?.completed ?? '—';
+  // Image evidence is counted only for the loaded page, never misrepresented as an all-time total.
   const reportsWithImages = observationsData.filter(o => !!o.imagePath).length;
   return { totalReports, openReports, closedReports, reportsWithImages };
 }
@@ -3721,7 +3746,7 @@ function renderKPIs() {
     {title:'إجمالي الملاحظات', value:totalReports, icon:'clipboard-list', gradientClass:'kpi-closed-gradient'},
     {title:'ملاحظات مفتوحة/انتظار', value:openReports, icon:'alert-triangle', gradientClass:'kpi-open-gradient'},
     {title:'ملاحظات مغلقة/معالجة', value:closedReports, icon:'check-circle', gradientClass:'kpi-closed-gradient'},
-    {title:'ملاحظات موثقة بالصور', value:reportsWithImages, icon:'image', gradientClass:'kpi-images-gradient'}
+    {title:'موثقة بالصور (المحمّلة)', value:reportsWithImages, icon:'image', gradientClass:'kpi-images-gradient'}
   ];
 
   kpiData.forEach(kpi=>{
@@ -3846,6 +3871,8 @@ function subscribeObservations() {
   }
 
   if (obsUnsub) { obsUnsub(); obsUnsub = null; }
+  ++inspectorCountRequest;
+  inspectorServerCounts = null;
   observationsData = [];
   olderObservationsData = [];
   oldestObservationCursor = null;
@@ -3877,6 +3904,7 @@ function subscribeObservations() {
     updateLoadMoreButton();
     observationsServerConfirmed = true;
     lastServerSnapshotAt = Date.now();
+    void refreshInspectorServerCounts();
     obsState = 'ready';
     renderKPIs();
     renderInspectorCounts();
@@ -4505,7 +4533,7 @@ async function renderPersonalLifecycle(){
   const inProgress=own.filter(o=>o.status==='IN_PROGRESS').length;
   const completed=own.filter(o=>o.status==='COMPLETED').length;
   const evidence=own.filter(o=>o.status==='COMPLETED'&&(o.imagePath||o.afterImagePath||cleanDisplayText(o.resolutionNote))).length;
-  setText('lifecycleTotal',String(own.length));setText('lifecyclePending',String(pending));setText('lifecycleInProgress',String(inProgress));setText('lifecycleCompleted',String(completed));setText('lifecycleEvidence',String(evidence));
+  setText('lifecycleTotal',inspectorServerCounts?String(inspectorServerCounts.total):'—');setText('lifecyclePending',inspectorServerCounts?String(inspectorServerCounts.pending):'—');setText('lifecycleInProgress',inspectorServerCounts?String(inspectorServerCounts.progress):'—');setText('lifecycleCompleted',inspectorServerCounts?String(inspectorServerCounts.completed):'—');setText('lifecycleEvidence',String(evidence));
   authority.textContent=navigator.onLine?'بيانات ملاحظاتك مؤكدة من الخادم.':'آخر نسخة مؤكدة من الخادم؛ الاتصال غير متاح حالياً.';
   const latest=own.filter(o=>o.serverConfirmed!==false).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
   if(!latest){hide('lifecycleLatestBody');unhide('lifecycleLatestEmpty');return}
