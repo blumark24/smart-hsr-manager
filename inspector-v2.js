@@ -160,7 +160,13 @@
       attributionControl: true,
       preferCanvas: true,
       minZoom: 3,
-      maxZoom: 20
+      maxZoom: 20,
+      zoomAnimation: true,
+      fadeAnimation: true,
+      markerZoomAnimation: true,
+      wheelPxPerZoomLevel: 90,
+      zoomSnap: .5,
+      zoomDelta: .5
     }).setView([23.8859, 45.0792], 5);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
