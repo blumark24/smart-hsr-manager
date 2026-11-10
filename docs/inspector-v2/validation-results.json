@@ -1,0 +1,54 @@
+{
+  "baselineCommit": "666e7d3",
+  "validatedImplementationSHA": "e9e11db22060ec55ef7ffdebf57f470a63157191",
+  "baseline": {
+    "tests": 914,
+    "pass": 798,
+    "fail": 116
+  },
+  "current": {
+    "tests": 926,
+    "pass": 810,
+    "fail": 116
+  },
+  "newFailureNames": [],
+  "removedFailureNames": [],
+  "browser": [
+    {
+      "viewport": "mobile",
+      "width": 390,
+      "height": 844,
+      "routes": "PASS",
+      "captureRetry": "PASS",
+      "afterEvidenceWithoutClosure": "PASS",
+      "mapSelection": "PASS",
+      "overflow": "PASS",
+      "legacyRedirect": "PASS",
+      "pageErrors": 0
+    },
+    {
+      "viewport": "tablet",
+      "width": 820,
+      "height": 1180,
+      "routes": "PASS",
+      "captureRetry": "PASS",
+      "afterEvidenceWithoutClosure": "PASS",
+      "mapSelection": "PASS",
+      "overflow": "PASS",
+      "legacyRedirect": "PASS",
+      "pageErrors": 0
+    },
+    {
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "routes": "PASS",
+      "captureRetry": "PASS",
+      "afterEvidenceWithoutClosure": "PASS",
+      "mapSelection": "PASS",
+      "overflow": "PASS",
+      "legacyRedirect": "PASS",
+      "pageErrors": 0
+    }
+  ]
+}

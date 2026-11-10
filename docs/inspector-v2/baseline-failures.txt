@@ -1,0 +1,116 @@
+A1 same-org manager read: allow
+A10 contractor cross-org update: deny
+A11 contractor updates extra fields: deny
+A12 contractor updatedByUid != request.auth.uid: deny
+A13 cross-org manager delete: deny
+A13 delete denied for every non-manager role: deny
+A13 same-org manager delete: allow
+A2 cross-org manager read: deny
+A3 same-org inspector create with canonical schema: allow
+A3 same-org inspector read: allow
+A4 cross-org inspector create: deny
+A4 cross-org inspector read: deny
+A5 createdByUid spoofing: deny
+A5.1 forged workflow and server-owned fields at create: deny
+A5.2 forged createdAt and mismatched document id: deny
+A6 organizationId change on update: deny
+A7 manager allowed-field update: allow
+A8 manager updatedByUid set to another uid: deny
+A9 assigned contractor allowed-field update: allow
+A9.1 non-assigned same-org contractor update: deny
+A9.2 unassigned observation contractor update: deny
+ALLOW atomic assignment replacement batch
+ALLOW contractor starts own ACTIVE PENDING
+ALLOW contractor submits own evidence
+ALLOW inspector updates own permitted PENDING observation
+ALLOW manager completes PENDING_REVIEW
+ALLOW manager returns PENDING_REVIEW
+ALLOW manager reviews PENDING_REVIEW without status change
+ALLOW supervisor reviews and returns
+B1 self-read: allow
+B2 same-org manager read: allow
+B3 cross-org manager read: deny
+B4 owner read: deny
+B5 client writes by all roles: deny
+C1 active manager read: allow
+C2 inspector/contractor/supervisor/owner read: deny
+C3 manager writing own email document: allow
+C4 manager writing another email document: deny
+D1 active owner access to organizations and invoices: allow
+D2 inactive owner access: deny
+D3 owner access to users and observations: deny
+DENY COMPLETED to every other status
+DENY contractor completes
+DENY contractor inactive assignment
+DENY contractor reopens COMPLETED
+DENY contractor replaced assignment
+DENY contractor stale assignment version
+DENY contractor starts another assignment
+DENY contractor submits another assignment evidence
+DENY inspector completes
+DENY inspector cross-org read
+DENY inspector cross-org write
+DENY inspector updates another inspector observation
+DENY invalid transition
+DENY manager cross-org access
+DENY manager reopens COMPLETED
+DENY missing organization context
+DENY second ACTIVE assignment without atomic pointer replacement
+DENY supervisor completes
+E1 missing organizationId in caller role document: deny
+E2 blank organizationId in caller role document: deny
+E3 missing organizationId in target document: deny
+E4 inactive manager/inspector/contractor: deny
+F1 same-org supervisor observation read: allow
+F10 supervisor delete: deny
+F11 supervisor users read same org: allow
+F12 supervisor users cross org: deny
+F13 supervisor users write: deny
+F14 supervisor organizations/invoices: deny
+F15 inactive supervisor: deny
+F2 cross-org supervisor read: deny
+F3 supervisor assignment update: allow
+F4 supervisor supervisorNote update: allow
+F5 supervisor return for correction: allow
+F6 supervisor COMPLETED update: deny
+F7 supervisor extra field update: deny
+F8 supervisor updatedByUid spoof: deny
+F9 supervisor organizationId change: deny
+G1 inspector cannot update another inspector observation
+G2 inspector can update own observation using the current allowed fields
+G3 manager status transitions are fail-closed and COMPLETED is terminal
+G4 contractor backward and completion transitions are denied
+G5 inspector has no workflow status authority
+Inspector remains GPS-only and cannot satisfy save requirements with a weak or manual source
+OpenAI selection routed end-to-end through createProviderRouter stays advisory-only
+PASS: contractor starts own assigned PENDING observation
+PASS: cross-organization read is denied
+PASS: cross-organization write is denied
+PASS: inspector updates own unassigned observation
+PASS: invented assistant role has no review access
+PASS: missing organization context is denied
+PASS: real manager role approves review as COMPLETED
+PASS: real supervisor role cannot approve COMPLETED
+PASS: real supervisor role returns review to IN_PROGRESS
+Preview manager call site creates through gateway against candidate rules
+Preview manager call site replaces atomically against candidate rules
+RULE GAP: assigned contractor can reopen COMPLETED under current rules
+RULE GAP: contractor starts another contractor observation
+RULE GAP: contractor submits evidence for another assignment
+RULE GAP: inspector updates another inspector observation
+RULE GAP: manager can reopen COMPLETED under current rules
+V2 denial never falls back to legacy against candidate rules
+V2 service creates canonical assignment atomically against candidate rules
+V2 service denies a second ACTIVE assignment
+V2 service denies cross-organization before any write
+V2 service ends assignment and removes current pointer atomically
+V2 service replaces atomically with one ACTIVE assignment
+approved bootstrap initializes existing emulator app and creates assignment
+approved bootstrap replaces assignment atomically under candidate rules
+createActiveVisionProviderRegistration selects Gemini explicitly with SMART_HSR_AI_PROVIDER=gemini
+denied bootstrap never initializes gateway and manager remains on legacy path
+inspector capture starts GPS automatically and hides every manual-location path
+rejects a summary containing exactly 12 words with AI_SUMMARY_NOT_CONCISE
+rejects a summary missing required action or impact language with AI_SUMMARY_ACTION_OR_IMPACT_REQUIRED
+rollback target matches current legacy rules
+verbose and low-quality summaries fail closed
