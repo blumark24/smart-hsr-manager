@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');
-const dashboard=fs.readFileSync(path.join(__dirname,'..','dashboard.html'),'utf8');
+const dashboard=fs.readFileSync(path.join(__dirname,'..','test/fixtures/legacy/dashboard.txt'),'utf8');
 const indexes=JSON.parse(fs.readFileSync(path.join(__dirname,'..','firestore.indexes.json'),'utf8'));
 const {evaluateFinalization}=require('../api/storage/finalize')._test;
 test('Inspector startup query is tenant/owner scoped, ordered and limited to 25',()=>{const start=dashboard.indexOf('function subscribeObservations()');const end=dashboard.indexOf('window.loadMoreObservations',start);const source=dashboard.slice(start,end);assert.match(source,/where\('organizationId'/);assert.match(source,/where\('createdByUid'/);assert.match(source,/orderBy\('createdAt', 'desc'\)/);assert.match(source,/limit\(OBSERVATIONS_PAGE_SIZE\)/);assert.match(dashboard,/const OBSERVATIONS_PAGE_SIZE = 25/);});

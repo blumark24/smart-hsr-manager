@@ -42,14 +42,14 @@ function resolveLandsRedirectBaseFor(hostname) {
 }
 
 // ---- 1. Field login unchanged ----
-test('1. login.html: the Field branch (contractor/supervisor/other) is untouched by the SSO handoff work', () => {
+test('1. login.html: the Field branch preserves role routing and sends inspectors to V2', () => {
   const source = read('login.html');
   const fieldBranch = source.slice(source.indexOf("showMsg('✅ تم التحقق بنجاح... جارٍ التوجيه', 'success');"));
   assert.match(fieldBranch, /signInWithEmailAndPassword\(managerAuth, email, password\)/);
   assert.match(fieldBranch, /signInWithEmailAndPassword\(auth, email, password\)/);
   assert.match(fieldBranch, /window\.location\.href = 'mobile-map\.html'/);
   assert.match(fieldBranch, /window\.location\.href = 'manager\.html'/);
-  assert.match(fieldBranch, /window\.location\.href = 'dashboard\.html'/);
+  assert.match(fieldBranch, /window\.location\.href = 'inspector\.html'/);
 });
 
 // ---- eligibility (pure) ----

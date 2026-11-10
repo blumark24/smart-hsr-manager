@@ -1,0 +1,6 @@
+test/
+docs/
+qa-screenshots/
+evaluation/
+*.md
+.git/

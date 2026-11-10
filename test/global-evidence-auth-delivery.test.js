@@ -99,7 +99,7 @@ test('repeated render deduplicates one private evidence request', async () => {
 });
 
 test('Inspector, Manager, and Contractor viewers use the same authUser path', () => {
-  for (const file of ['dashboard.html', 'manager.html', 'mobile-map.html']) {
+  for (const file of ['test/fixtures/legacy/dashboard.txt', 'manager.html', 'mobile-map.html']) {
     const source = read(file);
     assert.match(source, /resolveObservationImage\(\{/);
     assert.match(source, /authUser:auth(?:\?)?\.currentUser/);
