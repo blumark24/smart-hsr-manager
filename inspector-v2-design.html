@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#03122b">
+  <meta name="description" content="SMART HSR Inspector V2 — visual design preview">
+  <title>SMART HSR — Field Inspector Design Preview</title>
+  <link rel="icon" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="inspector-v2-design.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero-header">
+      <button class="glass icon-bell" type="button" aria-label="الإشعارات">
+        <span class="bell-glyph">⌁</span><b>3</b>
+      </button>
+
+      <section class="identity">
+        <div class="avatar-wrap">
+          <div class="avatar">👷</div>
+          <span class="online-dot"></span>
+        </div>
+        <div class="identity-copy">
+          <p class="greeting">مرحبًا أحمد</p>
+          <p class="role">المراقب الميداني</p>
+          <p class="mission-copy">معًا.. لبيئة حضرية أكثر أمانًا وجودة</p>
+        </div>
+      </section>
+    </header>
+
+    <section class="status-strip">
+      <article class="status-pill">
+        <span class="status-icon signal">▥</span>
+        <div><small>دقة GPS</small><strong>عالية</strong></div>
+      </article>
+      <article class="status-pill">
+        <span class="status-icon pin">●</span>
+        <div><small>الموقع</small><strong>بالقرب</strong></div>
+      </article>
+      <article class="status-pill weather">
+        <span class="status-icon sun">☀</span>
+        <div><strong>28°</strong><small>سماء صافية</small></div>
+      </article>
+    </section>
+
+    <section class="map-card">
+      <div class="map-tabs">
+        <button>عرض الكل <span>‹</span></button>
+        <div class="segmented">
+          <button class="active">الحالات</button>
+          <button>المهام القريبة</button>
+          <button>المقاولين</button>
+        </div>
+      </div>
+
+      <div class="map-stage">
+        <div class="city-grid"></div>
+        <span class="road r1"></span><span class="road r2"></span><span class="road r3"></span><span class="road r4"></span>
+        <span class="marker red m1">!</span>
+        <span class="marker orange m2">A</span>
+        <span class="marker green m3">✓</span>
+        <span class="marker green m4">✓</span>
+        <span class="marker cyan m5">•</span>
+        <span class="marker red m6">●</span>
+        <span class="marker orange m7">♜</span>
+
+        <div class="map-controls">
+          <button>▰<small>الطبقات</small></button>
+          <button>◎</button>
+          <button>➤</button>
+        </div>
+
+        <div class="map-mode"><button>3D</button><button>⌘</button></div>
+
+        <div class="user-radar">
+          <span class="radar-ring r-a"></span>
+          <span class="radar-ring r-b"></span>
+          <span class="radar-ring r-c"></span>
+          <span class="user-arrow">▲</span>
+        </div>
+
+        <article class="case-float">
+          <div class="case-thumb road-damage"></div>
+          <div class="case-copy">
+            <strong>#HSR-1042</strong>
+            <span>حفرة في الطريق</span>
+            <small>📍 480 م</small>
+          </div>
+          <button>‹</button>
+        </article>
+      </div>
+
+      <div class="ai-strip">
+        <span class="ai-orb">AI</span>
+        <div class="ai-copy">
+          <strong>المساعد الذكي</strong>
+          <small>يوجد 3 حالات قريبة من موقعك ننصح بالبدء بها الآن</small>
+        </div>
+        <button>✦ عرض المقترحات</button>
+      </div>
+    </section>
+
+    <section class="section-block current-task">
+      <div class="section-title">
+        <div><h2>مهمتك الحالية</h2></div>
+        <span class="state-badge"><b></b>قيد التنفيذ</span>
+      </div>
+
+      <article class="task-card">
+        <div class="task-thumb road-damage"></div>
+        <div class="task-info">
+          <strong>#HSR-1042</strong>
+          <span>حفرة في الطريق</span>
+          <small>📍 حي النرجس، الرياض</small>
+        </div>
+        <div class="task-metrics">
+          <span>480 م ➤</span>
+          <small>الوقت المتبقي</small>
+          <strong>01:34</strong>
+          <div class="progress"><i></i></div>
+        </div>
+      </article>
+
+      <div class="task-actions">
+        <button class="secondary">▤ تفاصيل الحالة</button>
+        <button class="primary">➤ الاتجاه إلى الموقع</button>
+      </div>
+    </section>
+
+    <section class="section-block quick-actions">
+      <div class="section-title"><h2>إجراءات سريعة</h2><span>‹</span></div>
+      <div class="quick-grid">
+        <button><span>⌗</span><strong>مسح الموقع</strong></button>
+        <button><span>●</span><strong>رصد سريع</strong></button>
+        <button><span>▤</span><strong>ملاحظة</strong></button>
+        <button><span>◉</span><strong>إضافة صورة</strong></button>
+      </div>
+    </section>
+
+    <section class="section-block latest">
+      <div class="section-title">
+        <h2>أحدث البلاغات القريبة</h2>
+        <button class="text-link">عرض الكل ‹</button>
+      </div>
+      <div class="report-grid">
+        <article>
+          <div class="report-thumb lighting"></div>
+          <div><strong>إنارة معطلة</strong><small>📍 33 م</small><span class="new">● جديد</span></div><b>‹</b>
+        </article>
+        <article>
+          <div class="report-thumb waste"></div>
+          <div><strong>مخلفات وأنقاض</strong><small>📍 312 م</small><span class="done">◆ تم الاستجابة</span></div><b>‹</b>
+        </article>
+        <article>
+          <div class="report-thumb bench"></div>
+          <div><strong>تلف في المرافق</strong><small>📍 850 م</small><span class="progressing">● قيد المعالجة</span></div><b>‹</b>
+        </article>
+      </div>
+    </section>
+
+    <nav class="bottom-nav">
+      <button><span>⌂</span><strong>الحساب</strong></button>
+      <button><span>▥</span><strong>الإحصائيات</strong></button>
+      <button class="create"><span>＋</span><strong>بلاغ جديد</strong></button>
+      <button><span>▤</span><strong>مهامي</strong></button>
+      <button class="active"><span>⌂</span><strong>الرئيسية</strong></button>
+    </nav>
+  </main>
+</body>
+</html>
