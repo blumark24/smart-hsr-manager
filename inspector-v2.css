@@ -1541,3 +1541,175 @@ body.map-expanded .urban-map-shell::before{
     linear-gradient(90deg,rgba(8,127,91,.035) 1px,transparent 1px);
   background-size:34px 34px;
 }
+
+
+/* ===== Reference lock — match approved mobile concept proportions ===== */
+.urban-map-shell{
+  min-height:292px!important;
+  height:292px!important;
+  border-radius:26px!important;
+}
+.live-map{height:292px!important}
+
+/* Keep map center visually clear; controls hug the edges like the approved concept. */
+.map-heading{
+  top:12px!important;
+  right:12px!important;
+  max-width:43%!important;
+}
+.view-toggle{top:12px!important;left:12px!important}
+.map-experience-tabs{
+  top:54px!important;
+  right:12px!important;
+  max-width:176px!important;
+}
+.map-top-actions{
+  top:54px!important;
+  left:12px!important;
+}
+.map-action{
+  width:40px!important;
+  height:40px!important;
+  border-radius:13px!important;
+}
+.map-footer{
+  bottom:10px!important;
+  left:10px!important;
+  right:auto!important;
+  max-width:40%!important;
+}
+
+/* Contextual observation card stays INSIDE the map, compact, and never becomes a tall modal. */
+.map-marker-sheet{
+  position:absolute!important;
+  top:104px!important;
+  right:12px!important;
+  left:auto!important;
+  bottom:auto!important;
+  width:min(50%,196px)!important;
+  max-height:126px!important;
+  overflow:hidden!important;
+  padding:9px 10px!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,rgba(7,31,66,.94),rgba(3,18,40,.96))!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 14px 34px rgba(0,0,0,.28),
+    0 0 24px rgba(27,135,255,.10)!important;
+  backdrop-filter:blur(18px) saturate(140%)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(140%)!important;
+}
+.map-marker-handle{display:none!important}
+.map-marker-head{gap:5px!important}
+.map-marker-status{
+  min-height:19px!important;
+  padding:0 6px!important;
+  font-size:7px!important;
+}
+.map-marker-close{
+  width:25px!important;
+  height:25px!important;
+  border-radius:8px!important;
+}
+.map-marker-sheet h3{
+  margin:5px 0 2px!important;
+  font-size:11px!important;
+  line-height:1.25!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.map-marker-sheet>p{
+  font-size:7px!important;
+  line-height:1.3!important;
+}
+.map-marker-meta{
+  gap:7px!important;
+  margin-top:5px!important;
+  font-size:7px!important;
+}
+.map-marker-actions{
+  position:absolute!important;
+  left:8px!important;
+  bottom:8px!important;
+  display:block!important;
+  margin:0!important;
+}
+.map-marker-actions .marker-secondary{display:none!important}
+.map-marker-actions .marker-primary{
+  width:28px!important;
+  min-width:28px!important;
+  height:28px!important;
+  min-height:28px!important;
+  padding:0!important;
+  border-radius:9px!important;
+  display:grid!important;
+  place-items:center!important;
+}
+.map-marker-actions .marker-primary span{display:none!important}
+.map-marker-actions .marker-primary svg{
+  width:13px!important;
+  height:13px!important;
+}
+
+/* The expanded map remains optional; the default home map keeps the approved concept ratio. */
+body.map-expanded .urban-map-shell{
+  height:100dvh!important;
+  min-height:100dvh!important;
+}
+body.map-expanded .live-map{height:100dvh!important}
+body.map-expanded .map-marker-sheet{
+  position:fixed!important;
+  top:auto!important;
+  right:12px!important;
+  left:12px!important;
+  bottom:calc(var(--safe-bottom) + 12px)!important;
+  width:auto!important;
+  max-height:32dvh!important;
+  padding:10px 13px 13px!important;
+}
+body.map-expanded .map-marker-handle{display:block!important}
+body.map-expanded .map-marker-actions{
+  position:static!important;
+  display:grid!important;
+  grid-template-columns:1.35fr 1fr!important;
+  gap:7px!important;
+  margin-top:9px!important;
+}
+body.map-expanded .map-marker-actions .marker-secondary{display:flex!important}
+body.map-expanded .map-marker-actions .marker-primary{
+  width:auto!important;
+  min-width:0!important;
+  height:auto!important;
+  min-height:43px!important;
+  padding:0 12px!important;
+  display:flex!important;
+}
+body.map-expanded .map-marker-actions .marker-primary span{display:inline!important}
+
+@media (min-width:700px){
+  .urban-map-shell{
+    min-height:316px!important;
+    height:316px!important;
+  }
+  .live-map{height:316px!important}
+  .map-marker-sheet{
+    top:112px!important;
+    right:14px!important;
+    width:210px!important;
+    max-height:132px!important;
+  }
+}
+@media (min-width:900px){
+  .urban-map-shell{
+    min-height:336px!important;
+    height:336px!important;
+  }
+  .live-map{height:336px!important}
+  .map-marker-sheet{
+    top:118px!important;
+    right:16px!important;
+    width:220px!important;
+    max-height:136px!important;
+  }
+}
