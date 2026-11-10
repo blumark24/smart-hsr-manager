@@ -378,7 +378,18 @@
       </div>
     </section>
 
-    <div class="capture-transition" id="captureTransition" aria-hidden="true">
+  
+  <section class="capture-frame-shell" id="captureFrameShell" aria-hidden="true" aria-label="إنشاء ملاحظة ميدانية">
+    <iframe
+      id="captureFrame"
+      class="capture-frame"
+      title="إنشاء ملاحظة ميدانية"
+      allow="camera; geolocation"
+      referrerpolicy="same-origin"
+    ></iframe>
+  </section>
+
+  <div class="capture-transition" id="captureTransition" aria-hidden="true">
       <span class="capture-transition-orb"><i data-lucide="camera"></i></span>
       <strong>فتح وحدة التوثيق الآمنة</strong>
       <small>GPS · الصورة · التحليل · الحفظ الموثوق</small>
