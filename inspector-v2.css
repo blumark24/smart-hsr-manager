@@ -260,7 +260,35 @@ body.map-expanded .map-footer{bottom:calc(var(--safe-bottom) + 8px)}
   font-size:10px;text-align:center;opacity:0;pointer-events:none;transition:.2s ease
 }
 .toast.is-visible{opacity:1;transform:translate(-50%,0)}
-.user-location-marker{width:18px;height:18px;border-radius:50%;background:#32b5ff;border:3px solid #eaf8ff;box-shadow:0 0 0 8px rgba(50,181,255,.18),0 0 22px rgba(50,181,255,.85)}
+.user-location-marker{
+  --heading:0deg;
+  position:relative;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#32b5ff;
+  border:3px solid #eaf8ff;
+  box-shadow:0 0 0 8px rgba(50,181,255,.18),0 0 22px rgba(50,181,255,.85);
+}
+.user-location-marker::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:7px;
+  height:13px;
+  background:#eaf8ff;
+  clip-path:polygon(50% 0,100% 100%,50% 77%,0 100%);
+  transform-origin:50% 50%;
+  transform:translate(-50%,-145%) rotate(var(--heading));
+  transition:transform .28s ease;
+  filter:drop-shadow(0 1px 4px rgba(0,0,0,.28));
+}
+.user-location-accuracy{
+  stroke:rgba(50,181,255,.72);
+  fill:rgba(50,181,255,.12);
+  stroke-width:1.5;
+}
 @media (min-width:700px){
   .inspector-app{min-height:900px;margin-block:18px;border-radius:34px;border:1px solid rgba(90,158,255,.18);box-shadow:0 30px 90px rgba(0,0,0,.48)}
 }
@@ -447,6 +475,8 @@ body.map-expanded .map-top-actions{top:calc(var(--safe-top) + 110px)}
 :root[data-theme="light"] .sheet-note{background:rgba(8,127,91,.06);border-color:rgba(8,127,91,.13);color:#315e51}
 :root[data-theme="light"] .toast{background:rgba(255,255,255,.96);border-color:rgba(8,127,91,.18);color:#17473a;box-shadow:0 12px 30px rgba(18,64,50,.13)}
 :root[data-theme="light"] .user-location-marker{background:#0d9c6a;border-color:#fff;box-shadow:0 0 0 8px rgba(13,156,106,.13),0 0 18px rgba(13,156,106,.26)}
+:root[data-theme="light"] .user-location-marker::after{background:#fff}
+:root[data-theme="light"] .user-location-accuracy{stroke:rgba(13,156,106,.65);fill:rgba(13,156,106,.09)}
 @media (prefers-reduced-motion:reduce){
   .theme-toggle-thumb,.twin-visual-layer{transition:none!important}
 }
@@ -1096,4 +1126,9 @@ body.map-expanded .urban-map-shell{
 :root[data-theme="light"] .capture-transition-orb{
   background:linear-gradient(145deg,#087f5b,#20a66f);
   box-shadow:0 0 30px rgba(8,127,91,.16);
+}
+
+
+@media (prefers-reduced-motion: reduce){
+  .user-location-marker::after{transition:none}
 }
