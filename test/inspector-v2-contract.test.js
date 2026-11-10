@@ -108,11 +108,16 @@ test('Inspector V2 motion polish is accessibility-aware', () => {
 });
 
 
-test('Inspector V2 capture routes into the protected legacy capture engine', () => {
+test('Inspector V2 keeps trusted capture inside the new application shell', () => {
   assert.match(html, /id="quickCaptureBtn"/);
   assert.match(html, /id="quickObservationBtn"/);
   assert.match(html, /id="dockCaptureBtn"/);
-  assert.match(js, /dashboard\.html\?capture=v2&theme=/);
+  assert.match(html, /id="captureFrameShell"/);
+  assert.match(html, /id="captureFrame"/);
+  assert.match(js, /frame\.src = 'dashboard\.html\?capture=v2&theme='/);
+  assert.match(js, /handleCaptureFrameLoad/);
+  assert.match(js, /closeTrustedCapture/);
+  assert.doesNotMatch(js, /window\.location\.assign\(target\)/);
   assert.match(dashboard, /V2_CAPTURE_MODE/);
   assert.match(dashboard, /window\.openModal\('smartInputModal'\)/);
   assert.match(dashboard, /window\.getLocation\(\)/);
@@ -234,4 +239,12 @@ test('Inspector V2 live map behaves like a tracked field map without fabricating
   assert.match(js, /coords\.heading/);
   assert.match(css, /\.user-location-accuracy/);
   assert.match(css, /--heading:/);
+});
+
+test('Inspector V2 uses the direct OSM tile endpoint and responsive desktop workspace', () => {
+  assert.match(js, /https:\/\/tile\.openstreetmap\.org\/\{z\}\/\{x\}\/\{y\}\.png/);
+  assert.doesNotMatch(js, /https:\/\/\{s\}\.tile\.openstreetmap\.org/);
+  assert.match(css, /Inspector V2 — desktop workspace expansion/);
+  assert.match(css, /1080px/);
+  assert.match(css, /grid-template-columns:minmax\(0,1\.18fr\) minmax\(320px,\.82fr\)/);
 });
