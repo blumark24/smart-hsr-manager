@@ -2175,7 +2175,7 @@
     const org = typeof data.organizationId === 'string' ? data.organizationId.trim() : '';
     if (data.active === false || !org) return null;
     if (data.role === 'supervisor') return 'manager.html';
-    if (data.role === 'inspector') return 'dashboard.html';
+    if (data.role === 'inspector') return 'inspector-v2.html';
     return null;
   }
 
