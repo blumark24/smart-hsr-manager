@@ -46,9 +46,8 @@
       </div>
 
       <div class="header-tools" aria-label="أدوات التطبيق">
-        <button class="icon-btn glass-control" type="button" aria-label="الإشعارات" data-action="toast">
+        <button class="icon-btn glass-control" id="notificationsBtn" type="button" aria-label="الإشعارات غير مفعّلة حاليًا" aria-disabled="true" disabled title="الإشعارات تحتاج مصدر بيانات تشغيلي معتمد">
           <i data-lucide="bell"></i>
-          <span class="notification-dot" aria-hidden="true"></span>
         </button>
       </div>
     </header>
@@ -78,7 +77,7 @@
 
       <div class="view-toggle" role="group" aria-label="نمط الخريطة">
         <button type="button" class="is-active" data-map-mode="2d">2D</button>
-        <button type="button" data-map-mode="3d" aria-disabled="true" title="يتم ربط وضع 3D في مرحلة الخريطة المتقدمة">3D</button>
+        <button type="button" data-map-mode="3d" aria-disabled="true" disabled title="يتم تفعيل 3D بعد اعتماد مزود الخريطة">3D</button>
       </div>
 
       <div class="map-experience-tabs" role="tablist" aria-label="نوع الخريطة">
@@ -174,7 +173,7 @@
           <p class="eyebrow">مهمتك الحالية</p>
           <h2 id="missionTitle">مهمة ميدانية نشطة</h2>
         </div>
-        <button class="text-action" type="button" data-action="toast">عرض الكل</button>
+        <button class="text-action" id="viewAllTasksBtn" type="button">عرض الكل</button>
       </div>
 
       <article class="mission-card">
@@ -230,7 +229,7 @@
           <strong>إضافة صورة</strong>
           <small>توثيق ميداني</small>
         </button>
-        <button class="quick-card" type="button" data-action="toast">
+        <button class="quick-card" id="quickNoteBtn" type="button">
           <span class="quick-icon"><i data-lucide="notebook-pen"></i></span>
           <strong>ملاحظة</strong>
           <small>تحديث سريع</small>
@@ -240,7 +239,7 @@
           <strong>رصد سريع</strong>
           <small>حالة جديدة</small>
         </button>
-        <button class="quick-card" type="button" data-action="toast">
+        <button class="quick-card" id="quickScanBtn" type="button">
           <span class="quick-icon"><i data-lucide="scan-line"></i></span>
           <strong>مسح الموقع</strong>
           <small>فحص النطاق</small>
@@ -267,11 +266,11 @@
     </section>
 
     <nav class="bottom-dock" aria-label="التنقل الرئيسي">
-      <button type="button" data-action="toast"><i data-lucide="user-round"></i><span>الحساب</span></button>
-      <button type="button" data-action="toast"><i data-lucide="chart-no-axes-column"></i><span>الإحصائيات</span></button>
+      <button type="button" id="dockAccountBtn"><i data-lucide="user-round"></i><span>الحساب</span></button>
+      <button type="button" id="dockStatsBtn"><i data-lucide="chart-no-axes-column"></i><span>الإحصائيات</span></button>
       <button type="button" class="dock-create" id="dockCaptureBtn" aria-label="بلاغ جديد"><span><i data-lucide="plus"></i></span><small>بلاغ جديد</small></button>
-      <button type="button" data-action="toast"><i data-lucide="clipboard-list"></i><span>مهامي</span></button>
-      <button type="button" class="is-active"><i data-lucide="house"></i><span>الرئيسية</span></button>
+      <button type="button" id="dockTasksBtn"><i data-lucide="clipboard-list"></i><span>مهامي</span></button>
+      <button type="button" class="is-active" id="dockHomeBtn"><i data-lucide="house"></i><span>الرئيسية</span></button>
     </nav>
 
 
@@ -380,6 +379,22 @@
     </section>
 
   
+
+    <section class="utility-sheet" id="utilitySheet" aria-hidden="true" aria-labelledby="utilitySheetTitle">
+      <button class="sheet-backdrop" id="utilityBackdrop" type="button" aria-label="إغلاق"></button>
+      <div class="sheet-panel utility-sheet-panel" role="dialog" aria-modal="true">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <header class="sheet-header">
+          <div>
+            <p class="eyebrow" id="utilitySheetEyebrow">SMART HSR</p>
+            <h2 id="utilitySheetTitle">المعلومات</h2>
+          </div>
+          <button class="icon-btn" id="closeUtilityBtn" type="button" aria-label="إغلاق"><i data-lucide="x"></i></button>
+        </header>
+        <div class="utility-content" id="utilityContent"></div>
+      </div>
+    </section>
+
   <section class="capture-frame-shell" id="captureFrameShell" aria-hidden="true" aria-label="إنشاء ملاحظة ميدانية">
     <iframe
       id="captureFrame"
