@@ -248,3 +248,22 @@ test('Inspector V2 uses the direct OSM tile endpoint and responsive desktop work
   assert.match(css, /1080px/);
   assert.match(css, /grid-template-columns:minmax\(0,1\.18fr\) minmax\(320px,\.82fr\)/);
 });
+
+
+test('Inspector V2 visible controls are real or explicitly disabled', () => {
+  assert.match(html, /id="quickNoteBtn"/);
+  assert.match(html, /id="quickScanBtn"/);
+  assert.match(html, /id="viewAllTasksBtn"/);
+  assert.match(html, /id="dockAccountBtn"/);
+  assert.match(html, /id="dockStatsBtn"/);
+  assert.match(html, /id="dockTasksBtn"/);
+  assert.match(html, /id="dockHomeBtn"/);
+  assert.match(html, /id="notificationsBtn"[^>]*disabled/);
+  assert.match(html, /data-map-mode="3d"[^>]*disabled/);
+  assert.match(js, /quickNoteBtn.*openTrustedCapture/);
+  assert.match(js, /quickScanBtn.*scanCurrentLocation/);
+  assert.match(js, /dockAccountBtn.*openUtilitySheet\('account'\)/);
+  assert.match(js, /dockStatsBtn.*openUtilitySheet\('stats'\)/);
+  assert.match(js, /dockTasksBtn.*openUtilitySheet\('tasks'\)/);
+  assert.doesNotMatch(html, /<button[^>]+data-action="toast"[^>]*>\s*<i data-lucide="(user-round|chart-no-axes-column|clipboard-list)"/);
+});
