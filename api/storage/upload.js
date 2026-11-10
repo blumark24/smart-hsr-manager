@@ -21,6 +21,7 @@
 // bucket is private, so no public/permanent URL is ever produced here.
 // ============================================================================
 const crypto = require('crypto');
+const { pendingUploadId } = require('../_lib/evidenceBinding');
 const { getDb, FieldValue } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 const { validateImage } = require('../_lib/imageValidation');
@@ -115,10 +116,6 @@ function buildObjectKey({ prefix, organizationId, observationId, scope, extensio
   // The tail is authoritative and is never rewritten: organizationId, scope,
   // date and filename pass through exactly as given.
   return [OBJECT_ROOT, organizationId, scope, year, month, `${uuid}.${extension}`].join('/');
-}
-
-function pendingUploadId(objectKey) {
-  return crypto.createHash('sha256').update(objectKey, 'utf8').digest('hex');
 }
 
 // Reads the caller's OWN users/{uid} document. No other collection, no other
