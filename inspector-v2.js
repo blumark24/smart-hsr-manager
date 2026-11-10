@@ -163,7 +163,7 @@
       maxZoom: 20
     }).setView([23.8859, 45.0792], 5);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 20,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(state.map);
@@ -590,19 +590,46 @@
     });
   }
 
+  function closeTrustedCapture() {
+    const shell = $('captureFrameShell');
+    const frame = $('captureFrame');
+    if (shell) {
+      shell.classList.remove('is-open');
+      shell.setAttribute('aria-hidden','true');
+    }
+    document.body.classList.remove('capture-frame-open');
+    if (frame) frame.removeAttribute('src');
+  }
+
+  function handleCaptureFrameLoad() {
+    const frame = $('captureFrame');
+    if (!frame?.src) return;
+    try {
+      const childUrl = new URL(frame.contentWindow.location.href);
+      if (childUrl.origin !== window.location.origin) return;
+      if (childUrl.pathname.endsWith('/inspector-v2.html') || childUrl.pathname.endsWith('inspector-v2.html')) {
+        closeTrustedCapture();
+      }
+    } catch (_) {}
+  }
+
   function openTrustedCapture() {
-    const overlay = $('captureTransition');
-    if (overlay) {
-      overlay.classList.add('is-open');
-      overlay.setAttribute('aria-hidden','false');
+    const shell = $('captureFrameShell');
+    const frame = $('captureFrame');
+    if (!shell || !frame) {
+      showToast('تعذر فتح نموذج الرصد داخل التطبيق.');
+      return;
     }
     const theme = state.theme === 'light' ? 'light' : 'dark';
-    const target = 'dashboard.html?capture=v2&theme=' + encodeURIComponent(theme);
-    setTimeout(() => window.location.assign(target), 180);
+    shell.classList.add('is-open');
+    shell.setAttribute('aria-hidden','false');
+    document.body.classList.add('capture-frame-open');
+    frame.src = 'dashboard.html?capture=v2&theme=' + encodeURIComponent(theme);
   }
 
   function bindActions() {
     $('themeToggleBtn')?.addEventListener('click', toggleTheme);
+    $('captureFrame')?.addEventListener('load', handleCaptureFrameLoad);
     $('quickCaptureBtn')?.addEventListener('click', openTrustedCapture);
     $('quickObservationBtn')?.addEventListener('click', openTrustedCapture);
     $('dockCaptureBtn')?.addEventListener('click', openTrustedCapture);
@@ -640,6 +667,7 @@
 
     document.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape') return;
+      if (document.body.classList.contains('capture-frame-open')) { closeTrustedCapture(); return; }
       if ($('missionSheet')?.classList.contains('is-open')) { closeMissionDetail(); return; }
       if ($('analysisSheet')?.classList.contains('is-open')) { closeAnalysis(); return; }
       if ($('mapMarkerSheet')?.classList.contains('is-open')) { closeMapMarkerSheet(); return; }
