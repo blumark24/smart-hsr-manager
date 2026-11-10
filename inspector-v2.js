@@ -627,8 +627,89 @@
     frame.src = 'dashboard.html?capture=v2&theme=' + encodeURIComponent(theme);
   }
 
+
+  function utilityRow(label, value) {
+    const row = document.createElement('div');
+    row.className = 'utility-row';
+    const key = document.createElement('span');
+    const val = document.createElement('strong');
+    key.textContent = label;
+    val.textContent = value || '—';
+    row.append(key, val);
+    return row;
+  }
+
+  function closeUtilitySheet() {
+    const sheet = $('utilitySheet');
+    if (!sheet) return;
+    sheet.classList.remove('is-open');
+    sheet.setAttribute('aria-hidden','true');
+  }
+
+  function openUtilitySheet(type) {
+    const sheet = $('utilitySheet');
+    const content = $('utilityContent');
+    const title = $('utilitySheetTitle');
+    const eyebrow = $('utilitySheetEyebrow');
+    if (!sheet || !content || !title || !eyebrow) return;
+    content.replaceChildren();
+
+    if (type === 'account') {
+      eyebrow.textContent = 'ACCOUNT';
+      title.textContent = 'الحساب';
+      content.append(
+        utilityRow('الاسم', $('inspectorDisplayName')?.textContent || 'المراقب'),
+        utilityRow('الدور', 'المراقب الميداني'),
+        utilityRow('الجهة', $('inspectorOrgName')?.textContent || 'المؤسسة المسجلة'),
+        utilityRow('الحالة', 'متصل الآن')
+      );
+    } else if (type === 'stats') {
+      eyebrow.textContent = 'LIVE STATS';
+      title.textContent = 'الإحصائيات';
+      content.append(
+        utilityRow('إجمالي الحالات', $('twinTotalCount')?.textContent || '—'),
+        utilityRow('مفتوحة', $('twinOpenCount')?.textContent || '—'),
+        utilityRow('قيد المعالجة', $('twinProgressCount')?.textContent || '—'),
+        utilityRow('مغلقة', $('twinClosedCount')?.textContent || '—')
+      );
+    } else {
+      eyebrow.textContent = 'TASKS';
+      title.textContent = 'مهامي';
+      if (!state.activeMission) {
+        const empty = document.createElement('div');
+        empty.className = 'utility-empty';
+        empty.textContent = 'لا توجد مهمة ميدانية نشطة ضمن حسابك حاليًا.';
+        content.append(empty);
+      } else {
+        content.append(
+          utilityRow('المهمة', $('missionTitleText')?.textContent || 'مهمة ميدانية'),
+          utilityRow('الحالة', $('missionStatusPill')?.textContent || '—'),
+          utilityRow('الموقع', $('missionLocationText')?.textContent || '—'),
+          utilityRow('التاريخ', $('missionDateText')?.textContent || '—')
+        );
+      }
+    }
+
+    sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden','false');
+  }
+
+  function scanCurrentLocation() {
+    if (!document.body.classList.contains('map-expanded')) toggleMapExpanded();
+    centerOnUser();
+  }
+
   function bindActions() {
     $('themeToggleBtn')?.addEventListener('click', toggleTheme);
+    $('quickNoteBtn')?.addEventListener('click', openTrustedCapture);
+    $('quickScanBtn')?.addEventListener('click', scanCurrentLocation);
+    $('viewAllTasksBtn')?.addEventListener('click', () => openUtilitySheet('tasks'));
+    $('dockAccountBtn')?.addEventListener('click', () => openUtilitySheet('account'));
+    $('dockStatsBtn')?.addEventListener('click', () => openUtilitySheet('stats'));
+    $('dockTasksBtn')?.addEventListener('click', () => openUtilitySheet('tasks'));
+    $('dockHomeBtn')?.addEventListener('click', () => window.scrollTo({ top:0, behavior:'smooth' }));
+    $('closeUtilityBtn')?.addEventListener('click', closeUtilitySheet);
+    $('utilityBackdrop')?.addEventListener('click', closeUtilitySheet);
     $('captureFrame')?.addEventListener('load', handleCaptureFrameLoad);
     $('quickCaptureBtn')?.addEventListener('click', openTrustedCapture);
     $('quickObservationBtn')?.addEventListener('click', openTrustedCapture);
@@ -668,6 +749,7 @@
     document.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape') return;
       if (document.body.classList.contains('capture-frame-open')) { closeTrustedCapture(); return; }
+      if ($('utilitySheet')?.classList.contains('is-open')) { closeUtilitySheet(); return; }
       if ($('missionSheet')?.classList.contains('is-open')) { closeMissionDetail(); return; }
       if ($('analysisSheet')?.classList.contains('is-open')) { closeAnalysis(); return; }
       if ($('mapMarkerSheet')?.classList.contains('is-open')) { closeMapMarkerSheet(); return; }
