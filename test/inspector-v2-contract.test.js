@@ -236,7 +236,8 @@ test('Inspector V2 live map behaves like a tracked field map without fabricating
   assert.match(js, /state\.liveFollowEnabled = false/);
   assert.match(js, /state\.liveFollowEnabled = true;[\s\S]*state\.map\.flyTo/);
   assert.match(js, /state\.map\.panTo\(latlng/);
-  assert.match(js, /coords\.heading/);
+  assert.match(js, /function resolveLocationHeading/);
+  assert.match(js, /resolveLocationHeading\(previousPosition, position\)/);
   assert.match(css, /\.user-location-accuracy/);
   assert.match(css, /--heading:/);
 });
@@ -271,9 +272,9 @@ test('Inspector V2 visible controls are real or explicitly disabled', () => {
 
 test('same-origin capture framing remains security-bounded', () => {
   const vercel = fs.readFileSync(path.join(root, 'vercel.json'), 'utf8');
-  assert.match(vercel, /"X-Frame-Options"\s*:\s*"SAMEORIGIN"/);
+  assert.match(vercel, /"key"\s*:\s*"X-Frame-Options"[\s\S]*?"value"\s*:\s*"SAMEORIGIN"/);
   assert.match(vercel, /frame-ancestors 'self'/);
   assert.match(vercel, /\/login\.html/);
   assert.match(vercel, /frame-ancestors 'none'/);
-  assert.doesNotMatch(vercel, /"X-Frame-Options"\s*:\s*"ALLOWALL"/);
+  assert.doesNotMatch(vercel, /"key"\s*:\s*"X-Frame-Options"[\s\S]*?"value"\s*:\s*"ALLOWALL"/);
 });
