@@ -3717,9 +3717,10 @@ async function refreshDemoStorageBadge(){
 
 // ========= KPI HELPERS =========
 function kpis() {
-  const totalReports = observationsData.length;
-  const openReports  = observationsData.filter(o => o.status !== 'COMPLETED').length;
-  const closedReports = totalReports - openReports;
+  const totalReports = inspectorServerCounts?.total ?? '—';
+  const openReports = inspectorServerCounts ? inspectorServerCounts.total - inspectorServerCounts.completed : '—';
+  const closedReports = inspectorServerCounts?.completed ?? '—';
+  // Image evidence is counted only for the loaded page, never misrepresented as an all-time total.
   const reportsWithImages = observationsData.filter(o => !!o.imagePath).length;
   return { totalReports, openReports, closedReports, reportsWithImages };
 }
@@ -3745,7 +3746,7 @@ function renderKPIs() {
     {title:'إجمالي الملاحظات', value:totalReports, icon:'clipboard-list', gradientClass:'kpi-closed-gradient'},
     {title:'ملاحظات مفتوحة/انتظار', value:openReports, icon:'alert-triangle', gradientClass:'kpi-open-gradient'},
     {title:'ملاحظات مغلقة/معالجة', value:closedReports, icon:'check-circle', gradientClass:'kpi-closed-gradient'},
-    {title:'ملاحظات موثقة بالصور', value:reportsWithImages, icon:'image', gradientClass:'kpi-images-gradient'}
+    {title:'موثقة بالصور (المحمّلة)', value:reportsWithImages, icon:'image', gradientClass:'kpi-images-gradient'}
   ];
 
   kpiData.forEach(kpi=>{
@@ -3870,6 +3871,8 @@ function subscribeObservations() {
   }
 
   if (obsUnsub) { obsUnsub(); obsUnsub = null; }
+  ++inspectorCountRequest;
+  inspectorServerCounts = null;
   observationsData = [];
   olderObservationsData = [];
   oldestObservationCursor = null;
