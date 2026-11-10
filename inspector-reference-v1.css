@@ -670,3 +670,88 @@ body.inspector-v3-active #inspector-reference-dashboard{
 @media(prefers-reduced-motion:reduce){
   .inspector-v3 *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
+
+
+/* Reference polish V2 — visual order is deliberately independent of Arabic text direction. */
+#inspector-reference-dashboard.inspector-v3{box-sizing:border-box;font-family:Tajawal,system-ui,sans-serif;width:min(100%,720px);padding-inline:12px}
+.inspector-v3 [hidden]{display:none!important}
+.ir-top{direction:ltr;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px}
+.ir-profile{direction:rtl;grid-column:2/4;grid-row:1}
+.ir-top #irLocate{grid-column:1;grid-row:2;width:44px;height:44px}
+.ir-top #irNotifications{grid-column:1;grid-row:1;width:44px;height:44px}
+.ir-tagline{margin-top:-34px;margin-bottom:18px;padding-inline-start:60px;text-align:right;min-height:24px}
+.ir-profile-copy h1{line-height:1.4;font-weight:800}
+.ir-profile-copy strong{font-weight:500}
+.ir-status-row{direction:ltr;grid-template-columns:1fr .8fr 1.15fr}
+.ir-status-chip{direction:rtl;min-height:44px;border-radius:24px}
+.ir-status-chip strong{font-size:12px}
+.ir-map-card{border-radius:25px}
+.ir-map-tabs{position:absolute;inset:0 0 auto;z-index:30;background:linear-gradient(180deg,var(--ir-surface-2),transparent);border:0;padding:10px;gap:0}
+.ir-map-tab{min-height:44px;font-weight:700}
+.ir-map-wrap{height:clamp(240px,54vw,380px)}
+.ir-map-controls{inset-inline-start:auto;left:12px;top:64px;gap:7px}
+.ir-map-control{width:44px;height:44px;border-radius:13px}
+.ir-map-twin{inset-inline-start:12px;bottom:12px}
+.ir-selected-case{inset-inline-end:auto;right:12px;top:86px;width:47%;min-height:64px;direction:ltr;padding:7px;gap:7px;border-radius:17px}
+.ir-selected-case-copy{direction:rtl;text-align:right}
+.ir-selected-case .ir-case-thumb{width:44px;height:48px;flex-basis:44px;border-radius:10px}
+.ir-ai-strip{direction:ltr;grid-template-columns:42px minmax(0,1fr) auto;gap:9px;padding:10px;min-height:66px}
+.ir-ai-copy{direction:rtl;text-align:right}
+.ir-ai-badge{width:40px;height:40px;font-size:16px}
+.ir-ai-action{grid-column:auto;min-height:44px;width:auto;padding:0 9px;font-size:10px}
+.ir-section{margin-top:15px}
+.ir-section-title h2{font-size:18px;font-weight:800}
+.ir-section[aria-labelledby="irQuickHeading"] .ir-section-title{justify-content:flex-end}
+.ir-section[aria-labelledby="irRecentHeading"] .ir-section-title{flex-direction:row-reverse}
+.ir-section-title button{min-height:44px}
+.ir-mission-card{padding:9px;border-radius:22px}
+.ir-mission-main{direction:ltr;grid-template-columns:70px minmax(0,1fr) 90px;gap:9px}
+.ir-mission-thumb{width:70px;height:70px;border-radius:14px}
+.ir-mission-copy{direction:rtl;text-align:right}
+.ir-mission-meta{direction:rtl}
+.ir-mission-actions{direction:ltr;grid-template-columns:.95fr 1.1fr}
+.ir-primary-btn,.ir-secondary-btn{display:flex;align-items:center;justify-content:center;gap:7px;direction:rtl;min-height:48px;font-size:12px;font-weight:700}
+.ir-primary-btn svg{width:20px;height:20px;flex-shrink:0}
+.ir-sla-track{display:none} /* No verified SLA feed: never show fabricated progress. */
+.ir-quick{min-height:76px;border-radius:17px;font-size:11px;font-weight:500}
+.ir-quick svg{width:25px;height:25px}
+.ir-recent-row{grid-auto-columns:minmax(160px,1fr);padding-bottom:10px}
+.ir-recent-card{min-height:86px;padding:7px;border-radius:16px;direction:ltr;grid-template-columns:48px minmax(0,1fr);text-align:right}
+.ir-recent-thumb{width:48px;height:62px;border-radius:10px}
+.ir-recent-copy{direction:rtl}
+.ir-bottom-dock{box-sizing:border-box;direction:ltr;max-width:696px;width:calc(100% - 24px);height:76px;border-radius:28px}
+.ir-bottom-dock *{box-sizing:border-box}
+.ir-dock-item{font-family:Tajawal,system-ui,sans-serif;direction:rtl;font-size:11px;min-width:0}
+.ir-dock-add .ir-add-circle{width:54px;height:54px}
+.ir-dock-add{margin-top:-20px;height:82px}
+.inspector-v3 button,.ir-dock-item{touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform 160ms ease,box-shadow 160ms ease}
+.inspector-v3 button:active,.ir-dock-item:active{transform:scale(.98)}
+.ir-dock-item:focus-visible{outline:3px solid var(--ir-primary-2);outline-offset:2px}
+:root:not([data-theme="dark"]){color-scheme:light;--ir-blue-2:#08774f;--ir-card-shadow:0 12px 30px #153d2910,0 2px 5px #153d2908,inset 0 1px 0 #fff;--ir-soft-shadow:0 5px 16px #153d290c,inset 0 1px 0 #fff}
+:root:not([data-theme="dark"]) .ir-ai-action{background:linear-gradient(145deg,#14976a,#08734f)}
+:root[data-theme="dark"]{--ir-border:rgba(84,153,255,.32);--ir-card-shadow:0 14px 34px #0007,0 2px 8px #006bff18,inset 0 1px 1px #b8e5ff26;--ir-soft-shadow:0 7px 20px #0005,inset 0 1px 1px #b8e5ff26}
+:root[data-theme="dark"] .ir-mission-card,
+:root[data-theme="dark"] .ir-quick,
+:root[data-theme="dark"] .ir-recent-card{background:linear-gradient(135deg,#142e5caa,#04233bd9 55%,#03132bea)}
+:root[data-theme="dark"] .ir-primary-btn,
+:root[data-theme="dark"] .ir-map-tab.is-active{background:linear-gradient(170deg,#37bcff 0%,#0789ff 22%,#0755e9 75%,#087cfa);border:1px solid #86dcff;box-shadow:inset 0 1px 3px #e0f8ff99,inset 0 -2px 5px #66ccff55,0 4px 14px #007bff66,0 0 22px #008cff33}
+:root[data-theme="dark"] .ir-bottom-dock{box-shadow:inset 0 1px 2px #9ccfff44,0 -4px 28px #006aff22,0 12px 32px #0008;border-color:#427adc99}
+:root[data-theme="dark"] .ir-dock-item.is-active{color:#e3f7ff;text-shadow:0 0 12px #00b7ff}
+:root[data-theme="dark"] .ir-avatar{box-shadow:0 0 0 3px #006bff22,0 0 18px #009dff66,inset 0 1px 8px #008aff55}
+@media(min-width:760px){
+ #inspector-reference-dashboard.inspector-v3{padding:24px 24px 120px}
+ .ir-map-wrap{height:380px}
+ .ir-profile-copy h1{font-size:28px}
+ .ir-quick{min-height:96px}
+ .ir-recent-row{grid-auto-columns:calc((100% - 16px)/3)}
+}
+@media(max-width:360px){
+ .ir-ai-strip{grid-template-columns:32px minmax(0,1fr) 82px;gap:6px}
+ .ir-ai-badge{width:32px;height:32px}
+ .ir-ai-action{padding:0 5px}
+ .ir-mission-main{grid-template-columns:54px minmax(0,1fr) 72px;gap:6px}
+ .ir-mission-thumb{width:54px;height:64px}
+ .ir-section-title h2{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){.ir-dock-item{transition:none!important}}
+
