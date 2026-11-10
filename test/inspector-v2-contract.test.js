@@ -278,3 +278,9 @@ test('same-origin capture framing remains security-bounded', () => {
   assert.match(vercel, /frame-ancestors 'none'/);
   assert.doesNotMatch(vercel, /"key"\s*:\s*"X-Frame-Options"[\s\S]*?"value"\s*:\s*"ALLOWALL"/);
 });
+
+
+test('Direct inspector legacy dashboard visits redirect to Inspector V2', () => {
+  assert.match(dashboard, /const captureV2 = new URLSearchParams\(window\.location\.search\)\.get\('capture'\) === 'v2';/);
+  assert.match(dashboard, /if \(!captureV2\) \{[\s\S]*?window\.location\.replace\('inspector-v2\.html'\);[\s\S]*?return;/);
+});
