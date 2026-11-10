@@ -1339,3 +1339,21 @@ body{
     0 16px 42px rgba(27,64,54,.10),
     0 0 0 1px rgba(255,255,255,.34);
 }
+
+
+/* ===== Inspector V2 — utility sheets ===== */
+button:disabled{cursor:not-allowed;opacity:.42;filter:saturate(.65)}
+.utility-sheet{position:fixed;z-index:5500;inset:0;display:none}
+.utility-sheet.is-open{display:block}
+.utility-sheet-panel{z-index:2}
+.utility-content{display:grid;gap:8px;margin-top:12px}
+.utility-row{
+  min-height:58px;padding:10px 12px;border:1px solid var(--line);border-radius:15px;
+  background:linear-gradient(145deg,rgba(15,49,96,.68),rgba(4,21,47,.72));
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 12px 30px rgba(0,0,0,.18);
+}
+.utility-row span{font-size:9px;color:var(--muted)}
+.utility-row strong{font-size:11px;text-align:left;overflow-wrap:anywhere}
+.utility-empty{padding:20px 12px;text-align:center;color:var(--muted);font-size:10px;line-height:1.7}
+:root[data-theme="light"] .utility-row{background:#fff;border-color:rgba(8,127,91,.12);box-shadow:0 12px 30px rgba(20,67,53,.08)}
