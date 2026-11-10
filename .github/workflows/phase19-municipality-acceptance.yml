@@ -18,6 +18,9 @@ on:
       - fix/embedded-lands-preview
       - security/rc2-firebase-admin-14
       - design/spatial-intelligence-v1
+      - codex/inspector-v2-full-replacement
+  pull_request:
+    branches: [release/municipality-final-v6]
   workflow_dispatch:
 
 jobs:
@@ -55,6 +58,9 @@ jobs:
           node --check owner-invoices.js
           node --check api/_lib/ownerOpsSupport.js
           node --check public-enhancements.js
+
+      - name: Inspector V2 trusted repository and integration contracts
+        run: npm run test:inspector
 
       - name: Final responsive contract
         run: node --test test/final-release-responsive-contract.test.js

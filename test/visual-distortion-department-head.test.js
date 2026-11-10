@@ -54,15 +54,15 @@ test('contractor registry remains separate and assignment is gated by an active 
 });
 
 test('inspector verification is required before department-head closure', () => {
-  const inspectorPage = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+  const inspectorPage = fs.readFileSync(path.join(root, 'inspector/app.mjs'), 'utf8');
   assert.match(usersApi, /action === 'verifyFieldObservation'/);
   assert.match(usersApi, /reporting_inspector_required/);
   assert.match(usersApi, /action: 'verify_contractor_work'/);
   assert.match(usersApi, /action: 'return_to_contractor'/);
   assert.match(usersApi, /action === 'closeFieldObservation'/);
   assert.match(usersApi, /inspector_verification_required/);
-  assert.match(inspectorPage, /id="inspectorVerificationPanel"/);
-  assert.match(inspectorPage, /action:'verifyFieldObservation'/);
+  assert.match(inspectorPage, /id=\"inspector-review\"|review\.id\s*=\s*["']inspector-review["']/);
+  assert.match(inspectorPage, /action:\s*["']verifyFieldObservation["']/);
   assert.match(runtime, /o\.inspectorVerification\?\.status === 'VERIFIED'/);
   assert.match(runtime, /closeFieldObservation/);
 });
@@ -75,8 +75,8 @@ test('contractor workflow remains execution owner until PENDING_REVIEW', () => {
 });
 
 test('inspector still cannot close visual distortion directly', () => {
-  const inspectorPage = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
-  assert.match(inspectorPage, /toggleHidden\('completeObservationBtn', true\)/);
+  const inspectorPage = fs.readFileSync(path.join(root, 'inspector/app.mjs'), 'utf8');
+  assert.doesNotMatch(inspectorPage, /action:\s*["']closeFieldObservation["']/);
   assert.match(inspectorPage, /الإغلاق النهائي يتم من رئيس قسم الحصر الميداني/);
   assert.doesNotMatch(inspectorPage, /currentSelectedObservation\.status = 'COMPLETED'/);
 });

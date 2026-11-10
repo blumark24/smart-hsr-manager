@@ -57,11 +57,11 @@ test('canonical workforce router binds institutional path to the real project wo
   assert.match(workspaceAccess, /if \(flags\.hasFieldDepartmentHeadRole\) return ['"]department-head\.html['"]/);
   assert.match(workspaceAccess, /d\.role === ['"]supervisor['"]\) return ['"]manager\.html['"]/);
   assert.match(workspaceAccess, /d\.role === ['"]contractor['"]\) return ['"]mobile-map\.html['"]/);
-  assert.match(workspaceAccess, /return ['"]dashboard\.html['"]/);
+  assert.match(workspaceAccess, /return ['"]inspector\.html['"]/);
   assert.match(workspaceAccess, /MOBILITY_ROUTE = ['"]department-head\.html\?mode=mobility['"]/);
   assert.match(workspaceAccess, /['"]admin-affairs\.html['"]/);
 
-  for (const target of ['department-head.html','manager.html','mobile-map.html','dashboard.html','admin-affairs.html']) {
+  for (const target of ['department-head.html','manager.html','mobile-map.html','inspector.html','admin-affairs.html']) {
     assert.ok(fs.existsSync(path.join(root, target)), `missing routed workspace: ${target}`);
   }
 });

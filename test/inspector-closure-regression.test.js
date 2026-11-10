@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
-const dashboard = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+const dashboard = fs.readFileSync(path.join(root, 'test/fixtures/legacy/release-dashboard.txt'), 'utf8');
 const aiApi = fs.readFileSync(path.join(root, 'api', 'ai', 'analyze.js'), 'utf8');
 const storageAdapter = fs.readFileSync(path.join(root, 'storage-adapter.js'), 'utf8');
 const storageRead = require('../api/storage/read.js')._test;

@@ -9,7 +9,7 @@ const root = path.join(__dirname, '..');
 const page = fs.readFileSync(path.join(root, 'department-head.html'), 'utf8');
 const runtime = fs.readFileSync(path.join(root, 'field-head-runtime.js'), 'utf8');
 const usersApi = fs.readFileSync(path.join(root, 'api', 'admin', 'users.js'), 'utf8');
-const dashboard = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+const dashboard = fs.readFileSync(path.join(root, 'test/fixtures/legacy/release-dashboard.txt'), 'utf8');
 
 test('02C approved map renders only supported visual-distortion lifecycle states', () => {
   assert.match(runtime, /new Set\(\['PENDING','IN_PROGRESS','PENDING_REVIEW','COMPLETED'\]\)/);

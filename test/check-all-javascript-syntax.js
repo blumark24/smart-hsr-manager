@@ -14,7 +14,7 @@ function collect(relative){
   }
 }
 
-for(const directory of ['platform','preview-only','scripts','test']){
+for(const directory of ['api','inspector','platform','preview-only','scripts','test']){
   if(fs.existsSync(path.join(root,directory))) collect(directory);
 }
 

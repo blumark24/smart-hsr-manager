@@ -6,7 +6,7 @@ const {resolveInspectorAiPreview}=require('../platform/config/inspector-ai-previ
 const {createLocalPreviewSuggestion}=require('../platform/ai/inspector-human-review-preview-service');
 const browser=require('../preview-only/inspector-human-review-preview');
 const {MUNICIPAL_INTELLIGENCE_FIXTURES}=require('./fixtures/municipal-intelligence-fixtures');
-const dashboard=fs.readFileSync(path.join(__dirname,'..','dashboard.html'),'utf8');
+const dashboard=fs.readFileSync(path.join(__dirname,'..','test/fixtures/legacy/release-dashboard.txt'),'utf8');
 
 test('preview flag is disabled by default and denies Production hosts',()=>{assert.equal(resolveInspectorAiPreview({hostname:'localhost',localMock:true}).enabled,false);assert.equal(resolveInspectorAiPreview({hostname:'smart-hsr.example',search:'?inspectorAiPreview=1',localMock:true}).enabled,false);assert.equal(browser.resolveFlag({hostname:'smart-hsr.example',search:'?inspectorAiPreview=1'}).enabled,false)});
 test('explicit localhost preview activates deterministic local mock only',()=>{assert.equal(resolveInspectorAiPreview({hostname:'localhost',search:'?inspectorAiPreview=1',localMock:true}).enabled,true);assert.equal(browser.resolveFlag({hostname:'127.0.0.1',search:'?inspectorAiPreview=1'}).enabled,true)});

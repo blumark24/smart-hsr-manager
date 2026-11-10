@@ -1,63 +1,11 @@
 'use strict';
-
-const test=require('node:test');
-const assert=require('node:assert/strict');
-const fs=require('node:fs');
-const path=require('node:path');
-const root=path.resolve(__dirname,'..');
-const page=fs.readFileSync(path.join(root,'dashboard.html'),'utf8');
-
-test('Inspector record is a lightweight in-page route, not a modal',()=>{
-  assert.match(page,/id="inspector-record-page"/);
-  assert.match(page,/body\.inspector-record-view #inspector-record-page/);
-  assert.match(page,/function openInspectorRecord\(\)/);
-  assert.doesNotMatch(page,/<dialog[^>]+inspector-record/i);
-  assert.doesNotMatch(page,/showModal\(\)[\s\S]{0,80}inspectorRecord/i);
-});
-
-test('Inspector record reuses only the already scoped personal observation set',()=>{
-  const start=page.indexOf('function inspectorRecordFilteredRows()');
-  const end=page.indexOf('function inspectorRecordWhen',start);
-  const block=page.slice(start,end);
-  assert.match(block,/ownPersonalObservations\(\)/);
-  assert.doesNotMatch(block,/collection\(|where\(|getDocs\(|onSnapshot\(/);
-  assert.match(page,/return observationsData\.filter\(o=>o\.organizationId===organizationId&&o\.createdByUid===uid\)/);
-});
-
-test('Inspector record has search, status filter, date-time and compact rows',()=>{
-  assert.match(page,/id="inspectorRecordSearch"/);
-  assert.match(page,/id="inspectorRecordStatusFilter"/);
-  assert.match(page,/inspectorRecordStatus==='ALL'\|\|o\.status===inspectorRecordStatus/);
-  assert.match(page,/formatObservationDate\(observation\?\.createdAt\|\|observation\?\.date/);
-  assert.match(page,/class="inspector-record-row"/);
-});
-
-test('Dock سجل opens the in-page record and home exits it',()=>{
-  assert.match(page,/\['mobileNavLog',\(\)=>openInspectorRecord\(\)\]/);
-  assert.match(page,/\['mobileNavHome',\(\)=>\{closeInspectorRecord\(\)/);
-  assert.match(page,/document\.getElementById\('refLogBtn'\)\?\.addEventListener\('click',focusPersonalObservations\)/);
-  assert.match(page,/function focusPersonalObservations\(\)\{ openInspectorRecord\(\); \}/);
-});
-
-test('Record details load evidence only after a selected record is opened',()=>{
-  const start=page.indexOf('async function showInspectorRecordDetail');
-  const end=page.indexOf('function showInspectorRecordList',start);
-  const block=page.slice(start,end);
-  assert.match(block,/resolveEvidenceReference\(obs\.imagePath\)/);
-  assert.match(block,/resolveEvidenceReference\(obs\.afterImagePath\)/);
-  assert.match(block,/inspectorRecordSelectedId=docId/);
-});
-
-test('Record stays synchronized with the trusted observation stream',()=>{
-  assert.match(page,/renderObservationsList\(observationsData\);\s*renderInspectorRecord\(\);\s*renderPersonalMap\(\);/);
-  assert.match(page,/renderInspectorCounts\(\);\s*renderInspectorRecord\(\);\s*renderPersonalMap\(\);/);
-});
-
-
-test('Inspector record JavaScript block parses as valid browser JavaScript',()=>{
-  const start=page.indexOf("let inspectorRecordQuery=''");
-  const end=page.indexOf('function renderPersonalMapAuthority',start);
-  assert.ok(start>=0&&end>start,'record logic block missing');
-  const block=page.slice(start,end);
-  assert.doesNotThrow(()=>new Function(block));
-});
+// V2 replaces the old in-page record DOM. Behavioral repository tests are in inspector-v2.test.js.
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const read=name=>fs.readFileSync(path.join(__dirname,'..',name),'utf8');
+const app=read('inspector/app.mjs'),repository=read('api/_lib/inspectorObservations.js');
+test('Inspector record is the independent tasks route',()=>{assert.match(app,/route === "tasks"/);assert.match(read('inspector.html'),/href="#tasks"/);assert.doesNotMatch(app,/dashboard\.html|iframe/)});
+test('Record repository scopes every page to authenticated organization and creator',()=>{assert.match(repository,/where\("organizationId", "==", caller\.organizationId\)/);assert.match(repository,/where\("createdByUid", "==", caller\.uid\)/);assert.match(repository,/owns\(cursor\.data\(\), caller\)/)});
+test('Record has search, status filtering and compact rows',()=>{assert.match(app,/id="task-search"/);assert.match(app,/id="task-status"/);assert.match(app,/class="report-row"/)});
+test('Record pages are bounded and can be explicitly extended',()=>{assert.match(repository,/\.limit\(26\)/);assert.match(repository,/slice\(0, 25\)/);assert.match(app,/data-action="more"/)});
+test('Selected record loads private before and after evidence',()=>{assert.match(app,/async function openCase/);assert.match(app,/before-evidence/);assert.match(app,/after-evidence/);assert.match(app,/\.evidence\(key\)/)});
+test('Record refresh only accepts the current authenticated session response',()=>{assert.match(app,/epoch !== sessionEpoch/);assert.match(app,/api\.list/);assert.match(app,/await refresh\(\)/)});

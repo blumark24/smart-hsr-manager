@@ -18,7 +18,7 @@ test('field survey department head remains a first-class login destination', () 
   assert.match(login, /return 'department-head\.html'/);
   assert.match(login, /return 'mobile-map\.html'/);
   assert.match(login, /return 'manager\.html'/);
-  assert.match(login, /return 'dashboard\.html'/);
+  assert.match(login, /return 'inspector\.html'/);
 });
 
 test('canonical premium board delegates authentication to a fail-closed field runtime', () => {

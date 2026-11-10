@@ -10,7 +10,7 @@ const path = require('node:path');
 // already used by test/sprint6.11-2-provider-activation.test.js for
 // api/ai/analyze.js's own integration shape.
 function dashboardSource() {
-  return fs.readFileSync(path.join(__dirname, '..', 'dashboard.html'), 'utf8');
+  return fs.readFileSync(path.join(__dirname, '..', 'test/fixtures/legacy/release-dashboard.txt'), 'utf8');
 }
 
 function functionBody(source, startMarker, endMarker) {

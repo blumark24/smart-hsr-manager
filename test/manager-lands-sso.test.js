@@ -57,7 +57,7 @@ test('1. login.html keeps role probing memory-only and persists the workforce se
   const resolver = read('workspace-access.js');
   assert.match(resolver, /return 'mobile-map\.html'/);
   assert.match(resolver, /return 'manager\.html'/);
-  assert.match(resolver, /return 'dashboard\.html'/);
+  assert.match(resolver, /return 'inspector\.html'/);
 });
 
 // ---- eligibility (pure) ----

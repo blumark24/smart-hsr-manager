@@ -9,9 +9,10 @@
     "build:css": "npx tailwindcss -i ./input.css -o ./output.css --minify",
     "watch:css": "npx tailwindcss -i ./input.css -o ./output.css --watch",
     "test:rules": "node test/run-firestore-rules.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test test/*.test.js",
     "test:lands-ui": "node --test test/lands-shell-ui.test.js test/embedded-lands-preview.test.js test/manager-lands-gis.test.js",
-    "test:lands": "node --test test/lands-shell-ui.test.js test/embedded-lands-preview.test.js test/manager-lands-gis.test.js test/manager-lands-sso.test.js test/lands-bootstrap.test.js test/manager-lands-bridge-integration.test.js test/phase19-2-lands-role-matrix.test.js"
+    "test:lands": "node --test test/lands-shell-ui.test.js test/embedded-lands-preview.test.js test/manager-lands-gis.test.js test/manager-lands-sso.test.js test/lands-bootstrap.test.js test/manager-lands-bridge-integration.test.js test/phase19-2-lands-role-matrix.test.js",
+    "test:inspector": "node --test test/inspector-v2.test.js test/inspector-v2-visual.test.js"
   },
   "keywords": [],
   "author": "",

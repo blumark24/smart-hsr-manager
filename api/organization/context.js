@@ -194,6 +194,9 @@ function sanitizedMapContext(organizationId, organizationName, organizationData)
 }
 
 async function handler(req, res) {
+  const inspectorAction = req.query?.inspectorAction || new URL(req.url || '/', 'http://localhost').searchParams.get('inspectorAction');
+  if (inspectorAction === 'observations') return require('../_lib/inspectorObservations')(req, res);
+
   const embeddedLandsAction = (req.query && typeof req.query.embeddedLandsAction === 'string' ? req.query.embeddedLandsAction : (() => { try { return new URL(req.url || '/', 'http://localhost').searchParams.get('embeddedLandsAction') || ''; } catch (_) { return ''; } })()).trim();
   if (embeddedLandsAction) {
     const { handleEmbeddedLandsHttp } = require('../_lib/embeddedLandsRuntime');

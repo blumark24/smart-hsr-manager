@@ -134,6 +134,15 @@
           "value": "no-store, no-cache, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/inspector.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -172,6 +181,10 @@
     {
       "source": "/api/report/work-order",
       "destination": "/api/report?kind=work-order"
+    },
+    {
+      "source": "/api/inspector/observations",
+      "destination": "/api/organization/context?inspectorAction=observations"
     }
   ]
 }

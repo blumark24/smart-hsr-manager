@@ -1,6 +1,6 @@
 'use strict';
 
-const crypto = require('crypto');
+const { pendingUploadId, canonicalBeforeEvidenceKey } = require('../_lib/evidenceBinding');
 const { getDb, FieldValue } = require('../_lib/firebaseAdmin');
 const { verifyRequestToken, activeIsNotFalse } = require('../_lib/authz');
 
@@ -16,19 +16,6 @@ function sendJson(res, statusCode, payload) {
 function cleanId(value) {
   const clean = typeof value === 'string' ? value.trim() : '';
   return /^[A-Za-z0-9_-]{1,128}$/.test(clean) ? clean : '';
-}
-
-function pendingUploadId(objectKey) {
-  return crypto.createHash('sha256').update(objectKey, 'utf8').digest('hex');
-}
-
-function canonicalBeforeEvidenceKey(objectKey, organizationId, observationId) {
-  const key = typeof objectKey === 'string' ? objectKey.trim() : '';
-  const prefix = `observations/${organizationId}/${observationId}/before/`;
-  if (!key.startsWith(prefix) || key.length <= prefix.length || key.length > 512) return '';
-  const filename = key.slice(prefix.length);
-  if (filename.includes('/') || filename.includes('..') || filename.includes('\\')) return '';
-  return /^[A-Za-z0-9_-]+\.(?:jpg|jpeg|png|webp)$/i.test(filename) ? key : '';
 }
 
 function evaluateFinalization(upload, observation, caller, observationId, objectKey) {

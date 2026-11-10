@@ -109,7 +109,7 @@
     if (flags.hasFieldDepartmentHeadRole) return 'department-head.html';
     if (d.role === 'contractor') return 'mobile-map.html';
     if (d.role === 'supervisor') return 'manager.html';
-    return 'dashboard.html';
+    return 'inspector.html';
   }
 
   function resolveWorkspaces(d) {
@@ -183,7 +183,7 @@
     const mode = new URLSearchParams(search || '').get('mode');
     if (file === 'department-head.html') return mode === 'mobility' ? 'mobility' : 'field';
     if (file === 'admin-affairs.html') return 'admin_affairs';
-    if (['dashboard.html', 'mobile-map.html', 'manager.html'].includes(file)) return 'field';
+    if (['inspector.html', 'dashboard.html', 'mobile-map.html', 'manager.html'].includes(file)) return 'field';
     return null;
   }
 

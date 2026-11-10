@@ -81,7 +81,7 @@ test('primary workspace stays institutional; Mobility is an additional workspace
   const field = WA.resolveWorkspaces({ ...ORG, role: 'inspector', institutionalRole: 'employee', administration: 'إدارة الحصر الميداني', entitlements: { capabilities: ['mobility.access'] } });
   assert.equal(field.primary, 'field');
   assert.deepEqual(field.workspaces.map(w => w.id), ['field', 'mobility']);
-  assert.equal(field.workspaces[0].route, 'dashboard.html');
+  assert.equal(field.workspaces[0].route, 'inspector.html');
   assert.equal(field.workspaces[1].route, 'department-head.html?mode=mobility');
 });
 
