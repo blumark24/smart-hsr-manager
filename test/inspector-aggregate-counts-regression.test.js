@@ -52,7 +52,7 @@ test('inspector KPI surfaces use aggregate totals instead of loaded-array length
   assert.match(light, /inspectorServerCounts\.completed/);
   assert.doesNotMatch(light, /String\(own\.length\)/);
 
-  const reference = between('function renderReferenceInspectorDashboard(own)', 'function updateInspectorConnectionStatus');
+  const reference = between('function renderReferenceInspectorDashboard(own)', "window.addEventListener('online'");
   assert.match(reference, /refTotalCount'.*inspectorServerCounts\.total/s);
   assert.doesNotMatch(reference, /refTotalCount'.*own\.length/s);
 });
