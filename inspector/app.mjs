@@ -1,9 +1,9 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import {
   getAuth,
   onAuthStateChanged,
   signOut,
-} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { resolveFirebaseConfig } from "../firebase-runtime-config.js";
 import { createServices, getGPS } from "./services.mjs";
 import {
@@ -262,7 +262,7 @@ function render() {
           $("statistics").textContent = errorMessage(error);
       });
   } else if (route === "account")
-    main.innerHTML = `<h2>الحساب</h2><section class="glass account"><dl><dt>الاسم</dt><dd>${e(profile.name || "غير مسجل")}</dd><dt>الدور</dt><dd>مراقب ميداني</dd><dt>المؤسسة</dt><dd>${e(profile.organizationId)}</dd><dt>معرّف الحساب</dt><dd>${e(profile.uid)}</dd></dl><p class="muted">إدارة الحساب والصلاحيات من مسؤول المؤسسة.</p><button data-action="logout">تسجيل الخروج</button></section>`;
+    main.innerHTML = `<h2>الحساب</h2><a class="button" href="workspace.html">مساحات العمل المصرح بها</a><section class="glass account"><dl><dt>الاسم</dt><dd>${e(profile.name || "غير مسجل")}</dd><dt>الدور</dt><dd>مراقب ميداني</dd><dt>المؤسسة</dt><dd>${e(profile.organizationId)}</dd><dt>معرّف الحساب</dt><dd>${e(profile.uid)}</dd></dl><p class="muted">إدارة الحساب والصلاحيات من مسؤول المؤسسة.</p><button data-action="logout">تسجيل الخروج</button></section>`;
   lazyThumbnails();
 }
 function newDraft() {
@@ -401,6 +401,12 @@ async function openCase(id) {
   $("case-title").textContent = item.title;
   $("case-content").innerHTML =
     `<small>${e(item.id)}</small><p>${pill(item)}</p><p class="sheet-details">${e(item.details)}</p><p class="muted">${e(item.location || "الموقع غير متوفر")} · ${e(dist(item))}</p><p>المقاول المسؤول: ${e(item.assignedContractorUid || "لم يُسند إلى مقاول")}</p>${item.supervisorNote ? `<p>ملاحظة المشرف: ${e(item.supervisorNote)}</p>` : ""}<div class="evidence-grid"><div><h3>قبل المعالجة</h3><div id="before-evidence">${item.imageObjectKey || item.imagePath ? "جارٍ تحميل الدليل…" : "لا يوجد دليل"}</div></div><div><h3>بعد المعالجة</h3><div id="after-evidence">${item.afterImagePath ? "جارٍ تحميل الدليل…" : "لا يوجد دليل"}</div></div></div><p>${e(item.resolutionNote || "")}</p><div class="actions"><button class="primary" data-navigate="${e(id)}" ${coordinates(item) ? "" : "disabled"}>الاتجاه إلى الموقع</button><button data-ai="${e(id)}">استشارة AI</button></div><div class="actions"><button data-advisory="root-cause" data-id="${e(id)}">إرشادات التحقق الميداني</button><button data-advisory="work-order" data-id="${e(id)}">مسودة نطاق العمل</button></div><div id="advisory-output" class="field-info"></div><p id="case-ai" class="field-info">${e(item.aiAnalysis?.explanation || "استشارة فقط؛ الاعتماد والإغلاق يخضعان للمسؤول المخوّل.")}</p>${canAttachAfter(item) ? `<form id="after-form"><h3>توثيق المعالجة</h3><p class="field-info">إضافة دليل فقط؛ لا يُغيّر الحالة ولا يغلق البلاغ.</p><label>صورة بعد المعالجة<input id="after-photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" required></label><label>ملاحظة المعالجة<textarea id="after-note" maxlength="3000" required></textarea></label><button type="submit">حفظ دليل المعالجة</button><p id="after-result" role="status"></p></form>` : '<p class="field-info">تعديل دليل المعالجة غير متاح لهذه الحالة وفق الصلاحيات الحالية.</p>'}`;
+  const review=document.createElement('section');
+  if(item.status==='PENDING_REVIEW' && item.assignedContractorUid && item.afterImagePath && item.resolutionNote){
+    review.id='inspector-review';
+    review.innerHTML=`<h3>مراجعة معالجة المقاول</h3><p class="field-info">${item.inspectorVerification?.status==='VERIFIED'?'تم اعتماد المعالجة؛ بانتظار إغلاق رئيس القسم.':'راجع أدلة قبل وبعد المعالجة قبل القرار.'}</p><label>ملاحظة التحقق<textarea id="review-note" maxlength="3000"></textarea></label><div class="actions"><button data-review="ACCEPT" data-id="${e(id)}">اعتماد المعالجة</button><button data-review="RETURN" data-id="${e(id)}">إعادة للمقاول</button></div><p id="review-result" role="status"></p>`;
+    $('case-content').append(review);
+  }
   if (!sheet.open) sheet.showModal();
   for (const [field, key] of [
     ["before-evidence", item.imageObjectKey || item.imagePath],
@@ -556,6 +562,17 @@ document.addEventListener("click", async (event) => {
     } finally {
       button.disabled = false;
     }
+    return;
+  }
+  if(button.dataset.review){
+    const note=$('review-note').value.trim();
+    if(button.dataset.review==='RETURN'&&!note){$('review-result').textContent='اكتب سبب الإعادة للمقاول.';return;}
+    const controls=[...sheet.querySelectorAll('[data-review]')];controls.forEach(b=>b.disabled=true);
+    try{
+      const result=await api.request('/api/admin/users',{action:'verifyFieldObservation',observationId:button.dataset.id,decision:button.dataset.review,note});
+      if(!['VERIFIED','RETURNED'].includes(result.verificationStatus))throw new Error('unconfirmed');
+      await refresh();closeSheet();notice(result.verificationStatus==='VERIFIED'?'تم اعتماد المعالجة؛ الإغلاق النهائي يتم من رئيس قسم الحصر الميداني.':'أعيدت الحالة إلى المقاول لاستكمال المعالجة.');
+    }catch(error){if($('review-result'))$('review-result').textContent=errorMessage(error)}finally{controls.forEach(b=>b.disabled=false)}
     return;
   }
   if (button.dataset.ai) {

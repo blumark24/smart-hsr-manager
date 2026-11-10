@@ -1,13 +1,14 @@
 "use strict";
 // Isolated browser integration: explicit test-only Firebase/API doubles. Never uses real accounts/data.
-const {
-  chromium,
-} = require("/opt/codex/cua_node/lib/node_modules/playwright-core");
+let playwright;
+try { playwright=require(process.env.PLAYWRIGHT_MODULE||'playwright'); }
+catch (_) { playwright=require('/opt/codex/cua_node/lib/node_modules/playwright-core'); }
+const {chromium}=playwright;
 const fs = require("node:fs"),
   assert = require("node:assert/strict");
 (async () => {
   const browser = await chromium.launch({
-    executablePath: "/usr/bin/chromium",
+    executablePath: process.env.CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
     headless: true,
     args: ["--no-sandbox"],
   });
@@ -141,6 +142,12 @@ const fs = require("node:fs"),
         record.afterImagePath = body.objectKey;
         record.resolutionNote = body.note;
         value = { confirmed: true, id: body.id };
+      } else if(url.pathname === '/api/admin/users' && body.action === 'verifyFieldObservation') {
+        const record=records.find(r=>r.id===body.observationId);
+        const verificationStatus=body.decision==='ACCEPT'?'VERIFIED':'RETURNED';
+        record.inspectorVerification={status:verificationStatus};
+        if(body.decision==='RETURN')record.status='IN_PROGRESS';
+        value={status:record.status,verificationStatus};
       } else if (url.pathname === "/api/ai/analyze") {
         status = 403;
         value = {
@@ -187,6 +194,15 @@ const fs = require("node:fs"),
     await page.waitForFunction(
       () => !document.getElementById("case-sheet").open,
     );
+    records.push({id:'review-report',title:'حالة مراجعة تجريبية',status:'PENDING_REVIEW',assignedContractorUid:'test-contractor',afterImagePath:'observations/test-org/review-report/after/test.jpg',resolutionNote:'معالجة موثقة'});
+    await page.locator('#nav a[href="#tasks"]').click();
+    await page.locator('[data-action="refresh"]').click();
+    await page.locator('[data-case="review-report"]').click();
+    await page.locator('#review-note').fill('راجعت الأدلة');
+    await page.locator('[data-review="ACCEPT"]').click();
+    await page.waitForFunction(()=>!document.getElementById('case-sheet').open);
+    assert.equal(records.find(r=>r.id==='review-report').inspectorVerification.status,'VERIFIED');
+    assert.equal(records.find(r=>r.id==='review-report').status,'PENDING_REVIEW');
     assert.equal(records[0].status, "IN_PROGRESS");
     assert.ok(records[0].afterImagePath);
     await page.locator('#nav a[href="#tasks"]').click();
@@ -237,6 +253,7 @@ const fs = require("node:fs"),
       routes: "PASS",
       captureRetry: "PASS",
       afterEvidenceWithoutClosure: "PASS",
+      contractorVerificationWithoutClosure: "PASS",
       mapSelection: "PASS",
       overflow: "PASS",
       legacyRedirect: "PASS",

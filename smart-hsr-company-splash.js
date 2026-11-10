@@ -1,0 +1,107 @@
+(function(){
+  "use strict";
+  const script=document.currentScript;
+  const mode=(script&&script.dataset.hsrSplash)||"auto";
+  const force=new URLSearchParams(location.search).get("splash")==="1";
+  const key="smart-hsr.company-splash.v8";
+  let root=null;
+  let startedAt=performance.now();
+  let hiddenUi=[];
+  let uiObserver=null;
+  const minimum=1250;
+
+  function shouldShow(){
+    if(mode==="manual") return true;
+    if(force) return true;
+    try{return sessionStorage.getItem(key)!=="shown";}catch{return true;}
+  }
+  function markShown(){
+    try{sessionStorage.setItem(key,"shown");}catch{}
+  }
+  function isolateUi(){
+    const selectors=[".ai-trigger",".ai-panel",".mobile-bottom-nav",".toast","[data-ai-trigger]","[aria-label*=\"المساعد\"]"];
+    hiddenUi=[];
+    const hide=()=>{
+      document.querySelectorAll(selectors.join(",")).forEach(el=>{
+        if(root&&root.contains(el)) return;
+        if(!hiddenUi.includes(el)) hiddenUi.push(el);
+        el.style.setProperty("display","none","important");
+        el.style.setProperty("visibility","hidden","important");
+        el.style.setProperty("pointer-events","none","important");
+      });
+    };
+    hide();
+    if(uiObserver) uiObserver.disconnect();
+    uiObserver=new MutationObserver(hide);
+    uiObserver.observe(document.documentElement,{childList:true,subtree:true});
+  }
+  function restoreUi(){
+    if(uiObserver){uiObserver.disconnect();uiObserver=null;}
+    hiddenUi.forEach(el=>{
+      if(!el||!el.style) return;
+      el.style.removeProperty("display");
+      el.style.removeProperty("visibility");
+      el.style.removeProperty("pointer-events");
+    });
+    hiddenUi=[];
+  }
+  function mount(){
+    if(root||!shouldShow()) return root;
+    root=document.createElement("div");
+    root.id=mode==="manual"?"bootScreen":"hsrCompanySplash";
+    root.className="hsr-company-splash";
+    root.setAttribute("role","status");
+    root.setAttribute("aria-live","polite");
+    root.setAttribute("aria-label","جاري تشغيل منصة SMART HSR");
+    root.innerHTML='<div class="hsr-company-splash__core" aria-hidden="true">'+
+      '<div class="hsr-company-splash__brand hsr-company-splash__brand--minimal">'+
+        '<img class="hsr-company-splash__manager-mark" src="/smart-hsr-mark.svg" alt="">'+
+        '<div class="hsr-company-splash__manager-wordmark">'+
+          '<div class="hsr-company-splash__manager-name"><span>SMART</span><span>HSR</span></div>'+
+        '</div>'+
+      '</div>'+
+      '<span class="hsr-company-splash__line"></span>'+
+    '</div>';
+    document.documentElement.classList.add("hsr-splash-active");
+    document.documentElement.appendChild(root);
+    isolateUi();
+    startedAt=performance.now();
+    return root;
+  }
+  function setStatus(label,ready){
+    if(!root) return;
+    const span=root.querySelector(".hsr-company-splash__status span");
+    if(span&&label) span.textContent=label;
+    if(ready) root.dataset.ready="true";
+  }
+  function dismiss(){
+    if(!root) return;
+    const remaining=Math.max(0,minimum-(performance.now()-startedAt));
+    window.setTimeout(()=>{
+      if(!root) return;
+      root.dataset.ready="true";
+      root.classList.add("is-exiting");
+      markShown();
+      const doomed=root;
+      window.setTimeout(()=>{
+        if(doomed&&doomed.parentNode) doomed.remove();
+        if(root===doomed) root=null;
+        document.documentElement.classList.remove("hsr-splash-active");
+        restoreUi();
+      },260);
+    },remaining);
+  }
+  function show(){
+    if(!root) mount();
+  }
+
+  window.SmartHSRCompanySplash={mount,show,dismiss,setStatus};
+  mount();
+
+  if(mode!=="manual"&&root){
+    const done=()=>dismiss();
+    if(document.readyState==="complete") done();
+    else window.addEventListener("load",done,{once:true});
+    window.setTimeout(done,2600);
+  }
+})();

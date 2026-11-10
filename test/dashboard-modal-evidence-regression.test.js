@@ -7,7 +7,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const storageRead = require('../api/storage/read.js')._test;
 
-const dashboard = fs.readFileSync(path.join(__dirname, '..', 'test/fixtures/legacy/dashboard.txt'), 'utf8');
+const dashboard = fs.readFileSync(path.join(__dirname, '..', 'test/fixtures/legacy/release-dashboard.txt'), 'utf8');
 
 function loadEvidenceNormalizer() {
   const match = dashboard.match(/function firstEvidenceReference[\s\S]*?(?=\nfunction subscribeObservations\(\))/);

@@ -10,7 +10,7 @@ const db = fakes.store,
 require.cache[require.resolve("../api/_lib/firebaseAdmin")] = {
   exports: { getDb: () => db, getAuth: () => auth, FieldValue },
 };
-const handler = require("../api/inspector/observations"),
+const handler = require("../api/_lib/inspectorObservations"),
   { validateDraft, uploadAllowed, createObservation, attachAfter } =
     handler._test;
 const { pendingUploadId } = require("../api/storage/finalize")._test;
@@ -257,7 +257,7 @@ test("runtime uses independent V2; historical UI is inert and excluded from depl
   assert(!/iframe|dashboard\.html|modal-script/.test(html + app));
   assert.match(read("dashboard.html"), /inspector.html/);
   assert(!/firebase|modal|iframe/i.test(read("dashboard.html")));
-  assert.match(read("login.html"), /href = 'inspector.html'/);
+  assert.match(read("workspace-access.js"), /return 'inspector.html'/);
   assert.match(read(".vercelignore"), /test\//);
   assert.match(app, /saved\.confirmed\s*!==\s*true/);
   assert.match(app, /URL.revokeObjectURL/);
@@ -416,4 +416,22 @@ test("authoritative owner and manager records cannot enter V2 through a stale in
     db.seed(collection + "/ins", data);
     assert.equal((await call("POST", draft())).statusCode, 403);
   }
+});
+
+test('Vercel rewrite dispatches trusted creation through the existing context function',async()=>{
+  setup();seedUpload();
+  const context=require('../api/organization/context');
+  const response={setHeader(){},end(value){this.body=JSON.parse(value)}};
+  await context({method:'POST',headers:{authorization:'Bearer token-for-ins'},url:'/api/inspector/observations',query:{inspectorAction:'observations'},body:draft()},response);
+  assert.equal(response.statusCode,200);assert.equal(response.body.confirmed,true);
+  assert.equal(db.docs.get('observations/report').organizationId,'org');
+});
+test('deployment preserves release hardening and does not add a billable function surface',()=>{
+  const root=path.join(__dirname,'..');
+  const config=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
+  assert(config.rewrites.some(r=>r.source==='/api/inspector/observations'&&r.destination==='/api/organization/context?inspectorAction=observations'));
+  assert(config.headers.find(r=>r.source==='/(.*)').headers.some(h=>h.key==='Content-Security-Policy'&&h.value.includes("frame-ancestors 'none'")));
+  assert(!fs.existsSync(path.join(root,'api/inspector/observations.js')));
+  const ignore=fs.readFileSync(path.join(root,'.vercelignore'),'utf8');
+  assert.match(ignore,/api\/report\/root-cause.js/);assert.match(ignore,/test\//);
 });

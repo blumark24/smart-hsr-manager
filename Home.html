@@ -1,212 +1,52 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart HSR — بوابة الإدارة والشركات</title>
-  <meta name="description" content="النظام الذكي لإدارة الجودة والملاحظات الميدانية — بوابة الإدارة والشركات لمتابعة المشاريع والمستخدمين بذكاء واحترافية عالية." />
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* إعدادات أساسية */
-    body {
-      font-family: 'Tajawal', sans-serif;
-      color: #ffffff;
-      min-height: 100vh;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      overflow: hidden;
-      position: relative;
-      padding-top: 120px;
-      background: radial-gradient(circle at 30% 20%, #0ea5a1 0%, #0b2533 85%);
-      background-size: 200% 200%;
-      animation: gradientMove 15s ease-in-out infinite;
-    }
-
-    /* 🌈 حركة خلفية راقية */
-    @keyframes gradientMove {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    /* ✨ الشعار */
-    .logo {
-      width: 150px;
-      height: auto;
-      margin-top: -180px;
-      margin-bottom: 25px;
-      opacity: 0;
-      animation: float 5s ease-in-out infinite, glowIn 2.5s ease forwards;
-      filter: drop-shadow(0 0 25px rgba(255,255,255,0.7));
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    @keyframes glowIn {
-      0% { opacity: 0; filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
-      100% { opacity: 1; filter: drop-shadow(0 0 25px rgba(255,255,255,0.8)); }
-    }
-
-    /* 🩵 العنوان الرئيسي */
-    h1 {
-      font-size: 2.6rem;
-      font-weight: 900;
-      margin-bottom: 0.7rem;
-      letter-spacing: 0.8px;
-      color: #fff;
-      opacity: 0;
-      animation: slideUp 1.3s ease forwards;
-      animation-delay: 0.3s;
-      text-shadow: 0 2px 8px rgba(255,255,255,0.3);
-      position: relative;
-    }
-
-    /* ✨ تأثير لمعان متحرك */
-    .shine {
-      display: inline-block;
-      background: linear-gradient(90deg, #ffffff 0%, #e9e9e9 25%, #ffffff 50%, #e9e9e9 75%, #ffffff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: shineMove 3s linear infinite;
-      background-size: 200%;
-    }
-
-    @keyframes shineMove {
-      from { background-position: 200% center; }
-      to { background-position: -200% center; }
-    }
-
-    /* ✨ نبض ضوء ناعم للعنوان */
-    @keyframes pulseGlow {
-      0%, 100% { text-shadow: 0 0 15px rgba(255,255,255,0.5); }
-      50% { text-shadow: 0 0 35px rgba(255,255,255,0.8); }
-    }
-
-    h1:hover {
-      animation: pulseGlow 3s ease-in-out infinite;
-    }
-
-    /* النص */
-    p {
-      color: #f1fdfd;
-      font-size: 1.1rem;
-      max-width: 480px;
-      margin: 0 auto 2.2rem;
-      line-height: 1.9;
-      opacity: 0;
-      animation: slideUp 1.5s ease forwards;
-      animation-delay: 0.6s;
-    }
-
-    /* حركة العناصر */
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* 🌐 الأزرار الزجاجية */
-    .btn {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 999px;
-      padding: 0.7rem 2rem;
-      font-weight: 700;
-      font-size: 1rem;
-      color: #ffffff;
-      cursor: pointer;
-      transition: all 0.4s ease-in-out;
-      backdrop-filter: blur(14px);
-      background: rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 25px rgba(255,255,255,0.15);
-      transform: translateY(25px);
-      opacity: 0;
-      animation: slideUp 1.4s ease forwards;
-    }
-
-    .btn:nth-child(1) { animation-delay: 0.9s; }
-    .btn:nth-child(2) { animation-delay: 1.1s; }
-
-    .btn::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(120deg, rgba(255,255,255,0.5), rgba(255,255,255,0));
-      transition: all 0.6s ease;
-    }
-
-    .btn:hover::before { left: 100%; }
-
-    .btn:hover {
-      transform: scale(1.08);
-      box-shadow: 0 0 40px rgba(255,255,255,0.7);
-      border-color: rgba(255,255,255,0.5);
-    }
-
-    /* ألوان زجاجية ناعمة */
-    .btn-primary, .btn-secondary {
-      background: linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.1));
-      color: #fff;
-    }
-
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    @media (min-width: 640px) {
-      .btn-group { flex-direction: row; gap: 1.4rem; }
-    }
-
-    /* الفوتر */
-    footer {
-      margin-top: 70px;
-      font-size: 0.85rem;
-      color: #e3e3e3;
-      opacity: 0.85;
-      animation: fadeIn 2s ease forwards;
-      animation-delay: 1.8s;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>بوابة الدخول الموحّدة | SMART HSR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="cloud-access-r2.css">
 </head>
-
 <body>
-  <!-- شعار Smart HSR -->
-  <img src="Smart_HSR_Dashboard_Logo.svg" alt="شعار Smart HSR" class="logo" loading="eager" decoding="async" />
-
-  <h1>مرحبًا بك في منصة <span class="shine">Smart HSR</span></h1>
-
-  <p>
-    النظام الذكي لإدارة الجودة والملاحظات الميدانية — بوابة الإدارة والشركات لمتابعة المشاريع والمستخدمين بذكاء واحترافية عالية.
-  </p>
-
-  <div class="btn-group">
-    <button onclick="window.location.href='manager-login.html'" class="btn btn-primary">
-      🏢 دخول الإدارة
-    </button>
-    <button onclick="window.location.href='login.html'" class="btn btn-secondary">
-      👷 دخول المستخدمين
-    </button>
-  </div>
-
-  <footer>© 2025 Smart HSR — جميع الحقوق محفوظة.</footer>
+<main class="cd-shell gateway-page" data-screen-label="3a Desktop Gateway · 3d iPad Gateway · 3g Mobile Gateway">
+<canvas class="cd-twin" data-tw="gate" data-d="7,.5,.3,.4,.36" data-t="7,.5,.3,.62,.3" data-m="5,.5,.26,.66,.22" aria-hidden="true"></canvas>
+<div class="cd-noise" aria-hidden="true"></div>
+<div class="gateway-fade" aria-hidden="true"></div>
+<header class="gateway-header">
+  <img class="cd-logo" src="smart-hsr-logo-r2.png" width="360" height="146" alt="SMART HSR">
+  <div class="gateway-tools"><a class="gateway-back" href="index.html">العودة إلى الموقع</a><span class="divider"></span><span><b class="active">العربية</b> | <span class="en">EN</span></span></div>
+  <span class="gateway-mobile-en">EN</span>
+</header>
+<div class="gateway-halo" aria-hidden="true"></div>
+<div class="gateway-main">
+<section class="gateway-hero">
+  <span class="cd-kicker">UNIFIED ACCESS GATEWAY</span>
+  <h1>بوابة الدخول<br class="br-m"> الموحّدة</h1>
+  <p>اختر مسار الدخول المعتمد لك</p>
+</section>
+<section class="gateway-cards" aria-label="مسارات الدخول">
+  <a class="gateway-card leadership" href="manager-login.html">
+    <span class="gateway-card-code">01 · LEADERSHIP<span class="not-m"> · L4</span></span>
+    <i class="gateway-dot"></i>
+    <strong class="gateway-card-title">بوابة القيادات البلدية</strong>
+    <span class="gateway-card-desc"><span class="v-d">أمين البلدية ومدير البلدية · القيادة التنفيذية · المسؤولون الإداريون المعتمدون</span><span class="v-t">مدير البلدية · القيادة التنفيذية · المسؤولون المعتمدون</span><span class="v-m">القيادة التنفيذية والمسؤولون المعتمدون</span></span>
+    <span class="gateway-cta"><span class="gateway-cta-label">دخول مركز القيادة</span><span class="gateway-arrow">←</span></span>
+  </a>
+  <a class="gateway-card workforce" href="login.html">
+    <span class="gateway-card-code">02 · WORKSPACE<span class="not-m"> · L1–L3</span></span>
+    <i class="gateway-dot"></i>
+    <strong class="gateway-card-title"><span class="not-m">بوابة الموظفين والمستخدمين</span><span class="only-m">الموظفون والمستخدمون</span></strong>
+    <span class="gateway-card-desc"><span class="v-d">رؤساء الأقسام · المشرفون · الموظفون · المفتشون · المقاولون · المستخدمون التشغيليون</span><span class="v-t">رؤساء الأقسام · المشرفون · الموظفون · المفتشون · المقاولون</span><span class="v-m">الأقسام · المفتشون · المقاولون</span></span>
+    <span class="gateway-cta"><span class="gateway-cta-label">دخول مساحة العمل</span><span class="gateway-arrow">←</span></span>
+  </a>
+</section>
+</div>
+<div class="gateway-foot"><i></i><span><span class="v-d">اتصال مشفّر · الحسابات المعتمدة فقط · تُسجَّل الجلسات لأغراض الحوكمة</span><span class="v-t">اتصال مشفّر · الحسابات المعتمدة فقط</span></span></div>
+</main>
+<script src="hsr-twin.js"></script>
+<script src="cloud-twin-mount.js"></script>
 </body>
 </html>

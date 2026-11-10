@@ -1,0 +1,44 @@
+name: Owner CSS Release Build
+
+on:
+  push:
+    branches:
+      - release/municipality-final-v5
+    paths:
+      - owner.html
+      - input.css
+      - tailwind.config.js
+      - package.json
+      - package-lock.json
+      - .github/workflows/owner-css-build.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-owner-css:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/municipality-final-v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build deterministic Owner Tailwind CSS
+        run: npx tailwindcss -i ./input.css -o ./owner-tailwind.css --content ./owner.html --minify
+      - name: Commit generated Owner CSS
+        shell: bash
+        run: |
+          if git diff --quiet -- owner-tailwind.css && git ls-files --error-unmatch owner-tailwind.css >/dev/null 2>&1; then
+            echo "owner-tailwind.css already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add owner-tailwind.css
+          git commit -m "build(owner): generate deterministic Tailwind CSS"
+          git push origin HEAD:release/municipality-final-v5

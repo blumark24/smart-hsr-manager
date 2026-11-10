@@ -8,12 +8,12 @@ async function leaflet() {
       link.rel = "stylesheet";
       link.crossOrigin = "anonymous";
       link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
-      link.href = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css";
+      link.href = "/vendor/leaflet/1.9.4/leaflet.css";
       document.head.append(link);
       const script = document.createElement("script");
       script.crossOrigin = "anonymous";
       script.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
-      script.src = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js";
+      script.src = "/vendor/leaflet/1.9.4/leaflet.js";
       script.onload = () => resolve(window.L);
       script.onerror = () => {
         library = null;

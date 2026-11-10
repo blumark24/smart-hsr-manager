@@ -1,0 +1,48 @@
+name: Lands Visual QA
+
+on:
+  push:
+    branches:
+      - fix/lands-visual-unification-v1
+      - release/municipality-final-v5
+  workflow_dispatch:
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LANDS_PREVIEW_URL: http://127.0.0.1:4173
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start isolated review server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/lands-review-server.log 2>&1 &
+          echo $! > /tmp/lands-review-server.pid
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:4173/lands/ >/dev/null; then
+              echo "Local review server ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/lands-review-server.log
+          exit 1
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Run Lands visual QA
+        run: node scripts/lands-visual-qa.mjs
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lands-visual-qa
+          path: artifacts/lands-visual-qa
+          retention-days: 7

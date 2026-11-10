@@ -5,15 +5,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCXCiNeaO9lhM79tKb98x4oaNqNy5xKvWM",
-  authDomain: "smart-hsr-manager.firebaseapp.com",
-  projectId: "smart-hsr-manager",
-  storageBucket: "smart-hsr-manager.firebasestorage.app",
-  messagingSenderId: "38965508031",
-  appId: "1:38965508031:web:6fd0b6c6b0b63fa513930a"
-};
+// Owner must use the exact same Firebase project as the current deployment.
+// Production aliases resolve to the production project; every Vercel Preview
+// resolves to the locked staging project through /api/firebase-config.
+// This prevents Preview owner ID tokens from being rejected by Preview APIs.
+const firebaseConfig = await resolveFirebaseConfig();
 
 export const app = initializeApp(firebaseConfig, 'smart-hsr-owner-session');
 export const auth = getAuth(app);

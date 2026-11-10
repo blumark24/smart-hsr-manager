@@ -45,8 +45,10 @@ function bridgeBypassSecret() {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : '';
 }
 
+function embeddedRuntimeEnabled() { return process.env.LANDS_EMBEDDED_RUNTIME === '1'; }
+
 function bridgeConfigured() {
-  return bridgeBaseUrl().length > 0;
+  return embeddedRuntimeEnabled() || bridgeBaseUrl().length > 0;
 }
 
 /**
@@ -57,6 +59,11 @@ function bridgeConfigured() {
  * surrounding admin request.
  */
 async function callLandsTrustedMutation({ idToken, municipalityId, operation, recordId, recordChanges, safeMetadata }) {
+  if (embeddedRuntimeEnabled()) {
+    const { embeddedMutation } = require('./embeddedLandsRuntime');
+    const result = await embeddedMutation({ idToken, municipalityId, operation, recordId, recordChanges, safeMetadata });
+    return result.ok ? { ok:true, bridged:true, eventId:result.eventId, result:result.result } : { ok:false, bridged:true, status:result.status, reason:result.reason };
+  }
   const base = bridgeBaseUrl();
   if (!base) return { ok: false, bridged: false, reason: 'lands_bridge_not_configured' };
 
@@ -100,6 +107,11 @@ async function callLandsTrustedMutation({ idToken, municipalityId, operation, re
  * Never throws — every failure mode comes back as { ok:false, reason }.
  */
 async function callLandsSsoRegister({ idToken, municipalityId }) {
+  if (embeddedRuntimeEnabled()) {
+    const { embeddedSsoRegister } = require('./embeddedLandsRuntime');
+    const result = await embeddedSsoRegister({ idToken, municipalityId });
+    return result.ok ? { ok:true, code:result.code, expiresAt:result.expiresAt } : { ok:false, status:result.status, reason:result.reason };
+  }
   const base = bridgeBaseUrl();
   if (!base) return { ok: false, reason: 'lands_bridge_not_configured' };
 
@@ -140,6 +152,10 @@ async function callLandsSsoRegister({ idToken, municipalityId }) {
  * Never throws — every failure mode comes back as { ok:false, reason }.
  */
 async function callLandsMembershipStatus({ idToken, municipalityId, targetUid }) {
+  if (embeddedRuntimeEnabled()) {
+    const { embeddedMembershipStatus } = require('./embeddedLandsRuntime');
+    return embeddedMembershipStatus({ idToken, municipalityId, targetUid });
+  }
   const base = bridgeBaseUrl();
   if (!base) return { ok: false, reason: 'lands_bridge_not_configured' };
 

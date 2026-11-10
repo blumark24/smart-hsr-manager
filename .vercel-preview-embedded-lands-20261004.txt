@@ -1,0 +1,3 @@
+SMART HSR Embedded Lands Preview trigger.
+PHASE19 PASS; single final Preview build trigger after rate-limit cooldown.
+No main or Production changes.

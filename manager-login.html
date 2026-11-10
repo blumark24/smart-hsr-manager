@@ -1,186 +1,177 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل دخول المدير - Smart HSR</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: radial-gradient(circle at center, #0EA5A1 0%, #0B2B3A 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      overflow: hidden;
-    }
-    .card {
-      background: rgba(255,255,255,0.08);
-      border-radius: 22px;
-      padding: 3rem;
-      width: 100%;
-      max-width: 420px;
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 0 30px rgba(14,165,161,0.4);
-      text-align: center;
-      animation: fadeIn 1.2s ease-out;
-    }
-    .glow { animation: glowPulse 3s ease-in-out infinite; }
-
-    @keyframes glowPulse {
-      0%,100%{ box-shadow:0 0 25px rgba(14,165,161,0.5); }
-      50%{ box-shadow:0 0 45px rgba(14,165,161,0.9); }
-    }
-    @keyframes fadeIn {
-      from{ opacity:0; transform:translateY(20px); }
-      to{ opacity:1; transform:translateY(0); }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>مركز القيادة البلدية | SMART HSR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="cloud-access-r2.css">
 </head>
 <body>
-
-  <div class="card glow">
-    <img src="Smart_HSR_Dashboard_Logo.svg" class="mx-auto w-24 mb-5 animate-pulse">
-    <h2 class="text-2xl font-extrabold mb-6 text-teal-300 tracking-wide">
-      تسجيل دخول المدير
-    </h2>
-
-    <form id="loginForm" class="space-y-4">
-      <div>
-        <label class="block text-right mb-1">البريد الإلكتروني</label>
-        <input type="email" id="email"
-          class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400"
-          placeholder="example@email.com" required>
-      </div>
-      <div>
-        <label class="block text-right mb-1">كلمة المرور</label>
-        <input type="password" id="password"
-          class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400"
-          placeholder="••••••••" required>
-      </div>
-
-      <button type="submit"
-        class="w-full py-3 rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:opacity-90 font-extrabold tracking-wide transition">
-        تسجيل الدخول
-      </button>
-    </form>
-
-    <p id="errorMsg" class="text-red-400 mt-4 hidden text-sm"></p>
-
-    <p class="mt-6 text-white/60 text-xs">© 2025 Smart HSR — جميع الحقوق محفوظة</p>
+<main class="cd-shell login-page leadership-login" data-screen-label="3b Desktop Leadership · 3e iPad Leadership · 3h Mobile Leadership">
+<section class="login-form-panel">
+  <div class="login-panel-top"><img class="cd-logo" src="smart-hsr-logo-r2.png" width="360" height="146" alt="SMART HSR"><span class="lang-switch"><b>العربية</b> | <span class="en">EN</span></span></div>
+  <div class="login-copy">
+    <span class="cd-kicker">01 · LEADERSHIP ACCESS</span>
+    <h1>مركز القيادة البلدية</h1>
+    <p>دخول القيادات والحسابات الإدارية المعتمدة</p>
   </div>
-
+  <form id="loginForm" class="login-form" autocomplete="on">
+    <div class="field"><label for="email">البريد الإلكتروني المؤسسي</label><input id="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr" placeholder="name@municipality.gov.sa" required></div>
+    <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••••" data-ph-m="كلمة المرور" required><button class="password-toggle" type="button" data-password-toggle="password" aria-pressed="false">إظهار</button></div></div>
+    <div class="login-meta-row"><span class="remember"><i class="remember-box"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>تذكّر هذا الجهاز</span><button type="button" class="forgot" id="forgotButton" aria-controls="forgotNote" aria-expanded="false">نسيت كلمة المرور؟</button></div>
+    <p id="forgotNote" class="note" hidden>لإعادة تعيين كلمة المرور تواصل مع إدارة المنصة.</p>
+    <button id="leadershipLoginButton" type="submit" class="submit">دخول مركز القيادة</button>
+    <div class="login-or">أو</div>
+    <button type="button" class="sso-visual" id="ssoButton" aria-controls="ssoNotice" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="#073324" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>الدخول الموحّد للجهة<span class="sso-tag"> (SSO)</span></button>
+    <p id="ssoNotice" class="note" hidden>الدخول الموحّد للجهة غير مفعّل لهذه البلدية بعد. استخدم البريد الإلكتروني وكلمة المرور.</p>
+  </form>
+  <p id="errorMsg" class="message error hidden" aria-live="polite"></p>
+  <div class="switch"><span id="workforcePortalLink" hidden>هذا ليس حساب قيادة؟ <a href="login.html">استخدم بوابة الموظفين والمستخدمين</a></span></div>
+  <div class="login-footer"><span class="secure-status"><i></i>جلسة مشفّرة · تحقق مؤسسي</span><a href="Home.html">→ بوابة الدخول</a></div>
+  <div class="login-mfoot"><i class="secure-dot"></i>جلسة مشفّرة · تحقق مؤسسي</div>
+</section>
+<div class="login-topbar"><a class="login-back" href="Home.html"><span class="bk-arrow">→</span><span class="bk-label">بوابة الدخول</span></a><span class="login-tag">COMMAND ACCESS · L4</span></div>
+<section class="login-visual" aria-hidden="true">
+  <canvas class="cd-twin" data-tw="lead" data-d="33,.5,.44,.4,.48" data-t="33,.5,.22,.56,.24" data-m="12,.5,.18,.66,.17"></canvas>
+  <div class="cd-noise"></div>
+  <div class="visual-topline"><span>COMMAND ACCESS · L4</span><span>SECURE SESSION</span></div>
+  <div class="visual-card"><b>طبقة القرار</b><span>صورة مكانية واحدة تجمع الميدان والتشغيل أمام القيادة.</span></div>
+</section>
+</main>
+<script src="hsr-twin.js"></script>
+<script src="cloud-twin-mount.js"></script>
+<script>
+document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventListener('click',()=>{
+  const input=document.getElementById(btn.dataset.passwordToggle);if(!input)return;
+  const show=input.type==='password';input.type=show?'text':'password';btn.textContent=show?'إخفاء':'إظهار';btn.setAttribute('aria-pressed',String(show));
+}));
+(function(){[['forgotButton','forgotNote'],['ssoButton','ssoNotice']].forEach(([btnId,noteId])=>{
+  const btn=document.getElementById(btnId),note=document.getElementById(noteId);if(!btn||!note)return;
+  btn.addEventListener('click',()=>{const open=note.hidden;note.hidden=!open;btn.setAttribute('aria-expanded',String(open));});
+});})();
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resolveFirebaseConfig } from './firebase-runtime-config.js';
 import { classifyManagerLoginError } from './manager-login-error-classification.js';
 
 const errorMsg = document.getElementById("errorMsg");
-const submitBtn = document.querySelector('#loginForm button[type="submit"]');
+const submitBtn = document.getElementById("leadershipLoginButton");
 function showLoginMessage(text) {
   errorMsg.textContent = text;
   errorMsg.classList.remove("hidden");
 }
 
-// إعدادات Firebase — a failure here is a system/environment problem (wrong
-// project, Preview config unavailable), never a credentials problem, so it
-// must never be allowed to silently leave the form non-functional.
 let firebaseConfig;
 try {
   firebaseConfig = await resolveFirebaseConfig();
 } catch (configErr) {
   console.error('manager-login: Firebase configuration unavailable', configErr);
-  showLoginMessage('⚠️ تعذر تحميل إعدادات النظام. حاول لاحقًا أو تواصل مع الدعم الفني.');
+  showLoginMessage('تعذر تحميل إعدادات النظام. حاول لاحقًا أو تواصل مع الدعم الفني.');
   if (submitBtn) submitBtn.disabled = true;
   throw configErr;
 }
 
-// Dedicated persisted Auth namespace: manager/supervisor actions must never
-// mutate the field-worker session stored by the default Firebase app.
-const app = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
-const auth = getAuth(app);
-await setPersistence(auth, browserLocalPersistence);
-const db = getFirestore(app);
+// Separate namespaces:
+// - managerAuth: persisted leadership session used by manager.html.
+// - probeAuth: memory-only credential + authorization probe.
+// Workforce/default Auth is intentionally untouched so both portals can coexist.
+const managerApp = initializeApp(firebaseConfig, 'smart-hsr-manager-session');
+const managerAuth = getAuth(managerApp);
+await setPersistence(managerAuth, browserLocalPersistence);
+const probeApp = initializeApp(firebaseConfig, 'smart-hsr-manager-login-probe');
+const probeAuth = getAuth(probeApp);
+const probeDb = getFirestore(probeApp);
+await setPersistence(probeAuth, inMemoryPersistence);
+
+const PORTAL_CONTEXT_KEY = 'smartHSRPortalContext';
+
+function setLeadershipPortalContext(user, organizationId) {
+  sessionStorage.setItem(PORTAL_CONTEXT_KEY, JSON.stringify({
+    portal: 'leadership',
+    uid: user.uid,
+    organizationId,
+    role: 'manager'
+  }));
+}
 
 const form = document.getElementById("loginForm");
-
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   errorMsg.classList.add("hidden");
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
+  if (!email || !password) {
+    showLoginMessage("أدخل البريد الإلكتروني وكلمة المرور.");
+    return;
+  }
 
-  // Step 1: Firebase Auth itself. Kept in its own try/catch so a failure
-  // here can never be confused with what happens after — a wrong password
-  // and a Firestore permission/network failure are different problems with
-  // different fixes, and telling the user to "check your password" for the
-  // second one is actively misleading.
-  let user;
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="loading-spinner"></span> جاري التحقق...';
+
+  let probeUser = null;
   try {
-    const userCred = await signInWithEmailAndPassword(auth, email, password);
-    user = userCred.user;
+    const userCred = await signInWithEmailAndPassword(probeAuth, email, password);
+    probeUser = userCred.user;
   } catch (authErr) {
     console.error('manager-login: authentication failed', authErr);
     const kind = classifyManagerLoginError(authErr);
     showLoginMessage(kind === 'credential-failed'
-      ? "❌ فشل تسجيل الدخول — تحقق من البريد أو كلمة المرور"
-      : "⚠️ تعذر الاتصال بخدمة المصادقة حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.");
+      ? "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+      : "تعذر الاتصال بخدمة المصادقة حاليًا. حاول لاحقًا.");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "دخول مركز القيادة";
     return;
   }
 
-  // Step 2: manager/supervisor authorization lookup. Authentication already
-  // succeeded at this point — any failure here is a lookup/authorization
-  // problem, never a credentials problem.
   try {
-    // 🔍 تحقق إذا كان موجود داخل managers
-    const ref = doc(db, "managers", user.uid);
-    const snap = await getDoc(ref);
+    const snap = await getDoc(doc(probeDb, "managers", probeUser.uid));
+    const manager = snap.exists() ? (snap.data() || {}) : null;
+    const organizationId = typeof manager?.organizationId === 'string' ? manager.organizationId.trim() : '';
 
-    const managerData = snap.exists() ? snap.data() : null;
-
-    // لا تُنشئ صلاحية من صفحة الدخول. المدير من managers/{uid} أو المشرف
-    // المساعد من users/{uid} فقط، وكلاهما فعّال ومرتبط بمؤسسة.
-    const managerOrg = typeof managerData?.organizationId === 'string' ? managerData.organizationId.trim() : '';
-    let authorized = !!(managerData && managerData.role === 'manager' && managerData.active !== false && managerOrg);
-    if (!authorized) {
-      const userSnap = await getDoc(doc(db, 'users', user.uid));
-      const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
-      const userOrg = typeof userData.organizationId === 'string' ? userData.organizationId.trim() : '';
-      authorized = userData.role === 'supervisor' && userData.active !== false && !!userOrg;
-    }
-    if (!authorized) {
-      await signOut(auth);
-      showLoginMessage("❌ هذا الحساب غير مصرح له بالدخول كمدير");
+    if (!manager || manager.role !== 'manager' || manager.active === false || !organizationId) {
+      await signOut(probeAuth).catch(() => {});
+      showLoginMessage("هذا الحساب ليس حساب مدير بلدية معتمد. استخدم بوابة الموظفين والمستخدمين.");
+      document.getElementById('workforcePortalLink')?.removeAttribute('hidden');
+      submitBtn.disabled = false;
+      submitBtn.textContent = "دخول مركز القيادة";
       return;
     }
+    // Persist only after manager authorization succeeds. The workforce/default
+    // Auth namespace is never signed out or overwritten here.
+    await signInWithEmailAndPassword(managerAuth, email, password);
+    await signOut(probeAuth).catch(() => {});
 
-    // تخزين الجلسة بعد التحقق من مستند المدير ودوره فقط
+    setLeadershipPortalContext(probeUser, organizationId);
     sessionStorage.setItem("smartHSRUser", JSON.stringify({
-      uid: user.uid,
-      email: user.email,
-      role: "manager"
+      uid: probeUser.uid,
+      email: probeUser.email,
+      role: "manager",
+      organizationId
     }));
-
-    window.location.href = "manager.html";
-
+    // Preserve Preview access/query context (for example Vercel Share links)
+    // across the authenticated handoff. Dropping location.search here can
+    // send an otherwise-valid Preview login into a different access context
+    // before manager.html has a chance to restore the persisted managerAuth
+    // session. Production normally has no share query, so its URL remains
+    // manager.html with no behavioral change.
+    const managerUrl = new URL("manager.html", window.location.href);
+    managerUrl.search = window.location.search;
+    window.location.replace(managerUrl.href);
   } catch (lookupErr) {
-    // Authenticated successfully but the manager-authorization lookup
-    // itself failed (Firestore permission-denied, network error, rules
-    // misconfiguration). This is never the password's fault, and the user
-    // must not be left signed in with an unverified authorization state.
-    console.error('manager-login: manager authorization lookup failed', lookupErr);
-    await signOut(auth).catch(() => {});
-    showLoginMessage("⚠️ تعذر التحقق من صلاحياتك حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.");
+    console.error('manager-login: authorization lookup failed', lookupErr);
+    await signOut(probeAuth).catch(() => {});
+    showLoginMessage("تعذر التحقق من صلاحيات القيادة حاليًا. حاول لاحقًا أو تواصل مع الدعم الفني.");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "دخول مركز القيادة";
   }
 });
 </script>
-
-</body>
-</html>
+</body></html>

@@ -1,0 +1,64 @@
+name: PHASE13D.5 Acceptance Gate
+
+on:
+  push:
+    branches:
+      - phase13d5-field-head-smart-mobility-integration
+  workflow_dispatch:
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check trusted API
+        run: |
+          node --check api/admin/users.js
+          node --check api/storage/read.js
+          node --check field-head-runtime.js
+          node --check platform/policies/vehicle-authorization-policy.js
+
+      - name: Department Head framework tests
+        run: node --test test/department-head-framework.test.js
+
+      - name: Field Head mobility integration tests
+        run: node --test test/field-head-mobility-integration.test.js
+
+      - name: Shared mobility workflow tests
+        run: node --test test/mobility-workflow-server-bridge.test.js
+
+      - name: Vehicle authorization workflow tests
+        run: node --test test/vehicle-authorization-workflow.test.js
+
+      - name: Visual distortion inspector-contractor tests
+        run: node --test test/visual-distortion-department-head.test.js
+
+      - name: Visual distortion full lifecycle integration test
+        run: node --test test/visual-distortion-lifecycle.integration.test.js
+
+      - name: Field Head evidence access tests
+        run: node --test test/field-head-evidence-access.test.js
+
+      - name: Field Head operational map tests
+        run: node --test test/field-head-operational-map.test.js
+
+      - name: Field Head user-center provisioning tests
+        run: node --test test/field-head-user-center-provisioning.test.js
+
+      - name: User Center edit-window layout tests
+        run: node --test test/user-center-edit-window-layout.test.js
+
+      - name: Firestore security rules regression
+        run: npm run test:rules

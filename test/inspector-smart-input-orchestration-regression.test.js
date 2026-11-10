@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const dashboard = fs.readFileSync(path.join(__dirname, '..', 'test/fixtures/legacy/dashboard.txt'), 'utf8');
+const dashboard = fs.readFileSync(path.join(__dirname, '..', 'test/fixtures/legacy/release-dashboard.txt'), 'utf8');
 const flowStart = dashboard.indexOf('window.processSmartInput = async function()');
 const flowEnd = dashboard.indexOf('async function commitPendingSmartInput()', flowStart);
 const flow = dashboard.slice(flowStart, flowEnd);

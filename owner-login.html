@@ -1,64 +1,303 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل دخول المالك - Smart HSR</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: radial-gradient(circle at center, #0EA5A1 0%, #0B2B3A 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-    }
-    .card {
-      background: rgba(255,255,255,0.08);
-      border-radius: 22px;
-      padding: 3rem;
-      width: 100%;
-      max-width: 420px;
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 0 30px rgba(14,165,161,0.4);
-      text-align: center;
-    }
-    .glow {
-      animation: glowPulse 3s ease-in-out infinite;
-    }
-    @keyframes glowPulse {
-      0%,100%{ box-shadow:0 0 25px rgba(14,165,161,0.5);}
-      50%{ box-shadow:0 0 45px rgba(14,165,161,0.9);}
-    }
-    input{direction:ltr;}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Owner Command Access | SMART HSR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#051321;--bg2:#0a2237;--panel:rgba(7,24,41,.80);--panel2:rgba(9,30,51,.94);
+  --surface:rgba(255,255,255,.045);--surface2:rgba(255,255,255,.065);
+  --line:rgba(108,174,225,.18);--line2:rgba(108,174,225,.30);
+  --text:#f5f9ff;--muted:#91a8bc;--green:#36d596;--green2:#17a971;
+  --cyan:#43c9d7;--blue:#6ea9ff;--danger:#ff8190;
+  --input:rgba(6,22,39,.86);--shadow:0 38px 100px -48px rgba(0,0,0,.78);
+}
+html[data-theme="light"]{
+  --bg:#edf4f0;--bg2:#f8fbf9;--panel:rgba(255,255,255,.78);--panel2:rgba(255,255,255,.95);
+  --surface:rgba(13,102,68,.035);--surface2:rgba(13,102,68,.055);
+  --line:rgba(18,133,90,.15);--line2:rgba(18,133,90,.26);
+  --text:#0a3526;--muted:#60766b;--green:#128a4b;--green2:#0d6f3b;
+  --cyan:#177f91;--blue:#2f6bd2;--danger:#b43d52;
+  --input:rgba(248,251,249,.95);--shadow:0 36px 90px -54px rgba(13,74,49,.34);
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  margin:0;font-family:'Tajawal',system-ui,sans-serif;color:var(--text);
+  background:
+    radial-gradient(circle at 82% 10%,rgba(54,213,150,.12),transparent 22%),
+    radial-gradient(circle at 9% 88%,rgba(83,137,222,.12),transparent 28%),
+    linear-gradient(145deg,var(--bg),var(--bg2));
+  min-height:100vh;padding:22px;display:grid;place-items:center;overflow-x:hidden;
+}
+.portal-shell{
+  width:min(1220px,100%);min-height:min(760px,calc(100vh - 44px));
+  display:grid;grid-template-columns:minmax(0,1.13fr) minmax(390px,.87fr);
+  overflow:hidden;border:1px solid var(--line);border-radius:30px;
+  background:var(--panel);box-shadow:var(--shadow);
+  backdrop-filter:blur(18px) saturate(112%);-webkit-backdrop-filter:blur(18px) saturate(112%);
+}
+.twin-zone{
+  position:relative;overflow:hidden;padding:46px;display:flex;flex-direction:column;justify-content:space-between;
+  border-inline-end:1px solid var(--line);
+  background:
+    linear-gradient(160deg,rgba(54,213,150,.09),transparent 39%),
+    linear-gradient(180deg,rgba(255,255,255,.018),transparent 68%);
+}
+.twin-zone:before{
+  content:"";position:absolute;inset:0;opacity:.32;pointer-events:none;
+  background-image:
+    linear-gradient(var(--line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:linear-gradient(to bottom,transparent,black 15%,black 80%,transparent);
+}
+.brand-row{position:relative;z-index:3;display:flex;align-items:center;gap:13px}
+.brand-logo{
+  width:64px;height:64px;border-radius:19px;display:grid;place-items:center;cursor:default;user-select:none;
+  background:color-mix(in srgb,var(--panel2) 86%,transparent);border:1px solid var(--line2);
+  box-shadow:inset 0 1px rgba(255,255,255,.06);
+}
+.brand-logo img{width:52px;height:52px;object-fit:contain;pointer-events:none}
+.brand-meta b{display:block;font-size:18px;letter-spacing:.04em}.brand-meta span{font-size:9.5px;color:var(--muted)}
+.hero{position:relative;z-index:3;max-width:650px;margin-top:24px}
+.eyebrow{font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--green);margin-bottom:12px}
+.hero h1{margin:0 0 16px;font-size:clamp(36px,4.8vw,61px);line-height:1.12;font-weight:900;letter-spacing:-.04em}
+.hero p{margin:0;color:var(--muted);font-size:14px;line-height:1.95;max-width:590px}
+.twin-stage{
+  position:relative;z-index:2;height:260px;margin:30px 0 14px;border:1px solid var(--line);border-radius:24px;overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 48%,rgba(54,213,150,.11),transparent 26%),
+    linear-gradient(155deg,color-mix(in srgb,var(--panel2) 70%,transparent),color-mix(in srgb,var(--surface) 76%,transparent));
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+  transform:perspective(900px) rotateX(calc(var(--py,0) * -1deg)) rotateY(calc(var(--px,0) * 1deg));
+  transition:transform .15s ease-out;
+}
+.twin-stage svg{width:100%;height:100%;display:block}
+.twin-scan{
+  position:absolute;left:8%;right:8%;height:1px;top:15%;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);
+  box-shadow:0 0 18px var(--green);opacity:.7;animation:scan 5.6s ease-in-out infinite;
+}
+@keyframes scan{0%,100%{top:17%;opacity:.25}50%{top:80%;opacity:.82}}
+.twin-caption{
+  position:absolute;inset:auto 18px 16px 18px;display:flex;justify-content:space-between;align-items:end;gap:12px;
+}
+.twin-caption b{font-size:10px}.twin-caption span{font-size:8.5px;color:var(--muted)}
+.twin-badges{display:flex;gap:8px;flex-wrap:wrap}
+.twin-badges span{
+  height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;
+  background:color-mix(in srgb,var(--panel2) 72%,transparent);font-size:8.5px;color:var(--muted)
+}
+.twin-badges span:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);margin-inline-end:6px}
+.portal-foot{position:relative;z-index:3;font-size:9.5px;color:var(--muted)}
+.login-zone{
+  padding:42px;display:flex;flex-direction:column;justify-content:center;
+  background:color-mix(in srgb,var(--panel2) 84%,transparent);
+}
+.login-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:28px}
+.login-head h2{font-size:24px;line-height:1.2;margin:0 0 7px;font-weight:900;letter-spacing:-.025em}
+.login-head p{font-size:10.5px;line-height:1.7;margin:0;color:var(--muted)}
+.theme-btn{
+  width:40px;height:40px;min-width:40px;border:1px solid var(--line);border-radius:12px;
+  color:var(--text);background:var(--input);font-size:16px;cursor:pointer
+}
+.field{display:grid;gap:7px;margin-bottom:14px}
+.field label{font-size:9.5px;color:var(--muted);font-weight:800;padding-inline:2px}
+.input-wrap{position:relative}
+input{
+  width:100%;height:49px;padding:0 14px;border-radius:13px;border:1px solid var(--line);
+  background:var(--input);color:var(--text);font-family:inherit;font-size:14px;outline:0;
+  transition:border-color .14s ease,box-shadow .14s ease,background-color .14s ease;
+}
+input::placeholder{color:color-mix(in srgb,var(--muted) 70%,transparent)}
+input:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 13%,transparent)}
+.password-toggle{
+  position:absolute;left:7px;top:7px;height:35px;padding:0 10px;border-radius:9px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--panel2) 90%,transparent);color:var(--muted);font-family:inherit;font-size:9px;font-weight:800;cursor:pointer
+}
+.submit{
+  width:100%;height:50px;margin-top:7px;border:0;border-radius:13px;cursor:pointer;
+  color:#fff;background:linear-gradient(135deg,var(--green),var(--green2));
+  font-family:inherit;font-size:12.5px;font-weight:900;box-shadow:0 16px 30px -22px var(--green);
+  transition:transform .14s ease,filter .14s ease;
+}
+.submit:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.04)}
+.submit:disabled{opacity:.56;cursor:wait}
+.message{min-height:22px;margin-top:13px;text-align:center;font-size:10.5px;font-weight:800;line-height:1.7}
+.error{color:var(--danger)}.success{color:var(--green)}
+.security-note{
+  margin-top:13px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;
+  background:color-mix(in srgb,var(--surface) 70%,transparent);font-size:9px;line-height:1.7;color:var(--muted)
+}
+.portal-switch{margin-top:17px;padding-top:17px;border-top:1px solid var(--line);font-size:9.5px;color:var(--muted);text-align:center}
+.portal-switch a{color:var(--green);font-weight:900;text-decoration:none}
+.loading-spinner{
+  width:17px;height:17px;border-radius:50%;border:2px solid rgba(255,255,255,.28);border-top-color:#fff;
+  display:inline-block;vertical-align:middle;margin-inline-end:8px;animation:spin .8s linear infinite
+}
+.hidden{display:none!important}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:920px){
+  body{padding:10px}.portal-shell{grid-template-columns:1fr;min-height:auto;border-radius:22px}
+  .twin-zone{padding:26px;border-inline-end:0;border-bottom:1px solid var(--line)}
+  .hero h1{font-size:35px}.hero p{font-size:12.5px}.twin-stage{height:190px;margin-top:22px}
+  .login-zone{padding:28px}
+}
+@media(max-width:540px){
+  .twin-zone,.login-zone{padding:19px}.brand-logo{width:54px;height:54px}.brand-logo img{width:44px;height:44px}
+  .hero h1{font-size:30px}.twin-stage{height:160px;border-radius:18px}.twin-caption{inset:auto 12px 10px 12px}
+  .twin-badges{display:none}.login-head h2{font-size:21px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{animation:none!important;transition:none!important}.twin-stage{transform:none!important}
+}
+
+.portal-shell{width:min(980px,100%);grid-template-columns:minmax(0,1fr) minmax(390px,.92fr)}
+.owner-mark{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 11px;border-radius:999px;border:1px solid var(--line);font-size:8.5px;color:var(--muted);background:var(--surface)}
+.owner-mark:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+</style>
 </head>
 <body>
-  <div class="card glow">
-    <img src="Smart_HSR_Dashboard_Logo.svg" alt="Smart HSR Logo" class="mx-auto w-24 mb-5 animate-pulse">
-    <h2 class="text-2xl font-extrabold mb-6 text-teal-300 tracking-wide">تسجيل دخول المالك</h2>
-
-    <form id="loginForm" class="space-y-4">
-      <div>
-        <label class="block text-right mb-1">البريد الإلكتروني</label>
-        <input type="email" id="email" class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400" placeholder="example@email.com" required>
+<main class="portal-shell">
+  <section class="twin-zone">
+    <div>
+      <div class="brand-row">
+        <div class="brand-logo"><img src="Smart_HSR_Dashboard_Logo.svg" alt="شعار SMART HSR"></div>
+        <div class="brand-meta"><b>SMART HSR</b><span>OWNER COMMAND ACCESS</span></div>
       </div>
-      <div>
-        <label class="block text-right mb-1">كلمة المرور</label>
-        <input type="password" id="password" class="w-full p-3 rounded-xl bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-2 focus:ring-teal-400" placeholder="••••••••" required>
+      <div class="hero">
+        <div class="eyebrow">PLATFORM GOVERNANCE</div>
+        <h1>مركز تحكم<br>المالك</h1>
+        <p>وصول سيادي لإدارة المؤسسات والحسابات الإدارية والعمليات المركزية للمنصة. لا تمنح هذه الواجهة أي صلاحية بحد ذاتها؛ التحقق يتم من هوية Owner المعتمدة.</p>
+        <div style="margin-top:22px"><span class="owner-mark">Protected Owner Authorization</span></div>
       </div>
-      <button type="submit" class="w-full py-3 rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:opacity-90 font-extrabold tracking-wide transition">تسجيل الدخول</button>
-    </form>
-
-    <p id="errorMsg" class="text-red-400 mt-4 hidden text-sm"></p>
-    <p class="mt-6 text-white/60 text-xs">© 2025 Smart HSR — جميع الحقوق محفوظة</p>
+      
+<div class="twin-stage" data-twin-stage aria-label="واجهة توأم رقمي مرئية">
+  <svg viewBox="0 0 760 280" role="img" aria-label="نموذج بصري لمركز القيادة البلدية">
+    <defs>
+      <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#35d495" stop-opacity=".78"/><stop offset="1" stop-color="#64a6ff" stop-opacity=".55"/></linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <g opacity=".28" stroke="currentColor">
+      <path d="M40 214 L210 122 L372 190 L550 86 L716 160" fill="none" stroke="url(#g1)" stroke-width="1.2"/>
+      <path d="M72 75 L215 122 L334 60 L550 86 L690 48" fill="none" stroke="url(#g1)" stroke-width="1"/>
+      <path d="M210 122 L334 60 M372 190 L550 86 M550 86 L690 48" fill="none" stroke="url(#g1)" stroke-width=".8"/>
+    </g>
+    <g fill="none" stroke="url(#g1)" filter="url(#glow)">
+      <rect x="306" y="93" width="148" height="96" rx="17" opacity=".9"/>
+      <path d="M333 161 V124 H427 V161 M352 124 V108 H408 V124" opacity=".82"/>
+      <path d="M352 144 H408 M380 108 V93" opacity=".6"/>
+    </g>
+    <g fill="#35d495">
+      <circle cx="210" cy="122" r="5"/><circle cx="334" cy="60" r="5"/><circle cx="372" cy="190" r="5"/>
+      <circle cx="550" cy="86" r="5"/><circle cx="690" cy="48" r="4"/><circle cx="716" cy="160" r="4"/>
+    </g>
+    <g fill="#64a6ff" opacity=".75">
+      <circle cx="72" cy="75" r="3.5"/><circle cx="40" cy="214" r="3.5"/><circle cx="690" cy="220" r="3.5"/>
+    </g>
+    <g font-family="Tajawal, sans-serif" fill="currentColor" opacity=".72" font-size="10">
+      <text x="466" y="174">الخدمات</text><text x="572" y="73">المؤشرات</text><text x="171" y="109">الفرق</text><text x="294" y="217">الصلاحيات</text>
+    </g>
+  </svg>
+  <div class="twin-scan"></div>
+  <div class="twin-caption">
+    <div><b>DIGITAL TWIN · COMMAND EXPERIENCE</b><span>واجهة مرئية تفاعلية لمنظومة SMART HSR</span></div>
+    <div class="twin-badges"><span>هوية مؤسسية</span><span>صلاحيات موثوقة</span><span>مسار واحد</span></div>
   </div>
+</div>
+    </div>
+    <div class="portal-foot">SMART HSR · Platform Governance</div>
+  </section>
+  <section class="login-zone">
+    <div class="login-head">
+      <div><h2>دخول المالك</h2><p>الوصول متاح فقط لحساب Owner معتمد وفعال.</p></div>
+      <button class="theme-btn" type="button" data-theme-toggle aria-label="تفعيل الوضع النهاري">☀</button>
+    </div>
+    <form id="loginForm" autocomplete="on">
+      <div class="field"><label for="email">البريد الإلكتروني</label><input type="email" id="email" autocomplete="username" required></div>
+      <div class="field"><label for="password">كلمة المرور</label><div class="input-wrap"><input type="password" id="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-password-toggle="password">إظهار</button></div></div>
+      <button type="submit" class="submit">دخول مركز المالك</button>
+    </form>
+    <p id="errorMsg" class="message error hidden" aria-live="polite"></p>
+    <div class="security-note">يتم التحقق من هوية المالك وصلاحيته الفعلية قبل فتح لوحة التحكم. لا يوجد مسار تجاوز أو دخول مخفي بدون مصادقة.</div>
+  </section>
+</main>
 
-  <script type="module">
+<script>
+(function(){
+  const THEME_KEY='smartHSRLoginTheme';
+  const saved=localStorage.getItem(THEME_KEY);
+  const chosen=saved || (matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+  document.documentElement.dataset.theme=chosen;
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    const themeBtn=document.querySelector('[data-theme-toggle]');
+    const syncTheme=()=>{
+      if(!themeBtn)return;
+      const light=document.documentElement.dataset.theme==='light';
+      themeBtn.textContent=light?'☾':'☀';
+      themeBtn.setAttribute('aria-label',light?'تفعيل الوضع الليلي':'تفعيل الوضع النهاري');
+    };
+    syncTheme();
+    themeBtn?.addEventListener('click',()=>{
+      const next=document.documentElement.dataset.theme==='light'?'dark':'light';
+      document.documentElement.dataset.theme=next;
+      localStorage.setItem(THEME_KEY,next);
+      syncTheme();
+    });
+
+    document.querySelectorAll('[data-password-toggle]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const input=document.getElementById(btn.dataset.passwordToggle);
+        if(!input)return;
+        const show=input.type==='password';
+        input.type=show?'text':'password';
+        btn.textContent=show?'إخفاء':'إظهار';
+        btn.setAttribute('aria-pressed',String(show));
+      });
+    });
+
+    const stage=document.querySelector('[data-twin-stage]');
+    if(stage && matchMedia('(pointer:fine)').matches && !matchMedia('(prefers-reduced-motion:reduce)').matches){
+      let raf=0;
+      stage.addEventListener('pointermove',e=>{
+        if(raf)return;
+        raf=requestAnimationFrame(()=>{
+          const r=stage.getBoundingClientRect();
+          const x=((e.clientX-r.left)/r.width-.5)*2;
+          const y=((e.clientY-r.top)/r.height-.5)*2;
+          stage.style.setProperty('--px',x.toFixed(2));
+          stage.style.setProperty('--py',y.toFixed(2));
+          raf=0;
+        });
+      });
+      stage.addEventListener('pointerleave',()=>{stage.style.setProperty('--px',0);stage.style.setProperty('--py',0)});
+    }
+
+    // Owner convenience gesture only. This is NOT an authorization control:
+    // owner-login.html still performs the real Owner authentication/authorization.
+    const logo=document.querySelector('[data-owner-gesture]');
+    let taps=0,timer=0;
+    logo?.addEventListener('click',()=>{
+      taps++;
+      clearTimeout(timer);
+      timer=setTimeout(()=>{taps=0},2600);
+      if(taps>=5){
+        taps=0;clearTimeout(timer);
+        location.href='owner-login.html';
+      }
+    });
+  });
+})();
+</script>
+<script type="module">
     import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
     import { auth, db } from './owner-firebase-client.js';
     import { isAuthorizedOwner } from './owner-auth-guard.js';

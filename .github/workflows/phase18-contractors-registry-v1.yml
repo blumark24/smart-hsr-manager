@@ -1,0 +1,39 @@
+name: PHASE18 Contractors Registry V1
+on:
+  push:
+    branches:
+      - phase18-contractors-registry-v1
+  workflow_dispatch:
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Syntax check
+        run: |
+          node --check api/admin/users.js
+          node --check contractors-registry-runtime.js
+          node --check manager-phase11d-user-center-enhancements.js
+      - name: Contractors registry V1
+        run: node --test test/contractors-registry-v1.test.js
+      - name: Administrative Affairs regression
+        run: node --test test/administrative-affairs-v1.test.js
+      - name: Identity regression
+        run: |
+          node --test test/institutional-path-foundation.test.js
+          node --test test/unified-identity-service-switcher.test.js
+      - name: User Center regression
+        run: node --test test/user-center-compact-grid-email-performance.test.js
+      - name: Field contractor workflow regression
+        run: |
+          node --test test/visual-distortion-lifecycle.integration.test.js
+          node --test test/field-head-evidence-access.test.js
+      - name: Security rules
+        run: npm run test:rules

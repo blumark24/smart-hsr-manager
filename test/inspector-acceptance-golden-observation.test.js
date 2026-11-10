@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
-const dashboard = fs.readFileSync(path.join(root, 'test/fixtures/legacy/dashboard.txt'), 'utf8');
+const dashboard = fs.readFileSync(path.join(root, 'test/fixtures/legacy/release-dashboard.txt'), 'utf8');
 const manager = fs.readFileSync(path.join(root, 'manager.html'), 'utf8');
 const rules = fs.readFileSync(path.join(root, 'firestore.rules'), 'utf8');
 const analyze = fs.readFileSync(path.join(root, 'api', 'ai', 'analyze.js'), 'utf8');

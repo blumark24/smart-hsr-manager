@@ -9,7 +9,7 @@ const { evaluateAIStorageInput } = require('../platform/ai/ai-storage-boundary')
 const { parseCanonicalObjectKey } = require('../platform/storage/object-key-policy');
 
 const root = path.join(__dirname, '..');
-const dashboard = fs.readFileSync(path.join(root, 'test/fixtures/legacy/dashboard.txt'), 'utf8');
+const dashboard = fs.readFileSync(path.join(root, 'test/fixtures/legacy/release-dashboard.txt'), 'utf8');
 const caller = Object.freeze({ uid: 'inspector-a', role: 'inspector', organizationId: 'org-a' });
 const observationId = 'obs-1';
 const imageObjectKey = 'observations/org-a/obs-1/before/image-1.jpg';

@@ -1,0 +1,3 @@
+SMART HSR Manager Preview redeploy trigger.
+Reason: disable dead Lands bridge target until lands-smart Preview is recreated.
+No runtime logic change. Preview only; Production untouched.
