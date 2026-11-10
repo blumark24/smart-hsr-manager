@@ -3545,6 +3545,16 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
+  // Inspector V2 is the canonical user-facing field workspace.
+  // Keep this legacy dashboard reachable only as the trusted capture engine
+  // embedded by Inspector V2. Direct inspector visits must never render
+  // the legacy dashboard UI.
+  const captureV2 = new URLSearchParams(window.location.search).get('capture') === 'v2';
+  if (!captureV2) {
+    window.location.replace('inspector-v2.html');
+    return;
+  }
+
   inspectorContext.uid = user.uid;
   inspectorContext.organizationId = verified.organizationId;
   inspectorContext.organizationName = verified.organizationName;
