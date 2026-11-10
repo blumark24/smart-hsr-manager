@@ -218,3 +218,20 @@ test('Inspector V2 capture does not treat timeout or Firestore failure as succes
   assert.match(dashboard, /setDoc does not resolve|setDoc لا تُحلّ إلا بعد إقرار الخادم|نجاح مؤكد من الخادم/);
 });
 
+
+
+test('Inspector V2 live map behaves like a tracked field map without fabricating positions', () => {
+  assert.match(js, /liveFollowEnabled: true/);
+  assert.match(js, /accuracyCircle: null/);
+  assert.match(js, /navigator\.geolocation\.watchPosition/);
+  assert.match(js, /requestAnimationFrame\(animate\)/);
+  assert.match(js, /L\.circle\(latlng/);
+  assert.match(js, /className: 'user-location-accuracy'/);
+  assert.match(js, /state\.map\.on\('dragstart'/);
+  assert.match(js, /state\.liveFollowEnabled = false/);
+  assert.match(js, /state\.liveFollowEnabled = true;[\s\S]*state\.map\.flyTo/);
+  assert.match(js, /state\.map\.panTo\(latlng/);
+  assert.match(js, /coords\.heading/);
+  assert.match(css, /\.user-location-accuracy/);
+  assert.match(css, /--heading:/);
+});
