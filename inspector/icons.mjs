@@ -1,4 +1,14 @@
 const paths = {
+  navigate: "M21 3 3 10l7 3 3 8Z",
+  target:
+    "M12 2v3m0 14v3M2 12h3m14 0h3M19 12a7 7 0 1 1-14 0 7 7 0 0 1 14 0ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
+  layers: "m12 3 10 6-10 6L2 9Zm-9 11 9 5 9-5M3 18l9 5 9-5",
+  clock: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM12 7v5l3 2",
+  sun: "M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM12 1v2m0 18v2M1 12h2m18 0h2M4 4l2 2m12 12 2 2M20 4l-2 2M6 18l-2 2",
+  signal: "M4 15h3v7H4zM10 9h3v13h-3zM16 3h3v19h-3z",
+  chevron: "m14 5-7 7 7 7",
+  sparkle: "m12 2 2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z",
+
   home: "M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9",
   tasks: "M5 3h14v18H5zM8 7h8M8 11h8M8 15h5",
   plus: "M12 4v16M4 12h16",

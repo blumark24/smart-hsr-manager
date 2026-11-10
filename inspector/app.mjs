@@ -41,7 +41,7 @@ let disposeMap = () => {},
 const sheet = $("case-sheet");
 for (const [i, name] of ["home", "tasks", "plus", "chart", "user"].entries())
   $("nav").querySelectorAll("a span")[i].innerHTML = icon(name);
-$("notifications").innerHTML = icon("bell");
+$("notifications").querySelector(".notification-icon").innerHTML = icon("bell");
 let sessionEpoch = 0;
 let thumbObserver,
   thumbURLs = [],
@@ -87,6 +87,11 @@ function lazyThumbnails() {
 function notice(message, error = false) {
   $("notice").textContent = message;
   $("notice").classList.toggle("error", error);
+  $("notice").dataset.quiet = String(
+    !error &&
+      (message.startsWith("بيانات مؤكدة") ||
+        message === "تم التحقق من الموقع."),
+  );
 }
 function errorMessage(error) {
   if (error.status === 401 || error.code === "reauthentication-required")
@@ -124,7 +129,7 @@ function dist(item) {
       : `${(d / 1000).toFixed(1)} كم`;
 }
 function row(item) {
-  return `<button class="report-row" data-case="${e(item.id)}">${thumbnail(item)}<span class="copy"><strong>${e(item.title)}</strong><small>${e(item.id.slice(0, 12))} · ${e(dist(item))}</small><br>${pill(item)}</span><span aria-hidden="true">‹</span></button>`;
+  return `<button class="report-row" data-case="${e(item.id)}">${thumbnail(item)}<span class="copy"><strong>${e(item.title)}</strong><small><span class="row-id">${e(item.id.slice(0, 12))} · </span><span class="row-distance">${e(dist(item))}</span></small><br>${pill(item)}</span><span aria-hidden="true">‹</span></button>`;
 }
 function list(data) {
   return data.length
@@ -156,6 +161,7 @@ async function refresh(more = false) {
       ? [...new Map([...items, ...result.items].map((i) => [i.id, i])).values()]
       : result.items;
     ready = true;
+    document.querySelector(".session-dot").hidden = false;
     $("greeting").textContent = profile.name
       ? `مرحباً ${profile.name}`
       : "مرحباً بك";
@@ -176,17 +182,36 @@ async function refresh(more = false) {
     if (epoch === sessionEpoch) loading = false;
   }
 }
+function reportLabel(item) {
+  return item.displayId
+    ? `#HSR-${item.displayId}`
+    : `#${item.id.slice(0, 8).toUpperCase()}`;
+}
+function heading(title, href, label = "عرض الكل") {
+  return `<div class="section-head"><h2>${title}</h2>${href ? `<a href="${href}">${label}<span class="round-chevron">${icon("chevron")}</span></a>` : `<span class="round-chevron" aria-hidden="true">${icon("chevron")}</span>`}</div>`;
+}
+function statusCards() {
+  return `<div class="context"><div class="status-card gps-card"><span class="status-icon">${icon("signal")}</span><div><strong>${position && position.accuracy <= 30 ? "دقة GPS عالية" : "GPS غير محدد"}</strong><small>${position ? `± ${Math.round(position.accuracy)} متر` : "بانتظار الموقع"}</small></div></div><button class="status-card location-card" data-action="locate"><span class="status-icon">${icon("pin")}</span><strong>${position ? "بالموقع" : "تحديد الموقع"}</strong></button><div class="status-card weather-card" aria-label="الطقس غير متاح؛ لا يوجد مصدر طقس مفعّل"><span class="status-icon">${icon("sun")}</span><div><strong>الطقس <b>—°</b></strong><small>غير متاح حالياً</small></div></div></div>`;
+}
 function mapHTML() {
   const current =
     items.find((i) => i.id === selected) ||
     items.find((i) => i.status !== "COMPLETED");
-  return `<section class="map-panel" aria-label="خريطة العمل"><div class="map-tools"><select id="map-filter" aria-label="تصفية الخريطة"><option value="all">الحالات · الكل</option>${Object.entries(
+  return `<section class="map-panel" aria-label="خريطة العمل"><div class="map-stage"><div class="map-tools"><div class="map-tabs" role="tablist" aria-label="محتوى الخريطة"><button role="tab" aria-selected="true" data-map-view="cases">الحالات</button><button role="tab" aria-selected="false" disabled title="مصدر المهام القريبة غير مفعّل">المهام القريبة</button><button role="tab" aria-selected="false" disabled title="دليل المقاولين غير متاح لهذا الدور">المقاولين</button></div><a href="#map">عرض الكل <span class="round-chevron">${icon("chevron")}</span></a></div><div id="operational-map" class="map-canvas" aria-label="خريطة البلاغات"></div><div class="map-edge-controls"><label class="map-control status-filter" title="تصفية الحالات">${icon("layers")}<select id="map-filter" aria-label="تصفية الخريطة"><option value="all">جميع الحالات</option>${Object.entries(
     statuses,
   )
     .map(([k, v]) => `<option value="${k}">${v}</option>`)
     .join(
       "",
-    )}</select><button data-action="locate">⌖ موقعي</button><a class="button" href="#map" aria-label="فتح الخريطة">↗</a></div><div id="operational-map" class="map-canvas" aria-label="خريطة البلاغات">جارٍ تحميل الخريطة…</div>${current ? `<button class="map-case" data-case="${e(current.id)}"><strong>${e(current.title)}</strong>${e(dist(current))} ‹</button>` : ""}<div class="ai-strip"><span class="ai-orb">AI</span><div><h3>المساعد الذكي</h3><p>استشارة اختيارية؛ القرار للمراقب والمراجعة الرسمية</p></div><button data-action="ai-current" ${current ? "" : "disabled"}>عرض المقترحات ✧</button></div></section>`;
+    )}</select></label><button class="map-control" data-map-control="center" disabled aria-label="توسيط الخريطة">${icon("target")}</button><button class="map-control" data-action="locate" aria-label="تحديد موقعي">${icon("navigate")}</button></div><div class="map-perspective"><button data-map-control="perspective" disabled aria-label="تبديل منظور الخريطة" aria-pressed="true">3D</button><button data-map-control="layers" disabled aria-label="إظهار طبقة المباني" aria-pressed="true">${icon("layers")}</button></div>${current ? `<button class="map-case" data-case="${e(current.id)}">${thumbnail(current)}<span class="map-case-copy"><b dir="ltr">${e(reportLabel(current))}</b><strong>${e(current.title)}</strong><small>${icon("pin")}${e(dist(current))}</small></span><span class="case-chevron">${icon("chevron")}</span></button>` : ""}</div><div class="ai-strip"><span class="ai-orb">AI</span><div><h3>المساعد الذكي</h3><p>استشارة لبلاغاتك، والقرار والمراجعة لك</p></div><button data-action="ai-current" ${current ? "" : "disabled"}>عرض المقترحات ${icon("sparkle")}</button></div></section>`;
+}
+function missionHTML(mission) {
+  if (!mission)
+    return '<section class="glass mission empty">لا توجد حالة نشطة ضمن بلاغاتك المحملة.</section>';
+  return `<section class="glass mission"><div class="mission-summary"><div class="mission-time"><span>${icon("clock")}الوقت المتبقي</span><time title="لم تُحدد مهلة معالجة لهذه الحالة">— : —</time><small>مهلة غير محددة</small></div><div class="mission-copy"><b class="report-id" dir="ltr">${e(reportLabel(mission))}</b><h3>${e(mission.title)}</h3><p>${icon("pin")}${e(profile.organizationName || "موقع الرصد")}</p></div>${thumbnail(mission)}</div><div class="mission-meta"><span class="distance-chip">${icon("navigate")}${e(dist(mission))}</span><div class="lifecycle-track" role="img" aria-label="${e(statuses[mission.status] || mission.status)}"><i data-status="${e(mission.status)}"></i></div></div><div class="actions"><button class="primary" data-navigate="${e(mission.id)}" ${coordinates(mission) ? "" : "disabled"}>${icon("navigate")}الاتجاه إلى الموقع</button><button data-case="${e(mission.id)}">${icon("tasks")}تفاصيل الحالة</button></div></section>`;
+}
+function quickHTML() {
+  return `<div class="quick-grid"><a href="#new" data-focus="photo"><span>${icon("camera")}</span>إضافة صورة</a><a href="#new" data-focus="note"><span>${icon("tasks")}</span>ملاحظة</a><a href="#new"><span>${icon("pin")}</span>رصد سريع</a><a href="#map"><span>${icon("scan")}</span>مسح الموقع</a></div>`;
 }
 async function showMap() {
   const element = $("operational-map");
@@ -197,6 +222,7 @@ async function showMap() {
       items,
       position,
       center,
+      organizationId: profile.organizationId,
       onSelect: (id) => {
         selected = id;
         openCase(id);
@@ -227,7 +253,7 @@ function render() {
     const mission =
       items.find((i) => i.status === "IN_PROGRESS") ||
       items.find((i) => i.status !== "COMPLETED");
-    main.innerHTML = `<div class="context"><div><b>●</b> ${position ? `دقة GPS ${Math.round(position.accuracy)} م` : "GPS غير محدد"}</div><button data-action="locate">⌖ تحديد الموقع</button><div>المؤسسة<br><b>${e(profile.organizationName || "المؤسسة الحالية")}</b></div></div><div class="home-grid"><div>${mapHTML()}</div><div class="secondary"><h2>مهمتك الحالية</h2><section class="glass mission">${mission ? `<div class="mission-top"><h3>${e(mission.title)}</h3>${pill(mission)}</div><small>${e(dist(mission))}</small><p class="muted">من بلاغاتك النشطة · لا توجد مهلة SLA مؤكدة</p><div class="actions"><button class="primary" data-navigate="${e(mission.id)}" ${coordinates(mission) ? "" : "disabled"}>➤ الاتجاه إلى الموقع</button><button data-case="${e(mission.id)}">تفاصيل الحالة ▤</button></div>` : '<p class="empty">لا توجد حالة نشطة ضمن البلاغات المحملة.</p>'}</section><h2>إجراءات سريعة</h2><div class="quick-grid"><a href="#new" data-focus="photo"><span>${icon("camera")}</span>إضافة صورة</a><a href="#new" data-focus="note"><span>${icon("tasks")}</span>ملاحظة</a><a href="#new"><span>${icon("pin")}</span>رصد سريع</a><a href="#map"><span>${icon("scan")}</span>مسح الموقع</a></div></div></div><div class="section-head"><h2>أحدث بلاغاتي</h2><a href="#tasks">عرض الكل ‹</a></div><div class="recent-grid report-list">${list(items.slice(0, 3))}</div>`;
+    main.innerHTML = `${statusCards()}<div class="home-grid"><div class="home-map">${mapHTML()}</div><div class="secondary"><div class="mission-heading"><h2>مهمتك الحالية <span class="round-chevron">${icon("chevron")}</span></h2>${mission ? pill(mission) : ""}</div>${missionHTML(mission)}${heading("إجراءات سريعة")}${quickHTML()}</div><section class="recent-section">${heading("أحدث بلاغاتي", "#tasks")}<div class="recent-grid report-list">${list(items.slice(0, 3))}</div></section></div>`;
     showMap();
   } else if (route === "tasks") {
     main.innerHTML = `<div class="section-head"><h2>مهامي وبلاغاتي</h2><button data-action="refresh">تحديث</button></div><p class="muted">بلاغاتك فقط. الإسناد الرسمي للمقاول يظهر داخل تفاصيل الحالة.</p><input id="task-search" aria-label="بحث في البلاغات المحملة" placeholder="ابحث في البلاغات المحملة"><select id="task-status" aria-label="حالة البلاغ"><option value="all">جميع الحالات</option>${Object.entries(
@@ -394,18 +420,24 @@ async function openCase(id) {
   const mapCard = main.querySelector(".map-case");
   if (mapCard) {
     mapCard.dataset.case = id;
-    mapCard.innerHTML = `<strong>${e(item.title)}</strong>${e(dist(item))} ‹`;
+    mapCard.innerHTML = `${thumbnail(item)}<span class="map-case-copy"><b dir="ltr">${e(reportLabel(item))}</b><strong>${e(item.title)}</strong><small>${icon("pin")}${e(dist(item))}</small></span><span class="case-chevron">${icon("chevron")}</span>`;
+    lazyThumbnails();
   }
   revokeImages();
   focusBeforeSheet = document.activeElement;
   $("case-title").textContent = item.title;
   $("case-content").innerHTML =
     `<small>${e(item.id)}</small><p>${pill(item)}</p><p class="sheet-details">${e(item.details)}</p><p class="muted">${e(item.location || "الموقع غير متوفر")} · ${e(dist(item))}</p><p>المقاول المسؤول: ${e(item.assignedContractorUid || "لم يُسند إلى مقاول")}</p>${item.supervisorNote ? `<p>ملاحظة المشرف: ${e(item.supervisorNote)}</p>` : ""}<div class="evidence-grid"><div><h3>قبل المعالجة</h3><div id="before-evidence">${item.imageObjectKey || item.imagePath ? "جارٍ تحميل الدليل…" : "لا يوجد دليل"}</div></div><div><h3>بعد المعالجة</h3><div id="after-evidence">${item.afterImagePath ? "جارٍ تحميل الدليل…" : "لا يوجد دليل"}</div></div></div><p>${e(item.resolutionNote || "")}</p><div class="actions"><button class="primary" data-navigate="${e(id)}" ${coordinates(item) ? "" : "disabled"}>الاتجاه إلى الموقع</button><button data-ai="${e(id)}">استشارة AI</button></div><div class="actions"><button data-advisory="root-cause" data-id="${e(id)}">إرشادات التحقق الميداني</button><button data-advisory="work-order" data-id="${e(id)}">مسودة نطاق العمل</button></div><div id="advisory-output" class="field-info"></div><p id="case-ai" class="field-info">${e(item.aiAnalysis?.explanation || "استشارة فقط؛ الاعتماد والإغلاق يخضعان للمسؤول المخوّل.")}</p>${canAttachAfter(item) ? `<form id="after-form"><h3>توثيق المعالجة</h3><p class="field-info">إضافة دليل فقط؛ لا يُغيّر الحالة ولا يغلق البلاغ.</p><label>صورة بعد المعالجة<input id="after-photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" required></label><label>ملاحظة المعالجة<textarea id="after-note" maxlength="3000" required></textarea></label><button type="submit">حفظ دليل المعالجة</button><p id="after-result" role="status"></p></form>` : '<p class="field-info">تعديل دليل المعالجة غير متاح لهذه الحالة وفق الصلاحيات الحالية.</p>'}`;
-  const review=document.createElement('section');
-  if(item.status==='PENDING_REVIEW' && item.assignedContractorUid && item.afterImagePath && item.resolutionNote){
-    review.id='inspector-review';
-    review.innerHTML=`<h3>مراجعة معالجة المقاول</h3><p class="field-info">${item.inspectorVerification?.status==='VERIFIED'?'تم اعتماد المعالجة؛ بانتظار إغلاق رئيس القسم.':'راجع أدلة قبل وبعد المعالجة قبل القرار.'}</p><label>ملاحظة التحقق<textarea id="review-note" maxlength="3000"></textarea></label><div class="actions"><button data-review="ACCEPT" data-id="${e(id)}">اعتماد المعالجة</button><button data-review="RETURN" data-id="${e(id)}">إعادة للمقاول</button></div><p id="review-result" role="status"></p>`;
-    $('case-content').append(review);
+  const review = document.createElement("section");
+  if (
+    item.status === "PENDING_REVIEW" &&
+    item.assignedContractorUid &&
+    item.afterImagePath &&
+    item.resolutionNote
+  ) {
+    review.id = "inspector-review";
+    review.innerHTML = `<h3>مراجعة معالجة المقاول</h3><p class="field-info">${item.inspectorVerification?.status === "VERIFIED" ? "تم اعتماد المعالجة؛ بانتظار إغلاق رئيس القسم." : "راجع أدلة قبل وبعد المعالجة قبل القرار."}</p><label>ملاحظة التحقق<textarea id="review-note" maxlength="3000"></textarea></label><div class="actions"><button data-review="ACCEPT" data-id="${e(id)}">اعتماد المعالجة</button><button data-review="RETURN" data-id="${e(id)}">إعادة للمقاول</button></div><p id="review-result" role="status"></p>`;
+    $("case-content").append(review);
   }
   if (!sheet.open) sheet.showModal();
   for (const [field, key] of [
@@ -564,15 +596,36 @@ document.addEventListener("click", async (event) => {
     }
     return;
   }
-  if(button.dataset.review){
-    const note=$('review-note').value.trim();
-    if(button.dataset.review==='RETURN'&&!note){$('review-result').textContent='اكتب سبب الإعادة للمقاول.';return;}
-    const controls=[...sheet.querySelectorAll('[data-review]')];controls.forEach(b=>b.disabled=true);
-    try{
-      const result=await api.request('/api/admin/users',{action:'verifyFieldObservation',observationId:button.dataset.id,decision:button.dataset.review,note});
-      if(!['VERIFIED','RETURNED'].includes(result.verificationStatus))throw new Error('unconfirmed');
-      await refresh();closeSheet();notice(result.verificationStatus==='VERIFIED'?'تم اعتماد المعالجة؛ الإغلاق النهائي يتم من رئيس قسم الحصر الميداني.':'أعيدت الحالة إلى المقاول لاستكمال المعالجة.');
-    }catch(error){if($('review-result'))$('review-result').textContent=errorMessage(error)}finally{controls.forEach(b=>b.disabled=false)}
+  if (button.dataset.review) {
+    const note = $("review-note").value.trim();
+    if (button.dataset.review === "RETURN" && !note) {
+      $("review-result").textContent = "اكتب سبب الإعادة للمقاول.";
+      return;
+    }
+    const controls = [...sheet.querySelectorAll("[data-review]")];
+    controls.forEach((b) => (b.disabled = true));
+    try {
+      const result = await api.request("/api/admin/users", {
+        action: "verifyFieldObservation",
+        observationId: button.dataset.id,
+        decision: button.dataset.review,
+        note,
+      });
+      if (!["VERIFIED", "RETURNED"].includes(result.verificationStatus))
+        throw new Error("unconfirmed");
+      await refresh();
+      closeSheet();
+      notice(
+        result.verificationStatus === "VERIFIED"
+          ? "تم اعتماد المعالجة؛ الإغلاق النهائي يتم من رئيس قسم الحصر الميداني."
+          : "أعيدت الحالة إلى المقاول لاستكمال المعالجة.",
+      );
+    } catch (error) {
+      if ($("review-result"))
+        $("review-result").textContent = errorMessage(error);
+    } finally {
+      controls.forEach((b) => (b.disabled = false));
+    }
     return;
   }
   if (button.dataset.ai) {
@@ -676,6 +729,7 @@ main.addEventListener("change", (event) => {
       items: items.filter((i) => value === "all" || i.status === value),
       position,
       center,
+      organizationId: profile.organizationId,
       onSelect: openCase,
       selected,
     })

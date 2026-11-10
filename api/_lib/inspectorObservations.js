@@ -123,6 +123,7 @@ function present(snapshot) {
   const d = snapshot.data(),
     out = { id: snapshot.id };
   for (const k of [
+    "displayId",
     "title",
     "details",
     "type",

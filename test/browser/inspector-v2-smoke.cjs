@@ -1,45 +1,80 @@
 "use strict";
 // Isolated browser integration: explicit test-only Firebase/API doubles. Never uses real accounts/data.
 let playwright;
-try { playwright=require(process.env.PLAYWRIGHT_MODULE||'playwright'); }
-catch (_) { playwright=require('/opt/codex/cua_node/lib/node_modules/playwright-core'); }
-const {chromium}=playwright;
+try {
+  playwright = require(process.env.PLAYWRIGHT_MODULE || "playwright");
+} catch (_) {
+  playwright = require("/opt/codex/cua_node/lib/node_modules/playwright-core");
+}
+const { chromium } = playwright;
 const fs = require("node:fs"),
   assert = require("node:assert/strict");
+let activeBrowser;
 (async () => {
   const browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
     headless: true,
-    args: ["--no-sandbox"],
+    args: ["--no-sandbox", "--enable-unsafe-swiftshader"],
   });
+  activeBrowser = browser;
   const screenshots = "/tmp/inspector-v2-screenshots";
   fs.mkdirSync(screenshots, { recursive: true });
   const report = [];
   for (const [name, width, height] of [
     ["mobile", 390, 844],
+    ["compact-mobile", 320, 740],
     ["tablet", 820, 1180],
     ["desktop", 1440, 1000],
   ]) {
     const context = await browser.newContext({
       viewport: { width, height },
       permissions: ["geolocation"],
-      geolocation: { latitude: 21.5, longitude: 39.2, accuracy: 8 },
+      geolocation: { latitude: 19.12639, longitude: 41.07889, accuracy: 8 },
     });
     const page = await context.newPage();
     const errors = [];
+    const requests = [];
+    page.on("request", (r) => requests.push(r.url()));
     page.on("pageerror", (e) => errors.push(e.message));
     let records = [
         {
           id: "existing-report",
+          displayId: 1042,
           title: "حفرة في الطريق",
           details: "حالة اختبار معزولة",
           type: "MAINTENANCE",
           status: "IN_PROGRESS",
           imageObjectKey:
             "observations/test-org/existing-report/before/test.jpg",
-          location: "21.5,39.2",
-          correctedLat: 21.5,
-          correctedLng: 39.2,
+          location: "19.12639,41.07889",
+          correctedLat: 19.1271,
+          correctedLng: 41.0794,
+        },
+        {
+          id: "reference-case-1043",
+          displayId: 1043,
+          title: "تلف في الرصيف",
+          details: "بيانات اختبار متصفح معزولة",
+          type: "MAINTENANCE",
+          status: "PENDING",
+          location: "19.1258,41.0777",
+          correctedLat: 19.1258,
+          correctedLng: 41.0777,
+          imageObjectKey:
+            "observations/test-org/reference-case-1043/before/test.jpg",
+        },
+        {
+          id: "reference-case-1044",
+          displayId: 1044,
+          title: "معالجة الرصف",
+          details: "بيانات اختبار متصفح معزولة",
+          type: "MAINTENANCE",
+          status: "COMPLETED",
+          location: "19.1261,41.0802",
+          correctedLat: 19.1261,
+          correctedLng: 41.0802,
+          imageObjectKey:
+            "observations/test-org/reference-case-1044/before/test.jpg",
         },
       ],
       postCount = 0,
@@ -103,14 +138,14 @@ const fs = require("node:fs"),
               profile: {
                 name: "حساب اختبار",
                 uid: "test-inspector",
-                organizationId: "test-org",
+                organizationId: "CnlVlKC7UcDMp2NZzjjT",
                 role: "inspector",
               },
             };
       else if (url.pathname === "/api/organization/context")
         value = {
-          organizationId: "test-org",
-          mapCenter: { lat: 21.5, lng: 39.2 },
+          organizationId: "CnlVlKC7UcDMp2NZzjjT",
+          mapCenter: { lat: 19.12639, lng: 41.07889 },
         };
       else if (url.pathname === "/api/storage/upload")
         value = {
@@ -142,12 +177,16 @@ const fs = require("node:fs"),
         record.afterImagePath = body.objectKey;
         record.resolutionNote = body.note;
         value = { confirmed: true, id: body.id };
-      } else if(url.pathname === '/api/admin/users' && body.action === 'verifyFieldObservation') {
-        const record=records.find(r=>r.id===body.observationId);
-        const verificationStatus=body.decision==='ACCEPT'?'VERIFIED':'RETURNED';
-        record.inspectorVerification={status:verificationStatus};
-        if(body.decision==='RETURN')record.status='IN_PROGRESS';
-        value={status:record.status,verificationStatus};
+      } else if (
+        url.pathname === "/api/admin/users" &&
+        body.action === "verifyFieldObservation"
+      ) {
+        const record = records.find((r) => r.id === body.observationId);
+        const verificationStatus =
+          body.decision === "ACCEPT" ? "VERIFIED" : "RETURNED";
+        record.inspectorVerification = { status: verificationStatus };
+        if (body.decision === "RETURN") record.status = "IN_PROGRESS";
+        value = { status: record.status, verificationStatus };
       } else if (url.pathname === "/api/ai/analyze") {
         status = 403;
         value = {
@@ -166,7 +205,58 @@ const fs = require("node:fs"),
     });
     await page.goto("http://127.0.0.1:5000/inspector.html");
     await page.locator("h1").filter({ hasText: "حساب اختبار" }).waitFor();
-    await page.locator(".leaflet-container").waitFor();
+    await page.locator(".maplibregl-map").waitFor();
+    await page.locator(".location-card").click();
+    await page.waitForFunction(() => document.querySelector(".user-radar"));
+    await page.waitForFunction(
+      () =>
+        document.getElementById("operational-map")?.dataset.mapState ===
+        "ready",
+    );
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(500);
+    assert.equal(
+      requests.some((url) => url.includes("tile.openstreetmap.org")),
+      false,
+    );
+    const geometry = await page.evaluate(() => {
+      const stage = document
+          .querySelector(".map-stage")
+          .getBoundingClientRect(),
+        card = document.querySelector(".map-case").getBoundingClientRect();
+      return {
+        ratio: stage.height / stage.width,
+        cardContainsCenter:
+          card.left <= stage.left + stage.width / 2 &&
+          card.right >= stage.left + stage.width / 2,
+        provider: document.getElementById("operational-map").dataset.provider,
+      };
+    });
+    if (width < 700)
+      assert.ok(
+        geometry.ratio > 0.46 && geometry.ratio < (width < 350 ? 0.62 : 0.59),
+      );
+    assert.equal(geometry.cardContainsCenter, false);
+    assert.equal(geometry.provider, "local-reference");
+    assert.equal(await page.locator(".map-tabs [role=tab]").count(), 3);
+    await page.locator('[data-map-control="perspective"]').click();
+    await page.waitForTimeout(400);
+    assert.equal(
+      await page
+        .locator('[data-map-control="perspective"]')
+        .getAttribute("aria-pressed"),
+      "false",
+    );
+    await page.locator('[data-map-control="perspective"]').click();
+    await page.waitForTimeout(400);
+    const controls = await page.locator(".map-control").evaluateAll((nodes) =>
+      nodes.map((n) => {
+        const r = n.getBoundingClientRect(),
+          s = n.closest(".map-stage").getBoundingClientRect();
+        return r.top >= s.top && r.bottom <= s.bottom;
+      }),
+    );
+    assert(controls.every(Boolean), "map controls stay inside compact map");
     await page.screenshot({
       path: `${screenshots}/${name}-home.png`,
       fullPage: true,
@@ -178,10 +268,12 @@ const fs = require("node:fs"),
       false,
       `${name} home horizontal overflow`,
     );
-    assert.equal(await page.locator('#notifications').isDisabled(),true);
+    assert.equal(await page.locator("#notifications").isDisabled(), true);
     await page.locator('.quick-grid a[href="#map"]').click();
-    await page.getByRole('heading',{name:'الخريطة التشغيلية',exact:true}).waitFor();
-    await page.locator('#map-filter').selectOption('IN_PROGRESS');
+    await page
+      .getByRole("heading", { name: "الخريطة التشغيلية", exact: true })
+      .waitFor();
+    await page.locator("#map-filter").selectOption("IN_PROGRESS");
     await page.locator('#nav a[href="#home"]').click();
     await page.locator(".map-case").click();
     await page.locator("dialog[open]").waitFor();
@@ -194,15 +286,31 @@ const fs = require("node:fs"),
     await page.waitForFunction(
       () => !document.getElementById("case-sheet").open,
     );
-    records.push({id:'review-report',title:'حالة مراجعة تجريبية',status:'PENDING_REVIEW',assignedContractorUid:'test-contractor',afterImagePath:'observations/test-org/review-report/after/test.jpg',resolutionNote:'معالجة موثقة'});
+    records.push({
+      id: "review-report",
+      title: "حالة مراجعة تجريبية",
+      status: "PENDING_REVIEW",
+      assignedContractorUid: "test-contractor",
+      afterImagePath: "observations/test-org/review-report/after/test.jpg",
+      resolutionNote: "معالجة موثقة",
+    });
     await page.locator('#nav a[href="#tasks"]').click();
     await page.locator('[data-action="refresh"]').click();
     await page.locator('[data-case="review-report"]').click();
-    await page.locator('#review-note').fill('راجعت الأدلة');
+    await page.locator("#review-note").fill("راجعت الأدلة");
     await page.locator('[data-review="ACCEPT"]').click();
-    await page.waitForFunction(()=>!document.getElementById('case-sheet').open);
-    assert.equal(records.find(r=>r.id==='review-report').inspectorVerification.status,'VERIFIED');
-    assert.equal(records.find(r=>r.id==='review-report').status,'PENDING_REVIEW');
+    await page.waitForFunction(
+      () => !document.getElementById("case-sheet").open,
+    );
+    assert.equal(
+      records.find((r) => r.id === "review-report").inspectorVerification
+        .status,
+      "VERIFIED",
+    );
+    assert.equal(
+      records.find((r) => r.id === "review-report").status,
+      "PENDING_REVIEW",
+    );
     assert.equal(records[0].status, "IN_PROGRESS");
     assert.ok(records[0].afterImagePath);
     await page.locator('#nav a[href="#tasks"]').click();
@@ -212,7 +320,7 @@ const fs = require("node:fs"),
     await page.locator('#nav a[href="#statistics"]').click();
     await page.locator(".stat").first().waitFor();
     await page.locator('#nav a[href="#account"]').click();
-    await page.getByText("test-org", { exact: true }).waitFor();
+    await page.getByText("CnlVlKC7UcDMp2NZzjjT", { exact: true }).waitFor();
     await page.locator('#nav a[href="#new"]').click();
     await page.locator("#report-title").fill("رصد جديد للاختبار");
     await page.locator("#report-note").fill("تفاصيل اختبار المتصفح");
@@ -267,7 +375,8 @@ const fs = require("node:fs"),
     JSON.stringify(report, null, 2),
   );
   console.log(JSON.stringify(report, null, 2));
-})().catch((error) => {
+})().catch(async (error) => {
   console.error(error);
+  await activeBrowser?.close();
   process.exitCode = 1;
 });

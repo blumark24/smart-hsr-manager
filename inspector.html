@@ -14,25 +14,33 @@
   <body>
     <a class="skip" href="#main">انتقل للمحتوى</a>
     <div class="app">
-      <header>
+      <header class="inspector-header">
         <div class="identity">
-          <img src="Smart_HSR_Dashboard_Logo.svg" alt="SMART HSR" />
-          <div>
+          <div class="avatar">
+            <img src="inspector/assets/avatar.svg" alt="صورة رمزية للمراقب" /><i
+              class="session-dot"
+              aria-label="جلسة نشطة"
+              hidden
+            ></i>
+          </div>
+          <div class="identity-copy">
             <h1 id="greeting">مساحة المراقب</h1>
-            <p>المراقب الميداني</p>
+            <p class="role-label">المراقب الميداني</p>
+            <p class="tagline">معاً.. لبيئة حضرية أكثر أماناً وجودة</p>
           </div>
         </div>
         <button
           id="notifications"
+          class="notification-button"
           disabled
-          title="الإشعارات غير مدعومة حالياً"
+          title="لا يوجد مصدر إشعارات مفعّل"
           aria-label="الإشعارات غير متاحة"
         >
-          ♧
+          <span class="notification-icon"></span
+          ><span class="notification-badge" aria-hidden="true">—</span>
         </button>
       </header>
-      <p class="tagline">معاً.. لبيئة حضرية أكثر أماناً وجودة</p>
-      <div id="notice" role="status" aria-live="polite">
+      <div id="notice" data-quiet="true" role="status" aria-live="polite">
         جارٍ التحقق من الجلسة…
       </div>
       <main id="main" tabindex="-1"></main>
